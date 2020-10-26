@@ -2,6 +2,7 @@ trigger:
   branches:
     exclude:
       - '*'
+
 pr:
   autoCancel: true
   branches:
