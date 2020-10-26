@@ -45,7 +45,7 @@ stages:
              conda env create -f ${scippdependency}.yaml
             displayName: 'create anaconda environment'
           - bash: |
-             conda activating $(scippdependency)
+             echo conda activating $(scippdependency)
              conda activate '$(scippdependency)'
              conda env list
              python -m pytest --junitxml=junit/unit-test.xml
