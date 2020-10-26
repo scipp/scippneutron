@@ -8,6 +8,8 @@ pr:
     include:
       - '*'
 
+stages:
+
   - stage: 'test'
     displayName: 'Python tests'
 
