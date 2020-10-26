@@ -9,6 +9,9 @@ pr:
     include:
       - '*'
 
+variables:
+  isMaster: $[eq(variables['System.PullRequest.TargetBranch'], 'refs/heads/master')]
+
 stages:
 
   - stage: 'test'
@@ -27,6 +30,7 @@ stages:
             displayName: 'add conda to PATH'
           - bash: |
              set -ex
+             echo isMaster $(isMaster)
              conda --version
              conda config --set always_yes yes --set changeps1 no
              conda env create -f scipp-neutron-latest.yaml
