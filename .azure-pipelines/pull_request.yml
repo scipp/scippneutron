@@ -1,0 +1,38 @@
+trigger:
+  branches:
+    exclude:
+      - '*'
+pr:
+  autoCancel: true
+  branches:
+    include:
+      - '*'
+
+  - stage: 'test'
+    displayName: 'Python tests'
+
+    jobs:
+      - job: 'python_test'
+        displayName: 'Python tests'
+        timeoutInMinutes: 20
+        pool:
+          vmImage: 'ubuntu-18.04'
+        steps:
+          - checkout: self
+            submodules: true
+          - bash: echo "##vso[task.prependpath]$CONDA/bin"
+            displayName: 'add conda to PATH'
+          - bash: |
+             set -ex
+             conda --version
+             conda config --set always_yes yes --set changeps1 no
+             conda env create -f scipp-neutron-latest.yaml
+            displayName: 'create anaconda environment'
+          - bash: |
+             source activate scipp-neutron-latest
+             python -m pytest --junitxml=junit/unit-test.xml
+            displayName: 'run pytest'
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFiles: 'junit/*.xml'
+            condition: succeededOrFailed()
