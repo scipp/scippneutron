@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/scipp/scipp/_apis/build/status/scipp.scipp-neutron%20Master?branchName=master)](https://dev.azure.com/scipp/scipp/_build/latest?definitionId=8&branchName=master)
+
 # scipp-neutron
 Neutron scattering toolkit built using [scipp](https://github.com/scipp/scipp) for Data Reduction. Not facility or instrument specific.
 
