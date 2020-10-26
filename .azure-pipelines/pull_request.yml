@@ -31,6 +31,7 @@ stages:
           - bash: |
              set -ex
              echo isMaster $(isMaster)
+             echo target branch $[eq(variables['System.PullRequest.TargetBranch']
              conda --version
              conda config --set always_yes yes --set changeps1 no
              conda env create -f scipp-neutron-latest.yaml
