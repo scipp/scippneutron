@@ -47,7 +47,7 @@ stages:
           - bash: |
              conda activating $(scippdependency)
              conda activate $(scippdependency)
-             conda list
+             conda env list
              python -m pytest --junitxml=junit/unit-test.xml
             displayName: 'run pytest'
           - task: PublishTestResults@2
