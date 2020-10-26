@@ -11,6 +11,7 @@ pr:
 
 variables:
   isMaster: $[eq(variables['System.PullRequest.TargetBranch'], 'refs/heads/master')]
+  target_branch: $[variables['System.PullRequest.TargetBranch']]
 
 stages:
 
@@ -31,6 +32,7 @@ stages:
           - bash: |
              set -ex
              echo isMaster $(isMaster)
+             echo target branch $(target_branch)
              echo target branch $(System.PullRequest.TargetBranch)
              conda --version
              conda config --set always_yes yes --set changeps1 no
