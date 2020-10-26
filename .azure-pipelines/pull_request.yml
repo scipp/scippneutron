@@ -32,6 +32,7 @@ stages:
           - bash: |
              set -ex
              echo isMaster $(isMaster)
+             echo target branch $SYSTEM_PULLREQUEST_TARGETBRANCH
              echo target branch $(target_branch)
              echo target branch $(System.PullRequest.TargetBranch)
              conda --version
