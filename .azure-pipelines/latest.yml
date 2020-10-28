@@ -1,10 +1,11 @@
 trigger:
   - latest
+  - flake8-initial
 
 pr: none
 
 stages:
-
+  - template: code_quality_checks.yml
   - stage: 'test'
     displayName: 'Python tests'
 
