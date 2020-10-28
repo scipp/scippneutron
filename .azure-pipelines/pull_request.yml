@@ -34,19 +34,14 @@ stages:
              echo is master $(is_master)
              echo target branch $(System.PullRequest.TargetBranch)
              # If master use stable/release scipp version from channel, otherwise latest
-             scippdependency=scipp-neutron
-             if [ $(is_master) == False ]; then
-                 scippdependency=scipp-neutron-latest
-             fi
-             echo using $scippdependency;
-             echo "##vso[task.setvariable variable=scippdependency]$scippdependency"
-             conda --version
              conda config --set always_yes yes --set changeps1 no
-             conda env create -f ${scippdependency}.yaml
-            displayName: 'create anaconda environment'
-          - bash: |
-             echo conda activating '$(scippdependency)'
-             source activate '$(scippdependency)'
+             if [ $(is_master) == False ]; then
+                 conda env create -f scipp-neutron-latest.yaml
+                 source activate scipp-neutron-latest
+             else
+                 conda env create -f scipp-neutron.yaml
+                 source activate scipp-neutron
+             fi
              python -m pytest --junitxml=junit/unit-test.xml
             displayName: 'run pytest'
           - task: PublishTestResults@2
