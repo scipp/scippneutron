@@ -1,6 +1,5 @@
 trigger:
   - latest
-  - flake8-initial
 
 pr: none
 
