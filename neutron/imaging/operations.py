@@ -66,12 +66,13 @@ def mean_from_adj_pixels(data):
     Applies a mean across 8 neighboring pixels (plus centre value)
     for data with 'x' and 'y' dimensions (at least).
     Result will calculate mean from slices across additional dimensions.
-    
-    For example if there is a tof dimension in addition to x, and y, 
-    for each set of neighbours the returned mean will take the mean tof value in the neighbour group.
+
+    For example if there is a tof dimension in addition to x, and y,
+    for each set of neighbours the returned mean
+    will take the mean tof value in the neighbour group.
     """
     fill = np.finfo(data.values.dtype).min
-    has_variances = not data.variances is None
+    has_variances = data.variances is not None
     container = sc.Variable(['neighbor'] + data.dims,
                             shape=[
                                 9,
@@ -113,10 +114,11 @@ def median_from_adj_pixels(data):
     Result will calculate median from slices across additional dimensions.
 
     For example if there is a tof dimension in addition to x, and y,
-    for each set of neighbours the returned median will take the median tof value in the neighbour group.
+    for each set of neighbours the returned median will take the
+    median tof value in the neighbour group.
     """
     fill = np.finfo(data.values.dtype).min
-    has_variances = not data.variances is None
+    has_variances = data.variances is not None
     container = sc.Variable(['neighbor'] + data.dims,
                             shape=[
                                 9,
