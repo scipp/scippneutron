@@ -16,7 +16,7 @@ jobs:
           echo "##vso[task.prependpath]$CONDA/bin"
         displayName: Add Conda to PATH
       - bash: |
-          conda env create -f scipp-neutron-latest.yml
+          conda env create -f scipp-neutron-latest.yaml
         displayName: 'Create Conda environment'
       - bash: |
           set -ex
