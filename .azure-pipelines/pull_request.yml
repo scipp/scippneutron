@@ -10,7 +10,7 @@ pr:
       - '*'
 
 variables:
-  is_master: $[eq(variables['System.PullRequest.TargetBranch'], 'master')]
+  is_release: $[eq(variables['System.PullRequest.TargetBranch'], 'release')]
   target_branch: $[variables['System.PullRequest.TargetBranch']]
 
 stages:
@@ -31,11 +31,11 @@ stages:
             displayName: 'add conda to PATH'
           - bash: |
              set -ex
-             echo is master $(is_master)
+             echo is master $(is_release)
              echo target branch $(System.PullRequest.TargetBranch)
-             # If master use stable/release scipp version from channel, otherwise latest
+             # If release use release scipp version from scipp channel, otherwise use scipp/label/dev channel
              scippdependency=scipp-neutron
-             if [ $(is_master) == False ]; then
+             if [ $(is_release) == False ]; then
                  scippdependency=scipp-neutron-latest
              fi
              echo using $scippdependency;

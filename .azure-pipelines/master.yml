@@ -1,5 +1,5 @@
 trigger:
-  - latest
+  - master
 
 pr: none
 
