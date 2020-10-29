@@ -1,5 +1,5 @@
 trigger:
-  - latest
+  - release
 
 pr: none
 
@@ -23,10 +23,10 @@ stages:
              set -ex
              conda --version
              conda config --set always_yes yes --set changeps1 no
-             conda env create -f scipp-neutron-latest.yaml
+             conda env create -f scipp-neutron.yaml
             displayName: 'create anaconda environment'
           - bash: |
-             source activate scipp-neutron-latest
+             source activate scipp-neutron
              python -m pytest --junitxml=junit/unit-test.xml
             displayName: 'run pytest'
           - task: PublishTestResults@2
