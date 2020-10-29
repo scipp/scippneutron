@@ -31,7 +31,6 @@ stages:
             displayName: 'add conda to PATH'
           - bash: |
              set -ex
-             ls
              echo is master $(is_release)
              echo target branch $(System.PullRequest.TargetBranch)
              # If release use release scipp version from scipp channel, otherwise use scipp/label/dev channel
