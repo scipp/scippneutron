@@ -10,5 +10,5 @@ This serves facility and instrument specific functionality such as that availabl
 
 # Branch organisation
 
-Developments `master` are pinned to the latest [stable release](https://github.com/scipp/scipp/tags) of scipp. Other ongoing feature developments should be merged into `latest`.
+Developments `release` are pinned to the latest [stable release](https://github.com/scipp/scipp/tags) of scipp. Other ongoing feature developments should be merged into `master`.
 
