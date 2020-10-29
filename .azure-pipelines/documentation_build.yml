@@ -10,7 +10,6 @@ jobs:
         submodules: true
       - bash: |
           set -ex
-          echo ls
           mkdir -p "$(docs_build_dir)"
         displayName: 'Make directories'
       - bash: |
