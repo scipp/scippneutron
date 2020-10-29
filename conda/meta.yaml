@@ -22,6 +22,9 @@ test:
   commands:
     - python -m pytest -v
 
+build:
+  number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
+
 about:
   home: https://github.com/scipp/scipp-neutron
   license: GPLv3
