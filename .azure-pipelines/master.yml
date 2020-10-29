@@ -33,3 +33,8 @@ stages:
             inputs:
               testResultsFiles: 'junit/*.xml'
             condition: succeededOrFailed()
+  - stage: 'post_build_checks'
+    displayName: 'Post Build Checks'
+
+    jobs:
+      - template: documentation_build.yml

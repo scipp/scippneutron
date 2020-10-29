@@ -1,0 +1,32 @@
+jobs:
+  - job: 'documentation'
+    displayName: 'Documentation'
+    pool:
+      vmImage: 'ubuntu-18.04'
+    variables:
+      docs_build_dir: '$(Build.StagingDirectory)/docs_build'
+    steps:
+      - bash: |
+          set -ex
+          mkdir -p "$(docs_build_dir)"
+        displayName: 'Make directories'
+      - bash: |
+          echo "##vso[task.prependpath]$CONDA/bin"
+        displayName: Add Conda to PATH
+      - bash: |
+          conda env create -f scipp-neutron-latest.yaml
+        displayName: 'Create Conda environment'
+      - bash: |
+          set -ex
+          source activate scipp-neutron-latest
+        displayName: 'Activate Conda environment'
+      - bash: |
+          set -ex
+          source activate scipp-neutron-latest
+          sphinx-build docs "$(docs_build_dir)"
+        displayName: 'Build documentation'
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(docs_build_dir)'
+          ArtifactName: 'documentation'
+        displayName: 'Publish documentation artifacts'
