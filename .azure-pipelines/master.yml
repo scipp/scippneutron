@@ -28,7 +28,7 @@ stages:
             displayName: 'create anaconda environment'
           - bash: |
              conda build conda/ --channel scipp/label/dev --channel conda-forge --label dev
-            displayName: 'run pytest'
+            displayName: 'package'
   - stage: 'post_build_checks'
     displayName: 'Post Build Checks'
 
