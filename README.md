@@ -1,4 +1,4 @@
-[![Build Status](https://dev.azure.com/scipp/scipp/_apis/build/status/scipp.scippneutron%20Master?branchName=main)](https://dev.azure.com/scipp/scipp/_build/latest?definitionId=8&branchName=main)
+[![Build Status](https://dev.azure.com/scipp/scippneutron/_apis/build/status/scipp.scippneutron%20Main?branchName=main)](https://dev.azure.com/scipp/scippneutron/_build/latest?definitionId=44&branchName=main)
 
 # scippneutron
 
