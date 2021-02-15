@@ -23,7 +23,7 @@ stages:
              set -ex
              conda --version
              conda config --set always_yes yes --set changeps1 no
-             conda env create -f scipp-neutron.yml
+             conda env create -f scippneutron.yml
             displayName: 'create anaconda environment'
           - bash: |
              source activate scipp-neutron
