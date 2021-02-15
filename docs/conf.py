@@ -16,9 +16,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = u'scipp-neutron'
-copyright = u'2020 scipp-neutron contributors'
-copyright = u'scipp-neutron contributors'
+project = u'scippneutron'
+copyright = u'2021 scippneutron contributors'
+copyright = u'scippneutron contributors'
 
 # The full version, including alpha/beta/rc tags
 version = u''

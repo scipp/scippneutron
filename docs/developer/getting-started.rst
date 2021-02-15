@@ -1,10 +1,10 @@
 Getting Started
 ===============
 
-What goes into scipp-neutron
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+What goes into scippneutron
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Code contributions to scipp-neutron should meet the following crieria:
+Code contributions to scippneutron should meet the following crieria:
 
 * Relate to neutron scattering data reduction in general or be particular to a technique
 * Will *not* contain any instrument or facility specific assumptions or branching
@@ -13,5 +13,3 @@ Code contributions to scipp-neutron should meet the following crieria:
   - As far as possible, unit test will make no use of external data via IO
 
 In addition, all code should meet the code :ref:`conventions`.
-
-

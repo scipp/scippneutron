@@ -1,4 +1,4 @@
-name: scipp-neutron
+name: scippneutron
 
 channels:
   - conda-forge

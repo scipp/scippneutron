@@ -36,11 +36,11 @@ stages:
              # If release use release scipp version from scipp channel, otherwise use scipp/label/dev channel
              conda config --set always_yes yes --set changeps1 no
              if [ $(is_release) == False ]; then
-                 conda env create -f scipp-neutron-latest.yml
-                 source activate scipp-neutron-latest
+                 conda env create -f scippneutron-latest.yml
+                 source activate scippneutron-latest
              else
-                 conda env create -f scipp-neutron.yml
-                 source activate scipp-neutron
+                 conda env create -f scippneutron.yml
+                 source activate scippneutron
              fi
              python -m pytest --junitxml=junit/unit-test.xml
             displayName: 'run pytest'
