@@ -14,15 +14,15 @@ jobs:
           echo "##vso[task.prependpath]$CONDA/bin"
         displayName: Add Conda to PATH
       - bash: |
-          conda env create -f scipp-neutron-latest.yml
+          conda env create -f scippneutron-latest.yml
         displayName: 'Create Conda environment'
       - bash: |
           set -ex
-          source activate scipp-neutron-latest
+          source activate scippneutron-latest
         displayName: 'Activate Conda environment'
       - bash: |
           set -ex
-          source activate scipp-neutron-latest
+          source activate scippneutron-latest
           sphinx-build docs "$(docs_build_dir)"
         displayName: 'Build documentation'
       - task: PublishBuildArtifacts@1
