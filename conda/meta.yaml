@@ -6,13 +6,20 @@ source:
   path: ..
 
 requirements:
+  build:
+    - cmake
+    - gxx_linux-64 7.3.* [linux64]
+    - git
+    - ninja
+    - python {{ python }}
+    - scipp
   run:
     - python {{ python }}
     - scipp
 
 test:
   imports:
-    - scipp
+    - scippneutron
     - neutron
     - neutron.imaging
   requires:
