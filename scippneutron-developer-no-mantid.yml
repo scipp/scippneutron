@@ -7,12 +7,13 @@ name: scipp-developer
 
 channels:
   - conda-forge
+  - scipp/label/dev # using dev version until correctly packaged scipp is released
 
 dependencies:
   # Build
   - ninja
   - tbb-devel
-  - scipp/label/dev # using dev version until correctly packaged scipp is released
+  - scipp
 
   # Run
   - appdirs
