@@ -3,7 +3,7 @@
 # This file is identical to scipp-developer.yml but does not include Mantid (for platforms Mantid has yet to be packaged for).
 # See https://scipp.github.io/developer/dependencies.html
 
-name: scipp-developer
+name: scippneutron-developer
 
 channels:
   - conda-forge

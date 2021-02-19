@@ -2,7 +2,7 @@
 # All dependencies should be installed here (i.e. the union of build, run, test and documentation build dependencies).
 # See https://scipp.github.io/developer/dependencies.html
 
-name: scipp-developer
+name: scippneutron-developer
 
 channels:
   - conda-forge
