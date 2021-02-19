@@ -87,5 +87,5 @@ stages:
               set -ex
               yapf --version
               # Perform format checking on all Python API files
-              yapf --diff --recursive 'python'
+              #yapf --diff --recursive 'python' # TODO enable once Python files added
             displayName: 'Run yapf'
