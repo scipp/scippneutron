@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # ~~~
-set(TARGET_NAME "scipp-neutron")
+set(TARGET_NAME "scippneutron")
 set(INC_FILES include/scipp/neutron/convert.h include/scipp/neutron/beamline.h)
 
 set(SRC_FILES beamline.cpp convert.cpp)

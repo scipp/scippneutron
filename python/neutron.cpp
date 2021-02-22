@@ -4,7 +4,6 @@
 /// @author Simon Heybrock
 #include "scipp/neutron/beamline.h"
 #include "scipp/neutron/convert.h"
-#include "scipp/neutron/diffraction/convert_with_calibration.h"
 
 #include "pybind11.h"
 
@@ -107,51 +106,9 @@ template <class T> void bind_convert(py::module &m) {
       py::call_guard<py::gil_scoped_release>(), doc);
 }
 
-template <class T> void bind_convert_with_calibration(py::module &m) {
-  const char *doc = R"(
-    Convert unit of powder-diffraction data based on calibration.
-
-    :param data: Input data with time-of-flight dimension (Dim.Tof)
-    :param calibration: Table of calibration constants
-    :param out: Optional output container
-    :return: New data array or dataset with time-of-flight converted to d-spacing (Dim.DSpacing)
-    :rtype: DataArray or Dataset
-
-    .. seealso:: Use :py:func:`scipp.neutron.convert` for unit conversion based on beamline-geometry information instead of calibration information.)";
-  m.def("convert_with_calibration",
-        py::overload_cast<T, dataset::Dataset>(
-            diffraction::convert_with_calibration),
-        py::arg("data"), py::arg("calibration"),
-        py::call_guard<py::gil_scoped_release>(), doc);
-  m.def(
-      "convert_with_calibration",
-      [](py::object &obj, const dataset::Dataset &calibration, const T &out) {
-        auto &data = obj.cast<T &>();
-        if (&data != &out)
-          throw std::runtime_error("Currently only out=<input> is supported");
-        data =
-            diffraction::convert_with_calibration(std::move(data), calibration);
-        return obj;
-      },
-      py::arg("data"), py::arg("calibration"), py::arg("out"),
-      py::call_guard<py::gil_scoped_release>(), doc);
-}
-
-void bind_diffraction(py::module &m) {
-  auto diffraction = m.def_submodule("neutron_diffraction");
-  bind_convert_with_calibration<dataset::DataArray>(diffraction);
-  bind_convert_with_calibration<dataset::Dataset>(diffraction);
-}
-
 void init_neutron(py::module &m) {
-  auto neutron = m;
-
-  bind_convert<dataset::DataArray>(neutron);
-  bind_convert<dataset::Dataset>(neutron);
-  bind_beamline<dataset::DataArray>(neutron);
-  bind_beamline<dataset::Dataset>(neutron);
-
-  // This is deliberately `m` and not `neutron` due to how nested imports work
-  // in Python in combination with mixed C++/Python modules.
-  bind_diffraction(m);
+  bind_convert<dataset::DataArray>(m);
+  bind_convert<dataset::Dataset>(m);
+  bind_beamline<dataset::DataArray>(m);
+  bind_beamline<dataset::Dataset>(m);
 }

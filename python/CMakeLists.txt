@@ -6,7 +6,7 @@ pybind11_add_module(_scippneutron SHARED SYSTEM neutron.cpp scippneutron.cpp)
 target_include_directories(
   _scippneutron PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
 )
-target_link_libraries(_scippneutron LINK_PRIVATE scipp-neutron)
+target_link_libraries(_scippneutron LINK_PRIVATE scippneutron)
 
 # Set symbol visibility to hidden to reduce binary size, as recommended in
 # pybind11 FAQ.

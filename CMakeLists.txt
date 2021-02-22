@@ -5,6 +5,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(scippneutron)
 set(version 0.0.1)
+add_definitions(-DSCIPPNEUTRON_VERSION="${version}")
 
 if(NOT DEFINED CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
