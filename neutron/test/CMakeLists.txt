@@ -17,5 +17,5 @@ set_property(
                                  ${INTERPROCEDURAL_OPTIMIZATION_TESTS}
 )
 if(${WITH_CTEST})
-  gtest_discover_tests(${TARGET_NAME} TEST_PREFIX scipp/neutron/)
+  gtest_discover_tests(${TARGET_NAME} TEST_PREFIX bin/)
 endif()

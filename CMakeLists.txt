@@ -147,7 +147,7 @@ set(EXPORT_NAME ${PROJECT_NAME}-targets)
 
 # add_subdirectory(benchmark)
 add_subdirectory(neutron)
-# add_subdirectory(python)
+add_subdirectory(python)
 
 if(DYNAMIC_LIB)
   install(
