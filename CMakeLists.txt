@@ -44,7 +44,7 @@ if(NOT CMAKE_BUILD_TYPE)
   )
 endif(NOT CMAKE_BUILD_TYPE)
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
@@ -130,8 +130,8 @@ else()
   add_custom_target(docs COMMAND docs_build.bat)
 endif()
 
-configure_file(CMake/docs_build.bat.in docs_build.bat)
-configure_file(CMake/docs_build.sh.in docs_build.sh)
+configure_file(cmake/docs_build.bat.in docs_build.bat)
+configure_file(cmake/docs_build.sh.in docs_build.sh)
 
 if(WIN32)
   set(PYTHONDIR ${PROJECT_NAME})
@@ -157,7 +157,7 @@ if(DYNAMIC_LIB)
   )
   include(CMakePackageConfigHelpers)
   configure_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMake/${PROJECT_NAME}-config.cmake.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
     INSTALL_DESTINATION lib/cmake/${PROJECT_NAME}
   )
