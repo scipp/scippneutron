@@ -7,12 +7,8 @@ from copy import deepcopy
 from contextlib import contextmanager
 import uuid
 import warnings
-
 import numpy as np
-
-from .. import detail
-from .._utils import is_data_array
-from .._scipp import core as sc
+import scipp as sc
 
 
 @contextmanager
@@ -580,7 +576,7 @@ def convert_Workspace2D_to_data_array(ws,
                                                unit=data_unit,
                                                values=ws.extractY(),
                                                variances=stddev2)
-    array = detail.move_to_data_array(**coords_labs_data)
+    array = sc.detail.move_to_data_array(**coords_labs_data)
 
     if ws.hasAnyMaskedBins():
         bin_mask = sc.Variable(dims=array.dims,
@@ -592,9 +588,9 @@ def convert_Workspace2D_to_data_array(ws,
                 set_bin_masks(bin_mask, dim, i, ws.maskedBinsIndices(i))
         common_mask = sc.all(bin_mask, 'spectrum')
         if sc.is_equal(common_mask, sc.any(bin_mask, 'spectrum')):
-            array.masks["bin"] = detail.move(common_mask)
+            array.masks["bin"] = sc.detail.move(common_mask)
         else:
-            array.masks["bin"] = detail.move(bin_mask)
+            array.masks["bin"] = sc.detail.move(bin_mask)
 
     # Avoid creating dimensions that are not required since this mostly an
     # artifact of inflexible data structures and gets in the way when working
@@ -662,7 +658,7 @@ def convert_EventWorkspace_to_data_array(ws,
     proto_events = {'data': weights, 'coords': {dim: coord}}
     if load_pulse_times:
         proto_events["coords"]["pulse-time"] = pulse_times
-    events = detail.move_to_data_array(**proto_events)
+    events = sc.detail.move_to_data_array(**proto_events)
 
     coords_labs_data = _convert_MatrixWorkspace_info(
         ws, advanced_geometry=advanced_geometry, load_run_logs=load_run_logs)
@@ -680,8 +676,8 @@ def convert_EventWorkspace_to_data_array(ws,
     coords_labs_data["data"] = sc.bins(begin=begins,
                                        end=ends,
                                        dim='event',
-                                       data=detail.move(events))
-    return detail.move_to_data_array(**coords_labs_data)
+                                       data=sc.detail.move(events))
+    return sc.detail.move_to_data_array(**coords_labs_data)
 
 
 def convert_MDHistoWorkspace_to_data_array(md_histo, **ignored):
@@ -703,9 +699,9 @@ def convert_MDHistoWorkspace_to_data_array(md_histo, **ignored):
                        variances=md_histo.getErrorSquaredArray(),
                        unit=sc.units.counts)
     nevents = sc.Variable(dims=dims_used, values=md_histo.getNumEventsArray())
-    return detail.move_to_data_array(coords=coords,
-                                     data=data,
-                                     attrs={'nevents': nevents})
+    return sc.detail.move_to_data_array(coords=coords,
+                                        data=data,
+                                        attrs={'nevents': nevents})
 
 
 def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
@@ -744,7 +740,7 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
 
         data_name = columnNames[i]
         if error_connection is None:
-            dataset[data_name] = detail.move(
+            dataset[data_name] = sc.detail.move(
                 sc.Variable(['row'], values=ws.column(i)))
         elif data_name in error_connection:
             # This data has error availble
@@ -758,13 +754,13 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
                                    "Variance: " + str(error_name) + "\n")
 
             variance = np.array(ws.column(error_name))**2
-            dataset[data_name] = detail.move(
+            dataset[data_name] = sc.detail.move(
                 sc.Variable(['row'],
                             values=np.array(ws.column(i)),
                             variances=variance))
         elif data_name not in error_connection.values():
             # This data is not an error for another dataset, and has no error
-            dataset[data_name] = detail.move(
+            dataset[data_name] = sc.detail.move(
                 sc.Variable(['row'], values=ws.column(i)))
 
     return dataset
@@ -835,7 +831,7 @@ def from_mantid(workspace, **kwargs):
 
         monitors = convert_monitors_ws(monitor_ws, converter, **kwargs)
         for name, monitor in monitors:
-            scipp_obj.attrs[name] = detail.move(sc.Variable(value=monitor))
+            scipp_obj.attrs[name] = sc.detail.move(sc.Variable(value=monitor))
     for ws in workspaces_to_delete:
         mantid.DeleteWorkspace(ws)
 
@@ -992,7 +988,7 @@ def to_mantid(data, dim, instrument_file=None):
     :returns: Workspace containing converted data. The concrete workspace type
               may differ depending on the content of `data`.
     """
-    if not is_data_array(data):
+    if not sc.is_data_array(data):
         raise RuntimeError(
             "Currently only data arrays can be converted to a Mantid workspace"
         )
