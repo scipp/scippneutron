@@ -140,7 +140,7 @@ set(INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
 
 set(EXPORT_NAME ${PROJECT_NAME}-targets)
 
-# add_subdirectory(benchmark)
+add_subdirectory(benchmark)
 add_subdirectory(neutron)
 add_subdirectory(python)
 

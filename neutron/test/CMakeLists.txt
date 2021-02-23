@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # ~~~
-set(TARGET_NAME "scipp-neutron-test")
+set(TARGET_NAME "scippneutron-test")
 add_dependencies(all-tests ${TARGET_NAME})
 add_executable(
   ${TARGET_NAME} EXCLUDE_FROM_ALL beamline_test.cpp constants_test.cpp
@@ -10,7 +10,7 @@ add_executable(
 )
 include_directories(SYSTEM ${GTEST_INCLUDE_DIR})
 target_link_libraries(
-  ${TARGET_NAME} LINK_PRIVATE scipp-neutron gtest_main ${GTEST_LIBRARIES}
+  ${TARGET_NAME} LINK_PRIVATE scippneutron gtest_main ${GTEST_LIBRARIES}
 )
 set_property(
   TARGET ${TARGET_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION
