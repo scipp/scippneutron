@@ -11,13 +11,13 @@
 
 namespace scipp::neutron {
 
-[[nodiscard]] SCIPP_NEUTRON_EXPORT dataset::DataArray
+[[nodiscard]] SCIPPNEUTRON_EXPORT dataset::DataArray
 convert(dataset::DataArray d, const Dim from, const Dim to);
-[[nodiscard]] SCIPP_NEUTRON_EXPORT dataset::DataArray
+[[nodiscard]] SCIPPNEUTRON_EXPORT dataset::DataArray
 convert(const dataset::DataArrayConstView &d, const Dim from, const Dim to);
-[[nodiscard]] SCIPP_NEUTRON_EXPORT dataset::Dataset
+[[nodiscard]] SCIPPNEUTRON_EXPORT dataset::Dataset
 convert(dataset::Dataset d, const Dim from, const Dim to);
-[[nodiscard]] SCIPP_NEUTRON_EXPORT dataset::Dataset
+[[nodiscard]] SCIPPNEUTRON_EXPORT dataset::Dataset
 convert(const dataset::DatasetConstView &d, const Dim from, const Dim to);
 
 } // namespace scipp::neutron
