@@ -1,5 +1,3 @@
-.. _conventions
-
 Coding conventions
 ==================
 
