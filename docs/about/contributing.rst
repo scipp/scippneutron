@@ -22,7 +22,7 @@ Examples of generic functionality that is permitted are
 * Published research such as absorption corrections.
 
 Examples of functionality that shall not be added to ``scippneutron`` are handling of facility-specific file types or data layouts, or instrument-specific correction algorithms.
-
+`ess <https://github.com/scipp/ess>`_ is an example codebase providing facility-specific algorithms
 Security
 --------
 
