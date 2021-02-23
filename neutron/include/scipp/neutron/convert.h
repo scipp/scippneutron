@@ -4,9 +4,10 @@
 /// @author Simon Heybrock
 #pragma once
 
-#include <scipp-neutron_export.h>
 #include <scipp/dataset/dataset.h>
 #include <scipp/units/unit.h>
+
+#include "scippneutron_export.h"
 
 namespace scipp::neutron {
 

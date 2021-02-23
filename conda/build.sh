@@ -30,7 +30,7 @@ cmake -B . -S .. -LA
 ninja -v all-benchmarks all-tests install
 
 # Run C++ tests
-./bin/scipp-neutron-test
+./bin/scippneutron-test
 
 # Move scipp Python library to site packages location
 mv "$CONDA_PREFIX/scippneutron" "$CONDA_PREFIX"/lib/python*/

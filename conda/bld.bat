@@ -12,7 +12,7 @@ cmake --build . --target all-benchmarks --config Release || echo ERROR && exit /
 
 :: C++ tests
 cmake --build . --target all-tests --config Release || echo ERROR && exit /b
-bin\Release\scipp-neutron-test.exe || echo ERROR && exit /b
+bin\Release\scippneutron-test.exe || echo ERROR && exit /b
 
 ::  Build, install and move scipp Python library to site packages location
 cmake --build . --target install --config Release || echo ERROR && exit /b

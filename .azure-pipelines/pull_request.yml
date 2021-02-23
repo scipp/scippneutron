@@ -76,7 +76,7 @@ stages:
           - bash: |
               set -ex
               cd "$(build_dir)"
-              ./bin/scipp-neutron-test
+              ./bin/scippneutron-test
             displayName: 'Run C++ unit tests'
           - bash: |
               set -ex
@@ -154,7 +154,7 @@ stages:
           - bash: |
               set -ex
               cd "$(build_dir)"
-              ./bin/scipp-neutron-test
+              ./bin/scippneutron-test
             displayName: 'Run C++ unit tests'
           - bash: |
               set -ex
@@ -208,7 +208,7 @@ stages:
               set -ex
               cd "$(build_dir)"
               source activate scippneutron-developer
-              bin/Release/scipp-neutron-test.exe
+              bin/Release/scippneutron-test.exe
             displayName: 'Run C++ unit tests'
           - bash: |
               set -ex
