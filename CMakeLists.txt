@@ -135,7 +135,7 @@ configure_file(cmake/docs_build.bat.in docs_build.bat)
 configure_file(cmake/docs_build.sh.in docs_build.sh)
 
 include(GNUInstallDirs)
-set(PYTHONDIR scipp)
+set(PYTHONDIR scippneutron)
 set(INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
 
 set(EXPORT_NAME ${PROJECT_NAME}-targets)
