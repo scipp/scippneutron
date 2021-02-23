@@ -9,47 +9,216 @@ pr:
     include:
       - '*'
 
-variables:
-  is_release: $[eq(variables['System.PullRequest.TargetBranch'], 'release')]
-  target_branch: $[variables['System.PullRequest.TargetBranch']]
-
 stages:
-  - template: code_quality_checks.yml
-  - stage: 'test'
-    displayName: 'Python tests'
+  - template: templates/code_quality_checks.yml
+
+  - stage: 'build_and_test'
+    displayName: 'Build and Test'
 
     jobs:
-      - job: 'python_test'
-        displayName: 'Python tests'
-        timeoutInMinutes: 20
+      - job: 'linux'
+        displayName: 'Linux'
+        timeoutInMinutes: 90
         pool:
-          vmImage: 'ubuntu-18.04'
+          vmImage: 'ubuntu-20.04'
+        variables:
+          ccache_dir: '$(Pipeline.Workspace)/ccache'
+          build_dir: '$(Build.StagingDirectory)/build'
+          install_dir: '$(Build.StagingDirectory)/install'
+          docs_build_dir: '$(Build.StagingDirectory)/docs_build'
         steps:
           - checkout: self
             submodules: true
-          - bash: echo "##vso[task.prependpath]$CONDA/bin"
-            displayName: 'add conda to PATH'
           - bash: |
-             set -ex
-             echo is main $(is_release)
-             echo target branch $(System.PullRequest.TargetBranch)
-             # If release use release scipp version from scipp channel, otherwise use scipp/label/dev channel
-             conda config --set always_yes yes --set changeps1 no
-             if [ $(is_release) == False ]; then
-                 conda env create -f scippneutron-latest.yml
-                 source activate scippneutron-latest
-             else
-                 conda env create -f scippneutron.yml
-                 source activate scippneutron
-             fi
-             python -m pytest --junitxml=junit/unit-test.xml
-            displayName: 'run pytest'
-          - task: PublishTestResults@2
+              set -ex
+              sudo apt-get install -y ccache
+              echo "##vso[task.prependpath]/usr/lib/ccache"
+              # Set cache dir
+              ccache --set-config=cache_dir="$(ccache_dir)"
+            displayName: 'Install and configure ccache'
+          - task: Cache@2
             inputs:
-              testResultsFiles: 'junit/*.xml'
-            condition: succeededOrFailed()
-  - stage: 'post_build_checks'
-    displayName: 'Post Build Checks'
+              key: 'ccache | "$(Agent.OS)" | "$(Build.SourceVersion)"'
+              restoreKeys: |
+                ccache | "$(Agent.OS)" | "$(Build.SourceVersion)"
+                ccache | "$(Agent.OS)"
+              path: "$(CCACHE_DIR)"
+            displayName: 'Process ccache'
+          - bash: ccache --show-stats
+            displayName: 'Report ccache statistics'
+          - bash: echo "##vso[task.prependpath]$CONDA/bin"
+            displayName: 'Add Conda to PATH'
+          - bash: |
+              set -ex
+              conda --version
+              conda env create -f scippneutron-developer.yml
+              # TODO: source activate does not work (see https://github.com/conda/conda/issues/9566)
+              echo "##vso[task.prependpath]$CONDA/envs/scippneutron-developer/bin"
+              mkdir -p  "$(build_dir)" "$(install_dir)" "$(docs_build_dir)"
+            displayName: 'Configure build environment'
+          - bash: |
+              set -ex
+              cd "$(build_dir)"
+              cmake \
+                -G Ninja \
+                -DPYTHON_EXECUTABLE=$(command -v python) \
+                -DCMAKE_INSTALL_PREFIX="$(install_dir)" \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF \
+                -DDYNAMIC_LIB=ON \
+                "$(Build.Repository.LocalPath)"
+            displayName: 'CMake configuration'
+          - bash: |
+              set -ex
+              cd "$(build_dir)"
+              cmake --build . --target all-tests
+            displayName: 'Build C++ unit tests'
+          - bash: |
+              set -ex
+              cd "$(build_dir)"
+              ./bin/scippneutron-test
+            displayName: 'Run C++ unit tests'
+          - bash: |
+              set -ex
+              cd "$(build_dir)"
+              cmake --build . --target all-benchmarks
+            displayName: 'Build benchmarks'
+          - bash: |
+              set -ex
+              cd "$(build_dir)"
+              cmake --build . --target install
+            displayName: 'Build Python library'
+          - bash: |
+              set -ex
+              PYTHONPATH="$PYTHONPATH:$(install_dir)" python -m pytest
+            displayName: 'Run Python unit tests'
+          - bash: |
+              set -ex
+              cd docs
+              python data/fetch_neutron_data.py
+              mkdir -p  "$HOME/.mantid"
+              echo -e "usagereports.enabled=0\ndatasearch.directories=$(pwd)/data" > "$HOME/.mantid/Mantid.user.properties"
+              # Build documentation, redirecting doctrees to avoid size bloat in build documentation
+              PYTHONPATH="$PYTHONPATH:$(install_dir)" sphinx-build -d $(mktemp -d) . "$(docs_build_dir)"
+              # Remove Juptyer notebooks used for documentation build, they are not accessible and create size bloat
+              find "$(docs_build_dir)" -type f -name *.ipynb -delete
+            displayName: 'Build documentation'
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: "$(docs_build_dir)"
+              ArtifactName: 'documentation'
+            displayName: 'Upload built documentation'
+          - bash: ccache --show-stats
+            displayName: 'Report ccache statistics'
 
-    jobs:
-      - template: documentation_build.yml
+      - job: 'mac'
+        displayName: 'Mac OS'
+        timeoutInMinutes: 80
+        pool:
+          vmImage: 'macOS-10.14'
+        variables:
+          build_dir: '$(Build.StagingDirectory)/build'
+          install_dir: '$(Build.StagingDirectory)/install'
+        steps:
+          - checkout: self
+            submodules: true
+          - bash: |
+              set -ex
+              echo "##vso[task.prependpath]$CONDA/bin"
+              sudo chown -R $USER $CONDA
+            displayName: 'Add Conda to PATH'
+          - bash: |
+              set -ex
+              conda --version
+              conda env create -f scippneutron-developer-no-mantid.yml
+              # TODO: source activate does not work (see https://github.com/conda/conda/issues/9566)
+              echo "##vso[task.prependpath]$CONDA/envs/scippneutron-developer/bin"
+              mkdir -p  "$(build_dir)" "$(install_dir)"
+            displayName: 'Configure build environment'
+          - bash: |
+              set -ex
+              cd "$(build_dir)"
+              cmake \
+                -G Ninja \
+                -DPYTHON_EXECUTABLE=$(command -v python) \
+                -DCMAKE_INSTALL_PREFIX="$(install_dir)" \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF \
+                "$(Build.Repository.LocalPath)"
+            displayName: 'CMake configuration'
+          - bash: |
+              set -ex
+              cd "$(build_dir)"
+              cmake --build . --target all-tests
+            displayName: 'Build C++ unit tests'
+          - bash: |
+              set -ex
+              cd "$(build_dir)"
+              ./bin/scippneutron-test
+            displayName: 'Run C++ unit tests'
+          - bash: |
+              set -ex
+              cd "$(build_dir)"
+              cmake --build . --target install
+            displayName: 'Build Python library'
+          - bash: |
+              set -ex
+              PYTHONPATH="$(install_dir)" python -m pytest
+            displayName: 'Run Python unit tests'
+
+      - job: 'windows'
+        displayName: 'Windows'
+        timeoutInMinutes: 120
+        pool:
+          vmImage: 'windows-latest'
+        variables:
+          build_dir: '$(Build.StagingDirectory)/build'
+          install_dir: '$(Build.StagingDirectory)/install'
+        steps:
+          - checkout: self
+            submodules: true
+          - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+            displayName: 'Add Conda to PATH'
+          - bash: |
+              set -ex
+              conda --version
+              conda env create -f scippneutron-developer-no-mantid.yml
+              mkdir -p  "$(build_dir)" "$(install_dir)"
+            displayName: 'Configure build environment'
+          - bash: |
+              set -ex
+              cd "$(build_dir)"
+              source activate scippneutron-developer
+              cmake \
+                -G "Visual Studio 16 2019" \
+                -A x64 \
+                -DCMAKE_CXX_STANDARD=20 \
+                -DPYTHON_EXECUTABLE=$(command -v python) \
+                -DCMAKE_INSTALL_PREFIX="$(install_dir)" \
+                -DCMAKE_BUILD_TYPE=Release \
+                "$(Build.Repository.LocalPath)"
+            displayName: 'CMake configuration'
+          - bash: |
+              set -ex
+              cd "$(build_dir)"
+              source activate scippneutron-developer
+              cmake --build . --target all-tests --config Release
+            displayName: 'Build C++ unit tests'
+          - bash: |
+              set -ex
+              cd "$(build_dir)"
+              source activate scippneutron-developer
+              bin/Release/scippneutron-test.exe
+            displayName: 'Run C++ unit tests'
+          - bash: |
+              set -ex
+              cd "$(build_dir)"
+              source activate scippneutron-developer
+              cmake --build . --target install --config Release
+            displayName: 'Build Python library'
+          - bash: |
+              set -ex
+              source activate scippneutron-developer
+              PATH="$(install_dir)/bin":$PATH
+              PYTHONPATH="$(install_dir)" python -m pytest
+            displayName: 'Run Python unit tests'

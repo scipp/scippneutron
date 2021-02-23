@@ -1,0 +1,12 @@
+# ~~~
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
+# ~~~
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/scippneutron-targets.cmake")
+
+check_required_components(scippneutron-targets)
+
+include(CMakeFindDependencyMacro)
+find_dependency(Scipp 0.5)
