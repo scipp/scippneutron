@@ -11,6 +11,7 @@ channels:
 
 dependencies:
   # Build
+  - boost-cpp
   - ninja
   - tbb-devel
   - scipp
