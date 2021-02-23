@@ -1,7 +1,7 @@
 .. _about:
 
-About scipp
-===========
+About scippneutron
+==================
 
 References and citations
 ------------------------
@@ -13,9 +13,9 @@ A significant amount of changes such as multi-threading and support for realigne
 License
 -------
 
-Scipp is available as open source under the `GPL license <https://www.gnu.org/licenses/gpl-3.0.en.html>`_.
+Scipp and scippneutron are available as open source under the `GPL license <https://www.gnu.org/licenses/gpl-3.0.en.html>`_.
 
 Source code and development
 ---------------------------
 
-Scipp is hosted and developed `on GitHub <https://github.com/scipp/scipp/projects>`_.
+Scippneutron is hosted and developed `on GitHub <https://github.com/scipp/scippneutron/projects>`_.
