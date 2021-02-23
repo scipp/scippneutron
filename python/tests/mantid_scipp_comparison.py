@@ -1,6 +1,6 @@
 from mantid_data_helper import MantidDataHelper
 import scipp as sc
-import scipp.compat.mantid as mantid
+import scippneutron.mantid as mantid
 import time
 
 

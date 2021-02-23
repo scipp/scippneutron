@@ -1,7 +1,7 @@
 from mantid_scipp_comparison import MantidScippComparison
 from mantid_data_helper import mantid_is_available
 import pytest
-import scipp.compat.mantid as mantid
+import scippneutron.mantid as mantid
 import scipp as sc
 import numpy as np
 
