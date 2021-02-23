@@ -14,7 +14,7 @@ requirements:
     - ninja
     - python {{ python }}
     - scipp
-    - tbb-devel [not win]
+    - tbb-devel
   run:
     - python {{ python }}
     - scipp
