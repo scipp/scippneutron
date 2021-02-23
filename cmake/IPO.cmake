@@ -34,7 +34,4 @@ if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
         ${CMAKE_INTERPROCEDURAL_OPTIMIZATION}
     )
   endif()
-  set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-  # Reduces binary size of, e.g., libscipp-core.so by several MB.
-  set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
 endif()
