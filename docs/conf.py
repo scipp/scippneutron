@@ -25,7 +25,7 @@
 import os
 
 html_show_sourcelink = True
-nbsphinx_prolog = """`Download this Jupyter notebook <https://raw.githubusercontent.com/scipp/scipp/master/docs/{{ env.doc2path(env.docname, base=None) }}>`_
+nbsphinx_prolog = """`Download this Jupyter notebook <https://raw.githubusercontent.com/scipp/scippneutron/main/docs/{{ env.doc2path(env.docname, base=None) }}>`_
 
 ----
 """  # noqa: E501
@@ -70,7 +70,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'scipp'
+project = u'scippneutron'
 copyright = u'2021 Scipp contributors'
 author = u'Scipp contributors'
 
