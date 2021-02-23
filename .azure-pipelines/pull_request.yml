@@ -219,5 +219,6 @@ stages:
           - bash: |
               set -ex
               source activate scippneutron-developer
+              PATH="$(install_dir)/bin":$PATH
               PYTHONPATH="$(install_dir)" python -m pytest
             displayName: 'Run Python unit tests'

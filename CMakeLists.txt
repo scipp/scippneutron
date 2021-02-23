@@ -134,15 +134,9 @@ endif()
 configure_file(cmake/docs_build.bat.in docs_build.bat)
 configure_file(cmake/docs_build.sh.in docs_build.sh)
 
-if(WIN32)
-  set(PYTHONDIR ${PROJECT_NAME})
-  set(LIBDIR ${PYTHONDIR})
-  set(INCLUDEDIR include)
-else()
-  set(PYTHONDIR ${PROJECT_NAME})
-  set(LIBDIR ${CMAKE_INSTALL_LIBDIR})
-  set(INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
-endif()
+include(GNUInstallDirs)
+set(PYTHONDIR scipp)
+set(INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
 
 set(EXPORT_NAME ${PROJECT_NAME}-targets)
 
@@ -153,7 +147,7 @@ add_subdirectory(python)
 if(DYNAMIC_LIB)
   install(
     EXPORT ${EXPORT_NAME}
-    DESTINATION "${LIBDIR}/cmake/${PROJECT_NAME}"
+    DESTINATION "lib/cmake/${PROJECT_NAME}"
     NAMESPACE ${PROJECT_NAME}::
   )
   include(CMakePackageConfigHelpers)
@@ -165,7 +159,8 @@ if(DYNAMIC_LIB)
   write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
     VERSION "${version}"
-    COMPATIBILITY AnyNewerVersion
+    COMPATIBILITY SameMinorVersion # switch to SameMajorVersion after 1.0
+                                   # release
   )
   install(
     FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
