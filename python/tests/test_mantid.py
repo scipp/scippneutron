@@ -9,15 +9,8 @@ import os
 
 import scipp as sc
 from mantid_data_helper import MantidDataHelper
+from mantid_data_helper import mantid_is_available
 from scipp.compat import mantid as mantidcompat
-
-
-def mantid_is_available():
-    try:
-        import mantid  # noqa: F401
-        return True
-    except ImportError:
-        return False
 
 
 def memory_is_at_least_gb(required):
@@ -39,7 +32,7 @@ class TestMantidConversion(unittest.TestCase):
         # This needs OutputWorkspace specified, as it doesn't
         # pick up the name from the class variable name
         cls.base_event_ws = mantid.LoadEventNexus(
-            MantidDataHelper.find_file(filename),
+            MantidDataHelper.find_known_file(filename),
             OutputWorkspace="test_ws{}".format(__file__),
             SpectrumMax=200,
             StoreInADS=False)
@@ -270,7 +263,7 @@ class TestMantidConversion(unittest.TestCase):
     def test_Workspace2D_with_separate_monitors(self):
         from mantid.simpleapi import mtd
         mtd.clear()
-        filename = MantidDataHelper.find_file("WISH00016748.raw")
+        filename = MantidDataHelper.find_known_file("WISH00016748.raw")
         # This test would use 20 GB of memory if "SpectrumMax" was not set
         ds = mantidcompat.load(filename,
                                mantid_args={
@@ -291,7 +284,7 @@ class TestMantidConversion(unittest.TestCase):
     def test_Workspace2D_with_include_monitors(self):
         from mantid.simpleapi import mtd
         mtd.clear()
-        filename = MantidDataHelper.find_file("WISH00016748.raw")
+        filename = MantidDataHelper.find_known_file("WISH00016748.raw")
         # This test would use 20 GB of memory if "SpectrumMax" was not set
         ds = mantidcompat.load(filename,
                                mantid_args={
@@ -311,7 +304,7 @@ class TestMantidConversion(unittest.TestCase):
     def test_EventWorkspace_with_monitors(self):
         from mantid.simpleapi import mtd
         mtd.clear()
-        filename = MantidDataHelper.find_file("CNCS_51936_event.nxs")
+        filename = MantidDataHelper.find_known_file("CNCS_51936_event.nxs")
         ds = mantidcompat.load(filename,
                                mantid_args={
                                    "LoadMonitors": True,
@@ -412,7 +405,8 @@ class TestMantidConversion(unittest.TestCase):
         ds = sc.Dataset()
 
         sc.compat.mantid.load_component_info(
-            ds, MantidDataHelper.find_file("iris26176_graphite002_sqw.nxs"))
+            ds,
+            MantidDataHelper.find_known_file("iris26176_graphite002_sqw.nxs"))
 
         # check that no workspaces have been leaked in the ADS
         assert len(mtd) == 0, f"Workspaces present: {mtd.getObjectNames()}"
@@ -466,7 +460,7 @@ class TestMantidConversion(unittest.TestCase):
         from mantid.simpleapi import mtd
         mtd.clear()
 
-        data = sc.neutron.load(filename=MantidDataHelper.find_file(
+        data = sc.neutron.load(filename=MantidDataHelper.find_known_file(
             "iris26176_graphite002_sqw.nxs"))
 
         params, diff = sc.compat.mantid.fit(
@@ -868,7 +862,7 @@ def test_extract_energy_final_when_not_present():
 def test_extract_energy_initial():
     from mantid.simpleapi import mtd
     mtd.clear()
-    filename = MantidDataHelper.find_file("CNCS_51936_event.nxs")
+    filename = MantidDataHelper.find_known_file("CNCS_51936_event.nxs")
     ds = mantidcompat.load(filename, mantid_args={"SpectrumMax": 1})
     assert sc.is_equal(ds.coords["incident-energy"],
                        sc.scalar(value=3.0, unit=sc.Unit("meV")))
