@@ -7,6 +7,7 @@ source:
 
 requirements:
   build:
+    - boost-cpp
     - cmake
     - gxx_linux-64 7.3.* [linux64]
     - git
