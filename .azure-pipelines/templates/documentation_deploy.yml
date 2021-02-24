@@ -38,7 +38,7 @@ jobs:
         displayName: 'Clone documentation repository'
       - bash: |
           set -ex
-          cd ".github.io$(documentation_repo_path)"
+          cd "$(documentation_repo_path)"
           # checkout the gh-pages branch
           git checkout gh-pages
           # Stage removal of everything
