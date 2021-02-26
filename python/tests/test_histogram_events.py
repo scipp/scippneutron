@@ -8,7 +8,7 @@ import numpy as np
 
 class HistogramEventsTest(MantidScippComparison):
     def __init__(self):
-        super(HistogramEventsTest, self).__init__('histogram_events_test')
+        super(HistogramEventsTest, self).__init__(self.__class__.__name__)
 
     @property
     def _filenames(self):

@@ -17,7 +17,7 @@ class NeutronConvertUnitsTest(MantidScippComparison):
     def __init__(self, origin, target):
         self._origin = origin
         self._target = target
-        super(NeutronConvertUnitsTest, self).__init__('histogram_events_test')
+        super(NeutronConvertUnitsTest, self).__init__(self.__class__.__name__)
 
     @property
     def _workspaces(self):
