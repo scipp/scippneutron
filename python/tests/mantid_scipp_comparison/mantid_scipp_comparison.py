@@ -1,4 +1,4 @@
-from mantid_data_helper import MantidDataHelper
+from ..mantid_data_helper import MantidDataHelper
 import scipp as sc
 import scippneutron.mantid as mantid
 import time

@@ -1,5 +1,5 @@
-from mantid_scipp_comparison import MantidScippComparison
-from mantid_data_helper import mantid_is_available
+from .mantid_scipp_comparison import MantidScippComparison
+from tests.mantid_data_helper import mantid_is_available
 import pytest
 import scippneutron.mantid as converter
 import scipp as sc
