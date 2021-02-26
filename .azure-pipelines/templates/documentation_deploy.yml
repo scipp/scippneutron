@@ -22,8 +22,8 @@ jobs:
         displayName: 'Retrieve updated documentation'
       - task: InstallSSHKey@0
         inputs:
-          knownHostsEntry: '|1|RUYRgOQOM1Elf2P4avx8YNBvtI8=|QKQU0rsDA0sdvfZeayvuQ3l7XjE= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ=='
-          sshPublicKey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC4mbPfL7/6wMV1sze2onhifxMa998x/DWIysWY0ViOixRV8T31u+2uGpkA0nu8P8l4XzCu26sh2n57kgHQ2ryaJh/dZvnv14IFH8fWvE72PzDZM7DKsm35a0N78CV1yMDTHyHDxgq8z4S9a56eCDyGTq5iaoboATYvgY3cJEyro2SsmHviuHiPul/3cHKzdSwbpI0Tn8WNF5e+shLNboa5o3ABRcoKQbhKOd9Sc8h3b4HNqCgJSOaoIUlqgL5RoqXrm5+r8CqrMG+qOOBLcnpK/4L7dYBtHXIIytOsBL6gLAqWARyxE6VFquF0f2w9XtOC3+csFPO0FMUeH7Ar7JTTlFHt1o8/tMVpNvOEbLpnyD65OTQMl45IjL00mgF2jmxl+8n/VokBZ6yuYPguL9lPYJ+XhBIa4m8Tbnp0wKQm6c31jXw3CHtgm5SeCj5RysRTJEGn9eppxtz65IqbyJ5u6VD87oZzL8tTUdxw9qFYJae2MgQ45nVMZiQCQ/dfi1bLMKKEYL9yGI61J/RZ9wJB4nYzw411KLk5EhkRxzu05F2Js+8IEBFgusd7CdHcWxQ1ochN9hrSDJNZPQb2mpH11eRg5o2W2WN93UWbuAMHXvTcSJ6w0WkGTDENg/0bWIdvOQ4RBzM49GaHL2ou4ty5MHX9ffzEha6O1dTAbnw8mQ=='
+          knownHostsEntry: 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ=='
+          sshPublicKey: '$(gh_pages_deploy_key_public)'
           sshKeySecureFile: 'gh_pages_deploy_key'
         displayName: 'Add GitHub Pages deploy key'
       - bash: |
@@ -38,7 +38,7 @@ jobs:
         displayName: 'Clone documentation repository'
       - bash: |
           set -ex
-          cd ".github.io$(documentation_repo_path)"
+          cd "$(documentation_repo_path)"
           # checkout the gh-pages branch
           git checkout gh-pages
           # Stage removal of everything
