@@ -11,13 +11,16 @@ class NeutronConvertUnitsTest(MantidScippComparison):
         return {
             'tof': 'TOF',
             'wavelength': 'Wavelength',
-            'd-spacing': 'dSpacing'
+            'd-spacing': 'dSpacing',
+            'energy-transfer': 'DeltaE'
         }
 
-    def __init__(self, origin, target):
+    def __init__(self, name, origin, target, emode, efixed):
         self._origin = origin
         self._target = target
-        super(NeutronConvertUnitsTest, self).__init__(self.__class__.__name__)
+        self._emode = emode
+        self._efixed = efixed
+        super(NeutronConvertUnitsTest, self).__init__(name)
 
     @property
     def _workspaces(self):
@@ -25,7 +28,8 @@ class NeutronConvertUnitsTest(MantidScippComparison):
         ws = sapi.CreateSampleWorkspace(NumBanks=1, StoreInADS=False)
         ws = sapi.ConvertUnits(InputWorkspace=ws,
                                Target=self._dim_map[self._origin],
-                               EMode='Elastic',
+                               EMode=self._emode,
+                               EFixed=self._efixed,
                                StoreInADS=False)  # start in origin units
         return {"sample_workspace": ws}
 
@@ -33,7 +37,7 @@ class NeutronConvertUnitsTest(MantidScippComparison):
         import mantid.simpleapi as sapi
         out = sapi.ConvertUnits(InputWorkspace=input,
                                 Target=self._dim_map[self._target],
-                                EMode='Elastic',
+                                EMode=self._emode,
                                 StoreInADS=False)
         return converter.from_mantid(out)
 
@@ -41,22 +45,34 @@ class NeutronConvertUnitsTest(MantidScippComparison):
         return sn.convert(data=input, origin=self._origin, target=self._target)
 
 
+class ElasticNeutronConvertUnitsTest(NeutronConvertUnitsTest):
+    def __init__(self, origin, target):
+        self._origin = origin
+        self._target = target
+        super(ElasticNeutronConvertUnitsTest,
+              self).__init__(self.__class__.__name__,
+                             origin,
+                             target,
+                             emode='Elastic',
+                             efixed=None)
+
+
 @pytest.mark.skipif(not mantid_is_available(),
                     reason='Mantid framework is unavailable')
 def test_neutron_convert_units_tof_to_wavelength():
-    test = NeutronConvertUnitsTest(origin='tof', target='wavelength')
+    test = ElasticNeutronConvertUnitsTest(origin='tof', target='wavelength')
     print(test.run(allow_failure=True))
 
 
 @pytest.mark.skipif(not mantid_is_available(),
                     reason='Mantid framework is unavailable')
 def test_neutron_convert_units_wavelength_to_tof():
-    test = NeutronConvertUnitsTest(origin='wavelength', target='tof')
+    test = ElasticNeutronConvertUnitsTest(origin='wavelength', target='tof')
     print(test.run(allow_failure=True))
 
 
 @pytest.mark.skipif(not mantid_is_available(),
                     reason='Mantid framework is unavailable')
 def test_neutron_convert_units_tof_to_d_space():
-    test = NeutronConvertUnitsTest(origin='tof', target='d-spacing')
+    test = ElasticNeutronConvertUnitsTest(origin='tof', target='d-spacing')
     print(test.run(allow_failure=True))
