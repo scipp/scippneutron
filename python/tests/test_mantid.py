@@ -8,8 +8,8 @@ import pytest
 import os
 
 import scipp as sc
-from mantid_data_helper import MantidDataHelper
-from mantid_data_helper import mantid_is_available
+from .mantid_data_helper import MantidDataHelper
+from .mantid_data_helper import mantid_is_available
 from scippneutron import mantid as mantidcompat
 
 
