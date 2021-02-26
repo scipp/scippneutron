@@ -24,29 +24,32 @@ class MantidScippComparison:
                 raise (ae)
 
     def _run_from_workspace(self, in_ws, allow_failure):
-        out_mantid_da, time_mantid = self._execute_with_timing(
-            self._run_mantid, input=in_ws)
+        out_mantid, time_mantid = self._execute_with_timing(self._run_mantid,
+                                                            input=in_ws)
         in_da = mantid.from_mantid(in_ws).astype(
             sc.dtype.float64)  # Converters set weights float32
-        out_scipp_da, time_scipp = self._execute_with_timing(self._run_scipp,
-                                                             input=in_da)
+        out_scipp, time_scipp = self._execute_with_timing(self._run_scipp,
+                                                          input=in_da)
 
-        self._assert(out_scipp_da, out_mantid_da, allow_failure)
+        self._assert(out_scipp, out_mantid, allow_failure)
 
-        result = sc.DataArray(sc.equal(out_mantid_da.data, out_scipp_da.data),
-                              coords={
-                                  'diff':
-                                  out_mantid_da.data - out_scipp_da.data,
-                                  'is_approx':
-                                  sc.is_approx(
-                                      out_mantid_da.data, out_scipp_da.data,
-                                      1e-9 * sc.Unit('counts') +
-                                      1e-9 * sc.abs(out_mantid_da.data)),
-                                  'duration_scipp':
-                                  time_scipp,
-                                  'duration_mantid':
-                                  time_mantid
-                              })
+        if isinstance(out_mantid, sc.DataArray):
+            result = sc.DataArray(sc.equal(out_mantid.data, out_scipp.data),
+                                  coords={
+                                      'diff':
+                                      out_mantid.data - out_scipp.data,
+                                      'is_approx':
+                                      sc.is_approx(
+                                          out_mantid.data, out_scipp.data,
+                                          1e-9 * sc.Unit('counts') +
+                                          1e-9 * sc.abs(out_mantid.data)),
+                                      'duration_scipp':
+                                      time_scipp,
+                                      'duration_mantid':
+                                      time_mantid
+                                  })
+        else:
+            result = out_mantid - out_scipp
         return result
 
     def _add_result_to_dataset(self, name, result, results):
