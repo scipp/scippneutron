@@ -1,7 +1,7 @@
 from mantid_scipp_comparison import MantidScippComparison
 from mantid_data_helper import mantid_is_available
 import pytest
-import scippneutron.mantid as mantid
+import scippneutron.mantid as converter
 import scipp as sc
 import numpy as np
 
@@ -23,7 +23,7 @@ class HistogramEventsTest(MantidScippComparison):
                          Params=[0, 10, 1000],
                          PreserveEvents=False,
                          StoreInADS=False)
-        return mantid.from_mantid(out)
+        return converter.from_mantid(out)
 
     def _run_scipp(self, input):
         return sc.histogram(x=input,
@@ -36,5 +36,5 @@ class HistogramEventsTest(MantidScippComparison):
 @pytest.mark.skipif(not mantid_is_available(),
                     reason='Mantid framework is unavailable')
 def test_histogram_events():
-    rebin = HistogramEventsTest()
-    print(rebin.run(allow_failure=True))
+    test = HistogramEventsTest()
+    print(test.run(allow_failure=True))
