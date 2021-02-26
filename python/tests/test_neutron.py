@@ -3,6 +3,7 @@
 # @file
 # @author Simon Heybrock
 import scipp as sc
+import scippneutron as sn
 import numpy as np
 
 
@@ -88,7 +89,7 @@ def test_neutron_instrument_view_with_masks():
     x = np.transpose(d.coords['position'].values)[0, :]
     d['a'].masks['amask'] = sc.Variable(dims=['position'],
                                         values=np.less(np.abs(x), 0.5))
-    sc.neutron.instrument_view(d["a"])
+    sn.instrument_view(d["a"])
 
 
 def test_neutron_instrument_view_with_cmap_args():
