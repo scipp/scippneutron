@@ -1,6 +1,6 @@
-from ..._scipp import core as sc
-from ._detector_data_loading import load_detector_data
-from ._log_data_loading import load_logs
+import scipp as sc
+from ._loading_detector_data import load_detector_data
+from ._loading_log_data import load_logs
 
 import h5py
 from timeit import default_timer as timer
@@ -39,7 +39,7 @@ def _find_by_nx_class(
                 pass
 
     root.visititems(_match_nx_class)
-    # We should also check if root itself is an NX_class
+    # Also check if root itself is an NX_class
     _match_nx_class(None, root)
     return groups_with_requested_nx_class
 

@@ -3,8 +3,7 @@ import h5py
 from typing import Optional, List
 import numpy as np
 from ._loading_common import ensure_str, BadSource, ensure_not_unsigned
-from ..._scipp import core as sc
-from ..._bins import bin
+import scipp as sc
 from datetime import datetime
 from warnings import warn
 from itertools import groupby
@@ -165,12 +164,12 @@ def load_detector_data(
         return
     else:
 
-        def getDetectorId(events_and_max_det_id: DetectorData):
+        def get_detector_id(events_and_max_det_id: DetectorData):
             # Assume different detector banks do not have
             # intersecting ranges of detector ids
             return events_and_max_det_id.detector_ids[0]
 
-        event_data.sort(key=getDetectorId)
+        event_data.sort(key=get_detector_id)
 
         detector_ids = sc.Variable(
             dims=[_detector_dimension],
@@ -191,7 +190,7 @@ def load_detector_data(
         # Events in the NeXus file are effectively binned by pulse
         # (because they are recorded chronologically)
         # but for reduction it is more useful to bin by detector id
-        events = bin(events, groups=[detector_ids])
+        events = sc.bin(events, groups=[detector_ids])
         if pixel_positions_loaded:
             events.coords['position'] = pixel_positions
 

@@ -5,28 +5,29 @@ from nexus_helpers import (
     Log,
     in_memory_hdf5_file_with_two_nxentry,
 )
-import scipp as sc
 import numpy as np
 import pytest
+import scippneutron
+import scipp as sc
 
 
-def test_load_nexus_raises_exception_if_multiple_NXentry_in_file():
+def test_load_nexus_raises_exception_if_multiple_nxentry_in_file():
     with in_memory_hdf5_file_with_two_nxentry() as nexus_file:
         with pytest.raises(RuntimeError):
-            sc.neutron.load_nexus(nexus_file)
+            scippneutron.load_nexus(nexus_file)
 
 
-def test_load_nexus_no_exception_if_single_NXentry_in_file():
+def test_load_nexus_no_exception_if_single_nxentry_in_file():
     builder = InMemoryNexusFileBuilder()
     with builder.file() as nexus_file:
-        assert sc.neutron.load_nexus(nexus_file) is None
+        assert scippneutron.load_nexus(nexus_file) is None
 
 
-def test_load_nexus_no_exception_if_single_NXentry_found_below_root():
+def test_load_nexus_no_exception_if_single_nxentry_found_below_root():
     with in_memory_hdf5_file_with_two_nxentry() as nexus_file:
         # There are 2 NXentry in the file, but root is used
         # to specify which to load data from
-        assert sc.neutron.load_nexus(nexus_file, root='/entry_1') is None
+        assert scippneutron.load_nexus(nexus_file, root='/entry_1') is None
 
 
 def test_load_nexus_loads_data_from_single_event_data_group():
@@ -45,7 +46,7 @@ def test_load_nexus_loads_data_from_single_event_data_group():
     builder.add_event_data(event_data)
 
     with builder.file() as nexus_file:
-        loaded_data = sc.neutron.load_nexus(nexus_file)
+        loaded_data = scippneutron.load_nexus(nexus_file)
 
     # Expect time of flight to match the values in the
     # event_time_offset dataset
@@ -94,7 +95,7 @@ def test_load_nexus_loads_data_from_multiple_event_data_groups():
     builder.add_detector(Detector(detector_2_ids, event_data_2))
 
     with builder.file() as nexus_file:
-        loaded_data = sc.neutron.load_nexus(nexus_file)
+        loaded_data = scippneutron.load_nexus(nexus_file)
 
     # Expect time of flight to match the values in the
     # event_time_offset datasets
@@ -123,7 +124,7 @@ def test_load_nexus_loads_data_from_single_log_with_no_units():
     builder.add_log(Log(name, values, times))
 
     with builder.file() as nexus_file:
-        loaded_data = sc.neutron.load_nexus(nexus_file)
+        loaded_data = scippneutron.load_nexus(nexus_file)
 
     # Expect a sc.Dataset with log names as keys
     assert np.allclose(loaded_data[name].data.values.values, values)
@@ -138,7 +139,7 @@ def test_load_nexus_loads_data_from_single_log_with_units():
     builder.add_log(Log(name, values, times, value_units="m", time_units="s"))
 
     with builder.file() as nexus_file:
-        loaded_data = sc.neutron.load_nexus(nexus_file)
+        loaded_data = scippneutron.load_nexus(nexus_file)
 
     # Expect a sc.Dataset with log names as keys
     assert np.allclose(loaded_data[name].data.values.values, values)
@@ -157,7 +158,7 @@ def test_load_nexus_loads_data_from_multiple_logs():
     builder.add_log(log_2)
 
     with builder.file() as nexus_file:
-        loaded_data = sc.neutron.load_nexus(nexus_file)
+        loaded_data = scippneutron.load_nexus(nexus_file)
 
     # Expect a sc.Dataset with log names as keys
     assert np.allclose(loaded_data[log_1.name].data.values.values, log_1.value)
@@ -178,7 +179,7 @@ def test_load_nexus_skips_multidimensional_log():
     builder.add_log(Log(name, multidim_values, np.array([4, 5, 6])))
 
     with builder.file() as nexus_file:
-        loaded_data = sc.neutron.load_nexus(nexus_file)
+        loaded_data = scippneutron.load_nexus(nexus_file)
 
     assert loaded_data is None
 
@@ -190,7 +191,7 @@ def test_load_nexus_loads_data_from_non_timeseries_log():
     builder.add_log(Log(name, values))
 
     with builder.file() as nexus_file:
-        loaded_data = sc.neutron.load_nexus(nexus_file)
+        loaded_data = scippneutron.load_nexus(nexus_file)
 
     assert np.allclose(loaded_data[name].data.values.values, values)
 
@@ -208,7 +209,7 @@ def test_load_nexus_loads_data_from_multiple_logs_with_same_name():
                                                                values_2)))
 
     with builder.file() as nexus_file:
-        loaded_data = sc.neutron.load_nexus(nexus_file)
+        loaded_data = scippneutron.load_nexus(nexus_file)
 
     # Expect two logs
     # The log group name for one of them should have been prefixed with
@@ -231,7 +232,7 @@ def test_load_instrument_name():
     builder.add_instrument(name)
 
     with builder.file() as nexus_file:
-        loaded_data = sc.neutron.load_nexus(nexus_file)
+        loaded_data = scippneutron.load_nexus(nexus_file)
 
     assert loaded_data['instrument-name'].values == name
 
@@ -259,7 +260,7 @@ def test_load_nexus_loads_event_and_log_data_from_single_file():
     builder.add_log(log_2)
 
     with builder.file() as nexus_file:
-        loaded_data = sc.neutron.load_nexus(nexus_file)
+        loaded_data = scippneutron.load_nexus(nexus_file)
 
     # Expect time of flight to match the values in the
     # event_time_offset dataset
@@ -338,7 +339,7 @@ def test_load_nexus_loads_pixel_positions_with_event_data():
                  y_offsets=y_pixel_offset_2))
 
     with builder.file() as nexus_file:
-        loaded_data = sc.neutron.load_nexus(nexus_file)
+        loaded_data = scippneutron.load_nexus(nexus_file)
 
     # If z offsets are missing they should be zero
     z_pixel_offset_2 = np.array([[0., 0.], [0., 0.]])
@@ -394,20 +395,20 @@ def test_load_nexus_does_not_load_pixel_positions_with_non_matching_shape():
                  y_offsets=y_pixel_offset_2))
 
     with builder.file() as nexus_file:
-        loaded_data = sc.neutron.load_nexus(nexus_file)
+        loaded_data = scippneutron.load_nexus(nexus_file)
 
     assert "position" not in loaded_data.coords.keys(
     ), "One of the NXdetectors pixel positions arrays did not match the " \
        "size of its detector ids so we should not find 'position' coord"
-    # Even though detector_1's offsets and ids are loaded, we do not
+    # Even though detector_1's offsets and ids are matches in size, we do not
     # load them as the "position" coord would not have positions for all
     # the detector ids (loading event data from all detectors is prioritised)
 
 
 # TODO test
 #  Make tickets for any remaining todos
-#  - time offsets
 #  - transformations (depends_on) chains
 #  - sample and source position
-#  - pulse times
-#  - multidimensional logs (how to label dimensions?)
+#  - load pulse times
+#  - time offsets (logs) [make times relative to start of run,
+#      else unix epoch if no run start supplied?]

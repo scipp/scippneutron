@@ -1,10 +1,9 @@
 import numpy as np
 from typing import Tuple
-from ..._scipp import core as sc
+import scipp as sc
 import h5py
 from ._loading_common import ensure_str, BadSource, ensure_not_unsigned
 from warnings import warn
-from ... import detail
 
 
 def load_logs(loaded_data, log_groups):
@@ -29,7 +28,7 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
     unique_name_found = False
     while not unique_name_found:
         if log_data_name not in data.keys():
-            data[log_data_name] = detail.move(log_data)
+            data[log_data_name] = sc.detail.move(log_data)
             unique_name_found = True
         else:
             name_changed = True
