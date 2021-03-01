@@ -42,26 +42,9 @@ class MantidScippComparison(ABC):
 
         self._assert(out_scipp, out_mantid, allow_failure)
 
-        if isinstance(out_mantid, sc.DataArray):
-            result = sc.DataArray(sc.equal(out_mantid.data, out_scipp.data),
-                                  coords={
-                                      'diff':
-                                      out_mantid.data - out_scipp.data,
-                                      'is_approx':
-                                      sc.is_approx(
-                                          out_mantid.data, out_scipp.data,
-                                          1e-9 * out_mantid.data.unit +
-                                          1e-9 * sc.abs(out_mantid.data)),
-                                      'duration_scipp':
-                                      time_scipp,
-                                      'duration_mantid':
-                                      time_mantid
-                                  })
-        else:
-            result = out_mantid - out_scipp
-        return result
+        return {'scipp': out_scipp, 'mantid': out_mantid}
 
-    def _add_result_to_dataset(self, name, result, results):
+    def _append_result(self, name, result, results):
         results[f'with_{name}' if self._test_description is None else
                 f'{self._test_description}_with_{name}'] = result
 
@@ -76,10 +59,10 @@ class MantidScippComparison(ABC):
             print('Loading', name)
             in_ws = sapi.Load(Filename=file, StoreInADS=False)
             result = self._run_from_workspace(in_ws, allow_failure)
-            self._add_result_to_dataset(name, result, results)
+            self._append_result(name, result, results)
         for name, in_ws in self._workspaces.items():
             result = self._run_from_workspace(in_ws, allow_failure)
-            self._add_result_to_dataset(name, result, results)
+            self._append_result(name, result, results)
 
         return results
 
