@@ -33,7 +33,7 @@ class TestBeamlineCalculations:
                 return sn.l1(input)
 
         test = L1Comparison()
-        test.run(allow_failure=True)
+        test.run()
 
     def test_bealine_calculations_l2(self):
         class L2Comparison(BeamlineComparision):
@@ -44,7 +44,7 @@ class TestBeamlineCalculations:
                 return sn.l2(input)
 
         test = L2Comparison()
-        test.run(allow_failure=True)
+        test.run()
 
     def test_bealine_calculations_two_theta(self):
         class TwoThetaComparison(BeamlineComparision):
@@ -55,4 +55,4 @@ class TestBeamlineCalculations:
                 return sn.scattering_angle(input)
 
         test = TwoThetaComparison()
-        test.run(allow_failure=True)
+        test.run()

@@ -102,17 +102,17 @@ class DirectInElasticComparison(Comparison):
 class TestNeutronConversionUnits:
     def test_neutron_convert_units_tof_to_wavelength(self):
         test = ElasticComparison(origin='tof', target='wavelength')
-        test.run(allow_failure=True)
+        test.run()
 
     def test_neutron_convert_units_wavelength_to_tof(self):
         test = ElasticComparison(origin='wavelength', target='tof')
-        test.run(allow_failure=True)
+        test.run()
 
     def test_neutron_convert_units_tof_to_d_space(self):
         test = ElasticComparison(origin='tof', target='d-spacing')
-        test.run(allow_failure=True)
+        test.run()
 
     def test_neutron_convert_units_tof_to_wavelength_direct(self):
         test = DirectInElasticComparison(origin='tof',
                                          target='energy-transfer')
-        test.run(allow_failure=True)
+        test.run()
