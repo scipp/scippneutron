@@ -102,28 +102,22 @@ class DirectInElasticNeutronConvertUnitsTest(NeutronConvertUnitsTest):
 
 @pytest.mark.skipif(not mantid_is_available(),
                     reason='Mantid framework is unavailable')
-def test_neutron_convert_units_tof_to_wavelength():
-    test = ElasticNeutronConvertUnitsTest(origin='tof', target='wavelength')
-    print(test.run(allow_failure=True))
+class TestNeutronConversionUnits:
+    def test_neutron_convert_units_tof_to_wavelength(self):
+        test = ElasticNeutronConvertUnitsTest(origin='tof',
+                                              target='wavelength')
+        test.run(allow_failure=True)
 
+    def test_neutron_convert_units_wavelength_to_tof(self):
+        test = ElasticNeutronConvertUnitsTest(origin='wavelength',
+                                              target='tof')
+        test.run(allow_failure=True)
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
-def test_neutron_convert_units_wavelength_to_tof():
-    test = ElasticNeutronConvertUnitsTest(origin='wavelength', target='tof')
-    print(test.run(allow_failure=True))
+    def test_neutron_convert_units_tof_to_d_space(self):
+        test = ElasticNeutronConvertUnitsTest(origin='tof', target='d-spacing')
+        test.run(allow_failure=True)
 
-
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
-def test_neutron_convert_units_tof_to_d_space():
-    test = ElasticNeutronConvertUnitsTest(origin='tof', target='d-spacing')
-    print(test.run(allow_failure=True))
-
-
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
-def test_neutron_convert_units_tof_to_wavelength_direct():
-    test = DirectInElasticNeutronConvertUnitsTest(origin='tof',
-                                                  target='energy-transfer')
-    print(test.run(allow_failure=True))
+    def test_neutron_convert_units_tof_to_wavelength_direct(self):
+        test = DirectInElasticNeutronConvertUnitsTest(origin='tof',
+                                                      target='energy-transfer')
+        test.run(allow_failure=True)
