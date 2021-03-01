@@ -8,6 +8,7 @@ import pytest
 import os
 
 import scipp as sc
+import scippneutron as sn
 from .mantid_data_helper import MantidDataHelper
 from .mantid_data_helper import mantid_is_available
 from scippneutron import mantid as mantidcompat
@@ -404,7 +405,7 @@ class TestMantidConversion(unittest.TestCase):
 
         ds = sc.Dataset()
 
-        sc.compat.mantid.load_component_info(
+        sn.mantid.load_component_info(
             ds,
             MantidDataHelper.find_known_file("iris26176_graphite002_sqw.nxs"))
 
@@ -439,7 +440,7 @@ class TestMantidConversion(unittest.TestCase):
                                 (expected_number_spectra, expected_bins)))
         data = sc.DataArray(data=y, coords={param_dim: x})
 
-        ws = sc.compat.mantid.to_mantid(data, param_dim)
+        ws = sn.mantid.to_mantid(data, param_dim)
 
         assert len(ws.readX(0)) == expected_bins
         assert ws.getNumberHistograms() == expected_number_spectra
@@ -463,13 +464,13 @@ class TestMantidConversion(unittest.TestCase):
         data = sc.neutron.load(filename=MantidDataHelper.find_known_file(
             "iris26176_graphite002_sqw.nxs"))
 
-        params, diff = sc.compat.mantid.fit(
-            data['Q', 0],
-            mantid_args={
-                'Function': 'name=LinearBackground,A0=0,A1=1',
-                'StartX': 0,
-                'EndX': 3
-            })
+        params, diff = sn.mantid.fit(data['Q', 0],
+                                     mantid_args={
+                                         'Function':
+                                         'name=LinearBackground,A0=0,A1=1',
+                                         'StartX': 0,
+                                         'EndX': 3
+                                     })
 
         # check that no workspaces have been leaked in the ADS
         assert len(mtd) == 0
@@ -685,7 +686,7 @@ def test_to_workspace_2d(param_dim):
                                           expected_bins)))
     data = sc.DataArray(data=y, coords={param_dim: x})
 
-    ws = sc.compat.mantid.to_mantid(data, param_dim)
+    ws = sn.mantid.to_mantid(data, param_dim)
 
     assert len(ws.readX(0)) == expected_bins
     assert ws.getNumberHistograms() == expected_number_spectra
@@ -713,7 +714,7 @@ def test_to_workspace_2d_handles_single_spectra():
     y = sc.Variable(['tof'], values=expected_y, variances=expected_e)
     data = sc.DataArray(data=y, coords={'tof': x})
 
-    ws = sc.compat.mantid.to_mantid(data, "tof")
+    ws = sn.mantid.to_mantid(data, "tof")
 
     assert ws.getNumberHistograms() == 1
 
@@ -738,7 +739,7 @@ def test_to_workspace_2d_handles_single_x_array():
                     variances=np.array(expected_e))
     data = sc.DataArray(data=y, coords={'tof': x})
 
-    ws = sc.compat.mantid.to_mantid(data, "tof")
+    ws = sn.mantid.to_mantid(data, "tof")
 
     assert ws.getNumberHistograms() == 2
     assert np.equal(ws.readX(0), expected_x).all()
@@ -788,7 +789,7 @@ def test_from_mask_workspace():
     from os import path
     dir_path = path.dirname(path.realpath(__file__))
     mask = LoadMask('HYS', path.join(dir_path, 'HYS_mask.xml'))
-    da = sc.compat.mantid.from_mantid(mask)
+    da = sn.mantid.from_mantid(mask)
     assert da.data.dtype == sc.dtype.bool
     assert da.dims == ['spectrum']
     assert da.variances is None
@@ -840,7 +841,7 @@ def test_extract_energy_final():
     ]
     for instr in _all_indirect(blacklist=unsupported):
         out = _load_indirect_instrument(instr, parameters)
-        ds = sc.compat.mantid.from_mantid(out)
+        ds = sn.mantid.from_mantid(out)
         efs = ds.coords["final-energy"]
         assert not sc.all(sc.isnan(efs)).value
         assert efs.unit == sc.Unit("meV")
@@ -853,7 +854,7 @@ def test_extract_energy_final_when_not_present():
     from mantid.kernel import DeltaEModeType
     ws = CreateSampleWorkspace(StoreInADS=False)
     assert ws.getEMode() == DeltaEModeType.Elastic
-    ds = sc.compat.mantid.from_mantid(ws)
+    ds = sn.mantid.from_mantid(ws)
     assert "final-energy" not in ds.coords
 
 
@@ -875,7 +876,7 @@ def test_extract_energy_inital_when_not_present():
     from mantid.kernel import DeltaEModeType
     ws = CreateSampleWorkspace(StoreInADS=False)
     assert ws.getEMode() == DeltaEModeType.Elastic
-    ds = sc.compat.mantid.from_mantid(ws)
+    ds = sn.mantid.from_mantid(ws)
     assert "incident-energy" not in ds.coords
 
 
