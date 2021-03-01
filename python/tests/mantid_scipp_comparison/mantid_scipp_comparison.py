@@ -67,7 +67,7 @@ class MantidScippComparison(ABC):
 
     def run(self, allow_failure=False):
         import mantid.simpleapi as sapi
-        results = sc.Dataset()
+        results = {}
         if self._filenames == {} and self._workspaces == {}:
             raise RuntimeError(
                 'No _files or _workspaces provided for testing ')
