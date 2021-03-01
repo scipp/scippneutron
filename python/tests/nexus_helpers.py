@@ -170,6 +170,7 @@ class InMemoryNexusFileBuilder:
         self._logs: List[Log] = []
         self._instrument_name = None
         self._sample_position = None
+        self._title = None
 
     def add_detector(self, detector: Detector):
         self._detectors.append(detector)
@@ -182,6 +183,9 @@ class InMemoryNexusFileBuilder:
 
     def add_instrument(self, name: str):
         self._instrument_name = name
+
+    def add_title(self, title: str):
+        self._title = title
 
     def add_sample(self, position: Optional[np.ndarray] = None):
         self._sample_position = position
@@ -197,6 +201,8 @@ class InMemoryNexusFileBuilder:
                                backing_store=False)
         try:
             entry_group = _create_nx_class("entry", "NXentry", nexus_file)
+            if self._title is not None:
+                entry_group.create_dataset("title", data=self._title)
             self._write_event_data(entry_group)
             self._write_logs(entry_group)
             self._write_sample(entry_group)
