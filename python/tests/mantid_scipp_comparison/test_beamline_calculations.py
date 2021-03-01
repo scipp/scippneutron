@@ -5,9 +5,9 @@ import scippneutron as sn
 import scipp as sc
 
 
-class BeamlineCalculationsTest(MantidScippComparison):
+class BeamlineComparision(MantidScippComparison):
     def __init__(self):
-        super(BeamlineCalculationsTest, self).__init__(self.__class__.__name__)
+        super(BeamlineComparision, self).__init__(self.__class__.__name__)
 
     @property
     def _workspaces(self):
@@ -21,46 +21,38 @@ class BeamlineCalculationsTest(MantidScippComparison):
         return {"sample_workspace": ws}
 
 
-class L1CalculationsTest(BeamlineCalculationsTest):
-    def _run_mantid(self, input):
-        return input.detectorInfo().l1() * sc.Unit('m')
-
-    def _run_scipp(self, input):
-        return sn.l1(input)
-
-
-class L2CalculationsTest(BeamlineCalculationsTest):
-    def _run_mantid(self, input):
-        return input.detectorInfo().l2(0) * sc.Unit('m')
-
-    def _run_scipp(self, input):
-        return sn.l2(input)
-
-
-class TwoThetaCalculationsTest(BeamlineCalculationsTest):
-    def _run_mantid(self, input):
-        return input.detectorInfo().twoTheta(0) * sc.Unit('rad')
-
-    def _run_scipp(self, input):
-        return sn.scattering_angle(input)
-
-
 @pytest.mark.skipif(not mantid_is_available(),
                     reason='Mantid framework is unavailable')
-def test_bealine_calculations_l1():
-    test = L1CalculationsTest()
-    print(test.run(allow_failure=True))
+class TestBeamlineCalculations:
+    def test_bealine_calculations_l1(self):
+        class L1Comparison(BeamlineComparision):
+            def _run_mantid(self, input):
+                return input.detectorInfo().l1() * sc.Unit('m')
 
+            def _run_scipp(self, input):
+                return sn.l1(input)
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
-def test_bealine_calculations_l2():
-    test = L2CalculationsTest()
-    print(test.run(allow_failure=True))
+        test = L1Comparison()
+        test.run(allow_failure=True)
 
+    def test_bealine_calculations_l2(self):
+        class L2Comparison(BeamlineComparision):
+            def _run_mantid(self, input):
+                return input.detectorInfo().l2(0) * sc.Unit('m')
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
-def test_bealine_calculations_two_theta():
-    test = TwoThetaCalculationsTest()
-    print(test.run(allow_failure=True))
+            def _run_scipp(self, input):
+                return sn.l2(input)
+
+        test = L2Comparison()
+        test.run(allow_failure=True)
+
+    def test_bealine_calculations_two_theta(self):
+        class TwoThetaComparison(BeamlineComparision):
+            def _run_mantid(self, input):
+                return input.detectorInfo().twoTheta(0) * sc.Unit('rad')
+
+            def _run_scipp(self, input):
+                return sn.scattering_angle(input)
+
+        test = TwoThetaComparison()
+        test.run(allow_failure=True)
