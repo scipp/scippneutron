@@ -37,14 +37,14 @@ def make_dataset_with_beamline():
 
 def test_neutron_convert():
     d = make_dataset_with_beamline()
-    dspacing = sc.neutron.convert(d, 'tof', 'd-spacing')
+    dspacing = sn.convert(d, 'tof', 'd-spacing')
     # Detailed testing done on the C++ side
     assert dspacing.coords['d-spacing'].unit == sc.units.angstrom
 
 
 def test_neutron_convert_out_arg():
     d = make_dataset_with_beamline()
-    dspacing = sc.neutron.convert(d, 'tof', 'd-spacing', out=d)
+    dspacing = sn.convert(d, 'tof', 'd-spacing', out=d)
     assert dspacing.coords['d-spacing'].unit == sc.units.angstrom
     assert dspacing is d
 
@@ -53,35 +53,35 @@ def test_neutron_beamline():
     d = make_dataset_with_beamline()
 
     assert sc.is_equal(
-        sc.neutron.source_position(d),
+        sn.source_position(d),
         sc.Variable(value=np.array([0, 0, -10]),
                     dtype=sc.dtype.vector_3_float64,
                     unit=sc.units.m))
     assert sc.is_equal(
-        sc.neutron.sample_position(d),
+        sn.sample_position(d),
         sc.Variable(value=np.array([0, 0, 0]),
                     dtype=sc.dtype.vector_3_float64,
                     unit=sc.units.m))
-    assert sc.is_equal(sc.neutron.l1(d), 10.0 * sc.units.m)
+    assert sc.is_equal(sn.l1(d), 10.0 * sc.units.m)
     assert sc.is_equal(
-        sc.neutron.l2(d),
+        sn.l2(d),
         sc.Variable(dims=['position'], values=np.ones(4), unit=sc.units.m))
-    two_theta = sc.neutron.two_theta(d)
+    two_theta = sn.two_theta(d)
     assert two_theta.unit == sc.units.rad
     assert two_theta.dims == ['position']
-    assert sc.is_equal(sc.neutron.scattering_angle(d), 0.5 * two_theta)
+    assert sc.is_equal(sn.scattering_angle(d), 0.5 * two_theta)
 
 
 def test_neutron_instrument_view_3d():
     d = make_dataset_with_beamline()
-    sc.neutron.instrument_view(d["a"])
+    sn.instrument_view(d["a"])
 
 
 def test_neutron_instrument_view_with_dataset():
     d = make_dataset_with_beamline()
     d['b'] = sc.Variable(['position', 'tof'],
                          values=np.arange(36.).reshape(4, 9))
-    sc.neutron.instrument_view(d)
+    sn.instrument_view(d)
 
 
 def test_neutron_instrument_view_with_masks():
@@ -94,8 +94,4 @@ def test_neutron_instrument_view_with_masks():
 
 def test_neutron_instrument_view_with_cmap_args():
     d = make_dataset_with_beamline()
-    sc.neutron.instrument_view(d["a"],
-                               vmin=0.001,
-                               vmax=5.0,
-                               cmap="magma",
-                               norm="log")
+    sn.instrument_view(d["a"], vmin=0.001, vmax=5.0, cmap="magma", norm="log")
