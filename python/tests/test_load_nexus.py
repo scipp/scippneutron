@@ -245,7 +245,7 @@ def test_load_experiment_title():
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
 
-    assert loaded_data['title'].values == title
+    assert loaded_data['experiment-title'].values == title
 
 
 def test_load_nexus_loads_event_and_log_data_from_single_file():

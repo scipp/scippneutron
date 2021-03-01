@@ -61,18 +61,26 @@ def _open_if_path(file_in: Union[str, h5py.File]):
         yield file_in
 
 
-def _add_instrument_name(instrument_group: h5py.Group, data: sc.Variable):
+def _add_string_data_as_attr(group: h5py.Group, dataset_name: str,
+                             attr_name: str, data: sc.Variable):
     try:
         data = data.attrs
     except AttributeError:
         pass
 
     try:
-        data["instrument-name"] = sc.Variable(
-            value=instrument_group["name"].asstr()[...].item())
+        data[attr_name] = sc.Variable(
+            value=group[dataset_name].asstr()[...].item())
     except KeyError:
-        # No instrument name found to add
         pass
+
+
+def _add_instrument_name(instrument_group: h5py.Group, data: sc.Variable):
+    _add_string_data_as_attr(instrument_group, "name", "instrument-name", data)
+
+
+def _add_title(entry_group: h5py.Group, data: sc.Variable):
+    _add_string_data_as_attr(entry_group, "title", "experiment-title", data)
 
 
 def load_nexus(data_file: Union[str, h5py.File], root: str = "/"):
@@ -116,6 +124,9 @@ def load_nexus(data_file: Union[str, h5py.File], root: str = "/"):
 
         if groups[nx_instrument]:
             _add_instrument_name(groups[nx_instrument][0], loaded_data)
+
+        if groups[nx_entry]:
+            _add_title(groups[nx_entry][0], loaded_data)
 
     # Return None if we have an empty dataset at this point
     if no_event_data and not loaded_data.keys():
