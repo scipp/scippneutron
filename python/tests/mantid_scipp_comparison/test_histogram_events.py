@@ -37,4 +37,4 @@ class HistogramEventsTest(MantidScippComparison):
                     reason='Mantid framework is unavailable')
 def test_histogram_events():
     test = HistogramEventsTest()
-    print(test.run(allow_failure=True))
+    test.run(allow_failure=True)
