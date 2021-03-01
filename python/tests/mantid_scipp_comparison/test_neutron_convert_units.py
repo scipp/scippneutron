@@ -10,7 +10,6 @@ import enum
 class Emode(enum.Enum):
     Elastic = 0
     Direct = 1
-    Indirect = 2
 
 
 class Comparison(MantidScippComparison):
@@ -28,7 +27,6 @@ class Comparison(MantidScippComparison):
         return {
             Emode.Elastic: 'Elastic',
             Emode.Direct: 'Direct',
-            Emode.Indirect: 'Indirect'
         }
 
     def __init__(self, name, origin, target, emode, efixed):
