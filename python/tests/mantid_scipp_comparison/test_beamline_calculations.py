@@ -24,7 +24,7 @@ class BeamlineComparision(MantidScippComparison):
 @pytest.mark.skipif(not mantid_is_available(),
                     reason='Mantid framework is unavailable')
 class TestBeamlineCalculations:
-    def test_bealine_calculations_l1(self):
+    def test_beamline_calculations_l1(self):
         class L1Comparison(BeamlineComparision):
             def _run_mantid(self, input):
                 return input.detectorInfo().l1() * sc.Unit('m')
