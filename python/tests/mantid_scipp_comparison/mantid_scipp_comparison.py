@@ -27,8 +27,10 @@ class MantidScippComparison(ABC):
     def _run_from_workspace(self, in_ws, allow_failure):
         out_mantid, time_mantid = self._execute_with_timing(self._run_mantid,
                                                             input=in_ws)
-        in_da = mantid.from_mantid(in_ws).astype(
-            sc.dtype.float64)  # Converters set weights float32
+        in_da = mantid.from_mantid(in_ws)
+        if in_da.data.bins is not None:
+            in_da = in_da.astype(
+                sc.dtype.float64)  # Converters set weights float32
         out_scipp, time_scipp = self._execute_with_timing(self._run_scipp,
                                                           input=in_da)
 
