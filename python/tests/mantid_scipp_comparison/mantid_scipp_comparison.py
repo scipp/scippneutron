@@ -2,9 +2,10 @@ from ..mantid_data_helper import MantidDataHelper
 import scipp as sc
 import scippneutron.mantid as mantid
 import time
+from abc import ABC, abstractmethod
 
 
-class MantidScippComparison:
+class MantidScippComparison(ABC):
     def __init__(self, test_description=None):
         self._test_description = test_description
 
@@ -79,8 +80,10 @@ class MantidScippComparison:
     def _workspaces(self):
         return {}
 
-    def _run_mantid(self, input):
-        raise RuntimeError("_run_mantid not implemented in base")
+    @abstractmethod
+    def _run_mantid(self, in_ws):
+        pass
 
-    def _run_scipp(self, input):
-        raise RuntimeError("_run_scipp not implemented in base")
+    @abstractmethod
+    def _run_scipp(self, in_da):
+        pass
