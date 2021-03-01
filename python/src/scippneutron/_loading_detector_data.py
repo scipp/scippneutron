@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
+# @author Matthew Jones
+
 from dataclasses import dataclass, astuple
 import h5py
 from typing import Optional, List

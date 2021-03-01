@@ -1,5 +1,8 @@
-from typing import Union, Any
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
+# @author Matthew Jones
 
+from typing import Union, Any
 import numpy as np
 
 

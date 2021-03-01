@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
+# @author Matthew Jones
+
 import scipp as sc
 from ._loading_detector_data import load_detector_data
 from ._loading_log_data import load_logs
