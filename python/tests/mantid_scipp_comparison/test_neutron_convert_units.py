@@ -13,7 +13,7 @@ class Emode(enum.Enum):
     Indirect = 2
 
 
-class NeutronConvertUnitsTest(MantidScippComparison):
+class Comparison(MantidScippComparison):
     @property
     def _dim_map(self):
         return {
@@ -36,7 +36,7 @@ class NeutronConvertUnitsTest(MantidScippComparison):
         self._target = target
         self._emode = emode
         self._efixed = efixed
-        super(NeutronConvertUnitsTest, self).__init__(name)
+        super(Comparison, self).__init__(name)
 
     @property
     def _workspaces(self):
@@ -76,23 +76,22 @@ class NeutronConvertUnitsTest(MantidScippComparison):
         return sn.convert(data=input, origin=self._origin, target=self._target)
 
 
-class ElasticNeutronConvertUnitsTest(NeutronConvertUnitsTest):
+class ElasticComparison(Comparison):
     def __init__(self, origin, target):
         self._origin = origin
         self._target = target
-        super(ElasticNeutronConvertUnitsTest,
-              self).__init__(self.__class__.__name__,
-                             origin,
-                             target,
-                             emode=Emode.Elastic,
-                             efixed=None)
+        super(ElasticComparison, self).__init__(self.__class__.__name__,
+                                                origin,
+                                                target,
+                                                emode=Emode.Elastic,
+                                                efixed=None)
 
 
-class DirectInElasticNeutronConvertUnitsTest(NeutronConvertUnitsTest):
+class DirectInElasticComparison(Comparison):
     def __init__(self, origin, target):
         self._origin = origin
         self._target = target
-        super(DirectInElasticNeutronConvertUnitsTest,
+        super(DirectInElasticComparison,
               self).__init__(self.__class__.__name__,
                              origin,
                              target,
@@ -104,20 +103,18 @@ class DirectInElasticNeutronConvertUnitsTest(NeutronConvertUnitsTest):
                     reason='Mantid framework is unavailable')
 class TestNeutronConversionUnits:
     def test_neutron_convert_units_tof_to_wavelength(self):
-        test = ElasticNeutronConvertUnitsTest(origin='tof',
-                                              target='wavelength')
+        test = ElasticComparison(origin='tof', target='wavelength')
         test.run(allow_failure=True)
 
     def test_neutron_convert_units_wavelength_to_tof(self):
-        test = ElasticNeutronConvertUnitsTest(origin='wavelength',
-                                              target='tof')
+        test = ElasticComparison(origin='wavelength', target='tof')
         test.run(allow_failure=True)
 
     def test_neutron_convert_units_tof_to_d_space(self):
-        test = ElasticNeutronConvertUnitsTest(origin='tof', target='d-spacing')
+        test = ElasticComparison(origin='tof', target='d-spacing')
         test.run(allow_failure=True)
 
     def test_neutron_convert_units_tof_to_wavelength_direct(self):
-        test = DirectInElasticNeutronConvertUnitsTest(origin='tof',
-                                                      target='energy-transfer')
+        test = DirectInElasticComparison(origin='tof',
+                                         target='energy-transfer')
         test.run(allow_failure=True)
