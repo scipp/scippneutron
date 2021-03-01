@@ -60,6 +60,9 @@ class MantidScippComparison(ABC):
     def run(self, allow_failure=False):
         import mantid.simpleapi as sapi
         results = sc.Dataset()
+        if self._filenames == {} and self._workspaces == {}:
+            raise RuntimeError(
+                'No _files or _workspaces provided for testing ')
         for name, (hash, algorithm) in self._filenames.items():
             file = MantidDataHelper.find_file(hash, algorithm)
             print('Loading', name)
