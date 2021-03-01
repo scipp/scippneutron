@@ -17,7 +17,13 @@ class MantidScippComparison(ABC):
 
     def _assert(self, a, b, allow_failure):
         try:
-            assert sc.is_equal(a, b)
+            if isinstance(a, sc.DataArray):
+                assert sc.all(
+                    sc.is_approx(a.data, b.data, 1e-9 * a.data.unit +
+                                 1e-9 * sc.abs(a.data))).value
+            else:
+                assert sc.all(
+                    sc.is_approx(a, b, 1e-9 * a.unit + 1e-9 * sc.abs(a))).value
         except AssertionError as ae:
             if allow_failure:
                 print(ae)
@@ -44,7 +50,7 @@ class MantidScippComparison(ABC):
                                       'is_approx':
                                       sc.is_approx(
                                           out_mantid.data, out_scipp.data,
-                                          1e-9 * sc.Unit('counts') +
+                                          1e-9 * out_mantid.data.unit +
                                           1e-9 * sc.abs(out_mantid.data)),
                                       'duration_scipp':
                                       time_scipp,
