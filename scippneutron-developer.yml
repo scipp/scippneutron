@@ -28,6 +28,7 @@ dependencies:
   - pyyaml
   - tbb
   - traitlets=4.3.3 # see https://github.com/jupyter-widgets/pythreejs/issues/334
+  - h5py>=3.1.0
 
   # Test
   - psutil

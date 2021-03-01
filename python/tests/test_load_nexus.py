@@ -403,12 +403,3 @@ def test_load_nexus_does_not_load_pixel_positions_with_non_matching_shape():
     # Even though detector_1's offsets and ids are matches in size, we do not
     # load them as the "position" coord would not have positions for all
     # the detector ids (loading event data from all detectors is prioritised)
-
-
-# TODO test
-#  Make tickets for any remaining todos
-#  - transformations (depends_on) chains
-#  - sample and source position
-#  - load pulse times
-#  - time offsets (logs) [make times relative to start of run,
-#      else unix epoch if no run start supplied?]
