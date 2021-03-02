@@ -180,20 +180,15 @@ def load_detector_data(event_data_groups: List[h5py.Group],
         # but for reduction it is more useful to bin by detector id
         events = sc.bin(detector_data.events,
                         groups=[detector_data.detector_ids])
-        pixel_positions = detector_data.pixel_positions
+        if pixel_positions_loaded:
+            events.coords['position'] = detector_data.pixel_positions
         while event_data:
             detector_data = event_data.pop(0)
-            events = sc.concatenate(events,
-                                    sc.bin(detector_data.events,
-                                           groups=[detector_data.detector_ids
-                                                   ]),
-                                    dim=_detector_dimension)
+            new_events = sc.bin(detector_data.events,
+                                groups=[detector_data.detector_ids])
             if pixel_positions_loaded:
-                pixel_positions = sc.concatenate(pixel_positions,
-                                                 detector_data.pixel_positions,
-                                                 dim=_detector_dimension)
-
-        if pixel_positions_loaded:
-            events.coords['position'] = pixel_positions
-
+                new_events.coords['position'] = detector_data.pixel_positions
+            events = sc.concatenate(events,
+                                    new_events,
+                                    dim=_detector_dimension)
     return events
