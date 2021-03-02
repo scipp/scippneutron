@@ -98,7 +98,7 @@ def _load_dataset(dataset: h5py.Dataset,
     if dtype is None:
         dtype = ensure_not_unsigned(dataset.dtype.type)
     units = _get_units(dataset)
-    variable = sc.zeros(dims=dimensions,
+    variable = sc.empty(dims=dimensions,
                         shape=dataset.shape,
                         dtype=dtype,
                         unit=units)
