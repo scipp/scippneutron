@@ -51,7 +51,7 @@ def test_load_nexus_loads_data_from_single_event_data_group():
     # Expect time of flight to match the values in the
     # event_time_offset dataset
     # May be reordered due to binning (hence np.sort)
-    assert np.allclose(
+    assert np.array_equal(
         np.sort(
             loaded_data.bins.concatenate(
                 'detector-id').values.coords['tof'].values),
@@ -62,10 +62,10 @@ def test_load_nexus_loads_data_from_single_event_data_group():
     # binned according to whatever detector-ids are present in event_id
     # dataset: 2 on det 1, 1 on det 2, 2 on det 3
     expected_counts = np.array([2, 1, 2])
-    assert np.allclose(counts_on_detectors.data.values, expected_counts)
+    assert np.array_equal(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
-    assert np.allclose(loaded_data.coords['detector-id'].values,
-                       expected_detector_ids)
+    assert np.array_equal(loaded_data.coords['detector-id'].values,
+                          expected_detector_ids)
 
 
 def test_load_nexus_loads_data_from_multiple_event_data_groups():
@@ -100,7 +100,7 @@ def test_load_nexus_loads_data_from_multiple_event_data_groups():
     # Expect time of flight to match the values in the
     # event_time_offset datasets
     # May be reordered due to binning (hence np.sort)
-    assert np.allclose(
+    assert np.array_equal(
         np.sort(
             loaded_data.bins.concatenate(
                 'detector-id').values.coords['tof'].values),
@@ -110,10 +110,10 @@ def test_load_nexus_loads_data_from_multiple_event_data_groups():
     # There are detector_number datasets in the NXdetector for each
     # NXevent_data, these are used for detector-id binning
     expected_counts = np.array([0, 2, 1, 2, 2, 1, 2, 0])
-    assert np.allclose(counts_on_detectors.data.values, expected_counts)
+    assert np.array_equal(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.concatenate((detector_1_ids, detector_2_ids))
-    assert np.allclose(loaded_data.coords['detector-id'].values,
-                       expected_detector_ids)
+    assert np.array_equal(loaded_data.coords['detector-id'].values,
+                          expected_detector_ids)
 
 
 def test_load_nexus_loads_data_from_single_log_with_no_units():
@@ -127,8 +127,8 @@ def test_load_nexus_loads_data_from_single_log_with_no_units():
         loaded_data = scippneutron.load_nexus(nexus_file)
 
     # Expect a sc.Dataset with log names as keys
-    assert np.allclose(loaded_data[name].data.values.values, values)
-    assert np.allclose(loaded_data[name].data.values.coords['time'], times)
+    assert np.array_equal(loaded_data[name].data.values.values, values)
+    assert np.array_equal(loaded_data[name].data.values.coords['time'], times)
 
 
 def test_load_nexus_loads_data_from_single_log_with_units():
@@ -164,9 +164,10 @@ def test_load_nexus_loads_data_from_multiple_logs():
     assert np.allclose(loaded_data[log_1.name].data.values.values, log_1.value)
     assert np.allclose(loaded_data[log_1.name].data.values.coords['time'],
                        log_1.time)
-    assert np.allclose(loaded_data[log_2.name].data.values.values, log_2.value)
-    assert np.allclose(loaded_data[log_2.name].data.values.coords['time'],
-                       log_2.time)
+    assert np.array_equal(loaded_data[log_2.name].data.values.values,
+                          log_2.value)
+    assert np.array_equal(loaded_data[log_2.name].data.values.coords['time'],
+                          log_2.time)
 
 
 def test_load_nexus_skips_multidimensional_log():
