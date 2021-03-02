@@ -41,7 +41,7 @@ Documentation
    :caption: Tutorials
    :maxdepth: 3
 
-   tutorials/getting-started
+   tutorials/exploring-data
    tutorials/working-with-masks
    tutorials/powder-diffraction
 
