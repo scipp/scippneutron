@@ -6,7 +6,7 @@ import numpy as np
 from typing import Tuple
 import scipp as sc
 import h5py
-from ._loading_common import ensure_str, BadSource, ensure_not_unsigned
+from ._loading_common import ensure_str, BadSource, load_dataset, ensure_not_unsigned
 from warnings import warn
 
 
@@ -59,13 +59,9 @@ def _load_log_data_from_group(group: h5py.Group) -> Tuple[str, sc.Variable]:
         unit = ""
 
     try:
-        times = group[time_dataset_name][...]
         dimension_label = "time"
         is_time_series = True
-        try:
-            time_unit = ensure_str(group[time_dataset_name].attrs["units"])
-        except KeyError:
-            time_unit = ""
+        times = load_dataset(group[time_dataset_name], [dimension_label])
     except KeyError:
         dimension_label = property_name
         is_time_series = False
@@ -79,26 +75,25 @@ def _load_log_data_from_group(group: h5py.Group) -> Tuple[str, sc.Variable]:
     if np.ndim(values) == 0:
         property_data = sc.Variable(value=values,
                                     unit=unit,
-                                    dtype=group[value_dataset_name].dtype.type)
+                                    dtype=ensure_not_unsigned(
+                                        group[value_dataset_name].dtype.type))
     else:
         property_data = sc.Variable(values=values,
                                     unit=unit,
                                     dims=[dimension_label],
-                                    dtype=group[value_dataset_name].dtype.type)
+                                    dtype=ensure_not_unsigned(
+                                        group[value_dataset_name].dtype.type))
 
     if is_time_series:
         # If property has timestamps, create a DataArray
-        data_array = sc.DataArray(
-            data=property_data,
-            coords={
-                dimension_label:
-                sc.Variable([dimension_label],
-                            values=times,
-                            dtype=ensure_not_unsigned(
-                                group[time_dataset_name].dtype.type),
-                            unit=time_unit)
-            })
-        return property_name, sc.Variable(value=data_array)
+        data_array = {
+            "data": property_data,
+            "coords": {
+                dimension_label: times
+            }
+        }
+        return property_name, sc.Variable(value=sc.detail.move_to_data_array(
+            **data_array))
     elif not np.isscalar(values):
         # If property is multi-valued, create a wrapper single
         # value variable. This prevents interference with

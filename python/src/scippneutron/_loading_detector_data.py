@@ -4,9 +4,9 @@
 
 from dataclasses import dataclass, astuple
 import h5py
-from typing import Optional, List, Any
+from typing import Optional, List
 import numpy as np
-from ._loading_common import ensure_str, BadSource, ensure_not_unsigned
+from ._loading_common import BadSource, ensure_not_unsigned, load_dataset
 import scipp as sc
 from datetime import datetime
 from warnings import warn
@@ -19,14 +19,6 @@ _event_dimension = "event"
 def _all_equal(iterable):
     g = groupby(iterable)
     return next(g, True) and not next(g, False)
-
-
-def _get_units(dataset: h5py.Dataset) -> str:
-    try:
-        units = dataset.attrs["units"]
-    except (AttributeError, KeyError):
-        return ""
-    return ensure_str(units)
 
 
 def _check_for_missing_fields(group: h5py.Group) -> str:
@@ -92,20 +84,6 @@ class DetectorData:
     pixel_positions: Optional[sc.Variable] = None
 
 
-def _load_dataset(dataset: h5py.Dataset,
-                  dimensions: List[str],
-                  dtype: Optional[Any] = None) -> sc.Variable:
-    if dtype is None:
-        dtype = ensure_not_unsigned(dataset.dtype.type)
-    units = _get_units(dataset)
-    variable = sc.empty(dims=dimensions,
-                        shape=dataset.shape,
-                        dtype=dtype,
-                        unit=units)
-    dataset.read_direct(variable.values)
-    return variable
-
-
 def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
     error_msg = _check_for_missing_fields(group)
     if error_msg:
@@ -128,9 +106,9 @@ def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
         event_index[-1] = event_id_ds.len()
 
     number_of_events = event_index[-1]
-    event_time_offset = _load_dataset(group["event_time_offset"],
-                                      [_event_dimension])
-    event_id = _load_dataset(event_id_ds, [_event_dimension], dtype=np.int32)
+    event_time_offset = load_dataset(group["event_time_offset"],
+                                     [_event_dimension])
+    event_id = load_dataset(event_id_ds, [_event_dimension], dtype=np.int32)
 
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
