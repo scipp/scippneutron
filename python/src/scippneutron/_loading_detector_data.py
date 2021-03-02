@@ -80,7 +80,7 @@ def _load_positions(detector_group: h5py.Group,
 @dataclass
 class DetectorData:
     events: sc.Variable
-    detector_ids: np.ndarray
+    detector_ids: sc.Variable
     pixel_positions: Optional[sc.Variable] = None
 
 
@@ -125,6 +125,10 @@ def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
         # will not have a bin)
         detector_ids = np.unique(event_id.values)
 
+    detector_ids = sc.Variable(dims=[_detector_dimension],
+                               values=detector_ids,
+                               dtype=np.int32)
+
     data_dict = {
         "data": weights,
         "coords": {
@@ -137,7 +141,8 @@ def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
     detector_group = group.parent
     pixel_positions = None
     if "x_pixel_offset" in detector_group:
-        pixel_positions = _load_positions(detector_group, detector_ids.size)
+        pixel_positions = _load_positions(detector_group,
+                                          detector_ids.shape[0])
 
     if not quiet:
         print(f"Loaded event data from {group.name} containing "
@@ -160,33 +165,34 @@ def load_detector_data(event_data_groups: List[h5py.Group],
         return
     else:
 
-        def get_detector_id(events_and_max_det_id: DetectorData):
+        def get_detector_id(detector_data: DetectorData):
             # Assume different detector banks do not have
             # intersecting ranges of detector ids
-            return events_and_max_det_id.detector_ids[0]
+            return detector_data.detector_ids.values[0]
 
         event_data.sort(key=get_detector_id)
 
-        detector_ids = sc.Variable(
-            dims=[_detector_dimension],
-            values=np.concatenate([data.detector_ids for data in event_data]),
-            dtype=np.int32)
-
         pixel_positions_loaded = all(
             [data.pixel_positions is not None for data in event_data])
-        events, _, pixel_positions = astuple(event_data.pop(0))
-        while event_data:
-            new_events, _, new_pixel_positions = astuple(event_data.pop(0))
-            events = sc.concatenate(events, new_events, dim=_event_dimension)
-            if pixel_positions_loaded:
-                pixel_positions = sc.concatenate(pixel_positions,
-                                                 new_pixel_positions,
-                                                 dim=_detector_dimension)
-
+        detector_data = event_data.pop(0)
         # Events in the NeXus file are effectively binned by pulse
         # (because they are recorded chronologically)
         # but for reduction it is more useful to bin by detector id
-        events = sc.bin(events, groups=[detector_ids])
+        events = sc.bin(detector_data.events,
+                        groups=[detector_data.detector_ids])
+        pixel_positions = detector_data.pixel_positions
+        while event_data:
+            detector_data = event_data.pop(0)
+            events = sc.concatenate(events,
+                                    sc.bin(detector_data.events,
+                                           groups=[detector_data.detector_ids
+                                                   ]),
+                                    dim=_detector_dimension)
+            if pixel_positions_loaded:
+                pixel_positions = sc.concatenate(pixel_positions,
+                                                 detector_data.pixel_positions,
+                                                 dim=_detector_dimension)
+
         if pixel_positions_loaded:
             events.coords['position'] = pixel_positions
 
