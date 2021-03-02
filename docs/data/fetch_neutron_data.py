@@ -34,7 +34,7 @@ if __name__ == '__main__':
         "PG3_4866_event.nxs":
         "3d543bc6a646e622b3f4542bc3435e7e",
         "LARMOR00049338.nxs":
-        "https://github.com/ess-dmsc-dram/loki_tube_scripts/raw/master/test/test_data/LARMOR00049338.nxs",
+        "https://github.com/ess-dmsc-dram/loki_tube_scripts/raw/master/test/test_data/LARMOR00049338.nxs",  # noqa: E501
     }
 
     for f, h in data_files.items():
