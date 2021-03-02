@@ -83,13 +83,14 @@ def _add_title(entry_group: h5py.Group, data: sc.Variable):
     _add_string_data_as_attr(entry_group, "title", "experiment-title", data)
 
 
-def load_nexus(data_file: Union[str, h5py.File], root: str = "/"):
+def load_nexus(data_file: Union[str, h5py.File], root: str = "/", quiet=True):
     """
     Load a NeXus file and return required information.
 
     :param data_file: path of NeXus file containing data to load
     :param root: path of group in file, only load data from the subtree of
       this group
+    :param quiet: if False prints some details of what is being loaded
 
     Usage example:
       data = sc.neutron.load_nexus('PG3_4844_event.nxs')
@@ -113,7 +114,7 @@ def load_nexus(data_file: Union[str, h5py.File], root: str = "/"):
                 "to specify which to load data from, for example"
                 f"{__name__}('my_file.nxs', '/entry_2')")
 
-        loaded_data = load_detector_data(groups[nx_event_data])
+        loaded_data = load_detector_data(groups[nx_event_data], quiet)
         if loaded_data is None:
             no_event_data = True
             loaded_data = sc.Dataset({})
@@ -132,5 +133,6 @@ def load_nexus(data_file: Union[str, h5py.File], root: str = "/"):
     if no_event_data and not loaded_data.keys():
         loaded_data = None
 
-    print("Total time:", timer() - total_time)
+    if not quiet:
+        print("Total time:", timer() - total_time)
     return loaded_data

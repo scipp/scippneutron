@@ -106,7 +106,7 @@ def _load_dataset(dataset: h5py.Dataset,
     return variable
 
 
-def _load_event_group(group: h5py.Group) -> DetectorData:
+def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
     error_msg = _check_for_missing_fields(group)
     if error_msg:
         raise BadSource(error_msg)
@@ -161,18 +161,19 @@ def _load_event_group(group: h5py.Group) -> DetectorData:
     if "x_pixel_offset" in detector_group:
         pixel_positions = _load_positions(detector_group, detector_ids.size)
 
-    print(f"Loaded event data from {group.name} containing "
-          f"{number_of_events} events")
+    if not quiet:
+        print(f"Loaded event data from {group.name} containing "
+              f"{number_of_events} events")
 
     return DetectorData(data, detector_ids, pixel_positions)
 
 
-def load_detector_data(
-        event_data_groups: List[h5py.Group]) -> Optional[sc.DataArray]:
+def load_detector_data(event_data_groups: List[h5py.Group],
+                       quiet: bool) -> Optional[sc.DataArray]:
     event_data = []
     for group in event_data_groups:
         try:
-            new_event_data = _load_event_group(group)
+            new_event_data = _load_event_group(group, quiet)
             event_data.append(new_event_data)
         except BadSource as e:
             warn(f"Skipped loading {group.name} due to:\n{e}")
