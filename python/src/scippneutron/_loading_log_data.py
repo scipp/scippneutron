@@ -6,7 +6,8 @@ import numpy as np
 from typing import Tuple
 import scipp as sc
 import h5py
-from ._loading_common import ensure_str, BadSource, load_dataset, ensure_not_unsigned
+from ._loading_common import (ensure_str, BadSource, load_dataset,
+                              ensure_not_unsigned)
 from warnings import warn
 
 

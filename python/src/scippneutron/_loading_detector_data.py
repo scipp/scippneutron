@@ -2,7 +2,7 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
 
-from dataclasses import dataclass, astuple
+from dataclasses import dataclass
 import h5py
 from typing import Optional, List
 import numpy as np
