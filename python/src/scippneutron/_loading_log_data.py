@@ -102,6 +102,6 @@ def _load_log_data_from_group(group: h5py.Group) -> Tuple[str, sc.Variable]:
     elif not np.isscalar(values):
         # If property is multi-valued, create a wrapper single
         # value variable. This prevents interference with
-        # global dimensions for for output Dataset.
+        # global dimensions for the output Dataset.
         return property_name, sc.Variable(value=property_data)
     return property_name, property_data

@@ -4,7 +4,7 @@
 
 from dataclasses import dataclass, astuple
 import h5py
-from typing import Optional, List
+from typing import Optional, List, Any
 import numpy as np
 from ._loading_common import ensure_str, BadSource, ensure_not_unsigned
 import scipp as sc
@@ -21,11 +21,11 @@ def _all_equal(iterable):
     return next(g, True) and not next(g, False)
 
 
-def _get_units(dataset: h5py.Dataset) -> Optional[str]:
+def _get_units(dataset: h5py.Dataset) -> str:
     try:
         units = dataset.attrs["units"]
-    except AttributeError:
-        return None
+    except (AttributeError, KeyError):
+        return ""
     return ensure_str(units)
 
 
@@ -92,6 +92,20 @@ class DetectorData:
     pixel_positions: Optional[sc.Variable] = None
 
 
+def _load_dataset(dataset: h5py.Dataset,
+                  dimensions: List[str],
+                  dtype: Optional[Any] = None) -> sc.Variable:
+    if dtype is None:
+        dtype = ensure_not_unsigned(dataset.dtype.type)
+    units = _get_units(dataset)
+    variable = sc.zeros(dims=dimensions,
+                        shape=dataset.shape,
+                        dtype=dtype,
+                        unit=units)
+    dataset.read_direct(variable.values)
+    return variable
+
+
 def _load_event_group(group: h5py.Group) -> DetectorData:
     error_msg = _check_for_missing_fields(group)
     if error_msg:
@@ -103,7 +117,8 @@ def _load_event_group(group: h5py.Group) -> DetectorData:
     # In other words, ensure that event_index includes the bin edge for
     # the last pulse.
     event_id_ds = group["event_id"]
-    event_index = group["event_index"][...].astype(np.int64)
+    event_index = group["event_index"][...].astype(
+        ensure_not_unsigned(group["event_index"].dtype.type))
     if event_index[-1] < event_id_ds.len():
         event_index = np.append(
             event_index,
@@ -113,25 +128,14 @@ def _load_event_group(group: h5py.Group) -> DetectorData:
         event_index[-1] = event_id_ds.len()
 
     number_of_events = event_index[-1]
-    event_time_offset_ds = group["event_time_offset"]
-    event_time_offset = sc.Variable([_event_dimension],
-                                    values=event_time_offset_ds[...],
-                                    dtype=ensure_not_unsigned(
-                                        event_time_offset_ds.dtype.type),
-                                    unit=_get_units(event_time_offset_ds))
-    event_id = sc.Variable(
-        [_event_dimension], values=event_id_ds[...],
-        dtype=np.int32)  # assume int32 is safe for detector ids
+    event_time_offset = _load_dataset(group["event_time_offset"],
+                                      [_event_dimension])
+    event_id = _load_dataset(event_id_ds, [_event_dimension], dtype=np.int32)
 
     # Weights are not stored in NeXus, so use 1s
     weights = sc.Variable([_event_dimension],
                           values=np.ones(event_id.shape),
                           dtype=np.float32)
-    data = sc.DataArray(data=weights,
-                        coords={
-                            'tof': event_time_offset,
-                            _detector_dimension: event_id
-                        })
 
     detector_number_ds_name = "detector_number"
     if detector_number_ds_name in group.parent:
@@ -142,6 +146,15 @@ def _load_event_group(group: h5py.Group) -> DetectorData:
         # ids we have a events for (pixels with no recorded events
         # will not have a bin)
         detector_ids = np.unique(event_id.values)
+
+    data_dict = {
+        "data": weights,
+        "coords": {
+            "tof": event_time_offset,
+            _detector_dimension: event_id
+        }
+    }
+    data = sc.detail.move_to_data_array(**data_dict)
 
     detector_group = group.parent
     pixel_positions = None
