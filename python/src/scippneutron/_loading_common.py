@@ -46,16 +46,15 @@ def load_dataset(dataset: h5py.Dataset,
     """
     if dtype is None:
         dtype = ensure_not_unsigned(dataset.dtype.type)
-    units = _get_units(dataset)
     variable = sc.empty(dims=dimensions,
                         shape=dataset.shape,
                         dtype=dtype,
-                        unit=units)
+                        unit=get_units(dataset))
     dataset.read_direct(variable.values)
     return variable
 
 
-def _get_units(dataset: h5py.Dataset) -> str:
+def get_units(dataset: h5py.Dataset) -> str:
     try:
         units = dataset.attrs["units"]
     except (AttributeError, KeyError):
