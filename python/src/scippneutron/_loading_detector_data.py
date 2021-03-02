@@ -133,9 +133,9 @@ def _load_event_group(group: h5py.Group) -> DetectorData:
     event_id = _load_dataset(event_id_ds, [_event_dimension], dtype=np.int32)
 
     # Weights are not stored in NeXus, so use 1s
-    weights = sc.Variable([_event_dimension],
-                          values=np.ones(event_id.shape),
-                          dtype=np.float32)
+    weights = sc.ones(dims=[_event_dimension],
+                      shape=event_id.shape,
+                      dtype=np.float32)
 
     detector_number_ds_name = "detector_number"
     if detector_number_ds_name in group.parent:
