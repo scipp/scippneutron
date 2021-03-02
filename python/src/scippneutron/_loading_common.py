@@ -37,6 +37,13 @@ def ensure_not_unsigned(dataset_type: Any):
 def load_dataset(dataset: h5py.Dataset,
                  dimensions: List[str],
                  dtype: Optional[Any] = None) -> sc.Variable:
+    """
+    Load an HDF5 dataset into a Scipp Variable
+    :param dataset: The dataset to load
+    :param dimensions: Dimensions for the output Variable
+    :param dtype: Cast to this dtype during load,
+      otherwise retain dataset dtype
+    """
     if dtype is None:
         dtype = ensure_not_unsigned(dataset.dtype.type)
     units = _get_units(dataset)
