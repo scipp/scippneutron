@@ -15,6 +15,8 @@ class MantidScippComparison(ABC):
         stop = time.time()
         return result, (stop - start) * sc.Unit('s')
 
+    # TODO this will be updated with a generic scipp
+    # dedicated function supporting fuzzy comparisons
     def _fuzzy_compare(self, a, b, tol):
         same_data = sc.all(sc.is_approx(a.data, b.data, tol)).value
         if not len(a.meta) == len(b.meta):
