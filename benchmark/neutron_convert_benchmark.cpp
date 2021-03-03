@@ -47,7 +47,8 @@ static void BM_neutron_convert(benchmark::State &state, const Dim targetDim) {
     state.PauseTiming();
     Dataset data = dense;
     state.ResumeTiming();
-    data = neutron::convert(std::move(data), Dim::Tof, targetDim);
+    data = neutron::convert(std::move(data), Dim::Tof, targetDim,
+                            neutron::ConvertMode::Scatter);
     state.PauseTiming();
     data = Dataset();
     state.ResumeTiming();
@@ -88,7 +89,8 @@ static void BM_neutron_convert_events(benchmark::State &state,
     state.PauseTiming();
     Dataset data = events;
     state.ResumeTiming();
-    data = neutron::convert(std::move(data), Dim::Tof, targetDim);
+    data = neutron::convert(std::move(data), Dim::Tof, targetDim,
+                            neutron::ConvertMode::Scatter);
     state.PauseTiming();
     data = Dataset();
     state.ResumeTiming();
