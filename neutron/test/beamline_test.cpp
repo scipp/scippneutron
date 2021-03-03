@@ -23,9 +23,9 @@ Dataset makeDatasetWithBeamline() {
   components.setData("position", makeVariable<Eigen::Vector3d>(
                                      Dims{Dim::Row}, Shape{2}, units::m,
                                      Values{source_pos, sample_pos}));
-  beamline.setCoord(Dim("source-position"), makeVariable<Eigen::Vector3d>(
+  beamline.setCoord(Dim("source_position"), makeVariable<Eigen::Vector3d>(
                                                 units::m, Values{source_pos}));
-  beamline.setCoord(Dim("sample-position"), makeVariable<Eigen::Vector3d>(
+  beamline.setCoord(Dim("sample_position"), makeVariable<Eigen::Vector3d>(
                                                 units::m, Values{sample_pos}));
   // TODO Need fuzzy comparison for variables to write a convenient test with
   // detectors away from the axes.
@@ -43,41 +43,46 @@ protected:
 };
 
 TEST_F(BeamlineTest, basics) {
-  ASSERT_EQ(source_position(dataset),
+  ASSERT_EQ(source_position(dataset.meta()),
             makeVariable<Eigen::Vector3d>(Dims(), Shape(), units::m,
                                           Values{source_pos}));
-  ASSERT_EQ(sample_position(dataset),
+  ASSERT_EQ(sample_position(dataset.meta()),
             makeVariable<Eigen::Vector3d>(Dims(), Shape(), units::m,
                                           Values{sample_pos}));
-  ASSERT_EQ(l1(dataset),
+  ASSERT_EQ(l1(dataset.meta()),
             makeVariable<double>(Dims(), Shape(), units::m, Values{10.0}));
 }
 
 TEST_F(BeamlineTest, l2) {
-  ASSERT_EQ(l2(dataset), makeVariable<double>(Dims{Dim::Spectrum}, Shape{2},
-                                              units::m, Values{1.0, 1.0}));
+  ASSERT_EQ(l2(dataset.meta()),
+            makeVariable<double>(Dims{Dim::Spectrum}, Shape{2}, units::m,
+                                 Values{1.0, 1.0}));
 }
 
 TEST_F(BeamlineTest, flight_path_length) {
-  ASSERT_EQ(flight_path_length(dataset), l1(dataset) + l2(dataset));
+  ASSERT_EQ(flight_path_length(dataset.meta(), ConvertMode::Scatter),
+            l1(dataset.meta()) + l2(dataset.meta()));
+  ASSERT_EQ(flight_path_length(dataset.meta(), ConvertMode::NoScatter),
+            norm(source_position(dataset.meta()) - position(dataset.meta())));
 }
 
 template <class T> constexpr T pi = T(3.1415926535897932385L);
 
 TEST_F(BeamlineTest, scattering_angle) {
-  ASSERT_EQ(two_theta(dataset),
+  ASSERT_EQ(two_theta(dataset.meta()),
             makeVariable<double>(Dims{Dim::Spectrum}, Shape{2}, units::rad,
                                  Values{pi<double> / 2, pi<double> / 2}));
-  ASSERT_EQ(scattering_angle(dataset), 0.5 * units::one * two_theta(dataset));
+  ASSERT_EQ(scattering_angle(dataset.meta()),
+            0.5 * units::one * two_theta(dataset.meta()));
 }
 
-TEST_F(BeamlineTest, no_sample) {
+TEST_F(BeamlineTest, no_scatter) {
   Dataset d(dataset);
-  d.coords().erase(Dim("sample-position"));
-  ASSERT_THROW(l1(d), except::NotFoundError);
-  ASSERT_THROW(l2(d), except::NotFoundError);
-  ASSERT_THROW(scattering_angle(d), except::NotFoundError);
-  ASSERT_EQ(flight_path_length(d),
+  d.coords().erase(Dim("sample_position"));
+  ASSERT_THROW(l1(d.meta()), except::NotFoundError);
+  ASSERT_THROW(l2(d.meta()), except::NotFoundError);
+  ASSERT_THROW(scattering_angle(d.meta()), except::NotFoundError);
+  ASSERT_EQ(flight_path_length(d.meta(), ConvertMode::NoScatter),
             makeVariable<double>(
                 Dims{Dim::Spectrum}, Shape{2}, units::m,
                 Values{(Eigen::Vector3d{1.0, 0.0, 0.01} - source_pos).norm(),

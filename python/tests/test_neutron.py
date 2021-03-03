@@ -26,10 +26,10 @@ def make_dataset_with_beamline():
     d.coords['position'].values[2] = [0, 0, 1]
     d.coords['position'].values[3] = [-1, 0, 0]
 
-    d.coords['source-position'] = sc.Variable(value=np.array([0, 0, -10]),
+    d.coords['source_position'] = sc.Variable(value=np.array([0, 0, -10]),
                                               dtype=sc.dtype.vector_3_float64,
                                               unit=sc.units.m)
-    d.coords['sample-position'] = sc.Variable(value=np.array([0, 0, 0]),
+    d.coords['sample_position'] = sc.Variable(value=np.array([0, 0, 0]),
                                               dtype=sc.dtype.vector_3_float64,
                                               unit=sc.units.m)
     return d
@@ -37,15 +37,15 @@ def make_dataset_with_beamline():
 
 def test_neutron_convert():
     d = make_dataset_with_beamline()
-    dspacing = scn.convert(d, 'tof', 'd-spacing')
+    dspacing = scn.convert(d, 'tof', 'dspacing', scatter=True)
     # Detailed testing done on the C++ side
-    assert dspacing.coords['d-spacing'].unit == sc.units.angstrom
+    assert dspacing.coords['dspacing'].unit == sc.units.angstrom
 
 
 def test_neutron_convert_out_arg():
     d = make_dataset_with_beamline()
-    dspacing = scn.convert(d, 'tof', 'd-spacing', out=d)
-    assert dspacing.coords['d-spacing'].unit == sc.units.angstrom
+    dspacing = scn.convert(d, 'tof', 'dspacing', scatter=True, out=d)
+    assert dspacing.coords['dspacing'].unit == sc.units.angstrom
     assert dspacing is d
 
 

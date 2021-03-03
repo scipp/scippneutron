@@ -9,160 +9,70 @@
 
 #include "scipp/neutron/beamline.h"
 
-using namespace scipp::variable;
-using namespace scipp::dataset;
+using namespace scipp;
 
 namespace scipp::neutron {
 
-namespace beamline_impl {
-
-template <class T> static auto position(const T &d) {
-  return d.meta()[Dim::Position];
+VariableConstView position(const dataset::CoordsConstView &meta) {
+  return meta[Dim::Position];
 }
 
-template <class T> static auto source_position(const T &d) {
-  return d.meta()[Dim("source-position")];
+VariableConstView source_position(const dataset::CoordsConstView &meta) {
+  return meta[Dim("source_position")];
 }
 
-template <class T> static auto sample_position(const T &d) {
-  return d.meta()[Dim("sample-position")];
+VariableConstView sample_position(const dataset::CoordsConstView &meta) {
+  return meta[Dim("sample_position")];
 }
 
-template <class T> static Variable flight_path_length(const T &d) {
-  // If there is no sample this returns the straight distance from the source,
-  // as required, e.g., for monitors.
-  if (d.meta().contains(Dim("sample-position")))
-    return l1(d) + l2(d);
+Variable flight_path_length(const dataset::CoordsConstView &meta,
+                            const ConvertMode scatter) {
+  // If there is not scattering this returns the straight distance from the
+  // source, as required, e.g., for monitors or imaging.
+  if (scatter == ConvertMode::Scatter)
+    return l1(meta) + l2(meta);
   else
-    return norm(position(d) - source_position(d));
+    return norm(position(meta) - source_position(meta));
 }
 
-template <class T> static Variable l1(const T &d) {
-  return norm(sample_position(d) - source_position(d));
+Variable l1(const dataset::CoordsConstView &meta) {
+  return norm(sample_position(meta) - source_position(meta));
 }
 
-template <class T> static Variable l2(const T &d) {
+Variable l2(const dataset::CoordsConstView &meta) {
   // Use transform to avoid temporaries. For certain unit conversions this can
   // cause a speedup >50%. Short version would be:
-  //   return norm(position(d) - sample_position(d));
-  return transform<core::pair_self_t<Eigen::Vector3d>>(
-      position(d), sample_position(d),
+  //   return norm(position(meta) - sample_position(meta));
+  return variable::transform<core::pair_self_t<Eigen::Vector3d>>(
+      position(meta), sample_position(meta),
       overloaded{
           [](const auto &x, const auto &y) { return (x - y).norm(); },
           [](const units::Unit &x, const units::Unit &y) { return x - y; }});
 }
 
-template <class T> static Variable scattering_angle(const T &d) {
-  return 0.5 * units::one * two_theta(d);
+Variable scattering_angle(const dataset::CoordsConstView &meta) {
+  return 0.5 * units::one * two_theta(meta);
 }
 
-template <class T> static Variable two_theta(const T &d) {
-  auto beam = sample_position(d) - source_position(d);
+Variable two_theta(const dataset::CoordsConstView &meta) {
+  auto beam = sample_position(meta) - source_position(meta);
   const auto l1 = norm(beam);
   beam /= l1;
-  auto scattered = position(d) - sample_position(d);
+  auto scattered = position(meta) - sample_position(meta);
   const auto l2 = norm(scattered);
   scattered /= l2;
 
   return acos(dot(beam, scattered));
 }
 
-template <class T> static VariableConstView incident_energy(const T &d) {
-  return d.meta().contains(Dim::IncidentEnergy) ? d.meta()[Dim::IncidentEnergy]
-                                                : VariableConstView{};
+VariableConstView incident_energy(const dataset::CoordsConstView &meta) {
+  return meta.contains(Dim::IncidentEnergy) ? meta[Dim::IncidentEnergy]
+                                            : VariableConstView{};
 }
 
-template <class T> static VariableConstView final_energy(const T &d) {
-  return d.meta().contains(Dim::FinalEnergy) ? d.meta()[Dim::FinalEnergy]
-                                             : VariableConstView{};
-}
-
-} // namespace beamline_impl
-
-variable::VariableConstView position(const dataset::DatasetConstView &d) {
-  return beamline_impl::position(d);
-}
-variable::VariableConstView
-source_position(const dataset::DatasetConstView &d) {
-  return beamline_impl::source_position(d);
-}
-variable::VariableConstView
-sample_position(const dataset::DatasetConstView &d) {
-  return beamline_impl::sample_position(d);
-}
-variable::VariableView position(const dataset::DatasetView &d) {
-  return beamline_impl::position(d);
-}
-variable::VariableView source_position(const dataset::DatasetView &d) {
-  return beamline_impl::source_position(d);
-}
-variable::VariableView sample_position(const dataset::DatasetView &d) {
-  return beamline_impl::sample_position(d);
-}
-variable::Variable flight_path_length(const dataset::DatasetConstView &d) {
-  return beamline_impl::flight_path_length(d);
-}
-variable::Variable l1(const dataset::DatasetConstView &d) {
-  return beamline_impl::l1(d);
-}
-variable::Variable l2(const dataset::DatasetConstView &d) {
-  return beamline_impl::l2(d);
-}
-variable::Variable scattering_angle(const dataset::DatasetConstView &d) {
-  return beamline_impl::scattering_angle(d);
-}
-variable::Variable two_theta(const dataset::DatasetConstView &d) {
-  return beamline_impl::two_theta(d);
-}
-variable::VariableConstView
-incident_energy(const dataset::DatasetConstView &d) {
-  return beamline_impl::incident_energy(d);
-}
-variable::VariableConstView final_energy(const dataset::DatasetConstView &d) {
-  return beamline_impl::final_energy(d);
-}
-
-variable::VariableConstView position(const dataset::DataArrayConstView &d) {
-  return beamline_impl::position(d);
-}
-variable::VariableConstView
-source_position(const dataset::DataArrayConstView &d) {
-  return beamline_impl::source_position(d);
-}
-variable::VariableConstView
-sample_position(const dataset::DataArrayConstView &d) {
-  return beamline_impl::sample_position(d);
-}
-variable::VariableView position(const dataset::DataArrayView &d) {
-  return beamline_impl::position(d);
-}
-variable::VariableView source_position(const dataset::DataArrayView &d) {
-  return beamline_impl::source_position(d);
-}
-variable::VariableView sample_position(const dataset::DataArrayView &d) {
-  return beamline_impl::sample_position(d);
-}
-variable::Variable flight_path_length(const dataset::DataArrayConstView &d) {
-  return beamline_impl::flight_path_length(d);
-}
-variable::Variable l1(const dataset::DataArrayConstView &d) {
-  return beamline_impl::l1(d);
-}
-variable::Variable l2(const dataset::DataArrayConstView &d) {
-  return beamline_impl::l2(d);
-}
-variable::Variable scattering_angle(const dataset::DataArrayConstView &d) {
-  return beamline_impl::scattering_angle(d);
-}
-variable::Variable two_theta(const dataset::DataArrayConstView &d) {
-  return beamline_impl::two_theta(d);
-}
-variable::VariableConstView
-incident_energy(const dataset::DataArrayConstView &d) {
-  return beamline_impl::incident_energy(d);
-}
-variable::VariableConstView final_energy(const dataset::DataArrayConstView &d) {
-  return beamline_impl::final_energy(d);
+VariableConstView final_energy(const dataset::CoordsConstView &meta) {
+  return meta.contains(Dim::FinalEnergy) ? meta[Dim::FinalEnergy]
+                                         : VariableConstView{};
 }
 
 } // namespace scipp::neutron

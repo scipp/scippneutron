@@ -20,9 +20,9 @@ Dataset makeBeamline() {
   Dataset tof;
   static const auto source_pos = Eigen::Vector3d{0.0, 0.0, -10.0};
   static const auto sample_pos = Eigen::Vector3d{0.0, 0.0, 0.0};
-  tof.setCoord(Dim("source-position"),
+  tof.setCoord(Dim("source_position"),
                makeVariable<Eigen::Vector3d>(units::m, Values{source_pos}));
-  tof.setCoord(Dim("sample-position"),
+  tof.setCoord(Dim("sample_position"),
                makeVariable<Eigen::Vector3d>(units::m, Values{sample_pos}));
 
   tof.setCoord(Dim("position"), makeVariable<Eigen::Vector3d>(
@@ -71,10 +71,11 @@ INSTANTIATE_TEST_SUITE_P(SingleEntryDataset, ConvertTest,
 TEST_P(ConvertTest, DataArray_from_tof) {
   Dataset tof = GetParam();
   for (const auto &dim : {Dim::DSpacing, Dim::Wavelength, Dim::Energy}) {
-    const auto expected = convert(tof, Dim::Tof, dim);
+    const auto expected = convert(tof, Dim::Tof, dim, ConvertMode::Scatter);
     Dataset result;
     for (const auto &data : tof)
-      result.setData(data.name(), convert(data, Dim::Tof, dim));
+      result.setData(data.name(),
+                     convert(data, Dim::Tof, dim, ConvertMode::Scatter));
     for (const auto &data : result)
       EXPECT_EQ(data, expected[data.name()]);
   }
@@ -83,11 +84,12 @@ TEST_P(ConvertTest, DataArray_from_tof) {
 TEST_P(ConvertTest, DataArray_to_tof) {
   Dataset tof = GetParam();
   for (const auto &dim : {Dim::DSpacing, Dim::Wavelength, Dim::Energy}) {
-    const auto input = convert(tof, Dim::Tof, dim);
-    const auto expected = convert(input, dim, Dim::Tof);
+    const auto input = convert(tof, Dim::Tof, dim, ConvertMode::Scatter);
+    const auto expected = convert(input, dim, Dim::Tof, ConvertMode::Scatter);
     Dataset result;
     for (const auto &data : input)
-      result.setData(data.name(), convert(data, dim, Dim::Tof));
+      result.setData(data.name(),
+                     convert(data, dim, Dim::Tof, ConvertMode::Scatter));
     for (const auto &data : result)
       EXPECT_EQ(data, expected[data.name()]);
   }
@@ -96,12 +98,13 @@ TEST_P(ConvertTest, DataArray_to_tof) {
 TEST_P(ConvertTest, DataArray_non_tof) {
   Dataset tof = GetParam();
   for (const auto &from : {Dim::DSpacing, Dim::Wavelength, Dim::Energy}) {
-    const auto input = convert(tof, Dim::Tof, from);
+    const auto input = convert(tof, Dim::Tof, from, ConvertMode::Scatter);
     for (const auto &to : {Dim::DSpacing, Dim::Wavelength, Dim::Energy}) {
-      const auto expected = convert(tof, Dim::Tof, to);
+      const auto expected = convert(tof, Dim::Tof, to, ConvertMode::Scatter);
       Dataset result;
       for (const auto &data : input)
-        result.setData(data.name(), convert(data, from, to));
+        result.setData(data.name(),
+                       convert(data, from, to, ConvertMode::Scatter));
       for (const auto &data : result)
         EXPECT_TRUE(all(is_approx(data.coords()[to], expected.coords()[to],
                                   1e-9 * expected.coords()[to].unit()))
@@ -117,8 +120,10 @@ TEST_P(ConvertTest, convert_slice) {
   // data handling implementation in `convert` is current based on dataset
   // coords, but slicing converts this into attrs of *items*.
   for (const auto &dim : {Dim::DSpacing, Dim::Wavelength, Dim::Energy}) {
-    EXPECT_EQ(convert(tof["counts"].slice(slice), Dim::Tof, dim),
-              convert(tof["counts"], Dim::Tof, dim).slice(slice));
+    EXPECT_EQ(convert(tof["counts"].slice(slice), Dim::Tof, dim,
+                      ConvertMode::Scatter),
+              convert(tof["counts"], Dim::Tof, dim, ConvertMode::Scatter)
+                  .slice(slice));
   }
 }
 
@@ -126,20 +131,36 @@ TEST_P(ConvertTest, fail_count_density) {
   const Dataset tof = GetParam();
   for (const Dim dim : {Dim::DSpacing, Dim::Wavelength, Dim::Energy}) {
     Dataset a = tof;
-    Dataset b = convert(a, Dim::Tof, dim);
-    EXPECT_NO_THROW(convert(a, Dim::Tof, dim));
-    EXPECT_NO_THROW(convert(b, dim, Dim::Tof));
+    Dataset b = convert(a, Dim::Tof, dim, ConvertMode::Scatter);
+    EXPECT_NO_THROW(convert(a, Dim::Tof, dim, ConvertMode::Scatter));
+    EXPECT_NO_THROW(convert(b, dim, Dim::Tof, ConvertMode::Scatter));
     a.setData("", makeCountDensityData(a.coords()[Dim::Tof].unit()));
     b.setData("", makeCountDensityData(b.coords()[dim].unit()));
-    EXPECT_THROW(convert(a, Dim::Tof, dim), except::UnitError);
-    EXPECT_THROW(convert(b, dim, Dim::Tof), except::UnitError);
+    EXPECT_THROW(convert(a, Dim::Tof, dim, ConvertMode::Scatter),
+                 except::UnitError);
+    EXPECT_THROW(convert(b, dim, Dim::Tof, ConvertMode::Scatter),
+                 except::UnitError);
   }
+}
+
+TEST_P(ConvertTest, scattering_conversions_fail_with_NoScatter_mode) {
+  Dataset tof = GetParam();
+  EXPECT_THROW(convert(tof, Dim::Tof, Dim::DSpacing, ConvertMode::NoScatter),
+               std::runtime_error);
+  EXPECT_NO_THROW(convert(tof, Dim::Tof, Dim::DSpacing, ConvertMode::Scatter));
+  const auto wavelength =
+      convert(tof, Dim::Tof, Dim::Wavelength, ConvertMode::Scatter);
+  EXPECT_THROW(
+      convert(wavelength, Dim::Wavelength, Dim::Q, ConvertMode::NoScatter),
+      std::runtime_error);
+  EXPECT_NO_THROW(
+      convert(wavelength, Dim::Wavelength, Dim::Q, ConvertMode::Scatter));
 }
 
 TEST_P(ConvertTest, Tof_to_DSpacing) {
   Dataset tof = GetParam();
 
-  auto dspacing = convert(tof, Dim::Tof, Dim::DSpacing);
+  auto dspacing = convert(tof, Dim::Tof, Dim::DSpacing, ConvertMode::Scatter);
 
   ASSERT_FALSE(dspacing.coords().contains(Dim::Tof));
   ASSERT_TRUE(dspacing.coords().contains(Dim::DSpacing));
@@ -192,10 +213,10 @@ TEST_P(ConvertTest, Tof_to_DSpacing) {
             tof.coords()[Dim("position")]);
 
   ASSERT_FALSE(dspacing.coords().contains(Dim("position")));
-  ASSERT_EQ(dspacing.coords()[Dim("source-position")],
-            tof.coords()[Dim("source-position")]);
-  ASSERT_EQ(dspacing.coords()[Dim("sample-position")],
-            tof.coords()[Dim("sample-position")]);
+  ASSERT_EQ(dspacing.coords()[Dim("source_position")],
+            tof.coords()[Dim("source_position")]);
+  ASSERT_EQ(dspacing.coords()[Dim("sample_position")],
+            tof.coords()[Dim("sample_position")]);
 }
 
 TEST_P(ConvertTest, DSpacing_to_Tof) {
@@ -204,8 +225,10 @@ TEST_P(ConvertTest, DSpacing_to_Tof) {
    * original data. */
 
   const Dataset tof_original = GetParam();
-  const auto dspacing = convert(tof_original, Dim::Tof, Dim::DSpacing);
-  const auto tof = convert(dspacing, Dim::DSpacing, Dim::Tof);
+  const auto dspacing =
+      convert(tof_original, Dim::Tof, Dim::DSpacing, ConvertMode::Scatter);
+  const auto tof =
+      convert(dspacing, Dim::DSpacing, Dim::Tof, ConvertMode::Scatter);
 
   ASSERT_TRUE(tof.contains("counts"));
   /* Broadcasting is needed as conversion introduces the dependance on
@@ -217,16 +240,17 @@ TEST_P(ConvertTest, DSpacing_to_Tof) {
 
   ASSERT_EQ(tof.coords()[Dim("position")],
             tof_original.coords()[Dim("position")]);
-  ASSERT_EQ(tof.coords()[Dim("source-position")],
-            tof_original.coords()[Dim("source-position")]);
-  ASSERT_EQ(tof.coords()[Dim("sample-position")],
-            tof_original.coords()[Dim("sample-position")]);
+  ASSERT_EQ(tof.coords()[Dim("source_position")],
+            tof_original.coords()[Dim("source_position")]);
+  ASSERT_EQ(tof.coords()[Dim("sample_position")],
+            tof_original.coords()[Dim("sample_position")]);
 }
 
 TEST_P(ConvertTest, Tof_to_Wavelength) {
   Dataset tof = GetParam();
 
-  auto wavelength = convert(tof, Dim::Tof, Dim::Wavelength);
+  auto wavelength =
+      convert(tof, Dim::Tof, Dim::Wavelength, ConvertMode::Scatter);
 
   ASSERT_FALSE(wavelength.coords().contains(Dim::Tof));
   ASSERT_TRUE(wavelength.coords().contains(Dim::Wavelength));
@@ -265,7 +289,7 @@ TEST_P(ConvertTest, Tof_to_Wavelength) {
   EXPECT_TRUE(equals(data.values<double>(), {1, 2, 3, 4, 5, 6}));
   EXPECT_EQ(data.unit(), units::counts);
 
-  for (const auto &name : {"position", "source-position", "sample-position"})
+  for (const auto &name : {"position", "source_position", "sample_position"})
     ASSERT_EQ(wavelength.coords()[Dim(name)], tof.coords()[Dim(name)]);
 }
 
@@ -275,8 +299,10 @@ TEST_P(ConvertTest, Wavelength_to_Tof) {
   // original data.
 
   const Dataset tof_original = GetParam();
-  const auto wavelength = convert(tof_original, Dim::Tof, Dim::Wavelength);
-  const auto tof = convert(wavelength, Dim::Wavelength, Dim::Tof);
+  const auto wavelength =
+      convert(tof_original, Dim::Tof, Dim::Wavelength, ConvertMode::Scatter);
+  const auto tof =
+      convert(wavelength, Dim::Wavelength, Dim::Tof, ConvertMode::Scatter);
 
   ASSERT_TRUE(tof.contains("counts"));
   // Broadcasting is needed as conversion introduces the dependance on
@@ -287,16 +313,16 @@ TEST_P(ConvertTest, Wavelength_to_Tof) {
 
   ASSERT_EQ(tof.coords()[Dim("position")],
             tof_original.coords()[Dim("position")]);
-  ASSERT_EQ(tof.coords()[Dim("source-position")],
-            tof_original.coords()[Dim("source-position")]);
-  ASSERT_EQ(tof.coords()[Dim("sample-position")],
-            tof_original.coords()[Dim("sample-position")]);
+  ASSERT_EQ(tof.coords()[Dim("source_position")],
+            tof_original.coords()[Dim("source_position")]);
+  ASSERT_EQ(tof.coords()[Dim("sample_position")],
+            tof_original.coords()[Dim("sample_position")]);
 }
 
 TEST_P(ConvertTest, Tof_to_Energy_Elastic) {
   Dataset tof = GetParam();
 
-  auto energy = convert(tof, Dim::Tof, Dim::Energy);
+  auto energy = convert(tof, Dim::Tof, Dim::Energy, ConvertMode::Scatter);
 
   ASSERT_FALSE(energy.coords().contains(Dim::Tof));
   ASSERT_TRUE(energy.coords().contains(Dim::Energy));
@@ -356,7 +382,7 @@ TEST_P(ConvertTest, Tof_to_Energy_Elastic) {
   EXPECT_TRUE(equals(data.values<double>(), {1, 2, 3, 4, 5, 6}));
   EXPECT_EQ(data.unit(), units::counts);
 
-  for (const auto &name : {"position", "source-position", "sample-position"})
+  for (const auto &name : {"position", "source_position", "sample_position"})
     ASSERT_EQ(energy.coords()[Dim(name)], tof.coords()[Dim(name)]);
 }
 
@@ -364,13 +390,19 @@ TEST_P(ConvertTest, Tof_to_Energy_Elastic_fails_if_inelastic_params_present) {
   // Note these conversion fail only because they are not implemented. It should
   // definitely be possible to support this.
   Dataset tof = GetParam();
-  EXPECT_NO_THROW_DISCARD(convert(tof, Dim::Tof, Dim::Energy));
+  EXPECT_NO_THROW_DISCARD(
+      convert(tof, Dim::Tof, Dim::Energy, ConvertMode::Scatter));
   tof.coords().set(Dim::IncidentEnergy, 2.1 * units::meV);
-  EXPECT_THROW_DISCARD(convert(tof, Dim::Tof, Dim::Energy), std::runtime_error);
+  EXPECT_THROW_DISCARD(
+      convert(tof, Dim::Tof, Dim::Energy, ConvertMode::Scatter),
+      std::runtime_error);
   tof.coords().erase(Dim::IncidentEnergy);
-  EXPECT_NO_THROW_DISCARD(convert(tof, Dim::Tof, Dim::Energy));
+  EXPECT_NO_THROW_DISCARD(
+      convert(tof, Dim::Tof, Dim::Energy, ConvertMode::Scatter));
   tof.coords().set(Dim::FinalEnergy, 2.1 * units::meV);
-  EXPECT_THROW_DISCARD(convert(tof, Dim::Tof, Dim::Energy), std::runtime_error);
+  EXPECT_THROW_DISCARD(
+      convert(tof, Dim::Tof, Dim::Energy, ConvertMode::Scatter),
+      std::runtime_error);
 }
 
 TEST_P(ConvertTest, Energy_to_Tof_Elastic) {
@@ -379,8 +411,9 @@ TEST_P(ConvertTest, Energy_to_Tof_Elastic) {
    * the original data. */
 
   const Dataset tof_original = GetParam();
-  const auto energy = convert(tof_original, Dim::Tof, Dim::Energy);
-  const auto tof = convert(energy, Dim::Energy, Dim::Tof);
+  const auto energy =
+      convert(tof_original, Dim::Tof, Dim::Energy, ConvertMode::Scatter);
+  const auto tof = convert(energy, Dim::Energy, Dim::Tof, ConvertMode::Scatter);
 
   ASSERT_TRUE(tof.contains("counts"));
   /* Broadcasting is needed as conversion introduces the dependance on
@@ -392,19 +425,22 @@ TEST_P(ConvertTest, Energy_to_Tof_Elastic) {
 
   ASSERT_EQ(tof.coords()[Dim("position")],
             tof_original.coords()[Dim("position")]);
-  ASSERT_EQ(tof.coords()[Dim("source-position")],
-            tof_original.coords()[Dim("source-position")]);
-  ASSERT_EQ(tof.coords()[Dim("sample-position")],
-            tof_original.coords()[Dim("sample-position")]);
+  ASSERT_EQ(tof.coords()[Dim("source_position")],
+            tof_original.coords()[Dim("source_position")]);
+  ASSERT_EQ(tof.coords()[Dim("sample_position")],
+            tof_original.coords()[Dim("sample_position")]);
 }
 
 TEST_P(ConvertTest, Tof_to_EnergyTransfer) {
   Dataset tof = GetParam();
-  EXPECT_THROW_DISCARD(convert(tof, Dim::Tof, Dim::EnergyTransfer),
-                       std::runtime_error);
+  EXPECT_THROW_DISCARD(
+      convert(tof, Dim::Tof, Dim::EnergyTransfer, ConvertMode::Scatter),
+      std::runtime_error);
   tof.coords().set(Dim::IncidentEnergy, 35.0 * units::meV);
-  const auto direct = convert(tof, Dim::Tof, Dim::EnergyTransfer);
-  auto tof_direct = convert(direct, Dim::EnergyTransfer, Dim::Tof);
+  const auto direct =
+      convert(tof, Dim::Tof, Dim::EnergyTransfer, ConvertMode::Scatter);
+  auto tof_direct =
+      convert(direct, Dim::EnergyTransfer, Dim::Tof, ConvertMode::Scatter);
   ASSERT_TRUE(all(is_approx(tof_direct.coords()[Dim::Tof],
                             tof.coords()[Dim::Tof], 1e-11 * units::us))
                   .value<bool>());
@@ -412,11 +448,14 @@ TEST_P(ConvertTest, Tof_to_EnergyTransfer) {
   EXPECT_EQ(tof_direct, tof);
 
   tof.coords().set(Dim::FinalEnergy, 35.0 * units::meV);
-  EXPECT_THROW_DISCARD(convert(tof, Dim::Tof, Dim::EnergyTransfer),
-                       std::runtime_error);
+  EXPECT_THROW_DISCARD(
+      convert(tof, Dim::Tof, Dim::EnergyTransfer, ConvertMode::Scatter),
+      std::runtime_error);
   tof.coords().erase(Dim::IncidentEnergy);
-  const auto indirect = convert(tof, Dim::Tof, Dim::EnergyTransfer);
-  auto tof_indirect = convert(indirect, Dim::EnergyTransfer, Dim::Tof);
+  const auto indirect =
+      convert(tof, Dim::Tof, Dim::EnergyTransfer, ConvertMode::Scatter);
+  auto tof_indirect =
+      convert(indirect, Dim::EnergyTransfer, Dim::Tof, ConvertMode::Scatter);
   ASSERT_TRUE(all(is_approx(tof_indirect.coords()[Dim::Tof],
                             tof.coords()[Dim::Tof], 1e-12 * units::us))
                   .value<bool>());
@@ -433,10 +472,10 @@ TEST_P(ConvertTest, convert_with_factor_type_promotion) {
                makeVariable<float>(Dims{Dim::Tof}, Shape{4}, units::us,
                                    Values{4000, 5000, 6100, 7300}));
   for (auto &&d : {Dim::DSpacing, Dim::Wavelength, Dim::Energy}) {
-    auto res = convert(tof, Dim::Tof, d);
+    auto res = convert(tof, Dim::Tof, d, ConvertMode::Scatter);
     EXPECT_EQ(res.coords()[d].dtype(), core::dtype<float>);
 
-    res = convert(res, d, Dim::Tof);
+    res = convert(res, d, Dim::Tof, ConvertMode::Scatter);
     EXPECT_EQ(res.coords()[Dim::Tof].dtype(), core::dtype<float>);
   }
 }
@@ -450,7 +489,7 @@ TEST(ConvertBucketsTest, events_converted) {
   tof.coords().set(Dim::Tof, coord);
   tof.setData("bucketed", makeTofBucketedEvents());
   for (auto &&d : {Dim::DSpacing, Dim::Wavelength, Dim::Energy}) {
-    auto res = convert(tof, Dim::Tof, d);
+    auto res = convert(tof, Dim::Tof, d, ConvertMode::Scatter);
     auto values = res["bucketed"].values<bucket<DataArray>>();
     Variable expected(
         res.coords()[d].slice({Dim::Spectrum, 0}).slice({d, 0, 4}));

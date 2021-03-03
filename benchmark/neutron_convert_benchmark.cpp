@@ -14,10 +14,10 @@ using namespace scipp;
 auto make_beamline(const scipp::index size) {
   Dataset beamline;
 
-  beamline.setCoord(Dim("source-position"),
+  beamline.setCoord(Dim("source_position"),
                     makeVariable<Eigen::Vector3d>(
                         units::m, Values{Eigen::Vector3d{0.0, 0.0, -10.0}}));
-  beamline.setCoord(Dim("sample-position"),
+  beamline.setCoord(Dim("sample_position"),
                     makeVariable<Eigen::Vector3d>(
                         units::m, Values{Eigen::Vector3d{0.0, 0.0, 0.0}}));
 
@@ -47,7 +47,8 @@ static void BM_neutron_convert(benchmark::State &state, const Dim targetDim) {
     state.PauseTiming();
     Dataset data = dense;
     state.ResumeTiming();
-    data = neutron::convert(std::move(data), Dim::Tof, targetDim);
+    data = neutron::convert(std::move(data), Dim::Tof, targetDim,
+                            neutron::ConvertMode::Scatter);
     state.PauseTiming();
     data = Dataset();
     state.ResumeTiming();
@@ -88,7 +89,8 @@ static void BM_neutron_convert_events(benchmark::State &state,
     state.PauseTiming();
     Dataset data = events;
     state.ResumeTiming();
-    data = neutron::convert(std::move(data), Dim::Tof, targetDim);
+    data = neutron::convert(std::move(data), Dim::Tof, targetDim,
+                            neutron::ConvertMode::Scatter);
     state.PauseTiming();
     data = Dataset();
     state.ResumeTiming();
