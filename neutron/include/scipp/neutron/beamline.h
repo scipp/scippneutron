@@ -11,54 +11,22 @@
 
 namespace scipp::neutron {
 
-SCIPPNEUTRON_EXPORT variable::VariableConstView
-position(const dataset::DatasetConstView &d);
-SCIPPNEUTRON_EXPORT variable::VariableConstView
-source_position(const dataset::DatasetConstView &d);
-SCIPPNEUTRON_EXPORT variable::VariableConstView
-sample_position(const dataset::DatasetConstView &d);
-SCIPPNEUTRON_EXPORT variable::VariableView
-position(const dataset::DatasetView &d);
-SCIPPNEUTRON_EXPORT variable::VariableView
-source_position(const dataset::DatasetView &d);
-SCIPPNEUTRON_EXPORT variable::VariableView
-sample_position(const dataset::DatasetView &d);
-SCIPPNEUTRON_EXPORT variable::Variable
-flight_path_length(const dataset::DatasetConstView &d);
-SCIPPNEUTRON_EXPORT variable::Variable l1(const dataset::DatasetConstView &d);
-SCIPPNEUTRON_EXPORT variable::Variable l2(const dataset::DatasetConstView &d);
-SCIPPNEUTRON_EXPORT variable::Variable
-scattering_angle(const dataset::DatasetConstView &d);
-SCIPPNEUTRON_EXPORT variable::Variable
-two_theta(const dataset::DatasetConstView &d);
-SCIPPNEUTRON_EXPORT variable::VariableConstView
-incident_energy(const dataset::DatasetConstView &d);
-SCIPPNEUTRON_EXPORT variable::VariableConstView
-final_energy(const dataset::DatasetConstView &d);
-
-SCIPPNEUTRON_EXPORT variable::VariableConstView
-position(const dataset::DataArrayConstView &d);
-SCIPPNEUTRON_EXPORT variable::VariableConstView
-source_position(const dataset::DataArrayConstView &d);
-SCIPPNEUTRON_EXPORT variable::VariableConstView
-sample_position(const dataset::DataArrayConstView &d);
-SCIPPNEUTRON_EXPORT variable::VariableView
-position(const dataset::DataArrayView &d);
-SCIPPNEUTRON_EXPORT variable::VariableView
-source_position(const dataset::DataArrayView &d);
-SCIPPNEUTRON_EXPORT variable::VariableView
-sample_position(const dataset::DataArrayView &d);
-SCIPPNEUTRON_EXPORT variable::Variable
-flight_path_length(const dataset::DataArrayConstView &d);
-SCIPPNEUTRON_EXPORT variable::Variable l1(const dataset::DataArrayConstView &d);
-SCIPPNEUTRON_EXPORT variable::Variable l2(const dataset::DataArrayConstView &d);
-SCIPPNEUTRON_EXPORT variable::Variable
-scattering_angle(const dataset::DataArrayConstView &d);
-SCIPPNEUTRON_EXPORT variable::Variable
-two_theta(const dataset::DataArrayConstView &d);
-SCIPPNEUTRON_EXPORT variable::VariableConstView
-incident_energy(const dataset::DataArrayConstView &d);
-SCIPPNEUTRON_EXPORT variable::VariableConstView
-final_energy(const dataset::DataArrayConstView &d);
+SCIPPNEUTRON_EXPORT VariableConstView
+position(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT VariableConstView
+source_position(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT VariableConstView
+sample_position(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT Variable
+flight_path_length(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT Variable l1(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT Variable l2(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT Variable
+scattering_angle(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT Variable two_theta(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT VariableConstView
+incident_energy(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT VariableConstView
+final_energy(const dataset::CoordsConstView &meta);
 
 } // namespace scipp::neutron

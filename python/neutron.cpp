@@ -12,35 +12,35 @@ using namespace scipp::neutron;
 
 namespace py = pybind11;
 
-template <class T> void bind_positions(py::module &m) {
-  m.def("position", py::overload_cast<T>(position), R"(
+template <class T> void bind_beamline(py::module &m) {
+  using ConstView = const typename T::const_view_type &;
+  m.def(
+      "position", [](ConstView self) { return position(self.meta()); }, R"(
     Extract the detector pixel positions from a data array or a dataset.
 
     :return: A variable containing the detector pixel positions.
     :rtype: Variable)");
 
-  m.def("source_position", py::overload_cast<T>(source_position), R"(
+  m.def(
+      "source_position",
+      [](ConstView self) { return source_position(self.meta()); }, R"(
     Extract the neutron source position from a data array or a dataset.
 
     :return: A scalar variable containing the source position.
     :rtype: Variable)");
 
-  m.def("sample_position", py::overload_cast<T>(sample_position), R"(
+  m.def(
+      "sample_position",
+      [](ConstView self) { return sample_position(self.meta()); }, R"(
     Extract the sample position from a data array or a dataset.
 
     :return: A scalar variable containing the sample position.
     :rtype: Variable)");
-}
 
-template <class T> void bind_beamline(py::module &m) {
-  using ConstView = const typename T::const_view_type &;
-  using View = const typename T::view_type &;
-
-  bind_positions<View>(m);
-  bind_positions<ConstView>(m);
-
-  m.def("flight_path_length", py::overload_cast<ConstView>(flight_path_length),
-        R"(
+  m.def(
+      "flight_path_length",
+      [](ConstView self) { return flight_path_length(self.meta()); },
+      R"(
     Compute the length of the total flight path from a data array or a dataset.
 
     If a sample position is found this is the sum of `l1` and `l2`, otherwise the distance from the source.
@@ -48,25 +48,30 @@ template <class T> void bind_beamline(py::module &m) {
     :return: A scalar variable containing the total length of the flight path.
     :rtype: Variable)");
 
-  m.def("l1", py::overload_cast<ConstView>(l1), R"(
+  m.def(
+      "l1", [](ConstView self) { return l1(self.meta()); }, R"(
     Compute L1, the length of the primary flight path (distance between neutron source and sample) from a data array or a dataset.
 
     :return: A scalar variable containing L1.
     :rtype: Variable)");
 
-  m.def("l2", py::overload_cast<ConstView>(l2), R"(
+  m.def(
+      "l2", [](ConstView self) { return l2(self.meta()); }, R"(
     Compute L2, the length of the secondary flight paths (distances between sample and detector pixels) from a data array or a dataset.
 
     :return: A variable containing L2 for all detector pixels.
     :rtype: Variable)");
 
-  m.def("scattering_angle", py::overload_cast<ConstView>(scattering_angle), R"(
+  m.def(
+      "scattering_angle",
+      [](ConstView self) { return scattering_angle(self.meta()); }, R"(
     Compute :math:`\theta`, the scattering angle in Bragg's law, from a data array or a dataset.
 
     :return: A variable containing :math:`\theta` for all detector pixels.
     :rtype: Variable)");
 
-  m.def("two_theta", py::overload_cast<ConstView>(two_theta), R"(
+  m.def(
+      "two_theta", [](ConstView self) { return two_theta(self.meta()); }, R"(
     Compute :math:`2\theta`, twice the scattering angle in Bragg's law, from a data array or a dataset.
 
     :return: A variable containing :math:`2\theta` for all detector pixels.

@@ -12,6 +12,7 @@ using namespace scipp::neutron;
 namespace mock {
 
 struct Dummy {
+  Dummy meta() const { return *this; }
   Variable ei;
   Variable ef;
 };

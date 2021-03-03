@@ -41,13 +41,13 @@ constexpr auto tof_to_wavelength_physical_constants =
     llnl::units::constants::mn;
 
 template <class T> auto tof_to_dspacing(const T &d) {
-  const auto &sourcePos = source_position(d);
-  const auto &samplePos = sample_position(d);
+  const auto &sourcePos = source_position(d.meta());
+  const auto &samplePos = sample_position(d.meta());
 
   auto beam = samplePos - sourcePos;
   const auto l1 = norm(beam);
   beam /= l1;
-  auto scattered = position(d) - samplePos;
+  auto scattered = position(d.meta()) - samplePos;
   const auto l2 = norm(scattered);
   scattered /= l2;
 
@@ -62,16 +62,17 @@ template <class T> auto tof_to_dspacing(const T &d) {
 }
 
 template <class T> static auto tof_to_wavelength(const T &d) {
-  return Variable(tof_to_wavelength_physical_constants) / flight_path_length(d);
+  return Variable(tof_to_wavelength_physical_constants) /
+         flight_path_length(d.meta());
 }
 
 template <class T> auto tof_to_energy(const T &d) {
-  if (incident_energy(d) || final_energy(d))
+  if (incident_energy(d.meta()) || final_energy(d.meta()))
     throw std::runtime_error(
         "Data contains coords for incident or final energy. Conversion to "
         "energy for inelastic data not implemented yet.");
   // l_total = l1 + l2
-  auto conversionFactor = flight_path_length(d);
+  auto conversionFactor = flight_path_length(d.meta());
   // l_total^2
   conversionFactor *= conversionFactor;
   conversionFactor *= Variable(tof_to_energy_physical_constants);
@@ -79,8 +80,8 @@ template <class T> auto tof_to_energy(const T &d) {
 }
 
 template <class T> auto tof_to_energy_transfer(const T &d) {
-  const auto Ei = incident_energy(d);
-  const auto Ef = final_energy(d);
+  const auto Ei = incident_energy(d.meta());
+  const auto Ef = final_energy(d.meta());
   if (Ei && Ef)
     throw std::runtime_error(
         "Data contains coords for incident *and* final energy, cannot have "
@@ -90,10 +91,10 @@ template <class T> auto tof_to_energy_transfer(const T &d) {
         "Data contains neither coords for incident nor for final energy, this "
         "does not appear to be inelastic-scattering data, cannot convert to "
         "energy transfer.");
-  auto l1_square = l1(d);
+  auto l1_square = l1(d.meta());
   l1_square *= l1_square;
   l1_square *= Variable(tof_to_energy_physical_constants);
-  auto l2_square = l2(d);
+  auto l2_square = l2(d.meta());
   l2_square *= l2_square;
   l2_square *= Variable(tof_to_energy_physical_constants);
   if (Ei) { // Direct-inelastic.
@@ -104,7 +105,8 @@ template <class T> auto tof_to_energy_transfer(const T &d) {
 }
 
 template <class T> auto wavelength_to_q(const T &d) {
-  return sin(scattering_angle(d)) * (4.0 * scipp::pi<double> * units::one);
+  return sin(scattering_angle(d.meta())) *
+         (4.0 * scipp::pi<double> * units::one);
 }
 
 } // namespace scipp::neutron::constants
