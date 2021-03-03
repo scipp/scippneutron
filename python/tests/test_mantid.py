@@ -159,22 +159,22 @@ class TestMantidConversion(unittest.TestCase):
         e_2006 = 1.602176487
         e_2018 = 1.602176634
         scale = (m_n_2006 / m_n_2018) / (e_2006 / e_2018)
-        da.coords['source-position'] *= np.sqrt(scale)
+        da.coords['source_position'] *= np.sqrt(scale)
         da.coords['position'] *= np.sqrt(scale)
         low_tof = da.bins.data.coords['tof'] < 49000.0 * sc.units.us
-        da.coords['incident-energy'] = 3.0 * sc.units.meV
-        da = scn.convert(da, 'tof', 'energy-transfer')
+        da.coords['incident_energy'] = 3.0 * sc.units.meV
+        da = scn.convert(da, 'tof', 'energy_transfer')
         assert sc.all(
-            sc.isnan(da.coords['energy-transfer']) | sc.is_approx(
-                da.coords['energy-transfer'], ref.coords['energy-transfer'],
+            sc.isnan(da.coords['energy_transfer']) | sc.is_approx(
+                da.coords['energy_transfer'], ref.coords['energy_transfer'],
                 1e-8 * sc.units.meV +
-                1e-8 * sc.abs(ref.coords['energy-transfer']))).value
+                1e-8 * sc.abs(ref.coords['energy_transfer']))).value
         assert sc.all(
-            low_tof | sc.isnan(da.bins.data.coords['energy-transfer'])
+            low_tof | sc.isnan(da.bins.data.coords['energy_transfer'])
             | sc.is_approx(
-                da.bins.data.coords['energy-transfer'],
-                ref.bins.data.coords['energy-transfer'], 1e-5 * sc.units.meV +
-                1e-5 * sc.abs(ref.bins.data.coords['energy-transfer']))).value
+                da.bins.data.coords['energy_transfer'],
+                ref.bins.data.coords['energy_transfer'], 1e-5 * sc.units.meV +
+                1e-5 * sc.abs(ref.bins.data.coords['energy_transfer']))).value
 
     @staticmethod
     def _mask_bins_and_spectra(ws, xmin, xmax, num_spectra, indices=None):
@@ -326,10 +326,10 @@ class TestMantidConversion(unittest.TestCase):
             assert isinstance(monitor, sc.DataArray)
             assert monitor.shape == [200001]
             assert 'position' in monitor.coords
-            assert 'source-position' in monitor.coords
+            assert 'source_position' in monitor.coords
             # This is essential, otherwise unit conversion assumes scattering
             # from sample:
-            assert 'sample-position' not in monitor.coords
+            assert 'sample_position' not in monitor.coords
             # Absence of the following is not crucial, but currently there is
             # no need for these, and it avoids duplication:
             assert 'detector-info' not in monitor.coords
@@ -417,8 +417,8 @@ class TestMantidConversion(unittest.TestCase):
         # check that no workspaces have been leaked in the ADS
         assert len(mtd) == 0, f"Workspaces present: {mtd.getObjectNames()}"
 
-        self.assertTrue("source-position" in ds.coords)
-        self.assertTrue("sample-position" in ds.coords)
+        self.assertTrue("source_position" in ds.coords)
+        self.assertTrue("sample_position" in ds.coords)
         self.assertTrue("position" in ds.coords)
 
     def test_to_workspace_2d_no_error(self):
@@ -669,7 +669,7 @@ def test_to_rot_from_vectors():
                     reason='Mantid framework is unavailable')
 @pytest.mark.parametrize(
     "param_dim",
-    ('tof', 'wavelength', 'energy', 'd-spacing', 'Q', 'Q^2', 'energy-transfer')
+    ('tof', 'wavelength', 'energy', 'dspacing', 'Q', 'Q^2', 'energy_transfer')
 )
 def test_to_workspace_2d(param_dim):
     from mantid.simpleapi import mtd
@@ -847,7 +847,7 @@ def test_extract_energy_final():
     for instr in _all_indirect(blacklist=unsupported):
         out = _load_indirect_instrument(instr, parameters)
         ds = scn.from_mantid(out)
-        efs = ds.coords["final-energy"]
+        efs = ds.coords["final_energy"]
         assert not sc.all(sc.isnan(efs)).value
         assert efs.unit == sc.Unit("meV")
 
@@ -860,7 +860,7 @@ def test_extract_energy_final_when_not_present():
     ws = CreateSampleWorkspace(StoreInADS=False)
     assert ws.getEMode() == DeltaEModeType.Elastic
     ds = scn.from_mantid(ws)
-    assert "final-energy" not in ds.coords
+    assert "final_energy" not in ds.coords
 
 
 @pytest.mark.skipif(not mantid_is_available(),
@@ -870,7 +870,7 @@ def test_extract_energy_initial():
     mtd.clear()
     filename = MantidDataHelper.find_file("CNCS_51936_event.nxs")
     ds = scn.load(filename, mantid_args={"SpectrumMax": 1})
-    assert sc.is_equal(ds.coords["incident-energy"],
+    assert sc.is_equal(ds.coords["incident_energy"],
                        sc.scalar(value=3.0, unit=sc.Unit("meV")))
 
 
@@ -882,7 +882,7 @@ def test_extract_energy_inital_when_not_present():
     ws = CreateSampleWorkspace(StoreInADS=False)
     assert ws.getEMode() == DeltaEModeType.Elastic
     ds = scn.from_mantid(ws)
-    assert "incident-energy" not in ds.coords
+    assert "incident_energy" not in ds.coords
 
 
 if __name__ == "__main__":

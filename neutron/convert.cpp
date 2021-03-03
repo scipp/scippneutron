@@ -102,7 +102,7 @@ template <class T> T coords_to_attrs(T &&x, const Dim from, const Dim to) {
     }
   };
   // Will be replaced by explicit flag
-  bool scatter = x.coords().contains(Dim("sample-position"));
+  bool scatter = x.coords().contains(Dim("sample_position"));
   if (scatter) {
     std::set<Dim> pos_invariant{Dim::DSpacing, Dim::Q};
     if (pos_invariant.count(to))
@@ -131,7 +131,7 @@ template <class T> T attrs_to_coords(T &&x, const Dim from, const Dim to) {
     }
   };
   // Will be replaced by explicit flag
-  bool scatter = x.coords().contains(Dim("sample-position"));
+  bool scatter = x.coords().contains(Dim("sample_position"));
   if (scatter) {
     std::set<Dim> pos_invariant{Dim::DSpacing, Dim::Q};
     if (pos_invariant.count(from))

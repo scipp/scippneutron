@@ -78,8 +78,6 @@ template <class T> void bind_convert(py::module &m) {
   const char *doc = R"(
     Convert dimension (unit) into another.
 
-    Currently only conversion from time-of-flight (Dim.Tof) to other time-of-flight-derived units such as d-spacing (Dim.DSpacing) is supported.
-
     :param data: Input data with time-of-flight dimension (Dim.Tof)
     :param origin: Dimension to convert from
     :param target: Dimension to convert into
