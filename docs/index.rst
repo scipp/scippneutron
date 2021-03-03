@@ -41,7 +41,9 @@ Documentation
    :caption: Tutorials
    :maxdepth: 3
 
-   tutorials/neutron-diffraction
+   tutorials/exploring-data
+   tutorials/working-with-masks
+   tutorials/powder-diffraction
 
 .. toctree::
    :caption: Developer Documentation

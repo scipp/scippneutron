@@ -25,13 +25,20 @@ if __name__ == '__main__':
     target_dir = args.destination
 
     data_files = {
-        "PG3_4871_event.nxs": "a3d0edcb36ab8e9e3342cd8a4440b779",
-        "GEM40979.raw": "6df0f1c2fc472af200eec43762e9a874",
-        "PG3_4844_event.nxs": "d5ae38871d0a09a28ae01f85d969de1e",
-        "PG3_4866_event.nxs": "3d543bc6a646e622b3f4542bc3435e7e"
+        "PG3_4871_event.nxs":
+        "a3d0edcb36ab8e9e3342cd8a4440b779",
+        "GEM40979.raw":
+        "6df0f1c2fc472af200eec43762e9a874",
+        "PG3_4844_event.nxs":
+        "d5ae38871d0a09a28ae01f85d969de1e",
+        "PG3_4866_event.nxs":
+        "3d543bc6a646e622b3f4542bc3435e7e",
+        "LARMOR00049338.nxs":
+        "https://github.com/ess-dmsc-dram/loki_tube_scripts/raw/master/test/test_data/LARMOR00049338.nxs",  # noqa: E501
     }
 
     for f, h in data_files.items():
         destination = os.path.join(target_dir, f)
         if not os.path.isfile(destination):
-            download_file(os.path.join(remote_url, h), destination)
+            url = h if h[:4] == 'http' else os.path.join(remote_url, h)
+            download_file(url, destination)
