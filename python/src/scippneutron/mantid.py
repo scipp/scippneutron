@@ -183,7 +183,7 @@ def md_dimension(mantid_dim, index):
 
     # Look for common/known mantid dimensions
     patterns = ["DeltaE", "T"]
-    dims = ['energy-transfer', 'temperature']
+    dims = ['energy_transfer', 'temperature']
     pattern_result = zip(patterns, dims)
     for pattern, result in pattern_result:
         if re.search(pattern, mantid_dim.name, re.IGNORECASE):
@@ -222,7 +222,7 @@ def validate_and_get_unit(unit, allow_empty=False):
         else:
             unit = unit.unitID()
     known_units = {
-        "DeltaE": ['energy-transfer', sc.units.meV],
+        "DeltaE": ['energy_transfer', sc.units.meV],
         "TOF": ['tof', sc.units.us],
         "Wavelength": ['wavelength', sc.units.angstrom],
         "Energy": ['energy', sc.units.meV],
@@ -503,10 +503,10 @@ def _convert_MatrixWorkspace_info(ws,
         info["attrs"].update({"rotation": rot, "shape": shp})
 
     if source_pos is not None:
-        info["coords"]["source-position"] = source_pos
+        info["coords"]["source_position"] = source_pos
 
     if sample_pos is not None:
-        info["coords"]["sample-position"] = sample_pos
+        info["coords"]["sample_position"] = sample_pos
 
     if ws.detectorInfo().hasMaskedDetectors():
         spectrum_info = ws.spectrumInfo()
@@ -516,9 +516,9 @@ def _convert_MatrixWorkspace_info(ws,
         info["masks"]["spectrum"] = sc.Variable([spec_dim], values=mask)
 
     if ws.getEMode() == DeltaEModeType.Direct:
-        info["coords"]["incident-energy"] = _extract_einitial(ws)
+        info["coords"]["incident_energy"] = _extract_einitial(ws)
     elif ws.getEMode() == DeltaEModeType.Indirect:
-        info["coords"]["final-energy"] = _extract_efinal(ws)
+        info["coords"]["final_energy"] = _extract_efinal(ws)
     return info
 
 
@@ -545,7 +545,7 @@ def convert_monitors_ws(ws, converter, **ignored):
             single_monitor = converter(monitor_ws, load_run_logs=False)
         # Remove redundant information that is duplicated from workspace
         # We get this extra information from the generic converter reuse
-        del single_monitor.coords['sample-position']
+        del single_monitor.coords['sample_position']
         if 'detector-info' in single_monitor.coords:
             del single_monitor.coords['detector-info']
         del single_monitor.attrs['sample']
@@ -657,7 +657,7 @@ def convert_EventWorkspace_to_data_array(ws,
 
     proto_events = {'data': weights, 'coords': {dim: coord}}
     if load_pulse_times:
-        proto_events["coords"]["pulse-time"] = pulse_times
+        proto_events["coords"]["pulse_time"] = pulse_times
     events = sc.detail.move_to_data_array(**proto_events)
 
     coords_labs_data = _convert_MatrixWorkspace_info(
@@ -918,8 +918,8 @@ def load_component_info(ds, file, advanced_geometry=False):
     """
     Adds the component info coord into the dataset. The following are added:
 
-    - source-position
-    - sample-position
+    - source_position
+    - sample_position
     - detector positions
     - detector rotations
     - detector shapes
@@ -938,8 +938,8 @@ def load_component_info(ds, file, advanced_geometry=False):
     with run_mantid_alg('Load', file) as ws:
         source_pos, sample_pos = make_component_info(ws)
 
-        ds.coords["source-position"] = source_pos
-        ds.coords["sample-position"] = sample_pos
+        ds.coords["source_position"] = source_pos
+        ds.coords["sample_position"] = sample_pos
         pos, rot, shp = get_detector_properties(
             ws, source_pos, sample_pos, advanced_geometry=advanced_geometry)
         ds.coords["position"] = pos
@@ -951,7 +951,7 @@ def load_component_info(ds, file, advanced_geometry=False):
 
 def validate_dim_and_get_mantid_string(unit_dim):
     known_units = {
-        'energy-transfer': "DeltaE",
+        'energy_transfer': "DeltaE",
         'tof': "TOF",
         'wavelength': "Wavelength",
         'energy': "Energy",

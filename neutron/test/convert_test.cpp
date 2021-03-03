@@ -20,9 +20,9 @@ Dataset makeBeamline() {
   Dataset tof;
   static const auto source_pos = Eigen::Vector3d{0.0, 0.0, -10.0};
   static const auto sample_pos = Eigen::Vector3d{0.0, 0.0, 0.0};
-  tof.setCoord(Dim("source-position"),
+  tof.setCoord(Dim("source_position"),
                makeVariable<Eigen::Vector3d>(units::m, Values{source_pos}));
-  tof.setCoord(Dim("sample-position"),
+  tof.setCoord(Dim("sample_position"),
                makeVariable<Eigen::Vector3d>(units::m, Values{sample_pos}));
 
   tof.setCoord(Dim("position"), makeVariable<Eigen::Vector3d>(
@@ -192,10 +192,10 @@ TEST_P(ConvertTest, Tof_to_DSpacing) {
             tof.coords()[Dim("position")]);
 
   ASSERT_FALSE(dspacing.coords().contains(Dim("position")));
-  ASSERT_EQ(dspacing.coords()[Dim("source-position")],
-            tof.coords()[Dim("source-position")]);
-  ASSERT_EQ(dspacing.coords()[Dim("sample-position")],
-            tof.coords()[Dim("sample-position")]);
+  ASSERT_EQ(dspacing.coords()[Dim("source_position")],
+            tof.coords()[Dim("source_position")]);
+  ASSERT_EQ(dspacing.coords()[Dim("sample_position")],
+            tof.coords()[Dim("sample_position")]);
 }
 
 TEST_P(ConvertTest, DSpacing_to_Tof) {
@@ -217,10 +217,10 @@ TEST_P(ConvertTest, DSpacing_to_Tof) {
 
   ASSERT_EQ(tof.coords()[Dim("position")],
             tof_original.coords()[Dim("position")]);
-  ASSERT_EQ(tof.coords()[Dim("source-position")],
-            tof_original.coords()[Dim("source-position")]);
-  ASSERT_EQ(tof.coords()[Dim("sample-position")],
-            tof_original.coords()[Dim("sample-position")]);
+  ASSERT_EQ(tof.coords()[Dim("source_position")],
+            tof_original.coords()[Dim("source_position")]);
+  ASSERT_EQ(tof.coords()[Dim("sample_position")],
+            tof_original.coords()[Dim("sample_position")]);
 }
 
 TEST_P(ConvertTest, Tof_to_Wavelength) {
@@ -265,7 +265,7 @@ TEST_P(ConvertTest, Tof_to_Wavelength) {
   EXPECT_TRUE(equals(data.values<double>(), {1, 2, 3, 4, 5, 6}));
   EXPECT_EQ(data.unit(), units::counts);
 
-  for (const auto &name : {"position", "source-position", "sample-position"})
+  for (const auto &name : {"position", "source_position", "sample_position"})
     ASSERT_EQ(wavelength.coords()[Dim(name)], tof.coords()[Dim(name)]);
 }
 
@@ -287,10 +287,10 @@ TEST_P(ConvertTest, Wavelength_to_Tof) {
 
   ASSERT_EQ(tof.coords()[Dim("position")],
             tof_original.coords()[Dim("position")]);
-  ASSERT_EQ(tof.coords()[Dim("source-position")],
-            tof_original.coords()[Dim("source-position")]);
-  ASSERT_EQ(tof.coords()[Dim("sample-position")],
-            tof_original.coords()[Dim("sample-position")]);
+  ASSERT_EQ(tof.coords()[Dim("source_position")],
+            tof_original.coords()[Dim("source_position")]);
+  ASSERT_EQ(tof.coords()[Dim("sample_position")],
+            tof_original.coords()[Dim("sample_position")]);
 }
 
 TEST_P(ConvertTest, Tof_to_Energy_Elastic) {
@@ -356,7 +356,7 @@ TEST_P(ConvertTest, Tof_to_Energy_Elastic) {
   EXPECT_TRUE(equals(data.values<double>(), {1, 2, 3, 4, 5, 6}));
   EXPECT_EQ(data.unit(), units::counts);
 
-  for (const auto &name : {"position", "source-position", "sample-position"})
+  for (const auto &name : {"position", "source_position", "sample_position"})
     ASSERT_EQ(energy.coords()[Dim(name)], tof.coords()[Dim(name)]);
 }
 
@@ -392,10 +392,10 @@ TEST_P(ConvertTest, Energy_to_Tof_Elastic) {
 
   ASSERT_EQ(tof.coords()[Dim("position")],
             tof_original.coords()[Dim("position")]);
-  ASSERT_EQ(tof.coords()[Dim("source-position")],
-            tof_original.coords()[Dim("source-position")]);
-  ASSERT_EQ(tof.coords()[Dim("sample-position")],
-            tof_original.coords()[Dim("sample-position")]);
+  ASSERT_EQ(tof.coords()[Dim("source_position")],
+            tof_original.coords()[Dim("source_position")]);
+  ASSERT_EQ(tof.coords()[Dim("sample_position")],
+            tof_original.coords()[Dim("sample_position")]);
 }
 
 TEST_P(ConvertTest, Tof_to_EnergyTransfer) {

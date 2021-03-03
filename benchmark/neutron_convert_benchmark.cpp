@@ -14,10 +14,10 @@ using namespace scipp;
 auto make_beamline(const scipp::index size) {
   Dataset beamline;
 
-  beamline.setCoord(Dim("source-position"),
+  beamline.setCoord(Dim("source_position"),
                     makeVariable<Eigen::Vector3d>(
                         units::m, Values{Eigen::Vector3d{0.0, 0.0, -10.0}}));
-  beamline.setCoord(Dim("sample-position"),
+  beamline.setCoord(Dim("sample_position"),
                     makeVariable<Eigen::Vector3d>(
                         units::m, Values{Eigen::Vector3d{0.0, 0.0, 0.0}}));
 
