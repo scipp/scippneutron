@@ -47,7 +47,7 @@ Variable l2(const Dummy &dummy) {
   return norm(position(dummy) - sample_position(dummy));
 }
 
-Variable flight_path_length(const Dummy &dummy) {
+Variable flight_path_length(const Dummy &dummy, const ConvertMode) {
   return l1(dummy) + l2(dummy);
 }
 
@@ -62,7 +62,7 @@ protected:
   const Variable theta = mock::scattering_angle(dummy);
   const Variable L1 = mock::l1(dummy);
   const Variable L2 = mock::l2(dummy);
-  const Variable L = mock::flight_path_length(dummy);
+  const Variable L = mock::flight_path_length(dummy, ConvertMode::Scatter);
   const Variable source = mock::source_position(dummy);
   const Variable sample = mock::sample_position(dummy);
   const Variable det = mock::position(dummy);
@@ -90,12 +90,12 @@ TEST_F(ConstantsTest, tof_to_dspacing) {
 }
 
 TEST_F(ConstantsTest, tof_to_wavelength) {
-  EXPECT_EQ(constants::tof_to_wavelength(dummy),
+  EXPECT_EQ(constants::tof_to_wavelength(dummy, ConvertMode::Scatter),
             Variable(constants::tof_to_wavelength_physical_constants) / L);
 }
 
 TEST_F(ConstantsTest, tof_to_energy) {
-  EXPECT_EQ(constants::tof_to_energy(dummy),
+  EXPECT_EQ(constants::tof_to_energy(dummy, ConvertMode::Scatter),
             L * L * Variable(constants::tof_to_energy_physical_constants));
 }
 

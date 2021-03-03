@@ -60,8 +60,10 @@ TEST_F(BeamlineTest, l2) {
 }
 
 TEST_F(BeamlineTest, flight_path_length) {
-  ASSERT_EQ(flight_path_length(dataset.meta()),
+  ASSERT_EQ(flight_path_length(dataset.meta(), ConvertMode::Scatter),
             l1(dataset.meta()) + l2(dataset.meta()));
+  ASSERT_EQ(flight_path_length(dataset.meta(), ConvertMode::NoScatter),
+            norm(source_position(dataset.meta()) - position(dataset.meta())));
 }
 
 template <class T> constexpr T pi = T(3.1415926535897932385L);
@@ -74,13 +76,13 @@ TEST_F(BeamlineTest, scattering_angle) {
             0.5 * units::one * two_theta(dataset.meta()));
 }
 
-TEST_F(BeamlineTest, no_sample) {
+TEST_F(BeamlineTest, no_scatter) {
   Dataset d(dataset);
   d.coords().erase(Dim("sample_position"));
   ASSERT_THROW(l1(d.meta()), except::NotFoundError);
   ASSERT_THROW(l2(d.meta()), except::NotFoundError);
   ASSERT_THROW(scattering_angle(d.meta()), except::NotFoundError);
-  ASSERT_EQ(flight_path_length(d.meta()),
+  ASSERT_EQ(flight_path_length(d.meta(), ConvertMode::NoScatter),
             makeVariable<double>(
                 Dims{Dim::Spectrum}, Shape{2}, units::m,
                 Values{(Eigen::Vector3d{1.0, 0.0, 0.01} - source_pos).norm(),

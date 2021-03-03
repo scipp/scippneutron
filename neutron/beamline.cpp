@@ -25,10 +25,11 @@ VariableConstView sample_position(const dataset::CoordsConstView &meta) {
   return meta[Dim("sample_position")];
 }
 
-Variable flight_path_length(const dataset::CoordsConstView &meta) {
-  // If there is no sample this returns the straight distance from the source,
-  // as required, e.g., for monitors.
-  if (meta.contains(Dim("sample_position")))
+Variable flight_path_length(const dataset::CoordsConstView &meta,
+                            const ConvertMode scatter) {
+  // If there is not scattering this returns the straight distance from the
+  // source, as required, e.g., for monitors or imaging.
+  if (scatter == ConvertMode::Scatter)
     return l1(meta) + l2(meta);
   else
     return norm(position(meta) - source_position(meta));

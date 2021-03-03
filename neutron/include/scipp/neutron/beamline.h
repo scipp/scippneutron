@@ -11,14 +11,16 @@
 
 namespace scipp::neutron {
 
+enum class ConvertMode { Scatter, NoScatter };
+
 SCIPPNEUTRON_EXPORT VariableConstView
 position(const dataset::CoordsConstView &meta);
 SCIPPNEUTRON_EXPORT VariableConstView
 source_position(const dataset::CoordsConstView &meta);
 SCIPPNEUTRON_EXPORT VariableConstView
 sample_position(const dataset::CoordsConstView &meta);
-SCIPPNEUTRON_EXPORT Variable
-flight_path_length(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT Variable flight_path_length(
+    const dataset::CoordsConstView &meta, const ConvertMode scatter);
 SCIPPNEUTRON_EXPORT Variable l1(const dataset::CoordsConstView &meta);
 SCIPPNEUTRON_EXPORT Variable l2(const dataset::CoordsConstView &meta);
 SCIPPNEUTRON_EXPORT Variable

@@ -61,18 +61,19 @@ template <class T> auto tof_to_dspacing(const T &d) {
   return conversionFactor;
 }
 
-template <class T> static auto tof_to_wavelength(const T &d) {
+template <class T>
+static auto tof_to_wavelength(const T &d, const ConvertMode scatter) {
   return Variable(tof_to_wavelength_physical_constants) /
-         flight_path_length(d.meta());
+         flight_path_length(d.meta(), scatter);
 }
 
-template <class T> auto tof_to_energy(const T &d) {
+template <class T> auto tof_to_energy(const T &d, const ConvertMode scatter) {
   if (incident_energy(d.meta()) || final_energy(d.meta()))
     throw std::runtime_error(
         "Data contains coords for incident or final energy. Conversion to "
         "energy for inelastic data not implemented yet.");
   // l_total = l1 + l2
-  auto conversionFactor = flight_path_length(d.meta());
+  auto conversionFactor = flight_path_length(d.meta(), scatter);
   // l_total^2
   conversionFactor *= conversionFactor;
   conversionFactor *= Variable(tof_to_energy_physical_constants);
