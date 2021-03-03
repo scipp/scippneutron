@@ -88,9 +88,10 @@ template <class T> void bind_convert(py::module &m) {
   const char *doc = R"(
     Convert dimension (unit) into another.
 
-    :param data: Input data with time-of-flight dimension (Dim.Tof)
+    :param data: Input data
     :param origin: Dimension to convert from
     :param target: Dimension to convert into
+    :param scatter: If `True` conversion with scattering from `sample_position` is performed, else non-scattering conversion is attempted.
     :param out: Optional output container
     :return: New data array or dataset with converted dimension (dimension labels, coordinate values, and units)
     :rtype: DataArray or Dataset)";
