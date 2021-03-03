@@ -41,24 +41,11 @@ constexpr auto tof_to_wavelength_physical_constants =
     llnl::units::constants::mn;
 
 template <class T> auto tof_to_dspacing(const T &d) {
-  const auto &sourcePos = source_position(d.meta());
-  const auto &samplePos = sample_position(d.meta());
-
-  auto beam = samplePos - sourcePos;
-  const auto l1 = norm(beam);
-  beam /= l1;
-  auto scattered = position(d.meta()) - samplePos;
-  const auto l2 = norm(scattered);
-  scattered /= l2;
-
-  // l_total = l1 + l2
-  auto conversionFactor(l1 + l2);
-
-  conversionFactor *= Variable(tof_to_dspacing_physical_constants * sqrt(0.5));
-  conversionFactor *= sqrt(1.0 * units::one - dot(beam, scattered));
-
-  reciprocal(conversionFactor, conversionFactor);
-  return conversionFactor;
+  auto factor = flight_path_length(d.meta(), ConvertMode::Scatter);
+  factor *= Variable(tof_to_dspacing_physical_constants * sqrt(0.5));
+  factor *= sqrt(1.0 * units::one - cos_two_theta(d.meta()));
+  reciprocal(factor, factor);
+  return factor;
 }
 
 template <class T>

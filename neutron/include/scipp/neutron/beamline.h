@@ -25,6 +25,8 @@ SCIPPNEUTRON_EXPORT Variable l1(const dataset::CoordsConstView &meta);
 SCIPPNEUTRON_EXPORT Variable l2(const dataset::CoordsConstView &meta);
 SCIPPNEUTRON_EXPORT Variable
 scattering_angle(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT Variable
+cos_two_theta(const dataset::CoordsConstView &meta);
 SCIPPNEUTRON_EXPORT Variable two_theta(const dataset::CoordsConstView &meta);
 SCIPPNEUTRON_EXPORT VariableConstView
 incident_energy(const dataset::CoordsConstView &meta);

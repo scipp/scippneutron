@@ -34,6 +34,16 @@ Variable position(const Dummy &) {
       units::m);
 }
 
+Variable cos_two_theta(const Dummy &) {
+  // Note: Not related to actual positions.
+  return cos(2.0 * 0.123 * units::rad);
+}
+
+Variable two_theta(const Dummy &) {
+  // Note: Not related to actual positions.
+  return 2.0 * 0.123 * units::rad;
+}
+
 Variable scattering_angle(const Dummy &) {
   // Note: Not related to actual positions.
   return 0.123 * units::rad;
@@ -68,18 +78,6 @@ protected:
   const Variable source = mock::source_position(dummy);
   const Variable sample = mock::sample_position(dummy);
   const Variable det = mock::position(dummy);
-
-  Variable normalized_beam() const {
-    auto beam = sample - source;
-    beam /= norm(beam);
-    return beam;
-  }
-
-  Variable normalized_scatter() const {
-    auto scatter = det - sample;
-    scatter /= norm(scatter);
-    return scatter;
-  }
 };
 
 TEST_F(ConstantsTest, tof_to_dspacing) {
@@ -88,8 +86,7 @@ TEST_F(ConstantsTest, tof_to_dspacing) {
             reciprocal(L *
                        Variable(constants::tof_to_dspacing_physical_constants *
                                 sqrt(0.5)) *
-                       sqrt(1.0 * units::one -
-                            dot(normalized_beam(), normalized_scatter()))));
+                       sqrt(1.0 * units::one - cos(two_theta(dummy)))));
 }
 
 TEST_F(ConstantsTest, tof_to_wavelength) {

@@ -54,15 +54,18 @@ Variable scattering_angle(const dataset::CoordsConstView &meta) {
   return 0.5 * units::one * two_theta(meta);
 }
 
-Variable two_theta(const dataset::CoordsConstView &meta) {
+Variable cos_two_theta(const dataset::CoordsConstView &meta) {
   auto beam = sample_position(meta) - source_position(meta);
   const auto l1 = norm(beam);
   beam /= l1;
   auto scattered = position(meta) - sample_position(meta);
   const auto l2 = norm(scattered);
   scattered /= l2;
+  return dot(beam, scattered);
+}
 
-  return acos(dot(beam, scattered));
+Variable two_theta(const dataset::CoordsConstView &meta) {
+  return acos(cos_two_theta(meta));
 }
 
 VariableConstView incident_energy(const dataset::CoordsConstView &meta) {
