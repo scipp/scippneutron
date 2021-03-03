@@ -48,7 +48,7 @@ template <class T> void bind_beamline(py::module &m) {
       R"(
     Compute the length of the total flight path from a data array or a dataset.
 
-    If `scatter=True` this is the sum of `l1` and `l2`, otherwise the distance from the source.
+    If `scatter=True` this is the sum of `l1` and `l2`, otherwise the distance between `source_position` and `position`.
 
     :return: A scalar variable containing the total length of the flight path.
     :rtype: Variable)");
