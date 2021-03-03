@@ -11,6 +11,16 @@ Features
 
 * Functionality from ``scipp.neutron`` is now available in this package.
   This includes in particular the instrument view and "unit conversions" for time-of-flight neutron sources.
+* Naming convention for (in particular) coords and attrs used by unit conversion has changed.
+  Generally what previously used hyphens `-` now uses underscore `_`.
+
+  * ``pulse-time`` is now ``pulse_time``
+  * ``sample-position`` is now ``sample_position``
+  * ``source-position`` is now ``source_position``
+  * ``energy-transfer`` is now ``energy_transfer``
+  * ``incident-energy`` is now ``incident_energy``
+  * ``final-energy`` is now ``final_energy``
+  * ``d-spacing`` is now ``dspacing` (no hypthen)
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
