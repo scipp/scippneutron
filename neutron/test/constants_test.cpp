@@ -47,8 +47,11 @@ Variable l2(const Dummy &dummy) {
   return norm(position(dummy) - sample_position(dummy));
 }
 
-Variable flight_path_length(const Dummy &dummy, const ConvertMode) {
-  return l1(dummy) + l2(dummy);
+Variable flight_path_length(const Dummy &dummy, const ConvertMode scatter) {
+  if (scatter == ConvertMode::Scatter)
+    return l1(dummy) + l2(dummy);
+  else
+    return norm(position(dummy) - source_position(dummy));
 }
 
 Variable incident_energy(const Dummy &dummy) { return dummy.ei; }
