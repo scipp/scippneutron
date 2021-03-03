@@ -226,7 +226,7 @@ def validate_and_get_unit(unit, allow_empty=False):
         "TOF": ['tof', sc.units.us],
         "Wavelength": ['wavelength', sc.units.angstrom],
         "Energy": ['energy', sc.units.meV],
-        "dSpacing": ['d-spacing', sc.units.angstrom],
+        "dSpacing": ['dspacing', sc.units.angstrom],
         "MomentumTransfer": ['Q', sc.units.dimensionless / sc.units.angstrom],
         "QSquared": [
             'Q^2',
@@ -955,7 +955,7 @@ def validate_dim_and_get_mantid_string(unit_dim):
         'tof': "TOF",
         'wavelength': "Wavelength",
         'energy': "Energy",
-        'd-spacing': "dSpacing",
+        'dspacing': "dSpacing",
         'Q': "MomentumTransfer",
         'Q^2': "QSquared",
     }
