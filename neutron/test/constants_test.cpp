@@ -12,6 +12,7 @@ using namespace scipp::neutron;
 namespace mock {
 
 struct Dummy {
+  Dummy meta() const { return *this; }
   Variable ei;
   Variable ef;
 };
@@ -46,8 +47,11 @@ Variable l2(const Dummy &dummy) {
   return norm(position(dummy) - sample_position(dummy));
 }
 
-Variable flight_path_length(const Dummy &dummy) {
-  return l1(dummy) + l2(dummy);
+Variable flight_path_length(const Dummy &dummy, const ConvertMode scatter) {
+  if (scatter == ConvertMode::Scatter)
+    return l1(dummy) + l2(dummy);
+  else
+    return norm(position(dummy) - source_position(dummy));
 }
 
 Variable incident_energy(const Dummy &dummy) { return dummy.ei; }
@@ -61,7 +65,6 @@ protected:
   const Variable theta = mock::scattering_angle(dummy);
   const Variable L1 = mock::l1(dummy);
   const Variable L2 = mock::l2(dummy);
-  const Variable L = mock::flight_path_length(dummy);
   const Variable source = mock::source_position(dummy);
   const Variable sample = mock::sample_position(dummy);
   const Variable det = mock::position(dummy);
@@ -80,6 +83,7 @@ protected:
 };
 
 TEST_F(ConstantsTest, tof_to_dspacing) {
+  const Variable L = mock::flight_path_length(dummy, ConvertMode::Scatter);
   EXPECT_EQ(constants::tof_to_dspacing(dummy),
             reciprocal(L *
                        Variable(constants::tof_to_dspacing_physical_constants *
@@ -89,13 +93,19 @@ TEST_F(ConstantsTest, tof_to_dspacing) {
 }
 
 TEST_F(ConstantsTest, tof_to_wavelength) {
-  EXPECT_EQ(constants::tof_to_wavelength(dummy),
-            Variable(constants::tof_to_wavelength_physical_constants) / L);
+  for (const auto &scatter : {ConvertMode::Scatter, ConvertMode::NoScatter}) {
+    auto L = mock::flight_path_length(dummy, scatter);
+    EXPECT_EQ(constants::tof_to_wavelength(dummy, scatter),
+              Variable(constants::tof_to_wavelength_physical_constants) / L);
+  }
 }
 
 TEST_F(ConstantsTest, tof_to_energy) {
-  EXPECT_EQ(constants::tof_to_energy(dummy),
-            L * L * Variable(constants::tof_to_energy_physical_constants));
+  for (const auto &scatter : {ConvertMode::Scatter, ConvertMode::NoScatter}) {
+    auto L = mock::flight_path_length(dummy, scatter);
+    EXPECT_EQ(constants::tof_to_energy(dummy, scatter),
+              L * L * Variable(constants::tof_to_energy_physical_constants));
+  }
 }
 
 TEST_F(ConstantsTest, tof_to_energy_transfer_fails) {

@@ -34,8 +34,10 @@ Beamline geometry
 .. autosummary::
    :toctree: ../generated
 
+   position
    source_position
    sample_position
+   flight_path_length
    l1
    l2
    scattering_angle

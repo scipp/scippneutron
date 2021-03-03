@@ -87,7 +87,9 @@ static T convert_with_factor(T &&d, const Dim from, const Dim to,
 
 namespace {
 
-template <class T> T coords_to_attrs(T &&x, const Dim from, const Dim to) {
+template <class T>
+T coords_to_attrs(T &&x, const Dim from, const Dim to,
+                  const ConvertMode scatter) {
   const auto to_attr = [&](const Dim field) {
     if (!x.coords().contains(field))
       return;
@@ -101,9 +103,7 @@ template <class T> T coords_to_attrs(T &&x, const Dim from, const Dim to) {
       x.attrs().set(field, coord);
     }
   };
-  // Will be replaced by explicit flag
-  bool scatter = x.coords().contains(Dim("sample_position"));
-  if (scatter) {
+  if (scatter == ConvertMode::Scatter) {
     std::set<Dim> pos_invariant{Dim::DSpacing, Dim::Q};
     if (pos_invariant.count(to))
       to_attr(Dim::Position);
@@ -113,7 +113,9 @@ template <class T> T coords_to_attrs(T &&x, const Dim from, const Dim to) {
   return std::move(x);
 }
 
-template <class T> T attrs_to_coords(T &&x, const Dim from, const Dim to) {
+template <class T>
+T attrs_to_coords(T &&x, const Dim from, const Dim to,
+                  const ConvertMode scatter) {
   const auto to_coord = [&](const Dim field) {
     auto &&range = iter(x);
     if (!range.begin()->attrs().contains(field))
@@ -130,9 +132,7 @@ template <class T> T attrs_to_coords(T &&x, const Dim from, const Dim to) {
       x.coords().set(field, attr);
     }
   };
-  // Will be replaced by explicit flag
-  bool scatter = x.coords().contains(Dim("sample_position"));
-  if (scatter) {
+  if (scatter == ConvertMode::Scatter) {
     std::set<Dim> pos_invariant{Dim::DSpacing, Dim::Q};
     if (pos_invariant.count(from))
       to_coord(Dim::Position);
@@ -142,12 +142,24 @@ template <class T> T attrs_to_coords(T &&x, const Dim from, const Dim to) {
   return std::move(x);
 }
 
+void check_scattering(const Dim from, const Dim to, const ConvertMode scatter) {
+  std::set<Dim> scattering{Dim::DSpacing, Dim::Q, Dim::EnergyTransfer};
+  if ((scatter == ConvertMode::NoScatter) &&
+      (scattering.count(from) || scattering.count(to)))
+    throw std::runtime_error(
+        "Conversion with `scatter=False` requested, but `" + to_string(from) +
+        "` and/or `" + to_string(to) +
+        "` is only defined for a scattering process.");
+}
+
 } // namespace
 
-template <class T> T convert_impl(T d, const Dim from, const Dim to) {
+template <class T>
+T convert_impl(T d, const Dim from, const Dim to, const ConvertMode scatter) {
   for (const auto &item : iter(d))
     core::expect::notCountDensity(item.unit());
-  d = attrs_to_coords(std::move(d), from, to);
+
+  d = attrs_to_coords(std::move(d), from, to, scatter);
   // This will need to be cleanup up in the future, but it is unclear how to do
   // so in a future-proof way. Some sort of double-dynamic dispatch based on
   // `from` and `to` will likely be required (with conversions helpers created
@@ -167,17 +179,18 @@ template <class T> T convert_impl(T d, const Dim from, const Dim to) {
 
   if ((from == Dim::Tof) && (to == Dim::Wavelength))
     return convert_with_factor(std::move(d), from, to,
-                               constants::tof_to_wavelength(d));
+                               constants::tof_to_wavelength(d, scatter));
   if ((from == Dim::Wavelength) && (to == Dim::Tof))
-    return convert_with_factor(std::move(d), from, to,
-                               reciprocal(constants::tof_to_wavelength(d)));
+    return convert_with_factor(
+        std::move(d), from, to,
+        reciprocal(constants::tof_to_wavelength(d, scatter)));
 
   if ((from == Dim::Tof) && (to == Dim::Energy))
     return convert_generic(std::move(d), from, to, conversions::tof_to_energy,
-                           constants::tof_to_energy(d));
+                           constants::tof_to_energy(d, scatter));
   if ((from == Dim::Energy) && (to == Dim::Tof))
     return convert_generic(std::move(d), from, to, conversions::energy_to_tof,
-                           constants::tof_to_energy(d));
+                           constants::tof_to_energy(d, scatter));
 
   if ((from == Dim::Tof) && (to == Dim::EnergyTransfer))
     return convert_arg_tuple(std::move(d), from, to,
@@ -196,8 +209,8 @@ template <class T> T convert_impl(T d, const Dim from, const Dim to) {
 
   try {
     // Could get better performance by doing a direct conversion.
-    return convert_impl(convert_impl(std::move(d), from, Dim::Tof), Dim::Tof,
-                        to);
+    return convert_impl(convert_impl(std::move(d), from, Dim::Tof, scatter),
+                        Dim::Tof, to, scatter);
   } catch (const except::UnitError &) {
     throw except::UnitError("Conversion between " + to_string(from) + " and " +
                             to_string(to) +
@@ -205,20 +218,30 @@ template <class T> T convert_impl(T d, const Dim from, const Dim to) {
   }
 }
 
-DataArray convert(DataArray d, const Dim from, const Dim to) {
-  return coords_to_attrs(convert_impl(std::move(d), from, to), from, to);
+DataArray convert(DataArray d, const Dim from, const Dim to,
+                  const ConvertMode scatter) {
+  check_scattering(from, to, scatter);
+  return coords_to_attrs(convert_impl(std::move(d), from, to, scatter), from,
+                         to, scatter);
 }
 
-DataArray convert(const DataArrayConstView &d, const Dim from, const Dim to) {
-  return convert(DataArray(d), from, to);
+DataArray convert(const DataArrayConstView &d, const Dim from, const Dim to,
+                  const ConvertMode scatter) {
+  check_scattering(from, to, scatter);
+  return convert(DataArray(d), from, to, scatter);
 }
 
-Dataset convert(Dataset d, const Dim from, const Dim to) {
-  return coords_to_attrs(convert_impl(std::move(d), from, to), from, to);
+Dataset convert(Dataset d, const Dim from, const Dim to,
+                const ConvertMode scatter) {
+  check_scattering(from, to, scatter);
+  return coords_to_attrs(convert_impl(std::move(d), from, to, scatter), from,
+                         to, scatter);
 }
 
-Dataset convert(const DatasetConstView &d, const Dim from, const Dim to) {
-  return convert(Dataset(d), from, to);
+Dataset convert(const DatasetConstView &d, const Dim from, const Dim to,
+                const ConvertMode scatter) {
+  check_scattering(from, to, scatter);
+  return convert(Dataset(d), from, to, scatter);
 }
 
 } // namespace scipp::neutron

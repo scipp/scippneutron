@@ -25,7 +25,11 @@ Breaking changes
   * ``energy-transfer`` is now ``energy_transfer``
   * ``incident-energy`` is now ``incident_energy``
   * ``final-energy`` is now ``final_energy``
-  * ``d-spacing`` is now ``dspacing` (no hypthen)
+  * ``d-spacing`` is now ``dspacing`` (no hyphen)
+
+* ``convert`` now requires a mandatory argument ``scatter=True`` or ``scatter=False``.
+  Previously the conversion mode was determined automatically based on the presence of a ``sample_position`` coordinate.
+  This is error prone hidden/implicit behavior, which is now avoided.
 
 Contributors
 ~~~~~~~~~~~~
