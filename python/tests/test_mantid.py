@@ -327,9 +327,7 @@ class TestMantidConversion(unittest.TestCase):
             assert monitor.shape == [200001]
             assert 'position' in monitor.coords
             assert 'source_position' in monitor.coords
-            # This is essential, otherwise unit conversion assumes scattering
-            # from sample:
-            assert 'sample_position' not in monitor.coords
+            assert 'sample_position' in monitor.coords
             # Absence of the following is not crucial, but currently there is
             # no need for these, and it avoids duplication:
             assert 'detector-info' not in monitor.coords
