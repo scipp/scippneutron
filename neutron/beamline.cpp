@@ -62,6 +62,8 @@ Variable scattering_angle(const dataset::CoordsConstView &meta) {
 }
 
 Variable cos_two_theta(const dataset::CoordsConstView &meta) {
+  if (meta.contains(Dim("two_theta")))
+    return cos(meta[Dim("two_theta")]);
   auto beam = sample_position(meta) - source_position(meta);
   const auto l1 = norm(beam);
   beam /= l1;
@@ -72,6 +74,8 @@ Variable cos_two_theta(const dataset::CoordsConstView &meta) {
 }
 
 Variable two_theta(const dataset::CoordsConstView &meta) {
+  if (meta.contains(Dim("two_theta")))
+    return copy(meta[Dim("two_theta")]);
   return acos(cos_two_theta(meta));
 }
 

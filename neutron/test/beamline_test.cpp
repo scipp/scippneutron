@@ -100,11 +100,37 @@ TEST_F(BeamlineTest, flight_path_length) {
 template <class T> constexpr T pi = T(3.1415926535897932385L);
 
 TEST_F(BeamlineTest, scattering_angle) {
-  ASSERT_EQ(two_theta(dataset.meta()),
-            makeVariable<double>(Dims{Dim::Spectrum}, Shape{2}, units::rad,
-                                 Values{pi<double> / 2, pi<double> / 2}));
+  const auto two_theta_computed =
+      makeVariable<double>(Dims{Dim::Spectrum}, Shape{2}, units::rad,
+                           Values{pi<double> / 2, pi<double> / 2});
+  const auto theta_computed = 0.5 * units::one * two_theta_computed;
+  const auto cos_two_theta_computed =
+      makeVariable<double>(Dims{Dim::Spectrum}, Shape{2}, Values{0.0, 0.0});
+
+  ASSERT_EQ(cos_two_theta(dataset.meta()), cos_two_theta_computed);
+  ASSERT_EQ(two_theta(dataset.meta()), two_theta_computed);
+  ASSERT_EQ(scattering_angle(dataset.meta()), theta_computed);
+
+  const auto two_theta_override = makeVariable<double>(
+      Dims{Dim::Spectrum}, Shape{2}, units::rad, Values{0.1, 0.2});
+  // Setting `theta` or `scattering_angle` has no effect. These are slightly
+  // ambiguous and are therefore not interpreted by the beamline helpers.
+  dataset.coords().set(Dim("theta"), two_theta_override);
+  ASSERT_EQ(cos_two_theta(dataset.meta()), cos_two_theta_computed);
+  ASSERT_EQ(two_theta(dataset.meta()), two_theta_computed);
+  ASSERT_EQ(scattering_angle(dataset.meta()), theta_computed);
+  dataset.coords().erase(Dim("theta"));
+  dataset.coords().set(Dim("scattering_angle"), two_theta_override);
+  ASSERT_EQ(cos_two_theta(dataset.meta()), cos_two_theta_computed);
+  ASSERT_EQ(two_theta(dataset.meta()), two_theta_computed);
+  ASSERT_EQ(scattering_angle(dataset.meta()), theta_computed);
+  dataset.coords().erase(Dim("scattering_angle"));
+
+  dataset.coords().set(Dim("two_theta"), two_theta_override);
+  ASSERT_EQ(cos_two_theta(dataset.meta()), cos(two_theta_override));
+  ASSERT_EQ(two_theta(dataset.meta()), two_theta_override);
   ASSERT_EQ(scattering_angle(dataset.meta()),
-            0.5 * units::one * two_theta(dataset.meta()));
+            0.5 * units::one * two_theta_override);
 }
 
 TEST_F(BeamlineTest, no_scatter) {
