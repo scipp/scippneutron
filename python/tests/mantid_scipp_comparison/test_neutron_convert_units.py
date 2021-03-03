@@ -78,7 +78,10 @@ class Comparison(MantidScippComparison):
         return out
 
     def _run_scipp(self, input):
-        return sn.convert(data=input, origin=self._origin, target=self._target)
+        return sn.convert(data=input,
+                          origin=self._origin,
+                          target=self._target,
+                          scatter=True)
 
 
 class ElasticComparison(Comparison):
