@@ -143,6 +143,20 @@ TEST_P(ConvertTest, fail_count_density) {
   }
 }
 
+TEST_P(ConvertTest, scattering_conversions_fail_with_NoScatter_mode) {
+  Dataset tof = GetParam();
+  EXPECT_THROW(convert(tof, Dim::Tof, Dim::DSpacing, ConvertMode::NoScatter),
+               std::runtime_error);
+  EXPECT_NO_THROW(convert(tof, Dim::Tof, Dim::DSpacing, ConvertMode::Scatter));
+  const auto wavelength =
+      convert(tof, Dim::Tof, Dim::Wavelength, ConvertMode::Scatter);
+  EXPECT_THROW(
+      convert(wavelength, Dim::Wavelength, Dim::Q, ConvertMode::NoScatter),
+      std::runtime_error);
+  EXPECT_NO_THROW(
+      convert(wavelength, Dim::Wavelength, Dim::Q, ConvertMode::Scatter));
+}
+
 TEST_P(ConvertTest, Tof_to_DSpacing) {
   Dataset tof = GetParam();
 
