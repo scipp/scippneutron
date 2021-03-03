@@ -3,6 +3,7 @@ import scipp as sc
 import scippneutron.mantid as mantid
 import time
 from abc import ABC, abstractmethod
+import numpy as np
 
 
 class MantidScippComparison(ABC):
@@ -15,15 +16,64 @@ class MantidScippComparison(ABC):
         stop = time.time()
         return result, (stop - start) * sc.Unit('s')
 
+    def _fuzzy_compare(self, a, b, tol):
+        same_data = sc.all(sc.is_approx(a.data, b.data, tol)).value
+
+        if not len(a.meta) == len(b.meta):
+            for k, v in a.meta.items():
+                print(k)
+            for k, v in b.meta.items():
+                print(k)
+            print('different length')
+            return False
+        for key, val in a.meta.items():
+            if a.meta[key].shape != b.meta[key].shape:
+                print('DIFFERENT META for', key, a.meta[key].shape,
+                      b.meta[key].shape)
+                return False
+            if val.dtype == sc.dtype.vector_3_float64:
+                continue
+            if val.dtype not in [sc.dtype.float64, sc.dtype.float32]:
+                continue
+            vtol = np.abs(a.meta[key].values * 1e-9) + 1e-9
+            print(key)
+            print(vtol.shape, a.meta[key].values.shape,
+                  b.meta[key].values.shape)
+            x = a.meta[key].values
+            y = b.meta[key].values
+            atol = vtol
+            rtol = 0
+            np.less_equal(abs(x - y), atol + rtol * abs(y))
+            print('a is finite', np.sum(np.isposinf(a.meta[key].values)))
+            print('b is finite', np.sum(np.isposinf(b.meta[key].values)))
+            if not np.all(
+                    np.isclose(
+                        a.meta[key].values, b.meta[key].values, atol=vtol)):
+                print(key)
+                print(a.meta[key].shape)
+                print(b.meta[key].shape)
+                print(a.meta[key])
+                print(b.meta[key])
+                diff = (a.meta[key] - b.meta[key]).values.ravel()
+                imax = np.argmax(diff)
+                print(np.max(diff), np.argmax(diff))
+                print(a.meta[key].values.ravel()[imax])
+                print(b.meta[key].values.ravel()[imax])
+                print(vtol)
+                print(np.max(vtol), np.min(vtol), np.argmax(vtol))
+                return False
+        print('Coord match')
+        print(same_data)
+        return same_data
+
     def _assert(self, a, b, allow_failure):
         try:
             if isinstance(a, sc.DataArray):
-                assert sc.all(
-                    sc.is_approx(a.data, b.data, 1e-9 * a.data.unit +
-                                 1e-9 * sc.abs(a.data))).value
+                tol = 1e-2 * a.data.unit + 1e-2 * sc.abs(a.data)
+                assert self._fuzzy_compare(a, b, tol)
             else:
-                assert sc.all(
-                    sc.is_approx(a, b, 1e-9 * a.unit + 1e-9 * sc.abs(a))).value
+                tol = 1e-2 * a.unit + 1e-2 * sc.abs(a)
+                assert sc.all(sc.is_approx(a, b, tol)).value
         except AssertionError as ae:
             if allow_failure:
                 print(ae)

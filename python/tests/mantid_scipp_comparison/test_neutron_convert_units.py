@@ -18,8 +18,8 @@ class Comparison(MantidScippComparison):
         return {
             'tof': 'TOF',
             'wavelength': 'Wavelength',
-            'd-spacing': 'dSpacing',
-            'energy-transfer': 'DeltaE'
+            'dspacing': 'dSpacing',
+            'energy_transfer': 'DeltaE'
         }
 
     @property
@@ -43,6 +43,8 @@ class Comparison(MantidScippComparison):
         ws = sapi.CreateSampleWorkspace(XMin=1000,
                                         NumBanks=1,
                                         StoreInADS=False)
+        # Crop out spectra index 0 as has two_theta=0, gives inf d-spacing
+        ws = sapi.CropWorkspace(ws, StartWorkspaceIndex=1, StoreInADS=False)
         ws = sapi.ConvertUnits(
             InputWorkspace=ws,
             Target=self._dim_map[self._origin],
@@ -68,7 +70,12 @@ class Comparison(MantidScippComparison):
             EMode=self._emode_to_mantid[self._emode],
             EFixed=self._efixed.value if self._efixed is not None else None,
             StoreInADS=False)
-        return converter.from_mantid(out)
+        out = converter.from_mantid(out)
+        # broadcast to circumvent common-bins conversion in from_mantid
+        spec_shape = out.coords['spectrum'].shape
+        out.coords[self._target] = sc.ones(
+            dims=['spectrum'], shape=spec_shape) * out.coords[self._target]
+        return out
 
     def _run_scipp(self, input):
         return sn.convert(data=input, origin=self._origin, target=self._target)
@@ -109,10 +116,10 @@ class TestNeutronConversionUnits:
         test.run()
 
     def test_neutron_convert_units_tof_to_d_space(self):
-        test = ElasticComparison(origin='tof', target='d-spacing')
+        test = ElasticComparison(origin='tof', target='dspacing')
         test.run()
 
     def test_neutron_convert_units_tof_to_wavelength_direct(self):
         test = DirectInElasticComparison(origin='tof',
-                                         target='energy-transfer')
+                                         target='energy_transfer')
         test.run()
