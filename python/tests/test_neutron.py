@@ -37,14 +37,14 @@ def make_dataset_with_beamline():
 
 def test_neutron_convert():
     d = make_dataset_with_beamline()
-    dspacing = scn.convert(d, 'tof', 'dspacing')
+    dspacing = scn.convert(d, 'tof', 'dspacing', scatter=True)
     # Detailed testing done on the C++ side
     assert dspacing.coords['dspacing'].unit == sc.units.angstrom
 
 
 def test_neutron_convert_out_arg():
     d = make_dataset_with_beamline()
-    dspacing = scn.convert(d, 'tof', 'dspacing', out=d)
+    dspacing = scn.convert(d, 'tof', 'dspacing', scatter=True, out=d)
     assert dspacing.coords['dspacing'].unit == sc.units.angstrom
     assert dspacing is d
 

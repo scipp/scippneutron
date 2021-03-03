@@ -39,11 +39,16 @@ template <class T> void bind_beamline(py::module &m) {
 
   m.def(
       "flight_path_length",
-      [](ConstView self) { return flight_path_length(self.meta()); },
+      [](ConstView self, const bool scatter) {
+        return flight_path_length(self.meta(), scatter
+                                                   ? ConvertMode::Scatter
+                                                   : ConvertMode::NoScatter);
+      },
+      py::arg("data"), py::arg("scatter"),
       R"(
     Compute the length of the total flight path from a data array or a dataset.
 
-    If a sample position is found this is the sum of `l1` and `l2`, otherwise the distance from the source.
+    If `scatter=True` this is the sum of `l1` and `l2`, otherwise the distance from the source.
 
     :return: A scalar variable containing the total length of the flight path.
     :rtype: Variable)");
@@ -91,22 +96,27 @@ template <class T> void bind_convert(py::module &m) {
     :rtype: DataArray or Dataset)";
   m.def(
       "convert",
-      [](ConstView data, const Dim origin, const Dim target) {
-        return py::cast(convert(data, origin, target));
+      [](ConstView data, const Dim origin, const Dim target,
+         const bool scatter) {
+        return py::cast(
+            convert(data, origin, target,
+                    scatter ? ConvertMode::Scatter : ConvertMode::NoScatter));
       },
-      py::arg("data"), py::arg("origin"), py::arg("target"),
+      py::arg("data"), py::arg("origin"), py::arg("target"), py::arg("scatter"),
       py::call_guard<py::gil_scoped_release>(), doc);
   m.def(
       "convert",
-      [](py::object &obj, const Dim origin, const Dim target, T &out) {
+      [](py::object &obj, const Dim origin, const Dim target, T &out,
+         const bool scatter) {
         auto &data = obj.cast<T &>();
         if (&data != &out)
           throw std::runtime_error("Currently only out=<input> is supported");
-        data = convert(std::move(data), origin, target);
+        data = convert(std::move(data), origin, target,
+                       scatter ? ConvertMode::Scatter : ConvertMode::NoScatter);
         return obj;
       },
       py::arg("data"), py::arg("origin"), py::arg("target"), py::arg("out"),
-      py::call_guard<py::gil_scoped_release>(), doc);
+      py::arg("scatter"), py::call_guard<py::gil_scoped_release>(), doc);
 }
 
 void init_neutron(py::module &m) {

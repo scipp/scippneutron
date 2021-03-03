@@ -126,7 +126,7 @@ class TestMantidConversion(unittest.TestCase):
             eventWS, load_pulse_times=False)
         da = sc.histogram(da, target_tof)
         d = sc.Dataset({da.name: da})
-        converted = scn.convert(d, 'tof', 'wavelength')
+        converted = scn.convert(d, 'tof', 'wavelength', scatter=True)
 
         self.assertTrue(
             np.all(np.isclose(converted_mantid.values, converted[""].values)))
@@ -163,7 +163,7 @@ class TestMantidConversion(unittest.TestCase):
         da.coords['position'] *= np.sqrt(scale)
         low_tof = da.bins.data.coords['tof'] < 49000.0 * sc.units.us
         da.coords['incident_energy'] = 3.0 * sc.units.meV
-        da = scn.convert(da, 'tof', 'energy_transfer')
+        da = scn.convert(da, 'tof', 'energy_transfer', scatter=True)
         assert sc.all(
             sc.isnan(da.coords['energy_transfer']) | sc.is_approx(
                 da.coords['energy_transfer'], ref.coords['energy_transfer'],
@@ -669,8 +669,7 @@ def test_to_rot_from_vectors():
                     reason='Mantid framework is unavailable')
 @pytest.mark.parametrize(
     "param_dim",
-    ('tof', 'wavelength', 'energy', 'dspacing', 'Q', 'Q^2', 'energy_transfer')
-)
+    ('tof', 'wavelength', 'energy', 'dspacing', 'Q', 'Q^2', 'energy_transfer'))
 def test_to_workspace_2d(param_dim):
     from mantid.simpleapi import mtd
     mtd.clear()
