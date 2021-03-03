@@ -32,5 +32,9 @@ SCIPPNEUTRON_EXPORT VariableConstView
 incident_energy(const dataset::CoordsConstView &meta);
 SCIPPNEUTRON_EXPORT VariableConstView
 final_energy(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT Variable
+incident_beam(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT Variable
+scattered_beam(const dataset::CoordsConstView &meta);
 
 } // namespace scipp::neutron
