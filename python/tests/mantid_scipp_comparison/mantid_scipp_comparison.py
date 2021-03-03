@@ -18,14 +18,19 @@ class MantidScippComparison(ABC):
     def _fuzzy_compare(self, a, b, tol):
         same_data = sc.all(sc.is_approx(a.data, b.data, tol)).value
         if not len(a.meta) == len(b.meta):
-            return False
+            raise RuntimeError('Different number of items'
+                               f'in meta {len(a.meta)} {len(b.meta)}')
         for key, val in a.meta.items():
-            if a.meta[key].shape != b.meta[key].shape:
-                return False
+            x = a.meta[key]
+            y = b.meta[key]
+            if x.shape != y.shape:
+                raise RuntimeError(f'For meta {key} have different'
+                                   f' shapes {x.shape}, {y.shape}')
             if val.dtype in [sc.dtype.float64, sc.dtype.float32]:
-                if sc.sum(~sc.isfinite(a.meta[key])).value > 0 or sc.sum(
-                        ~sc.isfinite(a.meta[key])).value > 0:
-                    return False
+                if sc.sum(~sc.isfinite(x)).value > 0 or sc.sum(
+                        ~sc.isfinite(y)).value > 0:
+                    raise RuntimeError(
+                        f'For meta {key} have non-finite entries')
                 coord_tol_factor = 1e-6
                 vtol = sc.abs(
                     a.meta[key]
