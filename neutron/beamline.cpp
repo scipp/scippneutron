@@ -27,6 +27,9 @@ VariableConstView sample_position(const dataset::CoordsConstView &meta) {
 
 Variable flight_path_length(const dataset::CoordsConstView &meta,
                             const ConvertMode scatter) {
+  // TODO Avoid copies here and below if scipp buffer ownership model is changed
+  if (meta.contains(Dim("L")))
+    return copy(meta[Dim("L")]);
   // If there is not scattering this returns the straight distance from the
   // source, as required, e.g., for monitors or imaging.
   if (scatter == ConvertMode::Scatter)
@@ -36,10 +39,14 @@ Variable flight_path_length(const dataset::CoordsConstView &meta,
 }
 
 Variable l1(const dataset::CoordsConstView &meta) {
+  if (meta.contains(Dim("L1")))
+    return copy(meta[Dim("L1")]);
   return norm(sample_position(meta) - source_position(meta));
 }
 
 Variable l2(const dataset::CoordsConstView &meta) {
+  if (meta.contains(Dim("L2")))
+    return copy(meta[Dim("L2")]);
   // Use transform to avoid temporaries. For certain unit conversions this can
   // cause a speedup >50%. Short version would be:
   //   return norm(position(meta) - sample_position(meta));

@@ -39,7 +39,10 @@ Dataset makeDatasetWithBeamline() {
 
 class BeamlineTest : public ::testing::Test {
 protected:
-  const Dataset dataset{makeDatasetWithBeamline()};
+  Dataset dataset{makeDatasetWithBeamline()};
+
+  Variable L2_override = makeVariable<double>(Dims{Dim::Spectrum}, Shape{2},
+                                              units::m, Values{1.1, 1.2});
 };
 
 TEST_F(BeamlineTest, basics) {
@@ -49,21 +52,49 @@ TEST_F(BeamlineTest, basics) {
   ASSERT_EQ(sample_position(dataset.meta()),
             makeVariable<Eigen::Vector3d>(Dims(), Shape(), units::m,
                                           Values{sample_pos}));
-  ASSERT_EQ(l1(dataset.meta()),
-            makeVariable<double>(Dims(), Shape(), units::m, Values{10.0}));
+}
+
+TEST_F(BeamlineTest, l1) {
+  ASSERT_EQ(l1(dataset.meta()), 10.0 * units::m);
+  const auto L1_override = 10.1 * units::m;
+  dataset.coords().set(Dim("L1"), L1_override);
+  ASSERT_EQ(l1(dataset.meta()), L1_override);
+  dataset.coords().erase(Dim("L1"));
+  ASSERT_EQ(l1(dataset.meta()), 10.0 * units::m);
 }
 
 TEST_F(BeamlineTest, l2) {
-  ASSERT_EQ(l2(dataset.meta()),
-            makeVariable<double>(Dims{Dim::Spectrum}, Shape{2}, units::m,
-                                 Values{1.0, 1.0}));
+  const auto L2_computed = makeVariable<double>(Dims{Dim::Spectrum}, Shape{2},
+                                                units::m, Values{1.0, 1.0});
+  ASSERT_EQ(l2(dataset.meta()), L2_computed);
+  dataset.coords().set(Dim("L2"), L2_override);
+  ASSERT_EQ(l2(dataset.meta()), L2_override);
+  dataset.coords().erase(Dim("L2"));
+  ASSERT_EQ(l2(dataset.meta()), L2_computed);
 }
 
 TEST_F(BeamlineTest, flight_path_length) {
+  const auto L_computed = l1(dataset.meta()) + l2(dataset.meta());
   ASSERT_EQ(flight_path_length(dataset.meta(), ConvertMode::Scatter),
-            l1(dataset.meta()) + l2(dataset.meta()));
+            L_computed);
   ASSERT_EQ(flight_path_length(dataset.meta(), ConvertMode::NoScatter),
             norm(source_position(dataset.meta()) - position(dataset.meta())));
+  dataset.coords().set(Dim("L2"), L2_override);
+  ASSERT_NE(flight_path_length(dataset.meta(), ConvertMode::Scatter),
+            L_computed);
+  ASSERT_EQ(flight_path_length(dataset.meta(), ConvertMode::Scatter),
+            l1(dataset.meta()) + l2(dataset.meta()));
+  // In non-scattering conversion L2 is irrelvant, so adding the coord has no
+  // effect in this case
+  ASSERT_EQ(flight_path_length(dataset.meta(), ConvertMode::NoScatter),
+            norm(source_position(dataset.meta()) - position(dataset.meta())));
+  const auto L_override = l1(dataset.meta()) + L2_override * (1.1 * units::one);
+  dataset.coords().set(Dim("L"), L_override);
+  // Note that now L2 is also overridden by L
+  ASSERT_EQ(flight_path_length(dataset.meta(), ConvertMode::Scatter),
+            L_override);
+  ASSERT_EQ(flight_path_length(dataset.meta(), ConvertMode::NoScatter),
+            L_override);
 }
 
 template <class T> constexpr T pi = T(3.1415926535897932385L);
