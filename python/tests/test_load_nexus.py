@@ -305,7 +305,7 @@ def test_load_instrument_name():
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
 
-    assert loaded_data['instrument-name'].values == name
+    assert loaded_data['instrument_name'].values == name
 
 
 def test_load_experiment_title():
@@ -316,7 +316,7 @@ def test_load_experiment_title():
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
 
-    assert loaded_data['experiment-title'].values == title
+    assert loaded_data['experiment_title'].values == title
 
 
 def test_load_nexus_loads_event_and_log_data_from_single_file():

@@ -279,8 +279,9 @@ class TestMantidConversion(unittest.TestCase):
                       })
         self.assertEqual(len(mtd), 0, mtd.getObjectNames())
         attrs = [str(key) for key in ds.attrs.keys()]
-        expected_monitor_attrs = set(
-            ["monitor1", "monitor2", "monitor3", "monitor4", "monitor5"])
+        expected_monitor_attrs = {
+            "monitor1", "monitor2", "monitor3", "monitor4", "monitor5"
+        }
         assert expected_monitor_attrs.issubset(attrs)
 
         for monitor_name in expected_monitor_attrs:
@@ -300,8 +301,9 @@ class TestMantidConversion(unittest.TestCase):
                       })
         self.assertEqual(len(mtd), 0, mtd.getObjectNames())
         attrs = [str(key) for key in ds.attrs.keys()]
-        expected_monitor_attrs = set(
-            ["monitor1", "monitor2", "monitor3", "monitor4", "monitor5"])
+        expected_monitor_attrs = {
+            "monitor1", "monitor2", "monitor3", "monitor4", "monitor5"
+        }
         assert expected_monitor_attrs.issubset(attrs)
         for monitor_name in expected_monitor_attrs:
             monitors = ds.attrs[monitor_name].values
@@ -319,7 +321,7 @@ class TestMantidConversion(unittest.TestCase):
                       })
         self.assertEqual(len(mtd), 0, mtd.getObjectNames())
         attrs = [str(key) for key in ds.attrs.keys()]
-        expected_monitor_attrs = set(["monitor2", "monitor3"])
+        expected_monitor_attrs = {"monitor2", "monitor3"}
         assert expected_monitor_attrs.issubset(attrs)
         for monitor_name in expected_monitor_attrs:
             monitor = ds.attrs[monitor_name].value
@@ -330,7 +332,7 @@ class TestMantidConversion(unittest.TestCase):
             assert 'sample_position' in monitor.coords
             # Absence of the following is not crucial, but currently there is
             # no need for these, and it avoids duplication:
-            assert 'detector-info' not in monitor.coords
+            assert 'detector_info' not in monitor.coords
             assert 'sample' not in monitor.coords
             assert 'SampleTemp' not in monitor.coords,\
                 "Expect run logs not be duplicated in monitor workspaces"
@@ -482,7 +484,7 @@ class TestMantidConversion(unittest.TestCase):
         assert 'diff' in diff
         assert 'status' in params.coords
         assert 'function' in params.coords
-        assert 'cost-function' in params.coords
+        assert 'cost_function' in params.coords
         assert 'chi^2/d.o.f.' in params.coords
 
     def test_convert_array_run_log_to_attrs(self):

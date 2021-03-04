@@ -40,11 +40,11 @@ def _add_string_data_as_attr(group: h5py.Group, dataset_name: str,
 
 
 def _add_instrument_name(instrument_group: h5py.Group, data: sc.Variable):
-    _add_string_data_as_attr(instrument_group, "name", "instrument-name", data)
+    _add_string_data_as_attr(instrument_group, "name", "instrument_name", data)
 
 
 def _add_title(entry_group: h5py.Group, data: sc.Variable):
-    _add_string_data_as_attr(entry_group, "title", "experiment-title", data)
+    _add_string_data_as_attr(entry_group, "title", "experiment_title", data)
 
 
 def load_nexus(data_file: Union[str, h5py.File], root: str = "/", quiet=True):

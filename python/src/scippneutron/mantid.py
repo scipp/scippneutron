@@ -482,7 +482,7 @@ def _convert_MatrixWorkspace_info(ws,
         "attrs": {
             "sample":
             make_sample(ws),
-            "instrument-name":
+            "instrument_name":
             sc.Variable(
                 value=ws.componentInfo().name(ws.componentInfo().root()))
         },
@@ -493,7 +493,7 @@ def _convert_MatrixWorkspace_info(ws,
             info["attrs"][run_log_name] = run_log_variable
 
     if advanced_geometry:
-        info["coords"]["detector-info"] = make_detector_info(ws)
+        info["coords"]["detector_info"] = make_detector_info(ws)
 
     if not np.all(np.isnan(pos.values)):
         info["coords"].update({"position": pos})
@@ -545,8 +545,8 @@ def convert_monitors_ws(ws, converter, **ignored):
             single_monitor = converter(monitor_ws, load_run_logs=False)
         # Remove redundant information that is duplicated from workspace
         # We get this extra information from the generic converter reuse
-        if 'detector-info' in single_monitor.coords:
-            del single_monitor.coords['detector-info']
+        if 'detector_info' in single_monitor.coords:
+            del single_monitor.coords['detector_info']
         del single_monitor.attrs['sample']
         monitors.append((comp_info.name(det_index), single_monitor))
     return monitors
@@ -1086,7 +1086,7 @@ def _fit_workspace(ws, mantid_args):
         parameters.coords['status'] = sc.Variable(fit.OutputStatus)
         parameters.coords['chi^2/d.o.f.'] = sc.Variable(fit.OutputChi2overDoF)
         parameters.coords['function'] = sc.Variable(str(fit.Function))
-        parameters.coords['cost-function'] = sc.Variable(fit.CostFunction)
+        parameters.coords['cost_function'] = sc.Variable(fit.CostFunction)
         return parameters, data
 
 
