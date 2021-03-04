@@ -18,6 +18,7 @@ requirements:
   run:
     - python {{ python }}
     - scipp
+    - h5py
 
 test:
   imports:
