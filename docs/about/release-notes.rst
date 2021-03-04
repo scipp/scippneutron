@@ -11,6 +11,8 @@ Features
 
 * Functionality from ``scipp.neutron`` (as previously known as part of the scipp package) is now available in this package.
   This includes in particular the instrument view and "unit conversions" for time-of-flight neutron sources.
+* Convert supports a greatly enhanced way of obtaining required parameters of the beamline.
+  Instead of requiring raw component positions it can now work directly with, e.g., `two_theta`.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
