@@ -87,6 +87,24 @@ static T convert_with_factor(T &&d, const Dim from, const Dim to,
 
 namespace {
 
+const std::array<Dim, 2> no_scatter_params{Dim::Position, Dim("Ltotal")};
+
+auto scatter_params(const Dim dim) {
+  static std::set<Dim> pos_invariant{Dim::DSpacing, Dim::Q};
+  static std::vector<Dim> params{Dim::Position,
+                                 Dim("incident_beam"),
+                                 Dim("scattered_beam"),
+                                 Dim::IncidentEnergy,
+                                 Dim::FinalEnergy,
+                                 Dim("Ltotal"),
+                                 Dim("L1"),
+                                 Dim("L2")};
+  if (dim == Dim::Tof)
+    return scipp::span<Dim>{};
+  return pos_invariant.count(dim) ? scipp::span(params)
+                                  : scipp::span(params).subspan(3);
+}
+
 template <class T>
 T coords_to_attrs(T &&x, const Dim from, const Dim to,
                   const ConvertMode scatter) {
@@ -104,11 +122,11 @@ T coords_to_attrs(T &&x, const Dim from, const Dim to,
     }
   };
   if (scatter == ConvertMode::Scatter) {
-    std::set<Dim> pos_invariant{Dim::DSpacing, Dim::Q};
-    if (pos_invariant.count(to))
-      to_attr(Dim::Position);
+    for (const auto &param : scatter_params(to))
+      to_attr(param);
   } else if (from == Dim::Tof) {
-    to_attr(Dim::Position);
+    for (const auto &param : no_scatter_params)
+      to_attr(param);
   }
   return std::move(x);
 }
@@ -133,11 +151,11 @@ T attrs_to_coords(T &&x, const Dim from, const Dim to,
     }
   };
   if (scatter == ConvertMode::Scatter) {
-    std::set<Dim> pos_invariant{Dim::DSpacing, Dim::Q};
-    if (pos_invariant.count(from))
-      to_coord(Dim::Position);
+    for (const auto &param : scatter_params(from))
+      to_coord(param);
   } else if (to == Dim::Tof) {
-    to_coord(Dim::Position);
+    for (const auto &param : no_scatter_params)
+      to_coord(param);
   }
   return std::move(x);
 }
