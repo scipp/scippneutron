@@ -9,7 +9,7 @@ First release (planned)
 Features
 ~~~~~~~~
 
-* Functionality from ``scipp.neutron`` is now available in this package.
+* Functionality from ``scipp.neutron`` (as previously known as part of the scipp package) is now available in this package.
   This includes in particular the instrument view and "unit conversions" for time-of-flight neutron sources.
 
 Breaking changes
