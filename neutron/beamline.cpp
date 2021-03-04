@@ -28,8 +28,8 @@ VariableConstView sample_position(const dataset::CoordsConstView &meta) {
 Variable flight_path_length(const dataset::CoordsConstView &meta,
                             const ConvertMode scatter) {
   // TODO Avoid copies here and below if scipp buffer ownership model is changed
-  if (meta.contains(Dim("L")))
-    return copy(meta[Dim("L")]);
+  if (meta.contains(Dim("Ltotal")))
+    return copy(meta[Dim("Ltotal")]);
   // If there is not scattering this returns the straight distance from the
   // source, as required, e.g., for monitors or imaging.
   if (scatter == ConvertMode::Scatter)

@@ -134,7 +134,7 @@ TEST_F(BeamlineTest, flight_path_length) {
   ASSERT_EQ(flight_path_length(dataset.meta(), ConvertMode::NoScatter),
             norm(source_position(dataset.meta()) - position(dataset.meta())));
   const auto L_override = l1(dataset.meta()) + L2_override * (1.1 * units::one);
-  dataset.coords().set(Dim("L"), L_override);
+  dataset.coords().set(Dim("Ltotal"), L_override);
   // Note that now L2 is also overridden by L
   ASSERT_EQ(flight_path_length(dataset.meta(), ConvertMode::Scatter),
             L_override);
