@@ -67,7 +67,7 @@ def test_neutron_beamline():
         scn.L2(d),
         sc.Variable(dims=['position'], values=np.ones(4), unit=sc.units.m))
     two_theta = scn.two_theta(d)
-    assert scn.L1(d) + scn.L2(d) == scn.Ltotal(d, scatter=True)
+    assert sc.is_equal(scn.L1(d) + scn.L2(d), scn.Ltotal(d, scatter=True))
     assert two_theta.unit == sc.units.rad
     assert two_theta.dims == ['position']
 
