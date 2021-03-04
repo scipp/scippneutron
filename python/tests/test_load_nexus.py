@@ -1,4 +1,4 @@
-from nexus_helpers import (
+from .nexus_helpers import (
     InMemoryNexusFileBuilder,
     EventData,
     Detector,
