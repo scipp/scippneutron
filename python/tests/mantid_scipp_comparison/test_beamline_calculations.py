@@ -30,7 +30,7 @@ class TestBeamlineCalculations:
                 return data.detectorInfo().l1() * sc.Unit('m')
 
             def _run_scipp(self, data):
-                return sn.l1(data)
+                return sn.L1(data)
 
         test = L1Comparison()
         test.run()
@@ -44,7 +44,7 @@ class TestBeamlineCalculations:
                     values=[data.detectorInfo().l2(i) for i in [0, 1, 2, 3]])
 
             def _run_scipp(self, data):
-                return sn.l2(data)
+                return sn.L2(data)
 
         test = L2Comparison()
         test.run()
