@@ -1,46 +1,10 @@
 from dataclasses import dataclass
-from typing import List, Union, Iterator, Optional, Tuple, Dict
+from typing import List, Union, Iterator, Optional
 import h5py
 import numpy as np
 from contextlib import contextmanager
 
 h5root = Union[h5py.File, h5py.Group]
-
-
-def _get_attr_as_str(h5_object, attribute_name: str):
-    try:
-        return h5_object.attrs[attribute_name].decode("utf8")
-    except AttributeError:
-        return h5_object.attrs[attribute_name]
-
-
-def find_by_nx_class(
-        nx_class_names: Tuple[str, ...],
-        root: Union[h5py.File, h5py.Group]) -> Dict[str, List[h5py.Group]]:
-    """
-    Finds groups with requested NX_class in the subtree of root
-
-    Returns a dictionary with NX_class name as the key and list of matching
-    groups as the value
-    """
-    groups_with_requested_nx_class: Dict[str, List[h5py.Group]] = {
-        class_name: []
-        for class_name in nx_class_names
-    }
-
-    def _match_nx_class(_, h5_object):
-        if isinstance(h5_object, h5py.Group):
-            try:
-                nx_class = _get_attr_as_str(h5_object, "NX_class")
-                if nx_class in nx_class_names:
-                    groups_with_requested_nx_class[nx_class].append(h5_object)
-            except KeyError:
-                pass
-
-    root.visititems(_match_nx_class)
-    # We should also check if root itself is an NX_class
-    _match_nx_class(None, root)
-    return groups_with_requested_nx_class
 
 
 def _create_nx_class(group_name: str, nx_class_name: str,
