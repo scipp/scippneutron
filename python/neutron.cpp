@@ -38,7 +38,7 @@ template <class T> void bind_beamline(py::module &m) {
     :rtype: Variable)");
 
   m.def(
-      "flight_path_length",
+      "Ltotal",
       [](ConstView self, const bool scatter) {
         return flight_path_length(self.meta(), scatter
                                                    ? ConvertMode::Scatter
@@ -48,31 +48,39 @@ template <class T> void bind_beamline(py::module &m) {
       R"(
     Compute the length of the total flight path from a data array or a dataset.
 
-    If `scatter=True` this is the sum of `l1` and `l2`, otherwise the distance between `source_position` and `position`.
+    If `scatter=True` this is defined as the sum of `L1` and `L2`, otherwise the distance between `source_position` and `position`.
 
     :return: A scalar variable containing the total length of the flight path.
     :rtype: Variable)");
 
   m.def(
-      "l1", [](ConstView self) { return l1(self.meta()); }, R"(
+      "incident_beam",
+      [](ConstView self) { return incident_beam(self.meta()); }, R"(
+    Compute the indicent beam vector, the direction and length of the primary flight path from a data array or a dataset.
+
+    :return: A scalar variable containing the incident beam vector.
+    :rtype: Variable)");
+
+  m.def(
+      "scattered_beam",
+      [](ConstView self) { return scattered_beam(self.meta()); }, R"(
+    Compute the scattered beam, the directions and lengths of the secondary flight paths from a data array or a dataset.
+
+    :return: A variable containing the scattered beam vectors for all detector pixels.
+    :rtype: Variable)");
+
+  m.def(
+      "L1", [](ConstView self) { return l1(self.meta()); }, R"(
     Compute L1, the length of the primary flight path (distance between neutron source and sample) from a data array or a dataset.
 
     :return: A scalar variable containing L1.
     :rtype: Variable)");
 
   m.def(
-      "l2", [](ConstView self) { return l2(self.meta()); }, R"(
+      "L2", [](ConstView self) { return l2(self.meta()); }, R"(
     Compute L2, the length of the secondary flight paths (distances between sample and detector pixels) from a data array or a dataset.
 
     :return: A variable containing L2 for all detector pixels.
-    :rtype: Variable)");
-
-  m.def(
-      "scattering_angle",
-      [](ConstView self) { return scattering_angle(self.meta()); }, R"(
-    Compute :math:`\theta`, the scattering angle in Bragg's law, from a data array or a dataset.
-
-    :return: A variable containing :math:`\theta` for all detector pixels.
     :rtype: Variable)");
 
   m.def(
