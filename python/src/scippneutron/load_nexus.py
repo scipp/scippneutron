@@ -3,7 +3,7 @@
 # @author Matthew Jones
 
 import scipp as sc
-from ._loading_common import find_by_nx_class
+from ._loading_common import find_by_nx_class, ensure_str
 from ._loading_detector_data import load_detector_data
 from ._loading_log_data import load_logs
 import h5py
@@ -34,7 +34,7 @@ def _add_string_data_as_attr(group: h5py.Group, dataset_name: str,
 
     try:
         data[attr_name] = sc.Variable(
-            value=group[dataset_name].asstr()[...].item())
+            value=ensure_str(group[dataset_name][...].item()))
     except KeyError:
         pass
 
