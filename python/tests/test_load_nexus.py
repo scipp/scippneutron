@@ -116,6 +116,76 @@ def test_load_nexus_loads_data_from_multiple_event_data_groups():
                           expected_detector_ids)
 
 
+def test_load_nexus_skips_event_data_group_with_non_integer_event_ids():
+    event_time_offsets = np.array([456, 743, 347, 345, 632])
+    event_data = EventData(
+        event_id=np.array([1.1, 2.2, 3.3, 1.1, 3.1]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+
+    builder = InMemoryNexusFileBuilder()
+    builder.add_event_data(event_data)
+
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    assert loaded_data is None, "Expected no data to be loaded as " \
+                                "event data has non integer event ids"
+
+
+def test_load_nexus_skips_event_data_group_with_non_integer_detector_numbers():
+    event_time_offsets = np.array([456, 743, 347, 345, 632])
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 3]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+    detector_numbers = np.array([0.1, 1.2, 2.3, 3.4])
+
+    builder = InMemoryNexusFileBuilder()
+    builder.add_detector(Detector(detector_numbers, event_data))
+
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    assert loaded_data is None, "Expected no data to be loaded as " \
+                                "detector has non integer detector numbers"
+
+
+def test_load_nexus_skips_data_with_event_id_and_detector_number_type_unequal(
+):
+    event_time_offsets = np.array([456, 743, 347, 345, 632])
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 3], dtype=np.int64),
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+    detector_numbers = np.array([0, 1, 2, 3], dtype=np.int32)
+
+    builder = InMemoryNexusFileBuilder()
+    builder.add_detector(Detector(detector_numbers, event_data))
+
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    assert loaded_data is None, "Expected no data to be loaded as event " \
+                                "ids and detector numbers are of " \
+                                "different types"
+
+
 def test_load_nexus_loads_data_from_single_log_with_no_units():
     values = np.array([1, 2, 3])
     times = np.array([4, 5, 6])

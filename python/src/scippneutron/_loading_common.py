@@ -22,6 +22,8 @@ class BadSource(Exception):
 
 
 unsigned_to_signed = {
+    np.uint8: np.int8,
+    np.uint16: np.int16,
     np.uint32: np.int32,
     np.uint64: np.int64,
 }

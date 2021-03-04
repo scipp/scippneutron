@@ -108,7 +108,7 @@ def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
     number_of_events = event_index[-1]
     event_time_offset = load_dataset(group["event_time_offset"],
                                      [_event_dimension])
-    event_id = load_dataset(event_id_ds, [_event_dimension], dtype=np.int32)
+    event_id = load_dataset(event_id_ds, [_event_dimension])
 
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
@@ -125,9 +125,14 @@ def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
         # will not have a bin)
         detector_ids = np.unique(event_id.values)
 
+    detector_id_type = ensure_not_unsigned(detector_ids.dtype.type)
+    _check_event_ids_and_det_number_types_valid(detector_id_type,
+                                                event_id_ds.dtype.type,
+                                                group.name)
+
     detector_ids = sc.Variable(dims=[_detector_dimension],
                                values=detector_ids,
-                               dtype=np.int32)
+                               dtype=detector_id_type)
 
     data_dict = {
         "data": weights,
@@ -151,6 +156,29 @@ def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
     return DetectorData(data, detector_ids, pixel_positions)
 
 
+def _check_event_ids_and_det_number_types_valid(detector_id_type: np.dtype,
+                                                event_id_type: np.dtype,
+                                                group_name: str):
+    """
+    These must be integers and must be the same type or we'll have
+    problems trying to bin events by detector id. Check here so that
+    we can give a useful warning to the user and skip loading the
+    current event group.
+    """
+    if not np.issubdtype(detector_id_type, np.integer):
+        raise BadSource(
+            f"detector_numbers dataset in NXdetector is not an integer "
+            f"type, skipping loading {group_name}")
+    if not np.issubdtype(event_id_type, np.integer):
+        raise BadSource(f"event_ids dataset is not an integer type, "
+                        f"skipping loading {group_name}")
+    if detector_id_type != event_id_type:
+        raise BadSource(
+            f"event_ids and detector_numbers datasets in corresponding "
+            f"NXdetector were not of the same type, skipping "
+            f"loading {group_name}")
+
+
 def load_detector_data(event_data_groups: List[h5py.Group],
                        quiet: bool) -> Optional[sc.DataArray]:
     event_data = []
@@ -163,32 +191,28 @@ def load_detector_data(event_data_groups: List[h5py.Group],
 
     if not event_data:
         return
-    else:
 
-        def get_detector_id(detector_data: DetectorData):
-            # Assume different detector banks do not have
-            # intersecting ranges of detector ids
-            return detector_data.detector_ids.values[0]
+    def get_detector_id(detector_data: DetectorData):
+        # Assume different detector banks do not have
+        # intersecting ranges of detector ids
+        return detector_data.detector_ids.values[0]
 
-        event_data.sort(key=get_detector_id)
+    event_data.sort(key=get_detector_id)
 
-        pixel_positions_loaded = all(
-            [data.pixel_positions is not None for data in event_data])
+    pixel_positions_loaded = all(
+        [data.pixel_positions is not None for data in event_data])
+    detector_data = event_data.pop(0)
+    # Events in the NeXus file are effectively binned by pulse
+    # (because they are recorded chronologically)
+    # but for reduction it is more useful to bin by detector id
+    events = sc.bin(detector_data.events, groups=[detector_data.detector_ids])
+    if pixel_positions_loaded:
+        events.coords['position'] = detector_data.pixel_positions
+    while event_data:
         detector_data = event_data.pop(0)
-        # Events in the NeXus file are effectively binned by pulse
-        # (because they are recorded chronologically)
-        # but for reduction it is more useful to bin by detector id
-        events = sc.bin(detector_data.events,
-                        groups=[detector_data.detector_ids])
+        new_events = sc.bin(detector_data.events,
+                            groups=[detector_data.detector_ids])
         if pixel_positions_loaded:
-            events.coords['position'] = detector_data.pixel_positions
-        while event_data:
-            detector_data = event_data.pop(0)
-            new_events = sc.bin(detector_data.events,
-                                groups=[detector_data.detector_ids])
-            if pixel_positions_loaded:
-                new_events.coords['position'] = detector_data.pixel_positions
-            events = sc.concatenate(events,
-                                    new_events,
-                                    dim=_detector_dimension)
+            new_events.coords['position'] = detector_data.pixel_positions
+        events = sc.concatenate(events, new_events, dim=_detector_dimension)
     return events
