@@ -54,6 +54,9 @@ def _load_log_data_from_group(group: h5py.Group) -> Tuple[str, sc.Variable]:
     except KeyError:
         raise BadSource(f"NXlog at {group.name} has no value dataset")
 
+    if values.size == 0:
+        raise BadSource(f"NXlog at {group.name} has an empty value dataset")
+
     try:
         unit = ensure_str(group[value_dataset_name].attrs["units"])
     except KeyError:
@@ -63,6 +66,9 @@ def _load_log_data_from_group(group: h5py.Group) -> Tuple[str, sc.Variable]:
         dimension_label = "time"
         is_time_series = True
         times = load_dataset(group[time_dataset_name], [dimension_label])
+        if group[time_dataset_name].size != values.size:
+            raise BadSource(f"NXlog at {group.name} has time and value "
+                            f"datasets of different sizes")
     except KeyError:
         dimension_label = property_name
         is_time_series = False

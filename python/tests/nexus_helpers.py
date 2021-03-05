@@ -67,7 +67,7 @@ class EventData:
 @dataclass
 class Log:
     name: str
-    value: np.ndarray
+    value: Optional[np.ndarray]
     time: Optional[np.ndarray] = None
     value_units: Optional[str] = None
     time_units: Optional[str] = None
@@ -115,7 +115,8 @@ def _add_detector_group_to_file(detector: Detector, parent_group: h5py.Group,
 
 def _add_log_group_to_file(log, parent_group):
     log_group = _create_nx_class(log.name, "NXlog", parent_group)
-    value_ds = log_group.create_dataset("value", data=log.value)
+    if log.value is not None:
+        value_ds = log_group.create_dataset("value", data=log.value)
     if log.value_units is not None:
         value_ds.attrs.create("units", data=log.value_units)
     if log.time is not None:
