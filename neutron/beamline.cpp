@@ -13,8 +13,32 @@ using namespace scipp;
 
 namespace scipp::neutron {
 
+namespace NeutronDim {
+Dim Tof = Dim("tof");
+Dim Energy = Dim("energy");
+Dim EnergyTransfer = Dim("energy_transfer");
+Dim DSpacing = Dim("dspacing");
+Dim Q = Dim("Q");
+Dim Qx = Dim("Qx");
+Dim Qy = Dim("Qy");
+Dim Qz = Dim("Qz");
+Dim TwoTheta = Dim("two_theta");
+Dim SamplePosition = Dim("sample_position");
+Dim SourcePosition = Dim("source_position");
+Dim Position = Dim("position");
+Dim L1 = Dim("L1");
+Dim L2 = Dim("L2");
+Dim Ltotal = Dim("Ltotal");
+Dim IncidentBeam = Dim("incident_beam");
+Dim ScatteredBeam = Dim("scattered_beam");
+Dim IncidentEnergy = Dim("incident_energy");
+Dim FinalEnergy = Dim("final_energy");
+Dim Wavelength = Dim("wavelength");
+Dim Spectrum = Dim("spectrum");
+} // namespace NeutronDim
+
 VariableConstView position(const dataset::CoordsConstView &meta) {
-  return meta[Dim::Position];
+  return meta[NeutronDim::Position];
 }
 
 VariableConstView source_position(const dataset::CoordsConstView &meta) {
@@ -96,13 +120,14 @@ Variable two_theta(const dataset::CoordsConstView &meta) {
 }
 
 VariableConstView incident_energy(const dataset::CoordsConstView &meta) {
-  return meta.contains(Dim::IncidentEnergy) ? meta[Dim::IncidentEnergy]
-                                            : VariableConstView{};
+  return meta.contains(NeutronDim::IncidentEnergy)
+             ? meta[NeutronDim::IncidentEnergy]
+             : VariableConstView{};
 }
 
 VariableConstView final_energy(const dataset::CoordsConstView &meta) {
-  return meta.contains(Dim::FinalEnergy) ? meta[Dim::FinalEnergy]
-                                         : VariableConstView{};
+  return meta.contains(NeutronDim::FinalEnergy) ? meta[NeutronDim::FinalEnergy]
+                                                : VariableConstView{};
 }
 
 } // namespace scipp::neutron

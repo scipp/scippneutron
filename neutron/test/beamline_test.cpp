@@ -29,11 +29,11 @@ Dataset makeDatasetWithBeamline() {
                                                 units::m, Values{sample_pos}));
   // TODO Need fuzzy comparison for variables to write a convenient test with
   // detectors away from the axes.
-  beamline.setCoord(
-      Dim("position"),
-      makeVariable<Eigen::Vector3d>(Dims{Dim::Spectrum}, Shape{2}, units::m,
-                                    Values{Eigen::Vector3d{1.0, 0.0, 0.01},
-                                           Eigen::Vector3d{0.0, 1.0, 0.01}}));
+  beamline.setCoord(Dim("position"),
+                    makeVariable<Eigen::Vector3d>(
+                        Dims{NeutronDim::Spectrum}, Shape{2}, units::m,
+                        Values{Eigen::Vector3d{1.0, 0.0, 0.01},
+                               Eigen::Vector3d{0.0, 1.0, 0.01}}));
   return beamline;
 }
 
@@ -41,12 +41,12 @@ class BeamlineTest : public ::testing::Test {
 protected:
   Dataset dataset{makeDatasetWithBeamline()};
 
-  Variable L2_override = makeVariable<double>(Dims{Dim::Spectrum}, Shape{2},
-                                              units::m, Values{1.1, 1.2});
+  Variable L2_override = makeVariable<double>(
+      Dims{NeutronDim::Spectrum}, Shape{2}, units::m, Values{1.1, 1.2});
   Variable incident_beam_override =
       incident_beam(dataset.meta()) * (1.23 * units::one);
   Variable scattered_beam_override = makeVariable<Eigen::Vector3d>(
-      Dims{Dim::Spectrum}, Shape{2}, units::m,
+      Dims{NeutronDim::Spectrum}, Shape{2}, units::m,
       Values{Eigen::Vector3d{1.0, 0.1, 0.11}, Eigen::Vector3d{0.1, 1.0, 0.11}});
 };
 
@@ -79,8 +79,8 @@ TEST_F(BeamlineTest, L1) {
 }
 
 TEST_F(BeamlineTest, L2) {
-  const auto L2_computed = makeVariable<double>(Dims{Dim::Spectrum}, Shape{2},
-                                                units::m, Values{1.0, 1.0});
+  const auto L2_computed = makeVariable<double>(
+      Dims{NeutronDim::Spectrum}, Shape{2}, units::m, Values{1.0, 1.0});
   // No overrides, computed based on positions
   ASSERT_EQ(L2(dataset.meta()), L2_computed);
   dataset.coords().set(Dim("L2"), L2_override);
@@ -142,18 +142,18 @@ template <class T> constexpr T pi = T(3.1415926535897932385L);
 
 TEST_F(BeamlineTest, scattering_angle) {
   const auto two_theta_computed =
-      makeVariable<double>(Dims{Dim::Spectrum}, Shape{2}, units::rad,
+      makeVariable<double>(Dims{NeutronDim::Spectrum}, Shape{2}, units::rad,
                            Values{pi<double> / 2, pi<double> / 2});
   const auto theta_computed = 0.5 * units::one * two_theta_computed;
-  const auto cos_two_theta_computed =
-      makeVariable<double>(Dims{Dim::Spectrum}, Shape{2}, Values{0.0, 0.0});
+  const auto cos_two_theta_computed = makeVariable<double>(
+      Dims{NeutronDim::Spectrum}, Shape{2}, Values{0.0, 0.0});
 
   ASSERT_EQ(cos_two_theta(dataset.meta()), cos_two_theta_computed);
   ASSERT_EQ(two_theta(dataset.meta()), two_theta_computed);
   ASSERT_EQ(scattering_angle(dataset.meta()), theta_computed);
 
   const auto two_theta_override = makeVariable<double>(
-      Dims{Dim::Spectrum}, Shape{2}, units::rad, Values{0.1, 0.2});
+      Dims{NeutronDim::Spectrum}, Shape{2}, units::rad, Values{0.1, 0.2});
   // Setting `theta` or `scattering_angle` has no effect. These are slightly
   // ambiguous and are therefore not interpreted by the beamline helpers.
   dataset.coords().set(Dim("theta"), two_theta_override);
@@ -201,7 +201,7 @@ TEST_F(BeamlineTest, no_scatter) {
   ASSERT_THROW(scattering_angle(d.meta()), except::NotFoundError);
   ASSERT_EQ(Ltotal(d.meta(), ConvertMode::NoScatter),
             makeVariable<double>(
-                Dims{Dim::Spectrum}, Shape{2}, units::m,
+                Dims{NeutronDim::Spectrum}, Shape{2}, units::m,
                 Values{(Eigen::Vector3d{1.0, 0.0, 0.01} - source_pos).norm(),
                        (Eigen::Vector3d{0.0, 1.0, 0.01} - source_pos).norm()}));
 }
