@@ -242,6 +242,34 @@ def test_load_nexus_loads_data_from_multiple_logs():
         loaded_data[log_2.name].data.values.coords['time'].values, log_2.time)
 
 
+def test_load_nexus_loads_logs_with_non_supported_int_types():
+    builder = InMemoryNexusFileBuilder()
+    log_int8 = Log("test_log_int8",
+                   np.array([1, 2, 3]).astype(np.int8),
+                   np.array([4.4, 5.5, 6.6]))
+    log_int16 = Log("test_log_int16",
+                    np.array([123, 253, 756]).astype(np.int16),
+                    np.array([246, 1235, 2369]))
+    log_uint8 = Log("test_log_uint8",
+                    np.array([1, 2, 3]).astype(np.uint8),
+                    np.array([4.4, 5.5, 6.6]))
+    log_uint16 = Log("test_log_uint16",
+                     np.array([123, 253, 756]).astype(np.uint16),
+                     np.array([246, 1235, 2369]))
+    logs = (log_int8, log_int16, log_uint8, log_uint16)
+    for log in logs:
+        builder.add_log(log)
+
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    # Expect a sc.Dataset with log names as keys
+    for log in logs:
+        assert np.allclose(loaded_data[log.name].data.values.values, log.value)
+        assert np.allclose(loaded_data[log.name].data.values.coords['time'],
+                           log.time)
+
+
 def test_load_nexus_skips_multidimensional_log():
     # Loading NXlogs with more than 1 dimension is not yet implemented
     # We need to come up with a sensible approach to labelling the dimensions
