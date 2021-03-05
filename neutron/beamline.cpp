@@ -42,18 +42,18 @@ VariableConstView position(const dataset::CoordsConstView &meta) {
 }
 
 VariableConstView source_position(const dataset::CoordsConstView &meta) {
-  return meta[Dim("source_position")];
+  return meta[NeutronDim::SourcePosition];
 }
 
 VariableConstView sample_position(const dataset::CoordsConstView &meta) {
-  return meta[Dim("sample_position")];
+  return meta[NeutronDim::SamplePosition];
 }
 
 Variable Ltotal(const dataset::CoordsConstView &meta,
                 const ConvertMode scatter) {
   // TODO Avoid copies here and below if scipp buffer ownership model is changed
-  if (meta.contains(Dim("Ltotal")))
-    return copy(meta[Dim("Ltotal")]);
+  if (meta.contains(NeutronDim::Ltotal))
+    return copy(meta[NeutronDim::Ltotal]);
   // If there is not scattering this returns the straight distance from the
   // source, as required, e.g., for monitors or imaging.
   if (scatter == ConvertMode::Scatter)
@@ -63,16 +63,16 @@ Variable Ltotal(const dataset::CoordsConstView &meta,
 }
 
 Variable L1(const dataset::CoordsConstView &meta) {
-  if (meta.contains(Dim("L1")))
-    return copy(meta[Dim("L1")]);
+  if (meta.contains(NeutronDim::L1))
+    return copy(meta[NeutronDim::L1]);
   return norm(incident_beam(meta));
 }
 
 Variable L2(const dataset::CoordsConstView &meta) {
-  if (meta.contains(Dim("L2")))
-    return copy(meta[Dim("L2")]);
-  if (meta.contains(Dim("scattered_beam")))
-    return norm(meta[Dim("scattered_beam")]);
+  if (meta.contains(NeutronDim::L2))
+    return copy(meta[NeutronDim::L2]);
+  if (meta.contains(NeutronDim::ScatteredBeam))
+    return norm(meta[NeutronDim::ScatteredBeam]);
   // Use transform to avoid temporaries. For certain unit conversions this can
   // cause a speedup >50%. Short version would be:
   //   return norm(position(meta) - sample_position(meta));
@@ -88,14 +88,14 @@ Variable scattering_angle(const dataset::CoordsConstView &meta) {
 }
 
 Variable incident_beam(const dataset::CoordsConstView &meta) {
-  if (meta.contains(Dim("incident_beam")))
-    return copy(meta[Dim("incident_beam")]);
+  if (meta.contains(NeutronDim::IncidentBeam))
+    return copy(meta[NeutronDim::IncidentBeam]);
   return sample_position(meta) - source_position(meta);
 }
 
 Variable scattered_beam(const dataset::CoordsConstView &meta) {
-  if (meta.contains(Dim("scattered_beam")))
-    return copy(meta[Dim("scattered_beam")]);
+  if (meta.contains(NeutronDim::ScatteredBeam))
+    return copy(meta[NeutronDim::ScatteredBeam]);
   return position(meta) - sample_position(meta);
 }
 
@@ -108,14 +108,14 @@ auto normalize(Variable &&var) {
 } // namespace
 
 Variable cos_two_theta(const dataset::CoordsConstView &meta) {
-  if (meta.contains(Dim("two_theta")))
-    return cos(meta[Dim("two_theta")]);
+  if (meta.contains(NeutronDim::TwoTheta))
+    return cos(meta[NeutronDim::TwoTheta]);
   return dot(normalize(incident_beam(meta)), normalize(scattered_beam(meta)));
 }
 
 Variable two_theta(const dataset::CoordsConstView &meta) {
-  if (meta.contains(Dim("two_theta")))
-    return copy(meta[Dim("two_theta")]);
+  if (meta.contains(NeutronDim::TwoTheta))
+    return copy(meta[NeutronDim::TwoTheta]);
   return acos(cos_two_theta(meta));
 }
 

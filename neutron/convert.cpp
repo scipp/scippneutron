@@ -87,18 +87,19 @@ static T convert_with_factor(T &&d, const Dim from, const Dim to,
 
 namespace {
 
-const std::array<Dim, 2> no_scatter_params{NeutronDim::Position, Dim("Ltotal")};
+const std::array<Dim, 2> no_scatter_params{NeutronDim::Position,
+                                           NeutronDim::Ltotal};
 
 auto scatter_params(const Dim dim) {
   static std::set<Dim> pos_invariant{NeutronDim::DSpacing, NeutronDim::Q};
   static std::vector<Dim> params{NeutronDim::Position,
-                                 Dim("incident_beam"),
-                                 Dim("scattered_beam"),
+                                 NeutronDim::IncidentBeam,
+                                 NeutronDim::ScatteredBeam,
                                  NeutronDim::IncidentEnergy,
                                  NeutronDim::FinalEnergy,
-                                 Dim("Ltotal"),
-                                 Dim("L1"),
-                                 Dim("L2")};
+                                 NeutronDim::Ltotal,
+                                 NeutronDim::L1,
+                                 NeutronDim::L2};
   if (dim == NeutronDim::Tof)
     return scipp::span<Dim>{};
   return pos_invariant.count(dim) ? scipp::span(params)
