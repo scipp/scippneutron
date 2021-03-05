@@ -7,7 +7,7 @@ from typing import Tuple
 import scipp as sc
 import h5py
 from ._loading_common import (ensure_str, BadSource, load_dataset,
-                              ensure_not_unsigned)
+                              ensure_supported_int_type)
 from warnings import warn
 
 
@@ -40,7 +40,7 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
             log_data_name = f"{group_path[path_position]}-{log_data_name}"
             path_position -= 1
     if name_changed:
-        warn(f"Name of log group at {group_path} is not unique: "
+        warn(f"Name of log group at {'/'.join(group_path)} is not unique: "
              f"{log_data_name} used as attribute name.")
 
 
@@ -76,13 +76,13 @@ def _load_log_data_from_group(group: h5py.Group) -> Tuple[str, sc.Variable]:
     if np.ndim(values) == 0:
         property_data = sc.Variable(value=values,
                                     unit=unit,
-                                    dtype=ensure_not_unsigned(
+                                    dtype=ensure_supported_int_type(
                                         group[value_dataset_name].dtype.type))
     else:
         property_data = sc.Variable(values=values,
                                     unit=unit,
                                     dims=[dimension_label],
-                                    dtype=ensure_not_unsigned(
+                                    dtype=ensure_supported_int_type(
                                         group[value_dataset_name].dtype.type))
 
     if is_time_series:

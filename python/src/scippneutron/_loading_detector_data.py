@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import h5py
 from typing import Optional, List
 import numpy as np
-from ._loading_common import BadSource, ensure_not_unsigned, load_dataset
+from ._loading_common import BadSource, ensure_supported_int_type, load_dataset
 import scipp as sc
 from datetime import datetime
 from warnings import warn
@@ -96,7 +96,7 @@ def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
     # the last pulse.
     event_id_ds = group["event_id"]
     event_index = group["event_index"][...].astype(
-        ensure_not_unsigned(group["event_index"].dtype.type))
+        ensure_supported_int_type(group["event_index"].dtype.type))
     if event_index[-1] < event_id_ds.len():
         event_index = np.append(
             event_index,
@@ -125,7 +125,7 @@ def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
         # will not have a bin)
         detector_ids = np.unique(event_id.values)
 
-    detector_id_type = ensure_not_unsigned(detector_ids.dtype.type)
+    detector_id_type = ensure_supported_int_type(detector_ids.dtype.type)
     _check_event_ids_and_det_number_types_valid(detector_id_type,
                                                 event_id_ds.dtype.type,
                                                 group.name)
