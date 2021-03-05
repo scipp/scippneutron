@@ -87,19 +87,20 @@ static T convert_with_factor(T &&d, const Dim from, const Dim to,
 
 namespace {
 
-const std::array<Dim, 2> no_scatter_params{Dim::Position, Dim("Ltotal")};
+const std::array<Dim, 2> no_scatter_params{NeutronDim::Position,
+                                           NeutronDim::Ltotal};
 
 auto scatter_params(const Dim dim) {
-  static std::set<Dim> pos_invariant{Dim::DSpacing, Dim::Q};
-  static std::vector<Dim> params{Dim::Position,
-                                 Dim("incident_beam"),
-                                 Dim("scattered_beam"),
-                                 Dim::IncidentEnergy,
-                                 Dim::FinalEnergy,
-                                 Dim("Ltotal"),
-                                 Dim("L1"),
-                                 Dim("L2")};
-  if (dim == Dim::Tof)
+  static std::set<Dim> pos_invariant{NeutronDim::DSpacing, NeutronDim::Q};
+  static std::vector<Dim> params{NeutronDim::Position,
+                                 NeutronDim::IncidentBeam,
+                                 NeutronDim::ScatteredBeam,
+                                 NeutronDim::IncidentEnergy,
+                                 NeutronDim::FinalEnergy,
+                                 NeutronDim::Ltotal,
+                                 NeutronDim::L1,
+                                 NeutronDim::L2};
+  if (dim == NeutronDim::Tof)
     return scipp::span<Dim>{};
   return pos_invariant.count(dim) ? scipp::span(params)
                                   : scipp::span(params).subspan(3);
@@ -124,7 +125,7 @@ T coords_to_attrs(T &&x, const Dim from, const Dim to,
   if (scatter == ConvertMode::Scatter) {
     for (const auto &param : scatter_params(to))
       to_attr(param);
-  } else if (from == Dim::Tof) {
+  } else if (from == NeutronDim::Tof) {
     for (const auto &param : no_scatter_params)
       to_attr(param);
   }
@@ -153,7 +154,7 @@ T attrs_to_coords(T &&x, const Dim from, const Dim to,
   if (scatter == ConvertMode::Scatter) {
     for (const auto &param : scatter_params(from))
       to_coord(param);
-  } else if (to == Dim::Tof) {
+  } else if (to == NeutronDim::Tof) {
     for (const auto &param : no_scatter_params)
       to_coord(param);
   }
@@ -161,7 +162,8 @@ T attrs_to_coords(T &&x, const Dim from, const Dim to,
 }
 
 void check_scattering(const Dim from, const Dim to, const ConvertMode scatter) {
-  std::set<Dim> scattering{Dim::DSpacing, Dim::Q, Dim::EnergyTransfer};
+  std::set<Dim> scattering{NeutronDim::DSpacing, NeutronDim::Q,
+                           NeutronDim::EnergyTransfer};
   if ((scatter == ConvertMode::NoScatter) &&
       (scattering.count(from) || scattering.count(to)))
     throw std::runtime_error(
@@ -188,47 +190,48 @@ T convert_impl(T d, const Dim from, const Dim to, const ConvertMode scatter) {
   // tricky, since in particular the conversions are generic lambdas (passable
   // to `transform`) and are not readily stored as function pointers or
   // std::function.
-  if ((from == Dim::Tof) && (to == Dim::DSpacing))
+  if ((from == NeutronDim::Tof) && (to == NeutronDim::DSpacing))
     return convert_with_factor(std::move(d), from, to,
                                constants::tof_to_dspacing(d));
-  if ((from == Dim::DSpacing) && (to == Dim::Tof))
+  if ((from == NeutronDim::DSpacing) && (to == NeutronDim::Tof))
     return convert_with_factor(std::move(d), from, to,
                                reciprocal(constants::tof_to_dspacing(d)));
 
-  if ((from == Dim::Tof) && (to == Dim::Wavelength))
+  if ((from == NeutronDim::Tof) && (to == NeutronDim::Wavelength))
     return convert_with_factor(std::move(d), from, to,
                                constants::tof_to_wavelength(d, scatter));
-  if ((from == Dim::Wavelength) && (to == Dim::Tof))
+  if ((from == NeutronDim::Wavelength) && (to == NeutronDim::Tof))
     return convert_with_factor(
         std::move(d), from, to,
         reciprocal(constants::tof_to_wavelength(d, scatter)));
 
-  if ((from == Dim::Tof) && (to == Dim::Energy))
+  if ((from == NeutronDim::Tof) && (to == NeutronDim::Energy))
     return convert_generic(std::move(d), from, to, conversions::tof_to_energy,
                            constants::tof_to_energy(d, scatter));
-  if ((from == Dim::Energy) && (to == Dim::Tof))
+  if ((from == NeutronDim::Energy) && (to == NeutronDim::Tof))
     return convert_generic(std::move(d), from, to, conversions::energy_to_tof,
                            constants::tof_to_energy(d, scatter));
 
-  if ((from == Dim::Tof) && (to == Dim::EnergyTransfer))
+  if ((from == NeutronDim::Tof) && (to == NeutronDim::EnergyTransfer))
     return convert_arg_tuple(std::move(d), from, to,
                              conversions::tof_to_energy_transfer,
                              constants::tof_to_energy_transfer(d));
-  if ((from == Dim::EnergyTransfer) && (to == Dim::Tof))
+  if ((from == NeutronDim::EnergyTransfer) && (to == NeutronDim::Tof))
     return convert_arg_tuple(std::move(d), from, to,
                              conversions::energy_transfer_to_tof,
                              constants::tof_to_energy_transfer(d));
 
   // lambda <-> Q conversion is symmetric
-  if (((from == Dim::Wavelength) && (to == Dim::Q)) ||
-      ((from == Dim::Q) && (to == Dim::Wavelength)))
+  if (((from == NeutronDim::Wavelength) && (to == NeutronDim::Q)) ||
+      ((from == NeutronDim::Q) && (to == NeutronDim::Wavelength)))
     return convert_generic(std::move(d), from, to, conversions::wavelength_to_q,
                            constants::wavelength_to_q(d));
 
   try {
     // Could get better performance by doing a direct conversion.
-    return convert_impl(convert_impl(std::move(d), from, Dim::Tof, scatter),
-                        Dim::Tof, to, scatter);
+    return convert_impl(
+        convert_impl(std::move(d), from, NeutronDim::Tof, scatter),
+        NeutronDim::Tof, to, scatter);
   } catch (const except::UnitError &) {
     throw except::UnitError("Conversion between " + to_string(from) + " and " +
                             to_string(to) +

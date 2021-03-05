@@ -13,6 +13,30 @@ namespace scipp::neutron {
 
 enum class ConvertMode { Scatter, NoScatter };
 
+namespace NeutronDim {
+SCIPPNEUTRON_EXPORT extern Dim DSpacing;
+SCIPPNEUTRON_EXPORT extern Dim Energy;
+SCIPPNEUTRON_EXPORT extern Dim EnergyTransfer;
+SCIPPNEUTRON_EXPORT extern Dim FinalEnergy;
+SCIPPNEUTRON_EXPORT extern Dim IncidentBeam;
+SCIPPNEUTRON_EXPORT extern Dim IncidentEnergy;
+SCIPPNEUTRON_EXPORT extern Dim L1;
+SCIPPNEUTRON_EXPORT extern Dim L2;
+SCIPPNEUTRON_EXPORT extern Dim Ltotal;
+SCIPPNEUTRON_EXPORT extern Dim Position;
+SCIPPNEUTRON_EXPORT extern Dim Q;
+SCIPPNEUTRON_EXPORT extern Dim Qx;
+SCIPPNEUTRON_EXPORT extern Dim Qy;
+SCIPPNEUTRON_EXPORT extern Dim Qz;
+SCIPPNEUTRON_EXPORT extern Dim SamplePosition;
+SCIPPNEUTRON_EXPORT extern Dim ScatteredBeam;
+SCIPPNEUTRON_EXPORT extern Dim SourcePosition;
+SCIPPNEUTRON_EXPORT extern Dim Spectrum;
+SCIPPNEUTRON_EXPORT extern Dim Tof;
+SCIPPNEUTRON_EXPORT extern Dim TwoTheta;
+SCIPPNEUTRON_EXPORT extern Dim Wavelength;
+} // namespace NeutronDim
+
 SCIPPNEUTRON_EXPORT VariableConstView
 position(const dataset::CoordsConstView &meta);
 SCIPPNEUTRON_EXPORT VariableConstView
