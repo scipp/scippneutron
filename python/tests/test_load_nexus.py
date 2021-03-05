@@ -285,6 +285,43 @@ def test_load_nexus_skips_multidimensional_log():
     assert loaded_data is None
 
 
+def test_load_nexus_skips_log_with_no_value_dataset():
+    name = "test_log"
+    builder = InMemoryNexusFileBuilder()
+    builder.add_log(Log(name, None, np.array([4, 5, 6])))
+
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    assert loaded_data is None
+
+
+def test_load_nexus_skips_log_with_empty_value_and_time_datasets():
+    empty_values = np.array([]).astype(np.int32)
+    empty_times = np.array([]).astype(np.int32)
+    name = "test_log"
+    builder = InMemoryNexusFileBuilder()
+    builder.add_log(Log(name, empty_values, empty_times))
+
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    assert loaded_data is None
+
+
+def test_load_nexus_skips_log_with_mismatched_value_and_time():
+    values = np.array([1, 2, 3]).astype(np.int32)
+    times = np.array([1, 2, 3, 4]).astype(np.int32)
+    name = "test_log"
+    builder = InMemoryNexusFileBuilder()
+    builder.add_log(Log(name, values, times))
+
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    assert loaded_data is None
+
+
 def test_load_nexus_loads_data_from_non_timeseries_log():
     values = np.array([1.1, 2.2, 3.3])
     name = "test_log"
