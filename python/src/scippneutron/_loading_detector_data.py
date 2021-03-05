@@ -12,7 +12,7 @@ from datetime import datetime
 from warnings import warn
 from itertools import groupby
 
-_detector_dimension = "detector-id"
+_detector_dimension = "detector_id"
 _event_dimension = "event"
 
 

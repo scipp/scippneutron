@@ -54,17 +54,17 @@ def test_load_nexus_loads_data_from_single_event_data_group():
     assert np.array_equal(
         np.sort(
             loaded_data.bins.concatenate(
-                'detector-id').values.coords['tof'].values),
+                'detector_id').values.coords['tof'].values),
         np.sort(event_time_offsets))
 
     counts_on_detectors = loaded_data.bins.sum()
-    # No detector_number dataset in file so expect detector-id to be
-    # binned according to whatever detector-ids are present in event_id
+    # No detector_number dataset in file so expect detector_id to be
+    # binned according to whatever detector_ids are present in event_id
     # dataset: 2 on det 1, 1 on det 2, 2 on det 3
     expected_counts = np.array([2, 1, 2])
     assert np.array_equal(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
-    assert np.array_equal(loaded_data.coords['detector-id'].values,
+    assert np.array_equal(loaded_data.coords['detector_id'].values,
                           expected_detector_ids)
 
 
@@ -103,16 +103,16 @@ def test_load_nexus_loads_data_from_multiple_event_data_groups():
     assert np.array_equal(
         np.sort(
             loaded_data.bins.concatenate(
-                'detector-id').values.coords['tof'].values),
+                'detector_id').values.coords['tof'].values),
         np.sort(np.concatenate((event_time_offsets_1, event_time_offsets_2))))
 
     counts_on_detectors = loaded_data.bins.sum()
     # There are detector_number datasets in the NXdetector for each
-    # NXevent_data, these are used for detector-id binning
+    # NXevent_data, these are used for detector_id binning
     expected_counts = np.array([0, 2, 1, 2, 2, 1, 2, 0])
     assert np.array_equal(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.concatenate((detector_1_ids, detector_2_ids))
-    assert np.array_equal(loaded_data.coords['detector-id'].values,
+    assert np.array_equal(loaded_data.coords['detector_id'].values,
                           expected_detector_ids)
 
 
@@ -417,17 +417,17 @@ def test_load_nexus_loads_event_and_log_data_from_single_file():
     assert np.allclose(
         np.sort(
             loaded_data.bins.concatenate(
-                'detector-id').values.coords['tof'].values),
+                'detector_id').values.coords['tof'].values),
         np.sort(event_time_offsets))
 
     counts_on_detectors = loaded_data.bins.sum()
-    # No detector_number dataset in file so expect detector-id to be
-    # binned from the min to the max detector-id recorded in event_id
+    # No detector_number dataset in file so expect detector_id to be
+    # binned from the min to the max detector_id recorded in event_id
     # dataset: 2 on det 1, 1 on det 2, 2 on det 3
     expected_counts = np.array([2, 1, 2])
     assert np.allclose(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
-    assert np.allclose(loaded_data.coords['detector-id'].values,
+    assert np.allclose(loaded_data.coords['detector_id'].values,
                        expected_detector_ids)
     assert "position" not in loaded_data.coords.keys(
     ), "The NXdetectors had no pixel position datasets so we " \
