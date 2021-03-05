@@ -11,26 +11,26 @@ import scippneutron
 import scipp as sc
 
 
-def test_load_nexus_raises_exception_if_multiple_nxentry_in_file():
+def test_raises_exception_if_multiple_nxentry_in_file():
     with in_memory_hdf5_file_with_two_nxentry() as nexus_file:
         with pytest.raises(RuntimeError):
             scippneutron.load_nexus(nexus_file)
 
 
-def test_load_nexus_no_exception_if_single_nxentry_in_file():
+def test_no_exception_if_single_nxentry_in_file():
     builder = InMemoryNexusFileBuilder()
     with builder.file() as nexus_file:
         assert scippneutron.load_nexus(nexus_file) is None
 
 
-def test_load_nexus_no_exception_if_single_nxentry_found_below_root():
+def test_no_exception_if_single_nxentry_found_below_root():
     with in_memory_hdf5_file_with_two_nxentry() as nexus_file:
         # There are 2 NXentry in the file, but root is used
         # to specify which to load data from
         assert scippneutron.load_nexus(nexus_file, root='/entry_1') is None
 
 
-def test_load_nexus_loads_data_from_single_event_data_group():
+def test_loads_data_from_single_event_data_group():
     event_time_offsets = np.array([456, 743, 347, 345, 632])
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 3]),
@@ -68,7 +68,7 @@ def test_load_nexus_loads_data_from_single_event_data_group():
                           expected_detector_ids)
 
 
-def test_load_nexus_loads_data_from_multiple_event_data_groups():
+def test_loads_data_from_multiple_event_data_groups():
     pulse_times = np.array([
         1600766730000000000, 1600766731000000000, 1600766732000000000,
         1600766733000000000
@@ -116,7 +116,7 @@ def test_load_nexus_loads_data_from_multiple_event_data_groups():
                           expected_detector_ids)
 
 
-def test_load_nexus_skips_event_data_group_with_non_integer_event_ids():
+def test_skips_event_data_group_with_non_integer_event_ids():
     event_time_offsets = np.array([456, 743, 347, 345, 632])
     event_data = EventData(
         event_id=np.array([1.1, 2.2, 3.3, 1.1, 3.1]),
@@ -138,7 +138,7 @@ def test_load_nexus_skips_event_data_group_with_non_integer_event_ids():
                                 "event data has non integer event ids"
 
 
-def test_load_nexus_skips_event_data_group_with_non_integer_detector_numbers():
+def test_skips_event_data_group_with_non_integer_detector_numbers():
     event_time_offsets = np.array([456, 743, 347, 345, 632])
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 3]),
@@ -161,8 +161,7 @@ def test_load_nexus_skips_event_data_group_with_non_integer_detector_numbers():
                                 "detector has non integer detector numbers"
 
 
-def test_load_nexus_skips_data_with_event_id_and_detector_number_type_unequal(
-):
+def test_skips_data_with_event_id_and_detector_number_type_unequal():
     event_time_offsets = np.array([456, 743, 347, 345, 632])
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 3], dtype=np.int64),
@@ -186,7 +185,7 @@ def test_load_nexus_skips_data_with_event_id_and_detector_number_type_unequal(
                                 "different types"
 
 
-def test_load_nexus_loads_data_from_single_log_with_no_units():
+def test_loads_data_from_single_log_with_no_units():
     values = np.array([1, 2, 3])
     times = np.array([4, 5, 6])
     name = "test_log"
@@ -202,7 +201,7 @@ def test_load_nexus_loads_data_from_single_log_with_no_units():
                           times)
 
 
-def test_load_nexus_loads_data_from_single_log_with_units():
+def test_loads_data_from_single_log_with_units():
     values = np.array([1.1, 2.2, 3.3])
     times = np.array([4.4, 5.5, 6.6])
     name = "test_log"
@@ -220,7 +219,7 @@ def test_load_nexus_loads_data_from_single_log_with_units():
     assert loaded_data[name].data.values.coords['time'].unit == sc.units.s
 
 
-def test_load_nexus_loads_data_from_multiple_logs():
+def test_loads_data_from_multiple_logs():
     builder = InMemoryNexusFileBuilder()
     log_1 = Log("test_log", np.array([1.1, 2.2, 3.3]),
                 np.array([4.4, 5.5, 6.6]))
@@ -242,7 +241,7 @@ def test_load_nexus_loads_data_from_multiple_logs():
         loaded_data[log_2.name].data.values.coords['time'].values, log_2.time)
 
 
-def test_load_nexus_loads_logs_with_non_supported_int_types():
+def test_loads_logs_with_non_supported_int_types():
     builder = InMemoryNexusFileBuilder()
     log_int8 = Log("test_log_int8",
                    np.array([1, 2, 3]).astype(np.int8),
@@ -270,7 +269,7 @@ def test_load_nexus_loads_logs_with_non_supported_int_types():
                            log.time)
 
 
-def test_load_nexus_skips_multidimensional_log():
+def test_skips_multidimensional_log():
     # Loading NXlogs with more than 1 dimension is not yet implemented
     # We need to come up with a sensible approach to labelling the dimensions
 
@@ -285,7 +284,7 @@ def test_load_nexus_skips_multidimensional_log():
     assert loaded_data is None
 
 
-def test_load_nexus_skips_log_with_no_value_dataset():
+def test_skips_log_with_no_value_dataset():
     name = "test_log"
     builder = InMemoryNexusFileBuilder()
     builder.add_log(Log(name, None, np.array([4, 5, 6])))
@@ -296,7 +295,7 @@ def test_load_nexus_skips_log_with_no_value_dataset():
     assert loaded_data is None
 
 
-def test_load_nexus_skips_log_with_empty_value_and_time_datasets():
+def test_skips_log_with_empty_value_and_time_datasets():
     empty_values = np.array([]).astype(np.int32)
     empty_times = np.array([]).astype(np.int32)
     name = "test_log"
@@ -309,7 +308,7 @@ def test_load_nexus_skips_log_with_empty_value_and_time_datasets():
     assert loaded_data is None
 
 
-def test_load_nexus_skips_log_with_mismatched_value_and_time():
+def test_skips_log_with_mismatched_value_and_time():
     values = np.array([1, 2, 3]).astype(np.int32)
     times = np.array([1, 2, 3, 4]).astype(np.int32)
     name = "test_log"
@@ -322,7 +321,7 @@ def test_load_nexus_skips_log_with_mismatched_value_and_time():
     assert loaded_data is None
 
 
-def test_load_nexus_loads_data_from_non_timeseries_log():
+def test_loads_data_from_non_timeseries_log():
     values = np.array([1.1, 2.2, 3.3])
     name = "test_log"
     builder = InMemoryNexusFileBuilder()
@@ -334,7 +333,7 @@ def test_load_nexus_loads_data_from_non_timeseries_log():
     assert np.allclose(loaded_data[name].data.values.values, values)
 
 
-def test_load_nexus_loads_data_from_multiple_logs_with_same_name():
+def test_loads_data_from_multiple_logs_with_same_name():
     values_1 = np.array([1.1, 2.2, 3.3])
     values_2 = np.array([4, 5, 6])
     name = "test_log"
@@ -386,7 +385,7 @@ def test_load_experiment_title():
     assert loaded_data['experiment_title'].values == title
 
 
-def test_load_nexus_loads_event_and_log_data_from_single_file():
+def test_loads_event_and_log_data_from_single_file():
     event_time_offsets = np.array([456, 743, 347, 345, 632])
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 3]),
@@ -444,7 +443,7 @@ def test_load_nexus_loads_event_and_log_data_from_single_file():
         loaded_data.attrs[log_2.name].values.coords['time'].values, log_2.time)
 
 
-def test_load_nexus_loads_pixel_positions_with_event_data():
+def test_loads_pixel_positions_with_event_data():
     pulse_times = np.array([
         1600766730000000000, 1600766731000000000, 1600766732000000000,
         1600766733000000000
@@ -501,7 +500,7 @@ def test_load_nexus_loads_pixel_positions_with_event_data():
                        expected_pixel_positions)
 
 
-def test_load_nexus_does_not_load_pixel_positions_with_non_matching_shape():
+def test_does_not_load_pixel_positions_with_non_matching_shape():
     pulse_times = np.array([
         1600766730000000000, 1600766731000000000, 1600766732000000000,
         1600766733000000000
@@ -552,3 +551,18 @@ def test_load_nexus_does_not_load_pixel_positions_with_non_matching_shape():
     # Even though detector_1's offsets and ids are matches in size, we do not
     # load them as the "position" coord would not have positions for all
     # the detector ids (loading event data from all detectors is prioritised)
+
+
+def test_loads_sample_position_at_origin_if_not_explicit_in_file():
+    # The sample position is the origin of the coordinate
+    # system in NeXus files
+    # If there is an NXsample in the file, but it has no "distance" dataset
+    # or "depends_on" pointing to NXtransformations then it should be
+    # assumed to be at the origin
+    builder = InMemoryNexusFileBuilder()
+    builder.add_sample(position=None)
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    origin = np.array([0, 0, 0])
+    assert np.allclose(loaded_data.attrs["sample_position"].values, origin)
