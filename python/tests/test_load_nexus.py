@@ -355,10 +355,10 @@ def test_load_nexus_loads_data_from_multiple_logs_with_same_name():
     if np.allclose(loaded_data[name].data.values.values, values_1):
         # Then the other log should be
         assert np.allclose(
-            loaded_data[f"detector_1-{name}"].data.values.values, values_2)
+            loaded_data[f"detector_1_{name}"].data.values.values, values_2)
     elif np.allclose(loaded_data[name].data.values.values, values_2):
         # Then the other log should be
-        assert np.allclose(loaded_data[f"entry-{name}"].data.values.values,
+        assert np.allclose(loaded_data[f"entry_{name}"].data.values.values,
                            values_1)
     else:
         assert False
