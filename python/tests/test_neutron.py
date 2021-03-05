@@ -62,14 +62,14 @@ def test_neutron_beamline():
         sc.Variable(value=np.array([0, 0, 0]),
                     dtype=sc.dtype.vector_3_float64,
                     unit=sc.units.m))
-    assert sc.is_equal(scn.l1(d), 10.0 * sc.units.m)
+    assert sc.is_equal(scn.L1(d), 10.0 * sc.units.m)
     assert sc.is_equal(
-        scn.l2(d),
+        scn.L2(d),
         sc.Variable(dims=['position'], values=np.ones(4), unit=sc.units.m))
     two_theta = scn.two_theta(d)
+    assert sc.is_equal(scn.L1(d) + scn.L2(d), scn.Ltotal(d, scatter=True))
     assert two_theta.unit == sc.units.rad
     assert two_theta.dims == ['position']
-    assert sc.is_equal(scn.scattering_angle(d), 0.5 * two_theta)
 
 
 def test_neutron_instrument_view_3d():

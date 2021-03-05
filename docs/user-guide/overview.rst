@@ -31,17 +31,20 @@ Unit Conversion
 Beamline geometry
 ~~~~~~~~~~~~~~~~~
 
+Note that ``theta`` or ``scattering_angle`` are deliberately not supported, due to some ambiguity on how the terms are used in the community, and possible confusion of ``theta`` (from Bagg's law) with ``theta`` in spherical coordinates.
+
 .. autosummary::
    :toctree: ../generated
 
    position
    source_position
    sample_position
-   flight_path_length
-   l1
-   l2
-   scattering_angle
+   Ltotal
+   L1
+   L2
    two_theta
+   incident_beam
+   scattered_beam
 
 Loading Nexus files
 ~~~~~~~~~~~~~~~~~~~

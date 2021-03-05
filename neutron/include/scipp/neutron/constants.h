@@ -41,30 +41,17 @@ constexpr auto tof_to_wavelength_physical_constants =
     llnl::units::constants::mn;
 
 template <class T> auto tof_to_dspacing(const T &d) {
-  const auto &sourcePos = source_position(d.meta());
-  const auto &samplePos = sample_position(d.meta());
-
-  auto beam = samplePos - sourcePos;
-  const auto l1 = norm(beam);
-  beam /= l1;
-  auto scattered = position(d.meta()) - samplePos;
-  const auto l2 = norm(scattered);
-  scattered /= l2;
-
-  // l_total = l1 + l2
-  auto conversionFactor(l1 + l2);
-
-  conversionFactor *= Variable(tof_to_dspacing_physical_constants * sqrt(0.5));
-  conversionFactor *= sqrt(1.0 * units::one - dot(beam, scattered));
-
-  reciprocal(conversionFactor, conversionFactor);
-  return conversionFactor;
+  auto factor = Ltotal(d.meta(), ConvertMode::Scatter);
+  factor *= Variable(tof_to_dspacing_physical_constants * sqrt(0.5));
+  factor *= sqrt(1.0 * units::one - cos_two_theta(d.meta()));
+  reciprocal(factor, factor);
+  return factor;
 }
 
 template <class T>
 static auto tof_to_wavelength(const T &d, const ConvertMode scatter) {
   return Variable(tof_to_wavelength_physical_constants) /
-         flight_path_length(d.meta(), scatter);
+         Ltotal(d.meta(), scatter);
 }
 
 template <class T> auto tof_to_energy(const T &d, const ConvertMode scatter) {
@@ -73,7 +60,7 @@ template <class T> auto tof_to_energy(const T &d, const ConvertMode scatter) {
         "Data contains coords for incident or final energy. Conversion to "
         "energy for inelastic data not implemented yet.");
   // l_total = l1 + l2
-  auto conversionFactor = flight_path_length(d.meta(), scatter);
+  auto conversionFactor = Ltotal(d.meta(), scatter);
   // l_total^2
   conversionFactor *= conversionFactor;
   conversionFactor *= Variable(tof_to_energy_physical_constants);
@@ -92,10 +79,10 @@ template <class T> auto tof_to_energy_transfer(const T &d) {
         "Data contains neither coords for incident nor for final energy, this "
         "does not appear to be inelastic-scattering data, cannot convert to "
         "energy transfer.");
-  auto l1_square = l1(d.meta());
+  auto l1_square = L1(d.meta());
   l1_square *= l1_square;
   l1_square *= Variable(tof_to_energy_physical_constants);
-  auto l2_square = l2(d.meta());
+  auto l2_square = L2(d.meta());
   l2_square *= l2_square;
   l2_square *= Variable(tof_to_energy_physical_constants);
   if (Ei) { // Direct-inelastic.

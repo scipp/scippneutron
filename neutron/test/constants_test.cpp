@@ -34,22 +34,32 @@ Variable position(const Dummy &) {
       units::m);
 }
 
+Variable cos_two_theta(const Dummy &) {
+  // Note: Not related to actual positions.
+  return cos(2.0 * 0.123 * units::rad);
+}
+
+Variable two_theta(const Dummy &) {
+  // Note: Not related to actual positions.
+  return 2.0 * 0.123 * units::rad;
+}
+
 Variable scattering_angle(const Dummy &) {
   // Note: Not related to actual positions.
   return 0.123 * units::rad;
 }
 
-Variable l1(const Dummy &dummy) {
+Variable L1(const Dummy &dummy) {
   return norm(sample_position(dummy) - source_position(dummy));
 }
 
-Variable l2(const Dummy &dummy) {
+Variable L2(const Dummy &dummy) {
   return norm(position(dummy) - sample_position(dummy));
 }
 
-Variable flight_path_length(const Dummy &dummy, const ConvertMode scatter) {
+Variable Ltotal(const Dummy &dummy, const ConvertMode scatter) {
   if (scatter == ConvertMode::Scatter)
-    return l1(dummy) + l2(dummy);
+    return L1(dummy) + L2(dummy);
   else
     return norm(position(dummy) - source_position(dummy));
 }
@@ -63,38 +73,25 @@ class ConstantsTest : public ::testing::Test {
 protected:
   mock::Dummy dummy;
   const Variable theta = mock::scattering_angle(dummy);
-  const Variable L1 = mock::l1(dummy);
-  const Variable L2 = mock::l2(dummy);
+  const Variable L1 = mock::L1(dummy);
+  const Variable L2 = mock::L2(dummy);
   const Variable source = mock::source_position(dummy);
   const Variable sample = mock::sample_position(dummy);
   const Variable det = mock::position(dummy);
-
-  Variable normalized_beam() const {
-    auto beam = sample - source;
-    beam /= norm(beam);
-    return beam;
-  }
-
-  Variable normalized_scatter() const {
-    auto scatter = det - sample;
-    scatter /= norm(scatter);
-    return scatter;
-  }
 };
 
 TEST_F(ConstantsTest, tof_to_dspacing) {
-  const Variable L = mock::flight_path_length(dummy, ConvertMode::Scatter);
+  const Variable L = mock::Ltotal(dummy, ConvertMode::Scatter);
   EXPECT_EQ(constants::tof_to_dspacing(dummy),
             reciprocal(L *
                        Variable(constants::tof_to_dspacing_physical_constants *
                                 sqrt(0.5)) *
-                       sqrt(1.0 * units::one -
-                            dot(normalized_beam(), normalized_scatter()))));
+                       sqrt(1.0 * units::one - cos(two_theta(dummy)))));
 }
 
 TEST_F(ConstantsTest, tof_to_wavelength) {
   for (const auto &scatter : {ConvertMode::Scatter, ConvertMode::NoScatter}) {
-    auto L = mock::flight_path_length(dummy, scatter);
+    auto L = mock::Ltotal(dummy, scatter);
     EXPECT_EQ(constants::tof_to_wavelength(dummy, scatter),
               Variable(constants::tof_to_wavelength_physical_constants) / L);
   }
@@ -102,7 +99,7 @@ TEST_F(ConstantsTest, tof_to_wavelength) {
 
 TEST_F(ConstantsTest, tof_to_energy) {
   for (const auto &scatter : {ConvertMode::Scatter, ConvertMode::NoScatter}) {
-    auto L = mock::flight_path_length(dummy, scatter);
+    auto L = mock::Ltotal(dummy, scatter);
     EXPECT_EQ(constants::tof_to_energy(dummy, scatter),
               L * L * Variable(constants::tof_to_energy_physical_constants));
   }

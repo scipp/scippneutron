@@ -25,21 +25,30 @@ VariableConstView sample_position(const dataset::CoordsConstView &meta) {
   return meta[Dim("sample_position")];
 }
 
-Variable flight_path_length(const dataset::CoordsConstView &meta,
-                            const ConvertMode scatter) {
+Variable Ltotal(const dataset::CoordsConstView &meta,
+                const ConvertMode scatter) {
+  // TODO Avoid copies here and below if scipp buffer ownership model is changed
+  if (meta.contains(Dim("Ltotal")))
+    return copy(meta[Dim("Ltotal")]);
   // If there is not scattering this returns the straight distance from the
   // source, as required, e.g., for monitors or imaging.
   if (scatter == ConvertMode::Scatter)
-    return l1(meta) + l2(meta);
+    return L1(meta) + L2(meta);
   else
     return norm(position(meta) - source_position(meta));
 }
 
-Variable l1(const dataset::CoordsConstView &meta) {
-  return norm(sample_position(meta) - source_position(meta));
+Variable L1(const dataset::CoordsConstView &meta) {
+  if (meta.contains(Dim("L1")))
+    return copy(meta[Dim("L1")]);
+  return norm(incident_beam(meta));
 }
 
-Variable l2(const dataset::CoordsConstView &meta) {
+Variable L2(const dataset::CoordsConstView &meta) {
+  if (meta.contains(Dim("L2")))
+    return copy(meta[Dim("L2")]);
+  if (meta.contains(Dim("scattered_beam")))
+    return norm(meta[Dim("scattered_beam")]);
   // Use transform to avoid temporaries. For certain unit conversions this can
   // cause a speedup >50%. Short version would be:
   //   return norm(position(meta) - sample_position(meta));
@@ -54,15 +63,36 @@ Variable scattering_angle(const dataset::CoordsConstView &meta) {
   return 0.5 * units::one * two_theta(meta);
 }
 
-Variable two_theta(const dataset::CoordsConstView &meta) {
-  auto beam = sample_position(meta) - source_position(meta);
-  const auto l1 = norm(beam);
-  beam /= l1;
-  auto scattered = position(meta) - sample_position(meta);
-  const auto l2 = norm(scattered);
-  scattered /= l2;
+Variable incident_beam(const dataset::CoordsConstView &meta) {
+  if (meta.contains(Dim("incident_beam")))
+    return copy(meta[Dim("incident_beam")]);
+  return sample_position(meta) - source_position(meta);
+}
 
-  return acos(dot(beam, scattered));
+Variable scattered_beam(const dataset::CoordsConstView &meta) {
+  if (meta.contains(Dim("scattered_beam")))
+    return copy(meta[Dim("scattered_beam")]);
+  return position(meta) - sample_position(meta);
+}
+
+namespace {
+auto normalize(Variable &&var) {
+  const auto length = norm(var);
+  var /= length;
+  return std::move(var);
+}
+} // namespace
+
+Variable cos_two_theta(const dataset::CoordsConstView &meta) {
+  if (meta.contains(Dim("two_theta")))
+    return cos(meta[Dim("two_theta")]);
+  return dot(normalize(incident_beam(meta)), normalize(scattered_beam(meta)));
+}
+
+Variable two_theta(const dataset::CoordsConstView &meta) {
+  if (meta.contains(Dim("two_theta")))
+    return copy(meta[Dim("two_theta")]);
+  return acos(cos_two_theta(meta));
 }
 
 VariableConstView incident_energy(const dataset::CoordsConstView &meta) {
