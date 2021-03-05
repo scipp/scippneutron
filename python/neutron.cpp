@@ -40,9 +40,8 @@ template <class T> void bind_beamline(py::module &m) {
   m.def(
       "Ltotal",
       [](ConstView self, const bool scatter) {
-        return flight_path_length(self.meta(), scatter
-                                                   ? ConvertMode::Scatter
-                                                   : ConvertMode::NoScatter);
+        return Ltotal(self.meta(),
+                      scatter ? ConvertMode::Scatter : ConvertMode::NoScatter);
       },
       py::arg("data"), py::arg("scatter"),
       R"(
@@ -70,14 +69,14 @@ template <class T> void bind_beamline(py::module &m) {
     :rtype: Variable)");
 
   m.def(
-      "L1", [](ConstView self) { return l1(self.meta()); }, R"(
+      "L1", [](ConstView self) { return L1(self.meta()); }, R"(
     Compute L1, the length of the primary flight path (distance between neutron source and sample) from a data array or a dataset.
 
     :return: A scalar variable containing L1.
     :rtype: Variable)");
 
   m.def(
-      "L2", [](ConstView self) { return l2(self.meta()); }, R"(
+      "L2", [](ConstView self) { return L2(self.meta()); }, R"(
     Compute L2, the length of the secondary flight paths (distances between sample and detector pixels) from a data array or a dataset.
 
     :return: A variable containing L2 for all detector pixels.
