@@ -14,27 +14,27 @@ using namespace scipp;
 namespace scipp::neutron {
 
 namespace NeutronDim {
-Dim Tof = Dim("tof");
+Dim DSpacing = Dim("dspacing");
 Dim Energy = Dim("energy");
 Dim EnergyTransfer = Dim("energy_transfer");
-Dim DSpacing = Dim("dspacing");
+Dim FinalEnergy = Dim("final_energy");
+Dim IncidentBeam = Dim("incident_beam");
+Dim IncidentEnergy = Dim("incident_energy");
+Dim L1 = Dim("L1");
+Dim L2 = Dim("L2");
+Dim Ltotal = Dim("Ltotal");
+Dim Position = Dim("position");
 Dim Q = Dim("Q");
 Dim Qx = Dim("Qx");
 Dim Qy = Dim("Qy");
 Dim Qz = Dim("Qz");
-Dim TwoTheta = Dim("two_theta");
 Dim SamplePosition = Dim("sample_position");
-Dim SourcePosition = Dim("source_position");
-Dim Position = Dim("position");
-Dim L1 = Dim("L1");
-Dim L2 = Dim("L2");
-Dim Ltotal = Dim("Ltotal");
-Dim IncidentBeam = Dim("incident_beam");
 Dim ScatteredBeam = Dim("scattered_beam");
-Dim IncidentEnergy = Dim("incident_energy");
-Dim FinalEnergy = Dim("final_energy");
-Dim Wavelength = Dim("wavelength");
+Dim SourcePosition = Dim("source_position");
 Dim Spectrum = Dim("spectrum");
+Dim Tof = Dim("tof");
+Dim TwoTheta = Dim("two_theta");
+Dim Wavelength = Dim("wavelength");
 } // namespace NeutronDim
 
 VariableConstView position(const dataset::CoordsConstView &meta) {
