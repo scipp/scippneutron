@@ -25,26 +25,26 @@ VariableConstView sample_position(const dataset::CoordsConstView &meta) {
   return meta[Dim("sample_position")];
 }
 
-Variable flight_path_length(const dataset::CoordsConstView &meta,
-                            const ConvertMode scatter) {
+Variable Ltotal(const dataset::CoordsConstView &meta,
+                const ConvertMode scatter) {
   // TODO Avoid copies here and below if scipp buffer ownership model is changed
   if (meta.contains(Dim("Ltotal")))
     return copy(meta[Dim("Ltotal")]);
   // If there is not scattering this returns the straight distance from the
   // source, as required, e.g., for monitors or imaging.
   if (scatter == ConvertMode::Scatter)
-    return l1(meta) + l2(meta);
+    return L1(meta) + L2(meta);
   else
     return norm(position(meta) - source_position(meta));
 }
 
-Variable l1(const dataset::CoordsConstView &meta) {
+Variable L1(const dataset::CoordsConstView &meta) {
   if (meta.contains(Dim("L1")))
     return copy(meta[Dim("L1")]);
   return norm(incident_beam(meta));
 }
 
-Variable l2(const dataset::CoordsConstView &meta) {
+Variable L2(const dataset::CoordsConstView &meta) {
   if (meta.contains(Dim("L2")))
     return copy(meta[Dim("L2")]);
   if (meta.contains(Dim("scattered_beam")))
