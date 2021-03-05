@@ -191,7 +191,7 @@ class InMemoryNexusFileBuilder:
         self._logs: List[Log] = []
         self._instrument_name = None
         self._title = None
-        self._sample = None
+        self._sample = []
 
     def add_detector(self, detector: Detector):
         self._detectors.append(detector)
@@ -209,7 +209,7 @@ class InMemoryNexusFileBuilder:
         self._title = title
 
     def add_sample(self, sample: Sample):
-        self._sample = sample
+        self._sample.append(sample)
 
     @contextmanager
     def file(self) -> Iterator[h5py.File]:
@@ -237,16 +237,15 @@ class InMemoryNexusFileBuilder:
             nexus_file.close()
 
     def _write_sample(self, parent_group: h5py.Group):
-        if self._sample is not None:
-            sample_group = _create_nx_class(self._sample.name, "NXsample",
+        for sample in self._sample:
+            sample_group = _create_nx_class(sample.name, "NXsample",
                                             parent_group)
-            if self._sample.depends_on is not None:
+            if sample.depends_on is not None:
                 depends_on = _add_transformations_to_file(
-                    self._sample.depends_on, sample_group)
+                    sample.depends_on, sample_group)
                 sample_group.create_dataset("depends_on", data=depends_on)
-            if self._sample.distance is not None:
-                sample_group.create_dataset("distance",
-                                            data=self._sample.distance)
+            if sample.distance is not None:
+                sample_group.create_dataset("distance", data=sample.distance)
 
     def _write_instrument(self, parent_group: h5py.Group) -> h5py.Group:
         instrument_group = _create_nx_class("instrument", "NXinstrument",

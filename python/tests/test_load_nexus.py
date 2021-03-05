@@ -3,6 +3,7 @@ from .nexus_helpers import (
     EventData,
     Detector,
     Log,
+    Sample,
     in_memory_hdf5_file_with_two_nxentry,
 )
 import numpy as np
@@ -560,9 +561,19 @@ def test_loads_sample_position_at_origin_if_not_explicit_in_file():
     # or "depends_on" pointing to NXtransformations then it should be
     # assumed to be at the origin
     builder = InMemoryNexusFileBuilder()
-    builder.add_sample(position=None)
+    builder.add_sample(Sample("sample"))
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
 
     origin = np.array([0, 0, 0])
     assert np.allclose(loaded_data.attrs["sample_position"].values, origin)
+
+
+def test_skips_loading_sample_if_more_than_one_sample_in_file():
+    builder = InMemoryNexusFileBuilder()
+    builder.add_sample(Sample("sample_1"))
+    builder.add_sample(Sample("sample_2"))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    assert loaded_data is None
