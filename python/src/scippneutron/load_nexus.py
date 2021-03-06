@@ -77,7 +77,12 @@ def _load_sample(sample_groups: List[h5py.Group], data: sc.Variable):
     sample_group = sample_groups[0]
     if "distance" in sample_group:
         position = np.array([0, 0, sample_group["distance"][...]])
-        units = sc.Unit(get_units(sample_group["distance"]))
+        unit_str = get_units(sample_group["distance"])
+        if not unit_str:
+            warn("'distance' dataset in NXsample is missing units attribute, "
+                 "skipping loading sample position")
+            return
+        units = sc.Unit(unit_str)
     else:
         position = np.array([0, 0, 0])
         units = sc.units.m
