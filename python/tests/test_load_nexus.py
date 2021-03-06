@@ -551,15 +551,15 @@ def test_does_not_load_pixel_positions_with_non_matching_shape():
        "size of its detector ids so we should not find 'position' coord"
     # Even though detector_1's offsets and ids are matches in size, we do not
     # load them as the "position" coord would not have positions for all
-    # the detector ids (loading event data from all detectors is prioritised)
+    # the detector ids (loading event data from all detectors is prioritised).
 
 
 def test_loads_sample_position_at_origin_if_not_explicit_in_file():
     # The sample position is the origin of the coordinate
-    # system in NeXus files
+    # system in NeXus files.
     # If there is an NXsample in the file, but it has no "distance" dataset
     # or "depends_on" pointing to NXtransformations then it should be
-    # assumed to be at the origin
+    # assumed to be at the origin.
     builder = InMemoryNexusFileBuilder()
     builder.add_sample(Sample("sample"))
     with builder.file() as nexus_file:
@@ -570,6 +570,9 @@ def test_loads_sample_position_at_origin_if_not_explicit_in_file():
 
 
 def test_skips_loading_sample_if_more_than_one_sample_in_file():
+    # More than one sample is a serious error in the file, so load_nexus
+    # will display a warning and skip loading any sample rather than guessing
+    # which is the "correct" one.
     builder = InMemoryNexusFileBuilder()
     builder.add_sample(Sample("sample_1"))
     builder.add_sample(Sample("sample_2"))
@@ -579,14 +582,14 @@ def test_skips_loading_sample_if_more_than_one_sample_in_file():
     assert loaded_data is None
 
 
-def test_loads_sample_position_from_distance_dataset_if_no_depends_on():
+def test_loads_sample_position_from_distance_dataset():
     # If the NXsample contains a "distance" dataset this gives the position
-    # on the z axis. If there was a depends_on pointing to transformations
-    # then we'll use that instead as it is likely to be more accurate; it
+    # along the z axis. If there was a "depends_on" pointing to transformations
+    # then we'd use that instead as it is likely to be more accurate; it
     # can define position and orientation in 3D.
     builder = InMemoryNexusFileBuilder()
     distance = 4.2
-    builder.add_sample(Sample("sample", distance=distance))
+    builder.add_sample(Sample("sample", distance=distance, distance_units="m"))
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
 

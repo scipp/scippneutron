@@ -3,7 +3,7 @@
 # @author Matthew Jones
 
 import scipp as sc
-from ._loading_common import find_by_nx_class, ensure_str
+from ._loading_common import find_by_nx_class, ensure_str, get_units
 from ._loading_detector_data import load_detector_data
 from ._loading_log_data import load_logs
 import h5py
@@ -44,6 +44,7 @@ def _add_string_attr_to_loaded_data(group: h5py.Group, dataset_name: str,
 def _add_attr_to_loaded_data(attr_name: str,
                              data: sc.Variable,
                              value: np.ndarray,
+                             unit: sc.Unit,
                              dtype: Optional[Any] = None):
     try:
         data = data.attrs
@@ -52,9 +53,9 @@ def _add_attr_to_loaded_data(attr_name: str,
 
     try:
         if dtype is not None:
-            data[attr_name] = sc.Variable(value=value, dtype=dtype)
+            data[attr_name] = sc.Variable(value=value, dtype=dtype, unit=unit)
         else:
-            data[attr_name] = sc.Variable(value=value)
+            data[attr_name] = sc.Variable(value=value, unit=unit)
     except KeyError:
         pass
 
@@ -73,9 +74,17 @@ def _load_sample(sample_groups: List[h5py.Group], data: sc.Variable):
         warn("More than one NXsample found in file, "
              "skipping loading sample position")
         return
+    sample_group = sample_groups[0]
+    if "distance" in sample_group:
+        position = np.array([0, 0, sample_group["distance"][...]])
+        units = sc.Unit(get_units(sample_group["distance"]))
+    else:
+        position = np.array([0, 0, 0])
+        units = sc.units.m
     _add_attr_to_loaded_data("sample_position",
                              data,
-                             np.array([0, 0, 0]),
+                             position,
+                             unit=units,
                              dtype=sc.dtype.vector_3_float64)
 
 

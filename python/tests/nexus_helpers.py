@@ -78,6 +78,7 @@ class Sample:
     name: str
     depends_on: Optional[Transformation] = None
     distance: Optional[float] = None
+    distance_units: Optional[str] = None
 
 
 def _add_event_data_group_to_file(data: EventData, parent_group: h5py.Group,
@@ -245,7 +246,10 @@ class InMemoryNexusFileBuilder:
                     sample.depends_on, sample_group)
                 sample_group.create_dataset("depends_on", data=depends_on)
             if sample.distance is not None:
-                sample_group.create_dataset("distance", data=sample.distance)
+                distance_ds = sample_group.create_dataset("distance",
+                                                          data=sample.distance)
+                if sample.distance_units is not None:
+                    distance_ds.attrs["units"] = sample.distance_units
 
     def _write_instrument(self, parent_group: h5py.Group) -> h5py.Group:
         instrument_group = _create_nx_class("instrument", "NXinstrument",
