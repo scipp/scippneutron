@@ -566,7 +566,7 @@ def test_loads_sample_position_at_origin_if_not_explicit_in_file():
         loaded_data = scippneutron.load_nexus(nexus_file)
 
     origin = np.array([0, 0, 0])
-    assert np.allclose(loaded_data.attrs["sample_position"].values, origin)
+    assert np.allclose(loaded_data["sample_position"].values, origin)
 
 
 def test_skips_loading_sample_if_more_than_one_sample_in_file():

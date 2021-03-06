@@ -8,8 +8,10 @@ from ._loading_detector_data import load_detector_data
 from ._loading_log_data import load_logs
 import h5py
 from timeit import default_timer as timer
-from typing import Union
+from typing import Union, List, Optional, Any
 from contextlib import contextmanager
+from warnings import warn
+import numpy as np
 
 
 @contextmanager
@@ -39,8 +41,43 @@ def _add_string_data_as_attr(group: h5py.Group, dataset_name: str,
         pass
 
 
-def _load_instrument_name(instrument_group: h5py.Group, data: sc.Variable):
-    _add_string_data_as_attr(instrument_group, "name", "instrument_name", data)
+def _add_attr_to_loaded_data(attr_name: str,
+                             data: sc.Variable,
+                             value: np.ndarray,
+                             time: Optional[np.ndarray] = None,
+                             dtype: Optional[Any] = None):
+    try:
+        data = data.attrs
+    except AttributeError:
+        pass
+
+    try:
+        if dtype is not None:
+            data[attr_name] = sc.Variable(value=value, dtype=dtype)
+        else:
+            data[attr_name] = sc.Variable(value=value)
+    except KeyError:
+        pass
+
+
+def _load_instrument_name(instrument_groups: List[h5py.Group],
+                          data: sc.Variable):
+    if len(instrument_groups) > 1:
+        warn(f"More than one NXinstrument found in file, "
+             f"loading name from {instrument_groups[0]} only")
+    _add_string_data_as_attr(instrument_groups[0], "name", "instrument_name",
+                             data)
+
+
+def _load_sample(sample_groups: List[h5py.Group], data: sc.Variable):
+    if len(sample_groups) > 1:
+        warn("More than one NXsample found in file, "
+             "skipping loading sample position")
+        return
+    _add_attr_to_loaded_data("sample_position",
+                             data,
+                             np.array([0, 0, 0]),
+                             dtype=sc.dtype.vector_3_float64)
 
 
 def _load_title(entry_group: h5py.Group, data: sc.Variable):
@@ -89,8 +126,11 @@ def load_nexus(data_file: Union[str, h5py.File], root: str = "/", quiet=True):
 
         load_logs(loaded_data, groups[nx_log])
 
+        if groups[nx_sample]:
+            _load_sample(groups[nx_sample], loaded_data)
+
         if groups[nx_instrument]:
-            _load_instrument_name(groups[nx_instrument][0], loaded_data)
+            _load_instrument_name(groups[nx_instrument], loaded_data)
 
         if groups[nx_entry]:
             _load_title(groups[nx_entry][0], loaded_data)
