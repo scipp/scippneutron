@@ -3,15 +3,16 @@
 # @author Matthew Jones
 
 import scipp as sc
-from ._loading_common import find_by_nx_class, ensure_str, get_units
+from ._loading_common import find_by_nx_class, ensure_str
 from ._loading_detector_data import load_detector_data
 from ._loading_log_data import load_logs
 import h5py
 from timeit import default_timer as timer
-from typing import Union, List, Optional, Any
+from typing import Union, List
 from contextlib import contextmanager
 from warnings import warn
 import numpy as np
+from ._loading_positions import load_position_of_unique_component
 
 nx_event_data = "NXevent_data"
 nx_log = "NXlog"
@@ -48,25 +49,6 @@ def _add_string_attr_to_loaded_data(group: h5py.Group, dataset_name: str,
         pass
 
 
-def _add_attr_to_loaded_data(attr_name: str,
-                             data: sc.Variable,
-                             value: np.ndarray,
-                             unit: sc.Unit,
-                             dtype: Optional[Any] = None):
-    try:
-        data = data.attrs
-    except AttributeError:
-        pass
-
-    try:
-        if dtype is not None:
-            data[attr_name] = sc.Variable(value=value, dtype=dtype, unit=unit)
-        else:
-            data[attr_name] = sc.Variable(value=value, unit=unit)
-    except KeyError:
-        pass
-
-
 def _load_instrument_name(instrument_groups: List[h5py.Group],
                           data: sc.Variable):
     if len(instrument_groups) > 1:
@@ -76,49 +58,16 @@ def _load_instrument_name(instrument_groups: List[h5py.Group],
                                     "instrument_name", data)
 
 
-def _load_position_of_unique_component(
-        groups: List[h5py.Group],
-        data: sc.Variable,
-        name: str,
-        nx_class: str,
-        default_position: Optional[np.ndarray] = None):
-    if len(groups) > 1:
-        warn(f"More than one {nx_class} found in file, "
-             f"skipping loading {name} position")
-        return
-    group = groups[0]
-    if "distance" in group:
-        position = np.array([0, 0, group["distance"][...]])
-        unit_str = get_units(group["distance"])
-        if not unit_str:
-            warn(f"'distance' dataset in {nx_class} is missing "
-                 f"units attribute, skipping loading {name} position")
-            return
-        units = sc.Unit(unit_str)
-    elif default_position is None:
-        warn(f"No position given for {name} in file")
-        return
-    else:
-        position = np.array([0, 0, 0])
-        units = sc.units.m
-    _add_attr_to_loaded_data(f"{name}_position",
-                             data,
-                             position,
-                             unit=units,
-                             dtype=sc.dtype.vector_3_float64)
-
-
 def _load_sample(sample_groups: List[h5py.Group], data: sc.Variable):
-    _load_position_of_unique_component(sample_groups,
-                                       data,
-                                       "sample",
-                                       nx_sample,
-                                       default_position=np.array([0, 0, 0]))
+    load_position_of_unique_component(sample_groups,
+                                      data,
+                                      "sample",
+                                      nx_sample,
+                                      default_position=np.array([0, 0, 0]))
 
 
 def _load_source(source_groups: List[h5py.Group], data: sc.Variable):
-    _load_position_of_unique_component(source_groups, data, "source",
-                                       nx_source)
+    load_position_of_unique_component(source_groups, data, "source", nx_source)
 
 
 def _load_title(entry_group: h5py.Group, data: sc.Variable):
