@@ -81,6 +81,14 @@ class Sample:
     distance_units: Optional[str] = None
 
 
+@dataclass
+class Source:
+    name: str
+    depends_on: Optional[Transformation] = None
+    distance: Optional[float] = None
+    distance_units: Optional[str] = None
+
+
 def _add_event_data_group_to_file(data: EventData, parent_group: h5py.Group,
                                   group_name: str):
     event_group = _create_nx_class(group_name, "NXevent_data", parent_group)
@@ -190,9 +198,10 @@ class InMemoryNexusFileBuilder:
         self._event_data: List[EventData] = []
         self._detectors: List[Detector] = []
         self._logs: List[Log] = []
-        self._instrument_name = None
-        self._title = None
-        self._sample = []
+        self._instrument_name: Optional[str] = None
+        self._title: Optional[str] = None
+        self._sample: List[Sample] = []
+        self._source: List[Source] = []
 
     def add_detector(self, detector: Detector):
         self._detectors.append(detector)
@@ -212,6 +221,9 @@ class InMemoryNexusFileBuilder:
     def add_sample(self, sample: Sample):
         self._sample.append(sample)
 
+    def add_source(self, source: Source):
+        self._source.append(source)
+
     @contextmanager
     def file(self) -> Iterator[h5py.File]:
         # "core" driver means file is "in-memory" not on disk.
@@ -228,6 +240,7 @@ class InMemoryNexusFileBuilder:
             self._write_event_data(entry_group)
             self._write_logs(entry_group)
             self._write_sample(entry_group)
+            self._write_source(entry_group)
             if self._instrument_name is None:
                 parent_group = entry_group
             else:
@@ -250,6 +263,20 @@ class InMemoryNexusFileBuilder:
                                                           data=sample.distance)
                 if sample.distance_units is not None:
                     distance_ds.attrs["units"] = sample.distance_units
+
+    def _write_source(self, parent_group: h5py.Group):
+        for source in self._source:
+            source_group = _create_nx_class(source.name, "NXsource",
+                                            parent_group)
+            if source.depends_on is not None:
+                depends_on = _add_transformations_to_file(
+                    source.depends_on, source_group)
+                source_group.create_dataset("depends_on", data=depends_on)
+            if source.distance is not None:
+                distance_ds = source_group.create_dataset("distance",
+                                                          data=source.distance)
+                if source.distance_units is not None:
+                    distance_ds.attrs["units"] = source.distance_units
 
     def _write_instrument(self, parent_group: h5py.Group) -> h5py.Group:
         instrument_group = _create_nx_class("instrument", "NXinstrument",

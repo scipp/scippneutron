@@ -4,6 +4,7 @@ from .nexus_helpers import (
     Detector,
     Log,
     Sample,
+    Source,
     in_memory_hdf5_file_with_two_nxentry,
 )
 import numpy as np
@@ -604,6 +605,55 @@ def test_skips_sample_position_from_distance_dataset_missing_unit():
     builder = InMemoryNexusFileBuilder()
     distance = 4.2
     builder.add_sample(Sample("sample", distance=distance,
+                              distance_units=None))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+    assert loaded_data is None
+
+
+def test_skips_source_position_if_not_given_in_file():
+    builder = InMemoryNexusFileBuilder()
+    builder.add_source(Source("source"))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+    assert loaded_data is None
+
+
+def test_skips_loading_source_if_more_than_one_source_in_file():
+    # More than one source is a serious error in the file, so load_nexus
+    # will display a warning and skip loading any source rather than guessing
+    # which is the "correct" one.
+    builder = InMemoryNexusFileBuilder()
+    builder.add_source(Source("source_1"))
+    builder.add_source(Source("source_2"))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+    assert loaded_data is None
+
+
+def test_loads_source_position_from_distance_dataset():
+    # If the NXsource contains a "distance" dataset this gives the position
+    # along the z axis. If there was a "depends_on" pointing to transformations
+    # then we'd use that instead as it is likely to be more accurate; it
+    # can define position and orientation in 3D.
+    builder = InMemoryNexusFileBuilder()
+    distance = 4.2
+    units = "m"
+    builder.add_source(
+        Source("source", distance=distance, distance_units=units))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    expected_position = np.array([0, 0, distance])
+    assert np.allclose(loaded_data["source_position"].values,
+                       expected_position)
+    assert loaded_data["source_position"].unit == sc.Unit(units)
+
+
+def test_skips_source_position_from_distance_dataset_missing_unit():
+    builder = InMemoryNexusFileBuilder()
+    distance = 4.2
+    builder.add_source(Source("source", distance=distance,
                               distance_units=None))
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
