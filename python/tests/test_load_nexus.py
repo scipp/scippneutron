@@ -577,3 +577,19 @@ def test_skips_loading_sample_if_more_than_one_sample_in_file():
         loaded_data = scippneutron.load_nexus(nexus_file)
 
     assert loaded_data is None
+
+
+def test_loads_sample_position_from_distance_dataset_if_no_depends_on():
+    # If the NXsample contains a "distance" dataset this gives the position
+    # on the z axis. If there was a depends_on pointing to transformations
+    # then we'll use that instead as it is likely to be more accurate; it
+    # can define position and orientation in 3D.
+    builder = InMemoryNexusFileBuilder()
+    distance = 4.2
+    builder.add_sample(Sample("sample", distance=distance))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    expected_position = np.array([0, 0, distance])
+    assert np.allclose(loaded_data["sample_position"].values,
+                       expected_position)

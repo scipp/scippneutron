@@ -27,8 +27,8 @@ def _open_if_path(file_in: Union[str, h5py.File]):
         yield file_in
 
 
-def _add_string_data_as_attr(group: h5py.Group, dataset_name: str,
-                             attr_name: str, data: sc.Variable):
+def _add_string_attr_to_loaded_data(group: h5py.Group, dataset_name: str,
+                                    attr_name: str, data: sc.Variable):
     try:
         data = data.attrs
     except AttributeError:
@@ -44,7 +44,6 @@ def _add_string_data_as_attr(group: h5py.Group, dataset_name: str,
 def _add_attr_to_loaded_data(attr_name: str,
                              data: sc.Variable,
                              value: np.ndarray,
-                             time: Optional[np.ndarray] = None,
                              dtype: Optional[Any] = None):
     try:
         data = data.attrs
@@ -65,8 +64,8 @@ def _load_instrument_name(instrument_groups: List[h5py.Group],
     if len(instrument_groups) > 1:
         warn(f"More than one NXinstrument found in file, "
              f"loading name from {instrument_groups[0]} only")
-    _add_string_data_as_attr(instrument_groups[0], "name", "instrument_name",
-                             data)
+    _add_string_attr_to_loaded_data(instrument_groups[0], "name",
+                                    "instrument_name", data)
 
 
 def _load_sample(sample_groups: List[h5py.Group], data: sc.Variable):
@@ -81,7 +80,8 @@ def _load_sample(sample_groups: List[h5py.Group], data: sc.Variable):
 
 
 def _load_title(entry_group: h5py.Group, data: sc.Variable):
-    _add_string_data_as_attr(entry_group, "title", "experiment_title", data)
+    _add_string_attr_to_loaded_data(entry_group, "title", "experiment_title",
+                                    data)
 
 
 def load_nexus(data_file: Union[str, h5py.File], root: str = "/", quiet=True):
