@@ -5,6 +5,8 @@ from .nexus_helpers import (
     Log,
     Sample,
     Source,
+    Transformation,
+    TransformationType,
     in_memory_hdf5_file_with_two_nxentry,
 )
 import numpy as np
@@ -555,7 +557,7 @@ def test_does_not_load_pixel_positions_with_non_matching_shape():
     # the detector ids (loading event data from all detectors is prioritised).
 
 
-def test_loads_sample_position_at_origin_if_not_explicit_in_file():
+def test_sample_position_at_origin_if_not_explicit_in_file():
     # The sample position is the origin of the coordinate
     # system in NeXus files.
     # If there is an NXsample in the file, but it has no "distance" dataset
@@ -584,9 +586,7 @@ def test_skips_loading_sample_if_more_than_one_sample_in_file():
 
 def test_loads_sample_position_from_distance_dataset():
     # If the NXsample contains a "distance" dataset this gives the position
-    # along the z axis. If there was a "depends_on" pointing to transformations
-    # then we'd use that instead as it is likely to be more accurate; it
-    # can define position and orientation in 3D.
+    # along the z axis.
     builder = InMemoryNexusFileBuilder()
     distance = 4.2
     units = "m"
@@ -609,6 +609,88 @@ def test_skips_sample_position_from_distance_dataset_missing_unit():
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
     assert loaded_data is None
+
+
+def test_loads_sample_position_from_single_transformation():
+    builder = InMemoryNexusFileBuilder()
+    transformation = Transformation(TransformationType.TRANSLATION,
+                                    np.ndarray([0, 0, -1]),
+                                    np.array([230]),
+                                    value_units=sc.Unit("cm"))
+    builder.add_sample(Sample("sample", depends_on=transformation))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    # Transformations in NeXus are "passive transformations", so in this
+    # test case the coordinate system is shifted 2.3m in the negative z
+    # direction. In the lab reference frame this corresponds to
+    # setting the sample position to 2.3m in the positive z direction.
+    expected_position = np.array([0, 0, Transformation.value / 100])
+    assert np.allclose(loaded_data["sample_position"].values,
+                       expected_position)
+    # Resulting position will always be in metres, whatever units are
+    # used in the NeXus file
+    assert loaded_data["sample_position"].unit == sc.Unit("m")
+
+
+def test_loads_sample_position_prefers_transformation_over_distance_dataset():
+    # The "distance" dataset gives the position along the z axis.
+    # If there is a "depends_on" pointing to transformations then we
+    # prefer to use that instead as it is likely to be more accurate; it
+    # can define position and orientation in 3D.
+    builder = InMemoryNexusFileBuilder()
+    transformation = Transformation(TransformationType.TRANSLATION,
+                                    np.ndarray([0, 0, -1]),
+                                    np.array([2.3]),
+                                    value_units=sc.Unit("m"))
+    builder.add_sample(
+        Sample("sample",
+               depends_on=transformation,
+               distance=4.2,
+               distance_units=sc.Unit("m")))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    expected_position = np.array([0, 0, Transformation.value])
+    assert np.allclose(loaded_data["sample_position"].values,
+                       expected_position)
+    assert loaded_data["sample_position"].unit == sc.Unit("m")
+
+
+def test_skips_sample_position_from_transformation_missing_unit():
+    builder = InMemoryNexusFileBuilder()
+    transformation = Transformation(TransformationType.TRANSLATION,
+                                    np.ndarray([0, 0, -1]), np.array([2.3]))
+    builder.add_sample(Sample("sample", depends_on=transformation))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+    assert loaded_data is None
+
+
+def test_loads_sample_position_from_multiple_transformations():
+    builder = InMemoryNexusFileBuilder()
+    transformation_1 = Transformation(TransformationType.ROTATION,
+                                      np.ndarray([0, 1, 0]),
+                                      np.array([90]),
+                                      value_units=sc.Unit("deg"))
+    transformation_2 = Transformation(TransformationType.TRANSLATION,
+                                      np.ndarray([0, 0, -1]),
+                                      np.array([2.3]),
+                                      value_units=sc.Unit("m"),
+                                      depends_on=transformation_1)
+    builder.add_sample(Sample("sample", depends_on=transformation_2))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    # Transformations in NeXus are "passive transformations", so in this
+    # test case the coordinate system is rotated 90 degrees anticlockwise
+    # around the y axis and then shifted -2.3m in the z direction. In
+    # the lab reference frame this corresponds to
+    # setting the sample position to 2.3m in the x direction.
+    expected_position = np.array([Transformation.value, 0, 0])
+    assert np.allclose(loaded_data["sample_position"].values,
+                       expected_position)
+    assert loaded_data["sample_position"].unit == sc.Unit("m")
 
 
 def test_skips_source_position_if_not_given_in_file():
