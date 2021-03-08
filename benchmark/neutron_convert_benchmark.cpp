@@ -7,6 +7,7 @@
 #include <scipp/dataset/dataset.h>
 #include <scipp/variable/arithmetic.h>
 
+#include "scipp/neutron/beamline.h"
 #include "scipp/neutron/convert.h"
 
 using namespace scipp;
@@ -21,20 +22,23 @@ auto make_beamline(const scipp::index size) {
                     makeVariable<Eigen::Vector3d>(
                         units::m, Values{Eigen::Vector3d{0.0, 0.0, 0.0}}));
 
-  beamline.setCoord(Dim("position"),
-                    makeVariable<Eigen::Vector3d>(Dims{Dim::Spectrum},
-                                                  Shape{size}, units::m));
+  beamline.setCoord(Dim("position"), makeVariable<Eigen::Vector3d>(
+                                         Dims{neutron::NeutronDim::Spectrum},
+                                         Shape{size}, units::m));
   return beamline;
 }
 
 auto make_dense_coord_only(const scipp::index size, const scipp::index count,
                            bool transpose) {
   auto out = make_beamline(size);
-  auto var = transpose ? makeVariable<double>(Dims{Dim::Tof, Dim::Spectrum},
-                                              Shape{count, size})
-                       : makeVariable<double>(Dims{Dim::Spectrum, Dim::Tof},
-                                              Shape{size, count});
-  out.setCoord(Dim::Tof, std::move(var));
+  auto var = transpose
+                 ? makeVariable<double>(Dims{neutron::NeutronDim::Tof,
+                                             neutron::NeutronDim::Spectrum},
+                                        Shape{count, size})
+                 : makeVariable<double>(Dims{neutron::NeutronDim::Spectrum,
+                                             neutron::NeutronDim::Tof},
+                                        Shape{size, count});
+  out.setCoord(neutron::NeutronDim::Tof, std::move(var));
   return out;
 }
 
@@ -47,8 +51,8 @@ static void BM_neutron_convert(benchmark::State &state, const Dim targetDim) {
     state.PauseTiming();
     Dataset data = dense;
     state.ResumeTiming();
-    data = neutron::convert(std::move(data), Dim::Tof, targetDim,
-                            neutron::ConvertMode::Scatter);
+    data = neutron::convert(std::move(data), neutron::NeutronDim::Tof,
+                            targetDim, neutron::ConvertMode::Scatter);
     state.PauseTiming();
     data = Dataset();
     state.ResumeTiming();
@@ -64,7 +68,7 @@ auto make_events_default_weights(const scipp::index size,
                                  const scipp::index count) {
   auto out = make_beamline(size);
   Variable indices = makeVariable<std::pair<scipp::index, scipp::index>>(
-      Dims{Dim::Spectrum}, Shape{size});
+      Dims{neutron::NeutronDim::Spectrum}, Shape{size});
   scipp::index row = 0;
   for (auto &range : indices.values<std::pair<scipp::index, scipp::index>>()) {
     range = {row, row + count};
@@ -74,7 +78,7 @@ auto make_events_default_weights(const scipp::index size,
       makeVariable<double>(Dims{Dim::Event}, Shape{row}, Values{}, Variances{});
   auto tof = makeVariable<double>(Dims{Dim::Event}, Shape{row}, units::us) +
              5000.0 * units::us;
-  DataArray buf(weights, {{Dim::Tof, tof}});
+  DataArray buf(weights, {{neutron::NeutronDim::Tof, tof}});
   out.setData("", make_bins(indices, Dim::Event, buf));
 
   return out;
@@ -89,8 +93,8 @@ static void BM_neutron_convert_events(benchmark::State &state,
     state.PauseTiming();
     Dataset data = events;
     state.ResumeTiming();
-    data = neutron::convert(std::move(data), Dim::Tof, targetDim,
-                            neutron::ConvertMode::Scatter);
+    data = neutron::convert(std::move(data), neutron::NeutronDim::Tof,
+                            targetDim, neutron::ConvertMode::Scatter);
     state.PauseTiming();
     data = Dataset();
     state.ResumeTiming();
@@ -104,25 +108,31 @@ static void BM_neutron_convert_events(benchmark::State &state,
 // Params are:
 // - nBin
 // - transpose
-BENCHMARK_CAPTURE(BM_neutron_convert, Dim::DSpacing, Dim::DSpacing)
+BENCHMARK_CAPTURE(BM_neutron_convert, neutron::NeutronDim::DSpacing,
+                  neutron::NeutronDim::DSpacing)
     ->RangeMultiplier(2)
     ->Ranges({{8, 2 << 14}, {false, true}});
-BENCHMARK_CAPTURE(BM_neutron_convert, Dim::Wavelength, Dim::Wavelength)
+BENCHMARK_CAPTURE(BM_neutron_convert, neutron::NeutronDim::Wavelength,
+                  neutron::NeutronDim::Wavelength)
     ->RangeMultiplier(2)
     ->Ranges({{8, 2 << 14}, {false, true}});
-BENCHMARK_CAPTURE(BM_neutron_convert, Dim::Energy, Dim::Energy)
+BENCHMARK_CAPTURE(BM_neutron_convert, neutron::NeutronDim::Energy,
+                  neutron::NeutronDim::Energy)
     ->RangeMultiplier(2)
     ->Ranges({{8, 2 << 14}, {false, true}});
 
 // Params are:
 // - nEvent
-BENCHMARK_CAPTURE(BM_neutron_convert_events, Dim::DSpacing, Dim::DSpacing)
+BENCHMARK_CAPTURE(BM_neutron_convert_events, neutron::NeutronDim::DSpacing,
+                  neutron::NeutronDim::DSpacing)
     ->RangeMultiplier(2)
     ->Ranges({{8, 2 << 14}});
-BENCHMARK_CAPTURE(BM_neutron_convert_events, Dim::Wavelength, Dim::Wavelength)
+BENCHMARK_CAPTURE(BM_neutron_convert_events, neutron::NeutronDim::Wavelength,
+                  neutron::NeutronDim::Wavelength)
     ->RangeMultiplier(2)
     ->Ranges({{8, 2 << 14}});
-BENCHMARK_CAPTURE(BM_neutron_convert_events, Dim::Energy, Dim::Energy)
+BENCHMARK_CAPTURE(BM_neutron_convert_events, neutron::NeutronDim::Energy,
+                  neutron::NeutronDim::Energy)
     ->RangeMultiplier(2)
     ->Ranges({{8, 2 << 14}});
 
