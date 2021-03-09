@@ -651,6 +651,48 @@ def test_loads_sample_position_from_single_rotation():
     assert loaded_data["sample_position"].unit == sc.Unit("m")
 
 
+def test_loads_sample_position_from_log_transformation():
+    builder = InMemoryNexusFileBuilder()
+    # Provide "time" data, the builder will write the transformation as
+    # an NXlog
+    transformation = Transformation(TransformationType.TRANSLATION,
+                                    vector=np.array([0, 0, -1]),
+                                    value=np.array([230]),
+                                    time=np.array([1.3]),
+                                    time_units="s",
+                                    value_units="cm")
+    builder.add_sample(Sample("sample", depends_on=transformation))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    # Should load as usual despite the transformation being an NXlog
+    # as it only has a single value
+    expected_position = np.array([0, 0, transformation.value[0] / 100])
+    assert np.allclose(loaded_data["sample_position"].values,
+                       expected_position)
+    assert loaded_data["sample_position"].unit == sc.Unit("m")
+
+
+def test_skips_sample_position_with_multi_value_log_transformation():
+    builder = InMemoryNexusFileBuilder()
+    # Provide "time" data, the builder will write the transformation as
+    # an NXlog. This would be encountered in a file from an experiment
+    # involving a scan of a motion axis.
+    transformation = Transformation(TransformationType.TRANSLATION,
+                                    vector=np.array([0, 0, -1]),
+                                    value=np.array([230, 310]),
+                                    time=np.array([1.3, 6.4]),
+                                    time_units="s",
+                                    value_units="cm")
+    builder.add_sample(Sample("sample", depends_on=transformation))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    # Loading transformations recorded as NXlogs with multiple values is
+    # not yet implemented
+    assert loaded_data is None
+
+
 def test_loads_sample_position_prefers_transformation_over_distance_dataset():
     # The "distance" dataset gives the position along the z axis.
     # If there is a "depends_on" pointing to transformations then we
