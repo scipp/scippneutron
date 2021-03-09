@@ -58,16 +58,23 @@ def _load_instrument_name(instrument_groups: List[h5py.Group],
                                     "instrument_name", data)
 
 
-def _load_sample(sample_groups: List[h5py.Group], data: sc.Variable):
+def _load_sample(sample_groups: List[h5py.Group], data: sc.Variable,
+                 file_root: h5py.File):
     load_position_of_unique_component(sample_groups,
                                       data,
                                       "sample",
                                       nx_sample,
+                                      file_root=file_root,
                                       default_position=np.array([0, 0, 0]))
 
 
-def _load_source(source_groups: List[h5py.Group], data: sc.Variable):
-    load_position_of_unique_component(source_groups, data, "source", nx_source)
+def _load_source(source_groups: List[h5py.Group], data: sc.Variable,
+                 file_root: h5py.File):
+    load_position_of_unique_component(source_groups,
+                                      data,
+                                      "source",
+                                      nx_source,
+                                      file_root=file_root)
 
 
 def _load_title(entry_group: h5py.Group, data: sc.Variable):
@@ -113,9 +120,9 @@ def load_nexus(data_file: Union[str, h5py.File], root: str = "/", quiet=True):
         load_logs(loaded_data, groups[nx_log])
 
         if groups[nx_sample]:
-            _load_sample(groups[nx_sample], loaded_data)
+            _load_sample(groups[nx_sample], loaded_data, nexus_file)
         if groups[nx_source]:
-            _load_source(groups[nx_source], loaded_data)
+            _load_source(groups[nx_source], loaded_data, nexus_file)
         if groups[nx_instrument]:
             _load_instrument_name(groups[nx_instrument], loaded_data)
         if groups[nx_entry]:

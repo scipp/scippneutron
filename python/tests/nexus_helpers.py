@@ -134,7 +134,7 @@ def _add_log_group_to_file(log: Log, parent_group: h5py.Group) -> h5py.Group:
 
 def _add_transformations_to_file(transform: Transformation,
                                  parent_group: h5py.Group) -> str:
-    transform_chain = []
+    transform_chain = [transform]
     while transform.depends_on is not None:
         transform_chain.append(transform.depends_on)
         transform = transform.depends_on

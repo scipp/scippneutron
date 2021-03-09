@@ -4,6 +4,7 @@ import h5py
 import numpy as np
 import scipp as sc
 from ._loading_common import get_units
+from ._loading_transformations import get_position_from_transformations
 
 
 def load_position_of_unique_component(
@@ -11,13 +12,17 @@ def load_position_of_unique_component(
         data: sc.Variable,
         name: str,
         nx_class: str,
+        file_root: h5py.File,
         default_position: Optional[np.ndarray] = None):
     if len(groups) > 1:
         warn(f"More than one {nx_class} found in file, "
              f"skipping loading {name} position")
         return
     group = groups[0]
-    if "distance" in group:
+    if "depends_on" in group:
+        position = get_position_from_transformations(group, file_root)
+        units = sc.units.m
+    elif "distance" in group:
         position = np.array([0, 0, group["distance"][...]])
         unit_str = get_units(group["distance"])
         if not unit_str:

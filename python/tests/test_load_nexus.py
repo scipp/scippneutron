@@ -613,10 +613,11 @@ def test_skips_sample_position_from_distance_dataset_missing_unit():
 
 def test_loads_sample_position_from_single_transformation():
     builder = InMemoryNexusFileBuilder()
-    transformation = Transformation(TransformationType.TRANSLATION,
-                                    np.ndarray([0, 0, -1]),
-                                    np.array([230]),
-                                    value_units=sc.Unit("cm"))
+    transformation = Transformation(
+        TransformationType.TRANSLATION,
+        np.ndarray([0, 0, 1]),  # -1
+        np.array([230]),
+        value_units="cm")
     builder.add_sample(Sample("sample", depends_on=transformation))
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
@@ -625,7 +626,7 @@ def test_loads_sample_position_from_single_transformation():
     # test case the coordinate system is shifted 2.3m in the negative z
     # direction. In the lab reference frame this corresponds to
     # setting the sample position to 2.3m in the positive z direction.
-    expected_position = np.array([0, 0, Transformation.value / 100])
+    expected_position = np.array([0, 0, transformation.value[0] / 100])
     assert np.allclose(loaded_data["sample_position"].values,
                        expected_position)
     # Resulting position will always be in metres, whatever units are
@@ -642,7 +643,7 @@ def test_loads_sample_position_prefers_transformation_over_distance_dataset():
     transformation = Transformation(TransformationType.TRANSLATION,
                                     np.ndarray([0, 0, -1]),
                                     np.array([2.3]),
-                                    value_units=sc.Unit("m"))
+                                    value_units="m")
     builder.add_sample(
         Sample("sample",
                depends_on=transformation,
@@ -651,7 +652,7 @@ def test_loads_sample_position_prefers_transformation_over_distance_dataset():
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
 
-    expected_position = np.array([0, 0, Transformation.value])
+    expected_position = np.array([0, 0, transformation.value[0]])
     assert np.allclose(loaded_data["sample_position"].values,
                        expected_position)
     assert loaded_data["sample_position"].unit == sc.Unit("m")
@@ -672,11 +673,11 @@ def test_loads_sample_position_from_multiple_transformations():
     transformation_1 = Transformation(TransformationType.ROTATION,
                                       np.ndarray([0, 1, 0]),
                                       np.array([90]),
-                                      value_units=sc.Unit("deg"))
+                                      value_units="deg")
     transformation_2 = Transformation(TransformationType.TRANSLATION,
                                       np.ndarray([0, 0, -1]),
                                       np.array([2.3]),
-                                      value_units=sc.Unit("m"),
+                                      value_units="m",
                                       depends_on=transformation_1)
     builder.add_sample(Sample("sample", depends_on=transformation_2))
     with builder.file() as nexus_file:
@@ -687,7 +688,7 @@ def test_loads_sample_position_from_multiple_transformations():
     # around the y axis and then shifted -2.3m in the z direction. In
     # the lab reference frame this corresponds to
     # setting the sample position to 2.3m in the x direction.
-    expected_position = np.array([Transformation.value, 0, 0])
+    expected_position = np.array([transformation_2.value[0], 0, 0])
     assert np.allclose(loaded_data["sample_position"].values,
                        expected_position)
     assert loaded_data["sample_position"].unit == sc.Unit("m")
