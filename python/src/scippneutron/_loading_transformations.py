@@ -7,6 +7,7 @@ from ._loading_common import ensure_str
 from typing import Union, List
 import scipp as sc
 import h5py
+from cmath import isclose
 
 
 class TransformationError(Exception):
@@ -130,9 +131,27 @@ def _append_transformation(transform: h5py.Dataset,
     return attributes['depends_on']
 
 
-def _append_translation(attributes, offset, transform, transformations):
+def normalise(vector: np.ndarray, transform: h5py.Dataset):
+    norm = np.linalg.norm(vector)
+    if isclose(norm, 0.):
+        raise TransformationError(
+            f"Magnitude of 'vector' attribute in transformation at "
+            f"{transform.name} has magnitude too close to zero")
+    return vector / norm
+
+
+def _append_translation(attributes: h5py.AttributeManager, offset: List[float],
+                        transform: h5py.Dataset,
+                        transformations: List[np.ndarray]):
     # TODO no assumptions about units (convert everything to metres?)
-    vector = attributes['vector'] * transform[...].astype(float)
+    try:
+        direction = attributes['vector']
+    except KeyError:
+        raise TransformationError(
+            f"Missing 'vector' attribute in transformation at {transform.name}"
+        )
+    vector = normalise(direction,
+                       transform) * transform[...].astype(float).item()
     matrix = np.array([[1., 0., 0., vector[0] + offset[0]],
                        [0., 1., 0., vector[1] + offset[1]],
                        [0., 0., 1., vector[2] + offset[2]], [0., 0., 0., 1.]])
