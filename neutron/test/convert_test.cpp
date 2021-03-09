@@ -128,15 +128,26 @@ TEST_P(ConvertTest, DataArray_non_tof) {
 TEST_P(ConvertTest, convert_slice) {
   Dataset tof = GetParam();
   const auto slice = Slice{NeutronDim::Spectrum, 0};
-  // Note: Converting slics of data*sets* not supported right now, since meta
-  // data handling implementation in `convert` is current based on dataset
-  // coords, but slicing converts this into attrs of *items*.
   for (const auto &dim :
        {NeutronDim::DSpacing, NeutronDim::Wavelength, NeutronDim::Energy}) {
+    auto expected =
+        convert(tof["counts"], NeutronDim::Tof, dim, ConvertMode::Scatter)
+            .slice(slice);
+    // A side-effect of `convert` is that it turns relevant meta data into
+    // coords or attrs, depending on the target unit. Slicing (without range)
+    // turns coords into attrs, but applying `convert` effectively reverses
+    // this, which is why we have this slightly unusual behavior here:
+    if (dim != NeutronDim::DSpacing)
+      expected.coords().set(NeutronDim::Position,
+                            expected.attrs().extract(NeutronDim::Position));
     EXPECT_EQ(convert(tof["counts"].slice(slice), NeutronDim::Tof, dim,
                       ConvertMode::Scatter),
-              convert(tof["counts"], NeutronDim::Tof, dim, ConvertMode::Scatter)
-                  .slice(slice));
+              expected);
+    // Converting slice of item is same as item of converted slice
+    EXPECT_EQ(convert(tof["counts"].slice(slice), NeutronDim::Tof, dim,
+                      ConvertMode::Scatter),
+              convert(tof.slice(slice), NeutronDim::Tof, dim,
+                      ConvertMode::Scatter)["counts"]);
   }
 }
 
