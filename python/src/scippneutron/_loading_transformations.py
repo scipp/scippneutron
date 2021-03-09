@@ -131,12 +131,12 @@ def _append_transformation(transform: h5py.Dataset,
     return attributes['depends_on']
 
 
-def normalise(vector: np.ndarray, transform: h5py.Dataset):
+def _normalise(vector: np.ndarray, transform: h5py.Dataset):
     norm = np.linalg.norm(vector)
     if isclose(norm, 0.):
         raise TransformationError(
             f"Magnitude of 'vector' attribute in transformation at "
-            f"{transform.name} has magnitude too close to zero")
+            f"{transform.name} is too close to zero")
     return vector / norm
 
 
@@ -150,8 +150,9 @@ def _append_translation(attributes: h5py.AttributeManager, offset: List[float],
         raise TransformationError(
             f"Missing 'vector' attribute in transformation at {transform.name}"
         )
-    vector = normalise(direction,
-                       transform) * transform[...].astype(float).item()
+    # -1 as describes passive transformation
+    vector = _normalise(direction,
+                        transform) * -1. * transform[...].astype(float).item()
     matrix = np.array([[1., 0., 0., vector[0] + offset[0]],
                        [0., 1., 0., vector[1] + offset[1]],
                        [0., 0., 1., vector[2] + offset[2]], [0., 0., 0., 1.]])

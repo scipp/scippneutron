@@ -613,11 +613,10 @@ def test_skips_sample_position_from_distance_dataset_missing_unit():
 
 def test_loads_sample_position_from_single_transformation():
     builder = InMemoryNexusFileBuilder()
-    transformation = Transformation(
-        TransformationType.TRANSLATION,
-        np.ndarray([0, 0, 1]),  # -1
-        np.array([230]),
-        value_units="cm")
+    transformation = Transformation(TransformationType.TRANSLATION,
+                                    vector=np.array([0, 0, -1]),
+                                    value=np.array([230]),
+                                    value_units="cm")
     builder.add_sample(Sample("sample", depends_on=transformation))
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
@@ -641,14 +640,14 @@ def test_loads_sample_position_prefers_transformation_over_distance_dataset():
     # can define position and orientation in 3D.
     builder = InMemoryNexusFileBuilder()
     transformation = Transformation(TransformationType.TRANSLATION,
-                                    np.ndarray([0, 0, -1]),
+                                    np.array([0, 0, -1]),
                                     np.array([2.3]),
                                     value_units="m")
     builder.add_sample(
         Sample("sample",
                depends_on=transformation,
                distance=4.2,
-               distance_units=sc.Unit("m")))
+               distance_units="m"))
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
 
@@ -658,10 +657,20 @@ def test_loads_sample_position_prefers_transformation_over_distance_dataset():
     assert loaded_data["sample_position"].unit == sc.Unit("m")
 
 
-def test_skips_sample_position_from_transformation_missing_unit():
+def test_skips_sample_position_from_translation_missing_unit():
     builder = InMemoryNexusFileBuilder()
     transformation = Transformation(TransformationType.TRANSLATION,
-                                    np.ndarray([0, 0, -1]), np.array([2.3]))
+                                    np.array([0, 0, -1]), np.array([2.3]))
+    builder.add_sample(Sample("sample", depends_on=transformation))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+    assert loaded_data is None
+
+
+def test_skips_sample_position_from_rotation_missing_unit():
+    builder = InMemoryNexusFileBuilder()
+    transformation = Transformation(TransformationType.ROTATION,
+                                    np.array([0, 0, -1]), np.array([45.]))
     builder.add_sample(Sample("sample", depends_on=transformation))
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
@@ -671,11 +680,11 @@ def test_skips_sample_position_from_transformation_missing_unit():
 def test_loads_sample_position_from_multiple_transformations():
     builder = InMemoryNexusFileBuilder()
     transformation_1 = Transformation(TransformationType.ROTATION,
-                                      np.ndarray([0, 1, 0]),
+                                      np.array([0, 1, 0]),
                                       np.array([90]),
                                       value_units="deg")
     transformation_2 = Transformation(TransformationType.TRANSLATION,
-                                      np.ndarray([0, 0, -1]),
+                                      np.array([0, 0, -1]),
                                       np.array([2.3]),
                                       value_units="m",
                                       depends_on=transformation_1)
