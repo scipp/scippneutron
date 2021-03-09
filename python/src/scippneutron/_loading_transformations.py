@@ -14,36 +14,8 @@ class TransformationError(Exception):
     pass
 
 
-def _alt_rotation_matrix_from_axis_and_angle(axis: np.ndarray,
-                                             angle_radians: float):
-    axis_x = axis[0]
-    axis_y = axis[1]
-    axis_z = axis[2]
-    cos_t = np.cos(angle_radians)
-    sin_t = np.sin(angle_radians)
-    one_minus_cos_t = 1 - cos_t
-    x_sin_t = axis_x * sin_t
-    y_sint_t = axis_y * sin_t
-    z_sint_t = axis_z * sin_t
-    return np.array([[
-        cos_t + axis_x**2.0 * one_minus_cos_t,
-        axis_x * axis_y * one_minus_cos_t - z_sint_t,
-        axis_x * axis_z * one_minus_cos_t + y_sint_t
-    ],
-                     [
-                         axis_y * axis_x * one_minus_cos_t + z_sint_t,
-                         cos_t + axis_y**2.0 * one_minus_cos_t,
-                         axis_y * axis_z * one_minus_cos_t - x_sin_t
-                     ],
-                     [
-                         axis_z * axis_x * one_minus_cos_t - y_sint_t,
-                         axis_z * axis_y * one_minus_cos_t + x_sin_t,
-                         cos_t + axis_z**2.0 * one_minus_cos_t
-                     ]])
-
-
 def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
-                                         angle_radians: float):
+                                         angle_radians: float) -> np.ndarray:
     # Following convention for passive transformation
     # Variable naming follows that used in
     # https://doi.org/10.1061/(ASCE)SU.1943-5428.0000247
@@ -63,20 +35,17 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
     return i - np.sin(angle_radians) * ll + (1 - np.cos(angle_radians)) * ll_2
 
 
-def get_position_from_transformations(group: h5py.Group,
-                                      root: [h5py.File, h5py.Group]):
-    transformations = []
-    try:
-        depends_on = group["depends_on"][...].item()
-    except KeyError:
-        depends_on = '.'
-    _get_transformations(depends_on, transformations, root, group.name)
+def get_position_from_transformations(
+        group: h5py.Group, root: [h5py.File, h5py.Group]) -> np.ndarray:
+    """
+    Get position of a component which has a "depends_on" dataset
 
-    total_transform_matrix = np.identity(4)
-    for transformation in transformations:
-        total_transform_matrix = np.matmul(transformation,
-                                           total_transform_matrix)
-
+    :param group: The HDF5 group of the component, containing depends_on
+    :param root: The root of the NeXus file, transformation paths are
+      assumed to be relative to this
+    :return: Position of the component as a three-element numpy array
+    """
+    total_transform_matrix = get_full_transformation_matrix(group, root)
     return np.matmul(total_transform_matrix, np.array([0, 0, 0, 1],
                                                       dtype=float))[0:3]
 
@@ -87,6 +56,31 @@ def get_position_from_transformations(group: h5py.Group,
     # vertices = do_transformations(transformations, vertices)
     # Now the transformations are done we do not need the 4th element
     # return vertices[:3, :].T
+
+
+def get_full_transformation_matrix(
+        group: h5py.Group, root: [h5py.File, h5py.Group]) -> np.ndarray:
+    """
+    Get the 4x4 transformation matrix for a component, resulting
+    from the full chain of transformations linked by "depends_on"
+    attributes
+
+    :param group: The HDF5 group of the component, containing depends_on
+    :param root: The root of the NeXus file, transformation paths are
+      assumed to be relative to this
+    :return: 4x4 passive transformation matrix as a numpy array
+    """
+    transformations = []
+    try:
+        depends_on = group["depends_on"][...].item()
+    except KeyError:
+        depends_on = '.'
+    _get_transformations(depends_on, transformations, root, group.name)
+    total_transform_matrix = np.identity(4)
+    for transformation in transformations:
+        total_transform_matrix = np.matmul(transformation,
+                                           total_transform_matrix)
+    return total_transform_matrix
 
 
 def _get_transformations(depends_on: Union[str, bytes],
@@ -114,7 +108,7 @@ def _get_transformations(depends_on: Union[str, bytes],
 
 
 def _append_transformation(transform: h5py.Dataset,
-                           transformations: List[np.ndarray]):
+                           transformations: List[np.ndarray]) -> str:
     attributes = transform.attrs
     offset = [0., 0., 0.]
     try:
@@ -148,7 +142,7 @@ def _append_transformation(transform: h5py.Dataset,
     return attributes['depends_on']
 
 
-def _normalise(vector: np.ndarray, transform_name: str):
+def _normalise(vector: np.ndarray, transform_name: str) -> np.ndarray:
     norm = np.linalg.norm(vector)
     if isclose(norm, 0.):
         raise TransformationError(

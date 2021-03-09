@@ -296,6 +296,10 @@ class InMemoryNexusFileBuilder:
                                               detector_group, "events")
             if detector.log is not None:
                 _add_log_group_to_file(detector.log, detector_group)
+            if detector.depends_on is not None:
+                depends_on = _add_transformations_to_file(
+                    detector.depends_on, detector_group)
+                detector_group.create_dataset("depends_on", data=depends_on)
 
     def _write_event_data(self, parent_group: h5py.Group):
         for event_data_index, event_data in enumerate(self._event_data):
