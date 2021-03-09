@@ -49,17 +49,9 @@ def get_position_from_transformations(
     return np.matmul(total_transform_matrix, np.array([0, 0, 0, 1],
                                                       dtype=float))[0:3]
 
-    # vertices = vertices.T
-    # Add fourth element of 1 to each vertex, indicating these are
-    # positions not direction vectors
-    # vertices = np.vstack((vertices, np.ones(vertices.shape[1])))
-    # vertices = do_transformations(transformations, vertices)
-    # Now the transformations are done we do not need the 4th element
-    # return vertices[:3, :].T
 
-
-def get_full_transformation_matrix(
-        group: h5py.Group, root: [h5py.File, h5py.Group]) -> np.ndarray:
+def get_full_transformation_matrix(group: h5py.Group,
+                                   root: h5py.File) -> np.ndarray:
     """
     Get the 4x4 transformation matrix for a component, resulting
     from the full chain of transformations linked by "depends_on"
@@ -84,8 +76,8 @@ def get_full_transformation_matrix(
 
 
 def _get_transformations(depends_on: Union[str, bytes],
-                         transformations: List[np.ndarray],
-                         root: [h5py.File, h5py.Group], group_name: str):
+                         transformations: List[np.ndarray], root: h5py.File,
+                         group_name: str):
     """
     Get all transformations in the depends_on chain
 
