@@ -50,12 +50,12 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
     i = np.identity(3)
     l1, l2, l3 = tuple(axis)
     ll = np.array([[0, -l3, l2], [l3, 0, -l1], [-l2, l1, 0]])
-    l1l2 = np.matmul(l1, l2)
-    l1l3 = np.matmul(l1, l3)
-    l2l3 = np.matmul(l2, l3)
-    l1_squared = np.matmul(l1, l1)
-    l2_squared = np.matmul(l2, l2)
-    l3_squared = np.matmul(l3, l3)
+    l1l2 = l1 * l2
+    l1l3 = l1 * l3
+    l2l3 = l2 * l3
+    l1_squared = l1 * l1
+    l2_squared = l2 * l2
+    l3_squared = l3 * l3
     ll_2 = np.array([[-(l2_squared + l3_squared), l1l2, l1l3],
                      [l1l2, -(l1_squared + l3_squared), l2l3],
                      [l1l3, l2l3, -(l1_squared + l2_squared)]])
@@ -117,12 +117,29 @@ def _append_transformation(transform: h5py.Dataset,
                            transformations: List[np.ndarray]):
     attributes = transform.attrs
     offset = [0., 0., 0.]
+    try:
+        units_str = attributes["units"]
+    except KeyError:
+        raise TransformationError(
+            f"Missing units for transformation at {transform.name}")
+    try:
+        sc.Unit(units_str)
+    except RuntimeError:
+        raise TransformationError(f"Unrecognised units '{units_str}' for "
+                                  f"transformation at {transform.name}")
+    try:
+        vector = attributes['vector'].astype(float)
+        vector = _normalise(vector, transform.name)
+    except KeyError:
+        raise TransformationError(
+            f"Missing 'vector' attribute in transformation at {transform.name}"
+        )
     if 'offset' in attributes:
         offset = attributes['offset'].astype(float)
     if attributes['transformation_type'] == 'translation':
-        _append_translation(attributes, offset, transform, transformations)
+        _append_translation(offset, transform, transformations, vector)
     elif attributes['transformation_type'] == 'rotation':
-        _append_rotation(attributes, offset, transform, transformations)
+        _append_rotation(offset, transform, transformations, vector)
     else:
         raise TransformationError(
             f"Unknown transformation type "
@@ -131,37 +148,31 @@ def _append_transformation(transform: h5py.Dataset,
     return attributes['depends_on']
 
 
-def _normalise(vector: np.ndarray, transform: h5py.Dataset):
+def _normalise(vector: np.ndarray, transform_name: str):
     norm = np.linalg.norm(vector)
     if isclose(norm, 0.):
         raise TransformationError(
             f"Magnitude of 'vector' attribute in transformation at "
-            f"{transform.name} is too close to zero")
+            f"{transform_name} is too close to zero")
     return vector / norm
 
 
-def _append_translation(attributes: h5py.AttributeManager, offset: List[float],
-                        transform: h5py.Dataset,
-                        transformations: List[np.ndarray]):
+def _append_translation(offset: List[float], transform: h5py.Dataset,
+                        transformations: List[np.ndarray],
+                        direction_unit_vector: np.ndarray):
     # TODO no assumptions about units (convert everything to metres?)
-    try:
-        direction = attributes['vector']
-    except KeyError:
-        raise TransformationError(
-            f"Missing 'vector' attribute in transformation at {transform.name}"
-        )
     # -1 as describes passive transformation
-    vector = _normalise(direction,
-                        transform) * -1. * transform[...].astype(float).item()
+    vector = direction_unit_vector * -1. * transform[...].astype(float).item()
     matrix = np.array([[1., 0., 0., vector[0] + offset[0]],
                        [0., 1., 0., vector[1] + offset[1]],
                        [0., 0., 1., vector[2] + offset[2]], [0., 0., 0., 1.]])
     transformations.append(matrix)
 
 
-def _append_rotation(attributes, offset, transform, transformations):
-    axis = attributes['vector']
-    unit_str = ensure_str(transform.attrs['units'])
+def _append_rotation(offset: List[float], transform: h5py.Dataset,
+                     transformations: List[np.ndarray],
+                     rotation_axis: np.ndarray):
+    unit_str = transform.attrs['units']
     unit_error = TransformationError(
         f"Unit for rotation transformation must be radians "
         f"or degrees but found '{unit_str}' at {transform.name}")
@@ -175,7 +186,8 @@ def _append_rotation(attributes, offset, transform, transformations):
         angle = transform[...]
     else:
         raise unit_error
-    rotation_matrix = _rotation_matrix_from_axis_and_angle(axis, angle)
+    rotation_matrix = _rotation_matrix_from_axis_and_angle(
+        rotation_axis, angle)
     # Make 4x4 matrix from our 3x3 rotation matrix to include
     # possible "offset"
     # TODO try using rotation_matrix.resize((4, 4))

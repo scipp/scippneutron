@@ -736,10 +736,10 @@ def test_loads_sample_position_from_multiple_transformations():
 
     # Transformations in NeXus are "passive transformations", so in this
     # test case the coordinate system is rotated 90 degrees anticlockwise
-    # around the y axis and then shifted -2.3m in the z direction. In
+    # around the y axis and then shifted 2.3m in the z direction. In
     # the lab reference frame this corresponds to
-    # setting the sample position to 2.3m in the x direction.
-    expected_position = np.array([transformation_2.value[0], 0, 0])
+    # setting the sample position to -2.3m in the x direction.
+    expected_position = np.array([-transformation_2.value[0], 0, 0])
     assert np.allclose(loaded_data["sample_position"].values,
                        expected_position)
     assert loaded_data["sample_position"].unit == sc.Unit("m")
