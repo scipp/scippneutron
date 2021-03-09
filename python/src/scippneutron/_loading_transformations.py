@@ -8,6 +8,7 @@ from typing import Union, List
 import scipp as sc
 import h5py
 from cmath import isclose
+import scippneutron
 
 
 class TransformationError(Exception):
@@ -123,7 +124,7 @@ def _append_transformation(transform: h5py.Dataset,
         raise TransformationError(
             f"Missing units for transformation at {transform.name}")
     try:
-        sc.Unit(units_str)
+        units = sc.Unit(units_str)
     except RuntimeError:
         raise TransformationError(f"Unrecognised units '{units_str}' for "
                                   f"transformation at {transform.name}")
@@ -137,7 +138,7 @@ def _append_transformation(transform: h5py.Dataset,
     if 'offset' in attributes:
         offset = attributes['offset'].astype(float)
     if attributes['transformation_type'] == 'translation':
-        _append_translation(offset, transform, transformations, vector)
+        _append_translation(offset, transform, transformations, vector, units)
     elif attributes['transformation_type'] == 'rotation':
         _append_rotation(offset, transform, transformations, vector)
     else:
@@ -159,10 +160,15 @@ def _normalise(vector: np.ndarray, transform_name: str):
 
 def _append_translation(offset: List[float], transform: h5py.Dataset,
                         transformations: List[np.ndarray],
-                        direction_unit_vector: np.ndarray):
-    # TODO no assumptions about units (convert everything to metres?)
+                        direction_unit_vector: np.ndarray, units: sc.Unit):
+    magnitude = transform[...].astype(float).item()
+    if units != sc.units.m:
+        magnitude_var = magnitude * units
+        magnitude_var = sc.Dataset({'distance': magnitude_var})
+        magnitude_var = scippneutron.convert(magnitude_var, units, sc.units.m)
+        magnitude = magnitude_var.value
     # -1 as describes passive transformation
-    vector = direction_unit_vector * -1. * transform[...].astype(float).item()
+    vector = direction_unit_vector * -1. * magnitude
     matrix = np.array([[1., 0., 0., vector[0] + offset[0]],
                        [0., 1., 0., vector[1] + offset[1]],
                        [0., 0., 1., vector[2] + offset[2]], [0., 0., 0., 1.]])
@@ -190,7 +196,6 @@ def _append_rotation(offset: List[float], transform: h5py.Dataset,
         rotation_axis, angle)
     # Make 4x4 matrix from our 3x3 rotation matrix to include
     # possible "offset"
-    # TODO try using rotation_matrix.resize((4, 4))
     matrix = np.array([[
         rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2],
         offset[0]
