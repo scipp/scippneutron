@@ -46,16 +46,6 @@ class Log:
     time_units: Optional[str] = None
 
 
-@dataclass
-class Detector:
-    detector_numbers: np.ndarray
-    event_data: Optional[EventData] = None
-    log: Optional[Log] = None
-    x_offsets: Optional[np.ndarray] = None
-    y_offsets: Optional[np.ndarray] = None
-    z_offsets: Optional[np.ndarray] = None
-
-
 class TransformationType(Enum):
     TRANSLATION = "translation"
     ROTATION = "rotation"
@@ -71,6 +61,17 @@ class Transformation:
     offset: Optional[np.ndarray] = None
     value_units: Optional[str] = None
     time_units: Optional[str] = None
+
+
+@dataclass
+class Detector:
+    detector_numbers: np.ndarray
+    event_data: Optional[EventData] = None
+    log: Optional[Log] = None
+    x_offsets: Optional[np.ndarray] = None
+    y_offsets: Optional[np.ndarray] = None
+    z_offsets: Optional[np.ndarray] = None
+    depends_on: Optional[Transformation] = None
 
 
 @dataclass
