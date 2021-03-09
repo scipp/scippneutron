@@ -8,7 +8,6 @@ from typing import Union, List
 import scipp as sc
 import h5py
 from cmath import isclose
-import scippneutron
 
 
 class TransformationError(Exception):
@@ -164,8 +163,7 @@ def _append_translation(offset: List[float], transform: h5py.Dataset,
     magnitude = transform[...].astype(float).item()
     if units != sc.units.m:
         magnitude_var = magnitude * units
-        magnitude_var = sc.Dataset({'distance': magnitude_var})
-        magnitude_var = scippneutron.convert(magnitude_var, units, sc.units.m)
+        magnitude_var = sc.to_unit(magnitude_var, sc.units.m)
         magnitude = magnitude_var.value
     # -1 as describes passive transformation
     vector = direction_unit_vector * -1. * magnitude
