@@ -4,7 +4,8 @@ import h5py
 import numpy as np
 import scipp as sc
 from ._loading_common import get_units
-from ._loading_transformations import get_position_from_transformations
+from ._loading_transformations import (get_position_from_transformations,
+                                       TransformationError)
 
 
 def load_position_of_unique_component(
@@ -20,7 +21,11 @@ def load_position_of_unique_component(
         return
     group = groups[0]
     if "depends_on" in group:
-        position = get_position_from_transformations(group, file_root)
+        try:
+            position = get_position_from_transformations(group, file_root)
+        except TransformationError as e:
+            warn(f"Skipping loading {name} position due to error: {e}")
+            return
         units = sc.units.m
     elif "distance" in group:
         position = np.array([0, 0, group["distance"][...]])
