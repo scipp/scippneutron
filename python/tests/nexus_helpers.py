@@ -67,7 +67,7 @@ class Transformation:
     vector: np.ndarray
     value: Optional[np.ndarray]
     time: Optional[np.ndarray] = None
-    depends_on: Optional["Transformation"] = None
+    depends_on: Union["Transformation", str, None] = None
     offset: Optional[np.ndarray] = None
     value_units: Optional[str] = None
     time_units: Optional[str] = None
@@ -135,14 +135,16 @@ def _add_log_group_to_file(log: Log, parent_group: h5py.Group) -> h5py.Group:
 def _add_transformations_to_file(transform: Transformation,
                                  parent_group: h5py.Group) -> str:
     transform_chain = [transform]
-    while transform.depends_on is not None:
+    while transform.depends_on is not None and not isinstance(
+            transform.depends_on, str):
         transform_chain.append(transform.depends_on)
         transform = transform.depends_on
 
     transforms_group = _create_nx_class("transformations", "NXtransformations",
                                         parent_group)
     transform_chain.reverse()
-    depends_on_str = None
+    depends_on_str = transform.depends_on if isinstance(
+        transform.depends_on, str) else None
     for transform_number, transform in enumerate(transform_chain):
         if transform.time is not None:
             depends_on_str = _add_transformation_as_log(

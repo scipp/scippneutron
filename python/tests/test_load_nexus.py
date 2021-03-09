@@ -818,3 +818,37 @@ def test_loads_source_position_from_multiple_transformations():
     assert np.allclose(loaded_data["source_position"].values,
                        expected_position)
     assert loaded_data["source_position"].unit == sc.Unit("m")
+
+
+def test_loads_source_position_dependent_on_sample_position():
+    builder = InMemoryNexusFileBuilder()
+    transformation_0 = Transformation(TransformationType.ROTATION,
+                                      np.array([0, 1, 0]),
+                                      np.array([90]),
+                                      value_units="deg")
+    transformation_1 = Transformation(TransformationType.TRANSLATION,
+                                      np.array([0, 0, -1]),
+                                      np.array([2.3]),
+                                      value_units="m",
+                                      depends_on=transformation_0)
+    builder.add_sample(Sample("sample", depends_on=transformation_1))
+    transformation_2 = Transformation(
+        TransformationType.TRANSLATION,
+        np.array([0, 0, -1]),
+        np.array([1.0]),
+        value_units="m",
+        depends_on="/entry/sample/transformations/transform_1")
+    builder.add_source(Source("source", depends_on=transformation_2))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    # Transformations in NeXus are "passive transformations", so in this
+    # test case the coordinate system is rotated 90 degrees anticlockwise
+    # around the y axis and then shifted 2.3m in the z direction, then
+    # another 1.0m in the z direction. In
+    # the lab reference frame this corresponds to
+    # setting the sample position to -3.3m in the x direction.
+    expected_position = np.array([-3.3, 0, 0])
+    assert np.allclose(loaded_data["source_position"].values,
+                       expected_position)
+    assert loaded_data["source_position"].unit == sc.Unit("m")
