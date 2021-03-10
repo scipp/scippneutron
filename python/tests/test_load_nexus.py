@@ -137,7 +137,8 @@ def test_skips_event_data_group_with_non_integer_event_ids():
     builder.add_event_data(event_data)
 
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
 
     assert loaded_data is None, "Expected no data to be loaded as " \
                                 "event data has non integer event ids"
@@ -160,7 +161,8 @@ def test_skips_event_data_group_with_non_integer_detector_numbers():
     builder.add_detector(Detector(detector_numbers, event_data))
 
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
 
     assert loaded_data is None, "Expected no data to be loaded as " \
                                 "detector has non integer detector numbers"
@@ -183,7 +185,8 @@ def test_skips_data_with_event_id_and_detector_number_type_unequal():
     builder.add_detector(Detector(detector_numbers, event_data))
 
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
 
     assert loaded_data is None, "Expected no data to be loaded as event " \
                                 "ids and detector numbers are of " \
@@ -284,7 +287,8 @@ def test_skips_multidimensional_log():
     builder.add_log(Log(name, multidim_values, np.array([4, 5, 6])))
 
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
 
     assert loaded_data is None
 
@@ -295,7 +299,8 @@ def test_skips_log_with_no_value_dataset():
     builder.add_log(Log(name, None, np.array([4, 5, 6])))
 
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
 
     assert loaded_data is None
 
@@ -308,7 +313,8 @@ def test_skips_log_with_empty_value_and_time_datasets():
     builder.add_log(Log(name, empty_values, empty_times))
 
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
 
     assert loaded_data is None
 
@@ -321,7 +327,8 @@ def test_skips_log_with_mismatched_value_and_time():
     builder.add_log(Log(name, values, times))
 
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
 
     assert loaded_data is None
 
@@ -505,7 +512,7 @@ def test_loads_pixel_positions_with_event_data():
                        expected_pixel_positions)
 
 
-def test_does_not_load_pixel_positions_with_non_matching_shape():
+def test_skips_loading_pixel_positions_with_non_matching_shape():
     pulse_times = np.array([
         1600766730000000000, 1600766731000000000, 1600766732000000000,
         1600766733000000000
@@ -548,7 +555,8 @@ def test_does_not_load_pixel_positions_with_non_matching_shape():
                  y_offsets=y_pixel_offset_2))
 
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
 
     assert "position" not in loaded_data.coords.keys(
     ), "One of the NXdetectors pixel positions arrays did not match the " \
@@ -585,7 +593,8 @@ def test_skips_loading_component_if_more_than_one_in_file(
     builder.add_component(component_class(f"{component_name}_1"))
     builder.add_component(component_class(f"{component_name}_2"))
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
     assert loaded_data is None
 
 
@@ -600,7 +609,8 @@ def test_skips_component_position_from_distance_dataset_missing_unit(
         component_class(component_name, distance=distance,
                         distance_units=None))
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
     assert loaded_data is None
 
 
@@ -684,7 +694,8 @@ def test_skips_component_position_with_multi_value_log_transformation(
     builder.add_component(
         component_class(component_name, depends_on=transformation))
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
 
     # Loading component position from transformations recorded as
     # NXlogs with multiple values is not yet implemented
@@ -735,7 +746,8 @@ def test_skips_component_position_from_transformation_missing_unit(
     builder.add_component(
         component_class(component_name, depends_on=transformation))
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
     assert loaded_data is None
 
 
@@ -760,7 +772,8 @@ def test_skips_component_position_with_transformation_with_small_vector(
     builder.add_component(
         component_class(component_name, depends_on=transformation))
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
     assert loaded_data is None
 
 
@@ -800,7 +813,8 @@ def test_skips_source_position_if_not_given_in_file():
     builder = InMemoryNexusFileBuilder()
     builder.add_source(Source("source"))
     with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
     assert loaded_data is None
 
 
