@@ -161,7 +161,8 @@ class TestMantidConversion(unittest.TestCase):
         scale = (m_n_2006 / m_n_2018) / (e_2006 / e_2018)
         da.coords['source_position'] *= np.sqrt(scale)
         da.coords['position'] *= np.sqrt(scale)
-        low_tof = da.bins.data.coords['tof'] < 49000.0 * sc.units.us
+        low_tof = da.bins.constituents['data'].coords[
+            'tof'] < 49000.0 * sc.units.us
         da.coords['incident_energy'] = 3.0 * sc.units.meV
         da = scn.convert(da, 'tof', 'energy_transfer', scatter=True)
         assert sc.all(
@@ -170,11 +171,14 @@ class TestMantidConversion(unittest.TestCase):
                 1e-8 * sc.units.meV +
                 1e-8 * sc.abs(ref.coords['energy_transfer']))).value
         assert sc.all(
-            low_tof | sc.isnan(da.bins.data.coords['energy_transfer'])
+            low_tof
+            | sc.isnan(da.bins.constituents['data'].coords['energy_transfer'])
             | sc.is_approx(
-                da.bins.data.coords['energy_transfer'],
-                ref.bins.data.coords['energy_transfer'], 1e-5 * sc.units.meV +
-                1e-5 * sc.abs(ref.bins.data.coords['energy_transfer']))).value
+                da.bins.constituents['data'].coords['energy_transfer'],
+                ref.bins.constituents['data'].coords['energy_transfer'], 1e-5 *
+                sc.units.meV + 1e-5 *
+                sc.abs(ref.bins.constituents['data'].coords['energy_transfer'])
+            )).value
 
     @staticmethod
     def _mask_bins_and_spectra(ws, xmin, xmax, num_spectra, indices=None):
