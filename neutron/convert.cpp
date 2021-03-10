@@ -87,8 +87,11 @@ static T convert_with_factor(T &&d, const Dim from, const Dim to,
 
 namespace {
 
-const std::array<Dim, 2> no_scatter_params{NeutronDim::Position,
-                                           NeutronDim::Ltotal};
+const auto &no_scatter_params() {
+  static const std::array<Dim, 2> params{NeutronDim::Position,
+                                         NeutronDim::Ltotal};
+  return params;
+}
 
 auto scatter_params(const Dim dim) {
   static std::set<Dim> pos_invariant{NeutronDim::DSpacing, NeutronDim::Q};
@@ -126,7 +129,7 @@ T coords_to_attrs(T &&x, const Dim from, const Dim to,
     for (const auto &param : scatter_params(to))
       to_attr(param);
   } else if (from == NeutronDim::Tof) {
-    for (const auto &param : no_scatter_params)
+    for (const auto &param : no_scatter_params())
       to_attr(param);
   }
   return std::move(x);
@@ -155,7 +158,7 @@ T attrs_to_coords(T &&x, const Dim from, const Dim to,
     for (const auto &param : scatter_params(from))
       to_coord(param);
   } else if (to == NeutronDim::Tof) {
-    for (const auto &param : no_scatter_params)
+    for (const auto &param : no_scatter_params())
       to_coord(param);
   }
   return std::move(x);
