@@ -140,9 +140,9 @@ def _load_event_group(group: h5py.Group, file_root: h5py.File,
         detector_ids = np.unique(event_id.values)
 
     detector_id_type = ensure_supported_int_type(detector_ids.dtype.type)
+    event_id_type = ensure_supported_int_type(event_id_ds.dtype.type)
     _check_event_ids_and_det_number_types_valid(detector_id_type,
-                                                event_id_ds.dtype.type,
-                                                group.name)
+                                                event_id_type, group.name)
 
     detector_ids = sc.Variable(dims=[_detector_dimension],
                                values=detector_ids,

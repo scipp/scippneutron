@@ -114,10 +114,10 @@ def _append_transformation(transform: Union[h5py.Dataset, h5py.Group],
     offset = [0., 0., 0.]
     if 'offset' in attributes:
         offset = attributes['offset'].astype(float)
-    if attributes['transformation_type'] == 'translation':
+    if ensure_str(attributes['transformation_type']) == 'translation':
         _append_translation(offset, transform, transformations, vector,
                             group_name)
-    elif attributes['transformation_type'] == 'rotation':
+    elif ensure_str(attributes['transformation_type']) == 'rotation':
         _append_rotation(offset, transform, transformations, vector,
                          group_name)
     else:
