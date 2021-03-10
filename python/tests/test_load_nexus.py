@@ -13,6 +13,7 @@ import numpy as np
 import pytest
 import scippneutron
 import scipp as sc
+from typing import List
 
 
 def test_raises_exception_if_multiple_nxentry_in_file():
@@ -611,21 +612,22 @@ def test_skips_sample_position_from_distance_dataset_missing_unit():
     assert loaded_data is None
 
 
-def test_loads_sample_position_from_single_translation():
+@pytest.mark.parametrize(
+    "transform_type,value,value_units,expected_position",
+    [(TransformationType.ROTATION, 0.27, "rad", [0, 0, 0]),
+     (TransformationType.TRANSLATION, 230, "cm", [0, 0, 2.3])])
+def test_loads_sample_position_from_single_transformation(
+        transform_type: TransformationType, value: float, value_units: str,
+        expected_position: List[float]):
     builder = InMemoryNexusFileBuilder()
-    transformation = Transformation(TransformationType.TRANSLATION,
+    transformation = Transformation(transform_type,
                                     vector=np.array([0, 0, -1]),
-                                    value=np.array([230]),
-                                    value_units="cm")
+                                    value=np.array([value]),
+                                    value_units=value_units)
     builder.add_sample(Sample("sample", depends_on=transformation))
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
 
-    # Transformations in NeXus are "passive transformations", so in this
-    # test case the coordinate system is shifted 2.3m in the negative z
-    # direction. In the lab reference frame this corresponds to
-    # setting the sample position to 2.3m in the positive z direction.
-    expected_position = np.array([0, 0, transformation.value[0] / 100])
     assert np.allclose(loaded_data["sample_position"].values,
                        expected_position)
     # Resulting position will always be in metres, whatever units are
@@ -633,64 +635,58 @@ def test_loads_sample_position_from_single_translation():
     assert loaded_data["sample_position"].unit == sc.Unit("m")
 
 
-def test_loads_sample_position_from_single_rotation():
-    builder = InMemoryNexusFileBuilder()
-    transformation = Transformation(TransformationType.ROTATION,
-                                    vector=np.array([0, 0, -1]),
-                                    value=np.array([45]),
-                                    value_units="deg")
-    builder.add_sample(Sample("sample", depends_on=transformation))
-    with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
-
-    # A rotation by itself should not affect position,
-    # expect to find sample at origin
-    expected_position = np.array([0, 0, 0], dtype=float)
-    assert np.allclose(loaded_data["sample_position"].values,
-                       expected_position)
-    assert loaded_data["sample_position"].unit == sc.Unit("m")
-
-
-def test_loads_sample_position_from_log_transformation():
+@pytest.mark.parametrize(
+    "transform_type,value,value_units,expected_position",
+    [(TransformationType.ROTATION, 0.27, "rad", [0, 0, 0]),
+     (TransformationType.TRANSLATION, 230, "cm", [0, 0, 2.3])])
+def test_loads_sample_position_from_log_transformation(
+        transform_type: TransformationType, value: float, value_units: str,
+        expected_position: List[float]):
     builder = InMemoryNexusFileBuilder()
     # Provide "time" data, the builder will write the transformation as
     # an NXlog
-    transformation = Transformation(TransformationType.TRANSLATION,
+    transformation = Transformation(transform_type,
                                     vector=np.array([0, 0, -1]),
-                                    value=np.array([230]),
+                                    value=np.array([value]),
                                     time=np.array([1.3]),
                                     time_units="s",
-                                    value_units="cm")
+                                    value_units=value_units)
     builder.add_sample(Sample("sample", depends_on=transformation))
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
 
     # Should load as usual despite the transformation being an NXlog
     # as it only has a single value
-    expected_position = np.array([0, 0, transformation.value[0] / 100])
     assert np.allclose(loaded_data["sample_position"].values,
                        expected_position)
     assert loaded_data["sample_position"].unit == sc.Unit("m")
 
 
-def test_skips_sample_position_with_multi_value_log_transformation():
+@pytest.mark.parametrize("transform_type,value,value_units",
+                         [(TransformationType.ROTATION, [26, 73], "deg"),
+                          (TransformationType.TRANSLATION, [230, 310], "cm")])
+def test_skips_sample_position_with_multi_value_log_transformation(
+        transform_type: TransformationType, value: List[float],
+        value_units: str):
     builder = InMemoryNexusFileBuilder()
     # Provide "time" data, the builder will write the transformation as
     # an NXlog. This would be encountered in a file from an experiment
     # involving a scan of a motion axis.
-    transformation = Transformation(TransformationType.TRANSLATION,
+    transformation = Transformation(transform_type,
                                     vector=np.array([0, 0, -1]),
-                                    value=np.array([230, 310]),
+                                    value=np.array(value),
                                     time=np.array([1.3, 6.4]),
                                     time_units="s",
-                                    value_units="cm")
+                                    value_units=value_units)
     builder.add_sample(Sample("sample", depends_on=transformation))
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
 
-    # Loading transformations recorded as NXlogs with multiple values is
-    # not yet implemented
-    assert loaded_data is None
+    # Loading component position from transformations recorded as
+    # NXlogs with multiple values is not yet implemented
+    # However the NXlog itself will be loaded
+    # (loaded_data is not None)
+    assert "sample_position" not in loaded_data.keys()
 
 
 def test_loads_sample_position_prefers_transformation_over_distance_dataset():
@@ -717,44 +713,34 @@ def test_loads_sample_position_prefers_transformation_over_distance_dataset():
     assert loaded_data["sample_position"].unit == sc.Unit("m")
 
 
-def test_skips_sample_position_from_translation_missing_unit():
+@pytest.mark.parametrize(
+    "transform_type",
+    [TransformationType.ROTATION, TransformationType.TRANSLATION])
+def test_skips_sample_position_from_transformation_missing_unit(
+        transform_type: TransformationType):
     builder = InMemoryNexusFileBuilder()
-    transformation = Transformation(TransformationType.TRANSLATION,
-                                    np.array([0, 0, -1]), np.array([2.3]))
+    transformation = Transformation(transform_type, np.array([0, 0, -1]),
+                                    np.array([2.3]))
     builder.add_sample(Sample("sample", depends_on=transformation))
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
     assert loaded_data is None
 
 
-def test_skips_sample_position_from_rotation_missing_unit():
+@pytest.mark.parametrize("transform_type,value_units",
+                         [(TransformationType.ROTATION, "deg"),
+                          (TransformationType.TRANSLATION, "m")])
+def test_skips_sample_position_with_transformation_with_small_vector(
+        transform_type: TransformationType, value_units: str):
+    # The vector defines the direction of the translation or axis
+    # of the rotation so it is ill-defined if it is close to zero
+    # in magnitude
     builder = InMemoryNexusFileBuilder()
-    transformation = Transformation(TransformationType.ROTATION,
-                                    np.array([0, 0, -1]), np.array([45.]))
-    builder.add_sample(Sample("sample", depends_on=transformation))
-    with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
-    assert loaded_data is None
-
-
-def test_skips_sample_position_with_zero_direction_vector():
-    builder = InMemoryNexusFileBuilder()
-    transformation = Transformation(TransformationType.TRANSLATION,
-                                    np.array([0, 0, 0]),
+    zero_vector = np.array([0, 0, 0])
+    transformation = Transformation(transform_type,
+                                    zero_vector,
                                     np.array([2.3]),
-                                    value_units="m")
-    builder.add_sample(Sample("sample", depends_on=transformation))
-    with builder.file() as nexus_file:
-        loaded_data = scippneutron.load_nexus(nexus_file)
-    assert loaded_data is None
-
-
-def test_skips_sample_position_with_zero_rotation_axis_vector():
-    builder = InMemoryNexusFileBuilder()
-    transformation = Transformation(TransformationType.ROTATION,
-                                    np.array([0, 0, 0]),
-                                    np.array([45.]),
-                                    value_units="deg")
+                                    value_units=value_units)
     builder.add_sample(Sample("sample", depends_on=transformation))
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
