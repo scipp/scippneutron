@@ -227,6 +227,14 @@ class InMemoryNexusFileBuilder:
     def add_source(self, source: Source):
         self._source.append(source)
 
+    def add_component(self, component: Union[Sample, Source]):
+        # This is a little ugly, but allows parametrisation
+        # of tests which should work for sample and source
+        if isinstance(component, Sample):
+            self.add_sample(component)
+        elif isinstance(component, Source):
+            self.add_source(component)
+
     @contextmanager
     def file(self) -> Iterator[h5py.File]:
         # "core" driver means file is "in-memory" not on disk.

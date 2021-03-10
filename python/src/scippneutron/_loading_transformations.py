@@ -4,7 +4,7 @@
 
 import numpy as np
 from ._loading_common import ensure_str
-from typing import Union, List
+from typing import Union, List, Tuple
 import scipp as sc
 import h5py
 from cmath import isclose
@@ -94,25 +94,16 @@ def _get_transformations(depends_on: Union[str, bytes],
             raise TransformationError(
                 f"Non-existent depends_on path '{transform_path}' found "
                 f"in transformations chain for {group_name}")
-        next_depends_on = _append_transformation(transform, transformations)
+        next_depends_on = _append_transformation(transform, transformations,
+                                                 group_name)
         _get_transformations(next_depends_on, transformations, root,
                              group_name)
 
 
-def _append_transformation(transform: h5py.Dataset,
-                           transformations: List[np.ndarray]) -> str:
+def _append_transformation(transform: Union[h5py.Dataset, h5py.Group],
+                           transformations: List[np.ndarray],
+                           group_name: str) -> str:
     attributes = transform.attrs
-    offset = [0., 0., 0.]
-    try:
-        units_str = attributes["units"]
-    except KeyError:
-        raise TransformationError(
-            f"Missing units for transformation at {transform.name}")
-    try:
-        units = sc.Unit(units_str)
-    except RuntimeError:
-        raise TransformationError(f"Unrecognised units '{units_str}' for "
-                                  f"transformation at {transform.name}")
     try:
         vector = attributes['vector'].astype(float)
         vector = _normalise(vector, transform.name)
@@ -120,12 +111,15 @@ def _append_transformation(transform: h5py.Dataset,
         raise TransformationError(
             f"Missing 'vector' attribute in transformation at {transform.name}"
         )
+    offset = [0., 0., 0.]
     if 'offset' in attributes:
         offset = attributes['offset'].astype(float)
     if attributes['transformation_type'] == 'translation':
-        _append_translation(offset, transform, transformations, vector, units)
+        _append_translation(offset, transform, transformations, vector,
+                            group_name)
     elif attributes['transformation_type'] == 'rotation':
-        _append_rotation(offset, transform, transformations, vector)
+        _append_rotation(offset, transform, transformations, vector,
+                         group_name)
     else:
         raise TransformationError(
             f"Unknown transformation type "
@@ -143,12 +137,15 @@ def _normalise(vector: np.ndarray, transform_name: str) -> np.ndarray:
     return vector / norm
 
 
-def _append_translation(offset: List[float], transform: h5py.Dataset,
+def _append_translation(offset: List[float], transform: Union[h5py.Dataset,
+                                                              h5py.Group],
                         transformations: List[np.ndarray],
-                        direction_unit_vector: np.ndarray, units: sc.Unit):
-    magnitude = transform[...].astype(float).item()
-    if units != sc.units.m:
-        magnitude_var = magnitude * units
+                        direction_unit_vector: np.ndarray, group_name: str):
+    magnitude, unit = _get_transformation_magnitude_and_unit(
+        group_name, transform)
+
+    if unit != sc.units.m:
+        magnitude_var = magnitude * unit
         magnitude_var = sc.to_unit(magnitude_var, sc.units.m)
         magnitude = magnitude_var.value
     # -1 as describes passive transformation
@@ -159,23 +156,54 @@ def _append_translation(offset: List[float], transform: h5py.Dataset,
     transformations.append(matrix)
 
 
-def _append_rotation(offset: List[float], transform: h5py.Dataset,
-                     transformations: List[np.ndarray],
-                     rotation_axis: np.ndarray):
-    unit_str = transform.attrs['units']
-    unit_error = TransformationError(
-        f"Unit for rotation transformation must be radians "
-        f"or degrees but found '{unit_str}' at {transform.name}")
+def _get_unit(attributes: h5py.AttributeManager,
+              transform_name: str) -> sc.Unit:
     try:
-        units = sc.Unit(unit_str)
+        unit_str = attributes["units"]
+    except KeyError:
+        raise TransformationError(
+            f"Missing units for transformation at {transform_name}")
+    try:
+        unit = sc.Unit(unit_str)
     except RuntimeError:
-        raise unit_error
-    if units == sc.units.deg:
-        angle = np.deg2rad(transform[...])
-    elif units == sc.units.rad:
-        angle = transform[...]
+        raise TransformationError(f"Unrecognised units '{unit_str}' for "
+                                  f"transformation at {transform_name}")
+    return unit
+
+
+def _get_transformation_magnitude_and_unit(
+        group_name: str,
+        transform: Union[h5py.Dataset, h5py.Group]) -> Tuple[float, sc.Unit]:
+    if isinstance(transform, h5py.Group):
+        try:
+            if transform["value"].size > 1:
+                raise TransformationError(f"Found multivalued NXlog as a "
+                                          f"transformation for {group_name}, "
+                                          f"this is not yet supported")
+            magnitude = transform["value"][...].astype(float).item()
+        except KeyError:
+            raise TransformationError(
+                f"Encountered {transform.name} in transformation chain "
+                f"for {group_name} but it is a group without a value "
+                "dataset; not a valid transformation")
+        unit = _get_unit(transform["value"].attrs, transform.name)
     else:
-        raise unit_error
+        magnitude = transform[...].astype(float).item()
+        unit = _get_unit(transform.attrs, transform.name)
+    return magnitude, unit
+
+
+def _append_rotation(offset: List[float], transform: Union[h5py.Dataset,
+                                                           h5py.Group],
+                     transformations: List[np.ndarray],
+                     rotation_axis: np.ndarray, group_name: str):
+    angle, unit = _get_transformation_magnitude_and_unit(group_name, transform)
+    if unit == sc.units.deg:
+        angle = np.deg2rad(angle)
+    elif unit != sc.units.rad:
+        raise TransformationError(
+            f"Unit for rotation transformation must be radians "
+            f"or degrees, problem in {transform.name}")
     rotation_matrix = _rotation_matrix_from_axis_and_angle(
         rotation_axis, angle)
     # Make 4x4 matrix from our 3x3 rotation matrix to include
