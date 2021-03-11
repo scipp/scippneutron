@@ -2,6 +2,7 @@
 // Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 /// @file
 /// @author Simon Heybrock
+#include <ostream>
 #include <set>
 #include <tuple>
 
@@ -94,7 +95,8 @@ const auto &no_scatter_params() {
 }
 
 auto scatter_params(const Dim dim) {
-  static std::set<Dim> pos_invariant{NeutronDim::DSpacing, NeutronDim::Q};
+  static std::set<Dim> pos_invariant{Dim::Invalid, NeutronDim::DSpacing,
+                                     NeutronDim::Q};
   static std::vector<Dim> params{NeutronDim::Position,
                                  NeutronDim::IncidentBeam,
                                  NeutronDim::ScatteredBeam,
@@ -136,8 +138,7 @@ T coords_to_attrs(T &&x, const Dim from, const Dim to,
 }
 
 template <class T>
-T attrs_to_coords(T &&x, const Dim from, const Dim to,
-                  const ConvertMode scatter) {
+T attrs_to_coords(T &&x, const Dim to, const ConvertMode scatter) {
   const auto to_coord = [&](const Dim field) {
     auto &&range = iter(x);
     if (!range.begin()->attrs().contains(field))
@@ -155,7 +156,10 @@ T attrs_to_coords(T &&x, const Dim from, const Dim to,
     }
   };
   if (scatter == ConvertMode::Scatter) {
-    for (const auto &param : scatter_params(from))
+    // Before conversion we convert all geometry-related params into coords,
+    // otherwise conversions with datasets will not work since attrs are
+    // item-specific.
+    for (const auto &param : scatter_params(Dim::Invalid))
       to_coord(param);
   } else if (to == NeutronDim::Tof) {
     for (const auto &param : no_scatter_params())
@@ -175,6 +179,27 @@ void check_scattering(const Dim from, const Dim to, const ConvertMode scatter) {
         "` is only defined for a scattering process.");
 }
 
+void check_label(const Dim dim, const std::string &name) {
+  const std::array<Dim, 6> known{
+      NeutronDim::Tof,      NeutronDim::Energy, NeutronDim::Wavelength,
+      NeutronDim::DSpacing, NeutronDim::Q,      NeutronDim::EnergyTransfer};
+  if (std::find(known.begin(), known.end(), dim) == known.end()) {
+    std::ostringstream oss;
+    oss << "Unsupported " << name << " dimension `" << dim
+        << "`, must be one of [";
+    std::copy(known.begin(), known.end(),
+              std::ostream_iterator<Dim>(oss, ", "));
+    oss << "]";
+    throw except::DimensionError(oss.str());
+  }
+}
+
+void check_params(const Dim from, const Dim to, const ConvertMode scatter) {
+  check_scattering(from, to, scatter);
+  check_label(from, "origin");
+  check_label(to, "target");
+}
+
 } // namespace
 
 template <class T>
@@ -182,7 +207,7 @@ T convert_impl(T d, const Dim from, const Dim to, const ConvertMode scatter) {
   for (const auto &item : iter(d))
     core::expect::notCountDensity(item.unit());
 
-  d = attrs_to_coords(std::move(d), from, to, scatter);
+  d = attrs_to_coords(std::move(d), to, scatter);
   // This will need to be cleanup up in the future, but it is unclear how to do
   // so in a future-proof way. Some sort of double-dynamic dispatch based on
   // `from` and `to` will likely be required (with conversions helpers created
@@ -244,27 +269,27 @@ T convert_impl(T d, const Dim from, const Dim to, const ConvertMode scatter) {
 
 DataArray convert(DataArray d, const Dim from, const Dim to,
                   const ConvertMode scatter) {
-  check_scattering(from, to, scatter);
+  check_params(from, to, scatter);
   return coords_to_attrs(convert_impl(std::move(d), from, to, scatter), from,
                          to, scatter);
 }
 
 DataArray convert(const DataArrayConstView &d, const Dim from, const Dim to,
                   const ConvertMode scatter) {
-  check_scattering(from, to, scatter);
+  check_params(from, to, scatter);
   return convert(DataArray(d), from, to, scatter);
 }
 
 Dataset convert(Dataset d, const Dim from, const Dim to,
                 const ConvertMode scatter) {
-  check_scattering(from, to, scatter);
+  check_params(from, to, scatter);
   return coords_to_attrs(convert_impl(std::move(d), from, to, scatter), from,
                          to, scatter);
 }
 
 Dataset convert(const DatasetConstView &d, const Dim from, const Dim to,
                 const ConvertMode scatter) {
-  check_scattering(from, to, scatter);
+  check_params(from, to, scatter);
   return convert(Dataset(d), from, to, scatter);
 }
 

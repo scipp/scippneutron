@@ -17,8 +17,9 @@ class MantidScippComparison(ABC):
 
     # TODO this will be updated with a generic scipp
     # dedicated function supporting fuzzy comparisons
-    def _fuzzy_compare(self, a, b, tol):
-        same_data = sc.all(sc.is_approx(a.data, b.data, tol)).value
+    def _fuzzy_compare(self, a, b, rtol, atol):
+        same_data = sc.all(sc.isclose(a.data, b.data, rtol=rtol,
+                                      atol=atol)).value
         if not len(a.meta) == len(b.meta):
             raise RuntimeError('Different number of items'
                                f'in meta {len(a.meta)} {len(b.meta)}')
@@ -33,24 +34,22 @@ class MantidScippComparison(ABC):
                         ~sc.isfinite(y)).value > 0:
                     raise RuntimeError(
                         f'For meta {key} have non-finite entries')
-                coord_tol_factor = 1e-6
-                vtol = sc.abs(
-                    a.meta[key]
-                ) * coord_tol_factor + coord_tol_factor * a.meta[key].unit
-                if not sc.all(sc.is_approx(a.meta[key], b.meta[key],
-                                           vtol)).value:
+                if not sc.all(
+                        sc.isclose(a.meta[key],
+                                   b.meta[key],
+                                   rtol=1e-6 * sc.units.one,
+                                   atol=1e-6 * a.meta[key].unit)).value:
                     return False
         return same_data
 
     def _assert(self, a, b, allow_failure):
         try:
-            dtol_factor = 1e-9
+            rtol = 1e-9 * sc.units.one
+            atol = 1e-9 * a.unit
             if isinstance(a, sc.DataArray):
-                tol = dtol_factor * a.data.unit + dtol_factor * sc.abs(a.data)
-                assert self._fuzzy_compare(a, b, tol)
+                assert self._fuzzy_compare(a, b, rtol=rtol, atol=atol)
             else:
-                tol = dtol_factor * a.unit + dtol_factor * sc.abs(a)
-                assert sc.all(sc.is_approx(a, b, tol)).value
+                assert sc.all(sc.isclose(a, b, rtol=rtol, atol=atol)).value
         except AssertionError as ae:
             if allow_failure:
                 print(ae)
