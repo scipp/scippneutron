@@ -77,7 +77,7 @@ def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
         # Get and apply transformation matrix
         transformation = get_full_transformation_matrix(
             detector_group, file_root)
-        for row_index in range(array.shape[0]):
+        for row_index in range(n_rows):
             array[row_index, :] = np.matmul(transformation,
                                             array[row_index, :])
 

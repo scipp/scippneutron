@@ -186,7 +186,11 @@ def _get_transformation_magnitude_and_unit(
                 f"Encountered {transform.name} in transformation chain "
                 f"for {group_name} but it is a group without a value "
                 "dataset; not a valid transformation")
-        unit = _get_unit(transform["value"].attrs, transform.name)
+        try:
+            unit = _get_unit(transform["value"].attrs, transform.name)
+        except TransformationError:
+            # See if the value unit is on the NXLog itself instead
+            unit = _get_unit(transform.attrs, transform.name)
     else:
         magnitude = transform[...].astype(float).item()
         unit = _get_unit(transform.attrs, transform.name)

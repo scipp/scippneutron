@@ -110,7 +110,7 @@ def load_nexus(data_file: Union[str, h5py.File], root: str = "/", quiet=True):
                 "to specify which to load data from, for example"
                 f"{__name__}('my_file.nxs', '/entry_2')")
 
-        loaded_data = load_detector_data(groups[nx_event_data], data_file,
+        loaded_data = load_detector_data(groups[nx_event_data], nexus_file,
                                          quiet)
         if loaded_data is None:
             no_event_data = True
