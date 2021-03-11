@@ -65,7 +65,7 @@ auto get_param(const dataset::CoordsConstView &meta, const Dim dim) {
 }
 } // namespace
 
-VariableConstView position(const dataset::CoordsConstView &meta){
+VariableConstView position(const dataset::CoordsConstView &meta) {
   return get_param(meta, NeutronDim::Position);
 }
 
