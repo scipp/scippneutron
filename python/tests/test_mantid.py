@@ -166,19 +166,19 @@ class TestMantidConversion(unittest.TestCase):
         da.coords['incident_energy'] = 3.0 * sc.units.meV
         da = scn.convert(da, 'tof', 'energy_transfer', scatter=True)
         assert sc.all(
-            sc.isnan(da.coords['energy_transfer']) | sc.is_approx(
-                da.coords['energy_transfer'], ref.coords['energy_transfer'],
-                1e-8 * sc.units.meV +
-                1e-8 * sc.abs(ref.coords['energy_transfer']))).value
+            sc.isnan(da.coords['energy_transfer'])
+            | sc.isclose(da.coords['energy_transfer'],
+                         ref.coords['energy_transfer'],
+                         atol=1e-8 * sc.units.meV,
+                         rtol=1e-8 * sc.units.one)).value
         assert sc.all(
             low_tof
             | sc.isnan(da.bins.constituents['data'].coords['energy_transfer'])
-            | sc.is_approx(
+            | sc.isclose(
                 da.bins.constituents['data'].coords['energy_transfer'],
-                ref.bins.constituents['data'].coords['energy_transfer'], 1e-5 *
-                sc.units.meV + 1e-5 *
-                sc.abs(ref.bins.constituents['data'].coords['energy_transfer'])
-            )).value
+                ref.bins.constituents['data'].coords['energy_transfer'],
+                atol=1e-5 * sc.units.meV,
+                rtol=1e-5 * sc.units.one)).value
 
     @staticmethod
     def _mask_bins_and_spectra(ws, xmin, xmax, num_spectra, indices=None):
