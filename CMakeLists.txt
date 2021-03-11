@@ -3,9 +3,13 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # ~~~
 cmake_minimum_required(VERSION 3.16)
-project(scippneutron)
-set(version 0.0.1)
-add_definitions(-DSCIPPNEUTRON_VERSION="${version}")
+execute_process(
+  COMMAND git describe --tag --abbrev=0
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  OUTPUT_VARIABLE SCIPPNEUTRON_VERSION
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+project(scippneutron VERSION ${SCIPPNEUTRON_VERSION})
 
 if(NOT DEFINED CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -88,7 +92,7 @@ execute_process(
 )
 if(${HAVE_GIT_VERSION_INFO} EQUAL 0)
   message(STATUS "Got version from Git: ${GIT_VERSION_INFO}")
-  add_definitions(-DSCIPP_VERSION="${GIT_VERSION_INFO}")
+  add_definitions(-DSCIPPNEUTRON_VERSION="${GIT_VERSION_INFO}")
 endif()
 
 if(NOT WIN32)
@@ -158,7 +162,7 @@ if(DYNAMIC_LIB)
   )
   write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
-    VERSION "${version}"
+    VERSION "${CMAKE_PROJECT_VERSION}"
     COMPATIBILITY SameMinorVersion # switch to SameMajorVersion after 1.0
                                    # release
   )
