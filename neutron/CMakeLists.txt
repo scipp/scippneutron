@@ -3,9 +3,11 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # ~~~
 set(TARGET_NAME "scippneutron")
-set(INC_FILES include/scipp/neutron/convert.h include/scipp/neutron/beamline.h)
+set(INC_FILES include/scipp/neutron/convert.h include/scipp/neutron/beamline.h
+              include/scipp/neutron/logging.h
+)
 
-set(SRC_FILES beamline.cpp convert.cpp)
+set(SRC_FILES beamline.cpp convert.cpp logging.cpp)
 
 set(LINK_TYPE "STATIC")
 if(DYNAMIC_LIB)

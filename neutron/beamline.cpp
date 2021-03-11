@@ -8,6 +8,7 @@
 #include <scipp/variable/transform.h>
 
 #include "scipp/neutron/beamline.h"
+#include "scipp/neutron/logging.h"
 
 using namespace scipp;
 
@@ -56,26 +57,42 @@ Variable Ltotal(const dataset::CoordsConstView &meta,
     return copy(meta[NeutronDim::Ltotal]);
   // If there is not scattering this returns the straight distance from the
   // source, as required, e.g., for monitors or imaging.
-  if (scatter == ConvertMode::Scatter)
+  if (scatter == ConvertMode::Scatter) {
+    logging::info() << NeutronDim::Ltotal
+                    << " not found, trying to compute from " << NeutronDim::L1
+                    << " and " << NeutronDim::L2 << '\n';
     return L1(meta) + L2(meta);
-  else
+  } else {
+    logging::info() << NeutronDim::Ltotal
+                    << " not found, trying to compute from "
+                    << NeutronDim::Position << " and "
+                    << NeutronDim::SourcePosition << '\n';
     return norm(position(meta) - source_position(meta));
+  }
 }
 
 Variable L1(const dataset::CoordsConstView &meta) {
   if (meta.contains(NeutronDim::L1))
     return copy(meta[NeutronDim::L1]);
+  logging::info() << NeutronDim::L1 << " not found, trying to compute from "
+                  << NeutronDim::IncidentBeam << '\n';
   return norm(incident_beam(meta));
 }
 
 Variable L2(const dataset::CoordsConstView &meta) {
   if (meta.contains(NeutronDim::L2))
     return copy(meta[NeutronDim::L2]);
+  logging::info() << NeutronDim::L2 << " not found, trying to compute from "
+                  << NeutronDim::ScatteredBeam << '\n';
   if (meta.contains(NeutronDim::ScatteredBeam))
     return norm(meta[NeutronDim::ScatteredBeam]);
   // Use transform to avoid temporaries. For certain unit conversions this can
   // cause a speedup >50%. Short version would be:
   //   return norm(position(meta) - sample_position(meta));
+  logging::info() << NeutronDim::ScatteredBeam
+                  << " not found, trying to compute from "
+                  << NeutronDim::Position << " and "
+                  << NeutronDim::SamplePosition << '\n';
   return variable::transform<core::pair_self_t<Eigen::Vector3d>>(
       position(meta), sample_position(meta),
       overloaded{
@@ -90,12 +107,20 @@ Variable scattering_angle(const dataset::CoordsConstView &meta) {
 Variable incident_beam(const dataset::CoordsConstView &meta) {
   if (meta.contains(NeutronDim::IncidentBeam))
     return copy(meta[NeutronDim::IncidentBeam]);
+  logging::info() << NeutronDim::IncidentBeam
+                  << " not found, trying to compute from "
+                  << NeutronDim::SamplePosition << " and "
+                  << NeutronDim::SourcePosition << '\n';
   return sample_position(meta) - source_position(meta);
 }
 
 Variable scattered_beam(const dataset::CoordsConstView &meta) {
   if (meta.contains(NeutronDim::ScatteredBeam))
     return copy(meta[NeutronDim::ScatteredBeam]);
+  logging::info() << NeutronDim::ScatteredBeam
+                  << " not found, trying to compute from "
+                  << NeutronDim::Position << " and "
+                  << NeutronDim::SamplePosition << '\n';
   return position(meta) - sample_position(meta);
 }
 
@@ -110,6 +135,10 @@ auto normalize(Variable &&var) {
 Variable cos_two_theta(const dataset::CoordsConstView &meta) {
   if (meta.contains(NeutronDim::TwoTheta))
     return cos(meta[NeutronDim::TwoTheta]);
+  logging::info() << NeutronDim::TwoTheta
+                  << " not found, trying to compute from "
+                  << NeutronDim::IncidentBeam << " and "
+                  << NeutronDim::ScatteredBeam << '\n';
   return dot(normalize(incident_beam(meta)), normalize(scattered_beam(meta)));
 }
 
