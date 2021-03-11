@@ -38,61 +38,81 @@ Dim TwoTheta = Dim("two_theta");
 Dim Wavelength = Dim("wavelength");
 } // namespace NeutronDim
 
-VariableConstView position(const dataset::CoordsConstView &meta) {
-  return meta[NeutronDim::Position];
+namespace {
+void log_not_found(const Dim dim, const Dim a) {
+  logging::info() << dim << " coord or attr not found, trying to compute from "
+                  << a << '\n';
+}
+
+void log_not_found(const Dim dim, const Dim a, const Dim b) {
+  logging::info() << dim << " coord or attr not found, trying to compute from "
+                  << a << " and " << b << '\n';
+}
+
+bool find_param(const dataset::CoordsConstView &meta, const Dim dim) {
+  if (meta.contains(dim)) {
+    logging::info() << dim << " coord or attr found, using directly\n";
+    return true;
+  }
+  return false;
+}
+
+auto get_param(const dataset::CoordsConstView &meta, const Dim dim) {
+  if (find_param(meta, dim))
+    return meta[dim];
+  throw except::NotFoundError(
+      to_string(dim) + " coord or attr not found and no fallback available.");
+}
+} // namespace
+
+VariableConstView position(const dataset::CoordsConstView &meta){
+  return get_param(meta, NeutronDim::Position);
 }
 
 VariableConstView source_position(const dataset::CoordsConstView &meta) {
-  return meta[NeutronDim::SourcePosition];
+  return get_param(meta, NeutronDim::SourcePosition);
 }
 
 VariableConstView sample_position(const dataset::CoordsConstView &meta) {
-  return meta[NeutronDim::SamplePosition];
+  return get_param(meta, NeutronDim::SamplePosition);
 }
 
 Variable Ltotal(const dataset::CoordsConstView &meta,
                 const ConvertMode scatter) {
   // TODO Avoid copies here and below if scipp buffer ownership model is changed
-  if (meta.contains(NeutronDim::Ltotal))
+  if (find_param(meta, NeutronDim::Ltotal)) {
     return copy(meta[NeutronDim::Ltotal]);
+  }
   // If there is not scattering this returns the straight distance from the
   // source, as required, e.g., for monitors or imaging.
   if (scatter == ConvertMode::Scatter) {
-    logging::info() << NeutronDim::Ltotal
-                    << " not found, trying to compute from " << NeutronDim::L1
-                    << " and " << NeutronDim::L2 << '\n';
+    log_not_found(NeutronDim::Ltotal, NeutronDim::L1, NeutronDim::L2);
     return L1(meta) + L2(meta);
   } else {
-    logging::info() << NeutronDim::Ltotal
-                    << " not found, trying to compute from "
-                    << NeutronDim::Position << " and "
-                    << NeutronDim::SourcePosition << '\n';
+    log_not_found(NeutronDim::Ltotal, NeutronDim::SourcePosition,
+                  NeutronDim::Position);
     return norm(position(meta) - source_position(meta));
   }
 }
 
 Variable L1(const dataset::CoordsConstView &meta) {
-  if (meta.contains(NeutronDim::L1))
+  if (find_param(meta, NeutronDim::L1))
     return copy(meta[NeutronDim::L1]);
-  logging::info() << NeutronDim::L1 << " not found, trying to compute from "
-                  << NeutronDim::IncidentBeam << '\n';
+  log_not_found(NeutronDim::L1, NeutronDim::IncidentBeam);
   return norm(incident_beam(meta));
 }
 
 Variable L2(const dataset::CoordsConstView &meta) {
-  if (meta.contains(NeutronDim::L2))
+  if (find_param(meta, NeutronDim::L2))
     return copy(meta[NeutronDim::L2]);
-  logging::info() << NeutronDim::L2 << " not found, trying to compute from "
-                  << NeutronDim::ScatteredBeam << '\n';
-  if (meta.contains(NeutronDim::ScatteredBeam))
+  log_not_found(NeutronDim::L2, NeutronDim::ScatteredBeam);
+  if (find_param(meta, NeutronDim::ScatteredBeam))
     return norm(meta[NeutronDim::ScatteredBeam]);
   // Use transform to avoid temporaries. For certain unit conversions this can
   // cause a speedup >50%. Short version would be:
   //   return norm(position(meta) - sample_position(meta));
-  logging::info() << NeutronDim::ScatteredBeam
-                  << " not found, trying to compute from "
-                  << NeutronDim::Position << " and "
-                  << NeutronDim::SamplePosition << '\n';
+  log_not_found(NeutronDim::ScatteredBeam, NeutronDim::SamplePosition,
+                NeutronDim::Position);
   return variable::transform<core::pair_self_t<Eigen::Vector3d>>(
       position(meta), sample_position(meta),
       overloaded{
@@ -105,22 +125,18 @@ Variable scattering_angle(const dataset::CoordsConstView &meta) {
 }
 
 Variable incident_beam(const dataset::CoordsConstView &meta) {
-  if (meta.contains(NeutronDim::IncidentBeam))
+  if (find_param(meta, NeutronDim::IncidentBeam))
     return copy(meta[NeutronDim::IncidentBeam]);
-  logging::info() << NeutronDim::IncidentBeam
-                  << " not found, trying to compute from "
-                  << NeutronDim::SamplePosition << " and "
-                  << NeutronDim::SourcePosition << '\n';
+  log_not_found(NeutronDim::IncidentBeam, NeutronDim::SourcePosition,
+                NeutronDim::SamplePosition);
   return sample_position(meta) - source_position(meta);
 }
 
 Variable scattered_beam(const dataset::CoordsConstView &meta) {
-  if (meta.contains(NeutronDim::ScatteredBeam))
+  if (find_param(meta, NeutronDim::ScatteredBeam))
     return copy(meta[NeutronDim::ScatteredBeam]);
-  logging::info() << NeutronDim::ScatteredBeam
-                  << " not found, trying to compute from "
-                  << NeutronDim::Position << " and "
-                  << NeutronDim::SamplePosition << '\n';
+  log_not_found(NeutronDim::ScatteredBeam, NeutronDim::SamplePosition,
+                NeutronDim::Position);
   return position(meta) - sample_position(meta);
 }
 
@@ -133,17 +149,15 @@ auto normalize(Variable &&var) {
 } // namespace
 
 Variable cos_two_theta(const dataset::CoordsConstView &meta) {
-  if (meta.contains(NeutronDim::TwoTheta))
+  if (find_param(meta, NeutronDim::TwoTheta))
     return cos(meta[NeutronDim::TwoTheta]);
-  logging::info() << NeutronDim::TwoTheta
-                  << " not found, trying to compute from "
-                  << NeutronDim::IncidentBeam << " and "
-                  << NeutronDim::ScatteredBeam << '\n';
+  log_not_found(NeutronDim::TwoTheta, NeutronDim::IncidentBeam,
+                NeutronDim::ScatteredBeam);
   return dot(normalize(incident_beam(meta)), normalize(scattered_beam(meta)));
 }
 
 Variable two_theta(const dataset::CoordsConstView &meta) {
-  if (meta.contains(NeutronDim::TwoTheta))
+  if (find_param(meta, NeutronDim::TwoTheta))
     return copy(meta[NeutronDim::TwoTheta]);
   return acos(cos_two_theta(meta));
 }
