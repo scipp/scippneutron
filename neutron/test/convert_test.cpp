@@ -118,9 +118,10 @@ TEST_P(ConvertTest, DataArray_non_tof) {
         result.setData(data.name(),
                        convert(data, from, to, ConvertMode::Scatter));
       for (const auto &data : result)
-        EXPECT_TRUE(all(is_approx(data.coords()[to], expected.coords()[to],
-                                  1e-9 * expected.coords()[to].unit()))
-                        .value<bool>());
+        EXPECT_TRUE(
+            all(isclose(data.coords()[to], expected.coords()[to],
+                        1e-9 * units::one, 0.0 * data.coords()[to].unit()))
+                .value<bool>());
     }
   }
 }
@@ -339,10 +340,10 @@ TEST_P(ConvertTest, Wavelength_to_Tof) {
   ASSERT_TRUE(tof.contains("counts"));
   // Broadcasting is needed as conversion introduces the dependance on
   // NeutronDim::Spectrum
-  EXPECT_TRUE(
-      all(is_approx(tof.coords()[NeutronDim::Tof],
-                    tof_original.coords()[NeutronDim::Tof], 1e-12 * units::us))
-          .value<bool>());
+  EXPECT_TRUE(all(isclose(tof.coords()[NeutronDim::Tof],
+                          tof_original.coords()[NeutronDim::Tof],
+                          0.0 * units::one, 1e-12 * units::us))
+                  .value<bool>());
 
   ASSERT_EQ(tof.coords()[NeutronDim::Position],
             tof_original.coords()[NeutronDim::Position]);
@@ -479,8 +480,9 @@ TEST_P(ConvertTest, Tof_to_EnergyTransfer) {
                               ConvertMode::Scatter);
   auto tof_direct = convert(direct, NeutronDim::EnergyTransfer, NeutronDim::Tof,
                             ConvertMode::Scatter);
-  ASSERT_TRUE(all(is_approx(tof_direct.coords()[NeutronDim::Tof],
-                            tof.coords()[NeutronDim::Tof], 1e-11 * units::us))
+  ASSERT_TRUE(all(isclose(tof_direct.coords()[NeutronDim::Tof],
+                          tof.coords()[NeutronDim::Tof], 0.0 * units::one,
+                          1e-11 * units::us))
                   .value<bool>());
   tof_direct.coords().set(NeutronDim::Tof, tof.coords()[NeutronDim::Tof]);
   EXPECT_EQ(tof_direct, tof);
@@ -494,8 +496,9 @@ TEST_P(ConvertTest, Tof_to_EnergyTransfer) {
       tof, NeutronDim::Tof, NeutronDim::EnergyTransfer, ConvertMode::Scatter);
   auto tof_indirect = convert(indirect, NeutronDim::EnergyTransfer,
                               NeutronDim::Tof, ConvertMode::Scatter);
-  ASSERT_TRUE(all(is_approx(tof_indirect.coords()[NeutronDim::Tof],
-                            tof.coords()[NeutronDim::Tof], 1e-12 * units::us))
+  ASSERT_TRUE(all(isclose(tof_indirect.coords()[NeutronDim::Tof],
+                          tof.coords()[NeutronDim::Tof], 0.0 * units::one,
+                          1e-12 * units::us))
                   .value<bool>());
   tof_indirect.coords().set(NeutronDim::Tof, tof.coords()[NeutronDim::Tof]);
   EXPECT_EQ(tof_indirect, tof);
