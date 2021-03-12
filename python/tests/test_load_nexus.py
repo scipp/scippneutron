@@ -582,7 +582,7 @@ def test_sample_position_at_origin_if_not_explicit_in_file():
 
 
 @pytest.mark.parametrize("component_class,component_name",
-                         [(Sample, "sample"), (Source, "source")])
+                         ((Sample, "sample"), (Source, "source")))
 def test_skips_loading_component_if_more_than_one_in_file(
         component_class: Union[Type[Source], Type[Sample]],
         component_name: str):
@@ -599,7 +599,7 @@ def test_skips_loading_component_if_more_than_one_in_file(
 
 
 @pytest.mark.parametrize("component_class,component_name",
-                         [(Sample, "sample"), (Source, "source")])
+                         ((Sample, "sample"), (Source, "source")))
 def test_skips_component_position_from_distance_dataset_missing_unit(
         component_class: Union[Type[Source], Type[Sample]],
         component_name: str):
@@ -618,8 +618,8 @@ def test_skips_component_position_from_distance_dataset_missing_unit(
                          [(Sample, "sample"), (Source, "source")])
 @pytest.mark.parametrize(
     "transform_type,value,value_units,expected_position",
-    [(TransformationType.ROTATION, 0.27, "rad", [0, 0, 0]),
-     (TransformationType.TRANSLATION, 230, "cm", [0, 0, 2.3])])
+    ((TransformationType.ROTATION, 0.27, "rad", [0, 0, 0]),
+     (TransformationType.TRANSLATION, 230, "cm", [0, 0, 2.3])))
 def test_loads_component_position_from_single_transformation(
         component_class: Union[Type[Source], Type[Sample]],
         component_name: str, transform_type: TransformationType, value: float,
@@ -642,11 +642,11 @@ def test_loads_component_position_from_single_transformation(
 
 
 @pytest.mark.parametrize("component_class,component_name",
-                         [(Sample, "sample"), (Source, "source")])
+                         ((Sample, "sample"), (Source, "source")))
 @pytest.mark.parametrize(
     "transform_type,value,value_units,expected_position",
-    [(TransformationType.ROTATION, 0.27, "rad", [0, 0, 0]),
-     (TransformationType.TRANSLATION, 230, "cm", [0, 0, 2.3])])
+    ((TransformationType.ROTATION, 0.27, "rad", [0, 0, 0]),
+     (TransformationType.TRANSLATION, 230, "cm", [0, 0, 2.3])))
 def test_loads_component_position_from_log_transformation(
         component_class: Union[Type[Source], Type[Sample]],
         component_name: str, transform_type: TransformationType, value: float,
@@ -673,10 +673,10 @@ def test_loads_component_position_from_log_transformation(
 
 
 @pytest.mark.parametrize("component_class,component_name",
-                         [(Sample, "sample"), (Source, "source")])
+                         ((Sample, "sample"), (Source, "source")))
 @pytest.mark.parametrize("transform_type,value,value_units",
-                         [(TransformationType.ROTATION, [26, 73], "deg"),
-                          (TransformationType.TRANSLATION, [230, 310], "cm")])
+                         ((TransformationType.ROTATION, [26, 73], "deg"),
+                          (TransformationType.TRANSLATION, [230, 310], "cm")))
 def test_skips_component_position_with_multi_value_log_transformation(
         component_class: Union[Type[Source], Type[Sample]],
         component_name: str, transform_type: TransformationType,
@@ -705,7 +705,33 @@ def test_skips_component_position_with_multi_value_log_transformation(
 
 
 @pytest.mark.parametrize("component_class,component_name",
-                         [(Sample, "sample"), (Source, "source")])
+                         ((Sample, "sample"), (Source, "source")))
+@pytest.mark.parametrize("transform_type,value_units",
+                         ((TransformationType.ROTATION, "deg"),
+                          (TransformationType.TRANSLATION, "cm")))
+def test_skips_component_position_with_empty_value_log_transformation(
+        component_class: Union[Type[Source],
+                               Type[Sample]], component_name: str,
+        transform_type: TransformationType, value_units: str):
+    builder = InMemoryNexusFileBuilder()
+    empty_value = np.array([])
+    transformation = Transformation(transform_type,
+                                    vector=np.array([0, 0, -1]),
+                                    value=empty_value,
+                                    time=np.array([1.3, 6.4]),
+                                    time_units="s",
+                                    value_units=value_units)
+    builder.add_component(
+        component_class(component_name, depends_on=transformation))
+    with builder.file() as nexus_file:
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
+
+    assert loaded_data is None
+
+
+@pytest.mark.parametrize("component_class,component_name",
+                         ((Sample, "sample"), (Source, "source")))
 def test_load_component_position_prefers_transform_over_distance(
         component_class: Union[Type[Source], Type[Sample]],
         component_name: str):
@@ -733,10 +759,10 @@ def test_load_component_position_prefers_transform_over_distance(
 
 
 @pytest.mark.parametrize("component_class,component_name",
-                         [(Sample, "sample"), (Source, "source")])
+                         ((Sample, "sample"), (Source, "source")))
 @pytest.mark.parametrize(
     "transform_type",
-    [TransformationType.ROTATION, TransformationType.TRANSLATION])
+    (TransformationType.ROTATION, TransformationType.TRANSLATION))
 def test_skips_component_position_from_transformation_missing_unit(
         component_class: Union[Type[Source], Type[Sample]],
         component_name: str, transform_type: TransformationType):
@@ -752,10 +778,10 @@ def test_skips_component_position_from_transformation_missing_unit(
 
 
 @pytest.mark.parametrize("component_class,component_name",
-                         [(Sample, "sample"), (Source, "source")])
+                         ((Sample, "sample"), (Source, "source")))
 @pytest.mark.parametrize("transform_type,value_units",
-                         [(TransformationType.ROTATION, "deg"),
-                          (TransformationType.TRANSLATION, "m")])
+                         ((TransformationType.ROTATION, "deg"),
+                          (TransformationType.TRANSLATION, "m")))
 def test_skips_component_position_with_transformation_with_small_vector(
         component_class: Union[Type[Source],
                                Type[Sample]], component_name: str,
@@ -778,7 +804,7 @@ def test_skips_component_position_with_transformation_with_small_vector(
 
 
 @pytest.mark.parametrize("component_class,component_name",
-                         [(Sample, "sample"), (Source, "source")])
+                         ((Sample, "sample"), (Source, "source")))
 def test_loads_component_position_from_multiple_transformations(
     component_class: Union[Type[Source], Type[Sample]],
     component_name: str,
@@ -819,7 +845,7 @@ def test_skips_source_position_if_not_given_in_file():
 
 
 @pytest.mark.parametrize("component_class,component_name",
-                         [(Sample, "sample"), (Source, "source")])
+                         ((Sample, "sample"), (Source, "source")))
 def test_loads_component_position_from_distance_dataset(
     component_class: Union[Type[Source], Type[Sample]],
     component_name: str,
