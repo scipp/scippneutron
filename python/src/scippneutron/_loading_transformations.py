@@ -111,7 +111,7 @@ def _append_transformation(transform: Union[h5py.Dataset, h5py.Group],
         raise TransformationError(
             f"Missing 'vector' attribute in transformation at {transform.name}"
         )
-    offset = [0., 0., 0.]
+    offset = np.array([0., 0., 0.], dtype=float)
     if 'offset' in attributes:
         offset = attributes['offset'].astype(float)
     if ensure_str(attributes['transformation_type']) == 'translation':
@@ -137,8 +137,8 @@ def _normalise(vector: np.ndarray, transform_name: str) -> np.ndarray:
     return vector / norm
 
 
-def _append_translation(offset: List[float], transform: Union[h5py.Dataset,
-                                                              h5py.Group],
+def _append_translation(offset: np.ndarray, transform: Union[h5py.Dataset,
+                                                             h5py.Group],
                         transformations: List[np.ndarray],
                         direction_unit_vector: np.ndarray, group_name: str):
     magnitude, unit = _get_transformation_magnitude_and_unit(
@@ -150,9 +150,9 @@ def _append_translation(offset: List[float], transform: Union[h5py.Dataset,
         magnitude = magnitude_var.value
     # -1 as describes passive transformation
     vector = direction_unit_vector * -1. * magnitude
-    matrix = np.array([[1., 0., 0., vector[0] + offset[0]],
-                       [0., 1., 0., vector[1] + offset[1]],
-                       [0., 0., 1., vector[2] + offset[2]], [0., 0., 0., 1.]])
+    offset_vector = vector + offset
+    matrix = np.block([[np.eye(3), offset_vector[np.newaxis].T],
+                       [0., 0., 0., 1.]])
     transformations.append(matrix)
 
 
@@ -200,8 +200,8 @@ def _get_transformation_magnitude_and_unit(
     return magnitude, unit
 
 
-def _append_rotation(offset: List[float], transform: Union[h5py.Dataset,
-                                                           h5py.Group],
+def _append_rotation(offset: np.ndarray, transform: Union[h5py.Dataset,
+                                                          h5py.Group],
                      transformations: List[np.ndarray],
                      rotation_axis: np.ndarray, group_name: str):
     angle, unit = _get_transformation_magnitude_and_unit(group_name, transform)
@@ -215,16 +215,6 @@ def _append_rotation(offset: List[float], transform: Union[h5py.Dataset,
         rotation_axis, angle)
     # Make 4x4 matrix from our 3x3 rotation matrix to include
     # possible "offset"
-    matrix = np.array([[
-        rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2],
-        offset[0]
-    ],
-                       [
-                           rotation_matrix[1, 0], rotation_matrix[1, 1],
-                           rotation_matrix[1, 2], offset[1]
-                       ],
-                       [
-                           rotation_matrix[2, 0], rotation_matrix[2, 1],
-                           rotation_matrix[2, 2], offset[2]
-                       ], [0., 0., 0., 1.]])
+    matrix = np.block([[rotation_matrix, offset[np.newaxis].T],
+                       [0., 0., 0., 1.]])
     transformations.append(matrix)
