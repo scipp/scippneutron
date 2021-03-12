@@ -180,6 +180,9 @@ def _get_transformation_magnitude_and_unit(
                 raise TransformationError(f"Found multivalued NXlog as a "
                                           f"transformation for {group_name}, "
                                           f"this is not yet supported")
+            if transform["value"].size == 0:
+                raise TransformationError(f"Found empty NXlog as a "
+                                          f"transformation for {group_name}")
             magnitude = transform["value"][...].astype(float).item()
         except KeyError:
             raise TransformationError(
