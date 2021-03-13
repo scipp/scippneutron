@@ -73,7 +73,6 @@ def _load_log_data_from_group(group: h5py.Group) -> Tuple[str, sc.Variable]:
         dimension_label = property_name
         is_time_series = False
 
-    values = np.squeeze(values)
     if np.ndim(values) > 1:
         raise BadSource(f"NXlog at {group.name} has {value_dataset_name} "
                         f"dataset with more than 1 dimension, handling "
