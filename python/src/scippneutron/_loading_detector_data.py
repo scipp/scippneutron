@@ -142,7 +142,7 @@ def _load_event_group(group: h5py.Group, file_root: h5py.File,
     detector_id_type = ensure_supported_int_type(detector_ids.dtype.type)
     event_id_type = ensure_supported_int_type(event_id_ds.dtype.type)
     _check_event_ids_and_det_number_types_valid(detector_id_type,
-                                                event_id_type, group.name)
+                                                event_id_type)
 
     detector_ids = sc.Variable(dims=[_detector_dimension],
                                values=detector_ids,
@@ -172,8 +172,7 @@ def _load_event_group(group: h5py.Group, file_root: h5py.File,
 
 
 def _check_event_ids_and_det_number_types_valid(detector_id_type: np.dtype,
-                                                event_id_type: np.dtype,
-                                                group_name: str):
+                                                event_id_type: np.dtype):
     """
     These must be integers and must be the same type or we'll have
     problems trying to bin events by detector id. Check here so that
@@ -182,16 +181,14 @@ def _check_event_ids_and_det_number_types_valid(detector_id_type: np.dtype,
     """
     if not np.issubdtype(detector_id_type, np.integer):
         raise BadSource(
-            f"detector_numbers dataset in NXdetector is not an integer "
-            f"type, skipping loading {group_name}")
+            "detector_numbers dataset in NXdetector is not an integer "
+            "type")
     if not np.issubdtype(event_id_type, np.integer):
-        raise BadSource(f"event_ids dataset is not an integer type, "
-                        f"skipping loading {group_name}")
+        raise BadSource("event_ids dataset is not an integer type")
     if detector_id_type != event_id_type:
         raise BadSource(
-            f"event_ids and detector_numbers datasets in corresponding "
-            f"NXdetector were not of the same type, skipping "
-            f"loading {group_name}")
+            "event_ids and detector_numbers datasets in corresponding "
+            "NXdetector were not of the same type")
 
 
 def load_detector_data(event_data_groups: List[h5py.Group],
