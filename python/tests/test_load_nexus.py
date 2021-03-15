@@ -198,7 +198,8 @@ def test_load_nexus_loads_data_from_single_log_with_no_units():
 
     # Expect a sc.Dataset with log names as keys
     assert np.array_equal(loaded_data[name].data.values.values, values)
-    assert np.array_equal(loaded_data[name].data.values.coords['time'], times)
+    assert np.array_equal(loaded_data[name].data.values.coords['time'].values,
+                          times)
 
 
 def test_load_nexus_loads_data_from_single_log_with_units():
@@ -213,7 +214,8 @@ def test_load_nexus_loads_data_from_single_log_with_units():
 
     # Expect a sc.Dataset with log names as keys
     assert np.allclose(loaded_data[name].data.values.values, values)
-    assert np.allclose(loaded_data[name].data.values.coords['time'], times)
+    assert np.allclose(loaded_data[name].data.values.coords['time'].values,
+                       times)
     assert loaded_data[name].data.values.unit == sc.units.m
     assert loaded_data[name].data.values.coords['time'].unit == sc.units.s
 
@@ -232,12 +234,12 @@ def test_load_nexus_loads_data_from_multiple_logs():
 
     # Expect a sc.Dataset with log names as keys
     assert np.allclose(loaded_data[log_1.name].data.values.values, log_1.value)
-    assert np.allclose(loaded_data[log_1.name].data.values.coords['time'],
-                       log_1.time)
+    assert np.allclose(
+        loaded_data[log_1.name].data.values.coords['time'].values, log_1.time)
     assert np.array_equal(loaded_data[log_2.name].data.values.values,
                           log_2.value)
-    assert np.array_equal(loaded_data[log_2.name].data.values.coords['time'],
-                          log_2.time)
+    assert np.array_equal(
+        loaded_data[log_2.name].data.values.coords['time'].values, log_2.time)
 
 
 def test_load_nexus_skips_multidimensional_log():
@@ -369,12 +371,12 @@ def test_load_nexus_loads_event_and_log_data_from_single_file():
     # Logs should have been added to the DataArray as attributes
     assert np.allclose(loaded_data.attrs[log_1.name].values.values,
                        log_1.value)
-    assert np.allclose(loaded_data.attrs[log_1.name].values.coords['time'],
-                       log_1.time)
+    assert np.allclose(
+        loaded_data.attrs[log_1.name].values.coords['time'].values, log_1.time)
     assert np.allclose(loaded_data.attrs[log_2.name].values.values,
                        log_2.value)
-    assert np.allclose(loaded_data.attrs[log_2.name].values.coords['time'],
-                       log_2.time)
+    assert np.allclose(
+        loaded_data.attrs[log_2.name].values.coords['time'].values, log_2.time)
 
 
 def test_load_nexus_loads_pixel_positions_with_event_data():
