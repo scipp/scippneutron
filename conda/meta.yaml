@@ -24,7 +24,6 @@ test:
   imports:
     - scippneutron
     - neutron
-    - neutron.imaging
   requires:
     - pytest
   source_files:
