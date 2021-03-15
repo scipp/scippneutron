@@ -581,17 +581,39 @@ def test_sample_position_at_origin_if_not_explicit_in_file():
     assert np.allclose(loaded_data["sample_position"].values, origin)
 
 
-@pytest.mark.parametrize("component_class,component_name",
-                         ((Sample, "sample"), (Source, "source")))
-def test_skips_loading_component_if_more_than_one_in_file(
-        component_class: Union[Type[Source], Type[Sample]],
-        component_name: str):
-    # More than one source or sample is a serious error in the file, so
+def test_loads_multiple_samples():
+    # More than one sample in the file is possible, but we cannot guess
+    # which to record as _the_ "sample_position",
+    # instead record them in the form "<GROUP_NAME>_position"
+    builder = InMemoryNexusFileBuilder()
+    sample_1_name = "sample_1"
+    sample_2_name = "sample_2"
+    builder.add_sample(Sample(sample_1_name))
+
+    distance = 0.762
+    units = "m"
+    builder.add_sample(
+        Sample(sample_2_name, distance=distance, distance_units=units))
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    origin = np.array([0, 0, 0])
+    assert np.allclose(
+        loaded_data[f"{sample_1_name}_position"].values, origin
+    ), "Sample did not have explicit location so expect position " \
+       "to be recorded as the origin"
+    expected_position = np.array([0, 0, distance])
+    assert np.allclose(loaded_data[f"{sample_2_name}_position"].values,
+                       expected_position)
+
+
+def test_skips_loading_source_if_more_than_one_in_file():
+    # More than one source is a serious error in the file, so
     # load_nexus will display a warning and skip loading any sample rather
     # than guessing which is the "correct" one.
     builder = InMemoryNexusFileBuilder()
-    builder.add_component(component_class(f"{component_name}_1"))
-    builder.add_component(component_class(f"{component_name}_2"))
+    builder.add_source(Source("source_1"))
+    builder.add_source(Source("source_2"))
     with builder.file() as nexus_file:
         with pytest.warns(UserWarning):
             loaded_data = scippneutron.load_nexus(nexus_file)

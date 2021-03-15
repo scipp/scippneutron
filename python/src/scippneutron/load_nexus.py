@@ -12,7 +12,8 @@ from typing import Union, List
 from contextlib import contextmanager
 from warnings import warn
 import numpy as np
-from ._loading_positions import load_position_of_unique_component
+from ._loading_positions import (load_position_of_unique_component,
+                                 load_positions_of_components)
 
 nx_event_data = "NXevent_data"
 nx_log = "NXlog"
@@ -60,12 +61,12 @@ def _load_instrument_name(instrument_groups: List[h5py.Group],
 
 def _load_sample(sample_groups: List[h5py.Group], data: sc.Variable,
                  file_root: h5py.File):
-    load_position_of_unique_component(sample_groups,
-                                      data,
-                                      "sample",
-                                      nx_sample,
-                                      file_root=file_root,
-                                      default_position=np.array([0, 0, 0]))
+    load_positions_of_components(sample_groups,
+                                 data,
+                                 "sample",
+                                 nx_sample,
+                                 file_root=file_root,
+                                 default_position=np.array([0, 0, 0]))
 
 
 def _load_source(source_groups: List[h5py.Group], data: sc.Variable,
