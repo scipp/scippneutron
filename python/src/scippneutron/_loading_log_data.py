@@ -7,7 +7,7 @@ from typing import Tuple
 import scipp as sc
 import h5py
 from ._loading_common import (ensure_str, BadSource, load_dataset,
-                              ensure_not_unsigned)
+                              ensure_supported_int_type)
 from warnings import warn
 
 
@@ -37,10 +37,10 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
             unique_name_found = True
         else:
             name_changed = True
-            log_data_name = f"{group_path[path_position]}-{log_data_name}"
+            log_data_name = f"{group_path[path_position]}_{log_data_name}"
             path_position -= 1
     if name_changed:
-        warn(f"Name of log group at {group_path} is not unique: "
+        warn(f"Name of log group at {'/'.join(group_path)} is not unique: "
              f"{log_data_name} used as attribute name.")
 
 
@@ -54,6 +54,9 @@ def _load_log_data_from_group(group: h5py.Group) -> Tuple[str, sc.Variable]:
     except KeyError:
         raise BadSource(f"NXlog at {group.name} has no value dataset")
 
+    if values.size == 0:
+        raise BadSource(f"NXlog at {group.name} has an empty value dataset")
+
     try:
         unit = ensure_str(group[value_dataset_name].attrs["units"])
     except KeyError:
@@ -63,11 +66,13 @@ def _load_log_data_from_group(group: h5py.Group) -> Tuple[str, sc.Variable]:
         dimension_label = "time"
         is_time_series = True
         times = load_dataset(group[time_dataset_name], [dimension_label])
+        if group[time_dataset_name].size != values.size:
+            raise BadSource(f"NXlog at {group.name} has time and value "
+                            f"datasets of different sizes")
     except KeyError:
         dimension_label = property_name
         is_time_series = False
 
-    values = np.squeeze(values)
     if np.ndim(values) > 1:
         raise BadSource(f"NXlog at {group.name} has {value_dataset_name} "
                         f"dataset with more than 1 dimension, handling "
@@ -76,13 +81,13 @@ def _load_log_data_from_group(group: h5py.Group) -> Tuple[str, sc.Variable]:
     if np.ndim(values) == 0:
         property_data = sc.Variable(value=values,
                                     unit=unit,
-                                    dtype=ensure_not_unsigned(
+                                    dtype=ensure_supported_int_type(
                                         group[value_dataset_name].dtype.type))
     else:
         property_data = sc.Variable(values=values,
                                     unit=unit,
                                     dims=[dimension_label],
-                                    dtype=ensure_not_unsigned(
+                                    dtype=ensure_supported_int_type(
                                         group[value_dataset_name].dtype.type))
 
     if is_time_series:

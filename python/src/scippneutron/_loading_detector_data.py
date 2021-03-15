@@ -6,13 +6,14 @@ from dataclasses import dataclass
 import h5py
 from typing import Optional, List
 import numpy as np
-from ._loading_common import BadSource, ensure_not_unsigned, load_dataset
+from ._loading_common import BadSource, ensure_supported_int_type, load_dataset
 import scipp as sc
 from datetime import datetime
 from warnings import warn
 from itertools import groupby
+from ._loading_transformations import get_full_transformation_matrix
 
-_detector_dimension = "detector-id"
+_detector_dimension = "detector_id"
 _event_dimension = "event"
 
 
@@ -47,8 +48,8 @@ def _iso8601_to_datetime(iso8601: str) -> Optional[datetime]:
         return None
 
 
-def _load_positions(detector_group: h5py.Group,
-                    detector_ids_size: int) -> Optional[sc.Variable]:
+def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
+                          file_root: h5py.File) -> Optional[sc.Variable]:
     try:
         x_positions = detector_group["x_pixel_offset"][...].flatten()
         y_positions = detector_group["y_pixel_offset"][...].flatten()
@@ -65,13 +66,25 @@ def _load_positions(detector_group: h5py.Group,
              f"dataset sizes do not match in {detector_group.name}")
         return None
 
-    if "depends_on" in detector_group:
-        warn(f"Loaded pixel positions for "
-             f"{detector_group.name.split('/')[-1]} are relative to the "
-             f"detector, not sample position, as parsing transformations "
-             f"is not yet implemented")
-
     array = np.array([x_positions, y_positions, z_positions]).T
+
+    if "depends_on" in detector_group:
+        # Add fourth element of 1 to each vertex, indicating these are
+        # positions not direction vectors
+        n_rows = array.shape[0]
+        array = np.hstack((array, np.ones((n_rows, 1))))
+
+        # Get and apply transformation matrix
+        transformation = get_full_transformation_matrix(
+            detector_group, file_root)
+        for row_index in range(n_rows):
+            array[row_index, :] = np.matmul(transformation,
+                                            array[row_index, :])
+
+        # Now the transformations are done we do not need the 4th
+        # element in each position
+        array = array[:, :3]
+
     return sc.Variable([_detector_dimension],
                        values=array,
                        dtype=sc.dtype.vector_3_float64)
@@ -84,7 +97,8 @@ class DetectorData:
     pixel_positions: Optional[sc.Variable] = None
 
 
-def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
+def _load_event_group(group: h5py.Group, file_root: h5py.File,
+                      quiet: bool) -> DetectorData:
     error_msg = _check_for_missing_fields(group)
     if error_msg:
         raise BadSource(error_msg)
@@ -96,7 +110,7 @@ def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
     # the last pulse.
     event_id_ds = group["event_id"]
     event_index = group["event_index"][...].astype(
-        ensure_not_unsigned(group["event_index"].dtype.type))
+        ensure_supported_int_type(group["event_index"].dtype.type))
     if event_index[-1] < event_id_ds.len():
         event_index = np.append(
             event_index,
@@ -125,10 +139,10 @@ def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
         # will not have a bin)
         detector_ids = np.unique(event_id.values)
 
-    detector_id_type = ensure_not_unsigned(detector_ids.dtype.type)
+    detector_id_type = ensure_supported_int_type(detector_ids.dtype.type)
+    event_id_type = ensure_supported_int_type(event_id_ds.dtype.type)
     _check_event_ids_and_det_number_types_valid(detector_id_type,
-                                                event_id_ds.dtype.type,
-                                                group.name)
+                                                event_id_type)
 
     detector_ids = sc.Variable(dims=[_detector_dimension],
                                values=detector_ids,
@@ -146,8 +160,9 @@ def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
     detector_group = group.parent
     pixel_positions = None
     if "x_pixel_offset" in detector_group:
-        pixel_positions = _load_positions(detector_group,
-                                          detector_ids.shape[0])
+        pixel_positions = _load_pixel_positions(detector_group,
+                                                detector_ids.shape[0],
+                                                file_root)
 
     if not quiet:
         print(f"Loaded event data from {group.name} containing "
@@ -157,8 +172,7 @@ def _load_event_group(group: h5py.Group, quiet: bool) -> DetectorData:
 
 
 def _check_event_ids_and_det_number_types_valid(detector_id_type: np.dtype,
-                                                event_id_type: np.dtype,
-                                                group_name: str):
+                                                event_id_type: np.dtype):
     """
     These must be integers and must be the same type or we'll have
     problems trying to bin events by detector id. Check here so that
@@ -167,24 +181,23 @@ def _check_event_ids_and_det_number_types_valid(detector_id_type: np.dtype,
     """
     if not np.issubdtype(detector_id_type, np.integer):
         raise BadSource(
-            f"detector_numbers dataset in NXdetector is not an integer "
-            f"type, skipping loading {group_name}")
+            "detector_numbers dataset in NXdetector is not an integer "
+            "type")
     if not np.issubdtype(event_id_type, np.integer):
-        raise BadSource(f"event_ids dataset is not an integer type, "
-                        f"skipping loading {group_name}")
+        raise BadSource("event_ids dataset is not an integer type")
     if detector_id_type != event_id_type:
         raise BadSource(
-            f"event_ids and detector_numbers datasets in corresponding "
-            f"NXdetector were not of the same type, skipping "
-            f"loading {group_name}")
+            "event_ids and detector_numbers datasets in corresponding "
+            "NXdetector were not of the same type")
 
 
 def load_detector_data(event_data_groups: List[h5py.Group],
+                       file_root: h5py.File,
                        quiet: bool) -> Optional[sc.DataArray]:
     event_data = []
     for group in event_data_groups:
         try:
-            new_event_data = _load_event_group(group, quiet)
+            new_event_data = _load_event_group(group, file_root, quiet)
             event_data.append(new_event_data)
         except BadSource as e:
             warn(f"Skipped loading {group.name} due to:\n{e}")
