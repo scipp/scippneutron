@@ -28,17 +28,19 @@ class BadSource(Exception):
     pass
 
 
-unsigned_to_signed = {
-    np.uint8: np.int8,
-    np.uint16: np.int16,
+map_to_supported_type = {
+    np.int8: np.int32,
+    np.int16: np.int32,
+    np.uint8: np.int32,
+    np.uint16: np.int32,
     np.uint32: np.int32,
     np.uint64: np.int64,
 }
 
 
-def ensure_not_unsigned(dataset_type: Any):
+def ensure_supported_int_type(dataset_type: Any):
     try:
-        return unsigned_to_signed[dataset_type]
+        return map_to_supported_type[dataset_type]
     except KeyError:
         return dataset_type
 
@@ -54,7 +56,7 @@ def load_dataset(dataset: h5py.Dataset,
       otherwise retain dataset dtype
     """
     if dtype is None:
-        dtype = ensure_not_unsigned(dataset.dtype.type)
+        dtype = ensure_supported_int_type(dataset.dtype.type)
     variable = sc.empty(dims=dimensions,
                         shape=dataset.shape,
                         dtype=dtype,
