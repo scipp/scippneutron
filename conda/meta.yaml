@@ -25,7 +25,9 @@ test:
     - scippneutron
     - neutron
   requires:
+    - h5py
     - pytest
+    - psutil
     - mantid-framework [not win]
   source_files:
     - python/tests/
