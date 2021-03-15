@@ -273,8 +273,8 @@ def test_loads_logs_with_non_supported_int_types():
     # Expect a sc.Dataset with log names as keys
     for log in logs:
         assert np.allclose(loaded_data[log.name].data.values.values, log.value)
-        assert np.allclose(loaded_data[log.name].data.values.coords['time'],
-                           log.time)
+        assert np.allclose(
+            loaded_data[log.name].data.values.coords['time'].values, log.time)
 
 
 def test_skips_multidimensional_log():
