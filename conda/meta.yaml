@@ -26,9 +26,10 @@ test:
     - neutron
   requires:
     - pytest
-    - mantid-framework
+    - mantid-framework [not win]
   source_files:
     - python/tests/
+    - neutron/
   commands:
     - python -m pytest -v
 
