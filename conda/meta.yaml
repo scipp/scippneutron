@@ -26,6 +26,9 @@ test:
     - neutron
   requires:
     - h5py
+    - matplotlib-base
+    - pythreejs
+    - Pillow
     - pytest
     - psutil
     - mantid-framework [not win]
