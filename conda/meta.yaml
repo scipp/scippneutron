@@ -26,11 +26,12 @@ test:
     - neutron
   requires:
     - h5py
+    - ipywidgets
     - matplotlib-base
+    - psutil
+    - pytest
     - pythreejs
     - Pillow
-    - pytest
-    - psutil
     - mantid-framework [not win]
   source_files:
     - python/tests/
