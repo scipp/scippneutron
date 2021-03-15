@@ -20,7 +20,10 @@ class MantidScippComparison(ABC):
             rtol = 1e-9 * sc.units.one
             atol = 1e-9 * a.unit
             if isinstance(a, sc.DataArray):
-                sc._util.isnear(a, b, rtol=rtol, atol=atol)
+                assert sc.all(sc.isclose(
+                    a.data, b.data, rtol=rtol,
+                    atol=atol)).value and sc._utils.isnear(
+                        a, b, rtol=1e-6 * sc.units.one, include_data=False)
             else:
                 assert sc.all(sc.isclose(a, b, rtol=rtol, atol=atol)).value
         except AssertionError as ae:
