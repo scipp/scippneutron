@@ -586,7 +586,7 @@ def convert_Workspace2D_to_data_array(ws,
             if ws.hasMaskedBins(i):
                 set_bin_masks(bin_mask, dim, i, ws.maskedBinsIndices(i))
         common_mask = sc.all(bin_mask, 'spectrum')
-        if sc.is_equal(common_mask, sc.any(bin_mask, 'spectrum')):
+        if sc.identical(common_mask, sc.any(bin_mask, 'spectrum')):
             array.masks["bin"] = sc.detail.move(common_mask)
         else:
             array.masks["bin"] = sc.detail.move(bin_mask)

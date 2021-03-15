@@ -52,22 +52,22 @@ def test_neutron_convert_out_arg():
 def test_neutron_beamline():
     d = make_dataset_with_beamline()
 
-    assert sc.is_equal(
+    assert sc.identical(
         scn.source_position(d),
         sc.Variable(value=np.array([0, 0, -10]),
                     dtype=sc.dtype.vector_3_float64,
                     unit=sc.units.m))
-    assert sc.is_equal(
+    assert sc.identical(
         scn.sample_position(d),
         sc.Variable(value=np.array([0, 0, 0]),
                     dtype=sc.dtype.vector_3_float64,
                     unit=sc.units.m))
-    assert sc.is_equal(scn.L1(d), 10.0 * sc.units.m)
-    assert sc.is_equal(
+    assert sc.identical(scn.L1(d), 10.0 * sc.units.m)
+    assert sc.identical(
         scn.L2(d),
         sc.Variable(dims=['position'], values=np.ones(4), unit=sc.units.m))
     two_theta = scn.two_theta(d)
-    assert sc.is_equal(scn.L1(d) + scn.L2(d), scn.Ltotal(d, scatter=True))
+    assert sc.identical(scn.L1(d) + scn.L2(d), scn.Ltotal(d, scatter=True))
     assert two_theta.unit == sc.units.rad
     assert two_theta.dims == ['position']
 

@@ -80,7 +80,7 @@ class TestMantidConversion(unittest.TestCase):
         a = scn.mantid.convert_EventWorkspace_to_data_array(
             self.base_event_ws, load_pulse_times=False)
         b = a.copy()
-        assert sc.is_equal(a, b)
+        assert sc.identical(a, b)
 
     def test_EventWorkspace_no_y_unit(self):
         import mantid.simpleapi as mantid
@@ -235,7 +235,7 @@ class TestMantidConversion(unittest.TestCase):
 
         mask = sc.Variable(dims=ds.dims, shape=ds.shape, dtype=sc.dtype.bool)
         mask['spectrum', 0:3]['tof', 0:3] |= sc.Variable(value=True)
-        assert sc.is_equal(ds.masks['bin'], mask)
+        assert sc.identical(ds.masks['bin'], mask)
 
         np.testing.assert_array_equal(ds.masks["spectrum"].values[0:3],
                                       [True, True, True])
@@ -654,7 +654,7 @@ class TestMantidConversion(unittest.TestCase):
         converted_single = scn.from_mantid(mtd["ws1"])
 
         assert len(converted_group) == 3
-        assert sc.is_equal(converted_group['ws1'], converted_single)
+        assert sc.identical(converted_group['ws1'], converted_single)
 
         mtd.clear()
 
@@ -874,8 +874,8 @@ def test_extract_energy_initial():
     mtd.clear()
     filename = MantidDataHelper.find_known_file("CNCS_51936_event.nxs")
     ds = scn.load(filename, mantid_args={"SpectrumMax": 1})
-    assert sc.is_equal(ds.coords["incident_energy"],
-                       sc.scalar(value=3.0, unit=sc.Unit("meV")))
+    assert sc.identical(ds.coords["incident_energy"],
+                        sc.scalar(value=3.0, unit=sc.Unit("meV")))
 
 
 @pytest.mark.skipif(not mantid_is_available(),
