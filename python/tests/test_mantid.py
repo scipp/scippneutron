@@ -458,8 +458,8 @@ class TestMantidConversion(unittest.TestCase):
         assert len(mtd) == 0, f"Workspaces present: {mtd.getObjectNames()}"
 
         for i in range(expected_number_spectra):
-            np.testing.assert_array_equal(ws.readX(i), x['spectrum', i])
-            np.testing.assert_array_equal(ws.readY(i), y['spectrum', i])
+            np.testing.assert_array_equal(ws.readX(i), x['spectrum', i].values)
+            np.testing.assert_array_equal(ws.readY(i), y['spectrum', i].values)
             np.testing.assert_array_equal(ws.readE(i),
                                           np.sqrt(y['spectrum', i].values))
 
@@ -703,8 +703,8 @@ def test_to_workspace_2d(param_dim):
     assert len(mtd) == 0, f"Workspaces present: {mtd.getObjectNames()}"
 
     for i in range(expected_number_spectra):
-        np.testing.assert_array_equal(ws.readX(i), x['spectrum', i])
-        np.testing.assert_array_equal(ws.readY(i), y['spectrum', i])
+        np.testing.assert_array_equal(ws.readX(i), x['spectrum', i].values)
+        np.testing.assert_array_equal(ws.readY(i), y['spectrum', i].values)
         np.testing.assert_array_equal(ws.readE(i),
                                       np.sqrt(y['spectrum', i].variances))
 
