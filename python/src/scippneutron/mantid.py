@@ -93,10 +93,11 @@ def make_variables_from_run_logs(ws):
             data_array = sc.DataArray(data=property_data,
                                       coords={
                                           dimension_label:
-                                          sc.Variable([dimension_label],
-                                                      values=times,
-                                                      dtype=sc.dtype.int64,
-                                                      unit=sc.units.ns)
+                                          sc.Variable(
+                                              [dimension_label],
+                                              values=times,
+                                              dtype=sc.dtype.datetime64,
+                                              unit=sc.units.ns)
                                       })
             yield property_name, sc.Variable(value=data_array)
         elif not np.isscalar(values):

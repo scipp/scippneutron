@@ -512,8 +512,9 @@ class TestMantidConversion(unittest.TestCase):
             "the original run log from the Mantid workspace")
         self.assertEqual(d.attrs[log_name].values.unit, sc.units.K)
         self.assertTrue(
-            np.array_equal(target.run()[log_name].times.astype(np.int64),
-                           d.attrs[log_name].values.coords["time"].values),
+            np.array_equal(
+                target.run()[log_name].times.astype('datetime64[ns]'),
+                d.attrs[log_name].values.coords["time"].values),
             "Expected times in the unaligned coord to match "
             "the original run log from the Mantid workspace")
 
@@ -789,6 +790,24 @@ def test_attrs_with_dims():
     assert isinstance(ds.attrs['attr2'].value, sc.Variable)
     assert ds.attrs['attr2'].shape == []  # outer wrapper
     assert ds.attrs['attr2'].value.shape == [10]  # inner held
+
+
+@pytest.mark.skipif(not mantid_is_available(),
+                    reason='Mantid framework is unavailable')
+def test_time_series_log_extraction():
+    import mantid.simpleapi as sapi
+    ws = sapi.CreateWorkspace(DataX=[0, 1], DataY=[1])
+    times = [
+        np.datetime64(t) for t in
+        ['2021-01-01T00:00:00', '2021-01-01T00:30:00', '2021-01-01T00:50:00']
+    ]
+    for i, t in enumerate(times):
+        sapi.AddTimeSeriesLog(ws, Name='time_log', Time=str(t), Value=float(i))
+    da = scn.from_mantid(ws)
+    da.attrs['time_log'].value.coords['time'].dtype == sc.dtype.datetime64
+    sc.identical(
+        sc.Variable(['time'], values=np.array(times).astype('datetime64[ns]')),
+        da.attrs['time_log'].value.coords['time'])
 
 
 @pytest.mark.skipif(not mantid_is_available(),
