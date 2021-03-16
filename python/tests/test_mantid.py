@@ -805,9 +805,14 @@ def test_time_series_log_extraction():
         sapi.AddTimeSeriesLog(ws, Name='time_log', Time=str(t), Value=float(i))
     da = scn.from_mantid(ws)
     da.attrs['time_log'].value.coords['time'].dtype == sc.dtype.datetime64
+    # check times
     sc.identical(
         sc.Variable(['time'], values=np.array(times).astype('datetime64[ns]')),
         da.attrs['time_log'].value.coords['time'])
+    # check values
+    sc.identical(sc.Variable(['time'], values=np.arange(3.)),
+                 da.attrs['time_log'].value.data)
+    sapi.DeleteWorkspace(ws)
 
 
 @pytest.mark.skipif(not mantid_is_available(),
