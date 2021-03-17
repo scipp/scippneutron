@@ -5,7 +5,7 @@ pr: none
 
 resources:
   pipelines:
-  - pipeline: upstream_scipp_release
+  - pipeline: upstream_scipp_main
     project: scipp
     source: Main
 
