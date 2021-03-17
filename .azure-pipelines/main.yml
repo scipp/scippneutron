@@ -3,6 +3,12 @@ trigger:
 
 pr: none
 
+resources:
+  pipelines:
+  - pipeline: upstream_scipp_main
+    project: scipp
+    source: Main
+
 stages:
   - template: templates/code_quality_checks.yml
 
