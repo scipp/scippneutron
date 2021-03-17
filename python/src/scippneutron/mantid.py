@@ -629,7 +629,7 @@ def convert_EventWorkspace_to_data_array(ws,
         dims=['event'],
         shape=[n_event],
         unit=sc.units.ns,
-        dtype=sc.dtype.int64) if load_pulse_times else None
+        dtype=sc.dtype.datetime64) if load_pulse_times else None
 
     evtp = ws.getSpectrum(0).getEventType()
     contains_weighted_events = ((evtp == EventType.WEIGHTED)

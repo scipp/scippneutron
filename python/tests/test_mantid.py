@@ -913,5 +913,17 @@ def test_extract_energy_inital_when_not_present():
     assert "incident_energy" not in ds.coords
 
 
+@pytest.mark.skipif(not mantid_is_available(),
+                    reason='Mantid framework is unavailable')
+def test_EventWorkspace_with_pulse_times():
+    import mantid.simpleapi as sapi
+    tiny_event_ws = sapi.CreateSampleWorkspace(WorkspaceType='Event',
+                                               NumBanks=1,
+                                               NumEvents=1)
+    d = scn.mantid.convert_EventWorkspace_to_data_array(tiny_event_ws,
+                                                        load_pulse_times=True)
+    d.data.values[0].coords['pulse_time'].dtype == sc.dtype.datetime64
+
+
 if __name__ == "__main__":
     unittest.main()
