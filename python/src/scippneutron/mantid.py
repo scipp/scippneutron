@@ -618,7 +618,6 @@ def convert_EventWorkspace_to_data_array(ws,
                         dtype=sc.dtype.float64)
     weights = sc.ones(dims=['event'],
                       shape=[n_event],
-                      dtype=sc.dtype.float64,
                       unit=data_unit,
                       variances=True)
     pulse_times = sc.empty(dims=['event'],
