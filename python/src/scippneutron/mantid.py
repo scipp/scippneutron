@@ -622,7 +622,7 @@ def convert_EventWorkspace_to_data_array(ws,
                                        dtype=sc.dtype.float32),
                            dims=['event'],
                            shape=[n_event])
-    pulse_times = sc.Variable(dims=['event'],
+    pulse_times = sc.empty(dims=['event'],
                               shape=[n_event],
                               dtype=sc.dtype.datetime64,
                               unit=sc.units.ns) if load_pulse_times else None
