@@ -512,8 +512,9 @@ class TestMantidConversion(unittest.TestCase):
             "the original run log from the Mantid workspace")
         self.assertEqual(d.attrs[log_name].values.unit, sc.units.K)
         self.assertTrue(
-            np.array_equal(target.run()[log_name].times.astype(np.int64),
-                           d.attrs[log_name].values.coords["time"].values),
+            np.array_equal(
+                target.run()[log_name].times.astype('datetime64[ns]'),
+                d.attrs[log_name].values.coords["time"].values),
             "Expected times in the unaligned coord to match "
             "the original run log from the Mantid workspace")
 
@@ -793,6 +794,29 @@ def test_attrs_with_dims():
 
 @pytest.mark.skipif(not mantid_is_available(),
                     reason='Mantid framework is unavailable')
+def test_time_series_log_extraction():
+    import mantid.simpleapi as sapi
+    ws = sapi.CreateWorkspace(DataX=[0, 1], DataY=[1])
+    times = [
+        np.datetime64(t) for t in
+        ['2021-01-01T00:00:00', '2021-01-01T00:30:00', '2021-01-01T00:50:00']
+    ]
+    for i, t in enumerate(times):
+        sapi.AddTimeSeriesLog(ws, Name='time_log', Time=str(t), Value=float(i))
+    da = scn.from_mantid(ws)
+    da.attrs['time_log'].value.coords['time'].dtype == sc.dtype.datetime64
+    # check times
+    sc.identical(
+        sc.Variable(['time'], values=np.array(times).astype('datetime64[ns]')),
+        da.attrs['time_log'].value.coords['time'])
+    # check values
+    sc.identical(sc.Variable(['time'], values=np.arange(3.)),
+                 da.attrs['time_log'].value.data)
+    sapi.DeleteWorkspace(ws)
+
+
+@pytest.mark.skipif(not mantid_is_available(),
+                    reason='Mantid framework is unavailable')
 def test_from_mask_workspace():
     from mantid.simpleapi import LoadMask
     from os import path
@@ -887,6 +911,22 @@ def test_extract_energy_inital_when_not_present():
     assert ws.getEMode() == DeltaEModeType.Elastic
     ds = scn.from_mantid(ws)
     assert "incident_energy" not in ds.coords
+
+
+@pytest.mark.skipif(not mantid_is_available(),
+                    reason='Mantid framework is unavailable')
+def test_EventWorkspace_with_pulse_times():
+    import mantid.simpleapi as sapi
+    small_event_ws = sapi.CreateSampleWorkspace(WorkspaceType='Event',
+                                                NumBanks=1,
+                                                NumEvents=10)
+    d = scn.mantid.convert_EventWorkspace_to_data_array(small_event_ws,
+                                                        load_pulse_times=True)
+    d.data.values[0].coords['pulse_time'].dtype == sc.dtype.datetime64
+    sc.identical(
+        d.data.values[0].coords['pulse_time']['event', 0],
+        sc.scalar(value=small_event_ws.getSpectrum(0).getPulseTimes()
+                  [0].to_datetime64()))
 
 
 if __name__ == "__main__":

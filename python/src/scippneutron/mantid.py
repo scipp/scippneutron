@@ -94,9 +94,7 @@ def make_variables_from_run_logs(ws):
                                       coords={
                                           dimension_label:
                                           sc.Variable([dimension_label],
-                                                      values=times,
-                                                      dtype=sc.dtype.int64,
-                                                      unit=sc.units.ns)
+                                                      values=times)
                                       })
             yield property_name, sc.Variable(value=data_array)
         elif not np.isscalar(values):
@@ -618,17 +616,15 @@ def convert_EventWorkspace_to_data_array(ws,
                         shape=[n_event],
                         unit=unit,
                         dtype=sc.dtype.float64)
-    weights = sc.broadcast(sc.Variable(value=1.0,
-                                       variance=1.0,
-                                       unit=data_unit,
-                                       dtype=sc.dtype.float32),
-                           dims=['event'],
-                           shape=[n_event])
-    pulse_times = sc.Variable(
-        dims=['event'],
-        shape=[n_event],
-        unit=sc.units.ns,
-        dtype=sc.dtype.int64) if load_pulse_times else None
+    weights = sc.ones(dims=['event'],
+                      shape=[n_event],
+                      unit=data_unit,
+                      dtype=sc.dtype.float32,
+                      variances=True)
+    pulse_times = sc.empty(dims=['event'],
+                           shape=[n_event],
+                           dtype=sc.dtype.datetime64,
+                           unit=sc.units.ns) if load_pulse_times else None
 
     evtp = ws.getSpectrum(0).getEventType()
     contains_weighted_events = ((evtp == EventType.WEIGHTED)

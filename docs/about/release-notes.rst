@@ -13,6 +13,7 @@ Features
   This includes in particular the instrument view and "unit conversions" for time-of-flight neutron sources.
 * Convert supports a greatly enhanced way of obtaining required parameters of the beamline.
   Instead of requiring raw component positions it can now work directly with, e.g., `two_theta`.
+* Add scipp ``datetime64`` support in mantid-scipp converters `#39 <https://github.com/scipp/scipp/pull/39>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
