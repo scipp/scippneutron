@@ -616,16 +616,15 @@ def convert_EventWorkspace_to_data_array(ws,
                         shape=[n_event],
                         unit=unit,
                         dtype=sc.dtype.float64)
-    weights = sc.broadcast(sc.Variable(value=1.0,
-                                       variance=1.0,
-                                       unit=data_unit,
-                                       dtype=sc.dtype.float32),
-                           dims=['event'],
-                           shape=[n_event])
+    weights = sc.ones(dims=['event'],
+                      shape=[n_event],
+                      dtype=sc.dtype.float64,
+                      unit=data_unit,
+                      variances=True)
     pulse_times = sc.empty(dims=['event'],
-                              shape=[n_event],
-                              dtype=sc.dtype.datetime64,
-                              unit=sc.units.ns) if load_pulse_times else None
+                           shape=[n_event],
+                           dtype=sc.dtype.datetime64,
+                           unit=sc.units.ns) if load_pulse_times else None
 
     evtp = ws.getSpectrum(0).getEventType()
     contains_weighted_events = ((evtp == EventType.WEIGHTED)
