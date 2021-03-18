@@ -8,6 +8,7 @@ resources:
   - pipeline: upstream_scipp_main
     project: scipp
     source: Main
+    trigger: true
 
 stages:
   - template: templates/code_quality_checks.yml
