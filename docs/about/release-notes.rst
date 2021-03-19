@@ -3,8 +3,20 @@
 Release Notes
 =============
 
-First release (planned)
------------------------
+Since v0.1.0
+------------
+
+Features
+~~~~~~~~
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+Contributors
+~~~~~~~~~~~~
+
+v0.1.0 (March 2021)
+-------------------
 
 Features
 ~~~~~~~~
