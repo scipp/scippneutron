@@ -20,7 +20,7 @@ dependencies:
   - ipympl
   - ipywidgets
   - mantid-framework
-  - matplotlib-base=3.2.2 # version 3.3.3 causes issues with nodejs in JupyterLab
+  - matplotlib-base
   - numpy >=1.15.3
   - python
   - python-configuration
