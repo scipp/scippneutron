@@ -15,39 +15,15 @@ class MantidScippComparison(ABC):
         stop = time.time()
         return result, (stop - start) * sc.Unit('s')
 
-    # TODO this will be updated with a generic scipp
-    # dedicated function supporting fuzzy comparisons
-    def _fuzzy_compare(self, a, b, rtol, atol):
-        same_data = sc.all(sc.isclose(a.data, b.data, rtol=rtol,
-                                      atol=atol)).value
-        if not len(a.meta) == len(b.meta):
-            raise RuntimeError('Different number of items'
-                               f'in meta {len(a.meta)} {len(b.meta)}')
-        for key, val in a.meta.items():
-            x = a.meta[key]
-            y = b.meta[key]
-            if x.shape != y.shape:
-                raise RuntimeError(f'For meta {key} have different'
-                                   f' shapes {x.shape}, {y.shape}')
-            if val.dtype in [sc.dtype.float64, sc.dtype.float32]:
-                if sc.sum(~sc.isfinite(x)).value > 0 or sc.sum(
-                        ~sc.isfinite(y)).value > 0:
-                    raise RuntimeError(
-                        f'For meta {key} have non-finite entries')
-                if not sc.all(
-                        sc.isclose(a.meta[key],
-                                   b.meta[key],
-                                   rtol=1e-6 * sc.units.one,
-                                   atol=1e-6 * a.meta[key].unit)).value:
-                    return False
-        return same_data
-
     def _assert(self, a, b, allow_failure):
         try:
             rtol = 1e-9 * sc.units.one
             atol = 1e-9 * a.unit
             if isinstance(a, sc.DataArray):
-                assert self._fuzzy_compare(a, b, rtol=rtol, atol=atol)
+                assert sc.all(sc.isclose(
+                    a.data, b.data, rtol=rtol,
+                    atol=atol)).value and sc._utils.isnear(
+                        a, b, rtol=1e-6 * sc.units.one, include_data=False)
             else:
                 assert sc.all(sc.isclose(a, b, rtol=rtol, atol=atol)).value
         except AssertionError as ae:
