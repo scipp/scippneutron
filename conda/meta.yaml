@@ -20,6 +20,8 @@ requirements:
     - scipp
     - h5py
     - python-confluent-kafka
+    - pip:
+        - ess-streaming-data-types
 
 test:
   imports:
