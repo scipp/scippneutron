@@ -44,8 +44,8 @@ class StreamedDataBuffer:
         proto_events = {
             'data': weights,
             'coords': {
-                'Tof': tof_buffer,
-                'id': id_buffer,
+                'tof': tof_buffer,
+                'detector_id': id_buffer,
                 'pulse_time': pulse_times
             }
         }
@@ -72,7 +72,7 @@ class StreamedDataBuffer:
             async with self._buffer_mutex:
                 if self._current_event == 0:
                     return
-                new_data = self._events_buffer.coords['id'][
+                new_data = self._events_buffer[
                     'event', :self._current_event].copy()
                 self._current_event = 0
                 if self._unrecognised_fb_id_count:
@@ -105,10 +105,10 @@ class StreamedDataBuffer:
                 if self._current_event + message_size > self._buffer_size:
                     await self._emit_data()
                 async with self._buffer_mutex:
-                    self._events_buffer.coords['id'][
+                    self._events_buffer.coords['detector_id'][
                         'event', self._current_event:self._current_event +
                         message_size] = deserialised_data.detector_id
-                    self._events_buffer.coords['Tof'][
+                    self._events_buffer.coords['tof'][
                         'event', self._current_event:self._current_event +
                         message_size] = deserialised_data.time_of_flight
                     self._events_buffer.coords['pulse_time'][
