@@ -15,8 +15,10 @@ class KafkaConsumer:
         self._reached_eop = False
         self._cancelled = False
         self._consume_data: Optional[asyncio.Task] = None
+        self.stopped = True
 
     def start(self):
+        self.stopped = False
         self._cancelled = False
         self._consume_data = asyncio.create_task(self._consume_loop())
 
@@ -41,6 +43,7 @@ class KafkaConsumer:
             if self._consume_data is not None:
                 self._consume_data.cancel()
             self._consumer.close()
+            self.stopped = True
 
 
 def create_consumers(

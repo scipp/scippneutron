@@ -5,7 +5,7 @@ from scipp.detail import move_to_data_array
 from streaming_data_types.eventdata_ev42 import deserialise_ev42
 from streaming_data_types.logdata_f142 import deserialise_f142
 from streaming_data_types.exceptions import WrongSchemaException
-from typing import Optional, Callable
+from typing import Optional
 from warnings import warn
 
 
@@ -17,9 +17,9 @@ class StreamedDataBuffer:
     interval then data is emitted more frequently.
     """
     def __init__(self,
-                 data_callback: Optional[Callable] = None,
-                 interval_s=2.,
-                 buffer_size=1048576):
+                 queue: asyncio.Queue,
+                 interval_s: float = 2.,
+                 buffer_size: int = 1048576):
         # 1048576 events is around 24 MB (with pulse_time, id, weights, etc)
         self._buffer_mutex = asyncio.Lock()
         self._interval = interval_s
@@ -53,8 +53,8 @@ class StreamedDataBuffer:
         self._current_event = 0
         self._cancelled = False
         self._unrecognised_fb_id_count = 0
-        self._data_callback = data_callback
         self._periodic_emit: Optional[asyncio.Task] = None
+        self._emit_queue = queue
 
     def start(self):
         self._current_event = 0
@@ -80,8 +80,7 @@ class StreamedDataBuffer:
                          f"{self._unrecognised_fb_id_count}"
                          " messages with unrecognised FlatBuffer ids")
                     self._unrecognised_fb_id_count = 0
-            if self._data_callback is not None:
-                await self._data_callback(new_data)
+            self._emit_queue.put_nowait(new_data)
         except Exception as e:
             print(e)
 
