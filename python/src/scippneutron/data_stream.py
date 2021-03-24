@@ -14,25 +14,28 @@ def _consumers_all_stopped(consumers: List[KafkaConsumer]):
     return True
 
 
-async def stream_data(
+async def data_stream(
+        kafka_broker: str,
+        topics: List[str],
         interval_s: float = 2.) -> Generator[sc.Variable, None, None]:
     """
     Periodically yields accumulated data from stream.
     If the buffer fills up more frequently than the set interval
     then data is yielded more frequently.
+    :param kafka_broker: Address of the Kafka broker to stream data from
+    :param topics: Kafka topics to consume data from
     :param interval_s: interval between yielding any new data
       collected from stream
     """
     queue = asyncio.Queue()
     buffer = StreamedDataBuffer(queue, interval_s=interval_s)
     config = {
-        "bootstrap.servers": "localhost:9092",
+        "bootstrap.servers": kafka_broker,
         "group.id": "consumer_group_name",
         "auto.offset.reset": "latest",
         "enable.auto.commit": False,
     }
     time_now_ms = int(time.time() * 1000)
-    topics = ["ISIS_Kafka_Event_events"]
     consumers = create_consumers(time_now_ms,
                                  topics,
                                  config,
