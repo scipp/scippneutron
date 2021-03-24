@@ -7,8 +7,8 @@ from warnings import warn
 class KafkaConsumer:
     def __init__(self, topic_partitions: List[TopicPartition], conf: Dict,
                  callback: Callable, stop_at_end_of_partition: bool):
-        conf['enable.partition.eof'] = True
-        self._consumer = Consumer(**conf)
+        conf['enable.partition.eof'] = stop_at_end_of_partition
+        self._consumer = Consumer(conf)
         self._consumer.assign(topic_partitions)
         self._callback = callback
         self._stop_at_end_of_partition = stop_at_end_of_partition
@@ -29,21 +29,22 @@ class KafkaConsumer:
                 await asyncio.sleep(0.2)
                 continue
             if msg.error():
-                if self._stop_at_end_of_partition and msg.error(
+                if self._stop_at_end_of_partition and msg.error().code(
                 ) == KafkaError._PARTITION_EOF:
                     self._reached_eop = True
                     break
                 warn(f"Message error in consumer: {msg.error()}")
                 break
             await self._callback(msg.value())
+        self.stop()
 
     def stop(self):
         if not self._cancelled:
             self._cancelled = True
             if self._consume_data is not None:
                 self._consume_data.cancel()
-            self._consumer.close()
-            self.stopped = True
+        self._consumer.close()
+        self.stopped = True
 
 
 def create_consumers(

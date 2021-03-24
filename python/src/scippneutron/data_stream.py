@@ -1,7 +1,7 @@
 from ._streaming_consumer import (create_consumers, start_consumers)
 from ._streaming_data_buffer import StreamedDataBuffer
 import time
-from typing import List, Generator
+from typing import List, Generator, Callable
 from ._streaming_consumer import KafkaConsumer
 import asyncio
 import scipp as sc
@@ -40,7 +40,7 @@ async def data_stream(
                                  topics,
                                  config,
                                  buffer.new_data,
-                                 stop_at_end_of_partition=True)
+                                 stop_at_end_of_partition=False)
 
     start_consumers(consumers)
     buffer.start()
@@ -55,6 +55,11 @@ async def data_stream(
                                               timeout=2 * interval_s)
             yield new_data
         except asyncio.TimeoutError:
-            pass
+            print("timed out waiting for new data")
 
+    print("All consumers stopped")
     buffer.stop()
+
+
+def start_stream(user_function: Callable) -> asyncio.Task:
+    return asyncio.create_task(user_function())
