@@ -42,10 +42,10 @@ async def stream_data(
     start_consumers(consumers)
     buffer.start()
 
-    # If we wait twice the expected interval and haven't got
+    # If we wait twice the expected interval and have not got
     # any new data in the queue then check if it is because all
     # the consumers have stopped, if so, we are done. Otherwise
-    # it could just be that we have received any new data.
+    # it could just be that we have not received any new data.
     while not _consumers_all_stopped(consumers):
         try:
             new_data = await asyncio.wait_for(queue.get(),
