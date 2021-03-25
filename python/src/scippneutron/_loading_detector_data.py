@@ -49,18 +49,22 @@ def _iso8601_to_datetime(iso8601: str) -> Optional[datetime]:
         return None
 
 
+def _convert_array_to_metres(array: np.ndarray, unit: str) -> np.ndarray:
+    if sc.Unit(unit) != sc.units.m:
+        return sc.to_unit(
+            sc.Variable(["temporary_variable"],
+                        values=array,
+                        unit=unit,
+                        dtype=np.float64), "m").values
+    return array
+
+
 def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
                           file_root: h5py.File) -> Optional[sc.Variable]:
     offsets_unit = get_units(detector_group["x_pixel_offset"])
     if not offsets_unit:
         warn(f"Skipped loading pixel positions as no units found on "
              f"x_pixel_offset dataset in {detector_group.name}")
-        return None
-    if offsets_unit != sc.units.m:
-        warn(f"Skipped loading pixel positions as units found on "
-             f"x_pixel_offset dataset in {detector_group.name} are "
-             f"not supported. Only metres are currently supported "
-             f"for offsets datasets.")
         return None
 
     try:
@@ -78,6 +82,10 @@ def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
         warn(f"Skipped loading pixel positions as pixel offset and id "
              f"dataset sizes do not match in {detector_group.name}")
         return None
+
+    x_positions = _convert_array_to_metres(x_positions, offsets_unit)
+    y_positions = _convert_array_to_metres(y_positions, offsets_unit)
+    z_positions = _convert_array_to_metres(z_positions, offsets_unit)
 
     array = np.array([x_positions, y_positions, z_positions]).T
 
@@ -101,7 +109,7 @@ def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
     return sc.Variable([_detector_dimension],
                        values=array,
                        dtype=sc.dtype.vector_3_float64,
-                       unit=offsets_unit)
+                       unit=sc.units.m)
 
 
 @dataclass
