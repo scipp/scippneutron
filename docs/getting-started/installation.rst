@@ -9,7 +9,41 @@ Conda
 -----
 
 The easiest way to install ``scipp`` and ``scippneutron`` is using `conda <https://conda.io>`_.
-Packages from `Anaconda Cloud <https://conda.anaconda.org/scipp>`_ are available for Linux, macOS and Windows.
+Packages from `Anaconda Cloud <https://conda.anaconda.org/scipp>`_ are available for Linux, macOS, and Windows.
+It is recommended to create an environment rather than installing individual packages.
+
+With the provided environment file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Download :download:`scippneutron.yml <../environments/scippneutron.yml>` for the stable release version of scipp.
+   Use :download:`scippneutron-latest.yml <../environments/scippneutron-latest.yml>` for the latest development version.
+2. In a terminal run:
+
+   .. code-block:: sh
+
+      conda activate
+      conda env create -f scippneutron.yml
+      conda activate scippneutron
+      jupyter lab
+
+   The ``conda activate`` ensures that you are in your ``base`` environment.
+   This will take a few minutes.
+   Above, replace ``scippneutron.yml`` with the path to the download location you used to download the environment.
+   Open the link printed by Jupyter in a browser if it does not open automatically.
+
+If you have previously installed scipp with conda we nevertheless recommend creating a fresh environment rather than trying to ``conda update``.
+You may want to remove your old environment first, e.g.,
+
+.. code-block:: sh
+
+   conda activate
+   conda env remove -n scippneutron
+
+and then proceed as per instructions above.
+The ``conda activate`` ensures that you are in your ``base`` environment.
+
+Without the provided environment file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To create a new conda environment with scippneutron:
 

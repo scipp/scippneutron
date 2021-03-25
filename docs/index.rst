@@ -4,6 +4,15 @@ scippneutron - Neutron scattering data processing based on scipp
 Toolkit for neutron scattering data reduction powered by `scipp <https://scipp.github.io/>`_.
 Provides "unit conversions" and technique specific tools based on physics of (time-of-flight) neutron scattering.
 
+News
+----
+
+- Just like scipp, scippneutron is moving from GPLv3 to the more permissive BSD-3 license which fits better into the Python eco system.
+- `scipp-0.6 <https://scipp.github.io/about/release-notes.html#v0-6-0-march-2021>`_ has been released.
+- [March 2021] `scippneutron-0.1 <https://scipp.github.io/scippneutron/about/release-notes.html#v0-1-0-march-2021>`_ has been released.
+- [March 2021] `scipp-0.6 <https://scipp.github.io/about/release-notes.html#v0-6-0-march-2021>`_ has been released.
+  The `What's new <https://scipp.github.io/about/whats-new/whats-new-0.6.0.html>`_ notebook provides an overview of the highlights and major changes in both scipp and scippneutron.
+
 Where can I get help?
 ---------------------
 

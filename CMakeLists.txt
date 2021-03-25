@@ -64,12 +64,12 @@ include(IPO)
 include(pybind11)
 include(scipp-install)
 
-find_package(scipp 0.5 REQUIRED)
+find_package(scipp 0.6 REQUIRED)
 
-if("${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}" VERSION_LESS "3.5")
+if("${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}" VERSION_LESS "3.7")
   message(
     FATAL_ERROR
-      "Python v3 interpreter must be greater than or equal to 3.5. Found ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}"
+      "Python v3 interpreter must be greater than or equal to 3.7. Found ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}"
   )
 endif()
 
