@@ -12,6 +12,7 @@ dependencies:
   - jupyterlab
   - jupyterlab_widgets
   - jupyter_nbextensions_configurator
+  - mantid-framework
   - matplotlib-base
   - nodejs
   - pythreejs
