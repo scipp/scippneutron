@@ -6,7 +6,8 @@ from dataclasses import dataclass
 import h5py
 from typing import Optional, List
 import numpy as np
-from ._loading_common import BadSource, ensure_supported_int_type, load_dataset
+from ._loading_common import (BadSource, ensure_supported_int_type,
+                              load_dataset, get_units)
 import scipp as sc
 from datetime import datetime
 from warnings import warn
@@ -50,6 +51,18 @@ def _iso8601_to_datetime(iso8601: str) -> Optional[datetime]:
 
 def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
                           file_root: h5py.File) -> Optional[sc.Variable]:
+    offsets_unit = get_units(detector_group["x_pixel_offset"])
+    if not offsets_unit:
+        warn(f"Skipped loading pixel positions as no units found on "
+             f"x_pixel_offset dataset in {detector_group.name}")
+        return None
+    if offsets_unit != sc.units.m:
+        warn(f"Skipped loading pixel positions as units found on "
+             f"x_pixel_offset dataset in {detector_group.name} are "
+             f"not supported. Only metres are currently supported "
+             f"for offsets datasets.")
+        return None
+
     try:
         x_positions = detector_group["x_pixel_offset"][...].flatten()
         y_positions = detector_group["y_pixel_offset"][...].flatten()
@@ -87,7 +100,8 @@ def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
 
     return sc.Variable([_detector_dimension],
                        values=array,
-                       dtype=sc.dtype.vector_3_float64)
+                       dtype=sc.dtype.vector_3_float64,
+                       unit=offsets_unit)
 
 
 @dataclass
