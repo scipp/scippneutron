@@ -239,7 +239,7 @@ class InMemoryNexusFileBuilder:
         self._hard_links.append(link)
 
     def add_soft_link(self, link: Link):
-        self._hard_links.append(link)
+        self._soft_links.append(link)
 
     def add_component(self, component: Union[Sample, Source]):
         # This is a little ugly, but allows parametrisation
@@ -259,20 +259,35 @@ class InMemoryNexusFileBuilder:
                                driver="core",
                                backing_store=False)
         try:
-            entry_group = _create_nx_class("entry", "NXentry", nexus_file)
-            if self._title is not None:
-                entry_group.create_dataset("title", data=self._title)
-            self._write_event_data(entry_group)
-            self._write_logs(entry_group)
-            self._write_sample(entry_group)
-            self._write_source(entry_group)
-            if self._instrument_name is None:
-                parent_group = entry_group
-            else:
-                parent_group = self._write_instrument(entry_group)
-            self._write_detectors(parent_group)
-            self._write_links(nexus_file)
+            self._write_file(nexus_file)
             yield nexus_file
+        finally:
+            nexus_file.close()
+
+    def _write_file(self, nexus_file):
+        entry_group = _create_nx_class("entry", "NXentry", nexus_file)
+        if self._title is not None:
+            entry_group.create_dataset("title", data=self._title)
+        self._write_event_data(entry_group)
+        self._write_logs(entry_group)
+        self._write_sample(entry_group)
+        self._write_source(entry_group)
+        if self._instrument_name is None:
+            parent_group = entry_group
+        else:
+            parent_group = self._write_instrument(entry_group)
+        self._write_detectors(parent_group)
+        self._write_links(nexus_file)
+
+    def create_file_on_disk(self, filename: str):
+        """
+        Create a file on disk, do not use this in tests, it is intended to
+        be used as a tool during test development. Output file can be
+        explored using a tool such as HDFView.
+        """
+        nexus_file = h5py.File(filename, mode='w')
+        try:
+            self._write_file(nexus_file)
         finally:
             nexus_file.close()
 

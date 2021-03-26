@@ -7,6 +7,7 @@ from .nexus_helpers import (
     Source,
     Transformation,
     TransformationType,
+    Link,
     in_memory_hdf5_file_with_two_nxentry,
 )
 import numpy as np
@@ -1008,3 +1009,48 @@ def test_loads_pixel_positions_with_transformations():
     ]).T
     assert np.allclose(loaded_data.coords['position'].values,
                        expected_pixel_positions)
+
+
+def test_links_to_event_data_group_are_ignored():
+    event_time_offsets = np.array([456, 743, 347, 345, 632])
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 3]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+
+    builder = InMemoryNexusFileBuilder()
+    builder.add_event_data(event_data)
+    builder.add_hard_link(Link("/entry/hard_link_to_events",
+                               "/entry/events_0"))
+    builder.add_soft_link(Link("/entry/soft_link_to_events",
+                               "/entry/events_0"))
+
+    with builder.file() as nexus_file:
+        loaded_data = scippneutron.load_nexus(nexus_file)
+
+    # The output Variable must contain the events from the added event
+    # dataset with no duplicate data due to the links
+
+    # Expect time of flight to match the values in the
+    # event_time_offset dataset
+    # May be reordered due to binning (hence np.sort)
+    assert np.array_equal(
+        np.sort(
+            loaded_data.bins.concatenate(
+                'detector_id').values.coords['tof'].values),
+        np.sort(event_time_offsets))
+
+    counts_on_detectors = loaded_data.bins.sum()
+    # No detector_number dataset in file so expect detector_id to be
+    # binned according to whatever detector_ids are present in event_id
+    # dataset: 2 on det 1, 1 on det 2, 2 on det 3
+    expected_counts = np.array([2, 1, 2])
+    assert np.array_equal(counts_on_detectors.data.values, expected_counts)
+    expected_detector_ids = np.array([1, 2, 3])
+    assert np.array_equal(loaded_data.coords['detector_id'].values,
+                          expected_detector_ids)
