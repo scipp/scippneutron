@@ -50,11 +50,11 @@ def _iso8601_to_datetime(iso8601: str) -> Optional[datetime]:
 
 
 def _convert_array_to_metres(array: np.ndarray, unit: str) -> np.ndarray:
-        return sc.to_unit(
-            sc.Variable(["temporary_variable"],
-                        values=array,
-                        unit=unit,
-                        dtype=np.float64), "m").values
+    return sc.to_unit(
+        sc.Variable(["temporary_variable"],
+                    values=array,
+                    unit=unit,
+                    dtype=np.float64), "m").values
 
 
 def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
