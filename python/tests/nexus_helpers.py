@@ -91,6 +91,12 @@ class Source:
     distance_units: Optional[str] = None
 
 
+@dataclass
+class Link:
+    new_path: str
+    target_path: str
+
+
 def _add_event_data_group_to_file(data: EventData, parent_group: h5py.Group,
                                   group_name: str):
     event_group = _create_nx_class(group_name, "NXevent_data", parent_group)
@@ -205,6 +211,8 @@ class InMemoryNexusFileBuilder:
         self._title: Optional[str] = None
         self._sample: List[Sample] = []
         self._source: List[Source] = []
+        self._hard_links: List[Link] = []
+        self._soft_links: List[Link] = []
 
     def add_detector(self, detector: Detector):
         self._detectors.append(detector)
@@ -226,6 +234,12 @@ class InMemoryNexusFileBuilder:
 
     def add_source(self, source: Source):
         self._source.append(source)
+
+    def add_hard_link(self, link: Link):
+        self._hard_links.append(link)
+
+    def add_soft_link(self, link: Link):
+        self._hard_links.append(link)
 
     def add_component(self, component: Union[Sample, Source]):
         # This is a little ugly, but allows parametrisation
@@ -257,9 +271,17 @@ class InMemoryNexusFileBuilder:
             else:
                 parent_group = self._write_instrument(entry_group)
             self._write_detectors(parent_group)
+            self._write_links(nexus_file)
             yield nexus_file
         finally:
             nexus_file.close()
+
+    def _write_links(self, file_root: h5py.File):
+        for hard_link in self._hard_links:
+            file_root[hard_link.new_path] = file_root[hard_link.target_path]
+        for soft_link in self._soft_links:
+            file_root[soft_link.new_path] = h5py.SoftLink(
+                soft_link.target_path)
 
     def _write_sample(self, parent_group: h5py.Group):
         for sample in self._sample:
