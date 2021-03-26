@@ -71,6 +71,7 @@ class Detector:
     x_offsets: Optional[np.ndarray] = None
     y_offsets: Optional[np.ndarray] = None
     z_offsets: Optional[np.ndarray] = None
+    offsets_unit: Optional[str] = None
     depends_on: Optional[Transformation] = None
 
 
@@ -108,15 +109,14 @@ def _add_detector_group_to_file(detector: Detector, parent_group: h5py.Group,
     detector_group = _create_nx_class(group_name, "NXdetector", parent_group)
     detector_group.create_dataset("detector_number",
                                   data=detector.detector_numbers)
-    if detector.x_offsets is not None:
-        detector_group.create_dataset("x_pixel_offset",
-                                      data=detector.x_offsets)
-    if detector.y_offsets is not None:
-        detector_group.create_dataset("y_pixel_offset",
-                                      data=detector.y_offsets)
-    if detector.z_offsets is not None:
-        detector_group.create_dataset("z_pixel_offset",
-                                      data=detector.z_offsets)
+    for dataset_name, array in (("x_pixel_offset", detector.x_offsets),
+                                ("y_pixel_offset", detector.y_offsets),
+                                ("z_pixel_offset", detector.z_offsets)):
+        if array is not None:
+            offsets_ds = detector_group.create_dataset(dataset_name,
+                                                       data=array)
+            if detector.offsets_unit is not None:
+                offsets_ds.attrs["units"] = detector.offsets_unit
     return detector_group
 
 

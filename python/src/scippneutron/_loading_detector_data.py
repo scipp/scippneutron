@@ -6,7 +6,8 @@ from dataclasses import dataclass
 import h5py
 from typing import Optional, List
 import numpy as np
-from ._loading_common import BadSource, ensure_supported_int_type, load_dataset
+from ._loading_common import (BadSource, ensure_supported_int_type,
+                              load_dataset, get_units)
 import scipp as sc
 from datetime import datetime
 from warnings import warn
@@ -48,8 +49,22 @@ def _iso8601_to_datetime(iso8601: str) -> Optional[datetime]:
         return None
 
 
+def _convert_array_to_metres(array: np.ndarray, unit: str) -> np.ndarray:
+    return sc.to_unit(
+        sc.Variable(["temporary_variable"],
+                    values=array,
+                    unit=unit,
+                    dtype=np.float64), "m").values
+
+
 def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
                           file_root: h5py.File) -> Optional[sc.Variable]:
+    offsets_unit = get_units(detector_group["x_pixel_offset"])
+    if not offsets_unit:
+        warn(f"Skipped loading pixel positions as no units found on "
+             f"x_pixel_offset dataset in {detector_group.name}")
+        return None
+
     try:
         x_positions = detector_group["x_pixel_offset"][...].flatten()
         y_positions = detector_group["y_pixel_offset"][...].flatten()
@@ -65,6 +80,10 @@ def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
         warn(f"Skipped loading pixel positions as pixel offset and id "
              f"dataset sizes do not match in {detector_group.name}")
         return None
+
+    x_positions = _convert_array_to_metres(x_positions, offsets_unit)
+    y_positions = _convert_array_to_metres(y_positions, offsets_unit)
+    z_positions = _convert_array_to_metres(z_positions, offsets_unit)
 
     array = np.array([x_positions, y_positions, z_positions]).T
 
@@ -87,7 +106,8 @@ def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
 
     return sc.Variable([_detector_dimension],
                        values=array,
-                       dtype=sc.dtype.vector_3_float64)
+                       dtype=sc.dtype.vector_3_float64,
+                       unit=sc.units.m)
 
 
 @dataclass

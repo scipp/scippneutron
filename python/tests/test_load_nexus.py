@@ -486,17 +486,20 @@ def test_loads_pixel_positions_with_event_data():
     y_pixel_offset_2 = np.array([[0.1, 0.1], [0.2, 0.2]])
 
     builder = InMemoryNexusFileBuilder()
+    offsets_units = "mm"
     builder.add_detector(
         Detector(detector_1_ids,
                  event_data_1,
                  x_offsets=x_pixel_offset_1,
                  y_offsets=y_pixel_offset_1,
-                 z_offsets=z_pixel_offset_1))
+                 z_offsets=z_pixel_offset_1,
+                 offsets_unit=offsets_units))
     builder.add_detector(
         Detector(detector_2_ids,
                  event_data_2,
                  x_offsets=x_pixel_offset_2,
-                 y_offsets=y_pixel_offset_2))
+                 y_offsets=y_pixel_offset_2,
+                 offsets_unit=offsets_units))
 
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
@@ -507,9 +510,12 @@ def test_loads_pixel_positions_with_event_data():
         np.concatenate((x_pixel_offset_1, x_pixel_offset_2.flatten())),
         np.concatenate((y_pixel_offset_1, y_pixel_offset_2.flatten())),
         np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
-    ]).T
+    ]).T / 1_000  # Divide by 1000 for mm to metres
     assert np.allclose(loaded_data.coords['position'].values,
                        expected_pixel_positions)
+    assert loaded_data.coords[
+        'position'].unit == sc.units.m, "Expected positions " \
+                                        "to be converted to metres"
 
 
 def test_skips_loading_pixel_positions_with_non_matching_shape():
@@ -547,12 +553,14 @@ def test_skips_loading_pixel_positions_with_non_matching_shape():
                  event_data_1,
                  x_offsets=x_pixel_offset_1,
                  y_offsets=y_pixel_offset_1,
-                 z_offsets=z_pixel_offset_1))
+                 z_offsets=z_pixel_offset_1,
+                 offsets_unit="m"))
     builder.add_detector(
         Detector(detector_2_ids,
                  event_data_2,
                  x_offsets=x_pixel_offset_2,
-                 y_offsets=y_pixel_offset_2))
+                 y_offsets=y_pixel_offset_2,
+                 offsets_unit="m"))
 
     with builder.file() as nexus_file:
         with pytest.warns(UserWarning):
@@ -564,6 +572,39 @@ def test_skips_loading_pixel_positions_with_non_matching_shape():
     # Even though detector_1's offsets and ids are matches in size, we do not
     # load them as the "position" coord would not have positions for all
     # the detector ids (loading event data from all detectors is prioritised).
+
+
+def test_skips_loading_pixel_positions_with_no_units():
+    pulse_times = np.array([
+        1600766730000000000, 1600766731000000000, 1600766732000000000,
+        1600766733000000000
+    ])
+    event_time_offsets = np.array([456, 743, 347, 345, 632])
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 3]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=pulse_times,
+        event_index=np.array([0, 3, 3, 5]),
+    )
+    detector_ids = np.array([0, 1, 2, 3])
+    x_pixel_offset = np.array([0.1, 0.2, 0.1, 0.2])
+    y_pixel_offset = np.array([0.1, 0.1, 0.2, 0.2])
+    z_pixel_offset = np.array([0.1, 0.2, 0.3, 0.4])
+
+    builder = InMemoryNexusFileBuilder()
+    builder.add_detector(
+        Detector(detector_ids,
+                 event_data,
+                 x_offsets=x_pixel_offset,
+                 y_offsets=y_pixel_offset,
+                 z_offsets=z_pixel_offset,
+                 offsets_unit=None))
+
+    with builder.file() as nexus_file:
+        with pytest.warns(UserWarning):
+            loaded_data = scippneutron.load_nexus(nexus_file)
+
+    assert "position" not in loaded_data.coords.keys()
 
 
 def test_sample_position_at_origin_if_not_explicit_in_file():
@@ -956,6 +997,7 @@ def test_loads_pixel_positions_with_transformations():
                  x_offsets=x_pixel_offset_1,
                  y_offsets=y_pixel_offset_1,
                  z_offsets=z_pixel_offset_1,
+                 offsets_unit="m",
                  depends_on=transformation))
 
     with builder.file() as nexus_file:
