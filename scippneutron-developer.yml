@@ -36,6 +36,7 @@ dependencies:
   # Test
   - psutil
   - pytest
+  - pytest-asyncio
 
   # Formatting & static analysis
   - pre-commit
