@@ -14,6 +14,33 @@ def _consumers_all_stopped(consumers: List[KafkaConsumer]):
     return True
 
 
+async def _data_stream(
+        buffer: StreamedDataBuffer,
+        queue: asyncio.Queue,
+        consumers: List[KafkaConsumer],
+        interval_s: float = 2.) -> Generator[sc.Variable, None, None]:
+    """
+    Main implementation of data stream is extracted to this function so that
+    fake consumers can be injected for unit tests
+    """
+    start_consumers(consumers)
+    buffer.start()
+
+    # If we wait twice the expected interval and have not got
+    # any new data in the queue then check if it is because all
+    # the consumers have stopped, if so, we are done. Otherwise
+    # it could just be that we have not received any new data.
+    while not _consumers_all_stopped(consumers):
+        try:
+            new_data = await asyncio.wait_for(queue.get(),
+                                              timeout=2 * interval_s)
+            yield new_data
+        except asyncio.TimeoutError:
+            pass
+
+    buffer.stop()
+
+
 async def data_stream(
         kafka_broker: str,
         topics: List[str],
@@ -42,23 +69,10 @@ async def data_stream(
                                  buffer.new_data,
                                  stop_at_end_of_partition=False)
 
-    start_consumers(consumers)
-    buffer.start()
-
-    # If we wait twice the expected interval and have not got
-    # any new data in the queue then check if it is because all
-    # the consumers have stopped, if so, we are done. Otherwise
-    # it could just be that we have not received any new data.
-    while not _consumers_all_stopped(consumers):
-        try:
-            new_data = await asyncio.wait_for(queue.get(),
-                                              timeout=2 * interval_s)
-            yield new_data
-        except asyncio.TimeoutError:
-            print("timed out waiting for new data")
-
-    print("All consumers stopped")
-    buffer.stop()
+    # Use "async for" as "yield from" cannot be used in an async function, see
+    # https://www.python.org/dev/peps/pep-0525/#asynchronous-yield-from
+    async for v in _data_stream(buffer, queue, consumers, interval_s):
+        yield v
 
 
 def start_stream(user_function: Callable) -> asyncio.Task:

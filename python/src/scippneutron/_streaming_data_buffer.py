@@ -57,7 +57,6 @@ class StreamedDataBuffer:
         self._emit_queue = queue
 
     def start(self):
-        self._current_event = 0
         self._cancelled = False
         self._unrecognised_fb_id_count = 0
         self._periodic_emit = asyncio.create_task(self._emit_loop())
