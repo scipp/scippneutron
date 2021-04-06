@@ -3,7 +3,6 @@ import numpy as np
 import asyncio
 from scipp.detail import move_to_data_array
 from streaming_data_types.eventdata_ev42 import deserialise_ev42
-from streaming_data_types.logdata_f142 import deserialise_f142
 from streaming_data_types.exceptions import WrongSchemaException
 from typing import Optional
 from warnings import warn
@@ -40,7 +39,6 @@ class StreamedDataBuffer:
                               unit=sc.units.one,
                               values=np.ones(buffer_size, dtype=np.float32),
                               variances=np.ones(buffer_size, dtype=np.float32))
-        # TODO tof + pulse-time
         proto_events = {
             'data': weights,
             'coords': {
@@ -95,10 +93,10 @@ class StreamedDataBuffer:
                 deserialised_data = deserialise_ev42(new_data)
                 message_size = deserialised_data.detector_id.size
                 if message_size > self._buffer_size:
-                    print("Single message would overflow NewDataBuffer, "
-                          "please restart with a larger buffer_size:\n"
-                          f"message_size: {message_size}, buffer_size:"
-                          f" {self._buffer_size}")
+                    warn("Single message would overflow NewDataBuffer, "
+                         "please restart with a larger buffer_size:\n"
+                         f"message_size: {message_size}, buffer_size:"
+                         f" {self._buffer_size}")
                 # If new data would overfill buffer then emit data
                 # currently in buffer first
                 if self._current_event + message_size > self._buffer_size:
@@ -115,14 +113,6 @@ class StreamedDataBuffer:
                         message_size] = deserialised_data.pulse_time * \
                         np.ones_like(deserialised_data.time_of_flight)
                     self._current_event += message_size
-                return
-            except WrongSchemaException:
-                pass
-            # Are they log data?
-            try:
-                _ = deserialise_f142(new_data)
-                async with self._buffer_mutex:
-                    pass  # TODO append to DataArray with matching source name
                 return
             except WrongSchemaException:
                 self._unrecognised_fb_id_count += 1
