@@ -67,16 +67,15 @@ class StreamedDataBuffer:
     async def _emit_data(self):
         try:
             async with self._buffer_mutex:
+                if self._unrecognised_fb_id_count:
+                    warn(f"Received {self._unrecognised_fb_id_count}"
+                         " messages with unrecognised FlatBuffer ids")
+                    self._unrecognised_fb_id_count = 0
                 if self._current_event == 0:
                     return
                 new_data = self._events_buffer[
                     'event', :self._current_event].copy()
                 self._current_event = 0
-                if self._unrecognised_fb_id_count:
-                    warn(f"Accumulator received "
-                         f"{self._unrecognised_fb_id_count}"
-                         " messages with unrecognised FlatBuffer ids")
-                    self._unrecognised_fb_id_count = 0
             self._emit_queue.put_nowait(new_data)
         except Exception as e:
             print(e)
