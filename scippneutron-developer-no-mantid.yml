@@ -29,8 +29,8 @@ dependencies:
   - tbb
   - traitlets=4.3.3 # see https://github.com/jupyter-widgets/pythreejs/issues/334
   - h5py
-  - python-confluent-kafka
   - pip:
+      - confluent-kafka
       - ess-streaming-data-types
 
   # Test
