@@ -1,9 +1,0 @@
-name: scippneutron
-
-channels:
-  - conda-forge
-  - scipp
-
-dependencies:
-  - scipp 
-  - pytest
