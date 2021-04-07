@@ -17,9 +17,8 @@ class StreamedDataBuffer:
     """
     def __init__(self,
                  queue: asyncio.Queue,
-                 interval_s: float = 2.,
-                 buffer_size: int = 1048576):
-        # 1048576 events is around 24 MB (with pulse_time, id, weights, etc)
+                 buffer_size: int,
+                 interval_s: float = 2.):
         self._buffer_mutex = asyncio.Lock()
         self._interval = interval_s
         self._buffer_size = buffer_size

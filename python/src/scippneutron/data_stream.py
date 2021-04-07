@@ -44,18 +44,21 @@ async def _data_stream(
 async def data_stream(
         kafka_broker: str,
         topics: List[str],
+        buffer_size: int = 1048576,
         interval_s: float = 2.) -> Generator[sc.Variable, None, None]:
     """
     Periodically yields accumulated data from stream.
     If the buffer fills up more frequently than the set interval
     then data is yielded more frequently.
+    1048576 event buffer is around 24 MB (with pulse_time, id, weights, etc)
     :param kafka_broker: Address of the Kafka broker to stream data from
     :param topics: Kafka topics to consume data from
+    :param buffer_size: Size of buffer to accumulate data in
     :param interval_s: interval between yielding any new data
       collected from stream
     """
     queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, interval_s=interval_s)
+    buffer = StreamedDataBuffer(queue, buffer_size, interval_s=interval_s)
     config = {
         "bootstrap.servers": kafka_broker,
         "group.id": "consumer_group_name",

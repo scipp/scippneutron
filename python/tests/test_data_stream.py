@@ -32,12 +32,16 @@ def stop_consumers(consumers: List[FakeConsumer]):
 # Short time to use for buffer emit and data_stream interval in tests
 # pass or fail fast!
 SHORT_TEST_INTERVAL = 0.001  # 1 ms
+# Small buffer of 20 events is sufficient for the tests
+TEST_BUFFER_SIZE = 20
 
 
 @pytest.mark.asyncio
 async def test_data_stream_returns_data_from_single_event_message():
     queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, interval_s=SHORT_TEST_INTERVAL)
+    buffer = StreamedDataBuffer(queue,
+                                TEST_BUFFER_SIZE,
+                                interval_s=SHORT_TEST_INTERVAL)
     consumers = [FakeConsumer()]
     time_of_flight = np.array([1., 2., 3.])
     detector_ids = np.array([4, 5, 6])
@@ -59,7 +63,9 @@ async def test_data_stream_returns_data_from_single_event_message():
 @pytest.mark.asyncio
 async def test_data_stream_returns_data_from_multiple_event_messages():
     queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, interval_s=SHORT_TEST_INTERVAL)
+    buffer = StreamedDataBuffer(queue,
+                                TEST_BUFFER_SIZE,
+                                interval_s=SHORT_TEST_INTERVAL)
     consumers = [FakeConsumer()]
     first_tof = np.array([1., 2., 3.])
     first_detector_ids = np.array([4, 5, 6])
@@ -79,6 +85,9 @@ async def test_data_stream_returns_data_from_multiple_event_messages():
             interval_s=SHORT_TEST_INTERVAL):
         expected_tofs = np.concatenate((first_tof, second_tof))
         assert np.allclose(data.coords['tof'].values, expected_tofs)
+        expected_ids = np.concatenate(
+            (first_detector_ids, second_detector_ids))
+        assert np.array_equal(data.coords['detector_id'].values, expected_ids)
 
         stop_consumers(consumers)
 
@@ -86,7 +95,9 @@ async def test_data_stream_returns_data_from_multiple_event_messages():
 @pytest.mark.asyncio
 async def test_warn_on_data_emit_if_unrecognised_message_was_encountered():
     queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, interval_s=SHORT_TEST_INTERVAL)
+    buffer = StreamedDataBuffer(queue,
+                                TEST_BUFFER_SIZE,
+                                interval_s=SHORT_TEST_INTERVAL)
     # First 4 bytes of the message payload are the FlatBuffer schema identifier
     # "abcd" does not correspond to a FlatBuffer schema for data
     # that scipp is interested in
@@ -97,6 +108,46 @@ async def test_warn_on_data_emit_if_unrecognised_message_was_encountered():
         await buffer._emit_data()
 
 
-# TODO tests for:
-#  exceed buffer size with multiple messages
-#  exceed buffer size with single message
+@pytest.mark.asyncio
+async def test_warn_on_buffer_size_exceeded_by_single_message():
+    queue = asyncio.Queue()
+    buffer_size_2_events = 2
+    buffer = StreamedDataBuffer(queue,
+                                buffer_size=buffer_size_2_events,
+                                interval_s=SHORT_TEST_INTERVAL)
+    time_of_flight = np.array([1., 2., 3.])
+    detector_ids = np.array([4, 5, 6])
+    test_message = serialise_ev42("detector", 0, 0, time_of_flight,
+                                  detector_ids)
+
+    with pytest.warns(UserWarning):
+        await buffer.new_data(test_message)
+
+
+@pytest.mark.asyncio
+async def test_buffer_size_exceeded_by_messages_causes_early_data_emit():
+    queue = asyncio.Queue()
+    buffer_size_5_events = 5
+    buffer = StreamedDataBuffer(queue,
+                                buffer_size=buffer_size_5_events,
+                                interval_s=SHORT_TEST_INTERVAL)
+    first_tof = np.array([1., 2., 3.])
+    first_detector_ids = np.array([4, 5, 6])
+    first_test_message = serialise_ev42("detector", 0, 0, first_tof,
+                                        first_detector_ids)
+    second_tof = np.array([1., 2., 3.])
+    second_detector_ids = np.array([4, 5, 6])
+    second_test_message = serialise_ev42("detector", 0, 0, second_tof,
+                                         second_detector_ids)
+
+    with pytest.warns(None) as record_warnings:
+        await buffer.new_data(first_test_message)
+        assert len(
+            record_warnings
+        ) == 0, "Expect no warning from first message as events " \
+                "fit in buffer"
+
+    assert queue.empty()
+    await buffer.new_data(second_test_message)
+    assert not queue.empty(), "Expect data to have been emitted to " \
+                              "queue as buffer size was exceeded"
