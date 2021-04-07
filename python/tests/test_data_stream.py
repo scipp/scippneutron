@@ -120,6 +120,8 @@ async def test_warn_on_buffer_size_exceeded_by_single_message():
     test_message = serialise_ev42("detector", 0, 0, time_of_flight,
                                   detector_ids)
 
+    # User is warned to try again with a larger buffer size,
+    # and informed what message size was encountered
     with pytest.warns(UserWarning):
         await buffer.new_data(test_message)
 
