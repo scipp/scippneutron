@@ -46,3 +46,4 @@ dependencies:
   - sphinx_rtd_theme
   - nbsphinx
   - python-graphviz
+  - docutils=0.16 # see https://github.com/spatialaudio/nbsphinx/issues/549
