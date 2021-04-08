@@ -19,22 +19,19 @@ class StreamedDataBuffer:
         self._buffer_mutex = asyncio.Lock()
         self._interval_s = sc.to_unit(interval, 's').value
         self._buffer_size = buffer_size
-        tof_buffer = sc.Variable(dims=['event'],
-                                 shape=[buffer_size],
-                                 unit=sc.units.ns,
-                                 dtype=sc.dtype.int32)
-        id_buffer = sc.Variable(dims=['event'],
-                                shape=[buffer_size],
-                                unit=sc.units.one,
-                                dtype=sc.dtype.int32)
-        pulse_times = sc.Variable(dims=['event'],
-                                  shape=[buffer_size],
-                                  unit=sc.units.ns,
-                                  dtype=sc.dtype.int64)
-        weights = sc.Variable(dims=['event'],
-                              unit=sc.units.one,
-                              values=np.ones(buffer_size, dtype=np.float32),
-                              variances=np.ones(buffer_size, dtype=np.float32))
+        tof_buffer = sc.zeros(dims=['event'],
+                              shape=[buffer_size],
+                              unit=sc.units.ns,
+                              dtype=sc.dtype.int32)
+        id_buffer = sc.zeros(dims=['event'],
+                             shape=[buffer_size],
+                             unit=sc.units.one,
+                             dtype=sc.dtype.int32)
+        pulse_times = sc.zeros(dims=['event'],
+                               shape=[buffer_size],
+                               unit=sc.units.ns,
+                               dtype=sc.dtype.int64)
+        weights = sc.ones(dims=['event'], shape=[buffer_size], variances=True)
         self._events_buffer = sc.DataArray(weights, {
             'tof': tof_buffer,
             'detector_id': id_buffer,
