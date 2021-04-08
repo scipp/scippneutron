@@ -1,7 +1,6 @@
 import scipp as sc
 import numpy as np
 import asyncio
-from scipp.detail import move_to_data_array
 from streaming_data_types.eventdata_ev42 import deserialise_ev42
 from streaming_data_types.exceptions import WrongSchemaException
 from typing import Optional
@@ -36,15 +35,11 @@ class StreamedDataBuffer:
                               unit=sc.units.one,
                               values=np.ones(buffer_size, dtype=np.float32),
                               variances=np.ones(buffer_size, dtype=np.float32))
-        proto_events = {
-            'data': weights,
-            'coords': {
-                'tof': tof_buffer,
-                'detector_id': id_buffer,
-                'pulse_time': pulse_times
-            }
-        }
-        self._events_buffer = move_to_data_array(**proto_events)
+        self._events_buffer = sc.DataArray(weights, {
+            'tof': tof_buffer,
+            'detector_id': id_buffer,
+            'pulse_time': pulse_times
+        })
         self._current_event = 0
         self._cancelled = False
         self._unrecognised_fb_id_count = 0
