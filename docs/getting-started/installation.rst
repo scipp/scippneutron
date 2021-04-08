@@ -64,6 +64,11 @@ For a more up-to-date version, the `scipp/label/dev` channel can be used instead
 After installation the modules ``scipp`` and ``scippneutron`` can be imported in Python.
 Note that only the bare essential dependencies are installed.
 If you wish to use plotting functionality you will also need to install ``matplotlib`` and ``ipywidgets``.
+If you wish to use the live data functionality you will need to install ``confluent-kafka`` and ``ess-streaming-data-types`` from the PyPi:
+
+.. code-block:: sh
+
+   $ pip install confluent-kafka ess-streaming-data-types
 
 To update or remove ``scippneutron`` use `conda update <https://docs.conda.io/projects/conda/en/latest/commands/update.html>`_ and `conda remove <https://docs.conda.io/projects/conda/en/latest/commands/remove.html>`_.
 
