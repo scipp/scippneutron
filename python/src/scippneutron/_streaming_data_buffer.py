@@ -93,15 +93,15 @@ class StreamedDataBuffer:
                 if self._current_event + message_size > self._buffer_size:
                     await self._emit_data()
                 async with self._buffer_mutex:
-                    self._events_buffer.coords['detector_id'][
-                        'event', self._current_event:self._current_event +
-                        message_size] = deserialised_data.detector_id
-                    self._events_buffer.coords['tof'][
-                        'event', self._current_event:self._current_event +
-                        message_size] = deserialised_data.time_of_flight
-                    self._events_buffer.coords['pulse_time'][
-                        'event', self._current_event:self._current_event +
-                        message_size] = deserialised_data.pulse_time * \
+                    frame = self._events_buffer[
+                        'event',
+                        self._current_event:self._current_event + message_size]
+                    frame.coords[
+                        'detector_id'].values = deserialised_data.detector_id
+                    frame.coords[
+                        'tof'].values = deserialised_data.time_of_flight
+                    frame.coords['pulse_time'].values = \
+                        deserialised_data.pulse_time * \
                         np.ones_like(deserialised_data.time_of_flight)
                     self._current_event += message_size
                 return
