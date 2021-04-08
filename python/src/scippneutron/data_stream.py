@@ -15,16 +15,16 @@ def _consumers_all_stopped(consumers: List[KafkaConsumer]):
 
 
 async def _data_stream(
-        buffer: StreamedDataBuffer,
-        queue: asyncio.Queue,
+        buffer: StreamedDataBuffer, queue: asyncio.Queue,
         consumers: List[KafkaConsumer],
-        interval_s: float = 2.) -> Generator[sc.Variable, None, None]:
+        interval: sc.Variable) -> Generator[sc.Variable, None, None]:
     """
     Main implementation of data stream is extracted to this function so that
     fake consumers can be injected for unit tests
     """
     start_consumers(consumers)
     buffer.start()
+    interval_s = sc.to_unit(interval, 's').value
 
     # If we wait twice the expected interval and have not got
     # any new data in the queue then check if it is because all
@@ -42,10 +42,11 @@ async def _data_stream(
 
 
 async def data_stream(
-        kafka_broker: str,
-        topics: List[str],
-        buffer_size: int = 1048576,
-        interval_s: float = 2.) -> Generator[sc.Variable, None, None]:
+    kafka_broker: str,
+    topics: List[str],
+    buffer_size: int = 1048576,
+    interval: sc.Variable = 2. * sc.units.s
+) -> Generator[sc.Variable, None, None]:
     """
     Periodically yields accumulated data from stream.
     If the buffer fills up more frequently than the set interval
@@ -54,11 +55,11 @@ async def data_stream(
     :param kafka_broker: Address of the Kafka broker to stream data from
     :param topics: Kafka topics to consume data from
     :param buffer_size: Size of buffer to accumulate data in
-    :param interval_s: interval between yielding any new data
+    :param interval: interval between yielding any new data
       collected from stream
     """
     queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, buffer_size, interval_s=interval_s)
+    buffer = StreamedDataBuffer(queue, buffer_size, interval)
     config = {
         "bootstrap.servers": kafka_broker,
         "group.id": "consumer_group_name",
@@ -74,7 +75,7 @@ async def data_stream(
 
     # Use "async for" as "yield from" cannot be used in an async function, see
     # https://www.python.org/dev/peps/pep-0525/#asynchronous-yield-from
-    async for v in _data_stream(buffer, queue, consumers, interval_s):
+    async for v in _data_stream(buffer, queue, consumers, interval):
         yield v
 
 

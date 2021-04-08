@@ -15,12 +15,10 @@ class StreamedDataBuffer:
     and resets the buffer. If the buffer fills up within the emit time
     interval then data is emitted more frequently.
     """
-    def __init__(self,
-                 queue: asyncio.Queue,
-                 buffer_size: int,
-                 interval_s: float = 2.):
+    def __init__(self, queue: asyncio.Queue, buffer_size: int,
+                 interval: sc.Variable):
         self._buffer_mutex = asyncio.Lock()
-        self._interval = interval_s
+        self._interval_s = sc.to_unit(interval, 's').value
         self._buffer_size = buffer_size
         tof_buffer = sc.Variable(dims=['event'],
                                  shape=[buffer_size],
@@ -81,7 +79,7 @@ class StreamedDataBuffer:
 
     async def _emit_loop(self):
         while not self._cancelled:
-            await asyncio.sleep(self._interval)
+            await asyncio.sleep(self._interval_s)
             await self._emit_data()
 
     async def new_data(self, new_data: bytes):
