@@ -17,3 +17,6 @@ dependencies:
   - nodejs
   - pythreejs
   - scippneutron
+  - pip:
+      - confluent-kafka
+      - ess-streaming-data-types

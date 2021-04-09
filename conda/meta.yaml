@@ -30,6 +30,7 @@ test:
     - matplotlib-base
     - psutil
     - pytest
+    - pytest-asyncio
     - pythreejs
     - Pillow
     - mantid-framework [not win]
