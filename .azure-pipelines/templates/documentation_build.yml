@@ -1,3 +1,8 @@
+parameters:
+- name: conda_env
+  type: string
+  default: scippneutron-developer.yml
+
 jobs:
   - job: 'documentation'
     displayName: 'Documentation'
@@ -24,7 +29,7 @@ jobs:
           echo "##vso[task.prependpath]$CONDA/bin"
         displayName: Add Conda to PATH
       - bash: |
-          conda env create -f scippneutron-developer.yml
+          conda env create -f ${{ parameters.conda_env }}
         displayName: 'Create Conda environment'
       - bash: |
           set -ex
