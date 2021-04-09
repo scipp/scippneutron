@@ -929,5 +929,18 @@ def test_EventWorkspace_with_pulse_times():
                   [0].to_datetime64()))
 
 
+@pytest.mark.skipif(not mantid_is_available(),
+                    reason='Mantid framework is unavailable')
+def test_duplicate_monitor_names():
+    from mantid.simpleapi import LoadEmptyInstrument
+    ws = LoadEmptyInstrument(
+        InstrumentName='POLARIS',
+        StoreInADS=False)  # Has many monitors named 'monitor'
+    da = scn.mantid.from_mantid(ws)
+    assert da.attrs['monitor_0'].value.attrs['spectrum'].value == 1
+    assert da.attrs['monitor_12'].value.attrs['spectrum'].value == 13
+    assert da.attrs['monitor'].value.attrs['spectrum'].value == 14
+
+
 if __name__ == "__main__":
     unittest.main()
