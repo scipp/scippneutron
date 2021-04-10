@@ -49,13 +49,13 @@ To create a new conda environment with scippneutron:
 
 .. code-block:: sh
 
-   $ conda create -n env_with_scipp -c conda-forge -c scipp scippneutron
+   $ conda create -n env_with_scipp -c conda-forge -c scipp -c ess-dmsc scippneutron
 
 For a more up-to-date version, the `scipp/label/dev` channel can be used instead:
 
 .. code-block:: sh
 
-   $ conda install -c conda-forge -c scipp/label/dev scippneutron
+   $ conda install -c conda-forge -c scipp/label/dev -c ess-dmsc scippneutron
 
 .. note::
    Instaling ``scippneutron`` on Windows requires ``Microsoft Visual Studio 2019 C++ Runtime`` installed.
@@ -64,7 +64,7 @@ For a more up-to-date version, the `scipp/label/dev` channel can be used instead
 After installation the modules ``scipp`` and ``scippneutron`` can be imported in Python.
 Note that only the bare essential dependencies are installed.
 If you wish to use plotting functionality you will also need to install ``matplotlib`` and ``ipywidgets``.
-If you wish to use the live data functionality you will need to install ``confluent-kafka`` and ``ess-streaming-data-types`` from the PyPi:
+If you wish to use the live data functionality you will need to install ``conda-forge::python-confluent-kafka`` and ``ess-dmsc::ess-streaming-data-types`` with conda, or on Windows install ``confluent-kafka`` and ``ess-streaming-data-types`` from the PyPI:
 
 .. code-block:: sh
 

@@ -36,7 +36,7 @@ jobs:
           set -ex
           conda create -c conda-forge -n test python=3.7
           source activate test
-          conda install -c "$(packages_dir)" -c conda-forge -c scipp/label/dev scippneutron
+          conda install -c "$(packages_dir)" -c conda-forge -c scipp/label/dev -c ess-dmsc scippneutron
         displayName: 'Install Conda package'
       - bash: |
           set -ex
@@ -85,7 +85,7 @@ jobs:
           set -ex
           conda create -c conda-forge -n test python=3.7
           source activate test
-          conda install -c "$(packages_dir)" -c conda-forge -c scipp/label/dev scippneutron
+          conda install -c "$(packages_dir)" -c conda-forge -c scipp/label/dev -c ess-dmsc scippneutron
         displayName: 'Install Conda package'
       - bash: |
           set -ex

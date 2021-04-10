@@ -42,7 +42,7 @@ stages:
               conda config --set always_yes yes --set changeps1 no
             displayName: 'Conda configuration'
           - bash: |
-              conda build --user scipp --token "$ANACONDA_TOKEN" --channel conda-forge --channel scipp/label/dev --label dev --python="$PYTHON_VERSION" ./conda
+              conda build --user scipp --token "$ANACONDA_TOKEN" --channel conda-forge --channel scipp/label/dev --channel ess-dmsc --label dev --python="$PYTHON_VERSION" ./conda
             env:
               ANACONDA_TOKEN: $(anaconda_token_secret)
             displayName: 'Package build'
@@ -78,7 +78,7 @@ stages:
               conda config --set always_yes yes --set changeps1 no
             displayName: 'Conda configuration'
           - bash: |
-              conda build --user scipp --token "$ANACONDA_TOKEN" --channel conda-forge --channel scipp/label/dev --label dev ./conda
+              conda build --user scipp --token "$ANACONDA_TOKEN" --channel conda-forge --channel scipp/label/dev --channel ess-dmsc --label dev ./conda
             env:
               ANACONDA_TOKEN: $(anaconda_token_secret)
             displayName: 'Package build'
