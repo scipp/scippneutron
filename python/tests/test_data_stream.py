@@ -14,12 +14,7 @@ def kafka_and_deserialisation_are_available():
         return False
 
 
-"""
-NB, we have to use this magic variable to skip if the dependencies
-are not available because, due to the way the asyncio
-pytest plugin injects the asyncio event loop, we cannot use
-a test class that inherits from unittest.TestCase
-"""
+# Skip entire test module if the dependencies are not available
 pytestmark = pytest.mark.skipif(
     not kafka_and_deserialisation_are_available(),
     reason='Kafka or Serialisation module is unavailable')
