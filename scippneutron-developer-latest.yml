@@ -1,9 +1,9 @@
-# Same as scippneutron-developer.yml but using channel scipp instead of scipp/label/dev
+# Same as scippneutron-developer.yml but using channel scipp/label/dev instead of scipp
 name: scippneutron-developer
 
 channels:
   - conda-forge
-  - scipp
+  - scipp/label/dev
 
 dependencies:
   # Build

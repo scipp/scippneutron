@@ -7,7 +7,7 @@ name: scippneutron-developer
 
 channels:
   - conda-forge
-  - scipp/label/dev
+  - scipp
 
 dependencies:
   # Build
