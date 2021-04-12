@@ -12,7 +12,6 @@ services:
       SEND_GEOMETRY: 1
     volumes:
       - ./nexus_streamer_config.ini:/config.ini
-      - ../data/PG3_4866_event.nxs:/PG3_4866_event.nxs
 
   kafka:
     image: vectorized/redpanda:latest
