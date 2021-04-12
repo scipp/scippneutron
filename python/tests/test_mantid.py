@@ -939,7 +939,7 @@ def test_duplicate_monitor_names():
     da = scn.mantid.from_mantid(ws)
     assert da.attrs['monitor_1'].value.attrs['spectrum'].value == 1
     assert da.attrs['monitor_13'].value.attrs['spectrum'].value == 13
-    assert da.attrs['monitor'].value.attrs['spectrum'].value == 14
+    assert da.attrs['monitor_14'].value.attrs['spectrum'].value == 14
 
 
 if __name__ == "__main__":

@@ -547,7 +547,7 @@ def convert_monitors_ws(ws, converter, **ignored):
             del single_monitor.coords['detector_info']
         del single_monitor.attrs['sample']
         name = comp_info.name(det_index)
-        if det_index != comp_info.indexOfAny(name):
+        if not comp_info.uniqueName(name):
             name = f'{name}_{number}'
         monitors.append((name, single_monitor))
     return monitors
