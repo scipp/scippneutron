@@ -1,0 +1,21 @@
+version: '2.2'
+
+services:
+  producer:
+    image: screamingudder/nexus-streamer:1.0.0
+    network_mode: host
+    depends_on:
+      - kafka
+    environment:
+      CONFIG_FILE: "/config.ini"
+      KAFKA_BROKER: "localhost"
+      SEND_GEOMETRY: 1
+    volumes:
+      - ./nexus_streamer_config.ini:/config.ini
+      - ../data/PG3_4866_event.nxs:/PG3_4866_event.nxs
+
+  kafka:
+    image: vectorized/redpanda:latest
+    hostname: kafka
+    ports:
+      - "9092:9092"
