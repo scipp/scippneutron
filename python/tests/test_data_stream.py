@@ -1,14 +1,8 @@
+import pytest
 import scipp as sc
 import asyncio
-import pytest
 from typing import List
 import numpy as np
-"""
-NB, we have to use @pytest.mark.skipif and include the imports
-in each separate test case because, due to the way the asyncio
-pytest plugin injects the asyncio event loop, we cannot use
-a test class that inherits from unittest.TestCase
-"""
 
 
 def kafka_and_deserialisation_are_available():
@@ -18,6 +12,22 @@ def kafka_and_deserialisation_are_available():
         return True
     except ImportError:
         return False
+
+
+"""
+NB, we have to use this magic variable to skip if the dependencies
+are not available because, due to the way the asyncio
+pytest plugin injects the asyncio event loop, we cannot use
+a test class that inherits from unittest.TestCase
+"""
+pytestmark = pytest.mark.skipif(
+    not kafka_and_deserialisation_are_available(),
+    reason='Kafka or Serialisation module is unavailable')
+
+from scippneutron.data_stream import _data_stream  # noqa: E402
+from scippneutron._streaming_data_buffer import \
+    StreamedDataBuffer  # noqa: E402
+from streaming_data_types import serialise_ev42  # noqa: E402
 
 
 class FakeConsumer:
@@ -49,15 +59,8 @@ SHORT_TEST_INTERVAL = 1. * sc.Unit('milliseconds')
 TEST_BUFFER_SIZE = 20
 
 
-@pytest.mark.skipif(not kafka_and_deserialisation_are_available(),
-                    reason='Kafka or Serialisation module is unavailable')
 @pytest.mark.asyncio
 async def test_data_stream_returns_data_from_single_event_message():
-    from scippneutron.data_stream import _data_stream  # noqa: F401
-    from scippneutron._streaming_data_buffer import \
-        StreamedDataBuffer  # noqa: F401
-    from streaming_data_types import serialise_ev42  # noqa: F401
-
     queue = asyncio.Queue()
     buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
     consumers = [FakeConsumer()]
@@ -78,15 +81,8 @@ async def test_data_stream_returns_data_from_single_event_message():
         stop_consumers(consumers)
 
 
-@pytest.mark.skipif(not kafka_and_deserialisation_are_available(),
-                    reason='Kafka or Serialisation module is unavailable')
 @pytest.mark.asyncio
 async def test_data_stream_returns_data_from_multiple_event_messages():
-    from scippneutron.data_stream import _data_stream  # noqa: F401
-    from scippneutron._streaming_data_buffer import \
-        StreamedDataBuffer  # noqa: F401
-    from streaming_data_types import serialise_ev42  # noqa: F401
-
     queue = asyncio.Queue()
     buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
     consumers = [FakeConsumer()]
@@ -115,13 +111,8 @@ async def test_data_stream_returns_data_from_multiple_event_messages():
         stop_consumers(consumers)
 
 
-@pytest.mark.skipif(not kafka_and_deserialisation_are_available(),
-                    reason='Kafka or Serialisation module is unavailable')
 @pytest.mark.asyncio
 async def test_warn_on_data_emit_if_unrecognised_message_was_encountered():
-    from scippneutron._streaming_data_buffer import \
-        StreamedDataBuffer  # noqa: F401
-
     queue = asyncio.Queue()
     buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
     # First 4 bytes of the message payload are the FlatBuffer schema identifier
@@ -134,14 +125,8 @@ async def test_warn_on_data_emit_if_unrecognised_message_was_encountered():
         await buffer._emit_data()
 
 
-@pytest.mark.skipif(not kafka_and_deserialisation_are_available(),
-                    reason='Kafka or Serialisation module is unavailable')
 @pytest.mark.asyncio
 async def test_warn_on_buffer_size_exceeded_by_single_message():
-    from scippneutron._streaming_data_buffer import \
-        StreamedDataBuffer  # noqa: F401
-    from streaming_data_types import serialise_ev42  # noqa: F401
-
     queue = asyncio.Queue()
     buffer_size_2_events = 2
     buffer = StreamedDataBuffer(queue,
@@ -158,14 +143,8 @@ async def test_warn_on_buffer_size_exceeded_by_single_message():
         await buffer.new_data(test_message)
 
 
-@pytest.mark.skipif(not kafka_and_deserialisation_are_available(),
-                    reason='Kafka or Serialisation module is unavailable')
 @pytest.mark.asyncio
 async def test_buffer_size_exceeded_by_messages_causes_early_data_emit():
-    from scippneutron._streaming_data_buffer import \
-        StreamedDataBuffer  # noqa: F401
-    from streaming_data_types import serialise_ev42  # noqa: F401
-
     queue = asyncio.Queue()
     buffer_size_5_events = 5
     buffer = StreamedDataBuffer(queue,
