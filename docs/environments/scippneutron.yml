@@ -3,7 +3,6 @@ name: scippneutron
 channels:
   - conda-forge
   - scipp
-  - ess-dmsc
 
 dependencies:
   - h5py
@@ -19,4 +18,4 @@ dependencies:
   - pythreejs
   - scippneutron
   - python-confluent-kafka
-  - ess-streaming-data-types
+  - ess-dmsc::ess-streaming-data-types
