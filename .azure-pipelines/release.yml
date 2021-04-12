@@ -124,8 +124,6 @@ stages:
 
     jobs:
       - template: templates/documentation_build.yml
-        parameters:
-          conda_env: scippneutron-developer-release.yml
       - template: templates/test_can_install_and_import.yml
 
   - stage: 'deploy'
