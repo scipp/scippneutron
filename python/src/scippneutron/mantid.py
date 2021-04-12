@@ -526,9 +526,9 @@ def convert_monitors_ws(ws, converter, **ignored):
     spec_info = spec_info = ws.spectrumInfo()
     comp_info = ws.componentInfo()
     monitors = []
-    indexes = (ws.getIndexFromSpectrumNumber(int(i))
-               for i in spec_coord.values)
-    for index in indexes:
+    spec_indices = ((ws.getIndexFromSpectrumNumber(int(i)), i)
+                    for i in spec_coord.values)
+    for index, number in spec_indices:
         definition = spec_info.getSpectrumDefinition(index)
         if not definition.size() == 1:
             raise RuntimeError("Cannot deal with grouped monitor detectors")
@@ -548,7 +548,7 @@ def convert_monitors_ws(ws, converter, **ignored):
         del single_monitor.attrs['sample']
         name = comp_info.name(det_index)
         if det_index != comp_info.indexOfAny(name):
-            name = f'{name}_{det_index}'
+            name = f'{name}_{number}'
         monitors.append((name, single_monitor))
     return monitors
 

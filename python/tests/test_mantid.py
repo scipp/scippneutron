@@ -937,8 +937,8 @@ def test_duplicate_monitor_names():
         InstrumentName='POLARIS',
         StoreInADS=False)  # Has many monitors named 'monitor'
     da = scn.mantid.from_mantid(ws)
-    assert da.attrs['monitor_0'].value.attrs['spectrum'].value == 1
-    assert da.attrs['monitor_12'].value.attrs['spectrum'].value == 13
+    assert da.attrs['monitor_1'].value.attrs['spectrum'].value == 1
+    assert da.attrs['monitor_13'].value.attrs['spectrum'].value == 13
     assert da.attrs['monitor'].value.attrs['spectrum'].value == 14
 
 
