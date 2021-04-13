@@ -13,9 +13,9 @@ resources:
   - pipeline: upstream_scipp_main
     project: scipp
     source: Main
-    trigger: false # TODO need to disable publishing and change back to `true`, once CI setup has been updated
-    parameters: # TODO does setting the parameter within the same file work?
-      scipp_channel: scipp/label/dev
+    trigger: none # TODO need to disable publishing and change back to `true`, once CI setup has been updated
+    #parameters: # TODO does setting the parameter within the same file work?
+    #  scipp_channel: scipp/label/dev
 
 stages:
   - template: templates/code_quality_checks.yml
