@@ -1,3 +1,8 @@
+parameters:
+- name: scipp_channel
+  type: string
+  default: scipp
+
 trigger:
   - main
 
@@ -8,7 +13,9 @@ resources:
   - pipeline: upstream_scipp_main
     project: scipp
     source: Main
-    trigger: true
+    trigger: none # TODO need to disable publishing and change back to `true`, once CI setup has been updated
+    #parameters: # TODO does setting the parameter within the same file work?
+    #  scipp_channel: scipp/label/dev
 
 stages:
   - template: templates/code_quality_checks.yml
@@ -42,7 +49,7 @@ stages:
               conda config --set always_yes yes --set changeps1 no
             displayName: 'Conda configuration'
           - bash: |
-              conda build --user scipp --token "$ANACONDA_TOKEN" --channel conda-forge --channel scipp/label/dev --channel ess-dmsc --label dev --python="$PYTHON_VERSION" ./conda
+              conda build --user scipp --token "$ANACONDA_TOKEN" --channel conda-forge --channel ${{ parameters.scipp_channel }} --channel ess-dmsc --label dev --python="$PYTHON_VERSION" ./conda
             env:
               ANACONDA_TOKEN: $(anaconda_token_secret)
             displayName: 'Package build'
@@ -78,7 +85,7 @@ stages:
               conda config --set always_yes yes --set changeps1 no
             displayName: 'Conda configuration'
           - bash: |
-              conda build --user scipp --token "$ANACONDA_TOKEN" --channel conda-forge --channel scipp/label/dev --channel ess-dmsc --label dev ./conda
+              conda build --user scipp --token "$ANACONDA_TOKEN" --channel conda-forge --channel ${{ parameters.scipp_channel }} --channel ess-dmsc --label dev ./conda
             env:
               ANACONDA_TOKEN: $(anaconda_token_secret)
             displayName: 'Package build'
@@ -114,7 +121,7 @@ stages:
               conda config --set always_yes yes --set changeps1 no
             displayName: 'Conda configuration'
           - script: |
-              conda build --user scipp --token "%ANACONDA_TOKEN%" --channel conda-forge --channel scipp/label/dev --label dev --python="%PYTHON_VERSION%" ./conda
+              conda build --user scipp --token "%ANACONDA_TOKEN%" --channel conda-forge --channel ${{ parameters.scipp_channel }} --label dev --python="%PYTHON_VERSION%" ./conda
             env:
               ANACONDA_TOKEN: $(anaconda_token_secret)
             displayName: 'Package build'
