@@ -1,11 +1,19 @@
-from scippneutron.data_stream import _data_stream
-from scippneutron._streaming_data_buffer import StreamedDataBuffer
+import pytest
 import scipp as sc
 import asyncio
-import pytest
 from typing import List
-from streaming_data_types import serialise_ev42
 import numpy as np
+
+try:
+    import streaming_data_types  # noqa: F401
+    import confluent_kafka  # noqa: F401
+    from scippneutron.data_stream import _data_stream  # noqa: E402
+    from scippneutron._streaming_data_buffer import \
+        StreamedDataBuffer  # noqa: E402
+    from streaming_data_types import serialise_ev42  # noqa: E402
+except ImportError:
+    pytest.skip("Kafka or Serialisation module is unavailable",
+                allow_module_level=True)
 
 
 class FakeConsumer:

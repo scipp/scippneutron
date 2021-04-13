@@ -19,8 +19,9 @@ def run_mantid_alg(alg, *args, **kwargs):
     except ImportError:
         raise ImportError(
             "Mantid Python API was not found, please install Mantid framework "
-            "as detailed in the installation instructions (https://scipp."
-            "github.io/getting-started/installation.html)")
+            "as detailed in the installation instructions ("
+            "https://scipp.github.io/scippneutron/getting-started/"
+            "installation.html)")
     # Deal with multiple calls to this function, which may have conflicting
     # names in the global AnalysisDataService by using uuid.
     ws_name = f'scipp.run_mantid_alg.{uuid.uuid4()}'

@@ -34,9 +34,8 @@ test:
     - pythreejs
     - Pillow
     - mantid-framework [not win]
-    - pip:
-        - confluent-kafka
-        - ess-streaming-data-types
+    - python-confluent-kafka [not win]
+    - ess-streaming-data-types [not win]
   source_files:
     - python/tests/
     - neutron/
