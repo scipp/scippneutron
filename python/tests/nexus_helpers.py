@@ -4,6 +4,7 @@ import h5py
 import numpy as np
 from enum import Enum
 from contextlib import contextmanager
+import json
 
 h5root = Union[h5py.File, h5py.Group]
 
@@ -121,8 +122,73 @@ class InMemoryNeXusWriter:
         file_root[new_path] = h5py.SoftLink(target_path)
 
 
+numpy_to_fw_type = {
+    np.float32: "float32",
+    np.float64: "float64",
+    np.int32: "int32",
+    np.int64: "int64"
+}
+
+
 class JsonWriter:
-    pass
+    @staticmethod
+    def add_dataset(parent: Dict, name: str, data: Union[str,
+                                                         np.ndarray]) -> Dict:
+        if isinstance(data, str):
+            dataset_info = {"string_size": len(data), "type": "string"}
+        else:
+            dataset_info = {
+                "size": data.shape,
+                "type": numpy_to_fw_type[data.dtype.type]
+            }
+
+        new_dataset = {
+            "type": "dataset",
+            "name": name,
+            "values": data,
+            "dataset": dataset_info,
+            "attributes": []
+        }
+        parent["children"].append(new_dataset)
+        return new_dataset
+
+    @staticmethod
+    def add_attribute(parent: Dict, name: str, value: Union[str, np.ndarray]):
+        if isinstance(value, str):
+            attr_info = {"string_size": len(value), "type": "string"}
+        else:
+            attr_info = {
+                "size": value.shape,
+                "type": numpy_to_fw_type[value.dtype.type]
+            }
+        name_and_value = {"name": name, "values": value}
+        parent["attributes"].append({**attr_info, **name_and_value})
+
+    @staticmethod
+    def add_group(parent: Dict, name: str) -> Dict:
+        new_group = {
+            "type": "group",
+            "name": name,
+            "children": [],
+            "attributes": []
+        }
+        parent["children"].append(new_group)
+        return new_group
+
+    @staticmethod
+    def add_hard_link(file_root: Dict, new_path: str, target_path: str):
+        raise NotImplementedError
+
+    @staticmethod
+    def add_soft_link(file_root: Dict, new_path: str, target_path: str):
+        raise NotImplementedError
+
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
 
 
 class NexusBuilder:
@@ -176,6 +242,24 @@ class NexusBuilder:
         elif isinstance(component, Source):
             self.add_source(component)
 
+    @property
+    def json_string(self):
+        self._writer = JsonWriter()
+        root = {"children": []}
+        self._write_file(root)
+        return json.dumps(root, indent=4, cls=NumpyEncoder)
+
+    def create_json_file(self):
+        """
+        Create a file on disk, do not use this in tests, it is intended to
+        be used as a tool during test development
+        """
+        self._writer = JsonWriter()
+        root = {"children": []}
+        self._write_file(root)
+        with open("test_json.txt", "w") as json_file:
+            return json.dump(root, json_file, indent=4, cls=NumpyEncoder)
+
     @contextmanager
     def file(self) -> Iterator[h5py.File]:
         # "core" driver means file is "in-memory" not on disk.
@@ -192,7 +276,7 @@ class NexusBuilder:
         finally:
             nexus_file.close()
 
-    def _write_file(self, nexus_file: h5py.File):
+    def _write_file(self, nexus_file: Union[h5py.File, Dict]):
         entry_group = self._create_nx_class("entry", "NXentry", nexus_file)
         if self._title is not None:
             self._writer.add_dataset(entry_group, "title", data=self._title)
