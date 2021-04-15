@@ -1,5 +1,5 @@
 from .nexus_helpers import (
-    InMemoryNexusFileBuilder,
+    NexusBuilder,
     EventData,
     Detector,
     Log,
@@ -24,7 +24,7 @@ def test_raises_exception_if_multiple_nxentry_in_file():
 
 
 def test_no_exception_if_single_nxentry_in_file():
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     with builder.file() as nexus_file:
         assert scippneutron.load_nexus(nexus_file) is None
 
@@ -48,7 +48,7 @@ def test_loads_data_from_single_event_data_group():
         event_index=np.array([0, 3, 3, 5]),
     )
 
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_event_data(event_data)
 
     with builder.file() as nexus_file:
@@ -96,7 +96,7 @@ def test_loads_data_from_multiple_event_data_groups():
     )
     detector_2_ids = np.array([4, 5, 6, 7])
 
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_detector(Detector(detector_1_ids, event_data_1))
     builder.add_detector(Detector(detector_2_ids, event_data_2))
 
@@ -134,7 +134,7 @@ def test_skips_event_data_group_with_non_integer_event_ids():
         event_index=np.array([0, 3, 3, 5]),
     )
 
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_event_data(event_data)
 
     with builder.file() as nexus_file:
@@ -158,7 +158,7 @@ def test_skips_event_data_group_with_non_integer_detector_numbers():
     )
     detector_numbers = np.array([0.1, 1.2, 2.3, 3.4])
 
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_detector(Detector(detector_numbers, event_data))
 
     with builder.file() as nexus_file:
@@ -182,7 +182,7 @@ def test_skips_data_with_event_id_and_detector_number_type_unequal():
     )
     detector_numbers = np.array([0, 1, 2, 3], dtype=np.int32)
 
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_detector(Detector(detector_numbers, event_data))
 
     with builder.file() as nexus_file:
@@ -198,7 +198,7 @@ def test_loads_data_from_single_log_with_no_units():
     values = np.array([1, 2, 3])
     times = np.array([4, 5, 6])
     name = "test_log"
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_log(Log(name, values, times))
 
     with builder.file() as nexus_file:
@@ -214,7 +214,7 @@ def test_loads_data_from_single_log_with_units():
     values = np.array([1.1, 2.2, 3.3])
     times = np.array([4.4, 5.5, 6.6])
     name = "test_log"
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_log(Log(name, values, times, value_units="m", time_units="s"))
 
     with builder.file() as nexus_file:
@@ -229,7 +229,7 @@ def test_loads_data_from_single_log_with_units():
 
 
 def test_loads_data_from_multiple_logs():
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     log_1 = Log("test_log", np.array([1.1, 2.2, 3.3]),
                 np.array([4.4, 5.5, 6.6]))
     log_2 = Log("test_log_2", np.array([123, 253, 756]),
@@ -251,7 +251,7 @@ def test_loads_data_from_multiple_logs():
 
 
 def test_loads_logs_with_non_supported_int_types():
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     log_int8 = Log("test_log_int8",
                    np.array([1, 2, 3]).astype(np.int8),
                    np.array([4.4, 5.5, 6.6]))
@@ -284,7 +284,7 @@ def test_skips_multidimensional_log():
 
     multidim_values = np.array([[1, 2, 3], [1, 2, 3]])
     name = "test_log"
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_log(Log(name, multidim_values, np.array([4, 5, 6])))
 
     with builder.file() as nexus_file:
@@ -296,7 +296,7 @@ def test_skips_multidimensional_log():
 
 def test_skips_log_with_no_value_dataset():
     name = "test_log"
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_log(Log(name, None, np.array([4, 5, 6])))
 
     with builder.file() as nexus_file:
@@ -310,7 +310,7 @@ def test_skips_log_with_empty_value_and_time_datasets():
     empty_values = np.array([]).astype(np.int32)
     empty_times = np.array([]).astype(np.int32)
     name = "test_log"
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_log(Log(name, empty_values, empty_times))
 
     with builder.file() as nexus_file:
@@ -324,7 +324,7 @@ def test_skips_log_with_mismatched_value_and_time():
     values = np.array([1, 2, 3]).astype(np.int32)
     times = np.array([1, 2, 3, 4]).astype(np.int32)
     name = "test_log"
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_log(Log(name, values, times))
 
     with builder.file() as nexus_file:
@@ -337,7 +337,7 @@ def test_skips_log_with_mismatched_value_and_time():
 def test_loads_data_from_non_timeseries_log():
     values = np.array([1.1, 2.2, 3.3])
     name = "test_log"
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_log(Log(name, values))
 
     with builder.file() as nexus_file:
@@ -353,7 +353,7 @@ def test_loads_data_from_multiple_logs_with_same_name():
 
     # Add one log to NXentry and the other to an NXdetector,
     # both have the same group name
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_log(Log(name, values_1))
     builder.add_detector(Detector(np.array([1, 2, 3]), log=Log(name,
                                                                values_2)))
@@ -378,7 +378,7 @@ def test_loads_data_from_multiple_logs_with_same_name():
 
 def test_load_instrument_name():
     name = "INSTR"
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_instrument(name)
 
     with builder.file() as nexus_file:
@@ -389,7 +389,7 @@ def test_load_instrument_name():
 
 def test_load_experiment_title():
     title = "my experiment"
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_title(title)
 
     with builder.file() as nexus_file:
@@ -415,7 +415,7 @@ def test_loads_event_and_log_data_from_single_file():
     log_2 = Log("test_log_2", np.array([123, 253, 756]),
                 np.array([246, 1235, 2369]))
 
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_event_data(event_data)
     builder.add_log(log_1)
     builder.add_log(log_2)
@@ -486,7 +486,7 @@ def test_loads_pixel_positions_with_event_data():
     x_pixel_offset_2 = np.array([[1.1, 1.2], [1.1, 1.2]])
     y_pixel_offset_2 = np.array([[0.1, 0.1], [0.2, 0.2]])
 
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     offsets_units = "mm"
     builder.add_detector(
         Detector(detector_1_ids,
@@ -548,7 +548,7 @@ def test_skips_loading_pixel_positions_with_non_matching_shape():
     x_pixel_offset_2 = np.array([1.1, 1.2, 1.1, 1.2])
     y_pixel_offset_2 = np.array([0.1, 0.1, 0.2, 0.2])
 
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_detector(
         Detector(detector_1_ids,
                  event_data_1,
@@ -592,7 +592,7 @@ def test_skips_loading_pixel_positions_with_no_units():
     y_pixel_offset = np.array([0.1, 0.1, 0.2, 0.2])
     z_pixel_offset = np.array([0.1, 0.2, 0.3, 0.4])
 
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_detector(
         Detector(detector_ids,
                  event_data,
@@ -614,7 +614,7 @@ def test_sample_position_at_origin_if_not_explicit_in_file():
     # If there is an NXsample in the file, but it has no "distance" dataset
     # or "depends_on" pointing to NXtransformations then it should be
     # assumed to be at the origin.
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_sample(Sample("sample"))
     with builder.file() as nexus_file:
         loaded_data = scippneutron.load_nexus(nexus_file)
@@ -627,7 +627,7 @@ def test_loads_multiple_samples():
     # More than one sample in the file is possible, but we cannot guess
     # which to record as _the_ "sample_position",
     # instead record them in the form "<GROUP_NAME>_position"
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     sample_1_name = "sample_1"
     sample_2_name = "sample_2"
     builder.add_sample(Sample(sample_1_name))
@@ -653,7 +653,7 @@ def test_skips_loading_source_if_more_than_one_in_file():
     # More than one source is a serious error in the file, so
     # load_nexus will display a warning and skip loading any sample rather
     # than guessing which is the "correct" one.
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_source(Source("source_1"))
     builder.add_source(Source("source_2"))
     with builder.file() as nexus_file:
@@ -667,7 +667,7 @@ def test_skips_loading_source_if_more_than_one_in_file():
 def test_skips_component_position_from_distance_dataset_missing_unit(
         component_class: Union[Type[Source], Type[Sample]],
         component_name: str):
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     distance = 4.2
     builder.add_component(
         component_class(component_name, distance=distance,
@@ -688,7 +688,7 @@ def test_loads_component_position_from_single_transformation(
         component_class: Union[Type[Source], Type[Sample]],
         component_name: str, transform_type: TransformationType, value: float,
         value_units: str, expected_position: List[float]):
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     transformation = Transformation(transform_type,
                                     vector=np.array([0, 0, -1]),
                                     value=np.array([value]),
@@ -715,7 +715,7 @@ def test_loads_component_position_from_log_transformation(
         component_class: Union[Type[Source], Type[Sample]],
         component_name: str, transform_type: TransformationType, value: float,
         value_units: str, expected_position: List[float]):
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     # Provide "time" data, the builder will write the transformation as
     # an NXlog
     transformation = Transformation(transform_type,
@@ -745,7 +745,7 @@ def test_skips_component_position_with_multi_value_log_transformation(
         component_class: Union[Type[Source], Type[Sample]],
         component_name: str, transform_type: TransformationType,
         value: List[float], value_units: str):
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     # Provide "time" data, the builder will write the transformation as
     # an NXlog. This would be encountered in a file from an experiment
     # involving a scan of a motion axis.
@@ -777,7 +777,7 @@ def test_skips_component_position_with_empty_value_log_transformation(
         component_class: Union[Type[Source],
                                Type[Sample]], component_name: str,
         transform_type: TransformationType, value_units: str):
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     empty_value = np.array([])
     transformation = Transformation(transform_type,
                                     vector=np.array([0, 0, -1]),
@@ -803,7 +803,7 @@ def test_load_component_position_prefers_transform_over_distance(
     # If there is a "depends_on" pointing to transformations then we
     # prefer to use that instead as it is likely to be more accurate; it
     # can define position and orientation in 3D.
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     transformation = Transformation(TransformationType.TRANSLATION,
                                     np.array([0, 0, -1]),
                                     np.array([2.3]),
@@ -830,7 +830,7 @@ def test_load_component_position_prefers_transform_over_distance(
 def test_skips_component_position_from_transformation_missing_unit(
         component_class: Union[Type[Source], Type[Sample]],
         component_name: str, transform_type: TransformationType):
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     transformation = Transformation(transform_type, np.array([0, 0, -1]),
                                     np.array([2.3]))
     builder.add_component(
@@ -853,7 +853,7 @@ def test_skips_component_position_with_transformation_with_small_vector(
     # The vector defines the direction of the translation or axis
     # of the rotation so it is ill-defined if it is close to zero
     # in magnitude
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     zero_vector = np.array([0, 0, 0])
     transformation = Transformation(transform_type,
                                     zero_vector,
@@ -873,7 +873,7 @@ def test_loads_component_position_from_multiple_transformations(
     component_class: Union[Type[Source], Type[Sample]],
     component_name: str,
 ):
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     transformation_1 = Transformation(TransformationType.ROTATION,
                                       np.array([0, 1, 0]),
                                       np.array([90]),
@@ -900,7 +900,7 @@ def test_loads_component_position_from_multiple_transformations(
 
 
 def test_skips_source_position_if_not_given_in_file():
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_source(Source("source"))
     with builder.file() as nexus_file:
         with pytest.warns(UserWarning):
@@ -918,7 +918,7 @@ def test_loads_component_position_from_distance_dataset(
     # this gives the position along the z axis. If there was a "depends_on"
     # pointing to transformations then we'd use that instead as it is
     # likely to be more accurate; it can define position and orientation in 3D.
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     distance = 4.2
     units = "m"
     builder.add_component(
@@ -935,7 +935,7 @@ def test_loads_component_position_from_distance_dataset(
 
 
 def test_loads_source_position_dependent_on_sample_position():
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     transformation_0 = Transformation(TransformationType.ROTATION,
                                       np.array([0, 1, 0]),
                                       np.array([90]),
@@ -991,7 +991,7 @@ def test_loads_pixel_positions_with_transformations():
                                     value=np.array([distance]),
                                     value_units="cm")
 
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_detector(
         Detector(detector_1_ids,
                  event_data_1,
@@ -1023,7 +1023,7 @@ def test_links_to_event_data_group_are_ignored():
         event_index=np.array([0, 3, 3, 5]),
     )
 
-    builder = InMemoryNexusFileBuilder()
+    builder = NexusBuilder()
     builder.add_event_data(event_data)
     builder.add_hard_link(Link("/entry/hard_link_to_events",
                                "/entry/events_0"))
