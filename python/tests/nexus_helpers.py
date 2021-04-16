@@ -5,6 +5,7 @@ import numpy as np
 from enum import Enum
 from contextlib import contextmanager
 import json
+from scippneutron._json_loading import _filewriter_to_numpy_dtype
 
 h5root = Union[h5py.File, h5py.Group]
 
@@ -122,12 +123,10 @@ class InMemoryNeXusWriter:
         file_root[new_path] = h5py.SoftLink(target_path)
 
 
-numpy_to_fw_type = {
-    np.float32: "float32",
-    np.float64: "float64",
-    np.int32: "int32",
-    np.int64: "int64"
-}
+numpy_to_filewriter_type = {
+    v: k
+    for k, v in _filewriter_to_numpy_dtype.items()
+}  # invert the dictionary
 
 
 class JsonWriter:
@@ -139,7 +138,7 @@ class JsonWriter:
         else:
             dataset_info = {
                 "size": data.shape,
-                "type": numpy_to_fw_type[data.dtype.type]
+                "type": numpy_to_filewriter_type[data.dtype.type]
             }
 
         new_dataset = {
@@ -159,7 +158,7 @@ class JsonWriter:
         else:
             attr_info = {
                 "size": value.shape,
-                "type": numpy_to_fw_type[value.dtype.type]
+                "type": numpy_to_filewriter_type[value.dtype.type]
             }
         name_and_value = {"name": name, "values": value}
         parent["attributes"].append({**attr_info, **name_and_value})

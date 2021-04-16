@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
+import json
 
 import scipp as sc
 from ._loading_common import find_by_nx_class, ensure_str
@@ -8,12 +9,13 @@ from ._loading_detector_data import load_detector_data
 from ._loading_log_data import load_logs
 import h5py
 from timeit import default_timer as timer
-from typing import Union, List
+from typing import Union, List, Optional
 from contextlib import contextmanager
 from warnings import warn
 import numpy as np
 from ._loading_positions import (load_position_of_unique_component,
                                  load_positions_of_components)
+from ._json_loading import DecodeToScipp
 
 nx_event_data = "NXevent_data"
 nx_log = "NXlog"
@@ -83,7 +85,9 @@ def _load_title(entry_group: h5py.Group, data: sc.Variable):
                                     data)
 
 
-def load_nexus(data_file: Union[str, h5py.File], root: str = "/", quiet=True):
+def load_nexus(data_file: Union[str, h5py.File],
+               root: str = "/",
+               quiet=True) -> Optional[sc.Variable]:
     """
     Load a NeXus file and return required information.
 
@@ -137,3 +141,9 @@ def load_nexus(data_file: Union[str, h5py.File], root: str = "/", quiet=True):
     if not quiet:
         print("Total time:", timer() - total_time)
     return loaded_data
+
+
+def load_nexus_json(json_string: str) -> Optional[sc.Variable]:
+    loaded_json = json.loads(json_string, cls=DecodeToScipp)
+    print(loaded_json)
+    return None
