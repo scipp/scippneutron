@@ -373,7 +373,7 @@ def test_loads_data_from_multiple_logs_with_same_name(load_function: Callable):
     if np.allclose(loaded_data[name].data.values.values, values_1):
         # Then the other log should be
         assert np.allclose(
-            loaded_data[f"detector_1_{name}"].data.values.values, values_2)
+            loaded_data[f"detector_0_{name}"].data.values.values, values_2)
     elif np.allclose(loaded_data[name].data.values.values, values_2):
         # Then the other log should be
         assert np.allclose(loaded_data[f"entry_{name}"].data.values.values,
@@ -1038,6 +1038,49 @@ def test_links_to_event_data_group_are_ignored(load_function: Callable):
     # binned according to whatever detector_ids are present in event_id
     # dataset: 2 on det 1, 1 on det 2, 2 on det 3
     expected_counts = np.array([2, 1, 2])
+    assert np.array_equal(counts_on_detectors.data.values, expected_counts)
+    expected_detector_ids = np.array([1, 2, 3])
+    assert np.array_equal(loaded_data.coords['detector_id'].values,
+                          expected_detector_ids)
+
+
+def test_links_in_transformation_paths_are_followed(load_function: Callable):
+    pass
+
+
+def test_linked_datasets_are_found(load_function: Callable):
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 3]),
+        event_time_offset=np.array([456, 743, 347, 345, 632]),
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+
+    builder = NexusBuilder()
+    builder.add_event_data(event_data)
+    replaced_ids = np.array([1, 1, 1, 2, 3])
+    builder.add_dataset_at_path("/entry/ids", replaced_ids)
+    replaced_tofs = np.array([273, 546, 573, 812, 932])
+    builder.add_dataset_at_path("/entry/tofs", replaced_tofs)
+    # Replace dataset in the NXevent_data with a link to the
+    # replacement dataset
+    builder.add_hard_link(Link("/entry/events_0/event_id", "/entry/ids"))
+    builder.add_soft_link(
+        Link("/entry/events_0/event_time_offset", "/entry/tofs"))
+
+    loaded_data = load_function(builder)
+
+    assert np.array_equal(
+        np.sort(
+            loaded_data.bins.concatenate(
+                'detector_id').values.coords['tof'].values),
+        np.sort(replaced_tofs))
+
+    counts_on_detectors = loaded_data.bins.sum()
+    expected_counts = np.array([3, 1, 1])
     assert np.array_equal(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
     assert np.array_equal(loaded_data.coords['detector_id'].values,

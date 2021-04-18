@@ -1,11 +1,13 @@
 from _warnings import warn
-from typing import List, Optional, Any, Tuple
+from typing import List, Optional, Any, Tuple, Union, Dict
 import h5py
 import numpy as np
 import scipp as sc
-from ._loading_common import get_units
+from ._loading_common import Group
 from ._loading_transformations import (get_position_from_transformations,
                                        TransformationError)
+from ._loading_hdf5_nexus import LoadFromHdf5
+from ._loading_json_nexus import LoadFromJson
 
 
 class PositionError(Exception):
@@ -13,20 +15,21 @@ class PositionError(Exception):
 
 
 def load_position_of_unique_component(
-        groups: List[h5py.Group],
+        groups: List[Group],
         data: sc.Variable,
         name: str,
         nx_class: str,
         file_root: h5py.File,
+        loading: Union[LoadFromHdf5, LoadFromJson],
         default_position: Optional[np.ndarray] = None):
     if len(groups) > 1:
         warn(f"More than one {nx_class} found in file, "
              f"skipping loading {name} position")
         return
     try:
-        position, units = _get_position_of_component(groups[0], name, nx_class,
-                                                     file_root,
-                                                     default_position)
+        position, units = _get_position_of_component(groups[0].group, name,
+                                                     nx_class, file_root,
+                                                     loading, default_position)
     except PositionError:
         return
     _add_attr_to_loaded_data(f"{name}_position",
@@ -37,16 +40,18 @@ def load_position_of_unique_component(
 
 
 def load_positions_of_components(
-        groups: List[h5py.Group],
+        groups: List[Group],
         data: sc.Variable,
         name: str,
         nx_class: str,
         file_root: h5py.File,
+        loading: Union[LoadFromHdf5, LoadFromJson],
         default_position: Optional[np.ndarray] = None):
     for group in groups:
         try:
             position, units = _get_position_of_component(
-                group, name, nx_class, file_root, default_position)
+                group.group, name, nx_class, file_root, loading,
+                default_position)
         except PositionError:
             continue
         if len(groups) == 1:
@@ -56,35 +61,44 @@ def load_positions_of_components(
                                      unit=units,
                                      dtype=sc.dtype.vector_3_float64)
         else:
-            _add_attr_to_loaded_data(f"{group.name.split('/')[-1]}_position",
-                                     data,
-                                     position,
-                                     unit=units,
-                                     dtype=sc.dtype.vector_3_float64)
+            _add_attr_to_loaded_data(
+                f"{loading.get_name(group.group)}_position",
+                data,
+                position,
+                unit=units,
+                dtype=sc.dtype.vector_3_float64)
 
 
 def _get_position_of_component(
-    group: h5py.Group,
+    group: Union[h5py.Group, Dict],
     name: str,
     nx_class: str,
     file_root: h5py.File,
+    loading: Union[LoadFromHdf5, LoadFromJson],
     default_position: Optional[np.ndarray] = None
 ) -> Tuple[np.ndarray, sc.Unit]:
-    if "depends_on" in group:
+    depends_on_found, _ = loading.dataset_in_group(group, "depends_on")
+    distance_found, _ = loading.dataset_in_group(group, "distance")
+    if depends_on_found:
         try:
-            position = get_position_from_transformations(group, file_root)
+            position = get_position_from_transformations(
+                group, file_root, loading)
         except TransformationError as e:
             warn(f"Skipping loading {name} position due to error: {e}")
             raise PositionError
         units = sc.units.m
-    elif "distance" in group:
-        position = np.array([0, 0, group["distance"][...]])
-        unit_str = get_units(group["distance"])
-        if not unit_str:
+    elif distance_found:
+
+        position = np.array([
+            0, 0,
+            loading.load_dataset_from_group_as_numpy_array(group, "distance")
+        ])
+        units = loading.get_unit(
+            loading.get_dataset_from_group(group, "distance"))
+        if units == sc.units.dimensionless:
             warn(f"'distance' dataset in {nx_class} is missing "
                  f"units attribute, skipping loading {name} position")
             raise PositionError
-        units = sc.Unit(unit_str)
     elif default_position is None:
         warn(f"No position given for {name} in file")
         raise PositionError

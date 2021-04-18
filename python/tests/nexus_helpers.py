@@ -5,7 +5,7 @@ import numpy as np
 from enum import Enum
 from contextlib import contextmanager
 import json
-from scippneutron._json_loading import _filewriter_to_numpy_dtype
+from scippneutron._loading_json_nexus import LoadFromJson
 
 h5root = Union[h5py.File, h5py.Group]
 
@@ -100,6 +100,13 @@ class Link:
 
 
 class InMemoryNeXusWriter:
+    def add_dataset_at_path(self, file_root: h5py.File, path: str,
+                            data: np.ndarray):
+        path_split = path.split("/")
+        dataset_name = path_split[-1]
+        parent_path = "/".join(path_split[:-1])
+        self.add_dataset(file_root[parent_path], dataset_name, data)
+
     @staticmethod
     def add_dataset(parent: h5py.Group, name: str,
                     data: Union[str, np.ndarray]) -> h5py.Dataset:
@@ -116,25 +123,67 @@ class InMemoryNeXusWriter:
 
     @staticmethod
     def add_hard_link(file_root: h5py.File, new_path: str, target_path: str):
+        try:
+            _ = file_root[new_path]
+            del file_root[new_path]
+        except KeyError:
+            pass
         file_root[new_path] = file_root[target_path]
 
     @staticmethod
     def add_soft_link(file_root: h5py.File, new_path: str, target_path: str):
+        try:
+            _ = file_root[new_path]
+            del file_root[new_path]
+        except KeyError:
+            pass
         file_root[new_path] = h5py.SoftLink(target_path)
 
 
 numpy_to_filewriter_type = {
-    v: k
-    for k, v in _filewriter_to_numpy_dtype.items()
-}  # invert the dictionary
+    np.float32: "float32",
+    np.float64: "float64",
+    np.int8: "int8",
+    np.int16: "int16",
+    np.int32: "int32",
+    np.int64: "int64",
+    np.uint8: "uint8",
+    np.uint16: "uint16",
+    np.uint32: "uint32",
+    np.uint64: "uint64"
+}
+
+
+def _add_link_to_json(file_root: Dict, new_path: str, target_path: str):
+    new_path_split = new_path.split("/")
+    link_name = new_path_split[-1]
+    parent_path = "/".join(new_path_split[:-1])
+    loading = LoadFromJson()
+    parent_group = loading.get_object_by_path(file_root, parent_path)
+    link = {"type": "link", "name": link_name, "target": target_path}
+    existing_object = loading.get_child_from_group(parent_group, link_name)
+    if existing_object is not None:
+        parent_group["children"].remove(existing_object)
+    parent_group["children"].append(link)
 
 
 class JsonWriter:
+    def add_dataset_at_path(self, file_root: Dict, path: str,
+                            data: np.ndarray):
+        path_split = path.split("/")
+        dataset_name = path_split[-1]
+        parent_path = "/".join(path_split[:-1])
+        loading = LoadFromJson()
+        parent_group = loading.get_object_by_path(file_root, parent_path)
+        self.add_dataset(parent_group, dataset_name, data)
+
     @staticmethod
     def add_dataset(parent: Dict, name: str, data: Union[str,
                                                          np.ndarray]) -> Dict:
         if isinstance(data, str):
             dataset_info = {"string_size": len(data), "type": "string"}
+        elif isinstance(data, float):
+            dataset_info = {"size": 1, "type": "float32"}
         else:
             dataset_info = {
                 "size": data.shape,
@@ -176,11 +225,11 @@ class JsonWriter:
 
     @staticmethod
     def add_hard_link(file_root: Dict, new_path: str, target_path: str):
-        raise NotImplementedError
+        _add_link_to_json(file_root, new_path, target_path)
 
     @staticmethod
     def add_soft_link(file_root: Dict, new_path: str, target_path: str):
-        raise NotImplementedError
+        _add_link_to_json(file_root, new_path, target_path)
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -188,6 +237,12 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
+
+
+@dataclass
+class DatasetAtPath:
+    path: str
+    data: np.ndarray
 
 
 class NexusBuilder:
@@ -205,6 +260,14 @@ class NexusBuilder:
         self._hard_links: List[Link] = []
         self._soft_links: List[Link] = []
         self._writer = None
+        self._datasets: List[DatasetAtPath] = []
+
+    def add_dataset_at_path(self, path: str, data: np.ndarray):
+        self._datasets.append(DatasetAtPath(path, data))
+
+    def _write_datasets(self, root: Union[Dict, h5py.File]):
+        for dataset in self._datasets:
+            self._writer.add_dataset_at_path(root, dataset.path, dataset.data)
 
     def add_detector(self, detector: Detector):
         self._detectors.append(detector)
@@ -228,9 +291,17 @@ class NexusBuilder:
         self._source.append(source)
 
     def add_hard_link(self, link: Link):
+        """
+        If there is a group or dataset at the link path it will
+        be replaced by the link
+        """
         self._hard_links.append(link)
 
     def add_soft_link(self, link: Link):
+        """
+        If there is a group or dataset at the link path it will
+        be replaced by the link
+        """
         self._soft_links.append(link)
 
     def add_component(self, component: Union[Sample, Source]):
@@ -285,9 +356,12 @@ class NexusBuilder:
         self._write_source(entry_group)
         if self._instrument_name is None:
             parent_group = entry_group
+            parent_path = "/entry"
         else:
             parent_group = self._write_instrument(entry_group)
-        self._write_detectors(parent_group)
+            parent_path = "/entry/instrument"
+        self._write_detectors(parent_group, parent_path)
+        self._write_datasets(nexus_file)
         self._write_links(nexus_file)
 
     def create_file_on_disk(self, filename: str):
@@ -317,7 +391,7 @@ class NexusBuilder:
                                                  parent_group)
             if sample.depends_on is not None:
                 depends_on = self._add_transformations_to_file(
-                    sample.depends_on, sample_group)
+                    sample.depends_on, sample_group, f"/entry/{sample.name}")
                 self._writer.add_dataset(sample_group,
                                          "depends_on",
                                          data=depends_on)
@@ -335,7 +409,7 @@ class NexusBuilder:
                                                  parent_group)
             if source.depends_on is not None:
                 depends_on = self._add_transformations_to_file(
-                    source.depends_on, source_group)
+                    source.depends_on, source_group, f"/entry/{source.name}")
                 self._writer.add_dataset(source_group,
                                          "depends_on",
                                          data=depends_on)
@@ -356,10 +430,12 @@ class NexusBuilder:
                                  self._instrument_name)
         return instrument_group
 
-    def _write_detectors(self, parent_group: Union[h5py.Group, Dict]):
+    def _write_detectors(self, parent_group: Union[h5py.Group, Dict],
+                         parent_path: str):
         for detector_index, detector in enumerate(self._detectors):
+            detector_name = f"detector_{detector_index}"
             detector_group = self._add_detector_group_to_file(
-                detector, parent_group, f"detector_{detector_index}")
+                detector, parent_group, detector_name)
             if detector.event_data is not None:
                 self._add_event_data_group_to_file(detector.event_data,
                                                    detector_group, "events")
@@ -367,7 +443,8 @@ class NexusBuilder:
                 self._add_log_group_to_file(detector.log, detector_group)
             if detector.depends_on is not None:
                 depends_on = self._add_transformations_to_file(
-                    detector.depends_on, detector_group)
+                    detector.depends_on, detector_group,
+                    f"{parent_path}/{detector_name}")
                 self._writer.add_dataset(detector_group,
                                          "depends_on",
                                          data=depends_on)
@@ -398,34 +475,39 @@ class NexusBuilder:
                                  data=data.event_index)
 
     def _add_transformations_to_file(self, transform: Transformation,
-                                     parent_group: h5py.Group) -> str:
+                                     parent_group: h5py.Group,
+                                     parent_path: str) -> str:
         transform_chain = [transform]
         while transform.depends_on is not None and not isinstance(
                 transform.depends_on, str):
             transform_chain.append(transform.depends_on)
             transform = transform.depends_on
 
+        transforms_group_name = "transformations"
         transforms_group = self._create_nx_class("transformations",
                                                  "NXtransformations",
                                                  parent_group)
         transform_chain.reverse()
         depends_on_str = transform.depends_on if isinstance(
             transform.depends_on, str) else None
+        transform_group_path = f"{parent_path}/{transforms_group_name}"
         for transform_number, transform in enumerate(transform_chain):
             if transform.time is not None:
                 depends_on_str = self._add_transformation_as_log(
                     transform, transform_number, transforms_group,
-                    depends_on_str)
+                    transform_group_path, depends_on_str)
             else:
                 depends_on_str = self._add_transformation_as_dataset(
                     transform, transform_number, transforms_group,
-                    depends_on_str)
+                    transform_group_path, depends_on_str)
         return depends_on_str
 
     def _add_transformation_as_dataset(self, transform: Transformation,
                                        transform_number: int,
                                        transforms_group: h5py.Group,
+                                       group_path: str,
                                        depends_on: Optional[str]) -> str:
+        transform_name = f"transform_{transform_number}"
         added_transform = self._writer.add_dataset(
             transforms_group,
             f"transform_{transform_number}",
@@ -434,7 +516,7 @@ class NexusBuilder:
         if transform.value_units is not None:
             self._writer.add_attribute(added_transform, "units",
                                        transform.value_units)
-        return added_transform.name
+        return f"{group_path}/{transform_name}"
 
     def _add_log_group_to_file(self, log: Log,
                                parent_group: h5py.Group) -> h5py.Group:
@@ -454,13 +536,14 @@ class NexusBuilder:
     def _add_transformation_as_log(self, transform: Transformation,
                                    transform_number: int,
                                    transforms_group: h5py.Group,
+                                   group_path: str,
                                    depends_on: Optional[str]) -> str:
+        transform_name = f"transform_{transform_number}"
         added_transform = self._add_log_group_to_file(
-            Log(f"transform_{transform_number}", transform.value,
-                transform.time, transform.value_units, transform.time_units),
-            transforms_group)
+            Log(transform_name, transform.value, transform.time,
+                transform.value_units, transform.time_units), transforms_group)
         self._add_transform_attributes(added_transform, depends_on, transform)
-        return added_transform.name
+        return f"{group_path}/{transform_name}"
 
     def _add_detector_group_to_file(self, detector: Detector,
                                     parent_group: h5py.Group,
