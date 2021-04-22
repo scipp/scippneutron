@@ -1045,7 +1045,24 @@ def test_links_to_event_data_group_are_ignored(load_function: Callable):
 
 
 def test_links_in_transformation_paths_are_followed(load_function: Callable):
-    pass
+    builder = NexusBuilder()
+    distance = 15.6
+    builder.add_component(Source("source"))
+    builder.add_dataset_at_path(
+        "/entry/transform", np.array([distance]), {
+            "vector": np.array([0, 0, -1]),
+            "units": "m",
+            "transformation_type": "translation",
+            "depends_on": "."
+        })
+    builder.add_dataset_at_path("/entry/source/depends_on", "/entry/transform",
+                                {})
+    loaded_data = load_function(builder)
+
+    assert np.allclose(loaded_data["source_position"].values, [0, 0, distance])
+    # Resulting position will always be in metres, whatever units are
+    # used in the NeXus file
+    assert loaded_data["source_position"].unit == sc.Unit("m")
 
 
 def test_linked_datasets_are_found(load_function: Callable):
@@ -1062,9 +1079,9 @@ def test_linked_datasets_are_found(load_function: Callable):
     builder = NexusBuilder()
     builder.add_event_data(event_data)
     replaced_ids = np.array([1, 1, 1, 2, 3])
-    builder.add_dataset_at_path("/entry/ids", replaced_ids)
+    builder.add_dataset_at_path("/entry/ids", replaced_ids, {})
     replaced_tofs = np.array([273, 546, 573, 812, 932])
-    builder.add_dataset_at_path("/entry/tofs", replaced_tofs)
+    builder.add_dataset_at_path("/entry/tofs", replaced_tofs, {})
     # Replace dataset in the NXevent_data with a link to the
     # replacement dataset
     builder.add_hard_link(Link("/entry/events_0/event_id", "/entry/ids"))

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Union, Iterator, Optional, Dict
+from typing import List, Union, Iterator, Optional, Dict, Any
 import h5py
 import numpy as np
 from enum import Enum
@@ -88,7 +88,7 @@ class Sample:
 @dataclass
 class Source:
     name: str
-    depends_on: Optional[Transformation] = None
+    depends_on: Union[Transformation, None, str] = None
     distance: Optional[float] = None
     distance_units: Optional[str] = None
 
@@ -101,11 +101,13 @@ class Link:
 
 class InMemoryNeXusWriter:
     def add_dataset_at_path(self, file_root: h5py.File, path: str,
-                            data: np.ndarray):
+                            data: np.ndarray, attributes: Dict):
         path_split = path.split("/")
         dataset_name = path_split[-1]
         parent_path = "/".join(path_split[:-1])
-        self.add_dataset(file_root[parent_path], dataset_name, data)
+        dataset = self.add_dataset(file_root[parent_path], dataset_name, data)
+        for name, value in attributes.items():
+            self.add_attribute(dataset, name, value)
 
     @staticmethod
     def add_dataset(parent: h5py.Group, name: str,
@@ -168,14 +170,16 @@ def _add_link_to_json(file_root: Dict, new_path: str, target_path: str):
 
 
 class JsonWriter:
-    def add_dataset_at_path(self, file_root: Dict, path: str,
-                            data: np.ndarray):
+    def add_dataset_at_path(self, file_root: Dict, path: str, data: np.ndarray,
+                            attributes: Dict):
         path_split = path.split("/")
         dataset_name = path_split[-1]
         parent_path = "/".join(path_split[:-1])
         loading = LoadFromJson(file_root)
         parent_group = loading.get_object_by_path(file_root, parent_path)
-        self.add_dataset(parent_group, dataset_name, data)
+        dataset = self.add_dataset(parent_group, dataset_name, data)
+        for name, value in attributes.items():
+            self.add_attribute(dataset, name, value)
 
     @staticmethod
     def add_dataset(parent: Dict, name: str, data: Union[str,
@@ -243,6 +247,7 @@ class NumpyEncoder(json.JSONEncoder):
 class DatasetAtPath:
     path: str
     data: np.ndarray
+    attributes: Dict[str, Any]
 
 
 class NexusBuilder:
@@ -262,12 +267,14 @@ class NexusBuilder:
         self._writer = None
         self._datasets: List[DatasetAtPath] = []
 
-    def add_dataset_at_path(self, path: str, data: np.ndarray):
-        self._datasets.append(DatasetAtPath(path, data))
+    def add_dataset_at_path(self, path: str, data: np.ndarray,
+                            attributes: Dict):
+        self._datasets.append(DatasetAtPath(path, data, attributes))
 
     def _write_datasets(self, root: Union[Dict, h5py.File]):
         for dataset in self._datasets:
-            self._writer.add_dataset_at_path(root, dataset.path, dataset.data)
+            self._writer.add_dataset_at_path(root, dataset.path, dataset.data,
+                                             dataset.attributes)
 
     def add_detector(self, detector: Detector):
         self._detectors.append(detector)
@@ -408,8 +415,12 @@ class NexusBuilder:
             source_group = self._create_nx_class(source.name, "NXsource",
                                                  parent_group)
             if source.depends_on is not None:
-                depends_on = self._add_transformations_to_file(
-                    source.depends_on, source_group, f"/entry/{source.name}")
+                if isinstance(source.depends_on, str):
+                    depends_on = source.depends_on
+                else:
+                    depends_on = self._add_transformations_to_file(
+                        source.depends_on, source_group,
+                        f"/entry/{source.name}")
                 self._writer.add_dataset(source_group,
                                          "depends_on",
                                          data=depends_on)
