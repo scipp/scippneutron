@@ -14,6 +14,7 @@ _nexus_values = "values"
 _nexus_dataset = "dataset"
 _nexus_group = "group"
 _nexus_children = "children"
+_nexus_link = "link"
 
 _filewriter_to_supported_numpy_dtype = {
     "float32": np.float32,
@@ -87,7 +88,7 @@ class LoadFromJson:
         for child in group[_nexus_children]:
             try:
                 if child[_nexus_name] == name:
-                    if child["type"] == "link":
+                    if child["type"] == _nexus_link:
                         child = self.get_object_by_path(
                             self._root, child["target"])
                     if child["type"] in allowed_nexus_classes:

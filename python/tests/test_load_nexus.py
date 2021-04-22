@@ -1046,7 +1046,7 @@ def test_links_to_event_data_group_are_ignored(load_function: Callable):
 
 def test_links_in_transformation_paths_are_followed(load_function: Callable):
     builder = NexusBuilder()
-    distance = 15.6
+    distance = 13.6
     builder.add_component(Source("source"))
     builder.add_dataset_at_path(
         "/entry/transform", np.array([distance]), {
@@ -1055,8 +1055,9 @@ def test_links_in_transformation_paths_are_followed(load_function: Callable):
             "transformation_type": "translation",
             "depends_on": "."
         })
-    builder.add_dataset_at_path("/entry/source/depends_on", "/entry/transform",
-                                {})
+    builder.add_dataset_at_path("/entry/source/depends_on",
+                                "/entry/transform_link", {})
+    builder.add_soft_link(Link("/entry/transform_link", "/entry/transform"))
     loaded_data = load_function(builder)
 
     assert np.allclose(loaded_data["source_position"].values, [0, 0, distance])
