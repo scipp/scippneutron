@@ -157,4 +157,4 @@ def load_nexus_json(json_string: str) -> Optional[sc.Variable]:
     # We do not use cls to convert value lists to sc.Variable at this
     # point because we do not know what dimension names to use here
     loaded_json = json.loads(json_string)
-    return _load_data(loaded_json, None, LoadFromJson(), True)
+    return _load_data(loaded_json, None, LoadFromJson(loaded_json), True)

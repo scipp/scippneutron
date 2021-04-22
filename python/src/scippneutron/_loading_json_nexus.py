@@ -69,25 +69,32 @@ def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
         pass
 
 
-def _get_child_from_group(
-        group: Dict,
-        name: str,
-        allowed_nexus_classes: Optional[Tuple[str]] = None) -> Optional[Dict]:
-    """
-    Returns dictionary for dataset or None if not found
-    """
-    if allowed_nexus_classes is None:
-        allowed_nexus_classes = (_nexus_dataset, _nexus_group)
-    for child in group[_nexus_children]:
-        try:
-            if child[_nexus_name] == name and child[
-                    "type"] in allowed_nexus_classes:
-                return child
-        except KeyError:
-            pass
-
-
 class LoadFromJson:
+    def __init__(self, root: Dict):
+        self._root = root
+
+    def _get_child_from_group(
+            self,
+            group: Dict,
+            name: str,
+            allowed_nexus_classes: Optional[Tuple[str]] = None
+    ) -> Optional[Dict]:
+        """
+        Returns dictionary for dataset or None if not found
+        """
+        if allowed_nexus_classes is None:
+            allowed_nexus_classes = (_nexus_dataset, _nexus_group)
+        for child in group[_nexus_children]:
+            try:
+                if child[_nexus_name] == name:
+                    if child["type"] == "link":
+                        child = self.get_object_by_path(
+                            self._root, child["target"])
+                    if child["type"] in allowed_nexus_classes:
+                        return child
+            except KeyError:
+                pass
+
     @staticmethod
     def find_by_nx_class(nx_class_names: Tuple[str, ...],
                          root: Dict) -> Dict[str, List[Group]]:
@@ -111,17 +118,17 @@ class LoadFromJson:
 
         return groups_with_requested_nx_class
 
-    @staticmethod
-    def get_child_from_group(group: Dict, child_name: str) -> Optional[Dict]:
-        return _get_child_from_group(group, child_name)
+    def get_child_from_group(self, group: Dict,
+                             child_name: str) -> Optional[Dict]:
+        return self._get_child_from_group(group, child_name)
 
-    @staticmethod
-    def get_dataset_from_group(group: Dict,
+    def get_dataset_from_group(self, group: Dict,
                                dataset_name: str) -> Optional[Dict]:
         """
         Returns dictionary for dataset or None if not found
         """
-        return _get_child_from_group(group, dataset_name, (_nexus_dataset, ))
+        return self._get_child_from_group(group, dataset_name,
+                                          (_nexus_dataset, ))
 
     def dataset_in_group(self, group: Dict,
                          dataset_name: str) -> Tuple[bool, str]:
@@ -216,10 +223,9 @@ class LoadFromJson:
             raise MissingDataset()
         return dataset[_nexus_values]
 
-    @staticmethod
-    def get_object_by_path(group: Dict, path_str: str) -> Dict:
+    def get_object_by_path(self, group: Dict, path_str: str) -> Dict:
         for node in filter(None, path_str.split("/")):
-            group = _get_child_from_group(group, node)
+            group = self._get_child_from_group(group, node)
             if group is None:
                 raise MissingDataset()
         return group

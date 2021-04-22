@@ -158,7 +158,7 @@ def _add_link_to_json(file_root: Dict, new_path: str, target_path: str):
     new_path_split = new_path.split("/")
     link_name = new_path_split[-1]
     parent_path = "/".join(new_path_split[:-1])
-    loading = LoadFromJson()
+    loading = LoadFromJson(file_root)
     parent_group = loading.get_object_by_path(file_root, parent_path)
     link = {"type": "link", "name": link_name, "target": target_path}
     existing_object = loading.get_child_from_group(parent_group, link_name)
@@ -173,7 +173,7 @@ class JsonWriter:
         path_split = path.split("/")
         dataset_name = path_split[-1]
         parent_path = "/".join(path_split[:-1])
-        loading = LoadFromJson()
+        loading = LoadFromJson(file_root)
         parent_group = loading.get_object_by_path(file_root, parent_path)
         self.add_dataset(parent_group, dataset_name, data)
 
