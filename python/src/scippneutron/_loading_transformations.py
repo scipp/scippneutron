@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
+import warnings
 
 import numpy as np
 from ._loading_common import MissingDataset, MissingAttribute
@@ -9,7 +10,7 @@ import scipp as sc
 import h5py
 from cmath import isclose
 from ._loading_hdf5_nexus import LoadFromHdf5
-from ._loading_json_nexus import LoadFromJson
+from ._loading_json_nexus import LoadFromJson, contains_stream
 
 
 class TransformationError(Exception):
@@ -108,37 +109,70 @@ def _get_transformations(transform_path: str,
                              group_name, loading)
 
 
+def _transformation_is_nx_log_stream(transform: Union[h5py.Dataset, h5py.Group,
+                                                      Dict],
+                                     loading: Union[LoadFromHdf5,
+                                                    LoadFromJson]):
+    # Stream objects are only in the dict loaded from json
+    if isinstance(transform, dict):
+        # If transform is a group and contains a stream but not a value dataset
+        # then assume it is a streamed NXlog transformation
+        try:
+            if loading.is_group(transform):
+                found_value_dataset, _ = loading.dataset_in_group(
+                    transform, "value")
+                if not found_value_dataset and contains_stream(transform):
+                    return True
+        except KeyError:
+            pass
+    return False
+
+
 def _append_transformation(transform: Union[h5py.Dataset, h5py.Group, Dict],
                            transformations: List[np.ndarray], group_name: str,
                            loading: Union[LoadFromHdf5, LoadFromJson]) -> str:
-    try:
-        vector = loading.get_attribute_as_numpy_array(transform,
-                                                      "vector").astype(float)
-        vector = _normalise(vector, loading.get_name(transform))
-    except MissingAttribute:
-        raise TransformationError(
-            f"Missing 'vector' attribute in transformation "
-            f"at {loading.get_name(transform)}")
-
-    try:
-        offset = loading.get_attribute_as_numpy_array(transform,
-                                                      "offset").astype(float)
-    except MissingAttribute:
-        offset = np.array([0., 0., 0.], dtype=float)
-
-    transform_type = loading.get_string_attribute(transform,
-                                                  "transformation_type")
-    if transform_type == 'translation':
-        _append_translation(offset, transform, transformations, vector,
-                            group_name, loading)
-    elif transform_type == 'rotation':
-        _append_rotation(offset, transform, transformations, vector,
-                         group_name, loading)
+    if _transformation_is_nx_log_stream(transform, loading):
+        warnings.warn("Streamed NXlog found in transformation "
+                      "chain, getting its value from stream is "
+                      "not yet implemented and instead it will be "
+                      "treated as a 0-distance translation")
+        vector = np.array([0, 0, 0]).astype(float)
+        matrix = np.block([[np.eye(3), vector[np.newaxis].T], [0., 0., 0.,
+                                                               1.]])
+        transformations.append(matrix)
     else:
-        raise TransformationError(f"Unknown transformation type "
-                                  f"'{transform_type}'"
-                                  f" at {loading.get_name(transform)}")
-    return loading.get_string_attribute(transform, "depends_on")
+        try:
+            vector = loading.get_attribute_as_numpy_array(
+                transform, "vector").astype(float)
+            vector = _normalise(vector, loading.get_name(transform))
+        except MissingAttribute:
+            raise TransformationError(
+                f"Missing 'vector' attribute in transformation "
+                f"at {loading.get_name(transform)}")
+
+        try:
+            offset = loading.get_attribute_as_numpy_array(
+                transform, "offset").astype(float)
+        except MissingAttribute:
+            offset = np.array([0., 0., 0.], dtype=float)
+
+        transform_type = loading.get_string_attribute(transform,
+                                                      "transformation_type")
+        if transform_type == 'translation':
+            _append_translation(offset, transform, transformations, vector,
+                                group_name, loading)
+        elif transform_type == 'rotation':
+            _append_rotation(offset, transform, transformations, vector,
+                             group_name, loading)
+        else:
+            raise TransformationError(f"Unknown transformation type "
+                                      f"'{transform_type}'"
+                                      f" at {loading.get_name(transform)}")
+    try:
+        depends_on = loading.get_string_attribute(transform, "depends_on")
+    except MissingAttribute:
+        depends_on = "."
+    return depends_on
 
 
 def _normalise(vector: np.ndarray, transform_name: str) -> np.ndarray:

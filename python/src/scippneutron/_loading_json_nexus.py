@@ -15,6 +15,7 @@ _nexus_dataset = "dataset"
 _nexus_group = "group"
 _nexus_children = "children"
 _nexus_link = "link"
+_nexus_stream = "stream"
 
 _filewriter_to_supported_numpy_dtype = {
     "float32": np.float32,
@@ -70,6 +71,16 @@ def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
         pass
 
 
+def contains_stream(group: Dict):
+    try:
+        for child in group[_nexus_children]:
+            if child["type"] == _nexus_stream:
+                return True
+    except KeyError:
+        pass
+    return False
+
+
 class LoadFromJson:
     def __init__(self, root: Dict):
         self._root = root
@@ -84,7 +95,8 @@ class LoadFromJson:
         Returns dictionary for dataset or None if not found
         """
         if allowed_nexus_classes is None:
-            allowed_nexus_classes = (_nexus_dataset, _nexus_group)
+            allowed_nexus_classes = (_nexus_dataset, _nexus_group,
+                                     _nexus_stream)
         for child in group[_nexus_children]:
             try:
                 if child[_nexus_name] == name:
