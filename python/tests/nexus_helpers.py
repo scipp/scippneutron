@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Union, Iterator, Optional, Dict, Any
+from typing import List, Union, Iterator, Optional, Dict, Any, Tuple
 import h5py
 import numpy as np
 from enum import Enum
@@ -99,6 +99,23 @@ class Link:
     target_path: str
 
 
+@dataclass
+class DatasetAtPath:
+    path: str
+    data: np.ndarray
+    attributes: Dict[str, Any]
+
+
+@dataclass
+class Stream:
+    path: str
+    topic: str = "topic"
+    source: str = "source"
+    writer_module: str = "f142"
+    type: str = "double"
+    value_units: str = "m"
+
+
 class InMemoryNeXusWriter:
     def add_dataset_at_path(self, file_root: h5py.File, path: str,
                             data: np.ndarray, attributes: Dict):
@@ -169,14 +186,20 @@ def _add_link_to_json(file_root: Dict, new_path: str, target_path: str):
     parent_group["children"].append(link)
 
 
+def _parent_and_name_from_path(file_root: Dict, path: str) -> Tuple[Dict, str]:
+    path_split = path.split("/")
+    name = path_split[-1]
+    parent_path = "/".join(path_split[:-1])
+    loading = LoadFromJson(file_root)
+    parent_group = loading.get_object_by_path(file_root, parent_path)
+    return parent_group, name
+
+
 class JsonWriter:
     def add_dataset_at_path(self, file_root: Dict, path: str, data: np.ndarray,
                             attributes: Dict):
-        path_split = path.split("/")
-        dataset_name = path_split[-1]
-        parent_path = "/".join(path_split[:-1])
-        loading = LoadFromJson(file_root)
-        parent_group = loading.get_object_by_path(file_root, parent_path)
+        parent_group, dataset_name = _parent_and_name_from_path(
+            file_root, path)
         dataset = self.add_dataset(parent_group, dataset_name, data)
         for name, value in attributes.items():
             self.add_attribute(dataset, name, value)
@@ -235,19 +258,27 @@ class JsonWriter:
     def add_soft_link(file_root: Dict, new_path: str, target_path: str):
         _add_link_to_json(file_root, new_path, target_path)
 
+    def add_stream(self, file_root: Dict, stream: Stream):
+        new_stream = {
+            "type": "stream",
+            "stream": {
+                "topic": stream.topic,
+                "source": stream.source,
+                "writer_module": stream.writer_module,
+                "type": stream.type,
+                "value_units": stream.value_units
+            }
+        }
+        parent, name = _parent_and_name_from_path(file_root, stream.path)
+        stream_group = self.add_group(parent, name)
+        stream_group["children"].append(new_stream)
+
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
-
-
-@dataclass
-class DatasetAtPath:
-    path: str
-    data: np.ndarray
-    attributes: Dict[str, Any]
 
 
 class NexusBuilder:
@@ -266,6 +297,7 @@ class NexusBuilder:
         self._soft_links: List[Link] = []
         self._writer = None
         self._datasets: List[DatasetAtPath] = []
+        self._streams = []
 
     def add_dataset_at_path(self, path: str, data: np.ndarray,
                             attributes: Dict):
@@ -275,6 +307,9 @@ class NexusBuilder:
         for dataset in self._datasets:
             self._writer.add_dataset_at_path(root, dataset.path, dataset.data,
                                              dataset.attributes)
+
+    def add_stream(self, stream: Stream):
+        self._streams.append(stream)
 
     def add_detector(self, detector: Detector):
         self._detectors.append(detector)
@@ -369,6 +404,7 @@ class NexusBuilder:
             parent_path = "/entry/instrument"
         self._write_detectors(parent_group, parent_path)
         self._write_datasets(nexus_file)
+        self._write_streams(nexus_file)
         self._write_links(nexus_file)
 
     def create_file_on_disk(self, filename: str):
@@ -596,3 +632,8 @@ class NexusBuilder:
         nx_class = self._writer.add_group(parent, group_name)
         self._writer.add_attribute(nx_class, "NX_class", nx_class_name)
         return nx_class
+
+    def _write_streams(self, root: Union[h5py.File, Dict]):
+        if isinstance(self._writer, JsonWriter):
+            for stream in self._streams:
+                self._writer.add_stream(root, stream)

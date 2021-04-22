@@ -56,7 +56,7 @@ def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
             try:
                 path.append(child[_nexus_name])
             except KeyError:
-                pass
+                continue
             nx_class = _get_attribute_value(child, _nexus_class)
             if nx_class is not None:
                 if nx_class in nx_class_names:
