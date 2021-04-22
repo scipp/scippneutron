@@ -153,8 +153,17 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     return loaded_data
 
 
-def load_nexus_json(json_string: str) -> Optional[sc.Variable]:
+def _load_nexus_json(json_template: str) -> Optional[sc.Variable]:
+    """
+    Use this function for testing so that file io is not required
+    """
     # We do not use cls to convert value lists to sc.Variable at this
     # point because we do not know what dimension names to use here
-    loaded_json = json.loads(json_string)
+    loaded_json = json.loads(json_template)
     return _load_data(loaded_json, None, LoadFromJson(loaded_json), True)
+
+
+def load_nexus_json(json_filename: str) -> Optional[sc.Variable]:
+    with open(json_filename, 'r') as json_file:
+        json_string = json_file.read()
+    return _load_nexus_json(json_string)

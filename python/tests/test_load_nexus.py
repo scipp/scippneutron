@@ -15,6 +15,7 @@ import pytest
 import scippneutron
 import scipp as sc
 from typing import List, Type, Union, Callable
+from scippneutron.load_nexus import _load_nexus_json
 
 
 def test_raises_exception_if_multiple_nxentry_in_file():
@@ -36,7 +37,7 @@ def load_from_nexus(builder: NexusBuilder) -> sc.Variable:
 
 
 def load_from_json(builder: NexusBuilder) -> sc.Variable:
-    return scippneutron.load_nexus_json(builder.json_string)
+    return _load_nexus_json(builder.json_string)
 
 
 @pytest.fixture(params=[load_from_nexus, load_from_json])

@@ -1,8 +1,8 @@
 import scipp as sc
-import scippneutron
 import numpy as np
 from .nexus_helpers import NexusBuilder, Source, Stream
 import pytest
+from scippneutron.load_nexus import _load_nexus_json
 """
 Many tests for load_nexus_json() are in test_load_nexus
 as they are parameterised to run the same checks against
@@ -22,7 +22,7 @@ def test_stream_object_as_transformation_results_in_warning():
     builder.add_dataset_at_path("/entry/source/depends_on", stream_path, {})
 
     with pytest.warns(UserWarning):
-        loaded_data = scippneutron.load_nexus_json(builder.json_string)
+        loaded_data = _load_nexus_json(builder.json_string)
 
     # A 0 distance translation is used in place of the streamed transformation
     default = [0, 0, 0]

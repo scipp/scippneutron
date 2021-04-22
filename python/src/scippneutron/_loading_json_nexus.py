@@ -20,6 +20,8 @@ _nexus_stream = "stream"
 _filewriter_to_supported_numpy_dtype = {
     "float32": np.float32,
     "float64": np.float64,
+    "float": np.float32,
+    "double": np.float64,
     "int8": np.int32,
     "int16": np.int32,
     "int32": np.int32,
