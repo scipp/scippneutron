@@ -79,7 +79,8 @@ def _load_pixel_positions(
         z_positions = nexus.load_dataset_from_group_as_numpy_array(
             detector_group, "z_pixel_offset").flatten()
     except MissingDataset:
-        # z offsets are allowed to be missing, in which case use zeros
+        # According to the NeXus standard z offsets are allowed to be
+        # missing, in which case use zeros
         z_positions = np.zeros_like(x_positions)
 
     if not _all_equal((x_positions.size, y_positions.size, z_positions.size,
