@@ -2,9 +2,8 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
 
-from typing import Union, Dict
-import h5py
 from dataclasses import dataclass
+from ._loading_nexus import GroupObject
 
 
 class BadSource(Exception):
@@ -26,6 +25,6 @@ class Group:
     but we also need to access the parent when parsing Dict
     loaded from json
     """
-    group: Union[h5py.Group, Dict]
-    parent: Union[h5py.Group, Dict]
+    group: GroupObject
+    parent: GroupObject
     path: str

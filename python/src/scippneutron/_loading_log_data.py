@@ -3,17 +3,15 @@
 # @author Matthew Jones
 
 import numpy as np
-from typing import Tuple, List, Union, Dict
+from typing import Tuple, List
 import scipp as sc
-import h5py
 from ._loading_common import (BadSource, MissingDataset, Group)
-from ._loading_hdf5_nexus import LoadFromHdf5
-from ._loading_json_nexus import LoadFromJson
+from ._loading_nexus import LoadFromNexus, GroupObject
 from warnings import warn
 
 
 def load_logs(loaded_data: sc.Variable, log_groups: List[Group],
-              nexus: Union[LoadFromHdf5, LoadFromJson]):
+              nexus: LoadFromNexus):
     for group in log_groups:
         try:
             log_data_name, log_data = _load_log_data_from_group(
@@ -47,9 +45,8 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
              f"{log_data_name} used as attribute name.")
 
 
-def _load_log_data_from_group(
-        group: Union[h5py.Group, Dict],
-        nexus: Union[LoadFromHdf5, LoadFromJson]) -> Tuple[str, sc.Variable]:
+def _load_log_data_from_group(group: GroupObject,
+                              nexus: LoadFromNexus) -> Tuple[str, sc.Variable]:
     property_name = nexus.get_name(group)
     value_dataset_name = "value"
     time_dataset_name = "time"

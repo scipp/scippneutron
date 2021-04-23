@@ -1,13 +1,12 @@
 from _warnings import warn
-from typing import List, Optional, Any, Tuple, Union, Dict
+from typing import List, Optional, Any, Tuple
 import h5py
 import numpy as np
 import scipp as sc
 from ._loading_common import Group
 from ._loading_transformations import (get_position_from_transformations,
                                        TransformationError)
-from ._loading_hdf5_nexus import LoadFromHdf5
-from ._loading_json_nexus import LoadFromJson
+from ._loading_nexus import LoadFromNexus, GroupObject
 
 
 class PositionError(Exception):
@@ -20,7 +19,7 @@ def load_position_of_unique_component(
         name: str,
         nx_class: str,
         file_root: h5py.File,
-        nexus: Union[LoadFromHdf5, LoadFromJson],
+        nexus: LoadFromNexus,
         default_position: Optional[np.ndarray] = None):
     if len(groups) > 1:
         warn(f"More than one {nx_class} found in file, "
@@ -45,7 +44,7 @@ def load_positions_of_components(
         name: str,
         nx_class: str,
         file_root: h5py.File,
-        nexus: Union[LoadFromHdf5, LoadFromJson],
+        nexus: LoadFromNexus,
         default_position: Optional[np.ndarray] = None):
     for group in groups:
         try:
@@ -69,11 +68,11 @@ def load_positions_of_components(
 
 
 def _get_position_of_component(
-    group: Union[h5py.Group, Dict],
+    group: GroupObject,
     name: str,
     nx_class: str,
     file_root: h5py.File,
-    nexus: Union[LoadFromHdf5, LoadFromJson],
+    nexus: LoadFromNexus,
     default_position: Optional[np.ndarray] = None
 ) -> Tuple[np.ndarray, sc.Unit]:
     depends_on_found, _ = nexus.dataset_in_group(group, "depends_on")

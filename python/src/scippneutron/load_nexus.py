@@ -9,6 +9,7 @@ from ._loading_detector_data import load_detector_data
 from ._loading_log_data import load_logs
 from ._loading_hdf5_nexus import LoadFromHdf5
 from ._loading_json_nexus import LoadFromJson
+from ._loading_nexus import LoadFromNexus, GroupObject
 import h5py
 from timeit import default_timer as timer
 from typing import Union, List, Optional, Dict
@@ -39,10 +40,9 @@ def _open_if_path(file_in: Union[str, h5py.File]):
         yield file_in
 
 
-def _add_string_attr_to_loaded_data(group: Union[h5py.Group,
-                                                 Dict], dataset_name: str,
+def _add_string_attr_to_loaded_data(group: GroupObject, dataset_name: str,
                                     attr_name: str, data: sc.Variable,
-                                    nexus: Union[LoadFromHdf5, LoadFromJson]):
+                                    nexus: LoadFromNexus):
     try:
         data = data.attrs
     except AttributeError:
@@ -56,7 +56,7 @@ def _add_string_attr_to_loaded_data(group: Union[h5py.Group,
 
 
 def _load_instrument_name(instrument_groups: List[Group], data: sc.Variable,
-                          nexus: Union[LoadFromHdf5, LoadFromJson]):
+                          nexus: LoadFromNexus):
     if len(instrument_groups) > 1:
         warn(f"More than one {nx_instrument} found in file, "
              f"loading name from {instrument_groups[0].group.name} only")
@@ -65,8 +65,7 @@ def _load_instrument_name(instrument_groups: List[Group], data: sc.Variable,
 
 
 def _load_sample(sample_groups: List[Group], data: sc.Variable,
-                 file_root: h5py.File, nexus: Union[LoadFromHdf5,
-                                                    LoadFromJson]):
+                 file_root: h5py.File, nexus: LoadFromNexus):
     load_positions_of_components(sample_groups,
                                  data,
                                  "sample",
@@ -77,14 +76,12 @@ def _load_sample(sample_groups: List[Group], data: sc.Variable,
 
 
 def _load_source(source_groups: List[Group], data: sc.Variable,
-                 file_root: h5py.File, nexus: Union[LoadFromHdf5,
-                                                    LoadFromJson]):
+                 file_root: h5py.File, nexus: LoadFromNexus):
     load_position_of_unique_component(source_groups, data, "source", nx_source,
                                       file_root, nexus)
 
 
-def _load_title(entry_group: Group, data: sc.Variable,
-                nexus: Union[LoadFromHdf5, LoadFromJson]):
+def _load_title(entry_group: Group, data: sc.Variable, nexus: LoadFromNexus):
     _add_string_attr_to_loaded_data(entry_group.group, "title",
                                     "experiment_title", data, nexus)
 
@@ -114,7 +111,7 @@ def load_nexus(data_file: Union[str, h5py.File],
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
-               nexus: Union[LoadFromHdf5, LoadFromJson], quiet: bool):
+               nexus: LoadFromNexus, quiet: bool):
     if root is not None:
         root_node = nexus_file[root]
     else:

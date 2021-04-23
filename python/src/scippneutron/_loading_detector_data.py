@@ -4,7 +4,7 @@
 
 from dataclasses import dataclass
 import h5py
-from typing import Optional, List, Union
+from typing import Optional, List
 import numpy as np
 from ._loading_common import (BadSource, MissingDataset, Group)
 import scipp as sc
@@ -12,8 +12,7 @@ from datetime import datetime
 from warnings import warn
 from itertools import groupby
 from ._loading_transformations import get_full_transformation_matrix
-from ._loading_hdf5_nexus import LoadFromHdf5
-from ._loading_json_nexus import LoadFromJson
+from ._loading_nexus import LoadFromNexus, GroupObject
 
 _detector_dimension = "detector_id"
 _event_dimension = "event"
@@ -24,8 +23,7 @@ def _all_equal(iterable):
     return next(g, True) and not next(g, False)
 
 
-def _check_for_missing_fields(group: h5py.Group,
-                              nexus: Union[LoadFromHdf5, LoadFromJson]) -> str:
+def _check_for_missing_fields(group: GroupObject, nexus: LoadFromNexus) -> str:
     required_fields = (
         "event_time_zero",
         "event_index",
@@ -57,10 +55,9 @@ def _convert_array_to_metres(array: np.ndarray, unit: str) -> np.ndarray:
                     dtype=np.float64), "m").values
 
 
-def _load_pixel_positions(
-        detector_group: h5py.Group, detector_ids_size: int,
-        file_root: h5py.File,
-        nexus: Union[LoadFromHdf5, LoadFromJson]) -> Optional[sc.Variable]:
+def _load_pixel_positions(detector_group: GroupObject, detector_ids_size: int,
+                          file_root: h5py.File,
+                          nexus: LoadFromNexus) -> Optional[sc.Variable]:
     offsets_unit = nexus.get_unit(
         nexus.get_dataset_from_group(detector_group, "x_pixel_offset"))
     if offsets_unit == sc.units.dimensionless:
@@ -126,9 +123,8 @@ class DetectorData:
     pixel_positions: Optional[sc.Variable] = None
 
 
-def _load_event_group(group: Group, file_root: h5py.File,
-                      nexus: Union[LoadFromHdf5,
-                                   LoadFromJson], quiet: bool) -> DetectorData:
+def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
+                      quiet: bool) -> DetectorData:
     error_msg = _check_for_missing_fields(group.group, nexus)
     if error_msg:
         raise BadSource(error_msg)
@@ -227,7 +223,7 @@ def _check_event_ids_and_det_number_types_valid(detector_id_type: np.dtype,
 
 
 def load_detector_data(event_data_groups: List[Group], file_root: h5py.File,
-                       nexus: Union[LoadFromHdf5, LoadFromJson],
+                       nexus: LoadFromNexus,
                        quiet: bool) -> Optional[sc.DataArray]:
     event_data = []
     for group in event_data_groups:

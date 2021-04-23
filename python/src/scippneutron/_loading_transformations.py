@@ -9,8 +9,8 @@ from typing import Union, List, Tuple, Dict
 import scipp as sc
 import h5py
 from cmath import isclose
-from ._loading_hdf5_nexus import LoadFromHdf5
-from ._loading_json_nexus import LoadFromJson, contains_stream
+from ._loading_nexus import LoadFromNexus, GroupObject
+from ._loading_json_nexus import contains_stream
 
 
 class TransformationError(Exception):
@@ -38,9 +38,9 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
     return i - np.sin(angle_radians) * ll + (1 - np.cos(angle_radians)) * ll_2
 
 
-def get_position_from_transformations(
-        group: h5py.Group, root: [h5py.File, h5py.Group],
-        nexus: Union[LoadFromHdf5, LoadFromJson]) -> np.ndarray:
+def get_position_from_transformations(group: GroupObject,
+                                      root: [h5py.File, h5py.Group],
+                                      nexus: LoadFromNexus) -> np.ndarray:
     """
     Get position of a component which has a "depends_on" dataset
 
@@ -55,9 +55,8 @@ def get_position_from_transformations(
                                                       dtype=float))[0:3]
 
 
-def get_full_transformation_matrix(
-        group: h5py.Group, root: h5py.File,
-        nexus: Union[LoadFromHdf5, LoadFromJson]) -> np.ndarray:
+def get_full_transformation_matrix(group: GroupObject, root: h5py.File,
+                                   nexus: LoadFromNexus) -> np.ndarray:
     """
     Get the 4x4 transformation matrix for a component, resulting
     from the full chain of transformations linked by "depends_on"
@@ -86,7 +85,7 @@ def get_full_transformation_matrix(
 def _get_transformations(transform_path: str,
                          transformations: List[np.ndarray],
                          root: Union[h5py.File, Dict], group_name: str,
-                         nexus: Union[LoadFromHdf5, LoadFromJson]):
+                         nexus: LoadFromNexus):
     """
     Get all transformations in the depends_on chain
 
@@ -108,9 +107,9 @@ def _get_transformations(transform_path: str,
                              group_name, nexus)
 
 
-def _transformation_is_nx_log_stream(transform: Union[h5py.Dataset, h5py.Group,
-                                                      Dict],
-                                     nexus: Union[LoadFromHdf5, LoadFromJson]):
+def _transformation_is_nx_log_stream(transform: Union[h5py.Dataset,
+                                                      GroupObject],
+                                     nexus: LoadFromNexus):
     # Stream objects are only in the dict loaded from json
     if isinstance(transform, dict):
         # If transform is a group and contains a stream but not a value dataset
@@ -126,9 +125,9 @@ def _transformation_is_nx_log_stream(transform: Union[h5py.Dataset, h5py.Group,
     return False
 
 
-def _append_transformation(transform: Union[h5py.Dataset, h5py.Group, Dict],
+def _append_transformation(transform: Union[h5py.Dataset, GroupObject],
                            transformations: List[np.ndarray], group_name: str,
-                           nexus: Union[LoadFromHdf5, LoadFromJson]) -> str:
+                           nexus: LoadFromNexus) -> str:
     if _transformation_is_nx_log_stream(transform, nexus):
         warnings.warn("Streamed NXlog found in transformation "
                       "chain, getting its value from stream is "
@@ -180,11 +179,10 @@ def _normalise(vector: np.ndarray, transform_name: str) -> np.ndarray:
     return vector / norm
 
 
-def _append_translation(offset: np.ndarray, transform: Union[h5py.Dataset,
-                                                             h5py.Group],
+def _append_translation(offset: np.ndarray, transform: GroupObject,
                         transformations: List[np.ndarray],
                         direction_unit_vector: np.ndarray, group_name: str,
-                        nexus: Union[LoadFromHdf5, LoadFromJson]):
+                        nexus: LoadFromNexus):
     magnitude, unit = _get_transformation_magnitude_and_unit(
         group_name, transform, nexus)
 
@@ -216,8 +214,8 @@ def _get_unit(attributes: h5py.AttributeManager,
 
 
 def _get_transformation_magnitude_and_unit(
-        group_name: str, transform: Union[h5py.Dataset, h5py.Group, Dict],
-        nexus: Union[LoadFromHdf5, LoadFromJson]) -> Tuple[float, sc.Unit]:
+        group_name: str, transform: Union[h5py.Dataset, GroupObject],
+        nexus: LoadFromNexus) -> Tuple[float, sc.Unit]:
     if nexus.is_group(transform):
         value = nexus.load_dataset_from_group_as_numpy_array(
             transform, "value")
@@ -253,11 +251,10 @@ def _get_transformation_magnitude_and_unit(
     return magnitude, sc.Unit(unit)
 
 
-def _append_rotation(offset: np.ndarray, transform: Union[h5py.Dataset,
-                                                          h5py.Group],
+def _append_rotation(offset: np.ndarray, transform: GroupObject,
                      transformations: List[np.ndarray],
                      rotation_axis: np.ndarray, group_name: str,
-                     nexus: Union[LoadFromHdf5, LoadFromJson]):
+                     nexus: LoadFromNexus):
     angle, unit = _get_transformation_magnitude_and_unit(
         group_name, transform, nexus)
     if unit == sc.units.deg:
