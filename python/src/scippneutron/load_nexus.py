@@ -9,7 +9,7 @@ from ._loading_detector_data import load_detector_data
 from ._loading_log_data import load_logs
 from ._loading_hdf5_nexus import LoadFromHdf5
 from ._loading_json_nexus import LoadFromJson
-from ._loading_nexus import LoadFromNexus, GroupObject
+from ._loading_nexus import LoadFromNexus, GroupObject, ScippData
 import h5py
 from timeit import default_timer as timer
 from typing import Union, List, Optional, Dict
@@ -41,7 +41,7 @@ def _open_if_path(file_in: Union[str, h5py.File]):
 
 
 def _add_string_attr_to_loaded_data(group: GroupObject, dataset_name: str,
-                                    attr_name: str, data: sc.Variable,
+                                    attr_name: str, data: ScippData,
                                     nexus: LoadFromNexus):
     try:
         data = data.attrs
@@ -55,7 +55,7 @@ def _add_string_attr_to_loaded_data(group: GroupObject, dataset_name: str,
         pass
 
 
-def _load_instrument_name(instrument_groups: List[Group], data: sc.Variable,
+def _load_instrument_name(instrument_groups: List[Group], data: ScippData,
                           nexus: LoadFromNexus):
     if len(instrument_groups) > 1:
         warn(f"More than one {nx_instrument} found in file, "
@@ -64,7 +64,7 @@ def _load_instrument_name(instrument_groups: List[Group], data: sc.Variable,
                                     "instrument_name", data, nexus)
 
 
-def _load_sample(sample_groups: List[Group], data: sc.Variable,
+def _load_sample(sample_groups: List[Group], data: ScippData,
                  file_root: h5py.File, nexus: LoadFromNexus):
     load_positions_of_components(sample_groups,
                                  data,
@@ -75,20 +75,20 @@ def _load_sample(sample_groups: List[Group], data: sc.Variable,
                                  default_position=np.array([0, 0, 0]))
 
 
-def _load_source(source_groups: List[Group], data: sc.Variable,
+def _load_source(source_groups: List[Group], data: ScippData,
                  file_root: h5py.File, nexus: LoadFromNexus):
     load_position_of_unique_component(source_groups, data, "source", nx_source,
                                       file_root, nexus)
 
 
-def _load_title(entry_group: Group, data: sc.Variable, nexus: LoadFromNexus):
+def _load_title(entry_group: Group, data: ScippData, nexus: LoadFromNexus):
     _add_string_attr_to_loaded_data(entry_group.group, "title",
                                     "experiment_title", data, nexus)
 
 
 def load_nexus(data_file: Union[str, h5py.File],
                root: str = "/",
-               quiet=True) -> Optional[sc.Variable]:
+               quiet=True) -> Optional[ScippData]:
     """
     Load a NeXus file and return required information.
 
@@ -111,7 +111,7 @@ def load_nexus(data_file: Union[str, h5py.File],
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
-               nexus: LoadFromNexus, quiet: bool):
+               nexus: LoadFromNexus, quiet: bool) -> Optional[ScippData]:
     if root is not None:
         root_node = nexus_file[root]
     else:
@@ -149,7 +149,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     return loaded_data
 
 
-def _load_nexus_json(json_template: str) -> Optional[sc.Variable]:
+def _load_nexus_json(json_template: str) -> Optional[ScippData]:
     """
     Use this function for testing so that file io is not required
     """
@@ -159,7 +159,7 @@ def _load_nexus_json(json_template: str) -> Optional[sc.Variable]:
     return _load_data(loaded_json, None, LoadFromJson(loaded_json), True)
 
 
-def load_nexus_json(json_filename: str) -> Optional[sc.Variable]:
+def load_nexus_json(json_filename: str) -> Optional[ScippData]:
     with open(json_filename, 'r') as json_file:
         json_string = json_file.read()
     return _load_nexus_json(json_string)

@@ -6,11 +6,11 @@ import numpy as np
 from typing import Tuple, List
 import scipp as sc
 from ._loading_common import (BadSource, MissingDataset, Group)
-from ._loading_nexus import LoadFromNexus, GroupObject
+from ._loading_nexus import LoadFromNexus, GroupObject, ScippData
 from warnings import warn
 
 
-def load_logs(loaded_data: sc.Variable, log_groups: List[Group],
+def load_logs(loaded_data: ScippData, log_groups: List[Group],
               nexus: LoadFromNexus):
     for group in log_groups:
         try:
@@ -22,7 +22,7 @@ def load_logs(loaded_data: sc.Variable, log_groups: List[Group],
 
 
 def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
-                     group_path: str, data: sc.Variable):
+                     group_path: str, data: ScippData):
     try:
         data = data.attrs
     except AttributeError:
