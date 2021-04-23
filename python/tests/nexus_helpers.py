@@ -108,11 +108,34 @@ class DatasetAtPath:
 
 @dataclass
 class Stream:
+    """
+    Only present in the JSON NeXus file templates, not in HDF5 NeXus files.
+    Records where to find data in Kafka that are streamed during an experiment.
+    """
+    # Where the builder should place the stream object
     path: str
-    topic: str = "topic"
-    source: str = "source"
+
+    # The following members correspond to fields in stream object.
+    # Some of them may not be of interest to Scipp but are to other
+    # software which consume the json template, for example
+    # the Filewriter (https://github.com/ess-dmsc/kafka-to-nexus)
+
+    # Kafka topic (named data stream)
+    topic: str = "motion_devices_topic"
+    # Source name, allows filtering and multiplexing to different
+    # writer_modules by the filewriter software
+    source: str = "linear_axis"
+    # Tells filewriter which plugin to use to deserialise
+    # messages in this stream and how to write the data to file.
+    # For example the "f142" writer module deserialises messages which
+    # were serialised with the "f142" flatbuffer schema
+    # (https://github.com/ess-dmsc/streaming-data-types/) and
+    # writes resulting timeseries data to file as an NXlog
+    # (https://manual.nexusformat.org/classes/base_classes/NXlog.html)
     writer_module: str = "f142"
+    # Deserialised values are expected to be of this type
     type: str = "double"
+    # Values have these units
     value_units: str = "m"
 
 
