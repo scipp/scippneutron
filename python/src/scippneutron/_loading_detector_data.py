@@ -6,13 +6,13 @@ from dataclasses import dataclass
 import h5py
 from typing import Optional, List
 import numpy as np
-from ._loading_common import (BadSource, ensure_supported_int_type,
-                              load_dataset, get_units)
+from ._loading_common import (BadSource, MissingDataset, Group)
 import scipp as sc
 from datetime import datetime
 from warnings import warn
 from itertools import groupby
 from ._loading_transformations import get_full_transformation_matrix
+from ._loading_nexus import LoadFromNexus, GroupObject
 
 _detector_dimension = "detector_id"
 _event_dimension = "event"
@@ -23,8 +23,7 @@ def _all_equal(iterable):
     return next(g, True) and not next(g, False)
 
 
-def _check_for_missing_fields(group: h5py.Group) -> str:
-    error_message = ""
+def _check_for_missing_fields(group: GroupObject, nexus: LoadFromNexus) -> str:
     required_fields = (
         "event_time_zero",
         "event_index",
@@ -32,11 +31,10 @@ def _check_for_missing_fields(group: h5py.Group) -> str:
         "event_time_offset",
     )
     for field in required_fields:
-        if field not in group:
-            error_message += f"Unable to load data from NXevent_data " \
-                             f"at '{group.name}' due to missing '{field}'" \
-                             f" field\n"
-    return error_message
+        found, msg = nexus.dataset_in_group(group, field)
+        if not found:
+            return msg
+    return ""
 
 
 def _iso8601_to_datetime(iso8601: str) -> Optional[datetime]:
@@ -57,28 +55,35 @@ def _convert_array_to_metres(array: np.ndarray, unit: str) -> np.ndarray:
                     dtype=np.float64), "m").values
 
 
-def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
-                          file_root: h5py.File) -> Optional[sc.Variable]:
-    offsets_unit = get_units(detector_group["x_pixel_offset"])
-    if not offsets_unit:
+def _load_pixel_positions(detector_group: GroupObject, detector_ids_size: int,
+                          file_root: h5py.File,
+                          nexus: LoadFromNexus) -> Optional[sc.Variable]:
+    offsets_unit = nexus.get_unit(
+        nexus.get_dataset_from_group(detector_group, "x_pixel_offset"))
+    if offsets_unit == sc.units.dimensionless:
         warn(f"Skipped loading pixel positions as no units found on "
-             f"x_pixel_offset dataset in {detector_group.name}")
+             f"x_pixel_offset dataset in {nexus.get_name(detector_group)}")
         return None
 
     try:
-        x_positions = detector_group["x_pixel_offset"][...].flatten()
-        y_positions = detector_group["y_pixel_offset"][...].flatten()
-    except KeyError:
+        x_positions = nexus.load_dataset_from_group_as_numpy_array(
+            detector_group, "x_pixel_offset").flatten()
+        y_positions = nexus.load_dataset_from_group_as_numpy_array(
+            detector_group, "y_pixel_offset").flatten()
+    except MissingDataset:
         return None
     try:
-        z_positions = detector_group["z_pixel_offset"][...].flatten()
-    except KeyError:
+        z_positions = nexus.load_dataset_from_group_as_numpy_array(
+            detector_group, "z_pixel_offset").flatten()
+    except MissingDataset:
+        # According to the NeXus standard z offsets are allowed to be
+        # missing, in which case use zeros
         z_positions = np.zeros_like(x_positions)
 
     if not _all_equal((x_positions.size, y_positions.size, z_positions.size,
                        detector_ids_size)):
         warn(f"Skipped loading pixel positions as pixel offset and id "
-             f"dataset sizes do not match in {detector_group.name}")
+             f"dataset sizes do not match in {nexus.get_name(detector_group)}")
         return None
 
     x_positions = _convert_array_to_metres(x_positions, offsets_unit)
@@ -87,7 +92,8 @@ def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
 
     array = np.array([x_positions, y_positions, z_positions]).T
 
-    if "depends_on" in detector_group:
+    found_depends_on, _ = nexus.dataset_in_group(detector_group, "depends_on")
+    if found_depends_on:
         # Add fourth element of 1 to each vertex, indicating these are
         # positions not direction vectors
         n_rows = array.shape[0]
@@ -95,7 +101,7 @@ def _load_pixel_positions(detector_group: h5py.Group, detector_ids_size: int,
 
         # Get and apply transformation matrix
         transformation = get_full_transformation_matrix(
-            detector_group, file_root)
+            detector_group, file_root, nexus)
         for row_index in range(n_rows):
             array[row_index, :] = np.matmul(transformation,
                                             array[row_index, :])
@@ -117,9 +123,9 @@ class DetectorData:
     pixel_positions: Optional[sc.Variable] = None
 
 
-def _load_event_group(group: h5py.Group, file_root: h5py.File,
+def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
                       quiet: bool) -> DetectorData:
-    error_msg = _check_for_missing_fields(group)
+    error_msg = _check_for_missing_fields(group.group, nexus)
     if error_msg:
         raise BadSource(error_msg)
 
@@ -128,21 +134,21 @@ def _load_event_group(group: h5py.Group, file_root: h5py.File,
     # would be the first index of the next pulse.
     # In other words, ensure that event_index includes the bin edge for
     # the last pulse.
-    event_id_ds = group["event_id"]
-    event_index = group["event_index"][...].astype(
-        ensure_supported_int_type(group["event_index"].dtype.type))
-    if event_index[-1] < event_id_ds.len():
+    event_id = nexus.load_dataset(group.group, "event_id", [_event_dimension])
+    number_of_event_ids = event_id.sizes['event']
+    event_index = nexus.load_dataset_from_group_as_numpy_array(
+        group.group, "event_index")
+    if event_index[-1] < number_of_event_ids:
         event_index = np.append(
             event_index,
-            np.array([event_id_ds.len() - 1]).astype(event_index.dtype),
+            np.array([number_of_event_ids - 1]).astype(event_index.dtype),
         )
     else:
-        event_index[-1] = event_id_ds.len()
+        event_index[-1] = number_of_event_ids
 
     number_of_events = event_index[-1]
-    event_time_offset = load_dataset(group["event_time_offset"],
-                                     [_event_dimension])
-    event_id = load_dataset(event_id_ds, [_event_dimension])
+    event_time_offset = nexus.load_dataset(group.group, "event_time_offset",
+                                           [_event_dimension])
 
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
@@ -150,17 +156,20 @@ def _load_event_group(group: h5py.Group, file_root: h5py.File,
                       dtype=np.float32)
 
     detector_number_ds_name = "detector_number"
-    if detector_number_ds_name in group.parent:
+    dataset_in_group, _ = nexus.dataset_in_group(group.parent,
+                                                 detector_number_ds_name)
+    if dataset_in_group:
         # Hopefully the detector ids are recorded in the file
-        detector_ids = group.parent[detector_number_ds_name][...].flatten()
+        detector_ids = nexus.load_dataset_from_group_as_numpy_array(
+            group.parent, detector_number_ds_name).flatten()
     else:
         # Otherwise we'll just have to bin according to whatever
         # ids we have a events for (pixels with no recorded events
         # will not have a bin)
         detector_ids = np.unique(event_id.values)
 
-    detector_id_type = ensure_supported_int_type(detector_ids.dtype.type)
-    event_id_type = ensure_supported_int_type(event_id_ds.dtype.type)
+    detector_id_type = detector_ids.dtype.type
+    event_id_type = nexus.get_dataset_numpy_dtype(group.group, "event_id")
     _check_event_ids_and_det_number_types_valid(detector_id_type,
                                                 event_id_type)
 
@@ -179,14 +188,16 @@ def _load_event_group(group: h5py.Group, file_root: h5py.File,
 
     detector_group = group.parent
     pixel_positions = None
-    if "x_pixel_offset" in detector_group:
+    pixel_positions_found, _ = nexus.dataset_in_group(detector_group,
+                                                      "x_pixel_offset")
+    if pixel_positions_found:
         pixel_positions = _load_pixel_positions(detector_group,
                                                 detector_ids.shape[0],
-                                                file_root)
+                                                file_root, nexus)
 
     if not quiet:
-        print(f"Loaded event data from {group.name} containing "
-              f"{number_of_events} events")
+        print(f"Loaded event data from "
+              f"{group.path} containing {number_of_events} events")
 
     return DetectorData(data, detector_ids, pixel_positions)
 
@@ -211,16 +222,16 @@ def _check_event_ids_and_det_number_types_valid(detector_id_type: np.dtype,
             "NXdetector were not of the same type")
 
 
-def load_detector_data(event_data_groups: List[h5py.Group],
-                       file_root: h5py.File,
+def load_detector_data(event_data_groups: List[Group], file_root: h5py.File,
+                       nexus: LoadFromNexus,
                        quiet: bool) -> Optional[sc.DataArray]:
     event_data = []
     for group in event_data_groups:
         try:
-            new_event_data = _load_event_group(group, file_root, quiet)
+            new_event_data = _load_event_group(group, file_root, nexus, quiet)
             event_data.append(new_event_data)
         except BadSource as e:
-            warn(f"Skipped loading {group.name} due to:\n{e}")
+            warn(f"Skipped loading {group.path} due to:\n{e}")
 
     if not event_data:
         return
