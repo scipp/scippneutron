@@ -136,9 +136,7 @@ def _append_transformation(transform: Union[h5py.Dataset, h5py.Group, Dict],
                       "chain, getting its value from stream is "
                       "not yet implemented and instead it will be "
                       "treated as a 0-distance translation")
-        vector = np.array([0, 0, 0]).astype(float)
-        matrix = np.block([[np.eye(3), vector[np.newaxis].T], [0., 0., 0.,
-                                                               1.]])
+        matrix = np.eye(4).astype(float)
         transformations.append(matrix)
     else:
         try:
