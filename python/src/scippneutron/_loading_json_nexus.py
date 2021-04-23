@@ -73,7 +73,10 @@ def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
         pass
 
 
-def contains_stream(group: Dict):
+def contains_stream(group: Dict) -> bool:
+    """
+    Return True if the group contains a stream object
+    """
     try:
         for child in group[_nexus_children]:
             if child["type"] == _nexus_stream:
