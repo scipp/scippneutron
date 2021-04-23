@@ -3,7 +3,8 @@
 # @author Matthew Jones
 
 from dataclasses import dataclass
-from ._loading_nexus import GroupObject
+from typing import Union, Dict
+import h5py
 
 
 class BadSource(Exception):
@@ -25,6 +26,6 @@ class Group:
     but we also need to access the parent when parsing Dict
     loaded from json
     """
-    group: GroupObject
-    parent: GroupObject
+    group: Union[h5py.Group, Dict]
+    parent: Union[h5py.Group, Dict]
     path: str

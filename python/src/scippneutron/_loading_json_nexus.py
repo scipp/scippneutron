@@ -33,9 +33,8 @@ _filewriter_to_supported_numpy_dtype = {
 }
 
 
-def _get_attribute_value(
-        element: Dict,
-        attribute_name: str) -> Union[str, float, int, List, None]:
+def _get_attribute_value(element: Dict,
+                         attribute_name: str) -> Union[str, float, int, List]:
     """
     attributes can be a dictionary of key-value pairs, or an array
     of dictionaries with key, value, type, etc
@@ -50,6 +49,7 @@ def _get_attribute_value(
                     return attribute[_nexus_values]
     except KeyError:
         pass
+    raise MissingAttribute
 
 
 def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
@@ -60,12 +60,20 @@ def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
             try:
                 path.append(child[_nexus_name])
             except KeyError:
+                # If the object doesn't have a name it can't be a NeXus
+                # class we are looking for, nor can it be a group
+                # containing a NeXus class we are looking for, so skip to
+                # next object
                 continue
-            nx_class = _get_attribute_value(child, _nexus_class)
-            if nx_class is not None:
+            try:
+                nx_class = _get_attribute_value(child, _nexus_class)
                 if nx_class in nx_class_names:
                     groups_with_requested_nx_class[nx_class].append(
                         Group(child, root, "/".join(path)))
+            except MissingAttribute:
+                # It may be a group but not an NX_class,
+                # that's fine, continue to its children
+                pass
             _visit_nodes(child, nx_class_names, groups_with_requested_nx_class,
                          path)
             path.pop(-1)
@@ -79,9 +87,16 @@ def contains_stream(group: Dict) -> bool:
     """
     try:
         for child in group[_nexus_children]:
-            if child["type"] == _nexus_stream:
-                return True
+            try:
+                if child["type"] == _nexus_stream:
+                    return True
+            except KeyError:
+                # "type" field ought to exist, but if it does
+                # not then assume it is not a stream
+                pass
     except KeyError:
+        # "children" field may be missing, that is okay
+        # but means this this group cannot contain a stream
         pass
     return False
 
@@ -111,6 +126,8 @@ class LoadFromJson:
                     if child["type"] in allowed_nexus_classes:
                         return child
             except KeyError:
+                # if name or type are missing then it is
+                # not what we are looking for
                 pass
 
     @staticmethod
@@ -180,8 +197,9 @@ class LoadFromJson:
                 dtype = _filewriter_to_supported_numpy_dtype[
                     dataset[_nexus_dataset]["dtype"]]
 
-        units = _get_attribute_value(dataset, _nexus_units)
-        if units is None:
+        try:
+            units = _get_attribute_value(dataset, _nexus_units)
+        except MissingAttribute:
             units = sc.units.dimensionless
 
         if isinstance(dataset[_nexus_values], list):
@@ -235,9 +253,10 @@ class LoadFromJson:
 
     @staticmethod
     def get_unit(dataset: Dict) -> Union[str, sc.Unit]:
-        unit = _get_attribute_value(dataset, _nexus_units)
-        if unit is None:
-            return sc.units.dimensionless
+        try:
+            unit = _get_attribute_value(dataset, _nexus_units)
+        except MissingAttribute:
+            unit = sc.units.dimensionless
         return unit
 
     def load_scalar_string(self, group: Dict,
@@ -258,15 +277,11 @@ class LoadFromJson:
     def get_attribute_as_numpy_array(node: Dict,
                                      attribute_name: str) -> np.ndarray:
         attribute_value = _get_attribute_value(node, attribute_name)
-        if attribute_value is None:
-            raise MissingAttribute
         return np.array(attribute_value)
 
     @staticmethod
     def get_string_attribute(node: Dict, attribute_name: str) -> str:
         attribute_value = _get_attribute_value(node, attribute_name)
-        if attribute_value is None:
-            raise MissingAttribute
         return attribute_value
 
     @staticmethod
