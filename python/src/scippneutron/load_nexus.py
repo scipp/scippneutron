@@ -42,8 +42,7 @@ def _open_if_path(file_in: Union[str, h5py.File]):
 def _add_string_attr_to_loaded_data(group: Union[h5py.Group,
                                                  Dict], dataset_name: str,
                                     attr_name: str, data: sc.Variable,
-                                    loading: Union[LoadFromHdf5,
-                                                   LoadFromJson]):
+                                    nexus: Union[LoadFromHdf5, LoadFromJson]):
     try:
         data = data.attrs
     except AttributeError:
@@ -51,43 +50,43 @@ def _add_string_attr_to_loaded_data(group: Union[h5py.Group,
 
     try:
         data[attr_name] = sc.Variable(
-            value=loading.load_scalar_string(group, dataset_name))
+            value=nexus.load_scalar_string(group, dataset_name))
     except MissingDataset:
         pass
 
 
 def _load_instrument_name(instrument_groups: List[Group], data: sc.Variable,
-                          loading: Union[LoadFromHdf5, LoadFromJson]):
+                          nexus: Union[LoadFromHdf5, LoadFromJson]):
     if len(instrument_groups) > 1:
         warn(f"More than one {nx_instrument} found in file, "
              f"loading name from {instrument_groups[0].group.name} only")
     _add_string_attr_to_loaded_data(instrument_groups[0].group, "name",
-                                    "instrument_name", data, loading)
+                                    "instrument_name", data, nexus)
 
 
 def _load_sample(sample_groups: List[Group], data: sc.Variable,
-                 file_root: h5py.File, loading: Union[LoadFromHdf5,
-                                                      LoadFromJson]):
+                 file_root: h5py.File, nexus: Union[LoadFromHdf5,
+                                                    LoadFromJson]):
     load_positions_of_components(sample_groups,
                                  data,
                                  "sample",
                                  nx_sample,
                                  file_root,
-                                 loading,
+                                 nexus,
                                  default_position=np.array([0, 0, 0]))
 
 
 def _load_source(source_groups: List[Group], data: sc.Variable,
-                 file_root: h5py.File, loading: Union[LoadFromHdf5,
-                                                      LoadFromJson]):
+                 file_root: h5py.File, nexus: Union[LoadFromHdf5,
+                                                    LoadFromJson]):
     load_position_of_unique_component(source_groups, data, "source", nx_source,
-                                      file_root, loading)
+                                      file_root, nexus)
 
 
 def _load_title(entry_group: Group, data: sc.Variable,
-                loading: Union[LoadFromHdf5, LoadFromJson]):
+                nexus: Union[LoadFromHdf5, LoadFromJson]):
     _add_string_attr_to_loaded_data(entry_group.group, "title",
-                                    "experiment_title", data, loading)
+                                    "experiment_title", data, nexus)
 
 
 def load_nexus(data_file: Union[str, h5py.File],
@@ -115,12 +114,12 @@ def load_nexus(data_file: Union[str, h5py.File],
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
-               loading: Union[LoadFromHdf5, LoadFromJson], quiet: bool):
+               nexus: Union[LoadFromHdf5, LoadFromJson], quiet: bool):
     if root is not None:
         root_node = nexus_file[root]
     else:
         root_node = nexus_file
-    groups = loading.find_by_nx_class(
+    groups = nexus.find_by_nx_class(
         (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample, nx_source),
         root_node)
     if len(groups[nx_entry]) > 1:
@@ -131,22 +130,22 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             f"More than one {nx_entry} group in file, use 'root' argument "
             "to specify which to load data from, for example"
             f"{__name__}('my_file.nxs', '/entry_2')")
-    loaded_data = load_detector_data(groups[nx_event_data], nexus_file,
-                                     loading, quiet)
+    loaded_data = load_detector_data(groups[nx_event_data], nexus_file, nexus,
+                                     quiet)
     if loaded_data is None:
         no_event_data = True
         loaded_data = sc.Dataset({})
     else:
         no_event_data = False
-    load_logs(loaded_data, groups[nx_log], loading)
+    load_logs(loaded_data, groups[nx_log], nexus)
     if groups[nx_sample]:
-        _load_sample(groups[nx_sample], loaded_data, nexus_file, loading)
+        _load_sample(groups[nx_sample], loaded_data, nexus_file, nexus)
     if groups[nx_source]:
-        _load_source(groups[nx_source], loaded_data, nexus_file, loading)
+        _load_source(groups[nx_source], loaded_data, nexus_file, nexus)
     if groups[nx_instrument]:
-        _load_instrument_name(groups[nx_instrument], loaded_data, loading)
+        _load_instrument_name(groups[nx_instrument], loaded_data, nexus)
     if groups[nx_entry]:
-        _load_title(groups[nx_entry][0], loaded_data, loading)
+        _load_title(groups[nx_entry][0], loaded_data, nexus)
     # Return None if we have an empty dataset at this point
     if no_event_data and not loaded_data.keys():
         loaded_data = None

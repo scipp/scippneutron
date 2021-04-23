@@ -20,7 +20,7 @@ def load_position_of_unique_component(
         name: str,
         nx_class: str,
         file_root: h5py.File,
-        loading: Union[LoadFromHdf5, LoadFromJson],
+        nexus: Union[LoadFromHdf5, LoadFromJson],
         default_position: Optional[np.ndarray] = None):
     if len(groups) > 1:
         warn(f"More than one {nx_class} found in file, "
@@ -29,7 +29,7 @@ def load_position_of_unique_component(
     try:
         position, units = _get_position_of_component(groups[0].group, name,
                                                      nx_class, file_root,
-                                                     loading, default_position)
+                                                     nexus, default_position)
     except PositionError:
         return
     _add_attr_to_loaded_data(f"{name}_position",
@@ -45,12 +45,12 @@ def load_positions_of_components(
         name: str,
         nx_class: str,
         file_root: h5py.File,
-        loading: Union[LoadFromHdf5, LoadFromJson],
+        nexus: Union[LoadFromHdf5, LoadFromJson],
         default_position: Optional[np.ndarray] = None):
     for group in groups:
         try:
             position, units = _get_position_of_component(
-                group.group, name, nx_class, file_root, loading,
+                group.group, name, nx_class, file_root, nexus,
                 default_position)
         except PositionError:
             continue
@@ -61,12 +61,11 @@ def load_positions_of_components(
                                      unit=units,
                                      dtype=sc.dtype.vector_3_float64)
         else:
-            _add_attr_to_loaded_data(
-                f"{loading.get_name(group.group)}_position",
-                data,
-                position,
-                unit=units,
-                dtype=sc.dtype.vector_3_float64)
+            _add_attr_to_loaded_data(f"{nexus.get_name(group.group)}_position",
+                                     data,
+                                     position,
+                                     unit=units,
+                                     dtype=sc.dtype.vector_3_float64)
 
 
 def _get_position_of_component(
@@ -74,15 +73,15 @@ def _get_position_of_component(
     name: str,
     nx_class: str,
     file_root: h5py.File,
-    loading: Union[LoadFromHdf5, LoadFromJson],
+    nexus: Union[LoadFromHdf5, LoadFromJson],
     default_position: Optional[np.ndarray] = None
 ) -> Tuple[np.ndarray, sc.Unit]:
-    depends_on_found, _ = loading.dataset_in_group(group, "depends_on")
-    distance_found, _ = loading.dataset_in_group(group, "distance")
+    depends_on_found, _ = nexus.dataset_in_group(group, "depends_on")
+    distance_found, _ = nexus.dataset_in_group(group, "distance")
     if depends_on_found:
         try:
             position = get_position_from_transformations(
-                group, file_root, loading)
+                group, file_root, nexus)
         except TransformationError as e:
             warn(f"Skipping loading {name} position due to error: {e}")
             raise PositionError
@@ -91,10 +90,9 @@ def _get_position_of_component(
 
         position = np.array([
             0, 0,
-            loading.load_dataset_from_group_as_numpy_array(group, "distance")
+            nexus.load_dataset_from_group_as_numpy_array(group, "distance")
         ])
-        units = loading.get_unit(
-            loading.get_dataset_from_group(group, "distance"))
+        units = nexus.get_unit(nexus.get_dataset_from_group(group, "distance"))
         if units == sc.units.dimensionless:
             warn(f"'distance' dataset in {nx_class} is missing "
                  f"units attribute, skipping loading {name} position")

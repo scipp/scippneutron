@@ -200,10 +200,10 @@ def _add_link_to_json(file_root: Dict, new_path: str, target_path: str):
     new_path_split = new_path.split("/")
     link_name = new_path_split[-1]
     parent_path = "/".join(new_path_split[:-1])
-    loading = LoadFromJson(file_root)
-    parent_group = loading.get_object_by_path(file_root, parent_path)
+    nexus = LoadFromJson(file_root)
+    parent_group = nexus.get_object_by_path(file_root, parent_path)
     link = {"type": "link", "name": link_name, "target": target_path}
-    existing_object = loading.get_child_from_group(parent_group, link_name)
+    existing_object = nexus.get_child_from_group(parent_group, link_name)
     if existing_object is not None:
         parent_group["children"].remove(existing_object)
     parent_group["children"].append(link)
@@ -213,8 +213,8 @@ def _parent_and_name_from_path(file_root: Dict, path: str) -> Tuple[Dict, str]:
     path_split = path.split("/")
     name = path_split[-1]
     parent_path = "/".join(path_split[:-1])
-    loading = LoadFromJson(file_root)
-    parent_group = loading.get_object_by_path(file_root, parent_path)
+    nexus = LoadFromJson(file_root)
+    parent_group = nexus.get_object_by_path(file_root, parent_path)
     return parent_group, name
 
 

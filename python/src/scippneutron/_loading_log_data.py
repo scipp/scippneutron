@@ -13,11 +13,11 @@ from warnings import warn
 
 
 def load_logs(loaded_data: sc.Variable, log_groups: List[Group],
-              loading: Union[LoadFromHdf5, LoadFromJson]):
+              nexus: Union[LoadFromHdf5, LoadFromJson]):
     for group in log_groups:
         try:
             log_data_name, log_data = _load_log_data_from_group(
-                group.group, loading)
+                group.group, nexus)
             _add_log_to_data(log_data_name, log_data, group.path, loaded_data)
         except BadSource as e:
             warn(f"Skipped loading {group.path} due to:\n{e}")
@@ -49,13 +49,13 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
 
 def _load_log_data_from_group(
         group: Union[h5py.Group, Dict],
-        loading: Union[LoadFromHdf5, LoadFromJson]) -> Tuple[str, sc.Variable]:
-    property_name = loading.get_name(group)
+        nexus: Union[LoadFromHdf5, LoadFromJson]) -> Tuple[str, sc.Variable]:
+    property_name = nexus.get_name(group)
     value_dataset_name = "value"
     time_dataset_name = "time"
 
     try:
-        values = loading.load_dataset_from_group_as_numpy_array(
+        values = nexus.load_dataset_from_group_as_numpy_array(
             group, value_dataset_name)
     except MissingDataset:
         raise BadSource(f"NXlog '{property_name}' has no value dataset")
@@ -63,14 +63,13 @@ def _load_log_data_from_group(
     if values.size == 0:
         raise BadSource(f"NXlog '{property_name}' has an empty value dataset")
 
-    unit = loading.get_unit(
-        loading.get_dataset_from_group(group, value_dataset_name))
+    unit = nexus.get_unit(
+        nexus.get_dataset_from_group(group, value_dataset_name))
 
     try:
         dimension_label = "time"
         is_time_series = True
-        times = loading.load_dataset(group, time_dataset_name,
-                                     [dimension_label])
+        times = nexus.load_dataset(group, time_dataset_name, [dimension_label])
         if tuple(times.shape) != values.shape:
             raise BadSource(f"NXlog '{property_name}' has time and value "
                             f"datasets of different shapes")
@@ -86,13 +85,13 @@ def _load_log_data_from_group(
     if np.ndim(values) == 0:
         property_data = sc.Variable(value=values,
                                     unit=unit,
-                                    dtype=loading.get_dataset_numpy_dtype(
+                                    dtype=nexus.get_dataset_numpy_dtype(
                                         group, value_dataset_name))
     else:
         property_data = sc.Variable(values=values,
                                     unit=unit,
                                     dims=[dimension_label],
-                                    dtype=loading.get_dataset_numpy_dtype(
+                                    dtype=nexus.get_dataset_numpy_dtype(
                                         group, value_dataset_name))
 
     if is_time_series:
