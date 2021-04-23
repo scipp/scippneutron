@@ -113,6 +113,9 @@ class LoadFromHdf5:
                                                dataset_name: str):
         """
         Load a dataset into a numpy array
+        Prefer use of load_dataset to load directly to a scipp variable,
+        this function should only be used in rare cases that a
+        numpy array is required.
         :param group: Group containing dataset to load
         :param dataset_name: Name of the dataset to load
         """
@@ -126,6 +129,9 @@ class LoadFromHdf5:
     def load_dataset_as_numpy_array(dataset: h5py.Dataset):
         """
         Load a dataset into a numpy array
+        Prefer use of load_dataset to load directly to a scipp variable,
+        this function should only be used in rare cases that a
+        numpy array is required.
         :param dataset: The dataset to load values from
         """
         return dataset[...].astype(

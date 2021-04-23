@@ -196,6 +196,9 @@ class LoadFromJson:
                                                dataset_name: str):
         """
         Load a dataset into a numpy array
+        Prefer use of load_dataset to load directly to a scipp variable,
+        this function should only be used in rare cases that a
+        numpy array is required.
         :param group: Group containing dataset to load
         :param dataset_name: Name of the dataset to load
         """
@@ -208,6 +211,9 @@ class LoadFromJson:
     def load_dataset_as_numpy_array(dataset: Dict):
         """
         Load a dataset into a numpy array
+        Prefer use of load_dataset to load directly to a scipp variable,
+        this function should only be used in rare cases that a
+        numpy array is required.
         :param dataset: The dataset to load values from
         """
         try:
