@@ -522,6 +522,50 @@ def test_loads_pixel_positions_with_event_data(load_function: Callable):
                                         "to be converted to metres"
 
 
+def test_loads_pixel_positions_without_event_data(load_function: Callable):
+    """
+    This is important in the live-data feature as geometry and event data
+    are streamed separately
+    """
+    detector_1_ids = np.array([0, 1, 2, 3])
+    x_pixel_offset_1 = np.array([0.1, 0.2, 0.1, 0.2])
+    y_pixel_offset_1 = np.array([0.1, 0.1, 0.2, 0.2])
+    z_pixel_offset_1 = np.array([0.1, 0.2, 0.3, 0.4])
+
+    detector_2_ids = np.array([[4, 5], [6, 7]])
+    x_pixel_offset_2 = np.array([[1.1, 1.2], [1.1, 1.2]])
+    y_pixel_offset_2 = np.array([[0.1, 0.1], [0.2, 0.2]])
+
+    builder = NexusBuilder()
+    offsets_units = "mm"
+    builder.add_detector(
+        Detector(detector_numbers=detector_1_ids,
+                 x_offsets=x_pixel_offset_1,
+                 y_offsets=y_pixel_offset_1,
+                 z_offsets=z_pixel_offset_1,
+                 offsets_unit=offsets_units))
+    builder.add_detector(
+        Detector(detector_numbers=detector_2_ids,
+                 x_offsets=x_pixel_offset_2,
+                 y_offsets=y_pixel_offset_2,
+                 offsets_unit=offsets_units))
+
+    loaded_data = load_function(builder)
+
+    # If z offsets are missing they should be zero
+    z_pixel_offset_2 = np.array([[0., 0.], [0., 0.]])
+    expected_pixel_positions = np.array([
+        np.concatenate((x_pixel_offset_1, x_pixel_offset_2.flatten())),
+        np.concatenate((y_pixel_offset_1, y_pixel_offset_2.flatten())),
+        np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
+    ]).T / 1_000  # Divide by 1000 for mm to metres
+    assert np.allclose(loaded_data.coords['position'].values,
+                       expected_pixel_positions)
+    assert loaded_data.coords[
+               'position'].unit == sc.units.m, "Expected positions " \
+                                               "to be converted to metres"
+
+
 def test_skips_loading_pixel_positions_with_non_matching_shape(
         load_function: Callable):
     pulse_times = np.array([
