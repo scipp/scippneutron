@@ -67,7 +67,7 @@ class Transformation:
 
 @dataclass
 class Detector:
-    detector_numbers: np.ndarray
+    detector_numbers: Optional[np.ndarray] = None
     event_data: Optional[EventData] = None
     log: Optional[Log] = None
     x_offsets: Optional[np.ndarray] = None
@@ -620,8 +620,9 @@ class NexusBuilder:
                                     group_name: str) -> h5py.Group:
         detector_group = self._create_nx_class(group_name, "NXdetector",
                                                parent_group)
-        self._writer.add_dataset(detector_group, "detector_number",
-                                 detector.detector_numbers)
+        if detector.detector_numbers is not None:
+            self._writer.add_dataset(detector_group, "detector_number",
+                                     detector.detector_numbers)
         for dataset_name, array in (("x_pixel_offset", detector.x_offsets),
                                     ("y_pixel_offset", detector.y_offsets),
                                     ("z_pixel_offset", detector.z_offsets)):

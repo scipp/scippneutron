@@ -363,8 +363,7 @@ def test_loads_data_from_multiple_logs_with_same_name(load_function: Callable):
     # both have the same group name
     builder = NexusBuilder()
     builder.add_log(Log(name, values_1))
-    builder.add_detector(Detector(np.array([1, 2, 3]), log=Log(name,
-                                                               values_2)))
+    builder.add_detector(Detector(log=Log(name, values_2)))
 
     loaded_data = load_function(builder)
 

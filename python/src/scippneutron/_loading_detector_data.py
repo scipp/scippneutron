@@ -4,7 +4,7 @@
 
 from dataclasses import dataclass
 import h5py
-from typing import Optional, List
+from typing import Optional, List, Any, Dict, Union
 import numpy as np
 from ._loading_common import (BadSource, MissingDataset, Group)
 import scipp as sc
@@ -16,6 +16,7 @@ from ._loading_nexus import LoadFromNexus, GroupObject
 
 _detector_dimension = "detector_id"
 _event_dimension = "event"
+_time_of_flight = "tof"
 
 
 def _all_equal(iterable):
@@ -118,12 +119,59 @@ def _load_pixel_positions(detector_group: GroupObject, detector_ids_size: int,
 
 @dataclass
 class DetectorData:
-    events: sc.Variable
-    detector_ids: sc.Variable
+    events: Optional[sc.DataArray] = None
+    detector_ids: Optional[sc.Variable] = None
     pixel_positions: Optional[sc.Variable] = None
 
 
+def _create_events_data_array(
+        tof_dtype: Any = np.int64,
+        tof_unit: Union[str, sc.Unit] = "ns",
+        detector_id_dtype: Any = np.int32) -> sc.DataArray:
+    return sc.DataArray(data=sc.Variable(dims=[_event_dimension],
+                                         values=[],
+                                         dtype=np.float32),
+                        coords={
+                            _time_of_flight:
+                            sc.Variable(dims=[_event_dimension],
+                                        values=[],
+                                        dtype=tof_dtype,
+                                        unit=tof_unit),
+                            _detector_dimension:
+                            sc.Variable(dims=[_event_dimension],
+                                        values=[],
+                                        dtype=detector_id_dtype)
+                        })
+
+
+def _load_detector(group: Group, file_root: h5py.File,
+                   nexus: LoadFromNexus) -> DetectorData:
+    detector_number_ds_name = "detector_number"
+    dataset_in_group, _ = nexus.dataset_in_group(group.group,
+                                                 detector_number_ds_name)
+    detector_ids = None
+    if dataset_in_group:
+        detector_ids = nexus.load_dataset_from_group_as_numpy_array(
+            group.group, detector_number_ds_name).flatten()
+        detector_id_type = detector_ids.dtype.type
+
+        detector_ids = sc.Variable(dims=[_detector_dimension],
+                                   values=detector_ids,
+                                   dtype=detector_id_type)
+
+    pixel_positions = None
+    pixel_positions_found, _ = nexus.dataset_in_group(group.group,
+                                                      "x_pixel_offset")
+    if pixel_positions_found:
+        pixel_positions = _load_pixel_positions(group.group,
+                                                detector_ids.shape[0],
+                                                file_root, nexus)
+    return DetectorData(detector_ids=detector_ids,
+                        pixel_positions=pixel_positions)
+
+
 def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
+                      detector_data: DetectorData,
                       quiet: bool) -> DetectorData:
     error_msg = _check_for_missing_fields(group.group, nexus)
     if error_msg:
@@ -155,66 +203,59 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
                       shape=event_id.shape,
                       dtype=np.float32)
 
-    detector_number_ds_name = "detector_number"
-    dataset_in_group, _ = nexus.dataset_in_group(group.parent,
-                                                 detector_number_ds_name)
-    if dataset_in_group:
-        # Hopefully the detector ids are recorded in the file
-        detector_ids = nexus.load_dataset_from_group_as_numpy_array(
-            group.parent, detector_number_ds_name).flatten()
-    else:
-        # Otherwise we'll just have to bin according to whatever
+    if detector_data.detector_ids is None:
+        # If detector ids were not found in an associated detector group
+        # we will just have to bin according to whatever
         # ids we have a events for (pixels with no recorded events
         # will not have a bin)
-        detector_ids = np.unique(event_id.values)
+        detector_data.detector_ids = sc.Variable(dims=[_detector_dimension],
+                                                 values=np.unique(
+                                                     event_id.values))
 
-    detector_id_type = detector_ids.dtype.type
-    event_id_type = nexus.get_dataset_numpy_dtype(group.group, "event_id")
-    _check_event_ids_and_det_number_types_valid(detector_id_type,
-                                                event_id_type)
-
-    detector_ids = sc.Variable(dims=[_detector_dimension],
-                               values=detector_ids,
-                               dtype=detector_id_type)
+    _check_event_ids_and_det_number_types_valid(
+        detector_data.detector_ids.dtype, event_id.dtype)
 
     data_dict = {
         "data": weights,
         "coords": {
-            "tof": event_time_offset,
+            _time_of_flight: event_time_offset,
             _detector_dimension: event_id
         }
     }
-    data = sc.detail.move_to_data_array(**data_dict)
+    detector_data.events = sc.detail.move_to_data_array(**data_dict)
 
     detector_group = group.parent
-    pixel_positions = None
     pixel_positions_found, _ = nexus.dataset_in_group(detector_group,
                                                       "x_pixel_offset")
     if pixel_positions_found:
-        pixel_positions = _load_pixel_positions(detector_group,
-                                                detector_ids.shape[0],
-                                                file_root, nexus)
+        detector_data.pixel_positions = _load_pixel_positions(
+            detector_group, detector_data.detector_ids.shape[0], file_root,
+            nexus)
 
     if not quiet:
         print(f"Loaded event data from "
               f"{group.path} containing {number_of_events} events")
 
-    return DetectorData(data, detector_ids, pixel_positions)
+    return detector_data
 
 
-def _check_event_ids_and_det_number_types_valid(detector_id_type: np.dtype,
-                                                event_id_type: np.dtype):
+def _check_event_ids_and_det_number_types_valid(detector_id_type: Any,
+                                                event_id_type: Any):
     """
     These must be integers and must be the same type or we'll have
     problems trying to bin events by detector id. Check here so that
     we can give a useful warning to the user and skip loading the
     current event group.
     """
-    if not np.issubdtype(detector_id_type, np.integer):
+    def is_integer_type(type_to_check: Any) -> bool:
+        return type_to_check == sc.dtype.int32 or \
+               type_to_check == sc.dtype.int64
+
+    if not is_integer_type(detector_id_type):
         raise BadSource(
             "detector_numbers dataset in NXdetector is not an integer "
             "type")
-    if not np.issubdtype(event_id_type, np.integer):
+    if not is_integer_type(event_id_type):
         raise BadSource("event_ids dataset is not an integer type")
     if detector_id_type != event_id_type:
         raise BadSource(
@@ -222,30 +263,34 @@ def _check_event_ids_and_det_number_types_valid(detector_id_type: np.dtype,
             "NXdetector were not of the same type")
 
 
-def load_detector_data(event_data_groups: List[Group], file_root: h5py.File,
+def load_detector_data(event_data_groups: List[Group],
+                       detector_groups: List[Group], file_root: h5py.File,
                        nexus: LoadFromNexus,
                        quiet: bool) -> Optional[sc.DataArray]:
-    event_data = []
-    for group in event_data_groups:
-        try:
-            new_event_data = _load_event_group(group, file_root, nexus, quiet)
-            event_data.append(new_event_data)
-        except BadSource as e:
-            warn(f"Skipped loading {group.path} due to:\n{e}")
+    detector_data = _load_data_from_each_nx_detector(detector_groups,
+                                                     file_root, nexus)
+
+    event_data = _load_data_from_each_nx_event_data(detector_data,
+                                                    event_data_groups,
+                                                    file_root, nexus, quiet)
 
     if not event_data:
+        # If there were no data to load we are done
         return
 
-    def get_detector_id(detector_data: DetectorData):
+    def get_detector_id(data: DetectorData):
         # Assume different detector banks do not have
         # intersecting ranges of detector ids
-        return detector_data.detector_ids.values[0]
+        return data.detector_ids.values[0]
 
     event_data.sort(key=get_detector_id)
+
+    _create_empty_event_data(event_data)
 
     pixel_positions_loaded = all(
         [data.pixel_positions is not None for data in event_data])
     detector_data = event_data.pop(0)
+
     # Events in the NeXus file are effectively binned by pulse
     # (because they are recorded chronologically)
     # but for reduction it is more useful to bin by detector id
@@ -260,3 +305,67 @@ def load_detector_data(event_data_groups: List[Group], file_root: h5py.File,
             new_events.coords['position'] = detector_data.pixel_positions
         events = sc.concatenate(events, new_events, dim=_detector_dimension)
     return events
+
+
+def _create_empty_event_data(event_data: List[DetectorData]):
+    """
+    If any NXdetector groups had pixel position data but no events
+    then add an empty data array to make it easier to concatenate
+    the data from different groups
+    """
+    empty_events = None
+    detector_id_dtype = None
+    for data in event_data:
+        if data.events is not None:
+            # If any event data were loaded then use an empty data
+            # array with the same data types
+            tof_dtype = data.events.coords[_time_of_flight].dtype
+            tof_unit = data.events.coords[_time_of_flight].unit
+            empty_events = _create_events_data_array(
+                tof_dtype, tof_unit,
+                data.events.coords[_detector_dimension].dtype)
+            break
+        elif data.detector_ids is not None:
+            detector_id_dtype = data.detector_ids.dtype
+    if empty_events is None:
+        if detector_id_dtype is None:
+            # Create empty data array with types matching streamed event data
+            empty_events = _create_events_data_array(np.int64, "ns", np.int32)
+        else:
+            # If detector_ids were loaded then match the type used for those
+            empty_events = _create_events_data_array(np.int64, "ns",
+                                                     detector_id_dtype)
+    for data in event_data:
+        if data.events is None:
+            data.events = empty_events
+
+
+def _load_data_from_each_nx_event_data(detector_data: Dict,
+                                       event_data_groups: List[Group],
+                                       file_root: h5py.File,
+                                       nexus: LoadFromNexus,
+                                       quiet: bool) -> List[DetectorData]:
+    event_data = []
+    for group in event_data_groups:
+        parent_path = "/".join(group.path.split("/")[:-1])
+        try:
+            new_event_data = _load_event_group(
+                group, file_root, nexus,
+                detector_data.pop(parent_path, DetectorData()), quiet)
+            event_data.append(new_event_data)
+        except BadSource as e:
+            warn(f"Skipped loading {group.path} due to:\n{e}")
+    for _, remaining_data in detector_data.items():
+        if remaining_data.detector_ids is not None:
+            event_data.append(remaining_data)
+    return event_data
+
+
+def _load_data_from_each_nx_detector(detector_groups: List[Group],
+                                     file_root: h5py.File,
+                                     nexus: LoadFromNexus) -> Dict:
+    detector_data = {}
+    for detector_group in detector_groups:
+        detector_data[detector_group.path] = _load_detector(
+            detector_group, file_root, nexus)
+    return detector_data
