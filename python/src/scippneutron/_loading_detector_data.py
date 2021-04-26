@@ -351,8 +351,11 @@ def _load_data_from_each_nx_event_data(detector_data: Dict,
         try:
             new_event_data = _load_event_group(
                 group, file_root, nexus,
-                detector_data.pop(parent_path, DetectorData()), quiet)
+                detector_data.get(parent_path, DetectorData()), quiet)
             event_data.append(new_event_data)
+            # Only pop from dictionary if we did not raise an
+            # exception when loading events
+            detector_data.pop(parent_path, DetectorData())
         except BadSource as e:
             warn(f"Skipped loading {group.path} due to:\n{e}")
     for _, remaining_data in detector_data.items():
