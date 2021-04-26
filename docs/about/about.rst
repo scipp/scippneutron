@@ -14,7 +14,7 @@ A significant amount of changes such as multi-threading and support for realigne
 License
 -------
 
-Scipp and scippneutron are available as open source under the `GPL license <https://www.gnu.org/licenses/gpl-3.0.en.html>`_.
+Scippneutron is available as open source under the `BSD-3 license <https://opensource.org/licenses/BSD-3-Clause>`_.
 
 Source code and development
 ---------------------------
