@@ -109,4 +109,5 @@ After you are done testing you can clean up the containers and free up used disk
 
     .. code-block:: sh
 
-        docker system prune -a --volumes
+        docker rm -v live_data_producer_1
+        docker rm -v live_data_kafka_1
