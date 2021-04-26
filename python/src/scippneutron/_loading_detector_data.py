@@ -19,6 +19,10 @@ _event_dimension = "event"
 _time_of_flight = "tof"
 
 
+class DetectorIdError(Exception):
+    pass
+
+
 def _all_equal(iterable):
     g = groupby(iterable)
     return next(g, True) and not next(g, False)
@@ -252,13 +256,13 @@ def _check_event_ids_and_det_number_types_valid(detector_id_type: Any,
                type_to_check == sc.dtype.int64
 
     if not is_integer_type(detector_id_type):
-        raise BadSource(
+        raise DetectorIdError(
             "detector_numbers dataset in NXdetector is not an integer "
             "type")
     if not is_integer_type(event_id_type):
         raise BadSource("event_ids dataset is not an integer type")
     if detector_id_type != event_id_type:
-        raise BadSource(
+        raise DetectorIdError(
             "event_ids and detector_numbers datasets in corresponding "
             "NXdetector were not of the same type")
 
@@ -355,6 +359,9 @@ def _load_data_from_each_nx_event_data(detector_data: Dict,
             event_data.append(new_event_data)
             # Only pop from dictionary if we did not raise an
             # exception when loading events
+            detector_data.pop(parent_path, DetectorData())
+        except DetectorIdError as e:
+            warn(f"Skipped loading detector ids for {group.path} due to:\n{e}")
             detector_data.pop(parent_path, DetectorData())
         except BadSource as e:
             warn(f"Skipped loading {group.path} due to:\n{e}")
