@@ -51,7 +51,7 @@ build:
 
 about:
   home: https://github.com/scipp/scippneutron
-  license: GPLv3
+  license: BSD-3-Clause
   summary: Neutron scattering tools for Data Reduction
   description: Neutron scattering tools for Data Reduction
   dev_url: https://github.com/scipp/scippneutron

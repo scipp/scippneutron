@@ -2,8 +2,16 @@
 
 About scippneutron
 ==================
-``scippneutron`` builds on top of ``scipp`` and provides features specific to handling and reducing data generated in neutron scattering facilities.	
+
+``scippneutron`` builds on top of ``scipp`` and provides features specific to handling and reducing data generated in neutron scattering facilities.
 A key example is "unit conversion", e.g., from time-of-flight to energy transfer in an inelastic neutron scattering experiment at a spallation-based neutron source.
+
+Development
+-----------
+
+Scippneutron is a open source project by the `European Spallation Source ERIC <https://europeanspallationsource.se/>`_ (ESS).
+Other major contributions were provided by the `Science and Technology Facilities Council <https://www.ukri.org/councils/stfc/>`_ (STFC).
+
 References and citations
 ------------------------
 
@@ -14,7 +22,7 @@ A significant amount of changes such as multi-threading and support for realigne
 License
 -------
 
-Scipp and scippneutron are available as open source under the `GPL license <https://www.gnu.org/licenses/gpl-3.0.en.html>`_.
+Scippneutron is available as open source under the `BSD-3 license <https://opensource.org/licenses/BSD-3-Clause>`_.
 
 Source code and development
 ---------------------------
