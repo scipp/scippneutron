@@ -2,7 +2,7 @@ Testing "live data"
 ===================
 
 The ESS data streaming system is based on the Apache Kafka data streaming platform.
-Testing scippneutron's interface to this system requires running a Kafka server and
+Testing ``scippneutron``'s interface to this system requires running a Kafka server and
 populating it with neutron data. The most convenient way to do this on a developer
 machine is to use docker containers.
 
@@ -88,6 +88,7 @@ Try using ``scippneutron.data_stream``, for example
     .. code-block:: python
 
         import asyncio
+        import scippneutron as scn
 
         async def my_stream_func():
             async for data in scn.data_stream('localhost:9092', ['SANS2D_events']):
