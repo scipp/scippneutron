@@ -128,24 +128,24 @@ class DetectorData:
     pixel_positions: Optional[sc.Variable] = None
 
 
-def _create_events_data_array(
+def _create_empty_events_data_array(
         tof_dtype: Any = np.int64,
         tof_unit: Union[str, sc.Unit] = "ns",
         detector_id_dtype: Any = np.int32) -> sc.DataArray:
-    return sc.DataArray(data=sc.Variable(dims=[_event_dimension],
-                                         values=[],
-                                         variances=[],
-                                         dtype=np.float32),
+    return sc.DataArray(data=sc.empty(dims=[_event_dimension],
+                                      shape=[0],
+                                      variances=True,
+                                      dtype=np.float32),
                         coords={
                             _time_of_flight:
-                            sc.Variable(dims=[_event_dimension],
-                                        values=[],
-                                        dtype=tof_dtype,
-                                        unit=tof_unit),
+                            sc.empty(dims=[_event_dimension],
+                                     shape=[0],
+                                     dtype=tof_dtype,
+                                     unit=tof_unit),
                             _detector_dimension:
-                            sc.Variable(dims=[_event_dimension],
-                                        values=[],
-                                        dtype=detector_id_dtype)
+                            sc.empty(dims=[_event_dimension],
+                                     shape=[0],
+                                     dtype=detector_id_dtype)
                         })
 
 
@@ -327,7 +327,7 @@ def _create_empty_event_data(event_data: List[DetectorData]):
             # array with the same data types
             tof_dtype = data.events.coords[_time_of_flight].dtype
             tof_unit = data.events.coords[_time_of_flight].unit
-            empty_events = _create_events_data_array(
+            empty_events = _create_empty_events_data_array(
                 tof_dtype, tof_unit,
                 data.events.coords[_detector_dimension].dtype)
             break
@@ -338,11 +338,12 @@ def _create_empty_event_data(event_data: List[DetectorData]):
             # Create empty data array with types/unit matching streamed event
             # data, this avoids need to convert to concatenate with event data
             # arriving from stream
-            empty_events = _create_events_data_array(np.int64, "ns", np.int32)
+            empty_events = _create_empty_events_data_array(
+                np.int64, "ns", np.int32)
         else:
             # If detector_ids were loaded then match the type used for those
-            empty_events = _create_events_data_array(np.int64, "ns",
-                                                     detector_id_dtype)
+            empty_events = _create_empty_events_data_array(
+                np.int64, "ns", detector_id_dtype)
     for data in event_data:
         if data.events is None:
             data.events = empty_events
