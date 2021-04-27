@@ -6,7 +6,6 @@ import asyncio
 from typing import List
 import numpy as np
 from .nexus_helpers import NexusBuilder
-from streaming_data_types.run_start_pl72 import serialise_pl72
 
 try:
     import streaming_data_types  # noqa: F401
@@ -14,7 +13,11 @@ try:
     from scippneutron.data_stream import _data_stream  # noqa: E402
     from scippneutron._streaming_data_buffer import \
         StreamedDataBuffer  # noqa: E402
-    from streaming_data_types import serialise_ev42  # noqa: E402
+    from streaming_data_types.eventdata_ev42 import \
+        serialise_ev42  # noqa: E402
+    from streaming_data_types.run_start_pl72 import (serialise_pl72,
+                                                     deserialise_pl72,
+                                                     RunStartInfo)
 except ImportError:
     pytest.skip("Kafka or Serialisation module is unavailable",
                 allow_module_level=True)
@@ -42,7 +45,7 @@ def stop_consumers(consumers: List[FakeConsumer]):
         consumer.stop()
 
 
-def get_run_start_message_no_streams(topic: str) -> bytes:
+def get_run_start_message_no_streams(topic: str, broker: str) -> RunStartInfo:
     """
     The real implementation finds the last run start
     message in the given topic.
@@ -51,10 +54,11 @@ def get_run_start_message_no_streams(topic: str) -> bytes:
     """
     builder = NexusBuilder()
     builder.add_instrument("DATA_STREAM_TEST")
-    return serialise_pl72("",
-                          "",
-                          datetime.datetime.now(),
-                          nexus_structure=builder.json_string)
+    message = serialise_pl72("",
+                             "",
+                             datetime.datetime.now(),
+                             nexus_structure=builder.json_string)
+    return deserialise_pl72(message)
 
 
 # Short time to use for buffer emit and data_stream interval in tests
@@ -79,7 +83,8 @@ async def test_data_stream_returns_data_from_single_event_message():
             buffer,
             queue,
             consumers,  # type: ignore
-            SHORT_TEST_INTERVAL):
+            SHORT_TEST_INTERVAL,
+            ""):
         assert np.allclose(data.coords['tof'].values, time_of_flight)
 
         # Cause the data_stream generator to stop and exit the "async for"
@@ -106,7 +111,8 @@ async def test_data_stream_returns_data_from_multiple_event_messages():
             buffer,
             queue,
             consumers,  # type: ignore
-            SHORT_TEST_INTERVAL):
+            SHORT_TEST_INTERVAL,
+            ""):
         expected_tofs = np.concatenate((first_tof, second_tof))
         assert np.allclose(data.coords['tof'].values, expected_tofs)
         expected_ids = np.concatenate(
@@ -183,11 +189,15 @@ async def test_data_are_loaded_from_run_start_message():
     buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
     consumers = []
     run_info_topic = "fake_topic"
+    reached_assert = False
     async for data in _data_stream(
             buffer,
             queue,
             consumers,  # type: ignore
             SHORT_TEST_INTERVAL,
+            "broker_address",
             run_info_topic,
             get_run_start_message_no_streams):
-        assert data["instrument_name"] == "DATA_STREAM_TEST"
+        assert data["instrument_name"].value == "DATA_STREAM_TEST"
+        reached_assert = True
+    assert reached_assert

@@ -1,7 +1,8 @@
 import time
-from typing import List, Generator, Callable
+from typing import List, Generator, Callable, Optional, Any
 import asyncio
 import scipp as sc
+from .load_nexus import _load_nexus_json
 """
 Some type names are included as strings as imports are done in
 function scope to avoid optional dependencies being imported
@@ -28,7 +29,8 @@ async def data_stream(
     kafka_broker: str,
     topics: List[str],
     buffer_size: int = 1048576,
-    interval: sc.Variable = 2. * sc.units.s
+    interval: sc.Variable = 2. * sc.units.s,
+    run_info_topic: Optional[str] = None
 ) -> Generator[sc.Variable, None, None]:
     """
     Periodically yields accumulated data from stream.
@@ -40,6 +42,8 @@ async def data_stream(
     :param buffer_size: Size of buffer to accumulate data in
     :param interval: interval between yielding any new data
       collected from stream
+    :param run_info_topic: If provided, the first data batch returned by
+    data_stream will be from the last available run start message in the topic
     """
     try:
         from ._streaming_consumer import create_consumers
@@ -64,7 +68,8 @@ async def data_stream(
 
     # Use "async for" as "yield from" cannot be used in an async function, see
     # https://www.python.org/dev/peps/pep-0525/#asynchronous-yield-from
-    async for v in _data_stream(buffer, queue, consumers, interval):
+    async for v in _data_stream(buffer, queue, consumers, interval,
+                                kafka_broker, run_info_topic):
         yield v
 
 
@@ -72,15 +77,30 @@ async def _data_stream(
         buffer: "StreamedDataBuffer",  # noqa: F821
         queue: asyncio.Queue,
         consumers: List["KafkaConsumer"],  # noqa: F821
-        interval: sc.Variable) -> Generator[sc.Variable, None, None]:
+        interval: sc.Variable,
+        kafka_broker: str,
+        run_info_topic: Optional[str] = None,
+        get_run_start_message_func: Optional[Callable] = None,
+        consumer_type: Any = None) -> Generator[sc.Variable, None, None]:
     """
     Main implementation of data stream is extracted to this function so that
     fake consumers can be injected for unit tests
     """
     try:
-        from ._streaming_consumer import start_consumers
+        from ._streaming_consumer import (start_consumers, KafkaConsumer,
+                                          get_run_start_message)
     except ImportError:
         raise ImportError(_missing_dependency_message)
+
+    if run_info_topic is not None:
+        if get_run_start_message_func is None:
+            get_run_start_message_func = get_run_start_message
+        run_start_info = get_run_start_message_func(run_info_topic,
+                                                    kafka_broker)
+        yield _load_nexus_json(run_start_info.nexus_structure)
+
+    if consumer_type is None:
+        consumer_type = KafkaConsumer
 
     start_consumers(consumers)
     buffer.start()

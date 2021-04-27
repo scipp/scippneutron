@@ -2,6 +2,8 @@ from confluent_kafka import Consumer, TopicPartition, KafkaError
 from typing import Callable, List, Dict, Optional
 import asyncio
 from warnings import warn
+from streaming_data_types.run_start_pl72 import deserialise_pl72
+from streaming_data_types.exceptions import WrongSchemaException
 
 
 class KafkaConsumer:
@@ -89,3 +91,57 @@ def start_consumers(consumers: List[KafkaConsumer]):
 def stop_consumers(consumers: List[KafkaConsumer]):
     for consumer in consumers:
         consumer.stop()
+
+
+def get_run_start_message(topic: str, broker: str):
+    """
+    Get the last run start message on the given topic
+    """
+    # Set "queued.min.messages" to 1 as we will consume backwards through
+    # the partition one message at a time; we do not want to retrieve
+    # multiple messages in the forward direction each time we step
+    # backwards by 1 offset
+    conf = {
+        "bootstrap.servers": broker,
+        "group.id": "consumer_group_name",
+        "auto.offset.reset": "latest",
+        "enable.auto.commit": False,
+        "queued.min.messages": 1
+    }
+    consumer = Consumer(**conf)
+    metadata = consumer.list_topics(topic)
+    topic_partitions = [
+        TopicPartition(topic, partition[1].id, offset=-1)
+        for partition in metadata.topics[topic].partitions.items()
+    ]
+    n_partitions = len(topic_partitions)
+    if n_partitions != 1:
+        raise RuntimeError(
+            f"Expected run start topic to contain exactly one partition, "
+            f"the specified topic '{topic}' has {n_partitions} partitions.")
+    partition = topic_partitions[0]
+    low_watermark_offset, current_offset = consumer.get_watermark_offsets(
+        partition, cached=False)
+    partition.offset = current_offset
+    consumer.assign([partition])
+
+    # Consume backwards from the end of the partition
+    # until we find a run start message or reach the
+    # start of the partition
+    while current_offset > low_watermark_offset:
+        current_offset -= 1
+        partition.offset = current_offset
+        consumer.seek(partition)
+        message = consumer.poll(timeout=2.)
+        if message is None:
+            raise RuntimeError(
+                "Timed out when trying to retrieve run start message")
+        elif message.error():
+            raise RuntimeError(f"Message error in consumer: {message.error()}")
+        try:
+            return deserialise_pl72(message.value())
+        except WrongSchemaException:
+            # Not a run start message, keep trying
+            pass
+
+    raise RuntimeError(f"Run start message not found in topic '{topic}'")
