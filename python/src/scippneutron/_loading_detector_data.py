@@ -134,6 +134,7 @@ def _create_events_data_array(
         detector_id_dtype: Any = np.int32) -> sc.DataArray:
     return sc.DataArray(data=sc.Variable(dims=[_event_dimension],
                                          values=[],
+                                         variances=[],
                                          dtype=np.float32),
                         coords={
                             _time_of_flight:
@@ -205,7 +206,8 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
                       shape=event_id.shape,
-                      dtype=np.float32)
+                      dtype=np.float32,
+                      variances=True)
 
     if detector_data.detector_ids is None:
         # If detector ids were not found in an associated detector group
