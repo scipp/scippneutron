@@ -333,7 +333,9 @@ def _create_empty_event_data(event_data: List[DetectorData]):
             detector_id_dtype = data.detector_ids.dtype
     if empty_events is None:
         if detector_id_dtype is None:
-            # Create empty data array with types matching streamed event data
+            # Create empty data array with types/unit matching streamed event
+            # data, this avoids need to convert to concatenate with event data
+            # arriving from stream
             empty_events = _create_events_data_array(np.int64, "ns", np.int32)
         else:
             # If detector_ids were loaded then match the type used for those
