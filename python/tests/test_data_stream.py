@@ -1,8 +1,12 @@
+import datetime
+
 import pytest
 import scipp as sc
 import asyncio
 from typing import List
 import numpy as np
+from .nexus_helpers import NexusBuilder
+from streaming_data_types.run_start_pl72 import serialise_pl72
 
 try:
     import streaming_data_types  # noqa: F401
@@ -36,6 +40,21 @@ class FakeConsumer:
 def stop_consumers(consumers: List[FakeConsumer]):
     for consumer in consumers:
         consumer.stop()
+
+
+def get_run_start_message_no_streams(topic: str) -> bytes:
+    """
+    The real implementation finds the last run start
+    message in the given topic.
+    For tests we'll construct a run start message and
+    return it.
+    """
+    builder = NexusBuilder()
+    builder.add_instrument("DATA_STREAM_TEST")
+    return serialise_pl72("",
+                          "",
+                          datetime.datetime.now(),
+                          nexus_structure=builder.json_string)
 
 
 # Short time to use for buffer emit and data_stream interval in tests
@@ -156,3 +175,19 @@ async def test_buffer_size_exceeded_by_messages_causes_early_data_emit():
     await buffer.new_data(second_test_message)
     assert not queue.empty(), "Expect data to have been emitted to " \
                               "queue as buffer size was exceeded"
+
+
+@pytest.mark.asyncio
+async def test_data_are_loaded_from_run_start_message():
+    queue = asyncio.Queue()
+    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+    consumers = []
+    run_info_topic = "fake_topic"
+    async for data in _data_stream(
+            buffer,
+            queue,
+            consumers,  # type: ignore
+            SHORT_TEST_INTERVAL,
+            run_info_topic,
+            get_run_start_message_no_streams):
+        assert data["instrument_name"] == "DATA_STREAM_TEST"
