@@ -25,6 +25,7 @@ nx_entry = "NXentry"
 nx_instrument = "NXinstrument"
 nx_sample = "NXsample"
 nx_source = "NXsource"
+nx_detector = "NXdetector"
 
 
 @contextmanager
@@ -117,8 +118,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     else:
         root_node = nexus_file
     groups = nexus.find_by_nx_class(
-        (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample, nx_source),
-        root_node)
+        (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample, nx_source,
+         nx_detector), root_node)
     if len(groups[nx_entry]) > 1:
         # We can't sensibly load from multiple NXentry, for example each
         # could could contain a description of the same detector bank
@@ -127,7 +128,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             f"More than one {nx_entry} group in file, use 'root' argument "
             "to specify which to load data from, for example"
             f"{__name__}('my_file.nxs', '/entry_2')")
-    loaded_data = load_detector_data(groups[nx_event_data], nexus_file, nexus,
+    loaded_data = load_detector_data(groups[nx_event_data],
+                                     groups[nx_detector], nexus_file, nexus,
                                      quiet)
     if loaded_data is None:
         no_event_data = True

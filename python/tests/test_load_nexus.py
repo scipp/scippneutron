@@ -363,8 +363,7 @@ def test_loads_data_from_multiple_logs_with_same_name(load_function: Callable):
     # both have the same group name
     builder = NexusBuilder()
     builder.add_log(Log(name, values_1))
-    builder.add_detector(Detector(np.array([1, 2, 3]), log=Log(name,
-                                                               values_2)))
+    builder.add_detector(Detector(log=Log(name, values_2)))
 
     loaded_data = load_function(builder)
 
@@ -520,6 +519,168 @@ def test_loads_pixel_positions_with_event_data(load_function: Callable):
     assert loaded_data.coords[
         'position'].unit == sc.units.m, "Expected positions " \
                                         "to be converted to metres"
+
+
+def test_loads_pixel_positions_without_event_data(load_function: Callable):
+    """
+    This is important in the live-data feature as geometry and event data
+    are streamed separately
+    """
+    detector_1_ids = np.array([0, 1, 2, 3])
+    x_pixel_offset_1 = np.array([0.1, 0.2, 0.1, 0.2])
+    y_pixel_offset_1 = np.array([0.1, 0.1, 0.2, 0.2])
+    z_pixel_offset_1 = np.array([0.1, 0.2, 0.3, 0.4])
+
+    detector_2_ids = np.array([[4, 5], [6, 7]])
+    x_pixel_offset_2 = np.array([[1.1, 1.2], [1.1, 1.2]])
+    y_pixel_offset_2 = np.array([[0.1, 0.1], [0.2, 0.2]])
+
+    builder = NexusBuilder()
+    offsets_units = "mm"
+    builder.add_detector(
+        Detector(detector_numbers=detector_1_ids,
+                 x_offsets=x_pixel_offset_1,
+                 y_offsets=y_pixel_offset_1,
+                 z_offsets=z_pixel_offset_1,
+                 offsets_unit=offsets_units))
+    builder.add_detector(
+        Detector(detector_numbers=detector_2_ids,
+                 x_offsets=x_pixel_offset_2,
+                 y_offsets=y_pixel_offset_2,
+                 offsets_unit=offsets_units))
+
+    loaded_data = load_function(builder)
+
+    # If z offsets are missing they should be zero
+    z_pixel_offset_2 = np.array([[0., 0.], [0., 0.]])
+    expected_pixel_positions = np.array([
+        np.concatenate((x_pixel_offset_1, x_pixel_offset_2.flatten())),
+        np.concatenate((y_pixel_offset_1, y_pixel_offset_2.flatten())),
+        np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
+    ]).T / 1_000  # Divide by 1000 for mm to metres
+    assert np.allclose(loaded_data.coords['position'].values,
+                       expected_pixel_positions)
+    assert loaded_data.coords[
+               'position'].unit == sc.units.m, "Expected positions " \
+                                               "to be converted to metres"
+
+
+def test_loads_pixel_positions_when_event_data_is_missing_field(
+        load_function: Callable):
+    pulse_times = np.array([
+        1600766730000000000, 1600766731000000000, 1600766732000000000,
+        1600766733000000000
+    ])
+    event_data_missing_event_time_offsets = EventData(
+        event_id=np.array([1, 2, 3, 1, 3]),
+        event_time_offset=None,  # Missing, event data will not be loaded!
+        event_time_zero=pulse_times,
+        event_index=np.array([0, 3, 3, 5]),
+    )
+    detector_ids = np.array([0, 1, 2, 3])
+
+    x_pixel_offset_1 = np.array([0.1, 0.2, 0.1, 0.2])
+    y_pixel_offset_1 = np.array([0.1, 0.1, 0.2, 0.2])
+    z_pixel_offset_1 = np.array([0.1, 0.2, 0.3, 0.4])
+
+    detector_2_ids = np.array([[4, 5], [6, 7]])
+    x_pixel_offset_2 = np.array([[1.1, 1.2], [1.1, 1.2]])
+    y_pixel_offset_2 = np.array([[0.1, 0.1], [0.2, 0.2]])
+
+    builder = NexusBuilder()
+    offsets_units = "mm"
+    builder.add_detector(
+        Detector(detector_numbers=detector_ids,
+                 event_data=event_data_missing_event_time_offsets,
+                 x_offsets=x_pixel_offset_1,
+                 y_offsets=y_pixel_offset_1,
+                 z_offsets=z_pixel_offset_1,
+                 offsets_unit=offsets_units))
+    builder.add_detector(
+        Detector(detector_numbers=detector_2_ids,
+                 x_offsets=x_pixel_offset_2,
+                 y_offsets=y_pixel_offset_2,
+                 offsets_unit=offsets_units))
+
+    loaded_data = load_function(builder)
+
+    # If z offsets are missing they should be zero
+    z_pixel_offset_2 = np.array([[0., 0.], [0., 0.]])
+    expected_pixel_positions = np.array([
+        np.concatenate((x_pixel_offset_1, x_pixel_offset_2.flatten())),
+        np.concatenate((y_pixel_offset_1, y_pixel_offset_2.flatten())),
+        np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
+    ]).T / 1_000  # Divide by 1000 for mm to metres
+    assert np.allclose(loaded_data.coords['position'].values,
+                       expected_pixel_positions)
+    assert loaded_data.coords[
+               'position'].unit == sc.units.m, "Expected positions " \
+                                               "to be converted to metres"
+
+
+def test_loads_event_data_when_missing_from_some_detectors(
+        load_function: Callable):
+    pulse_times = np.array([
+        1600766730000000000, 1600766731000000000, 1600766732000000000,
+        1600766733000000000
+    ])
+    event_time_offsets = np.array([456, 743, 347, 345, 632])
+    event_data_missing_event_time_offsets = EventData(
+        event_id=np.array([1, 2, 3, 1, 3]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=pulse_times,
+        event_index=np.array([0, 3, 3, 5]),
+    )
+    detector_1_ids = np.array([0, 1, 2, 3])
+
+    x_pixel_offset_1 = np.array([0.1, 0.2, 0.1, 0.2])
+    y_pixel_offset_1 = np.array([0.1, 0.1, 0.2, 0.2])
+    z_pixel_offset_1 = np.array([0.1, 0.2, 0.3, 0.4])
+
+    detector_2_ids = np.array([[4, 5], [6, 7]])
+    x_pixel_offset_2 = np.array([[1.1, 1.2], [1.1, 1.2]])
+    y_pixel_offset_2 = np.array([[0.1, 0.1], [0.2, 0.2]])
+
+    # There is one detector with event data, detector ids
+    # and pixel offsets, and another detector with only
+    # detector ids and pixel offsets
+    builder = NexusBuilder()
+    offsets_units = "mm"
+    builder.add_detector(
+        Detector(detector_numbers=detector_1_ids,
+                 event_data=event_data_missing_event_time_offsets,
+                 x_offsets=x_pixel_offset_1,
+                 y_offsets=y_pixel_offset_1,
+                 z_offsets=z_pixel_offset_1,
+                 offsets_unit=offsets_units))
+    builder.add_detector(
+        Detector(detector_numbers=detector_2_ids,
+                 x_offsets=x_pixel_offset_2,
+                 y_offsets=y_pixel_offset_2,
+                 offsets_unit=offsets_units))
+
+    loaded_data = load_function(builder)
+
+    # If z offsets are missing they should be zero
+    z_pixel_offset_2 = np.array([[0., 0.], [0., 0.]])
+    expected_pixel_positions = np.array([
+        np.concatenate((x_pixel_offset_1, x_pixel_offset_2.flatten())),
+        np.concatenate((y_pixel_offset_1, y_pixel_offset_2.flatten())),
+        np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
+    ]).T / 1_000  # Divide by 1000 for mm to metres
+    assert np.allclose(loaded_data.coords['position'].values,
+                       expected_pixel_positions)
+    assert loaded_data.coords[
+               'position'].unit == sc.units.m, "Expected positions " \
+                                               "to be converted to metres"
+
+    # The event data from detector_1 has been loaded
+    counts_on_detectors = loaded_data.bins.sum()
+    expected_counts = np.array([0, 2, 1, 2, 0, 0, 0, 0])
+    assert np.allclose(counts_on_detectors.data.values, expected_counts)
+    assert np.allclose(
+        loaded_data.coords['detector_id'].values,
+        np.concatenate((detector_1_ids, detector_2_ids.flatten())))
 
 
 def test_skips_loading_pixel_positions_with_non_matching_shape(
