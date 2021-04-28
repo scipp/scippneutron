@@ -28,7 +28,7 @@ _missing_dependency_message = (
 
 async def data_stream(
     kafka_broker: str,
-    topics: List[str],
+    topics: Optional[List[str]] = None,
     buffer_size: int = 1048576,
     interval: sc.Variable = 2. * sc.units.s,
     run_info_topic: Optional[str] = None
@@ -44,7 +44,8 @@ async def data_stream(
     :param interval: interval between yielding any new data
       collected from stream
     :param run_info_topic: If provided, the first data batch returned by
-    data_stream will be from the last available run start message in the topic
+      data_stream will be from the last available run start message in
+      the topic
     """
     try:
         from ._streaming_data_buffer import StreamedDataBuffer
@@ -65,7 +66,7 @@ async def _data_stream(
     buffer: "StreamedDataBuffer",  # noqa: F821
     queue: asyncio.Queue,
     kafka_broker: str,
-    topics: List[str],
+    topics: Optional[List[str]],
     interval: sc.Variable,
     run_info_topic: Optional[str] = None,
     query_consumer: Optional["KafkaQueryConsumer"] = None,  # noqa: F821
@@ -82,6 +83,10 @@ async def _data_stream(
                                           KafkaQueryConsumer, KafkaConsumer)
     except ImportError:
         raise ImportError(_missing_dependency_message)
+
+    if topics is None and run_info_topic is None:
+        raise ValueError("At least one of 'topics' and 'run_info_topic'"
+                         " must be specified")
 
     # These are defaulted to None in the function signature
     # to avoid them having to be imported
