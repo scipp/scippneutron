@@ -3,21 +3,19 @@ import datetime
 import pytest
 import scipp as sc
 import asyncio
-from typing import List
+from typing import List, Tuple
 import numpy as np
 from .nexus_helpers import NexusBuilder
 
 try:
     import streaming_data_types  # noqa: F401
-    import confluent_kafka  # noqa: F401
+    from confluent_kafka import TopicPartition  # noqa: F401
     from scippneutron.data_stream import _data_stream  # noqa: E402
     from scippneutron._streaming_data_buffer import \
         StreamedDataBuffer  # noqa: E402
     from streaming_data_types.eventdata_ev42 import \
         serialise_ev42  # noqa: E402
-    from streaming_data_types.run_start_pl72 import (serialise_pl72,
-                                                     deserialise_pl72,
-                                                     RunStartInfo)
+    from streaming_data_types.run_start_pl72 import serialise_pl72
 except ImportError:
     pytest.skip("Kafka or Serialisation module is unavailable",
                 allow_module_level=True)
@@ -45,20 +43,45 @@ def stop_consumers(consumers: List[FakeConsumer]):
         consumer.stop()
 
 
-def get_run_start_message_no_streams(topic: str, broker: str) -> RunStartInfo:
-    """
-    The real implementation finds the last run start
-    message in the given topic.
-    For tests we'll construct a run start message and
-    return it.
-    """
-    builder = NexusBuilder()
-    builder.add_instrument("DATA_STREAM_TEST")
-    message = serialise_pl72("",
-                             "",
-                             datetime.datetime.now(),
-                             nexus_structure=builder.json_string)
-    return deserialise_pl72(message)
+class FakeMessage:
+    def __init__(self, message_payload: bytes):
+        self._message_payload = message_payload
+
+    def value(self):
+        return self._message_payload
+
+    @staticmethod
+    def error() -> bool:
+        return False
+
+
+class FakeQueryConsumer:
+    def __init__(self, instrument_name: str):
+        self._instrument_name = instrument_name
+
+    @staticmethod
+    def assign(partitions: List[TopicPartition]):
+        pass
+
+    @staticmethod
+    def get_watermark_offsets(partition: TopicPartition) -> Tuple[int, int]:
+        return 2, 10
+
+    @staticmethod
+    def get_topic_partitions(topic: str) -> List[TopicPartition]:
+        return [TopicPartition(topic, partition=0)]
+
+    def poll(self, timeout=2.) -> FakeMessage:
+        builder = NexusBuilder()
+        builder.add_instrument(self._instrument_name)
+        return FakeMessage(
+            serialise_pl72("",
+                           "",
+                           datetime.datetime.now(),
+                           nexus_structure=builder.json_string))
+
+    def seek(self, partition: TopicPartition):
+        pass
 
 
 # Short time to use for buffer emit and data_stream interval in tests
@@ -83,8 +106,7 @@ async def test_data_stream_returns_data_from_single_event_message():
             buffer,
             queue,
             consumers,  # type: ignore
-            SHORT_TEST_INTERVAL,
-            ""):
+            SHORT_TEST_INTERVAL):
         assert np.allclose(data.coords['tof'].values, time_of_flight)
 
         # Cause the data_stream generator to stop and exit the "async for"
@@ -111,8 +133,7 @@ async def test_data_stream_returns_data_from_multiple_event_messages():
             buffer,
             queue,
             consumers,  # type: ignore
-            SHORT_TEST_INTERVAL,
-            ""):
+            SHORT_TEST_INTERVAL):
         expected_tofs = np.concatenate((first_tof, second_tof))
         assert np.allclose(data.coords['tof'].values, expected_tofs)
         expected_ids = np.concatenate(
@@ -190,14 +211,15 @@ async def test_data_are_loaded_from_run_start_message():
     consumers = []
     run_info_topic = "fake_topic"
     reached_assert = False
+    test_instrument_name = "DATA_STREAM_TEST"
+    query_consumer = FakeQueryConsumer(test_instrument_name)
     async for data in _data_stream(
             buffer,
             queue,
             consumers,  # type: ignore
             SHORT_TEST_INTERVAL,
-            "broker_address",
             run_info_topic,
-            get_run_start_message_no_streams):
-        assert data["instrument_name"].value == "DATA_STREAM_TEST"
+            query_consumer):
+        assert data["instrument_name"].value == test_instrument_name
         reached_assert = True
     assert reached_assert
