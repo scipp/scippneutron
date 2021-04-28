@@ -159,6 +159,8 @@ def create_consumers(
         "group.id": "consumer_group_name",
         "auto.offset.reset": "latest",
         "enable.auto.commit": False,
+        "message.max.bytes": 100_000_000,
+        "fetch.message.max.bytes": 100_000_000,
     }
     consumers = []
     for topic_partition in topic_partitions:
