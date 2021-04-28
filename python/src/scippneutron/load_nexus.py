@@ -174,5 +174,5 @@ def _load_nexus_json(
 def load_nexus_json(json_filename: str) -> Optional[ScippData]:
     with open(json_filename, 'r') as json_file:
         json_string = json_file.read()
-    loaded_data, _ = _load_nexus_json(json_string)
+    loaded_data, _, _ = _load_nexus_json(json_string)
     return loaded_data
