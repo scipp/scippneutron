@@ -13,7 +13,7 @@ using namespace scipp::neutron;
 namespace py = pybind11;
 
 template <class T> void bind_beamline(py::module &m) {
-  using ConstView = const typename T::const_view_type &;
+  using ConstView = T;
   m.def(
       "position", [](ConstView self) { return position(self.meta()); }, R"(
     Extract the detector pixel positions from a data array or a dataset.
@@ -91,7 +91,7 @@ template <class T> void bind_beamline(py::module &m) {
 }
 
 template <class T> void bind_convert(py::module &m) {
-  using ConstView = const typename T::const_view_type &;
+  using ConstView = T;
   const char *doc = R"(
     Convert dimension (unit) into another.
 
