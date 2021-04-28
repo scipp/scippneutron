@@ -262,3 +262,35 @@ async def test_error_raised_if_no_run_start_message_available():
                                     consumer_type=FakeConsumer,
                                     max_iterations=0):
             pass
+
+
+@pytest.mark.asyncio
+async def test_error_if_both_topics_and_run_start_topic_not_specified():
+    queue = asyncio.Queue()
+    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+    # At least one of "topics" and "run_start_topic" must be specified
+    with pytest.raises(ValueError):
+        async for _ in _data_stream(buffer,
+                                    queue,
+                                    "broker",
+                                    topics=None,
+                                    interval=SHORT_TEST_INTERVAL,
+                                    run_info_topic=None,
+                                    query_consumer=FakeQueryConsumer(),
+                                    consumer_type=FakeConsumer,
+                                    max_iterations=0):
+            pass
+
+
+@pytest.mark.asyncio
+async def test_specified_topics_override_run_start_message_topics():
+    # If "topics" argument is specified then they should be used, even if
+    # a run start topic is provided
+    pass
+
+
+@pytest.mark.asyncio
+async def test_topics_from_run_start_message_used_if_not_specified():
+    # If "topics" argument is not specified then use topics from
+    # run start message
+    pass
