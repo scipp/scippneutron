@@ -316,7 +316,24 @@ async def test_specified_topics_override_run_start_message_topics():
 
 
 @pytest.mark.asyncio
-async def test_topics_from_run_start_message_used_if_not_specified():
-    # If "topics" argument is not specified then use topics from
-    # run start message
-    pass
+async def test_topics_from_run_start_message_used_if_topics_arg_not_specified(
+):
+    # If "topics" argument is specified then they should be used, even if
+    # a run start topic is provided
+    queue = asyncio.Queue()
+    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+    topic_in_run_start_message = "test_topic"
+    test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
+    query_consumer = FakeQueryConsumer(streams=test_streams)
+    # At least one of "topics" and "run_start_topic" must be specified
+    async for _ in _data_stream(buffer,
+                                queue,
+                                "broker",
+                                topics=None,
+                                interval=SHORT_TEST_INTERVAL,
+                                run_info_topic=None,
+                                query_consumer=query_consumer,
+                                consumer_type=FakeConsumer,
+                                max_iterations=0):
+        pass
+    assert topic_in_run_start_message in query_consumer.queried_topics
