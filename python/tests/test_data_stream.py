@@ -5,7 +5,7 @@ import scipp as sc
 import asyncio
 from typing import List, Tuple, Callable, Dict, Optional
 import numpy as np
-from .nexus_helpers import NexusBuilder
+from .nexus_helpers import NexusBuilder, Stream
 
 try:
     import streaming_data_types  # noqa: F401
@@ -63,9 +63,12 @@ class FakeMessage:
 class FakeQueryConsumer:
     def __init__(self,
                  instrument_name: str = "",
-                 low_and_high_offset: Tuple[int, int] = (2, 10)):
+                 low_and_high_offset: Tuple[int, int] = (2, 10),
+                 streams: List[Stream] = None):
         self._instrument_name = instrument_name
         self._low_and_high_offset = low_and_high_offset
+        self._streams = streams
+        self.queried_topics = []
 
     @staticmethod
     def assign(partitions: List[TopicPartition]):
@@ -75,14 +78,18 @@ class FakeQueryConsumer:
                               partition: TopicPartition) -> Tuple[int, int]:
         return self._low_and_high_offset
 
-    @staticmethod
-    def get_topic_partitions(topic: str,
+    def get_topic_partitions(self,
+                             topic: str,
                              offset: int = -1) -> List[TopicPartition]:
+        self.queried_topics.append(topic)
         return [TopicPartition(topic, partition=0, offset=offset)]
 
     def poll(self, timeout=2.) -> FakeMessage:
         builder = NexusBuilder()
         builder.add_instrument(self._instrument_name)
+        if self._streams is not None:
+            for stream in self._streams:
+                builder.add_stream(stream)
         return FakeMessage(
             serialise_pl72("",
                            "",
@@ -286,7 +293,26 @@ async def test_error_if_both_topics_and_run_start_topic_not_specified():
 async def test_specified_topics_override_run_start_message_topics():
     # If "topics" argument is specified then they should be used, even if
     # a run start topic is provided
-    pass
+    queue = asyncio.Queue()
+    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+    test_topics = ["whiting", "snail", "porpoise"]
+    topic_in_run_start_message = "test_topic"
+    test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
+    query_consumer = FakeQueryConsumer(streams=test_streams)
+    # At least one of "topics" and "run_start_topic" must be specified
+    async for _ in _data_stream(buffer,
+                                queue,
+                                "broker",
+                                topics=test_topics,
+                                interval=SHORT_TEST_INTERVAL,
+                                run_info_topic=None,
+                                query_consumer=query_consumer,
+                                consumer_type=FakeConsumer,
+                                max_iterations=0):
+        pass
+    for topic in test_topics:
+        assert topic in query_consumer.queried_topics
+    assert topic_in_run_start_message not in query_consumer.queried_topics
 
 
 @pytest.mark.asyncio
