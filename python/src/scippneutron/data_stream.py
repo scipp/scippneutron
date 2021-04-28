@@ -31,7 +31,7 @@ async def data_stream(
     buffer_size: int = 1048576,
     interval: sc.Variable = 2. * sc.units.s,
     run_info_topic: Optional[str] = None
-) -> Generator[sc.Variable, None, None]:
+) -> Generator[sc.DataArray, None, None]:
     """
     Periodically yields accumulated data from stream.
     If the buffer fills up more frequently than the set interval
@@ -68,10 +68,10 @@ async def data_stream(
 
     # Use "async for" as "yield from" cannot be used in an async function, see
     # https://www.python.org/dev/peps/pep-0525/#asynchronous-yield-from
-    async for v in _data_stream(buffer, queue, consumers,
-                                interval, run_info_topic,
-                                KafkaQueryConsumer(kafka_broker)):
-        yield v
+    async for data_chunk in _data_stream(buffer, queue, consumers, interval,
+                                         run_info_topic,
+                                         KafkaQueryConsumer(kafka_broker)):
+        yield data_chunk
 
 
 async def _data_stream(
@@ -81,7 +81,7 @@ async def _data_stream(
     interval: sc.Variable,
     run_info_topic: Optional[str] = None,
     query_consumer: Optional["KafkaQueryConsumer"] = None  # noqa: F821
-) -> Generator[sc.Variable, None, None]:
+) -> Generator[sc.DataArray, None, None]:
     """
     Main implementation of data stream is extracted to this function so that
     fake consumers can be injected for unit tests

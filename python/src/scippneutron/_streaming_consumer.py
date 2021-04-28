@@ -23,6 +23,10 @@ The following Kafka terminology is used extensively in the code:
 """
 
 
+class RunStartError(Exception):
+    pass
+
+
 class KafkaConsumer:
     def __init__(self, topic_partitions: List[TopicPartition], conf: Dict,
                  callback: Callable, stop_at_end_of_partition: bool):
@@ -191,15 +195,15 @@ def get_run_start_message(topic: str, query_consumer: KafkaQueryConsumer):
         query_consumer.seek(partition)
         message = query_consumer.poll(timeout=2.)
         if message is None:
-            raise RuntimeError(
+            raise RunStartError(
                 "Timed out when trying to retrieve run start message")
         elif message.error():
-            raise RuntimeError(f"Error encountered consuming run start "
-                               f"message: {message.error()}")
+            raise RunStartError(f"Error encountered consuming run start "
+                                f"message: {message.error()}")
         try:
             return deserialise_pl72(message.value())
         except WrongSchemaException:
             # Not a run start message, keep trying
             pass
 
-    raise RuntimeError(f"Run start message not found in topic '{topic}'")
+    raise RunStartError(f"Run start message not found in topic '{topic}'")

@@ -16,6 +16,7 @@ try:
     from streaming_data_types.eventdata_ev42 import \
         serialise_ev42  # noqa: E402
     from streaming_data_types.run_start_pl72 import serialise_pl72
+    from scippneutron._streaming_consumer import RunStartError
 except ImportError:
     pytest.skip("Kafka or Serialisation module is unavailable",
                 allow_module_level=True)
@@ -56,16 +57,19 @@ class FakeMessage:
 
 
 class FakeQueryConsumer:
-    def __init__(self, instrument_name: str):
+    def __init__(self,
+                 instrument_name: str,
+                 low_and_high_offset: Tuple[int, int] = (2, 10)):
         self._instrument_name = instrument_name
+        self._low_and_high_offset = low_and_high_offset
 
     @staticmethod
     def assign(partitions: List[TopicPartition]):
         pass
 
-    @staticmethod
-    def get_watermark_offsets(partition: TopicPartition) -> Tuple[int, int]:
-        return 2, 10
+    def get_watermark_offsets(self,
+                              partition: TopicPartition) -> Tuple[int, int]:
+        return self._low_and_high_offset
 
     @staticmethod
     def get_topic_partitions(topic: str) -> List[TopicPartition]:
@@ -223,3 +227,26 @@ async def test_data_are_loaded_from_run_start_message():
         assert data["instrument_name"].value == test_instrument_name
         reached_assert = True
     assert reached_assert
+
+
+@pytest.mark.asyncio
+async def test_error_raised_if_no_run_start_message_available():
+    queue = asyncio.Queue()
+    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+    consumers = []
+    run_info_topic = "fake_topic"
+    test_instrument_name = "DATA_STREAM_TEST"
+    # Low and high offset are the same value, indicates there are
+    # no messages available in the partition
+    low_and_high_offset = (0, 0)
+    query_consumer = FakeQueryConsumer(test_instrument_name,
+                                       low_and_high_offset)
+    with pytest.raises(RunStartError):
+        async for _ in _data_stream(
+                buffer,
+                queue,
+                consumers,  # type: ignore
+                SHORT_TEST_INTERVAL,
+                run_info_topic,
+                query_consumer):
+            pass
