@@ -5,7 +5,6 @@ import asyncio
 from typing import List, Tuple, Callable, Dict, Optional
 import numpy as np
 from .nexus_helpers import NexusBuilder, Stream
-import dateutil.parser
 
 try:
     import streaming_data_types  # noqa: F401
@@ -65,13 +64,15 @@ class FakeQueryConsumer:
                  instrument_name: str = "",
                  low_and_high_offset: Tuple[int, int] = (2, 10),
                  streams: List[Stream] = None,
-                 start_time: Optional[str] = None):
+                 start_time: Optional[int] = None):
         self._instrument_name = instrument_name
         self._low_and_high_offset = low_and_high_offset
         self._streams = streams
         self.queried_topics = []
         self.queried_timestamp = None
         self._start_time = start_time
+        if self._start_time is None:
+            self._start_time = datetime.datetime.now()
 
     @staticmethod
     def assign(partitions: List[TopicPartition]):
@@ -93,13 +94,10 @@ class FakeQueryConsumer:
         if self._streams is not None:
             for stream in self._streams:
                 builder.add_stream(stream)
-        if self._start_time is not None:
-            builder.add_dataset_at_path("/entry/start_time", self._start_time,
-                                        {})
         return FakeMessage(
             serialise_pl72("",
                            "",
-                           datetime.datetime.now(),
+                           start_time=self._start_time,
                            nexus_structure=builder.json_string))
 
     def seek(self, partition: TopicPartition):
@@ -349,7 +347,7 @@ async def test_start_time_from_run_start_msg_not_used_if_start_now_specified():
     buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
     topic_in_run_start_message = "test_topic"
     test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
-    test_start_time = "2021-04-28T15:09:49Z"
+    test_start_time = 123456
     query_consumer = FakeQueryConsumer(streams=test_streams,
                                        start_time=test_start_time)
     # At least one of "topics" and "run_start_topic" must be specified
@@ -365,8 +363,7 @@ async def test_start_time_from_run_start_msg_not_used_if_start_now_specified():
                                 max_iterations=0):
         pass
 
-    assert query_consumer.queried_timestamp != int(
-        dateutil.parser.parse(test_start_time).timestamp() * 1000.)
+    assert query_consumer.queried_timestamp != test_start_time
 
 
 @pytest.mark.asyncio
@@ -375,7 +372,7 @@ async def test_start_time_from_run_start_msg_used_if_requested():
     buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
     topic_in_run_start_message = "test_topic"
     test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
-    test_start_time = "2021-04-28T15:09:49Z"
+    test_start_time = 123456
     query_consumer = FakeQueryConsumer(streams=test_streams,
                                        start_time=test_start_time)
     # At least one of "topics" and "run_start_topic" must be specified
@@ -391,5 +388,4 @@ async def test_start_time_from_run_start_msg_used_if_requested():
                                 max_iterations=0):
         pass
 
-    assert query_consumer.queried_timestamp == int(
-        dateutil.parser.parse(test_start_time).timestamp() * 1000.)
+    assert query_consumer.queried_timestamp == test_start_time

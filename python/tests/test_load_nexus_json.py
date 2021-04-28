@@ -22,7 +22,7 @@ def test_stream_object_as_transformation_results_in_warning():
     builder.add_dataset_at_path("/entry/source/depends_on", stream_path, {})
 
     with pytest.warns(UserWarning):
-        loaded_data, _, _ = _load_nexus_json(builder.json_string)
+        loaded_data, _ = _load_nexus_json(builder.json_string)
 
     # A 0 distance translation is used in place of the streamed transformation
     default = [0, 0, 0]

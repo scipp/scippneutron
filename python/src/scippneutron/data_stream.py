@@ -107,15 +107,15 @@ async def _data_stream(
     if run_info_topic is not None:
         run_start_info = get_run_start_message(run_info_topic, query_consumer)
         if topics is None:
-            loaded_data, run_start_time, topics = _load_nexus_json(
+            loaded_data, topics = _load_nexus_json(
                 run_start_info.nexus_structure, get_start_info=True)
         else:
-            loaded_data, run_start_time, _ = _load_nexus_json(
-                run_start_info.nexus_structure, get_start_info=False)
+            loaded_data, _ = _load_nexus_json(run_start_info.nexus_structure,
+                                              get_start_info=False)
         yield loaded_data
 
     if start_at == StartTime.start_of_run:
-        start_time = run_start_time
+        start_time = run_start_info.start_time * sc.Unit("milliseconds")
     else:
         start_time = time.time() * sc.units.s
 

@@ -39,7 +39,7 @@ def load_from_nexus(
 
 def load_from_json(
         builder: NexusBuilder) -> Union[sc.Dataset, sc.DataArray, None]:
-    loaded_data, _, _ = _load_nexus_json(builder.json_string)
+    loaded_data, _ = _load_nexus_json(builder.json_string)
     return loaded_data
 
 

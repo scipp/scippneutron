@@ -6,7 +6,6 @@ from typing import Tuple, Dict, List, Optional, Any, Union
 import scipp as sc
 import numpy as np
 from ._loading_common import Group, MissingDataset, MissingAttribute
-import dateutil.parser
 
 _nexus_class = "NX_class"
 _nexus_units = "units"
@@ -319,17 +318,3 @@ class LoadFromJson:
 def get_topics_from_streams(root: Dict) -> List[str]:
     found_streams = _find_by_type(_nexus_stream, root)
     return [stream["stream"]["topic"] for stream in found_streams]
-
-
-def get_start_time(root: Dict) -> Optional[sc.Variable]:
-    nexus = LoadFromJson(root)
-    entry_class = "NXentry"
-    entry_groups = nexus.find_by_nx_class((entry_class, ), root)[entry_class]
-    if len(entry_groups) < 1:
-        return
-    start_time_iso8601 = nexus.get_dataset_from_group(entry_groups[0].group,
-                                                      "start_time")
-    if start_time_iso8601 is None:
-        return
-    parsed_time = dateutil.parser.parse(start_time_iso8601[_nexus_values])
-    return int(parsed_time.timestamp() * 1000.0) * sc.Unit("milliseconds")

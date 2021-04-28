@@ -8,8 +8,7 @@ from ._loading_common import Group, MissingDataset
 from ._loading_detector_data import load_detector_data
 from ._loading_log_data import load_logs
 from ._loading_hdf5_nexus import LoadFromHdf5
-from ._loading_json_nexus import (LoadFromJson, get_topics_from_streams,
-                                  get_start_time)
+from ._loading_json_nexus import LoadFromJson, get_topics_from_streams
 from ._loading_nexus import LoadFromNexus, GroupObject, ScippData
 import h5py
 from timeit import default_timer as timer
@@ -163,16 +162,14 @@ def _load_nexus_json(
     # point because we do not know what dimension names to use here
     loaded_json = json.loads(json_template)
     topics = None
-    start_time = None
     if get_start_info:
         topics = get_topics_from_streams(loaded_json)
-        start_time = get_start_time(loaded_json)
     return _load_data(loaded_json, None, LoadFromJson(loaded_json),
-                      True), start_time, topics
+                      True), topics
 
 
 def load_nexus_json(json_filename: str) -> Optional[ScippData]:
     with open(json_filename, 'r') as json_file:
         json_string = json_file.read()
-    loaded_data, _, _ = _load_nexus_json(json_string)
+    loaded_data, _ = _load_nexus_json(json_string)
     return loaded_data
