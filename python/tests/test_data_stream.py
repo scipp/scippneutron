@@ -10,7 +10,7 @@ import dateutil.parser
 try:
     import streaming_data_types  # noqa: F401
     from confluent_kafka import TopicPartition  # noqa: F401
-    from scippneutron.data_stream import _data_stream  # noqa: E402
+    from scippneutron.data_stream import _data_stream, StartTime  # noqa: E402
     from scippneutron._streaming_data_buffer import \
         StreamedDataBuffer  # noqa: E402
     from streaming_data_types.eventdata_ev42 import \
@@ -356,6 +356,7 @@ async def test_start_time_from_run_start_msg_not_used_if_start_now_specified():
     async for _ in _data_stream(buffer,
                                 queue,
                                 "broker",
+                                start_at=StartTime.now,
                                 topics=None,
                                 interval=SHORT_TEST_INTERVAL,
                                 run_info_topic="run_topic",
@@ -365,4 +366,30 @@ async def test_start_time_from_run_start_msg_not_used_if_start_now_specified():
         pass
 
     assert query_consumer.queried_timestamp != int(
+        dateutil.parser.parse(test_start_time).timestamp() * 1000.)
+
+
+@pytest.mark.asyncio
+async def test_start_time_from_run_start_msg_used_if_requested():
+    queue = asyncio.Queue()
+    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+    topic_in_run_start_message = "test_topic"
+    test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
+    test_start_time = "2021-04-28T15:09:49Z"
+    query_consumer = FakeQueryConsumer(streams=test_streams,
+                                       start_time=test_start_time)
+    # At least one of "topics" and "run_start_topic" must be specified
+    async for _ in _data_stream(buffer,
+                                queue,
+                                "broker",
+                                start_at=StartTime.start_of_run,
+                                topics=None,
+                                interval=SHORT_TEST_INTERVAL,
+                                run_info_topic="run_topic",
+                                query_consumer=query_consumer,
+                                consumer_type=FakeConsumer,
+                                max_iterations=0):
+        pass
+
+    assert query_consumer.queried_timestamp == int(
         dateutil.parser.parse(test_start_time).timestamp() * 1000.)
