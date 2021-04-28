@@ -4,11 +4,17 @@ from typing import List, Generator, Callable, Optional, Type
 import asyncio
 import scipp as sc
 from .load_nexus import _load_nexus_json
+from enum import Enum
 """
 Some type names are included as strings as imports are done in
 function scope to avoid optional dependencies being imported
 by the top level __init__.py
 """
+
+
+class StartTime(Enum):
+    now = "now"
+    start_of_run = "start_of_run"
 
 
 def _consumers_all_stopped(consumers: List["KafkaConsumer"]):  # noqa: F821
@@ -31,7 +37,8 @@ async def data_stream(
     topics: Optional[List[str]] = None,
     buffer_size: int = 1048576,
     interval: sc.Variable = 2. * sc.units.s,
-    run_info_topic: Optional[str] = None
+    run_info_topic: Optional[str] = None,
+    start_time: StartTime = StartTime.now,
 ) -> Generator[sc.DataArray, None, None]:
     """
     Periodically yields accumulated data from stream.
@@ -46,6 +53,7 @@ async def data_stream(
     :param run_info_topic: If provided, the first data batch returned by
       data_stream will be from the last available run start message in
       the topic
+    :param start_time: Get data from now or from start of the last run
     """
     try:
         from ._streaming_data_buffer import StreamedDataBuffer
@@ -58,7 +66,7 @@ async def data_stream(
     # Use "async for" as "yield from" cannot be used in an async function, see
     # https://www.python.org/dev/peps/pep-0525/#asynchronous-yield-from
     async for data_chunk in _data_stream(buffer, queue, kafka_broker, topics,
-                                         interval, run_info_topic):
+                                         interval, run_info_topic, start_time):
         yield data_chunk
 
 
@@ -69,6 +77,7 @@ async def _data_stream(
     topics: Optional[List[str]],
     interval: sc.Variable,
     run_info_topic: Optional[str] = None,
+    start_at: StartTime = StartTime.now,
     query_consumer: Optional["KafkaQueryConsumer"] = None,  # noqa: F821
     consumer_type: Optional[Type["KafkaConsumer"]] = None,  # noqa: F821
     max_iterations: int = np.iinfo(np.int32).max  # for testability
@@ -95,16 +104,20 @@ async def _data_stream(
     if consumer_type is None:
         consumer_type = KafkaConsumer
 
-    start_time = time.time() * sc.units.s
     if run_info_topic is not None:
         run_start_info = get_run_start_message(run_info_topic, query_consumer)
         if topics is None:
-            loaded_data, _, topics = _load_nexus_json(
+            loaded_data, run_start_time, topics = _load_nexus_json(
                 run_start_info.nexus_structure, get_start_info=True)
         else:
-            loaded_data, _, _ = _load_nexus_json(
+            loaded_data, run_start_time, _ = _load_nexus_json(
                 run_start_info.nexus_structure, get_start_info=False)
         yield loaded_data
+
+    if start_at == StartTime.start_of_run:
+        start_time = run_start_time
+    else:
+        start_time = time.time() * sc.units.s
 
     consumers = create_consumers(start_time,
                                  topics,
