@@ -1,9 +1,10 @@
 from confluent_kafka import Consumer, TopicPartition, KafkaError
-from typing import Callable, List, Dict, Optional, Tuple
+from typing import Callable, List, Dict, Optional, Tuple, Type
 import asyncio
 from warnings import warn
 from streaming_data_types.run_start_pl72 import deserialise_pl72
 from streaming_data_types.exceptions import WrongSchemaException
+import scipp as sc
 """
 This module uses the confluent-kafka-python implementation of the
 Kafka Client API to communicate with Kafka servers (brokers)
@@ -95,10 +96,10 @@ class KafkaQueryConsumer:
         }
         self._consumer = Consumer(**conf)
 
-    def get_topic_partitions(self, topic: str):
+    def get_topic_partitions(self, topic: str, offset: int = -1):
         metadata = self._consumer.list_topics(topic)
         return [
-            TopicPartition(topic, partition[1].id, offset=-1)
+            TopicPartition(topic, partition[1].id, offset=offset)
             for partition in metadata.topics[topic].partitions.items()
         ]
 
@@ -125,36 +126,44 @@ class KafkaQueryConsumer:
     def assign(self, partitions: List[TopicPartition]):
         self._consumer.assign(partitions)
 
+    def offsets_for_times(self, partitions: List[TopicPartition]):
+        return self._consumer.offsets_for_times(partitions)
+
 
 def create_consumers(
-        start_time_ms: int,
+        start_time: sc.Variable,
         topics: List[str],
-        conf: Dict,
+        kafka_broker: str,
+        query_consumer: KafkaQueryConsumer,
+        consumer_type: Type[KafkaConsumer],  # so we can inject fake consumer
         callback: Callable,
         stop_at_end_of_partition: bool = False) -> List[KafkaConsumer]:
     """
     Creates one consumer per TopicPartition that start consuming
-    at specified timestamp
+    at specified timestamp in the data stream
 
     Having each consumer only be responsible for one partition
     greatly simplifies the logic around stopping at the end of
     the stream (making use of "end of partition" event)
     """
-    consumer = Consumer(**conf)
-
     topic_partitions = []
     for topic in topics:
-        metadata = consumer.list_topics(topic)
-        topic_partitions.extend([
-            TopicPartition(topic, partition[1].id, offset=start_time_ms)
-            for partition in metadata.topics[topic].partitions.items()
-        ])
-    topic_partitions = consumer.offsets_for_times(topic_partitions)
+        topic_partitions.extend(
+            query_consumer.get_topic_partitions(
+                topic,
+                offset=int(sc.to_unit(start_time, "milliseconds").value)))
+    topic_partitions = query_consumer.offsets_for_times(topic_partitions)
 
+    config = {
+        "bootstrap.servers": kafka_broker,
+        "group.id": "consumer_group_name",
+        "auto.offset.reset": "latest",
+        "enable.auto.commit": False,
+    }
     consumers = []
     for topic_partition in topic_partitions:
         consumers.append(
-            KafkaConsumer([topic_partition], conf, callback,
+            consumer_type([topic_partition], config, callback,
                           stop_at_end_of_partition))
 
     return consumers

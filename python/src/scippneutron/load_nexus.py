@@ -12,7 +12,7 @@ from ._loading_json_nexus import LoadFromJson
 from ._loading_nexus import LoadFromNexus, GroupObject, ScippData
 import h5py
 from timeit import default_timer as timer
-from typing import Union, List, Optional, Dict
+from typing import Union, List, Optional, Dict, Tuple
 from contextlib import contextmanager
 from warnings import warn
 import numpy as np
@@ -151,17 +151,27 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     return loaded_data
 
 
-def _load_nexus_json(json_template: str) -> Optional[ScippData]:
+def _load_nexus_json(
+    json_template: str,
+    get_start_info: bool = False
+) -> Tuple[Optional[ScippData], Optional[int], Optional[List[str]]]:
     """
     Use this function for testing so that file io is not required
     """
     # We do not use cls to convert value lists to sc.Variable at this
     # point because we do not know what dimension names to use here
     loaded_json = json.loads(json_template)
-    return _load_data(loaded_json, None, LoadFromJson(loaded_json), True)
+    topics = None
+    start_time = None
+    if get_start_info:
+        topics = None
+        start_time = None
+    return _load_data(loaded_json, None, LoadFromJson(loaded_json),
+                      True), start_time, topics
 
 
 def load_nexus_json(json_filename: str) -> Optional[ScippData]:
     with open(json_filename, 'r') as json_file:
         json_string = json_file.read()
-    return _load_nexus_json(json_string)
+    loaded_data, _ = _load_nexus_json(json_string)
+    return loaded_data

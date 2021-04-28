@@ -31,13 +31,16 @@ def test_no_exception_if_single_nxentry_found_below_root():
         assert scippneutron.load_nexus(nexus_file, root='/entry_1') is None
 
 
-def load_from_nexus(builder: NexusBuilder) -> sc.Variable:
+def load_from_nexus(
+        builder: NexusBuilder) -> Union[sc.Dataset, sc.DataArray, None]:
     with builder.file() as nexus_file:
         return scippneutron.load_nexus(nexus_file)
 
 
-def load_from_json(builder: NexusBuilder) -> sc.Variable:
-    return _load_nexus_json(builder.json_string)
+def load_from_json(
+        builder: NexusBuilder) -> Union[sc.Dataset, sc.DataArray, None]:
+    loaded_data, _, _ = _load_nexus_json(builder.json_string)
+    return loaded_data
 
 
 @pytest.fixture(params=[load_from_nexus, load_from_json])

@@ -3,7 +3,7 @@ import datetime
 import pytest
 import scipp as sc
 import asyncio
-from typing import List, Tuple
+from typing import List, Tuple, Callable, Dict, Optional
 import numpy as np
 from .nexus_helpers import NexusBuilder
 
@@ -29,7 +29,11 @@ class FakeConsumer:
     fake messages as the new_data method on the
     StreamedDataBuffer can be called manually instead.
     """
-    def __init__(self):
+    def __init__(self,
+                 topic_partitions: Optional[List[TopicPartition]] = None,
+                 conf: Optional[Dict] = None,
+                 callback: Optional[Callable] = None,
+                 stop_at_end_of_partition: Optional[bool] = None):
         self.stopped = True
 
     def start(self):
@@ -58,7 +62,7 @@ class FakeMessage:
 
 class FakeQueryConsumer:
     def __init__(self,
-                 instrument_name: str,
+                 instrument_name: str = "",
                  low_and_high_offset: Tuple[int, int] = (2, 10)):
         self._instrument_name = instrument_name
         self._low_and_high_offset = low_and_high_offset
@@ -72,8 +76,9 @@ class FakeQueryConsumer:
         return self._low_and_high_offset
 
     @staticmethod
-    def get_topic_partitions(topic: str) -> List[TopicPartition]:
-        return [TopicPartition(topic, partition=0)]
+    def get_topic_partitions(topic: str,
+                             offset: int = -1) -> List[TopicPartition]:
+        return [TopicPartition(topic, partition=0, offset=offset)]
 
     def poll(self, timeout=2.) -> FakeMessage:
         builder = NexusBuilder()
@@ -87,6 +92,10 @@ class FakeQueryConsumer:
     def seek(self, partition: TopicPartition):
         pass
 
+    @staticmethod
+    def offsets_for_times(partitions: List[TopicPartition]):
+        return partitions
+
 
 # Short time to use for buffer emit and data_stream interval in tests
 # pass or fail fast!
@@ -99,29 +108,29 @@ TEST_BUFFER_SIZE = 20
 async def test_data_stream_returns_data_from_single_event_message():
     queue = asyncio.Queue()
     buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
-    consumers = [FakeConsumer()]
     time_of_flight = np.array([1., 2., 3.])
     detector_ids = np.array([4, 5, 6])
     test_message = serialise_ev42("detector", 0, 0, time_of_flight,
                                   detector_ids)
     await buffer.new_data(test_message)
 
-    async for data in _data_stream(
-            buffer,
-            queue,
-            consumers,  # type: ignore
-            SHORT_TEST_INTERVAL):
+    reached_assert = False
+    async for data in _data_stream(buffer,
+                                   queue,
+                                   "broker", ["topic"],
+                                   SHORT_TEST_INTERVAL,
+                                   query_consumer=FakeQueryConsumer(),
+                                   consumer_type=FakeConsumer,
+                                   max_iterations=1):
         assert np.allclose(data.coords['tof'].values, time_of_flight)
-
-        # Cause the data_stream generator to stop and exit the "async for"
-        stop_consumers(consumers)
+        reached_assert = True
+    assert reached_assert
 
 
 @pytest.mark.asyncio
 async def test_data_stream_returns_data_from_multiple_event_messages():
     queue = asyncio.Queue()
     buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
-    consumers = [FakeConsumer()]
     first_tof = np.array([1., 2., 3.])
     first_detector_ids = np.array([4, 5, 6])
     first_test_message = serialise_ev42("detector", 0, 0, first_tof,
@@ -133,18 +142,21 @@ async def test_data_stream_returns_data_from_multiple_event_messages():
     await buffer.new_data(first_test_message)
     await buffer.new_data(second_test_message)
 
-    async for data in _data_stream(
-            buffer,
-            queue,
-            consumers,  # type: ignore
-            SHORT_TEST_INTERVAL):
+    reached_asserts = False
+    async for data in _data_stream(buffer,
+                                   queue,
+                                   "broker", ["topic"],
+                                   SHORT_TEST_INTERVAL,
+                                   query_consumer=FakeQueryConsumer(),
+                                   consumer_type=FakeConsumer,
+                                   max_iterations=1):
         expected_tofs = np.concatenate((first_tof, second_tof))
         assert np.allclose(data.coords['tof'].values, expected_tofs)
         expected_ids = np.concatenate(
             (first_detector_ids, second_detector_ids))
         assert np.array_equal(data.coords['detector_id'].values, expected_ids)
-
-        stop_consumers(consumers)
+        reached_asserts = True
+    assert reached_asserts
 
 
 @pytest.mark.asyncio
@@ -212,18 +224,18 @@ async def test_buffer_size_exceeded_by_messages_causes_early_data_emit():
 async def test_data_are_loaded_from_run_start_message():
     queue = asyncio.Queue()
     buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
-    consumers = []
     run_info_topic = "fake_topic"
     reached_assert = False
     test_instrument_name = "DATA_STREAM_TEST"
-    query_consumer = FakeQueryConsumer(test_instrument_name)
     async for data in _data_stream(
             buffer,
             queue,
-            consumers,  # type: ignore
+            "broker", [""],
             SHORT_TEST_INTERVAL,
-            run_info_topic,
-            query_consumer):
+            run_info_topic=run_info_topic,
+            query_consumer=FakeQueryConsumer(test_instrument_name),
+            consumer_type=FakeConsumer,
+            max_iterations=0):
         assert data["instrument_name"].value == test_instrument_name
         reached_assert = True
     assert reached_assert
@@ -233,20 +245,20 @@ async def test_data_are_loaded_from_run_start_message():
 async def test_error_raised_if_no_run_start_message_available():
     queue = asyncio.Queue()
     buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
-    consumers = []
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
     # Low and high offset are the same value, indicates there are
     # no messages available in the partition
     low_and_high_offset = (0, 0)
-    query_consumer = FakeQueryConsumer(test_instrument_name,
-                                       low_and_high_offset)
     with pytest.raises(RunStartError):
-        async for _ in _data_stream(
-                buffer,
-                queue,
-                consumers,  # type: ignore
-                SHORT_TEST_INTERVAL,
-                run_info_topic,
-                query_consumer):
+        async for _ in _data_stream(buffer,
+                                    queue,
+                                    "broker", [""],
+                                    SHORT_TEST_INTERVAL,
+                                    run_info_topic=run_info_topic,
+                                    query_consumer=FakeQueryConsumer(
+                                        test_instrument_name,
+                                        low_and_high_offset),
+                                    consumer_type=FakeConsumer,
+                                    max_iterations=0):
             pass
