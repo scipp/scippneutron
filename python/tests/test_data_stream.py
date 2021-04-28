@@ -331,7 +331,7 @@ async def test_topics_from_run_start_message_used_if_topics_arg_not_specified(
                                 "broker",
                                 topics=None,
                                 interval=SHORT_TEST_INTERVAL,
-                                run_info_topic=None,
+                                run_info_topic="run_topic",
                                 query_consumer=query_consumer,
                                 consumer_type=FakeConsumer,
                                 max_iterations=0):

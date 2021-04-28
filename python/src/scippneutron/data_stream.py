@@ -98,7 +98,12 @@ async def _data_stream(
     start_time = time.time() * sc.units.s
     if run_info_topic is not None:
         run_start_info = get_run_start_message(run_info_topic, query_consumer)
-        loaded_data, _, _ = _load_nexus_json(run_start_info.nexus_structure)
+        if topics is None:
+            loaded_data, _, topics = _load_nexus_json(
+                run_start_info.nexus_structure, get_start_info=True)
+        else:
+            loaded_data, _, _ = _load_nexus_json(
+                run_start_info.nexus_structure, get_start_info=False)
         yield loaded_data
 
     consumers = create_consumers(start_time,
