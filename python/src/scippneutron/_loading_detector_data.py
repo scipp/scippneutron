@@ -8,7 +8,6 @@ from typing import Optional, List, Any, Dict, Union
 import numpy as np
 from ._loading_common import (BadSource, MissingDataset, Group)
 import scipp as sc
-from datetime import datetime
 from warnings import warn
 from itertools import groupby
 from ._loading_transformations import get_full_transformation_matrix
@@ -40,16 +39,6 @@ def _check_for_missing_fields(group: GroupObject, nexus: LoadFromNexus) -> str:
         if not found:
             return msg
     return ""
-
-
-def _iso8601_to_datetime(iso8601: str) -> Optional[datetime]:
-    try:
-        return datetime.strptime(
-            iso8601.translate(str.maketrans('', '', ':-Z')),
-            "%Y%m%dT%H%M%S.%f")
-    except ValueError:
-        # Did not understand the format of the input string
-        return None
 
 
 def _convert_array_to_metres(array: np.ndarray, unit: str) -> np.ndarray:
