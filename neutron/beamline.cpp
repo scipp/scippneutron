@@ -96,14 +96,14 @@ Variable Ltotal(const dataset::Coords &meta, const ConvertMode scatter) {
 
 Variable L1(const dataset::Coords &meta) {
   if (find_param(meta, NeutronDim::L1))
-    return copy(meta[NeutronDim::L1]);
+    return meta[NeutronDim::L1];
   log_not_found(NeutronDim::L1, NeutronDim::IncidentBeam);
   return norm(incident_beam(meta));
 }
 
 Variable L2(const dataset::Coords &meta) {
   if (find_param(meta, NeutronDim::L2))
-    return copy(meta[NeutronDim::L2]);
+    return meta[NeutronDim::L2];
   log_not_found(NeutronDim::L2, NeutronDim::ScatteredBeam);
   if (find_param(meta, NeutronDim::ScatteredBeam))
     return norm(meta[NeutronDim::ScatteredBeam]);
@@ -125,7 +125,7 @@ Variable scattering_angle(const dataset::Coords &meta) {
 
 Variable incident_beam(const dataset::Coords &meta) {
   if (find_param(meta, NeutronDim::IncidentBeam))
-    return copy(meta[NeutronDim::IncidentBeam]);
+    return meta[NeutronDim::IncidentBeam];
   log_not_found(NeutronDim::IncidentBeam, NeutronDim::SourcePosition,
                 NeutronDim::SamplePosition);
   return sample_position(meta) - source_position(meta);
@@ -133,17 +133,15 @@ Variable incident_beam(const dataset::Coords &meta) {
 
 Variable scattered_beam(const dataset::Coords &meta) {
   if (find_param(meta, NeutronDim::ScatteredBeam))
-    return copy(meta[NeutronDim::ScatteredBeam]);
+    return meta[NeutronDim::ScatteredBeam];
   log_not_found(NeutronDim::ScatteredBeam, NeutronDim::SamplePosition,
                 NeutronDim::Position);
   return position(meta) - sample_position(meta);
 }
 
 namespace {
-auto normalize(Variable &&var) {
-  const auto length = norm(var);
-  var /= length;
-  return std::move(var);
+auto normalize(const Variable &var) { // TODO rename
+  return var / norm(var);
 }
 } // namespace
 
@@ -157,7 +155,7 @@ Variable cos_two_theta(const dataset::Coords &meta) {
 
 Variable two_theta(const dataset::Coords &meta) {
   if (find_param(meta, NeutronDim::TwoTheta))
-    return copy(meta[NeutronDim::TwoTheta]);
+    return meta[NeutronDim::TwoTheta];
   return acos(cos_two_theta(meta));
 }
 
