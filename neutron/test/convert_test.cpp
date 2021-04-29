@@ -151,7 +151,7 @@ TEST_P(ConvertTest, convert_slice) {
 }
 TEST_P(ConvertTest, fail_count_density) {
   const Dataset tof = GetParam();
-  for (const Dim dim :
+  for (const Dim &dim :
        {NeutronDim::DSpacing, NeutronDim::Wavelength, NeutronDim::Energy}) {
     Dataset a = tof;
     Dataset b = convert(a, NeutronDim::Tof, dim, ConvertMode::Scatter);

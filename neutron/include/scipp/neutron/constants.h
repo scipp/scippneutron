@@ -55,7 +55,7 @@ static auto tof_to_wavelength(const T &d, const ConvertMode scatter) {
 }
 
 template <class T> auto tof_to_energy(const T &d, const ConvertMode scatter) {
-  if (incident_energy(d.meta()) || final_energy(d.meta()))
+  if (incident_energy(d.meta()).is_valid() || final_energy(d.meta()).is_valid())
     throw std::runtime_error(
         "Data contains coords for incident or final energy. Conversion to "
         "energy for inelastic data not implemented yet.");
@@ -70,11 +70,11 @@ template <class T> auto tof_to_energy(const T &d, const ConvertMode scatter) {
 template <class T> auto tof_to_energy_transfer(const T &d) {
   const auto Ei = incident_energy(d.meta());
   const auto Ef = final_energy(d.meta());
-  if (Ei && Ef)
+  if (Ei.is_valid() && Ef.is_valid())
     throw std::runtime_error(
         "Data contains coords for incident *and* final energy, cannot have "
         "both for inelastic scattering.");
-  if (!Ei && !Ef)
+  if (!Ei.is_valid() && !Ef.is_valid())
     throw std::runtime_error(
         "Data contains neither coords for incident nor for final energy, this "
         "does not appear to be inelastic-scattering data, cannot convert to "
@@ -85,7 +85,7 @@ template <class T> auto tof_to_energy_transfer(const T &d) {
   auto l2_square = L2(d.meta());
   l2_square *= l2_square;
   l2_square *= Variable(tof_to_energy_physical_constants);
-  if (Ei) { // Direct-inelastic.
+  if (Ei.is_valid()) { // Direct-inelastic.
     return std::tuple{-l2_square, sqrt(l1_square / Ei), -Ei};
   } else { // Indirect-inelastic.
     return std::tuple{std::move(l1_square), sqrt(l2_square / Ef), Variable(Ef)};
