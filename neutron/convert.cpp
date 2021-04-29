@@ -17,6 +17,7 @@
 #include "scipp/neutron/constants.h"
 #include "scipp/neutron/conversions.h"
 #include "scipp/neutron/convert.h"
+#include <scipp/dataset/bins_view.h>
 
 using namespace scipp::variable;
 using namespace scipp::dataset;
@@ -36,21 +37,22 @@ T convert_generic(T &&d, const Dim from, const Dim to, Op op,
   if (d.coords().contains(from)) {
     const auto coord = d.coords()[from];
     d.coords().set(from,
-                     copy(broadcast(coord, merge(args.dims()..., coord.dims()))));
+                   copy(broadcast(coord, merge(args.dims()..., coord.dims()))));
     transform_in_place(d.coords()[from], args..., op_);
   }
   // 2. Transform coordinates in bucket variables
-  for (auto item : iter(d)) {
+  for (auto &&item : iter(d)) {
     if (item.dtype() != dtype<bucket<DataArray>>)
       continue;
     auto [indices, dim, buffer] =
         item.data().template constituents<bucket<DataArray>>();
     if (!buffer.coords().contains(from))
       continue;
-    auto buffer_coord = buffer.coords().extract(from);
-    //auto coord = make_non_owning_bins(indices, dim, VariableView(buffer_coord));
-    transform_in_place(buffer_coord, args..., op_);
-    buffer.coords().set(to, std::move(buffer_coord));
+    auto view = dataset::bins_view<DataArray>(item.data());
+    auto transformed = copy(view.coords()[from]);
+    transform_in_place(transformed, args..., op_);
+    view.coords().set(to, transformed);
+    view.coords().erase(from);
   }
 
   // 3. Rename dims
@@ -117,8 +119,9 @@ T coords_to_attrs(T &&x, const Dim from, const Dim to,
     Variable coord(x.coords()[field]);
     if constexpr (std::is_same_v<std::decay_t<T>, Dataset>) {
       x.coords().erase(field);
-      for (auto item : iter(x))
-        item.attrs().set(field, coord);
+      for (auto &&item : iter(x)) {
+        item.attrs().set(field, coord.as_const());
+      }
     } else {
       x.coords().erase(field);
       x.attrs().set(field, coord);
@@ -267,8 +270,8 @@ T convert_impl(T d, const Dim from, const Dim to, const ConvertMode scatter) {
 DataArray convert(DataArray d, const Dim from, const Dim to,
                   const ConvertMode scatter) {
   check_params(from, to, scatter);
-  Dataset out = coords_to_attrs(convert_impl(Dataset(d), from, to, scatter), from,
-                        to, scatter);
+  Dataset out = coords_to_attrs(convert_impl(Dataset(d), from, to, scatter),
+                                from, to, scatter);
   return out[d.name()];
 }
 
@@ -278,6 +281,5 @@ Dataset convert(Dataset d, const Dim from, const Dim to,
   return coords_to_attrs(convert_impl(std::move(d), from, to, scatter), from,
                          to, scatter);
 }
-
 
 } // namespace scipp::neutron
