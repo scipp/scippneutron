@@ -89,11 +89,11 @@ class TestMantidConversion(unittest.TestCase):
                                                      NumEvents=1)
         d = scn.mantid.convert_EventWorkspace_to_data_array(
             tiny_event_ws, load_pulse_times=False)
-        self.assertEqual(sc.bins_data(d.data).unit, sc.units.counts)
+        self.assertEqual(d.data.events.unit, sc.units.counts)
         tiny_event_ws.setYUnit('')
         d = scn.mantid.convert_EventWorkspace_to_data_array(
             tiny_event_ws, load_pulse_times=False)
-        self.assertEqual(sc.bins_data(d.data).unit, sc.units.one)
+        self.assertEqual(d.data.events.unit, sc.units.one)
 
     def test_from_mantid_LoadEmptyInstrument(self):
         import mantid.simpleapi as mantid
@@ -408,23 +408,6 @@ class TestMantidConversion(unittest.TestCase):
         histo_data_array = scn.mantid.convert_MDHistoWorkspace_to_data_array(
             md_histo)
         self.assertEqual(4, len(histo_data_array.dims))
-
-    def test_load_component_info(self):
-        from mantid.simpleapi import mtd
-        mtd.clear()
-
-        ds = sc.Dataset()
-
-        scn.mantid.load_component_info(
-            ds,
-            MantidDataHelper.find_known_file("iris26176_graphite002_sqw.nxs"))
-
-        # check that no workspaces have been leaked in the ADS
-        assert len(mtd) == 0, f"Workspaces present: {mtd.getObjectNames()}"
-
-        self.assertTrue("source_position" in ds.coords)
-        self.assertTrue("sample_position" in ds.coords)
-        self.assertTrue("position" in ds.coords)
 
     def test_to_workspace_2d_no_error(self):
         from mantid.simpleapi import mtd

@@ -466,6 +466,10 @@ def _convert_MatrixWorkspace_info(ws,
     pos, rot, shp = get_detector_properties(
         ws, source_pos, sample_pos, advanced_geometry=advanced_geometry)
     spec_dim, spec_coord = init_spec_axis(ws)
+    # if spectrum axis for data is not spectrum,
+    # we cannot attach corresponding geometry information
+    # such as positions directly
+    data_and_geom_match = spec_dim == 'spectrum'
 
     if common_bins:
         coord = sc.Variable([dim], values=ws.readX(0), unit=unit)
@@ -495,11 +499,20 @@ def _convert_MatrixWorkspace_info(ws,
         info["coords"]["detector_info"] = make_detector_info(ws)
 
     if not np.all(np.isnan(pos.values)):
-        info["coords"].update({"position": pos})
+        if data_and_geom_match:
+            info["coords"].update({"position": pos})
+        else:
+            info["coords"].update({"position": sc.scalar(value=pos)})
 
     if rot is not None and shp is not None and not np.all(np.isnan(
             pos.values)):
-        info["attrs"].update({"rotation": rot, "shape": shp})
+        if data_and_geom_match:
+            info["attrs"].update({"rotation": rot, "shape": shp})
+        else:
+            info["coords"].update({
+                "rotation": sc.scalar(value=pos),
+                "shape": shp
+            })
 
     if source_pos is not None:
         info["coords"]["source_position"] = source_pos
@@ -512,12 +525,24 @@ def _convert_MatrixWorkspace_info(ws,
         mask = np.array([
             spectrum_info.isMasked(i) for i in range(ws.getNumberHistograms())
         ])
-        info["masks"]["spectrum"] = sc.Variable([spec_dim], values=mask)
+        if data_and_geom_match:
+            info["masks"]["spectrum"] = sc.Variable([spec_dim], values=mask)
+        else:
+            info["masks"]["spectrum"] = sc.scalar(
+                value=sc.Variable([spec_dim], values=mask))
 
     if ws.getEMode() == DeltaEModeType.Direct:
-        info["coords"]["incident_energy"] = _extract_einitial(ws)
+        if data_and_geom_match:
+            info["coords"]["incident_energy"] = _extract_einitial(ws)
+        else:
+            info["coords"]["incident_energy"] = sc.scalar(
+                value=_extract_einitial(ws))
     elif ws.getEMode() == DeltaEModeType.Indirect:
-        info["coords"]["final_energy"] = _extract_efinal(ws)
+        if data_and_geom_match:
+            info["coords"]["final_energy"] = _extract_efinal(ws)
+        else:
+            info["coords"]["final_energy"] = sc.scalar(
+                value=_extract_efinal(ws))
     return info
 
 
@@ -577,7 +602,7 @@ def convert_Workspace2D_to_data_array(ws,
                                                unit=data_unit,
                                                values=ws.extractY(),
                                                variances=stddev2)
-    array = sc.detail.move_to_data_array(**coords_labs_data)
+    array = sc.DataArray(**coords_labs_data)
 
     if ws.hasAnyMaskedBins():
         bin_mask = sc.Variable(dims=array.dims,
@@ -589,9 +614,9 @@ def convert_Workspace2D_to_data_array(ws,
                 set_bin_masks(bin_mask, dim, i, ws.maskedBinsIndices(i))
         common_mask = sc.all(bin_mask, 'spectrum')
         if sc.identical(common_mask, sc.any(bin_mask, 'spectrum')):
-            array.masks["bin"] = sc.detail.move(common_mask)
+            array.masks["bin"] = common_mask
         else:
-            array.masks["bin"] = sc.detail.move(bin_mask)
+            array.masks["bin"] = bin_mask
 
     # Avoid creating dimensions that are not required since this mostly an
     # artifact of inflexible data structures and gets in the way when working
@@ -657,7 +682,7 @@ def convert_EventWorkspace_to_data_array(ws,
     proto_events = {'data': weights, 'coords': {dim: coord}}
     if load_pulse_times:
         proto_events["coords"]["pulse_time"] = pulse_times
-    events = sc.detail.move_to_data_array(**proto_events)
+    events = sc.DataArray(**proto_events)
 
     coords_labs_data = _convert_MatrixWorkspace_info(
         ws, advanced_geometry=advanced_geometry, load_run_logs=load_run_logs)
@@ -675,8 +700,8 @@ def convert_EventWorkspace_to_data_array(ws,
     coords_labs_data["data"] = sc.bins(begin=begins,
                                        end=ends,
                                        dim='event',
-                                       data=sc.detail.move(events))
-    return sc.detail.move_to_data_array(**coords_labs_data)
+                                       data=events)
+    return sc.DataArray(**coords_labs_data)
 
 
 def convert_MDHistoWorkspace_to_data_array(md_histo, **ignored):
@@ -698,9 +723,7 @@ def convert_MDHistoWorkspace_to_data_array(md_histo, **ignored):
                        variances=md_histo.getErrorSquaredArray(),
                        unit=sc.units.counts)
     nevents = sc.Variable(dims=dims_used, values=md_histo.getNumEventsArray())
-    return sc.detail.move_to_data_array(coords=coords,
-                                        data=data,
-                                        attrs={'nevents': nevents})
+    return sc.DataArray(coords=coords, data=data, attrs={'nevents': nevents})
 
 
 def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
@@ -739,8 +762,7 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
 
         data_name = columnNames[i]
         if error_connection is None:
-            dataset[data_name] = sc.detail.move(
-                sc.Variable(['row'], values=ws.column(i)))
+            dataset[data_name] = sc.Variable(['row'], values=ws.column(i))
         elif data_name in error_connection:
             # This data has error availble
             error_name = error_connection[data_name]
@@ -753,14 +775,12 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
                                    "Variance: " + str(error_name) + "\n")
 
             variance = np.array(ws.column(error_name))**2
-            dataset[data_name] = sc.detail.move(
-                sc.Variable(['row'],
-                            values=np.array(ws.column(i)),
-                            variances=variance))
+            dataset[data_name] = sc.Variable(['row'],
+                                             values=np.array(ws.column(i)),
+                                             variances=variance)
         elif data_name not in error_connection.values():
             # This data is not an error for another dataset, and has no error
-            dataset[data_name] = sc.detail.move(
-                sc.Variable(['row'], values=ws.column(i)))
+            dataset[data_name] = sc.Variable(['row'], values=ws.column(i))
 
     return dataset
 
@@ -830,7 +850,7 @@ def from_mantid(workspace, **kwargs):
 
         monitors = convert_monitors_ws(monitor_ws, converter, **kwargs)
         for name, monitor in monitors:
-            scipp_obj.attrs[name] = sc.detail.move(sc.Variable(value=monitor))
+            scipp_obj.attrs[name] = sc.Variable(value=monitor)
     for ws in workspaces_to_delete:
         mantid.DeleteWorkspace(ws)
 
@@ -911,41 +931,6 @@ def load(filename="",
                            load_pulse_times=load_pulse_times,
                            error_connection=error_connection,
                            advanced_geometry=advanced_geometry)
-
-
-def load_component_info(ds, file, advanced_geometry=False):
-    """
-    Adds the component info coord into the dataset. The following are added:
-
-    - source_position
-    - sample_position
-    - detector positions
-    - detector rotations
-    - detector shapes
-
-    :param ds: Dataset on which the component info will be added as coords.
-    :param file: File from which the IDF will be loaded.
-                 This can be anything that mantid.Load can load.
-    :param bool advanced_geometry: If True, load the full detector geometry
-                                   including shapes and rotations. The
-                                   positions of grouped detectors are
-                                   spherically averaged. If False,
-                                   load only the detector position, and return
-                                   the cartesian average of the grouped
-                                   detector positions.
-    """
-    with run_mantid_alg('Load', file) as ws:
-        source_pos, sample_pos = make_component_info(ws)
-
-        ds.coords["source_position"] = source_pos
-        ds.coords["sample_position"] = sample_pos
-        pos, rot, shp = get_detector_properties(
-            ws, source_pos, sample_pos, advanced_geometry=advanced_geometry)
-        ds.coords["position"] = pos
-        if rot is not None:
-            ds.attrs["rotation"] = rot
-        if shp is not None:
-            ds.attrs["shape"] = shp
 
 
 def validate_dim_and_get_mantid_string(unit_dim):
