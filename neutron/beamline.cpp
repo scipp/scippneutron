@@ -7,6 +7,7 @@
 #include <scipp/variable/operations.h>
 #include <scipp/variable/transform.h>
 
+#include "scipp/core/eigen.h"
 #include "scipp/neutron/beamline.h"
 #include "scipp/neutron/logging.h"
 
@@ -40,21 +41,18 @@ Dim Wavelength = Dim("wavelength");
 
 namespace {
 void log_not_found(const Dim dim, const Dim a) {
-  logging::info() << to_string(dim)
-                  << " coord or attr not found, trying to compute from " << a
-                  << '\n';
+  logging::info() << dim << " coord or attr not found, trying to compute from "
+                  << a << '\n';
 }
 
 void log_not_found(const Dim dim, const Dim a, const Dim b) {
-  logging::info() << to_string(dim)
-                  << " coord or attr not found, trying to compute from "
-                  << to_string(a) << " and " << to_string(b) << '\n';
+  logging::info() << dim << " coord or attr not found, trying to compute from "
+                  << a << " and " << b << '\n';
 }
 
 bool find_param(const dataset::Coords &meta, const Dim dim) {
   if (meta.contains(dim)) {
-    logging::info() << to_string(dim)
-                    << " coord or attr found, using directly\n";
+    logging::info() << dim << " coord or attr found, using directly\n";
     return true;
   }
   return false;

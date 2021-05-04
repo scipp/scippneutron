@@ -9,6 +9,7 @@
 #include <scipp/variable/comparison.h>
 #include <scipp/variable/operations.h>
 
+#include "scipp/core/eigen.h"
 #include "scipp/neutron/convert.h"
 
 using namespace scipp;

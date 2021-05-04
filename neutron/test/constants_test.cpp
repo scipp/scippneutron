@@ -4,6 +4,7 @@
 
 #include <scipp/variable/arithmetic.h>
 
+#include "scipp/core/eigen.h"
 #include "scipp/neutron/constants.h"
 
 using namespace scipp;

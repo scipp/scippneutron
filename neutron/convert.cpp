@@ -18,6 +18,7 @@
 #include "scipp/neutron/conversions.h"
 #include "scipp/neutron/convert.h"
 #include <scipp/dataset/bins_view.h>
+#include <sstream>
 
 using namespace scipp::variable;
 using namespace scipp::dataset;
