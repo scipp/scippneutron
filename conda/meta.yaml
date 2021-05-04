@@ -39,7 +39,7 @@ test:
     - python/tests/
     - neutron/
   commands:
-    - python -m pytest -v
+    - python -m pytest -v python
 
 build:
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
