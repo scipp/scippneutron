@@ -27,6 +27,7 @@ extends:
   template: stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
+    conda_channels: '--channel scipp --channel ess-dmsc'
     config:
       linux:
         py_versions: ['3.7']
