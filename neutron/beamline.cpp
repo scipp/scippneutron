@@ -40,18 +40,21 @@ Dim Wavelength = Dim("wavelength");
 
 namespace {
 void log_not_found(const Dim dim, const Dim a) {
-  logging::info() << dim << " coord or attr not found, trying to compute from "
-                  << a << '\n';
+  logging::info() << to_string(dim)
+                  << " coord or attr not found, trying to compute from " << a
+                  << '\n';
 }
 
 void log_not_found(const Dim dim, const Dim a, const Dim b) {
-  logging::info() << dim << " coord or attr not found, trying to compute from "
-                  << a << " and " << b << '\n';
+  logging::info() << to_string(dim)
+                  << " coord or attr not found, trying to compute from "
+                  << to_string(a) << " and " << to_string(b) << '\n';
 }
 
 bool find_param(const dataset::Coords &meta, const Dim dim) {
   if (meta.contains(dim)) {
-    logging::info() << dim << " coord or attr found, using directly\n";
+    logging::info() << to_string(dim)
+                    << " coord or attr found, using directly\n";
     return true;
   }
   return false;
