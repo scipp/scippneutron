@@ -258,7 +258,7 @@ def _rot_from_vectors(vec1, vec2):
     c = sc.Variable(value=np.cross(a.value, b.value),
                     dtype=sc.dtype.vector_3_float64)
     angle = sc.acos(sc.dot(a, b)).value
-    q = sc.rotation_matrix_from_quaternion_coeffs(
+    q = sc.geometry.rotation_matrix_from_quaternion_coeffs(
         list(c.value * np.sin(angle / 2)) + [np.cos(angle / 2)])
     return sc.Variable(value=q)
 
