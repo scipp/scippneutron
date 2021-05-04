@@ -471,16 +471,18 @@ def _convert_MatrixWorkspace_info(ws,
     # such as positions directly
     data_and_geom_match = spec_dim == 'spectrum'
 
-    if common_bins:
-        coord = sc.Variable([dim], values=ws.readX(0), unit=unit)
-    else:
-        coord = sc.Variable([spec_dim, dim], values=ws.extractX(), unit=unit)
+    coords = {spec_dim: spec_coord}
+    # possible x - coord
+    if not ws.id() == 'MaskWorkspace':
+        if common_bins:
+            coords[dim] = sc.Variable([dim], values=ws.readX(0), unit=unit)
+        else:
+            coords[dim] = sc.Variable([spec_dim, dim],
+                                      values=ws.extractX(),
+                                      unit=unit)
 
     info = {
-        "coords": {
-            dim: coord,
-            spec_dim: spec_coord
-        },
+        "coords": coords,
         "masks": {},
         "attrs": {
             "sample":
