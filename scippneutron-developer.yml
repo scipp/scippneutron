@@ -27,7 +27,6 @@ dependencies:
   - pythreejs
   - pyyaml
   - tbb
-  - traitlets=4.3.3 # see https://github.com/jupyter-widgets/pythreejs/issues/334
   - h5py
   - python-confluent-kafka
   - ess-dmsc::ess-streaming-data-types
@@ -43,9 +42,8 @@ dependencies:
   - flake8
 
   # Docs
-  - ipython=7.2.0
   - pandoc
-  - sphinx=3.4.3 # see https://github.com/sphinx-doc/sphinx/issues/8885
+  - sphinx
   - sphinx_rtd_theme
   - nbsphinx
   - python-graphviz
