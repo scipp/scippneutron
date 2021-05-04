@@ -5,6 +5,18 @@ from streaming_data_types.eventdata_ev42 import deserialise_ev42
 from streaming_data_types.exceptions import WrongSchemaException
 from typing import Optional
 from warnings import warn
+"""
+The ESS data streaming system uses Google FlatBuffers to serialise
+data to transmit in the Kafka message payload. FlatBuffers uses schemas
+to define the data structure to serialise:
+https://github.com/ess-dmsc/streaming-data-types/
+The ess-streaming-data-types library provides convenience "serialise"
+and "deserialise" functions for each schema.
+Each schema is identified by a 4 character string which is included in:
+- the filename of the schema,
+- the serialised buffer as the first 4 bytes,
+- the module name in ess-streaming-data-types.
+"""
 
 
 class StreamedDataBuffer:

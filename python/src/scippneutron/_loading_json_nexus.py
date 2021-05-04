@@ -101,6 +101,28 @@ def contains_stream(group: Dict) -> bool:
     return False
 
 
+def _find_by_type(type_name: str, root: Dict) -> List[Dict]:
+    """
+    Finds objects with the requested "type" value
+    Returns a list of objects with requested type
+    """
+    def _visit_nodes_for_type(obj: Dict, requested_type: str,
+                              objects_found: List[Dict]):
+        try:
+            for child in obj[_nexus_children]:
+                if child["type"] == requested_type:
+                    objects_found.append(child)
+                _visit_nodes_for_type(child, requested_type, objects_found)
+        except KeyError:
+            # If this object does not have "children" array then go to next
+            pass
+
+    objects_with_requested_type: List[Dict] = []
+    _visit_nodes_for_type(root, type_name, objects_with_requested_type)
+
+    return objects_with_requested_type
+
+
 class LoadFromJson:
     def __init__(self, root: Dict):
         self._root = root
@@ -149,7 +171,8 @@ class LoadFromJson:
             path.append(root[_nexus_name])
         except KeyError:
             pass
-        _visit_nodes(root, nx_class_names, groups_with_requested_nx_class, [])
+        _visit_nodes(root, nx_class_names, groups_with_requested_nx_class,
+                     path)
 
         return groups_with_requested_nx_class
 
@@ -290,3 +313,8 @@ class LoadFromJson:
             return node["type"] == _nexus_group
         except KeyError:
             return False
+
+
+def get_topics_from_streams(root: Dict) -> List[str]:
+    found_streams = _find_by_type(_nexus_stream, root)
+    return [stream["stream"]["topic"] for stream in found_streams]
