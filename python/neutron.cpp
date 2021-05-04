@@ -13,25 +13,24 @@ using namespace scipp::neutron;
 namespace py = pybind11;
 
 template <class T> void bind_beamline(py::module &m) {
-  using ConstView = T;
   m.def(
-      "position", [](ConstView self) { return position(self.meta()); }, R"(
+      "position", [](T self) { return position(self.meta()); }, R"(
     Extract the detector pixel positions from a data array or a dataset.
 
     :return: A variable containing the detector pixel positions.
     :rtype: Variable)");
 
   m.def(
-      "source_position",
-      [](ConstView self) { return source_position(self.meta()); }, R"(
+      "source_position", [](T self) { return source_position(self.meta()); },
+      R"(
     Extract the neutron source position from a data array or a dataset.
 
     :return: A scalar variable containing the source position.
     :rtype: Variable)");
 
   m.def(
-      "sample_position",
-      [](ConstView self) { return sample_position(self.meta()); }, R"(
+      "sample_position", [](T self) { return sample_position(self.meta()); },
+      R"(
     Extract the sample position from a data array or a dataset.
 
     :return: A scalar variable containing the sample position.
@@ -39,7 +38,7 @@ template <class T> void bind_beamline(py::module &m) {
 
   m.def(
       "Ltotal",
-      [](ConstView self, const bool scatter) {
+      [](T self, const bool scatter) {
         return Ltotal(self.meta(),
                       scatter ? ConvertMode::Scatter : ConvertMode::NoScatter);
       },
@@ -53,37 +52,35 @@ template <class T> void bind_beamline(py::module &m) {
     :rtype: Variable)");
 
   m.def(
-      "incident_beam",
-      [](ConstView self) { return incident_beam(self.meta()); }, R"(
+      "incident_beam", [](T self) { return incident_beam(self.meta()); }, R"(
     Compute the indicent beam vector, the direction and length of the primary flight path from a data array or a dataset.
 
     :return: A scalar variable containing the incident beam vector.
     :rtype: Variable)");
 
   m.def(
-      "scattered_beam",
-      [](ConstView self) { return scattered_beam(self.meta()); }, R"(
+      "scattered_beam", [](T self) { return scattered_beam(self.meta()); }, R"(
     Compute the scattered beam, the directions and lengths of the secondary flight paths from a data array or a dataset.
 
     :return: A variable containing the scattered beam vectors for all detector pixels.
     :rtype: Variable)");
 
   m.def(
-      "L1", [](ConstView self) { return L1(self.meta()); }, R"(
+      "L1", [](T self) { return L1(self.meta()); }, R"(
     Compute L1, the length of the primary flight path (distance between neutron source and sample) from a data array or a dataset.
 
     :return: A scalar variable containing L1.
     :rtype: Variable)");
 
   m.def(
-      "L2", [](ConstView self) { return L2(self.meta()); }, R"(
+      "L2", [](T self) { return L2(self.meta()); }, R"(
     Compute L2, the length of the secondary flight paths (distances between sample and detector pixels) from a data array or a dataset.
 
     :return: A variable containing L2 for all detector pixels.
     :rtype: Variable)");
 
   m.def(
-      "two_theta", [](ConstView self) { return two_theta(self.meta()); }, R"(
+      "two_theta", [](T self) { return two_theta(self.meta()); }, R"(
     Compute :math:`2\theta`, twice the scattering angle in Bragg's law, from a data array or a dataset.
 
     :return: A variable containing :math:`2\theta` for all detector pixels.
@@ -91,7 +88,6 @@ template <class T> void bind_beamline(py::module &m) {
 }
 
 template <class T> void bind_convert(py::module &m) {
-  using ConstView = T;
   const char *doc = R"(
     Convert dimension (unit) into another.
 
@@ -104,8 +100,7 @@ template <class T> void bind_convert(py::module &m) {
     :rtype: DataArray or Dataset)";
   m.def(
       "convert",
-      [](ConstView data, const Dim origin, const Dim target,
-         const bool scatter) {
+      [](T data, const Dim origin, const Dim target, const bool scatter) {
         return py::cast(
             convert(data, origin, target,
                     scatter ? ConvertMode::Scatter : ConvertMode::NoScatter));
