@@ -16,7 +16,7 @@ dependencies:
   - boost-cpp
   - ninja
   - tbb-devel
-  - scipp
+  - scipp/label/dev::scipp
 
   # Run
   - appdirs
