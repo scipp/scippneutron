@@ -19,7 +19,6 @@ requirements:
     - python {{ python }}
     - scipp
     - h5py
-    - blis
 
 test:
   imports:
@@ -37,6 +36,7 @@ test:
     - mantid-framework [not win]
     - python-confluent-kafka [not win]
     - ess-streaming-data-types [not win]
+    - blis [not win]
   source_files:
     - python/tests/
     - neutron/
