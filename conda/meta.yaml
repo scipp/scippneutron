@@ -32,7 +32,6 @@ test:
     - pytest
     - pytest-asyncio
     - pythreejs
-    - blis [not win]
     - mantid-framework [not win]
     - python-confluent-kafka [not win]
     - ess-streaming-data-types [not win]

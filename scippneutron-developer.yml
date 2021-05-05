@@ -17,7 +17,6 @@ dependencies:
 
   # Run
   - appdirs
-  - blis
   - boost=1.75
   - ipympl
   - ipywidgets
