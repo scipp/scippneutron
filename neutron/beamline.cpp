@@ -141,7 +141,7 @@ Variable scattered_beam(const dataset::Coords &meta) {
 }
 
 namespace {
-auto normalize(const Variable &var) { // TODO rename
+auto normalized(const Variable &var) { // TODO rename
   return var / norm(var);
 }
 } // namespace
@@ -151,7 +151,7 @@ Variable cos_two_theta(const dataset::Coords &meta) {
     return cos(meta[NeutronDim::TwoTheta]);
   log_not_found(NeutronDim::TwoTheta, NeutronDim::IncidentBeam,
                 NeutronDim::ScatteredBeam);
-  return dot(normalize(incident_beam(meta)), normalize(scattered_beam(meta)));
+  return dot(normalized(incident_beam(meta)), normalized(scattered_beam(meta)));
 }
 
 Variable two_theta(const dataset::Coords &meta) {
