@@ -134,7 +134,7 @@ def make_component_info(ws):
     return as_var(sourcePos), as_var(samplePos)
 
 
-def make_detector_info(ws):
+def make_detector_info(ws, spectrum_dim):
     det_info = ws.detectorInfo()
     # det -> spec mapping
     nDet = det_info.size()
@@ -166,7 +166,7 @@ def make_detector_info(ws):
 
     return sc.Variable(value=sc.Dataset(coords={
         'detector': detector,
-        'spectrum': spectrum
+        spectrum_dim: spectrum
     }))
 
 
@@ -263,7 +263,7 @@ def _rot_from_vectors(vec1, vec2):
     return sc.Variable(value=q)
 
 
-def get_detector_pos(ws):
+def get_detector_pos(ws, spectrum_dim):
     nHist = ws.getNumberHistograms()
     pos = np.zeros([nHist, 3])
 
@@ -276,7 +276,7 @@ def get_detector_pos(ws):
             pos[i, 2] = p.Z()
         else:
             pos[i, :] = [np.nan, np.nan, np.nan]
-    return sc.Variable(['spectrum'],
+    return sc.Variable([spectrum_dim],
                        values=pos,
                        unit=sc.units.m,
                        dtype=sc.dtype.vector_3_float64)
@@ -285,9 +285,10 @@ def get_detector_pos(ws):
 def get_detector_properties(ws,
                             source_pos,
                             sample_pos,
+                            spectrum_dim,
                             advanced_geometry=False):
     if not advanced_geometry:
-        return (get_detector_pos(ws), None, None)
+        return (get_detector_pos(ws, spectrum_dim), None, None)
     spec_info = ws.spectrumInfo()
     det_info = ws.detectorInfo()
     comp_info = ws.componentInfo()
@@ -308,10 +309,10 @@ def get_detector_properties(ws,
                                  unit=sc.units.m)
         pos_d["y"] = pos_d["x"]
         pos_d["z"] = pos_d["x"]
-        pos_d.coords["spectrum"] = sc.Variable(
+        pos_d.coords[spectrum_dim] = sc.Variable(
             ["detector"], values=np.empty(total_detectors))
 
-        spectrum_values = pos_d.coords["spectrum"].values
+        spectrum_values = pos_d.coords[spectrum_dim].values
 
         x_values = pos_d["x"].values
         y_values = pos_d["y"].values
@@ -350,8 +351,8 @@ def get_detector_properties(ws,
         _to_spherical(rot_pos, pos_d)
 
         averaged = sc.groupby(pos_d,
-                              "spectrum",
-                              bins=sc.Variable(["spectrum"],
+                              spectrum_dim,
+                              bins=sc.Variable([spectrum_dim],
                                                values=np.arange(
                                                    -0.5,
                                                    len(spec_info) + 0.5,
@@ -370,10 +371,10 @@ def get_detector_properties(ws,
                                    averaged["z"].data)
 
         return (inv_rot * pos,
-                sc.Variable(['spectrum'],
+                sc.Variable([spectrum_dim],
                             values=det_rot,
                             dtype=sc.dtype.matrix_3_float64),
-                sc.Variable(['spectrum'],
+                sc.Variable([spectrum_dim],
                             values=det_bbox,
                             unit=sc.units.m,
                             dtype=sc.dtype.vector_3_float64))
@@ -407,14 +408,14 @@ def get_detector_properties(ws,
                 pos[i, :] = [np.nan, np.nan, np.nan]
                 det_rot[i, :] = [np.nan, np.nan, np.nan, np.nan]
                 det_bbox[i, :] = [np.nan, np.nan, np.nan]
-        return (sc.Variable(['spectrum'],
+        return (sc.Variable([spectrum_dim],
                             values=pos,
                             unit=sc.units.m,
                             dtype=sc.dtype.vector_3_float64),
-                sc.Variable(['spectrum'],
+                sc.Variable([spectrum_dim],
                             values=det_rot,
                             dtype=sc.dtype.matrix_3_float64),
-                sc.Variable(['spectrum'],
+                sc.Variable([spectrum_dim],
                             values=det_bbox,
                             unit=sc.units.m,
                             dtype=sc.dtype.vector_3_float64))
@@ -463,13 +464,13 @@ def _convert_MatrixWorkspace_info(ws,
     common_bins = ws.isCommonBins()
     dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
     source_pos, sample_pos = make_component_info(ws)
-    pos, rot, shp = get_detector_properties(
-        ws, source_pos, sample_pos, advanced_geometry=advanced_geometry)
     spec_dim, spec_coord = init_spec_axis(ws)
-    # if spectrum axis for data is not spectrum,
-    # we cannot attach corresponding geometry information
-    # such as positions directly
-    data_and_geom_match = spec_dim == 'spectrum'
+    pos, rot, shp = get_detector_properties(
+        ws,
+        source_pos,
+        sample_pos,
+        spec_dim,
+        advanced_geometry=advanced_geometry)
 
     coords = {spec_dim: spec_coord}
     # possible x - coord
@@ -498,23 +499,14 @@ def _convert_MatrixWorkspace_info(ws,
             info["attrs"][run_log_name] = run_log_variable
 
     if advanced_geometry:
-        info["coords"]["detector_info"] = make_detector_info(ws)
+        info["coords"]["detector_info"] = make_detector_info(ws, spec_dim)
 
     if not np.all(np.isnan(pos.values)):
-        if data_and_geom_match:
-            info["coords"].update({"position": pos})
-        else:
-            info["coords"].update({"position": sc.scalar(value=pos)})
+        info["coords"].update({"position": pos})
 
     if rot is not None and shp is not None and not np.all(np.isnan(
             pos.values)):
-        if data_and_geom_match:
-            info["attrs"].update({"rotation": rot, "shape": shp})
-        else:
-            info["coords"].update({
-                "rotation": sc.scalar(value=pos),
-                "shape": shp
-            })
+        info["attrs"].update({"rotation": rot, "shape": shp})
 
     if source_pos is not None:
         info["coords"]["source_position"] = source_pos
@@ -527,24 +519,12 @@ def _convert_MatrixWorkspace_info(ws,
         mask = np.array([
             spectrum_info.isMasked(i) for i in range(ws.getNumberHistograms())
         ])
-        if data_and_geom_match:
-            info["masks"]["spectrum"] = sc.Variable([spec_dim], values=mask)
-        else:
-            info["masks"]["spectrum"] = sc.scalar(
-                value=sc.Variable([spec_dim], values=mask))
+        info["masks"][spec_dim] = sc.Variable([spec_dim], values=mask)
 
     if ws.getEMode() == DeltaEModeType.Direct:
-        if data_and_geom_match:
-            info["coords"]["incident_energy"] = _extract_einitial(ws)
-        else:
-            info["coords"]["incident_energy"] = sc.scalar(
-                value=_extract_einitial(ws))
+        info["coords"]["incident_energy"] = _extract_einitial(ws)
     elif ws.getEMode() == DeltaEModeType.Indirect:
-        if data_and_geom_match:
-            info["coords"]["final_energy"] = _extract_efinal(ws)
-        else:
-            info["coords"]["final_energy"] = sc.scalar(
-                value=_extract_efinal(ws))
+        info["coords"]["final_energy"] = _extract_efinal(ws, spec_dim)
     return info
 
 
@@ -614,8 +594,8 @@ def convert_Workspace2D_to_data_array(ws,
             # maskedBinsIndices throws instead of returning empty list
             if ws.hasMaskedBins(i):
                 set_bin_masks(bin_mask, dim, i, ws.maskedBinsIndices(i))
-        common_mask = sc.all(bin_mask, 'spectrum')
-        if sc.identical(common_mask, sc.any(bin_mask, 'spectrum')):
+        common_mask = sc.all(bin_mask, spec_dim)
+        if sc.identical(common_mask, sc.any(bin_mask, spec_dim)):
             array.masks["bin"] = common_mask
         else:
             array.masks["bin"] = bin_mask
@@ -1119,7 +1099,7 @@ def _extract_einitial(ws):
     return sc.Variable(value=ei, unit=sc.Unit("meV"))
 
 
-def _extract_efinal(ws):
+def _extract_efinal(ws, spec_dim):
     detInfo = ws.detectorInfo()
     specInfo = ws.spectrumInfo()
     ef = np.empty(shape=(specInfo.size(), ), dtype=float)
@@ -1141,4 +1121,4 @@ def _extract_efinal(ws):
             # - i.e. a diffraction detector, monitor etc.
         ef[spec_index] = detector_ef
 
-    return sc.Variable(dims=['spectrum'], values=ef, unit=sc.Unit("meV"))
+    return sc.Variable(dims=[spec_dim], values=ef, unit=sc.Unit("meV"))
