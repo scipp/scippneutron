@@ -14,6 +14,7 @@
 #include <scipp/dataset/dataset.h>
 #include <scipp/dataset/dataset_util.h>
 
+#include "scipp/dataset/bins.h"
 #include "scipp/neutron/constants.h"
 #include "scipp/neutron/conversions.h"
 #include "scipp/neutron/convert.h"
@@ -52,7 +53,7 @@ T convert_generic(T &&d, const Dim from, const Dim to, Op op,
       continue;
     }
 
-    item.setData(copy(item.data()));
+    item.setData(dataset::make_bins(indices, dim, buffer));
     auto view = dataset::bins_view<DataArray>(item.data());
     auto transformed = copy(view.coords()[from]);
     transform_in_place(transformed, args..., op_);
