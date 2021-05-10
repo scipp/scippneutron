@@ -43,12 +43,16 @@ T convert_generic(T &&d, const Dim from, const Dim to, Op op,
   }
   // 2. Transform coordinates in bucket variables
   for (auto &&item : iter(d)) {
-    if (item.dtype() != dtype<bucket<DataArray>>)
+    if (item.dtype() != dtype<bucket<DataArray>>) {
       continue;
+    }
     auto [indices, dim, buffer] =
         item.data().template constituents<bucket<DataArray>>();
-    if (!buffer.coords().contains(from))
+    if (!buffer.coords().contains(from)) {
       continue;
+    }
+
+    item.setData(copy(item.data()));
     auto view = dataset::bins_view<DataArray>(item.data());
     auto transformed = copy(view.coords()[from]);
     transform_in_place(transformed, args..., op_);

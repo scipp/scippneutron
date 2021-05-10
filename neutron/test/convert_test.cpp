@@ -125,6 +125,16 @@ TEST_P(ConvertTest, DataArray_non_tof) {
     }
   }
 }
+
+TEST_P(ConvertTest, immutable_input) {
+  Dataset tof = GetParam();
+  Dataset original = copy(tof);
+  auto out = convert(tof, NeutronDim::Tof, NeutronDim::Wavelength,
+                     ConvertMode::Scatter);
+  EXPECT_NE(out, tof);      // Transformation took place
+  EXPECT_EQ(original, tof); // input was not mutated
+}
+
 TEST_P(ConvertTest, convert_slice) {
   Dataset tof = GetParam();
   const auto slice = Slice{NeutronDim::Spectrum, 0};
@@ -530,9 +540,10 @@ TEST(ConvertBucketsTest, events_converted) {
       Values{1000, 3000, 2000, 4000, 5000, 6000, 3000, 0});
   tof.coords().set(NeutronDim::Tof, coord);
   tof.setData("bucketed", makeTofBucketedEvents());
+  auto original = copy(tof);
   for (auto &&d :
        {NeutronDim::DSpacing, NeutronDim::Wavelength, NeutronDim::Energy}) {
-    auto res = convert(copy(tof), NeutronDim::Tof, d, ConvertMode::Scatter);
+    auto res = convert(tof, NeutronDim::Tof, d, ConvertMode::Scatter);
     auto values = res["bucketed"].values<bucket<DataArray>>();
     Variable expected =
         copy(res.coords()[d].slice({NeutronDim::Spectrum, 0}).slice({d, 0, 4}));
@@ -546,5 +557,6 @@ TEST(ConvertBucketsTest, events_converted) {
     EXPECT_FALSE(values[1].coords().contains(NeutronDim::Tof));
     EXPECT_TRUE(values[1].coords().contains(d));
     EXPECT_EQ(values[1].coords()[d], expected);
+    EXPECT_EQ(tof, original); // input should be immutable
   }
 }
