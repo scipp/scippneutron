@@ -39,3 +39,5 @@ extends:
       windows:
         py_versions: ['3.7']
         conda_env: 'scippneutron-developer-no-mantid.yml'
+    deploy: true
+    conda_label: 'test'
