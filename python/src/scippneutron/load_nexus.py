@@ -12,7 +12,7 @@ from ._loading_json_nexus import LoadFromJson, get_topics_from_streams
 from ._loading_nexus import LoadFromNexus, GroupObject, ScippData
 import h5py
 from timeit import default_timer as timer
-from typing import Union, List, Optional, Dict, Tuple
+from typing import Union, List, Optional, Dict, Tuple, Set
 from contextlib import contextmanager
 from warnings import warn
 import numpy as np
@@ -154,7 +154,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
 def _load_nexus_json(
     json_template: str,
     get_start_info: bool = False
-) -> Tuple[Optional[ScippData], Optional[sc.Variable], Optional[List[str]]]:
+) -> Tuple[Optional[ScippData], Optional[sc.Variable], Optional[Set[str]]]:
     """
     Use this function for testing so that file io is not required
     """
@@ -165,7 +165,7 @@ def _load_nexus_json(
     if get_start_info:
         topics = get_topics_from_streams(loaded_json)
     return _load_data(loaded_json, None, LoadFromJson(loaded_json),
-                      True), topics
+                      True), set(topics)
 
 
 def load_nexus_json(json_filename: str) -> Optional[ScippData]:

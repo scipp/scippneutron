@@ -64,7 +64,8 @@ class FakeQueryConsumer:
                  instrument_name: str = "",
                  low_and_high_offset: Tuple[int, int] = (2, 10),
                  streams: List[Stream] = None,
-                 start_time: Optional[int] = None):
+                 start_time: Optional[int] = None,
+                 nexus_structure: Optional[str] = None):
         self._instrument_name = instrument_name
         self._low_and_high_offset = low_and_high_offset
         self._streams = streams
@@ -73,6 +74,15 @@ class FakeQueryConsumer:
         self._start_time = start_time
         if self._start_time is None:
             self._start_time = datetime.datetime.now()
+        if self._nexus_structure is None:
+            builder = NexusBuilder()
+            builder.add_instrument(self._instrument_name)
+            if self._streams is not None:
+                for stream in self._streams:
+                    builder.add_stream(stream)
+            self._nexus_structure = builder.json_string
+        else:
+            self._nexus_structure = nexus_structure
 
     @staticmethod
     def assign(partitions: List[TopicPartition]):
@@ -89,16 +99,11 @@ class FakeQueryConsumer:
         return [TopicPartition(topic, partition=0, offset=offset)]
 
     def poll(self, timeout=2.) -> FakeMessage:
-        builder = NexusBuilder()
-        builder.add_instrument(self._instrument_name)
-        if self._streams is not None:
-            for stream in self._streams:
-                builder.add_stream(stream)
         return FakeMessage(
             serialise_pl72("",
                            "",
                            start_time=self._start_time,
-                           nexus_structure=builder.json_string))
+                           nexus_structure=self._nexus_structure))
 
     def seek(self, partition: TopicPartition):
         pass
@@ -303,7 +308,6 @@ async def test_specified_topics_override_run_start_message_topics():
     topic_in_run_start_message = "test_topic"
     test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
     query_consumer = FakeQueryConsumer(streams=test_streams)
-    # At least one of "topics" and "run_start_topic" must be specified
     async for _ in _data_stream(buffer,
                                 queue,
                                 "broker",
@@ -327,7 +331,6 @@ async def test_topics_from_run_start_message_used_if_topics_arg_not_specified(
     topic_in_run_start_message = "test_topic"
     test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
     query_consumer = FakeQueryConsumer(streams=test_streams)
-    # At least one of "topics" and "run_start_topic" must be specified
     async for _ in _data_stream(buffer,
                                 queue,
                                 "broker",
@@ -350,7 +353,6 @@ async def test_start_time_from_run_start_msg_not_used_if_start_now_specified():
     test_start_time = 123456
     query_consumer = FakeQueryConsumer(streams=test_streams,
                                        start_time=test_start_time)
-    # At least one of "topics" and "run_start_topic" must be specified
     async for _ in _data_stream(buffer,
                                 queue,
                                 "broker",
@@ -375,7 +377,6 @@ async def test_start_time_from_run_start_msg_used_if_requested():
     test_start_time = 123456
     query_consumer = FakeQueryConsumer(streams=test_streams,
                                        start_time=test_start_time)
-    # At least one of "topics" and "run_start_topic" must be specified
     async for _ in _data_stream(buffer,
                                 queue,
                                 "broker",
@@ -389,3 +390,33 @@ async def test_start_time_from_run_start_msg_used_if_requested():
         pass
 
     assert query_consumer.queried_timestamp == test_start_time
+
+
+@pytest.mark.asyncio
+async def test_attrs_created_for_metadata_streams_in_run_start_message():
+    # TODO add a stream for each metadata schema id and
+    #  check they are present as attributes
+    #  dataarrays for f142, senv
+    #  variable for tdct
+    queue = asyncio.Queue()
+    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+    run_info_topic = "fake_topic"
+    test_instrument_name = "DATA_STREAM_TEST"
+    data_from_stream = []
+    n_chunks = 0
+    async for data in _data_stream(
+            buffer,
+            queue,
+            "broker", [""],
+            SHORT_TEST_INTERVAL,
+            run_info_topic=run_info_topic,
+            query_consumer=FakeQueryConsumer(test_instrument_name),
+            consumer_type=FakeConsumer,
+            max_iterations=0):
+        data_from_stream.append([data])
+        n_chunks += 1
+        # Only collect the first two chunks of data for the test
+        if n_chunks > 2:
+            break
+
+    assert data_from_stream[0]["instrument_name"].value == test_instrument_name

@@ -119,6 +119,8 @@ async def _data_stream(
     else:
         start_time = time.time() * sc.units.s
 
+    print(start_time)
+    print(topics)
     consumers = create_consumers(start_time,
                                  topics,
                                  kafka_broker,
