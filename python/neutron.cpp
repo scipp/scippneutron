@@ -111,6 +111,19 @@ template <class T> void bind_convert(py::module &m) {
       },
       py::arg("data"), py::arg("origin"), py::arg("target"), py::arg("scatter"),
       py::call_guard<py::gil_scoped_release>(), doc);
+  m.def(
+      "convert",
+      [](py::object &obj, const Dim origin, const Dim target, T &out,
+         const bool scatter) {
+        auto &data = obj.cast<T &>();
+        if (&data != &out)
+          throw std::runtime_error("Currently only out=<input> is supported");
+        data = convert(std::move(data), origin, target,
+                       scatter ? ConvertMode::Scatter : ConvertMode::NoScatter);
+        return obj;
+      },
+      py::arg("data"), py::arg("origin"), py::arg("target"), py::arg("out"),
+      py::arg("scatter"), py::call_guard<py::gil_scoped_release>(), doc);
 }
 
 void init_neutron(py::module &m) {
