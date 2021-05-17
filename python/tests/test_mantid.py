@@ -9,8 +9,7 @@ import os
 
 import scipp as sc
 import scippneutron as scn
-from .mantid_data_helper import MantidDataHelper
-from .mantid_data_helper import mantid_is_available
+from .mantid_data_helper import MantidDataHelper, mantid_is_available
 
 
 def memory_is_at_least_gb(required):
