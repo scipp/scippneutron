@@ -7,7 +7,7 @@ source:
 
 requirements:
   build:
-    - boost-cpp
+    - boost-cpp {{ boost }}
     - cmake
     - gxx_linux-64 9.3.* [linux64]
     - git
@@ -32,7 +32,6 @@ test:
     - pytest
     - pytest-asyncio
     - pythreejs
-    - Pillow
     - mantid-framework [not win]
     - python-confluent-kafka [not win]
     - ess-streaming-data-types [not win]
@@ -40,14 +39,13 @@ test:
     - python/tests/
     - neutron/
   commands:
-    - python -m pytest -v
+    - python -m pytest -v python
 
 build:
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
   script_env:
-    - CC
-    - CXX
     - OSX_VERSION
+    - INSTALL_PREFIX
 
 about:
   home: https://github.com/scipp/scippneutron
@@ -55,4 +53,4 @@ about:
   summary: Neutron scattering tools for Data Reduction
   description: Neutron scattering tools for Data Reduction
   dev_url: https://github.com/scipp/scippneutron
-  doc_url:
+  doc_url: https://scipp.github.io/scippneutron
