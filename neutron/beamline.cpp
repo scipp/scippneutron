@@ -140,9 +140,7 @@ Variable scattered_beam(const dataset::Coords &meta) {
 }
 
 namespace {
-auto normalized(const Variable &var) {
-  return var / norm(var);
-}
+auto normalized(const Variable &var) { return var / norm(var); }
 } // namespace
 
 Variable cos_two_theta(const dataset::Coords &meta) {
