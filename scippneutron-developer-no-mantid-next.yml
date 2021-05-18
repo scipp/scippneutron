@@ -1,0 +1,52 @@
+# This is used for incremental CI builds and local development.
+# All dependencies should be installed here (i.e. the union of build, run, test and documentation build dependencies).
+# This file is identical to scipp-developer.yml but does not include Mantid or Kafka+Serialisation libraries
+# (for platforms these have yet to be packaged for)
+# or
+# See https://scipp.github.io/developer/dependencies.html
+
+name: scippneutron-developer
+
+channels:
+  - conda-forge
+  - scipp
+
+dependencies:
+  # Build
+  - boost-cpp=1.75 # see https://github.com/scipp/scipp/issues/1888
+  - ninja
+  - tbb-devel
+  - scipp/label/dev::scipp
+
+  # Run
+  - appdirs
+  - ipympl
+  - ipywidgets
+  - matplotlib-base
+  - numpy >=1.15.3
+  - python
+  - python-configuration
+  - pythreejs
+  - pyyaml
+  - tbb
+  - traitlets=4.3.3 # see https://github.com/jupyter-widgets/pythreejs/issues/334
+  - h5py
+
+  # Test
+  - psutil
+  - pytest
+  - pytest-asyncio
+
+  # Formatting & static analysis
+  - pre-commit
+  - yapf
+  - flake8
+
+  # Docs
+  - ipython=7.2.0
+  - pandoc
+  - sphinx=3.4.3 # see https://github.com/sphinx-doc/sphinx/issues/8885
+  - sphinx_rtd_theme
+  - nbsphinx
+  - python-graphviz
+  - docutils=0.16 # see https://github.com/spatialaudio/nbsphinx/issues/549
