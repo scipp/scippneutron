@@ -28,7 +28,7 @@ Our first pipeline will build, test and publish a package to the ``scipp`` chann
 Successful pipeline execution pushes new packages to `Anaconda Cloud <https://anaconda.org/scipp/mantid-framework>`_.
 This is the release pipeline, and is the subject of the deployment procedure below.
 
-Our second pipleline uses latest ``master`` of mantid to produce (but not publish) a nightly package, against our static recipie.
+Our second pipeline uses the latest ``master`` from mantid to produce (but not publish) a nightly package, against our static recipe.
 This allows us to anticipate and correct problems we will encounter in new package generation, and ensures we can produce new packages at short notice against an evolving mantid target, while taking into account updated depenencies on conda.
 
 Our third pipeline is triggered by github pull requests only. This is used to produce (but no publish) packages given changes in our recipe, but against the same mantid SHA1 as is used for the tagged releases. 
