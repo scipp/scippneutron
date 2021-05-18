@@ -18,7 +18,7 @@ resources:
     name: scipp/pipelines
     type: github
     endpoint: scipp
-    ref: main
+    ref: optional-publish # TODO change back to main after branch optional-publish branch merged
   pipelines:
   - pipeline: upstream_scipp_release
     project: scipp
@@ -48,3 +48,4 @@ extends:
         conda_env: 'scippneutron-developer-no-mantid.yml'
     deploy: true
     conda_label: 'dev'
+    publish_docs: true
