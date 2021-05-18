@@ -19,6 +19,7 @@ requirements:
     - python {{ python }}
     - scipp
     - h5py
+    - boost {{ boost }}
 
 test:
   imports:
