@@ -9,15 +9,7 @@ import os
 
 import scipp as sc
 import scippneutron as scn
-from .mantid_data_helper import MantidDataHelper
-
-
-def mantid_is_available():
-    try:
-        import mantid  # noqa: F401
-        return True
-    except ImportError:
-        return False
+from .mantid_data_helper import MantidDataHelper, mantid_is_available
 
 
 def memory_is_at_least_gb(required):
