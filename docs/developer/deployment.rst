@@ -25,7 +25,7 @@ There is currently no windows package.
 We have three azure piplelines for these packages.
 
 Our first pipeline will build, test and publish a package to the ``scipp`` channel and is triggered by new tags in the `recipe repository <https://github.com/scipp/mantid_framework_conda_recipe>`_.
-Successful pipline execution pushes new packages to `Anaconda Cloud <https://anaconda.org/scipp/mantid-framework>`_.
+Successful pipeline execution pushes new packages to `Anaconda Cloud <https://anaconda.org/scipp/mantid-framework>`_.
 This is the release pipeline, and is the subject of the deployment procedure below.
 
 Our second pipleline uses latest ``master`` of mantid to produce (but not publish) a nightly package, against our static recipie.
