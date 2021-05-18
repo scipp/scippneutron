@@ -79,9 +79,8 @@ Variable sample_position(const dataset::Coords &meta) {
 }
 
 Variable Ltotal(const dataset::Coords &meta, const ConvertMode scatter) {
-  // TODO Avoid copies here and below if scipp buffer ownership model is changed
   if (find_param(meta, NeutronDim::Ltotal)) {
-    return copy(meta[NeutronDim::Ltotal]);
+    return meta[NeutronDim::Ltotal];
   }
   // If there is not scattering this returns the straight distance from the
   // source, as required, e.g., for monitors or imaging.
@@ -141,7 +140,7 @@ Variable scattered_beam(const dataset::Coords &meta) {
 }
 
 namespace {
-auto normalized(const Variable &var) { // TODO rename
+auto normalized(const Variable &var) {
   return var / norm(var);
 }
 } // namespace
