@@ -5,7 +5,7 @@
 # or
 # See https://scipp.github.io/developer/dependencies.html
 
-name: scippneutron-developer
+name: scippneutron-developer-next
 
 channels:
   - conda-forge
