@@ -29,9 +29,11 @@ Successful pipeline execution pushes new packages to `Anaconda Cloud <https://an
 This is the release pipeline, and is the subject of the deployment procedure below.
 
 Our second pipeline uses the latest ``master`` from mantid to produce (but not publish) a nightly package, against our static recipe.
-This allows us to anticipate and correct problems we will encounter in new package generation, and ensures we can produce new packages at short notice against an evolving mantid target, while taking into account updated depenencies on conda.
+This allows us to anticipate and correct problems we will encounter in new package generation.
+This ensures we can produce new packages at short notice against an evolving mantid target, while taking into account updated depenencies in feed conda channels.
 
-Our third pipeline is triggered by github pull requests only. This is used to produce (but no publish) packages given changes in our recipe, but against the same mantid SHA1 as is used for the tagged releases. 
+Our third pipeline is triggered by github pull requests only.
+This is used to produce (but no publish) packages given changes in our recipe, but against the same mantid SHA1 as is used for the tagged releases. 
 
 Mantid Framework Deployment Procedure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -48,7 +50,12 @@ Mantid Framework Deployment Procedure
 #. Push the tag to origin, which will trigger the tagged release pipeline
 
 .. note::
-  As part of the ``conda build`` step mantid's imports are tested. Packaging can therefore fail if mantid does not appear to work (import).
+  Mantid's imports are tested as part of the ``conda build`` step. Packaging can therefore fail if mantid does not appear to work (import).
   
 .. warning::
-  When running ``conda build`` locally, ensure that ``conda-build`` is up to date (``conda update conda-build``). This can be a source of difference between what is observed on the CI (install fresh into clean conda env) and a potentially stale local environment. You should also ensure that the channel order specified is the same as is applied in the CI for your ``conda build`` command. Refer to order applied in ``conda build`` step in pipeline yaml file. Priority decreases from left to right in your command line argument order. You should also ensure that your local `~/.condarc` file does not prioritize any unexpected/conflicting channels and that flag settings such as ``channel_priority: false`` are not utilized. Note that you can set ``--override-channels`` to your ``conda build`` command to prevent local `.condarc` files getting getting in the way.
+  When running ``conda build`` locally, ensure that ``conda-build`` is up to date (``conda update conda-build``).
+  This can be a source of difference between what is observed on the CI (install fresh into clean conda env) and a potentially stale local environment.
+  You should also ensure that the channel order specified is the same as is applied in the CI for your ``conda build`` command.
+  Refer to order applied in ``conda build`` step in pipeline yaml file. Priority decreases from left to right in your command line argument order.
+  You should also ensure that your local `~/.condarc` file does not prioritize any unexpected/conflicting channels and that flag settings such as ``channel_priority: false`` are not utilized.
+  Note that you can set ``--override-channels`` to your ``conda build`` command to prevent local `.condarc` files getting getting in the way.
