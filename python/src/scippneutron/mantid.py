@@ -341,8 +341,9 @@ def get_detector_properties(ws,
                                   r.imagK(),
                                   r.real()]))
                     bboxes.append(s.getBoundingBox().width())
-                det_rot[i, :] = sc.rotation_matrix_from_quaternion_coeffs(
-                    np.mean(quats, axis=0))
+                det_rot[
+                    i, :] = sc.geometry.rotation_matrix_from_quaternion_coeffs(
+                        np.mean(quats, axis=0))
                 det_bbox[i, :] = np.sum(bboxes, axis=0)
 
         rot_pos = rot * sc.geometry.position(pos_d["x"].data, pos_d["y"].data,
@@ -401,8 +402,9 @@ def get_detector_properties(ws,
                                   r.real()]))
                     bboxes.append(s.getBoundingBox().width())
                 pos[i, :] = np.mean(vec3s, axis=0)
-                det_rot[i, :] = sc.rotation_matrix_from_quaterion_cooffs(
-                    np.mean(quats, axis=0))
+                det_rot[
+                    i, :] = sc.geometry.rotation_matrix_from_quaterion_cooffs(
+                        np.mean(quats, axis=0))
                 det_bbox[i, :] = np.sum(bboxes, axis=0)
             else:
                 pos[i, :] = [np.nan, np.nan, np.nan]
