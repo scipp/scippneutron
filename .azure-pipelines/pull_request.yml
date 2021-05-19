@@ -26,6 +26,8 @@ pr:
   branches:
     include:
       - '*'
+    exclude:
+      - next # Next has dedicated pipeline and is by nature incompatible with the stable scipp
 
 extends:
   template: stages.yml@SharedPipelines
