@@ -141,7 +141,6 @@ def make_detector_info(ws, spectrum_dim):
     spectrum = np.empty(shape=(nDet, ), dtype=np.int32)
     has_spectrum = np.full((nDet, ), False)
     spec_info = ws.spectrumInfo()
-    n_spec = 0
     for i, spec in enumerate(spec_info):
         spec_def = spec.spectrumDefinition
         for j in range(len(spec_def)):
@@ -150,14 +149,13 @@ def make_detector_info(ws, spectrum_dim):
                 raise RuntimeError(
                     "Conversion of Mantid Workspace with scanning instrument "
                     "not supported yet.")
-            spectrum[n_spec] = i
-            n_spec += 1
+            spectrum[det] = i
             has_spectrum[det] = True
 
-    # Store only information about detectors withdata (a spectrum). The rest
+    # Store only information about detectors with data (a spectrum). The rest
     # mostly just gets in the way and including it in the default converter
     # is probably not required.
-    spectrum = sc.array(dims=['detector'], values=spectrum[:n_spec])
+    spectrum = sc.array(dims=['detector'], values=spectrum[has_spectrum])
     detector = sc.array(dims=['detector'],
                         values=det_info.detectorIDs()[has_spectrum])
 
