@@ -138,11 +138,10 @@ def make_detector_info(ws, spectrum_dim):
     det_info = ws.detectorInfo()
     # det -> spec mapping
     nDet = det_info.size()
-    spectrum = sc.Variable(['detector'], shape=(nDet, ), dtype=sc.dtype.int32)
-    has_spectrum = sc.Variable(['detector'], values=np.full((nDet, ), False))
-    spectrum_ = spectrum.values
-    has_spectrum_ = has_spectrum.values
+    spectrum = np.empty(shape=(nDet, ), dtype=np.int32)
+    has_spectrum = np.full((nDet, ), False)
     spec_info = ws.spectrumInfo()
+    n_spec = 0
     for i, spec in enumerate(spec_info):
         spec_def = spec.spectrumDefinition
         for j in range(len(spec_def)):
@@ -151,15 +150,16 @@ def make_detector_info(ws, spectrum_dim):
                 raise RuntimeError(
                     "Conversion of Mantid Workspace with scanning instrument "
                     "not supported yet.")
-            spectrum_[det] = i
-            has_spectrum_[det] = True
-    detector = sc.Variable(['detector'], values=det_info.detectorIDs())
+            spectrum[n_spec] = i
+            n_spec += 1
+            has_spectrum[det] = True
 
-    # Remove any information about detectors without data (a spectrum). This
+    # Store only information about detectors withdata (a spectrum). The rest
     # mostly just gets in the way and including it in the default converter
     # is probably not required.
-    spectrum = sc.filter(spectrum, has_spectrum)
-    detector = sc.filter(detector, has_spectrum)
+    spectrum = sc.array(dims=['detector'], values=spectrum[:n_spec])
+    detector = sc.array(dims=['detector'],
+                        values=det_info.detectorIDs()[has_spectrum])
 
     # May want to include more information here, such as detector positions,
     # but for now this is not necessary.
