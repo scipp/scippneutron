@@ -18,11 +18,8 @@ using namespace scipp::neutron;
 Dataset makeBeamline() {
   Dataset tof;
   static const auto source_pos = Eigen::Vector3d{0.0, 0.0, -10.0};
-  static const auto sample_pos = Eigen::Vector3d{0.0, 0.0, 0.0};
   tof.setCoord(NeutronDim::SourcePosition,
                makeVariable<Eigen::Vector3d>(units::m, Values{source_pos}));
-  tof.setCoord(NeutronDim::SamplePosition,
-               makeVariable<Eigen::Vector3d>(units::m, Values{sample_pos}));
 
   tof.setCoord(NeutronDim::Position,
                makeVariable<Eigen::Vector3d>(
@@ -34,10 +31,14 @@ Dataset makeBeamline() {
 
 Dataset makeTofDataset() {
   Dataset tof = makeBeamline();
+  static const auto sample_pos = Eigen::Vector3d{0.0, 0.0, 0.0};
   tof.setData("counts",
               makeVariable<double>(Dims{NeutronDim::Spectrum, NeutronDim::Tof},
                                    Shape{2, 3}, units::counts,
                                    Values{1, 2, 3, 4, 5, 6}));
+  tof["counts"].attrs().set(
+      NeutronDim::SamplePosition,
+      makeVariable<Eigen::Vector3d>(units::m, Values{sample_pos}));
   tof.setCoord(NeutronDim::Tof,
                makeVariable<double>(Dims{NeutronDim::Tof}, Shape{4}, units::us,
                                     Values{4000, 5000, 6100, 7300}));

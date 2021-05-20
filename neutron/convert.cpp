@@ -109,7 +109,9 @@ auto scatter_params(const Dim dim) {
                                  NeutronDim::FinalEnergy,
                                  NeutronDim::Ltotal,
                                  NeutronDim::L1,
-                                 NeutronDim::L2};
+                                 NeutronDim::L2,
+                                 NeutronDim::SamplePosition,
+                                 NeutronDim::SourcePosition};
   if (dim == NeutronDim::Tof)
     return scipp::span<Dim>{};
   return pos_invariant.count(dim) ? scipp::span(params)
