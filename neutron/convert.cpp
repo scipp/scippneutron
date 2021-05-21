@@ -62,7 +62,8 @@ T convert_generic(T &&d, const Dim from, const Dim to, Op op,
   }
 
   // 3. Rename dims
-  d.rename(from, to);
+  if (d.coords().contains(from))
+    d.rename(from, to);
   return std::move(d);
 }
 
