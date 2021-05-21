@@ -94,8 +94,9 @@ static T convert_with_factor(T &&d, const Dim from, const Dim to,
 namespace {
 
 const auto &no_scatter_params() {
-  static const std::array<Dim, 2> params{NeutronDim::Position,
-                                         NeutronDim::Ltotal};
+  static const std::array<Dim, 4> params{
+      NeutronDim::Position, NeutronDim::SamplePosition,
+      NeutronDim::SourcePosition, NeutronDim::Ltotal};
   return params;
 }
 

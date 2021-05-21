@@ -18,8 +18,11 @@ using namespace scipp::neutron;
 Dataset makeBeamline() {
   Dataset tof;
   static const auto source_pos = Eigen::Vector3d{0.0, 0.0, -10.0};
+  static const auto sample_pos = Eigen::Vector3d{0.0, 0.0, 0.0};
   tof.setCoord(NeutronDim::SourcePosition,
                makeVariable<Eigen::Vector3d>(units::m, Values{source_pos}));
+  tof.setCoord(NeutronDim::SamplePosition,
+               makeVariable<Eigen::Vector3d>(units::m, Values{sample_pos}));
 
   tof.setCoord(NeutronDim::Position,
                makeVariable<Eigen::Vector3d>(
@@ -31,14 +34,10 @@ Dataset makeBeamline() {
 
 Dataset makeTofDataset() {
   Dataset tof = makeBeamline();
-  static const auto sample_pos = Eigen::Vector3d{0.0, 0.0, 0.0};
   tof.setData("counts",
               makeVariable<double>(Dims{NeutronDim::Spectrum, NeutronDim::Tof},
                                    Shape{2, 3}, units::counts,
                                    Values{1, 2, 3, 4, 5, 6}));
-  tof["counts"].attrs().set(
-      NeutronDim::SamplePosition,
-      makeVariable<Eigen::Vector3d>(units::m, Values{sample_pos}));
   tof.setCoord(NeutronDim::Tof,
                makeVariable<double>(Dims{NeutronDim::Tof}, Shape{4}, units::us,
                                     Values{4000, 5000, 6100, 7300}));
@@ -196,6 +195,27 @@ TEST_P(ConvertTest, scattering_conversions_fail_with_NoScatter_mode) {
                                   NeutronDim::Q, ConvertMode::Scatter));
 }
 
+TEST_P(ConvertTest, use_beamline_attributes_for_conversion) {
+  Dataset tof = GetParam();
+  Dataset tof_bl_attributes = GetParam();
+  tof_bl_attributes["counts"].attrs().set(
+      NeutronDim::SamplePosition,
+      tof_bl_attributes.coords()[NeutronDim::SamplePosition]);
+  tof_bl_attributes["counts"].attrs().set(
+      NeutronDim::SourcePosition,
+      tof_bl_attributes.coords()[NeutronDim::SourcePosition]);
+  tof_bl_attributes["counts"].attrs().set(
+      NeutronDim::Position, tof_bl_attributes.coords()[NeutronDim::Position]);
+  tof_bl_attributes.coords().erase(NeutronDim::SamplePosition);
+  tof_bl_attributes.coords().erase(NeutronDim::SourcePosition);
+  tof_bl_attributes.coords().erase(NeutronDim::Position);
+  auto a = convert(tof, NeutronDim::Tof, NeutronDim::Wavelength,
+                   ConvertMode::Scatter);
+  auto b = convert(tof_bl_attributes, NeutronDim::Tof, NeutronDim::Wavelength,
+                   ConvertMode::Scatter);
+  EXPECT_EQ(a, b);
+}
+
 TEST_P(ConvertTest, Tof_to_DSpacing) {
   Dataset tof = GetParam();
 
@@ -254,11 +274,10 @@ TEST_P(ConvertTest, Tof_to_DSpacing) {
   ASSERT_EQ(dspacing["counts"].attrs()[NeutronDim::Position],
             tof.coords()[NeutronDim::Position]);
 
+  // converted to attrs
   ASSERT_FALSE(dspacing.coords().contains(NeutronDim::Position));
-  ASSERT_EQ(dspacing.coords()[NeutronDim::SourcePosition],
-            tof.coords()[NeutronDim::SourcePosition]);
-  ASSERT_EQ(dspacing.coords()[NeutronDim::SamplePosition],
-            tof.coords()[NeutronDim::SamplePosition]);
+  ASSERT_FALSE(dspacing.coords().contains(NeutronDim::SourcePosition));
+  ASSERT_FALSE(dspacing.coords().contains(NeutronDim::SamplePosition));
 }
 
 TEST_P(ConvertTest, DSpacing_to_Tof) {
@@ -332,9 +351,10 @@ TEST_P(ConvertTest, Tof_to_Wavelength) {
   EXPECT_TRUE(equals(data.values<double>(), {1, 2, 3, 4, 5, 6}));
   EXPECT_EQ(data.unit(), units::counts);
 
-  for (const auto &dim : {NeutronDim::Position, NeutronDim::SourcePosition,
-                          NeutronDim::SamplePosition})
-    ASSERT_EQ(wavelength.coords()[dim], tof.coords()[dim]);
+  ASSERT_FALSE(wavelength.coords().contains(NeutronDim::SourcePosition));
+  ASSERT_FALSE(wavelength.coords().contains(NeutronDim::SamplePosition));
+  ASSERT_EQ(wavelength.coords()[NeutronDim::Position],
+            tof.coords()[NeutronDim::Position]);
 }
 
 TEST_P(ConvertTest, Wavelength_to_Tof) {
@@ -430,9 +450,10 @@ TEST_P(ConvertTest, Tof_to_Energy_Elastic) {
   EXPECT_TRUE(equals(data.values<double>(), {1, 2, 3, 4, 5, 6}));
   EXPECT_EQ(data.unit(), units::counts);
 
-  for (const auto &dim : {NeutronDim::Position, NeutronDim::SourcePosition,
-                          NeutronDim::SamplePosition})
-    ASSERT_EQ(energy.coords()[dim], tof.coords()[dim]);
+  ASSERT_FALSE(energy.coords().contains(NeutronDim::SourcePosition));
+  ASSERT_FALSE(energy.coords().contains(NeutronDim::SamplePosition));
+  ASSERT_EQ(energy.coords()[NeutronDim::Position],
+            tof.coords()[NeutronDim::Position]);
 }
 
 TEST_P(ConvertTest, Tof_to_Energy_Elastic_fails_if_inelastic_params_present) {
