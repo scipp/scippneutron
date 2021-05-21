@@ -18,7 +18,7 @@ resources:
     name: scipp/pipelines
     type: github
     endpoint: scipp
-    ref: optional-publish # TODO change back to main after branch optional-publish branch merged
+    ref: main
   pipelines:
   - pipeline: upstream_scipp_release
     project: scipp
