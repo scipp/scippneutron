@@ -16,6 +16,7 @@ try:
         serialise_ev42  # noqa: E402
     from streaming_data_types.run_start_pl72 import serialise_pl72
     from streaming_data_types.logdata_f142 import serialise_f142
+    from streaming_data_types.sample_environment_senv import serialise_senv
     from scippneutron._streaming_consumer import RunStartError
 except ImportError:
     pytest.skip("Kafka or Serialisation module is unavailable",
@@ -395,10 +396,6 @@ async def test_start_time_from_run_start_msg_used_if_requested():
 
 @pytest.mark.asyncio
 async def test_attrs_created_for_metadata_streams_in_run_start_message():
-    # TODO add a stream for each metadata schema id and
-    #  check they are present as attributes
-    #  dataarrays for f142, senv
-    #  variable for tdct
     queue = asyncio.Queue()
     buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
     run_info_topic = "fake_topic"
@@ -408,10 +405,21 @@ async def test_attrs_created_for_metadata_streams_in_run_start_message():
 
     # The Kafka topics to get metadata from are recorded as "stream" objects in
     # the nexus_structure field of the run start message
+    # There are currently 3 schemas for metadata, they have flatbuffer ids
+    # f142, senv and tdct
     f142_source_name = "f142_source"
+    f142_log_name = "f142_log"
+    senv_source_name = "senv_source"
+    senv_log_name = "senv_log"
+    tdct_source_name = "senv_source"
+    tdct_log_name = "tdct_log"
     streams = [
-        Stream("/entry/f142_log", "f142_topic", "f142_source", "f142",
-               "double", "m")
+        Stream(f"/entry/{f142_log_name}", "f142_topic", f142_source_name,
+               "f142", "double", "m"),
+        Stream(f"/entry/{senv_log_name}", "senv_topic", senv_source_name,
+               "senv", "double", "m"),
+        Stream(f"/entry/{tdct_log_name}", "tdct_topic", tdct_source_name,
+               "tdct")
     ]
 
     # Fake receiving a Kafka message for each metadata schema
@@ -420,6 +428,15 @@ async def test_attrs_created_for_metadata_streams_in_run_start_message():
     f142_test_message = serialise_f142(f142_value, f142_source_name,
                                        f142_timestamp)
     await buffer.new_data(f142_test_message)
+    senv_values = np.array([26, 127, 52])
+    senv_timestamp_ns = 123456  # ns after epoch
+    senv_timestamp = datetime.datetime.fromtimestamp(
+        int(senv_timestamp_ns * 1e-9), datetime.timezone.utc)
+    senv_time_between_samples = 100  # ns
+    senv_test_message = serialise_senv(senv_source_name, -1, senv_timestamp,
+                                       senv_time_between_samples, 0,
+                                       senv_values)
+    await buffer.new_data(senv_test_message)
 
     async for data in _data_stream(buffer,
                                    queue,
@@ -438,4 +455,15 @@ async def test_attrs_created_for_metadata_streams_in_run_start_message():
 
     # Zeroth data chunk contains data from run start, we want
     # to check the first chunk for data from our fake messages
-    assert data_from_stream[1]["f142_log"].value == f142_value
+    assert data_from_stream[1][f142_log_name].values[0] == f142_value
+    assert data_from_stream[1][f142_log_name].attrs['time'].values[
+        0] == f142_timestamp
+    assert np.array_equal(data_from_stream[1][senv_log_name].values,
+                          senv_values)
+    senv_expected_timestamps = np.array([
+        senv_timestamp_ns, senv_timestamp_ns + senv_time_between_samples,
+        senv_timestamp_ns + (2 * senv_time_between_samples)
+    ])
+    assert np.array_equal(
+        data_from_stream[1][senv_log_name].attrs['time'].values,
+        senv_expected_timestamps)
