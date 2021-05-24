@@ -48,7 +48,7 @@ T convert_generic(T &&d, const Dim from, const Dim to, Op op,
       continue;
     }
     auto [indices, dim, buffer] =
-        item.data().template constituents<bucket<DataArray>>();
+        item.data().template constituents<DataArray>();
     if (!buffer.coords().contains(from)) {
       continue;
     }
