@@ -15,6 +15,7 @@ try:
     from streaming_data_types.eventdata_ev42 import \
         serialise_ev42  # noqa: E402
     from streaming_data_types.run_start_pl72 import serialise_pl72
+    from streaming_data_types.logdata_f142 import serialise_f142
     from scippneutron._streaming_consumer import RunStartError
 except ImportError:
     pytest.skip("Kafka or Serialisation module is unavailable",
@@ -74,7 +75,7 @@ class FakeQueryConsumer:
         self._start_time = start_time
         if self._start_time is None:
             self._start_time = datetime.datetime.now()
-        if self._nexus_structure is None:
+        if nexus_structure is None:
             builder = NexusBuilder()
             builder.add_instrument(self._instrument_name)
             if self._streams is not None:
@@ -404,19 +405,37 @@ async def test_attrs_created_for_metadata_streams_in_run_start_message():
     test_instrument_name = "DATA_STREAM_TEST"
     data_from_stream = []
     n_chunks = 0
-    async for data in _data_stream(
-            buffer,
-            queue,
-            "broker", [""],
-            SHORT_TEST_INTERVAL,
-            run_info_topic=run_info_topic,
-            query_consumer=FakeQueryConsumer(test_instrument_name),
-            consumer_type=FakeConsumer,
-            max_iterations=0):
+
+    # The Kafka topics to get metadata from are recorded as "stream" objects in
+    # the nexus_structure field of the run start message
+    f142_source_name = "f142_source"
+    streams = [
+        Stream("/entry/f142_log", "f142_topic", "f142_source", "f142",
+               "double", "m")
+    ]
+
+    # Fake receiving a Kafka message for each metadata schema
+    f142_value = 26.1236
+    f142_timestamp = 123456  # ns after epoch
+    f142_test_message = serialise_f142(f142_value, f142_source_name,
+                                       f142_timestamp)
+    await buffer.new_data(f142_test_message)
+
+    async for data in _data_stream(buffer,
+                                   queue,
+                                   "broker", [""],
+                                   SHORT_TEST_INTERVAL,
+                                   run_info_topic=run_info_topic,
+                                   query_consumer=FakeQueryConsumer(
+                                       test_instrument_name, streams=streams),
+                                   consumer_type=FakeConsumer,
+                                   max_iterations=0):
         data_from_stream.append([data])
         n_chunks += 1
         # Only collect the first two chunks of data for the test
         if n_chunks > 2:
             break
 
-    assert data_from_stream[0]["instrument_name"].value == test_instrument_name
+    # Zeroth data chunk contains data from run start, we want
+    # to check the first chunk for data from our fake messages
+    assert data_from_stream[1]["f142_log"].value == f142_value

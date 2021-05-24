@@ -2,7 +2,7 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
 
-from typing import Tuple, Dict, List, Optional, Any, Union
+from typing import Tuple, Dict, List, Optional, Any, Union, Set
 import scipp as sc
 import numpy as np
 from ._loading_common import Group, MissingDataset, MissingAttribute
@@ -315,6 +315,6 @@ class LoadFromJson:
             return False
 
 
-def get_topics_from_streams(root: Dict) -> List[str]:
+def get_topics_from_streams(root: Dict) -> Set[str]:
     found_streams = _find_by_type(_nexus_stream, root)
-    return [stream["stream"]["topic"] for stream in found_streams]
+    return {stream["stream"]["topic"] for stream in found_streams}

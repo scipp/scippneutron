@@ -88,6 +88,7 @@ async def _data_stream(
     """
     try:
         from ._streaming_consumer import (start_consumers, create_consumers,
+                                          stop_consumers,
                                           get_run_start_message,
                                           KafkaQueryConsumer, KafkaConsumer)
     except ImportError:
@@ -137,18 +138,20 @@ async def _data_stream(
     # the consumers have stopped, if so, we are done. Otherwise
     # it could just be that we have not received any new data.
     iterations = 0
-    while not _consumers_all_stopped(
-            consumers) and iterations < max_iterations:
-        try:
-            new_data = await asyncio.wait_for(queue.get(),
-                                              timeout=2 *
-                                              sc.to_unit(interval, 's').value)
-            iterations += 1
-            yield new_data
-        except asyncio.TimeoutError:
-            pass
-
-    buffer.stop()
+    try:
+        while not _consumers_all_stopped(
+                consumers) and iterations < max_iterations:
+            try:
+                new_data = await asyncio.wait_for(
+                    queue.get(), timeout=2 * sc.to_unit(interval, 's').value)
+                iterations += 1
+                yield new_data
+            except asyncio.TimeoutError:
+                pass
+    finally:
+        # Ensure cleanup happens however the loop exits
+        stop_consumers(consumers)
+        buffer.stop()
 
 
 def start_stream(user_function: Callable) -> asyncio.Task:

@@ -165,7 +165,7 @@ def _load_nexus_json(
     if get_start_info:
         topics = get_topics_from_streams(loaded_json)
     return _load_data(loaded_json, None, LoadFromJson(loaded_json),
-                      True), set(topics)
+                      True), topics
 
 
 def load_nexus_json(json_filename: str) -> Optional[ScippData]:
