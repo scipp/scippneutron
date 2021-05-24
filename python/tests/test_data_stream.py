@@ -16,6 +16,7 @@ try:
         serialise_ev42  # noqa: E402
     from streaming_data_types.run_start_pl72 import serialise_pl72
     from streaming_data_types.logdata_f142 import serialise_f142
+    from streaming_data_types.timestamps_tdct import serialise_tdct
     from streaming_data_types.sample_environment_senv import serialise_senv
     from scippneutron._streaming_consumer import RunStartError
 except ImportError:
@@ -437,6 +438,9 @@ async def test_attrs_created_for_metadata_streams_in_run_start_message():
                                        senv_time_between_samples, 0,
                                        senv_values)
     await buffer.new_data(senv_test_message)
+    tdct_timestamps = np.array([1234, 2345, 3456])  # ns
+    tdct_test_message = serialise_tdct(tdct_source_name, tdct_timestamps)
+    await buffer.new_data(tdct_test_message)
 
     async for data in _data_stream(buffer,
                                    queue,
@@ -467,3 +471,5 @@ async def test_attrs_created_for_metadata_streams_in_run_start_message():
     assert np.array_equal(
         data_from_stream[1][senv_log_name].attrs['time'].values,
         senv_expected_timestamps)
+    assert np.array_equal(data_from_stream[1][f142_log_name].values,
+                          tdct_timestamps)
