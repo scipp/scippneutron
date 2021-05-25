@@ -636,11 +636,11 @@ class TestMantidConversion(unittest.TestCase):
 
 
 def test_to_rot_from_vectors():
-    a = sc.Variable(value=[1, 0, 0], dtype=sc.dtype.vector_3_float64)
-    b = sc.Variable(value=[0, 1, 0], dtype=sc.dtype.vector_3_float64)
-    rot = scn.mantid._rot_from_vectors(a.value, b.value)
+    a = sc.vector(value=[1, 0, 0])
+    b = sc.vector(value=[0, 1, 0])
+    rot = scn.mantid._rot_from_vectors(a, b)
     assert np.allclose((rot * a).value, b.value)
-    rot = scn.mantid._rot_from_vectors(b.value, a.value)
+    rot = scn.mantid._rot_from_vectors(b, a)
     assert np.allclose((rot * b).value, a.value)
 
 

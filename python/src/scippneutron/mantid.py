@@ -42,7 +42,8 @@ def run_mantid_alg(alg, *args, **kwargs):
 
 
 def get_pos(pos):
-    return [pos.X(), pos.Y(), pos.Z()]
+    return None if pos is None else sc.vector(
+        value=[pos.X(), pos.Y(), pos.Z()], unit=sc.units.m)
 
 
 def make_run(ws):
@@ -124,14 +125,7 @@ def make_component_info(ws):
     else:
         samplePos = None
 
-    def as_var(pos):
-        if pos is None:
-            return pos
-        return sc.Variable(value=np.array(get_pos(pos)),
-                           dtype=sc.dtype.vector_3_float64,
-                           unit=sc.units.m)
-
-    return as_var(sourcePos), as_var(samplePos)
+    return get_pos(sourcePos), get_pos(samplePos)
 
 
 def make_detector_info(ws, spectrum_dim):
@@ -251,16 +245,12 @@ def _to_spherical(pos, output):
 
 
 def _rot_from_vectors(vec1, vec2):
-    a = sc.Variable(value=vec1 / np.linalg.norm(vec1),
-                    dtype=sc.dtype.vector_3_float64)
-    b = sc.Variable(value=vec2 / np.linalg.norm(vec2),
-                    dtype=sc.dtype.vector_3_float64)
-    c = sc.Variable(value=np.cross(a.value, b.value),
-                    dtype=sc.dtype.vector_3_float64)
+    a = sc.vector(value=vec1.value / np.linalg.norm(vec1.value))
+    b = sc.vector(value=vec2.value / np.linalg.norm(vec2.value))
+    c = sc.vector(value=np.cross(a.value, b.value))
     angle = sc.acos(sc.dot(a, b)).value
-    q = sc.geometry.rotation_matrix_from_quaternion_coeffs(
-        list(c.value * np.sin(angle / 2)) + [np.cos(angle / 2)])
-    return sc.Variable(value=q)
+    return sc.matrix(value=sc.geometry.rotation_matrix_from_quaternion_coeffs(
+        list(c.value * np.sin(angle / 2)) + [np.cos(angle / 2)]))
 
 
 def get_detector_pos(ws, spectrum_dim):
@@ -276,10 +266,7 @@ def get_detector_pos(ws, spectrum_dim):
             pos[i, 2] = p.Z()
         else:
             pos[i, :] = [np.nan, np.nan, np.nan]
-    return sc.Variable([spectrum_dim],
-                       values=pos,
-                       unit=sc.units.m,
-                       dtype=sc.dtype.vector_3_float64)
+    return sc.vectors(dims=[spectrum_dim], values=pos, unit=sc.units.m)
 
 
 def get_detector_properties(ws,
@@ -371,14 +358,8 @@ def get_detector_properties(ws,
         pos = sc.geometry.position(averaged["x"].data, averaged["y"].data,
                                    averaged["z"].data)
 
-        return (inv_rot * pos,
-                sc.Variable([spectrum_dim],
-                            values=det_rot,
-                            dtype=sc.dtype.matrix_3_float64),
-                sc.Variable([spectrum_dim],
-                            values=det_bbox,
-                            unit=sc.units.m,
-                            dtype=sc.dtype.vector_3_float64))
+        return (inv_rot * pos, sc.matrices([spectrum_dim], values=det_rot),
+                sc.vectors([spectrum_dim], values=det_bbox, unit=sc.units.m))
     else:
         pos = np.zeros([nspec, 3])
 
@@ -410,17 +391,13 @@ def get_detector_properties(ws,
                 pos[i, :] = [np.nan, np.nan, np.nan]
                 det_rot[i, :] = [np.nan, np.nan, np.nan, np.nan]
                 det_bbox[i, :] = [np.nan, np.nan, np.nan]
-        return (sc.Variable([spectrum_dim],
-                            values=pos,
-                            unit=sc.units.m,
-                            dtype=sc.dtype.vector_3_float64),
-                sc.Variable([spectrum_dim],
-                            values=det_rot,
-                            dtype=sc.dtype.matrix_3_float64),
-                sc.Variable([spectrum_dim],
-                            values=det_bbox,
-                            unit=sc.units.m,
-                            dtype=sc.dtype.vector_3_float64))
+        return (sc.vectors([spectrum_dim], values=pos, unit=sc.units.m),
+                sc.matrices([spectrum_dim], values=det_rot),
+                sc.vectors(
+                    [spectrum_dim],
+                    values=det_bbox,
+                    unit=sc.units.m,
+                ))
 
 
 def _get_dtype_from_values(values, coerce_floats_to_ints):

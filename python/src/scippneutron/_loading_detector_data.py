@@ -104,10 +104,9 @@ def _load_pixel_positions(detector_group: GroupObject, detector_ids_size: int,
         # element in each position
         array = array[:, :3]
 
-    return sc.Variable([_detector_dimension],
-                       values=array,
-                       dtype=sc.dtype.vector_3_float64,
-                       unit=sc.units.m)
+    return sc.vectors(dims=[_detector_dimension],
+                      values=array,
+                      unit=sc.units.m)
 
 
 @dataclass
