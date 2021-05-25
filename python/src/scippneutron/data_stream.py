@@ -108,8 +108,10 @@ async def _data_stream(
     if run_info_topic is not None:
         run_start_info = get_run_start_message(run_info_topic, query_consumer)
         if topics is None:
-            loaded_data, topics = _load_nexus_json(
+            loaded_data, stream_info = _load_nexus_json(
                 run_start_info.nexus_structure, get_start_info=True)
+            topics = {stream.topic for stream in stream_info}
+            buffer.init_metadata_buffers(stream_info)
         else:
             loaded_data, _ = _load_nexus_json(run_start_info.nexus_structure,
                                               get_start_info=False)
@@ -120,8 +122,6 @@ async def _data_stream(
     else:
         start_time = time.time() * sc.units.s
 
-    print(start_time)
-    print(topics)
     consumers = create_consumers(start_time,
                                  topics,
                                  kafka_broker,

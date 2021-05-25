@@ -2,10 +2,11 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
 
-from typing import Tuple, Dict, List, Optional, Any, Union, Set
+from typing import Tuple, Dict, List, Optional, Any, Union
 import scipp as sc
 import numpy as np
 from ._loading_common import Group, MissingDataset, MissingAttribute
+from dataclasses import dataclass
 
 _nexus_class = "NX_class"
 _nexus_units = "units"
@@ -101,7 +102,7 @@ def contains_stream(group: Dict) -> bool:
     return False
 
 
-def _find_by_type(type_name: str, root: Dict) -> List[Dict]:
+def _find_by_type(type_name: str, root: Dict) -> List[Group]:
     """
     Finds objects with the requested "type" value
     Returns a list of objects with requested type
@@ -111,7 +112,7 @@ def _find_by_type(type_name: str, root: Dict) -> List[Dict]:
         try:
             for child in obj[_nexus_children]:
                 if child["type"] == requested_type:
-                    objects_found.append(child)
+                    objects_found.append(Group(child, obj, ""))
                 _visit_nodes_for_type(child, requested_type, objects_found)
         except KeyError:
             # If this object does not have "children" array then go to next
@@ -315,6 +316,37 @@ class LoadFromJson:
             return False
 
 
-def get_topics_from_streams(root: Dict) -> Set[str]:
+@dataclass
+class StreamInfo:
+    topic: str
+    flatbuffer_id: str
+    source_name: str
+    dtype: Any
+    unit: sc.Unit
+
+
+def get_streams_info(root: Dict) -> List[StreamInfo]:
     found_streams = _find_by_type(_nexus_stream, root)
-    return {stream["stream"]["topic"] for stream in found_streams}
+    streams = []
+    for stream in found_streams:
+        try:
+            dtype = _filewriter_to_supported_numpy_dtype[stream.group["stream"]
+                                                         ["dtype"]]
+        except KeyError:
+            try:
+                dtype = _filewriter_to_supported_numpy_dtype[
+                    stream.group["stream"]["type"]]
+            except KeyError:
+                dtype = None
+
+        units = sc.units.dimensionless
+        try:
+            units = _get_attribute_value(stream.parent, _nexus_units)
+        except MissingAttribute:
+            pass
+
+        streams.append(
+            StreamInfo(stream.group["stream"]["topic"],
+                       stream.group["stream"]["writer_module"],
+                       stream.group["stream"]["source"], dtype, units))
+    return streams

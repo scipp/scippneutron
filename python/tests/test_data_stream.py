@@ -197,7 +197,7 @@ async def test_warn_on_buffer_size_exceeded_by_single_message():
     queue = asyncio.Queue()
     buffer_size_2_events = 2
     buffer = StreamedDataBuffer(queue,
-                                buffer_size=buffer_size_2_events,
+                                event_buffer_size=buffer_size_2_events,
                                 interval=SHORT_TEST_INTERVAL)
     time_of_flight = np.array([1., 2., 3.])
     detector_ids = np.array([4, 5, 6])
@@ -215,7 +215,7 @@ async def test_buffer_size_exceeded_by_messages_causes_early_data_emit():
     queue = asyncio.Queue()
     buffer_size_5_events = 5
     buffer = StreamedDataBuffer(queue,
-                                buffer_size=buffer_size_5_events,
+                                event_buffer_size=buffer_size_5_events,
                                 interval=SHORT_TEST_INTERVAL)
     first_tof = np.array([1., 2., 3.])
     first_detector_ids = np.array([4, 5, 6])

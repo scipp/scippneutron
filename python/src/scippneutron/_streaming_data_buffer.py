@@ -2,9 +2,11 @@ import scipp as sc
 import numpy as np
 import asyncio
 from streaming_data_types.eventdata_ev42 import deserialise_ev42
+from streaming_data_types.logdata_f142 import deserialise_f142, LogDataInfo
 from streaming_data_types.exceptions import WrongSchemaException
-from typing import Optional
+from typing import Optional, Dict, List
 from warnings import warn
+from ._loading_json_nexus import StreamInfo
 """
 The ESS data streaming system uses Google FlatBuffers to serialise
 data to transmit in the Kafka message payload. FlatBuffers uses schemas
@@ -19,6 +21,40 @@ Each schema is identified by a 4 character string which is included in:
 """
 
 
+class _Bufferf142:
+    def __init__(self, stream_info: StreamInfo, buffer_size: int = 100_000):
+        self._buffer_mutex = asyncio.Lock()
+        self._buffer_size = buffer_size
+        self._unit = stream_info.unit
+        self._name = stream_info.source_name
+        self._dtype = stream_info.dtype
+        self._buffer_filled_size = 0
+        print(self._dtype)
+        self._create_buffer_array(buffer_size)
+
+    def _create_buffer_array(self, buffer_size: int):
+        self._data_array = sc.DataArray(
+            sc.zeros(dims=[self._name],
+                     shape=(buffer_size, ),
+                     unit=self._unit,
+                     dtype=self._dtype), {
+                         "time":
+                         sc.zeros(dims=[self._name],
+                                  shape=(buffer_size, ),
+                                  unit=sc.Unit("nanoseconds"),
+                                  dtype=np.int64)
+                     })
+
+    async def append_event(self, log_event: LogDataInfo):
+        async with self._buffer_mutex:
+            self._data_array["time"][
+                self._buffer_filled_size] = log_event.value
+            self._buffer_filled_size += 1
+
+
+metadata_ids = ("f142", )  # "tdct", "senv"
+
+
 class StreamedDataBuffer:
     """
     This owns the buffer for data consumed from Kafka.
@@ -26,24 +62,26 @@ class StreamedDataBuffer:
     and resets the buffer. If the buffer fills up within the emit time
     interval then data is emitted more frequently.
     """
-    def __init__(self, queue: asyncio.Queue, buffer_size: int,
+    def __init__(self, queue: asyncio.Queue, event_buffer_size: int,
                  interval: sc.Variable):
         self._buffer_mutex = asyncio.Lock()
         self._interval_s = sc.to_unit(interval, 's').value
-        self._buffer_size = buffer_size
+        self._buffer_size = event_buffer_size
         tof_buffer = sc.zeros(dims=['event'],
-                              shape=[buffer_size],
+                              shape=[event_buffer_size],
                               unit=sc.units.ns,
                               dtype=sc.dtype.int32)
         id_buffer = sc.zeros(dims=['event'],
-                             shape=[buffer_size],
+                             shape=[event_buffer_size],
                              unit=sc.units.one,
                              dtype=sc.dtype.int32)
         pulse_times = sc.zeros(dims=['event'],
-                               shape=[buffer_size],
+                               shape=[event_buffer_size],
                                unit=sc.units.ns,
                                dtype=sc.dtype.int64)
-        weights = sc.ones(dims=['event'], shape=[buffer_size], variances=True)
+        weights = sc.ones(dims=['event'],
+                          shape=[event_buffer_size],
+                          variances=True)
         self._events_buffer = sc.DataArray(weights, {
             'tof': tof_buffer,
             'detector_id': id_buffer,
@@ -54,6 +92,25 @@ class StreamedDataBuffer:
         self._unrecognised_fb_id_count = 0
         self._periodic_emit: Optional[asyncio.Task] = None
         self._emit_queue = queue
+        # Access metadata buffer by
+        # self._metadata_buffers[flatbuffer_id][source_name]
+        self._metadata_buffers: Dict[str, Dict[str, _Bufferf142]] = {
+            flatbuffer_id: {}
+            for flatbuffer_id in metadata_ids
+        }
+
+    def init_metadata_buffers(self, stream_info: List[StreamInfo]):
+        """
+        Create a buffer dataset for each of the metadata sources.
+        This is not in the constructor which allows the StreamedDataBuffer
+        to be constructed before metadata sources are extracted from the
+        run start message, this means the StreamedDataBuffer can be passed
+        into data_stream to facilitate unit testing.
+        """
+        for stream in stream_info:
+            if stream.flatbuffer_id in metadata_ids:
+                self._metadata_buffers[stream.flatbuffer_id][
+                    stream.source_name] = _Bufferf142(stream)
 
     def start(self):
         self._cancelled = False
@@ -83,8 +140,7 @@ class StreamedDataBuffer:
             await asyncio.sleep(self._interval_s)
             await self._emit_data()
 
-    async def new_data(self, new_data: bytes):
-        # Are they event data?
+    async def _handled_ev42_data(self, new_data: bytes) -> bool:
         try:
             deserialised_data = deserialise_ev42(new_data)
             message_size = deserialised_data.detector_id.size
@@ -94,7 +150,7 @@ class StreamedDataBuffer:
                      f"message_size: {message_size}, buffer_size:"
                      f" {self._buffer_size}. These data have been "
                      f"skipped!")
-                return
+                return True
             # If new data would overfill buffer then emit data
             # currently in buffer first
             if self._current_event + message_size > self._buffer_size:
@@ -110,6 +166,42 @@ class StreamedDataBuffer:
                     deserialised_data.pulse_time * \
                     np.ones_like(deserialised_data.time_of_flight)
                 self._current_event += message_size
-            return
         except WrongSchemaException:
-            self._unrecognised_fb_id_count += 1
+            return False
+        return True
+
+    async def _handled_f142_data(self, new_data: bytes) -> bool:
+        try:
+            deserialised_data = deserialise_f142(new_data)
+            try:
+                await self._metadata_buffers["f142"][
+                    deserialised_data.source_name
+                ].append_event(deserialised_data)
+            except KeyError:
+                # Ignore data from unknown source name
+                pass
+        except WrongSchemaException:
+            return False
+        return True
+
+    async def _handled_senv_data(self, new_data: bytes) -> bool:
+        return False
+
+    async def _handled_tdct_data(self, new_data: bytes) -> bool:
+        return False
+
+    async def new_data(self, new_data: bytes):
+        data_handled = await self._handled_ev42_data(new_data)
+        if data_handled:
+            return
+        data_handled = await self._handled_f142_data(new_data)
+        if data_handled:
+            return
+        data_handled = await self._handled_senv_data(new_data)
+        if data_handled:
+            return
+        data_handled = await self._handled_tdct_data(new_data)
+        if data_handled:
+            return
+        # new data were not handled
+        self._unrecognised_fb_id_count += 1
