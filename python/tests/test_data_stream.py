@@ -5,7 +5,6 @@ import asyncio
 from typing import List, Tuple, Callable, Dict, Optional
 import numpy as np
 from .nexus_helpers import NexusBuilder, Stream
-from scippneutron._loading_json_nexus import StreamInfo
 
 try:
     import streaming_data_types  # noqa: F401
@@ -421,35 +420,6 @@ async def test_attrs_created_for_metadata_streams_in_run_start_message():
         Stream(f"/entry/{tdct_log_name}", "tdct_topic", tdct_source_name,
                "tdct")
     ]
-    stream_info = [
-        StreamInfo(stream.topic,
-                   stream.writer_module, stream.source, np.float64,
-                   sc.Unit(stream.value_units)) for stream in streams
-    ]
-
-    # For testing we have to manually call init_metadata_buffers
-    # so that metadata buffers have been created before we fake
-    # messages arriving.
-    buffer.init_metadata_buffers(stream_info)
-
-    # Fake receiving a Kafka message for each metadata schema
-    f142_value = 26.1236
-    f142_timestamp = 123456  # ns after epoch
-    f142_test_message = serialise_f142(f142_value, f142_source_name,
-                                       f142_timestamp)
-    await buffer.new_data(f142_test_message)
-    senv_values = np.array([26, 127, 52])
-    senv_timestamp_ns = 123456  # ns after epoch
-    senv_timestamp = datetime.datetime.fromtimestamp(
-        int(senv_timestamp_ns * 1e-9), datetime.timezone.utc)
-    senv_time_between_samples = 100  # ns
-    senv_test_message = serialise_senv(senv_source_name, -1, senv_timestamp,
-                                       senv_time_between_samples, 0,
-                                       senv_values)
-    await buffer.new_data(senv_test_message)
-    tdct_timestamps = np.array([1234, 2345, 3456])  # ns
-    tdct_test_message = serialise_tdct(tdct_source_name, tdct_timestamps)
-    await buffer.new_data(tdct_test_message)
 
     n_chunks = 0
     data_from_stream = []
@@ -464,6 +434,32 @@ async def test_attrs_created_for_metadata_streams_in_run_start_message():
                                    consumer_type=FakeConsumer,
                                    max_iterations=1):
         data_from_stream.append(data)
+
+        if n_chunks == 0:
+            # Fake receiving a Kafka message for each metadata schema
+            # Do this after the run start message has been parsed, so that
+            # a metadata buffer will have been created for each data source
+            # described in the start message.
+            f142_value = 26.1236
+            f142_timestamp = 123456  # ns after epoch
+            f142_test_message = serialise_f142(f142_value, f142_source_name,
+                                               f142_timestamp)
+            await buffer.new_data(f142_test_message)
+            senv_values = np.array([26, 127, 52])
+            senv_timestamp_ns = 123456  # ns after epoch
+            senv_timestamp = datetime.datetime.fromtimestamp(
+                int(senv_timestamp_ns * 1e-9), datetime.timezone.utc)
+            senv_time_between_samples = 100  # ns
+            senv_test_message = serialise_senv(senv_source_name, -1,
+                                               senv_timestamp,
+                                               senv_time_between_samples, 0,
+                                               senv_values)
+            await buffer.new_data(senv_test_message)
+            tdct_timestamps = np.array([1234, 2345, 3456])  # ns
+            tdct_test_message = serialise_tdct(tdct_source_name,
+                                               tdct_timestamps)
+            await buffer.new_data(tdct_test_message)
+
         n_chunks += 1
         # Only collect the first two chunks of data for the test
         if n_chunks > 2:

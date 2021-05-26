@@ -122,15 +122,8 @@ class StreamedDataBuffer:
         """
         for stream in stream_info:
             if stream.flatbuffer_id in metadata_ids:
-                try:
-                    # Do not replace buffer if there is one already there;
-                    # for unit tests init_metadata_buffers has to be called
-                    # manually and will be called again by data_stream.
-                    _ = self._metadata_buffers[stream.flatbuffer_id][
-                        stream.source_name]
-                except KeyError:
-                    self._metadata_buffers[stream.flatbuffer_id][
-                        stream.source_name] = _Bufferf142(stream)
+                self._metadata_buffers[stream.flatbuffer_id][
+                    stream.source_name] = _Bufferf142(stream)
 
     def start(self):
         self._cancelled = False
