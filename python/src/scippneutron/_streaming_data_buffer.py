@@ -22,6 +22,10 @@ Each schema is identified by a 4 character string which is included in:
 
 
 class _Bufferf142:
+    """
+    Buffer for metadata from Kafka messages serialised according
+    to the flatbuffer schema with id f142
+    """
     def __init__(self, stream_info: StreamInfo, buffer_size: int = 100_000):
         self._buffer_mutex = asyncio.Lock()
         self._buffer_size = buffer_size
@@ -29,7 +33,6 @@ class _Bufferf142:
         self._name = stream_info.source_name
         self._dtype = stream_info.dtype
         self._buffer_filled_size = 0
-        print(self._dtype)
         self._create_buffer_array(buffer_size)
 
     def _create_buffer_array(self, buffer_size: int):
@@ -50,6 +53,16 @@ class _Bufferf142:
             self._data_array["time"][
                 self._buffer_filled_size] = log_event.value
             self._buffer_filled_size += 1
+
+    async def get_metadata_array(self) -> sc.DataArray:
+        """
+        Copy collected data from the buffer
+        """
+        async with self._buffer_mutex:
+            return_array = self._data_array[
+                self._name, :self._buffer_filled_size].copy()
+            self._buffer_filled_size = 0
+        return return_array
 
 
 metadata_ids = ("f142", )  # "tdct", "senv"
@@ -128,10 +141,15 @@ class StreamedDataBuffer:
                 warn(f"Received {self._unrecognised_fb_id_count}"
                      " messages with unrecognised FlatBuffer ids")
                 self._unrecognised_fb_id_count = 0
-            if self._current_event == 0:
-                return
+            # TODO remove this? does it cause a problem?
+            # if self._current_event == 0:
+            #     return
             new_data = self._events_buffer[
                 'event', :self._current_event].copy()
+            for _, buffers in self._metadata_buffers.items():
+                for name, buffer in buffers.items():
+                    metadata_array = await buffer.get_metadata_array()
+                    new_data.attrs[name] = sc.Variable(value=metadata_array)
             self._current_event = 0
         self._emit_queue.put_nowait(new_data)
 
@@ -174,9 +192,11 @@ class StreamedDataBuffer:
         try:
             deserialised_data = deserialise_f142(new_data)
             try:
+                print("not working?")
                 await self._metadata_buffers["f142"][
                     deserialised_data.source_name
                 ].append_event(deserialised_data)
+                print("appended f142 data to buffer!")
             except KeyError:
                 # Ignore data from unknown source name
                 pass
