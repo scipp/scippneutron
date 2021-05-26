@@ -50,8 +50,8 @@ class _Bufferf142:
 
     async def append_event(self, log_event: LogDataInfo):
         async with self._buffer_mutex:
-            self._data_array["time"][
-                self._buffer_filled_size] = log_event.value
+            self._data_array[self._name,
+                             self._buffer_filled_size].values = log_event.value
             self._buffer_filled_size += 1
 
     async def get_metadata_array(self) -> sc.DataArray:
@@ -122,8 +122,15 @@ class StreamedDataBuffer:
         """
         for stream in stream_info:
             if stream.flatbuffer_id in metadata_ids:
-                self._metadata_buffers[stream.flatbuffer_id][
-                    stream.source_name] = _Bufferf142(stream)
+                try:
+                    # Do not replace buffer if there is one already there;
+                    # for unit tests init_metadata_buffers has to be called
+                    # manually and will be called again by data_stream.
+                    _ = self._metadata_buffers[stream.flatbuffer_id][
+                        stream.source_name]
+                except KeyError:
+                    self._metadata_buffers[stream.flatbuffer_id][
+                        stream.source_name] = _Bufferf142(stream)
 
     def start(self):
         self._cancelled = False
@@ -192,11 +199,9 @@ class StreamedDataBuffer:
         try:
             deserialised_data = deserialise_f142(new_data)
             try:
-                print("not working?")
                 await self._metadata_buffers["f142"][
                     deserialised_data.source_name
                 ].append_event(deserialised_data)
-                print("appended f142 data to buffer!")
             except KeyError:
                 # Ignore data from unknown source name
                 pass

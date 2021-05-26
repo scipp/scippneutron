@@ -5,6 +5,7 @@ import asyncio
 from typing import List, Tuple, Callable, Dict, Optional
 import numpy as np
 from .nexus_helpers import NexusBuilder, Stream
+from scippneutron._loading_json_nexus import StreamInfo
 
 try:
     import streaming_data_types  # noqa: F401
@@ -420,6 +421,16 @@ async def test_attrs_created_for_metadata_streams_in_run_start_message():
         Stream(f"/entry/{tdct_log_name}", "tdct_topic", tdct_source_name,
                "tdct")
     ]
+    stream_info = [
+        StreamInfo(stream.topic,
+                   stream.writer_module, stream.source, np.float64,
+                   sc.Unit(stream.value_units)) for stream in streams
+    ]
+
+    # For testing we have to manually call init_metadata_buffers
+    # so that metadata buffers have been created before we fake
+    # messages arriving.
+    buffer.init_metadata_buffers(stream_info)
 
     # Fake receiving a Kafka message for each metadata schema
     f142_value = 26.1236
@@ -460,18 +471,19 @@ async def test_attrs_created_for_metadata_streams_in_run_start_message():
 
     # Zeroth data chunk contains data from run start, we want
     # to check the first chunk for data from our fake messages
-    assert data_from_stream[1].attrs[f142_log_name].value.values[
+    assert data_from_stream[1].attrs[f142_source_name].value.values[
         0] == f142_value
-    assert data_from_stream[1].attrs[f142_log_name].value.coords[
+    assert data_from_stream[1].attrs[f142_source_name].value.coords[
         'time'].values[0] == f142_timestamp
     assert np.array_equal(
-        data_from_stream[1].attrs[senv_log_name].value.values, senv_values)
+        data_from_stream[1].attrs[senv_source_name].value.values, senv_values)
     senv_expected_timestamps = np.array([
         senv_timestamp_ns, senv_timestamp_ns + senv_time_between_samples,
         senv_timestamp_ns + (2 * senv_time_between_samples)
     ])
     assert np.array_equal(
-        data_from_stream[1].attrs[senv_log_name].value.coords['time'].values,
-        senv_expected_timestamps)
+        data_from_stream[1].attrs[senv_source_name].value.coords['time'].
+        values, senv_expected_timestamps)
     assert np.array_equal(
-        data_from_stream[1].value.attrs[f142_log_name].values, tdct_timestamps)
+        data_from_stream[1].value.attrs[f142_source_name].values,
+        tdct_timestamps)
