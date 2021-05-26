@@ -18,6 +18,7 @@ try:
     from streaming_data_types.logdata_f142 import serialise_f142
     from streaming_data_types.timestamps_tdct import serialise_tdct
     from streaming_data_types.sample_environment_senv import serialise_senv
+    from streaming_data_types.sample_environment_senv import Location
     from scippneutron._streaming_consumer import RunStartError
 except ImportError:
     pytest.skip("Kafka or Serialisation module is unavailable",
@@ -445,14 +446,14 @@ async def test_data_stream_returns_metadata():
                                                f142_timestamp)
             await buffer.new_data(f142_test_message)
             senv_values = np.array([26, 127, 52])
-            senv_timestamp_ns = 123456  # ns after epoch
+            senv_timestamp_ns = 123000  # ns after epoch
             senv_timestamp = datetime.datetime.fromtimestamp(
-                int(senv_timestamp_ns * 1e-9), datetime.timezone.utc)
+                senv_timestamp_ns * 1e-9, datetime.timezone.utc)
             senv_time_between_samples = 100  # ns
             senv_test_message = serialise_senv(senv_source_name, -1,
                                                senv_timestamp,
                                                senv_time_between_samples, 0,
-                                               senv_values)
+                                               senv_values, Location.Start)
             await buffer.new_data(senv_test_message)
             tdct_timestamps = np.array([1234, 2345, 3456])  # ns
             tdct_test_message = serialise_tdct(tdct_source_name,

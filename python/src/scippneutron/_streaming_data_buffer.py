@@ -3,8 +3,13 @@ import numpy as np
 import asyncio
 from streaming_data_types.eventdata_ev42 import deserialise_ev42
 from streaming_data_types.logdata_f142 import deserialise_f142, LogDataInfo
+from streaming_data_types.sample_environment_senv import deserialise_senv
+from streaming_data_types.sample_environment_senv import (Response as
+                                                          FastSampleEnvData)
+from streaming_data_types.sample_environment_senv import (Location as
+                                                          TimestampLocation)
 from streaming_data_types.exceptions import WrongSchemaException
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any, Union
 from warnings import warn
 from ._loading_json_nexus import StreamInfo
 """
@@ -21,34 +26,43 @@ Each schema is identified by a 4 character string which is included in:
 """
 
 
-class _Bufferf142:
+def _create_metadata_buffer_array(name: str, unit: sc.Unit, dtype: Any,
+                                  buffer_size: int):
+    return sc.DataArray(
+        sc.zeros(dims=[name], shape=(buffer_size, ), unit=unit, dtype=dtype), {
+            "time":
+            sc.zeros(dims=[name],
+                     shape=(buffer_size, ),
+                     unit=sc.Unit("nanoseconds"),
+                     dtype=np.int64)
+        })
+
+
+# flatbuffer schema ids
+slow_fb_id = "f142"
+fast_fb_id = "senv"
+chopper_fb_id = "tdct"
+
+
+class _SlowMetadataBuffer:
     """
-    Buffer for metadata from Kafka messages serialised according
-    to the flatbuffer schema with id f142
+    Buffer for "slowly" changing metadata from Kafka messages serialised
+    according to the flatbuffer schema with id slow_fb_id.
+    Typically the data sources are EPICS PVs with updates published to
+    Kafka via the Forwarder (https://github.com/ess-dmsc/forwarder/).
     """
-    def __init__(self, stream_info: StreamInfo, buffer_size: int = 100_000):
+    def __init__(self, stream_info: StreamInfo, buffer_size: int = 1000):
         self._buffer_mutex = asyncio.Lock()
         self._buffer_size = buffer_size
         self._unit = stream_info.unit
         self._name = stream_info.source_name
         self._dtype = stream_info.dtype
         self._buffer_filled_size = 0
-        self._create_buffer_array(buffer_size)
+        self._data_array = _create_metadata_buffer_array(
+            self._name, self._unit, self._dtype, buffer_size)
 
-    def _create_buffer_array(self, buffer_size: int):
-        self._data_array = sc.DataArray(
-            sc.zeros(dims=[self._name],
-                     shape=(buffer_size, ),
-                     unit=self._unit,
-                     dtype=self._dtype), {
-                         "time":
-                         sc.zeros(dims=[self._name],
-                                  shape=(buffer_size, ),
-                                  unit=sc.Unit("nanoseconds"),
-                                  dtype=np.int64)
-                     })
-
-    async def append_event(self, log_event: LogDataInfo):
+    async def append_data(self, log_event: LogDataInfo):
+        # Each LogDataInfo contains a single value-timestamp pair
         async with self._buffer_mutex:
             self._data_array[
                 self._name, self._buffer_filled_size:self._buffer_filled_size +
@@ -69,7 +83,62 @@ class _Bufferf142:
         return return_array
 
 
-metadata_ids = ("f142", )  # "tdct", "senv"
+class _FastMetadataBuffer:
+    """
+    Buffer for "fast" changing metadata from Kafka messages serialised
+    according to the flatbuffer schema with id fast_fb_id.
+    Typical data sources are sample environment apparatus with relatively
+    rapidly values which, for efficiency, publish updates directly to Kafka
+    rather than via EPICS and the Forwarder.
+    """
+    def __init__(self, stream_info: StreamInfo, buffer_size: int = 100_000):
+        self._buffer_mutex = asyncio.Lock()
+        self._buffer_size = buffer_size
+        self._unit = stream_info.unit
+        self._name = stream_info.source_name
+        self._dtype = stream_info.dtype
+        self._buffer_filled_size = 0
+        self._data_array = _create_metadata_buffer_array(
+            self._name, self._unit, self._dtype, buffer_size)
+
+    async def append_data(self, log_events: FastSampleEnvData):
+        # Each FastSampleEnvData contains an array of values and either:
+        #  - an array of corresponding timestamps, or
+        #  - the timedelta for linearly spaced timestamps
+        async with self._buffer_mutex:
+            number_of_values = log_events.values.size
+            self._data_array[
+                self._name, self._buffer_filled_size:self._buffer_filled_size +
+                number_of_values].values = log_events.values
+            if log_events.value_ts is not None:
+                timestamps = log_events.value_ts
+            else:
+                timestamps = np.arange(
+                    0, number_of_values) * log_events.sample_ts_delta + int(
+                        log_events.timestamp.timestamp() * 1_000_000_000)
+                if log_events.ts_location == TimestampLocation.Middle:
+                    timestamps = timestamps - 0.5 * (timestamps[-1] -
+                                                     timestamps[0])
+                elif log_events.ts_location == TimestampLocation.End:
+                    timestamps = timestamps - (timestamps[-1] - timestamps[0])
+            self._data_array[
+                self._name, self._buffer_filled_size:self._buffer_filled_size +
+                number_of_values].coords["time"].values = timestamps
+            self._buffer_filled_size += number_of_values
+
+    async def get_metadata_array(self) -> sc.DataArray:
+        """
+        Copy collected data from the buffer
+        """
+        async with self._buffer_mutex:
+            return_array = self._data_array[
+                self._name, :self._buffer_filled_size].copy()
+            self._buffer_filled_size = 0
+        return return_array
+
+
+metadata_ids = (slow_fb_id, fast_fb_id)  # chopper_fb_id,
+_MetadataBuffer = Union[_FastMetadataBuffer, _SlowMetadataBuffer]
 
 
 class StreamedDataBuffer:
@@ -111,7 +180,7 @@ class StreamedDataBuffer:
         self._emit_queue = queue
         # Access metadata buffer by
         # self._metadata_buffers[flatbuffer_id][source_name]
-        self._metadata_buffers: Dict[str, Dict[str, _Bufferf142]] = {
+        self._metadata_buffers: Dict[str, Dict[str, _MetadataBuffer]] = {
             flatbuffer_id: {}
             for flatbuffer_id in metadata_ids
         }
@@ -125,9 +194,12 @@ class StreamedDataBuffer:
         into data_stream to facilitate unit testing.
         """
         for stream in stream_info:
-            if stream.flatbuffer_id in metadata_ids:
+            if stream.flatbuffer_id == slow_fb_id:
                 self._metadata_buffers[stream.flatbuffer_id][
-                    stream.source_name] = _Bufferf142(stream)
+                    stream.source_name] = _SlowMetadataBuffer(stream)
+            if stream.flatbuffer_id == fast_fb_id:
+                self._metadata_buffers[stream.flatbuffer_id][
+                    stream.source_name] = _FastMetadataBuffer(stream)
 
     def start(self):
         self._cancelled = False
@@ -159,7 +231,7 @@ class StreamedDataBuffer:
             await asyncio.sleep(self._interval_s)
             await self._emit_data()
 
-    async def _handled_ev42_data(self, new_data: bytes) -> bool:
+    async def _handled_event_data(self, new_data: bytes) -> bool:
         try:
             deserialised_data = deserialise_ev42(new_data)
             message_size = deserialised_data.detector_id.size
@@ -189,13 +261,13 @@ class StreamedDataBuffer:
             return False
         return True
 
-    async def _handled_f142_data(self, new_data: bytes) -> bool:
+    async def _handled_slow_metadata(self, new_data: bytes) -> bool:
         try:
             deserialised_data = deserialise_f142(new_data)
             try:
-                await self._metadata_buffers["f142"][
+                await self._metadata_buffers[slow_fb_id][
                     deserialised_data.source_name
-                ].append_event(deserialised_data)
+                ].append_data(deserialised_data)
             except KeyError:
                 # Ignore data from unknown source name
                 pass
@@ -203,23 +275,33 @@ class StreamedDataBuffer:
             return False
         return True
 
-    async def _handled_senv_data(self, new_data: bytes) -> bool:
-        return False
+    async def _handled_fast_metadata(self, new_data: bytes) -> bool:
+        try:
+            deserialised_data = deserialise_senv(new_data)
+            try:
+                await self._metadata_buffers[fast_fb_id][
+                    deserialised_data.name].append_data(deserialised_data)
+            except KeyError:
+                # Ignore data from unknown source name
+                pass
+        except WrongSchemaException:
+            return False
+        return True
 
-    async def _handled_tdct_data(self, new_data: bytes) -> bool:
+    async def _handled_chopper_metadata(self, new_data: bytes) -> bool:
         return False
 
     async def new_data(self, new_data: bytes):
-        data_handled = await self._handled_ev42_data(new_data)
+        data_handled = await self._handled_event_data(new_data)
         if data_handled:
             return
-        data_handled = await self._handled_f142_data(new_data)
+        data_handled = await self._handled_slow_metadata(new_data)
         if data_handled:
             return
-        data_handled = await self._handled_senv_data(new_data)
+        data_handled = await self._handled_fast_metadata(new_data)
         if data_handled:
             return
-        data_handled = await self._handled_tdct_data(new_data)
+        data_handled = await self._handled_chopper_metadata(new_data)
         if data_handled:
             return
         # new data were not handled
