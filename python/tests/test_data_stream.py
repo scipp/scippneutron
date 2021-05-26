@@ -411,7 +411,7 @@ async def test_data_stream_returns_metadata():
     f142_log_name = "f142_log"
     senv_source_name = "senv_source"
     senv_log_name = "senv_log"
-    tdct_source_name = "senv_source"
+    tdct_source_name = "tdct_source"
     tdct_log_name = "tdct_log"
     streams = [
         Stream(f"/entry/{f142_log_name}", "f142_topic", f142_source_name,
@@ -479,5 +479,5 @@ async def test_data_stream_returns_metadata():
     assert np.array_equal(
         data_from_stream.attrs[senv_source_name].value.coords['time'].values,
         senv_expected_timestamps)
-    assert np.array_equal(
-        data_from_stream.value.attrs[f142_source_name].values, tdct_timestamps)
+    assert np.array_equal(data_from_stream.attrs[tdct_source_name].values,
+                          tdct_timestamps)

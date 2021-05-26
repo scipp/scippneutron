@@ -8,6 +8,7 @@ from streaming_data_types.sample_environment_senv import (Response as
                                                           FastSampleEnvData)
 from streaming_data_types.sample_environment_senv import (Location as
                                                           TimestampLocation)
+from streaming_data_types.timestamps_tdct import deserialise_tdct, Timestamps
 from streaming_data_types.exceptions import WrongSchemaException
 from typing import Optional, Dict, List, Any, Union
 from warnings import warn
@@ -72,7 +73,7 @@ class _SlowMetadataBuffer:
                 1].coords["time"].values[0] = log_event.timestamp_unix_ns
             self._buffer_filled_size += 1
 
-    async def get_metadata_array(self) -> sc.DataArray:
+    async def get_metadata_array(self) -> sc.Variable:
         """
         Copy collected data from the buffer
         """
@@ -80,7 +81,7 @@ class _SlowMetadataBuffer:
             return_array = self._data_array[
                 self._name, :self._buffer_filled_size].copy()
             self._buffer_filled_size = 0
-        return return_array
+        return sc.Variable(value=return_array)
 
 
 class _FastMetadataBuffer:
@@ -105,8 +106,8 @@ class _FastMetadataBuffer:
         # Each FastSampleEnvData contains an array of values and either:
         #  - an array of corresponding timestamps, or
         #  - the timedelta for linearly spaced timestamps
+        number_of_values = log_events.values.size
         async with self._buffer_mutex:
-            number_of_values = log_events.values.size
             self._data_array[
                 self._name, self._buffer_filled_size:self._buffer_filled_size +
                 number_of_values].values = log_events.values
@@ -126,7 +127,44 @@ class _FastMetadataBuffer:
                 number_of_values].coords["time"].values = timestamps
             self._buffer_filled_size += number_of_values
 
-    async def get_metadata_array(self) -> sc.DataArray:
+    async def get_metadata_array(self) -> sc.Variable:
+        """
+        Copy collected data from the buffer
+        """
+        async with self._buffer_mutex:
+            return_array = self._data_array[
+                self._name, :self._buffer_filled_size].copy()
+            self._buffer_filled_size = 0
+        return sc.Variable(value=return_array)
+
+
+class _ChopperMetadataBuffer:
+    """
+    Buffer for chopper top-dead-centre timestamp from Kafka messages serialised
+    according to the flatbuffer schema with id chopper_fb_id.
+    """
+    def __init__(self, stream_info: StreamInfo, buffer_size: int = 10_000):
+        self._buffer_mutex = asyncio.Lock()
+        self._buffer_size = buffer_size
+        self._unit = sc.Unit("nanoseconds")
+        self._dtype = np.int64
+        self._name = stream_info.source_name
+        self._buffer_filled_size = 0
+        self._data_array = sc.zeros(dims=[self._name],
+                                    shape=(buffer_size, ),
+                                    unit=self._unit,
+                                    dtype=self._dtype)
+
+    async def append_data(self, chopper_timestamps: Timestamps):
+        # Each Timestamps contains an array of top-dead-centre timestamps
+        async with self._buffer_mutex:
+            self._data_array[
+                self._name, self._buffer_filled_size:self._buffer_filled_size +
+                chopper_timestamps.timestamps.
+                size].values = chopper_timestamps.timestamps
+            self._buffer_filled_size += chopper_timestamps.timestamps.size
+
+    async def get_metadata_array(self) -> sc.Variable:
         """
         Copy collected data from the buffer
         """
@@ -137,8 +175,9 @@ class _FastMetadataBuffer:
         return return_array
 
 
-metadata_ids = (slow_fb_id, fast_fb_id)  # chopper_fb_id,
-_MetadataBuffer = Union[_FastMetadataBuffer, _SlowMetadataBuffer]
+metadata_ids = (slow_fb_id, fast_fb_id, chopper_fb_id)
+_MetadataBuffer = Union[_FastMetadataBuffer, _SlowMetadataBuffer,
+                        _ChopperMetadataBuffer]
 
 
 class StreamedDataBuffer:
@@ -187,7 +226,7 @@ class StreamedDataBuffer:
 
     def init_metadata_buffers(self, stream_info: List[StreamInfo]):
         """
-        Create a buffer dataset for each of the metadata sources.
+        Create a buffer for each of the metadata sources.
         This is not in the constructor which allows the StreamedDataBuffer
         to be constructed before metadata sources are extracted from the
         run start message, this means the StreamedDataBuffer can be passed
@@ -197,9 +236,12 @@ class StreamedDataBuffer:
             if stream.flatbuffer_id == slow_fb_id:
                 self._metadata_buffers[stream.flatbuffer_id][
                     stream.source_name] = _SlowMetadataBuffer(stream)
-            if stream.flatbuffer_id == fast_fb_id:
+            elif stream.flatbuffer_id == fast_fb_id:
                 self._metadata_buffers[stream.flatbuffer_id][
                     stream.source_name] = _FastMetadataBuffer(stream)
+            elif stream.flatbuffer_id == chopper_fb_id:
+                self._metadata_buffers[stream.flatbuffer_id][
+                    stream.source_name] = _ChopperMetadataBuffer(stream)
 
     def start(self):
         self._cancelled = False
@@ -222,7 +264,7 @@ class StreamedDataBuffer:
             for _, buffers in self._metadata_buffers.items():
                 for name, buffer in buffers.items():
                     metadata_array = await buffer.get_metadata_array()
-                    new_data.attrs[name] = sc.Variable(value=metadata_array)
+                    new_data.attrs[name] = metadata_array
             self._current_event = 0
         self._emit_queue.put_nowait(new_data)
 
@@ -289,6 +331,16 @@ class StreamedDataBuffer:
         return True
 
     async def _handled_chopper_metadata(self, new_data: bytes) -> bool:
+        try:
+            deserialised_data = deserialise_tdct(new_data)
+            try:
+                await self._metadata_buffers[chopper_fb_id][
+                    deserialised_data.name].append_data(deserialised_data)
+            except KeyError:
+                # Ignore data from unknown source name
+                pass
+        except WrongSchemaException:
+            return False
         return False
 
     async def new_data(self, new_data: bytes):
