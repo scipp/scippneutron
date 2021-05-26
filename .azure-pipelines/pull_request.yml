@@ -26,14 +26,15 @@ pr:
   branches:
     include:
       - '*'
-    exclude:
-      - next # Next has dedicated pipeline and is by nature incompatible with the stable scipp
 
 extends:
   template: stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-    conda_channels: '--channel scipp/label/dev --channel ess-dmsc' # TODO temp change to PR pipeline.
+    - ${{ if eq(variables['System.PullRequest.TargetBranch'], 'main') }}:
+      conda_channels: '--channel scipp/label/main --channel ess-dmsc' # Select channel as for released scipp 
+    - ${{ if eq(variables['System.PullRequest.TargetBranch'], 'next') }}:
+      conda_channels: '--channel scipp/label/dev --channel ess-dmsc' # Select channel as for unstable scipp 
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
