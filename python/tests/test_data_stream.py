@@ -396,7 +396,7 @@ async def test_start_time_from_run_start_msg_used_if_requested():
 
 
 @pytest.mark.asyncio
-async def test_attrs_created_for_metadata_streams_in_run_start_message():
+async def test_data_stream_returns_metadata():
     queue = asyncio.Queue()
     buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
     run_info_topic = "fake_topic"
@@ -422,7 +422,6 @@ async def test_attrs_created_for_metadata_streams_in_run_start_message():
     ]
 
     n_chunks = 0
-    data_from_stream = []
     async for data in _data_stream(buffer,
                                    queue,
                                    "broker",
@@ -433,7 +432,7 @@ async def test_attrs_created_for_metadata_streams_in_run_start_message():
                                        test_instrument_name, streams=streams),
                                    consumer_type=FakeConsumer,
                                    max_iterations=1):
-        data_from_stream.append(data)
+        data_from_stream = data
 
         if n_chunks == 0:
             # Fake receiving a Kafka message for each metadata schema
@@ -461,25 +460,23 @@ async def test_attrs_created_for_metadata_streams_in_run_start_message():
             await buffer.new_data(tdct_test_message)
 
         n_chunks += 1
-        # Only collect the first two chunks of data for the test
+        # The first chunk contains data from the run start message
+        # the second chunk will contain data from our fake messages
         if n_chunks > 2:
             break
 
-    # Zeroth data chunk contains data from run start, we want
-    # to check the first chunk for data from our fake messages
-    assert data_from_stream[1].attrs[f142_source_name].value.values[
+    assert data_from_stream.attrs[f142_source_name].value.values[
         0] == f142_value
-    assert data_from_stream[1].attrs[f142_source_name].value.coords[
+    assert data_from_stream.attrs[f142_source_name].value.coords[
         'time'].values[0] == f142_timestamp
     assert np.array_equal(
-        data_from_stream[1].attrs[senv_source_name].value.values, senv_values)
+        data_from_stream.attrs[senv_source_name].value.values, senv_values)
     senv_expected_timestamps = np.array([
         senv_timestamp_ns, senv_timestamp_ns + senv_time_between_samples,
         senv_timestamp_ns + (2 * senv_time_between_samples)
     ])
     assert np.array_equal(
-        data_from_stream[1].attrs[senv_source_name].value.coords['time'].
-        values, senv_expected_timestamps)
+        data_from_stream.attrs[senv_source_name].value.coords['time'].values,
+        senv_expected_timestamps)
     assert np.array_equal(
-        data_from_stream[1].value.attrs[f142_source_name].values,
-        tdct_timestamps)
+        data_from_stream.value.attrs[f142_source_name].values, tdct_timestamps)

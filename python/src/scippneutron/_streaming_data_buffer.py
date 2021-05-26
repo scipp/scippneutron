@@ -50,8 +50,12 @@ class _Bufferf142:
 
     async def append_event(self, log_event: LogDataInfo):
         async with self._buffer_mutex:
-            self._data_array[self._name,
-                             self._buffer_filled_size].values = log_event.value
+            self._data_array[
+                self._name, self._buffer_filled_size:self._buffer_filled_size +
+                1].values[0] = log_event.value
+            self._data_array[
+                self._name, self._buffer_filled_size:self._buffer_filled_size +
+                1].coords["time"].values[0] = log_event.timestamp_unix_ns
             self._buffer_filled_size += 1
 
     async def get_metadata_array(self) -> sc.DataArray:
@@ -141,9 +145,6 @@ class StreamedDataBuffer:
                 warn(f"Received {self._unrecognised_fb_id_count}"
                      " messages with unrecognised FlatBuffer ids")
                 self._unrecognised_fb_id_count = 0
-            # TODO remove this? does it cause a problem?
-            # if self._current_event == 0:
-            #     return
             new_data = self._events_buffer[
                 'event', :self._current_event].copy()
             for _, buffers in self._metadata_buffers.items():
