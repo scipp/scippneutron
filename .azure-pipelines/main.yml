@@ -11,7 +11,8 @@ parameters:
 # found on the Azure pipelines web interface under
 # scipp > scippneutron > Settings > Service connections
 
-# New releases of scipp will automatically cause this pipeline to run
+# New stable runs/releases of scipp will automatically cause this pipeline to run.
+# Upstream scipp packages are scipp/label/main
 resources:
   repositories:
   - repository: SharedPipelines
