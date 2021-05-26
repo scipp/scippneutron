@@ -116,7 +116,7 @@ Variable L2(const dataset::Coords &meta) {
       position(meta), sample_position(meta),
       overloaded{
           [](const auto &x, const auto &y) { return (x - y).norm(); },
-          [](const units::Unit &x, const units::Unit &y) { return x - y; }});
+          [](const units::Unit &x, const units::Unit &y) { return x - y; }}, "scippneutron.L2");
 }
 
 Variable scattering_angle(const dataset::Coords &meta) {

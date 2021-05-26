@@ -40,7 +40,7 @@ T convert_generic(T &&d, const Dim from, const Dim to, Op op,
     const auto coord = d.coords()[from];
     d.coords().set(from,
                    copy(broadcast(coord, merge(args.dims()..., coord.dims()))));
-    transform_in_place(d.coords()[from], args..., op_);
+    transform_in_place(d.coords()[from], args..., op_, "scippneutron.convert");
   }
   // 2. Transform coordinates in bucket variables
   for (auto &&item : iter(d)) {
@@ -56,7 +56,7 @@ T convert_generic(T &&d, const Dim from, const Dim to, Op op,
     item.setData(dataset::make_bins(indices, dim, buffer));
     auto view = dataset::bins_view<DataArray>(item.data());
     auto transformed = copy(view.coords()[from]);
-    transform_in_place(transformed, args..., op_);
+    transform_in_place(transformed, args..., op_, "scippneutron.convert");
     view.coords().set(to, transformed);
     view.coords().erase(from);
   }
