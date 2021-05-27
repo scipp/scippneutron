@@ -10,7 +10,7 @@ from streaming_data_types.sample_environment_senv import (Location as
                                                           TimestampLocation)
 from streaming_data_types.timestamps_tdct import deserialise_tdct, Timestamps
 from streaming_data_types.exceptions import WrongSchemaException
-from typing import Optional, Dict, List, Any, Union
+from typing import Optional, Dict, List, Any, Union, Callable
 from warnings import warn
 from ._loading_json_nexus import StreamInfo
 """
@@ -39,7 +39,9 @@ def _create_metadata_buffer_array(name: str, unit: sc.Unit, dtype: Any,
         })
 
 
-# flatbuffer schema ids
+# FlatBuffer schema ids.
+# Avoid hardcoded dependence on these wherever possible because they will
+# change in the future if a breaking change needs to be made to the schema.
 slow_fb_id = "f142"
 fast_fb_id = "senv"
 chopper_fb_id = "tdct"
@@ -303,39 +305,15 @@ class StreamedDataBuffer:
             return False
         return True
 
-    async def _handled_slow_metadata(self, new_data: bytes) -> bool:
-        try:
-            deserialised_data = deserialise_f142(new_data)
-            try:
-                await self._metadata_buffers[slow_fb_id][
-                    deserialised_data.source_name
-                ].append_data(deserialised_data)
-            except KeyError:
-                # Ignore data from unknown source name
-                pass
-        except WrongSchemaException:
-            return False
-        return True
+    async def _handled_metadata(self, new_data: bytes, source_field_name: str,
+                                deserialise: Callable, fb_id: str) -> bool:
 
-    async def _handled_fast_metadata(self, new_data: bytes) -> bool:
         try:
-            deserialised_data = deserialise_senv(new_data)
+            deserialised_data = deserialise(new_data)
             try:
-                await self._metadata_buffers[fast_fb_id][
-                    deserialised_data.name].append_data(deserialised_data)
-            except KeyError:
-                # Ignore data from unknown source name
-                pass
-        except WrongSchemaException:
-            return False
-        return True
-
-    async def _handled_chopper_metadata(self, new_data: bytes) -> bool:
-        try:
-            deserialised_data = deserialise_tdct(new_data)
-            try:
-                await self._metadata_buffers[chopper_fb_id][
-                    deserialised_data.name].append_data(deserialised_data)
+                await self._metadata_buffers[fb_id][getattr(
+                    deserialised_data,
+                    source_field_name)].append_data(deserialised_data)
             except KeyError:
                 # Ignore data from unknown source name
                 pass
@@ -347,13 +325,19 @@ class StreamedDataBuffer:
         data_handled = await self._handled_event_data(new_data)
         if data_handled:
             return
-        data_handled = await self._handled_slow_metadata(new_data)
+        data_handled = await self._handled_metadata(new_data, "source_name",
+                                                    deserialise_f142,
+                                                    slow_fb_id)
         if data_handled:
             return
-        data_handled = await self._handled_fast_metadata(new_data)
+        data_handled = await self._handled_metadata(new_data, "name",
+                                                    deserialise_senv,
+                                                    fast_fb_id)
         if data_handled:
             return
-        data_handled = await self._handled_chopper_metadata(new_data)
+        data_handled = await self._handled_metadata(new_data, "name",
+                                                    deserialise_tdct,
+                                                    chopper_fb_id)
         if data_handled:
             return
         # new data were not handled
