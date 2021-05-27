@@ -24,6 +24,9 @@ def run_command(cmd, shell):
 
 if __name__ == '__main__':
 
+    print(args)
+    os.write(1, str(args).encode())
+
     platform = args.platform.lower()
 
     shell = False
@@ -44,7 +47,7 @@ if __name__ == '__main__':
     if 'ubuntu' in platform:
         cmake_flags.update({'-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'ON'})
 
-    if 'osx' in platform:
+    if 'macos' in platform:
         cmake_flags.update({
             '-DCMAKE_OSX_DEPLOYMENT_TARGET':
             args.osxversion,
