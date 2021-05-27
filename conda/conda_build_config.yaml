@@ -3,3 +3,6 @@ python:
 
 boost:
   - 1.75
+
+scipp:
+  - 0.6
