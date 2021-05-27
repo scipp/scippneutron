@@ -105,16 +105,24 @@ class _FastMetadataBuffer:
         # Each FastSampleEnvData contains an array of values and either:
         #  - an array of corresponding timestamps, or
         #  - the timedelta for linearly spaced timestamps
-        number_of_values = log_events.values.size
+        message_size = log_events.values.size
+        if message_size > self._buffer_size:
+            warn("Single message would overflow the fast metadata buffer, "
+                 "please restart with a larger buffer size:\n"
+                 f"message_size: {message_size}, fast_metadata_buffer_size:"
+                 f" {self._buffer_size}. These data have been "
+                 f"skipped!")
+            return
+
         async with self._buffer_mutex:
             self._data_array[
                 self._name, self._buffer_filled_size:self._buffer_filled_size +
-                number_of_values].values = log_events.values
+                message_size].values = log_events.values
             if log_events.value_ts is not None:
                 timestamps = log_events.value_ts
             else:
                 timestamps = np.arange(
-                    0, number_of_values) * log_events.sample_ts_delta + int(
+                    0, message_size) * log_events.sample_ts_delta + int(
                         log_events.timestamp.timestamp() * 1_000_000_000)
                 if log_events.ts_location == TimestampLocation.Middle:
                     timestamps = timestamps - 0.5 * (timestamps[-1] -
@@ -123,8 +131,8 @@ class _FastMetadataBuffer:
                     timestamps = timestamps - (timestamps[-1] - timestamps[0])
             self._data_array[
                 self._name, self._buffer_filled_size:self._buffer_filled_size +
-                number_of_values].coords["time"].values = timestamps
-            self._buffer_filled_size += number_of_values
+                message_size].coords["time"].values = timestamps
+            self._buffer_filled_size += message_size
 
     async def get_metadata_array(self) -> sc.Variable:
         """
@@ -154,12 +162,20 @@ class _ChopperMetadataBuffer:
 
     async def append_data(self, chopper_timestamps: Timestamps):
         # Each Timestamps contains an array of top-dead-centre timestamps
+        message_size = chopper_timestamps.timestamps.size
+        if message_size > self._buffer_size:
+            warn("Single message would overflow the chopper data buffer, "
+                 "please restart with a larger buffer size:\n"
+                 f"message_size: {message_size}, chopper_buffer_size:"
+                 f" {self._buffer_size}. These data have been "
+                 f"skipped!")
+            return
+
         async with self._buffer_mutex:
             self._data_array[
                 self._name, self._buffer_filled_size:self._buffer_filled_size +
-                chopper_timestamps.timestamps.
-                size].values = chopper_timestamps.timestamps
-            self._buffer_filled_size += chopper_timestamps.timestamps.size
+                message_size].values = chopper_timestamps.timestamps
+            self._buffer_filled_size += message_size
 
     async def get_metadata_array(self) -> sc.Variable:
         """
@@ -283,9 +299,9 @@ class StreamedDataBuffer:
             deserialised_data = deserialise_ev42(new_data)
             message_size = deserialised_data.detector_id.size
             if message_size > self._event_buffer_size:
-                warn("Single message would overflow NewDataBuffer, "
-                     "please restart with a larger buffer_size:\n"
-                     f"message_size: {message_size}, buffer_size:"
+                warn("Single message would overflow the event data buffer, "
+                     "please restart with a larger buffer size:\n"
+                     f"message_size: {message_size}, event_buffer_size:"
                      f" {self._event_buffer_size}. These data have been "
                      f"skipped!")
                 return True
@@ -316,6 +332,7 @@ class StreamedDataBuffer:
                 await self._metadata_buffers[fb_id][getattr(
                     deserialised_data,
                     source_field_name)].append_data(deserialised_data)
+                return True
             except KeyError:
                 # Ignore data from unknown source name
                 pass
