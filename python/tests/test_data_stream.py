@@ -676,3 +676,101 @@ async def test_data_stream_returns_data_from_multiple_chopper_messages(
     assert np.array_equal(
         data_from_stream.attrs[tdct_source_name].values,
         np.concatenate((tdct_timestamps_1, tdct_timestamps_2)))
+
+
+@pytest.mark.asyncio
+async def test_data_stream_warns_if_fast_metadata_message_exceeds_buffer():
+    queue = asyncio.Queue()
+    buffer_size = 2
+    buffer = StreamedDataBuffer(queue,
+                                event_buffer_size=TEST_BUFFER_SIZE,
+                                slow_metadata_buffer_size=TEST_BUFFER_SIZE,
+                                fast_metadata_buffer_size=buffer_size,
+                                chopper_buffer_size=TEST_BUFFER_SIZE,
+                                interval=SHORT_TEST_INTERVAL)
+    run_info_topic = "fake_topic"
+    test_instrument_name = "DATA_STREAM_TEST"
+
+    # The Kafka topics to get metadata from are recorded as "stream" objects in
+    # the nexus_structure field of the run start message
+    senv_source_name = "senv_source"
+    senv_log_name = "senv_log"
+    streams = [
+        Stream(f"/entry/{senv_log_name}", "senv_topic", senv_source_name,
+               "senv", "double", "m"),
+    ]
+
+    async for _ in _data_stream(buffer,
+                                queue,
+                                "broker",
+                                None,
+                                SHORT_TEST_INTERVAL,
+                                run_info_topic=run_info_topic,
+                                query_consumer=FakeQueryConsumer(
+                                    test_instrument_name, streams=streams),
+                                consumer_type=FakeConsumer,
+                                max_iterations=1):
+        # Fake receiving a Kafka message for each metadata schema
+        # Do this after the run start message has been parsed, so that
+        # a metadata buffer will have been created for each data source
+        # described in the start message.
+
+        # 3 values but buffer size is only 2!
+        senv_values = np.array([26, 127, 52])
+        senv_timestamp_ns = 123000  # ns after epoch
+        senv_timestamp = datetime.datetime.fromtimestamp(
+            senv_timestamp_ns * 1e-9, datetime.timezone.utc)
+        senv_time_between_samples = 100  # ns
+        senv_test_message = serialise_senv(senv_source_name, -1,
+                                           senv_timestamp,
+                                           senv_time_between_samples, 0,
+                                           senv_values, Location.Start)
+        with pytest.warns(UserWarning):
+            await buffer.new_data(senv_test_message)
+        break
+
+
+@pytest.mark.asyncio
+async def test_data_stream_warns_if_single_chopper_message_exceeds_buffer():
+    queue = asyncio.Queue()
+    buffer_size = 2
+    buffer = StreamedDataBuffer(queue,
+                                event_buffer_size=TEST_BUFFER_SIZE,
+                                slow_metadata_buffer_size=TEST_BUFFER_SIZE,
+                                fast_metadata_buffer_size=TEST_BUFFER_SIZE,
+                                chopper_buffer_size=buffer_size,
+                                interval=SHORT_TEST_INTERVAL)
+    run_info_topic = "fake_topic"
+    test_instrument_name = "DATA_STREAM_TEST"
+
+    # The Kafka topics to get metadata from are recorded as "stream" objects in
+    # the nexus_structure field of the run start message
+    tdct_source_name = "tdct_source"
+    tdct_log_name = "tdct_log"
+    streams = [
+        Stream(f"/entry/{tdct_log_name}", "tdct_topic", tdct_source_name,
+               "tdct")
+    ]
+
+    async for _ in _data_stream(buffer,
+                                queue,
+                                "broker",
+                                None,
+                                SHORT_TEST_INTERVAL,
+                                run_info_topic=run_info_topic,
+                                query_consumer=FakeQueryConsumer(
+                                    test_instrument_name, streams=streams),
+                                consumer_type=FakeConsumer,
+                                max_iterations=1):
+        # Fake receiving a Kafka message for each metadata schema
+        # Do this after the run start message has been parsed, so that
+        # a metadata buffer will have been created for each data source
+        # described in the start message.
+
+        # 3 values but buffer size is only 2!
+        tdct_timestamps = np.array([1234, 2345, 3456])  # ns
+        tdct_test_message = serialise_tdct(tdct_source_name, tdct_timestamps)
+
+        with pytest.warns(UserWarning):
+            await buffer.new_data(tdct_test_message)
+        break

@@ -69,6 +69,10 @@ async def data_stream(
     except ImportError:
         raise ImportError(_missing_dependency_message)
 
+    validate_buffer_size_args(chopper_buffer_size, event_buffer_size,
+                              fast_metadata_buffer_size,
+                              slow_metadata_buffer_size)
+
     queue = asyncio.Queue()
     buffer = StreamedDataBuffer(queue, event_buffer_size,
                                 slow_metadata_buffer_size,
@@ -80,6 +84,20 @@ async def data_stream(
     async for data_chunk in _data_stream(buffer, queue, kafka_broker, topics,
                                          interval, run_info_topic, start_time):
         yield data_chunk
+
+
+def validate_buffer_size_args(chopper_buffer_size, event_buffer_size,
+                              fast_metadata_buffer_size,
+                              slow_metadata_buffer_size):
+    for buffer_name, buffer_size in (("event_buffer_size", event_buffer_size),
+                                     ("slow_metadata_buffer_size",
+                                      slow_metadata_buffer_size),
+                                     ("fast_metadata_buffer_size",
+                                      fast_metadata_buffer_size),
+                                     ("chopper_buffer_size",
+                                      chopper_buffer_size)):
+        if buffer_size < 1:
+            raise ValueError(f"{buffer_name} must be greater than zero")
 
 
 async def _data_stream(
