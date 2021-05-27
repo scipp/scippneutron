@@ -1,9 +1,9 @@
 import os
 import argparse
-import urllib
-import requests
-import re
-from pathlib import Path
+# import urllib
+# import requests
+# import re
+# from pathlib import Path
 import shutil
 import subprocess
 import multiprocessing
@@ -48,8 +48,8 @@ if __name__ == '__main__':
             '-DCMAKE_OSX_DEPLOYMENT_TARGET':
             args.osxversion,
             '-DCMAKE_OSX_SYSROOT':
-            '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{}.sdk'
-            .format(osxversion)
+            '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{}.sdk'  # noqa: E501
+            .format(args.osxversion)
         })
 
     if 'windows' in platform:

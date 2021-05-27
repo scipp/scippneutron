@@ -8,6 +8,8 @@ parser.add_argument('--platform', default=None)
 parser.add_argument('--source', default='')
 parser.add_argument('--destination', default='')
 
+args = parser.parse_args()
+
 if __name__ == '__main__':
 
     if 'windows' in args.platform.lower():
