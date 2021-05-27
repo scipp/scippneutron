@@ -119,10 +119,18 @@ SHORT_TEST_INTERVAL = 1. * sc.Unit('milliseconds')
 TEST_BUFFER_SIZE = 20
 
 
-@pytest.mark.asyncio
-async def test_data_stream_returns_data_from_single_event_message():
+@pytest.fixture(scope="function")
+def queue_and_buffer() -> Tuple[asyncio.Queue, StreamedDataBuffer]:
     queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+    return queue, StreamedDataBuffer(queue, TEST_BUFFER_SIZE, TEST_BUFFER_SIZE,
+                                     TEST_BUFFER_SIZE, TEST_BUFFER_SIZE,
+                                     SHORT_TEST_INTERVAL)
+
+
+@pytest.mark.asyncio
+async def test_data_stream_returns_data_from_single_event_message(
+        queue_and_buffer):
+    queue, buffer = queue_and_buffer
     time_of_flight = np.array([1., 2., 3.])
     detector_ids = np.array([4, 5, 6])
     test_message = serialise_ev42("detector", 0, 0, time_of_flight,
@@ -143,9 +151,9 @@ async def test_data_stream_returns_data_from_single_event_message():
 
 
 @pytest.mark.asyncio
-async def test_data_stream_returns_data_from_multiple_event_messages():
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+async def test_data_stream_returns_data_from_multiple_event_messages(
+        queue_and_buffer):
+    queue, buffer = queue_and_buffer
     first_tof = np.array([1., 2., 3.])
     first_detector_ids = np.array([4, 5, 6])
     first_test_message = serialise_ev42("detector", 0, 0, first_tof,
@@ -175,9 +183,9 @@ async def test_data_stream_returns_data_from_multiple_event_messages():
 
 
 @pytest.mark.asyncio
-async def test_warn_on_data_emit_if_unrecognised_message_was_encountered():
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+async def test_warn_on_data_emit_if_unrecognised_message_was_encountered(
+        queue_and_buffer):
+    queue, buffer = queue_and_buffer
     # First 4 bytes of the message payload are the FlatBuffer schema identifier
     # "abcd" does not correspond to a FlatBuffer schema for data
     # that scipp is interested in
@@ -194,6 +202,9 @@ async def test_warn_on_buffer_size_exceeded_by_single_message():
     buffer_size_2_events = 2
     buffer = StreamedDataBuffer(queue,
                                 event_buffer_size=buffer_size_2_events,
+                                slow_metadata_buffer_size=TEST_BUFFER_SIZE,
+                                fast_metadata_buffer_size=TEST_BUFFER_SIZE,
+                                chopper_buffer_size=TEST_BUFFER_SIZE,
                                 interval=SHORT_TEST_INTERVAL)
     time_of_flight = np.array([1., 2., 3.])
     detector_ids = np.array([4, 5, 6])
@@ -212,6 +223,9 @@ async def test_buffer_size_exceeded_by_messages_causes_early_data_emit():
     buffer_size_5_events = 5
     buffer = StreamedDataBuffer(queue,
                                 event_buffer_size=buffer_size_5_events,
+                                slow_metadata_buffer_size=TEST_BUFFER_SIZE,
+                                fast_metadata_buffer_size=TEST_BUFFER_SIZE,
+                                chopper_buffer_size=TEST_BUFFER_SIZE,
                                 interval=SHORT_TEST_INTERVAL)
     first_tof = np.array([1., 2., 3.])
     first_detector_ids = np.array([4, 5, 6])
@@ -236,9 +250,8 @@ async def test_buffer_size_exceeded_by_messages_causes_early_data_emit():
 
 
 @pytest.mark.asyncio
-async def test_data_are_loaded_from_run_start_message():
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+async def test_data_are_loaded_from_run_start_message(queue_and_buffer):
+    queue, buffer = queue_and_buffer
     run_info_topic = "fake_topic"
     reached_assert = False
     test_instrument_name = "DATA_STREAM_TEST"
@@ -257,9 +270,9 @@ async def test_data_are_loaded_from_run_start_message():
 
 
 @pytest.mark.asyncio
-async def test_error_raised_if_no_run_start_message_available():
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+async def test_error_raised_if_no_run_start_message_available(
+        queue_and_buffer):
+    queue, buffer = queue_and_buffer
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
     # Low and high offset are the same value, indicates there are
@@ -280,9 +293,9 @@ async def test_error_raised_if_no_run_start_message_available():
 
 
 @pytest.mark.asyncio
-async def test_error_if_both_topics_and_run_start_topic_not_specified():
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+async def test_error_if_both_topics_and_run_start_topic_not_specified(
+        queue_and_buffer):
+    queue, buffer = queue_and_buffer
     # At least one of "topics" and "run_start_topic" must be specified
     with pytest.raises(ValueError):
         async for _ in _data_stream(buffer,
@@ -298,11 +311,11 @@ async def test_error_if_both_topics_and_run_start_topic_not_specified():
 
 
 @pytest.mark.asyncio
-async def test_specified_topics_override_run_start_message_topics():
+async def test_specified_topics_override_run_start_message_topics(
+        queue_and_buffer):
     # If "topics" argument is specified then they should be used, even if
     # a run start topic is provided
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+    queue, buffer = queue_and_buffer
     test_topics = ["whiting", "snail", "porpoise"]
     topic_in_run_start_message = "test_topic"
     test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
@@ -324,9 +337,8 @@ async def test_specified_topics_override_run_start_message_topics():
 
 @pytest.mark.asyncio
 async def test_topics_from_run_start_message_used_if_topics_arg_not_specified(
-):
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+        queue_and_buffer):
+    queue, buffer = queue_and_buffer
     topic_in_run_start_message = "test_topic"
     test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
     query_consumer = FakeQueryConsumer(streams=test_streams)
@@ -344,9 +356,9 @@ async def test_topics_from_run_start_message_used_if_topics_arg_not_specified(
 
 
 @pytest.mark.asyncio
-async def test_start_time_from_run_start_msg_not_used_if_start_now_specified():
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+async def test_start_time_from_run_start_msg_not_used_if_start_now_specified(
+        queue_and_buffer):
+    queue, buffer = queue_and_buffer
     topic_in_run_start_message = "test_topic"
     test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
     test_start_time = 123456
@@ -368,9 +380,9 @@ async def test_start_time_from_run_start_msg_not_used_if_start_now_specified():
 
 
 @pytest.mark.asyncio
-async def test_start_time_from_run_start_msg_used_if_requested():
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+async def test_start_time_from_run_start_msg_used_if_requested(
+        queue_and_buffer):
+    queue, buffer = queue_and_buffer
     topic_in_run_start_message = "test_topic"
     test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
     test_start_time = 123456
@@ -392,9 +404,8 @@ async def test_start_time_from_run_start_msg_used_if_requested():
 
 
 @pytest.mark.asyncio
-async def test_data_stream_returns_metadata():
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+async def test_data_stream_returns_metadata(queue_and_buffer):
+    queue, buffer = queue_and_buffer
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
 
@@ -479,9 +490,9 @@ async def test_data_stream_returns_metadata():
 
 
 @pytest.mark.asyncio
-async def test_data_stream_returns_data_from_multiple_slow_metadata_messages():
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+async def test_data_stream_returns_data_from_multiple_slow_metadata_messages(
+        queue_and_buffer):
+    queue, buffer = queue_and_buffer
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
 
@@ -537,9 +548,9 @@ async def test_data_stream_returns_data_from_multiple_slow_metadata_messages():
 
 
 @pytest.mark.asyncio
-async def test_data_stream_returns_data_from_multiple_fast_metadata_messages():
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+async def test_data_stream_returns_data_from_multiple_fast_metadata_messages(
+        queue_and_buffer):
+    queue, buffer = queue_and_buffer
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
 
@@ -614,9 +625,9 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages():
 
 
 @pytest.mark.asyncio
-async def test_data_stream_returns_data_from_multiple_chopper_messages():
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, TEST_BUFFER_SIZE, SHORT_TEST_INTERVAL)
+async def test_data_stream_returns_data_from_multiple_chopper_messages(
+        queue_and_buffer):
+    queue, buffer = queue_and_buffer
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
 

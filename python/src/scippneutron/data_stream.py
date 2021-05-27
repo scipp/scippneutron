@@ -35,7 +35,10 @@ _missing_dependency_message = (
 async def data_stream(
     kafka_broker: str,
     topics: Optional[List[str]] = None,
-    buffer_size: int = 1048576,
+    event_buffer_size: int = 1_048_576,
+    slow_metadata_buffer_size: int = 1000,
+    fast_metadata_buffer_size: int = 100_000,
+    chopper_buffer_size: int = 10_000,
     interval: sc.Variable = 2. * sc.units.s,
     run_info_topic: Optional[str] = None,
     start_time: StartTime = StartTime.now,
@@ -47,7 +50,13 @@ async def data_stream(
     1048576 event buffer is around 24 MB (with pulse_time, id, weights, etc)
     :param kafka_broker: Address of the Kafka broker to stream data from
     :param topics: Kafka topics to consume data from
-    :param buffer_size: Size of buffer to accumulate data in
+    :param event_buffer_size: Size of buffer to accumulate event data in
+    :param slow_metadata_buffer_size: Size of buffer to accumulate slow
+      sample env metadata in
+    :param fast_metadata_buffer_size: Size of buffer to accumulate fast
+      sample env metadata in
+    :param chopper_buffer_size: Size of buffer to accumulate chopper
+      timestamps in
     :param interval: interval between yielding any new data
       collected from stream
     :param run_info_topic: If provided, the first data batch returned by
@@ -61,7 +70,10 @@ async def data_stream(
         raise ImportError(_missing_dependency_message)
 
     queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, buffer_size, interval)
+    buffer = StreamedDataBuffer(queue, event_buffer_size,
+                                slow_metadata_buffer_size,
+                                fast_metadata_buffer_size, chopper_buffer_size,
+                                interval)
 
     # Use "async for" as "yield from" cannot be used in an async function, see
     # https://www.python.org/dev/peps/pep-0525/#asynchronous-yield-from

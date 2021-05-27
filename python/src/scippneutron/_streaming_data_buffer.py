@@ -55,7 +55,7 @@ class _SlowMetadataBuffer:
     Typically the data sources are EPICS PVs with updates published to
     Kafka via the Forwarder (https://github.com/ess-dmsc/forwarder/).
     """
-    def __init__(self, stream_info: StreamInfo, buffer_size: int = 1000):
+    def __init__(self, stream_info: StreamInfo, buffer_size: int):
         self._buffer_mutex = asyncio.Lock()
         self._buffer_size = buffer_size
         self._name = stream_info.source_name
@@ -93,7 +93,7 @@ class _FastMetadataBuffer:
     rapidly values which, for efficiency, publish updates directly to Kafka
     rather than via EPICS and the Forwarder.
     """
-    def __init__(self, stream_info: StreamInfo, buffer_size: int = 100_000):
+    def __init__(self, stream_info: StreamInfo, buffer_size: int):
         self._buffer_mutex = asyncio.Lock()
         self._buffer_size = buffer_size
         self._name = stream_info.source_name
@@ -142,7 +142,7 @@ class _ChopperMetadataBuffer:
     Buffer for chopper top-dead-centre timestamps from Kafka messages
     serialised according to the flatbuffer schema with id CHOPPER_FB_ID.
     """
-    def __init__(self, stream_info: StreamInfo, buffer_size: int = 10_000):
+    def __init__(self, stream_info: StreamInfo, buffer_size: int):
         self._buffer_mutex = asyncio.Lock()
         self._buffer_size = buffer_size
         self._name = stream_info.source_name
@@ -185,10 +185,15 @@ class StreamedDataBuffer:
     interval then data is emitted more frequently.
     """
     def __init__(self, queue: asyncio.Queue, event_buffer_size: int,
+                 slow_metadata_buffer_size: int,
+                 fast_metadata_buffer_size: int, chopper_buffer_size: int,
                  interval: sc.Variable):
         self._buffer_mutex = asyncio.Lock()
         self._interval_s = sc.to_unit(interval, 's').value
-        self._buffer_size = event_buffer_size
+        self._event_buffer_size = event_buffer_size
+        self._slow_metadata_buffer_size = slow_metadata_buffer_size
+        self._fast_metadata_buffer_size = fast_metadata_buffer_size
+        self._chopper_buffer_size = chopper_buffer_size
         tof_buffer = sc.zeros(dims=['event'],
                               shape=[event_buffer_size],
                               unit=sc.units.ns,
@@ -232,13 +237,16 @@ class StreamedDataBuffer:
         for stream in stream_info:
             if stream.flatbuffer_id == SLOW_FB_ID:
                 self._metadata_buffers[stream.flatbuffer_id][
-                    stream.source_name] = _SlowMetadataBuffer(stream)
+                    stream.source_name] = _SlowMetadataBuffer(
+                        stream, self._slow_metadata_buffer_size)
             elif stream.flatbuffer_id == FAST_FB_ID:
                 self._metadata_buffers[stream.flatbuffer_id][
-                    stream.source_name] = _FastMetadataBuffer(stream)
+                    stream.source_name] = _FastMetadataBuffer(
+                        stream, self._fast_metadata_buffer_size)
             elif stream.flatbuffer_id == CHOPPER_FB_ID:
                 self._metadata_buffers[stream.flatbuffer_id][
-                    stream.source_name] = _ChopperMetadataBuffer(stream)
+                    stream.source_name] = _ChopperMetadataBuffer(
+                        stream, self._chopper_buffer_size)
 
     def start(self):
         self._cancelled = False
@@ -274,16 +282,16 @@ class StreamedDataBuffer:
         try:
             deserialised_data = deserialise_ev42(new_data)
             message_size = deserialised_data.detector_id.size
-            if message_size > self._buffer_size:
+            if message_size > self._event_buffer_size:
                 warn("Single message would overflow NewDataBuffer, "
                      "please restart with a larger buffer_size:\n"
                      f"message_size: {message_size}, buffer_size:"
-                     f" {self._buffer_size}. These data have been "
+                     f" {self._event_buffer_size}. These data have been "
                      f"skipped!")
                 return True
             # If new data would overfill buffer then emit data
             # currently in buffer first
-            if self._current_event + message_size > self._buffer_size:
+            if self._current_event + message_size > self._event_buffer_size:
                 await self._emit_data()
             async with self._buffer_mutex:
                 frame = self._events_buffer[
