@@ -8,7 +8,6 @@ import urllib
 import requests
 import re
 from pathlib import Path
-import shutil
 
 parser = argparse.ArgumentParser(description='Download test data')
 parser.add_argument('--destination', default='data/')
