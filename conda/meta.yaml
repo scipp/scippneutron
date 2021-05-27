@@ -46,6 +46,8 @@ build:
   script_env:
     - OSX_VERSION
     - INSTALL_PREFIX
+  script:
+    - python conda/install.py --platform=ubuntu --source={{ environ.get('INSTALL_PREFIX') }} --destination={{ environ.get('CONDA_PREFIX') }}
 
 about:
   home: https://github.com/scipp/scippneutron
