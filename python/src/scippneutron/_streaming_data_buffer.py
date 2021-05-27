@@ -19,7 +19,8 @@ data to transmit in the Kafka message payload. FlatBuffers uses schemas
 to define the data structure to serialise:
 https://github.com/ess-dmsc/streaming-data-types/
 The ess-streaming-data-types library provides convenience "serialise"
-and "deserialise" functions for each schema.
+and "deserialise" functions for each schema:
+https://github.com/ess-dmsc/python-streaming-data-types/
 Each schema is identified by a 4 character string which is included in:
 - the filename of the schema,
 - the serialised buffer as the first 4 bytes,
@@ -40,17 +41,17 @@ def _create_metadata_buffer_array(name: str, unit: sc.Unit, dtype: Any,
 
 
 # FlatBuffer schema ids.
-# Avoid hardcoded dependence on these wherever possible because they will
-# change in the future if a breaking change needs to be made to the schema.
-slow_fb_id = "f142"
-fast_fb_id = "senv"
-chopper_fb_id = "tdct"
+# These will change in the future if a breaking change needs to be
+# made to the schema.
+SLOW_FB_ID = "f142"
+FAST_FB_ID = "senv"
+CHOPPER_FB_ID = "tdct"
 
 
 class _SlowMetadataBuffer:
     """
     Buffer for "slowly" changing metadata from Kafka messages serialised
-    according to the flatbuffer schema with id slow_fb_id.
+    according to the flatbuffer schema with id SLOW_FB_ID.
     Typically the data sources are EPICS PVs with updates published to
     Kafka via the Forwarder (https://github.com/ess-dmsc/forwarder/).
     """
@@ -89,7 +90,7 @@ class _SlowMetadataBuffer:
 class _FastMetadataBuffer:
     """
     Buffer for "fast" changing metadata from Kafka messages serialised
-    according to the flatbuffer schema with id fast_fb_id.
+    according to the flatbuffer schema with id FAST_FB_ID.
     Typical data sources are sample environment apparatus with relatively
     rapidly values which, for efficiency, publish updates directly to Kafka
     rather than via EPICS and the Forwarder.
@@ -142,8 +143,8 @@ class _FastMetadataBuffer:
 
 class _ChopperMetadataBuffer:
     """
-    Buffer for chopper top-dead-centre timestamp from Kafka messages serialised
-    according to the flatbuffer schema with id chopper_fb_id.
+    Buffer for chopper top-dead-centre timestamps from Kafka messages
+    serialised according to the flatbuffer schema with id CHOPPER_FB_ID.
     """
     def __init__(self, stream_info: StreamInfo, buffer_size: int = 10_000):
         self._buffer_mutex = asyncio.Lock()
@@ -177,7 +178,7 @@ class _ChopperMetadataBuffer:
         return return_array
 
 
-metadata_ids = (slow_fb_id, fast_fb_id, chopper_fb_id)
+metadata_ids = (SLOW_FB_ID, FAST_FB_ID, CHOPPER_FB_ID)
 _MetadataBuffer = Union[_FastMetadataBuffer, _SlowMetadataBuffer,
                         _ChopperMetadataBuffer]
 
@@ -235,13 +236,13 @@ class StreamedDataBuffer:
         into data_stream to facilitate unit testing.
         """
         for stream in stream_info:
-            if stream.flatbuffer_id == slow_fb_id:
+            if stream.flatbuffer_id == SLOW_FB_ID:
                 self._metadata_buffers[stream.flatbuffer_id][
                     stream.source_name] = _SlowMetadataBuffer(stream)
-            elif stream.flatbuffer_id == fast_fb_id:
+            elif stream.flatbuffer_id == FAST_FB_ID:
                 self._metadata_buffers[stream.flatbuffer_id][
                     stream.source_name] = _FastMetadataBuffer(stream)
-            elif stream.flatbuffer_id == chopper_fb_id:
+            elif stream.flatbuffer_id == CHOPPER_FB_ID:
                 self._metadata_buffers[stream.flatbuffer_id][
                     stream.source_name] = _ChopperMetadataBuffer(stream)
 
@@ -327,17 +328,17 @@ class StreamedDataBuffer:
             return
         data_handled = await self._handled_metadata(new_data, "source_name",
                                                     deserialise_f142,
-                                                    slow_fb_id)
+                                                    SLOW_FB_ID)
         if data_handled:
             return
         data_handled = await self._handled_metadata(new_data, "name",
                                                     deserialise_senv,
-                                                    fast_fb_id)
+                                                    FAST_FB_ID)
         if data_handled:
             return
         data_handled = await self._handled_metadata(new_data, "name",
                                                     deserialise_tdct,
-                                                    chopper_fb_id)
+                                                    CHOPPER_FB_ID)
         if data_handled:
             return
         # new data were not handled
