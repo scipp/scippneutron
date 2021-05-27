@@ -58,12 +58,10 @@ class _SlowMetadataBuffer:
     def __init__(self, stream_info: StreamInfo, buffer_size: int = 1000):
         self._buffer_mutex = asyncio.Lock()
         self._buffer_size = buffer_size
-        self._unit = stream_info.unit
         self._name = stream_info.source_name
-        self._dtype = stream_info.dtype
         self._buffer_filled_size = 0
         self._data_array = _create_metadata_buffer_array(
-            self._name, self._unit, self._dtype, buffer_size)
+            self._name, stream_info.unit, stream_info.dtype, buffer_size)
 
     async def append_data(self, log_event: LogDataInfo):
         # Each LogDataInfo contains a single value-timestamp pair
@@ -98,12 +96,10 @@ class _FastMetadataBuffer:
     def __init__(self, stream_info: StreamInfo, buffer_size: int = 100_000):
         self._buffer_mutex = asyncio.Lock()
         self._buffer_size = buffer_size
-        self._unit = stream_info.unit
         self._name = stream_info.source_name
-        self._dtype = stream_info.dtype
         self._buffer_filled_size = 0
         self._data_array = _create_metadata_buffer_array(
-            self._name, self._unit, self._dtype, buffer_size)
+            self._name, stream_info.unit, stream_info.dtype, buffer_size)
 
     async def append_data(self, log_events: FastSampleEnvData):
         # Each FastSampleEnvData contains an array of values and either:
@@ -149,14 +145,12 @@ class _ChopperMetadataBuffer:
     def __init__(self, stream_info: StreamInfo, buffer_size: int = 10_000):
         self._buffer_mutex = asyncio.Lock()
         self._buffer_size = buffer_size
-        self._unit = sc.Unit("nanoseconds")
-        self._dtype = np.int64
         self._name = stream_info.source_name
         self._buffer_filled_size = 0
         self._data_array = sc.zeros(dims=[self._name],
                                     shape=(buffer_size, ),
-                                    unit=self._unit,
-                                    dtype=self._dtype)
+                                    unit=sc.Unit("nanoseconds"),
+                                    dtype=np.int64)
 
     async def append_data(self, chopper_timestamps: Timestamps):
         # Each Timestamps contains an array of top-dead-centre timestamps
@@ -308,7 +302,6 @@ class StreamedDataBuffer:
 
     async def _handled_metadata(self, new_data: bytes, source_field_name: str,
                                 deserialise: Callable, fb_id: str) -> bool:
-
         try:
             deserialised_data = deserialise(new_data)
             try:
