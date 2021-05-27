@@ -18,6 +18,7 @@ args = parser.parse_args()
 
 
 def run_command(cmd, shell):
+    print(' '.join(cmd))
     return subprocess.check_call(cmd, stderr=subprocess.STDOUT, shell=shell)
 
 
