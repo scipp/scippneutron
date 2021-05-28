@@ -21,9 +21,8 @@ def move(src, dst):
     dst = os.path.join(args.destination, *dst)
     # Note: do not check for '*' in dst
     if '*' in src:
-        os.write(1, "glob: {}\n".format(glob.glob(src)).encode())
         for f in glob.glob(src):
-            move_file(src, dst)
+            move_file(f, dst)
     else:
         move_file(src, dst)
 
