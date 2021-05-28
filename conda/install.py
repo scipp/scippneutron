@@ -1,4 +1,4 @@
-from os.path import join
+import os
 import argparse
 import shutil
 import glob
@@ -12,8 +12,9 @@ args = parser.parse_args()
 
 
 def move(src, dst):
-    src = join(args.source, *src)
-    dst = join(args.destination, *dst)
+    src = os.path.join(args.source, *src)
+    dst = os.path.join(args.destination, *dst)
+    # Note: do not check for '*' in dst
     if '*' in src:
         for f in glob.glob(src):
             shutil.move(src, dst)
@@ -31,7 +32,7 @@ if __name__ == '__main__':
         lib_src = 'Lib'
         inc_src = 'include'
     else:
-        lib_dest = join('lib', 'python*')
+        lib_dest = os.path.join('lib', 'python*')
         bin_src = None
         lib_src = 'lib'
         inc_src = 'include'
