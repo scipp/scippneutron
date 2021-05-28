@@ -1,14 +1,25 @@
 from os.path import join
 import argparse
 import shutil
+import glob
 
 parser = argparse.ArgumentParser(
     description='Move the install target to finalize conda-build')
-parser.add_argument('--platform', default=None)
+parser.add_argument('--platform', default='')
 parser.add_argument('--source', default='')
 parser.add_argument('--destination', default='')
-
 args = parser.parse_args()
+
+
+def move(src, dst):
+    src = join(args.source, *src)
+    dst = join(args.destination, *dst)
+    if '*' in src:
+        for f in glob.glob(src):
+            shutil.move(src, dst)
+    else:
+        shutil.move(src, dst)
+
 
 if __name__ == '__main__':
 
@@ -23,16 +34,10 @@ if __name__ == '__main__':
         lib_src = 'lib'
         inc_src = 'include'
 
-    shutil.move(join(args.source, 'scippneutron'),
-                join(args.destination, lib_dest))
+    move(['scippneutron'], [lib_dest])
     if bin_src is not None:
-        shutil.move(join(args.source, bin_src, 'scippneutron*.dll'),
-                    join(args.destination, bin_src))
-    shutil.move(join(args.source, lib_src, '*scippneutron*'),
-                join(args.destination, lib_src))
-    shutil.move(join(args.source, lib_src, 'cmake', 'scippneutron'),
-                join(args.destination, lib_src, 'cmake'))
-    shutil.move(join(args.source, inc_src, 'scippneutron*'),
-                join(args.destination, inc_src))
-    shutil.move(join(args.source, inc_src, 'scipp', 'neutron'),
-                join(args.destination, inc_src, 'scipp'))
+        move([bin_src, 'scippneutron*.dll'], [bin_src])
+    move([lib_src, '*scippneutron*'], [lib_src])
+    move([lib_src, 'cmake', 'scippneutron'], [lib_src, 'cmake'])
+    move([inc_src, 'scippneutron*'], [inc_src])
+    move([inc_src, 'scipp', 'neutron'], [inc_src, 'scipp'])

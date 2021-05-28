@@ -10,7 +10,7 @@ import multiprocessing
 
 parser = argparse.ArgumentParser(description='Build C++ library and run tests')
 parser.add_argument('--platform', default=None)
-parser.add_argument('--install_prefix', default='')
+parser.add_argument('--prefix', default='')
 parser.add_argument('--osxversion', default='')
 parser.add_argument('--build_dir', default='build')
 
@@ -18,13 +18,14 @@ args = parser.parse_args()
 
 
 def run_command(cmd, shell):
-    print(' '.join(cmd))
+    # print(' '.join(cmd))
+    os.write(1, ' '.join(cmd).encode())
     return subprocess.check_call(cmd, stderr=subprocess.STDOUT, shell=shell)
 
 
 if __name__ == '__main__':
 
-    print(args)
+    # print(args)
     os.write(1, str(args).encode())
 
     platform = args.platform.lower()
