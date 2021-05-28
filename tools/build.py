@@ -53,18 +53,21 @@ if __name__ == '__main__':
             '-DCMAKE_OSX_DEPLOYMENT_TARGET':
             args.osxversion,
             '-DCMAKE_OSX_SYSROOT':
-            '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{}.sdk'  # noqa: E501
-            .format(args.osxversion)
+            os.path.join('/Applications', 'Xcode.app', 'Contents', 'Developer',
+                         'Platforms', 'MacOSX.platform', 'Developer', 'SDKs',
+                         'MacOSX{}.sdk'.format(args.osxversion))
         })
 
     if 'windows' in platform:
         cmake_flags.update({
-            '-G': 'Visual Studio 16 2019',
+            '-G': '"Visual Studio 16 2019"',
             '-A': 'x64',
             '-DCMAKE_CXX_STANDARD': '20'
         })
         shell = True
         parallel_flag = '-- /m:'
+
+    parallel_flag += ncores
 
     # Parse cmake flags
     flags_list = []
@@ -85,24 +88,20 @@ if __name__ == '__main__':
     status = run_command(['cmake', '-B', '.', '-S', '..', '-LA'], shell=shell)
 
     # Compile benchmarks
-    status = run_command([
-        'cmake', '--build', '.', '--target', 'all-benchmarks',
-        parallel_flag + ncores
-    ],
-                         shell=shell)
+    status = run_command(
+        ['cmake', '--build', '.', '--target', 'all-benchmarks', parallel_flag],
+        shell=shell)
 
     # Compile C++ tests
-    status = run_command([
-        'cmake', '--build', '.', '--target', 'all-tests',
-        parallel_flag + ncores
-    ],
-                         shell=shell)
+    status = run_command(
+        ['cmake', '--build', '.', '--target', 'all-tests', parallel_flag],
+        shell=shell)
 
     # Compile Python library
-    status = run_command([
-        'cmake', '--build', '.', '--target', 'install', parallel_flag + ncores
-    ],
-                         shell=shell)
+    status = run_command(
+        ['cmake', '--build', '.', '--target', 'install', parallel_flag],
+        shell=shell)
 
     # Run C++ tests
-    status = run_command(['bin/scippneutron-test'], shell=shell)
+    status = run_command([os.path.join('bin', 'scippneutron-test')],
+                         shell=shell)
