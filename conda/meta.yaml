@@ -43,9 +43,9 @@ test:
 
 build:
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
-  # script_env:
-  #   - OSX_VERSION
-  #   - INSTALL_PREFIX
+  script_env:
+    # - OSX_VERSION
+    - INSTALL_PREFIX
   script:
     - python conda/install.py --platform=ubuntu --source=$INSTALL_PREFIX --destination=$CONDA_PREFIX
 

@@ -23,6 +23,8 @@ def move(src, dst):
 
 if __name__ == '__main__':
 
+    os.write(1, "{}\n".format(args).encode())
+
     if 'windows' in args.platform.lower():
         lib_dest = 'lib'
         bin_src = 'bin'
