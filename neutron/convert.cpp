@@ -2,7 +2,6 @@
 // Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 /// @file
 /// @author Simon Heybrock
-#include <ostream>
 #include <set>
 #include <tuple>
 
@@ -82,7 +81,9 @@ T convert_generic(T &&d, const Dim from, const Dim to, Op op,
   }
 
   // 3. Rename dims
-  if (d.coords().contains(from))
+  const auto &keys = d.dims().labels();
+  auto it = std::find(keys.begin(), keys.end(), from);
+  if (it != keys.end())
     d.rename(from, to);
   return std::move(d);
 }
