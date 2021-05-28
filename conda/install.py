@@ -11,15 +11,21 @@ parser.add_argument('--destination', default='')
 args = parser.parse_args()
 
 
+def move_file(src, dst):
+    os.write(1, "move {} {}\n".format(src, dst).encode())
+    shutil.move(src, dst)
+
+
 def move(src, dst):
     src = os.path.join(args.source, *src)
     dst = os.path.join(args.destination, *dst)
     # Note: do not check for '*' in dst
     if '*' in src:
+        os.write(1, "glob: {}\n".format(glob.glob(src)).encode())
         for f in glob.glob(src):
-            shutil.move(src, dst)
+            move_file(src, dst)
     else:
-        shutil.move(src, dst)
+        move_file(src, dst)
 
 
 if __name__ == '__main__':
