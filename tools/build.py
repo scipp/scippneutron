@@ -33,6 +33,7 @@ if __name__ == '__main__':
     shell = False
     ncores = str(multiprocessing.cpu_count())
     parallel_flag = '-j'
+    build_flags = ''
 
     # Some flags use a syntax with a space separator instead of '='
     use_space = ['-G', '-A']
@@ -60,14 +61,15 @@ if __name__ == '__main__':
 
     if 'windows' in platform:
         cmake_flags.update({
-            '-G': '"Visual Studio 16 2019"',
+            '-G': 'Visual Studio 16 2019',
             '-A': 'x64',
             '-DCMAKE_CXX_STANDARD': '20'
         })
         shell = True
         parallel_flag = '-- /m:'
+        build_flags = ['--config', 'Release']
 
-    parallel_flag += ncores
+    additional_flags = build_flags + [parallel_flag + ncores]
 
     # Parse cmake flags
     flags_list = []
@@ -89,18 +91,19 @@ if __name__ == '__main__':
 
     # Compile benchmarks
     status = run_command(
-        ['cmake', '--build', '.', '--target', 'all-benchmarks', parallel_flag],
+        ['cmake', '--build', '.', '--target', 'all-benchmarks'] +
+        additional_flags,
         shell=shell)
 
     # Compile C++ tests
-    status = run_command(
-        ['cmake', '--build', '.', '--target', 'all-tests', parallel_flag],
-        shell=shell)
+    status = run_command(['cmake', '--build', '.', '--target', 'all-tests'] +
+                         additional_flags,
+                         shell=shell)
 
     # Compile Python library
-    status = run_command(
-        ['cmake', '--build', '.', '--target', 'install', parallel_flag],
-        shell=shell)
+    status = run_command(['cmake', '--build', '.', '--target', 'install'] +
+                         additional_flags,
+                         shell=shell)
 
     # Run C++ tests
     status = run_command([os.path.join('bin', 'scippneutron-test')],
