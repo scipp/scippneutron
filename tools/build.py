@@ -40,7 +40,7 @@ if __name__ == '__main__':
     cmake_flags = {
         '-G': 'Ninja',
         '-DPYTHON_EXECUTABLE': shutil.which("python"),
-        '-DCMAKE_INSTALL_PREFIX': args.install_prefix,
+        '-DCMAKE_INSTALL_PREFIX': args.prefix,
         '-DWITH_CTEST': 'OFF',
         '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'OFF'
     }
