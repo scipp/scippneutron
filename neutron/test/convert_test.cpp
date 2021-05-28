@@ -79,8 +79,10 @@ TEST_P(ConvertTest, DataArray_from_tof) {
         convert(tof, NeutronDim::Tof, dim, ConvertMode::Scatter);
     Dataset result;
     for (const auto &data : tof) {
-      result.setData(data.name(), convert(copy(data), NeutronDim::Tof, dim,
-                                          ConvertMode::Scatter));
+      auto converted =
+          convert(copy(data), NeutronDim::Tof, dim, ConvertMode::Scatter);
+      auto &attrs = converted.attrs();
+      result.setData(data.name(), converted);
     }
     for (const auto &data : result)
       EXPECT_EQ(data, expected[data.name()]);
@@ -155,9 +157,11 @@ TEST_P(ConvertTest, convert_slice) {
               expected);
     // Converting slice of item is same as item of converted slice
     EXPECT_EQ(convert(copy(tof["counts"].slice(slice)), NeutronDim::Tof, dim,
-                      ConvertMode::Scatter),
+                      ConvertMode::Scatter)
+                  .data(),
               convert(copy(tof.slice(slice)), NeutronDim::Tof, dim,
-                      ConvertMode::Scatter)["counts"]);
+                      ConvertMode::Scatter)["counts"]
+                  .data());
   }
 }
 TEST_P(ConvertTest, fail_count_density) {
@@ -351,8 +355,10 @@ TEST_P(ConvertTest, Tof_to_Wavelength) {
   EXPECT_TRUE(equals(data.values<double>(), {1, 2, 3, 4, 5, 6}));
   EXPECT_EQ(data.unit(), units::counts);
 
-  ASSERT_FALSE(wavelength.coords().contains(NeutronDim::SourcePosition));
-  ASSERT_FALSE(wavelength.coords().contains(NeutronDim::SamplePosition));
+  ASSERT_EQ(wavelength.coords()[NeutronDim::SourcePosition],
+            tof.coords()[NeutronDim::SourcePosition]);
+  ASSERT_EQ(wavelength.coords()[NeutronDim::SamplePosition],
+            tof.coords()[NeutronDim::SamplePosition]);
   ASSERT_EQ(wavelength.coords()[NeutronDim::Position],
             tof.coords()[NeutronDim::Position]);
 }
@@ -450,8 +456,10 @@ TEST_P(ConvertTest, Tof_to_Energy_Elastic) {
   EXPECT_TRUE(equals(data.values<double>(), {1, 2, 3, 4, 5, 6}));
   EXPECT_EQ(data.unit(), units::counts);
 
-  ASSERT_FALSE(energy.coords().contains(NeutronDim::SourcePosition));
-  ASSERT_FALSE(energy.coords().contains(NeutronDim::SamplePosition));
+  ASSERT_EQ(energy.coords()[NeutronDim::SourcePosition],
+            tof.coords()[NeutronDim::SourcePosition]);
+  ASSERT_EQ(energy.coords()[NeutronDim::SamplePosition],
+            tof.coords()[NeutronDim::SamplePosition]);
   ASSERT_EQ(energy.coords()[NeutronDim::Position],
             tof.coords()[NeutronDim::Position]);
 }
