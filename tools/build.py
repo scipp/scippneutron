@@ -19,14 +19,14 @@ args = parser.parse_args()
 
 def run_command(cmd, shell):
     # print(' '.join(cmd))
-    os.write(1, ' '.join(cmd).encode())
+    os.write(1, "{}\n".format(' '.join(cmd)).encode())
     return subprocess.check_call(cmd, stderr=subprocess.STDOUT, shell=shell)
 
 
 if __name__ == '__main__':
 
     # print(args)
-    os.write(1, str(args).encode())
+    os.write(1, "{}\n".format(args).encode())
 
     platform = args.platform.lower()
 
