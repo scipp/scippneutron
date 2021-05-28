@@ -33,7 +33,7 @@ if __name__ == '__main__':
     shell = False
     ncores = str(multiprocessing.cpu_count())
     parallel_flag = '-j'
-    build_flags = ''
+    build_config = ''
 
     # Some flags use a syntax with a space separator instead of '='
     use_space = ['-G', '-A']
@@ -67,9 +67,13 @@ if __name__ == '__main__':
         })
         shell = True
         parallel_flag = '-- /m:'
-        build_flags = ['--config', 'Release']
+        build_config = 'Release'
 
-    additional_flags = build_flags + [parallel_flag + ncores]
+    # Additional flags for --build commands
+    build_flags = []
+    if len(build_config) > 0:
+        build_flags += ['--config', build_config]
+    build_flags += [parallel_flag + ncores]
 
     # Parse cmake flags
     flags_list = []
@@ -91,20 +95,19 @@ if __name__ == '__main__':
 
     # Compile benchmarks
     status = run_command(
-        ['cmake', '--build', '.', '--target', 'all-benchmarks'] +
-        additional_flags,
+        ['cmake', '--build', '.', '--target', 'all-benchmarks'] + build_flags,
         shell=shell)
 
     # Compile C++ tests
     status = run_command(['cmake', '--build', '.', '--target', 'all-tests'] +
-                         additional_flags,
+                         build_flags,
                          shell=shell)
 
     # Compile Python library
     status = run_command(['cmake', '--build', '.', '--target', 'install'] +
-                         additional_flags,
+                         build_flags,
                          shell=shell)
 
     # Run C++ tests
-    status = run_command([os.path.join('bin', 'scippneutron-test')],
-                         shell=shell)
+    status = run_command(
+        [os.path.join('bin', build_config, 'scippneutron-test')], shell=shell)
