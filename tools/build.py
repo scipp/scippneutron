@@ -7,9 +7,9 @@ import argparse
 import shutil
 import subprocess
 import multiprocessing
+import sys
 
 parser = argparse.ArgumentParser(description='Build C++ library and run tests')
-parser.add_argument('--platform', default=None)
 parser.add_argument('--prefix', default='')
 parser.add_argument('--osxversion', default='')
 parser.add_argument('--build_dir', default='build')
@@ -18,18 +18,19 @@ args = parser.parse_args()
 
 
 def run_command(cmd, shell):
-    # print(' '.join(cmd))
+    """
+    Run a command (supplied as a list) using subprocess.check_call
+    """
     os.write(1, "{}\n".format(' '.join(cmd)).encode())
     return subprocess.check_call(cmd, stderr=subprocess.STDOUT, shell=shell)
 
 
 if __name__ == '__main__':
 
-    # print(args)
-    os.write(1, "{}\n".format(args).encode())
+    platform = sys.platform
+    print("PLATFORM IS:", platform)
 
-    platform = args.platform.lower()
-
+    # Default options
     shell = False
     ncores = str(multiprocessing.cpu_count())
     parallel_flag = '-j'
@@ -46,10 +47,10 @@ if __name__ == '__main__':
         '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'OFF'
     }
 
-    if 'ubuntu' in platform:
+    if platform == 'linux':
         cmake_flags.update({'-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'ON'})
 
-    if 'macos' in platform:
+    if platform == 'darwin':
         cmake_flags.update({
             '-DCMAKE_OSX_DEPLOYMENT_TARGET':
             args.osxversion,
@@ -59,7 +60,7 @@ if __name__ == '__main__':
                          'MacOSX{}.sdk'.format(args.osxversion))
         })
 
-    if 'windows' in platform:
+    if platform == 'win32':
         cmake_flags.update({
             '-G': 'Visual Studio 16 2019',
             '-A': 'x64',

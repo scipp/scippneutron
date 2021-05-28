@@ -2,10 +2,10 @@ import os
 import argparse
 import shutil
 import glob
+import sys
 
 parser = argparse.ArgumentParser(
     description='Move the install target to finalize conda-build')
-parser.add_argument('--platform', default='')
 parser.add_argument('--source', default='')
 parser.add_argument('--destination', default='')
 args = parser.parse_args()
@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
     os.write(1, "{}\n".format(args).encode())
 
-    if 'windows' in args.platform.lower():
+    if sys.platform == "win32":
         lib_dest = 'lib'
         bin_src = 'bin'
         lib_src = 'Lib'
