@@ -11,10 +11,8 @@ import sys
 
 parser = argparse.ArgumentParser(description='Build C++ library and run tests')
 parser.add_argument('--prefix', default='')
-parser.add_argument('--osxversion', default='')
+# parser.add_argument('--osxversion', default='')
 parser.add_argument('--build_dir', default='build')
-
-args = parser.parse_args()
 
 
 def run_command(cmd, shell):
@@ -25,7 +23,7 @@ def run_command(cmd, shell):
     return subprocess.check_call(cmd, stderr=subprocess.STDOUT, shell=shell)
 
 
-if __name__ == '__main__':
+def main(prefix='', build_dir=''):
 
     platform = sys.platform
     print("PLATFORM IS:", platform)
@@ -42,7 +40,7 @@ if __name__ == '__main__':
     cmake_flags = {
         '-G': 'Ninja',
         '-DPYTHON_EXECUTABLE': shutil.which("python"),
-        '-DCMAKE_INSTALL_PREFIX': args.prefix,
+        '-DCMAKE_INSTALL_PREFIX': prefix,
         '-DWITH_CTEST': 'OFF',
         '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'OFF'
     }
@@ -51,14 +49,17 @@ if __name__ == '__main__':
         cmake_flags.update({'-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'ON'})
 
     if platform == 'darwin':
-        cmake_flags.update({
-            '-DCMAKE_OSX_DEPLOYMENT_TARGET':
-            args.osxversion,
-            '-DCMAKE_OSX_SYSROOT':
-            os.path.join('/Applications', 'Xcode.app', 'Contents', 'Developer',
-                         'Platforms', 'MacOSX.platform', 'Developer', 'SDKs',
-                         'MacOSX{}.sdk'.format(args.osxversion))
-        })
+        osxversion = os.environ.get('OSX_VERSION')
+        if osxversion is not None:
+            cmake_flags.update({
+                '-DCMAKE_OSX_DEPLOYMENT_TARGET':
+                osxversion,
+                '-DCMAKE_OSX_SYSROOT':
+                os.path.join('/Applications', 'Xcode.app', 'Contents',
+                             'Developer', 'Platforms', 'MacOSX.platform',
+                             'Developer', 'SDKs',
+                             'MacOSX{}.sdk'.format(osxversion))
+            })
 
     if platform == 'win32':
         cmake_flags.update({
@@ -84,9 +85,9 @@ if __name__ == '__main__':
         else:
             flags_list.append('{}={}'.format(key, value))
 
-    if not os.path.exists(args.build_dir):
-        os.makedirs(args.build_dir)
-    os.chdir(args.build_dir)
+    if not os.path.exists(build_dir):
+        os.makedirs(build_dir)
+    os.chdir(build_dir)
 
     # Run cmake
     status = run_command(['cmake'] + flags_list + ['..'], shell=shell)
@@ -112,3 +113,8 @@ if __name__ == '__main__':
     # Run C++ tests
     status = run_command(
         [os.path.join('bin', build_config, 'scippneutron-test')], shell=shell)
+
+
+if __name__ == '__main__':
+    args = parser.parse_args()
+    main(prefix=args.prefix, build_dir=args.build_dir)

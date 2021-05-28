@@ -47,7 +47,7 @@ build:
     # - OSX_VERSION
     - INSTALL_PREFIX
   script:
-    - python conda/install.py --source=$INSTALL_PREFIX --destination=$CONDA_PREFIX
+    - python tools/install.py
 
 about:
   home: https://github.com/scipp/scippneutron
