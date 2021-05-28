@@ -19,7 +19,8 @@ def move_file(src, dst):
 def move(src, dst):
     src = os.path.join(args.source, *src)
     dst = os.path.join(args.destination, *dst)
-    # Note: do not check for '*' in dst
+    if '*' in dst:
+        dst = glob.glob(dst)[-1]
     if '*' in src:
         for f in glob.glob(src):
             move_file(f, dst)
