@@ -26,6 +26,12 @@ Each schema is identified by a 4 character string which is included in:
 - the serialised buffer as the first 4 bytes,
 - the module name in ess-streaming-data-types.
 """
+# FlatBuffer schema ids.
+# These will change in the future if a breaking change needs to be
+# made to the schema.
+SLOW_FB_ID = "f142"
+FAST_FB_ID = "senv"
+CHOPPER_FB_ID = "tdct"
 
 
 def _create_metadata_buffer_array(name: str, unit: sc.Unit, dtype: Any,
@@ -38,14 +44,6 @@ def _create_metadata_buffer_array(name: str, unit: sc.Unit, dtype: Any,
                      unit=sc.Unit("nanoseconds"),
                      dtype=np.int64)
         })
-
-
-# FlatBuffer schema ids.
-# These will change in the future if a breaking change needs to be
-# made to the schema.
-SLOW_FB_ID = "f142"
-FAST_FB_ID = "senv"
-CHOPPER_FB_ID = "tdct"
 
 
 class _SlowMetadataBuffer:
@@ -63,7 +61,10 @@ class _SlowMetadataBuffer:
         self._data_array = _create_metadata_buffer_array(
             self._name, stream_info.unit, stream_info.dtype, buffer_size)
 
-    async def append_data(self, log_event: LogDataInfo):
+    async def append_data(self, log_event: LogDataInfo, emit_data: Callable):
+        if self._buffer_filled_size == self._buffer_size:
+            await emit_data()
+
         # Each LogDataInfo contains a single value-timestamp pair
         async with self._buffer_mutex:
             self._data_array[
@@ -101,7 +102,8 @@ class _FastMetadataBuffer:
         self._data_array = _create_metadata_buffer_array(
             self._name, stream_info.unit, stream_info.dtype, buffer_size)
 
-    async def append_data(self, log_events: FastSampleEnvData):
+    async def append_data(self, log_events: FastSampleEnvData,
+                          emit_data: Callable):
         # Each FastSampleEnvData contains an array of values and either:
         #  - an array of corresponding timestamps, or
         #  - the timedelta for linearly spaced timestamps
@@ -113,6 +115,9 @@ class _FastMetadataBuffer:
                  f" {self._buffer_size}. These data have been "
                  f"skipped!")
             return
+
+        if self._buffer_filled_size + message_size > self._buffer_size:
+            await emit_data()
 
         async with self._buffer_mutex:
             self._data_array[
@@ -160,7 +165,8 @@ class _ChopperMetadataBuffer:
                                     unit=sc.Unit("nanoseconds"),
                                     dtype=np.int64)
 
-    async def append_data(self, chopper_timestamps: Timestamps):
+    async def append_data(self, chopper_timestamps: Timestamps,
+                          emit_data: Callable):
         # Each Timestamps contains an array of top-dead-centre timestamps
         message_size = chopper_timestamps.timestamps.size
         if message_size > self._buffer_size:
@@ -170,6 +176,9 @@ class _ChopperMetadataBuffer:
                  f" {self._buffer_size}. These data have been "
                  f"skipped!")
             return
+
+        if self._buffer_filled_size + message_size > self._buffer_size:
+            await emit_data()
 
         async with self._buffer_mutex:
             self._data_array[
@@ -195,10 +204,10 @@ _MetadataBuffer = Union[_FastMetadataBuffer, _SlowMetadataBuffer,
 
 class StreamedDataBuffer:
     """
-    This owns the buffer for data consumed from Kafka.
-    It periodically emits accumulated data to a processing pipeline
-    and resets the buffer. If the buffer fills up within the emit time
-    interval then data is emitted more frequently.
+    This owns the buffers for data consumed from Kafka.
+    It periodically emits accumulated data to a queue
+    and resets the buffer. If a buffer fills up within the emit time
+    interval then data are emitted early.
     """
     def __init__(self, queue: asyncio.Queue, event_buffer_size: int,
                  slow_metadata_buffer_size: int,
@@ -331,7 +340,8 @@ class StreamedDataBuffer:
             try:
                 await self._metadata_buffers[fb_id][getattr(
                     deserialised_data,
-                    source_field_name)].append_data(deserialised_data)
+                    source_field_name)].append_data(deserialised_data,
+                                                    self._emit_data)
                 return True
             except KeyError:
                 # Ignore data from unknown source name

@@ -783,8 +783,8 @@ async def test_data_stream_emits_if_multiple_slow_metadata_msgs_exceed_buffer(
     buffer_size = 1
     buffer = StreamedDataBuffer(queue,
                                 event_buffer_size=TEST_BUFFER_SIZE,
-                                slow_metadata_buffer_size=TEST_BUFFER_SIZE,
-                                fast_metadata_buffer_size=buffer_size,
+                                slow_metadata_buffer_size=buffer_size,
+                                fast_metadata_buffer_size=TEST_BUFFER_SIZE,
                                 chopper_buffer_size=TEST_BUFFER_SIZE,
                                 interval=SHORT_TEST_INTERVAL)
     run_info_topic = "fake_topic"
@@ -900,8 +900,8 @@ async def test_data_stream_emits_if_multiple_chopper_msgs_exceed_buffer():
     buffer = StreamedDataBuffer(queue,
                                 event_buffer_size=TEST_BUFFER_SIZE,
                                 slow_metadata_buffer_size=TEST_BUFFER_SIZE,
-                                fast_metadata_buffer_size=buffer_size,
-                                chopper_buffer_size=TEST_BUFFER_SIZE,
+                                fast_metadata_buffer_size=TEST_BUFFER_SIZE,
+                                chopper_buffer_size=buffer_size,
                                 interval=SHORT_TEST_INTERVAL)
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
