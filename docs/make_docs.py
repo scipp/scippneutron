@@ -66,7 +66,6 @@ if __name__ == '__main__':
         f.write("\nusagereports.enabled=0\ndatasearch.directories={}\n".format(
             target_dir))
 
-    os.write(1, "{}\n".format(' '.join(cmd)).encode())
     status = subprocess.check_call(
         ['sphinx-build', '-d', args.work_dir, '.', args.prefix],
         stderr=subprocess.STDOUT,

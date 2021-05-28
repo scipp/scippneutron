@@ -90,29 +90,28 @@ def main(prefix='', build_dir=''):
     os.chdir(build_dir)
 
     # Run cmake
-    status = run_command(['cmake'] + flags_list + ['..'], shell=shell)
+    run_command(['cmake'] + flags_list + ['..'], shell=shell)
 
     # Show cmake settings
-    status = run_command(['cmake', '-B', '.', '-S', '..', '-LA'], shell=shell)
+    run_command(['cmake', '-B', '.', '-S', '..', '-LA'], shell=shell)
 
     # Compile benchmarks
-    status = run_command(
-        ['cmake', '--build', '.', '--target', 'all-benchmarks'] + build_flags,
-        shell=shell)
+    run_command(['cmake', '--build', '.', '--target', 'all-benchmarks'] +
+                build_flags,
+                shell=shell)
 
     # Compile C++ tests
-    status = run_command(['cmake', '--build', '.', '--target', 'all-tests'] +
-                         build_flags,
-                         shell=shell)
+    run_command(['cmake', '--build', '.', '--target', 'all-tests'] +
+                build_flags,
+                shell=shell)
 
     # Compile Python library
-    status = run_command(['cmake', '--build', '.', '--target', 'install'] +
-                         build_flags,
-                         shell=shell)
+    run_command(['cmake', '--build', '.', '--target', 'install'] + build_flags,
+                shell=shell)
 
     # Run C++ tests
-    status = run_command(
-        [os.path.join('bin', build_config, 'scippneutron-test')], shell=shell)
+    run_command([os.path.join('bin', build_config, 'scippneutron-test')],
+                shell=shell)
 
 
 if __name__ == '__main__':
