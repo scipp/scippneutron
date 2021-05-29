@@ -3,13 +3,7 @@ import os
 import shutil
 import glob
 import sys
-import build
-
-# parser = argparse.ArgumentParser(
-#     description='Move the install target to finalize conda-build')
-# parser.add_argument('--source', default='')
-# parser.add_argument('--destination', default='')
-# args = parser.parse_args()
+import build_cpp
 
 
 class FileMover():
@@ -39,7 +33,7 @@ if __name__ == '__main__':
     source_root = os.environ.get('INSTALL_PREFIX')
     if source_root is None:
         source_root = os.path.abspath('scipp_install')
-        build.main(prefix=source_root)
+        build_cpp.main(prefix=source_root)
 
     destination_root = os.environ.get('CONDA_PREFIX')
 
