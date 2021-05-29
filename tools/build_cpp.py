@@ -26,7 +26,6 @@ def run_command(cmd, shell):
 def main(prefix='', build_dir=''):
 
     platform = sys.platform
-    print("PLATFORM IS:", platform)
 
     # Default options
     shell = False
