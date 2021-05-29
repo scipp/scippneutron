@@ -13,11 +13,11 @@ requirements:
     - git
     - ninja
     - python {{ python }}
-    - scipp
+    - scipp {{ scipp }}
     - tbb-devel
   run:
     - python {{ python }}
-    - scipp
+    - scipp {{ scipp }}
     - h5py
 
 test:
