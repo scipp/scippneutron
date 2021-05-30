@@ -11,7 +11,7 @@ import sys
 
 parser = argparse.ArgumentParser(description='Build C++ library and run tests')
 parser.add_argument('--prefix', default='')
-# parser.add_argument('--osxversion', default='')
+parser.add_argument('--source_dir', default='..')
 parser.add_argument('--build_dir', default='build')
 
 
@@ -89,7 +89,7 @@ def main(prefix='', build_dir=''):
     os.chdir(build_dir)
 
     # Run cmake
-    run_command(['cmake'] + flags_list + ['..'], shell=shell)
+    run_command(['cmake'] + flags_list + [args.source_dir], shell=shell)
 
     # Show cmake settings
     run_command(['cmake', '-B', '.', '-S', '..', '-LA'], shell=shell)
