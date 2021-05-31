@@ -46,7 +46,7 @@ def main(prefix='', build_dir=''):
         '-DPYTHON_EXECUTABLE': shutil.which("python"),
         '-DCMAKE_INSTALL_PREFIX': prefix,
         '-DWITH_CTEST': 'OFF',
-        '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'OFF'
+        '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'ON'
     }
 
     if platform == 'linux':
@@ -56,6 +56,8 @@ def main(prefix='', build_dir=''):
         osxversion = os.environ.get('OSX_VERSION')
         if osxversion is not None:
             cmake_flags.update({
+                '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION':
+                'OFF',
                 '-DCMAKE_OSX_DEPLOYMENT_TARGET':
                 osxversion,
                 '-DCMAKE_OSX_SYSROOT':
