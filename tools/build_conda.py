@@ -1,5 +1,8 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
+# @author Neil Vaytet
+
 import os
-# import argparse
 import shutil
 import glob
 import sys
@@ -29,16 +32,22 @@ class FileMover():
 
 if __name__ == '__main__':
 
-    # os.write(1, "{}\n".format(args).encode())
+    # Search for a defined INSTALL_PREFIX env variable.
+    # If it exists, it points to a previously built target and we simply move
+    # the files from there into the conda build directory.
+    # If it is undefined, we build the C++ library by calling main() from
+    # build_cpp.
     source_root = os.environ.get('INSTALL_PREFIX')
     if source_root is None:
-        source_root = os.path.abspath('scipp_install')
+        source_root = os.path.abspath('scippneutron_install')
         build_cpp.main(prefix=source_root)
-
     destination_root = os.environ.get('CONDA_PREFIX')
 
+    # Create a file mover to place the built files in the correct directories
+    # for conda build.
     m = FileMover(source_root=source_root, destination_root=destination_root)
 
+    # Depending on the platform, directories have different names.
     if sys.platform == "win32":
         lib_dest = 'lib'
         bin_src = 'bin'

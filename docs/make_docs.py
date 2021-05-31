@@ -16,8 +16,6 @@ parser.add_argument('--prefix', default='build')
 parser.add_argument('--work_dir', default='.doctrees')
 parser.add_argument('--data_dir', default='data')
 
-args = parser.parse_args()
-
 
 def download_file(source, target):
     os.write(1, "Downloading: {}\n".format(source).encode())
@@ -51,6 +49,8 @@ def download_multiple(remote_url, target_dir, extensions):
 
 if __name__ == '__main__':
 
+    args = parser.parse_args()
+
     # Download data files
     remote_url = "https://public.esss.dk/groups/scipp/scippneutron"
     target_dir = os.path.abspath(args.data_dir)
@@ -66,6 +66,7 @@ if __name__ == '__main__':
         f.write("\nusagereports.enabled=0\ndatasearch.directories={}\n".format(
             target_dir))
 
+    # Build the docs with sphinx-build
     status = subprocess.check_call(
         ['sphinx-build', '-d', args.work_dir, '.', args.prefix],
         stderr=subprocess.STDOUT,

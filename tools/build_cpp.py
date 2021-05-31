@@ -1,9 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
+# @author Neil Vaytet
+
 import os
 import argparse
-# import urllib
-# import requests
-# import re
-# from pathlib import Path
 import shutil
 import subprocess
 import multiprocessing
@@ -24,7 +24,11 @@ def run_command(cmd, shell):
 
 
 def main(prefix='', build_dir=''):
+    """
+    Platform-independent function to run cmake, build, install and C++ tests.
+    """
 
+    # Get the platform name: 'linux', 'darwin' (osx), or 'win32'.
     platform = sys.platform
 
     # Default options
@@ -36,6 +40,7 @@ def main(prefix='', build_dir=''):
     # Some flags use a syntax with a space separator instead of '='
     use_space = ['-G', '-A']
 
+    # Default cmake flags
     cmake_flags = {
         '-G': 'Ninja',
         '-DPYTHON_EXECUTABLE': shutil.which("python"),
