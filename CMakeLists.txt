@@ -128,7 +128,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 add_custom_target(all-tests)
 
 # Custom target for building documentation
-add_custom_target(docs COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/docs/make_docs.py)
+add_custom_target(docs COMMAND ${PYTHON_EXECUTABLE}  ${CMAKE_SOURCE_DIR}/docs/make_docs.py)
 
 include(GNUInstallDirs)
 set(PYTHONDIR scippneutron)
