@@ -31,10 +31,10 @@ extends:
   template: stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-    - ${{ if eq(variables['System.PullRequest.TargetBranch'], 'main') }}:
-      conda_channels: '--channel scipp/label/main --channel ess-dmsc' # Select channel as for released scipp 
-    - ${{ if eq(variables['System.PullRequest.TargetBranch'], 'next') }}:
-      conda_channels: '--channel scipp/label/dev --channel ess-dmsc' # Select channel as for unstable scipp 
+    ${{ if eq( variables['Build.SourceBranchName'], 'master' ) }}:
+      conda_channels: '--channel scipp/label/main --channel ess-dmsc'  
+    ${{ if eq( variables['Build.SourceBranchName'], 'next' ) }}:
+      conda_channels: '--channel scipp/label/dev --channel ess-dmsc'  
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
@@ -43,6 +43,6 @@ extends:
       osx:
         py_versions: ['3.7']
         conda_env: 'scippneutron-developer.yml'
-      windows:
-        py_versions: ['3.7']
-        conda_env: 'scippneutron-developer-no-mantid.yml'
+      # windows:
+      #   py_versions: ['3.7']
+      #   conda_env: 'scippneutron-developer-no-mantid.yml'

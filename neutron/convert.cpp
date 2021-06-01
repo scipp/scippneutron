@@ -29,14 +29,14 @@ namespace {
 // Iterable facade around a single object
 template <class T> class IterableFacade {
 public:
-  IterableFacade(T *const obj) : m_obj{obj} {}
+  IterableFacade(T *obj) : m_obj{obj} {}
   IterableFacade(const IterableFacade<T> &) = delete;
   IterableFacade(IterableFacade<T> &&) = delete;
-  T *const begin() { return m_obj; }
-  T *const end() { return m_obj + 1; }
+  T *begin() { return m_obj; }
+  T *end() { return m_obj + 1; }
 
 private:
-  T *const m_obj;
+  T *m_obj;
 };
 template <class T> IterableFacade(T &) -> IterableFacade<T>;
 
@@ -51,39 +51,34 @@ T convert_generic(T &&d, const Dim from, const Dim to, Op op,
       arg_list<double,
                std::tuple<float, std::conditional_t<true, double, Args>...>>,
       op};
+  const auto convert_coord = [&](auto &&array) {
+    auto coord = array.coords()[from];
+    coord = copy(broadcast(coord, merge(args.dims()..., coord.dims())));
+    transform_in_place(coord, args..., op_, "scippneutron.convert");
+    array.coords().erase(from);
+    array.coords().set(to, coord);
+  };
   // 1. Transform coordinate
   if (d.coords().contains(from)) {
-    const auto coord = d.coords()[from];
-    d.coords().set(from,
-                   copy(broadcast(coord, merge(args.dims()..., coord.dims()))));
-    transform_in_place(d.coords()[from], args..., op_, "scippneutron.convert");
+    convert_coord(d);
   }
   // 2. Transform coordinates in bucket variables
-  auto convert_item = [&](auto &item) {
-    if (item.dtype() != dtype<bucket<DataArray>>) {
-      return;
-    }
+  for (auto &&item : iter(d)) {
+    if (item.dtype() != dtype<core::bin<DataArray>>)
+      continue;
     auto [indices, dim, buffer] =
         item.data().template constituents<DataArray>();
-    if (!buffer.coords().contains(from)) {
-      return;
-    }
-
+    if (!buffer.coords().contains(from))
+      continue;
+    // A plain copy of item.data() would share the same `buffer`, i.e., coord
+    // rename would affect the original. Recreate binned data from shallow
+    // copies.
     item.setData(dataset::make_bins(indices, dim, buffer));
-    auto view = dataset::bins_view<DataArray>(item.data());
-    auto transformed = copy(view.coords()[from]);
-    transform_in_place(transformed, args..., op_, "scippneutron.convert");
-    view.coords().set(to, transformed);
-    view.coords().erase(from);
-  };
-  for (auto &&item : iter(d)) {
-    convert_item(item);
+    convert_coord(dataset::bins_view<DataArray>(item.data()));
   }
 
   // 3. Rename dims
-  const auto &keys = d.dims().labels();
-  auto it = std::find(keys.begin(), keys.end(), from);
-  if (it != keys.end())
+  if (d.dims().contains(from))
     d.rename(from, to);
   return std::move(d);
 }
@@ -189,10 +184,8 @@ T attrs_to_coords(T &&x, const Dim to, const ConvertMode scatter) {
     // Before conversion we convert all geometry-related params into coords,
     // otherwise conversions with datasets will not work since attrs are
     // item-specific.
-    for (const auto &param : scatter_params(Dim::Invalid)) {
-      auto str = to_string(param);
+    for (const auto &param : scatter_params(Dim::Invalid))
       to_coord(param);
-    }
   } else if (to == NeutronDim::Tof) {
     for (const auto &param : no_scatter_params())
       to_coord(param);
