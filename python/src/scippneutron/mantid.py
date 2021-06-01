@@ -236,8 +236,8 @@ def validate_and_get_unit(unit, allow_empty=False):
 
 def _to_spherical(pos, output):
     output["r"] = sc.sqrt(sc.dot(pos, pos))
-    output["t"] = sc.acos(pos.x3 / output["r"].data)
-    output["p-sign"] = sc.atan2(pos.x2, pos.x1)
+    output["t"] = sc.acos(pos.fields.z / output["r"].data)
+    output["p-sign"] = sc.atan2(pos.fields.y, pos.fields.x)
     output["p-delta"] = sc.Variable(value=np.pi, unit=sc.units.rad) - sc.abs(
         output["p-sign"].data)
 
