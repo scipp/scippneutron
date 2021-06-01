@@ -5,7 +5,7 @@ import numpy as np
 from enum import Enum
 from contextlib import contextmanager
 import json
-from scippneutron._loading_json_nexus import LoadFromJson
+from scippneutron.file_loading._loading_json_nexus import LoadFromJson
 
 h5root = Union[h5py.File, h5py.Group]
 

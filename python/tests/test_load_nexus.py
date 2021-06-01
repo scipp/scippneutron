@@ -15,7 +15,7 @@ import pytest
 import scippneutron
 import scipp as sc
 from typing import List, Type, Union, Callable
-from scippneutron.load_nexus import _load_nexus_json
+from scippneutron.file_loading.load_nexus import _load_nexus_json
 
 
 def test_raises_exception_if_multiple_nxentry_in_file():

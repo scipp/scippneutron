@@ -4,20 +4,20 @@
 import json
 
 import scipp as sc
-from ._loading_common import Group, MissingDataset
-from ._loading_detector_data import load_detector_data
-from ._loading_log_data import load_logs
-from ._loading_hdf5_nexus import LoadFromHdf5
-from ._loading_json_nexus import LoadFromJson, get_streams_info, StreamInfo
-from ._loading_nexus import LoadFromNexus, GroupObject, ScippData
+from ._common import Group, MissingDataset
+from ._detector_data import load_detector_data
+from ._log_data import load_logs
+from ._hdf5_nexus import LoadFromHdf5
+from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
+from ._nexus import LoadFromNexus, GroupObject, ScippData
 import h5py
 from timeit import default_timer as timer
 from typing import Union, List, Optional, Dict, Tuple, Set
 from contextlib import contextmanager
 from warnings import warn
 import numpy as np
-from ._loading_positions import (load_position_of_unique_component,
-                                 load_positions_of_components)
+from ._positions import (load_position_of_unique_component,
+                         load_positions_of_components)
 
 nx_event_data = "NXevent_data"
 nx_log = "NXlog"

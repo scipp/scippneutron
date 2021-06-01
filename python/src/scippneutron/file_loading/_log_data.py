@@ -5,8 +5,8 @@
 import numpy as np
 from typing import Tuple, List
 import scipp as sc
-from ._loading_common import (BadSource, MissingDataset, Group)
-from ._loading_nexus import LoadFromNexus, GroupObject, ScippData
+from ._common import (BadSource, MissingDataset, Group)
+from ._nexus import LoadFromNexus, GroupObject, ScippData
 from warnings import warn
 
 

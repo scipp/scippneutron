@@ -9,8 +9,10 @@ from .nexus_helpers import NexusBuilder, Stream
 try:
     import streaming_data_types  # noqa: F401
     from confluent_kafka import TopicPartition  # noqa: F401
-    from scippneutron.data_stream import _data_stream, StartTime  # noqa: E402
-    from scippneutron._streaming_data_buffer import \
+    from scippneutron.data_streaming.data_stream import (_data_stream,
+                                                         StartTime
+                                                         )  # noqa: E402
+    from scippneutron.data_streaming._data_buffer import \
         StreamedDataBuffer  # noqa: E402
     from streaming_data_types.eventdata_ev42 import \
         serialise_ev42  # noqa: E402
@@ -19,7 +21,7 @@ try:
     from streaming_data_types.timestamps_tdct import serialise_tdct
     from streaming_data_types.sample_environment_senv import serialise_senv
     from streaming_data_types.sample_environment_senv import Location
-    from scippneutron._streaming_consumer import RunStartError
+    from scippneutron.data_streaming._consumer import RunStartError
 except ImportError:
     pytest.skip("Kafka or Serialisation module is unavailable",
                 allow_module_level=True)

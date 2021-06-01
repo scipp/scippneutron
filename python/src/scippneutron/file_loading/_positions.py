@@ -3,10 +3,10 @@ from typing import List, Optional, Any, Tuple
 import h5py
 import numpy as np
 import scipp as sc
-from ._loading_common import Group
-from ._loading_transformations import (get_position_from_transformations,
-                                       TransformationError)
-from ._loading_nexus import LoadFromNexus, GroupObject
+from ._common import Group
+from ._transformations import (get_position_from_transformations,
+                               TransformationError)
+from ._nexus import LoadFromNexus, GroupObject
 
 
 class PositionError(Exception):

@@ -6,12 +6,12 @@ from dataclasses import dataclass
 import h5py
 from typing import Optional, List, Any, Dict, Union
 import numpy as np
-from ._loading_common import (BadSource, MissingDataset, Group)
+from ._common import (BadSource, MissingDataset, Group)
 import scipp as sc
 from warnings import warn
 from itertools import groupby
-from ._loading_transformations import get_full_transformation_matrix
-from ._loading_nexus import LoadFromNexus, GroupObject
+from ._transformations import get_full_transformation_matrix
+from ._nexus import LoadFromNexus, GroupObject
 
 _detector_dimension = "detector_id"
 _event_dimension = "event"

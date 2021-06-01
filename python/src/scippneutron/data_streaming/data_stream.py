@@ -3,7 +3,7 @@ import time
 from typing import List, Generator, Callable, Optional, Type
 import asyncio
 import scipp as sc
-from .load_nexus import _load_nexus_json
+from ..file_loading.load_nexus import _load_nexus_json
 from enum import Enum
 """
 Some type names are included as strings as imports are done in
@@ -65,7 +65,7 @@ async def data_stream(
     :param start_time: Get data from now or from start of the last run
     """
     try:
-        from ._streaming_data_buffer import StreamedDataBuffer
+        from ._data_buffer import StreamedDataBuffer
     except ImportError:
         raise ImportError(_missing_dependency_message)
 
@@ -117,10 +117,9 @@ async def _data_stream(
     fake consumers can be injected for unit tests
     """
     try:
-        from ._streaming_consumer import (start_consumers, create_consumers,
-                                          stop_consumers,
-                                          get_run_start_message,
-                                          KafkaQueryConsumer, KafkaConsumer)
+        from ._consumer import (start_consumers, create_consumers,
+                                stop_consumers, get_run_start_message,
+                                KafkaQueryConsumer, KafkaConsumer)
     except ImportError:
         raise ImportError(_missing_dependency_message)
 

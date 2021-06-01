@@ -5,7 +5,7 @@
 from typing import Tuple, Dict, List, Optional, Any, Union
 import scipp as sc
 import numpy as np
-from ._loading_common import Group, MissingDataset, MissingAttribute
+from ._common import Group, MissingDataset, MissingAttribute
 from dataclasses import dataclass
 
 _nexus_class = "NX_class"
