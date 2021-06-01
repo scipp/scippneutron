@@ -3,6 +3,11 @@ parameters:
   displayName: Verbose
   type: boolean
   default: false
+- name: conda_channels
+  type: object
+  default:
+    main: '--channel scipp/label/main --channel ess-dmsc'
+    next: '--channel scipp/label/dev --channel ess-dmsc'
 
 # Note: the 'endpoint' refers to the Azure service connection, which can be
 # found on the Azure pipelines web interface under
@@ -31,10 +36,7 @@ extends:
   template: stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-    ${{ if eq( variables['Build.SourceBranchName'], 'master' ) }}:
-      conda_channels: '--channel scipp/label/main --channel ess-dmsc'  
-    ${{ if eq( variables['Build.SourceBranchName'], 'next' ) }}:
-      conda_channels: '--channel scipp/label/dev --channel ess-dmsc'  
+    conda_channels: ${{ parameters.conda_channels[$(Build.SourceBranchName)] }}
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
