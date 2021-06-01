@@ -33,10 +33,10 @@ def in_memory_hdf5_file_with_two_nxentry() -> Iterator[h5py.File]:
 
 @dataclass
 class EventData:
-    event_id: np.ndarray
+    event_id: Optional[np.ndarray]
     event_time_offset: Optional[np.ndarray]
-    event_time_zero: np.ndarray
-    event_index: np.ndarray
+    event_time_zero: Optional[np.ndarray]
+    event_index: Optional[np.ndarray]
 
 
 @dataclass
@@ -538,17 +538,22 @@ class NexusBuilder:
                                       group_name: str):
         event_group = self._create_nx_class(group_name, "NXevent_data",
                                             parent_group)
-        self._writer.add_dataset(event_group, "event_id", data=data.event_id)
+        if data.event_id is not None:
+            self._writer.add_dataset(event_group,
+                                     "event_id",
+                                     data=data.event_id)
         if data.event_time_offset is not None:
             event_time_offset_ds = self._writer.add_dataset(
                 event_group, "event_time_offset", data=data.event_time_offset)
             self._writer.add_attribute(event_time_offset_ds, "units", "ns")
-        event_time_zero_ds = self._writer.add_dataset(
-            event_group, "event_time_zero", data=data.event_time_zero)
-        self._writer.add_attribute(event_time_zero_ds, "units", "ns")
-        self._writer.add_dataset(event_group,
-                                 "event_index",
-                                 data=data.event_index)
+        if data.event_time_zero is not None:
+            event_time_zero_ds = self._writer.add_dataset(
+                event_group, "event_time_zero", data=data.event_time_zero)
+            self._writer.add_attribute(event_time_zero_ds, "units", "ns")
+        if data.event_index is not None:
+            self._writer.add_dataset(event_group,
+                                     "event_index",
+                                     data=data.event_index)
 
     def _add_transformations_to_file(self, transform: Transformation,
                                      parent_group: h5py.Group,

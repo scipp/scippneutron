@@ -4,7 +4,7 @@ import scipp as sc
 import asyncio
 from typing import List, Tuple, Callable, Dict, Optional
 import numpy as np
-from .nexus_helpers import NexusBuilder, Stream, Log
+from .nexus_helpers import NexusBuilder, Stream, Log, EventData
 
 try:
     import streaming_data_types  # noqa: F401
@@ -962,10 +962,10 @@ async def test_no_warning_for_missing_datasets_if_group_contains_stream(
     test_instrument_name = "DATA_STREAM_TEST"
     builder.add_instrument(test_instrument_name)
     builder.add_log(Log("log", None))
+    builder.add_event_data(EventData(None, None, None, None))
     builder.add_stream(Stream("/entry/log"))
+    builder.add_stream(Stream("/entry/events_0"))
     nexus_structure = builder.json_string
-
-    print(nexus_structure)
 
     queue, buffer = queue_and_buffer
     run_info_topic = "fake_topic"
@@ -987,5 +987,6 @@ async def test_no_warning_for_missing_datasets_if_group_contains_stream(
     assert reached_assert
     assert len(
         record_warnings
-    ) == 0, "Expect no 'missing datasets' warning from the NXlog because it " \
-            "contains a stream which will provide the missing data"
+    ) == 0, "Expect no 'missing datasets' warning from the NXlog or " \
+            "NXevent_data because they each contain a stream which " \
+            "will provide the missing data"
