@@ -5,7 +5,7 @@ import numpy as np
 from enum import Enum
 from contextlib import contextmanager
 import json
-from scippneutron.file_loading._json_nexus import LoadFromJson
+from scippneutron.file_loading._json_nexus import LoadFromJson, MissingDataset
 
 h5root = Union[h5py.File, h5py.Group]
 
@@ -292,9 +292,14 @@ class JsonWriter:
                 "value_units": stream.value_units
             }
         }
-        parent, name = _parent_and_name_from_path(file_root, stream.path)
-        stream_group = self.add_group(parent, name)
-        stream_group["children"].append(new_stream)
+
+        nexus = LoadFromJson(file_root)
+        try:
+            group = nexus.get_object_by_path(file_root, stream.path)
+        except MissingDataset:
+            parent, name = _parent_and_name_from_path(file_root, stream.path)
+            group = self.add_group(parent, name)
+        group["children"].append(new_stream)
 
 
 class NumpyEncoder(json.JSONEncoder):
