@@ -35,7 +35,7 @@ extends:
   template: stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-    conda_channels: channel_select[variables['System.PullRequest.TargetBranch']] 
+    conda_channels: $channel_select[variables['System.PullRequest.TargetBranch']] 
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
