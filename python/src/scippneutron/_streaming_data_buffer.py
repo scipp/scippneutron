@@ -13,6 +13,7 @@ from streaming_data_types.exceptions import WrongSchemaException
 from typing import Optional, Dict, List, Any, Union, Callable
 from warnings import warn
 from ._loading_json_nexus import StreamInfo
+from datetime import datetime
 """
 The ESS data streaming system uses Google FlatBuffers to serialise
 data to transmit in the Kafka message payload. FlatBuffers uses schemas
@@ -42,7 +43,7 @@ def _create_metadata_buffer_array(name: str, unit: sc.Unit, dtype: Any,
             sc.zeros(dims=[name],
                      shape=(buffer_size, ),
                      unit=sc.Unit("nanoseconds"),
-                     dtype=np.int64)
+                     dtype=np.dtype('datetime64[ns]'))
         })
 
 
@@ -119,6 +120,9 @@ class _FastMetadataBuffer:
         if self._buffer_filled_size + message_size > self._buffer_size:
             await emit_data()
 
+        def _datetime_to_epoch_ns(input_timestamp: datetime) -> int:
+            return int(input_timestamp.timestamp() * 1_000_000_000)
+
         async with self._buffer_mutex:
             self._data_array[
                 self._name, self._buffer_filled_size:self._buffer_filled_size +
@@ -126,14 +130,32 @@ class _FastMetadataBuffer:
             if log_events.value_ts is not None:
                 timestamps = log_events.value_ts
             else:
-                timestamps = np.arange(
-                    0, message_size) * log_events.sample_ts_delta + int(
-                        log_events.timestamp.timestamp() * 1_000_000_000)
+                # Generate linearly spaced sample timestamps assuming that
+                # the message timestamp falls at the start of the sample range
+                timestamps = np.arange(0, message_size, dtype=np.int64) * int(
+                    log_events.sample_ts_delta) + _datetime_to_epoch_ns(
+                        log_events.timestamp)
                 if log_events.ts_location == TimestampLocation.Middle:
-                    timestamps = timestamps - 0.5 * (timestamps[-1] -
-                                                     timestamps[0])
+                    # Shift timestamps so that the message timestamp falls
+                    # in the middle of the sample range
+                    timestamps = timestamps - int(
+                        0.5 * (timestamps[-1] - timestamps[0]))
                 elif log_events.ts_location == TimestampLocation.End:
+                    # Shift timestamps so that the message timestamp falls at
+                    # the end of the sample range
                     timestamps = timestamps - (timestamps[-1] - timestamps[0])
+                elif log_events.ts_location == TimestampLocation.Start:
+                    pass  # timestamps are already correct
+                else:
+                    # We have accounted for all enum values so this can only
+                    # happen if someone really messed up when serialising the
+                    # message or a breaking change was made to the schema
+                    # without a new schema id being assigned (which is
+                    # against ECDC policy)
+                    raise RuntimeError(
+                        "Unrecognised timestamp location in fast sample "
+                        "environment data message (flatbuffer id: "
+                        f"'{FAST_FB_ID}')")
             self._data_array[
                 self._name, self._buffer_filled_size:self._buffer_filled_size +
                 message_size].coords["time"].values = timestamps

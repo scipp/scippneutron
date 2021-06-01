@@ -475,13 +475,15 @@ async def test_data_stream_returns_metadata(queue_and_buffer):
     assert data_from_stream.attrs[f142_source_name].value.values[
         0] == f142_value
     assert data_from_stream.attrs[f142_source_name].value.coords[
-        'time'].values[0] == f142_timestamp
+        'time'].values[0] == np.array(f142_timestamp,
+                                      dtype=np.dtype('datetime64[ns]'))
     assert np.array_equal(
         data_from_stream.attrs[senv_source_name].value.values, senv_values)
     senv_expected_timestamps = np.array([
         senv_timestamp_ns, senv_timestamp_ns + senv_time_between_samples,
         senv_timestamp_ns + (2 * senv_time_between_samples)
-    ])
+    ],
+                                        dtype=np.dtype('datetime64[ns]'))
     assert np.array_equal(
         data_from_stream.attrs[senv_source_name].value.coords['time'].values,
         senv_expected_timestamps)
@@ -544,7 +546,8 @@ async def test_data_stream_returns_data_from_multiple_slow_metadata_messages(
                        np.array([f142_value_1, f142_value_2]))
     assert np.array_equal(
         data_from_stream.attrs[f142_source_name].value.coords['time'].values,
-        np.array([f142_timestamp_1, f142_timestamp_2]))
+        np.array([f142_timestamp_1, f142_timestamp_2],
+                 dtype=np.dtype('datetime64[ns]')))
 
 
 @pytest.mark.asyncio
@@ -613,11 +616,13 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages(
     senv_expected_timestamps_1 = np.array([
         senv_timestamp_ns_1, senv_timestamp_ns_1 + senv_time_between_samples,
         senv_timestamp_ns_1 + (2 * senv_time_between_samples)
-    ])
+    ],
+                                          dtype=np.dtype('datetime64[ns]'))
     senv_expected_timestamps_2 = np.array([
         senv_timestamp_ns_2, senv_timestamp_ns_2 + senv_time_between_samples,
         senv_timestamp_ns_2 + (2 * senv_time_between_samples)
-    ])
+    ],
+                                          dtype=np.dtype('datetime64[ns]'))
     assert np.array_equal(
         data_from_stream.attrs[senv_source_name].value.coords['time'].values,
         np.concatenate(
