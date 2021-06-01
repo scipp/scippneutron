@@ -31,9 +31,9 @@ extends:
   template: stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-    - ${{ if eq($(System.PullRequest.TargetBranch), 'main') }}:
+    - ${{ if eq(variables['System.PullRequest.TargetBranch'], 'main') }}:
       conda_channels: '--channel scipp/label/main --channel ess-dmsc' # Select channel as for released scipp 
-    - ${{ if eq($(System.PullRequest.TargetBranch), 'next') }}:
+    - ${{ if eq(variables['System.PullRequest.TargetBranch'], 'next') }}:
       conda_channels: '--channel scipp/label/dev --channel ess-dmsc' # Select channel as for unstable scipp 
     gh_pages_subdirectory: 'scippneutron'
     config:
