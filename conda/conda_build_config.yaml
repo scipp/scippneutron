@@ -5,4 +5,4 @@ boost:
   - 1.75 # pinning is temporary solution to issue https://github.com/scipp/scipp/issues/1888
 
 scipp:
-  - 0.6
+  - 0.7
