@@ -33,6 +33,7 @@ Each schema is identified by a 4 character string which is included in:
 SLOW_FB_ID = "f142"
 FAST_FB_ID = "senv"
 CHOPPER_FB_ID = "tdct"
+EVENT_FB_ID = "ev42"
 
 
 def _create_metadata_buffer_array(name: str, unit: sc.Unit, dtype: Any,
@@ -68,12 +69,11 @@ class _SlowMetadataBuffer:
 
         # Each LogDataInfo contains a single value-timestamp pair
         async with self._buffer_mutex:
-            self._data_array[
-                self._name, self._buffer_filled_size:self._buffer_filled_size +
-                1].values[0] = log_event.value
-            self._data_array[
-                self._name, self._buffer_filled_size:self._buffer_filled_size +
-                1].coords["time"].values[0] = log_event.timestamp_unix_ns
+            self._data_array[self._name,
+                             self._buffer_filled_size] = log_event.value
+            self._data_array.coords["time"][
+                self._name, self._buffer_filled_size].value = np.datetime64(
+                    log_event.timestamp_unix_ns, 'ns')
             self._buffer_filled_size += 1
 
     async def get_metadata_array(self) -> sc.Variable:
@@ -294,6 +294,12 @@ class StreamedDataBuffer:
                 self._metadata_buffers[stream.flatbuffer_id][
                     stream.source_name] = _ChopperMetadataBuffer(
                         stream, self._chopper_buffer_size)
+            elif stream.flatbuffer_id == EVENT_FB_ID:
+                pass  # detection events, not metadata
+            else:
+                warn(f"Stream in run start message specified flatbuffer id "
+                     f"'{stream.flatbuffer_id}' which scippneutron does "
+                     f"not know how to deserialise.")
 
     def start(self):
         self._cancelled = False
