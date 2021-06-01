@@ -184,10 +184,8 @@ T attrs_to_coords(T &&x, const Dim to, const ConvertMode scatter) {
     // Before conversion we convert all geometry-related params into coords,
     // otherwise conversions with datasets will not work since attrs are
     // item-specific.
-    for (const auto &param : scatter_params(Dim::Invalid)) {
-      auto str = to_string(param);
+    for (const auto &param : scatter_params(Dim::Invalid))
       to_coord(param);
-    }
   } else if (to == NeutronDim::Tof) {
     for (const auto &param : no_scatter_params())
       to_coord(param);
