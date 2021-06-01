@@ -28,16 +28,18 @@ pr:
       - '*'
 
 variables:
-  ${{ if $[eq(variables['System.PullRequest.TargetBranch'], 'main')] }}:  
+  is_main: $[eq(variables['System.PullRequest.TargetBranch'], 'main')]
     channels: '--channel scipp/label/main --channel ess-dmsc'
-  ${{ if not($[eq(variables['System.PullRequest.TargetBranch'], 'next')]) }}:
     channels: '--channel scipp/label/dev --channel ess-dmsc'
 
 extends:
   template: stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-    conda_channels: $(channels)  
+    ${{ if eq( variables['Build.SourceBranchName'], 'master' ) }}:
+      conda_channels: '--channel scipp/label/main --channel ess-dmsc'  
+    ${{ if eq( variables['Build.SourceBranchName'], 'next' ) }}:
+      conda_channels: '--channel scipp/label/dev --channel ess-dmsc'  
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
