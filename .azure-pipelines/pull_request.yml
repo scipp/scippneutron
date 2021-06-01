@@ -27,11 +27,6 @@ pr:
     include:
       - '*'
 
-variables:
-  is_main: $[eq(variables['System.PullRequest.TargetBranch'], 'main')]
-    channels: '--channel scipp/label/main --channel ess-dmsc'
-    channels: '--channel scipp/label/dev --channel ess-dmsc'
-
 extends:
   template: stages.yml@SharedPipelines
   parameters:
