@@ -31,9 +31,9 @@ extends:
   template: stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-    ${{ if eq( variables['System.PullRequest.TargetBranch'], 'master' ) }}:
+    ${{ if eq( variables['System.PullRequest.TargetBranch'], 'refs/heads/main' ) }}:
       conda_channels: '--channel scipp/label/main --channel ess-dmsc'
-    ${{ if eq( variables['System.PullRequest.TargetBranch'], 'next' ) }}:
+    ${{ if eq( variables['System.PullRequest.TargetBranch'], 'refs/heads/next' ) }}:
       conda_channels: '--channel scipp/label/dev --channel ess-dmsc'
     gh_pages_subdirectory: 'scippneutron'
     config:
