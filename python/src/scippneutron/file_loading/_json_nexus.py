@@ -70,7 +70,8 @@ def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
                 nx_class = _get_attribute_value(child, _nexus_class)
                 if nx_class in nx_class_names:
                     groups_with_requested_nx_class[nx_class].append(
-                        Group(child, root, "/".join(path)))
+                        Group(child, root, "/".join(path),
+                              contains_stream(child)))
             except MissingAttribute:
                 # It may be a group but not an NX_class,
                 # that's fine, continue to its children

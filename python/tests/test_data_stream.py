@@ -4,7 +4,7 @@ import scipp as sc
 import asyncio
 from typing import List, Tuple, Callable, Dict, Optional
 import numpy as np
-from .nexus_helpers import NexusBuilder, Stream
+from .nexus_helpers import NexusBuilder, Stream, Log, EventData
 
 try:
     import streaming_data_types  # noqa: F401
@@ -320,7 +320,7 @@ async def test_specified_topics_override_run_start_message_topics(
     queue, buffer = queue_and_buffer
     test_topics = ["whiting", "snail", "porpoise"]
     topic_in_run_start_message = "test_topic"
-    test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
+    test_streams = [Stream("/entry", topic_in_run_start_message)]
     query_consumer = FakeQueryConsumer(streams=test_streams)
     async for _ in _data_stream(buffer,
                                 queue,
@@ -342,7 +342,7 @@ async def test_topics_from_run_start_message_used_if_topics_arg_not_specified(
         queue_and_buffer):
     queue, buffer = queue_and_buffer
     topic_in_run_start_message = "test_topic"
-    test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
+    test_streams = [Stream("/entry", topic_in_run_start_message)]
     query_consumer = FakeQueryConsumer(streams=test_streams)
     async for _ in _data_stream(buffer,
                                 queue,
@@ -362,7 +362,7 @@ async def test_start_time_from_run_start_msg_not_used_if_start_now_specified(
         queue_and_buffer):
     queue, buffer = queue_and_buffer
     topic_in_run_start_message = "test_topic"
-    test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
+    test_streams = [Stream("/entry", topic_in_run_start_message)]
     test_start_time = 123456
     query_consumer = FakeQueryConsumer(streams=test_streams,
                                        start_time=test_start_time)
@@ -386,7 +386,7 @@ async def test_start_time_from_run_start_msg_used_if_requested(
         queue_and_buffer):
     queue, buffer = queue_and_buffer
     topic_in_run_start_message = "test_topic"
-    test_streams = [Stream("/entry/stream_1", topic_in_run_start_message)]
+    test_streams = [Stream("/entry", topic_in_run_start_message)]
     test_start_time = 123456
     query_consumer = FakeQueryConsumer(streams=test_streams,
                                        start_time=test_start_time)
@@ -950,3 +950,43 @@ async def test_data_stream_emits_if_multiple_chopper_msgs_exceed_buffer():
         assert not queue.empty(), "Expect data to have been emitted to " \
                                   "queue as buffer size was exceeded"
         break
+
+
+@pytest.mark.asyncio
+async def test_no_warning_for_missing_datasets_if_group_contains_stream(
+        queue_and_buffer):
+    # Create NeXus description for run start message which contains
+    # an NXlog which contains no datasets but does have a Stream
+    # source for the data
+    builder = NexusBuilder()
+    test_instrument_name = "DATA_STREAM_TEST"
+    builder.add_instrument(test_instrument_name)
+    builder.add_log(Log("log", None))
+    builder.add_event_data(EventData(None, None, None, None))
+    builder.add_stream(Stream("/entry/log"))
+    builder.add_stream(Stream("/entry/events_0"))
+    nexus_structure = builder.json_string
+
+    queue, buffer = queue_and_buffer
+    run_info_topic = "fake_topic"
+    reached_assert = False
+
+    with pytest.warns(None) as record_warnings:
+        async for _ in _data_stream(buffer,
+                                    queue,
+                                    "broker", [""],
+                                    SHORT_TEST_INTERVAL,
+                                    run_info_topic=run_info_topic,
+                                    query_consumer=FakeQueryConsumer(
+                                        test_instrument_name,
+                                        nexus_structure=nexus_structure),
+                                    consumer_type=FakeConsumer,
+                                    max_iterations=0):
+            reached_assert = True
+            break
+    assert reached_assert
+    assert len(
+        record_warnings
+    ) == 0, "Expect no 'missing datasets' warning from the NXlog or " \
+            "NXevent_data because they each contain a stream which " \
+            "will provide the missing data"

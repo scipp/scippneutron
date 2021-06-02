@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import h5py
 from typing import Optional, List, Any, Dict, Union
 import numpy as np
-from ._common import (BadSource, MissingDataset, Group)
+from ._common import (BadSource, SkipSource, MissingDataset, Group)
 import scipp as sc
 from warnings import warn
 from itertools import groupby
@@ -27,7 +27,13 @@ def _all_equal(iterable):
     return next(g, True) and not next(g, False)
 
 
-def _check_for_missing_fields(group: GroupObject, nexus: LoadFromNexus) -> str:
+def _check_for_missing_fields(group: Group, nexus: LoadFromNexus):
+    if group.contains_stream:
+        # Do not warn about missing datasets if the group contains
+        # a stream, as this will provide the missing data
+        raise SkipSource("Data source is missing datasets"
+                         "but contains a stream source for the data")
+
     required_fields = (
         "event_time_zero",
         "event_index",
@@ -35,10 +41,9 @@ def _check_for_missing_fields(group: GroupObject, nexus: LoadFromNexus) -> str:
         "event_time_offset",
     )
     for field in required_fields:
-        found, msg = nexus.dataset_in_group(group, field)
+        found, msg = nexus.dataset_in_group(group.group, field)
         if not found:
-            return msg
-    return ""
+            raise BadSource(msg)
 
 
 def _convert_array_to_metres(array: np.ndarray, unit: str) -> np.ndarray:
@@ -167,9 +172,7 @@ def _load_detector(group: Group, file_root: h5py.File,
 def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
                       detector_data: DetectorData,
                       quiet: bool) -> DetectorData:
-    error_msg = _check_for_missing_fields(group.group, nexus)
-    if error_msg:
-        raise BadSource(error_msg)
+    _check_for_missing_fields(group, nexus)
 
     # There is some variation in the last recorded event_index in files
     # from different institutions. We try to make sure here that it is what
@@ -359,6 +362,8 @@ def _load_data_from_each_nx_event_data(detector_data: Dict,
             detector_data.pop(parent_path, DetectorData())
         except BadSource as e:
             warn(f"Skipped loading {group.path} due to:\n{e}")
+        except SkipSource:
+            pass  # skip without warning user
     for _, remaining_data in detector_data.items():
         if remaining_data.detector_ids is not None:
             event_data.append(remaining_data)

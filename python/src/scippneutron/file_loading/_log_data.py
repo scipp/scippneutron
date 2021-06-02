@@ -5,8 +5,8 @@
 import numpy as np
 from typing import Tuple, List
 import scipp as sc
-from ._common import (BadSource, MissingDataset, Group)
-from ._nexus import LoadFromNexus, GroupObject, ScippData
+from ._common import (BadSource, SkipSource, MissingDataset, Group)
+from ._nexus import LoadFromNexus, ScippData
 from warnings import warn
 
 
@@ -14,11 +14,12 @@ def load_logs(loaded_data: ScippData, log_groups: List[Group],
               nexus: LoadFromNexus):
     for group in log_groups:
         try:
-            log_data_name, log_data = _load_log_data_from_group(
-                group.group, nexus)
+            log_data_name, log_data = _load_log_data_from_group(group, nexus)
             _add_log_to_data(log_data_name, log_data, group.path, loaded_data)
         except BadSource as e:
             warn(f"Skipped loading {group.path} due to:\n{e}")
+        except SkipSource:
+            pass  # skip without warning user
 
 
 def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
@@ -45,28 +46,32 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
              f"{log_data_name} used as attribute name.")
 
 
-def _load_log_data_from_group(group: GroupObject,
+def _load_log_data_from_group(group: Group,
                               nexus: LoadFromNexus) -> Tuple[str, sc.Variable]:
-    property_name = nexus.get_name(group)
+    property_name = nexus.get_name(group.group)
     value_dataset_name = "value"
     time_dataset_name = "time"
 
     try:
         values = nexus.load_dataset_from_group_as_numpy_array(
-            group, value_dataset_name)
+            group.group, value_dataset_name)
     except MissingDataset:
+        if group.contains_stream:
+            raise SkipSource(
+                "Log is missing value dataset but contains stream")
         raise BadSource(f"NXlog '{property_name}' has no value dataset")
 
     if values.size == 0:
         raise BadSource(f"NXlog '{property_name}' has an empty value dataset")
 
     unit = nexus.get_unit(
-        nexus.get_dataset_from_group(group, value_dataset_name))
+        nexus.get_dataset_from_group(group.group, value_dataset_name))
 
     try:
         dimension_label = "time"
         is_time_series = True
-        times = nexus.load_dataset(group, time_dataset_name, [dimension_label])
+        times = nexus.load_dataset(group.group, time_dataset_name,
+                                   [dimension_label])
         if tuple(times.shape) != values.shape:
             raise BadSource(f"NXlog '{property_name}' has time and value "
                             f"datasets of different shapes")
@@ -83,13 +88,13 @@ def _load_log_data_from_group(group: GroupObject,
         property_data = sc.Variable(value=values,
                                     unit=unit,
                                     dtype=nexus.get_dataset_numpy_dtype(
-                                        group, value_dataset_name))
+                                        group.group, value_dataset_name))
     else:
         property_data = sc.Variable(values=values,
                                     unit=unit,
                                     dims=[dimension_label],
                                     dtype=nexus.get_dataset_numpy_dtype(
-                                        group, value_dataset_name))
+                                        group.group, value_dataset_name))
 
     if is_time_series:
         # If property has timestamps, create a DataArray
