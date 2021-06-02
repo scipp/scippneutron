@@ -14,7 +14,7 @@ resources:
     name: scipp/pipelines
     type: github
     endpoint: scipp
-    ref: more_flexible_conda_channels
+    ref: main
 
 trigger:
   tags:
@@ -27,10 +27,8 @@ extends:
   template: stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-     conda_channels:
-      void: '--channel scipp --channel ess-dmsc'
-      key: 'void'
-   gh_pages_subdirectory: 'scippneutron'
+    conda_channels: '--channel scipp --channel ess-dmsc'
+    gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
         py_versions: ['3.7']
