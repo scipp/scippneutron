@@ -14,7 +14,7 @@ resources:
     name: scipp/pipelines
     type: github
     endpoint: scipp
-    ref: main
+    ref: more_flexible_conda_channels
 
 trigger:
   branches:
@@ -31,10 +31,10 @@ extends:
   template: stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-    ${{ if eq( variables['System.PullRequest.TargetBranch'], 'refs/heads/main' ) }}:
-      conda_channels: '--channel scipp/label/main --channel ess-dmsc'
-    ${{ if eq( variables['System.PullRequest.TargetBranch'], 'refs/heads/next' ) }}:
-      conda_channels: '--channel scipp/label/dev --channel ess-dmsc'
+    conda_channels:
+      main: '--channel scipp/label/main --channel ess-dmsc'
+      next: '--channel scipp/label/dev --channel ess-dmsc'
+      key: $ {{ variables.System.PullRequest.TargetBranch }}
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
