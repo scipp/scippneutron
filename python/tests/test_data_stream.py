@@ -2,7 +2,7 @@ import datetime
 import pytest
 import scipp as sc
 import asyncio
-from typing import List, Tuple, Callable, Dict, Optional
+from typing import List, Tuple, Optional
 import numpy as np
 from .nexus_helpers import NexusBuilder, Stream, Log, EventData
 
@@ -21,31 +21,11 @@ try:
     from streaming_data_types.timestamps_tdct import serialise_tdct
     from streaming_data_types.sample_environment_senv import serialise_senv
     from streaming_data_types.sample_environment_senv import Location
-    from scippneutron.data_streaming._consumer import RunStartError
+    from scippneutron.data_streaming._consumer import (RunStartError,
+                                                       FakeConsumer)
 except ImportError:
     pytest.skip("Kafka or Serialisation module is unavailable",
                 allow_module_level=True)
-
-
-class FakeConsumer:
-    """
-    Use in place of KafkaConsumer to avoid having to do
-    network IO in unit tests. Does not need to supply
-    fake messages as the new_data method on the
-    StreamedDataBuffer can be called manually instead.
-    """
-    def __init__(self,
-                 topic_partitions: Optional[List[TopicPartition]] = None,
-                 conf: Optional[Dict] = None,
-                 callback: Optional[Callable] = None,
-                 stop_at_end_of_partition: Optional[bool] = None):
-        self.stopped = True
-
-    def start(self):
-        self.stopped = False
-
-    def stop(self):
-        self.stopped = True
 
 
 class FakeMessage:

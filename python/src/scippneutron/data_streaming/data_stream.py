@@ -1,10 +1,13 @@
 import numpy as np
 import time
-from typing import List, Generator, Callable, Optional, Type
+from typing import List, Generator, Optional, Set
 import asyncio
 import scipp as sc
-from ..file_loading.load_nexus import _load_nexus_json
+from ..file_loading.load_nexus import _load_nexus_json, StreamInfo
+import multiprocessing as mp
+from queue import Empty as QueueEmpty
 from enum import Enum
+from ._consumer_type import ConsumerType
 """
 Some type names are included as strings as imports are done in
 function scope to avoid optional dependencies being imported
@@ -15,13 +18,6 @@ by the top level __init__.py
 class StartTime(Enum):
     now = "now"
     start_of_run = "start_of_run"
-
-
-def _consumers_all_stopped(consumers: List["KafkaConsumer"]):  # noqa: F821
-    for consumer in consumers:
-        if not consumer.stopped:
-            return False
-    return True
 
 
 _missing_dependency_message = (
@@ -64,25 +60,20 @@ async def data_stream(
       the topic
     :param start_time: Get data from now or from start of the last run
     """
-    try:
-        from ._data_buffer import StreamedDataBuffer
-    except ImportError:
-        raise ImportError(_missing_dependency_message)
-
     validate_buffer_size_args(chopper_buffer_size, event_buffer_size,
                               fast_metadata_buffer_size,
                               slow_metadata_buffer_size)
 
-    queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, event_buffer_size,
-                                slow_metadata_buffer_size,
-                                fast_metadata_buffer_size, chopper_buffer_size,
-                                interval)
+    data_queue = mp.Queue()
+    instruction_queue = mp.Queue()
 
     # Use "async for" as "yield from" cannot be used in an async function, see
     # https://www.python.org/dev/peps/pep-0525/#asynchronous-yield-from
-    async for data_chunk in _data_stream(buffer, queue, kafka_broker, topics,
-                                         interval, run_info_topic, start_time):
+    async for data_chunk in _data_stream(
+        data_queue, instruction_queue, kafka_broker, topics, interval,
+        event_buffer_size, slow_metadata_buffer_size,
+        fast_metadata_buffer_size, chopper_buffer_size, run_info_topic,
+        start_time):  # noqa: E125
         yield data_chunk
 
 
@@ -100,26 +91,89 @@ def validate_buffer_size_args(chopper_buffer_size, event_buffer_size,
             raise ValueError(f"{buffer_name} must be greater than zero")
 
 
+class WorkerInstruction(Enum):
+    STOP_NOW = 1
+    STOPTIME_UPDATE = 2
+
+
+def data_consumption_worker(
+        start_time_ms: int, topics: Set[str], kafka_broker: str,
+        consumer_type: ConsumerType, stream_info: Optional[List[StreamInfo]],
+        interval_s: float, event_buffer_size: int,
+        slow_metadata_buffer_size: int, fast_metadata_buffer_size: int,
+        chopper_buffer_size: int, worker_instruction_queue: mp.Queue,
+        data_queue: mp.Queue):
+    """
+    Starts and stops buffers and data consumers which collect data and
+    send them back to the main process via a queue.
+
+    All input args must be mp.Queue or picklable as this function is launched
+    as a multiprocessing.Process.
+    """
+    try:
+        from ._consumer import (start_consumers, stop_consumers,
+                                create_consumers)
+        from ._data_buffer import StreamedDataBuffer
+    except ImportError:
+        raise ImportError(_missing_dependency_message)
+
+    buffer = StreamedDataBuffer(data_queue, event_buffer_size,
+                                slow_metadata_buffer_size,
+                                fast_metadata_buffer_size, chopper_buffer_size,
+                                interval_s)
+
+    if stream_info is not None:
+        buffer.init_metadata_buffers(stream_info)
+
+    consumers = create_consumers(start_time_ms,
+                                 topics,
+                                 kafka_broker,
+                                 consumer_type,
+                                 buffer.new_data,
+                                 stop_at_end_of_partition=False)
+
+    start_consumers(consumers)
+    buffer.start()
+
+    while True:
+        try:
+            instruction = worker_instruction_queue.get(timeout=10.)
+            if instruction == WorkerInstruction.STOP_NOW:
+                stop_consumers(consumers)
+                buffer.stop()
+                break
+        except QueueEmpty:
+            pass
+        except (ValueError, OSError):
+            # Queue has been closed, stop worker
+            stop_consumers(consumers)
+            buffer.stop()
+            break
+
+
 async def _data_stream(
-    buffer: "StreamedDataBuffer",  # noqa: F821
-    queue: asyncio.Queue,
-    kafka_broker: str,
-    topics: Optional[List[str]],
-    interval: sc.Variable,
-    run_info_topic: Optional[str] = None,
-    start_at: StartTime = StartTime.now,
-    query_consumer: Optional["KafkaQueryConsumer"] = None,  # noqa: F821
-    consumer_type: Optional[Type["KafkaConsumer"]] = None,  # noqa: F821
-    max_iterations: int = np.iinfo(np.int32).max  # for testability
+        data_queue: mp.Queue,
+        worker_instruction_queue: mp.Queue,
+        kafka_broker: str,
+        topics: Optional[List[str]],
+        interval: sc.Variable,
+        event_buffer_size: int,
+        slow_metadata_buffer_size: int,
+        fast_metadata_buffer_size: int,
+        chopper_buffer_size: int,
+        run_info_topic: Optional[str] = None,
+        start_at: StartTime = StartTime.now,
+        query_consumer: Optional["KafkaQueryConsumer"] = None,  # noqa: F821
+        consumer_type: ConsumerType = ConsumerType.REAL,
+        max_iterations: int = np.iinfo(np.int32).max,  # for testability
 ) -> Generator[sc.DataArray, None, None]:
     """
     Main implementation of data stream is extracted to this function so that
     fake consumers can be injected for unit tests
     """
     try:
-        from ._consumer import (start_consumers, create_consumers,
-                                stop_consumers, get_run_start_message,
-                                KafkaQueryConsumer, KafkaConsumer)
+        from ._consumer import (get_run_start_message, KafkaQueryConsumer,
+                                KafkaConsumer)
     except ImportError:
         raise ImportError(_missing_dependency_message)
 
@@ -134,13 +188,13 @@ async def _data_stream(
     if consumer_type is None:
         consumer_type = KafkaConsumer
 
+    stream_info = None
     if run_info_topic is not None:
         run_start_info = get_run_start_message(run_info_topic, query_consumer)
         if topics is None:
             loaded_data, stream_info = _load_nexus_json(
                 run_start_info.nexus_structure, get_start_info=True)
             topics = {stream.topic for stream in stream_info}
-            buffer.init_metadata_buffers(stream_info)
         else:
             loaded_data, _ = _load_nexus_json(run_start_info.nexus_structure,
                                               get_start_info=False)
@@ -151,37 +205,29 @@ async def _data_stream(
     else:
         start_time = time.time() * sc.units.s
 
-    consumers = create_consumers(start_time,
-                                 topics,
-                                 kafka_broker,
-                                 query_consumer,
-                                 consumer_type,
-                                 buffer.new_data,
-                                 stop_at_end_of_partition=False)
+    # Convert to int and float as easier to pass to mp.Process
+    # (sc.Variable would have to be serialised/deserialised)
+    start_time_ms = int(sc.to_unit(start_time, "milliseconds").value)
+    interval_s = float(sc.to_unit(interval, 's').value)
 
-    start_consumers(consumers)
-    buffer.start()
+    data_collect_process = mp.Process(
+        target=data_consumption_worker,
+        args=(start_time_ms, topics, kafka_broker, consumer_type, stream_info,
+              interval_s, event_buffer_size, slow_metadata_buffer_size,
+              fast_metadata_buffer_size, chopper_buffer_size,
+              worker_instruction_queue, data_queue))
+    data_collect_process.start()
 
-    # If we wait twice the expected interval and have not got
-    # any new data in the queue then check if it is because all
-    # the consumers have stopped, if so, we are done. Otherwise
-    # it could just be that we have not received any new data.
     iterations = 0
     try:
-        while not _consumers_all_stopped(
-                consumers) and iterations < max_iterations:
+        while data_collect_process.is_alive() and iterations < max_iterations:
             try:
-                new_data = await asyncio.wait_for(
-                    queue.get(), timeout=2 * sc.to_unit(interval, 's').value)
+                new_data = data_queue.get_nowait()
                 iterations += 1
                 yield new_data
-            except asyncio.TimeoutError:
-                pass
+            except QueueEmpty:
+                await asyncio.sleep(0.5 * interval_s)
     finally:
         # Ensure cleanup happens however the loop exits
-        stop_consumers(consumers)
-        buffer.stop()
-
-
-def start_stream(user_function: Callable) -> asyncio.Task:
-    return asyncio.create_task(user_function())
+        worker_instruction_queue.put(WorkerInstruction.STOP_NOW)
+        data_collect_process.join()

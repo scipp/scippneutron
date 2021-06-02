@@ -1,10 +1,10 @@
 from confluent_kafka import Consumer, TopicPartition, KafkaError
-from typing import Callable, List, Dict, Optional, Tuple, Type
-import asyncio
+from typing import Callable, List, Dict, Optional, Tuple
 from warnings import warn
+import threading
 from streaming_data_types.run_start_pl72 import deserialise_pl72
 from streaming_data_types.exceptions import WrongSchemaException
-import scipp as sc
+from ._consumer_type import ConsumerType
 """
 This module uses the confluent-kafka-python implementation of the
 Kafka Client API to communicate with Kafka servers (brokers)
@@ -42,19 +42,19 @@ class KafkaConsumer:
         self._stop_at_end_of_partition = stop_at_end_of_partition
         self._reached_eop = False
         self._cancelled = False
-        self._consume_data: Optional[asyncio.Task] = None
+        self._consume_data: Optional[threading.Thread] = None
         self.stopped = True
 
     def start(self):
         self.stopped = False
         self._cancelled = False
-        self._consume_data = asyncio.create_task(self._consume_loop())
+        self._consume_data = threading.Thread(target=self._consume_loop)
+        self._consume_data.start()
 
-    async def _consume_loop(self):
+    def _consume_loop(self):
         while not self._cancelled:
-            msg = self._consumer.poll(timeout=0.)
+            msg = self._consumer.poll(timeout=1.0)
             if msg is None:
-                await asyncio.sleep(0.2)
                 continue
             if msg.error():
                 if self._stop_at_end_of_partition and msg.error().code(
@@ -63,15 +63,34 @@ class KafkaConsumer:
                     break
                 warn(f"Message error in consumer: {msg.error()}")
                 break
-            await self._callback(msg.value())
-        self.stop()
+            self._callback(msg.value())
+        # self.stop()
 
     def stop(self):
         if not self._cancelled:
             self._cancelled = True
             if self._consume_data is not None:
-                self._consume_data.cancel()
+                self._consume_data.join(5.)
         self._consumer.close()
+        self.stopped = True
+
+
+class FakeConsumer:
+    """
+    Use in place of KafkaConsumer to avoid having to do
+    network IO in unit tests.
+    """
+    def __init__(self,
+                 topic_partitions: Optional[List[TopicPartition]] = None,
+                 conf: Optional[Dict] = None,
+                 callback: Optional[Callable] = None,
+                 stop_at_end_of_partition: Optional[bool] = None):
+        self.stopped = True
+
+    def start(self):
+        self.stopped = False
+
+    def stop(self):
         self.stopped = True
 
 
@@ -131,11 +150,10 @@ class KafkaQueryConsumer:
 
 
 def create_consumers(
-        start_time: sc.Variable,
+        start_time_ms: int,
         topics: List[str],
         kafka_broker: str,
-        query_consumer: KafkaQueryConsumer,
-        consumer_type: Type[KafkaConsumer],  # so we can inject fake consumer
+        consumer_type_enum: ConsumerType,  # so we can inject fake consumer
         callback: Callable,
         stop_at_end_of_partition: bool = False) -> List[KafkaConsumer]:
     """
@@ -146,12 +164,11 @@ def create_consumers(
     greatly simplifies the logic around stopping at the end of
     the stream (making use of "end of partition" event)
     """
+    query_consumer = KafkaQueryConsumer(kafka_broker)
     topic_partitions = []
     for topic in topics:
         topic_partitions.extend(
-            query_consumer.get_topic_partitions(
-                topic,
-                offset=int(sc.to_unit(start_time, "milliseconds").value)))
+            query_consumer.get_topic_partitions(topic, offset=start_time_ms))
     topic_partitions = query_consumer.offsets_for_times(topic_partitions)
 
     config = {
@@ -162,6 +179,12 @@ def create_consumers(
         "message.max.bytes": 100_000_000,
         "fetch.message.max.bytes": 100_000_000,
     }
+
+    if consumer_type_enum == ConsumerType.REAL:
+        consumer_type = KafkaConsumer
+    else:
+        consumer_type = FakeConsumer
+
     consumers = []
     for topic_partition in topic_partitions:
         consumers.append(
