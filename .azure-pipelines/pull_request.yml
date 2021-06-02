@@ -34,7 +34,7 @@ extends:
     conda_channels:
       main: '--channel scipp/label/main --channel ess-dmsc'
       next: '--channel scipp/label/dev --channel ess-dmsc'
-      key: $ {{ variables.System.PullRequest.TargetBranch }}
+      key: $(System.PullRequest.TargetBranch)
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
