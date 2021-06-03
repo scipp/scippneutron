@@ -3,10 +3,34 @@
 Release Notes
 =============
 
-Since v0.1.0
+Since v0.2.0
 ------------
 
 Features
+~~~~~~~~
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+Contributors
+~~~~~~~~~~~~
+
+Owen Arnold,
+Simon Heybrock,
+Matthew D. Jones,
+Neil Vaytet,
+and Jan-Lukas Wynen
+
+v0.2.0 (June 2021)
+-------------------
+
+Features
+~~~~~~~~
+
+* ``convert`` new returns data arrays with a new coordinate array (for the converted dimension), but data and unrelated meta data is not deep-copied.
+  This should improve performance in a number of cases.
+
+Bugfixes
 ~~~~~~~~
 
 * When converting from data from `Mantid <https://www.mantidproject.org/Main_Page>`_ with its `instrument <https://docs.mantidproject.org/nightly/concepts/InstrumentDefinitionFile.html>`_ format;
@@ -14,11 +38,14 @@ Features
   This fixes a bug with monitors where previously, duplicate entries encoutered after the first were rejected from the output metadata.
   In the case of instruments such as POLARIS, all monitors will now be translated.
 
-Breaking changes
-~~~~~~~~~~~~~~~~
-
 Contributors
 ~~~~~~~~~~~~
+
+Owen Arnold,
+Simon Heybrock,
+Matthew D. Jones,
+Neil Vaytet,
+and Jan-Lukas Wynen
 
 v0.1.0 (March 2021)
 -------------------

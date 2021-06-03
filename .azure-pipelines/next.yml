@@ -3,11 +3,16 @@ parameters:
   displayName: Verbose
   type: boolean
   default: false
+- name: scipp_channel
+  type: string
+  default: scipp/label/dev
 
 # Note: the 'endpoint' refers to the Azure service connection, which can be
 # found on the Azure pipelines web interface under
 # scipp > scippneutron > Settings > Service connections
 
+# New unstable runs/releases of scipp will automatically cause this pipeline to run
+# Upstream scipp packages are scipp/label/dev
 resources:
   repositories:
   - repository: SharedPipelines
@@ -15,31 +20,33 @@ resources:
     type: github
     endpoint: scipp
     ref: main
+  pipelines:
+  - pipeline: upstream_scipp_main
+    project: scipp
+    source: Main
+    trigger: true 
 
 trigger:
-  branches:
-    exclude:
-      - '*'
+  - next
 
-pr:
-  autoCancel: true
-  branches:
-    include:
-      - '*'
+pr: none
 
 extends:
   template: stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-    conda_channels: '--channel scipp --channel ess-dmsc'
+    conda_channels: '--channel scipp/label/dev --channel ess-dmsc'
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
         py_versions: ['3.7']
-        conda_env: 'scippneutron-developer.yml'
+        conda_env: 'scippneutron-developer-next.yml'
       osx:
         py_versions: ['3.7']
-        conda_env: 'scippneutron-developer.yml'
+        conda_env: 'scippneutron-developer-next.yml'
       windows:
         py_versions: ['3.7']
-        conda_env: 'scippneutron-developer-no-mantid.yml'
+        conda_env: 'scippneutron-developer-no-mantid-next.yml'
+    deploy: true
+    conda_label: 'next'
+    publish_docs: false

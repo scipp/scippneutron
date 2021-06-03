@@ -118,7 +118,12 @@ def _add_attr_to_loaded_data(attr_name: str,
 
     try:
         if dtype is not None:
-            data[attr_name] = sc.Variable(value=value, dtype=dtype, unit=unit)
+            if dtype == sc.dtype.vector_3_float64:
+                data[attr_name] = sc.vector(value=value, unit=unit)
+            else:
+                data[attr_name] = sc.Variable(value=value,
+                                              dtype=dtype,
+                                              unit=unit)
         else:
             data[attr_name] = sc.Variable(value=value, unit=unit)
     except KeyError:

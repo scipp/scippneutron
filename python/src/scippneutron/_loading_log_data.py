@@ -34,7 +34,7 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
     unique_name_found = False
     while not unique_name_found:
         if log_data_name not in data.keys():
-            data[log_data_name] = sc.detail.move(log_data)
+            data[log_data_name] = log_data
             unique_name_found = True
         else:
             name_changed = True
@@ -99,8 +99,7 @@ def _load_log_data_from_group(group: GroupObject,
                 dimension_label: times
             }
         }
-        return property_name, sc.Variable(value=sc.detail.move_to_data_array(
-            **data_array))
+        return property_name, sc.Variable(value=sc.DataArray(**data_array))
     elif not np.isscalar(values):
         # If property is multi-valued, create a wrapper single
         # value variable. This prevents interference with

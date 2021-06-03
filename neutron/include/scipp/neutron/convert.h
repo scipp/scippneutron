@@ -16,14 +16,8 @@ namespace scipp::neutron {
 [[nodiscard]] SCIPPNEUTRON_EXPORT dataset::DataArray
 convert(dataset::DataArray d, const Dim from, const Dim to,
         const ConvertMode scatter);
-[[nodiscard]] SCIPPNEUTRON_EXPORT dataset::DataArray
-convert(const dataset::DataArrayConstView &d, const Dim from, const Dim to,
-        const ConvertMode scatter);
 [[nodiscard]] SCIPPNEUTRON_EXPORT dataset::Dataset
 convert(dataset::Dataset d, const Dim from, const Dim to,
-        const ConvertMode scatter);
-[[nodiscard]] SCIPPNEUTRON_EXPORT dataset::Dataset
-convert(const dataset::DatasetConstView &d, const Dim from, const Dim to,
         const ConvertMode scatter);
 
 } // namespace scipp::neutron

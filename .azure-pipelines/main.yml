@@ -11,6 +11,8 @@ parameters:
 # found on the Azure pipelines web interface under
 # scipp > scippneutron > Settings > Service connections
 
+# New stable runs/releases of scipp will automatically cause this pipeline to run.
+# Upstream scipp packages are scipp/label/main
 resources:
   repositories:
   - repository: SharedPipelines
@@ -19,12 +21,10 @@ resources:
     endpoint: scipp
     ref: main
   pipelines:
-  - pipeline: upstream_scipp_main
+  - pipeline: upstream_scipp_release
     project: scipp
-    source: Main
-    trigger: none # TODO need to disable publishing and change back to `true`, once CI setup has been updated
-    #parameters: # TODO does setting the parameter within the same file work?
-    #  scipp_channel: scipp/label/dev
+    source: Release
+    trigger: true
 
 trigger:
   - main
@@ -44,8 +44,9 @@ extends:
       osx:
         py_versions: ['3.7']
         conda_env: 'scippneutron-developer.yml'
-      # windows:
-      #   py_versions: ['3.7']
-      #   conda_env: 'scippneutron-developer-no-mantid.yml'
+      windows:
+        py_versions: ['3.7']
+        conda_env: 'scippneutron-developer-no-mantid.yml'
     deploy: true
     conda_label: 'dev'
+    publish_docs: true

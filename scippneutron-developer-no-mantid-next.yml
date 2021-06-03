@@ -5,7 +5,7 @@
 # or
 # See https://scipp.github.io/developer/dependencies.html
 
-name: scippneutron-developer
+name: scippneutron-developer-next
 
 channels:
   - conda-forge
@@ -16,7 +16,7 @@ dependencies:
   - boost-cpp=1.75 # see https://github.com/scipp/scipp/issues/1888
   - ninja
   - tbb-devel
-  - scipp
+  - scipp/label/dev::scipp
 
   # Run
   - appdirs

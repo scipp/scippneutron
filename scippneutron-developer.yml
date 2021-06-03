@@ -10,14 +10,13 @@ channels:
 
 dependencies:
   # Build
-  - boost-cpp=1.75
+  - boost-cpp=1.75 # see https://github.com/scipp/scipp/issues/1888
   - ninja
   - tbb-devel
   - scipp
 
   # Run
   - appdirs
-  - boost=1.75
   - ipympl
   - ipywidgets
   - mantid-framework
@@ -28,6 +27,7 @@ dependencies:
   - pythreejs
   - pyyaml
   - tbb
+  - traitlets
   - h5py
   - python-confluent-kafka
   - ess-dmsc::ess-streaming-data-types
@@ -43,6 +43,7 @@ dependencies:
   - flake8
 
   # Docs
+  - ipython
   - pandoc
   - sphinx
   - sphinx_rtd_theme

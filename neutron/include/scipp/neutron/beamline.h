@@ -37,28 +37,19 @@ SCIPPNEUTRON_EXPORT extern Dim TwoTheta;
 SCIPPNEUTRON_EXPORT extern Dim Wavelength;
 } // namespace NeutronDim
 
-SCIPPNEUTRON_EXPORT VariableConstView
-position(const dataset::CoordsConstView &meta);
-SCIPPNEUTRON_EXPORT VariableConstView
-source_position(const dataset::CoordsConstView &meta);
-SCIPPNEUTRON_EXPORT VariableConstView
-sample_position(const dataset::CoordsConstView &meta);
-SCIPPNEUTRON_EXPORT Variable Ltotal(const dataset::CoordsConstView &meta,
+SCIPPNEUTRON_EXPORT Variable position(const dataset::Coords &meta);
+SCIPPNEUTRON_EXPORT Variable source_position(const dataset::Coords &meta);
+SCIPPNEUTRON_EXPORT Variable sample_position(const dataset::Coords &meta);
+SCIPPNEUTRON_EXPORT Variable Ltotal(const dataset::Coords &meta,
                                     const ConvertMode scatter);
-SCIPPNEUTRON_EXPORT Variable L1(const dataset::CoordsConstView &meta);
-SCIPPNEUTRON_EXPORT Variable L2(const dataset::CoordsConstView &meta);
-SCIPPNEUTRON_EXPORT Variable
-scattering_angle(const dataset::CoordsConstView &meta);
-SCIPPNEUTRON_EXPORT Variable
-cos_two_theta(const dataset::CoordsConstView &meta);
-SCIPPNEUTRON_EXPORT Variable two_theta(const dataset::CoordsConstView &meta);
-SCIPPNEUTRON_EXPORT VariableConstView
-incident_energy(const dataset::CoordsConstView &meta);
-SCIPPNEUTRON_EXPORT VariableConstView
-final_energy(const dataset::CoordsConstView &meta);
-SCIPPNEUTRON_EXPORT Variable
-incident_beam(const dataset::CoordsConstView &meta);
-SCIPPNEUTRON_EXPORT Variable
-scattered_beam(const dataset::CoordsConstView &meta);
+SCIPPNEUTRON_EXPORT Variable L1(const dataset::Coords &meta);
+SCIPPNEUTRON_EXPORT Variable L2(const dataset::Coords &meta);
+SCIPPNEUTRON_EXPORT Variable scattering_angle(const dataset::Coords &meta);
+SCIPPNEUTRON_EXPORT Variable cos_two_theta(const dataset::Coords &meta);
+SCIPPNEUTRON_EXPORT Variable two_theta(const dataset::Coords &meta);
+SCIPPNEUTRON_EXPORT Variable incident_energy(const dataset::Coords &meta);
+SCIPPNEUTRON_EXPORT Variable final_energy(const dataset::Coords &meta);
+SCIPPNEUTRON_EXPORT Variable incident_beam(const dataset::Coords &meta);
+SCIPPNEUTRON_EXPORT Variable scattered_beam(const dataset::Coords &meta);
 
 } // namespace scipp::neutron
