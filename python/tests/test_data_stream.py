@@ -489,8 +489,8 @@ async def test_data_stream_returns_metadata(queue_and_buffer):
     assert np.array_equal(
         data_from_stream.attrs[senv_source_name].value.coords['time'].values,
         senv_expected_timestamps)
-    assert np.array_equal(data_from_stream.attrs[tdct_source_name].values,
-                          tdct_timestamps)
+    assert np.array_equal(
+        data_from_stream.attrs[tdct_source_name].value.values, tdct_timestamps)
 
 
 @pytest.mark.asyncio
@@ -681,7 +681,7 @@ async def test_data_stream_returns_data_from_multiple_chopper_messages(
             break
 
     assert np.array_equal(
-        data_from_stream.attrs[tdct_source_name].values,
+        data_from_stream.attrs[tdct_source_name].value.values,
         np.concatenate((tdct_timestamps_1, tdct_timestamps_2)))
 
 

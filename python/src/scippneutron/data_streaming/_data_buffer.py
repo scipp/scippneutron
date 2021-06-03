@@ -216,7 +216,7 @@ class _ChopperMetadataBuffer:
             return_array = self._data_array[
                 self._name, :self._buffer_filled_size].copy()
             self._buffer_filled_size = 0
-        return return_array
+        return sc.Variable(value=return_array)
 
 
 metadata_ids = (SLOW_FB_ID, FAST_FB_ID, CHOPPER_FB_ID)
