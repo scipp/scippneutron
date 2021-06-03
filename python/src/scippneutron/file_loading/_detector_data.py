@@ -109,10 +109,9 @@ def _load_pixel_positions(detector_group: GroupObject, detector_ids_size: int,
         # element in each position
         array = array[:, :3]
 
-    return sc.Variable([_detector_dimension],
-                       values=array,
-                       dtype=sc.dtype.vector_3_float64,
-                       unit=sc.units.m)
+    return sc.vectors(dims=[_detector_dimension],
+                      values=array,
+                      unit=sc.units.m)
 
 
 @dataclass
@@ -220,7 +219,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
             _detector_dimension: event_id
         }
     }
-    detector_data.events = sc.detail.move_to_data_array(**data_dict)
+    detector_data.events = sc.DataArray(**data_dict)
 
     detector_group = group.parent
     pixel_positions_found, _ = nexus.dataset_in_group(detector_group,

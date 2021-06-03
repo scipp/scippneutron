@@ -2,28 +2,46 @@
 // Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 /// @file
 /// @author Simon Heybrock
-#include <ostream>
 #include <set>
 #include <tuple>
 
 #include <scipp/core/element/arg_list.h>
 
-#include <scipp/variable/bucket_model.h>
 #include <scipp/variable/transform.h>
 #include <scipp/variable/util.h>
 
-#include <scipp/dataset/bins.h>
 #include <scipp/dataset/dataset.h>
 #include <scipp/dataset/dataset_util.h>
 
+#include "scipp/dataset/bins.h"
 #include "scipp/neutron/constants.h"
 #include "scipp/neutron/conversions.h"
 #include "scipp/neutron/convert.h"
+#include <scipp/dataset/bins_view.h>
+#include <sstream>
 
 using namespace scipp::variable;
 using namespace scipp::dataset;
 
 namespace scipp::neutron {
+
+namespace {
+// Iterable facade around a single object
+template <class T> class IterableFacade {
+public:
+  IterableFacade(T *obj) : m_obj{obj} {}
+  IterableFacade(const IterableFacade<T> &) = delete;
+  IterableFacade(IterableFacade<T> &&) = delete;
+  T *begin() { return m_obj; }
+  T *end() { return m_obj + 1; }
+
+private:
+  T *m_obj;
+};
+template <class T> IterableFacade(T &) -> IterableFacade<T>;
+
+static decltype(auto) iter(DataArray &d) { return IterableFacade(&d); }
+} // namespace
 
 template <class T, class Op, class... Args>
 T convert_generic(T &&d, const Dim from, const Dim to, Op op,
@@ -33,31 +51,35 @@ T convert_generic(T &&d, const Dim from, const Dim to, Op op,
       arg_list<double,
                std::tuple<float, std::conditional_t<true, double, Args>...>>,
       op};
-  const auto items = iter(d);
+  const auto convert_coord = [&](auto &&array) {
+    auto coord = array.coords()[from];
+    coord = copy(broadcast(coord, merge(args.dims()..., coord.dims())));
+    transform_in_place(coord, args..., op_, "scippneutron.convert");
+    array.coords().erase(from);
+    array.coords().set(to, coord);
+  };
   // 1. Transform coordinate
   if (d.coords().contains(from)) {
-    const auto coord = d.coords()[from];
-    if (!coord.dims().contains(merge(args.dims()...)))
-      d.coords().set(from,
-                     broadcast(coord, merge(args.dims()..., coord.dims())));
-    transform_in_place(d.coords()[from], args..., op_);
+    convert_coord(d);
   }
   // 2. Transform coordinates in bucket variables
-  for (const auto &item : iter(d)) {
-    if (item.dtype() != dtype<bucket<DataArray>>)
+  for (auto &&item : iter(d)) {
+    if (item.dtype() != dtype<core::bin<DataArray>>)
       continue;
-    const auto &[indices, dim, buffer] =
-        item.data().template constituents<bucket<DataArray>>();
+    auto [indices, dim, buffer] =
+        item.data().template constituents<DataArray>();
     if (!buffer.coords().contains(from))
       continue;
-    auto buffer_coord = buffer.coords().extract(from);
-    auto coord = make_non_owning_bins(indices, dim, VariableView(buffer_coord));
-    transform_in_place(coord, args..., op_);
-    buffer.coords().set(to, std::move(buffer_coord));
+    // A plain copy of item.data() would share the same `buffer`, i.e., coord
+    // rename would affect the original. Recreate binned data from shallow
+    // copies.
+    item.setData(dataset::make_bins(indices, dim, buffer));
+    convert_coord(dataset::bins_view<DataArray>(item.data()));
   }
 
   // 3. Rename dims
-  d.rename(from, to);
+  if (d.dims().contains(from))
+    d.rename(from, to);
   return std::move(d);
 }
 
@@ -89,26 +111,31 @@ static T convert_with_factor(T &&d, const Dim from, const Dim to,
 namespace {
 
 const auto &no_scatter_params() {
-  static const std::array<Dim, 2> params{NeutronDim::Position,
-                                         NeutronDim::Ltotal};
+  static const std::array<Dim, 4> params{
+      NeutronDim::Position, NeutronDim::SamplePosition,
+      NeutronDim::SourcePosition, NeutronDim::Ltotal};
   return params;
 }
 
 auto scatter_params(const Dim dim) {
   static std::set<Dim> pos_invariant{Dim::Invalid, NeutronDim::DSpacing,
                                      NeutronDim::Q};
-  static std::vector<Dim> params{NeutronDim::Position,
-                                 NeutronDim::IncidentBeam,
-                                 NeutronDim::ScatteredBeam,
-                                 NeutronDim::IncidentEnergy,
-                                 NeutronDim::FinalEnergy,
-                                 NeutronDim::Ltotal,
-                                 NeutronDim::L1,
-                                 NeutronDim::L2};
+  static std::vector<Dim> params{
+      NeutronDim::Position,
+      NeutronDim::IncidentBeam,
+      NeutronDim::ScatteredBeam,
+      NeutronDim::SamplePosition,
+      NeutronDim::SourcePosition,
+      NeutronDim::L1,
+      NeutronDim::L2,
+      NeutronDim::Ltotal,
+      NeutronDim::IncidentEnergy,
+      NeutronDim::FinalEnergy,
+  };
   if (dim == NeutronDim::Tof)
     return scipp::span<Dim>{};
   return pos_invariant.count(dim) ? scipp::span(params)
-                                  : scipp::span(params).subspan(3);
+                                  : scipp::span(params).subspan(8);
 }
 
 template <class T>
@@ -118,18 +145,16 @@ T coords_to_attrs(T &&x, const Dim from, const Dim to,
     if (!x.coords().contains(field))
       return;
     Variable coord(x.coords()[field]);
-    if constexpr (std::is_same_v<std::decay_t<T>, Dataset>) {
-      x.coords().erase(field);
-      for (const auto &item : iter(x))
-        item.attrs().set(field, coord);
-    } else {
-      x.coords().erase(field);
-      x.attrs().set(field, coord);
+    x.coords().erase(field);
+    for (auto &&item : iter(x)) {
+      item.attrs().set(field, coord);
     }
   };
   if (scatter == ConvertMode::Scatter) {
-    for (const auto &param : scatter_params(to))
+    for (const auto &param : scatter_params(to)) {
+      auto str = to_string(param);
       to_attr(param);
+    }
   } else if (from == NeutronDim::Tof) {
     for (const auto &param : no_scatter_params())
       to_attr(param);
@@ -145,7 +170,7 @@ T attrs_to_coords(T &&x, const Dim to, const ConvertMode scatter) {
       return;
     Variable attr(range.begin()->attrs()[field]);
     if constexpr (std::is_same_v<std::decay_t<T>, Dataset>) {
-      for (const auto &item : range) {
+      for (auto item : range) {
         core::expect::equals(item.attrs()[field], attr);
         item.attrs().erase(field);
       }
@@ -270,14 +295,7 @@ T convert_impl(T d, const Dim from, const Dim to, const ConvertMode scatter) {
 DataArray convert(DataArray d, const Dim from, const Dim to,
                   const ConvertMode scatter) {
   check_params(from, to, scatter);
-  return coords_to_attrs(convert_impl(std::move(d), from, to, scatter), from,
-                         to, scatter);
-}
-
-DataArray convert(const DataArrayConstView &d, const Dim from, const Dim to,
-                  const ConvertMode scatter) {
-  check_params(from, to, scatter);
-  return convert(DataArray(d), from, to, scatter);
+  return coords_to_attrs(convert_impl(d, from, to, scatter), from, to, scatter);
 }
 
 Dataset convert(Dataset d, const Dim from, const Dim to,
@@ -285,12 +303,6 @@ Dataset convert(Dataset d, const Dim from, const Dim to,
   check_params(from, to, scatter);
   return coords_to_attrs(convert_impl(std::move(d), from, to, scatter), from,
                          to, scatter);
-}
-
-Dataset convert(const DatasetConstView &d, const Dim from, const Dim to,
-                const ConvertMode scatter) {
-  check_params(from, to, scatter);
-  return convert(Dataset(d), from, to, scatter);
 }
 
 } // namespace scipp::neutron

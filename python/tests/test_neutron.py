@@ -8,6 +8,7 @@ import numpy as np
 
 
 def make_dataset_with_beamline():
+    positions = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0]]
     d = sc.Dataset(
         {'a': sc.Variable(['position', 'tof'], values=np.random.rand(4, 9))},
         coords={
@@ -16,22 +17,13 @@ def make_dataset_with_beamline():
                         values=np.arange(1000.0, 1010.0),
                         unit=sc.units.us),
             'position':
-            sc.Variable(dims=['position'],
-                        shape=(4, ),
-                        dtype=sc.dtype.vector_3_float64,
-                        unit=sc.units.m)
+            sc.vectors(dims=['position'], values=positions, unit=sc.units.m)
         })
-    d.coords['position'].values[0] = [1, 0, 0]
-    d.coords['position'].values[1] = [0, 1, 0]
-    d.coords['position'].values[2] = [0, 0, 1]
-    d.coords['position'].values[3] = [-1, 0, 0]
 
-    d.coords['source_position'] = sc.Variable(value=np.array([0, 0, -10]),
-                                              dtype=sc.dtype.vector_3_float64,
-                                              unit=sc.units.m)
-    d.coords['sample_position'] = sc.Variable(value=np.array([0, 0, 0]),
-                                              dtype=sc.dtype.vector_3_float64,
-                                              unit=sc.units.m)
+    d.coords['source_position'] = sc.vector(value=np.array([0, 0, -10]),
+                                            unit=sc.units.m)
+    d.coords['sample_position'] = sc.vector(value=np.array([0, 0, 0]),
+                                            unit=sc.units.m)
     return d
 
 
@@ -54,14 +46,9 @@ def test_neutron_beamline():
 
     assert sc.identical(
         scn.source_position(d),
-        sc.Variable(value=np.array([0, 0, -10]),
-                    dtype=sc.dtype.vector_3_float64,
-                    unit=sc.units.m))
-    assert sc.identical(
-        scn.sample_position(d),
-        sc.Variable(value=np.array([0, 0, 0]),
-                    dtype=sc.dtype.vector_3_float64,
-                    unit=sc.units.m))
+        sc.vector(value=np.array([0, 0, -10]), unit=sc.units.m))
+    assert sc.identical(scn.sample_position(d),
+                        sc.vector(value=np.array([0, 0, 0]), unit=sc.units.m))
     assert sc.identical(scn.L1(d), 10.0 * sc.units.m)
     assert sc.identical(
         scn.L2(d),
