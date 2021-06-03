@@ -3,7 +3,7 @@ import time
 from typing import List, Generator, Callable, Optional, Type
 import asyncio
 import scipp as sc
-from .load_nexus import _load_nexus_json
+from ..file_loading.load_nexus import _load_nexus_json
 from enum import Enum
 """
 Some type names are included as strings as imports are done in
@@ -35,7 +35,10 @@ _missing_dependency_message = (
 async def data_stream(
     kafka_broker: str,
     topics: Optional[List[str]] = None,
-    buffer_size: int = 1048576,
+    event_buffer_size: int = 1_048_576,
+    slow_metadata_buffer_size: int = 1000,
+    fast_metadata_buffer_size: int = 100_000,
+    chopper_buffer_size: int = 10_000,
     interval: sc.Variable = 2. * sc.units.s,
     run_info_topic: Optional[str] = None,
     start_time: StartTime = StartTime.now,
@@ -47,7 +50,13 @@ async def data_stream(
     1048576 event buffer is around 24 MB (with pulse_time, id, weights, etc)
     :param kafka_broker: Address of the Kafka broker to stream data from
     :param topics: Kafka topics to consume data from
-    :param buffer_size: Size of buffer to accumulate data in
+    :param event_buffer_size: Size of buffer to accumulate event data in
+    :param slow_metadata_buffer_size: Size of buffer to accumulate slow
+      sample env metadata in
+    :param fast_metadata_buffer_size: Size of buffer to accumulate fast
+      sample env metadata in
+    :param chopper_buffer_size: Size of buffer to accumulate chopper
+      timestamps in
     :param interval: interval between yielding any new data
       collected from stream
     :param run_info_topic: If provided, the first data batch returned by
@@ -56,18 +65,39 @@ async def data_stream(
     :param start_time: Get data from now or from start of the last run
     """
     try:
-        from ._streaming_data_buffer import StreamedDataBuffer
+        from ._data_buffer import StreamedDataBuffer
     except ImportError:
         raise ImportError(_missing_dependency_message)
 
+    validate_buffer_size_args(chopper_buffer_size, event_buffer_size,
+                              fast_metadata_buffer_size,
+                              slow_metadata_buffer_size)
+
     queue = asyncio.Queue()
-    buffer = StreamedDataBuffer(queue, buffer_size, interval)
+    buffer = StreamedDataBuffer(queue, event_buffer_size,
+                                slow_metadata_buffer_size,
+                                fast_metadata_buffer_size, chopper_buffer_size,
+                                interval)
 
     # Use "async for" as "yield from" cannot be used in an async function, see
     # https://www.python.org/dev/peps/pep-0525/#asynchronous-yield-from
     async for data_chunk in _data_stream(buffer, queue, kafka_broker, topics,
                                          interval, run_info_topic, start_time):
         yield data_chunk
+
+
+def validate_buffer_size_args(chopper_buffer_size, event_buffer_size,
+                              fast_metadata_buffer_size,
+                              slow_metadata_buffer_size):
+    for buffer_name, buffer_size in (("event_buffer_size", event_buffer_size),
+                                     ("slow_metadata_buffer_size",
+                                      slow_metadata_buffer_size),
+                                     ("fast_metadata_buffer_size",
+                                      fast_metadata_buffer_size),
+                                     ("chopper_buffer_size",
+                                      chopper_buffer_size)):
+        if buffer_size < 1:
+            raise ValueError(f"{buffer_name} must be greater than zero")
 
 
 async def _data_stream(
@@ -87,9 +117,9 @@ async def _data_stream(
     fake consumers can be injected for unit tests
     """
     try:
-        from ._streaming_consumer import (start_consumers, create_consumers,
-                                          get_run_start_message,
-                                          KafkaQueryConsumer, KafkaConsumer)
+        from ._consumer import (start_consumers, create_consumers,
+                                stop_consumers, get_run_start_message,
+                                KafkaQueryConsumer, KafkaConsumer)
     except ImportError:
         raise ImportError(_missing_dependency_message)
 
@@ -107,8 +137,10 @@ async def _data_stream(
     if run_info_topic is not None:
         run_start_info = get_run_start_message(run_info_topic, query_consumer)
         if topics is None:
-            loaded_data, topics = _load_nexus_json(
+            loaded_data, stream_info = _load_nexus_json(
                 run_start_info.nexus_structure, get_start_info=True)
+            topics = {stream.topic for stream in stream_info}
+            buffer.init_metadata_buffers(stream_info)
         else:
             loaded_data, _ = _load_nexus_json(run_start_info.nexus_structure,
                                               get_start_info=False)
@@ -135,18 +167,20 @@ async def _data_stream(
     # the consumers have stopped, if so, we are done. Otherwise
     # it could just be that we have not received any new data.
     iterations = 0
-    while not _consumers_all_stopped(
-            consumers) and iterations < max_iterations:
-        try:
-            new_data = await asyncio.wait_for(queue.get(),
-                                              timeout=2 *
-                                              sc.to_unit(interval, 's').value)
-            iterations += 1
-            yield new_data
-        except asyncio.TimeoutError:
-            pass
-
-    buffer.stop()
+    try:
+        while not _consumers_all_stopped(
+                consumers) and iterations < max_iterations:
+            try:
+                new_data = await asyncio.wait_for(
+                    queue.get(), timeout=2 * sc.to_unit(interval, 's').value)
+                iterations += 1
+                yield new_data
+            except asyncio.TimeoutError:
+                pass
+    finally:
+        # Ensure cleanup happens however the loop exits
+        stop_consumers(consumers)
+        buffer.stop()
 
 
 def start_stream(user_function: Callable) -> asyncio.Task:

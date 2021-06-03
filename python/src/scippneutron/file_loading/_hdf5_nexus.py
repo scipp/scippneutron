@@ -7,7 +7,7 @@ from typing import Union, Any, List, Optional, Tuple, Dict
 import h5py
 import numpy as np
 import scipp as sc
-from ._loading_common import Group, MissingDataset, MissingAttribute
+from ._common import Group, MissingDataset, MissingAttribute
 
 
 def _get_attr_as_str(h5_object, attribute_name: str):

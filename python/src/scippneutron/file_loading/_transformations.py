@@ -4,13 +4,13 @@
 import warnings
 
 import numpy as np
-from ._loading_common import MissingDataset, MissingAttribute
+from ._common import MissingDataset, MissingAttribute
 from typing import Union, List, Tuple, Dict
 import scipp as sc
 import h5py
 from cmath import isclose
-from ._loading_nexus import LoadFromNexus, GroupObject
-from ._loading_json_nexus import contains_stream
+from ._nexus import LoadFromNexus, GroupObject
+from ._json_nexus import contains_stream
 
 
 class TransformationError(Exception):

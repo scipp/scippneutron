@@ -8,6 +8,18 @@ import h5py
 
 
 class BadSource(Exception):
+    """
+    Raise if something is wrong with data source which
+    prevents it being used. Warn the user.
+    """
+    pass
+
+
+class SkipSource(Exception):
+    """
+    Raise to abort using the data source, do not
+    warn the user.
+    """
     pass
 
 
@@ -29,3 +41,4 @@ class Group:
     group: Union[h5py.Group, Dict]
     parent: Union[h5py.Group, Dict]
     path: str
+    contains_stream: bool = False

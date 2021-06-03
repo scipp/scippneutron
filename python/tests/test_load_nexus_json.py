@@ -2,7 +2,7 @@ import scipp as sc
 import numpy as np
 from .nexus_helpers import NexusBuilder, Source, Stream
 import pytest
-from scippneutron.load_nexus import _load_nexus_json
+from scippneutron.file_loading.load_nexus import _load_nexus_json
 """
 Many tests for load_nexus_json() are in test_load_nexus
 as they are parameterised to run the same checks against
