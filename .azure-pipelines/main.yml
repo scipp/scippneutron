@@ -39,13 +39,13 @@ extends:
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
-        py_versions: ['3.7', '3.8']
+        py_versions: ['3.7']
         conda_env: 'scippneutron-developer.yml'
       osx:
-        py_versions: ['3.7', '3.8']
+        py_versions: ['3.7']
         conda_env: 'scippneutron-developer.yml'
       windows:
-        py_versions: ['3.7', '3.8']
+        py_versions: ['3.7']
         conda_env: 'scippneutron-developer-no-mantid.yml'
     deploy: true
     conda_label: 'dev'
