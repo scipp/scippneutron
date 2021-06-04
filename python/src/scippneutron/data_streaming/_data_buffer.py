@@ -12,7 +12,7 @@ from streaming_data_types.timestamps_tdct import deserialise_tdct, Timestamps
 from streaming_data_types.exceptions import WrongSchemaException
 from typing import Optional, Dict, List, Any, Union, Callable
 from warnings import warn
-from python.src.scippneutron.file_loading._json_nexus import StreamInfo
+from ..file_loading._json_nexus import StreamInfo
 from datetime import datetime
 """
 The ESS data streaming system uses Google FlatBuffers to serialise
