@@ -47,6 +47,6 @@ extends:
       windows:
         py_versions: ['3.7']
         conda_env: 'scippneutron-developer-no-mantid-next.yml'
-    deploy: true
+    deploy: false
     conda_label: 'next'
     publish_docs: false
