@@ -16,6 +16,7 @@ from warnings import warn
 from ..file_loading._json_nexus import StreamInfo
 from datetime import datetime
 from time import sleep
+from ._serialisation import dict_dumps
 """
 The ESS data streaming system uses Google FlatBuffers to serialise
 data to transmit in the Kafka message payload. FlatBuffers uses schemas
@@ -325,9 +326,7 @@ class StreamedDataBuffer:
                     metadata_array = buffer.get_metadata_array()
                     new_data.attrs[name] = metadata_array
             self._current_event = 0
-        # TODO serialise with flatbuffers
-        #  for now we'll just send a str representation through the queue
-        self._emit_queue.put_nowait(str(new_data).encode('utf-8'))
+        self._emit_queue.put_nowait(dict_dumps(new_data))
 
     def _emit_loop(self):
         while not self._cancelled:

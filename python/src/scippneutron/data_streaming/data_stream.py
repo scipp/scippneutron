@@ -8,6 +8,7 @@ import multiprocessing as mp
 from queue import Empty as QueueEmpty
 from enum import Enum
 from ._consumer_type import ConsumerType
+from ._serialisation import dict_loads
 """
 Some type names are included as strings as imports are done in
 function scope to avoid optional dependencies being imported
@@ -224,7 +225,7 @@ async def _data_stream(
             try:
                 new_data = data_queue.get_nowait()
                 iterations += 1
-                yield new_data
+                yield dict_loads(new_data)
             except QueueEmpty:
                 await asyncio.sleep(0.5 * interval_s)
     finally:
