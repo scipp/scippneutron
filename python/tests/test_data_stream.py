@@ -5,12 +5,15 @@ import asyncio
 from typing import List, Tuple, Optional
 import numpy as np
 from .nexus_helpers import NexusBuilder, Stream, Log, EventData
+import multiprocessing as mp
+from scippneutron.data_streaming._consumer_type import ConsumerType
 
 try:
     import streaming_data_types  # noqa: F401
     from confluent_kafka import TopicPartition  # noqa: F401
     from scippneutron.data_streaming.data_stream import (_data_stream,
-                                                         StartTime
+                                                         StartTime,
+                                                         WorkerInstruction
                                                          )  # noqa: E402
     from scippneutron.data_streaming._data_buffer import \
         StreamedDataBuffer  # noqa: E402
@@ -101,34 +104,33 @@ SHORT_TEST_INTERVAL = 1. * sc.Unit('milliseconds')
 TEST_BUFFER_SIZE = 20
 
 
-@pytest.fixture(scope="function")
-def queue_and_buffer() -> Tuple[asyncio.Queue, StreamedDataBuffer]:
-    queue = asyncio.Queue()
-    return queue, StreamedDataBuffer(queue, TEST_BUFFER_SIZE, TEST_BUFFER_SIZE,
-                                     TEST_BUFFER_SIZE, TEST_BUFFER_SIZE,
-                                     SHORT_TEST_INTERVAL)
-
-
 @pytest.mark.asyncio
-async def test_data_stream_returns_data_from_single_event_message(
-        queue_and_buffer):
-    queue, buffer = queue_and_buffer
+async def test_data_stream_returns_data_from_single_event_message():
+    data_queue = mp.Queue()
+    worker_instruction_queue = mp.Queue()
+    test_message_queue = mp.Queue()
     time_of_flight = np.array([1., 2., 3.])
     detector_ids = np.array([4, 5, 6])
     test_message = serialise_ev42("detector", 0, 0, time_of_flight,
                                   detector_ids)
-    await buffer.new_data(test_message)
+    test_message_queue.put(test_message)
 
     reached_assert = False
-    async for data in _data_stream(buffer,
-                                   queue,
+    async for data in _data_stream(data_queue,
+                                   worker_instruction_queue,
                                    "broker", ["topic"],
                                    SHORT_TEST_INTERVAL,
+                                   TEST_BUFFER_SIZE,
+                                   TEST_BUFFER_SIZE,
+                                   TEST_BUFFER_SIZE,
+                                   TEST_BUFFER_SIZE,
                                    query_consumer=FakeQueryConsumer(),
-                                   consumer_type=FakeConsumer,
-                                   max_iterations=1):
+                                   consumer_type=ConsumerType.FAKE,
+                                   max_iterations=1,
+                                   test_message_queue=test_message_queue):
         assert np.allclose(data.coords['tof'].values, time_of_flight)
         reached_assert = True
+        worker_instruction_queue.put(WorkerInstruction.STOP_NOW)
     assert reached_assert
 
 

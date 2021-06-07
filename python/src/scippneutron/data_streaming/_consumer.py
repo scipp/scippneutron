@@ -79,7 +79,10 @@ class FakeConsumer:
     Use in place of KafkaConsumer to avoid having to do
     network IO in unit tests.
     """
-    def __init__(self, callback: Callable, input_queue: mp.Queue):
+    def __init__(self, callback: Callable, input_queue: Optional[mp.Queue]):
+        if input_queue is None:
+            raise RuntimeError("A multiprocessing queue for test messages "
+                               "must be provided when using FakeConsumer")
         self.stopped = True
         self._cancelled = False
         self._callback = callback
@@ -185,12 +188,14 @@ def create_consumers(
     greatly simplifies the logic around stopping at the end of
     the stream (making use of "end of partition" event)
     """
-    query_consumer = KafkaQueryConsumer(kafka_broker)
     topic_partitions = []
-    for topic in topics:
-        topic_partitions.extend(
-            query_consumer.get_topic_partitions(topic, offset=start_time_ms))
-    topic_partitions = query_consumer.offsets_for_times(topic_partitions)
+    if consumer_type_enum == ConsumerType.REAL:
+        query_consumer = KafkaQueryConsumer(kafka_broker)
+        for topic in topics:
+            topic_partitions.extend(
+                query_consumer.get_topic_partitions(topic,
+                                                    offset=start_time_ms))
+        topic_partitions = query_consumer.offsets_for_times(topic_partitions)
 
     config = {
         "bootstrap.servers": kafka_broker,

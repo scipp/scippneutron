@@ -171,8 +171,7 @@ async def _data_stream(
     fake consumers can be injected for unit tests
     """
     try:
-        from ._consumer import (get_run_start_message, KafkaQueryConsumer,
-                                KafkaConsumer)
+        from ._consumer import (get_run_start_message, KafkaQueryConsumer)
     except ImportError:
         raise ImportError(_missing_dependency_message)
 
@@ -180,12 +179,10 @@ async def _data_stream(
         raise ValueError("At least one of 'topics' and 'run_info_topic'"
                          " must be specified")
 
-    # These are defaulted to None in the function signature
-    # to avoid them having to be imported
+    # This is defaulted to None in the function signature
+    # to avoid it having to be imported earlier
     if query_consumer is None:
         query_consumer = KafkaQueryConsumer(kafka_broker)
-    if consumer_type is None:
-        consumer_type = KafkaConsumer
 
     stream_info = None
     if run_info_topic is not None:
