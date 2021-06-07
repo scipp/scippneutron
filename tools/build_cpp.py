@@ -33,8 +33,7 @@ def main(prefix='', build_dir=''):
 
     # Default options
     shell = False
-    ncores = str(multiprocessing.cpu_count())
-    parallel_flag = '-j'
+    parallel_flag = '-j{}'.format(multiprocessing.cpu_count())
     build_config = ''
 
     # Some flags use a syntax with a space separator instead of '='
@@ -49,15 +48,11 @@ def main(prefix='', build_dir=''):
         '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'ON'
     }
 
-    if platform == 'linux':
-        cmake_flags.update({'-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'ON'})
-
     if platform == 'darwin':
+        cmake_flags.update({'-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'OFF'})
         osxversion = os.environ.get('OSX_VERSION')
         if osxversion is not None:
             cmake_flags.update({
-                '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION':
-                'OFF',
                 '-DCMAKE_OSX_DEPLOYMENT_TARGET':
                 osxversion,
                 '-DCMAKE_OSX_SYSROOT':
@@ -68,20 +63,14 @@ def main(prefix='', build_dir=''):
             })
 
     if platform == 'win32':
-        cmake_flags.update({
-            '-G': 'Visual Studio 16 2019',
-            '-A': 'x64',
-            '-DCMAKE_CXX_STANDARD': '20'
-        })
+        cmake_flags.update({'-G': 'Visual Studio 16 2019', '-A': 'x64'})
         shell = True
-        parallel_flag = '-- /m:'
         build_config = 'Release'
 
     # Additional flags for --build commands
-    build_flags = []
+    build_flags = [parallel_flag]
     if len(build_config) > 0:
         build_flags += ['--config', build_config]
-    build_flags += [parallel_flag + ncores]
 
     # Parse cmake flags
     flags_list = []
