@@ -103,7 +103,7 @@ def data_consumption_worker(
         interval_s: float, event_buffer_size: int,
         slow_metadata_buffer_size: int, fast_metadata_buffer_size: int,
         chopper_buffer_size: int, worker_instruction_queue: mp.Queue,
-        data_queue: mp.Queue):
+        data_queue: mp.Queue, test_message_queue: Optional[mp.Queue]):
     """
     Starts and stops buffers and data consumers which collect data and
     send them back to the main process via a queue.
@@ -126,12 +126,9 @@ def data_consumption_worker(
     if stream_info is not None:
         buffer.init_metadata_buffers(stream_info)
 
-    consumers = create_consumers(start_time_ms,
-                                 topics,
-                                 kafka_broker,
-                                 consumer_type,
-                                 buffer.new_data,
-                                 stop_at_end_of_partition=False)
+    consumers = create_consumers(start_time_ms, topics, kafka_broker,
+                                 consumer_type, buffer.new_data,
+                                 test_message_queue)
 
     start_consumers(consumers)
     buffer.start()
@@ -166,7 +163,8 @@ async def _data_stream(
         start_at: StartTime = StartTime.now,
         query_consumer: Optional["KafkaQueryConsumer"] = None,  # noqa: F821
         consumer_type: ConsumerType = ConsumerType.REAL,
-        max_iterations: int = np.iinfo(np.int32).max,  # for testability
+        max_iterations: int = np.iinfo(np.int32).max,  # for tests
+        test_message_queue: Optional[mp.Queue] = None,  # for tests
 ) -> Generator[sc.DataArray, None, None]:
     """
     Main implementation of data stream is extracted to this function so that
@@ -216,7 +214,7 @@ async def _data_stream(
         args=(start_time_ms, topics, kafka_broker, consumer_type, stream_info,
               interval_s, event_buffer_size, slow_metadata_buffer_size,
               fast_metadata_buffer_size, chopper_buffer_size,
-              worker_instruction_queue, data_queue))
+              worker_instruction_queue, data_queue, test_message_queue))
     data_collect_process.start()
 
     iterations = 0

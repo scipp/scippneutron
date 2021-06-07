@@ -5,6 +5,8 @@ import threading
 from streaming_data_types.run_start_pl72 import deserialise_pl72
 from streaming_data_types.exceptions import WrongSchemaException
 from ._consumer_type import ConsumerType
+import multiprocessing as mp
+from queue import Empty as QueueEmpty
 """
 This module uses the confluent-kafka-python implementation of the
 Kafka Client API to communicate with Kafka servers (brokers)
@@ -30,8 +32,8 @@ class RunStartError(Exception):
 
 class KafkaConsumer:
     def __init__(self, topic_partitions: List[TopicPartition], conf: Dict,
-                 callback: Callable, stop_at_end_of_partition: bool):
-        conf['enable.partition.eof'] = stop_at_end_of_partition
+                 callback: Callable):
+        conf['enable.partition.eof'] = True
         self._consumer = Consumer(conf)
         # To consume messages the consumer must "subscribe" to one
         # or more topics or "assign" specific topic partitions, the
@@ -39,7 +41,6 @@ class KafkaConsumer:
         # in the TopicPartition
         self._consumer.assign(topic_partitions)
         self._callback = callback
-        self._stop_at_end_of_partition = stop_at_end_of_partition
         self._reached_eop = False
         self._cancelled = False
         self._consume_data: Optional[threading.Thread] = None
@@ -57,19 +58,17 @@ class KafkaConsumer:
             if msg is None:
                 continue
             if msg.error():
-                if self._stop_at_end_of_partition and msg.error().code(
-                ) == KafkaError._PARTITION_EOF:
-                    self._reached_eop = True
-                    break
+                if msg.error().code() == KafkaError._PARTITION_EOF:
+                    continue
                 warn(f"Message error in consumer: {msg.error()}")
                 break
             self._callback(msg.value())
-        # self.stop()
 
     def stop(self):
         if not self._cancelled:
             self._cancelled = True
-            if self._consume_data is not None:
+            if self._consume_data is not None and self._consume_data.is_alive(
+            ):
                 self._consume_data.join(5.)
         self._consumer.close()
         self.stopped = True
@@ -80,17 +79,39 @@ class FakeConsumer:
     Use in place of KafkaConsumer to avoid having to do
     network IO in unit tests.
     """
-    def __init__(self,
-                 topic_partitions: Optional[List[TopicPartition]] = None,
-                 conf: Optional[Dict] = None,
-                 callback: Optional[Callable] = None,
-                 stop_at_end_of_partition: Optional[bool] = None):
+    def __init__(self, callback: Callable, input_queue: mp.Queue):
         self.stopped = True
+        self._cancelled = False
+        self._callback = callback
+        self._consume_data: Optional[threading.Thread] = None
+        # This queue is used to provide the consumer with
+        # messages in unit tests
+        self._input_queue = input_queue
 
     def start(self):
         self.stopped = False
+        self._cancelled = False
+        self._consume_data = threading.Thread(target=self._consume_loop)
+        self._consume_data.start()
+
+    def _consume_loop(self):
+        while not self._cancelled:
+            try:
+                msg = self._input_queue.get(timeout=10.)
+                self._callback(msg)
+            except QueueEmpty:
+                pass
+            except (ValueError, OSError):
+                # Queue has been closed, stop worker
+                self.stop()
+                break
 
     def stop(self):
+        if not self._cancelled:
+            self._cancelled = True
+            if self._consume_data is not None and self._consume_data.is_alive(
+            ):
+                self._consume_data.join(5.)
         self.stopped = True
 
 
@@ -155,7 +176,7 @@ def create_consumers(
         kafka_broker: str,
         consumer_type_enum: ConsumerType,  # so we can inject fake consumer
         callback: Callable,
-        stop_at_end_of_partition: bool = False) -> List[KafkaConsumer]:
+        test_message_queue: Optional[mp.Queue]) -> List[KafkaConsumer]:
     """
     Creates one consumer per TopicPartition that start consuming
     at specified timestamp in the data stream
@@ -181,15 +202,12 @@ def create_consumers(
     }
 
     if consumer_type_enum == ConsumerType.REAL:
-        consumer_type = KafkaConsumer
+        consumers = [
+            KafkaConsumer([topic_partition], config, callback)
+            for topic_partition in topic_partitions
+        ]
     else:
-        consumer_type = FakeConsumer
-
-    consumers = []
-    for topic_partition in topic_partitions:
-        consumers.append(
-            consumer_type([topic_partition], config, callback,
-                          stop_at_end_of_partition))
+        consumers = [FakeConsumer(callback, test_message_queue)]
 
     return consumers
 
