@@ -99,7 +99,7 @@ class FakeQueryConsumer:
 
 # Short time to use for buffer emit and data_stream interval in tests
 # pass or fail fast!
-SHORT_TEST_INTERVAL = 1. * sc.Unit('milliseconds')
+SHORT_TEST_INTERVAL = 10. * sc.Unit('milliseconds')
 # Small buffer of 20 events is sufficient for the tests
 TEST_BUFFER_SIZE = 20
 

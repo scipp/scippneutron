@@ -100,7 +100,7 @@ class FakeConsumer:
     def _consume_loop(self):
         while not self._cancelled:
             try:
-                msg = self._input_queue.get(timeout=10.)
+                msg = self._input_queue.get(timeout=.1)
                 self._callback(msg)
             except QueueEmpty:
                 pass
