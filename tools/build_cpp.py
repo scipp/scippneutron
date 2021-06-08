@@ -95,19 +95,11 @@ def main(prefix='install', build_dir='build', source_dir='.'):
     # Show cmake settings
     run_command(['cmake', '-B', '.', '-S', source_dir, '-LA'], shell=shell)
 
-    # Compile benchmarks
-    run_command(['cmake', '--build', '.', '--target', 'all-benchmarks'] +
-                build_flags,
-                shell=shell)
-
-    # Compile C++ tests
-    run_command(['cmake', '--build', '.', '--target', 'all-tests'] +
-                build_flags,
-                shell=shell)
-
-    # Compile Python library
-    run_command(['cmake', '--build', '.', '--target', 'install'] + build_flags,
-                shell=shell)
+    # Compile benchmarks, C++ tests, and python library
+    for target in ['all-benchmarks', 'all-tests', 'install']:
+        run_command(['cmake', '--build', '.', '--target', target] +
+                    build_flags,
+                    shell=shell)
 
     # Run C++ tests
     run_command([os.path.join('bin', build_config, 'scippneutron-test')],
