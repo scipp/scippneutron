@@ -241,7 +241,7 @@ def _to_spherical(pos, output):
     abs_phi = sc.abs(signed_phi)
     output["p-delta"] = (
         np.pi * sc.units.rad) - abs_phi  # angular delta (magnitude) from pole
-    output['p-sign'] = signed_phi / abs_phi  # sign of phi
+    output['p-sign'] = signed_phi  # weighted sign of phi
     return output
 
 
@@ -347,7 +347,7 @@ def get_detector_properties(ws,
                                                    len(spec_info) + 0.5,
                                                    1.0))).mean("detector")
 
-        sign = averaged["p-sign"].data
+        sign = averaged["p-sign"].data / sc.abs(averaged["p-sign"].data)
         averaged["p"] = sign * (
             (np.pi * sc.units.rad) - averaged["p-delta"].data)
         averaged["x"] = averaged["r"].data * sc.sin(

@@ -584,16 +584,16 @@ class TestMantidConversion(unittest.TestCase):
                                                  np.sqrt(x**2 + y**2 + z**2))
         # Phi now should be between 0 and pi
         assert spherical['p-delta'].value == (3.0 / 4) * np.pi
-        assert spherical['p-sign'].value == 1.0
+        assert spherical['p-sign'].value > 0.0
         x = -1.0
         spherical = self._exec_to_spherical(x, y, z)
         assert spherical['p-delta'].value == (1.0 / 4) * np.pi
-        assert spherical['p-sign'].value == 1.0
+        assert spherical['p-sign'].value > 0.0
         # Phi now should be between 0 and -pi
         y = -1.0
         spherical = self._exec_to_spherical(x, y, z)
         assert spherical['p-delta'].value == (1.0 / 4) * np.pi
-        assert spherical['p-sign'].value == -1.0
+        assert spherical['p-sign'].value < 0.0
 
     def test_detector_positions(self):
         import mantid.simpleapi as mantid
