@@ -74,6 +74,15 @@ class TestMantidConversion(unittest.TestCase):
         b = a.copy()
         assert sc.identical(a, b)
 
+    def test_advanced_geometry(self):
+        # basic test that positions are approximately equal for detectors for
+        # CNCS given advanced and basic geometry calculation routes
+        x = scn.from_mantid(self.base_event_ws, advanced_geometry=False)
+        y = scn.from_mantid(self.base_event_ws, advanced_geometry=True)
+        assert np.all(
+            np.isclose(x.coords['position'].values,
+                       y.coords['position'].values))
+
     def test_EventWorkspace_no_y_unit(self):
         import mantid.simpleapi as mantid
         tiny_event_ws = mantid.CreateSampleWorkspace(WorkspaceType='Event',
@@ -568,23 +577,23 @@ class TestMantidConversion(unittest.TestCase):
     def test_spherical_conversion(self):
         x = 1.0
         y = 1.0
-        z = 1.0
+        z = 0.0
         spherical = self._exec_to_spherical(x, y, z)
         assert spherical['r'].value == np.sqrt(x**2 + y**2 + z**2)
         assert spherical['t'].value == np.arccos(z /
                                                  np.sqrt(x**2 + y**2 + z**2))
         # Phi now should be between 0 and pi
-        assert spherical['p-delta'].value + spherical['p-sign'].value == np.pi
-        assert spherical['p-sign'].value == np.arctan2(y, x)
+        assert spherical['p-delta'].value == (3.0 / 4) * np.pi
+        assert spherical['p-sign'].value == 1.0
         x = -1.0
         spherical = self._exec_to_spherical(x, y, z)
-        assert spherical['p-delta'].value + spherical['p-sign'].value == np.pi
-        assert spherical['p-sign'].value == np.arctan2(y, x)
+        assert spherical['p-delta'].value == (1.0 / 4) * np.pi
+        assert spherical['p-sign'].value == 1.0
         # Phi now should be between 0 and -pi
         y = -1.0
         spherical = self._exec_to_spherical(x, y, z)
-        assert spherical['p-sign'].value - spherical['p-delta'].value == -np.pi
-        assert spherical['p-sign'].value == np.arctan2(y, x)
+        assert spherical['p-delta'].value == (1.0 / 4) * np.pi
+        assert spherical['p-sign'].value == -1.0
 
     def test_detector_positions(self):
         import mantid.simpleapi as mantid

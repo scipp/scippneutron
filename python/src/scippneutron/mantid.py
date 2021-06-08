@@ -237,9 +237,12 @@ def validate_and_get_unit(unit, allow_empty=False):
 def _to_spherical(pos, output):
     output["r"] = sc.sqrt(sc.dot(pos, pos))
     output["t"] = sc.acos(pos.fields.z / output["r"].data)
-    output["p-sign"] = sc.atan2(pos.fields.y, pos.fields.x)
-    output["p-delta"] = sc.Variable(value=np.pi, unit=sc.units.rad) - sc.abs(
-        output["p-sign"].data)
+    signed_phi = sc.atan2(pos.fields.y, pos.fields.x)
+    abs_phi = sc.abs(signed_phi)
+    output["p-delta"] = (
+        np.pi * sc.units.rad) - abs_phi  # angular delta (magnitude) from pole
+    output['p-sign'] = signed_phi / abs_phi  # sign of phi
+    return output
 
 
 def _rot_from_vectors(vec1, vec2):
@@ -344,9 +347,9 @@ def get_detector_properties(ws,
                                                    len(spec_info) + 0.5,
                                                    1.0))).mean("detector")
 
-        averaged["p-delta"].values *= np.sign(averaged["p-sign"].values)
-        averaged["p"] = sc.Variable(
-            value=np.pi, unit=sc.units.rad) + averaged["p-delta"].data
+        sign = averaged["p-sign"].data
+        averaged["p"] = sign * (
+            (np.pi * sc.units.rad) - averaged["p-delta"].data)
         averaged["x"] = averaged["r"].data * sc.sin(
             averaged["t"].data) * sc.cos(averaged["p"].data)
         averaged["y"] = averaged["r"].data * sc.sin(
