@@ -14,7 +14,7 @@ resources:
     name: scipp/pipelines
     type: github
     endpoint: scipp
-    ref: test_predocs_python
+    ref: main
 
 trigger:
   branches:
@@ -40,6 +40,6 @@ extends:
       osx:
         py_versions: ['3.7']
         conda_env: 'scippneutron-developer.yml'
-      # windows:
-      #   py_versions: ['3.7']
-      #   conda_env: 'scippneutron-developer-no-mantid.yml'
+      windows:
+        py_versions: ['3.7']
+        conda_env: 'scippneutron-developer-no-mantid.yml'
