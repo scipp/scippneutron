@@ -6,12 +6,12 @@ from dataclasses import dataclass
 import h5py
 from typing import Optional, List, Any, Dict, Union
 import numpy as np
-from ._loading_common import (BadSource, MissingDataset, Group)
+from ._common import (BadSource, SkipSource, MissingDataset, Group)
 import scipp as sc
 from warnings import warn
 from itertools import groupby
-from ._loading_transformations import get_full_transformation_matrix
-from ._loading_nexus import LoadFromNexus, GroupObject
+from ._transformations import get_full_transformation_matrix
+from ._nexus import LoadFromNexus, GroupObject
 
 _detector_dimension = "detector_id"
 _event_dimension = "event"
@@ -27,7 +27,13 @@ def _all_equal(iterable):
     return next(g, True) and not next(g, False)
 
 
-def _check_for_missing_fields(group: GroupObject, nexus: LoadFromNexus) -> str:
+def _check_for_missing_fields(group: Group, nexus: LoadFromNexus):
+    if group.contains_stream:
+        # Do not warn about missing datasets if the group contains
+        # a stream, as this will provide the missing data
+        raise SkipSource("Data source is missing datasets"
+                         "but contains a stream source for the data")
+
     required_fields = (
         "event_time_zero",
         "event_index",
@@ -35,10 +41,9 @@ def _check_for_missing_fields(group: GroupObject, nexus: LoadFromNexus) -> str:
         "event_time_offset",
     )
     for field in required_fields:
-        found, msg = nexus.dataset_in_group(group, field)
+        found, msg = nexus.dataset_in_group(group.group, field)
         if not found:
-            return msg
-    return ""
+            raise BadSource(msg)
 
 
 def _convert_array_to_metres(array: np.ndarray, unit: str) -> np.ndarray:
@@ -104,10 +109,9 @@ def _load_pixel_positions(detector_group: GroupObject, detector_ids_size: int,
         # element in each position
         array = array[:, :3]
 
-    return sc.Variable([_detector_dimension],
-                       values=array,
-                       dtype=sc.dtype.vector_3_float64,
-                       unit=sc.units.m)
+    return sc.vectors(dims=[_detector_dimension],
+                      values=array,
+                      unit=sc.units.m)
 
 
 @dataclass
@@ -167,9 +171,7 @@ def _load_detector(group: Group, file_root: h5py.File,
 def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
                       detector_data: DetectorData,
                       quiet: bool) -> DetectorData:
-    error_msg = _check_for_missing_fields(group.group, nexus)
-    if error_msg:
-        raise BadSource(error_msg)
+    _check_for_missing_fields(group, nexus)
 
     # There is some variation in the last recorded event_index in files
     # from different institutions. We try to make sure here that it is what
@@ -217,7 +219,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
             _detector_dimension: event_id
         }
     }
-    detector_data.events = sc.detail.move_to_data_array(**data_dict)
+    detector_data.events = sc.DataArray(**data_dict)
 
     detector_group = group.parent
     pixel_positions_found, _ = nexus.dataset_in_group(detector_group,
@@ -359,6 +361,8 @@ def _load_data_from_each_nx_event_data(detector_data: Dict,
             detector_data.pop(parent_path, DetectorData())
         except BadSource as e:
             warn(f"Skipped loading {group.path} due to:\n{e}")
+        except SkipSource:
+            pass  # skip without warning user
     for _, remaining_data in detector_data.items():
         if remaining_data.detector_ids is not None:
             event_data.append(remaining_data)

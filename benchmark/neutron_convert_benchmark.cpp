@@ -7,6 +7,7 @@
 #include <scipp/dataset/dataset.h>
 #include <scipp/variable/arithmetic.h>
 
+#include "scipp/core/eigen.h"
 #include "scipp/neutron/beamline.h"
 #include "scipp/neutron/convert.h"
 

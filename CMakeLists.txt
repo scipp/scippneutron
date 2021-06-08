@@ -64,7 +64,7 @@ include(IPO)
 include(pybind11)
 include(scipp-install)
 
-find_package(scipp 0.6 REQUIRED)
+find_package(scipp 0.7 REQUIRED)
 
 if("${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}" VERSION_LESS "3.7")
   message(

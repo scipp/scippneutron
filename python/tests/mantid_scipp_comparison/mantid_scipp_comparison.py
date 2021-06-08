@@ -22,7 +22,7 @@ class MantidScippComparison(ABC):
             if isinstance(a, sc.DataArray):
                 assert sc.all(sc.isclose(
                     a.data, b.data, rtol=rtol,
-                    atol=atol)).value and sc._utils.isnear(
+                    atol=atol)).value and sc.utils.comparison.isnear(
                         a, b, rtol=1e-6 * sc.units.one, include_data=False)
             else:
                 assert sc.all(sc.isclose(a, b, rtol=rtol, atol=atol)).value

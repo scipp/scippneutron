@@ -3,10 +3,10 @@ from typing import List, Optional, Any, Tuple
 import h5py
 import numpy as np
 import scipp as sc
-from ._loading_common import Group
-from ._loading_transformations import (get_position_from_transformations,
-                                       TransformationError)
-from ._loading_nexus import LoadFromNexus, GroupObject
+from ._common import Group
+from ._transformations import (get_position_from_transformations,
+                               TransformationError)
+from ._nexus import LoadFromNexus, GroupObject
 
 
 class PositionError(Exception):
@@ -118,7 +118,12 @@ def _add_attr_to_loaded_data(attr_name: str,
 
     try:
         if dtype is not None:
-            data[attr_name] = sc.Variable(value=value, dtype=dtype, unit=unit)
+            if dtype == sc.dtype.vector_3_float64:
+                data[attr_name] = sc.vector(value=value, unit=unit)
+            else:
+                data[attr_name] = sc.Variable(value=value,
+                                              dtype=dtype,
+                                              unit=unit)
         else:
             data[attr_name] = sc.Variable(value=value, unit=unit)
     except KeyError:

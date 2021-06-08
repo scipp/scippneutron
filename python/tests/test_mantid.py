@@ -81,11 +81,11 @@ class TestMantidConversion(unittest.TestCase):
                                                      NumEvents=1)
         d = scn.mantid.convert_EventWorkspace_to_data_array(
             tiny_event_ws, load_pulse_times=False)
-        self.assertEqual(sc.bins_data(d.data).unit, sc.units.counts)
+        self.assertEqual(d.data.events.unit, sc.units.counts)
         tiny_event_ws.setYUnit('')
         d = scn.mantid.convert_EventWorkspace_to_data_array(
             tiny_event_ws, load_pulse_times=False)
-        self.assertEqual(sc.bins_data(d.data).unit, sc.units.one)
+        self.assertEqual(d.data.events.unit, sc.units.one)
 
     def test_from_mantid_LoadEmptyInstrument(self):
         import mantid.simpleapi as mantid
@@ -401,23 +401,6 @@ class TestMantidConversion(unittest.TestCase):
             md_histo)
         self.assertEqual(4, len(histo_data_array.dims))
 
-    def test_load_component_info(self):
-        from mantid.simpleapi import mtd
-        mtd.clear()
-
-        ds = sc.Dataset()
-
-        scn.mantid.load_component_info(
-            ds,
-            MantidDataHelper.find_known_file("iris26176_graphite002_sqw.nxs"))
-
-        # check that no workspaces have been leaked in the ADS
-        assert len(mtd) == 0, f"Workspaces present: {mtd.getObjectNames()}"
-
-        self.assertTrue("source_position" in ds.coords)
-        self.assertTrue("sample_position" in ds.coords)
-        self.assertTrue("position" in ds.coords)
-
     def test_to_workspace_2d_no_error(self):
         from mantid.simpleapi import mtd
         mtd.clear()
@@ -653,11 +636,11 @@ class TestMantidConversion(unittest.TestCase):
 
 
 def test_to_rot_from_vectors():
-    a = sc.Variable(value=[1, 0, 0], dtype=sc.dtype.vector_3_float64)
-    b = sc.Variable(value=[0, 1, 0], dtype=sc.dtype.vector_3_float64)
-    rot = scn.mantid._rot_from_vectors(a.value, b.value)
+    a = sc.vector(value=[1, 0, 0])
+    b = sc.vector(value=[0, 1, 0])
+    rot = scn.mantid._rot_from_vectors(a, b)
     assert np.allclose((rot * a).value, b.value)
-    rot = scn.mantid._rot_from_vectors(b.value, a.value)
+    rot = scn.mantid._rot_from_vectors(b, a)
     assert np.allclose((rot * b).value, a.value)
 
 
