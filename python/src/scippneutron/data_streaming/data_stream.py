@@ -9,6 +9,7 @@ from queue import Empty as QueueEmpty
 from enum import Enum
 from ._consumer_type import ConsumerType
 from ._serialisation import dict_loads
+from warnings import warn
 """
 Some type names are included as strings as imports are done in
 function scope to avoid optional dependencies being imported
@@ -163,8 +164,10 @@ async def _data_stream(
         start_at: StartTime = StartTime.now,
         query_consumer: Optional["KafkaQueryConsumer"] = None,  # noqa: F821
         consumer_type: ConsumerType = ConsumerType.REAL,
-        max_iterations: int = np.iinfo(np.int32).max,  # for tests
+        halt_after_n_data_chunks: int = np.iinfo(np.int32).max,  # for tests
+        halt_after_n_warnings: int = np.iinfo(np.int32).max,  # for tests
         test_message_queue: Optional[mp.Queue] = None,  # for tests
+        timeout: Optional[sc.Variable] = None,  # for tests
 ) -> Generator[sc.DataArray, None, None]:
     """
     Main implementation of data stream is extracted to this function so that
@@ -214,12 +217,28 @@ async def _data_stream(
               worker_instruction_queue, data_queue, test_message_queue))
     data_collect_process.start()
 
-    iterations = 0
+    if timeout is not None:
+        start_timeout = time.time()
+        timeout_s = float(sc.to_unit(timeout, 's').value)
+    n_data_chunks = 0
+    n_warnings = 0
     try:
-        while data_collect_process.is_alive() and iterations < max_iterations:
+        while data_collect_process.is_alive(
+        ) and n_data_chunks < halt_after_n_data_chunks and \
+                n_warnings < halt_after_n_warnings:
+            if timeout is not None and (time.time() -
+                                        start_timeout) > timeout_s:
+                raise TimeoutError("data_stream timed out in test")
             try:
                 new_data = data_queue.get_nowait()
-                iterations += 1
+
+                if isinstance(new_data, Warning):
+                    # Raise warnings in this process so that they
+                    # can be captured in tests
+                    warn(new_data)
+                    n_warnings += 1
+                    continue
+                n_data_chunks += 1
                 yield dict_loads(new_data)
             except QueueEmpty:
                 await asyncio.sleep(0.5 * interval_s)

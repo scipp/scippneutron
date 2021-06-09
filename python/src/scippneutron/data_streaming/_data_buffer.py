@@ -12,11 +12,11 @@ from streaming_data_types.sample_environment_senv import (Location as
 from streaming_data_types.timestamps_tdct import deserialise_tdct, Timestamps
 from streaming_data_types.exceptions import WrongSchemaException
 from typing import Optional, Dict, List, Any, Union, Callable
-from warnings import warn
 from ..file_loading._json_nexus import StreamInfo
 from datetime import datetime
 from time import sleep
 from ._serialisation import dict_dumps
+from ._warnings import UnknownFlatbufferIdWarning, BufferSizeWarning
 """
 The ESS data streaming system uses Google FlatBuffers to serialise
 data to transmit in the Kafka message payload. FlatBuffers uses schemas
@@ -98,10 +98,12 @@ class _FastMetadataBuffer:
     rapidly values which, for efficiency, publish updates directly to Kafka
     rather than via EPICS and the Forwarder.
     """
-    def __init__(self, stream_info: StreamInfo, buffer_size: int):
+    def __init__(self, stream_info: StreamInfo, buffer_size: int,
+                 data_queue: mp.Queue):
         self._buffer_mutex = threading.Lock()
         self._buffer_size = buffer_size
         self._name = stream_info.source_name
+        self._data_queue = data_queue
         self._buffer_filled_size = 0
         self._data_array = _create_metadata_buffer_array(
             self._name, stream_info.unit, stream_info.dtype, buffer_size)
@@ -112,11 +114,13 @@ class _FastMetadataBuffer:
         #  - the timedelta for linearly spaced timestamps
         message_size = log_events.values.size
         if message_size > self._buffer_size:
-            warn("Single message would overflow the fast metadata buffer, "
-                 "please restart with a larger buffer size:\n"
-                 f"message_size: {message_size}, fast_metadata_buffer_size:"
-                 f" {self._buffer_size}. These data have been "
-                 f"skipped!")
+            self._data_queue.put(
+                BufferSizeWarning(
+                    "Single message would overflow the fast metadata buffer, "
+                    "please restart with a larger buffer size:\n"
+                    f"message_size: {message_size}, fast_metadata_buffer_size:"
+                    f" {self._buffer_size}. These data have been "
+                    f"skipped!"))
             return
 
         if self._buffer_filled_size + message_size > self._buffer_size:
@@ -179,10 +183,12 @@ class _ChopperMetadataBuffer:
     Buffer for chopper top-dead-centre timestamps from Kafka messages
     serialised according to the flatbuffer schema with id CHOPPER_FB_ID.
     """
-    def __init__(self, stream_info: StreamInfo, buffer_size: int):
+    def __init__(self, stream_info: StreamInfo, buffer_size: int,
+                 data_queue: mp.Queue):
         self._buffer_mutex = threading.Lock()
         self._buffer_size = buffer_size
         self._name = stream_info.source_name
+        self._data_queue = data_queue
         self._buffer_filled_size = 0
         self._data_array = sc.zeros(dims=[self._name],
                                     shape=(buffer_size, ),
@@ -193,11 +199,13 @@ class _ChopperMetadataBuffer:
         # Each Timestamps contains an array of top-dead-centre timestamps
         message_size = chopper_timestamps.timestamps.size
         if message_size > self._buffer_size:
-            warn("Single message would overflow the chopper data buffer, "
-                 "please restart with a larger buffer size:\n"
-                 f"message_size: {message_size}, chopper_buffer_size:"
-                 f" {self._buffer_size}. These data have been "
-                 f"skipped!")
+            self._data_queue.put(
+                BufferSizeWarning(
+                    "Single message would overflow the chopper data buffer, "
+                    "please restart with a larger buffer size:\n"
+                    f"message_size: {message_size}, chopper_buffer_size:"
+                    f" {self._buffer_size}. These data have been "
+                    f"skipped!"))
             return
 
         if self._buffer_filled_size + message_size > self._buffer_size:
@@ -290,17 +298,20 @@ class StreamedDataBuffer:
             elif stream.flatbuffer_id == FAST_FB_ID:
                 self._metadata_buffers[stream.flatbuffer_id][
                     stream.source_name] = _FastMetadataBuffer(
-                        stream, self._fast_metadata_buffer_size)
+                        stream, self._fast_metadata_buffer_size,
+                        self._emit_queue)
             elif stream.flatbuffer_id == CHOPPER_FB_ID:
                 self._metadata_buffers[stream.flatbuffer_id][
                     stream.source_name] = _ChopperMetadataBuffer(
-                        stream, self._chopper_buffer_size)
+                        stream, self._chopper_buffer_size, self._emit_queue)
             elif stream.flatbuffer_id == EVENT_FB_ID:
                 pass  # detection events, not metadata
             else:
-                warn(f"Stream in run start message specified flatbuffer id "
-                     f"'{stream.flatbuffer_id}' which scippneutron does "
-                     f"not know how to deserialise.")
+                self._emit_queue.put(
+                    UnknownFlatbufferIdWarning(
+                        f"Stream in run start message specified flatbuffer id "
+                        f"'{stream.flatbuffer_id}' which scippneutron does "
+                        f"not know how to deserialise."))
 
     def start(self):
         self._cancelled = False
@@ -316,8 +327,10 @@ class StreamedDataBuffer:
     def _emit_data(self):
         with self._buffer_mutex:
             if self._unrecognised_fb_id_count:
-                warn(f"Received {self._unrecognised_fb_id_count}"
-                     " messages with unrecognised FlatBuffer ids")
+                self._emit_queue.put(
+                    UnknownFlatbufferIdWarning(
+                        f"Received {self._unrecognised_fb_id_count}"
+                        " messages with unrecognised FlatBuffer ids"))
                 self._unrecognised_fb_id_count = 0
             new_data = self._events_buffer[
                 'event', :self._current_event].copy()
@@ -326,7 +339,7 @@ class StreamedDataBuffer:
                     metadata_array = buffer.get_metadata_array()
                     new_data.attrs[name] = metadata_array
             self._current_event = 0
-        self._emit_queue.put_nowait(dict_dumps(new_data))
+        self._emit_queue.put(dict_dumps(new_data))
 
     def _emit_loop(self):
         while not self._cancelled:
@@ -338,11 +351,13 @@ class StreamedDataBuffer:
             deserialised_data = deserialise_ev42(new_data)
             message_size = deserialised_data.detector_id.size
             if message_size > self._event_buffer_size:
-                warn("Single message would overflow the event data buffer, "
-                     "please restart with a larger buffer size:\n"
-                     f"message_size: {message_size}, event_buffer_size:"
-                     f" {self._event_buffer_size}. These data have been "
-                     f"skipped!")
+                self._emit_queue.put(
+                    BufferSizeWarning(
+                        "Single message would overflow the event data buffer, "
+                        "please restart with a larger buffer size:\n"
+                        f"message_size: {message_size}, event_buffer_size:"
+                        f" {self._event_buffer_size}. These data have been "
+                        f"skipped!"))
                 return True
             # If new data would overfill buffer then emit data
             # currently in buffer first
