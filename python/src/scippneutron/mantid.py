@@ -237,9 +237,12 @@ def validate_and_get_unit(unit, allow_empty=False):
 def _to_spherical(pos, output):
     output["r"] = sc.sqrt(sc.dot(pos, pos))
     output["t"] = sc.acos(pos.fields.z / output["r"].data)
-    output["p-sign"] = sc.atan2(pos.fields.y, pos.fields.x)
-    output["p-delta"] = sc.Variable(value=np.pi, unit=sc.units.rad) - sc.abs(
-        output["p-sign"].data)
+    signed_phi = sc.atan2(pos.fields.y, pos.fields.x)
+    abs_phi = sc.abs(signed_phi)
+    output["p-delta"] = (
+        np.pi * sc.units.rad) - abs_phi  # angular delta (magnitude) from pole
+    output['p-sign'] = signed_phi  # weighted sign of phi
+    return output
 
 
 def _rot_from_vectors(vec1, vec2):
@@ -283,19 +286,19 @@ def get_detector_properties(ws,
 
     if sample_pos is not None and source_pos is not None:
         total_detectors = spec_info.detectorCount()
-        act_beam = (sample_pos - source_pos).values
-        rot = _rot_from_vectors(act_beam, [0, 0, 1])
-        inv_rot = _rot_from_vectors([0, 0, 1], act_beam)
+        act_beam = (sample_pos - source_pos)
+        rot = _rot_from_vectors(act_beam, sc.vector(value=[0, 0, 1]))
+        inv_rot = _rot_from_vectors(sc.vector(value=[0, 0, 1]), act_beam)
 
         pos_d = sc.Dataset()
         # Create empty to hold position info for all spectra detectors
-        pos_d["x"] = sc.Variable(["detector"],
-                                 shape=[total_detectors],
-                                 unit=sc.units.m)
-        pos_d["y"] = pos_d["x"]
-        pos_d["z"] = pos_d["x"]
-        pos_d.coords[spectrum_dim] = sc.Variable(
-            ["detector"], values=np.empty(total_detectors))
+        pos_d["x"] = sc.zeros(dims=["detector"],
+                              shape=[total_detectors],
+                              unit=sc.units.m)
+        pos_d["y"] = sc.zeros_like(pos_d["x"])
+        pos_d["z"] = sc.zeros_like(pos_d["x"])
+        pos_d.coords[spectrum_dim] = sc.array(dims=["detector"],
+                                              values=np.empty(total_detectors))
 
         spectrum_values = pos_d.coords[spectrum_dim].values
 
@@ -344,9 +347,9 @@ def get_detector_properties(ws,
                                                    len(spec_info) + 0.5,
                                                    1.0))).mean("detector")
 
-        averaged["p-delta"].values *= np.sign(averaged["p-sign"].values)
-        averaged["p"] = sc.Variable(
-            value=np.pi, unit=sc.units.rad) + averaged["p-delta"].data
+        sign = averaged["p-sign"].data / sc.abs(averaged["p-sign"].data)
+        averaged["p"] = sign * (
+            (np.pi * sc.units.rad) - averaged["p-delta"].data)
         averaged["x"] = averaged["r"].data * sc.sin(
             averaged["t"].data) * sc.cos(averaged["p"].data)
         averaged["y"] = averaged["r"].data * sc.sin(
@@ -356,8 +359,11 @@ def get_detector_properties(ws,
         pos = sc.geometry.position(averaged["x"].data, averaged["y"].data,
                                    averaged["z"].data)
 
-        return (inv_rot * pos, sc.matrices([spectrum_dim], values=det_rot),
-                sc.vectors([spectrum_dim], values=det_bbox, unit=sc.units.m))
+        return (inv_rot * pos, sc.matrices(dims=[spectrum_dim],
+                                           values=det_rot),
+                sc.vectors(dims=[spectrum_dim],
+                           values=det_bbox,
+                           unit=sc.units.m))
     else:
         pos = np.zeros([nspec, 3])
 
@@ -382,17 +388,17 @@ def get_detector_properties(ws,
                     bboxes.append(s.getBoundingBox().width())
                 pos[i, :] = np.mean(vec3s, axis=0)
                 det_rot[
-                    i, :] = sc.geometry.rotation_matrix_from_quaterion_cooffs(
+                    i, :] = sc.geometry.rotation_matrix_from_quaternion_coeffs(
                         np.mean(quats, axis=0))
                 det_bbox[i, :] = np.sum(bboxes, axis=0)
             else:
                 pos[i, :] = [np.nan, np.nan, np.nan]
                 det_rot[i, :] = [np.nan, np.nan, np.nan, np.nan]
                 det_bbox[i, :] = [np.nan, np.nan, np.nan]
-        return (sc.vectors([spectrum_dim], values=pos, unit=sc.units.m),
-                sc.matrices([spectrum_dim], values=det_rot),
+        return (sc.vectors(dims=[spectrum_dim], values=pos, unit=sc.units.m),
+                sc.matrices(dims=[spectrum_dim], values=det_rot),
                 sc.vectors(
-                    [spectrum_dim],
+                    dims=[spectrum_dim],
                     values=det_bbox,
                     unit=sc.units.m,
                 ))
