@@ -18,6 +18,7 @@ from warnings import warn
 import numpy as np
 from ._positions import (load_position_of_unique_component,
                          load_positions_of_components)
+from ._sample import load_ub_matrices_of_components
 
 nx_event_data = "NXevent_data"
 nx_log = "NXlog"
@@ -74,6 +75,13 @@ def _load_sample(sample_groups: List[Group], data: ScippData,
                                  file_root,
                                  nexus,
                                  default_position=np.array([0, 0, 0]))
+    load_ub_matrices_of_components(sample_groups,
+                                   data,
+                                   "sample",
+                                   nx_sample,
+                                   file_root,
+                                   nexus,
+                                   default_ub=np.identity(3))
 
 
 def _load_source(source_groups: List[Group], data: ScippData,

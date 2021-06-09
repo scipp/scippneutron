@@ -1,9 +1,9 @@
 from _warnings import warn
-from typing import List, Optional, Any, Tuple
+from typing import List, Optional, Tuple
 import h5py
 import numpy as np
 import scipp as sc
-from ._common import Group
+from ._common import Group, _add_attr_to_loaded_data
 from ._transformations import (get_position_from_transformations,
                                TransformationError)
 from ._nexus import LoadFromNexus, GroupObject
@@ -104,27 +104,3 @@ def _get_position_of_component(
         units = sc.units.m
 
     return position, units
-
-
-def _add_attr_to_loaded_data(attr_name: str,
-                             data: sc.Variable,
-                             value: np.ndarray,
-                             unit: sc.Unit,
-                             dtype: Optional[Any] = None):
-    try:
-        data = data.attrs
-    except AttributeError:
-        pass
-
-    try:
-        if dtype is not None:
-            if dtype == sc.dtype.vector_3_float64:
-                data[attr_name] = sc.vector(value=value, unit=unit)
-            else:
-                data[attr_name] = sc.Variable(value=value,
-                                              dtype=dtype,
-                                              unit=unit)
-        else:
-            data[attr_name] = sc.Variable(value=value, unit=unit)
-    except KeyError:
-        pass
