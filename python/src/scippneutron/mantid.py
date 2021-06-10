@@ -108,8 +108,12 @@ def make_variables_from_run_logs(ws):
             yield property_name, property_data
 
 
-def make_sample(ws):
+def make_mantid_sample(ws):
     return sc.Variable(value=deepcopy(ws.sample()))
+
+
+def make_sample_ub(ws):
+    return sc.matrix(value=(ws.sample().getOrientedLattice().getUB()))
 
 
 def make_component_info(ws):
@@ -470,7 +474,7 @@ def _convert_MatrixWorkspace_info(ws,
         "masks": {},
         "attrs": {
             "sample":
-            make_sample(ws),
+            make_mantid_sample(ws),
             "instrument_name":
             sc.Variable(
                 value=ws.componentInfo().name(ws.componentInfo().root()))
@@ -508,6 +512,9 @@ def _convert_MatrixWorkspace_info(ws,
         info["coords"]["incident_energy"] = _extract_einitial(ws)
     elif ws.getEMode() == DeltaEModeType.Indirect:
         info["coords"]["final_energy"] = _extract_efinal(ws, spec_dim)
+
+    if ws.sample().hasOrientedLattice():
+        info["attrs"]["sample_ub"] = make_sample_ub(ws)
     return info
 
 
