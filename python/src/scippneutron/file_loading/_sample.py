@@ -10,8 +10,7 @@ from ._nexus import LoadFromNexus, GroupObject
 def _get_ub_of_component(
         group: GroupObject,
         nx_class: str,
-        nexus: LoadFromNexus,
-        default_ub: Optional[np.ndarray] = None) -> Tuple[np.ndarray, sc.Unit]:
+        nexus: LoadFromNexus) -> Tuple[np.ndarray, sc.Unit]:
     ub_matrix_found, _ = nexus.dataset_in_group(group, "ub_matrix")
     ub_matrix_unit_found, _ = nexus.dataset_in_group(group, "ub_matrix_units")
     if ub_matrix_found:
@@ -23,7 +22,7 @@ def _get_ub_of_component(
             warn(f"'ub_matrix' dataset in {nx_class} is missing ")
         return ub_matrix, units
     else:
-        return default_ub, sc.units.angstrom**-1
+        return None, None
 
 
 def load_ub_matrices_of_components(groups: List[Group],
@@ -31,11 +30,11 @@ def load_ub_matrices_of_components(groups: List[Group],
                                    name: str,
                                    nx_class: str,
                                    file_root: h5py.File,
-                                   nexus: LoadFromNexus,
-                                   default_ub: Optional[np.ndarray] = None):
+                                   nexus: LoadFromNexus):
     for group in groups:
-        ub_matrix, units = _get_ub_of_component(group.group, nx_class, nexus,
-                                                default_ub)
+        ub_matrix, units = _get_ub_of_component(group.group, nx_class, nexus)
+        if ub_matrix is None:
+            return
         if len(groups) == 1:
             _add_attr_to_loaded_data(f"{name}_ub_matrix",
                                      data,

@@ -80,8 +80,7 @@ def _load_sample(sample_groups: List[Group], data: ScippData,
                                    "sample",
                                    nx_sample,
                                    file_root,
-                                   nexus,
-                                   default_ub=np.identity(3))
+                                   nexus)
 
 
 def _load_source(source_groups: List[Group], data: ScippData,
