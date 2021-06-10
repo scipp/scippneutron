@@ -573,6 +573,9 @@ class TestMantidConversion(unittest.TestCase):
         assert sc.identical(
             d.attrs['sample_ub'],
             sc.matrix(value=ws.sample().getOrientedLattice().getUB()))
+        assert sc.identical(
+            d.attrs['sample_u'],
+            sc.matrix(value=ws.sample().getOrientedLattice().getU()))
 
     def test_sample_without_ub(self):
         import mantid.simpleapi as mantid
@@ -580,6 +583,7 @@ class TestMantidConversion(unittest.TestCase):
         assert not ws.sample().hasOrientedLattice()  # Sanity check input
         d = scn.mantid.from_mantid(ws)
         assert "sample_ub" not in d.attrs
+        assert "sample_u" not in d.attrs
 
     def _exec_to_spherical(self, x, y, z):
         in_out = sc.Dataset()

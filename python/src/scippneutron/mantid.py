@@ -113,7 +113,15 @@ def make_mantid_sample(ws):
 
 
 def make_sample_ub(ws):
+    # B matrix transforms the h,k,l triplet into a Cartesian system
+    # https://docs.mantidproject.org/nightly/concepts/Lattice.html
     return sc.matrix(value=(ws.sample().getOrientedLattice().getUB()))
+
+
+def make_sample_u(ws):
+    # U matrix rotation for sample alignment
+    # https://docs.mantidproject.org/nightly/concepts/Lattice.html
+    return sc.matrix(value=(ws.sample().getOrientedLattice().getU()))
 
 
 def make_component_info(ws):
@@ -514,7 +522,10 @@ def _convert_MatrixWorkspace_info(ws,
         info["coords"]["final_energy"] = _extract_efinal(ws, spec_dim)
 
     if ws.sample().hasOrientedLattice():
-        info["attrs"]["sample_ub"] = make_sample_ub(ws)
+        info["attrs"].update({
+            "sample_ub": make_sample_ub(ws),
+            "sample_u": make_sample_u(ws)
+        })
     return info
 
 
