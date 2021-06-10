@@ -1,5 +1,5 @@
 from _warnings import warn
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 import h5py
 import numpy as np
 import scipp as sc
@@ -7,10 +7,8 @@ from ._common import Group, _add_attr_to_loaded_data
 from ._nexus import LoadFromNexus, GroupObject
 
 
-def _get_ub_of_component(
-        group: GroupObject,
-        nx_class: str,
-        nexus: LoadFromNexus) -> Tuple[np.ndarray, sc.Unit]:
+def _get_ub_of_component(group: GroupObject, nx_class: str,
+                         nexus: LoadFromNexus) -> Tuple[np.ndarray, sc.Unit]:
     ub_matrix_found, _ = nexus.dataset_in_group(group, "ub_matrix")
     ub_matrix_unit_found, _ = nexus.dataset_in_group(group, "ub_matrix_units")
     if ub_matrix_found:
@@ -25,12 +23,9 @@ def _get_ub_of_component(
         return None, None
 
 
-def load_ub_matrices_of_components(groups: List[Group],
-                                   data: sc.Variable,
-                                   name: str,
-                                   nx_class: str,
-                                   file_root: h5py.File,
-                                   nexus: LoadFromNexus):
+def load_ub_matrices_of_components(groups: List[Group], data: sc.Variable,
+                                   name: str, nx_class: str,
+                                   file_root: h5py.File, nexus: LoadFromNexus):
     for group in groups:
         ub_matrix, units = _get_ub_of_component(group.group, nx_class, nexus)
         if ub_matrix is None:
