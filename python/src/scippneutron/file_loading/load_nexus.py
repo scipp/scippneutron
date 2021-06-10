@@ -104,13 +104,13 @@ def load_nexus(data_file: Union[str, h5py.File],
     Usage example:
       data = sc.neutron.load_nexus('PG3_4844_event.nxs')
     """
-    total_time = timer()
+    start_time = timer()
 
     with _open_if_path(data_file) as nexus_file:
         loaded_data = _load_data(nexus_file, root, LoadFromHdf5(), quiet)
 
     if not quiet:
-        print("Total time:", timer() - total_time)
+        print("Total time:", timer() - start_time)
     return loaded_data
 
 

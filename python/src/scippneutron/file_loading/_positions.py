@@ -1,5 +1,5 @@
 from _warnings import warn
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 import h5py
 import numpy as np
 import scipp as sc
@@ -40,7 +40,7 @@ def load_position_of_unique_component(
 
 def load_positions_of_components(
         groups: List[Group],
-        data: sc.Variable,
+        data: Union[sc.DataArray, sc.Dataset],
         name: str,
         nx_class: str,
         file_root: h5py.File,

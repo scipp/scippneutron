@@ -1,5 +1,5 @@
 from _warnings import warn
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import h5py
 import numpy as np
 import scipp as sc
@@ -23,7 +23,8 @@ def _get_ub_of_component(group: GroupObject, nx_class: str,
         return None, None
 
 
-def load_ub_matrices_of_components(groups: List[Group], data: sc.Variable,
+def load_ub_matrices_of_components(groups: List[Group],
+                                   data: Union[sc.DataArray, sc.Dataset],
                                    name: str, nx_class: str,
                                    file_root: h5py.File, nexus: LoadFromNexus):
     for group in groups:

@@ -1286,8 +1286,8 @@ def test_loads_multiple_sample_ub_matrix(load_function: Callable):
     builder.add_component(
         Sample("sample2", ub_matrix=np.identity(3), ub_matrix_units="1/Å"))
     builder.add_component(Sample("sample3"))  # No ub specified
+    builder.create_file_on_disk("/Users/spu92482/Downloads/sample.hdf5")
     loaded_data = load_function(builder)
-    print(loaded_data)
     assert sc.identical(
         loaded_data["sample1_ub_matrix"].data,
         sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.angstrom**-1))
