@@ -15,7 +15,7 @@ from typing import Optional, Dict, List, Any, Union, Callable
 from ..file_loading._json_nexus import StreamInfo
 from datetime import datetime
 from time import sleep
-from ._serialisation import dict_dumps
+from ._serialisation import convert_to_pickleable_dict
 from ._warnings import UnknownFlatbufferIdWarning, BufferSizeWarning
 """
 The ESS data streaming system uses Google FlatBuffers to serialise
@@ -339,7 +339,7 @@ class StreamedDataBuffer:
                     metadata_array = buffer.get_metadata_array()
                     new_data.attrs[name] = metadata_array
             self._current_event = 0
-        self._emit_queue.put(dict_dumps(new_data))
+        self._emit_queue.put(convert_to_pickleable_dict(new_data))
 
     def _emit_loop(self):
         while not self._cancelled:

@@ -8,7 +8,7 @@ import multiprocessing as mp
 from queue import Empty as QueueEmpty
 from enum import Enum
 from ._consumer_type import ConsumerType
-from ._serialisation import dict_loads
+from ._serialisation import convert_from_pickleable_dict
 from warnings import warn
 """
 Some type names are included as strings as imports are done in
@@ -109,7 +109,7 @@ def data_consumption_worker(
     Starts and stops buffers and data consumers which collect data and
     send them back to the main process via a queue.
 
-    All input args must be mp.Queue or picklable as this function is launched
+    All input args must be mp.Queue or pickleable as this function is launched
     as a multiprocessing.Process.
     """
     try:
@@ -239,7 +239,7 @@ async def _data_stream(
                     n_warnings += 1
                     continue
                 n_data_chunks += 1
-                yield dict_loads(new_data)
+                yield convert_from_pickleable_dict(new_data)
             except QueueEmpty:
                 await asyncio.sleep(0.5 * interval_s)
     finally:
