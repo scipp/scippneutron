@@ -1272,9 +1272,25 @@ def test_loads_sample_ub_matrix(load_function: Callable):
                ub_matrix=np.ones(shape=[3, 3]),
                ub_matrix_units="1/Å"))
     loaded_data = load_function(builder)
+    assert "sample_ub_matrix" in loaded_data
     assert sc.identical(
         loaded_data["sample_ub_matrix"].data,
         sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.angstrom**-1))
+    assert "sample_u_matrix" not in loaded_data
+
+
+def test_loads_sample_u_matrix(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_component(
+        Sample("sample",
+               orientation_matrix=np.ones(shape=[3, 3]),
+               orientation_matrix_units=""))
+    loaded_data = load_function(builder)
+    assert "sample_u_matrix" in loaded_data
+    assert sc.identical(
+        loaded_data["sample_u_matrix"].data,
+        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.one))
+    assert "sample_ub_matrix" not in loaded_data
 
 
 def test_loads_multiple_sample_ub_matrix(load_function: Callable):
