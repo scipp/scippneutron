@@ -572,7 +572,8 @@ class TestMantidConversion(unittest.TestCase):
         d = scn.mantid.from_mantid(ws)
         assert sc.identical(
             d.attrs['sample_ub'],
-            sc.matrix(value=ws.sample().getOrientedLattice().getUB()))
+            sc.matrix(value=ws.sample().getOrientedLattice().getUB(),
+                      unit=sc.units.angstrom**-1))
         assert sc.identical(
             d.attrs['sample_u'],
             sc.matrix(value=ws.sample().getOrientedLattice().getU()))

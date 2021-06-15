@@ -115,13 +115,14 @@ def make_mantid_sample(ws):
 def make_sample_ub(ws):
     # B matrix transforms the h,k,l triplet into a Cartesian system
     # https://docs.mantidproject.org/nightly/concepts/Lattice.html
-    return sc.matrix(value=(ws.sample().getOrientedLattice().getUB()))
+    return sc.matrix(value=ws.sample().getOrientedLattice().getUB(),
+                     unit=sc.units.angstrom**-1)
 
 
 def make_sample_u(ws):
     # U matrix rotation for sample alignment
     # https://docs.mantidproject.org/nightly/concepts/Lattice.html
-    return sc.matrix(value=(ws.sample().getOrientedLattice().getU()))
+    return sc.matrix(value=ws.sample().getOrientedLattice().getU())
 
 
 def make_component_info(ws):
