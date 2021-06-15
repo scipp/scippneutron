@@ -150,6 +150,21 @@ def data_consumption_worker(
             break
 
 
+def _cleanup_queue(queue: Optional[mp.Queue]):
+    if queue is not None:
+        try:
+            item = queue.get(block=False)
+        except QueueEmpty:
+            item = None
+        while item:
+            try:
+                queue.get(block=False)
+            except QueueEmpty:
+                break
+        queue.close()
+        queue.join_thread()
+
+
 async def _data_stream(
         data_queue: mp.Queue,
         worker_instruction_queue: mp.Queue,
@@ -245,4 +260,10 @@ async def _data_stream(
     finally:
         # Ensure cleanup happens however the loop exits
         worker_instruction_queue.put(WorkerInstruction.STOP_NOW)
-        data_collect_process.join()
+        process_halt_timeout_s = 4.
+        data_collect_process.join(process_halt_timeout_s)
+        if data_collect_process.is_alive():
+            data_collect_process.terminate()
+        for queue in (data_queue, worker_instruction_queue,
+                      test_message_queue):
+            _cleanup_queue(queue)
