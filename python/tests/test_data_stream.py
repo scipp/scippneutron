@@ -16,8 +16,6 @@ try:
     from scippneutron.data_streaming.data_stream import (_data_stream,
                                                          WorkerInstruction
                                                          )  # noqa: E402
-    from scippneutron.data_streaming._data_buffer import \
-        StreamedDataBuffer  # noqa: E402
     from streaming_data_types.eventdata_ev42 import \
         serialise_ev42  # noqa: E402
     from streaming_data_types.run_start_pl72 import serialise_pl72
@@ -225,37 +223,46 @@ async def test_data_returned_when_buffer_size_exceeded_by_event_messages():
     # will return multiple chunks of data to clear the buffer
     # between messages.
 
-    # data_queue = mp.Queue()
-    # worker_instruction_queue = mp.Queue()
-    # test_message_queue = mp.Queue()
-    queue = 1
-    buffer_size_5_events = 5
-    buffer = StreamedDataBuffer(queue,
-                                event_buffer_size=buffer_size_5_events,
-                                slow_metadata_buffer_size=TEST_BUFFER_SIZE,
-                                fast_metadata_buffer_size=TEST_BUFFER_SIZE,
-                                chopper_buffer_size=TEST_BUFFER_SIZE,
-                                interval=SHORT_TEST_INTERVAL)
+    data_queue = mp.Queue()
+    worker_instruction_queue = mp.Queue()
+    test_message_queue = mp.Queue()
     first_tof = np.array([1., 2., 3.])
     first_detector_ids = np.array([4, 5, 6])
     first_test_message = serialise_ev42("detector", 0, 0, first_tof,
                                         first_detector_ids)
-    second_tof = np.array([1., 2., 3.])
+    second_tof = np.array([7., 8., 9.])
     second_detector_ids = np.array([4, 5, 6])
     second_test_message = serialise_ev42("detector", 0, 0, second_tof,
                                          second_detector_ids)
 
-    with pytest.warns(None) as record_warnings:
-        await buffer.new_data(first_test_message)
-        assert len(
-            record_warnings
-        ) == 0, "Expect no warning from first message as events " \
-                "fit in buffer"
+    # Event data buffer size is 5, so the second message
+    # will not fit in the buffer
+    test_stream_args = TEST_STREAM_ARGS.copy()
+    test_stream_args["event_buffer_size"] = 5
 
-    assert queue.empty()
-    await buffer.new_data(second_test_message)
-    assert not queue.empty(), "Expect data to have been emitted to " \
-                              "queue as buffer size was exceeded"
+    reached_asserts = False
+    n_chunks = 0
+    async for data in _data_stream(data_queue,
+                                   worker_instruction_queue,
+                                   halt_after_n_data_chunks=3,
+                                   test_message_queue=test_message_queue,
+                                   query_consumer=FakeQueryConsumer(),
+                                   **test_stream_args):
+        # n_chunks == 0 zeroth chunk contains data
+        # from run start message
+        if n_chunks == 0:
+            test_message_queue.put(first_test_message)
+            test_message_queue.put(second_test_message)
+        elif n_chunks == 1:
+            # Contain event data from first message
+            assert np.allclose(data.coords['tof'].values, first_tof)
+        elif n_chunks == 2:
+            # Contain event data from second message
+            assert np.allclose(data.coords['tof'].values, second_tof)
+            reached_asserts = True
+
+        n_chunks += 1
+    assert reached_asserts
 
 
 @pytest.mark.asyncio
