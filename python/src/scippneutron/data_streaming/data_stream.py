@@ -230,14 +230,14 @@ async def _data_stream(
               interval_s, event_buffer_size, slow_metadata_buffer_size,
               fast_metadata_buffer_size, chopper_buffer_size,
               worker_instruction_queue, data_queue, test_message_queue))
-    data_collect_process.start()
-
-    if timeout is not None:
-        start_timeout = time.time()
-        timeout_s = float(sc.to_unit(timeout, 's').value)
-    n_data_chunks = 0
-    n_warnings = 0
     try:
+        data_collect_process.start()
+
+        if timeout is not None:
+            start_timeout = time.time()
+            timeout_s = float(sc.to_unit(timeout, 's').value)
+        n_data_chunks = 0
+        n_warnings = 0
         while data_collect_process.is_alive(
         ) and n_data_chunks < halt_after_n_data_chunks and \
                 n_warnings < halt_after_n_warnings:
