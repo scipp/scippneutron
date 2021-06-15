@@ -14,7 +14,6 @@ try:
     import streaming_data_types  # noqa: F401
     from confluent_kafka import TopicPartition  # noqa: F401
     from scippneutron.data_streaming.data_stream import (_data_stream,
-                                                         StartTime,
                                                          WorkerInstruction
                                                          )  # noqa: E402
     from scippneutron.data_streaming._data_buffer import \
@@ -221,7 +220,11 @@ async def test_warn_on_buffer_size_exceeded_by_single_message():
 
 
 @pytest.mark.asyncio
-async def test_buffer_size_exceeded_by_messages_causes_early_data_emit():
+async def test_data_returned_when_buffer_size_exceeded_by_event_messages():
+    # Messages cumulatively exceed the buffer size, data_stream
+    # will return multiple chunks of data to clear the buffer
+    # between messages.
+
     # data_queue = mp.Queue()
     # worker_instruction_queue = mp.Queue()
     # test_message_queue = mp.Queue()
@@ -343,85 +346,6 @@ async def test_specified_topics_override_run_start_message_topics():
         pass
     assert not query_consumer.queried_topics, "Expected specified topics" \
                                               " to be used and none queried"
-
-
-@pytest.mark.skip(
-    "Cannot inject query_consumer to point where consumers are created")
-@pytest.mark.asyncio
-async def test_topics_from_run_start_message_used_if_topics_arg_not_specified(
-):
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
-    topic_in_run_start_message = "test_topic"
-    test_streams = [Stream("/entry", topic_in_run_start_message)]
-    query_consumer = FakeQueryConsumer(streams=test_streams)
-
-    test_stream_args = TEST_STREAM_ARGS.copy()
-    test_stream_args["topics"] = None
-    async for _ in _data_stream(data_queue,
-                                worker_instruction_queue,
-                                run_info_topic="run_topic",
-                                query_consumer=query_consumer,
-                                halt_after_n_data_chunks=0,
-                                **test_stream_args,
-                                test_message_queue=test_message_queue):
-        pass
-    assert topic_in_run_start_message in query_consumer.queried_topics
-
-
-@pytest.mark.skip(
-    "Cannot inject query_consumer to point where consumers are created")
-@pytest.mark.asyncio
-async def test_start_time_from_run_start_msg_not_used_if_start_now_specified():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
-    topic_in_run_start_message = "test_topic"
-    test_streams = [Stream("/entry", topic_in_run_start_message)]
-    test_start_time = 123456
-    query_consumer = FakeQueryConsumer(streams=test_streams,
-                                       start_time=test_start_time)
-    test_stream_args = TEST_STREAM_ARGS.copy()
-    test_stream_args["topics"] = None
-    async for _ in _data_stream(data_queue,
-                                worker_instruction_queue,
-                                start_at=StartTime.now,
-                                run_info_topic="run_topic",
-                                query_consumer=query_consumer,
-                                **test_stream_args,
-                                halt_after_n_data_chunks=0,
-                                test_message_queue=test_message_queue):
-        pass
-
-    assert query_consumer.queried_timestamp != test_start_time
-
-
-@pytest.mark.skip(
-    "Cannot inject query_consumer to point where consumers are created")
-@pytest.mark.asyncio
-async def test_start_time_from_run_start_msg_used_if_requested():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
-    topic_in_run_start_message = "test_topic"
-    test_streams = [Stream("/entry", topic_in_run_start_message)]
-    test_start_time = 123456
-    query_consumer = FakeQueryConsumer(streams=test_streams,
-                                       start_time=test_start_time)
-    test_stream_args = TEST_STREAM_ARGS.copy()
-    test_stream_args["topics"] = None
-    async for _ in _data_stream(data_queue,
-                                worker_instruction_queue,
-                                start_at=StartTime.start_of_run,
-                                run_info_topic="run_topic",
-                                query_consumer=query_consumer,
-                                halt_after_n_data_chunks=0,
-                                **test_stream_args,
-                                test_message_queue=test_message_queue):
-        pass
-
-    assert query_consumer.queried_timestamp == test_start_time
 
 
 @pytest.mark.asyncio
