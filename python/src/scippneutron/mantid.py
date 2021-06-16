@@ -330,8 +330,6 @@ def get_detector_properties(ws,
                     if comp_info.hasValidShape(det_idx):
                         s = comp_info.shape(det_idx)
                         bboxes.append(s.getBoundingBox().width())
-                    else:
-                        bboxes.append(-1)  # not physical
                 det_rot[
                     i, :] = sc.geometry.rotation_matrix_from_quaternion_coeffs(
                         np.mean(quats, axis=0))
@@ -381,14 +379,15 @@ def get_detector_properties(ws,
                     det_idx = definition[j][0]
                     p = det_info.position(det_idx)
                     r = det_info.rotation(det_idx)
-                    s = comp_info.shape(det_idx)
                     vec3s.append([p.X(), p.Y(), p.Z()])
                     quats.append(
                         np.array([r.imagI(),
                                   r.imagJ(),
                                   r.imagK(),
                                   r.real()]))
-                    bboxes.append(s.getBoundingBox().width())
+                    if comp_info.hasValidShape(det_idx):
+                        s = comp_info.shape(det_idx)
+                        bboxes.append(s.getBoundingBox().width())
                 pos[i, :] = np.mean(vec3s, axis=0)
                 det_rot[
                     i, :] = sc.geometry.rotation_matrix_from_quaternion_coeffs(
