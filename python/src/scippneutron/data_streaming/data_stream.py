@@ -98,7 +98,7 @@ class WorkerInstruction(Enum):
     STOPTIME_UPDATE = 2
 
 
-def data_consumption_worker(
+def data_consumption_manager(
         start_time_ms: int, topics: Set[str], kafka_broker: str,
         consumer_type: ConsumerType, stream_info: Optional[List[StreamInfo]],
         interval_s: float, event_buffer_size: int,
@@ -225,7 +225,7 @@ async def _data_stream(
     interval_s = float(sc.to_unit(interval, 's').value)
 
     data_collect_process = mp.Process(
-        target=data_consumption_worker,
+        target=data_consumption_manager,
         args=(start_time_ms, topics, kafka_broker, consumer_type, stream_info,
               interval_s, event_buffer_size, slow_metadata_buffer_size,
               fast_metadata_buffer_size, chopper_buffer_size,
