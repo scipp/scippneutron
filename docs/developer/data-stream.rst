@@ -156,7 +156,7 @@ Setup
 `Install Docker Engine <https://docs.docker.com/get-docker/>`_ on your system.
 If on Linux, do not forget to add your user to the "docker" group,
 `see documentation <https://docs.docker.com/engine/install/linux-postinstall/>`_.
-Install the docker-compose conda package.
+Install the ``docker-compose`` conda package.
 
 Run Test
 ~~~~~~~~
@@ -172,7 +172,13 @@ directory and run
 
 To populate Kafka with data the `NeXus Streamer <https://github.com/ess-dmsc/nexus-streamer-python>`_
 tool can be used. This is available as a conda package `<https://anaconda.org/ESS-DMSC/nexus-streamer>`_.
-Run it from the conda environment with a
+Run it from the conda environment and point it at a NeXus file, for example for the AMOR instrument
+
+    .. code-block:: sh
+        nexus_streamer --broker localhost --instrument AMOR --filename /path/to/nexus/file/amor.nxs -s -z
+
+see `readme <https://github.com/ess-dmsc/nexus-streamer-python>`_ or use ``--help`` for an explanation
+of the args.
 
 If you are in doubt whether data has reached Kafka you may want
 to use the `kafkacow command line tool <https://github.com/ess-dmsc/kafkacow>`_
@@ -213,11 +219,6 @@ output:
         Timestamp: 1618234256903 || PartitionID:     0 || Offset:    1150 || File Identifier: ev42 ||
         {
           detector_id: [     61985     62379     62126     ... truncated 756 elements ...     120485   ]
-          facility_specific_data: {
-            proton_charge: 0.001098
-            run_state: RUNNING
-          }
-          facility_specific_data_type: ISISData
           message_id: 1149
           pulse_time: 1618234368838996887
           source_name: NeXus-Streamer
@@ -231,19 +232,27 @@ Try using ``scippneutron.data_stream``, for example
 
         import asyncio
         import scippneutron as scn
+        import numpy as np
+        from scippneutron.data_streaming.data_stream import StartTime
+
+        plot_data = sc.zeros(dims=("y", "x"), shape=(288, 32), dtype=np.int32)  # float64
+        det_plot = sc.plot(plot_data, vmax=1000)
+        det_plot.set_draw_no_delay(True)
+        det_plot
+
+    .. code-block:: python
+
+        import asyncio
+        from scippneutron.data_streaming.data_stream import StartTime
 
         async def my_stream_func():
-            async for data in scn.data_stream('localhost:9092', ['SANS2D_events']):
-                print(data)
-                break  # just print the first batch of data we receive
-
-        streaming_task = asyncio.create_task(my_stream_func())
-
-Note that the producer container (NeXus-Streamer) must be currently running for you to receive data.
-By default the producer container stops running after publishing the contents of the SANS2D file it contains.
-If you want it to keep repeating publishing data until you terminate docker-compose then set
-``single-run`` to ``false`` in ``docs/developer/data_stream/nexus_streamer_config.ini``, but note that this
-will use more and more disk space until you terminate docker-compose.
+            detector_ids = sc.Variable(dims=["detector_id"],
+                                       values=np.arange(32*288).astype(np.int32))
+            async for data in scn.data_stream('localhost:9092', run_info_topic="AMOR_runInfo", start_time=StartTime.start_of_run, interval=2. * sc.units.s):
+                events = sc.bin(data, groups=[detector_ids])
+                counts = events.bins.sum()
+                plot_data.values = plot_data.values + sc.fold(counts, dim='detector_id', sizes={'y': 288, 'x': 32}).values
+                det_plot.redraw()
 
 Clean Up
 ~~~~~~~~
