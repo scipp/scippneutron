@@ -13,7 +13,7 @@ Apache Kafka
 
 The ESS data streaming system is based on the Apache Kafka data streaming platform. The
 basic terminology used in the scippneutron codebase is described here, but the
-introductory documentation at https://kafka.apache.org is well worth 5-10 minutes
+introductory documentation at `<https://kafka.apache.org>`_ is well worth 5-10 minutes
 of your time.
 
 Apache Kafka is a publish-subscribe system for passing data over the network. A *producer* client
@@ -48,8 +48,27 @@ FlatBuffers
 -----------
 
 Kafka does not dictate how data are serialised to be transmitted in a message over the network.
+The ESS streaming system uses `FlatBuffers <https://google.github.io/flatbuffers/>`_ for serialisation.
+Data to be serialised with FlatBuffers are described by an IDL schema, the FlatBuffer compiler ``flatc``
+can be used to generate code from the schema which provides a builder class with which to construct
+the serialised buffer, as well as methods to extract data from the buffer.
 
-[flatbuffers, schema ids, streaming-data-types, ess-streaming-data-types (on conda)]
+Each type of data, for example neutron detection events, sample environment measurement,
+experiment run start event, etc has an associated FlatBuffer schema. These are stored in a repository
+`<https://github.com/ess-dmsc/streaming-data-types/>`_. The ESS has also developed a Python library
+to provide a convenient `serialise` and `deserialise` method for each schema
+`<https://github.com/ess-dmsc/python-streaming-data-types/>`_, this is available as a conda package
+`<https://anaconda.org/ess-dmsc/ess-streaming-data-types>`_.
+
+Each schema file defines a ``file_identifier``, which comprises 4 characters. These are the first 4
+bytes in the serialised buffer. It is ESS convention to also use these 4 characters in the schema
+filename and the module name in the ``streaming-data-types`` python library. If breaking changes are
+made to a schema, such as changing field names or removing fields, then a new ``file_identifier`` is
+defined.
+
+It may be worth noting that we have found extracting data from serialised FlatBuffers in Python
+to be efficient, but serialising can be much more efficient in C++, particularly if serialising
+very many small buffers.
 
 
 Architecture
