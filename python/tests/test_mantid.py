@@ -6,6 +6,7 @@ import warnings
 import numpy as np
 import pytest
 import os
+import tempfile
 
 import scipp as sc
 import scippneutron as scn
@@ -82,6 +83,27 @@ class TestMantidConversion(unittest.TestCase):
         assert np.all(
             np.isclose(x.coords['position'].values,
                        y.coords['position'].values))
+
+    def test_advanced_geometry_with_absent_shape(self):
+        import mantid.simpleapi as mantid
+        # single bank 3 by 3
+        ws = mantid.CreateSampleWorkspace(NumBanks=1,
+                                          BankPixelWidth=3,
+                                          StoreInADS=False)
+        # Save and reload trick to purge sample shape info
+        file_name = "example_geometry.nxs"
+        geom_path = os.path.join(tempfile.gettempdir(), file_name)
+        mantid.SaveNexusGeometry(ws, geom_path)  # Does not save shape info
+        assert os.path.isfile(geom_path)  # sanity check
+        out = mantid.LoadEmptyInstrument(
+            Filename=geom_path, StoreInADS=False)  # reload without sample info
+        os.remove(geom_path)
+
+        assert not out.componentInfo().hasValidShape(0)  # sanity check
+        da = scn.mantid.from_mantid(out, advanced_geometry=True)
+        # Shapes have zero size
+        assert sc.identical(sc.sum(da.meta['shape']),
+                            sc.vector(value=[0, 0, 0], unit=sc.units.m))
 
     def test_EventWorkspace_no_y_unit(self):
         import mantid.simpleapi as mantid
