@@ -1,7 +1,7 @@
-The Data Streaming Interface
-============================
+Data Streaming
+==============
 
-This interface provides access to data in the ESS data streaming system. The functionality
+The data streaming interface provides access to data in the ESS data streaming system. The functionality
 is included in ``scippneutron`` rather than the facility-specific ``ess`` library as
 the same system is also used to varying extents at other neutron sources including ISIS
 Pulsed Neutron and Muon Source, SINQ: The Swiss Spallation Neutron Source, and ANSTO:
@@ -29,19 +29,21 @@ offset in each partition may not be 0. Consumers have control over what offset t
 they can start consuming the stream from the oldest available message, the latest message, or at
 from the next available message after a specified time.
 
-Many libraries are available for the *Client API*: implementations of a producer and consumer. In
-``scippneutron`` we use ``confluent-kafka-python`` which is based on a high performance C implementation
-``librdkafka``.
+Many libraries are available for the *Client API*; to implement producer and consumer applications. In
+``scippneutron`` we use `confluent-kafka-python <https://github.com/confluentinc/confluent-kafka-python>`_
+which is based on a high performance C implementation `librdkafka <https://github.com/edenhill/librdkafka>`_.
 
 Note, messages published to Kafka are often called *events*, but this terminology is avoided in
 ``scippneutron`` as we usually use this term for "neutron detection events" specifically.
 
-Topic - a named data stream
-- Partition - a log file, one or more per topic
-- Offset - the position of a message in a partition
-- Broker - Kafka server, usually deployed as a cluster
-- Consumer - a client application which subscribes to data on Kafka
-- Producer - a client application which publishes data to Kafka
+Terminology:
+
+- *Topic* - a named data stream
+- *Partition* - a log file, one or more per topic
+- *Offset* - the position of a message in a partition
+- *Broker* - Kafka server, usually deployed as a cluster
+- *Consumer* - a client application which subscribes to data on Kafka
+- *Producer* - a client application which publishes data to Kafka
 
 
 FlatBuffers
@@ -56,7 +58,7 @@ the serialised buffer, as well as methods to extract data from the buffer.
 Each type of data, for example neutron detection events, sample environment measurement,
 experiment run start event, etc has an associated FlatBuffer schema. These are stored in a repository
 `<https://github.com/ess-dmsc/streaming-data-types/>`_. The ESS has also developed a Python library
-to provide a convenient `serialise` and `deserialise` method for each schema
+to provide a convenient "serialise" and "deserialise" method for each schema
 `<https://github.com/ess-dmsc/python-streaming-data-types/>`_, this is available as a conda package
 `<https://anaconda.org/ess-dmsc/ess-streaming-data-types>`_.
 
@@ -74,32 +76,79 @@ very many small buffers.
 Architecture
 ------------
 
-Why threading.Thread, multiprocessing.Process and asyncio?
-Why each consumer responsible for a single TopicPartition and not multiple partitions or even multiple topics?
+The interface to streamed data is ``data_stream()`` and is an asynchronous generator. It is run like this
 
-The interface to streamed data is data_stream(), which is an asynchronous generator. It is run like this
-```python
-async for data in data_stream(*args):
-    ...
-```
+    .. code-block:: python
 
+        async def stream_func():
+            async for data in data_stream(*args):
+                ...
 
-data_stream is given a Kafka topic on which to find "run start" messages. It looks for the last available run start message. The message contains some data known at the start of an experiment run, for example instrument geometry. These data are yielded from the generator as the first chunk of streamed data, as a data array. The run start message also contains details of all the other data sources important to the experiment and where to find their data on Kafka. This information is passed to the data_consumption_manager() which is started in a separate multiprocessing.Process.
+        streaming_task = asyncio.create_task(stream_func())
 
-data_consumption_manager() creates a StreamedDataBuffer which comprises buffers for data from each data source known about from the run start message. data_consumption_manager() also creates a KafkaConsumer for each partition in each Kafka topic associated with the data sources. It starts a threading.Thread in each KafkaConsumer which polls the consumer's internal queue, if any data have been collected by the consumer they are passed to the buffer via a callback function. It also starts a threading.Thread in the buffer which periodically puts all all data collected in the buffer as a single DataArray into a multiprocessing.Queue for the data_stream generator to yield. The buffer is responsible for checking the flatbuffer id of each message it receives from the consumers, deserialising the message, checking the source name matches a data source named in the run start message, and if so adding the data to the buffer. If a single message exceeds the buffer size a warning is issued to the user and the data is skipped. If multiple messages arrive which collectively exceed the buffer size before the buffer has put its data on the queue and reset, then the buffer puts its data on the queue early.
+The architecture of the implementation under ``data_stream()`` is sketched in the following diagram.
 
+.. image:: data_stream/data_stream_arch.svg
+   :width: 600
+
+``data_stream`` has a Kafka topic argument in which to find "run start" messages. It looks for
+the last available `run start message <https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/pl72_run_start.fbs>`_.
+The message contains some data known at the start of an
+experiment run, for example instrument geometry. These data are yielded from the generator as
+the first chunk of streamed data, as a ``DataArray``. The run start message also contains details
+of all the other data sources important to the experiment and where to find their data on Kafka.
+This information is passed to the ``data_consumption_manager()`` which is started in a separate
+``multiprocessing.Process``.
+
+``data_consumption_manager()`` creates a ``StreamedDataBuffer`` which comprises buffers for data
+from each data source known about from the run start message. ``data_consumption_manager()`` also
+creates a ``KafkaConsumer`` for each partition in each Kafka topic associated with the data sources.
+It starts a ``threading.Thread`` in each ``KafkaConsumer`` which polls the consumer's internal queue.
+If any data have been collected by the consumer they are passed to the buffer via a callback function.
+It also starts a ``threading.Thread`` in the buffer which periodically puts all all data collected
+in the buffer as a single ``DataArray`` into a ``multiprocessing.Queue`` for the ``data_stream``
+generator to yield. The buffer is responsible for checking the flatbuffer id of each message it
+receives from the consumers, deserialising the message, checking the source name matches a data
+source named in the run start message, and if so adding the data to the buffer. If a single
+message exceeds the buffer size a warning is issued to the user and the data is skipped. If multiple
+messages arrive which collectively exceed the buffer size before the buffer has put its data on
+the queue and reset, then the buffer puts its data on the queue early.
+
+``data_consumption_manager()`` is also responsible for stopping the ``StreamedDataBuffer`` thread
+and all ``KafkaConsumer`` threads to stop when it receives a stop event in a
+``multiprocessing.Queue`` shared with ``data_stream``. This allows everything in the data consumption
+process to be cleanly stopped at a request from the main, notebook, process.
+
+A note on the choice of using ``threading.Thread``, ``multiprocessing.Process`` and ``asyncio``:
+
+    ``asyncio`` and ``threading`` each provide concurrency but not parallelism. ``threading`` was the most
+    simple approach to run loops polling the consumer buffers. ``asyncio`` provides a convenient way to
+    allow ``data_stream`` to run while retaining interactivity of plots in the notebook. It makes use of the
+    same asyncio event loop which the ``matplotlib`` ``nbagg`` backend uses.
+    ``multiprocessing.Process`` allows us to move most of the work of consuming and aggregating the data
+    in ``scipp`` datastructures onto a different CPU core to the one being used for updating plots etc
+    in the notebook.
 
 Unit Testing
 ------------
 
-[modified diagram to show approach without normal dep inject]
+For unit tests it would be convenient to use a fake consumer object in place of ``KafkaConsumer``
+instances. However, any input arguments or variables passed via the queue to the ``mp.Process``
+must be pickleable or ``mp.Queue``. This makes dependency injection difficult. To get around
+this an enum can be passed via ``data_stream`` to the ``data_consumption_manager`` to tell it
+to create instances of ``FakeConsumer`` instead of ``KafkaConsumer``, additionally an ``mp.Queue``
+can be provided and is passed to the ``FakeConsumer``. The ``FakeConsumer`` then polls for messages
+on the queue instead of Kafka, allowing the test to provide the messages.
+
+.. image:: data_stream/data_stream_arch_testing.svg
+   :width: 600
 
 Manual Testing
 --------------
 
-Testing ``scippneutron``'s interface to the streaming system requires running a Kafka server and
-populating it with neutron data. The most convenient way to do this on a developer
-machine is to use docker containers.
+Testing the full, real implementation, of ``scippneutron``'s interface to the streaming
+system requires running a Kafka server and populating it with neutron data. The most
+convenient way to do this on a developer machine is to use docker containers.
 
 Setup
 ~~~~~
@@ -107,19 +156,13 @@ Setup
 `Install Docker Engine <https://docs.docker.com/get-docker/>`_ on your system.
 If on Linux, do not forget to add your user to the "docker" group,
 `see documentation <https://docs.docker.com/engine/install/linux-postinstall/>`_.
+Install the docker-compose conda package.
 
-Install docker-compose
+Run Test
+~~~~~~~~
 
-    .. code-block:: sh
-
-        conda install -c docker-compose
-
-Run Containers
-~~~~~~~~~~~~~~
-
-To start up Kafka and the `NeXus Streamer <https://github.com/ess-dmsc/nexus-streamer>`_
-to populate it with data from the SANS2D instrument at ISIS Neutron Source,
-navigate to the ``docs/developer/data_stream`` directory and run
+To start up a Kafka broker navigate to the ``docs/developer/data_stream``
+directory and run
 
     .. code-block:: sh
 
@@ -127,9 +170,13 @@ navigate to the ``docs/developer/data_stream`` directory and run
 
 ``Ctrl+C`` cleanly stops the running containers when you are done.
 
-If you are in doubt whether the containers are working you may want
-to use the `kafkacow command line tool <https://github.com/ess-dmsc/kafkacow>`_ to query the Kafka server, see
-`installation instructions <https://github.com/ess-dmsc/kafkacow#install>`_.
+To populate Kafka with data the `NeXus Streamer <https://github.com/ess-dmsc/nexus-streamer-python>`_
+tool can be used. This is available as a conda package `<https://anaconda.org/ESS-DMSC/nexus-streamer>`_.
+Run it from the conda environment with a
+
+If you are in doubt whether data has reached Kafka you may want
+to use the `kafkacow command line tool <https://github.com/ess-dmsc/kafkacow>`_
+to query the Kafka server, see `installation instructions <https://github.com/ess-dmsc/kafkacow#install>`_.
 
 For example, to check data topics on the Kafka server
 
@@ -137,7 +184,7 @@ For example, to check data topics on the Kafka server
 
         kafkacow -L -b localhost
 
-you should see output like this
+you should see output something like this
 
     .. code-block:: sh
 
@@ -145,9 +192,9 @@ you should see output like this
            broker 1 at 0.0.0.0:9092
 
         10 topics:
-           "SANS2D_sampleEnv" with 1 partitions:
+           "AMOR_sampleEnv" with 1 partitions:
                 partition   0  |  Low offset:      0  |  High offset: 295782 |  leader:  1 |  replicas: 1,  |  isrs: 1,
-           "SANS2D_events" with 1 partitions:
+           "AMOR_events" with 1 partitions:
                 partition   0  |  Low offset:      0  |  High offset:   6271 |  leader:  1 |  replicas: 1,  |  isrs: 1,
         ...
 
@@ -155,7 +202,7 @@ and you can view the event data with
 
     .. code-block:: sh
 
-        kafkacow -C -b localhost -t SANS2D_events
+        kafkacow -C -b localhost -t AMOR_events
 
 output:
 
