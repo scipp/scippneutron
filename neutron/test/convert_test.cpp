@@ -45,7 +45,7 @@ Dataset makeTofDataset() {
   return tof;
 }
 
-Variable makeTofBucketedEvents() {
+Variable makeTofBinnedEvents() {
   Variable indices = makeVariable<std::pair<scipp::index, scipp::index>>(
       Dims{NeutronDim::Spectrum}, Shape{2},
       Values{std::pair{0, 4}, std::pair{4, 7}});
@@ -81,7 +81,6 @@ TEST_P(ConvertTest, DataArray_from_tof) {
     for (const auto &data : tof) {
       auto converted =
           convert(copy(data), NeutronDim::Tof, dim, ConvertMode::Scatter);
-      auto &attrs = converted.attrs();
       result.setData(data.name(), converted);
     }
     for (const auto &data : result)
@@ -562,19 +561,19 @@ TEST_P(ConvertTest, convert_with_factor_type_promotion) {
   }
 }
 
-TEST(ConvertBucketsTest, events_converted) {
+TEST(ConvertBinnedTest, events_converted) {
   Dataset tof = makeTofDataset();
   // Standard dense coord for comparison purposes. The final 0 is a dummy.
   const auto coord = makeVariable<double>(
       Dims{NeutronDim::Spectrum, NeutronDim::Tof}, Shape{2, 4}, units::us,
       Values{1000, 3000, 2000, 4000, 5000, 6000, 3000, 0});
   tof.coords().set(NeutronDim::Tof, coord);
-  tof.setData("bucketed", makeTofBucketedEvents());
+  tof.setData("events", makeTofBinnedEvents());
   auto original = copy(tof);
   for (auto &&d :
        {NeutronDim::DSpacing, NeutronDim::Wavelength, NeutronDim::Energy}) {
     auto res = convert(tof, NeutronDim::Tof, d, ConvertMode::Scatter);
-    auto values = res["bucketed"].values<bucket<DataArray>>();
+    auto values = res["events"].values<bucket<DataArray>>();
     Variable expected =
         copy(res.coords()[d].slice({NeutronDim::Spectrum, 0}).slice({d, 0, 4}));
     expected.rename(d, Dim::Event);
@@ -587,6 +586,20 @@ TEST(ConvertBucketsTest, events_converted) {
     EXPECT_FALSE(values[1].coords().contains(NeutronDim::Tof));
     EXPECT_TRUE(values[1].coords().contains(d));
     EXPECT_EQ(values[1].coords()[d], expected);
+    EXPECT_EQ(tof, original); // input should be immutable
+  }
+}
+
+TEST(ConvertBinnedTest, convert_slice) {
+  auto tof = copy(makeTofDataset()["counts"].slice({NeutronDim::Tof, 0}));
+  tof.setData(makeTofBinnedEvents());
+  const auto original = copy(tof);
+  for (auto &&d :
+       {NeutronDim::DSpacing, NeutronDim::Wavelength, NeutronDim::Energy}) {
+    auto full = convert(tof, NeutronDim::Tof, d, ConvertMode::Scatter);
+    auto slice = convert(tof.slice({NeutronDim::Spectrum, 1, 2}),
+                         NeutronDim::Tof, d, ConvertMode::Scatter);
+    EXPECT_EQ(slice, full.slice({NeutronDim::Spectrum, 1, 2}));
     EXPECT_EQ(tof, original); // input should be immutable
   }
 }

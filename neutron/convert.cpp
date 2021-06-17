@@ -3,6 +3,7 @@
 /// @file
 /// @author Simon Heybrock
 #include <set>
+#include <sstream>
 #include <tuple>
 
 #include <scipp/core/element/arg_list.h>
@@ -10,6 +11,7 @@
 #include <scipp/variable/transform.h>
 #include <scipp/variable/util.h>
 
+#include <scipp/dataset/bins_view.h>
 #include <scipp/dataset/dataset.h>
 #include <scipp/dataset/dataset_util.h>
 
@@ -17,8 +19,6 @@
 #include "scipp/neutron/constants.h"
 #include "scipp/neutron/conversions.h"
 #include "scipp/neutron/convert.h"
-#include <scipp/dataset/bins_view.h>
-#include <sstream>
 
 using namespace scipp::variable;
 using namespace scipp::dataset;
@@ -66,10 +66,10 @@ T convert_generic(T &&d, const Dim from, const Dim to, Op op,
   for (auto &&item : iter(d)) {
     if (item.dtype() != dtype<core::bin<DataArray>>)
       continue;
-    auto [indices, dim, buffer] =
-        item.data().template constituents<DataArray>();
-    if (!buffer.coords().contains(from))
+    if (dataset::bins_view<DataArray>(item.data()).coords().contains(from))
       continue;
+    const auto data = item.data().is_slice() ? copy(item.data()) : item.data();
+    auto [indices, dim, buffer] = data.template constituents<DataArray>();
     // A plain copy of item.data() would share the same `buffer`, i.e., coord
     // rename would affect the original. Recreate binned data from shallow
     // copies.
