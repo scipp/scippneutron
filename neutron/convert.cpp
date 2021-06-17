@@ -66,7 +66,7 @@ T convert_generic(T &&d, const Dim from, const Dim to, Op op,
   for (auto &&item : iter(d)) {
     if (item.dtype() != dtype<core::bin<DataArray>>)
       continue;
-    if (dataset::bins_view<DataArray>(item.data()).coords().contains(from))
+    if (!dataset::bins_view<DataArray>(item.data()).coords().contains(from))
       continue;
     const auto data = item.data().is_slice() ? copy(item.data()) : item.data();
     auto [indices, dim, buffer] = data.template constituents<DataArray>();
