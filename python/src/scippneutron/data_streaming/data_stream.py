@@ -10,6 +10,8 @@ from enum import Enum
 from ._consumer_type import ConsumerType
 from ._serialisation import convert_from_pickleable_dict
 from warnings import warn
+import ipywidgets as widgets
+from IPython.display import display
 """
 Some type names are included as strings as imports are done in
 function scope to avoid optional dependencies being imported
@@ -231,6 +233,8 @@ async def _data_stream(
               fast_metadata_buffer_size, chopper_buffer_size,
               worker_instruction_queue, data_queue, test_message_queue))
     try:
+        stop_button = _create_stop_button()
+
         data_collect_process.start()
 
         if timeout is not None:
@@ -240,7 +244,7 @@ async def _data_stream(
         n_warnings = 0
         while data_collect_process.is_alive(
         ) and n_data_chunks < halt_after_n_data_chunks and \
-                n_warnings < halt_after_n_warnings:
+                n_warnings < halt_after_n_warnings and not stop_button.value:
             if timeout is not None and (time.time() -
                                         start_timeout) > timeout_s:
                 raise TimeoutError("data_stream timed out in test")
@@ -267,3 +271,15 @@ async def _data_stream(
         for queue in (data_queue, worker_instruction_queue,
                       test_message_queue):
             _cleanup_queue(queue)
+        stop_button.description = "Stopped"
+
+
+def _create_stop_button():
+    def on_button_clicked(b):
+        b["owner"].description = "Stopping..."
+        b["owner"].disabled = True
+
+    button = widgets.ToggleButton(description="Stop stream")
+    button.observe(on_button_clicked, 'value')
+    display(button)
+    return button
