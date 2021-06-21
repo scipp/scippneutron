@@ -2,7 +2,7 @@ from confluent_kafka import Consumer, TopicPartition, KafkaError
 from typing import Callable, List, Dict, Optional, Tuple
 from warnings import warn
 import threading
-from streaming_data_types.run_start_pl72 import deserialise_pl72
+from streaming_data_types.run_start_pl72 import deserialise_pl72, RunStartInfo
 from streaming_data_types.exceptions import WrongSchemaException
 from ._consumer_type import ConsumerType
 import multiprocessing as mp
@@ -227,7 +227,8 @@ def stop_consumers(consumers: List[KafkaConsumer]):
         consumer.stop()
 
 
-def get_run_start_message(topic: str, query_consumer: KafkaQueryConsumer):
+def get_run_start_message(topic: str,
+                          query_consumer: KafkaQueryConsumer) -> RunStartInfo:
     """
     Get the last run start message on the given topic
     """

@@ -9,9 +9,9 @@ from queue import Empty as QueueEmpty
 from enum import Enum
 from ._consumer_type import ConsumerType
 from ._serialisation import convert_from_pickleable_dict
+from ._stop_time import StopTime
 from warnings import warn
-import ipywidgets as widgets
-from IPython.display import display
+from ._data_stream_widget import DataStreamWidget
 """
 Some type names are included as strings as imports are done in
 function scope to avoid optional dependencies being imported
@@ -97,11 +97,11 @@ def validate_buffer_size_args(chopper_buffer_size, event_buffer_size,
 
 class WorkerInstruction(Enum):
     STOP_NOW = 1
-    STOPTIME_UPDATE = 2
+    UPDATE_STOP_TIME = 2
 
 
 def data_consumption_manager(
-        start_time_ms: int, topics: Set[str], kafka_broker: str,
+        start_time_ms: int, run_id: str, topics: Set[str], kafka_broker: str,
         consumer_type: ConsumerType, stream_info: Optional[List[StreamInfo]],
         interval_s: float, event_buffer_size: int,
         slow_metadata_buffer_size: int, fast_metadata_buffer_size: int,
@@ -124,7 +124,7 @@ def data_consumption_manager(
     buffer = StreamedDataBuffer(data_queue, event_buffer_size,
                                 slow_metadata_buffer_size,
                                 fast_metadata_buffer_size, chopper_buffer_size,
-                                interval_s)
+                                interval_s, run_id)
 
     if stream_info is not None:
         buffer.init_metadata_buffers(stream_info)
@@ -205,8 +205,14 @@ async def _data_stream(
         query_consumer = KafkaQueryConsumer(kafka_broker)
 
     stream_info = None
+    run_id = ""
+    run_title = "-"  # for display in widget
+    stop_time_ms = 0
     if run_info_topic is not None:
         run_start_info = get_run_start_message(run_info_topic, query_consumer)
+        run_id = run_start_info.job_id
+        run_title = run_start_info.run_name
+        stop_time_ms = run_start_info.stop_time
         if topics is None:
             loaded_data, stream_info = _load_nexus_json(
                 run_start_info.nexus_structure, get_start_info=True)
@@ -228,13 +234,15 @@ async def _data_stream(
 
     data_collect_process = mp.Process(
         target=data_consumption_manager,
-        args=(start_time_ms, topics, kafka_broker, consumer_type, stream_info,
-              interval_s, event_buffer_size, slow_metadata_buffer_size,
-              fast_metadata_buffer_size, chopper_buffer_size,
-              worker_instruction_queue, data_queue, test_message_queue))
+        args=(start_time_ms, run_id, topics, kafka_broker, consumer_type,
+              stream_info, interval_s, event_buffer_size,
+              slow_metadata_buffer_size, fast_metadata_buffer_size,
+              chopper_buffer_size, worker_instruction_queue, data_queue,
+              test_message_queue))
     try:
-        stop_button = _create_stop_button()
-
+        data_stream_widget = DataStreamWidget(start_time_ms=start_time_ms,
+                                              stop_time_ms=stop_time_ms,
+                                              run_title=run_title)
         data_collect_process.start()
 
         if timeout is not None:
@@ -244,7 +252,8 @@ async def _data_stream(
         n_warnings = 0
         while data_collect_process.is_alive(
         ) and n_data_chunks < halt_after_n_data_chunks and \
-                n_warnings < halt_after_n_warnings and not stop_button.value:
+                n_warnings < halt_after_n_warnings and \
+                not data_stream_widget.stop_requested:
             if timeout is not None and (time.time() -
                                         start_timeout) > timeout_s:
                 raise TimeoutError("data_stream timed out in test")
@@ -257,6 +266,9 @@ async def _data_stream(
                     warn(new_data)
                     n_warnings += 1
                     continue
+                elif isinstance(new_data, StopTime):
+                    data_stream_widget.set_stop_time(new_data.stop_time_ms)
+                    # TODO emit worker instruct for stop time update
                 n_data_chunks += 1
                 yield convert_from_pickleable_dict(new_data)
             except QueueEmpty:
@@ -271,15 +283,4 @@ async def _data_stream(
         for queue in (data_queue, worker_instruction_queue,
                       test_message_queue):
             _cleanup_queue(queue)
-        stop_button.description = "Stopped"
-
-
-def _create_stop_button():
-    def on_button_clicked(b):
-        b["owner"].description = "Stopping..."
-        b["owner"].disabled = True
-
-    button = widgets.ToggleButton(description="Stop stream")
-    button.observe(on_button_clicked, 'value')
-    display(button)
-    return button
+        data_stream_widget.set_stopped()

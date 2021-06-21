@@ -10,9 +10,11 @@ from streaming_data_types.sample_environment_senv import (Response as
 from streaming_data_types.sample_environment_senv import (Location as
                                                           TimestampLocation)
 from streaming_data_types.timestamps_tdct import deserialise_tdct, Timestamps
+from streaming_data_types.run_stop_6s4t import deserialise_6s4t
 from streaming_data_types.exceptions import WrongSchemaException
 from typing import Optional, Dict, List, Any, Union, Callable
 from ..file_loading._json_nexus import StreamInfo
+from ._stop_time import StopTime
 from datetime import datetime
 from time import sleep
 from ._serialisation import convert_to_pickleable_dict
@@ -243,13 +245,14 @@ class StreamedDataBuffer:
     def __init__(self, queue: mp.Queue, event_buffer_size: int,
                  slow_metadata_buffer_size: int,
                  fast_metadata_buffer_size: int, chopper_buffer_size: int,
-                 interval_s: float):
+                 interval_s: float, run_id: str):
         self._buffer_mutex = threading.Lock()
         self._interval_s = interval_s
         self._event_buffer_size = event_buffer_size
         self._slow_metadata_buffer_size = slow_metadata_buffer_size
         self._fast_metadata_buffer_size = fast_metadata_buffer_size
         self._chopper_buffer_size = chopper_buffer_size
+        self._current_run_id = run_id
         tof_buffer = sc.zeros(dims=['event'],
                               shape=[event_buffer_size],
                               unit=sc.units.ns,
@@ -395,6 +398,15 @@ class StreamedDataBuffer:
             return False
         return False
 
+    def _handled_stop_run(self, new_data: bytes):
+        try:
+            stop_run_data = deserialise_6s4t(new_data)
+            if stop_run_data.job_id == self._current_run_id:
+                self._emit_queue.put(StopTime(stop_run_data.stop_time))
+            return True
+        except WrongSchemaException:
+            return False
+
     def new_data(self, new_data: bytes):
         if self._handled_event_data(new_data):
             return
@@ -406,6 +418,8 @@ class StreamedDataBuffer:
             return
         if self._handled_metadata(new_data, "name", deserialise_tdct,
                                   CHOPPER_FB_ID):
+            return
+        if self._handled_stop_run(new_data):
             return
         # new data were not handled
         self._unrecognised_fb_id_count += 1
