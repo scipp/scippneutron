@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from ..file_loading.load_nexus import StreamInfo
-from typing import Set, Optional, List
+from typing import Optional, List
 from enum import Enum
 import multiprocessing as mp
 from ._consumer_type import ConsumerType
@@ -21,7 +21,7 @@ class ManagerInstruction:
 
 
 def data_consumption_manager(
-        start_time_ms: int, run_id: str, topics: Set[str], kafka_broker: str,
+        start_time_ms: int, run_id: str, topics: List[str], kafka_broker: str,
         consumer_type: ConsumerType, stream_info: Optional[List[StreamInfo]],
         interval_s: float, event_buffer_size: int,
         slow_metadata_buffer_size: int, fast_metadata_buffer_size: int,
@@ -42,7 +42,7 @@ def data_consumption_manager(
     if stream_info is not None:
         buffer.init_metadata_buffers(stream_info)
 
-    consumers = create_consumers(start_time_ms, topics, kafka_broker,
+    consumers = create_consumers(start_time_ms, set(topics), kafka_broker,
                                  consumer_type, buffer.new_data,
                                  test_message_queue)
 

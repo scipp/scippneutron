@@ -162,11 +162,11 @@ async def _data_stream(
         if topics is None:
             loaded_data, stream_info = _load_nexus_json(
                 run_start_info.nexus_structure, get_start_info=True)
-            topics = {stream.topic for stream in stream_info}
+            topics = [stream.topic for stream in stream_info]
         else:
             loaded_data, _ = _load_nexus_json(run_start_info.nexus_structure,
                                               get_start_info=False)
-        topics.add(run_info_topic)  # listen for stop run message
+        topics.append(run_info_topic)  # listen for stop run message
         yield loaded_data
 
     if start_at == StartTime.start_of_run:

@@ -14,11 +14,12 @@ from cmath import isclose
 try:
     import streaming_data_types  # noqa: F401
     from confluent_kafka import TopicPartition  # noqa: F401
-    from scippneutron.data_streaming.data_stream import (_data_stream,
-                                                         WorkerInstruction
-                                                         )  # noqa: E402
+    from scippneutron.data_streaming.data_stream import \
+        _data_stream  # noqa: E402
     from streaming_data_types.eventdata_ev42 import \
         serialise_ev42  # noqa: E402
+    from scippneutron.data_streaming._data_consumption_manager import (
+        ManagerInstruction, InstructionType)
     from streaming_data_types.run_start_pl72 import serialise_pl72
     from streaming_data_types.logdata_f142 import serialise_f142
     from streaming_data_types.timestamps_tdct import serialise_tdct
@@ -135,7 +136,8 @@ async def test_data_stream_returns_data_from_single_event_message():
                                    **TEST_STREAM_ARGS):
         assert np.allclose(data.coords['tof'].values, time_of_flight)
         reached_assert = True
-        worker_instruction_queue.put(WorkerInstruction.STOP_NOW)
+        worker_instruction_queue.put(
+            ManagerInstruction(InstructionType.STOP_NOW))
     assert reached_assert
 
 
