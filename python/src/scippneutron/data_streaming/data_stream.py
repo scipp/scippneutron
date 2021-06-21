@@ -1,9 +1,9 @@
 import numpy as np
 import time
-from typing import List, Generator, Optional, Set
+from typing import List, Generator, Optional
 import asyncio
 import scipp as sc
-from ..file_loading.load_nexus import _load_nexus_json, StreamInfo
+from ..file_loading.load_nexus import _load_nexus_json
 import multiprocessing as mp
 from queue import Empty as QueueEmpty
 from enum import Enum
@@ -95,63 +95,6 @@ def validate_buffer_size_args(chopper_buffer_size, event_buffer_size,
             raise ValueError(f"{buffer_name} must be greater than zero")
 
 
-class WorkerInstruction(Enum):
-    STOP_NOW = 1
-    UPDATE_STOP_TIME = 2
-
-
-def data_consumption_manager(
-        start_time_ms: int, run_id: str, topics: Set[str], kafka_broker: str,
-        consumer_type: ConsumerType, stream_info: Optional[List[StreamInfo]],
-        interval_s: float, event_buffer_size: int,
-        slow_metadata_buffer_size: int, fast_metadata_buffer_size: int,
-        chopper_buffer_size: int, worker_instruction_queue: mp.Queue,
-        data_queue: mp.Queue, test_message_queue: Optional[mp.Queue]):
-    """
-    Starts and stops buffers and data consumers which collect data and
-    send them back to the main process via a queue.
-
-    All input args must be mp.Queue or pickleable as this function is launched
-    as a multiprocessing.Process.
-    """
-    try:
-        from ._consumer import (start_consumers, stop_consumers,
-                                create_consumers)
-        from ._data_buffer import StreamedDataBuffer
-    except ImportError:
-        raise ImportError(_missing_dependency_message)
-
-    buffer = StreamedDataBuffer(data_queue, event_buffer_size,
-                                slow_metadata_buffer_size,
-                                fast_metadata_buffer_size, chopper_buffer_size,
-                                interval_s, run_id)
-
-    if stream_info is not None:
-        buffer.init_metadata_buffers(stream_info)
-
-    consumers = create_consumers(start_time_ms, topics, kafka_broker,
-                                 consumer_type, buffer.new_data,
-                                 test_message_queue)
-
-    start_consumers(consumers)
-    buffer.start()
-
-    while True:
-        try:
-            instruction = worker_instruction_queue.get(timeout=10.)
-            if instruction == WorkerInstruction.STOP_NOW:
-                stop_consumers(consumers)
-                buffer.stop()
-                break
-        except QueueEmpty:
-            pass
-        except (ValueError, OSError):
-            # Queue has been closed, stop worker
-            stop_consumers(consumers)
-            buffer.stop()
-            break
-
-
 def _cleanup_queue(queue: Optional[mp.Queue]):
     if queue is not None:
         try:
@@ -192,6 +135,9 @@ async def _data_stream(
     """
     try:
         from ._consumer import (get_run_start_message, KafkaQueryConsumer)
+        from ._data_consumption_manager import (data_consumption_manager,
+                                                ManagerInstruction,
+                                                InstructionType)
     except ImportError:
         raise ImportError(_missing_dependency_message)
 
@@ -207,7 +153,7 @@ async def _data_stream(
     stream_info = None
     run_id = ""
     run_title = "-"  # for display in widget
-    stop_time_ms = 0
+    stop_time_ms = None
     if run_info_topic is not None:
         run_start_info = get_run_start_message(run_info_topic, query_consumer)
         run_id = run_start_info.job_id
@@ -220,6 +166,7 @@ async def _data_stream(
         else:
             loaded_data, _ = _load_nexus_json(run_start_info.nexus_structure,
                                               get_start_info=False)
+        topics.add(run_info_topic)  # listen for stop run message
         yield loaded_data
 
     if start_at == StartTime.start_of_run:
@@ -269,13 +216,15 @@ async def _data_stream(
                 elif isinstance(new_data, StopTime):
                     data_stream_widget.set_stop_time(new_data.stop_time_ms)
                     # TODO emit worker instruct for stop time update
+                    continue
                 n_data_chunks += 1
                 yield convert_from_pickleable_dict(new_data)
             except QueueEmpty:
                 await asyncio.sleep(0.5 * interval_s)
     finally:
         # Ensure cleanup happens however the loop exits
-        worker_instruction_queue.put(WorkerInstruction.STOP_NOW)
+        worker_instruction_queue.put(
+            ManagerInstruction(InstructionType.STOP_NOW))
         process_halt_timeout_s = 4.
         data_collect_process.join(process_halt_timeout_s)
         if data_collect_process.is_alive():
