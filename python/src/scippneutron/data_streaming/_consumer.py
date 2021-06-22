@@ -8,6 +8,7 @@ from ._consumer_type import ConsumerType
 import multiprocessing as mp
 from queue import Empty as QueueEmpty
 import numpy as np
+from time import time_ns
 """
 This module uses the confluent-kafka-python implementation of the
 Kafka Client API to communicate with Kafka servers (brokers)
@@ -62,15 +63,32 @@ class KafkaConsumer:
         self._consume_data.start()
 
     def _consume_loop(self):
+        def time_now_ms() -> int:
+            return time_ns() // 1_000_000
+
+        reached_message_after_stop_time = False
+        reached_stop_time = False
+
         while not self._cancelled:
+            with self._stop_time_mutex:
+                if time_now_ms() > self._stop_time:
+                    reached_stop_time = True
+                    if reached_message_after_stop_time:
+                        break
             msg = self._consumer.poll(timeout=1.0)
             if msg is None:
                 continue
             if msg.error():
                 if msg.error().code() == KafkaError._PARTITION_EOF:
+                    if reached_stop_time:
+                        break
                     continue
                 warn(f"Message error in consumer: {msg.error()}")
                 break
+            with self._stop_time_mutex:
+                if msg.timestamp() > self._stop_time:
+                    reached_message_after_stop_time = True
+                    continue
             self._callback(msg.value())
 
     def stop(self):
