@@ -14,7 +14,7 @@ from streaming_data_types.run_stop_6s4t import deserialise_6s4t
 from streaming_data_types.exceptions import WrongSchemaException
 from typing import Optional, Dict, List, Any, Union, Callable
 from ..file_loading._json_nexus import StreamInfo
-from ._stop_time import StopTime
+from ._stop_time import StopTimeUpdate
 from datetime import datetime
 from time import sleep
 from ._serialisation import convert_to_pickleable_dict
@@ -402,7 +402,7 @@ class StreamedDataBuffer:
         try:
             stop_run_data = deserialise_6s4t(new_data)
             if stop_run_data.job_id == self._current_run_id:
-                self._emit_queue.put(StopTime(stop_run_data.stop_time))
+                self._emit_queue.put(StopTimeUpdate(stop_run_data.stop_time))
             return True
         except WrongSchemaException:
             return False

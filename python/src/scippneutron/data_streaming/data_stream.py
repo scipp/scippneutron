@@ -9,7 +9,7 @@ from queue import Empty as QueueEmpty
 from enum import Enum
 from ._consumer_type import ConsumerType
 from ._serialisation import convert_from_pickleable_dict
-from ._stop_time import StopTime
+from ._stop_time import StopTimeUpdate
 from warnings import warn
 from ._data_stream_widget import DataStreamWidget
 """
@@ -20,8 +20,13 @@ by the top level __init__.py
 
 
 class StartTime(Enum):
-    now = "now"
-    start_of_run = "start_of_run"
+    NOW = "now"
+    START_OF_RUN = "start_of_run"
+
+
+class StopTime(Enum):
+    NEVER = "never"
+    END_OF_RUN = "end_of_run"
 
 
 _missing_dependency_message = (
@@ -41,7 +46,8 @@ async def data_stream(
     chopper_buffer_size: int = 10_000,
     interval: sc.Variable = 2. * sc.units.s,
     run_info_topic: Optional[str] = None,
-    start_time: StartTime = StartTime.now,
+    start_time: StartTime = StartTime.NOW,
+    stop_time: StopTime = StopTime.NEVER,
 ) -> Generator[sc.DataArray, None, None]:
     """
     Periodically yields accumulated data from stream.
@@ -49,7 +55,8 @@ async def data_stream(
     then data is yielded more frequently.
     1048576 event buffer is around 24 MB (with pulse_time, id, weights, etc)
     :param kafka_broker: Address of the Kafka broker to stream data from
-    :param topics: Kafka topics to consume data from
+    :param topics: Kafka topics to consume data from (not required if
+      run_info_topic is used)
     :param event_buffer_size: Size of buffer to accumulate event data in
     :param slow_metadata_buffer_size: Size of buffer to accumulate slow
       sample env metadata in
@@ -61,8 +68,10 @@ async def data_stream(
       collected from stream
     :param run_info_topic: If provided, the first data batch returned by
       data_stream will be from the last available run start message in
-      the topic
+      the topic, data will be consumed from all data sources documented
+      in the run start message
     :param start_time: Get data from now or from start of the last run
+    :param stop_time: Stop data_stream at end of run, or not
     """
     validate_buffer_size_args(chopper_buffer_size, event_buffer_size,
                               fast_metadata_buffer_size,
@@ -77,7 +86,7 @@ async def data_stream(
         data_queue, instruction_queue, kafka_broker, topics, interval,
         event_buffer_size, slow_metadata_buffer_size,
         fast_metadata_buffer_size, chopper_buffer_size, run_info_topic,
-        start_time):  # noqa: E125
+        start_time, stop_time):  # noqa: E125
         yield data_chunk
 
 
@@ -121,7 +130,8 @@ async def _data_stream(
         fast_metadata_buffer_size: int,
         chopper_buffer_size: int,
         run_info_topic: Optional[str] = None,
-        start_at: StartTime = StartTime.now,
+        start_at: StartTime = StartTime.NOW,
+        end_at: StopTime = StopTime.NEVER,
         query_consumer: Optional["KafkaQueryConsumer"] = None,  # noqa: F821
         consumer_type: ConsumerType = ConsumerType.REAL,
         halt_after_n_data_chunks: int = np.iinfo(np.int32).max,  # for tests
@@ -158,7 +168,10 @@ async def _data_stream(
         run_start_info = get_run_start_message(run_info_topic, query_consumer)
         run_id = run_start_info.job_id
         run_title = run_start_info.run_name
-        stop_time_ms = run_start_info.stop_time
+        # default value for stop_time in message flatbuffer is 0,
+        # it means that field has not been populated
+        if end_at == StopTime.END_OF_RUN and run_start_info.stop_time != 0:
+            stop_time_ms = run_start_info.stop_time
         if topics is None:
             loaded_data, stream_info = _load_nexus_json(
                 run_start_info.nexus_structure, get_start_info=True)
@@ -169,7 +182,7 @@ async def _data_stream(
         topics.append(run_info_topic)  # listen for stop run message
         yield loaded_data
 
-    if start_at == StartTime.start_of_run:
+    if start_at == StartTime.START_OF_RUN:
         start_time = run_start_info.start_time * sc.Unit("milliseconds")
     else:
         start_time = time.time() * sc.units.s
@@ -181,8 +194,8 @@ async def _data_stream(
 
     data_collect_process = mp.Process(
         target=data_consumption_manager,
-        args=(start_time_ms, run_id, topics, kafka_broker, consumer_type,
-              stream_info, interval_s, event_buffer_size,
+        args=(start_time_ms, stop_time_ms, run_id, topics, kafka_broker,
+              consumer_type, stream_info, interval_s, event_buffer_size,
               slow_metadata_buffer_size, fast_metadata_buffer_size,
               chopper_buffer_size, worker_instruction_queue, data_queue,
               test_message_queue))
@@ -213,9 +226,13 @@ async def _data_stream(
                     warn(new_data)
                     n_warnings += 1
                     continue
-                elif isinstance(new_data, StopTime):
+                elif isinstance(new_data, StopTimeUpdate):
                     data_stream_widget.set_stop_time(new_data.stop_time_ms)
-                    # TODO emit worker instruct for stop time update
+                    if end_at == StopTime.END_OF_RUN:
+                        worker_instruction_queue.put(
+                            ManagerInstruction(
+                                InstructionType.UPDATE_STOP_TIME,
+                                new_data.stop_time_ms))
                     continue
                 n_data_chunks += 1
                 yield convert_from_pickleable_dict(new_data)

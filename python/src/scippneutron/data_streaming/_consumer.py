@@ -7,6 +7,7 @@ from streaming_data_types.exceptions import WrongSchemaException
 from ._consumer_type import ConsumerType
 import multiprocessing as mp
 from queue import Empty as QueueEmpty
+import numpy as np
 """
 This module uses the confluent-kafka-python implementation of the
 Kafka Client API to communicate with Kafka servers (brokers)
@@ -31,8 +32,11 @@ class RunStartError(Exception):
 
 
 class KafkaConsumer:
-    def __init__(self, topic_partitions: List[TopicPartition], conf: Dict,
-                 callback: Callable):
+    def __init__(self,
+                 topic_partitions: List[TopicPartition],
+                 conf: Dict,
+                 callback: Callable,
+                 stop_time_ms: Optional[int] = None):
         conf['enable.partition.eof'] = True
         self._consumer = Consumer(conf)
         # To consume messages the consumer must "subscribe" to one
@@ -45,6 +49,11 @@ class KafkaConsumer:
         self._cancelled = False
         self._consume_data: Optional[threading.Thread] = None
         self.stopped = True
+        self._stop_time_mutex = threading.Lock()
+        # default stop time to distant future (run until manually stopped)
+        self._stop_time = np.iinfo(np.int64).max
+        if stop_time_ms is not None:
+            self._stop_time = stop_time_ms
 
     def start(self):
         self.stopped = False
@@ -72,6 +81,10 @@ class KafkaConsumer:
                 self._consume_data.join(5.)
         self._consumer.close()
         self.stopped = True
+
+    def update_stop_time(self, new_stop_time_ms: int):
+        with self._stop_time_mutex:
+            self._stop_time = new_stop_time_ms
 
 
 class FakeConsumer:
@@ -116,6 +129,10 @@ class FakeConsumer:
             ):
                 self._consume_data.join(5.)
         self.stopped = True
+
+    @staticmethod
+    def update_stop_time(new_stop_time_ms: int):
+        pass
 
 
 class KafkaQueryConsumer:
@@ -175,6 +192,7 @@ class KafkaQueryConsumer:
 
 def create_consumers(
         start_time_ms: int,
+        stop_time_ms: Optional[int],
         topics: List[str],
         kafka_broker: str,
         consumer_type_enum: ConsumerType,  # so we can inject fake consumer
@@ -208,7 +226,7 @@ def create_consumers(
 
     if consumer_type_enum == ConsumerType.REAL:
         consumers = [
-            KafkaConsumer([topic_partition], config, callback)
+            KafkaConsumer([topic_partition], config, callback, stop_time_ms)
             for topic_partition in topic_partitions
         ]
     else:
@@ -225,6 +243,13 @@ def start_consumers(consumers: List[KafkaConsumer]):
 def stop_consumers(consumers: List[KafkaConsumer]):
     for consumer in consumers:
         consumer.stop()
+
+
+def all_consumers_stopped(consumers: List[KafkaConsumer]) -> bool:
+    for consumer in consumers:
+        if not consumer.stopped:
+            return False
+    return True
 
 
 def get_run_start_message(topic: str,
