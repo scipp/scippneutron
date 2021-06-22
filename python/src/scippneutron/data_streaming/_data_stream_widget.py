@@ -59,3 +59,4 @@ class DataStreamWidget:
 
     def set_stopped(self):
         self._stop_button.description = "Stopped"
+        self._stop_button.disabled = True
