@@ -326,6 +326,7 @@ class StreamedDataBuffer:
         self._cancelled = True
         if self._periodic_emit is not None:
             self._periodic_emit.join(5.)
+        self._emit_data()  # flush the buffer
 
     def _emit_data(self):
         with self._buffer_mutex:

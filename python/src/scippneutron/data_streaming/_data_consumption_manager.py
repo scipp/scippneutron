@@ -68,3 +68,5 @@ def data_consumption_manager(
             stop_consumers(consumers)
             buffer.stop()
             break
+
+    buffer.stop()
