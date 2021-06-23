@@ -14,7 +14,7 @@ resources:
     name: scipp/pipelines
     type: github
     endpoint: scipp
-    ref: main
+    ref: document-without-build-deps # TODO update to main
 
 trigger:
   branches:
