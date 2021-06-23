@@ -70,7 +70,7 @@ def _load_log_data_from_group(group: Group,
         unit = sc.Unit(unit)
     except sc.UnitError:
         warn(f"Unrecognised unit '{unit}' for value dataset "
-             f"in NXlog '{group.path}'")
+             f"in NXlog '{group.path}'; setting unit as 'dimensionless'")
         unit = sc.units.dimensionless
 
     try:
