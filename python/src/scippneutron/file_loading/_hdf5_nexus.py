@@ -149,11 +149,11 @@ class LoadFromHdf5:
         return group.name.split("/")[-1]
 
     @staticmethod
-    def get_unit(node: Union[h5py.Dataset, h5py.Group]) -> Union[str, sc.Unit]:
+    def get_unit(node: Union[h5py.Dataset, h5py.Group]) -> str:
         try:
             units = node.attrs["units"]
         except (AttributeError, KeyError):
-            return sc.units.dimensionless
+            return "dimensionless"
         return _ensure_str(units)
 
     @staticmethod

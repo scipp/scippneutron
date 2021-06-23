@@ -1280,11 +1280,12 @@ def test_warning_but_no_error_for_unrecognised_log_unit(
     builder.add_log(
         Log(name, values, times, value_units=unknown_unit, time_units="s"))
 
-    loaded_data = load_function(builder)
+    with pytest.warns(UserWarning):
+        loaded_data = load_function(builder)
 
     # Expect a sc.Dataset with log names as keys
     assert np.allclose(loaded_data[name].data.values.values, values)
     assert np.allclose(loaded_data[name].data.values.coords['time'].values,
                        times)
-    assert loaded_data[name].data.values.unit == sc.units.m
+    assert loaded_data[name].data.values.unit == sc.units.dimensionless
     assert loaded_data[name].data.values.coords['time'].unit == sc.units.s
