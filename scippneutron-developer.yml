@@ -32,11 +32,7 @@ dependencies:
   - h5py
   - python-confluent-kafka
   - ess-dmsc::ess-streaming-data-types
-
-  # Test
-  - psutil
-  - pytest
-  - pytest-asyncio
+  - scipp
 
   # Formatting & static analysis
   - pre-commit
