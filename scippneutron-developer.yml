@@ -7,10 +7,11 @@ name: scippneutron-developer
 channels:
   - conda-forge
   - scipp
+  - nodefaults
 
 dependencies:
   # Build
-  - boost-cpp=1.75 # see https://github.com/scipp/scipp/issues/1888
+  - boost-cpp
   - ninja
   - tbb-devel
   - scipp
