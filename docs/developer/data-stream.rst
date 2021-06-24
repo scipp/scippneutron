@@ -92,7 +92,9 @@ during the configurable time interval since the previous chunk was yielded. Each
 `DataArray` of neutron detection events of the same format that is obtained by loading a NeXus file
 with `load_nexus`. The `DataArray` has detection event weights as value, these are always 1 for
 data from the streaming system, coordinates of `tof`, `detector_id` and `pulse_time` and metadata
-logs as attributes. It is up to the user to concatenate `data` from the stream if they wish to
+logs as attributes. Metadata logs are each themselves a `DataArray` with a `time` coordinate. The logs
+are each nested in a `Variable` as they do not share coordinates with each other or the event data.
+It is up to the user to concatenate `data` from the stream if they wish to
 accumulate events. This will consume memory rapidly for instruments with high event detection rates
 so perhaps a more likely scenario is for the user to do a reduction workflow step in the `data_stream`
 loop and accumulate the result, for example sum a histogram.
