@@ -76,7 +76,8 @@ very many small buffers.
 Architecture
 ------------
 
-The interface to streamed data is ``data_stream()`` and is an asynchronous generator. It is run like this
+The interface to streamed data is ``scippneutron.data_stream()`` and is an asynchronous generator.
+It is run like this
 
     .. code-block:: python
 
