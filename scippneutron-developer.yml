@@ -20,7 +20,7 @@ dependencies:
   - appdirs
   - ipympl
   - ipywidgets
-  - mantid-framework
+  - mantid-framework=6.0.20210412.0948
   - matplotlib-base
   - numpy >=1.15.3
   - python
