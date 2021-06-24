@@ -15,6 +15,7 @@ dependencies:
   - ninja
   - tbb-devel
   - scipp
+  - python
 
   # Run
   - appdirs
