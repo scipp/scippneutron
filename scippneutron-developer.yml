@@ -7,7 +7,6 @@ name: scippneutron-developer
 channels:
   - conda-forge
   - scipp
-  - nodefaults
 
 dependencies:
   # Build
@@ -21,7 +20,7 @@ dependencies:
   - appdirs
   - ipympl
   - ipywidgets
-  - mantid-framework=6.0.20210412.0948
+  - mantid-framework>=6.0.20210412.0948
   - matplotlib-base
   - numpy >=1.15.3
   - python
