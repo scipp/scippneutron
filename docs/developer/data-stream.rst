@@ -5,7 +5,7 @@ The data streaming interface provides access to data in the ESS data streaming s
 is included in ``scippneutron`` rather than the facility-specific ``ess`` library as
 the same system is also used to varying extents at other neutron sources including ISIS
 Pulsed Neutron and Muon Source, SINQ: The Swiss Spallation Neutron Source, and ANSTO:
-Austrailian Centre for Neutron Scattering.
+Australian Centre for Neutron Scattering.
 
 
 Apache Kafka
@@ -49,27 +49,27 @@ Terminology:
 FlatBuffers
 -----------
 
-Kafka does not dictate how data are serialised to be transmitted in a message over the network.
-The ESS streaming system uses `FlatBuffers <https://google.github.io/flatbuffers/>`_ for serialisation.
-Data to be serialised with FlatBuffers are described by an IDL schema, the FlatBuffer compiler ``flatc``
+Kafka does not dictate how data are serialized to be transmitted in a message over the network.
+The ESS streaming system uses `FlatBuffers <https://google.github.io/flatbuffers/>`_ for serialization.
+Data to be serialized with FlatBuffers are described by an IDL schema, the FlatBuffer compiler ``flatc``
 can be used to generate code from the schema which provides a builder class with which to construct
-the serialised buffer, as well as methods to extract data from the buffer.
+the serialized buffer, as well as methods to extract data from the buffer.
 
 Each type of data, for example neutron detection events, sample environment measurement,
 experiment run start event, etc has an associated FlatBuffer schema. These are stored in a repository
 `<https://github.com/ess-dmsc/streaming-data-types/>`_. The ESS has also developed a Python library
-to provide a convenient "serialise" and "deserialise" method for each schema
+to provide a convenient "serialize" and "deserialize" method for each schema
 `<https://github.com/ess-dmsc/python-streaming-data-types/>`_, this is available as a conda package
 `<https://anaconda.org/ess-dmsc/ess-streaming-data-types>`_.
 
 Each schema file defines a ``file_identifier``, which comprises 4 characters. These are the first 4
-bytes in the serialised buffer. It is ESS convention to also use these 4 characters in the schema
+bytes in the serialized buffer. It is ESS convention to also use these 4 characters in the schema
 filename and the module name in the ``streaming-data-types`` python library. If breaking changes are
 made to a schema, such as changing field names or removing fields, then a new ``file_identifier`` is
 defined.
 
-It may be worth noting that we have found extracting data from serialised FlatBuffers in Python
-to be efficient, but serialising can be much more efficient in C++, particularly if serialising
+It may be worth noting that we have found extracting data from serialized FlatBuffers in Python
+to be efficient, but serializing can be much more efficient in C++, particularly if serializing
 very many small buffers.
 
 
@@ -108,7 +108,7 @@ If any data have been collected by the consumer they are passed to the buffer vi
 It also starts a ``threading.Thread`` in the buffer which periodically puts all all data collected
 in the buffer as a single ``DataArray`` into a ``multiprocessing.Queue`` for the ``data_stream``
 generator to yield. The buffer is responsible for checking the flatbuffer id of each message it
-receives from the consumers, deserialising the message, checking the source name matches a data
+receives from the consumers, deserializing the message, checking the source name matches a data
 source named in the run start message, and if so adding the data to the buffer. If a single
 message exceeds the buffer size a warning is issued to the user and the data is skipped. If multiple
 messages arrive which collectively exceed the buffer size before the buffer has put its data on
