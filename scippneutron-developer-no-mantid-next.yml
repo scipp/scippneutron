@@ -13,10 +13,11 @@ channels:
 
 dependencies:
   # Build
-  - boost-cpp=1.75
+  - boost-cpp
   - ninja
   - tbb-devel
   - scipp/label/dev::scipp
+  - python
 
   # Run
   - appdirs
@@ -31,11 +32,10 @@ dependencies:
   - tbb
   - traitlets
   - h5py
-
-  # Test
   - psutil
   - pytest
   - pytest-asyncio
+  - scipp/label/dev::scipp
 
   # Formatting & static analysis
   - pre-commit

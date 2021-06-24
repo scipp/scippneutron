@@ -30,6 +30,9 @@ dependencies:
   - tbb
   - traitlets
   - h5py
+  - psutil
+  - pytest
+  - pytest-asyncio
   - python-confluent-kafka
   - ess-dmsc::ess-streaming-data-types
   - scipp

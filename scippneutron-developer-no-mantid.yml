@@ -17,6 +17,7 @@ dependencies:
   - ninja
   - tbb-devel
   - scipp
+  - python
 
   # Run
   - appdirs
@@ -31,11 +32,10 @@ dependencies:
   - tbb
   - traitlets
   - h5py
-
-  # Test
   - psutil
   - pytest
   - pytest-asyncio
+  - scipp
 
   # Formatting & static analysis
   - pre-commit

@@ -14,12 +14,13 @@ dependencies:
   - ninja
   - tbb-devel
   - scipp/label/dev::scipp
+  - python
 
   # Run
   - appdirs
   - ipympl
   - ipywidgets
-  - mantid-framework
+  - mantid-framework>=6.0.20210412.0948
   - matplotlib-base
   - numpy >=1.15.3
   - python
@@ -29,13 +30,12 @@ dependencies:
   - tbb
   - traitlets
   - h5py
-  - python-confluent-kafka
-  - ess-dmsc::ess-streaming-data-types
-
-  # Test
   - psutil
   - pytest
   - pytest-asyncio
+  - python-confluent-kafka
+  - ess-dmsc::ess-streaming-data-types
+  - scipp/label/dev::scipp
 
   # Formatting & static analysis
   - pre-commit
