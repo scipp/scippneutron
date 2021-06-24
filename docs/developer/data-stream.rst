@@ -87,16 +87,16 @@ It is run like this
 
         streaming_task = asyncio.create_task(stream_func())
 
-Each chunk of `data` yielded by `data_stream` contains the data collected from the streaming system
-during the configurable time interval since the previous chunk was yielded. Each `data` chunk is a
-`DataArray` of neutron detection events of the same format that is obtained by loading a NeXus file
-with `load_nexus`. The `DataArray` has detection event weights as value, these are always 1 for
-data from the streaming system, coordinates of `tof`, `detector_id` and `pulse_time` and metadata
-logs as attributes. Metadata logs are each themselves a `DataArray` with a `time` coordinate. The logs
-are each nested in a `Variable` as they do not share coordinates with each other or the event data.
-It is up to the user to concatenate `data` from the stream if they wish to
+Each chunk of ``data`` yielded by ``data_stream`` contains the data collected from the streaming system
+during the configurable time interval since the previous chunk was yielded. Each ``data`` chunk is a
+``DataArray`` of neutron detection events of the same format that is obtained by loading a NeXus file
+with ``load_nexus``. The ``DataArray`` has detection event weights as value, these are always 1 for
+data from the streaming system, coordinates of ``tof``, ``detector_id`` and ``pulse_time`` and metadata
+logs as attributes. Metadata logs are each themselves a ``DataArray`` with a ``time`` coordinate. The logs
+are each nested in a ``Variable`` as they do not share coordinates with each other or the event data.
+It is up to the user to concatenate ``data`` from the stream if they wish to
 accumulate events. This will consume memory rapidly for instruments with high event detection rates
-so perhaps a more likely scenario is for the user to do a reduction workflow step in the `data_stream`
+so perhaps a more likely scenario is for the user to do a reduction workflow step in the ``data_stream``
 loop and accumulate the result, for example sum a histogram.
 
 The architecture of the implementation under ``data_stream()`` is sketched in the following diagram.
@@ -150,8 +150,9 @@ instances. However, any input arguments or variables passed via the queue to the
 must be pickleable or ``mp.Queue``. This makes dependency injection difficult. To get around
 this an enum can be passed via ``data_stream`` to the ``data_consumption_manager`` to tell it
 to create instances of ``FakeConsumer`` instead of ``KafkaConsumer``, additionally an ``mp.Queue``
-can be provided and is passed to the ``FakeConsumer``. The ``FakeConsumer`` then polls for messages
-on the queue instead of Kafka, allowing the test to provide the messages.
+can be provided and is passed to the ``FakeConsumer``. The ``FakeConsumer`` simply polls for messages
+on the queue instead of Kafka, thus allowing the test to provide the messages. There is no other
+configuration of ``FakeConsumer`` possible or necessary.
 
 .. image:: data_stream/data_stream_arch_testing.svg
    :width: 600
