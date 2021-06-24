@@ -87,6 +87,16 @@ It is run like this
 
         streaming_task = asyncio.create_task(stream_func())
 
+Each chunk of `data` yielded by `data_stream` contains the data collected from the streaming system
+during the configurable time interval since the previous chunk was yielded. Each `data` chunk is a
+`DataArray` of neutron detection events of the same format that is obtained by loading a NeXus file
+with `load_nexus`. The `DataArray` has detection event weights as value, these are always 1 for
+data from the streaming system, coordinates of `tof`, `detector_id` and `pulse_time` and metadata
+logs as attributes. It is up to the user to concatenate `data` from the stream if they wish to
+accumulate events. This will consume memory rapidly for instruments with high event detection rates
+so perhaps a more likely scenario is for the user to do a reduction workflow step in the `data_stream`
+loop and accumulate the result, for example sum a histogram.
+
 The architecture of the implementation under ``data_stream()`` is sketched in the following diagram.
 
 .. image:: data_stream/data_stream_arch.svg
@@ -96,10 +106,10 @@ The architecture of the implementation under ``data_stream()`` is sketched in th
 the last available `run start message <https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/pl72_run_start.fbs>`_.
 The message contains some data known at the start of an
 experiment run, for example instrument geometry. These data are yielded from the generator as
-the first chunk of streamed data, as a ``DataArray``. The run start message also contains details
-of all the other data sources important to the experiment and where to find their data on Kafka.
-This information is passed to the ``data_consumption_manager()`` which is started in a separate
-``multiprocessing.Process``.
+the first chunk of streamed data, as a ``DataArray`` in the same format as subsequent chunks.
+The run start message also contains details of all the other data sources important to the
+experiment and where to find their data on Kafka. This information is passed to the
+``data_consumption_manager()`` which is started in a separate ``multiprocessing.Process``.
 
 ``data_consumption_manager()`` creates a ``StreamedDataBuffer`` which comprises buffers for data
 from each data source known about from the run start message. ``data_consumption_manager()`` also
