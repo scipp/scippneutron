@@ -160,7 +160,7 @@ def _load_detector(group: Group, file_root: h5py.File,
     pixel_positions = None
     pixel_positions_found, _ = nexus.dataset_in_group(group.group,
                                                       "x_pixel_offset")
-    if pixel_positions_found:
+    if pixel_positions_found and detector_ids is not None:
         pixel_positions = _load_pixel_positions(group.group,
                                                 detector_ids.shape[0],
                                                 file_root, nexus)

@@ -277,11 +277,11 @@ class LoadFromJson:
         return group[_nexus_name]
 
     @staticmethod
-    def get_unit(dataset: Dict) -> Union[str, sc.Unit]:
+    def get_unit(dataset: Dict) -> str:
         try:
             unit = _get_attribute_value(dataset, _nexus_units)
         except MissingAttribute:
-            unit = sc.units.dimensionless
+            unit = "dimensionless"
         return unit
 
     def load_scalar_string(self, group: Dict,
