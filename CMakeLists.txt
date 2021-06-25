@@ -129,7 +129,7 @@ add_custom_target(all-tests)
 
 # Custom target for building documentation
 add_custom_target(
-  docs COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/docs/make_docs.py
+  docs COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/docs/build_docs.py
 )
 
 include(GNUInstallDirs)
