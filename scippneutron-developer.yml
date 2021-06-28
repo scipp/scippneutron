@@ -23,7 +23,6 @@ dependencies:
   - mantid-framework
   - matplotlib-base
   - numpy >=1.15.3
-  - python
   - python-configuration
   - pythreejs
   - pyyaml
@@ -35,7 +34,6 @@ dependencies:
   - pytest-asyncio
   - python-confluent-kafka
   - ess-dmsc::ess-streaming-data-types
-  - scipp
 
   # Formatting & static analysis
   - pre-commit
