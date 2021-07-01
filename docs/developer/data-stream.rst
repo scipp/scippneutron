@@ -189,6 +189,7 @@ tool can be used. This is available as a conda package `<https://anaconda.org/ES
 Run it from the conda environment and point it at a NeXus file, for example for the AMOR instrument
 
     .. code-block:: sh
+
         nexus_streamer --broker localhost --instrument AMOR --filename /path/to/nexus/file/amor.nxs -s -z
 
 see `readme <https://github.com/ess-dmsc/nexus-streamer-python>`_ or use ``--help`` for an explanation
