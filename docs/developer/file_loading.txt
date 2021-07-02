@@ -1,0 +1,82 @@
+File loading:
+
+- Classic loading via mantid is just `scn.load`
+- New loading is `load_nexus`
+
+-> Trying to load the same file leads to differences:
+  - classic: dims [spectrum, tof]
+  -> probably due to SNS files not following Nexus standard
+
+
+-> Loading the AMOR file gives correct number of detector pixels
+
+- Classic load also creates one bin along tof. We could add this to load_nexus.
+
+- `load` and `load_nexus`:
+  - we don't want to load all file formats natively in scipp
+  - do we want to keep classic `load` indefinitely?
+  - Matt: we could tell people if they want to use old files in scipp, they have to convert files to Nexus compliant first? Then remove classic load?
+  - script for converting: copy on Slack
+
+- `load_nexus` is not loading pulse times because we needed to broadcast pulse times to all the events: https://github.com/scipp/scippneutron/issues/21
+
+
+- classic `load` adds 1 bin in tof
+
+- some missing attributes in `load_nexus`: `load_nexus` is just looking for NXlogs
+
+
+
+
+
+
+
+Description of `load_nexus`:
+
+- can load nexus files or a json string
+
+- hdf5_nexus:
+
+- detector_data: going through file and find all event data.
+  when loading json, need to keep track of parents.
+
+  json is needed for streaming
+
+  why is json used and not just a nexus binary block? Matt: bad design is his opinion, people didn't know enough about nexus files.
+
+- at least in scipp both nexus and json loading are using the same logic, in Mantid they are separate and out of sync
+
+
+- `load_nexus`: calls `_load_data` -> for testing so load_data can use a in-memory file
+- `_load_data`: looks for any NXClass it can load.
+- use `visititems` to traverse the tree
+
+- back in load_data: groups is a dict with key for each catergory (nx_log, nx_instrument ...)
+
+- making unique names for attributes: if non-unique: iteritavely go up the tree and prepend the parent name until it is unique. (prints a warning when it does this)
+
+- `detector_data.py`: loads all the detector data
+  - concatenate all events from detectors
+  - checking for pixel_positions_loaded: need to check all positions loaded because in principle, the standard allows not to always have them. ESS should always have them though.
+
+
+- positions: special coordinate name 'position'. Should maybe make it common with mantid to a single name that can be changed in one go
+
+
+- if no event data is found, it just makes a Dataset, and adds attributes as entries
+- if no event data, pixel positions not loaded -> meaning you cannot do a load empty instrument?
+  -> Matt: actually it should work (load geometry from stream, while there is still no data)
+
+
+- transformations:
+  - first make a list of all transformations in the chain: transformations = []
+  - will need to cache that list in the future, in case something moves you need to re-calculate positions, so good to not re-do all that list
+  - convert everything to rad and meter
+  -
+
+
+
+
+
+
+
