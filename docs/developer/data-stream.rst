@@ -268,6 +268,7 @@ Try using ``scippneutron.data_stream``, for example
                 plot_data.values = plot_data.values + sc.fold(counts, dim='detector_id', sizes={'y': 288, 'x': 32}).values
                 det_plot.redraw()
 
+        streaming_task = asyncio.create_task(my_stream_func())
 
 Clean Up
 ~~~~~~~~
