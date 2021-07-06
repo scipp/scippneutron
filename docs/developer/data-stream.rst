@@ -245,10 +245,8 @@ Try using ``scippneutron.data_stream``, for example
 
     .. code-block:: python
 
-        import asyncio
-        import scippneutron as scn
+        import scipp as sc
         import numpy as np
-        from scippneutron.data_streaming.data_stream import StartTime
 
         plot_data = sc.zeros(dims=("y", "x"), shape=(288, 32), dtype=np.int32)  # float64
         det_plot = sc.plot(plot_data, vmax=1000)
@@ -258,6 +256,7 @@ Try using ``scippneutron.data_stream``, for example
     .. code-block:: python
 
         import asyncio
+        import scippneutron as scn
         from scippneutron.data_streaming.data_stream import StartTime
 
         async def my_stream_func():
@@ -268,6 +267,7 @@ Try using ``scippneutron.data_stream``, for example
                 counts = events.bins.sum()
                 plot_data.values = plot_data.values + sc.fold(counts, dim='detector_id', sizes={'y': 288, 'x': 32}).values
                 det_plot.redraw()
+
 
 Clean Up
 ~~~~~~~~
