@@ -87,12 +87,17 @@ def _get_transformations(transform_path: str,
                          root: Union[h5py.File, Dict], group_name: str,
                          nexus: LoadFromNexus):
     """
-    Get all transformations in the depends_on chain
+    Get all transformations in the depends_on chain.
 
     :param transform_path: The first depends_on path string
     :param transformations: List of transformations to populate
     :param root: root of the file, depends_on paths assumed to be
       relative to this
+    """
+    """
+    TODO: this list of transformation should probably be cached in the future
+    to deal with changing beamline components (e.g. pixel positions) during a
+    live data stream (see https://github.com/scipp/scippneutron/issues/76).
     """
     if transform_path != '.':
         try:
