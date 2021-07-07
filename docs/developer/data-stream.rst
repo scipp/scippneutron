@@ -189,6 +189,7 @@ tool can be used. This is available as a conda package `<https://anaconda.org/ES
 Run it from the conda environment and point it at a NeXus file, for example for the AMOR instrument
 
     .. code-block:: sh
+
         nexus_streamer --broker localhost --instrument AMOR --filename /path/to/nexus/file/amor.nxs -s -z
 
 see `readme <https://github.com/ess-dmsc/nexus-streamer-python>`_ or use ``--help`` for an explanation
@@ -244,10 +245,8 @@ Try using ``scippneutron.data_stream``, for example
 
     .. code-block:: python
 
-        import asyncio
-        import scippneutron as scn
+        import scipp as sc
         import numpy as np
-        from scippneutron.data_streaming.data_stream import StartTime
 
         plot_data = sc.zeros(dims=("y", "x"), shape=(288, 32), dtype=np.int32)  # float64
         det_plot = sc.plot(plot_data, vmax=1000)
@@ -257,6 +256,7 @@ Try using ``scippneutron.data_stream``, for example
     .. code-block:: python
 
         import asyncio
+        import scippneutron as scn
         from scippneutron.data_streaming.data_stream import StartTime
 
         async def my_stream_func():
@@ -267,6 +267,8 @@ Try using ``scippneutron.data_stream``, for example
                 counts = events.bins.sum()
                 plot_data.values = plot_data.values + sc.fold(counts, dim='detector_id', sizes={'y': 288, 'x': 32}).values
                 det_plot.redraw()
+
+        streaming_task = asyncio.create_task(my_stream_func())
 
 Clean Up
 ~~~~~~~~
