@@ -1,5 +1,5 @@
 from confluent_kafka import Consumer, TopicPartition, KafkaError
-from typing import Callable, List, Dict, Optional, Tuple
+from typing import Callable, List, Union, Optional, Tuple
 from warnings import warn
 import threading
 from streaming_data_types.run_start_pl72 import deserialise_pl72, RunStartInfo
@@ -32,14 +32,41 @@ class RunStartError(Exception):
     pass
 
 
+class FakeConsumer:
+    """
+    Use in place of confluent_kafka.Consumer
+    to avoid network io in unit tests
+    """
+    def __init__(self, input_queue: Optional[mp.Queue]):
+        if input_queue is None:
+            raise RuntimeError("A multiprocessing queue for test messages "
+                               "must be provided when using FakeConsumer")
+        # This queue is used to provide the consumer with
+        # messages in unit tests, instead of it getting messages
+        # from the Kafka broker
+        self._input_queue = input_queue
+
+    def assign(self, topic_partitions: List[TopicPartition]):
+        pass
+
+    def poll(self, timeout: float):
+        try:
+            msg = self._input_queue.get(timeout=timeout)
+            return msg
+        except QueueEmpty:
+            pass
+
+    def close(self):
+        pass
+
+
 class KafkaConsumer:
     def __init__(self,
                  topic_partition: TopicPartition,
-                 conf: Dict,
+                 consumer: Union[Consumer, FakeConsumer],
                  callback: Callable,
                  stop_time_ms: Optional[int] = None):
-        conf['enable.partition.eof'] = True
-        self._consumer = Consumer(conf)
+        self._consumer = consumer
         # To consume messages the consumer must "subscribe" to one
         # or more topics or "assign" specific topic partitions, the
         # latter allows us to start consuming at an offset specified
@@ -123,59 +150,14 @@ class KafkaConsumer:
         self.cancelled = True
         if self._consume_data is not None and self._consume_data.is_alive():
             self._consume_data.join(5.)
+            if self._consume_data.is_alive():
+                raise Exception("JOIN FAILED")
         self._consumer.close()
         self.stopped = True
 
     def update_stop_time(self, new_stop_time_ms: int):
         with self._stop_time_mutex:
             self._stop_time = new_stop_time_ms
-
-
-class FakeConsumer:
-    """
-    Use in place of KafkaConsumer to avoid having to do
-    network IO in unit tests.
-    """
-    def __init__(self, callback: Callable, input_queue: Optional[mp.Queue]):
-        if input_queue is None:
-            raise RuntimeError("A multiprocessing queue for test messages "
-                               "must be provided when using FakeConsumer")
-        self.stopped = True
-        self.cancelled = False
-        self._callback = callback
-        self._consume_data: Optional[threading.Thread] = None
-        # This queue is used to provide the consumer with
-        # messages in unit tests
-        self._input_queue = input_queue
-
-    def start(self):
-        self.stopped = False
-        self.cancelled = False
-        self._consume_data = threading.Thread(target=self._consume_loop)
-        self._consume_data.start()
-
-    def _consume_loop(self):
-        while not self.cancelled:
-            try:
-                msg = self._input_queue.get(timeout=.1)
-                self._callback(msg)
-            except QueueEmpty:
-                pass
-            except (ValueError, OSError):
-                # Queue has been closed, stop worker
-                self.stop()
-                self.cancelled = True
-                break
-
-    def stop(self):
-        self.cancelled = True
-        if self._consume_data is not None and self._consume_data.is_alive():
-            self._consume_data.join(5.)
-        self.stopped = True
-
-    @staticmethod
-    def update_stop_time(new_stop_time_ms: int):
-        pass
 
 
 class KafkaQueryConsumer:
@@ -258,6 +240,9 @@ def create_consumers(
                                                     offset=start_time_ms))
         topic_partitions = query_consumer.offsets_for_times(topic_partitions)
 
+    # Run start messages are typically much larger than the
+    # default maximum message size of 1MB. NB, there are
+    # corresponding settings on the broker, so if
     config = {
         "bootstrap.servers": kafka_broker,
         "group.id": "consumer_group_name",
@@ -265,15 +250,19 @@ def create_consumers(
         "enable.auto.commit": False,
         "message.max.bytes": 100_000_000,
         "fetch.message.max.bytes": 100_000_000,
+        "enable.partition.eof": True,  # used by consumer stop logic
     }
 
     if consumer_type_enum == ConsumerType.REAL:
         consumers = [
-            KafkaConsumer(topic_partition, config, callback, stop_time_ms)
-            for topic_partition in topic_partitions
+            KafkaConsumer(topic_partition, Consumer(config), callback,
+                          stop_time_ms) for topic_partition in topic_partitions
         ]
     else:
-        consumers = [FakeConsumer(callback, test_message_queue)]
+        consumers = [
+            KafkaConsumer(TopicPartition(""), FakeConsumer(test_message_queue),
+                          callback, stop_time_ms)
+        ]
 
     return consumers
 

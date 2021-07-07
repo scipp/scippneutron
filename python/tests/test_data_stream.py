@@ -13,7 +13,7 @@ from cmath import isclose
 
 try:
     import streaming_data_types  # noqa: F401
-    from confluent_kafka import TopicPartition  # noqa: F401
+    from confluent_kafka import TopicPartition, KafkaError  # noqa: F401
     from scippneutron.data_streaming.data_stream import \
         _data_stream  # noqa: E402
     from streaming_data_types.eventdata_ev42 import \
@@ -31,16 +31,31 @@ except ImportError:
                 allow_module_level=True)
 
 
+class FakeKafkaError:
+    def __init__(self, kafka_error_code: int):
+        self._error_code = kafka_error_code
+
+    def code(self):
+        return self._error_code
+
+    def __str__(self):
+        return f"FakeKafkaError: code {self._error_code}"
+
+
 class FakeMessage:
-    def __init__(self, message_payload: bytes):
-        self._message_payload = message_payload
+    def __init__(self, payload: bytes, error: Optional[FakeKafkaError] = None):
+        self._payload = payload
+        self._error = error
 
     def value(self):
-        return self._message_payload
+        return self._payload
+
+    def error(self) -> Optional[KafkaError]:
+        return self._error
 
     @staticmethod
-    def error() -> bool:
-        return False
+    def timestamp() -> Tuple[None, int]:
+        return None, 0
 
 
 class FakeQueryConsumer:
@@ -123,8 +138,8 @@ async def test_data_stream_returns_data_from_single_event_message():
     test_message_queue = mp.Queue()
     time_of_flight = np.array([1., 2., 3.])
     detector_ids = np.array([4, 5, 6])
-    test_message = serialise_ev42("detector", 0, 0, time_of_flight,
-                                  detector_ids)
+    test_message = FakeMessage(
+        serialise_ev42("detector", 0, 0, time_of_flight, detector_ids))
     test_message_queue.put(test_message)
 
     reached_assert = False
@@ -136,6 +151,7 @@ async def test_data_stream_returns_data_from_single_event_message():
                                    **TEST_STREAM_ARGS):
         assert np.allclose(data.coords['tof'].values, time_of_flight)
         reached_assert = True
+        test_message_queue.put(FakeMessage(b"aaaa", 42))
         worker_instruction_queue.put(
             ManagerInstruction(InstructionType.STOP_NOW))
     assert reached_assert
@@ -154,8 +170,8 @@ async def test_data_stream_returns_data_from_multiple_event_messages():
     second_detector_ids = np.array([4, 5, 6])
     second_test_message = serialise_ev42("detector", 0, 0, second_tof,
                                          second_detector_ids)
-    test_message_queue.put(first_test_message)
-    test_message_queue.put(second_test_message)
+    test_message_queue.put(FakeMessage(first_test_message))
+    test_message_queue.put(FakeMessage(second_test_message))
 
     reached_asserts = False
     async for data in _data_stream(data_queue,
@@ -185,14 +201,14 @@ async def test_warn_if_unrecognised_message_was_encountered():
     test_message = b"abcd0000"
 
     with pytest.warns(UnknownFlatbufferIdWarning):
-        test_message_queue.put(test_message)
+        test_message_queue.put(FakeMessage(test_message))
         async for _ in _data_stream(data_queue,
                                     worker_instruction_queue,
                                     halt_after_n_warnings=1,
                                     test_message_queue=test_message_queue,
                                     query_consumer=FakeQueryConsumer(),
                                     **TEST_STREAM_ARGS):
-            test_message_queue.put(test_message)
+            test_message_queue.put(FakeMessage(test_message))
 
 
 @pytest.mark.asyncio
@@ -210,14 +226,14 @@ async def test_warn_on_buffer_size_exceeded_by_single_message():
     test_steam_args["event_buffer_size"] = buffer_size_2_events
 
     with pytest.warns(BufferSizeWarning):
-        test_message_queue.put(test_message)
+        test_message_queue.put(FakeMessage(test_message))
         async for _ in _data_stream(data_queue,
                                     worker_instruction_queue,
                                     halt_after_n_warnings=1,
                                     test_message_queue=test_message_queue,
                                     query_consumer=FakeQueryConsumer(),
                                     **test_steam_args):
-            test_message_queue.put(test_message)
+            test_message_queue.put(FakeMessage(test_message))
 
 
 @pytest.mark.asyncio
@@ -254,8 +270,8 @@ async def test_data_returned_when_buffer_size_exceeded_by_event_messages():
         # n_chunks == 0 zeroth chunk contains data
         # from run start message
         if n_chunks == 0:
-            test_message_queue.put(first_test_message)
-            test_message_queue.put(second_test_message)
+            test_message_queue.put(FakeMessage(first_test_message))
+            test_message_queue.put(FakeMessage(second_test_message))
         elif n_chunks == 1:
             # Contain event data from first message
             assert np.allclose(data.coords['tof'].values, first_tof)
@@ -407,7 +423,7 @@ async def test_data_stream_returns_metadata():
             f142_timestamp = 123456  # ns after epoch
             f142_test_message = serialise_f142(f142_value, f142_source_name,
                                                f142_timestamp)
-            test_message_queue.put(f142_test_message)
+            test_message_queue.put(FakeMessage(f142_test_message))
             senv_values = np.array([26, 127, 52])
             senv_timestamp_ns = 123000  # ns after epoch
             senv_timestamp = datetime.datetime.fromtimestamp(
@@ -417,11 +433,11 @@ async def test_data_stream_returns_metadata():
                                                senv_timestamp,
                                                senv_time_between_samples, 0,
                                                senv_values, Location.Start)
-            test_message_queue.put(senv_test_message)
+            test_message_queue.put(FakeMessage(senv_test_message))
             tdct_timestamps = np.array([1234, 2345, 3456])  # ns
             tdct_test_message = serialise_tdct(tdct_source_name,
                                                tdct_timestamps)
-            test_message_queue.put(tdct_test_message)
+            test_message_queue.put(FakeMessage(tdct_test_message))
 
         n_chunks += 1
         # The first chunk contains data from the run start message
@@ -487,12 +503,12 @@ async def test_data_stream_returns_data_from_multiple_slow_metadata_messages():
             f142_timestamp_1 = 123456  # ns after epoch
             f142_test_message = serialise_f142(f142_value_1, f142_source_name,
                                                f142_timestamp_1)
-            test_message_queue.put(f142_test_message)
+            test_message_queue.put(FakeMessage(f142_test_message))
             f142_value_2 = 2.725
             f142_timestamp_2 = 234567  # ns after epoch
             f142_test_message = serialise_f142(f142_value_2, f142_source_name,
                                                f142_timestamp_2)
-            test_message_queue.put(f142_test_message)
+            test_message_queue.put(FakeMessage(f142_test_message))
 
         n_chunks += 1
         # The first chunk contains data from the run start message
@@ -552,7 +568,7 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages():
                                                senv_timestamp,
                                                senv_time_between_samples, 0,
                                                senv_values_1, Location.Start)
-            test_message_queue.put(senv_test_message)
+            test_message_queue.put(FakeMessage(senv_test_message))
             senv_values_2 = np.array([3832, 324, 3])
             senv_timestamp_ns_2 = 234000  # ns after epoch
             senv_timestamp = datetime.datetime.fromtimestamp(
@@ -561,7 +577,7 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages():
                                                senv_timestamp,
                                                senv_time_between_samples, 0,
                                                senv_values_2, Location.Start)
-            test_message_queue.put(senv_test_message)
+            test_message_queue.put(FakeMessage(senv_test_message))
 
         n_chunks += 1
         # The first chunk contains data from the run start message
@@ -626,11 +642,11 @@ async def test_data_stream_returns_data_from_multiple_chopper_messages():
             tdct_timestamps_1 = np.array([1234, 2345, 3456])  # ns
             tdct_test_message = serialise_tdct(tdct_source_name,
                                                tdct_timestamps_1)
-            test_message_queue.put(tdct_test_message)
+            test_message_queue.put(FakeMessage(tdct_test_message))
             tdct_timestamps_2 = np.array([4567, 5678, 6789])  # ns
             tdct_test_message = serialise_tdct(tdct_source_name,
                                                tdct_timestamps_2)
-            test_message_queue.put(tdct_test_message)
+            test_message_queue.put(FakeMessage(tdct_test_message))
 
         n_chunks += 1
         # The first chunk contains data from the run start message
@@ -689,7 +705,7 @@ async def test_data_stream_warns_if_fast_metadata_message_exceeds_buffer():
                                                senv_time_between_samples, 0,
                                                senv_values, Location.Start)
 
-            test_message_queue.put(senv_test_message)
+            test_message_queue.put(FakeMessage(senv_test_message))
 
 
 @pytest.mark.asyncio
@@ -732,7 +748,7 @@ async def test_data_stream_warns_if_single_chopper_message_exceeds_buffer():
             tdct_test_message = serialise_tdct(tdct_source_name,
                                                tdct_timestamps)
 
-            test_message_queue.put(tdct_test_message)
+            test_message_queue.put(FakeMessage(tdct_test_message))
 
 
 @pytest.mark.asyncio
@@ -776,8 +792,8 @@ async def test_data_returned_if_multiple_slow_metadata_msgs_exceed_buffer():
         # n_chunks == 0 zeroth chunk contains data
         # from run start message
         if n_chunks == 0:
-            test_message_queue.put(first_message)
-            test_message_queue.put(second_message)
+            test_message_queue.put(FakeMessage(first_message))
+            test_message_queue.put(FakeMessage(second_message))
         elif n_chunks == 1:
             # Contains data from first message
             assert isclose(data.attrs[f142_source_name].value.values[0],
@@ -839,8 +855,8 @@ async def test_data_returned_if_multiple_fast_metadata_msgs_exceed_buffer():
         # n_chunks == 0 zeroth chunk contains data
         # from run start message
         if n_chunks == 0:
-            test_message_queue.put(first_message)
-            test_message_queue.put(second_message)
+            test_message_queue.put(FakeMessage(first_message))
+            test_message_queue.put(FakeMessage(second_message))
         elif n_chunks == 1:
             # Contains data from first message
             assert np.array_equal(data.attrs[senv_source_name].value.values,
@@ -894,8 +910,8 @@ async def test_data_returned_if_multiple_chopper_msgs_exceed_buffer():
         # n_chunks == 0 zeroth chunk contains data
         # from run start message
         if n_chunks == 0:
-            test_message_queue.put(first_tdct_message)
-            test_message_queue.put(second_tdct_message)
+            test_message_queue.put(FakeMessage(first_tdct_message))
+            test_message_queue.put(FakeMessage(second_tdct_message))
         elif n_chunks == 1:
             # Contains data from first message
             assert np.array_equal(data.attrs[tdct_source_name].value.values,
