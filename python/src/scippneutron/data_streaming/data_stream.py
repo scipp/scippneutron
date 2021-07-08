@@ -106,15 +106,7 @@ def validate_buffer_size_args(chopper_buffer_size, event_buffer_size,
 
 def _cleanup_queue(queue: Optional[mp.Queue]):
     if queue is not None:
-        try:
-            item = queue.get(block=False)
-        except QueueEmpty:
-            item = None
-        while item:
-            try:
-                queue.get(block=False)
-            except QueueEmpty:
-                break
+        queue.cancel_join_thread()
         queue.close()
         queue.join_thread()
 

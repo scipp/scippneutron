@@ -150,8 +150,6 @@ class KafkaConsumer:
         self.cancelled = True
         if self._consume_data is not None and self._consume_data.is_alive():
             self._consume_data.join(5.)
-            if self._consume_data.is_alive():
-                raise Exception("JOIN FAILED")
         self._consumer.close()
         self.stopped = True
 

@@ -56,8 +56,6 @@ def data_consumption_manager(
             instruction = worker_instruction_queue.get(timeout=10.)
             if instruction.type == InstructionType.STOP_NOW:
                 stop_consumers(consumers)
-                buffer.stop()
-                break
             elif instruction.type == InstructionType.UPDATE_STOP_TIME:
                 for consumer in consumers:
                     consumer.update_stop_time(instruction.stop_time_ms)
@@ -66,7 +64,5 @@ def data_consumption_manager(
         except (ValueError, OSError):
             # Queue has been closed, stop worker
             stop_consumers(consumers)
-            buffer.stop()
-            break
 
     buffer.stop()
