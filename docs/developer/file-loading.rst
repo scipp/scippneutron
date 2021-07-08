@@ -3,7 +3,7 @@ File loading
 
 Scippneutron is able to load Nexus files from ESS experimental runs,
 as well as data files from other neutron facilities.
-There is currently two different implementations of file loading.
+There are currently two different implementations of file loading.
 
 ``scippneutron.load``
 ~~~~~~~~~~~~~~~~~~~~~

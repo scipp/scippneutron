@@ -138,7 +138,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     loaded_data = load_detector_data(groups[nx_event_data],
                                      groups[nx_detector], nexus_file, nexus,
                                      quiet)
-    # If no event data is found, make a Dataset and add the metadata as
+    # If no event data are found, make a Dataset and add the metadata as
     # Dataset entries. Otherwise, make a DataArray.
     if loaded_data is None:
         no_event_data = True

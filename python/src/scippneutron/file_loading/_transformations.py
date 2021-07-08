@@ -94,11 +94,11 @@ def _get_transformations(transform_path: str,
     :param root: root of the file, depends_on paths assumed to be
       relative to this
     """
-    """
-    TODO: this list of transformation should probably be cached in the future
-    to deal with changing beamline components (e.g. pixel positions) during a
-    live data stream (see https://github.com/scipp/scippneutron/issues/76).
-    """
+
+    # TODO: this list of transformation should probably be cached in the future
+    # to deal with changing beamline components (e.g. pixel positions) during a
+    # live data stream (see https://github.com/scipp/scippneutron/issues/76).
+
     if transform_path != '.':
         try:
             transform = nexus.get_object_by_path(root, transform_path)

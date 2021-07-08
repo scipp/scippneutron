@@ -224,6 +224,7 @@ async def _data_stream(
     #
     # TODO: This should, in principle, not look any different from any other
     # chunk of data, right now it seems it may be different?
+    # (see https://github.com/scipp/scippneutron/issues/114)
     #
     # Generic data chunk structure: geometry, metadata, and event data are all
     # optional.

@@ -103,7 +103,7 @@ Below is a list of the FlatBuffers schemas used by scipp, along with a few infor
 
 It may be worth noting that we have found extracting data from serialized FlatBuffers in Python
 to be efficient, but serializing can be much more efficient in C++, particularly if serializing
-many very small buffers.
+a large number of small buffers.
 
 
 Architecture
