@@ -16,7 +16,6 @@ from typing import Optional, Dict, List, Any, Union, Callable
 from ..file_loading._json_nexus import StreamInfo
 from ._stop_time import StopTimeUpdate
 from datetime import datetime
-from time import sleep
 from ._serialisation import convert_to_pickleable_dict
 from ._warnings import UnknownFlatbufferIdWarning, BufferSizeWarning
 """
@@ -275,6 +274,7 @@ class StreamedDataBuffer:
         })
         self._current_event = 0
         self._cancelled = False
+        self._notify_cancelled = threading.Condition()
         self._unrecognised_fb_id_count = 0
         self._periodic_emit: Optional[threading.Thread] = None
         self._emit_queue = queue
@@ -324,6 +324,8 @@ class StreamedDataBuffer:
 
     def stop(self):
         self._cancelled = True
+        with self._notify_cancelled:
+            self._notify_cancelled.notifyAll()
         if self._periodic_emit is not None:
             self._periodic_emit.join(5.)
         self._emit_data()  # flush the buffer
@@ -347,7 +349,8 @@ class StreamedDataBuffer:
 
     def _emit_loop(self):
         while not self._cancelled:
-            sleep(self._interval_s)
+            with self._notify_cancelled:
+                self._notify_cancelled.wait(timeout=self._interval_s)
             self._emit_data()
 
     def _handled_event_data(self, new_data: bytes) -> bool:
