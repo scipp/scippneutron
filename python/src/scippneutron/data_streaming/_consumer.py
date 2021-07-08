@@ -51,7 +51,7 @@ class FakeConsumer:
 
     def poll(self, timeout: float):
         try:
-            msg = self._input_queue.get(timeout=timeout)
+            msg = self._input_queue.get(timeout=0.1)
             return msg
         except QueueEmpty:
             pass

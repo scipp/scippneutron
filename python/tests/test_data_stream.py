@@ -18,8 +18,6 @@ try:
         _data_stream  # noqa: E402
     from streaming_data_types.eventdata_ev42 import \
         serialise_ev42  # noqa: E402
-    from scippneutron.data_streaming._data_consumption_manager import (
-        ManagerInstruction, InstructionType)
     from streaming_data_types.run_start_pl72 import serialise_pl72
     from streaming_data_types.logdata_f142 import serialise_f142
     from streaming_data_types.timestamps_tdct import serialise_tdct
@@ -116,7 +114,7 @@ class FakeQueryConsumer:
 
 # Short time to use for buffer emit and data_stream interval in tests
 # pass or fail fast!
-SHORT_TEST_INTERVAL = 10. * sc.Unit('milliseconds')
+SHORT_TEST_INTERVAL = 100. * sc.Unit('milliseconds')
 # Small buffer of 20 events is sufficient for the tests
 TEST_BUFFER_SIZE = 20
 
@@ -129,7 +127,7 @@ TEST_STREAM_ARGS = {
     "fast_metadata_buffer_size": TEST_BUFFER_SIZE,
     "chopper_buffer_size": TEST_BUFFER_SIZE,
     "consumer_type": ConsumerType.FAKE,
-    "timeout": 1. * sc.units.s
+    "timeout": 4. * sc.units.s
 }
 
 
@@ -163,9 +161,6 @@ async def test_data_stream_returns_data_from_single_event_message(queues):
                                    **TEST_STREAM_ARGS):
         assert np.allclose(data.coords['tof'].values, time_of_flight)
         reached_assert = True
-        # test_message_queue.put(FakeMessage(b"aaaa", 42))
-        worker_instruction_queue.put(
-            ManagerInstruction(InstructionType.STOP_NOW))
     assert reached_assert
 
 
