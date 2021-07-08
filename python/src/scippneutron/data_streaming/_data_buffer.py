@@ -40,7 +40,7 @@ CHOPPER_FB_ID = "tdct"
 EVENT_FB_ID = "ev42"
 
 
-def _create_metadata_buffer_array(name: str, unit: sc.Unit, dtype: Any,
+def _create_metadata_buffer_array(name: str, unit: str, dtype: Any,
                                   buffer_size: int):
     return sc.DataArray(
         sc.zeros(dims=[name], shape=(buffer_size, ), unit=unit, dtype=dtype), {
@@ -326,7 +326,8 @@ class StreamedDataBuffer:
         self._cancelled = True
         with self._notify_cancelled:
             self._notify_cancelled.notifyAll()
-        if self._periodic_emit is not None:
+        if (self._periodic_emit is not None
+                and self._periodic_emit.is_alive()):
             self._periodic_emit.join(5.)
         self._emit_data()  # flush the buffer
 

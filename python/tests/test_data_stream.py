@@ -43,15 +43,17 @@ class FakeKafkaError:
 
 
 class FakeMessage:
-    def __init__(self, payload: bytes, error: Optional[FakeKafkaError] = None):
+    def __init__(self, payload: bytes, error_code: Optional[int] = None):
         self._payload = payload
-        self._error = error
+        self._error_code = error_code
 
     def value(self):
         return self._payload
 
     def error(self) -> Optional[KafkaError]:
-        return self._error
+        if self._error_code is not None:
+            return FakeKafkaError(self._error_code)
+        return None
 
     @staticmethod
     def timestamp() -> Tuple[None, int]:
@@ -131,11 +133,21 @@ TEST_STREAM_ARGS = {
 }
 
 
+@pytest.fixture(scope="function")
+def queues():
+    # Specify to start the process using the "spawn" method, otherwise
+    # on Linux the default is to fork the Python interpreter which
+    # is "problematic" in a multithreaded process, in our case the use of
+    # asyncio means the process is multithreaded.
+    # See documentation:
+    # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
+    ctx = mp.get_context("spawn")
+    return ctx.Queue(), ctx.Queue(), ctx.Queue()
+
+
 @pytest.mark.asyncio
-async def test_data_stream_returns_data_from_single_event_message():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_data_stream_returns_data_from_single_event_message(queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     time_of_flight = np.array([1., 2., 3.])
     detector_ids = np.array([4, 5, 6])
     test_message = FakeMessage(
@@ -151,17 +163,15 @@ async def test_data_stream_returns_data_from_single_event_message():
                                    **TEST_STREAM_ARGS):
         assert np.allclose(data.coords['tof'].values, time_of_flight)
         reached_assert = True
-        test_message_queue.put(FakeMessage(b"aaaa", 42))
+        # test_message_queue.put(FakeMessage(b"aaaa", 42))
         worker_instruction_queue.put(
             ManagerInstruction(InstructionType.STOP_NOW))
     assert reached_assert
 
 
 @pytest.mark.asyncio
-async def test_data_stream_returns_data_from_multiple_event_messages():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_data_stream_returns_data_from_multiple_event_messages(queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     first_tof = np.array([1., 2., 3.])
     first_detector_ids = np.array([4, 5, 6])
     first_test_message = serialise_ev42("detector", 0, 0, first_tof,
@@ -190,11 +200,9 @@ async def test_data_stream_returns_data_from_multiple_event_messages():
 
 
 @pytest.mark.asyncio
-async def test_warn_if_unrecognised_message_was_encountered():
+async def test_warn_if_unrecognised_message_was_encountered(queues):
     warnings.filterwarnings("error")
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+    data_queue, worker_instruction_queue, test_message_queue = queues
     # First 4 bytes of the message payload are the FlatBuffer schema identifier
     # "abcd" does not correspond to a FlatBuffer schema for data
     # that scipp is interested in
@@ -212,10 +220,8 @@ async def test_warn_if_unrecognised_message_was_encountered():
 
 
 @pytest.mark.asyncio
-async def test_warn_on_buffer_size_exceeded_by_single_message():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_warn_on_buffer_size_exceeded_by_single_message(queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     buffer_size_2_events = 2
     time_of_flight = np.array([1., 2., 3.])
     detector_ids = np.array([4, 5, 6])
@@ -237,14 +243,12 @@ async def test_warn_on_buffer_size_exceeded_by_single_message():
 
 
 @pytest.mark.asyncio
-async def test_data_returned_when_buffer_size_exceeded_by_event_messages():
+async def test_data_returned_when_buffer_size_exceeded_by_event_messages(
+        queues):
     # Messages cumulatively exceed the buffer size, data_stream
     # will return multiple chunks of data to clear the buffer
     # between messages.
-
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+    data_queue, worker_instruction_queue, test_message_queue = queues
     first_tof = np.array([1., 2., 3.])
     first_detector_ids = np.array([4, 5, 6])
     first_test_message = serialise_ev42("detector", 0, 0, first_tof,
@@ -285,10 +289,8 @@ async def test_data_returned_when_buffer_size_exceeded_by_event_messages():
 
 
 @pytest.mark.asyncio
-async def test_data_are_loaded_from_run_start_message():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_data_are_loaded_from_run_start_message(queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
     reached_assert = False
     test_instrument_name = "DATA_STREAM_TEST"
@@ -306,10 +308,8 @@ async def test_data_are_loaded_from_run_start_message():
 
 
 @pytest.mark.asyncio
-async def test_error_raised_if_no_run_start_message_available():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_error_raised_if_no_run_start_message_available(queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
 
@@ -330,10 +330,8 @@ async def test_error_raised_if_no_run_start_message_available():
 
 
 @pytest.mark.asyncio
-async def test_error_if_both_topics_and_run_start_topic_not_specified():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_error_if_both_topics_and_run_start_topic_not_specified(queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
 
     test_stream_args = TEST_STREAM_ARGS.copy()
     test_stream_args["topics"] = None
@@ -350,12 +348,10 @@ async def test_error_if_both_topics_and_run_start_topic_not_specified():
 
 
 @pytest.mark.asyncio
-async def test_specified_topics_override_run_start_message_topics():
+async def test_specified_topics_override_run_start_message_topics(queues):
     # If "topics" argument is specified then they should be used, even if
     # a run start topic is provided
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+    data_queue, worker_instruction_queue, test_message_queue = queues
     test_topics = ["whiting", "snail", "porpoise"]
     topic_in_run_start_message = "test_topic"
     test_streams = [Stream("/entry", topic_in_run_start_message)]
@@ -375,10 +371,8 @@ async def test_specified_topics_override_run_start_message_topics():
 
 
 @pytest.mark.asyncio
-async def test_data_stream_returns_metadata():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_data_stream_returns_metadata(queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
 
@@ -465,10 +459,9 @@ async def test_data_stream_returns_metadata():
 
 
 @pytest.mark.asyncio
-async def test_data_stream_returns_data_from_multiple_slow_metadata_messages():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_data_stream_returns_data_from_multiple_slow_metadata_messages(
+        queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
 
@@ -525,10 +518,9 @@ async def test_data_stream_returns_data_from_multiple_slow_metadata_messages():
 
 
 @pytest.mark.asyncio
-async def test_data_stream_returns_data_from_multiple_fast_metadata_messages():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_data_stream_returns_data_from_multiple_fast_metadata_messages(
+        queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
 
@@ -605,10 +597,8 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages():
 
 
 @pytest.mark.asyncio
-async def test_data_stream_returns_data_from_multiple_chopper_messages():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_data_stream_returns_data_from_multiple_chopper_messages(queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
 
@@ -660,10 +650,9 @@ async def test_data_stream_returns_data_from_multiple_chopper_messages():
 
 
 @pytest.mark.asyncio
-async def test_data_stream_warns_if_fast_metadata_message_exceeds_buffer():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_data_stream_warns_if_fast_metadata_message_exceeds_buffer(
+        queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     buffer_size = 2
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
@@ -709,10 +698,9 @@ async def test_data_stream_warns_if_fast_metadata_message_exceeds_buffer():
 
 
 @pytest.mark.asyncio
-async def test_data_stream_warns_if_single_chopper_message_exceeds_buffer():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_data_stream_warns_if_single_chopper_message_exceeds_buffer(
+        queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     buffer_size = 2
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
@@ -752,10 +740,9 @@ async def test_data_stream_warns_if_single_chopper_message_exceeds_buffer():
 
 
 @pytest.mark.asyncio
-async def test_data_returned_if_multiple_slow_metadata_msgs_exceed_buffer():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_data_returned_if_multiple_slow_metadata_msgs_exceed_buffer(
+        queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
 
@@ -809,10 +796,9 @@ async def test_data_returned_if_multiple_slow_metadata_msgs_exceed_buffer():
 
 
 @pytest.mark.asyncio
-async def test_data_returned_if_multiple_fast_metadata_msgs_exceed_buffer():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_data_returned_if_multiple_fast_metadata_msgs_exceed_buffer(
+        queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     buffer_size = 4
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
@@ -871,10 +857,8 @@ async def test_data_returned_if_multiple_fast_metadata_msgs_exceed_buffer():
 
 
 @pytest.mark.asyncio
-async def test_data_returned_if_multiple_chopper_msgs_exceed_buffer():
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+async def test_data_returned_if_multiple_chopper_msgs_exceed_buffer(queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
     buffer_size = 4
     run_info_topic = "fake_topic"
     test_instrument_name = "DATA_STREAM_TEST"
@@ -926,7 +910,8 @@ async def test_data_returned_if_multiple_chopper_msgs_exceed_buffer():
 
 
 @pytest.mark.asyncio
-async def test_no_warning_for_missing_datasets_if_group_contains_stream():
+async def test_no_warning_for_missing_datasets_if_group_contains_stream(
+        queues):
     # Create NeXus description for run start message which contains
     # an NXlog which contains no datasets but does have a Stream
     # source for the data
@@ -939,9 +924,7 @@ async def test_no_warning_for_missing_datasets_if_group_contains_stream():
     builder.add_stream(Stream("/entry/events_0"))
     nexus_structure = builder.json_string
 
-    data_queue = mp.Queue()
-    worker_instruction_queue = mp.Queue()
-    test_message_queue = mp.Queue()
+    data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
     reached_assert = False
 

@@ -8,6 +8,7 @@ from ._consumer import (start_consumers, stop_consumers, create_consumers,
                         all_consumers_stopped)
 from ._data_buffer import StreamedDataBuffer
 from queue import Empty as QueueEmpty
+from time import time_ns
 
 
 class InstructionType(Enum):
@@ -51,10 +52,12 @@ def data_consumption_manager(
     start_consumers(consumers)
     buffer.start()
 
+    tic = None  # TODO remove
     while not all_consumers_stopped(consumers):
         try:
             instruction = worker_instruction_queue.get(timeout=10.)
             if instruction.type == InstructionType.STOP_NOW:
+                tic = time_ns()  # TODO remove
                 stop_consumers(consumers)
             elif instruction.type == InstructionType.UPDATE_STOP_TIME:
                 for consumer in consumers:
@@ -66,3 +69,8 @@ def data_consumption_manager(
             stop_consumers(consumers)
 
     buffer.stop()
+    # TODO remove
+    if tic:
+        toc = (time_ns() - tic) / 1_000_000_000
+        print(f"manager took {toc} seconds to reach end of "
+              f"func after getting STOP_NOW")

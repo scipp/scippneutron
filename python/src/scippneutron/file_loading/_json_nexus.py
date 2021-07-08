@@ -323,7 +323,7 @@ class StreamInfo:
     flatbuffer_id: str
     source_name: str
     dtype: Any
-    unit: sc.Unit
+    unit: str
 
 
 def get_streams_info(root: Dict) -> List[StreamInfo]:
@@ -340,7 +340,7 @@ def get_streams_info(root: Dict) -> List[StreamInfo]:
             except KeyError:
                 dtype = None
 
-        units = sc.units.dimensionless
+        units = "dimensionless"
         try:
             units = _get_attribute_value(stream.parent, _nexus_units)
         except MissingAttribute:

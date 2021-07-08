@@ -12,6 +12,7 @@ from ._serialisation import convert_from_pickleable_dict
 from ._stop_time import StopTimeUpdate
 from warnings import warn
 from ._data_stream_widget import DataStreamWidget
+from time import time_ns
 """
 Some type names are included as strings as imports are done in
 function scope to avoid optional dependencies being imported
@@ -77,8 +78,9 @@ async def data_stream(
                               fast_metadata_buffer_size,
                               slow_metadata_buffer_size)
 
-    data_queue = mp.Queue()
-    instruction_queue = mp.Queue()
+    ctx = mp.get_context("spawn")
+    data_queue = ctx.Queue()
+    instruction_queue = ctx.Queue()
 
     # Use "async for" as "yield from" cannot be used in an async function, see
     # https://www.python.org/dev/peps/pep-0525/#asynchronous-yield-from
@@ -184,7 +186,22 @@ async def _data_stream(
     start_time_ms = int(sc.to_unit(start_time, "milliseconds").value)
     interval_s = float(sc.to_unit(interval, 's').value)
 
-    data_collect_process = mp.Process(
+    # TODO remove
+    from confluent_kafka import Producer
+    _producer = Producer({"bootstrap.servers": "localhost:9092"})
+
+    def log(message: str):
+        _producer.produce("scn", message.encode('utf-8'))
+        _producer.poll(0)
+        _producer.flush(timeout=2.)
+
+    # Specify to start the process using the "spawn" method, otherwise
+    # on Linux the default is to fork the Python interpreter which
+    # is "problematic" in a multithreaded process, in our case the use of
+    # asyncio means the process is multithreaded.
+    # See documentation:
+    # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
+    data_collect_process = mp.get_context("spawn").Process(
         target=data_consumption_manager,
         args=(start_time_ms, stop_time_ms, run_id, topics, kafka_broker,
               consumer_type, stream_info, interval_s, event_buffer_size,
@@ -234,8 +251,12 @@ async def _data_stream(
         # Ensure cleanup happens however the loop exits
         worker_instruction_queue.put(
             ManagerInstruction(InstructionType.STOP_NOW))
+        tic = time_ns()  # TODO remove
         process_halt_timeout_s = 4.
-        data_collect_process.join(process_halt_timeout_s)
+        if data_collect_process.is_alive():
+            data_collect_process.join(process_halt_timeout_s)
+        toc = (time_ns() - tic) / 1_000_000_000  # TODO remove
+        log(f"waited for manager to stop for {toc} seconds")  # TODO remove
         if data_collect_process.is_alive():
             data_collect_process.terminate()
         for queue in (data_queue, worker_instruction_queue,
