@@ -191,7 +191,7 @@ class LoadFromHdf5:
     def get_attribute_as_numpy_array(node: Union[h5py.Group, h5py.Dataset],
                                      attribute_name: str) -> np.ndarray:
         try:
-            return np.array(node.attrs[attribute_name])
+            return np.asarray(node.attrs[attribute_name])
         except KeyError:
             raise MissingAttribute
 
