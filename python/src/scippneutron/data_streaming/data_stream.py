@@ -197,10 +197,12 @@ async def _data_stream(
 
     # Specify to start the process using the "spawn" method, otherwise
     # on Linux the default is to fork the Python interpreter which
-    # is "problematic" in a multithreaded process, in our case the use of
-    # asyncio means the process is multithreaded.
+    # is "problematic" in a multithreaded process, this can apparently
+    # even cause multiprocessing's own Queue to cause problems when forking.
     # See documentation:
     # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
+    # pytorch docs mention Queue problem:
+    # https://pytorch.org/docs/stable/notes/multiprocessing.html
     data_collect_process = mp.get_context("spawn").Process(
         target=data_consumption_manager,
         args=(start_time_ms, stop_time_ms, run_id, topics, kafka_broker,
