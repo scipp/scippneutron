@@ -73,6 +73,8 @@ class KafkaConsumer:
         # in the TopicPartition. Each KafkaConsumer consumes from only
         # a single partition, this simplifies the logic around run stop
         # behaviour.
+        # Note that offsets are integer indices pointing to a position in the
+        # topic partition, they are not a bytes offset.
         self._consumer.assign([topic_partition])
         self._callback = callback
         self._reached_eop = False
@@ -166,6 +168,11 @@ class KafkaQueryConsumer:
     in unit tests.
     """
     def __init__(self, broker: str):
+        # Set "enable.auto.commit" to False, as we do not need to report to the
+        # kafka broker where we got to (it usually does this in case of a
+        # crash, but we simply restart the process and go and find the last
+        # run_start message.
+        #
         # Set "queued.min.messages" to 1 as we will consume backwards through
         # the partition one message at a time; we do not want to retrieve
         # multiple messages in the forward direction each time we step
@@ -239,8 +246,12 @@ def create_consumers(
         topic_partitions = query_consumer.offsets_for_times(topic_partitions)
 
     # Run start messages are typically much larger than the
-    # default maximum message size of 1MB. NB, there are
-    # corresponding settings on the broker, so if
+    # default maximum message size of 1MB. There are
+    # corresponding settings on the broker.
+    # Note: the "message.max.bytes" does not necessarily have to agree with the
+    # size set in the broker. The lower of the two will set the limit.
+    # If a message exceeds this maximum size, an error should be reported by
+    # the software publishing the run start message (for example NICOS).
     config = {
         "bootstrap.servers": kafka_broker,
         "group.id": "consumer_group_name",
@@ -290,7 +301,11 @@ def all_consumers_stopped(consumers: List[KafkaConsumer]) -> bool:
 def get_run_start_message(topic: str,
                           query_consumer: KafkaQueryConsumer) -> RunStartInfo:
     """
-    Get the last run start message on the given topic
+    Get the last run start message on the given topic.
+
+    TODO: we may need to carry out some filtering on instrument name,
+    since it is possible that start messages from other instruments end up on
+    the same Kafka topic (unless there is a separate topic for each instrument)
     """
     topic_partitions = query_consumer.get_topic_partitions(topic)
     n_partitions = len(topic_partitions)

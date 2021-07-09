@@ -160,7 +160,7 @@ def _load_detector(group: Group, file_root: h5py.File,
     pixel_positions = None
     pixel_positions_found, _ = nexus.dataset_in_group(group.group,
                                                       "x_pixel_offset")
-    if pixel_positions_found:
+    if pixel_positions_found and detector_ids is not None:
         pixel_positions = _load_pixel_positions(group.group,
                                                 detector_ids.shape[0],
                                                 file_root, nexus)
@@ -224,6 +224,9 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     detector_group = group.parent
     pixel_positions_found, _ = nexus.dataset_in_group(detector_group,
                                                       "x_pixel_offset")
+    # Checking for positions here is needed because, in principle, the standard
+    # allows not to always have them. ESS files should however always have
+    # them.
     if pixel_positions_found:
         detector_data.pixel_positions = _load_pixel_positions(
             detector_group, detector_data.detector_ids.shape[0], file_root,
@@ -293,6 +296,8 @@ def load_detector_data(event_data_groups: List[Group],
     # but for reduction it is more useful to bin by detector id
     events = sc.bin(detector_data.events, groups=[detector_data.detector_ids])
     if pixel_positions_loaded:
+        # TODO: the name 'position' should probably not be hard-coded but moved
+        # to a variable that cah be changed in a single place.
         events.coords['position'] = detector_data.pixel_positions
     while event_data:
         detector_data = event_data.pop(0)

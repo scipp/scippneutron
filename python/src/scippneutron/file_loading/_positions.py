@@ -31,11 +31,11 @@ def load_position_of_unique_component(
                                                      nexus, default_position)
     except PositionError:
         return
-    _add_attr_to_loaded_data(f"{name}_position",
-                             data,
-                             position,
-                             unit=units,
-                             dtype=sc.dtype.vector_3_float64)
+    _add_coord_to_loaded_data(f"{name}_position",
+                              data,
+                              position,
+                              unit=units,
+                              dtype=sc.dtype.vector_3_float64)
 
 
 def load_positions_of_components(
@@ -54,17 +54,18 @@ def load_positions_of_components(
         except PositionError:
             continue
         if len(groups) == 1:
-            _add_attr_to_loaded_data(f"{name}_position",
-                                     data,
-                                     position,
-                                     unit=units,
-                                     dtype=sc.dtype.vector_3_float64)
+            _add_coord_to_loaded_data(f"{name}_position",
+                                      data,
+                                      position,
+                                      unit=units,
+                                      dtype=sc.dtype.vector_3_float64)
         else:
-            _add_attr_to_loaded_data(f"{nexus.get_name(group.group)}_position",
-                                     data,
-                                     position,
-                                     unit=units,
-                                     dtype=sc.dtype.vector_3_float64)
+            _add_coord_to_loaded_data(
+                f"{nexus.get_name(group.group)}_position",
+                data,
+                position,
+                unit=units,
+                dtype=sc.dtype.vector_3_float64)
 
 
 def _get_position_of_component(
@@ -106,15 +107,14 @@ def _get_position_of_component(
     return position, units
 
 
-def _add_attr_to_loaded_data(attr_name: str,
-                             data: sc.Variable,
-                             value: np.ndarray,
-                             unit: sc.Unit,
-                             dtype: Optional[Any] = None):
-    try:
-        data = data.attrs
-    except AttributeError:
-        pass
+def _add_coord_to_loaded_data(attr_name: str,
+                              data: sc.Variable,
+                              value: np.ndarray,
+                              unit: sc.Unit,
+                              dtype: Optional[Any] = None):
+
+    if isinstance(data, sc.DataArray):
+        data = data.coords
 
     try:
         if dtype is not None:

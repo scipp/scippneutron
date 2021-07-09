@@ -1268,3 +1268,24 @@ def test_linked_datasets_are_found(load_function: Callable):
     expected_detector_ids = np.array([1, 2, 3])
     assert np.array_equal(loaded_data.coords['detector_id'].values,
                           expected_detector_ids)
+
+
+def test_warning_but_no_error_for_unrecognised_log_unit(
+        load_function: Callable):
+    values = np.array([1.1, 2.2, 3.3])
+    times = np.array([4.4, 5.5, 6.6])
+    name = "test_log"
+    builder = NexusBuilder()
+    unknown_unit = "elephants"
+    builder.add_log(
+        Log(name, values, times, value_units=unknown_unit, time_units="s"))
+
+    with pytest.warns(UserWarning):
+        loaded_data = load_function(builder)
+
+    # Expect a sc.Dataset with log names as keys
+    assert np.allclose(loaded_data[name].data.values.values, values)
+    assert np.allclose(loaded_data[name].data.values.coords['time'].values,
+                       times)
+    assert loaded_data[name].data.values.unit == sc.units.dimensionless
+    assert loaded_data[name].data.values.coords['time'].unit == sc.units.s

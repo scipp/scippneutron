@@ -61,7 +61,8 @@ Documentation
 
    developer/getting-started
    developer/coding-conventions
-   developer/testing-live-data
+   developer/data-stream
+   developer/file-loading
    developer/deployment
 
 .. toctree::

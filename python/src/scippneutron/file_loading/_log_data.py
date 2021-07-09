@@ -24,6 +24,12 @@ def load_logs(loaded_data: ScippData, log_groups: List[Group],
 
 def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
                      group_path: str, data: ScippData):
+    """
+    Add an attribute with a unique name.
+    If an attribute name already exists, we iteratively walk up the file tree
+    and prepend the parent name to the attribute name, until a unique name is
+    found.
+    """
     try:
         data = data.attrs
     except AttributeError:
@@ -66,6 +72,12 @@ def _load_log_data_from_group(group: Group,
 
     unit = nexus.get_unit(
         nexus.get_dataset_from_group(group.group, value_dataset_name))
+    try:
+        unit = sc.Unit(unit)
+    except sc.UnitError:
+        warn(f"Unrecognized unit '{unit}' for value dataset "
+             f"in NXlog '{group.path}'; setting unit as 'dimensionless'")
+        unit = sc.units.dimensionless
 
     try:
         dimension_label = "time"
