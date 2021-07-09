@@ -113,10 +113,17 @@ def load_nexus(data_file: Union[str, h5py.File],
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                nexus: LoadFromNexus, quiet: bool) -> Optional[ScippData]:
+    """
+    Main implementation for loading data is extracted to this function so that
+    in-memory data can be used for unit tests.
+    """
     if root is not None:
         root_node = nexus_file[root]
     else:
         root_node = nexus_file
+    # Use visititems (in find_by_nx_class) to traverse the entire file tree,
+    # looking for any NXClass that can be read.
+    # groups is a dict with a key for each category (nx_log, nx_instrument...)
     groups = nexus.find_by_nx_class(
         (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample, nx_source,
          nx_detector), root_node)
@@ -131,6 +138,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     loaded_data = load_detector_data(groups[nx_event_data],
                                      groups[nx_detector], nexus_file, nexus,
                                      quiet)
+    # If no event data are found, make a Dataset and add the metadata as
+    # Dataset entries. Otherwise, make a DataArray.
     if loaded_data is None:
         no_event_data = True
         loaded_data = sc.Dataset({})

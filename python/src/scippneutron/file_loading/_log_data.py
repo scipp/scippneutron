@@ -24,6 +24,12 @@ def load_logs(loaded_data: ScippData, log_groups: List[Group],
 
 def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
                      group_path: str, data: ScippData):
+    """
+    Add an attribute with a unique name.
+    If an attribute name already exists, we iteratively walk up the file tree
+    and prepend the parent name to the attribute name, until a unique name is
+    found.
+    """
     try:
         data = data.attrs
     except AttributeError:

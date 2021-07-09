@@ -68,9 +68,42 @@ filename and the module name in the ``streaming-data-types`` python library. If 
 made to a schema, such as changing field names or removing fields, then a new ``file_identifier`` is
 defined.
 
+Below is a list of the FlatBuffers schemas used by scipp, along with a few informative notes on each schema.
+
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
+
+   * - Schema
+     - Name / link
+     - Notes
+   * - Run start message
+     - `pl72_run_start <https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/pl72_run_start.fbs>`_
+     - - ``nexus_structure``: contains any information known at the start of the run (e.g. the instrument geometry)
+   * - Run stop message
+     - `6s4t_run_stop <https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/6s4t_run_stop.fbs>`_
+     - - ``job_id`` must be the same as in the run start message
+   * - Event data
+     - `ev42_events <https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/ev42_events.fbs>`_
+     - - All quantities are in units of nanoseconds, including time-of-flight
+       - ``source_name``: used to filter what data to get, as Kafka may hold data from other instruments
+   * - Slow metadata
+     - `f142_logdata <https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/f142_logdata.fbs>`_
+     - - This is typically used for PV updates
+       - The format is usually just a timestamp and a value
+   * - Fast metadata
+     - `senv_data <https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/senv_data.fbs>`_
+     - - Used for fast-changing sample environment values
+       - In this case, the information is sent directly to Kafka instead of going via Epics
+       - It mostly resembles the slow metadata with a timestamp and a value
+   * - Chopper timestamps
+     - `tdct_timestamps <https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/tdct_timestamps.fbs>`_
+     - - Chopper timestamps are handled differently from other metadata as their structure is slightly different
+       - They consist of timestamps, with no associated value
+
 It may be worth noting that we have found extracting data from serialized FlatBuffers in Python
 to be efficient, but serializing can be much more efficient in C++, particularly if serializing
-very many small buffers.
+a large number of small buffers.
 
 
 Architecture

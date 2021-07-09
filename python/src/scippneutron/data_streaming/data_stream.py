@@ -62,6 +62,21 @@ async def data_stream(
       the topic
     :param start_time: Get data from now or from start of the last run
     """
+    """
+    Additional info:
+    - The `topics` argument is generally unused.
+    - Instead, prefer the use of `run_info_topic` where it is possible to go
+      and find the last run_start message and use that to get info on what
+      topics to listen to.
+    - Buffer sizes: it is currently not easy to resize scipp data structures,
+      so we choose sensible default buffer sizes. This may need to be tweaked
+      in the future.
+    - `start_time`: it is possible to go back to the start of the run, even if
+      `data_stream()` is started after or during the run. It simply finds the
+      start time in the last run_start message. The data can persist on Kafka
+      for a significant duration (hours? days?), making this lookup possible.
+    """
+
     validate_buffer_size_args(chopper_buffer_size, event_buffer_size,
                               fast_metadata_buffer_size,
                               slow_metadata_buffer_size)
@@ -188,6 +203,8 @@ async def _data_stream(
     Main implementation of data stream is extracted to this function so that
     fake consumers can be injected for unit tests
     """
+
+    # Search backwards to find the last run_start message
     try:
         from ._consumer import (get_run_start_message, KafkaQueryConsumer)
     except ImportError:
@@ -202,6 +219,20 @@ async def _data_stream(
     if query_consumer is None:
         query_consumer = KafkaQueryConsumer(kafka_broker)
 
+    # stream_info contains information on where to look for data and metadata.
+    # The data from the start message is yielded as the first chunk of data.
+    #
+    # TODO: This should, in principle, not look any different from any other
+    # chunk of data, right now it seems it may be different?
+    # (see https://github.com/scipp/scippneutron/issues/114)
+    #
+    # Generic data chunk structure: geometry, metadata, and event data are all
+    # optional.
+    # - first data chunk will most probably contain no event data
+    # - subsequent chunks can contain geometry info, if e.g. some pixels have
+    #   moved
+    # - metadata (e.g. sample environment) might be empty, if values have not
+    #   changed
     stream_info = None
     if run_info_topic is not None:
         run_start_info = get_run_start_message(run_info_topic, query_consumer)
@@ -233,6 +264,8 @@ async def _data_stream(
     try:
         data_collect_process.start()
 
+        # When testing, if something goes wrong, the while loop below can
+        # become infinite. So we introduce a timeout.
         if timeout is not None:
             start_timeout = time.time()
             timeout_s = float(sc.to_unit(timeout, 's').value)

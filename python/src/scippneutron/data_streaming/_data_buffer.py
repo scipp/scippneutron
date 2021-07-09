@@ -239,6 +239,9 @@ class StreamedDataBuffer:
     It periodically emits accumulated data to a queue
     and resets the buffer. If a buffer fills up within the emit time
     interval then data are emitted early.
+
+    TODO: This also owns the metadata buffers. Maybe this should be moved to a
+    separate place in the future?
     """
     def __init__(self, queue: mp.Queue, event_buffer_size: int,
                  slow_metadata_buffer_size: int,
@@ -396,6 +399,9 @@ class StreamedDataBuffer:
         return False
 
     def new_data(self, new_data: bytes):
+        """
+        This is the callback which is given to the consumers.
+        """
         if self._handled_event_data(new_data):
             return
         if self._handled_metadata(new_data, "source_name", deserialise_f142,
