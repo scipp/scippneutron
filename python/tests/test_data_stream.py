@@ -42,9 +42,13 @@ class FakeKafkaError:
 
 
 class FakeMessage:
-    def __init__(self, payload: bytes, error_code: Optional[int] = None):
+    def __init__(self,
+                 payload: bytes,
+                 error_code: Optional[int] = None,
+                 timestamp: int = 0):
         self._payload = payload
         self._error_code = error_code
+        self._timestamp = timestamp
 
     def value(self):
         return self._payload
@@ -54,9 +58,8 @@ class FakeMessage:
             return FakeKafkaError(self._error_code)
         return None
 
-    @staticmethod
-    def timestamp() -> Tuple[None, int]:
-        return None, 0
+    def timestamp(self) -> Tuple[None, int]:
+        return None, self._timestamp
 
 
 class FakeQueryConsumer:
@@ -1051,11 +1054,18 @@ async def test_stream_loop_exits_if_stop_time_reached_and_later_message_seen(
             timestamp_before_stop_dt = datetime.datetime(
                 2017, 11, 28, 23, 55, 50, 0)
             # Convert to integer nanoseconds
+            # (for timestamp in message payload)
             timestamp_before_stop_ns = int(
                 timestamp_before_stop_dt.timestamp() * 1_000_000_000)
+            # Convert to integer milliseconds
+            # (for Kafka message header)
+            timestamp_before_stop_ms = int(
+                timestamp_before_stop_dt.timestamp() * 1_000)
             f142_test_message = serialise_f142(f142_value_1, f142_source_name,
                                                timestamp_before_stop_ns)
-            test_message_queue.put(FakeMessage(f142_test_message))
+            test_message_queue.put(
+                FakeMessage(f142_test_message,
+                            timestamp=timestamp_before_stop_ms))
         elif n_chunks == 1:
             # The data from the first message will be returned
             assert np.allclose(data.attrs[f142_source_name].value.values,
@@ -1073,8 +1083,12 @@ async def test_stream_loop_exits_if_stop_time_reached_and_later_message_seen(
                 2017, 11, 28, 23, 56, 50, 0)
             timestamp_after_stop_ns = int(timestamp_after_stop_dt.timestamp() *
                                           1_000_000_000)
+            timestamp_after_stop_ms = int(timestamp_after_stop_dt.timestamp() *
+                                          1_000)
             f142_test_message = serialise_f142(f142_value_2, f142_source_name,
                                                timestamp_after_stop_ns)
-            test_message_queue.put(FakeMessage(f142_test_message))
+            test_message_queue.put(
+                FakeMessage(f142_test_message,
+                            timestamp=timestamp_after_stop_ms))
 
         n_chunks += 1
