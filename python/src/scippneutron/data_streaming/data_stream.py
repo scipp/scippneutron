@@ -252,8 +252,8 @@ async def _data_stream(
         worker_instruction_queue.put(
             ManagerInstruction(InstructionType.STOP_NOW))
         tic = time_ns()  # TODO remove
-        process_halt_timeout_s = 4.
         if data_collect_process.is_alive():
+            process_halt_timeout_s = 4.
             data_collect_process.join(process_halt_timeout_s)
         toc = (time_ns() - tic) / 1_000_000_000  # TODO remove
         log(f"waited for manager to stop for {toc} seconds")  # TODO remove
