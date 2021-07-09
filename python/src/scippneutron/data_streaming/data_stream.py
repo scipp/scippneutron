@@ -12,7 +12,6 @@ from ._serialisation import convert_from_pickleable_dict
 from ._stop_time import StopTimeUpdate
 from warnings import warn
 from ._data_stream_widget import DataStreamWidget
-from time import time_ns
 """
 Some type names are included as strings as imports are done in
 function scope to avoid optional dependencies being imported
@@ -186,15 +185,6 @@ async def _data_stream(
     start_time_ms = int(sc.to_unit(start_time, "milliseconds").value)
     interval_s = float(sc.to_unit(interval, 's').value)
 
-    # TODO remove
-    from confluent_kafka import Producer
-    _producer = Producer({"bootstrap.servers": "localhost:9092"})
-
-    def log(message: str):
-        _producer.produce("scn", message.encode('utf-8'))
-        _producer.poll(0)
-        _producer.flush(timeout=2.)
-
     # Specify to start the process using the "spawn" method, otherwise
     # on Linux the default is to fork the Python interpreter which
     # is "problematic" in a multithreaded process, this can apparently
@@ -253,12 +243,9 @@ async def _data_stream(
         # Ensure cleanup happens however the loop exits
         worker_instruction_queue.put(
             ManagerInstruction(InstructionType.STOP_NOW))
-        tic = time_ns()  # TODO remove
         if data_collect_process.is_alive():
             process_halt_timeout_s = 4.
             data_collect_process.join(process_halt_timeout_s)
-        toc = (time_ns() - tic) / 1_000_000_000  # TODO remove
-        log(f"waited for manager to stop for {toc} seconds")  # TODO remove
         if data_collect_process.is_alive():
             data_collect_process.terminate()
         for queue in (data_queue, worker_instruction_queue,
