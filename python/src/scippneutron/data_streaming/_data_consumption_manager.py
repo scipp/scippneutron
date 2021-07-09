@@ -53,7 +53,7 @@ def data_consumption_manager(
 
     while not all_consumers_stopped(consumers):
         try:
-            instruction = worker_instruction_queue.get(timeout=10.)
+            instruction = worker_instruction_queue.get(timeout=.5)
             if instruction.type == InstructionType.STOP_NOW:
                 stop_consumers(consumers)
             elif instruction.type == InstructionType.UPDATE_STOP_TIME:

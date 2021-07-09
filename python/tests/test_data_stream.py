@@ -2,7 +2,7 @@ import datetime
 import pytest
 import scipp as sc
 import warnings
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
 import numpy as np
 from .nexus_helpers import NexusBuilder, Stream, Log, EventData
 import multiprocessing as mp
@@ -24,6 +24,7 @@ try:
     from streaming_data_types.sample_environment_senv import serialise_senv
     from streaming_data_types.sample_environment_senv import Location
     from scippneutron.data_streaming._consumer import RunStartError
+    from scippneutron.data_streaming.data_stream import StopTime
 except ImportError:
     pytest.skip("Kafka or Serialisation module is unavailable",
                 allow_module_level=True)
@@ -63,7 +64,8 @@ class FakeQueryConsumer:
                  instrument_name: str = "",
                  low_and_high_offset: Tuple[int, int] = (2, 10),
                  streams: List[Stream] = None,
-                 start_time: Optional[int] = None,
+                 start_time: Optional[Union[int, datetime.datetime]] = None,
+                 stop_time: Optional[Union[int, datetime.datetime]] = None,
                  nexus_structure: Optional[str] = None):
         self._instrument_name = instrument_name
         self._low_and_high_offset = low_and_high_offset
@@ -71,6 +73,7 @@ class FakeQueryConsumer:
         self.queried_topics = []
         self.queried_timestamp = None
         self._start_time = start_time
+        self._stop_time = stop_time
         if self._start_time is None:
             self._start_time = datetime.datetime.now()
         if nexus_structure is None:
@@ -102,6 +105,7 @@ class FakeQueryConsumer:
             serialise_pl72("",
                            "",
                            start_time=self._start_time,
+                           stop_time=self._stop_time,
                            nexus_structure=self._nexus_structure))
 
     def seek(self, partition: TopicPartition):
@@ -129,6 +133,9 @@ TEST_STREAM_ARGS = {
     "consumer_type": ConsumerType.FAKE,
     "timeout": 4. * sc.units.s
 }
+# "timeout" arg: if something gets broken then this makes sure the
+# test will not get stuck in the _data_stream loop indefinitely.
+# A TimeoutError is raised by _data_stream if the timeout occurs.
 
 
 @pytest.fixture(scope="function")
@@ -941,3 +948,133 @@ async def test_no_warning_for_missing_datasets_if_group_contains_stream(
     ) == 0, "Expect no 'missing datasets' warning from the NXlog or " \
             "NXevent_data because they each contain a stream which " \
             "will provide the missing data"
+
+
+@pytest.mark.asyncio
+async def test_data_stream_times_out(queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
+    run_info_topic = "fake_topic"
+    test_instrument_name = "DATA_STREAM_TEST"
+
+    test_stream_args = TEST_STREAM_ARGS.copy()
+    test_stream_args["topics"] = None
+    # "timeout" is only for use in tests, ensures that if something
+    # gets broken then tests will not get stuck in the _data_stream
+    # loop indefinitely.
+    test_stream_args["timeout"] = 2. * sc.units.s
+    timed_out = False
+    try:
+        async for _ in _data_stream(
+                data_queue,
+                worker_instruction_queue,
+                run_info_topic=run_info_topic,
+                query_consumer=FakeQueryConsumer(test_instrument_name),
+                **test_stream_args,
+                test_message_queue=test_message_queue,
+                end_at=StopTime.END_OF_RUN):
+            # Do nothing until it times out
+            pass
+    except TimeoutError:
+        timed_out = True
+    assert timed_out
+
+
+@pytest.mark.asyncio
+async def test_stream_loop_exits_if_stop_time_and_end_of_partition_reached(
+        queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
+    run_info_topic = "fake_topic"
+    test_instrument_name = "DATA_STREAM_TEST"
+
+    test_stream_args = TEST_STREAM_ARGS.copy()
+    test_stream_args["topics"] = None
+    # System time is already after this stop time so the stream will stop
+    # as soon as it sees the end of partition or a message with a
+    # timestamp after the stop time
+    stop_time_in_past = datetime.datetime(2017, 11, 28, 23, 55, 59, 342380)
+    n_chunks = 0
+    async for _ in _data_stream(data_queue,
+                                worker_instruction_queue,
+                                run_info_topic=run_info_topic,
+                                query_consumer=FakeQueryConsumer(
+                                    test_instrument_name,
+                                    stop_time=stop_time_in_past),
+                                **test_stream_args,
+                                test_message_queue=test_message_queue,
+                                end_at=StopTime.END_OF_RUN):
+        if n_chunks == 0:
+            # Tell consumer it has reached the end of the partition
+            # Consumer will stop, data_consumption_manager will see the
+            # consumer has stopped and stop the buffer and the
+            # _data_stream will exit.
+            # A TimeoutError would occur if the functionality is broken.
+            test_message_queue.put(FakeMessage(b"", KafkaError._PARTITION_EOF))
+        n_chunks += 1
+
+
+@pytest.mark.asyncio
+async def test_stream_loop_exits_if_stop_time_reached_and_later_message_seen(
+        queues):
+    data_queue, worker_instruction_queue, test_message_queue = queues
+    run_info_topic = "fake_topic"
+    test_instrument_name = "DATA_STREAM_TEST"
+
+    # The Kafka topics to get metadata from are recorded as "stream" objects in
+    # the nexus_structure field of the run start message
+    f142_source_name = "f142_source"
+    f142_log_name = "f142_log"
+    streams = [
+        Stream(f"/entry/{f142_log_name}", "f142_topic", f142_source_name,
+               "f142", "double", "m"),
+    ]
+
+    test_stream_args = TEST_STREAM_ARGS.copy()
+    test_stream_args["topics"] = None
+    # System time is already after this stop time so the stream will stop
+    # as soon as it sees the end of partition or a message with a
+    # timestamp after the stop time
+    stop_time_in_past = datetime.datetime(2017, 11, 28, 23, 55, 59, 342380)
+    n_chunks = 0
+    async for data in _data_stream(data_queue,
+                                   worker_instruction_queue,
+                                   run_info_topic=run_info_topic,
+                                   query_consumer=FakeQueryConsumer(
+                                       test_instrument_name,
+                                       stop_time=stop_time_in_past,
+                                       streams=streams),
+                                   **test_stream_args,
+                                   test_message_queue=test_message_queue,
+                                   end_at=StopTime.END_OF_RUN):
+        if n_chunks == 0:
+            # Publish a message with a timestamp before the stop time
+            f142_value_1 = 26.1236
+            timestamp_before_stop_dt = datetime.datetime(
+                2017, 11, 28, 23, 55, 50, 0)
+            # Convert to integer nanoseconds
+            timestamp_before_stop_ns = int(
+                timestamp_before_stop_dt.timestamp() * 1_000_000_000)
+            f142_test_message = serialise_f142(f142_value_1, f142_source_name,
+                                               timestamp_before_stop_ns)
+            test_message_queue.put(FakeMessage(f142_test_message))
+        elif n_chunks == 1:
+            # The data from the first message will be returned
+            assert np.allclose(data.attrs[f142_source_name].value.values,
+                               np.array([f142_value_1]))
+            assert np.array_equal(
+                data.attrs[f142_source_name].value.coords['time'].values,
+                np.array([timestamp_before_stop_ns],
+                         dtype=np.dtype('datetime64[ns]')))
+
+            # Publish message with timestamp after stop time, this will trigger
+            # the consumer to stop and data_stream to exit.
+            # A TimeoutError would occur if the functionality is broken.
+            f142_value_2 = 2.725
+            timestamp_after_stop_dt = datetime.datetime(
+                2017, 11, 28, 23, 56, 50, 0)
+            timestamp_after_stop_ns = int(timestamp_after_stop_dt.timestamp() *
+                                          1_000_000_000)
+            f142_test_message = serialise_f142(f142_value_2, f142_source_name,
+                                               timestamp_after_stop_ns)
+            test_message_queue.put(FakeMessage(f142_test_message))
+
+        n_chunks += 1
