@@ -267,6 +267,7 @@ async def test_data_returned_when_buffer_size_exceeded_by_event_messages(
     # will not fit in the buffer
     test_stream_args = TEST_STREAM_ARGS.copy()
     test_stream_args["event_buffer_size"] = 5
+    test_stream_args["run_info_topic"] = "run_info_topic"
 
     reached_asserts = False
     n_chunks = 0
@@ -408,7 +409,7 @@ async def test_data_stream_returns_metadata(queues):
                                    run_info_topic=run_info_topic,
                                    query_consumer=FakeQueryConsumer(
                                        test_instrument_name, streams=streams),
-                                   halt_after_n_data_chunks=1,
+                                   halt_after_n_data_chunks=2,
                                    **test_stream_args,
                                    test_message_queue=test_message_queue):
         data_from_stream = data
@@ -439,10 +440,6 @@ async def test_data_stream_returns_metadata(queues):
             test_message_queue.put(FakeMessage(tdct_test_message))
 
         n_chunks += 1
-        # The first chunk contains data from the run start message
-        # the second chunk will contain data from our fake messages
-        if n_chunks > 2:
-            break
 
     assert isclose(data_from_stream.attrs[f142_source_name].value.values[0],
                    f142_value)
@@ -487,7 +484,7 @@ async def test_data_stream_returns_data_from_multiple_slow_metadata_messages(
                                    run_info_topic=run_info_topic,
                                    query_consumer=FakeQueryConsumer(
                                        test_instrument_name, streams=streams),
-                                   halt_after_n_data_chunks=1,
+                                   halt_after_n_data_chunks=2,
                                    **test_stream_args,
                                    test_message_queue=test_message_queue):
         data_from_stream = data
@@ -509,10 +506,6 @@ async def test_data_stream_returns_data_from_multiple_slow_metadata_messages(
             test_message_queue.put(FakeMessage(f142_test_message))
 
         n_chunks += 1
-        # The first chunk contains data from the run start message
-        # the second chunk will contain data from our fake messages
-        if n_chunks > 2:
-            break
 
     assert np.allclose(data_from_stream.attrs[f142_source_name].value.values,
                        np.array([f142_value_1, f142_value_2]))
@@ -546,7 +539,7 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages(
                                    run_info_topic=run_info_topic,
                                    query_consumer=FakeQueryConsumer(
                                        test_instrument_name, streams=streams),
-                                   halt_after_n_data_chunks=1,
+                                   halt_after_n_data_chunks=2,
                                    **test_stream_args,
                                    test_message_queue=test_message_queue):
         data_from_stream = data
@@ -577,10 +570,6 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages(
             test_message_queue.put(FakeMessage(senv_test_message))
 
         n_chunks += 1
-        # The first chunk contains data from the run start message
-        # the second chunk will contain data from our fake messages
-        if n_chunks > 2:
-            break
 
     assert np.array_equal(
         data_from_stream.attrs[senv_source_name].value.values,
@@ -624,7 +613,7 @@ async def test_data_stream_returns_data_from_multiple_chopper_messages(queues):
                                    run_info_topic=run_info_topic,
                                    query_consumer=FakeQueryConsumer(
                                        test_instrument_name, streams=streams),
-                                   halt_after_n_data_chunks=1,
+                                   halt_after_n_data_chunks=2,
                                    **test_stream_args,
                                    test_message_queue=test_message_queue):
         data_from_stream = data
@@ -644,10 +633,6 @@ async def test_data_stream_returns_data_from_multiple_chopper_messages(queues):
             test_message_queue.put(FakeMessage(tdct_test_message))
 
         n_chunks += 1
-        # The first chunk contains data from the run start message
-        # the second chunk will contain data from our fake messages
-        if n_chunks > 2:
-            break
 
     assert np.array_equal(
         data_from_stream.attrs[tdct_source_name].value.values,
@@ -680,7 +665,7 @@ async def test_data_stream_warns_if_fast_metadata_message_exceeds_buffer(
                                     run_info_topic=run_info_topic,
                                     query_consumer=FakeQueryConsumer(
                                         test_instrument_name, streams=streams),
-                                    halt_after_n_data_chunks=1,
+                                    halt_after_n_warnings=1,
                                     **test_stream_args,
                                     test_message_queue=test_message_queue):
             # Fake receiving a Kafka message for each metadata schema
@@ -728,7 +713,7 @@ async def test_data_stream_warns_if_single_chopper_message_exceeds_buffer(
                                     run_info_topic=run_info_topic,
                                     query_consumer=FakeQueryConsumer(
                                         test_instrument_name, streams=streams),
-                                    halt_after_n_data_chunks=1,
+                                    halt_after_n_warnings=1,
                                     **test_stream_args,
                                     test_message_queue=test_message_queue):
             # Fake receiving a Kafka message for each metadata schema

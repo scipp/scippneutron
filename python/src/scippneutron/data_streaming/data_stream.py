@@ -188,6 +188,7 @@ async def _data_stream(
     run_id = ""
     run_title = "-"  # for display in widget
     stop_time_ms = None
+    n_data_chunks = 0
     if run_info_topic is not None:
         run_start_info = get_run_start_message(run_info_topic, query_consumer)
         run_id = run_start_info.job_id
@@ -205,6 +206,7 @@ async def _data_stream(
                                               get_start_info=False)
         topics.append(run_info_topic)  # listen for stop run message
         yield loaded_data
+        n_data_chunks += 1
 
     if start_at == StartTime.START_OF_RUN:
         start_time = run_start_info.start_time * sc.Unit("milliseconds")
@@ -242,7 +244,6 @@ async def _data_stream(
         if timeout is not None:
             start_timeout = time.time()
             timeout_s = float(sc.to_unit(timeout, 's').value)
-        n_data_chunks = 0
         n_warnings = 0
         while data_collect_process.is_alive(
         ) and n_data_chunks < halt_after_n_data_chunks and \

@@ -12,7 +12,7 @@ from streaming_data_types.sample_environment_senv import (Location as
 from streaming_data_types.timestamps_tdct import deserialise_tdct, Timestamps
 from streaming_data_types.run_stop_6s4t import deserialise_6s4t
 from streaming_data_types.exceptions import WrongSchemaException
-from typing import Optional, Dict, List, Any, Union, Callable
+from typing import Optional, Dict, List, Any, Union, Callable, Tuple
 from ..file_loading._json_nexus import StreamInfo
 from ._stop_time import StopTimeUpdate
 from datetime import datetime
@@ -80,15 +80,16 @@ class _SlowMetadataBuffer:
                     log_event.timestamp_unix_ns, 'ns')
             self._buffer_filled_size += 1
 
-    def get_metadata_array(self) -> sc.Variable:
+    def get_metadata_array(self) -> Tuple[bool, sc.Variable]:
         """
         Copy collected data from the buffer
         """
         with self._buffer_mutex:
             return_array = self._data_array[
                 self._name, :self._buffer_filled_size].copy()
+            new_data_exists = self._buffer_filled_size != 0
             self._buffer_filled_size = 0
-        return sc.Variable(value=return_array)
+        return new_data_exists, sc.Variable(value=return_array)
 
 
 class _FastMetadataBuffer:
@@ -168,15 +169,16 @@ class _FastMetadataBuffer:
                 message_size].coords["time"].values = timestamps
             self._buffer_filled_size += message_size
 
-    def get_metadata_array(self) -> sc.Variable:
+    def get_metadata_array(self) -> Tuple[bool, sc.Variable]:
         """
         Copy collected data from the buffer
         """
         with self._buffer_mutex:
             return_array = self._data_array[
                 self._name, :self._buffer_filled_size].copy()
+            new_data_exists = self._buffer_filled_size != 0
             self._buffer_filled_size = 0
-        return sc.Variable(value=return_array)
+        return new_data_exists, sc.Variable(value=return_array)
 
 
 class _ChopperMetadataBuffer:
@@ -218,15 +220,16 @@ class _ChopperMetadataBuffer:
                 message_size].values = chopper_timestamps.timestamps
             self._buffer_filled_size += message_size
 
-    def get_metadata_array(self) -> sc.Variable:
+    def get_metadata_array(self) -> Tuple[bool, sc.Variable]:
         """
         Copy collected data from the buffer
         """
         with self._buffer_mutex:
             return_array = self._data_array[
                 self._name, :self._buffer_filled_size].copy()
+            new_data_exists = self._buffer_filled_size != 0
             self._buffer_filled_size = 0
-        return sc.Variable(value=return_array)
+        return new_data_exists, sc.Variable(value=return_array)
 
 
 metadata_ids = (SLOW_FB_ID, FAST_FB_ID, CHOPPER_FB_ID)
@@ -344,12 +347,17 @@ class StreamedDataBuffer:
                 self._unrecognised_fb_id_count = 0
             new_data = self._events_buffer[
                 'event', :self._current_event].copy()
+            new_data_exists = (self._current_event != 0)
             for _, buffers in self._metadata_buffers.items():
                 for name, buffer in buffers.items():
-                    metadata_array = buffer.get_metadata_array()
+                    (new_metadata_exists,
+                     metadata_array) = buffer.get_metadata_array()
                     new_data.attrs[name] = metadata_array
+                    if new_metadata_exists:
+                        new_data_exists = True
             self._current_event = 0
-        self._emit_queue.put(convert_to_pickleable_dict(new_data))
+        if new_data_exists:
+            self._emit_queue.put(convert_to_pickleable_dict(new_data))
 
     def _emit_loop(self):
         while not self._cancelled:
