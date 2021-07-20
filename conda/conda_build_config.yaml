@@ -1,8 +1,5 @@
 python:
   - 3.7
 
-boost:
-  - 1.75 # pinning is temporary solution to issue https://github.com/scipp/scipp/issues/1888
-
 scipp:
   - 0.7
