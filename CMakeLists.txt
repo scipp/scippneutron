@@ -83,7 +83,7 @@ conan_cmake_install(
 find_package(Benchmark)
 find_package(Boost 1.67 REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(GTest REQUIRED)
+find_package(GTest CONFIG REQUIRED)
 find_package(Python 3.7 REQUIRED COMPONENTS Interpreter Development)
 find_package(pybind11 CONFIG REQUIRED)
 find_package(scipp 0.7 REQUIRED)
