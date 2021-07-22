@@ -3,11 +3,12 @@
 # @author Matthew Jones
 
 import numpy as np
-from typing import Tuple, List
+from typing import Tuple, List, Union
 import scipp as sc
-from ._common import (BadSource, SkipSource, MissingDataset, Group)
+from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
 from ._nexus import LoadFromNexus, ScippData
 from warnings import warn
+from dateutil.parser import parse as parse_date
 
 
 def load_logs(loaded_data: ScippData, log_groups: List[Group],
@@ -20,6 +21,45 @@ def load_logs(loaded_data: ScippData, log_groups: List[Group],
             warn(f"Skipped loading {group.path} due to:\n{e}")
         except SkipSource:
             pass  # skip without warning user
+
+
+def _correct_nxlog_times(raw_times: sc.Variable,
+                         run_start: str = None,
+                         log_start: str = None,
+                         scaling_factor: Union[float, np.float_] = None) -> sc.Variable:
+    """
+    The nexus standard allows an arbitrary scaling factor to be inserted between the
+    numbers in the `time` series and the unit of time reported in the nexus attribute.
+
+    The times are also relative to a given start time, which might be different for all
+    logs.
+
+    This method implements these corrections and returns a variable with time data
+    relative to the provided run start time.
+
+    See https://manual.nexusformat.org/classes/base_classes/NXlog.html
+
+    Args:
+        raw_times: The raw time data from a nexus file.
+        run_start: Optional, the start time of the run in an ISO8601 string. If not
+            provided defaults to the beginning of the unix epoch (1970-01-01T00:00:00Z).
+        log_start: Optional, the start time of the log in an ISO8601 string. If not
+            provided defaults to the beginning of the unix epoch (1970-01-01T00:00:00Z).
+        scaling_factor: Optional, the start time of the log in an ISO8601 string. If
+            not provided, defaults to 1 (a no-op scaling factor).
+    """
+    _log_start_ts = sc.scalar(
+        value=parse_date(log_start).timestamp() if log_start is not None else 0.,
+        unit=sc.units.s, dtype=sc.dtype.float64)
+
+    _run_start_ts = sc.scalar(
+        value=parse_date(run_start).timestamp() if run_start is not None else 0.,
+        unit=sc.units.s, dtype=sc.dtype.float64)
+
+    _scale = sc.scalar(value=scaling_factor if scaling_factor is not None else 1.,
+                       unit=sc.units.dimensionless, dtype=sc.dtype.float64)
+
+    return (raw_times * _scale) + (_log_start_ts - _run_start_ts)
 
 
 def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
@@ -58,6 +98,10 @@ def _load_log_data_from_group(group: Group,
     value_dataset_name = "value"
     time_dataset_name = "time"
 
+    run_start_time = nexus.load_scalar_string(group.group.parent.parent, "start_time")
+    run_start_time = nexus.load()
+    print(f"run start time: {run_start_time}")
+
     try:
         values = nexus.load_dataset_from_group_as_numpy_array(
             group.group, value_dataset_name)
@@ -82,8 +126,24 @@ def _load_log_data_from_group(group: Group,
     try:
         dimension_label = "time"
         is_time_series = True
-        times = nexus.load_dataset(group.group, time_dataset_name,
+        raw_times = nexus.load_dataset(group.group, time_dataset_name,
                                    [dimension_label])
+
+        time_dataset = group.group.get(time_dataset_name)
+        try:
+            start = nexus.get_string_attribute(time_dataset, "start")
+        except MissingAttribute:
+            start = None
+
+        try:
+            scaling_factor = nexus.get_attribute(time_dataset, "scaling_factor")
+        except MissingAttribute:
+            scaling_factor = None
+
+        times = _correct_nxlog_times(raw_times=raw_times, log_start=start,
+                                     scaling_factor=scaling_factor,
+                                     run_start=run_start_time)
+
         if tuple(times.shape) != values.shape:
             raise BadSource(f"NXlog '{property_name}' has time and value "
                             f"datasets of different shapes")
