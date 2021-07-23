@@ -146,13 +146,13 @@ def _load_log_data_from_group(group: Group, nexus: LoadFromNexus,
         time_dataset = group.group.get(time_dataset_name)
         try:
             log_start_time = nexus.get_string_attribute(time_dataset, "start")
-        except MissingAttribute:
+        except (MissingAttribute, TypeError):
             log_start_time = None
 
         try:
             scaling_factor = nexus.get_attribute(time_dataset,
                                                  "scaling_factor")
-        except MissingAttribute:
+        except (MissingAttribute, TypeError):
             scaling_factor = None
 
         times = _correct_nxlog_times(raw_times=raw_times,
