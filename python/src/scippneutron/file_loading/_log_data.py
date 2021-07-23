@@ -55,6 +55,13 @@ def _correct_nxlog_times(
             ISO8601 string. If not provided, defaults to 1
             (a no-op scaling factor).
     """
+    try:
+        sc.to_unit(raw_times, sc.units.s)
+    except sc.UnitError:
+        raise BadSource(
+            "The units of time in an NXlog entry must be convertible to "
+            f"seconds, not '{raw_times.unit}'.")
+
     _log_start_ts = sc.scalar(value=parse_date(log_start).timestamp()
                               if log_start is not None else 0.,
                               unit=sc.units.s,

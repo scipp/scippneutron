@@ -45,7 +45,12 @@ class Log:
     value: Optional[np.ndarray]
     time: Optional[np.ndarray] = None
     value_units: Optional[str] = None
-    time_units: Optional[str] = None
+
+    # From
+    # https://manual.nexusformat.org/classes/base_classes/NXlog.html?highlight=nxlog
+    # time units are non-optional if time series data is present, and the unit
+    # must be a unit of time (i.e. convertible to seconds).
+    time_units: Optional[str] = "s"
 
 
 class TransformationType(Enum):

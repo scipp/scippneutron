@@ -161,7 +161,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         try:
             run_start_time = nexus.load_scalar_string(
                 groups[nx_entry][0].group, "start_time")
-        except (AttributeError, MissingDataset):
+        except (AttributeError, TypeError, MissingDataset):
             run_start_time = None
     else:
         run_start_time = None
