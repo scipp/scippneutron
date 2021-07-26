@@ -1361,3 +1361,92 @@ def test_adjust_log_times_with_scaling_factor(run_start: str, log_start: str,
 
     assert np.allclose(loaded_data["test_log"].values.coords['time'].values,
                        ((np.array(times) * scaling_factor) + start_time_delta))
+
+
+@pytest.mark.parametrize(
+    "units", ("ps", "ns", "us", "ms", "s", "minute", "hour", "day", "year"))
+def test_adjust_log_times_with_different_time_units(units,
+                                                    load_function: Callable):
+
+    times = [1, 2, 3]
+
+    builder = NexusBuilder()
+    builder.add_log(
+        Log(name="test_log",
+            value=np.zeros(shape=(len(times), )),
+            time=np.array(times, dtype="float64"),
+            time_units=units))
+
+    loaded_data = load_function(builder)
+
+    expected = sc.to_unit(
+        sc.Variable(dims=["time"],
+                    values=np.array(times),
+                    unit=sc.Unit(units),
+                    dtype=sc.dtype.float64), sc.units.s)
+
+    assert sc.identical(expected,
+                        loaded_data["test_log"].values.coords['time'])
+
+
+def test_nexus_file_with_invalid_nxlog_time_units_warns_and_skips_log(
+        load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_log(
+        Log(
+            name="test_log_1",
+            value=np.zeros(shape=(1, )),
+            time=np.array([1]),
+            time_units="m",  # Time in metres, should fail.
+            start_time="1970-01-01T00:00:00Z"))
+    builder.add_log(
+        Log(name="test_log_2",
+            value=np.zeros(shape=(1, )),
+            time=np.array([1]),
+            time_units="s",
+            start_time="1970-01-01T00:00:00Z"))
+
+    with pytest.warns(UserWarning,
+                      match="The units of time in an NXlog entry must be "
+                      "convertible to seconds, not 'm'"):
+        loaded_data = load_function(builder)
+
+        assert "test_log_1" not in loaded_data
+        assert "test_log_2" in loaded_data
+
+
+def test_nexus_file_with_invalid_log_start_date_warns_and_skips_log(
+        load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_log(
+        Log(name="test_log_1",
+            value=np.zeros(shape=(1, )),
+            time=np.array([1]),
+            start_time="this_isnt_a_valid_log_start_time"))
+    builder.add_log(
+        Log(name="test_log_2",
+            value=np.zeros(shape=(1, )),
+            time=np.array([1]),
+            start_time="1970-01-01T00:00:00Z"))
+
+    with pytest.warns(UserWarning, match="Invalid date string "):
+        loaded_data = load_function(builder)
+
+        assert "test_log_1" not in loaded_data
+        assert "test_log_2" in loaded_data
+
+
+def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
+        load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_start_time("this_inst_a_valid_run_start_time")
+    builder.add_log(
+        Log(name="test_log_1",
+            value=np.zeros(shape=(1, )),
+            time=np.array([1]),
+            start_time="1970-01-01T00:00:00Z"))
+
+    with pytest.warns(UserWarning, match="Invalid run start date "):
+        loaded_data = load_function(builder)
+
+        assert "test_log_1" not in loaded_data

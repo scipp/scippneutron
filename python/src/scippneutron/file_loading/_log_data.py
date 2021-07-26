@@ -9,7 +9,7 @@ from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute,
                       Group)
 from ._nexus import LoadFromNexus, ScippData
 from warnings import warn
-from dateutil.parser import parse as parse_date
+from dateutil.parser import parse as parse_date, ParserError
 
 
 def load_logs(loaded_data: ScippData, log_groups: List[Group],
@@ -56,28 +56,36 @@ def _correct_nxlog_times(
             (a no-op scaling factor).
     """
     try:
-        sc.to_unit(raw_times, sc.units.s)
+        raw_times_s = sc.to_unit(raw_times, sc.units.s)
     except sc.UnitError:
         raise BadSource(
             "The units of time in an NXlog entry must be convertible to "
             f"seconds, not '{raw_times.unit}'.")
 
-    _log_start_ts = sc.scalar(value=parse_date(log_start).timestamp()
-                              if log_start is not None else 0.,
-                              unit=sc.units.s,
-                              dtype=sc.dtype.float64)
+    try:
+        _log_start_ts = sc.scalar(value=parse_date(log_start).timestamp()
+                                  if log_start is not None else 0.,
+                                  unit=sc.units.s,
+                                  dtype=sc.dtype.float64)
+    except (ParserError, OverflowError):
+        raise BadSource(
+            f"Invalid date string '{log_start}' in NXLog start time.")
 
-    _run_start_ts = sc.scalar(value=parse_date(run_start).timestamp()
-                              if run_start is not None else 0.,
-                              unit=sc.units.s,
-                              dtype=sc.dtype.float64)
+    try:
+        _run_start_ts = sc.scalar(value=parse_date(run_start).timestamp()
+                                  if run_start is not None else 0.,
+                                  unit=sc.units.s,
+                                  dtype=sc.dtype.float64)
+    except (ParserError, OverflowError):
+        raise BadSource(
+            f"Invalid run start date '{run_start}' when loading NXLog.")
 
     _scale = sc.scalar(
         value=scaling_factor if scaling_factor is not None else 1.,
         unit=sc.units.dimensionless,
         dtype=sc.dtype.float64)
 
-    return (raw_times * _scale) + (_log_start_ts - _run_start_ts)
+    return (raw_times_s * _scale) + (_log_start_ts - _run_start_ts)
 
 
 def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
