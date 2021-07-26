@@ -197,7 +197,7 @@ class LoadFromHdf5:
 
     @staticmethod
     def get_attribute(node: Union[h5py.Group, h5py.Dataset],
-                             attribute_name: str) -> Any:
+                      attribute_name: str) -> Any:
         try:
             return node.attrs[attribute_name]
         except KeyError:
