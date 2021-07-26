@@ -52,6 +52,9 @@ class Log:
     # must be a unit of time (i.e. convertible to seconds).
     time_units: Optional[str] = "s"
 
+    start_time: Optional[str] = None
+    scaling_factor: Optional[float] = None
+
 
 class TransformationType(Enum):
     TRANSLATION = "translation"
@@ -324,6 +327,8 @@ class NexusBuilder:
         self._logs: List[Log] = []
         self._instrument_name: Optional[str] = None
         self._title: Optional[str] = None
+        self._start_time: Optional[str] = None
+        self._end_time: Optional[str] = None
         self._sample: List[Sample] = []
         self._source: List[Source] = []
         self._hard_links: List[Link] = []
@@ -358,6 +363,12 @@ class NexusBuilder:
 
     def add_title(self, title: str):
         self._title = title
+
+    def add_start_time(self, start_time: str):
+        self._start_time = start_time
+
+    def add_end_time(self, end_time: str):
+        self._end_time = end_time
 
     def add_sample(self, sample: Sample):
         self._sample.append(sample)
@@ -425,6 +436,14 @@ class NexusBuilder:
         entry_group = self._create_nx_class("entry", "NXentry", nexus_file)
         if self._title is not None:
             self._writer.add_dataset(entry_group, "title", data=self._title)
+        if self._start_time is not None:
+            self._writer.add_dataset(entry_group,
+                                     "start_time",
+                                     data=self._start_time)
+        if self._end_time is not None:
+            self._writer.add_dataset(entry_group,
+                                     "end_time",
+                                     data=self._end_time)
         self._write_event_data(entry_group)
         self._write_logs(entry_group)
         self._write_sample(entry_group)
@@ -617,6 +636,11 @@ class NexusBuilder:
                                                data=log.time)
             if log.time_units is not None:
                 self._writer.add_attribute(time_ds, "units", log.time_units)
+            if log.start_time is not None:
+                self._writer.add_attribute(time_ds, "start", log.start_time)
+            if log.scaling_factor is not None:
+                self._writer.add_attribute(time_ds, "scaling_factor",
+                                           log.scaling_factor)
         return log_group
 
     def _add_transformation_as_log(self, transform: Transformation,

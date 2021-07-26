@@ -143,7 +143,8 @@ def _load_log_data_from_group(group: Group, nexus: LoadFromNexus,
         raw_times = nexus.load_dataset(group.group, time_dataset_name,
                                        [dimension_label])
 
-        time_dataset = group.group.get(time_dataset_name)
+        time_dataset = nexus.get_dataset_from_group(group.group,
+                                                    time_dataset_name)
         try:
             log_start_time = nexus.get_string_attribute(time_dataset, "start")
         except (MissingAttribute, TypeError):
