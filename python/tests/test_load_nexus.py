@@ -19,6 +19,10 @@ from scippneutron.file_loading.load_nexus import _load_nexus_json
 from dateutil.parser import parse as parse_date
 
 
+def _timestamp(date: str):
+    return parse_date(date).timestamp()
+
+
 def test_raises_exception_if_multiple_nxentry_in_file():
     with in_memory_hdf5_file_with_two_nxentry() as nexus_file:
         with pytest.raises(RuntimeError):
@@ -1306,22 +1310,20 @@ def test_start_and_end_times_appear_in_dataset_if_set(load_function: Callable):
 
 
 @pytest.mark.parametrize(
-    "run_start,log_start,expected_difference",
+    "run_start,log_start,start_time_delta",
     (("2000-01-01T00:00:00Z", "2000-01-01T01:00:00Z", 60 * 60),
      ("2000-01-01T01:00:00Z", "2000-01-01T00:00:00Z", -60 * 60)))
-def test_adjust_log_times(run_start: str, log_start: str,
-                          expected_difference: float, load_function: Callable):
-    def _timestamp(date: str):
-        return parse_date(date).timestamp()
-
+def test_adjust_log_times_without_scaling_factor(run_start: str,
+                                                 log_start: str,
+                                                 start_time_delta: float,
+                                                 load_function: Callable):
     # Sanity check
-    assert _timestamp(log_start) - _timestamp(run_start) == expected_difference
+    assert _timestamp(log_start) - _timestamp(run_start) == start_time_delta
 
     times = [0, 10, 20, 30, 40, 50]
 
     builder = NexusBuilder()
     builder.add_start_time(run_start)
-    builder.add_title("my_run_title")
     builder.add_log(
         Log(name="test_log",
             value=np.zeros(shape=(len(times), )),
@@ -1331,4 +1333,31 @@ def test_adjust_log_times(run_start: str, log_start: str,
     loaded_data = load_function(builder)
 
     assert np.allclose(loaded_data["test_log"].values.coords['time'].values,
-                       (np.array(times) + expected_difference))
+                       (np.array(times) + start_time_delta))
+
+
+@pytest.mark.parametrize(
+    "run_start,log_start,start_time_delta",
+    (("2000-01-01T00:00:00Z", "2000-01-01T01:00:00Z", 60 * 60),
+     ("2000-01-01T01:00:00Z", "2000-01-01T00:00:00Z", -60 * 60)))
+def test_adjust_log_times_with_scaling_factor(run_start: str, log_start: str,
+                                              start_time_delta: float,
+                                              load_function: Callable):
+    scaling_factor = 1000
+    assert _timestamp(log_start) - _timestamp(run_start) == start_time_delta
+
+    times = [0, 10, 20, 30, 40, 50]
+
+    builder = NexusBuilder()
+    builder.add_start_time(run_start)
+    builder.add_log(
+        Log(name="test_log",
+            value=np.zeros(shape=(len(times), )),
+            time=np.array(times),
+            start_time=log_start,
+            scaling_factor=scaling_factor))
+
+    loaded_data = load_function(builder)
+
+    assert np.allclose(loaded_data["test_log"].values.coords['time'].values,
+                       ((np.array(times) * scaling_factor) + start_time_delta))

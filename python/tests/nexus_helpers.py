@@ -262,6 +262,10 @@ class JsonWriter:
     def add_attribute(parent: Dict, name: str, value: Union[str, np.ndarray]):
         if isinstance(value, str):
             attr_info = {"string_size": len(value), "type": "string"}
+        elif isinstance(value, float):
+            attr_info = {"size": 1, "type": "float64"}
+        elif isinstance(value, int):
+            attr_info = {"size": 1, "type": "int64"}
         else:
             attr_info = {
                 "size": value.shape,
