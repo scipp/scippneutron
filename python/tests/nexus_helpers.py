@@ -368,10 +368,10 @@ class NexusBuilder:
     def add_title(self, title: str):
         self._title = title
 
-    def add_start_time(self, start_time: str):
+    def add_run_start_time(self, start_time: str):
         self._start_time = start_time
 
-    def add_end_time(self, end_time: str):
+    def add_run_end_time(self, end_time: str):
         self._end_time = end_time
 
     def add_sample(self, sample: Sample):

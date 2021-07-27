@@ -27,6 +27,7 @@ def load_logs(loaded_data: ScippData, log_groups: List[Group],
 
 def _correct_nxlog_times(
         raw_times: sc.Variable,
+        group_path: str,
         run_start: str = None,
         log_start: str = None,
         scaling_factor: Union[float, np.float_] = None) -> sc.Variable:
@@ -45,22 +46,26 @@ def _correct_nxlog_times(
 
     Args:
         raw_times: The raw time data from a nexus file.
+        group_path: The path within the nexus file to the log being read.
+            Used to generate warnings if loading the log fails.
         run_start: Optional, the start time of the run in an ISO8601
             string. If not provided, defaults to the beginning of the
             unix epoch (1970-01-01T00:00:00Z).
         log_start: Optional, the start time of the log in an ISO8601
             string. If not provided, defaults to the beginning of the
             unix epoch (1970-01-01T00:00:00Z).
-        scaling_factor: Optional, the start time of the log in an
-            ISO8601 string. If not provided, defaults to 1
-            (a no-op scaling factor).
+        scaling_factor: Optional, the scaling factor between the provided
+            time series data and the unit of the raw_times Variable. If
+            not provided, defaults to 1 (a no-op scaling factor).
     """
     try:
         raw_times_s = sc.to_unit(raw_times, sc.units.s)
     except sc.UnitError:
         raise BadSource(
-            "The units of time in an NXlog entry must be convertible to "
-            f"seconds, not '{raw_times.unit}'.")
+            f"The units of time in the NXlog entry at "
+            f"'{group_path}/time{{units}}' must be convertible to seconds, "
+            f"but this cannot be done for '{raw_times.unit}'. Skipping "
+            f"loading NXLog at '{group_path}'.")
 
     try:
         _log_start_ts = sc.scalar(value=parse_date(log_start).timestamp()
@@ -69,7 +74,9 @@ def _correct_nxlog_times(
                                   dtype=sc.dtype.float64)
     except (ParserError, OverflowError):
         raise BadSource(
-            f"Invalid date string '{log_start}' in NXLog start time.")
+            f"The date string '{log_start}' in the NXLog entry at "
+            f"'{group_path}/time@start' failed to parse as an ISO8601 date. "
+            f"Skipping loading NXLog at '{group_path}'")
 
     try:
         _run_start_ts = sc.scalar(value=parse_date(run_start).timestamp()
@@ -78,7 +85,9 @@ def _correct_nxlog_times(
                                   dtype=sc.dtype.float64)
     except (ParserError, OverflowError):
         raise BadSource(
-            f"Invalid run start date '{run_start}' when loading NXLog.")
+            f"The run start time '{run_start}' at '/<NXEntry>/start_time' "
+            f"failed to parse as an ISO8601 date. Skipping loading NXLog "
+            f"at '{group_path}'.")
 
     _scale = sc.scalar(
         value=scaling_factor if scaling_factor is not None else 1.,
@@ -167,7 +176,8 @@ def _load_log_data_from_group(group: Group, nexus: LoadFromNexus,
         times = _correct_nxlog_times(raw_times=raw_times,
                                      log_start=log_start_time,
                                      scaling_factor=scaling_factor,
-                                     run_start=run_start_time)
+                                     run_start=run_start_time,
+                                     group_path=group.path)
 
         if tuple(times.shape) != values.shape:
             raise BadSource(f"NXlog '{property_name}' has time and value "

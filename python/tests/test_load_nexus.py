@@ -1298,8 +1298,8 @@ def test_warning_but_no_error_for_unrecognised_log_unit(
 
 def test_start_and_end_times_appear_in_dataset_if_set(load_function: Callable):
     builder = NexusBuilder()
-    builder.add_start_time("2001-01-01T00:00:00Z")
-    builder.add_end_time("2002-02-02T00:00:00Z")
+    builder.add_run_start_time("2001-01-01T00:00:00Z")
+    builder.add_run_end_time("2002-02-02T00:00:00Z")
 
     loaded_data = load_function(builder)
 
@@ -1323,7 +1323,7 @@ def test_adjust_log_times_without_scaling_factor(run_start: str,
     times = [0, 10, 20, 30, 40, 50]
 
     builder = NexusBuilder()
-    builder.add_start_time(run_start)
+    builder.add_run_start_time(run_start)
     builder.add_log(
         Log(name="test_log",
             value=np.zeros(shape=(len(times), )),
@@ -1334,22 +1334,23 @@ def test_adjust_log_times_without_scaling_factor(run_start: str,
 
     assert np.allclose(loaded_data["test_log"].values.coords['time'].values,
                        (np.array(times) + start_time_delta))
+    assert loaded_data["test_log"].values.coords['time'].unit == sc.units.s
 
 
 @pytest.mark.parametrize(
-    "run_start,log_start,start_time_delta",
-    (("2000-01-01T00:00:00Z", "2000-01-01T01:00:00Z", 60 * 60),
-     ("2000-01-01T01:00:00Z", "2000-01-01T00:00:00Z", -60 * 60)))
+    "run_start,log_start,scaling_factor",
+    (("2000-01-01T00:00:00Z", "2000-01-01T01:00:00Z", 1000),
+     ("2000-01-01T01:00:00Z", "2000-01-01T00:00:00Z", 0.001)))
 def test_adjust_log_times_with_scaling_factor(run_start: str, log_start: str,
-                                              start_time_delta: float,
+                                              scaling_factor: float,
                                               load_function: Callable):
-    scaling_factor = 1000
-    assert _timestamp(log_start) - _timestamp(run_start) == start_time_delta
+
+    time_delta = _timestamp(log_start) - _timestamp(run_start)
 
     times = [0, 10, 20, 30, 40, 50]
 
     builder = NexusBuilder()
-    builder.add_start_time(run_start)
+    builder.add_run_start_time(run_start)
     builder.add_log(
         Log(name="test_log",
             value=np.zeros(shape=(len(times), )),
@@ -1360,7 +1361,8 @@ def test_adjust_log_times_with_scaling_factor(run_start: str, log_start: str,
     loaded_data = load_function(builder)
 
     assert np.allclose(loaded_data["test_log"].values.coords['time'].values,
-                       ((np.array(times) * scaling_factor) + start_time_delta))
+                       ((np.array(times) * scaling_factor) + time_delta))
+    assert loaded_data["test_log"].values.coords['time'].unit == sc.units.s
 
 
 @pytest.mark.parametrize(
@@ -1407,8 +1409,7 @@ def test_nexus_file_with_invalid_nxlog_time_units_warns_and_skips_log(
             start_time="1970-01-01T00:00:00Z"))
 
     with pytest.warns(UserWarning,
-                      match="The units of time in an NXlog entry must be "
-                      "convertible to seconds, not 'm'"):
+                      match="The units of time in the NXlog entry at "):
         loaded_data = load_function(builder)
 
         assert "test_log_1" not in loaded_data
@@ -1429,7 +1430,7 @@ def test_nexus_file_with_invalid_log_start_date_warns_and_skips_log(
             time=np.array([1]),
             start_time="1970-01-01T00:00:00Z"))
 
-    with pytest.warns(UserWarning, match="Invalid date string "):
+    with pytest.warns(UserWarning, match="The date string "):
         loaded_data = load_function(builder)
 
         assert "test_log_1" not in loaded_data
@@ -1439,14 +1440,14 @@ def test_nexus_file_with_invalid_log_start_date_warns_and_skips_log(
 def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
         load_function: Callable):
     builder = NexusBuilder()
-    builder.add_start_time("this_inst_a_valid_run_start_time")
+    builder.add_run_start_time("this_inst_a_valid_run_start_time")
     builder.add_log(
         Log(name="test_log_1",
             value=np.zeros(shape=(1, )),
             time=np.array([1]),
             start_time="1970-01-01T00:00:00Z"))
 
-    with pytest.warns(UserWarning, match="Invalid run start date "):
+    with pytest.warns(UserWarning, match="The run start time "):
         loaded_data = load_function(builder)
 
         assert "test_log_1" not in loaded_data
