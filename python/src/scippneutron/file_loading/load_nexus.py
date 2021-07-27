@@ -87,6 +87,14 @@ def _load_title(entry_group: Group, data: ScippData, nexus: LoadFromNexus):
                                     "experiment_title", data, nexus)
 
 
+def _load_start_and_end_time(entry_group: Group, data: ScippData,
+                             nexus: LoadFromNexus):
+    _add_string_attr_to_loaded_data(entry_group.group, "start_time",
+                                    "start_time", data, nexus)
+    _add_string_attr_to_loaded_data(entry_group.group, "end_time", "end_time",
+                                    data, nexus)
+
+
 def load_nexus(data_file: Union[str, h5py.File],
                root: str = "/",
                quiet=True) -> Optional[ScippData]:
@@ -145,15 +153,30 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         loaded_data = sc.Dataset({})
     else:
         no_event_data = False
-    load_logs(loaded_data, groups[nx_log], nexus)
+
+    if groups[nx_entry]:
+        _load_title(groups[nx_entry][0], loaded_data, nexus)
+        _load_start_and_end_time(groups[nx_entry][0], loaded_data, nexus)
+
+        try:
+            run_start_time = nexus.load_scalar_string(
+                groups[nx_entry][0].group, "start_time")
+        except (AttributeError, TypeError, MissingDataset):
+            run_start_time = None
+    else:
+        run_start_time = None
+
+    load_logs(loaded_data,
+              groups[nx_log],
+              nexus,
+              run_start_time=run_start_time)
+
     if groups[nx_sample]:
         _load_sample(groups[nx_sample], loaded_data, nexus_file, nexus)
     if groups[nx_source]:
         _load_source(groups[nx_source], loaded_data, nexus_file, nexus)
     if groups[nx_instrument]:
         _load_instrument_name(groups[nx_instrument], loaded_data, nexus)
-    if groups[nx_entry]:
-        _load_title(groups[nx_entry][0], loaded_data, nexus)
     # Return None if we have an empty dataset at this point
     if no_event_data and not loaded_data.keys():
         loaded_data = None

@@ -196,6 +196,14 @@ class LoadFromHdf5:
             raise MissingAttribute
 
     @staticmethod
+    def get_attribute(node: Union[h5py.Group, h5py.Dataset],
+                      attribute_name: str) -> Any:
+        try:
+            return node.attrs[attribute_name]
+        except KeyError:
+            raise MissingAttribute
+
+    @staticmethod
     def get_string_attribute(node: Union[h5py.Group, h5py.Dataset],
                              attribute_name: str) -> str:
         try:
