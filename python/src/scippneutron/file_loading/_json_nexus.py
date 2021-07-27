@@ -5,7 +5,7 @@
 from typing import Tuple, Dict, List, Optional, Any, Union
 import scipp as sc
 import numpy as np
-from ._common import Group, MissingDataset, MissingAttribute
+from ._common import Group, MissingDataset, MissingAttribute, try_or_default
 from dataclasses import dataclass
 
 _nexus_class = "NX_class"
@@ -222,10 +222,12 @@ class LoadFromJson:
                 dtype = _filewriter_to_supported_numpy_dtype[
                     dataset[_nexus_dataset]["dtype"]]
 
-        try:
-            units = _get_attribute_value(dataset, _nexus_units)
-        except MissingAttribute:
-            units = sc.units.dimensionless
+        units = try_or_default(
+            function=_get_attribute_value,
+            exceptions=(MissingAttribute, ),
+            default=sc.units.dimensionless,
+            func_args=(dataset, _nexus_units),
+        )
 
         if isinstance(dataset[_nexus_values], list):
             return sc.Variable(dims=dimensions,
