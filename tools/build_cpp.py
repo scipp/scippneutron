@@ -116,4 +116,5 @@ if __name__ == '__main__':
     main(prefix=args.prefix,
          build_dir=args.build_dir,
          source_dir=args.source_dir,
-         caching=args.caching)
+         caching=args.caching.lower() == "true" if isinstance(
+             args.caching, str) else bool(args.caching))

@@ -19,8 +19,6 @@ dependencies:
   - scipp
   - cmake
   - pip
-  - pip:
-    - clcache
 
   # Run
   - appdirs
