@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser(description='Build C++ library and run tests')
 parser.add_argument('--prefix', default='install')
 parser.add_argument('--source_dir', default='.')
 parser.add_argument('--build_dir', default='build')
-parser.add_argument('--caching', default=False)
+parser.add_argument('--caching', action='store_true', default=False)
 
 
 def run_command(cmd, shell):
@@ -116,5 +116,4 @@ if __name__ == '__main__':
     main(prefix=args.prefix,
          build_dir=args.build_dir,
          source_dir=args.source_dir,
-         caching=args.caching.lower() == "true" if isinstance(
-             args.caching, str) else bool(args.caching))
+         caching=args.caching)
