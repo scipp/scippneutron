@@ -14,6 +14,10 @@ dependencies:
   - ninja
   - tbb-devel
   - scipp
+  - cmake
+  - pip
+  - pip:
+    - clcache
 
   # Run
   - appdirs
