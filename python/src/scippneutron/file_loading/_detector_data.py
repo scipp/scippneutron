@@ -13,9 +13,10 @@ from itertools import groupby
 from ._transformations import get_full_transformation_matrix
 from ._nexus import LoadFromNexus, GroupObject
 
-_detector_dimension = "detector_id"
-_event_dimension = "event"
-_time_of_flight = "tof"
+_detector_dim_name = "detector_id"
+_event_dim_name = "event"
+_event_index_dim_name = "event_index"
+_time_of_flight_dim_name = "tof"
 
 
 class DetectorIdError(Exception):
@@ -109,7 +110,7 @@ def _load_pixel_positions(detector_group: GroupObject, detector_ids_size: int,
         # element in each position
         array = array[:, :3]
 
-    return sc.vectors(dims=[_detector_dimension],
+    return sc.vectors(dims=[_detector_dim_name],
                       values=array,
                       unit=sc.units.m)
 
@@ -119,27 +120,52 @@ class DetectorData:
     events: Optional[sc.DataArray] = None
     detector_ids: Optional[sc.Variable] = None
     pixel_positions: Optional[sc.Variable] = None
+    pulse_times: Optional[sc.Variable] = None
+    event_index: Optional[sc.Variable] = None
 
 
 def _create_empty_events_data_array(
         tof_dtype: Any = np.int64,
         tof_unit: Union[str, sc.Unit] = "ns",
         detector_id_dtype: Any = np.int32) -> sc.DataArray:
-    return sc.DataArray(data=sc.empty(dims=[_event_dimension],
+    return sc.DataArray(data=sc.empty(dims=[_event_dim_name],
                                       shape=[0],
                                       variances=True,
                                       dtype=np.float32),
                         coords={
-                            _time_of_flight:
-                            sc.empty(dims=[_event_dimension],
+                            _time_of_flight_dim_name:
+                            sc.empty(dims=[_event_dim_name],
                                      shape=[0],
                                      dtype=tof_dtype,
                                      unit=tof_unit),
-                            _detector_dimension:
-                            sc.empty(dims=[_event_dimension],
+                            _detector_dim_name:
+                            sc.empty(dims=[_event_dim_name],
                                      shape=[0],
                                      dtype=detector_id_dtype)
                         })
+
+
+def _load_pulse_times(group: Group, nexus: LoadFromNexus) -> sc.Variable:
+    time_zero_group = "event_time_zero"
+    _event_time_zeros_units = sc.Unit(
+        nexus.get_string_attribute(group.group[time_zero_group], "units"))
+
+    return sc.Variable(
+        dims=[_event_index_dim_name],
+        values=nexus.load_dataset_from_group_as_numpy_array(group.group,
+                                                            time_zero_group),
+        unit=_event_time_zeros_units,
+        dtype=sc.dtype.float64)
+
+
+def _load_event_index(group: Group, nexus: LoadFromNexus) -> sc.Variable:
+    event_index = nexus.load_dataset_from_group_as_numpy_array(
+        group.group, "event_index")
+    return sc.Variable(
+        dims=[_event_index_dim_name],
+        values=event_index,
+        unit=sc.units.dimensionless
+    )
 
 
 def _load_detector(group: Group, file_root: h5py.File,
@@ -153,7 +179,7 @@ def _load_detector(group: Group, file_root: h5py.File,
             group.group, detector_number_ds_name).flatten()
         detector_id_type = detector_ids.dtype.type
 
-        detector_ids = sc.Variable(dims=[_detector_dimension],
+        detector_ids = sc.Variable(dims=[_detector_dim_name],
                                    values=detector_ids,
                                    dtype=detector_id_type)
 
@@ -164,6 +190,7 @@ def _load_detector(group: Group, file_root: h5py.File,
         pixel_positions = _load_pixel_positions(group.group,
                                                 detector_ids.shape[0],
                                                 file_root, nexus)
+
     return DetectorData(detector_ids=detector_ids,
                         pixel_positions=pixel_positions)
 
@@ -178,7 +205,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     # would be the first index of the next pulse.
     # In other words, ensure that event_index includes the bin edge for
     # the last pulse.
-    event_id = nexus.load_dataset(group.group, "event_id", [_event_dimension])
+    event_id = nexus.load_dataset(group.group, "event_id", [_event_dim_name])
     number_of_event_ids = event_id.sizes['event']
     event_index = nexus.load_dataset_from_group_as_numpy_array(
         group.group, "event_index")
@@ -192,10 +219,10 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
 
     number_of_events = event_index[-1]
     event_time_offset = nexus.load_dataset(group.group, "event_time_offset",
-                                           [_event_dimension])
+                                           [_event_dim_name])
 
     # Weights are not stored in NeXus, so use 1s
-    weights = sc.ones(dims=[_event_dimension],
+    weights = sc.ones(dims=[_event_dim_name],
                       shape=event_id.shape,
                       dtype=np.float32,
                       variances=True)
@@ -205,19 +232,22 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
         # we will just have to bin according to whatever
         # ids we have a events for (pixels with no recorded events
         # will not have a bin)
-        detector_data.detector_ids = sc.Variable(dims=[_detector_dimension],
+        detector_data.detector_ids = sc.Variable(dims=[_detector_dim_name],
                                                  values=np.unique(
                                                      event_id.values))
 
     _check_event_ids_and_det_number_types_valid(
         detector_data.detector_ids.dtype, event_id.dtype)
 
+    event_index = _load_event_index(group=group, nexus=nexus)
+    pulse_times = _load_pulse_times(group=group, nexus=nexus)
+
     data_dict = {
         "data": weights,
         "coords": {
-            _time_of_flight: event_time_offset,
-            _detector_dimension: event_id
-        }
+            _time_of_flight_dim_name: event_time_offset,
+            _detector_dim_name: event_id,
+        },
     }
     detector_data.events = sc.DataArray(**data_dict)
 
@@ -231,6 +261,9 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
         detector_data.pixel_positions = _load_pixel_positions(
             detector_group, detector_data.detector_ids.shape[0], file_root,
             nexus)
+
+    detector_data.pulse_times = pulse_times
+    detector_data.event_index = event_index
 
     if not quiet:
         print(f"Loaded event data from "
@@ -295,17 +328,54 @@ def load_detector_data(event_data_groups: List[Group],
     # (because they are recorded chronologically)
     # but for reduction it is more useful to bin by detector id
     events = sc.bin(detector_data.events, groups=[detector_data.detector_ids])
+
     if pixel_positions_loaded:
         # TODO: the name 'position' should probably not be hard-coded but moved
         # to a variable that cah be changed in a single place.
         events.coords['position'] = detector_data.pixel_positions
     while event_data:
         detector_data = event_data.pop(0)
+
+        print(f"events: {detector_data.events}")
+        print(f"det ids: {detector_data.detector_ids}")
+        print(f"index: {detector_data.event_index}")
+
+        unbinned_pulse_times = sc.DataArray(data=detector_data.pulse_times, coords={
+                _event_index_dim_name: detector_data.event_index
+            })
+
+        binned_pulse_times = sc.bin(unbinned_pulse_times, edges=[detector_data.event_index])
+
+        print(f"1. binned_pulse_times: {binned_pulse_times}")
+
+        binned_pulse_times.events.coords[_event_index_dim_name] = sc.empty(
+            shape=binned_pulse_times.events.shape,
+            dtype=binned_pulse_times.events.dtype,
+            unit=binned_pulse_times.events.unit,
+            dims=binned_pulse_times.events.dims
+        )
+
+        print(f"2. binned_pulse_times: {binned_pulse_times}")
+
+        binned_pulse_times.bins.coords[_event_index_dim_name][_event_index_dim_name, ...] = binned_pulse_times.coords[_event_index_dim_name]
+
+        print(f"3. binned_pulse_times: {binned_pulse_times}")
+
         new_events = sc.bin(detector_data.events,
                             groups=[detector_data.detector_ids])
+
         if pixel_positions_loaded:
             new_events.coords['position'] = detector_data.pixel_positions
-        events = sc.concatenate(events, new_events, dim=_detector_dimension)
+            new_events.coords['pulse_time'] = binned_pulse_times
+        events = sc.concatenate(events, new_events, dim=_detector_dim_name)
+
+        # print("events: {}".format(events))
+        # print("event index: {}".format(detector_data.event_index))
+        #
+        # events_by_pulse_time = sc.bin(
+        #     events,
+        #     edges=[detector_data.event_index])
+        # print("Events by pulse time: {}".format(events_by_pulse_time))
     return events
 
 
@@ -321,11 +391,11 @@ def _create_empty_event_data(event_data: List[DetectorData]):
         if data.events is not None:
             # If any event data were loaded then use an empty data
             # array with the same data types
-            tof_dtype = data.events.coords[_time_of_flight].dtype
-            tof_unit = data.events.coords[_time_of_flight].unit
+            tof_dtype = data.events.coords[_time_of_flight_dim_name].dtype
+            tof_unit = data.events.coords[_time_of_flight_dim_name].unit
             empty_events = _create_empty_events_data_array(
                 tof_dtype, tof_unit,
-                data.events.coords[_detector_dimension].dtype)
+                data.events.coords[_detector_dim_name].dtype)
             break
         elif data.detector_ids is not None:
             detector_id_dtype = data.detector_ids.dtype
@@ -368,9 +438,11 @@ def _load_data_from_each_nx_event_data(detector_data: Dict,
             warn(f"Skipped loading {group.path} due to:\n{e}")
         except SkipSource:
             pass  # skip without warning user
+
     for _, remaining_data in detector_data.items():
         if remaining_data.detector_ids is not None:
             event_data.append(remaining_data)
+
     return event_data
 
 
