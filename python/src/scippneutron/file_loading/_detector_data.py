@@ -336,38 +336,49 @@ def load_detector_data(event_data_groups: List[Group],
     while event_data:
         detector_data = event_data.pop(0)
 
-        print(f"events: {detector_data.events}")
-        print(f"det ids: {detector_data.detector_ids}")
-        print(f"index: {detector_data.event_index}")
+        # print(f"events: {detector_data.events}")
+        # print(f"det ids: {detector_data.detector_ids}")
+        # print(f"index: {detector_data.event_index}")
 
         unbinned_pulse_times = sc.DataArray(data=detector_data.pulse_times, coords={
-                _event_index_dim_name: detector_data.event_index
-            })
+            _event_index_dim_name: detector_data.event_index
+        })
 
         binned_pulse_times = sc.bin(unbinned_pulse_times, edges=[detector_data.event_index])
 
-        print(f"1. binned_pulse_times: {binned_pulse_times}")
+        # print(f"1. binned_pulse_times: {binned_pulse_times}")
 
-        binned_pulse_times.events.coords[_event_index_dim_name] = sc.empty(
-            shape=binned_pulse_times.events.shape,
-            dtype=binned_pulse_times.events.dtype,
-            unit=binned_pulse_times.events.unit,
-            dims=binned_pulse_times.events.dims
-        )
+        pt = sc.Variable(value=sc.flatten(binned_pulse_times, to=_event_dim_name))
 
-        print(f"2. binned_pulse_times: {binned_pulse_times}")
+        print(f"1a. pt: {pt}")
+        #
+        # binned_pulse_times.events.coords[_event_index_dim_name] = sc.empty(
+        #     shape=binned_pulse_times.events.shape,
+        #     dtype=binned_pulse_times.events.dtype,
+        #     unit=binned_pulse_times.events.unit,
+        #     dims=binned_pulse_times.events.dims
+        # )
 
-        binned_pulse_times.bins.coords[_event_index_dim_name][_event_index_dim_name, ...] = binned_pulse_times.coords[_event_index_dim_name]
-
-        print(f"3. binned_pulse_times: {binned_pulse_times}")
+        # print(f"2. binned_pulse_times: {binned_pulse_times}")
+        # print(f"2a. {binned_pulse_times.bins.coords[_event_index_dim_name]}")
+        #
+        # tmp = binned_pulse_times.coords[_event_index_dim_name]
+        # print(f"2b. tmp = {tmp}")
+        # print(f"2c. coords = {binned_pulse_times.bins.coords[_event_index_dim_name]}")
+        # print(f"2d. coords = {binned_pulse_times.bins.coords[_event_index_dim_name][_event_index_dim_name, :]}")
+        #
+        # binned_pulse_times.bins.coords[_event_index_dim_name][_event_index_dim_name, :] = tmp
+        #
+        # print(f"3. binned_pulse_times: {binned_pulse_times}")
 
         new_events = sc.bin(detector_data.events,
                             groups=[detector_data.detector_ids])
 
         if pixel_positions_loaded:
             new_events.coords['position'] = detector_data.pixel_positions
-            new_events.coords['pulse_time'] = binned_pulse_times
+
         events = sc.concatenate(events, new_events, dim=_detector_dim_name)
+        events.coords['pulse_times'] = pt
 
         # print("events: {}".format(events))
         # print("event index: {}".format(detector_data.event_index))
