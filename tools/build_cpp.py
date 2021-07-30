@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import multiprocessing
 import sys
+import time
 
 parser = argparse.ArgumentParser(description='Build C++ library and run tests')
 parser.add_argument('--prefix', default='install')
