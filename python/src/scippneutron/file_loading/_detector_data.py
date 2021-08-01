@@ -148,27 +148,30 @@ def _create_empty_events_data_array(
                         })
 
 
-def _load_pulse_times(group: Group, nexus: LoadFromNexus, number_of_events: int) -> sc.Variable:
+def _load_pulse_times(group: Group, nexus: LoadFromNexus,
+                      event_index: np.array) -> sc.Variable:
     time_zero_group = "event_time_zero"
-    _event_time_zeros_units = sc.Unit(
-        nexus.get_string_attribute(group.group[time_zero_group], "units"))
 
-    raw_pulse_times = nexus.load_dataset_from_group_as_numpy_array(
-        group.group, time_zero_group)
+    _number_of_events = event_index[-1]
 
-    event_index = nexus.load_dataset_from_group_as_numpy_array(
-        group.group, "event_index")
+    _raw_pulse_times = nexus.load_dataset(group.group, time_zero_group,
+                                          [_event_dimension])
 
-    pulse_times = np.repeat(
-        raw_pulse_times,
-        np.diff(event_index, append=number_of_events)
-    )
+    _values = np.repeat(_raw_pulse_times.values,
+                        np.diff(event_index, append=_number_of_events))
 
-    return sc.Variable(
-        dims=[_event_dimension],
-        values=pulse_times,
-        unit=_event_time_zeros_units,
-        dtype=sc.dtype.float64)
+    _var = sc.Variable(dims=[_event_dimension],
+                       values=_values,
+                       unit=_raw_pulse_times.unit,
+                       dtype=sc.dtype.float64)
+
+    try:
+        return sc.to_unit(_var, sc.units.s)
+    except sc.UnitError:
+        raise BadSource(
+            f"Could not load pulse times: units attribute '{_var.unit}' in"
+            f" NXEvent at {group.path}/{time_zero_group} is not convertible"
+            f" to seconds.")
 
 
 def _load_detector(group: Group, file_root: h5py.File,
@@ -220,11 +223,10 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     else:
         event_index[-1] = number_of_event_ids
 
-    number_of_events = event_index[-1]
     event_time_offset = nexus.load_dataset(group.group, "event_time_offset",
                                            [_event_dimension])
 
-    pulse_times = _load_pulse_times(group, nexus, number_of_event_ids)
+    pulse_times = _load_pulse_times(group, nexus, event_index)
 
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
@@ -249,6 +251,8 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
         "coords": {
             _time_of_flight: event_time_offset,
             _detector_dimension: event_id,
+        },
+        "attrs": {
             _pulse_time: pulse_times,
         },
     }
@@ -267,7 +271,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
 
     if not quiet:
         print(f"Loaded event data from "
-              f"{group.path} containing {number_of_events} events")
+              f"{group.path} containing {number_of_event_ids} events")
 
     return detector_data
 

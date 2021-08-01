@@ -68,10 +68,7 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 3]),
         event_time_offset=event_time_offsets,
-        event_time_zero=np.array([
-            1600766730000000000, 1600766731000000000, 1600766732000000000,
-            1600766733000000000
-        ]),
+        event_time_zero=np.array([12, 34, 56, 78]),
         event_index=np.array([0, 3, 3, 5]),
     )
 
@@ -98,6 +95,25 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
     expected_detector_ids = np.array([1, 2, 3])
     assert np.array_equal(loaded_data.coords['detector_id'].values,
                           expected_detector_ids)
+
+
+def test_loads_pulse_times_from_single_event_data_group(
+        load_function: Callable):
+    expected_pulse_times = np.array([12, 34, 56])
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 3]),
+        event_time_offset=expected_pulse_times,
+        event_time_zero=np.array([12, 34, 56, 78]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+
+    builder = NexusBuilder()
+    builder.add_event_data(event_data)
+
+    loaded_data = load_function(builder)
+
+    assert np.array_equal(loaded_data.attrs['pulse_times'].values,
+                          expected_pulse_times)
 
 
 def test_loads_data_from_multiple_event_data_groups(load_function: Callable):
