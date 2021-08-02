@@ -160,10 +160,6 @@ def test_loads_pulse_times_from_multiple_event_data_groups(
 
     for event, pulse_time in [(0, 12), (1, 12), (2, 12), (3, 56), (4, 87),
                               (5, 87), (6, 87), (7, 43)]:
-        print(f":: {loaded_data.values[event]}")
-        print(f"Expected: {event} {pulse_time}")
-        print(f"Actual: {event} "
-              f"{loaded_data.values[event].coords['pulse_time'].values}")
         assert sc.identical(
             loaded_data.values[event].coords['pulse_time'],
             sc.array(dims=["event"],

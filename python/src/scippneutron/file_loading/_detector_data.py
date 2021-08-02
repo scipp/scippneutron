@@ -232,9 +232,6 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     pulse_times = _load_pulse_times(group, nexus, event_index,
                                     number_of_event_ids)
 
-    print(f"event index: {event_index}")
-    print(f"pulse times: {pulse_times}")
-
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
                       shape=event_id.shape,
