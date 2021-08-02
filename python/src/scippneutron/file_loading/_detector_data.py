@@ -253,6 +253,8 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
         "coords": {
             _time_of_flight: event_time_offset,
             _detector_dimension: event_id,
+        },
+        "attrs": {
             _pulse_time: pulse_times,
         },
     }

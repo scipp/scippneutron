@@ -122,7 +122,7 @@ def test_loads_pulse_times_in_nanoseconds_from_single_event_data_group(
 
     for event, pulse_time in [(0, 12), (1, 12), (2, 12), (3, 56)]:
         assert sc.identical(
-            loaded_data.values[event].coords['pulse_time'],
+            loaded_data.values[event].attrs['pulse_time'],
             sc.array(dims=["event"],
                      values=[pulse_time],
                      unit=sc.units.s,
@@ -150,7 +150,7 @@ def test_loads_pulse_times_in_seconds_from_single_event_data_group(
 
     for event, pulse_time in [(0, 12), (1, 12), (2, 12), (3, 56)]:
         assert sc.identical(
-            loaded_data.values[event].coords['pulse_time'],
+            loaded_data.values[event].attrs['pulse_time'],
             sc.array(dims=["event"],
                      values=[pulse_time],
                      unit=sc.units.s,
@@ -224,7 +224,7 @@ def test_loads_pulse_times_from_multiple_event_data_groups(
     for event, pulse_time in [(0, 12), (1, 12), (2, 12), (3, 56), (4, 87),
                               (5, 87), (6, 87), (7, 43)]:
         assert sc.identical(
-            loaded_data.values[event].coords['pulse_time'],
+            loaded_data.values[event].attrs['pulse_time'],
             sc.array(dims=["event"],
                      values=[pulse_time],
                      unit=sc.units.s,
