@@ -158,6 +158,11 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus,
 
     _diffs = np.diff(event_index, append=number_of_event_ids)
 
+    if any(_diffs < 0):
+        raise BadSource(
+            f"Event index in NXEvent at {group.path}/event_index was not"
+            f"ordered.")
+
     _values = np.repeat(_raw_pulse_times.values, _diffs)
 
     _var = sc.Variable(dims=[_event_dimension],

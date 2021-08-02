@@ -191,6 +191,22 @@ def test_does_not_load_events_if_time_zero_unit_not_convertible_to_s(
     assert len(loaded_data.values[3].values) > 0
 
 
+def test_does_not_load_events_if_index_not_ordered(load_function: Callable):
+    event_data_1 = EventData(
+        event_id=np.array([0, 1]),
+        event_time_offset=np.array([0, 1]),
+        event_time_zero=np.array([0, 1]),
+        event_index=np.array([2, 0]),
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([0, 1]), event_data=event_data_1))
+
+    with pytest.warns(UserWarning, match="Event index in NXEvent at "):
+        load_function(builder)
+
+
 def test_loads_pulse_times_from_multiple_event_data_groups(
         load_function: Callable):
     offsets = np.array([0, 0, 0, 0])
