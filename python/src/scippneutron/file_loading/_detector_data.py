@@ -149,8 +149,7 @@ def _create_empty_events_data_array(
 
 
 def _load_pulse_times(group: Group, nexus: LoadFromNexus,
-                      event_index: np.array,
-                      num_of_event_ids: int) -> sc.Variable:
+                      event_index: np.array) -> sc.Variable:
     time_zero_group = "event_time_zero"
 
     _raw_pulse_times = nexus.load_dataset(group.group, time_zero_group,
@@ -229,8 +228,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     event_time_offset = nexus.load_dataset(group.group, "event_time_offset",
                                            [_event_dimension])
 
-    pulse_times = _load_pulse_times(group, nexus, event_index,
-                                    number_of_event_ids)
+    pulse_times = _load_pulse_times(group, nexus, event_index)
 
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
