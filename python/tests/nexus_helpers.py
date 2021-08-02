@@ -37,7 +37,7 @@ class EventData:
     event_time_offset: Optional[np.ndarray]
     event_time_zero: Optional[np.ndarray]
     event_index: Optional[np.ndarray]
-    event_time_zero_unit: str = "ns"
+    event_time_zero_unit: Optional[str] = "ns"
 
 
 @dataclass

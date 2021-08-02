@@ -157,6 +157,40 @@ def test_loads_pulse_times_in_seconds_from_single_event_data_group(
                      dtype=sc.dtype.float64))
 
 
+def test_does_not_load_events_if_time_zero_unit_not_convertible_to_s(
+        load_function: Callable):
+    event_data_1 = EventData(
+        event_id=np.array([0, 1]),
+        event_time_offset=np.array([0, 1]),
+        event_time_zero=np.array([0, 1]),
+        event_index=np.array([0, 2]),
+        event_time_zero_unit="m",  # time in metres, should fail
+    )
+    event_data_2 = EventData(
+        event_id=np.array([2, 3]),
+        event_time_offset=np.array([2, 3]),
+        event_time_zero=np.array([2, 3]),
+        event_index=np.array([0, 2]),
+        event_time_zero_unit="s",  # time in secs, should work.
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([0, 1]), event_data=event_data_1))
+    builder.add_detector(
+        Detector(detector_numbers=np.array([2, 3]), event_data=event_data_2))
+
+    with pytest.warns(UserWarning, match="Could not load pulse times: units "):
+        loaded_data = load_function(builder)
+
+    # Detectors 0 and 1 shouldn't have events loaded; units were invalid.
+    assert len(loaded_data.values[0].values) == 0
+    assert len(loaded_data.values[1].values) == 0
+    # Detectors 2 and 3 should have their events loaded; units were valid.
+    assert len(loaded_data.values[2].values) > 0
+    assert len(loaded_data.values[3].values) > 0
+
+
 def test_loads_pulse_times_from_multiple_event_data_groups(
         load_function: Callable):
     offsets = np.array([0, 0, 0, 0])
