@@ -37,6 +37,7 @@ class EventData:
     event_time_offset: Optional[np.ndarray]
     event_time_zero: Optional[np.ndarray]
     event_index: Optional[np.ndarray]
+    event_time_zero_unit: str = "ns"
 
 
 @dataclass
@@ -577,7 +578,8 @@ class NexusBuilder:
         if data.event_time_zero is not None:
             event_time_zero_ds = self._writer.add_dataset(
                 event_group, "event_time_zero", data=data.event_time_zero)
-            self._writer.add_attribute(event_time_zero_ds, "units", "ns")
+            self._writer.add_attribute(event_time_zero_ds, "units",
+                                       data.event_time_zero_unit)
         if data.event_index is not None:
             self._writer.add_dataset(event_group,
                                      "event_index",
