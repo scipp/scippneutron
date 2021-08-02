@@ -15,6 +15,7 @@ parser = argparse.ArgumentParser(description='Build doc pages with sphinx')
 parser.add_argument('--prefix', default='build')
 parser.add_argument('--work_dir', default='.doctrees')
 parser.add_argument('--data_dir', default='data')
+parser.add_argument('--builder', default='html')
 
 
 def download_file(source, target):
@@ -47,15 +48,26 @@ def download_multiple(remote_url, target_dir, extensions):
             download_file(os.path.join(remote_url, f), target)
 
 
+def get_abs_path(path, root):
+    if os.path.isabs(path):
+        return path
+    else:
+        return os.path.join(root, path)
+
+
 if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    docs_dir = Path(__file__).parent.absolute()
+    work_dir = get_abs_path(path=args.work_dir, root=docs_dir)
+    prefix = get_abs_path(path=args.prefix, root=docs_dir)
+    data_dir = get_abs_path(path=args.data_dir, root=docs_dir)
+
     # Download data files
     remote_url = "https://public.esss.dk/groups/scipp/scippneutron"
-    target_dir = os.path.abspath(args.data_dir)
     extensions = [".nxs", ".h5", ".hdf5", ".raw"]
-    download_multiple(remote_url, target_dir, extensions)
+    download_multiple(remote_url, data_dir, extensions)
 
     # Create Mantid properties file so that it can find the data files
     home = str(Path.home())
@@ -64,10 +76,10 @@ if __name__ == '__main__':
     properties_file = os.path.join(config_dir, "Mantid.user.properties")
     with open(properties_file, "a") as f:
         f.write("\nusagereports.enabled=0\ndatasearch.directories={}\n".format(
-            target_dir))
+            data_dir))
 
     # Build the docs with sphinx-build
     status = subprocess.check_call(
-        ['sphinx-build', '-d', args.work_dir, '.', args.prefix],
+        ['sphinx-build', '-b', args.builder, '-d', work_dir, '.', prefix],
         stderr=subprocess.STDOUT,
         shell=sys.platform == "win32")

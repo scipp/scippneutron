@@ -16,6 +16,11 @@ import scippneutron
 import scipp as sc
 from typing import List, Type, Union, Callable
 from scippneutron.file_loading.load_nexus import _load_nexus_json
+from dateutil.parser import parse as parse_date
+
+
+def _timestamp(date: str):
+    return parse_date(date).timestamp()
 
 
 def test_raises_exception_if_multiple_nxentry_in_file():
@@ -1302,3 +1307,181 @@ def test_loads_multiple_sample_ub_matrix(load_function: Callable):
         loaded_data["sample2_ub_matrix"].data,
         sc.matrix(value=np.identity(3), unit=sc.units.angstrom**-1))
     assert "sample3_ub_matrix" not in loaded_data
+
+
+def test_warning_but_no_error_for_unrecognised_log_unit(
+        load_function: Callable):
+    values = np.array([1.1, 2.2, 3.3])
+    times = np.array([4.4, 5.5, 6.6])
+    name = "test_log"
+    builder = NexusBuilder()
+    unknown_unit = "elephants"
+    builder.add_log(
+        Log(name, values, times, value_units=unknown_unit, time_units="s"))
+
+    with pytest.warns(UserWarning):
+        loaded_data = load_function(builder)
+
+    # Expect a sc.Dataset with log names as keys
+    assert np.allclose(loaded_data[name].data.values.values, values)
+    assert np.allclose(loaded_data[name].data.values.coords['time'].values,
+                       times)
+    assert loaded_data[name].data.values.unit == sc.units.dimensionless
+    assert loaded_data[name].data.values.coords['time'].unit == sc.units.s
+
+
+def test_start_and_end_times_appear_in_dataset_if_set(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_run_start_time("2001-01-01T00:00:00Z")
+    builder.add_run_end_time("2002-02-02T00:00:00Z")
+
+    loaded_data = load_function(builder)
+
+    assert sc.identical(loaded_data["start_time"],
+                        sc.DataArray(sc.scalar("2001-01-01T00:00:00Z")))
+    assert sc.identical(loaded_data["end_time"],
+                        sc.DataArray(sc.scalar("2002-02-02T00:00:00Z")))
+
+
+@pytest.mark.parametrize(
+    "run_start,log_start,start_time_delta",
+    (("2000-01-01T00:00:00Z", "2000-01-01T01:00:00Z", 60 * 60),
+     ("2000-01-01T01:00:00Z", "2000-01-01T00:00:00Z", -60 * 60)))
+def test_adjust_log_times_without_scaling_factor(run_start: str,
+                                                 log_start: str,
+                                                 start_time_delta: float,
+                                                 load_function: Callable):
+    # Sanity check
+    assert _timestamp(log_start) - _timestamp(run_start) == start_time_delta
+
+    times = [0, 10, 20, 30, 40, 50]
+
+    builder = NexusBuilder()
+    builder.add_run_start_time(run_start)
+    builder.add_log(
+        Log(name="test_log",
+            value=np.zeros(shape=(len(times), )),
+            time=np.array(times),
+            start_time=log_start))
+
+    loaded_data = load_function(builder)
+
+    assert np.allclose(loaded_data["test_log"].values.coords['time'].values,
+                       (np.array(times) + start_time_delta))
+    assert loaded_data["test_log"].values.coords['time'].unit == sc.units.s
+
+
+@pytest.mark.parametrize(
+    "run_start,log_start,scaling_factor",
+    (("2000-01-01T00:00:00Z", "2000-01-01T01:00:00Z", 1000),
+     ("2000-01-01T01:00:00Z", "2000-01-01T00:00:00Z", 0.001)))
+def test_adjust_log_times_with_scaling_factor(run_start: str, log_start: str,
+                                              scaling_factor: float,
+                                              load_function: Callable):
+
+    time_delta = _timestamp(log_start) - _timestamp(run_start)
+
+    times = [0, 10, 20, 30, 40, 50]
+
+    builder = NexusBuilder()
+    builder.add_run_start_time(run_start)
+    builder.add_log(
+        Log(name="test_log",
+            value=np.zeros(shape=(len(times), )),
+            time=np.array(times),
+            start_time=log_start,
+            scaling_factor=scaling_factor))
+
+    loaded_data = load_function(builder)
+
+    assert np.allclose(loaded_data["test_log"].values.coords['time'].values,
+                       ((np.array(times) * scaling_factor) + time_delta))
+    assert loaded_data["test_log"].values.coords['time'].unit == sc.units.s
+
+
+@pytest.mark.parametrize(
+    "units", ("ps", "ns", "us", "ms", "s", "minute", "hour", "day", "year"))
+def test_adjust_log_times_with_different_time_units(units,
+                                                    load_function: Callable):
+
+    times = [1, 2, 3]
+
+    builder = NexusBuilder()
+    builder.add_log(
+        Log(name="test_log",
+            value=np.zeros(shape=(len(times), )),
+            time=np.array(times, dtype="float64"),
+            time_units=units))
+
+    loaded_data = load_function(builder)
+
+    expected = sc.to_unit(
+        sc.Variable(dims=["time"],
+                    values=np.array(times),
+                    unit=sc.Unit(units),
+                    dtype=sc.dtype.float64), sc.units.s)
+
+    assert sc.identical(expected,
+                        loaded_data["test_log"].values.coords['time'])
+
+
+def test_nexus_file_with_invalid_nxlog_time_units_warns_and_skips_log(
+        load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_log(
+        Log(
+            name="test_log_1",
+            value=np.zeros(shape=(1, )),
+            time=np.array([1]),
+            time_units="m",  # Time in metres, should fail.
+            start_time="1970-01-01T00:00:00Z"))
+    builder.add_log(
+        Log(name="test_log_2",
+            value=np.zeros(shape=(1, )),
+            time=np.array([1]),
+            time_units="s",
+            start_time="1970-01-01T00:00:00Z"))
+
+    with pytest.warns(UserWarning,
+                      match="The units of time in the NXlog entry at "):
+        loaded_data = load_function(builder)
+
+        assert "test_log_1" not in loaded_data
+        assert "test_log_2" in loaded_data
+
+
+def test_nexus_file_with_invalid_log_start_date_warns_and_skips_log(
+        load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_log(
+        Log(name="test_log_1",
+            value=np.zeros(shape=(1, )),
+            time=np.array([1]),
+            start_time="this_isnt_a_valid_log_start_time"))
+    builder.add_log(
+        Log(name="test_log_2",
+            value=np.zeros(shape=(1, )),
+            time=np.array([1]),
+            start_time="1970-01-01T00:00:00Z"))
+
+    with pytest.warns(UserWarning, match="The date string "):
+        loaded_data = load_function(builder)
+
+        assert "test_log_1" not in loaded_data
+        assert "test_log_2" in loaded_data
+
+
+def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
+        load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_run_start_time("this_inst_a_valid_run_start_time")
+    builder.add_log(
+        Log(name="test_log_1",
+            value=np.zeros(shape=(1, )),
+            time=np.array([1]),
+            start_time="1970-01-01T00:00:00Z"))
+
+    with pytest.warns(UserWarning, match="The run start time "):
+        loaded_data = load_function(builder)
+
+        assert "test_log_1" not in loaded_data

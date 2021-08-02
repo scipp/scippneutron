@@ -90,6 +90,14 @@ def _load_title(entry_group: Group, data: ScippData, nexus: LoadFromNexus):
                                     "experiment_title", data, nexus)
 
 
+def _load_start_and_end_time(entry_group: Group, data: ScippData,
+                             nexus: LoadFromNexus):
+    _add_string_attr_to_loaded_data(entry_group.group, "start_time",
+                                    "start_time", data, nexus)
+    _add_string_attr_to_loaded_data(entry_group.group, "end_time", "end_time",
+                                    data, nexus)
+
+
 def load_nexus(data_file: Union[str, h5py.File],
                root: str = "/",
                quiet=True) -> Optional[ScippData]:
@@ -116,10 +124,17 @@ def load_nexus(data_file: Union[str, h5py.File],
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                nexus: LoadFromNexus, quiet: bool) -> Optional[ScippData]:
+    """
+    Main implementation for loading data is extracted to this function so that
+    in-memory data can be used for unit tests.
+    """
     if root is not None:
         root_node = nexus_file[root]
     else:
         root_node = nexus_file
+    # Use visititems (in find_by_nx_class) to traverse the entire file tree,
+    # looking for any NXClass that can be read.
+    # groups is a dict with a key for each category (nx_log, nx_instrument...)
     groups = nexus.find_by_nx_class(
         (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample, nx_source,
          nx_detector), root_node)
@@ -134,20 +149,37 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     loaded_data = load_detector_data(groups[nx_event_data],
                                      groups[nx_detector], nexus_file, nexus,
                                      quiet)
+    # If no event data are found, make a Dataset and add the metadata as
+    # Dataset entries. Otherwise, make a DataArray.
     if loaded_data is None:
         no_event_data = True
         loaded_data = sc.Dataset({})
     else:
         no_event_data = False
-    load_logs(loaded_data, groups[nx_log], nexus)
+
+    if groups[nx_entry]:
+        _load_title(groups[nx_entry][0], loaded_data, nexus)
+        _load_start_and_end_time(groups[nx_entry][0], loaded_data, nexus)
+
+        try:
+            run_start_time = nexus.load_scalar_string(
+                groups[nx_entry][0].group, "start_time")
+        except (AttributeError, TypeError, MissingDataset):
+            run_start_time = None
+    else:
+        run_start_time = None
+
+    load_logs(loaded_data,
+              groups[nx_log],
+              nexus,
+              run_start_time=run_start_time)
+
     if groups[nx_sample]:
         _load_sample(groups[nx_sample], loaded_data, nexus_file, nexus)
     if groups[nx_source]:
         _load_source(groups[nx_source], loaded_data, nexus_file, nexus)
     if groups[nx_instrument]:
         _load_instrument_name(groups[nx_instrument], loaded_data, nexus)
-    if groups[nx_entry]:
-        _load_title(groups[nx_entry][0], loaded_data, nexus)
     # Return None if we have an empty dataset at this point
     if no_event_data and not loaded_data.keys():
         loaded_data = None

@@ -1,9 +1,9 @@
 from _warnings import warn
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Any
 import h5py
 import numpy as np
 import scipp as sc
-from ._common import Group, _add_attr_to_loaded_data
+from ._common import Group
 from ._transformations import (get_position_from_transformations,
                                TransformationError)
 from ._nexus import LoadFromNexus, GroupObject
@@ -31,11 +31,11 @@ def load_position_of_unique_component(
                                                      nexus, default_position)
     except PositionError:
         return
-    _add_attr_to_loaded_data(f"{name}_position",
-                             data,
-                             position,
-                             unit=units,
-                             dtype=sc.dtype.vector_3_float64)
+    _add_coord_to_loaded_data(f"{name}_position",
+                              data,
+                              position,
+                              unit=units,
+                              dtype=sc.dtype.vector_3_float64)
 
 
 def load_positions_of_components(
@@ -54,17 +54,18 @@ def load_positions_of_components(
         except PositionError:
             continue
         if len(groups) == 1:
-            _add_attr_to_loaded_data(f"{name}_position",
-                                     data,
-                                     position,
-                                     unit=units,
-                                     dtype=sc.dtype.vector_3_float64)
+            _add_coord_to_loaded_data(f"{name}_position",
+                                      data,
+                                      position,
+                                      unit=units,
+                                      dtype=sc.dtype.vector_3_float64)
         else:
-            _add_attr_to_loaded_data(f"{nexus.get_name(group.group)}_position",
-                                     data,
-                                     position,
-                                     unit=units,
-                                     dtype=sc.dtype.vector_3_float64)
+            _add_coord_to_loaded_data(
+                f"{nexus.get_name(group.group)}_position",
+                data,
+                position,
+                unit=units,
+                dtype=sc.dtype.vector_3_float64)
 
 
 def _get_position_of_component(
@@ -104,3 +105,26 @@ def _get_position_of_component(
         units = sc.units.m
 
     return position, units
+
+
+def _add_coord_to_loaded_data(attr_name: str,
+                              data: sc.Variable,
+                              value: np.ndarray,
+                              unit: sc.Unit,
+                              dtype: Optional[Any] = None):
+
+    if isinstance(data, sc.DataArray):
+        data = data.coords
+
+    try:
+        if dtype is not None:
+            if dtype == sc.dtype.vector_3_float64:
+                data[attr_name] = sc.vector(value=value, unit=unit)
+            else:
+                data[attr_name] = sc.Variable(value=value,
+                                              dtype=dtype,
+                                              unit=unit)
+        else:
+            data[attr_name] = sc.Variable(value=value, unit=unit)
+    except KeyError:
+        pass

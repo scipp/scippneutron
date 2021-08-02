@@ -54,24 +54,47 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
 
+# Conan dependencies
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
+  message(
+    STATUS
+      "Downloading conan.cmake from https://github.com/conan-io/cmake-conan"
+  )
+  file(
+    DOWNLOAD
+    "https://raw.githubusercontent.com/conan-io/cmake-conan/v0.16.1/conan.cmake"
+    "${CMAKE_BINARY_DIR}/conan.cmake"
+    EXPECTED_HASH
+      SHA256=396e16d0f5eabdc6a14afddbcfff62a54a7ee75c6da23f32f7a31bc85db23484
+    TLS_VERIFY ON
+  )
+endif()
+
+include(${CMAKE_BINARY_DIR}/conan.cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
+
+conan_cmake_autodetect(conan_settings)
+conan_cmake_install(
+  PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR} SETTINGS ${conan_settings} BUILD
+  outdated
+)
+
+find_package(Benchmark)
+find_package(Boost 1.67 REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(GTest CONFIG REQUIRED)
+find_package(Python 3.7 REQUIRED COMPONENTS Interpreter Development)
+find_package(pybind11 CONFIG REQUIRED)
+find_package(scipp 0.7 REQUIRED)
+
 # MP : Parallel compile, add before any targets so all use it
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:-MP>)
 
-include(GTest)
-include(GoogleBenchmark)
+include(GoogleTest)
 include(GenerateExportHeader)
 include(IPO)
-include(pybind11)
 include(scipp-install)
-
-find_package(scipp 0.7 REQUIRED)
-
-if("${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}" VERSION_LESS "3.7")
-  message(
-    FATAL_ERROR
-      "Python v3 interpreter must be greater than or equal to 3.7. Found ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}"
-  )
-endif()
 
 option(WITH_CTEST "Enable ctest integration of tests" ON)
 option(DYNAMIC_LIB "Build shared libraries" ON)
@@ -129,7 +152,7 @@ add_custom_target(all-tests)
 
 # Custom target for building documentation
 add_custom_target(
-  docs COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/docs/make_docs.py
+  docs COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/docs/build_docs.py
 )
 
 include(GNUInstallDirs)

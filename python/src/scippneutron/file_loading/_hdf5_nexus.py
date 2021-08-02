@@ -149,11 +149,11 @@ class LoadFromHdf5:
         return group.name.split("/")[-1]
 
     @staticmethod
-    def get_unit(node: Union[h5py.Dataset, h5py.Group]) -> Union[str, sc.Unit]:
+    def get_unit(node: Union[h5py.Dataset, h5py.Group]) -> str:
         try:
             units = node.attrs["units"]
         except (AttributeError, KeyError):
-            return sc.units.dimensionless
+            return "dimensionless"
         return _ensure_str(units)
 
     @staticmethod
@@ -190,6 +190,14 @@ class LoadFromHdf5:
     @staticmethod
     def get_attribute_as_numpy_array(node: Union[h5py.Group, h5py.Dataset],
                                      attribute_name: str) -> np.ndarray:
+        try:
+            return node.attrs[attribute_name]
+        except KeyError:
+            raise MissingAttribute
+
+    @staticmethod
+    def get_attribute(node: Union[h5py.Group, h5py.Dataset],
+                      attribute_name: str) -> Any:
         try:
             return node.attrs[attribute_name]
         except KeyError:

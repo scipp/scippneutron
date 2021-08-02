@@ -41,7 +41,8 @@ nbsphinx_prolog = """`Download this Jupyter notebook <https://raw.githubusercont
 # ones.
 extensions = [
     'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.intersphinx',
-    'sphinx.ext.mathjax', 'IPython.sphinxext.ipython_directive',
+    'sphinx.ext.mathjax', 'sphinx.ext.doctest',
+    'IPython.sphinxext.ipython_directive',
     'IPython.sphinxext.ipython_console_highlighting', 'nbsphinx'
 ]
 
