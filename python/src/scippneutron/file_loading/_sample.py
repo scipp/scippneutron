@@ -1,4 +1,3 @@
-from _warnings import warn
 from typing import List, Tuple, Union
 import h5py
 import numpy as np
@@ -11,26 +10,23 @@ def _get_matrix_of_component(group: GroupObject, nx_class: str,
                              nexus: LoadFromNexus,
                              name: str) -> Tuple[np.ndarray, sc.Unit]:
     matrix_found, _ = nexus.dataset_in_group(group, name)
-    matrix_unit_found, _ = nexus.dataset_in_group(group, f"{name}_units")
     if matrix_found:
         matrix = nexus.load_dataset_from_group_as_numpy_array(group, name)
-        units = nexus.get_unit(nexus.get_dataset_from_group(group, name))
-        if units == sc.units.dimensionless:
-            warn(f"'{name}' dataset in {nx_class} is missing units")
-        return matrix, units
+        return matrix
     else:
-        return None, None
+        return None
 
 
 def _get_ub_of_component(group: GroupObject, nx_class: str,
                          nexus: LoadFromNexus) -> Tuple[np.ndarray, sc.Unit]:
-    return _get_matrix_of_component(group, nx_class, nexus, "ub_matrix")
+    return _get_matrix_of_component(group, nx_class, nexus,
+                                    "ub_matrix"), sc.units.angstrom**-1
 
 
 def _get_u_of_component(group: GroupObject, nx_class: str,
                         nexus: LoadFromNexus) -> Tuple[np.ndarray, sc.Unit]:
     return _get_matrix_of_component(group, nx_class, nexus,
-                                    "orientation_matrix")
+                                    "orientation_matrix"), sc.units.one
 
 
 def load_ub_matrices_of_components(groups: List[Group],

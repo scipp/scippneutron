@@ -84,9 +84,7 @@ class Sample:
     distance: Optional[float] = None
     distance_units: Optional[str] = None
     ub_matrix: Optional[np.ndarray] = None
-    ub_matrix_units: Optional[str] = None
     orientation_matrix: Optional[np.ndarray] = None
-    orientation_matrix_units: Optional[str] = None
 
 
 @dataclass
@@ -479,21 +477,14 @@ class NexusBuilder:
                                                sample.distance_units)
 
             if sample.ub_matrix is not None:
-                ub_matrix_ds = self._writer.add_dataset(sample_group,
-                                                        "ub_matrix",
-                                                        data=sample.ub_matrix)
-                if sample.ub_matrix_units is not None:
-                    self._writer.add_attribute(ub_matrix_ds, "units",
-                                               sample.ub_matrix_units)
+                self._writer.add_dataset(sample_group,
+                                         "ub_matrix",
+                                         data=sample.ub_matrix)
 
             if sample.orientation_matrix is not None:
-                u_matrix_ds = self._writer.add_dataset(
-                    sample_group,
-                    "orientation_matrix",
-                    data=sample.orientation_matrix)
-                if sample.orientation_matrix_units is not None:
-                    self._writer.add_attribute(u_matrix_ds, "units",
-                                               sample.orientation_matrix_units)
+                self._writer.add_dataset(sample_group,
+                                         "orientation_matrix",
+                                         data=sample.orientation_matrix)
 
     def _write_source(self, parent_group: Union[h5py.Group, Dict]):
         for source in self._source:

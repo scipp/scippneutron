@@ -1267,12 +1267,10 @@ def test_linked_datasets_are_found(load_function: Callable):
 
 def test_loads_sample_ub_matrix(load_function: Callable):
     builder = NexusBuilder()
-    builder.add_component(
-        Sample("sample",
-               ub_matrix=np.ones(shape=[3, 3]),
-               ub_matrix_units="1/Å"))
+    builder.add_component(Sample("sample", ub_matrix=np.ones(shape=[3, 3])))
     loaded_data = load_function(builder)
     assert "sample_ub_matrix" in loaded_data
+    print(loaded_data["sample_ub_matrix"].data)
     assert sc.identical(
         loaded_data["sample_ub_matrix"].data,
         sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.angstrom**-1))
@@ -1282,9 +1280,7 @@ def test_loads_sample_ub_matrix(load_function: Callable):
 def test_loads_sample_u_matrix(load_function: Callable):
     builder = NexusBuilder()
     builder.add_component(
-        Sample("sample",
-               orientation_matrix=np.ones(shape=[3, 3]),
-               orientation_matrix_units=""))
+        Sample("sample", orientation_matrix=np.ones(shape=[3, 3])))
     loaded_data = load_function(builder)
     assert "sample_u_matrix" in loaded_data
     assert sc.identical(
@@ -1295,12 +1291,8 @@ def test_loads_sample_u_matrix(load_function: Callable):
 
 def test_loads_multiple_sample_ub_matrix(load_function: Callable):
     builder = NexusBuilder()
-    builder.add_component(
-        Sample("sample1",
-               ub_matrix=np.ones(shape=[3, 3]),
-               ub_matrix_units="1/Å"))
-    builder.add_component(
-        Sample("sample2", ub_matrix=np.identity(3), ub_matrix_units="1/Å"))
+    builder.add_component(Sample("sample1", ub_matrix=np.ones(shape=[3, 3])))
+    builder.add_component(Sample("sample2", ub_matrix=np.identity(3)))
     builder.add_component(Sample("sample3"))  # No ub specified
     loaded_data = load_function(builder)
     assert sc.identical(
@@ -1310,12 +1302,3 @@ def test_loads_multiple_sample_ub_matrix(load_function: Callable):
         loaded_data["sample2_ub_matrix"].data,
         sc.matrix(value=np.identity(3), unit=sc.units.angstrom**-1))
     assert "sample3_ub_matrix" not in loaded_data
-
-
-def test_loads_sample_ub_matrix_with_units_unset(load_function: Callable):
-    builder = NexusBuilder()
-    builder.add_component(Sample("sample", ub_matrix=np.ones(shape=[3, 3])))
-    loaded_data = load_function(builder)
-    assert sc.identical(
-        loaded_data["sample_ub_matrix"].data,
-        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.one))
