@@ -100,45 +100,19 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
                           expected_detector_ids)
 
 
-def test_loads_pulse_times_in_nanoseconds_from_single_event_data_group(
-        load_function: Callable):
+@pytest.mark.parametrize("unit,multiplier", (("ns", 10**9), ("us", 10**6),
+                                             ("ms", 10**3), ("s", 1.)))
+def test_loads_pulse_times_from_single_event_with_different_units(
+        load_function: Callable, unit: str, multiplier: float):
+
     offsets = np.array([12, 34, 56, 78])
-    zeros = np.array([12 * 10**9, 34 * 10**9, 56 * 10**9,
-                      78 * 10**9])  # x10**9 for ns->s
+    zeros = np.array([12., 34., 56., 78.], dtype="float64") * multiplier
     event_data = EventData(
         event_id=np.array([1, 2, 3, 4]),
         event_time_offset=offsets,
         event_time_zero=zeros,
         event_index=np.array([0, 3, 3, 4]),
-        event_time_zero_unit="ns",
-    )
-
-    builder = NexusBuilder()
-    builder.add_detector(
-        Detector(detector_numbers=np.array([1, 2, 3, 4]),
-                 event_data=event_data))
-
-    loaded_data = load_function(builder)
-
-    for event, pulse_time in [(0, 12), (1, 12), (2, 12), (3, 56)]:
-        assert sc.identical(
-            loaded_data.values[event].attrs['pulse_time'],
-            sc.array(dims=["event"],
-                     values=[pulse_time],
-                     unit=sc.units.s,
-                     dtype=sc.dtype.float64))
-
-
-def test_loads_pulse_times_in_seconds_from_single_event_data_group(
-        load_function: Callable):
-    offsets = np.array([12, 34, 56, 78])
-    zeros = np.array([12, 34, 56, 78])
-    event_data = EventData(
-        event_id=np.array([1, 2, 3, 4]),
-        event_time_offset=offsets,
-        event_time_zero=zeros,
-        event_index=np.array([0, 3, 3, 4]),
-        event_time_zero_unit="s",
+        event_time_zero_unit=unit,
     )
 
     builder = NexusBuilder()
