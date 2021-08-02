@@ -149,16 +149,17 @@ def _create_empty_events_data_array(
 
 
 def _load_pulse_times(group: Group, nexus: LoadFromNexus,
-                      event_index: np.array) -> sc.Variable:
+                      event_index: np.array,
+                      num_of_event_ids: int) -> sc.Variable:
     time_zero_group = "event_time_zero"
-
-    _number_of_events = event_index[-1]
 
     _raw_pulse_times = nexus.load_dataset(group.group, time_zero_group,
                                           [_event_dimension])
 
-    _values = np.repeat(_raw_pulse_times.values,
-                        np.diff(event_index, append=_number_of_events))
+    _diffs = np.diff(event_index,
+                     append=max(num_of_event_ids, event_index[-1]))
+
+    _values = np.repeat(_raw_pulse_times.values, _diffs)
 
     _var = sc.Variable(dims=[_event_dimension],
                        values=_values,
@@ -223,10 +224,13 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     else:
         event_index[-1] = number_of_event_ids
 
+    number_of_events = event_index[-1]
+
     event_time_offset = nexus.load_dataset(group.group, "event_time_offset",
                                            [_event_dimension])
 
-    pulse_times = _load_pulse_times(group, nexus, event_index)
+    pulse_times = _load_pulse_times(group, nexus, event_index,
+                                    number_of_event_ids)
 
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
@@ -251,11 +255,10 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
         "coords": {
             _time_of_flight: event_time_offset,
             _detector_dimension: event_id,
-        },
-        "attrs": {
             _pulse_time: pulse_times,
         },
     }
+
     detector_data.events = sc.DataArray(**data_dict)
 
     detector_group = group.parent
@@ -271,7 +274,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
 
     if not quiet:
         print(f"Loaded event data from "
-              f"{group.path} containing {number_of_event_ids} events")
+              f"{group.path} containing {number_of_events} events")
 
     return detector_data
 
