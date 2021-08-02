@@ -128,6 +128,50 @@ def test_loads_pulse_times_from_single_event_data_group(
                      dtype=sc.dtype.float64))
 
 
+def test_loads_pulse_times_from_multiple_event_data_groups(
+        load_function: Callable):
+    offsets = np.array([0, 0, 0, 0])
+
+    zeros_1 = np.array([12 * 10**9, 34 * 10**9, 56 * 10**9, 78 * 10**9])
+    zeros_2 = np.array([87 * 10**9, 65 * 10**9, 43 * 10**9, 21 * 10**9])
+
+    event_data_1 = EventData(
+        event_id=np.array([0, 1, 2, 3]),
+        event_time_offset=offsets,
+        event_time_zero=zeros_1,
+        event_index=np.array([0, 3, 3, 4]),
+    )
+    event_data_2 = EventData(
+        event_id=np.array([4, 5, 6, 7]),
+        event_time_offset=offsets,
+        event_time_zero=zeros_2,
+        event_index=np.array([0, 3, 3, 4]),
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([0, 1, 2, 3]),
+                 event_data=event_data_1))
+    builder.add_detector(
+        Detector(detector_numbers=np.array([4, 5, 6, 7]),
+                 event_data=event_data_2))
+
+    loaded_data = load_function(builder)
+
+    for event, pulse_time in [(0, 12), (1, 12), (2, 12), (3, 56), (4, 87),
+                              (5, 87), (6, 87), (7, 43)]:
+        print(f":: {loaded_data.values[event]}")
+        print(f"Expected: {event} {pulse_time}")
+        print(f"Actual: {event} "
+              f"{loaded_data.values[event].coords['pulse_time'].values}")
+        assert sc.identical(
+            loaded_data.values[event].coords['pulse_time'],
+            sc.array(dims=["event"],
+                     values=[pulse_time],
+                     unit=sc.units.s,
+                     dtype=sc.dtype.float64))
+
+
 def test_loads_data_from_multiple_event_data_groups(load_function: Callable):
     pulse_times = np.array([
         1600766730000000000, 1600766731000000000, 1600766732000000000,

@@ -157,7 +157,7 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus,
                                           [_event_dimension])
 
     _diffs = np.diff(event_index,
-                     append=max(num_of_event_ids, event_index[-1]))
+                     append=max(len(_raw_pulse_times.values), event_index[-1]))
 
     _values = np.repeat(_raw_pulse_times.values, _diffs)
 
@@ -231,6 +231,9 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
 
     pulse_times = _load_pulse_times(group, nexus, event_index,
                                     number_of_event_ids)
+
+    print(f"event index: {event_index}")
+    print(f"pulse times: {pulse_times}")
 
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
