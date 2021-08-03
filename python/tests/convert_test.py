@@ -3,7 +3,9 @@
 # @author Jan-Lukas Wynen
 
 import itertools
+import math
 
+import numpy as np
 import pytest
 import scipp as sc
 import scippneutron as scn
@@ -13,6 +15,7 @@ def make_beamline_dataset():
     dset = sc.Dataset()
     dset.coords['source_position'] = sc.vector(value=[0.0, 0.0, -10.0],
                                                unit='m')
+    # Test assume that the sample is in the origin.
     dset.coords['sample_position'] = sc.vector(value=[0.0, 0.0, 0.0], unit='m')
     dset.coords['position'] = sc.vectors(dims=['spectrum'],
                                          values=[[1.0, 0.0, 0.0],
@@ -116,6 +119,69 @@ def test_convert_scattering_conversion_fails_with_noscatter_mode():
     scn.convert(wavelength, origin='wavelength', target='Q', scatter=True)
     with pytest.raises(RuntimeError):
         scn.convert(wavelength, origin='wavelength', target='Q', scatter=False)
+
+
+def test_convert_coords_vs_attributes():
+    with_coords = make_tof_dataset()
+    with_attrs = make_tof_dataset()
+    for key in ('sample_position', 'source_position', 'position'):
+        with_attrs['counts'].attrs[key] = with_attrs.coords.pop(key)
+
+    from_coords = scn.convert(with_coords,
+                              origin='tof',
+                              target='wavelength',
+                              scatter=True)
+    from_attrs = scn.convert(with_attrs,
+                             origin='tof',
+                             target='wavelength',
+                             scatter=True)
+    assert sc.identical(from_coords, from_attrs)
+
+
+def test_convert_tof_to_dspacing():
+    tof = make_tof_dataset()
+    dspacing = scn.convert(tof, origin='tof', target='dspacing', scatter=True)
+
+    for key in ('tof', 'position', 'source_position', 'sample_position'):
+        assert key not in dspacing.coords
+    assert 'dspacing' in dspacing.coords
+    assert 'counts' in dspacing
+    assert dspacing['counts'].dims == ['spectrum', 'dspacing']
+    assert dspacing['counts'].shape == [2, 3]
+    assert dspacing['counts'].unit == sc.units.counts
+    np.testing.assert_array_equal(dspacing['counts'].values.flat,
+                                  np.arange(1, 7))
+    assert sc.identical(dspacing['counts'].attrs['position'],
+                        tof.coords['position'])
+
+    coord = dspacing.coords['dspacing']
+    # Due to conversion, the coordinate now also depends on 'spectrum'.
+    assert coord.dims == ['spectrum', 'dspacing']
+    assert coord.shape == [2, 4]
+    assert coord.unit == sc.units.angstrom
+
+    # Rule of thumb (https://www.psi.ch/niag/neutron-physics):
+    # v [m/s] = 3956 / \lambda [ Angstrom ]
+    tof_in_seconds = tof.coords['tof'] * 1e-6
+    tofs = tof_in_seconds.values
+
+    values = coord.values.flat
+
+    # Spectrum 0 is 11 m from source
+    # 2d sin(theta) = n \lambda
+    # theta = 45 deg => d = lambda / (2 * 1 / sqrt(2))
+    for val, t in zip(values, tofs):
+        np.testing.assert_almost_equal(val,
+                                       3956.0 / (11.0 / t) / math.sqrt(2.0),
+                                       val * 1e-3)
+
+    # Spectrum 1
+    # sin(2 theta) = 0.1/(L-10)
+    L = 10.0 + math.sqrt(1.0 * 1.0 + 0.1 * 0.1)
+    lambda_to_d = 1.0 / (2.0 * math.sin(0.5 * math.asin(0.1 / (L - 10.0))))
+    for val, t in zip(values[4:], tofs):
+        np.testing.assert_almost_equal(val, 3956.0 / (L / t) * lambda_to_d,
+                                       val * 1e-3)
 
 
 def make_dataset_in(dim):
