@@ -184,6 +184,32 @@ def test_convert_tof_to_dspacing():
                                        val * 1e-3)
 
 
+def test_convert_dspacing_to_Tof():
+    """Assuming the tof_to_dspacing test is correct and passing we can test the
+    inverse conversion by simply comparing a round trip conversion with the
+    original data."""
+
+    tof_original = make_tof_dataset()
+    dspacing = scn.convert(tof_original,
+                           origin='tof',
+                           target='dspacing',
+                           scatter=True)
+    tof = scn.convert(dspacing, origin='dspacing', target='tof', scatter=True)
+
+    assert 'counts' in tof
+    # Broadcasting is needed as conversion introduces the
+    # dependance on 'spectrum'.
+    expected_tofs = sc.broadcast(tof_original.coords['tof'],
+                                 tof.coords['tof'].dims,
+                                 tof.coords['tof'].shape)
+    np.testing.assert_allclose(tof.coords['tof'].values,
+                               expected_tofs.values,
+                               atol=1e-12)
+
+    for key in ('position', 'source_position', 'sample_position'):
+        assert sc.identical(tof.coords[key], tof_original.coords[key])
+
+
 def make_dataset_in(dim):
     if dim == 'tof':
         return make_tof_dataset()  # TODO triggers segfault otherwise
