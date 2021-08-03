@@ -9,7 +9,6 @@ import numpy as np
 from ._common import (BadSource, SkipSource, MissingDataset, Group)
 import scipp as sc
 from warnings import warn
-from itertools import groupby
 from ._transformations import get_full_transformation_matrix
 from ._nexus import LoadFromNexus, GroupObject
 
@@ -20,11 +19,6 @@ _time_of_flight = "tof"
 
 class DetectorIdError(Exception):
     pass
-
-
-def _all_equal(iterable):
-    g = groupby(iterable)
-    return next(g, True) and not next(g, False)
 
 
 def _check_for_missing_fields(group: Group, nexus: LoadFromNexus):
@@ -77,8 +71,10 @@ def _load_pixel_positions(detector_group: GroupObject, detector_ids_size: int,
         # missing, in which case use zeros
         z_positions = np.zeros_like(x_positions)
 
-    if not _all_equal(
-        (x_positions.size, y_positions.size, z_positions.size, detector_ids_size)):
+    list_of_sizes = [
+        x_positions.size, y_positions.size, z_positions.size, detector_ids_size
+    ]
+    if list_of_sizes.count(list_of_sizes[0]) != len(list_of_sizes):
         warn(f"Skipped loading pixel positions as pixel offset and id "
              f"dataset sizes do not match in {nexus.get_name(detector_group)}")
         return None
