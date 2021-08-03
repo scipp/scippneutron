@@ -65,8 +65,8 @@ def _load_instrument_name(instrument_groups: List[Group], data: ScippData,
                                     "instrument_name", data, nexus)
 
 
-def _load_sample(sample_groups: List[Group], data: ScippData,
-                 file_root: h5py.File, nexus: LoadFromNexus):
+def _load_sample(sample_groups: List[Group], data: ScippData, file_root: h5py.File,
+                 nexus: LoadFromNexus):
     load_positions_of_components(sample_groups,
                                  data,
                                  "sample",
@@ -76,23 +76,22 @@ def _load_sample(sample_groups: List[Group], data: ScippData,
                                  default_position=np.array([0, 0, 0]))
 
 
-def _load_source(source_groups: List[Group], data: ScippData,
-                 file_root: h5py.File, nexus: LoadFromNexus):
+def _load_source(source_groups: List[Group], data: ScippData, file_root: h5py.File,
+                 nexus: LoadFromNexus):
     load_position_of_unique_component(source_groups, data, "source", nx_source,
                                       file_root, nexus)
 
 
 def _load_title(entry_group: Group, data: ScippData, nexus: LoadFromNexus):
-    _add_string_attr_to_loaded_data(entry_group.group, "title",
-                                    "experiment_title", data, nexus)
-
-
-def _load_start_and_end_time(entry_group: Group, data: ScippData,
-                             nexus: LoadFromNexus):
-    _add_string_attr_to_loaded_data(entry_group.group, "start_time",
-                                    "start_time", data, nexus)
-    _add_string_attr_to_loaded_data(entry_group.group, "end_time", "end_time",
+    _add_string_attr_to_loaded_data(entry_group.group, "title", "experiment_title",
                                     data, nexus)
+
+
+def _load_start_and_end_time(entry_group: Group, data: ScippData, nexus: LoadFromNexus):
+    _add_string_attr_to_loaded_data(entry_group.group, "start_time", "start_time", data,
+                                    nexus)
+    _add_string_attr_to_loaded_data(entry_group.group, "end_time", "end_time", data,
+                                    nexus)
 
 
 def load_nexus(data_file: Union[str, h5py.File],
@@ -132,9 +131,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     # Use visititems (in find_by_nx_class) to traverse the entire file tree,
     # looking for any NXClass that can be read.
     # groups is a dict with a key for each category (nx_log, nx_instrument...)
-    groups = nexus.find_by_nx_class(
-        (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample, nx_source,
-         nx_detector), root_node)
+    groups = nexus.find_by_nx_class((nx_event_data, nx_log, nx_entry, nx_instrument,
+                                     nx_sample, nx_source, nx_detector), root_node)
     if len(groups[nx_entry]) > 1:
         # We can't sensibly load from multiple NXentry, for example each
         # could could contain a description of the same detector bank
@@ -143,9 +141,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             f"More than one {nx_entry} group in file, use 'root' argument "
             "to specify which to load data from, for example"
             f"{__name__}('my_file.nxs', '/entry_2')")
-    loaded_data = load_detector_data(groups[nx_event_data],
-                                     groups[nx_detector], nexus_file, nexus,
-                                     quiet)
+    loaded_data = load_detector_data(groups[nx_event_data], groups[nx_detector],
+                                     nexus_file, nexus, quiet)
     # If no event data are found, make a Dataset and add the metadata as
     # Dataset entries. Otherwise, make a DataArray.
     if loaded_data is None:
@@ -159,17 +156,14 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         _load_start_and_end_time(groups[nx_entry][0], loaded_data, nexus)
 
         try:
-            run_start_time = nexus.load_scalar_string(
-                groups[nx_entry][0].group, "start_time")
+            run_start_time = nexus.load_scalar_string(groups[nx_entry][0].group,
+                                                      "start_time")
         except (AttributeError, TypeError, MissingDataset):
             run_start_time = None
     else:
         run_start_time = None
 
-    load_logs(loaded_data,
-              groups[nx_log],
-              nexus,
-              run_start_time=run_start_time)
+    load_logs(loaded_data, groups[nx_log], nexus, run_start_time=run_start_time)
 
     if groups[nx_sample]:
         _load_sample(groups[nx_sample], loaded_data, nexus_file, nexus)
@@ -186,8 +180,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
 def _load_nexus_json(
     json_template: str,
     get_start_info: bool = False
-) -> Tuple[Optional[ScippData], Optional[sc.Variable],
-           Optional[Set[StreamInfo]]]:
+) -> Tuple[Optional[ScippData], Optional[sc.Variable], Optional[Set[StreamInfo]]]:
     """
     Use this function for testing so that file io is not required
     """
@@ -197,8 +190,7 @@ def _load_nexus_json(
     streams = None
     if get_start_info:
         streams = get_streams_info(loaded_json)
-    return _load_data(loaded_json, None, LoadFromJson(loaded_json),
-                      True), streams
+    return _load_data(loaded_json, None, LoadFromJson(loaded_json), True), streams
 
 
 def load_nexus_json(json_filename: str) -> Optional[ScippData]:

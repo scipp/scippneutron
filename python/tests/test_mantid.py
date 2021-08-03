@@ -19,10 +19,8 @@ def memory_is_at_least_gb(required):
     return total >= required
 
 
-@pytest.mark.skipif(not memory_is_at_least_gb(4),
-                    reason='Insufficient virtual memory')
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not memory_is_at_least_gb(4), reason='Insufficient virtual memory')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 class TestMantidConversion(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -61,8 +59,8 @@ class TestMantidConversion(unittest.TestCase):
         binned_mantid = scn.mantid.convert_Workspace2D_to_data_array(ws)
 
         target_tof = binned_mantid.coords['tof']
-        d = scn.mantid.convert_EventWorkspace_to_data_array(
-            eventWS, load_pulse_times=False)
+        d = scn.mantid.convert_EventWorkspace_to_data_array(eventWS,
+                                                            load_pulse_times=False)
         binned = sc.histogram(d, target_tof)
 
         delta = sc.sum(binned_mantid - binned, 'spectrum')
@@ -70,8 +68,8 @@ class TestMantidConversion(unittest.TestCase):
         self.assertLess(np.abs(delta.value), 1e-5)
 
     def test_comparison(self):
-        a = scn.mantid.convert_EventWorkspace_to_data_array(
-            self.base_event_ws, load_pulse_times=False)
+        a = scn.mantid.convert_EventWorkspace_to_data_array(self.base_event_ws,
+                                                            load_pulse_times=False)
         b = a.copy()
         assert sc.identical(a, b)
 
@@ -81,8 +79,7 @@ class TestMantidConversion(unittest.TestCase):
         x = scn.from_mantid(self.base_event_ws, advanced_geometry=False)
         y = scn.from_mantid(self.base_event_ws, advanced_geometry=True)
         assert np.all(
-            np.isclose(x.coords['position'].values,
-                       y.coords['position'].values))
+            np.isclose(x.coords['position'].values, y.coords['position'].values))
 
     def test_advanced_geometry_with_absent_shape(self):
         import mantid.simpleapi as mantid
@@ -95,8 +92,8 @@ class TestMantidConversion(unittest.TestCase):
         geom_path = os.path.join(tempfile.gettempdir(), file_name)
         mantid.SaveNexusGeometry(ws, geom_path)  # Does not save shape info
         assert os.path.isfile(geom_path)  # sanity check
-        out = mantid.LoadEmptyInstrument(
-            Filename=geom_path, StoreInADS=False)  # reload without sample info
+        out = mantid.LoadEmptyInstrument(Filename=geom_path,
+                                         StoreInADS=False)  # reload without sample info
         os.remove(geom_path)
 
         assert not out.componentInfo().hasValidShape(0)  # sanity check
@@ -110,12 +107,12 @@ class TestMantidConversion(unittest.TestCase):
         tiny_event_ws = mantid.CreateSampleWorkspace(WorkspaceType='Event',
                                                      NumBanks=1,
                                                      NumEvents=1)
-        d = scn.mantid.convert_EventWorkspace_to_data_array(
-            tiny_event_ws, load_pulse_times=False)
+        d = scn.mantid.convert_EventWorkspace_to_data_array(tiny_event_ws,
+                                                            load_pulse_times=False)
         self.assertEqual(d.data.events.unit, sc.units.counts)
         tiny_event_ws.setYUnit('')
-        d = scn.mantid.convert_EventWorkspace_to_data_array(
-            tiny_event_ws, load_pulse_times=False)
+        d = scn.mantid.convert_EventWorkspace_to_data_array(tiny_event_ws,
+                                                            load_pulse_times=False)
         self.assertEqual(d.data.events.unit, sc.units.one)
 
     def test_from_mantid_LoadEmptyInstrument(self):
@@ -145,8 +142,8 @@ class TestMantidConversion(unittest.TestCase):
                                  EMode="Elastic")
         converted_mantid = scn.mantid.convert_Workspace2D_to_data_array(ws)
 
-        da = scn.mantid.convert_EventWorkspace_to_data_array(
-            eventWS, load_pulse_times=False)
+        da = scn.mantid.convert_EventWorkspace_to_data_array(eventWS,
+                                                             load_pulse_times=False)
         da = sc.histogram(da, target_tof)
         d = sc.Dataset({da.name: da})
         converted = scn.convert(d, 'tof', 'wavelength', scatter=True)
@@ -184,8 +181,7 @@ class TestMantidConversion(unittest.TestCase):
         scale = (m_n_2006 / m_n_2018) / (e_2006 / e_2018)
         da.coords['source_position'] *= np.sqrt(scale)
         da.coords['position'] *= np.sqrt(scale)
-        low_tof = da.bins.constituents['data'].coords[
-            'tof'] < 49000.0 * sc.units.us
+        low_tof = da.bins.constituents['data'].coords['tof'] < 49000.0 * sc.units.us
         da.coords['incident_energy'] = 3.0 * sc.units.meV
         da = scn.convert(da, 'tof', 'energy_transfer', scatter=True)
         assert sc.all(
@@ -197,11 +193,10 @@ class TestMantidConversion(unittest.TestCase):
         assert sc.all(
             low_tof
             | sc.isnan(da.bins.constituents['data'].coords['energy_transfer'])
-            | sc.isclose(
-                da.bins.constituents['data'].coords['energy_transfer'],
-                ref.bins.constituents['data'].coords['energy_transfer'],
-                atol=1e-5 * sc.units.meV,
-                rtol=1e-5 * sc.units.one)).value
+            | sc.isclose(da.bins.constituents['data'].coords['energy_transfer'],
+                         ref.bins.constituents['data'].coords['energy_transfer'],
+                         atol=1e-5 * sc.units.meV,
+                         rtol=1e-5 * sc.units.one)).value
 
     @staticmethod
     def _mask_bins_and_spectra(ws, xmin, xmax, num_spectra, indices=None):
@@ -233,8 +228,7 @@ class TestMantidConversion(unittest.TestCase):
 
         ds = scn.mantid.convert_Workspace2D_to_data_array(masked_ws)
 
-        np.testing.assert_array_equal(ds.masks["bin"].values[0:3],
-                                      [True, True, True])
+        np.testing.assert_array_equal(ds.masks["bin"].values[0:3], [True, True, True])
 
         np.testing.assert_array_equal(ds.masks["spectrum"].values[0:3],
                                       [True, True, True])
@@ -267,10 +261,7 @@ class TestMantidConversion(unittest.TestCase):
         import mantid.simpleapi as mantid
         eventWS = self.base_event_ws
         ws = mantid.Rebin(eventWS, 10000, PreserveEvents=False)
-        ws = mantid.ConvertUnits(ws,
-                                 "Wavelength",
-                                 EMode="Direct",
-                                 EFixed=0.1231)
+        ws = mantid.ConvertUnits(ws, "Wavelength", EMode="Direct", EFixed=0.1231)
 
         # these X values will mask different number of bins
         masked_ws = self._mask_bins_and_spectra(ws,
@@ -284,12 +275,10 @@ class TestMantidConversion(unittest.TestCase):
         ds = scn.mantid.convert_Workspace2D_to_data_array(masked_ws)
 
         # bin with 3 masks
-        np.testing.assert_array_equal(ds.masks["bin"].values[0],
-                                      [True, True, False])
+        np.testing.assert_array_equal(ds.masks["bin"].values[0], [True, True, False])
 
         # bin with only 2
-        np.testing.assert_array_equal(ds.masks["bin"].values[31],
-                                      [True, True, False])
+        np.testing.assert_array_equal(ds.masks["bin"].values[31], [True, True, False])
 
         np.testing.assert_array_equal(ds.masks["spectrum"].values[0:3],
                                       [True, True, True])
@@ -341,11 +330,7 @@ class TestMantidConversion(unittest.TestCase):
         from mantid.simpleapi import mtd
         mtd.clear()
         filename = MantidDataHelper.find_known_file("CNCS_51936_event.nxs")
-        ds = scn.load(filename,
-                      mantid_args={
-                          "LoadMonitors": True,
-                          "SpectrumMax": 1
-                      })
+        ds = scn.load(filename, mantid_args={"LoadMonitors": True, "SpectrumMax": 1})
         self.assertEqual(len(mtd), 0, mtd.getObjectNames())
         attrs = [str(key) for key in ds.attrs.keys()]
         expected_monitor_attrs = {"monitor2", "monitor3"}
@@ -365,8 +350,7 @@ class TestMantidConversion(unittest.TestCase):
                 "Expect run logs not be duplicated in monitor workspaces"
 
     def test_mdhisto_workspace_q(self):
-        from mantid.simpleapi import (CreateMDWorkspace, FakeMDEventData,
-                                      BinMD)
+        from mantid.simpleapi import (CreateMDWorkspace, FakeMDEventData, BinMD)
 
         md_event = CreateMDWorkspace(Dimensions=3,
                                      Extents=[-10, 10, -10, 10, -10, 10],
@@ -383,8 +367,7 @@ class TestMantidConversion(unittest.TestCase):
                          AlignedDim2='Q_z,-10,10,5',
                          StoreInADS=False)
 
-        histo_data_array = scn.mantid.convert_MDHistoWorkspace_to_data_array(
-            md_histo)
+        histo_data_array = scn.mantid.convert_MDHistoWorkspace_to_data_array(md_histo)
 
         self.assertEqual(histo_data_array.coords['Q_x'].values.shape, (4, ))
         self.assertEqual(histo_data_array.coords['Q_y'].values.shape, (3, ))
@@ -409,15 +392,13 @@ class TestMantidConversion(unittest.TestCase):
         self.assertTrue('nevents' in histo_data_array.attrs)
 
     def test_mdhisto_workspace_many_dims(self):
-        from mantid.simpleapi import (CreateMDWorkspace, FakeMDEventData,
-                                      BinMD)
+        from mantid.simpleapi import (CreateMDWorkspace, FakeMDEventData, BinMD)
 
-        md_event = CreateMDWorkspace(
-            Dimensions=4,
-            Extents=[-10, 10, -10, 10, -10, 10, -10, 10],
-            Names='deltae,y,z,T',
-            Units='U,U,U,U',
-            StoreInADS=False)
+        md_event = CreateMDWorkspace(Dimensions=4,
+                                     Extents=[-10, 10, -10, 10, -10, 10, -10, 10],
+                                     Names='deltae,y,z,T',
+                                     Units='U,U,U,U',
+                                     StoreInADS=False)
         FakeMDEventData(InputWorkspace=md_event,
                         PeakParams=[100000, 0, 0, 0, 0, 1],
                         StoreInADS=False)  # Add Peak
@@ -428,8 +409,7 @@ class TestMantidConversion(unittest.TestCase):
                          AlignedDim3='T,-10,10,7',
                          StoreInADS=False)
 
-        histo_data_array = scn.mantid.convert_MDHistoWorkspace_to_data_array(
-            md_histo)
+        histo_data_array = scn.mantid.convert_MDHistoWorkspace_to_data_array(md_histo)
         self.assertEqual(4, len(histo_data_array.dims))
 
     def test_to_workspace_2d_no_error(self):
@@ -446,14 +426,12 @@ class TestMantidConversion(unittest.TestCase):
         expected_number_spectra = 10
 
         y = sc.Variable(['spectrum', param_dim],
-                        values=np.random.rand(expected_number_spectra,
-                                              data_len))
+                        values=np.random.rand(expected_number_spectra, data_len))
 
         x = sc.Variable(['spectrum', param_dim],
-                        values=np.arange(
-                            expected_number_spectra * expected_bins,
-                            dtype=np.float64).reshape(
-                                (expected_number_spectra, expected_bins)))
+                        values=np.arange(expected_number_spectra * expected_bins,
+                                         dtype=np.float64).reshape(
+                                             (expected_number_spectra, expected_bins)))
         data = sc.DataArray(data=y, coords={param_dim: x})
 
         ws = scn.to_mantid(data, param_dim)
@@ -466,8 +444,7 @@ class TestMantidConversion(unittest.TestCase):
         for i in range(expected_number_spectra):
             np.testing.assert_array_equal(ws.readX(i), x['spectrum', i].values)
             np.testing.assert_array_equal(ws.readY(i), y['spectrum', i].values)
-            np.testing.assert_array_equal(ws.readE(i),
-                                          np.sqrt(y['spectrum', i].values))
+            np.testing.assert_array_equal(ws.readE(i), np.sqrt(y['spectrum', i].values))
 
     def test_fit(self):
         """
@@ -477,13 +454,12 @@ class TestMantidConversion(unittest.TestCase):
         from mantid.simpleapi import mtd
         mtd.clear()
 
-        data = scn.load(filename=MantidDataHelper.find_known_file(
-            "iris26176_graphite002_sqw.nxs"))
+        data = scn.load(
+            filename=MantidDataHelper.find_known_file("iris26176_graphite002_sqw.nxs"))
 
         params, diff = scn.fit(data['Q', 0],
                                mantid_args={
-                                   'Function':
-                                   'name=LinearBackground,A0=0,A1=1',
+                                   'Function': 'name=LinearBackground,A0=0,A1=1',
                                    'StartX': 0,
                                    'EndX': 3
                                })
@@ -503,9 +479,8 @@ class TestMantidConversion(unittest.TestCase):
         import mantid.simpleapi as mantid
         target = mantid.CloneWorkspace(self.base_event_ws)
         log_name = "SampleTemp"
-        self.assertTrue(
-            target.run().hasProperty(log_name),
-            f"Expected input workspace to have a {log_name} run log")
+        self.assertTrue(target.run().hasProperty(log_name),
+                        f"Expected input workspace to have a {log_name} run log")
 
         # When the workspace is converted to a scipp data array
         d = scn.mantid.convert_EventWorkspace_to_data_array(target, False)
@@ -518,9 +493,8 @@ class TestMantidConversion(unittest.TestCase):
             "the original run log from the Mantid workspace")
         self.assertEqual(d.attrs[log_name].values.unit, sc.units.K)
         self.assertTrue(
-            np.array_equal(
-                target.run()[log_name].times.astype('datetime64[ns]'),
-                d.attrs[log_name].values.coords["time"].values),
+            np.array_equal(target.run()[log_name].times.astype('datetime64[ns]'),
+                           d.attrs[log_name].values.coords["time"].values),
             "Expected times in the unaligned coord to match "
             "the original run log from the Mantid workspace")
 
@@ -529,9 +503,8 @@ class TestMantidConversion(unittest.TestCase):
         import mantid.simpleapi as mantid
         target = mantid.CloneWorkspace(self.base_event_ws)
         log_name = "start_time"
-        self.assertTrue(
-            target.run().hasProperty(log_name),
-            f"Expected input workspace to have a {log_name} run log")
+        self.assertTrue(target.run().hasProperty(log_name),
+                        f"Expected input workspace to have a {log_name} run log")
 
         # When the workspace is converted to a scipp data array
         d = scn.mantid.convert_EventWorkspace_to_data_array(target, False)
@@ -602,8 +575,7 @@ class TestMantidConversion(unittest.TestCase):
         z = 0.0
         spherical = self._exec_to_spherical(x, y, z)
         assert spherical['r'].value == np.sqrt(x**2 + y**2 + z**2)
-        assert spherical['t'].value == np.arccos(z /
-                                                 np.sqrt(x**2 + y**2 + z**2))
+        assert spherical['t'].value == np.arccos(z / np.sqrt(x**2 + y**2 + z**2))
         # Phi now should be between 0 and pi
         assert spherical['p-delta'].value == (3.0 / 4) * np.pi
         assert spherical['p-sign'].value > 0.0
@@ -632,9 +604,7 @@ class TestMantidConversion(unittest.TestCase):
         # Moving the sample accounted for in position calculations
         # but should not yield change to final detector positions
         self.assertTrue(
-            np.all(
-                np.isclose(moved_det_position.values,
-                           unmoved_det_positions.values)))
+            np.all(np.isclose(moved_det_position.values, unmoved_det_positions.values)))
 
     def test_validate_units(self):
         acceptable = ["wavelength", "Wavelength"]
@@ -649,13 +619,11 @@ class TestMantidConversion(unittest.TestCase):
                 scn.mantid.validate_dim_and_get_mantid_string(i)
 
     def test_WorkspaceGroup_parsed_correctly(self):
-        from mantid.simpleapi import (mtd, CreateSampleWorkspace,
-                                      GroupWorkspaces)
+        from mantid.simpleapi import (mtd, CreateSampleWorkspace, GroupWorkspaces)
         CreateSampleWorkspace(OutputWorkspace="ws1")
         CreateSampleWorkspace(OutputWorkspace="ws2")
         CreateSampleWorkspace(OutputWorkspace="ws3")
-        GroupWorkspaces(InputWorkspaces="ws1,ws2,ws3",
-                        OutputWorkspace="NewGroup")
+        GroupWorkspaces(InputWorkspaces="ws1,ws2,ws3", OutputWorkspace="NewGroup")
 
         converted_group = scn.from_mantid(mtd["NewGroup"])
         converted_single = scn.from_mantid(mtd["ws1"])
@@ -675,10 +643,8 @@ def test_to_rot_from_vectors():
     assert np.allclose((rot * b).value, a.value)
 
 
-@pytest.mark.skipif(not memory_is_at_least_gb(8),
-                    reason='Insufficient virtual memory')
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not memory_is_at_least_gb(8), reason='Insufficient virtual memory')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 @pytest.mark.parametrize(
     "param_dim",
     ('tof', 'wavelength', 'energy', 'dspacing', 'Q', 'Q^2', 'energy_transfer'))
@@ -692,14 +658,12 @@ def test_to_workspace_2d(param_dim):
 
     y = sc.Variable(['spectrum', param_dim],
                     values=np.random.rand(expected_number_spectra, data_len),
-                    variances=np.random.rand(expected_number_spectra,
-                                             data_len))
+                    variances=np.random.rand(expected_number_spectra, data_len))
 
     x = sc.Variable(['spectrum', param_dim],
                     values=np.arange(expected_number_spectra * expected_bins,
                                      dtype=np.float64).reshape(
-                                         (expected_number_spectra,
-                                          expected_bins)))
+                                         (expected_number_spectra, expected_bins)))
     data = sc.DataArray(data=y, coords={param_dim: x})
 
     ws = scn.to_mantid(data, param_dim)
@@ -712,12 +676,10 @@ def test_to_workspace_2d(param_dim):
     for i in range(expected_number_spectra):
         np.testing.assert_array_equal(ws.readX(i), x['spectrum', i].values)
         np.testing.assert_array_equal(ws.readY(i), y['spectrum', i].values)
-        np.testing.assert_array_equal(ws.readE(i),
-                                      np.sqrt(y['spectrum', i].variances))
+        np.testing.assert_array_equal(ws.readE(i), np.sqrt(y['spectrum', i].variances))
 
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_to_workspace_2d_handles_single_spectra():
     from mantid.simpleapi import mtd
     mtd.clear()
@@ -739,8 +701,7 @@ def test_to_workspace_2d_handles_single_spectra():
     assert np.equal(ws.readE(0), np.sqrt(expected_e)).all()
 
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_to_workspace_2d_handles_single_x_array():
     from mantid.simpleapi import mtd
     mtd.clear()
@@ -766,17 +727,13 @@ def test_to_workspace_2d_handles_single_x_array():
         assert np.equal(ws.readE(i), np.sqrt(e_vals)).all()
 
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_attrs_with_dims():
     from mantid.kernel import FloatArrayProperty
     import mantid.simpleapi as sapi
     dataX = [1, 2, 3]
     dataY = [1, 2, 3]
-    ws = sapi.CreateWorkspace(DataX=dataX,
-                              DataY=dataY,
-                              NSpec=1,
-                              UnitX="Wavelength")
+    ws = sapi.CreateWorkspace(DataX=dataX, DataY=dataY, NSpec=1, UnitX="Wavelength")
     # Time series property
     sapi.AddSampleLog(ws, 'attr0', LogText='1', LogType='Number Series')
     # Single value property
@@ -798,31 +755,28 @@ def test_attrs_with_dims():
     assert ds.attrs['attr2'].value.shape == [10]  # inner held
 
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_time_series_log_extraction():
     import mantid.simpleapi as sapi
     ws = sapi.CreateWorkspace(DataX=[0, 1], DataY=[1])
     times = [
-        np.datetime64(t) for t in
-        ['2021-01-01T00:00:00', '2021-01-01T00:30:00', '2021-01-01T00:50:00']
+        np.datetime64(t)
+        for t in ['2021-01-01T00:00:00', '2021-01-01T00:30:00', '2021-01-01T00:50:00']
     ]
     for i, t in enumerate(times):
         sapi.AddTimeSeriesLog(ws, Name='time_log', Time=str(t), Value=float(i))
     da = scn.from_mantid(ws)
     da.attrs['time_log'].value.coords['time'].dtype == sc.dtype.datetime64
     # check times
-    sc.identical(
-        sc.Variable(['time'], values=np.array(times).astype('datetime64[ns]')),
-        da.attrs['time_log'].value.coords['time'])
+    sc.identical(sc.Variable(['time'], values=np.array(times).astype('datetime64[ns]')),
+                 da.attrs['time_log'].value.coords['time'])
     # check values
     sc.identical(sc.Variable(['time'], values=np.arange(3.)),
                  da.attrs['time_log'].value.data)
     sapi.DeleteWorkspace(ws)
 
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_from_mask_workspace():
     from mantid.simpleapi import LoadMask
     from os import path
@@ -852,21 +806,16 @@ def _load_indirect_instrument(instr, parameters):
     out = LoadEmptyInstrument(InstrumentName=instr)
     if instr in parameters:
         LoadParameterFile(out,
-                          Filename=os.path.join(
-                              config.getInstrumentDirectory(),
-                              parameters[instr]))
+                          Filename=os.path.join(config.getInstrumentDirectory(),
+                                                parameters[instr]))
     if not out.run().hasProperty('EMode'):
         # EMode would usually get attached via data loading
         # We skip that so have to apply manually
-        AddSampleLog(out,
-                     LogName='EMode',
-                     LogText='Indirect',
-                     LogType='String')
+        AddSampleLog(out, LogName='EMode', LogText='Indirect', LogType='String')
     return out
 
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_extract_energy_final():
     # Efinal is often stored in a non-default parameter file
     parameters = {
@@ -875,9 +824,7 @@ def test_extract_energy_final():
         'OSIRIS': 'OSIRIS_graphite_002_Parameters.xml',
         'BASIS': 'BASIS_silicon_311_Parameters.xml'
     }
-    unsupported = [
-        'ZEEMANS', 'MARS', 'IN10', 'IN13', 'IN16', 'VISION', 'VESUVIO'
-    ]
+    unsupported = ['ZEEMANS', 'MARS', 'IN10', 'IN13', 'IN16', 'VISION', 'VESUVIO']
     for instr in _all_indirect(blacklist=unsupported):
         out = _load_indirect_instrument(instr, parameters)
         ds = scn.from_mantid(out)
@@ -886,8 +833,7 @@ def test_extract_energy_final():
         assert efs.unit == sc.Unit("meV")
 
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_extract_energy_final_when_not_present():
     from mantid.simpleapi import CreateSampleWorkspace
     from mantid.kernel import DeltaEModeType
@@ -897,8 +843,7 @@ def test_extract_energy_final_when_not_present():
     assert "final_energy" not in ds.coords
 
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_extract_energy_initial():
     from mantid.simpleapi import mtd
     mtd.clear()
@@ -908,8 +853,7 @@ def test_extract_energy_initial():
                         sc.scalar(value=3.0, unit=sc.Unit("meV")))
 
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_extract_energy_inital_when_not_present():
     from mantid.simpleapi import CreateSampleWorkspace
     from mantid.kernel import DeltaEModeType
@@ -919,8 +863,7 @@ def test_extract_energy_inital_when_not_present():
     assert "incident_energy" not in ds.coords
 
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_EventWorkspace_with_pulse_times():
     import mantid.simpleapi as sapi
     small_event_ws = sapi.CreateSampleWorkspace(WorkspaceType='Event',
@@ -931,17 +874,15 @@ def test_EventWorkspace_with_pulse_times():
     d.data.values[0].coords['pulse_time'].dtype == sc.dtype.datetime64
     sc.identical(
         d.data.values[0].coords['pulse_time']['event', 0],
-        sc.scalar(value=small_event_ws.getSpectrum(0).getPulseTimes()
-                  [0].to_datetime64()))
+        sc.scalar(
+            value=small_event_ws.getSpectrum(0).getPulseTimes()[0].to_datetime64()))
 
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_duplicate_monitor_names():
     from mantid.simpleapi import LoadEmptyInstrument
-    ws = LoadEmptyInstrument(
-        InstrumentName='POLARIS',
-        StoreInADS=False)  # Has many monitors named 'monitor'
+    ws = LoadEmptyInstrument(InstrumentName='POLARIS',
+                             StoreInADS=False)  # Has many monitors named 'monitor'
     da = scn.mantid.from_mantid(ws)
     assert da.attrs['monitor_1'].value.attrs['spectrum'].value == 1
     assert da.attrs['monitor_13'].value.attrs['spectrum'].value == 13

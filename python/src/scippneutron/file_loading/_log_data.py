@@ -5,15 +5,14 @@
 import numpy as np
 from typing import Tuple, List, Union
 import scipp as sc
-from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute,
-                      Group)
+from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
 from ._nexus import LoadFromNexus, ScippData
 from warnings import warn
 from dateutil.parser import parse as parse_date, ParserError
 
 
-def load_logs(loaded_data: ScippData, log_groups: List[Group],
-              nexus: LoadFromNexus, run_start_time: str):
+def load_logs(loaded_data: ScippData, log_groups: List[Group], nexus: LoadFromNexus,
+              run_start_time: str):
     for group in log_groups:
         try:
             log_data_name, log_data = _load_log_data_from_group(
@@ -25,12 +24,11 @@ def load_logs(loaded_data: ScippData, log_groups: List[Group],
             pass  # skip without warning user
 
 
-def _correct_nxlog_times(
-        raw_times: sc.Variable,
-        group_path: str,
-        run_start: str = None,
-        log_start: str = None,
-        scaling_factor: Union[float, np.float_] = None) -> sc.Variable:
+def _correct_nxlog_times(raw_times: sc.Variable,
+                         group_path: str,
+                         run_start: str = None,
+                         log_start: str = None,
+                         scaling_factor: Union[float, np.float_] = None) -> sc.Variable:
     """
     The nexus standard allows an arbitrary scaling factor to be inserted
     between the numbers in the `time` series and the unit of time reported
@@ -61,17 +59,16 @@ def _correct_nxlog_times(
     try:
         raw_times_s = sc.to_unit(raw_times, sc.units.s)
     except sc.UnitError:
-        raise BadSource(
-            f"The units of time in the NXlog entry at "
-            f"'{group_path}/time{{units}}' must be convertible to seconds, "
-            f"but this cannot be done for '{raw_times.unit}'. Skipping "
-            f"loading NXLog at '{group_path}'.")
+        raise BadSource(f"The units of time in the NXlog entry at "
+                        f"'{group_path}/time{{units}}' must be convertible to seconds, "
+                        f"but this cannot be done for '{raw_times.unit}'. Skipping "
+                        f"loading NXLog at '{group_path}'.")
 
     try:
-        _log_start_ts = sc.scalar(value=parse_date(log_start).timestamp()
-                                  if log_start is not None else 0.,
-                                  unit=sc.units.s,
-                                  dtype=sc.dtype.float64)
+        _log_start_ts = sc.scalar(
+            value=parse_date(log_start).timestamp() if log_start is not None else 0.,
+            unit=sc.units.s,
+            dtype=sc.dtype.float64)
     except (ParserError, OverflowError):
         raise BadSource(
             f"The date string '{log_start}' in the NXLog entry at "
@@ -79,26 +76,24 @@ def _correct_nxlog_times(
             f"Skipping loading NXLog at '{group_path}'")
 
     try:
-        _run_start_ts = sc.scalar(value=parse_date(run_start).timestamp()
-                                  if run_start is not None else 0.,
-                                  unit=sc.units.s,
-                                  dtype=sc.dtype.float64)
+        _run_start_ts = sc.scalar(
+            value=parse_date(run_start).timestamp() if run_start is not None else 0.,
+            unit=sc.units.s,
+            dtype=sc.dtype.float64)
     except (ParserError, OverflowError):
-        raise BadSource(
-            f"The run start time '{run_start}' at '/<NXEntry>/start_time' "
-            f"failed to parse as an ISO8601 date. Skipping loading NXLog "
-            f"at '{group_path}'.")
+        raise BadSource(f"The run start time '{run_start}' at '/<NXEntry>/start_time' "
+                        f"failed to parse as an ISO8601 date. Skipping loading NXLog "
+                        f"at '{group_path}'.")
 
-    _scale = sc.scalar(
-        value=scaling_factor if scaling_factor is not None else 1.,
-        unit=sc.units.dimensionless,
-        dtype=sc.dtype.float64)
+    _scale = sc.scalar(value=scaling_factor if scaling_factor is not None else 1.,
+                       unit=sc.units.dimensionless,
+                       dtype=sc.dtype.float64)
 
     return (raw_times_s * _scale) + (_log_start_ts - _run_start_ts)
 
 
-def _add_log_to_data(log_data_name: str, log_data: sc.Variable,
-                     group_path: str, data: ScippData):
+def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,
+                     data: ScippData):
     """
     Add an attribute with a unique name.
     If an attribute name already exists, we iteratively walk up the file tree
@@ -138,15 +133,13 @@ def _load_log_data_from_group(group: Group, nexus: LoadFromNexus,
             group.group, value_dataset_name)
     except MissingDataset:
         if group.contains_stream:
-            raise SkipSource(
-                "Log is missing value dataset but contains stream")
+            raise SkipSource("Log is missing value dataset but contains stream")
         raise BadSource(f"NXlog '{property_name}' has no value dataset")
 
     if values.size == 0:
         raise BadSource(f"NXlog '{property_name}' has an empty value dataset")
 
-    unit = nexus.get_unit(
-        nexus.get_dataset_from_group(group.group, value_dataset_name))
+    unit = nexus.get_unit(nexus.get_dataset_from_group(group.group, value_dataset_name))
     try:
         unit = sc.Unit(unit)
     except sc.UnitError:
@@ -160,16 +153,14 @@ def _load_log_data_from_group(group: Group, nexus: LoadFromNexus,
         raw_times = nexus.load_dataset(group.group, time_dataset_name,
                                        [dimension_label])
 
-        time_dataset = nexus.get_dataset_from_group(group.group,
-                                                    time_dataset_name)
+        time_dataset = nexus.get_dataset_from_group(group.group, time_dataset_name)
         try:
             log_start_time = nexus.get_string_attribute(time_dataset, "start")
         except (MissingAttribute, TypeError):
             log_start_time = None
 
         try:
-            scaling_factor = nexus.get_attribute(time_dataset,
-                                                 "scaling_factor")
+            scaling_factor = nexus.get_attribute(time_dataset, "scaling_factor")
         except (MissingAttribute, TypeError):
             scaling_factor = None
 
@@ -205,12 +196,7 @@ def _load_log_data_from_group(group: Group, nexus: LoadFromNexus,
 
     if is_time_series:
         # If property has timestamps, create a DataArray
-        data_array = {
-            "data": property_data,
-            "coords": {
-                dimension_label: times
-            }
-        }
+        data_array = {"data": property_data, "coords": {dimension_label: times}}
         return property_name, sc.Variable(value=sc.DataArray(**data_array))
     elif not np.isscalar(values):
         # If property is multi-valued, create a wrapper single

@@ -20,10 +20,10 @@ class MantidScippComparison(ABC):
             rtol = 1e-9 * sc.units.one
             atol = 1e-9 * a.unit
             if isinstance(a, sc.DataArray):
-                assert sc.all(sc.isclose(
-                    a.data, b.data, rtol=rtol,
-                    atol=atol)).value and sc.utils.comparison.isnear(
-                        a, b, rtol=1e-6 * sc.units.one, include_data=False)
+                assert sc.all(
+                    sc.isclose(a.data, b.data, rtol=rtol,
+                               atol=atol)).value and sc.utils.comparison.isnear(
+                                   a, b, rtol=1e-6 * sc.units.one, include_data=False)
             else:
                 assert sc.all(sc.isclose(a, b, rtol=rtol, atol=atol)).value
         except AssertionError as ae:
@@ -37,10 +37,8 @@ class MantidScippComparison(ABC):
                                                             input=in_ws)
         in_da = mantid.from_mantid(in_ws)
         if in_da.data.bins is not None:
-            in_da = in_da.astype(
-                sc.dtype.float64)  # Converters set weights float32
-        out_scipp, time_scipp = self._execute_with_timing(self._run_scipp,
-                                                          input=in_da)
+            in_da = in_da.astype(sc.dtype.float64)  # Converters set weights float32
+        out_scipp, time_scipp = self._execute_with_timing(self._run_scipp, input=in_da)
 
         self._assert(out_scipp, out_mantid, allow_failure)
 
@@ -54,8 +52,7 @@ class MantidScippComparison(ABC):
         import mantid.simpleapi as sapi
         results = {}
         if self._filenames == {} and self._workspaces == {}:
-            raise RuntimeError(
-                'No _files or _workspaces provided for testing ')
+            raise RuntimeError('No _files or _workspaces provided for testing ')
         for name, (hash, algorithm) in self._filenames.items():
             file = MantidDataHelper.find_file(hash, algorithm)
             print('Loading', name)
