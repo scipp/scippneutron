@@ -9,14 +9,9 @@
 #include <scipp/units/unit.h>
 #include <scipp/variable/variable.h>
 
-#include "scipp/neutron/conversions.h"
+#include "scippneutron_export.h"
 
 namespace scipp::neutron::conversions {
-
-variable::Variable wavelength_from_tof(const variable::Variable &tof, const variable::Variable &Ltotal) {
-  return variable::Variable(scipp::neutron::constants::tof_to_wavelength_physical_constants) * tof / Ltotal;
-}
-
 constexpr auto tof_to_energy = [](auto &coord, const auto &c) {
   coord = c / (coord * coord);
 };
@@ -48,5 +43,9 @@ constexpr auto energy_transfer_to_tof = [](auto &coord, const auto &scale,
                                            const auto &energy_shift) {
   coord = tof_shift + sqrt(scale / (coord + energy_shift));
 };
+
+[[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
+wavelength_from_tof(const variable::Variable &Ltotal,
+                    const variable::Variable &tof);
 
 } // namespace scipp::neutron::conversions
