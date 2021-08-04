@@ -45,6 +45,52 @@ def make_count_density_variable(unit):
                      })
 
 
+def check_tof_round_trip(via):
+    tof_original = make_tof_dataset()
+    converted = scn.convert(tof_original,
+                            origin='tof',
+                            target=via,
+                            scatter=True)
+    tof = scn.convert(converted, origin=via, target='tof', scatter=True)
+
+    assert 'counts' in tof
+    assert sc.all(
+        sc.isclose(tof.coords['tof'],
+                   tof_original.coords['tof'],
+                   rtol=sc.scalar(0.0),
+                   atol=sc.scalar(1e-12, unit=tof.coords['tof'].unit))).value
+    for key in ('position', 'source_position', 'sample_position'):
+        assert sc.identical(tof.coords[key], tof_original.coords[key])
+
+
+def make_dataset_in(dim):
+    if dim == 'tof':
+        return make_tof_dataset()  # TODO triggers segfault otherwise
+    return scn.convert(make_tof_dataset(),
+                       origin='tof',
+                       target=dim,
+                       scatter=True)
+
+
+@pytest.mark.parametrize(('origin', 'target'),
+                         itertools.product(
+                             ('tof', 'dspacing', 'wavelength', 'energy'),
+                             repeat=2))
+def test_convert_dataset_vs_dataarray(origin, target):
+    if target == 'tof' and origin == 'tof':
+        return  # TODO triggers segfault otherwise
+    inputs = make_dataset_in(origin)
+    expected = scn.convert(inputs, origin=origin, target=target, scatter=True)
+    result = sc.Dataset(
+        data={
+            name: scn.convert(
+                data.copy(), origin=origin, target=target, scatter=True)
+            for name, data in inputs.items()
+        })
+    for name, data in result.items():
+        assert sc.identical(data, expected[name])
+
+
 def test_convert_input_unchanged():
     inputs = make_tof_dataset()
     original = inputs.copy(deep=True)
@@ -163,14 +209,11 @@ def test_convert_tof_to_dspacing():
     # Rule of thumb (https://www.psi.ch/niag/neutron-physics):
     # v [m/s] = 3956 / \lambda [ Angstrom ]
     tof_in_seconds = tof.coords['tof'] * 1e-6
-    tofs = tof_in_seconds.values
-
-    values = coord.values.flat
 
     # Spectrum 0 is 11 m from source
     # 2d sin(theta) = n \lambda
     # theta = 45 deg => d = lambda / (2 * 1 / sqrt(2))
-    for val, t in zip(values, tofs):
+    for val, t in zip(coord['spectrum', 0].values, tof_in_seconds.values):
         np.testing.assert_almost_equal(val,
                                        3956.0 / (11.0 / t) / math.sqrt(2.0),
                                        val * 1e-3)
@@ -179,60 +222,57 @@ def test_convert_tof_to_dspacing():
     # sin(2 theta) = 0.1/(L-10)
     L = 10.0 + math.sqrt(1.0 * 1.0 + 0.1 * 0.1)
     lambda_to_d = 1.0 / (2.0 * math.sin(0.5 * math.asin(0.1 / (L - 10.0))))
-    for val, t in zip(values[4:], tofs):
+    for val, t in zip(coord['spectrum', 1].values, tof_in_seconds.values):
         np.testing.assert_almost_equal(val, 3956.0 / (L / t) * lambda_to_d,
                                        val * 1e-3)
 
 
-def test_convert_dspacing_to_Tof():
+def test_convert_dspacing_to_tof():
     """Assuming the tof_to_dspacing test is correct and passing we can test the
     inverse conversion by simply comparing a round trip conversion with the
     original data."""
-
-    tof_original = make_tof_dataset()
-    dspacing = scn.convert(tof_original,
-                           origin='tof',
-                           target='dspacing',
-                           scatter=True)
-    tof = scn.convert(dspacing, origin='dspacing', target='tof', scatter=True)
-
-    assert 'counts' in tof
-    # Broadcasting is needed as conversion introduces the
-    # dependance on 'spectrum'.
-    expected_tofs = sc.broadcast(tof_original.coords['tof'],
-                                 tof.coords['tof'].dims,
-                                 tof.coords['tof'].shape)
-    np.testing.assert_allclose(tof.coords['tof'].values,
-                               expected_tofs.values,
-                               atol=1e-12)
-
-    for key in ('position', 'source_position', 'sample_position'):
-        assert sc.identical(tof.coords[key], tof_original.coords[key])
+    check_tof_round_trip(via='dspacing')
 
 
-def make_dataset_in(dim):
-    if dim == 'tof':
-        return make_tof_dataset()  # TODO triggers segfault otherwise
-    return scn.convert(make_tof_dataset(),
-                       origin='tof',
-                       target=dim,
-                       scatter=True)
+def test_convert_tof_to_wavelength():
+    tof = make_tof_dataset()
+    wavelength = scn.convert(tof,
+                             origin='tof',
+                             target='wavelength',
+                             scatter=True)
+
+    assert 'tof' not in wavelength.coords
+    assert 'wavelength' in wavelength.coords
+    assert 'counts' in wavelength
+    assert wavelength['counts'].dims == ['spectrum', 'wavelength']
+    assert wavelength['counts'].shape == [2, 3]
+    assert wavelength['counts'].unit == sc.units.counts
+    np.testing.assert_array_equal(wavelength['counts'].values.flat,
+                                  np.arange(1, 7))
+    assert sc.identical(wavelength['counts'].coords['position'],
+                        tof.coords['position'])
+
+    coord = wavelength.coords['wavelength']
+    # Due to conversion, the coordinate now also depends on 'spectrum'.
+    assert coord.dims == ['spectrum', 'wavelength']
+    assert coord.shape == [2, 4]
+    assert coord.unit == sc.units.angstrom
+
+    # Rule of thumb (https://www.psi.ch/niag/neutron-physics):
+    # v [m/s] = 3956 / \lambda [ Angstrom ]
+    tof_in_seconds = tof.coords['tof'] * 1e-6
+
+    # Spectrum 0 is 11 m from source
+    for val, t in zip(coord['spectrum', 0].values, tof_in_seconds.values):
+        np.testing.assert_almost_equal(val, 3956.0 / (11.0 / t), val * 1e-3)
+    # Spectrum 1
+    L = 10.0 + math.sqrt(1.0 * 1.0 + 0.1 * 0.1)
+    for val, t in zip(coord['spectrum', 1].values, tof_in_seconds.values):
+        np.testing.assert_almost_equal(val, 3956.0 / (L / t), val * 1e-3)
 
 
-@pytest.mark.parametrize(('origin', 'target'),
-                         itertools.product(
-                             ('tof', 'dspacing', 'wavelength', 'energy'),
-                             repeat=2))
-def test_convert_dataset_vs_dataarray(origin, target):
-    if target == 'tof' and origin == 'tof':
-        return  # TODO triggers segfault otherwise
-    inputs = make_dataset_in(origin)
-    expected = scn.convert(inputs, origin=origin, target=target, scatter=True)
-    result = sc.Dataset(
-        data={
-            name: scn.convert(
-                data.copy(), origin=origin, target=target, scatter=True)
-            for name, data in inputs.items()
-        })
-    for name, data in result.items():
-        assert sc.identical(data, expected[name])
+def test_convert_wavelength_to_tof():
+    """Assuming the tof_to_wavelength test is correct and passing we can test the
+    inverse conversion by simply comparing a round trip conversion with the
+    original data."""
+    check_tof_round_trip(via='wavelength')
