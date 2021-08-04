@@ -75,8 +75,7 @@ class LoadFromHdf5:
         return found_groups
 
     @staticmethod
-    def dataset_in_group(group: h5py.Group,
-                         dataset_name: str) -> Tuple[bool, str]:
+    def dataset_in_group(group: h5py.Group, dataset_name: str) -> Tuple[bool, str]:
         if dataset_name not in group:
             return False, (f"Unable to load data from NXevent_data "
                            f"at '{group.name}' due to missing '{dataset_name}'"
@@ -134,8 +133,7 @@ class LoadFromHdf5:
         numpy array is required.
         :param dataset: The dataset to load values from
         """
-        return dataset[...].astype(
-            _ensure_supported_int_type(dataset.dtype.type))
+        return dataset[...].astype(_ensure_supported_int_type(dataset.dtype.type))
 
     @staticmethod
     def get_dataset_numpy_dtype(group: h5py.Group, dataset_name: str) -> Any:
@@ -157,9 +155,8 @@ class LoadFromHdf5:
         return _ensure_str(units)
 
     @staticmethod
-    def get_child_from_group(
-            group: Dict,
-            child_name: str) -> Union[h5py.Dataset, h5py.Group, None]:
+    def get_child_from_group(group: Dict,
+                             child_name: str) -> Union[h5py.Dataset, h5py.Group, None]:
         try:
             return group[child_name]
         except KeyError:

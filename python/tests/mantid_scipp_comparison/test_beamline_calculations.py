@@ -21,8 +21,7 @@ class BeamlineComparision(MantidScippComparison):
         return {"sample_workspace": ws}
 
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 class TestBeamlineCalculations:
     def test_beamline_calculations_l1(self):
         class L1Comparison(BeamlineComparision):
@@ -52,12 +51,10 @@ class TestBeamlineCalculations:
     def test_bealine_calculations_two_theta(self):
         class TwoThetaComparison(BeamlineComparision):
             def _run_mantid(self, data):
-                return sc.array(dims=['spectrum'],
-                                unit='rad',
-                                values=[
-                                    data.detectorInfo().twoTheta(i)
-                                    for i in [0, 1, 2, 3]
-                                ])
+                return sc.array(
+                    dims=['spectrum'],
+                    unit='rad',
+                    values=[data.detectorInfo().twoTheta(i) for i in [0, 1, 2, 3]])
 
             def _run_scipp(self, data):
                 return sn.two_theta(data)

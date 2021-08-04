@@ -71,8 +71,7 @@ class KafkaConsumer:
     def stop(self):
         if not self._cancelled:
             self._cancelled = True
-            if self._consume_data is not None and self._consume_data.is_alive(
-            ):
+            if self._consume_data is not None and self._consume_data.is_alive():
                 self._consume_data.join(5.)
         self._consumer.close()
         self.stopped = True
@@ -116,8 +115,7 @@ class FakeConsumer:
     def stop(self):
         if not self._cancelled:
             self._cancelled = True
-            if self._consume_data is not None and self._consume_data.is_alive(
-            ):
+            if self._consume_data is not None and self._consume_data.is_alive():
                 self._consume_data.join(5.)
         self.stopped = True
 
@@ -167,8 +165,7 @@ class KafkaQueryConsumer:
         """
         return self._consumer.poll(timeout=timeout)
 
-    def get_watermark_offsets(self,
-                              partition: TopicPartition) -> Tuple[int, int]:
+    def get_watermark_offsets(self, partition: TopicPartition) -> Tuple[int, int]:
         """
         Get the offset of the first and last available
         message in the given partition
@@ -202,8 +199,7 @@ def create_consumers(
         query_consumer = KafkaQueryConsumer(kafka_broker)
         for topic in topics:
             topic_partitions.extend(
-                query_consumer.get_topic_partitions(topic,
-                                                    offset=start_time_ms))
+                query_consumer.get_topic_partitions(topic, offset=start_time_ms))
         topic_partitions = query_consumer.offsets_for_times(topic_partitions)
 
     # Note: the "message.max.bytes" does not necessarily have to agree with the
@@ -269,8 +265,7 @@ def get_run_start_message(topic: str, query_consumer: KafkaQueryConsumer):
         query_consumer.seek(partition)
         message = query_consumer.poll(timeout=2.)
         if message is None:
-            raise RunStartError(
-                "Timed out when trying to retrieve run start message")
+            raise RunStartError("Timed out when trying to retrieve run start message")
         elif message.error():
             raise RunStartError(f"Error encountered consuming run start "
                                 f"message: {message.error()}")
