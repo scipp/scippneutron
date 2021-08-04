@@ -45,6 +45,23 @@ def make_count_density_variable(unit):
                      })
 
 
+def check_tof_conversion_metadata(converted, target, coord_unit):
+    assert 'tof' not in converted.coords
+    assert target in converted.coords
+    assert 'counts' in converted
+    assert converted['counts'].dims == ['spectrum', target]
+    assert converted['counts'].shape == [2, 3]
+    assert converted['counts'].unit == sc.units.counts
+    np.testing.assert_array_equal(converted['counts'].values.flat,
+                                  np.arange(1, 7))
+
+    coord = converted.coords[target]
+    # Due to conversion, the coordinate now also depends on 'spectrum'.
+    assert coord.dims == ['spectrum', target]
+    assert coord.shape == [2, 4]
+    assert coord.unit == coord_unit
+
+
 def check_tof_round_trip(via):
     tof_original = make_tof_dataset()
     converted = scn.convert(tof_original,
@@ -187,24 +204,9 @@ def test_convert_coords_vs_attributes():
 def test_convert_tof_to_dspacing():
     tof = make_tof_dataset()
     dspacing = scn.convert(tof, origin='tof', target='dspacing', scatter=True)
-
-    for key in ('tof', 'position', 'source_position', 'sample_position'):
-        assert key not in dspacing.coords
-    assert 'dspacing' in dspacing.coords
-    assert 'counts' in dspacing
-    assert dspacing['counts'].dims == ['spectrum', 'dspacing']
-    assert dspacing['counts'].shape == [2, 3]
-    assert dspacing['counts'].unit == sc.units.counts
-    np.testing.assert_array_equal(dspacing['counts'].values.flat,
-                                  np.arange(1, 7))
-    assert sc.identical(dspacing['counts'].attrs['position'],
-                        tof.coords['position'])
-
-    coord = dspacing.coords['dspacing']
-    # Due to conversion, the coordinate now also depends on 'spectrum'.
-    assert coord.dims == ['spectrum', 'dspacing']
-    assert coord.shape == [2, 4]
-    assert coord.unit == sc.units.angstrom
+    check_tof_conversion_metadata(dspacing, 'dspacing', sc.units.angstrom)
+    for key in ('position', 'source_position', 'sample_position'):
+        assert sc.identical(dspacing['counts'].attrs[key], tof.coords[key])
 
     # Rule of thumb (https://www.psi.ch/niag/neutron-physics):
     # v [m/s] = 3956 / \lambda [ Angstrom ]
@@ -213,7 +215,8 @@ def test_convert_tof_to_dspacing():
     # Spectrum 0 is 11 m from source
     # 2d sin(theta) = n \lambda
     # theta = 45 deg => d = lambda / (2 * 1 / sqrt(2))
-    for val, t in zip(coord['spectrum', 0].values, tof_in_seconds.values):
+    for val, t in zip(dspacing.coords['dspacing']['spectrum', 0].values,
+                      tof_in_seconds.values):
         np.testing.assert_almost_equal(val,
                                        3956.0 / (11.0 / t) / math.sqrt(2.0),
                                        val * 1e-3)
@@ -222,7 +225,8 @@ def test_convert_tof_to_dspacing():
     # sin(2 theta) = 0.1/(L-10)
     L = 10.0 + math.sqrt(1.0 * 1.0 + 0.1 * 0.1)
     lambda_to_d = 1.0 / (2.0 * math.sin(0.5 * math.asin(0.1 / (L - 10.0))))
-    for val, t in zip(coord['spectrum', 1].values, tof_in_seconds.values):
+    for val, t in zip(dspacing.coords['dspacing']['spectrum', 1].values,
+                      tof_in_seconds.values):
         np.testing.assert_almost_equal(val, 3956.0 / (L / t) * lambda_to_d,
                                        val * 1e-3)
 
@@ -240,34 +244,22 @@ def test_convert_tof_to_wavelength():
                              origin='tof',
                              target='wavelength',
                              scatter=True)
-
-    assert 'tof' not in wavelength.coords
-    assert 'wavelength' in wavelength.coords
-    assert 'counts' in wavelength
-    assert wavelength['counts'].dims == ['spectrum', 'wavelength']
-    assert wavelength['counts'].shape == [2, 3]
-    assert wavelength['counts'].unit == sc.units.counts
-    np.testing.assert_array_equal(wavelength['counts'].values.flat,
-                                  np.arange(1, 7))
-    assert sc.identical(wavelength['counts'].coords['position'],
-                        tof.coords['position'])
-
-    coord = wavelength.coords['wavelength']
-    # Due to conversion, the coordinate now also depends on 'spectrum'.
-    assert coord.dims == ['spectrum', 'wavelength']
-    assert coord.shape == [2, 4]
-    assert coord.unit == sc.units.angstrom
+    check_tof_conversion_metadata(wavelength, 'wavelength', sc.units.angstrom)
+    for key in ('position', 'source_position', 'sample_position'):
+        assert sc.identical(wavelength['counts'].coords[key], tof.coords[key])
 
     # Rule of thumb (https://www.psi.ch/niag/neutron-physics):
     # v [m/s] = 3956 / \lambda [ Angstrom ]
     tof_in_seconds = tof.coords['tof'] * 1e-6
 
     # Spectrum 0 is 11 m from source
-    for val, t in zip(coord['spectrum', 0].values, tof_in_seconds.values):
+    for val, t in zip(wavelength.coords['wavelength']['spectrum', 0].values,
+                      tof_in_seconds.values):
         np.testing.assert_almost_equal(val, 3956.0 / (11.0 / t), val * 1e-3)
     # Spectrum 1
     L = 10.0 + math.sqrt(1.0 * 1.0 + 0.1 * 0.1)
-    for val, t in zip(coord['spectrum', 1].values, tof_in_seconds.values):
+    for val, t in zip(wavelength.coords['wavelength']['spectrum', 1].values,
+                      tof_in_seconds.values):
         np.testing.assert_almost_equal(val, 3956.0 / (L / t), val * 1e-3)
 
 
@@ -276,3 +268,53 @@ def test_convert_wavelength_to_tof():
     inverse conversion by simply comparing a round trip conversion with the
     original data."""
     check_tof_round_trip(via='wavelength')
+
+
+def test_convert_tof_to_energy_elastic():
+    tof = make_tof_dataset()
+    energy = scn.convert(tof, origin='tof', target='energy', scatter=True)
+    check_tof_conversion_metadata(energy, 'energy', sc.units.meV)
+    for key in ('position', 'source_position', 'sample_position'):
+        assert sc.identical(energy['counts'].coords[key], tof.coords[key])
+
+    # Rule of thumb (https://www.psi.ch/niag/neutron-physics):
+    # v [m/s] = 3956 / \lambda [ Angstrom ]
+    tof_in_seconds = tof.coords['tof'] * 1e-6
+    # e [J] = 1/2 m(n) [kg] (l [m] / tof [s])^2
+    joule_to_mev = 6.241509125883257e21
+    neutron_mass = 1.674927471e-27
+
+    # Spectrum 0 is 11 m from source
+    for val, t in zip(energy.coords['energy']['spectrum', 0].values,
+                      tof_in_seconds.values):
+        np.testing.assert_almost_equal(
+            val, joule_to_mev * 0.5 * neutron_mass * (11 / t)**2, val * 1e-3)
+    # Spectrum 1
+    L = 10.0 + math.sqrt(1.0 * 1.0 + 0.1 * 0.1)
+    for val, t in zip(energy.coords['energy']['spectrum', 1].values,
+                      tof_in_seconds.values):
+        np.testing.assert_almost_equal(
+            val, joule_to_mev * 0.5 * neutron_mass * (L / t)**2, val * 1e-3)
+
+
+def test_convert_tof_to_energy_elastic_fails_if_inelastic_params_present():
+    # Note these conversion fail only because they are not implemented.
+    # It should definitely be possible to support this.
+    tof = make_tof_dataset()
+    scn.convert(tof, origin='tof', target='energy', scatter=True)
+    tof.coords['incident_energy'] = 2.1 * sc.units.meV
+    with pytest.raises(RuntimeError):
+        scn.convert(tof, origin='tof', target='energy', scatter=True)
+
+    del tof.coords['incident_energy']
+    scn.convert(tof, origin='tof', target='energy', scatter=True)
+    tof.coords['final_energy'] = 2.1 * sc.units.meV
+    with pytest.raises(RuntimeError):
+        scn.convert(tof, origin='tof', target='energy', scatter=True)
+
+
+def test_convert_energy_to_tof_elastic():
+    """Assuming the tof_to_energy_elastic test is correct and passing we can test
+    the inverse conversion by simply comparing a round trip conversion with the
+    original data."""
+    check_tof_round_trip(via='energy')
