@@ -47,7 +47,7 @@ def main(prefix='install', build_dir='build', source_dir='.'):
     # Default cmake flags
     cmake_flags = {
         '-G': 'Ninja',
-        '-DPYTHON_EXECUTABLE': shutil.which("python"),
+        '-DPython_EXECUTABLE': shutil.which("python"),
         '-DCMAKE_INSTALL_PREFIX': prefix,
         '-DWITH_CTEST': 'OFF',
         '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'ON'
@@ -61,9 +61,8 @@ def main(prefix='install', build_dir='build', source_dir='.'):
                 '-DCMAKE_OSX_DEPLOYMENT_TARGET':
                 osxversion,
                 '-DCMAKE_OSX_SYSROOT':
-                os.path.join('/Applications', 'Xcode.app', 'Contents',
-                             'Developer', 'Platforms', 'MacOSX.platform',
-                             'Developer', 'SDKs',
+                os.path.join('/Applications', 'Xcode.app', 'Contents', 'Developer',
+                             'Platforms', 'MacOSX.platform', 'Developer', 'SDKs',
                              'MacOSX{}.sdk'.format(osxversion))
             })
 
@@ -97,17 +96,13 @@ def main(prefix='install', build_dir='build', source_dir='.'):
 
     # Compile benchmarks, C++ tests, and python library
     for target in ['all-benchmarks', 'all-tests', 'install']:
-        run_command(['cmake', '--build', '.', '--target', target] +
-                    build_flags,
+        run_command(['cmake', '--build', '.', '--target', target] + build_flags,
                     shell=shell)
 
     # Run C++ tests
-    run_command([os.path.join('bin', build_config, 'scippneutron-test')],
-                shell=shell)
+    run_command([os.path.join('bin', build_config, 'scippneutron-test')], shell=shell)
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    main(prefix=args.prefix,
-         build_dir=args.build_dir,
-         source_dir=args.source_dir)
+    main(prefix=args.prefix, build_dir=args.build_dir, source_dir=args.source_dir)

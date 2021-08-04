@@ -14,8 +14,7 @@ from cmath import isclose
 try:
     import streaming_data_types  # noqa: F401
     from confluent_kafka import TopicPartition  # noqa: F401
-    from scippneutron.data_streaming.data_stream import (_data_stream,
-                                                         WorkerInstruction
+    from scippneutron.data_streaming.data_stream import (_data_stream, WorkerInstruction
                                                          )  # noqa: E402
     from streaming_data_types.eventdata_ev42 import \
         serialise_ev42  # noqa: E402
@@ -26,8 +25,7 @@ try:
     from streaming_data_types.sample_environment_senv import Location
     from scippneutron.data_streaming._consumer import RunStartError
 except ImportError:
-    pytest.skip("Kafka or Serialisation module is unavailable",
-                allow_module_level=True)
+    pytest.skip("Kafka or Serialisation module is unavailable", allow_module_level=True)
 
 
 class FakeMessage:
@@ -71,8 +69,7 @@ class FakeQueryConsumer:
     def assign(partitions: List[TopicPartition]):
         pass
 
-    def get_watermark_offsets(self,
-                              partition: TopicPartition) -> Tuple[int, int]:
+    def get_watermark_offsets(self, partition: TopicPartition) -> Tuple[int, int]:
         return self._low_and_high_offset
 
     def get_topic_partitions(self,
@@ -122,8 +119,7 @@ async def test_data_stream_returns_data_from_single_event_message():
     test_message_queue = mp.Queue()
     time_of_flight = np.array([1., 2., 3.])
     detector_ids = np.array([4, 5, 6])
-    test_message = serialise_ev42("detector", 0, 0, time_of_flight,
-                                  detector_ids)
+    test_message = serialise_ev42("detector", 0, 0, time_of_flight, detector_ids)
     test_message_queue.put(test_message)
 
     reached_assert = False
@@ -146,8 +142,7 @@ async def test_data_stream_returns_data_from_multiple_event_messages():
     test_message_queue = mp.Queue()
     first_tof = np.array([1., 2., 3.])
     first_detector_ids = np.array([4, 5, 6])
-    first_test_message = serialise_ev42("detector", 0, 0, first_tof,
-                                        first_detector_ids)
+    first_test_message = serialise_ev42("detector", 0, 0, first_tof, first_detector_ids)
     second_tof = np.array([1., 2., 3.])
     second_detector_ids = np.array([4, 5, 6])
     second_test_message = serialise_ev42("detector", 0, 0, second_tof,
@@ -164,8 +159,7 @@ async def test_data_stream_returns_data_from_multiple_event_messages():
                                    **TEST_STREAM_ARGS):
         expected_tofs = np.concatenate((first_tof, second_tof))
         assert np.allclose(data.coords['tof'].values, expected_tofs)
-        expected_ids = np.concatenate(
-            (first_detector_ids, second_detector_ids))
+        expected_ids = np.concatenate((first_detector_ids, second_detector_ids))
         assert np.array_equal(data.coords['detector_id'].values, expected_ids)
         reached_asserts = True
     assert reached_asserts
@@ -201,8 +195,7 @@ async def test_warn_on_buffer_size_exceeded_by_single_message():
     buffer_size_2_events = 2
     time_of_flight = np.array([1., 2., 3.])
     detector_ids = np.array([4, 5, 6])
-    test_message = serialise_ev42("detector", 0, 0, time_of_flight,
-                                  detector_ids)
+    test_message = serialise_ev42("detector", 0, 0, time_of_flight, detector_ids)
 
     test_steam_args = TEST_STREAM_ARGS.copy()
     test_steam_args["event_buffer_size"] = buffer_size_2_events
@@ -229,8 +222,7 @@ async def test_data_returned_when_buffer_size_exceeded_by_event_messages():
     test_message_queue = mp.Queue()
     first_tof = np.array([1., 2., 3.])
     first_detector_ids = np.array([4, 5, 6])
-    first_test_message = serialise_ev42("detector", 0, 0, first_tof,
-                                        first_detector_ids)
+    first_test_message = serialise_ev42("detector", 0, 0, first_tof, first_detector_ids)
     second_tof = np.array([7., 8., 9.])
     second_detector_ids = np.array([4, 5, 6])
     second_test_message = serialise_ev42("detector", 0, 0, second_tof,
@@ -305,8 +297,7 @@ async def test_error_raised_if_no_run_start_message_available():
                                     halt_after_n_data_chunks=0,
                                     test_message_queue=test_message_queue,
                                     query_consumer=FakeQueryConsumer(
-                                        test_instrument_name,
-                                        low_and_high_offset),
+                                        test_instrument_name, low_and_high_offset),
                                     **TEST_STREAM_ARGS):
             pass
 
@@ -375,12 +366,11 @@ async def test_data_stream_returns_metadata():
     tdct_source_name = "tdct_source"
     tdct_log_name = "tdct_log"
     streams = [
-        Stream(f"/entry/{f142_log_name}", "f142_topic", f142_source_name,
-               "f142", "double", "m"),
-        Stream(f"/entry/{senv_log_name}", "senv_topic", senv_source_name,
-               "senv", "double", "m"),
-        Stream(f"/entry/{tdct_log_name}", "tdct_topic", tdct_source_name,
-               "tdct")
+        Stream(f"/entry/{f142_log_name}", "f142_topic", f142_source_name, "f142",
+               "double", "m"),
+        Stream(f"/entry/{senv_log_name}", "senv_topic", senv_source_name, "senv",
+               "double", "m"),
+        Stream(f"/entry/{tdct_log_name}", "tdct_topic", tdct_source_name, "tdct")
     ]
 
     test_stream_args = TEST_STREAM_ARGS.copy()
@@ -408,17 +398,15 @@ async def test_data_stream_returns_metadata():
             test_message_queue.put(f142_test_message)
             senv_values = np.array([26, 127, 52])
             senv_timestamp_ns = 123000  # ns after epoch
-            senv_timestamp = datetime.datetime.fromtimestamp(
-                senv_timestamp_ns * 1e-9, datetime.timezone.utc)
+            senv_timestamp = datetime.datetime.fromtimestamp(senv_timestamp_ns * 1e-9,
+                                                             datetime.timezone.utc)
             senv_time_between_samples = 100  # ns
-            senv_test_message = serialise_senv(senv_source_name, -1,
-                                               senv_timestamp,
+            senv_test_message = serialise_senv(senv_source_name, -1, senv_timestamp,
                                                senv_time_between_samples, 0,
                                                senv_values, Location.Start)
             test_message_queue.put(senv_test_message)
             tdct_timestamps = np.array([1234, 2345, 3456])  # ns
-            tdct_test_message = serialise_tdct(tdct_source_name,
-                                               tdct_timestamps)
+            tdct_test_message = serialise_tdct(tdct_source_name, tdct_timestamps)
             test_message_queue.put(tdct_test_message)
 
         n_chunks += 1
@@ -427,13 +415,11 @@ async def test_data_stream_returns_metadata():
         if n_chunks > 2:
             break
 
-    assert isclose(data_from_stream.attrs[f142_source_name].value.values[0],
-                   f142_value)
-    assert data_from_stream.attrs[f142_source_name].value.coords[
-        'time'].values[0] == np.array(f142_timestamp,
-                                      dtype=np.dtype('datetime64[ns]'))
-    assert np.array_equal(
-        data_from_stream.attrs[senv_source_name].value.values, senv_values)
+    assert isclose(data_from_stream.attrs[f142_source_name].value.values[0], f142_value)
+    assert data_from_stream.attrs[f142_source_name].value.coords['time'].values[
+        0] == np.array(f142_timestamp, dtype=np.dtype('datetime64[ns]'))
+    assert np.array_equal(data_from_stream.attrs[senv_source_name].value.values,
+                          senv_values)
     senv_expected_timestamps = np.array([
         senv_timestamp_ns, senv_timestamp_ns + senv_time_between_samples,
         senv_timestamp_ns + (2 * senv_time_between_samples)
@@ -442,8 +428,8 @@ async def test_data_stream_returns_metadata():
     assert np.array_equal(
         data_from_stream.attrs[senv_source_name].value.coords['time'].values,
         senv_expected_timestamps)
-    assert np.array_equal(
-        data_from_stream.attrs[tdct_source_name].value.values, tdct_timestamps)
+    assert np.array_equal(data_from_stream.attrs[tdct_source_name].value.values,
+                          tdct_timestamps)
 
 
 @pytest.mark.asyncio
@@ -459,8 +445,8 @@ async def test_data_stream_returns_data_from_multiple_slow_metadata_messages():
     f142_source_name = "f142_source"
     f142_log_name = "f142_log"
     streams = [
-        Stream(f"/entry/{f142_log_name}", "f142_topic", f142_source_name,
-               "f142", "double", "m"),
+        Stream(f"/entry/{f142_log_name}", "f142_topic", f142_source_name, "f142",
+               "double", "m"),
     ]
 
     test_stream_args = TEST_STREAM_ARGS.copy()
@@ -519,8 +505,8 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages():
     senv_source_name = "senv_source"
     senv_log_name = "senv_log"
     streams = [
-        Stream(f"/entry/{senv_log_name}", "senv_topic", senv_source_name,
-               "senv", "double", "m"),
+        Stream(f"/entry/{senv_log_name}", "senv_topic", senv_source_name, "senv",
+               "double", "m"),
     ]
 
     test_stream_args = TEST_STREAM_ARGS.copy()
@@ -543,20 +529,18 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages():
             # described in the start message.
             senv_values_1 = np.array([26, 127, 52])
             senv_timestamp_ns_1 = 123000  # ns after epoch
-            senv_timestamp = datetime.datetime.fromtimestamp(
-                senv_timestamp_ns_1 * 1e-9, datetime.timezone.utc)
+            senv_timestamp = datetime.datetime.fromtimestamp(senv_timestamp_ns_1 * 1e-9,
+                                                             datetime.timezone.utc)
             senv_time_between_samples = 100  # ns
-            senv_test_message = serialise_senv(senv_source_name, -1,
-                                               senv_timestamp,
+            senv_test_message = serialise_senv(senv_source_name, -1, senv_timestamp,
                                                senv_time_between_samples, 0,
                                                senv_values_1, Location.Start)
             test_message_queue.put(senv_test_message)
             senv_values_2 = np.array([3832, 324, 3])
             senv_timestamp_ns_2 = 234000  # ns after epoch
-            senv_timestamp = datetime.datetime.fromtimestamp(
-                senv_timestamp_ns_2 * 1e-9, datetime.timezone.utc)
-            senv_test_message = serialise_senv(senv_source_name, -1,
-                                               senv_timestamp,
+            senv_timestamp = datetime.datetime.fromtimestamp(senv_timestamp_ns_2 * 1e-9,
+                                                             datetime.timezone.utc)
+            senv_test_message = serialise_senv(senv_source_name, -1, senv_timestamp,
                                                senv_time_between_samples, 0,
                                                senv_values_2, Location.Start)
             test_message_queue.put(senv_test_message)
@@ -567,9 +551,8 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages():
         if n_chunks > 2:
             break
 
-    assert np.array_equal(
-        data_from_stream.attrs[senv_source_name].value.values,
-        np.concatenate((senv_values_1, senv_values_2)))
+    assert np.array_equal(data_from_stream.attrs[senv_source_name].value.values,
+                          np.concatenate((senv_values_1, senv_values_2)))
     senv_expected_timestamps_1 = np.array([
         senv_timestamp_ns_1, senv_timestamp_ns_1 + senv_time_between_samples,
         senv_timestamp_ns_1 + (2 * senv_time_between_samples)
@@ -582,8 +565,7 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages():
                                           dtype=np.dtype('datetime64[ns]'))
     assert np.array_equal(
         data_from_stream.attrs[senv_source_name].value.coords['time'].values,
-        np.concatenate(
-            (senv_expected_timestamps_1, senv_expected_timestamps_2)))
+        np.concatenate((senv_expected_timestamps_1, senv_expected_timestamps_2)))
 
 
 @pytest.mark.asyncio
@@ -599,8 +581,7 @@ async def test_data_stream_returns_data_from_multiple_chopper_messages():
     tdct_source_name = "tdct_source"
     tdct_log_name = "tdct_log"
     streams = [
-        Stream(f"/entry/{tdct_log_name}", "tdct_topic", tdct_source_name,
-               "tdct")
+        Stream(f"/entry/{tdct_log_name}", "tdct_topic", tdct_source_name, "tdct")
     ]
 
     test_stream_args = TEST_STREAM_ARGS.copy()
@@ -622,12 +603,10 @@ async def test_data_stream_returns_data_from_multiple_chopper_messages():
             # a metadata buffer will have been created for each data source
             # described in the start message.
             tdct_timestamps_1 = np.array([1234, 2345, 3456])  # ns
-            tdct_test_message = serialise_tdct(tdct_source_name,
-                                               tdct_timestamps_1)
+            tdct_test_message = serialise_tdct(tdct_source_name, tdct_timestamps_1)
             test_message_queue.put(tdct_test_message)
             tdct_timestamps_2 = np.array([4567, 5678, 6789])  # ns
-            tdct_test_message = serialise_tdct(tdct_source_name,
-                                               tdct_timestamps_2)
+            tdct_test_message = serialise_tdct(tdct_source_name, tdct_timestamps_2)
             test_message_queue.put(tdct_test_message)
 
         n_chunks += 1
@@ -636,9 +615,8 @@ async def test_data_stream_returns_data_from_multiple_chopper_messages():
         if n_chunks > 2:
             break
 
-    assert np.array_equal(
-        data_from_stream.attrs[tdct_source_name].value.values,
-        np.concatenate((tdct_timestamps_1, tdct_timestamps_2)))
+    assert np.array_equal(data_from_stream.attrs[tdct_source_name].value.values,
+                          np.concatenate((tdct_timestamps_1, tdct_timestamps_2)))
 
 
 @pytest.mark.asyncio
@@ -655,8 +633,8 @@ async def test_data_stream_warns_if_fast_metadata_message_exceeds_buffer():
     senv_source_name = "senv_source"
     senv_log_name = "senv_log"
     streams = [
-        Stream(f"/entry/{senv_log_name}", "senv_topic", senv_source_name,
-               "senv", "double", "m"),
+        Stream(f"/entry/{senv_log_name}", "senv_topic", senv_source_name, "senv",
+               "double", "m"),
     ]
 
     test_stream_args = TEST_STREAM_ARGS.copy()
@@ -679,11 +657,10 @@ async def test_data_stream_warns_if_fast_metadata_message_exceeds_buffer():
             # 3 values but buffer size is only 2!
             senv_values = np.array([26, 127, 52])
             senv_timestamp_ns = 123000  # ns after epoch
-            senv_timestamp = datetime.datetime.fromtimestamp(
-                senv_timestamp_ns * 1e-9, datetime.timezone.utc)
+            senv_timestamp = datetime.datetime.fromtimestamp(senv_timestamp_ns * 1e-9,
+                                                             datetime.timezone.utc)
             senv_time_between_samples = 100  # ns
-            senv_test_message = serialise_senv(senv_source_name, -1,
-                                               senv_timestamp,
+            senv_test_message = serialise_senv(senv_source_name, -1, senv_timestamp,
                                                senv_time_between_samples, 0,
                                                senv_values, Location.Start)
 
@@ -704,8 +681,7 @@ async def test_data_stream_warns_if_single_chopper_message_exceeds_buffer():
     tdct_source_name = "tdct_source"
     tdct_log_name = "tdct_log"
     streams = [
-        Stream(f"/entry/{tdct_log_name}", "tdct_topic", tdct_source_name,
-               "tdct")
+        Stream(f"/entry/{tdct_log_name}", "tdct_topic", tdct_source_name, "tdct")
     ]
 
     test_stream_args = TEST_STREAM_ARGS.copy()
@@ -727,8 +703,7 @@ async def test_data_stream_warns_if_single_chopper_message_exceeds_buffer():
 
             # 3 values but buffer size is only 2!
             tdct_timestamps = np.array([1234, 2345, 3456])  # ns
-            tdct_test_message = serialise_tdct(tdct_source_name,
-                                               tdct_timestamps)
+            tdct_test_message = serialise_tdct(tdct_source_name, tdct_timestamps)
 
             test_message_queue.put(tdct_test_message)
 
@@ -746,17 +721,15 @@ async def test_data_returned_if_multiple_slow_metadata_msgs_exceed_buffer():
     f142_source_name = "f142_source"
     f142_log_name = "f142_log"
     streams = [
-        Stream(f"/entry/{f142_log_name}", "f142_topic", f142_source_name,
-               "f142", "double", "m"),
+        Stream(f"/entry/{f142_log_name}", "f142_topic", f142_source_name, "f142",
+               "double", "m"),
     ]
 
     first_f142_value = 26.1236
     f142_timestamp = 123456  # ns after epoch
-    first_message = serialise_f142(first_f142_value, f142_source_name,
-                                   f142_timestamp)
+    first_message = serialise_f142(first_f142_value, f142_source_name, f142_timestamp)
     second_f142_value = 62.721
-    second_message = serialise_f142(second_f142_value, f142_source_name,
-                                    f142_timestamp)
+    second_message = serialise_f142(second_f142_value, f142_source_name, f142_timestamp)
 
     test_stream_args = TEST_STREAM_ARGS.copy()
     test_stream_args["slow_metadata_buffer_size"] = 1
@@ -804,8 +777,8 @@ async def test_data_returned_if_multiple_fast_metadata_msgs_exceed_buffer():
     senv_source_name = "senv_source"
     senv_log_name = "senv_log"
     streams = [
-        Stream(f"/entry/{senv_log_name}", "senv_topic", senv_source_name,
-               "senv", "double", "m"),
+        Stream(f"/entry/{senv_log_name}", "senv_topic", senv_source_name, "senv",
+               "double", "m"),
     ]
 
     first_senv_values = np.array([26, 127, 52])
@@ -815,11 +788,11 @@ async def test_data_returned_if_multiple_fast_metadata_msgs_exceed_buffer():
                                                      datetime.timezone.utc)
     senv_time_between_samples = 100  # ns
     first_message = serialise_senv(senv_source_name, -1, senv_timestamp,
-                                   senv_time_between_samples, 0,
-                                   first_senv_values, Location.Start)
+                                   senv_time_between_samples, 0, first_senv_values,
+                                   Location.Start)
     second_message = serialise_senv(senv_source_name, -1, senv_timestamp,
-                                    senv_time_between_samples, 0,
-                                    second_senv_values, Location.Start)
+                                    senv_time_between_samples, 0, second_senv_values,
+                                    Location.Start)
 
     test_stream_args = TEST_STREAM_ARGS.copy()
     test_stream_args["topics"] = None
@@ -866,8 +839,7 @@ async def test_data_returned_if_multiple_chopper_msgs_exceed_buffer():
     tdct_source_name = "tdct_source"
     tdct_log_name = "tdct_log"
     streams = [
-        Stream(f"/entry/{tdct_log_name}", "tdct_topic", tdct_source_name,
-               "tdct")
+        Stream(f"/entry/{tdct_log_name}", "tdct_topic", tdct_source_name, "tdct")
     ]
 
     tdct_timestamps_1 = np.array([1234, 2345, 3456])  # ns

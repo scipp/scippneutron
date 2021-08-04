@@ -38,8 +38,7 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
     return i - np.sin(angle_radians) * ll + (1 - np.cos(angle_radians)) * ll_2
 
 
-def get_position_from_transformations(group: GroupObject,
-                                      root: [h5py.File, h5py.Group],
+def get_position_from_transformations(group: GroupObject, root: [h5py.File, h5py.Group],
                                       nexus: LoadFromNexus) -> np.ndarray:
     """
     Get position of a component which has a "depends_on" dataset
@@ -51,8 +50,7 @@ def get_position_from_transformations(group: GroupObject,
     :return: Position of the component as a three-element numpy array
     """
     total_transform_matrix = get_full_transformation_matrix(group, root, nexus)
-    return np.matmul(total_transform_matrix, np.array([0, 0, 0, 1],
-                                                      dtype=float))[0:3]
+    return np.matmul(total_transform_matrix, np.array([0, 0, 0, 1], dtype=float))[0:3]
 
 
 def get_full_transformation_matrix(group: GroupObject, root: h5py.File,
@@ -73,19 +71,17 @@ def get_full_transformation_matrix(group: GroupObject, root: h5py.File,
         depends_on = nexus.load_scalar_string(group, "depends_on")
     except MissingDataset:
         depends_on = '.'
-    _get_transformations(depends_on, transformations, root,
-                         nexus.get_name(group), nexus)
+    _get_transformations(depends_on, transformations, root, nexus.get_name(group),
+                         nexus)
     total_transform_matrix = np.identity(4)
     for transformation in transformations:
-        total_transform_matrix = np.matmul(transformation,
-                                           total_transform_matrix)
+        total_transform_matrix = np.matmul(transformation, total_transform_matrix)
     return total_transform_matrix
 
 
-def _get_transformations(transform_path: str,
-                         transformations: List[np.ndarray],
-                         root: Union[h5py.File, Dict], group_name: str,
-                         nexus: LoadFromNexus):
+def _get_transformations(transform_path: str, transformations: List[np.ndarray],
+                         root: Union[h5py.File,
+                                     Dict], group_name: str, nexus: LoadFromNexus):
     """
     Get all transformations in the depends_on chain.
 
@@ -106,14 +102,12 @@ def _get_transformations(transform_path: str,
             raise TransformationError(
                 f"Non-existent depends_on path '{transform_path}' found "
                 f"in transformations chain for {group_name}")
-        next_depends_on = _append_transformation(transform, transformations,
-                                                 group_name, nexus)
-        _get_transformations(next_depends_on, transformations, root,
-                             group_name, nexus)
+        next_depends_on = _append_transformation(transform, transformations, group_name,
+                                                 nexus)
+        _get_transformations(next_depends_on, transformations, root, group_name, nexus)
 
 
-def _transformation_is_nx_log_stream(transform: Union[h5py.Dataset,
-                                                      GroupObject],
+def _transformation_is_nx_log_stream(transform: Union[h5py.Dataset, GroupObject],
                                      nexus: LoadFromNexus):
     # Stream objects are only in the dict loaded from json
     if isinstance(transform, dict):
@@ -121,8 +115,7 @@ def _transformation_is_nx_log_stream(transform: Union[h5py.Dataset,
         # then assume it is a streamed NXlog transformation
         try:
             if nexus.is_group(transform):
-                found_value_dataset, _ = nexus.dataset_in_group(
-                    transform, "value")
+                found_value_dataset, _ = nexus.dataset_in_group(transform, "value")
                 if not found_value_dataset and contains_stream(transform):
                     return True
         except KeyError:
@@ -146,9 +139,8 @@ def _append_transformation(transform: Union[h5py.Dataset, GroupObject],
                                                         "vector").astype(float)
             vector = _normalise(vector, nexus.get_name(transform))
         except MissingAttribute:
-            raise TransformationError(
-                f"Missing 'vector' attribute in transformation "
-                f"at {nexus.get_name(transform)}")
+            raise TransformationError(f"Missing 'vector' attribute in transformation "
+                                      f"at {nexus.get_name(transform)}")
 
         try:
             offset = nexus.get_attribute_as_numpy_array(transform,
@@ -156,14 +148,13 @@ def _append_transformation(transform: Union[h5py.Dataset, GroupObject],
         except MissingAttribute:
             offset = np.array([0., 0., 0.], dtype=float)
 
-        transform_type = nexus.get_string_attribute(transform,
-                                                    "transformation_type")
+        transform_type = nexus.get_string_attribute(transform, "transformation_type")
         if transform_type == 'translation':
-            _append_translation(offset, transform, transformations, vector,
-                                group_name, nexus)
+            _append_translation(offset, transform, transformations, vector, group_name,
+                                nexus)
         elif transform_type == 'rotation':
-            _append_rotation(offset, transform, transformations, vector,
-                             group_name, nexus)
+            _append_rotation(offset, transform, transformations, vector, group_name,
+                             nexus)
         else:
             raise TransformationError(f"Unknown transformation type "
                                       f"'{transform_type}'"
@@ -188,8 +179,8 @@ def _append_translation(offset: np.ndarray, transform: GroupObject,
                         transformations: List[np.ndarray],
                         direction_unit_vector: np.ndarray, group_name: str,
                         nexus: LoadFromNexus):
-    magnitude, unit = _get_transformation_magnitude_and_unit(
-        group_name, transform, nexus)
+    magnitude, unit = _get_transformation_magnitude_and_unit(group_name, transform,
+                                                             nexus)
 
     if unit != sc.units.m:
         magnitude_var = magnitude * unit
@@ -198,13 +189,11 @@ def _append_translation(offset: np.ndarray, transform: GroupObject,
     # -1 as describes passive transformation
     vector = direction_unit_vector * -1. * magnitude
     offset_vector = vector + offset
-    matrix = np.block([[np.eye(3), offset_vector[np.newaxis].T],
-                       [0., 0., 0., 1.]])
+    matrix = np.block([[np.eye(3), offset_vector[np.newaxis].T], [0., 0., 0., 1.]])
     transformations.append(matrix)
 
 
-def _get_unit(attributes: h5py.AttributeManager,
-              transform_name: str) -> sc.Unit:
+def _get_unit(attributes: h5py.AttributeManager, transform_name: str) -> sc.Unit:
     try:
         unit_str = attributes["units"]
     except KeyError:
@@ -222,8 +211,7 @@ def _get_transformation_magnitude_and_unit(
         group_name: str, transform: Union[h5py.Dataset, GroupObject],
         nexus: LoadFromNexus) -> Tuple[float, sc.Unit]:
     if nexus.is_group(transform):
-        value = nexus.load_dataset_from_group_as_numpy_array(
-            transform, "value")
+        value = nexus.load_dataset_from_group_as_numpy_array(transform, "value")
         try:
             if value.size > 1:
                 raise TransformationError(f"Found multivalued NXlog as a "
@@ -243,12 +231,10 @@ def _get_transformation_magnitude_and_unit(
             # See if the value unit is on the NXLog itself instead
             unit = nexus.get_unit(transform)
             if unit == sc.units.dimensionless:
-                raise TransformationError(
-                    f"Missing units for transformation at "
-                    f"{nexus.get_name(transform)}")
+                raise TransformationError(f"Missing units for transformation at "
+                                          f"{nexus.get_name(transform)}")
     else:
-        magnitude = nexus.load_dataset_as_numpy_array(transform).astype(
-            float).item()
+        magnitude = nexus.load_dataset_as_numpy_array(transform).astype(float).item()
         unit = nexus.get_unit(transform)
         if unit == sc.units.dimensionless:
             raise TransformationError(f"Missing units for transformation at "
@@ -257,21 +243,16 @@ def _get_transformation_magnitude_and_unit(
 
 
 def _append_rotation(offset: np.ndarray, transform: GroupObject,
-                     transformations: List[np.ndarray],
-                     rotation_axis: np.ndarray, group_name: str,
-                     nexus: LoadFromNexus):
-    angle, unit = _get_transformation_magnitude_and_unit(
-        group_name, transform, nexus)
+                     transformations: List[np.ndarray], rotation_axis: np.ndarray,
+                     group_name: str, nexus: LoadFromNexus):
+    angle, unit = _get_transformation_magnitude_and_unit(group_name, transform, nexus)
     if unit == sc.units.deg:
         angle = np.deg2rad(angle)
     elif unit != sc.units.rad:
-        raise TransformationError(
-            f"Unit for rotation transformation must be radians "
-            f"or degrees, problem in {transform.name}")
-    rotation_matrix = _rotation_matrix_from_axis_and_angle(
-        rotation_axis, angle)
+        raise TransformationError(f"Unit for rotation transformation must be radians "
+                                  f"or degrees, problem in {transform.name}")
+    rotation_matrix = _rotation_matrix_from_axis_and_angle(rotation_axis, angle)
     # Make 4x4 matrix from our 3x3 rotation matrix to include
     # possible "offset"
-    matrix = np.block([[rotation_matrix, offset[np.newaxis].T],
-                       [0., 0., 0., 1.]])
+    matrix = np.block([[rotation_matrix, offset[np.newaxis].T], [0., 0., 0., 1.]])
     transformations.append(matrix)
