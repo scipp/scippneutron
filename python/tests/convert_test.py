@@ -318,3 +318,55 @@ def test_convert_energy_to_tof_elastic():
     the inverse conversion by simply comparing a round trip conversion with the
     original data."""
     check_tof_round_trip(via='energy')
+
+
+def test_convert_tof_to_energy_transfer():
+    tof = make_tof_dataset()
+    with pytest.raises(RuntimeError):
+        scn.convert(tof, origin='tof', target='energy_transfer', scatter=True)
+    tof.coords['incident_energy'] = 35.0 * sc.units.meV
+    direct = scn.convert(tof,
+                         origin='tof',
+                         target='energy_transfer',
+                         scatter=True)
+    assert 'energy_transfer' in direct.coords
+    assert 'tof' not in direct.coords
+    tof_direct = scn.convert(direct,
+                             origin='energy_transfer',
+                             target='tof',
+                             scatter=True)
+    assert sc.all(
+        sc.isclose(tof_direct.coords['tof'],
+                   tof.coords['tof'],
+                   rtol=0.0 * sc.units.one,
+                   atol=1e-11 * sc.units.us)).value
+    tof_direct.coords['tof'] = tof.coords['tof']
+    assert sc.identical(tof_direct, tof)
+
+    tof.coords['final_energy'] = 35.0 * sc.units.meV
+    with pytest.raises(RuntimeError):
+        scn.convert(tof, origin='tof', target='energy_transfer', scatter=True)
+    del tof.coords['incident_energy']
+    indirect = scn.convert(tof,
+                           origin='tof',
+                           target='energy_transfer',
+                           scatter=True)
+    assert 'energy_transfer' in indirect.coords
+    assert 'tof' not in indirect.coords
+    tof_indirect = scn.convert(indirect,
+                               origin='energy_transfer',
+                               target='tof',
+                               scatter=True)
+    assert sc.all(
+        sc.isclose(tof_indirect.coords['tof'],
+                   tof.coords['tof'],
+                   rtol=0.0 * sc.units.one,
+                   atol=1e-11 * sc.units.us)).value
+    tof_indirect.coords['tof'] = tof.coords['tof']
+    assert sc.identical(tof_indirect, tof)
+
+    assert not sc.all(
+        sc.isclose(direct.coords['energy_transfer'],
+                   indirect.coords['energy_transfer'],
+                   rtol=0.0 * sc.units.one,
+                   atol=1e-11 * sc.units.meV)).value
