@@ -83,14 +83,14 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
     # May be reordered due to binning (hence np.sort)
     assert np.array_equal(
         np.sort(
-            loaded_data.bins.concatenate('detector_id').values.coords['tof'].values),
+            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
         np.sort(event_time_offsets))
 
     counts_on_detectors = loaded_data.bins.sum()
     # No detector_number dataset in file so expect detector_id to be
     # binned according to whatever detector_ids are present in event_id
     # dataset: 2 on det 1, 1 on det 2, 2 on det 3
-    expected_counts = np.array([2, 1, 2])
+    expected_counts = np.array([[2], [1], [2]])
     assert np.array_equal(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
     assert np.array_equal(loaded_data.coords['detector_id'].values,
@@ -130,13 +130,13 @@ def test_loads_data_from_multiple_event_data_groups(load_function: Callable):
     # May be reordered due to binning (hence np.sort)
     assert np.array_equal(
         np.sort(
-            loaded_data.bins.concatenate('detector_id').values.coords['tof'].values),
+            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
         np.sort(np.concatenate((event_time_offsets_1, event_time_offsets_2))))
 
     counts_on_detectors = loaded_data.bins.sum()
     # There are detector_number datasets in the NXdetector for each
     # NXevent_data, these are used for detector_id binning
-    expected_counts = np.array([0, 2, 1, 2, 2, 1, 2, 0])
+    expected_counts = np.array([[0], [2], [1], [2], [2], [1], [2], [0]])
     assert np.array_equal(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.concatenate((detector_1_ids, detector_2_ids))
     assert np.array_equal(loaded_data.coords['detector_id'].values,
@@ -424,14 +424,14 @@ def test_loads_event_and_log_data_from_single_file(load_function: Callable):
     # May be reordered due to binning (hence np.sort)
     assert np.allclose(
         np.sort(
-            loaded_data.bins.concatenate('detector_id').values.coords['tof'].values),
+            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
         np.sort(event_time_offsets))
 
     counts_on_detectors = loaded_data.bins.sum()
     # No detector_number dataset in file so expect detector_id to be
     # binned from the min to the max detector_id recorded in event_id
     # dataset: 2 on det 1, 1 on det 2, 2 on det 3
-    expected_counts = np.array([2, 1, 2])
+    expected_counts = np.array([[2], [1], [2]])
     assert np.allclose(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
     assert np.allclose(loaded_data.coords['detector_id'].values, expected_detector_ids)
@@ -660,7 +660,7 @@ def test_loads_event_data_when_missing_from_some_detectors(load_function: Callab
 
     # The event data from detector_1 has been loaded
     counts_on_detectors = loaded_data.bins.sum()
-    expected_counts = np.array([0, 2, 1, 2, 0, 0, 0, 0])
+    expected_counts = np.array([[0], [2], [1], [2], [0], [0], [0], [0]])
     assert np.allclose(counts_on_detectors.data.values, expected_counts)
     assert np.allclose(loaded_data.coords['detector_id'].values,
                        np.concatenate((detector_1_ids, detector_2_ids.flatten())))
@@ -1146,14 +1146,14 @@ def test_links_to_event_data_group_are_ignored(load_function: Callable):
     # May be reordered due to binning (hence np.sort)
     assert np.array_equal(
         np.sort(
-            loaded_data.bins.concatenate('detector_id').values.coords['tof'].values),
+            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
         np.sort(event_time_offsets))
 
     counts_on_detectors = loaded_data.bins.sum()
     # No detector_number dataset in file so expect detector_id to be
     # binned according to whatever detector_ids are present in event_id
     # dataset: 2 on det 1, 1 on det 2, 2 on det 3
-    expected_counts = np.array([2, 1, 2])
+    expected_counts = np.array([[2], [1], [2]])
     assert np.array_equal(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
     assert np.array_equal(loaded_data.coords['detector_id'].values,
@@ -1207,11 +1207,11 @@ def test_linked_datasets_are_found(load_function: Callable):
 
     assert np.array_equal(
         np.sort(
-            loaded_data.bins.concatenate('detector_id').values.coords['tof'].values),
+            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
         np.sort(replaced_tofs))
 
     counts_on_detectors = loaded_data.bins.sum()
-    expected_counts = np.array([3, 1, 1])
+    expected_counts = np.array([[3], [1], [1]])
     assert np.array_equal(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
     assert np.array_equal(loaded_data.coords['detector_id'].values,
@@ -1385,3 +1385,32 @@ def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
         loaded_data = load_function(builder)
 
         assert "test_log_1" not in loaded_data
+
+
+def test_load_nexus_adds_single_tof_bin(load_function: Callable):
+    event_time_offsets = np.array([456, 743, 347, 345, 632])
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 3]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+
+    builder = NexusBuilder()
+    builder.add_event_data(event_data)
+
+    loaded_data = load_function(builder)
+
+    # Size 2 for each of the two bin edges around a single bin
+    assert len(loaded_data.coords["tof"]) == 2
+
+    # Assert bin edges correspond to smallest and largest+1 time-of-flights in data.
+    # +1 is so that right-hand bin edge doesn't exclude last data point
+    assert sc.identical(loaded_data.coords["tof"]["tof", 0],
+                        sc.scalar(value=np.min(event_time_offsets), unit=sc.units.ns))
+    assert sc.identical(
+        loaded_data.coords["tof"]["tof", 1],
+        sc.scalar(value=np.max(event_time_offsets) + 1, unit=sc.units.ns))
