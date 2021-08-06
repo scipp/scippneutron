@@ -59,6 +59,12 @@ energy_transfer_direct_from_tof(const variable::Variable &tof,
                                 const variable::Variable &incident_energy);
 
 [[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
+energy_transfer_indirect_from_tof(const variable::Variable &tof,
+                                  const variable::Variable &L1,
+                                  const variable::Variable &L2,
+                                  const variable::Variable &final_energy);
+
+[[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
 dspacing_from_tof(const variable::Variable &tof,
                   const variable::Variable &Ltotal,
                   const variable::Variable &two_theta);

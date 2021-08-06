@@ -18,4 +18,6 @@ void init_conversions(py::module &base_module) {
   m.def("energy_from_tof", conversions::energy_from_tof);
   m.def("energy_transfer_direct_from_tof",
         conversions::energy_transfer_direct_from_tof);
+  m.def("energy_transfer_indirect_from_tof",
+        conversions::energy_transfer_indirect_from_tof);
 }

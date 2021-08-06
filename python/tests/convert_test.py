@@ -236,7 +236,7 @@ def test_convert_tof_to_wavelength():
     wavelength = scn.convert(tof, origin='tof', target='wavelength', scatter=True)
     check_tof_conversion_metadata(wavelength, 'wavelength', sc.units.angstrom)
     for key in ('position', 'source_position', 'sample_position'):
-        assert sc.identical(wavelength['counts'].coords[key], tof.coords[key])
+        assert sc.identical(wavelength['counts'].attrs[key], tof.coords[key])
 
     # Rule of thumb (https://www.psi.ch/niag/neutron-physics):
     # v [m/s] = 3956 / \lambda [ Angstrom ]
@@ -265,7 +265,7 @@ def test_convert_tof_to_energy_elastic():
     energy = scn.convert(tof, origin='tof', target='energy', scatter=True)
     check_tof_conversion_metadata(energy, 'energy', sc.units.meV)
     for key in ('position', 'source_position', 'sample_position'):
-        assert sc.identical(energy['counts'].coords[key], tof.coords[key])
+        assert sc.identical(energy['counts'].attrs[key], tof.coords[key])
 
     # Rule of thumb (https://www.psi.ch/niag/neutron-physics):
     # v [m/s] = 3956 / \lambda [ Angstrom ]
@@ -312,7 +312,7 @@ def test_convert_energy_to_tof_elastic():
     check_tof_round_trip(via='energy')
 
 
-def test_convert_tof_to_energy_transfer():
+def test_convert_tof_to_energy_transfer_direct():
     tof = make_tof_dataset()
     with pytest.raises(RuntimeError):
         scn.convert(tof, origin='tof', target='energy_transfer', scatter=True)
@@ -332,6 +332,12 @@ def test_convert_tof_to_energy_transfer():
     tof_direct.coords['tof'] = tof.coords['tof']
     assert sc.identical(tof_direct, tof)
 
+
+def test_convert_tof_to_energy_transfer_indirect():
+    tof = make_tof_dataset()
+    with pytest.raises(RuntimeError):
+        scn.convert(tof, origin='tof', target='energy_transfer', scatter=True)
+    tof.coords['incident_energy'] = 25.0 * sc.units.meV
     tof.coords['final_energy'] = 35.0 * sc.units.meV
     with pytest.raises(RuntimeError):
         scn.convert(tof, origin='tof', target='energy_transfer', scatter=True)
@@ -351,6 +357,21 @@ def test_convert_tof_to_energy_transfer():
     tof_indirect.coords['tof'] = tof.coords['tof']
     assert sc.identical(tof_indirect, tof)
 
+
+def test_convert_tof_to_energy_transfer_direct_indirect_are_distinct():
+    tof_direct = make_tof_dataset()
+    tof_direct.coords['incident_energy'] = 22.0 * sc.units.meV
+    direct = scn.convert(tof_direct,
+                         origin='tof',
+                         target='energy_transfer',
+                         scatter=True)
+
+    tof_indirect = make_tof_dataset()
+    tof_indirect.coords['final_energy'] = 22.0 * sc.units.meV
+    indirect = scn.convert(tof_indirect,
+                           origin='tof',
+                           target='energy_transfer',
+                           scatter=True)
     assert not sc.all(
         sc.isclose(direct.coords['energy_transfer'],
                    indirect.coords['energy_transfer'],
