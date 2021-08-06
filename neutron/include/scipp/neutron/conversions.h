@@ -45,7 +45,22 @@ constexpr auto energy_transfer_to_tof = [](auto &coord, const auto &scale,
 };
 
 [[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
-wavelength_from_tof(const variable::Variable &Ltotal,
-                    const variable::Variable &tof);
+wavelength_from_tof(const variable::Variable &tof,
+                    const variable::Variable &Ltotal);
+
+[[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
+energy_from_tof(const variable::Variable &tof,
+                const variable::Variable &Ltotal);
+
+[[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
+energy_transfer_direct_from_tof(const variable::Variable &tof,
+                                const variable::Variable &L1,
+                                const variable::Variable &L2,
+                                const variable::Variable &incident_energy);
+
+[[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
+dspacing_from_tof(const variable::Variable &tof,
+                  const variable::Variable &Ltotal,
+                  const variable::Variable &two_theta);
 
 } // namespace scipp::neutron::conversions
