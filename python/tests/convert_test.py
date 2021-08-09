@@ -260,6 +260,47 @@ def test_convert_wavelength_to_tof():
     check_tof_round_trip(via='wavelength')
 
 
+def test_convert_tof_to_Q():
+    tof = make_tof_dataset()
+    wavelength = scn.convert(tof, origin='tof', target='wavelength', scatter=True)
+    Q_from_tof = scn.convert(tof, origin='tof', target='Q', scatter=True)
+    Q_from_wavelength = scn.convert(wavelength, origin='tof', target='Q', scatter=True)
+    check_tof_conversion_metadata(Q_from_tof, 'Q', sc.units.one / sc.units.angstrom)
+    check_tof_conversion_metadata(Q_from_wavelength, 'Q',
+                                  sc.units.one / sc.units.angstrom)
+    assert sc.identical(Q_from_tof, Q_from_wavelength)
+    for key in ('position', 'source_position', 'sample_position'):
+        assert sc.identical(wavelength['counts'].attrs[key], tof.coords[key])
+
+    # Rule of thumb (c):
+    # v [m/s] = 3956 / \lambda [ Angstrom ]
+    tof_in_seconds = tof.coords['tof'] * 1e-6
+
+    # Spectrum 0 is 11 m from source
+    # Q = 4pi sin(theta) / lambda
+    # theta = 45 deg => Q = 2 sqrt(2) pi / lambda
+    for val, t in zip(Q_from_wavelength.coords['Q']['spectrum', 0].values,
+                      tof_in_seconds.values):
+        np.testing.assert_almost_equal(
+            val, 2.0 * math.sqrt(2.0) * math.pi / (3956.0 / (11.0 / t)), val * 1e-3)
+
+    # Spectrum 1
+    # sin(2 theta) = 0.1/(L-10)
+    L = 10.0 + math.sqrt(1.0 * 1.0 + 0.1 * 0.1)
+    lambda_to_Q = 4.0 * math.pi * math.sin(math.asin(0.1 / (L - 10.0)) / 2.0)
+    for val, t in zip(Q_from_wavelength.coords['Q']['spectrum', 1].values,
+                      tof_in_seconds.values):
+        np.testing.assert_almost_equal(val, lambda_to_Q / (3956.0 / (L / t)),
+                                       val * 1e-3)
+
+
+def test_convert_Q_to_tof():
+    """Assuming the tof_to_Q test is correct and passing we can test the
+    inverse conversion by simply comparing a round trip conversion with the
+    original data."""
+    check_tof_round_trip(via='Q')
+
+
 def test_convert_tof_to_energy_elastic():
     tof = make_tof_dataset()
     energy = scn.convert(tof, origin='tof', target='energy', scatter=True)
