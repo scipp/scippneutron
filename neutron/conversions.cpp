@@ -7,6 +7,7 @@
 
 #include <scipp/common/overloaded.h>
 #include <scipp/core/element/arg_list.h>
+#include <scipp/core/value_and_variance.h>
 #include <scipp/variable/transform.h>
 
 #include "scipp/neutron/constants.h"
@@ -94,7 +95,22 @@ Variable energy_transfer_indirect_from_tof(const Variable &tof,
 
 Variable dspacing_from_tof(const Variable &tof, const Variable &Ltotal,
                            const Variable &two_theta) {
-  return Variable{};
+  static constexpr auto kernel = overloaded{
+      core::element::arg_list<double>,
+      core::transform_flags::expect_no_variance_arg<2>,
+      [](const auto t, const auto l, const auto angle) {
+        static constexpr auto c =
+            measurement_cast<decltype(l)>(tof_to_dspacing_physical_constants);
+        using std::cos;
+        using std::sqrt;
+        return t * sqrt(2.0) / (c * l * sqrt(1.0 - cos(angle)));
+      },
+      [](const units::Unit t, const units::Unit l, const units::Unit angle) {
+        static constexpr auto c =
+            measurement_cast<units::Unit>(tof_to_dspacing_physical_constants);
+        return t / (c * l * sqrt(cos(angle)));
+      }};
+  return transform(tof, Ltotal, two_theta, kernel, "dspacing_from_tof");
 }
 
 } // namespace scipp::neutron::conversions

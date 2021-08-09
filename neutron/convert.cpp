@@ -22,10 +22,18 @@
 
 using namespace scipp::variable;
 using namespace scipp::dataset;
+using namespace scipp::neutron::constants;
 
 namespace scipp::neutron {
 
 namespace {
+template <class T> static decltype(auto) iter(T &d) {
+  if constexpr (std::is_same_v<T, Dataset>)
+    return d;
+  else
+    return d.iterable_view();
+}
+
 // Iterable facade around a single object
 template <class T> class IterableFacade {
 public:
