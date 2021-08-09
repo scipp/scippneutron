@@ -264,10 +264,15 @@ def test_convert_tof_to_Q():
     tof = make_tof_dataset()
     wavelength = scn.convert(tof, origin='tof', target='wavelength', scatter=True)
     Q_from_tof = scn.convert(tof, origin='tof', target='Q', scatter=True)
-    Q_from_wavelength = scn.convert(wavelength, origin='tof', target='Q', scatter=True)
+    Q_from_wavelength = scn.convert(wavelength,
+                                    origin='wavelength',
+                                    target='Q',
+                                    scatter=True)
     check_tof_conversion_metadata(Q_from_tof, 'Q', sc.units.one / sc.units.angstrom)
     check_tof_conversion_metadata(Q_from_wavelength, 'Q',
                                   sc.units.one / sc.units.angstrom)
+    # wavelength is intermediate in this case and thus kept but not in the other case.
+    del Q_from_tof['counts'].attrs['wavelength']
     assert sc.identical(Q_from_tof, Q_from_wavelength)
     for key in ('position', 'source_position', 'sample_position'):
         assert sc.identical(wavelength['counts'].attrs[key], tof.coords[key])
