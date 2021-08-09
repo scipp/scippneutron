@@ -158,7 +158,7 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus,
 
     if any(_diffs < 0):
         raise BadSource(f"Event index in NXEvent at {group.path}/event_index was not"
-                        f"ordered.")
+                        f"ordered. The index must be ordered to load pulse times.")
 
     pulse_times = np.repeat(_raw_pulse_times.values, _diffs).astype('timedelta64')
 
