@@ -47,7 +47,7 @@ def get_pos(pos):
 
 
 def make_run(ws):
-    return sc.Variable(value=deepcopy(ws.run()))
+    return sc.scalar(deepcopy(ws.run()))
 
 
 additional_unit_mapping = {
@@ -83,7 +83,7 @@ def make_variables_from_run_logs(ws):
             dimension_label = property_name
 
         if np.isscalar(values):
-            property_data = sc.Variable(value=values, unit=unit)
+            property_data = sc.scalar(values, unit=unit)
         else:
             property_data = sc.Variable(values=values,
                                         unit=unit,
@@ -91,21 +91,24 @@ def make_variables_from_run_logs(ws):
 
         if is_time_series:
             # If property has timestamps, create a DataArray
-            data_array = sc.DataArray(
-                data=property_data,
-                coords={dimension_label: sc.Variable([dimension_label], values=times)})
-            yield property_name, sc.Variable(value=data_array)
+            data_array = sc.DataArray(data=property_data,
+                                      coords={
+                                          dimension_label:
+                                          sc.Variable(dims=[dimension_label],
+                                                      values=times)
+                                      })
+            yield property_name, sc.scalar(data_array)
         elif not np.isscalar(values):
             # If property is multi-valued, create a wrapper single
             # value variable. This prevents interference with
             # global dimensions for for output Dataset.
-            yield property_name, sc.Variable(value=property_data)
+            yield property_name, sc.scalar(property_data)
         else:
             yield property_name, property_data
 
 
 def make_sample(ws):
-    return sc.Variable(value=deepcopy(ws.sample()))
+    return sc.scalar(deepcopy(ws.sample()))
 
 
 def make_component_info(ws):
@@ -151,10 +154,7 @@ def make_detector_info(ws, spectrum_dim):
     # May want to include more information here, such as detector positions,
     # but for now this is not necessary.
 
-    return sc.Variable(value=sc.Dataset(coords={
-        'detector': detector,
-        spectrum_dim: spectrum
-    }))
+    return sc.scalar(sc.Dataset(coords={'detector': detector, spectrum_dim: spectrum}))
 
 
 def md_dimension(mantid_dim, index):
@@ -330,7 +330,7 @@ def get_detector_properties(ws,
 
         averaged = sc.groupby(pos_d,
                               spectrum_dim,
-                              bins=sc.Variable([spectrum_dim],
+                              bins=sc.Variable(dims=[spectrum_dim],
                                                values=np.arange(
                                                    -0.5,
                                                    len(spec_info) + 0.5,
@@ -413,7 +413,7 @@ def init_spec_axis(ws):
     dim, unit = validate_and_get_unit(axis.getUnit())
     values = axis.extractValues()
     dtype = _get_dtype_from_values(values, dim == 'spectrum')
-    return dim, sc.Variable([dim], values=values, unit=unit, dtype=dtype)
+    return dim, sc.Variable(dims=[dim], values=values, unit=unit, dtype=dtype)
 
 
 def set_bin_masks(bin_masks, dim, index, masked_bins):
@@ -437,18 +437,19 @@ def _convert_MatrixWorkspace_info(ws, advanced_geometry=False, load_run_logs=Tru
     # possible x - coord
     if not ws.id() == 'MaskWorkspace':
         if common_bins:
-            coords[dim] = sc.Variable([dim], values=ws.readX(0), unit=unit)
+            coords[dim] = sc.Variable(dims=[dim], values=ws.readX(0), unit=unit)
         else:
-            coords[dim] = sc.Variable([spec_dim, dim], values=ws.extractX(), unit=unit)
+            coords[dim] = sc.Variable(dims=[spec_dim, dim],
+                                      values=ws.extractX(),
+                                      unit=unit)
 
     info = {
         "coords": coords,
         "masks": {},
         "attrs": {
-            "sample":
-            make_sample(ws),
+            "sample": make_sample(ws),
             "instrument_name":
-            sc.Variable(value=ws.componentInfo().name(ws.componentInfo().root()))
+            sc.scalar(ws.componentInfo().name(ws.componentInfo().root()))
         },
     }
 
@@ -475,7 +476,7 @@ def _convert_MatrixWorkspace_info(ws, advanced_geometry=False, load_run_logs=Tru
         spectrum_info = ws.spectrumInfo()
         mask = np.array(
             [spectrum_info.isMasked(i) for i in range(ws.getNumberHistograms())])
-        info["masks"][spec_dim] = sc.Variable([spec_dim], values=mask)
+        info["masks"][spec_dim] = sc.Variable(dims=[spec_dim], values=mask)
 
     if ws.getEMode() == DeltaEModeType.Direct:
         info["coords"]["incident_energy"] = _extract_einitial(ws)
@@ -529,14 +530,14 @@ def convert_Workspace2D_to_data_array(ws,
         ws, advanced_geometry=advanced_geometry, load_run_logs=load_run_logs)
     _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
     if ws.id() == 'MaskWorkspace':
-        coords_labs_data["data"] = sc.Variable([spec_dim],
+        coords_labs_data["data"] = sc.Variable(dims=[spec_dim],
                                                unit=data_unit,
                                                values=ws.extractY().flatten(),
                                                dtype=sc.dtype.bool)
     else:
         stddev2 = ws.extractE()
         np.multiply(stddev2, stddev2, out=stddev2)  # much faster than np.power
-        coords_labs_data["data"] = sc.Variable([spec_dim, dim],
+        coords_labs_data["data"] = sc.Variable(dims=[spec_dim, dim],
                                                unit=data_unit,
                                                values=ws.extractY(),
                                                variances=stddev2)
@@ -577,15 +578,12 @@ def convert_EventWorkspace_to_data_array(ws,
     _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
 
     n_event = ws.getNumberEvents()
-    coord = sc.Variable(dims=['event'],
-                        shape=[n_event],
-                        unit=unit,
-                        dtype=sc.dtype.float64)
+    coord = sc.zeros(dims=['event'], shape=[n_event], unit=unit, dtype=sc.dtype.float64)
     weights = sc.ones(dims=['event'],
                       shape=[n_event],
                       unit=data_unit,
                       dtype=sc.dtype.float32,
-                      variances=True)
+                      with_variances=True)
     pulse_times = sc.empty(
         dims=['event'], shape=[n_event], dtype=sc.dtype.datetime64,
         unit=sc.units.ns) if load_pulse_times else None
@@ -594,7 +592,7 @@ def convert_EventWorkspace_to_data_array(ws,
     contains_weighted_events = ((evtp == EventType.WEIGHTED)
                                 or (evtp == EventType.WEIGHTED_NOTIME))
 
-    begins = sc.Variable([spec_dim, dim], shape=[nHist, 1], dtype=sc.dtype.int64)
+    begins = sc.zeros(dims=[spec_dim, dim], shape=[nHist, 1], dtype=sc.dtype.int64)
     ends = begins.copy()
     current = 0
     for i in range(nHist):
@@ -691,7 +689,7 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
 
         data_name = columnNames[i]
         if error_connection is None:
-            dataset[data_name] = sc.Variable(['row'], values=ws.column(i))
+            dataset[data_name] = sc.Variable(dims=['row'], values=ws.column(i))
         elif data_name in error_connection:
             # This data has error availble
             error_name = error_connection[data_name]
@@ -704,12 +702,12 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
                                    str(error_name) + "\n")
 
             variance = np.array(ws.column(error_name))**2
-            dataset[data_name] = sc.Variable(['row'],
+            dataset[data_name] = sc.Variable(dims=['row'],
                                              values=np.array(ws.column(i)),
                                              variances=variance)
         elif data_name not in error_connection.values():
             # This data is not an error for another dataset, and has no error
-            dataset[data_name] = sc.Variable(['row'], values=ws.column(i))
+            dataset[data_name] = sc.Variable(dims=['row'], values=ws.column(i))
 
     return dataset
 
@@ -776,7 +774,7 @@ def from_mantid(workspace, **kwargs):
 
         monitors = convert_monitors_ws(monitor_ws, converter, **kwargs)
         for name, monitor in monitors:
-            scipp_obj.attrs[name] = sc.Variable(value=monitor)
+            scipp_obj.attrs[name] = sc.scalar(monitor)
     for ws in workspaces_to_delete:
         mantid.DeleteWorkspace(ws)
 
@@ -989,10 +987,10 @@ def _fit_workspace(ws, mantid_args):
         data['data'] = out['empty', 0]
         data['calculated'] = out['empty', 1]
         data['diff'] = out['empty', 2]
-        parameters.coords['status'] = sc.Variable(fit.OutputStatus)
-        parameters.coords['chi^2/d.o.f.'] = sc.Variable(fit.OutputChi2overDoF)
-        parameters.coords['function'] = sc.Variable(str(fit.Function))
-        parameters.coords['cost_function'] = sc.Variable(fit.CostFunction)
+        parameters.coords['status'] = sc.scalar(fit.OutputStatus)
+        parameters.coords['chi^2/d.o.f.'] = sc.scalar(fit.OutputChi2overDoF)
+        parameters.coords['function'] = sc.scalar(str(fit.Function))
+        parameters.coords['cost_function'] = sc.scalar(fit.CostFunction)
         return parameters, data
 
 
@@ -1034,7 +1032,7 @@ def _extract_einitial(ws):
         ei = ws.run().getProperty("Ei").value
     elif ws.run().hasProperty('EnergyRequest'):
         ei = ws.run().getProperty('EnergyRequest').value[-1]
-    return sc.Variable(value=ei, unit=sc.Unit("meV"))
+    return sc.scalar(ei, unit=sc.Unit("meV"))
 
 
 def _extract_efinal(ws, spec_dim):
