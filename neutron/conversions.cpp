@@ -16,6 +16,11 @@ using namespace scipp::variable;
 using namespace scipp::neutron::constants;
 
 namespace {
+namespace {
+constexpr inline auto c_one = 1.0 * llnl::units::one;
+constexpr inline auto c_two = 2.0 * llnl::units::one;
+} // namespace
+
 template <class T>
 [[nodiscard]] constexpr auto
 measurement_cast(const llnl::units::precise_measurement &m) {
@@ -101,14 +106,11 @@ Variable dspacing_from_tof(const Variable &tof, const Variable &Ltotal,
       [](const auto t, const auto l, const auto angle) {
         static constexpr auto c =
             measurement_cast<decltype(l)>(tof_to_dspacing_physical_constants);
+        static constexpr auto one = measurement_cast<decltype(l)>(c_one);
+        static constexpr auto two = measurement_cast<decltype(l)>(c_two);
         using std::cos;
         using std::sqrt;
-        return t * sqrt(2.0) / (c * l * sqrt(1.0 - cos(angle)));
-      },
-      [](const units::Unit t, const units::Unit l, const units::Unit angle) {
-        static constexpr auto c =
-            measurement_cast<units::Unit>(tof_to_dspacing_physical_constants);
-        return t / (c * l * sqrt(cos(angle)));
+        return t * sqrt(two) / (c * l * sqrt(one - cos(angle)));
       }};
   return transform(tof, Ltotal, two_theta, kernel, "dspacing_from_tof");
 }
