@@ -18,6 +18,7 @@ using namespace scipp::neutron::constants;
 
 namespace {
 constexpr inline auto c_two = 2.0 * llnl::units::one;
+constexpr inline auto c_4pi = 4.0 * scipp::pi<double> * llnl::units::one;
 
 template <class T>
 [[nodiscard]] constexpr auto
@@ -39,6 +40,22 @@ Variable wavelength_from_tof(const Variable &tof, const Variable &Ltotal) {
         return c / l * t;
       }};
   return transform(Ltotal, tof, kernel, "wavelength_from_tof");
+}
+
+Variable Q_from_wavelength(const Variable &wavelength,
+                           const Variable &two_theta) {
+  static constexpr auto kernel =
+      overloaded{core::element::arg_list<double>,
+                 core::transform_flags::expect_no_variance_arg<1>,
+                 [](const auto &lambda, const auto &angle) {
+                   static constexpr auto four_pi =
+                       measurement_cast<decltype(lambda)>(c_4pi);
+                   static constexpr auto two =
+                       measurement_cast<decltype(lambda)>(c_two);
+                   using std::sin;
+                   return four_pi * sin(angle / two) / lambda;
+                 }};
+  return transform(wavelength, two_theta, kernel, "Q_from_wavelength");
 }
 
 Variable energy_from_tof(const Variable &tof, const Variable &Ltotal) {

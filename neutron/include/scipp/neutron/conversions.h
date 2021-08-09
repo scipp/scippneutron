@@ -49,6 +49,10 @@ wavelength_from_tof(const variable::Variable &tof,
                     const variable::Variable &Ltotal);
 
 [[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
+Q_from_wavelength(const variable::Variable &wavelength,
+                  const variable::Variable &two_theta);
+
+[[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
 energy_from_tof(const variable::Variable &tof,
                 const variable::Variable &Ltotal);
 
