@@ -134,6 +134,44 @@ def test_loads_pulse_times_from_single_event_with_different_units(
                      dtype=sc.dtype.datetime64))
 
 
+@pytest.mark.parametrize(
+    "time_zero_offset,time_zero,time_zero_unit,expected_time", (
+        ("1980-01-01T00:00:00Z", 30, "s", "1980-01-01T00:00:30Z"),
+        ("1990-01-01T00:00:00Z", 5000, "ms", "1990-01-01T00:00:05Z"),
+        ("2000-01-01T00:00:00Z", 3 * 10**6, "us", "2000-01-01T00:00:03Z"),
+        ("2010-01-01T00:00:00Z", 12, "hour", "2010-01-01T12:00:00Z"),
+    ))
+def test_loads_pulse_times_with_combinations_of_offset_and_units(
+        load_function: Callable, time_zero_offset: str, time_zero: float,
+        time_zero_unit: str, expected_time: str):
+
+    offsets = np.array([0])
+    zeros = np.array([time_zero], dtype="float64")
+    event_data = EventData(
+        event_id=np.array([0]),
+        event_time_offset=offsets,
+        event_time_zero_offset=time_zero_offset,
+        event_time_zero=zeros,
+        event_index=np.array([0]),
+        event_time_zero_unit=time_zero_unit,
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([0]), event_data=event_data))
+
+    loaded_data = load_function(builder)
+
+    _time = np.array(expected_time).astype("datetime64[s]")
+
+    assert sc.identical(
+        loaded_data.values[0].attrs['pulse_time'],
+        sc.array(dims=["event"],
+                 values=[_time],
+                 unit=sc.units.s,
+                 dtype=sc.dtype.datetime64))
+
+
 def test_does_not_load_events_if_time_zero_unit_not_convertible_to_s(
         load_function: Callable):
     event_data_1 = EventData(

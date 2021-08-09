@@ -150,17 +150,20 @@ def _create_empty_events_data_array(
 
 
 def _load_pulse_times(group: Group, nexus: LoadFromNexus,
-                      event_index: np.array,
                       number_of_event_ids: int) -> sc.Variable:
     time_zero_group = "event_time_zero"
 
     _raw_pulse_times = nexus.load_dataset(group.group, time_zero_group,
                                           [_event_dimension])
 
+    event_index = nexus.load_dataset_from_group_as_numpy_array(
+        group.group, "event_index")
+
     try:
-        time_offset = nexus.get_string_attribute(group.group[time_zero_group],
-                                                 "offset")
-    except (KeyError, MissingAttribute):
+        time_offset = nexus.get_string_attribute(
+            nexus.get_dataset_from_group(group.group, time_zero_group),
+            "offset")
+    except MissingAttribute:
         time_offset = "1970-01-01T00:00:00Z"
 
     _diffs = np.diff(event_index, append=number_of_event_ids)
@@ -279,8 +282,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
             _detector_dimension: event_id,
         },
         "attrs": {
-            _pulse_time:
-            _load_pulse_times(group, nexus, event_index, number_of_event_ids),
+            _pulse_time: _load_pulse_times(group, nexus, number_of_event_ids),
         },
     }
 
