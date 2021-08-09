@@ -133,7 +133,7 @@ def test_convert_slice(target):
     # turns coords into attrs, but applying `convert` effectively reverses
     # this, which is why we have this slightly unusual behavior here:
     if target != 'dspacing':
-        expected.coords['position'] = expected.attrs.pop('position')
+        expected.coords['two_theta'] = expected.attrs.pop('two_theta')
     assert sc.identical(
         scn.convert(tof['counts']['spectrum', 0].copy(),
                     origin='tof',
