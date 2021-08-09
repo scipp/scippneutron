@@ -8,6 +8,7 @@
 #include <scipp/common/overloaded.h>
 #include <scipp/core/element/arg_list.h>
 #include <scipp/core/value_and_variance.h>
+#include <scipp/variable/to_unit.h>
 #include <scipp/variable/transform.h>
 
 #include "scipp/neutron/constants.h"
@@ -112,7 +113,10 @@ Variable dspacing_from_tof(const Variable &tof, const Variable &Ltotal,
         using std::sqrt;
         return t * sqrt(two) / (c * l * sqrt(one - cos(angle)));
       }};
-  return transform(tof, Ltotal, two_theta, kernel, "dspacing_from_tof");
+  return transform(
+      tof, Ltotal,
+      to_unit(two_theta, scipp::units::rad, scipp::CopyPolicy::TryAvoid),
+      kernel, "dspacing_from_tof");
 }
 
 } // namespace scipp::neutron::conversions
