@@ -122,13 +122,16 @@ def test_loads_pulse_times_from_single_event_with_different_units(
 
     loaded_data = load_function(builder)
 
-    for event, pulse_time in [(0, 12), (1, 12), (2, 12), (3, 56)]:
+    for event, pulse_time in enumerate([12, 12, 12, 56]):
+        _time = np.array("1970-01-01").astype("datetime64[s]") \
+                + np.array(pulse_time).astype("timedelta64[s]")
+
         assert sc.identical(
             loaded_data.values[event].attrs['pulse_time'],
             sc.array(dims=["event"],
-                     values=[pulse_time],
+                     values=[_time],
                      unit=sc.units.s,
-                     dtype=sc.dtype.float64))
+                     dtype=sc.dtype.datetime64))
 
 
 def test_does_not_load_events_if_time_zero_unit_not_convertible_to_s(
@@ -211,14 +214,16 @@ def test_loads_pulse_times_from_multiple_event_data_groups(
 
     loaded_data = load_function(builder)
 
-    for event, pulse_time in [(0, 12), (1, 12), (2, 12), (3, 56), (4, 87),
-                              (5, 87), (6, 87), (7, 43)]:
+    for event, pulse_time in enumerate([12, 12, 12, 56, 87, 87, 87, 43]):
+        _time = np.array("1970-01-01").astype("datetime64[s]") \
+                + np.array(pulse_time).astype("timedelta64[s]")
+
         assert sc.identical(
             loaded_data.values[event].attrs['pulse_time'],
             sc.array(dims=["event"],
-                     values=[pulse_time],
+                     values=[_time],
                      unit=sc.units.s,
-                     dtype=sc.dtype.float64))
+                     dtype=sc.dtype.datetime64))
 
 
 def test_loads_data_from_multiple_event_data_groups(load_function: Callable):

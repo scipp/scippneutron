@@ -6,7 +6,8 @@ from dataclasses import dataclass
 import h5py
 from typing import Optional, List, Any, Dict, Union
 import numpy as np
-from ._common import (BadSource, SkipSource, MissingDataset, Group)
+from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute,
+                      Group)
 import scipp as sc
 from warnings import warn
 from itertools import groupby
@@ -143,7 +144,7 @@ def _create_empty_events_data_array(
                             _pulse_time:
                             sc.empty(dims=[_event_dimension],
                                      shape=[0],
-                                     dtype=sc.dtype.float64,
+                                     dtype=sc.dtype.datetime64,
                                      unit=sc.units.s),
                         })
 
@@ -156,6 +157,12 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus,
     _raw_pulse_times = nexus.load_dataset(group.group, time_zero_group,
                                           [_event_dimension])
 
+    try:
+        time_offset = nexus.get_string_attribute(group.group[time_zero_group],
+                                                 "offset")
+    except (KeyError, MissingAttribute):
+        time_offset = "1970-01-01T00:00:00Z"
+
     _diffs = np.diff(event_index, append=number_of_event_ids)
 
     if any(_diffs < 0):
@@ -163,20 +170,34 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus,
             f"Event index in NXEvent at {group.path}/event_index was not"
             f"ordered.")
 
-    _values = np.repeat(_raw_pulse_times.values, _diffs)
+    pulse_times = np.repeat(_raw_pulse_times.values,
+                            _diffs).astype('timedelta64')
 
-    _var = sc.Variable(dims=[_event_dimension],
-                       values=_values,
-                       unit=_raw_pulse_times.unit,
-                       dtype=sc.dtype.float64)
+    if _raw_pulse_times.unit != sc.units.s:
+        # scipp doesn't have time offsets so do time offset arithmetic in
+        # numpy and then convert back to scipp. Skip this step in the fast
+        # case where the unit is already correct to avoid unnecessary
+        # conversion to/from numpy.
+        try:
+            pulse_times = sc.to_unit(
+                sc.Variable(dims=[_event_dimension],
+                            values=pulse_times,
+                            unit=_raw_pulse_times.unit,
+                            dtype=sc.dtype.float64),
+                sc.units.s).values.astype("timedelta64[s]")
+        except sc.UnitError:
+            raise BadSource(
+                f"Could not load pulse times: units attribute "
+                f"'{_raw_pulse_times.unit}' in NXEvent at "
+                f"{group.path}/{time_zero_group} is not convertible"
+                f" to seconds.")
 
-    try:
-        return sc.to_unit(_var, sc.units.s)
-    except sc.UnitError:
-        raise BadSource(
-            f"Could not load pulse times: units attribute '{_var.unit}' in"
-            f" NXEvent at {group.path}/{time_zero_group} is not convertible"
-            f" to seconds.")
+    return sc.Variable(
+        dims=[_event_dimension],
+        values=np.array([time_offset]).astype('datetime64[s]') + pulse_times,
+        unit=sc.units.s,
+        dtype=sc.dtype.datetime64,
+    )
 
 
 def _load_detector(group: Group, file_root: h5py.File,
@@ -233,9 +254,6 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     event_time_offset = nexus.load_dataset(group.group, "event_time_offset",
                                            [_event_dimension])
 
-    pulse_times = _load_pulse_times(group, nexus, event_index,
-                                    number_of_event_ids)
-
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
                       shape=event_id.shape,
@@ -261,7 +279,8 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
             _detector_dimension: event_id,
         },
         "attrs": {
-            _pulse_time: pulse_times,
+            _pulse_time:
+            _load_pulse_times(group, nexus, event_index, number_of_event_ids),
         },
     }
 
