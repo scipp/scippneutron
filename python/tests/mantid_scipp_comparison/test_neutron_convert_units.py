@@ -40,9 +40,7 @@ class Comparison(MantidScippComparison):
     def _workspaces(self):
         import mantid.simpleapi as sapi
         import mantid.kernel as kernel
-        ws = sapi.CreateSampleWorkspace(XMin=1000,
-                                        NumBanks=1,
-                                        StoreInADS=False)
+        ws = sapi.CreateSampleWorkspace(XMin=1000, NumBanks=1, StoreInADS=False)
         # Crop out spectra index 0 as has two_theta=0, gives inf d-spacing
         ws = sapi.CropWorkspace(ws, StartWorkspaceIndex=1, StoreInADS=False)
         ws = sapi.ConvertUnits(
@@ -54,8 +52,8 @@ class Comparison(MantidScippComparison):
         ws.mutableRun().addProperty(
             'deltaE-mode',
             kernel.StringPropertyWithValue('deltaE-mode',
-                                           self._emode_to_mantid[self._emode]),
-            '', True)
+                                           self._emode_to_mantid[self._emode]), '',
+            True)
         if self._efixed is not None:
             ws.mutableRun().addProperty(
                 'Ei', kernel.FloatPropertyWithValue('Ei', self._efixed.value),
@@ -73,8 +71,8 @@ class Comparison(MantidScippComparison):
         out = converter.from_mantid(out)
         # broadcast to circumvent common-bins conversion in from_mantid
         spec_shape = out.coords['spectrum'].shape
-        out.coords[self._target] = sc.ones(
-            dims=['spectrum'], shape=spec_shape) * out.coords[self._target]
+        out.coords[self._target] = sc.ones(dims=['spectrum'],
+                                           shape=spec_shape) * out.coords[self._target]
         return out
 
     def _run_scipp(self, input):
@@ -99,16 +97,14 @@ class DirectInElasticComparison(Comparison):
     def __init__(self, origin, target):
         self._origin = origin
         self._target = target
-        super(DirectInElasticComparison,
-              self).__init__(self.__class__.__name__,
-                             origin,
-                             target,
-                             emode=Emode.Direct,
-                             efixed=1000 * sc.Unit('meV'))
+        super(DirectInElasticComparison, self).__init__(self.__class__.__name__,
+                                                        origin,
+                                                        target,
+                                                        emode=Emode.Direct,
+                                                        efixed=1000 * sc.Unit('meV'))
 
 
-@pytest.mark.skipif(not mantid_is_available(),
-                    reason='Mantid framework is unavailable')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 class TestNeutronConversionUnits:
     def test_neutron_convert_units_tof_to_wavelength(self):
         test = ElasticComparison(origin='tof', target='wavelength')
@@ -123,6 +119,5 @@ class TestNeutronConversionUnits:
         test.run()
 
     def test_neutron_convert_units_tof_to_wavelength_direct(self):
-        test = DirectInElasticComparison(origin='tof',
-                                         target='energy_transfer')
+        test = DirectInElasticComparison(origin='tof', target='energy_transfer')
         test.run()

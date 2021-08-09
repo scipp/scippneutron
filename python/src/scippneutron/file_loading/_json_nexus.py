@@ -54,8 +54,8 @@ def _get_attribute_value(element: Dict,
 
 
 def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
-                 groups_with_requested_nx_class: Dict[str, List[Group]],
-                 path: List[str]):
+                 groups_with_requested_nx_class: Dict[str,
+                                                      List[Group]], path: List[str]):
     try:
         for child in root[_nexus_children]:
             try:
@@ -70,14 +70,12 @@ def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
                 nx_class = _get_attribute_value(child, _nexus_class)
                 if nx_class in nx_class_names:
                     groups_with_requested_nx_class[nx_class].append(
-                        Group(child, root, "/".join(path),
-                              contains_stream(child)))
+                        Group(child, root, "/".join(path), contains_stream(child)))
             except MissingAttribute:
                 # It may be a group but not an NX_class,
                 # that's fine, continue to its children
                 pass
-            _visit_nodes(child, nx_class_names, groups_with_requested_nx_class,
-                         path)
+            _visit_nodes(child, nx_class_names, groups_with_requested_nx_class, path)
             path.pop(-1)
     except KeyError:
         pass
@@ -133,20 +131,17 @@ class LoadFromJson:
             self,
             group: Dict,
             name: str,
-            allowed_nexus_classes: Optional[Tuple[str]] = None
-    ) -> Optional[Dict]:
+            allowed_nexus_classes: Optional[Tuple[str]] = None) -> Optional[Dict]:
         """
         Returns dictionary for dataset or None if not found
         """
         if allowed_nexus_classes is None:
-            allowed_nexus_classes = (_nexus_dataset, _nexus_group,
-                                     _nexus_stream)
+            allowed_nexus_classes = (_nexus_dataset, _nexus_group, _nexus_stream)
         for child in group[_nexus_children]:
             try:
                 if child[_nexus_name] == name:
                     if child["type"] == _nexus_link:
-                        child = self.get_object_by_path(
-                            self._root, child["target"])
+                        child = self.get_object_by_path(self._root, child["target"])
                     if child["type"] in allowed_nexus_classes:
                         return child
             except KeyError:
@@ -173,25 +168,20 @@ class LoadFromJson:
             path.append(root[_nexus_name])
         except KeyError:
             pass
-        _visit_nodes(root, nx_class_names, groups_with_requested_nx_class,
-                     path)
+        _visit_nodes(root, nx_class_names, groups_with_requested_nx_class, path)
 
         return groups_with_requested_nx_class
 
-    def get_child_from_group(self, group: Dict,
-                             child_name: str) -> Optional[Dict]:
+    def get_child_from_group(self, group: Dict, child_name: str) -> Optional[Dict]:
         return self._get_child_from_group(group, child_name)
 
-    def get_dataset_from_group(self, group: Dict,
-                               dataset_name: str) -> Optional[Dict]:
+    def get_dataset_from_group(self, group: Dict, dataset_name: str) -> Optional[Dict]:
         """
         Returns dictionary for dataset or None if not found
         """
-        return self._get_child_from_group(group, dataset_name,
-                                          (_nexus_dataset, ))
+        return self._get_child_from_group(group, dataset_name, (_nexus_dataset, ))
 
-    def dataset_in_group(self, group: Dict,
-                         dataset_name: str) -> Tuple[bool, str]:
+    def dataset_in_group(self, group: Dict, dataset_name: str) -> Tuple[bool, str]:
         if self.get_dataset_from_group(group, dataset_name) is not None:
             return True, ""
         return False, (f"Unable to load data from NXevent_data "
@@ -216,11 +206,11 @@ class LoadFromJson:
 
         if dtype is None:
             try:
-                dtype = _filewriter_to_supported_numpy_dtype[
-                    dataset[_nexus_dataset]["type"]]
+                dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
+                                                             ["type"]]
             except KeyError:
-                dtype = _filewriter_to_supported_numpy_dtype[
-                    dataset[_nexus_dataset]["dtype"]]
+                dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
+                                                             ["dtype"]]
 
         try:
             units = _get_attribute_value(dataset, _nexus_units)
@@ -235,8 +225,7 @@ class LoadFromJson:
 
         raise NotImplementedError("Loading scalar datasets not implemented")
 
-    def load_dataset_from_group_as_numpy_array(self, group: Dict,
-                                               dataset_name: str):
+    def load_dataset_from_group_as_numpy_array(self, group: Dict, dataset_name: str):
         """
         Load a dataset into a numpy array
         Prefer use of load_dataset to load directly to a scipp variable,
@@ -260,17 +249,16 @@ class LoadFromJson:
         :param dataset: The dataset to load values from
         """
         try:
-            dtype = _filewriter_to_supported_numpy_dtype[
-                dataset[_nexus_dataset]["type"]]
+            dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
+                                                         ["type"]]
         except KeyError:
-            dtype = _filewriter_to_supported_numpy_dtype[
-                dataset[_nexus_dataset]["dtype"]]
+            dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
+                                                         ["dtype"]]
         return np.array(dataset[_nexus_values]).astype(dtype)
 
     def get_dataset_numpy_dtype(self, group: Dict, dataset_name: str) -> Any:
         dataset = self.get_dataset_from_group(group, dataset_name)
-        return _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
-                                                    ["type"]]
+        return _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]["type"]]
 
     @staticmethod
     def get_name(group: Dict) -> str:
@@ -284,8 +272,7 @@ class LoadFromJson:
             unit = "dimensionless"
         return unit
 
-    def load_scalar_string(self, group: Dict,
-                           dataset_name: str) -> sc.Variable:
+    def load_scalar_string(self, group: Dict, dataset_name: str) -> sc.Variable:
         dataset = self.get_dataset_from_group(group, dataset_name)
         if dataset is None:
             raise MissingDataset()
@@ -299,8 +286,7 @@ class LoadFromJson:
         return group
 
     @staticmethod
-    def get_attribute_as_numpy_array(node: Dict,
-                                     attribute_name: str) -> np.ndarray:
+    def get_attribute_as_numpy_array(node: Dict, attribute_name: str) -> np.ndarray:
         attribute_value = _get_attribute_value(node, attribute_name)
         return np.array(attribute_value)
 
@@ -338,8 +324,8 @@ def get_streams_info(root: Dict) -> List[StreamInfo]:
                                                          ["dtype"]]
         except KeyError:
             try:
-                dtype = _filewriter_to_supported_numpy_dtype[
-                    stream.group["stream"]["type"]]
+                dtype = _filewriter_to_supported_numpy_dtype[stream.group["stream"]
+                                                             ["type"]]
             except KeyError:
                 dtype = None
 
