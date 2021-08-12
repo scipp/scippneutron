@@ -9,6 +9,8 @@ Since v0.2.0
 Features
 ~~~~~~~~
 
+* `load_nexus` will now load pulse times along with event data.
+
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
