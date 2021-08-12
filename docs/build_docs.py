@@ -80,6 +80,6 @@ if __name__ == '__main__':
 
     # Build the docs with sphinx-build
     status = subprocess.check_call(
-        ['sphinx-build', '-b', args.builder, '-d', work_dir, '.', prefix],
+        ['sphinx-build', '-b', args.builder, '-d', work_dir, docs_dir, prefix],
         stderr=subprocess.STDOUT,
         shell=sys.platform == "win32")

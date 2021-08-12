@@ -150,10 +150,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 # Custom target for building tests. all excludes tests by default
 add_custom_target(all-tests)
 
-# Custom target for building documentation
+# Custom install target for docs to depend on.
 add_custom_target(
-  docs COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/docs/build_docs.py
+  install-scippneutron COMMAND cmake --build ${CMAKE_CURRENT_BINARY_DIR}
+                               --target install
 )
+
+include(docs)
+add_docs_target(docs BUILDER html DEPENDS install-scippneutron)
+add_docs_target(doctest BUILDER doctest DEPENDS docs)
+add_docs_target(linkcheck BUILDER linkcheck DEPENDS docs)
 
 include(GNUInstallDirs)
 set(PYTHONDIR scippneutron)
