@@ -282,7 +282,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
 
     detector_data = event_data.pop(0)
 
-    _tof_edges = sc.Variable(
+    _tof_edges = sc.array(
         values=[_min_tof, _max_tof + 1],  # +1 so that bins include all data
         dims=[_time_of_flight],
         unit=detector_data.events.coords[_time_of_flight].unit,

@@ -81,10 +81,11 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
     # Expect time of flight to match the values in the
     # event_time_offset dataset
     # May be reordered due to binning (hence np.sort)
-    assert np.array_equal(
-        np.sort(
-            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
-        np.sort(event_time_offsets))
+    assert sc.identical(
+        sc.sort(loaded_data.bins.concatenate('detector_id').values[0].coords['tof'],
+                key="event"),
+        sc.sort(sc.array(dims=["event"], values=event_time_offsets, unit=sc.units.ns),
+                key="event"))
 
     counts_on_detectors = loaded_data.bins.sum()
     # No detector_number dataset in file so expect detector_id to be
@@ -1405,7 +1406,7 @@ def test_load_nexus_adds_single_tof_bin(load_function: Callable):
     loaded_data = load_function(builder)
 
     # Size 2 for each of the two bin edges around a single bin
-    assert len(loaded_data.coords["tof"]) == 2
+    assert loaded_data.coords["tof"].shape == [2]
 
     # Assert bin edges correspond to smallest and largest+1 time-of-flights in data.
     # +1 is so that right-hand bin edge doesn't exclude last data point
