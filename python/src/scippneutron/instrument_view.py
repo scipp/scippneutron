@@ -4,6 +4,7 @@
 
 import numpy as np
 import pythreejs as p3
+import scipp as sc
 
 
 def _cube(position, message, sz, color):
@@ -73,16 +74,43 @@ def _add_sample(position, scene, sz=(1, 1, 1)):
     _unpack_to_scene(scene, _cube(position, message="sample", sz=sz, color="#808080"))
 
 
-def _add_beamline(scipp_obj, scene):
-    # TODO calculate sizes
+def _calculate_component_width(det_center, component, fixed_width=None):
+    if fixed_width:
+        return fixed_width
+    else:
+        scaling_factor = 1 / 5.0
+        return sc.norm(det_center - component).value * scaling_factor
 
-    if "source_position" in scipp_obj.meta:
-        _add_source(tuple(scipp_obj.meta["source_position"].value), scene, sz=(1, 1, 1))
+
+def _add_beamline(scipp_obj, positions_var, scene):
+    sample_width = None
+    det_center = sc.mean(positions_var)
+    beamline_comp_positions = []
+
     if "sample_position" in scipp_obj.meta:
-        _add_sample(tuple(scipp_obj.meta["sample_position"].value),
-                    scene,
-                    sz=(0.5, 0.5, 0.5))
-    # TODO reset camera far field
+        sample_width = _calculate_component_width(det_center,
+                                                  scipp_obj.meta["sample_position"])
+        sample = scipp_obj.meta["sample_position"]
+        beamline_comp_positions.append(sc.norm(sample - det_center).value)
+        _add_sample(tuple(sample.value), scene, sz=([sample_width] * 3))
+    if "source_position" in scipp_obj.meta:
+        source_width = _calculate_component_width(det_center,
+                                                  scipp_obj.meta["source_position"],
+                                                  sample_width)
+        source = scipp_obj.meta["source_position"]
+        beamline_comp_positions.append(sc.norm(source - det_center).value)
+        _add_source(tuple(source.value), scene, sz=([source_width] * 3))
+
+    if not beamline_comp_positions:
+        return None
+    return np.max(np.array(beamline_comp_positions)) * 5.0
+
+
+def _get_camera(plt):
+    for child in plt.view.figure.scene.children:
+        if isinstance(child, p3.PerspectiveCamera):
+            return child
+    return None
 
 
 def instrument_view(scipp_obj=None,
@@ -113,8 +141,9 @@ def instrument_view(scipp_obj=None,
 
     from scipp.plotting import plot
 
+    positions_var = scipp_obj.meta[positions]
     if pixel_size is None:
-        pos_array = scipp_obj.meta[positions].values
+        pos_array = positions_var.values
         if len(pos_array) > 1:
             pixel_size = np.linalg.norm(pos_array[1] - pos_array[0])
 
@@ -127,6 +156,10 @@ def instrument_view(scipp_obj=None,
     # Add additional components from the beamline
     if plot_non_pixels:
         scene = plt.view.figure.scene
-        _add_beamline(scipp_obj, scene)
+        z = _add_beamline(scipp_obj, positions_var, scene)
+        # Reset camera
+        if z:
+            camera = _get_camera(plt)
+            camera.far = z * 5.0
 
     return plt
