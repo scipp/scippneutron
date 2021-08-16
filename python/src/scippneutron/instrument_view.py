@@ -154,7 +154,8 @@ def instrument_view(scipp_obj=None,
                **kwargs)
 
     # Add additional components from the beamline
-    if plot_non_pixels:
+    # TODO solve hasattr fix
+    if plot_non_pixels and hasattr(plot, 'view'):
         scene = plt.view.figure.scene
         z = _add_beamline(scipp_obj, positions_var, scene)
         # Reset camera
