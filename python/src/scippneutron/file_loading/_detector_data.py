@@ -16,6 +16,8 @@ _detector_dimension = "detector_id"
 _event_dimension = "event"
 _time_of_flight = "tof"
 
+TOF_EPSILON = 1
+
 
 class DetectorIdError(Exception):
     pass
@@ -277,13 +279,12 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
     # This can happen if there were no events in the file at all as sc.min will return
     # double_max and sc.max will return double_min
     if _min_tof >= _max_tof:
-        _min_tof = float("-inf")
-        _max_tof = float("inf")
+        _min_tof, _max_tof = _max_tof, _min_tof
 
     detector_data = event_data.pop(0)
 
     _tof_edges = sc.array(
-        values=[_min_tof, _max_tof + 1],  # +1 so that bins include all data
+        values=[_min_tof, _max_tof + TOF_EPSILON],  # so that bins include all data
         dims=[_time_of_flight],
         unit=detector_data.events.coords[_time_of_flight].unit,
         dtype=detector_data.events.coords[_time_of_flight].dtype,
