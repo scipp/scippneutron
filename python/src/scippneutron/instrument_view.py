@@ -7,10 +7,10 @@ import pythreejs as p3
 import scipp as sc
 
 
-def _cube(position, message, sz, color):
-    geometry = p3.BoxGeometry(width=sz[0],
-                              height=sz[1],
-                              depth=sz[2],
+def _box(position, display_text, bounding_box, color):
+    geometry = p3.BoxGeometry(width=bounding_box[0],
+                              height=bounding_box[1],
+                              depth=bounding_box[2],
                               widthSegments=2,
                               heightSegments=2,
                               depthSegments=2)
@@ -18,28 +18,31 @@ def _cube(position, message, sz, color):
     material = p3.MeshBasicMaterial(color=color)
     mesh = p3.Mesh(geometry=geometry, material=material)
     mesh.position = position
-    text_position = (position[0], position[1] + sz[1], position[2])
-    text_mesh = _text_mesh(text_position, message, x_width=sz[0], y_width=sz[1])
+    text_position = (position[0], position[1] + bounding_box[1], position[2])
+    text_mesh = _text_mesh(text_position,
+                           display_text=display_text,
+                           x_width=bounding_box[0],
+                           y_width=bounding_box[1])
     return mesh, text_mesh
 
 
-def _text_mesh(position, message, x_width, y_width):
+def _text_mesh(position, display_text, x_width, y_width):
     text_geometry = p3.PlaneGeometry(width=x_width,
                                      height=y_width,
                                      widthSegments=2,
                                      heightSegments=2)
 
-    text = p3.TextTexture(string=message, color='black', size=20)
+    text = p3.TextTexture(string=display_text, color='black', size=20)
     text_material = p3.MeshBasicMaterial(map=text, transparent=True)
     text_mesh = p3.Mesh(geometry=text_geometry, material=text_material)
     text_mesh.position = position
     return text_mesh
 
 
-def _cylinder(position, message, sz, color):
-    geometry = p3.CylinderGeometry(radiusTop=sz[0] / 2,
-                                   radiusBottom=sz[0] / 2,
-                                   height=sz[1],
+def _cylinder(position, display_text, bounding_box, color):
+    geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
+                                   radiusBottom=bounding_box[0] / 2,
+                                   height=bounding_box[1],
                                    radialSegments=12,
                                    heightSegments=12,
                                    openEnded=False,
@@ -50,8 +53,11 @@ def _cylinder(position, message, sz, color):
     mesh = p3.Mesh(geometry=geometry, material=material)
     mesh.position = position
     # Position label above cylinder
-    text_position = (position[0], position[1] + sz[1], position[2])
-    text_mesh = _text_mesh(text_position, message=message, x_width=sz[0], y_width=sz[1])
+    text_position = (position[0], position[1] + bounding_box[1], position[2])
+    text_mesh = _text_mesh(text_position,
+                           display_text=display_text,
+                           x_width=bounding_box[0],
+                           y_width=bounding_box[1])
     return mesh, text_mesh
 
 
@@ -63,47 +69,43 @@ def _unpack_to_scene(scene, items):
         scene.add(items)
 
 
-def _add_source(position, scene, sz=(1, 1, 1)):
-    _unpack_to_scene(scene, _cylinder(position,
-                                      message="source",
-                                      sz=sz,
-                                      color="#808080"))
+def _add_to_scene(position, scene, shape, display_text, bounding_box):
+    _unpack_to_scene(
+        scene,
+        shape(position,
+              display_text=display_text,
+              bounding_box=bounding_box,
+              color="#808080"))
 
 
-def _add_sample(position, scene, sz=(1, 1, 1)):
-    _unpack_to_scene(scene, _cube(position, message="sample", sz=sz, color="#808080"))
-
-
-def _calculate_component_width(det_center, component, fixed_width=None):
-    if fixed_width:
-        return fixed_width
-    else:
-        scaling_factor = 1 / 5.0
-        return sc.norm(det_center - component).value * scaling_factor
-
-
-def _add_beamline(scipp_obj, positions_var, scene):
-    sample_width = None
+def _furthest_component(positions_var, scipp_obj, additional):
     det_center = sc.mean(positions_var)
-    beamline_comp_positions = []
+    distances = [(key, sc.norm(scipp_obj.meta[key] - det_center).value)
+                 for key in additional.keys()]
+    item, max_displacement = sorted(distances, key=lambda x: x[1])[-1]
+    return item, max_displacement
 
-    if "sample_position" in scipp_obj.meta:
-        sample_width = _calculate_component_width(det_center,
-                                                  scipp_obj.meta["sample_position"])
-        sample = scipp_obj.meta["sample_position"]
-        beamline_comp_positions.append(sc.norm(sample - det_center).value)
-        _add_sample(tuple(sample.value), scene, sz=([sample_width] * 3))
-    if "source_position" in scipp_obj.meta:
-        source_width = _calculate_component_width(det_center,
-                                                  scipp_obj.meta["source_position"],
-                                                  sample_width)
-        source = scipp_obj.meta["source_position"]
-        beamline_comp_positions.append(sc.norm(source - det_center).value)
-        _add_source(tuple(source.value), scene, sz=([source_width] * 3))
 
-    if not beamline_comp_positions:
-        return None
-    return np.max(np.array(beamline_comp_positions)) * 5.0
+def _plot_additional(scipp_obj, additional, positions_var, scene):
+    furthest_key, furthest_distance = _furthest_component(positions_var, scipp_obj,
+                                                          additional)
+    # Some scaling to set width according to distance from detector center
+    scaling_factor = 1 / 10.0
+    width = furthest_distance * scaling_factor
+    shapes = {"cube": _box, "cylinder": _cylinder}
+    for item, type in additional.items():
+        if type not in shapes:
+            supported_shapes = ", ".join(shapes.keys())
+            raise ValueError(f"Unknown shape: {type} requested for {item}. "
+                             f"Allowed values are: {supported_shapes}")
+        component_position = scipp_obj.meta[item]
+        _add_to_scene(position=tuple(component_position.value),
+                      scene=scene,
+                      shape=shapes[type],
+                      display_text=item,
+                      bounding_box=([width] * 3))
+
+    return furthest_distance * 5.0
 
 
 def _get_camera(plt):
@@ -116,13 +118,14 @@ def _get_camera(plt):
 def instrument_view(scipp_obj=None,
                     positions="position",
                     pixel_size=None,
-                    plot_non_pixels=True,
+                    also_plot=None,
                     **kwargs):
     """
     :param scipp_obj: scipp object holding geometries
     :param positions: Key for coord/attr holding positions to use for pixels
     :param pixel_size: Custom pixel size to use for detector pixels
-    :param plot_non_pixels: If True render other known beamline components.
+    :param also_plot: Dictionary containing names and outlines for
+     items with known positions to be shown
     :param kwargs: Additional keyword arguments to pass to scipp.plotting.plot
     :return: The 3D plot object
 
@@ -140,6 +143,7 @@ def instrument_view(scipp_obj=None,
     """
 
     from scipp.plotting import plot
+    from scipp.plotting.objects import PlotDict
 
     positions_var = scipp_obj.meta[positions]
     if pixel_size is None:
@@ -154,10 +158,9 @@ def instrument_view(scipp_obj=None,
                **kwargs)
 
     # Add additional components from the beamline
-    # TODO solve hasattr fix
-    if plot_non_pixels and hasattr(plot, 'view'):
+    if also_plot and not isinstance(plot, PlotDict):
         scene = plt.view.figure.scene
-        z = _add_beamline(scipp_obj, positions_var, scene)
+        z = _plot_additional(scipp_obj, also_plot, positions_var, scene)
         # Reset camera
         if z:
             camera = _get_camera(plt)
