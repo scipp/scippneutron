@@ -16,7 +16,6 @@ import scippneutron
 import scipp as sc
 from typing import List, Type, Union, Callable
 from scippneutron.file_loading.load_nexus import _load_nexus_json
-from scippneutron.file_loading._detector_data import TOF_EPSILON
 from dateutil.parser import parse as parse_date
 
 
@@ -1390,7 +1389,7 @@ def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
 
 
 def test_load_nexus_adds_single_tof_bin(load_function: Callable):
-    event_time_offsets = np.array([456, 743, 347, 345, 632])
+    event_time_offsets = np.array([456, 743, 347, 345, 632], dtype="float64")
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 3]),
         event_time_offset=event_time_offsets,
@@ -1409,11 +1408,11 @@ def test_load_nexus_adds_single_tof_bin(load_function: Callable):
     # Size 2 for each of the two bin edges around a single bin
     assert loaded_data.coords["tof"].shape == [2]
 
-    # Assert bin edges correspond to smallest and largest+TOF_EPSILON time-of-flights
+    # Assert bin edges correspond to smallest and largest+1 time-of-flights
     # in data.
-    # +TOF_EPSILON is so that right-hand bin edge doesn't exclude last data point
     assert sc.identical(loaded_data.coords["tof"]["tof", 0],
                         sc.scalar(value=np.min(event_time_offsets), unit=sc.units.ns))
     assert sc.identical(
         loaded_data.coords["tof"]["tof", 1],
-        sc.scalar(value=np.max(event_time_offsets) + TOF_EPSILON, unit=sc.units.ns))
+        sc.scalar(value=np.nextafter(np.max(event_time_offsets), float("inf")),
+                  unit=sc.units.ns))

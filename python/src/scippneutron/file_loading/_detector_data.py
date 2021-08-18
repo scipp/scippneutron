@@ -16,8 +16,6 @@ _detector_dimension = "detector_id"
 _event_dimension = "event"
 _time_of_flight = "tof"
 
-TOF_EPSILON = 1
-
 
 class DetectorIdError(Exception):
     pass
@@ -283,8 +281,18 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
 
     detector_data = event_data.pop(0)
 
+    tof_dtype = detector_data.events.coords[_time_of_flight].dtype
+
+    if str(tof_dtype).startswith("int"):
+        _max_tof += 1
+    else:
+        _max_tof = np.nextafter(_max_tof, float("inf"))
+
     _tof_edges = sc.array(
-        values=[_min_tof, _max_tof + TOF_EPSILON],  # so that bins include all data
+        values=[
+            _min_tof,
+            _max_tof,
+        ],
         dims=[_time_of_flight],
         unit=detector_data.events.coords[_time_of_flight].unit,
         dtype=detector_data.events.coords[_time_of_flight].dtype,
