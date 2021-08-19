@@ -60,7 +60,7 @@ class LoadFromHdf5:
         }
 
         def _match_nx_class(_, h5_object):
-            if isinstance(h5_object, h5py.Group):
+            if LoadFromHdf5.is_group(h5_object):
                 try:
                     nx_class = _get_attr_as_str(h5_object, "NX_class")
                     if nx_class in nx_class_names:
@@ -165,7 +165,7 @@ class LoadFromHdf5:
     def get_dataset_from_group(self, group: h5py.Group,
                                dataset_name: str) -> Optional[h5py.Dataset]:
         dataset = self.get_child_from_group(group, dataset_name)
-        if isinstance(dataset, h5py.Dataset):
+        if not self.is_group(dataset):
             return dataset
         return None
 
@@ -188,7 +188,7 @@ class LoadFromHdf5:
     def get_attribute_as_numpy_array(node: Union[h5py.Group, h5py.Dataset],
                                      attribute_name: str) -> np.ndarray:
         try:
-            return node.attrs[attribute_name]
+            return np.asarray(node.attrs[attribute_name])
         except KeyError:
             raise MissingAttribute
 
@@ -210,4 +210,7 @@ class LoadFromHdf5:
 
     @staticmethod
     def is_group(node: Any):
-        return isinstance(node, h5py.Group)
+        # Note: Not using isinstance(node, h5py.Group) so we can support other
+        # libraries that look like h5py but are not, in particular data
+        # adapted from `tiled`.
+        return hasattr(node, 'visititems')
