@@ -49,11 +49,18 @@ def _find_beam(det_com, pos):
     return beam
 
 
+def _alignment_matrix(to_align, target):
+    rotaxis = np.cross(to_align, target)
+    magnitude = np.linalg.norm(to_align) * np.linalg.norm(target)
+    axis_angle = np.arcsin(rotaxis / magnitude)
+    return Rot.from_rotvec(axis_angle).as_matrix()
+
+
 def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
     geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
                                    radiusBottom=bounding_box[0] / 2,
                                    height=bounding_box[0] / 100,
-                                   radialSegments=2,
+                                   radialSegments=24,
                                    heightSegments=12,
                                    openEnded=False,
                                    thetaStart=np.pi / 8,
@@ -62,12 +69,10 @@ def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
     material = p3.MeshBasicMaterial(color=color)
     mesh = p3.Mesh(geometry=geometry, material=material)
     mesh.position = tuple(position.value)
-    beam = _find_beam(kwargs['det_center'], position)
-    disk_axis = np.array([0, 1, 0])
-    rotaxis = np.cross(disk_axis, beam)
-    magnitude = np.linalg.norm(disk_axis) * np.linalg.norm(beam)
-    axis_angle = np.arcsin(rotaxis / magnitude)
-    mesh.setRotationFromMatrix(Rot.from_rotvec(axis_angle).as_matrix().flatten())
+    beam = _find_beam(det_com=kwargs['det_center'], pos=position)
+    disk_axis = np.array([0, 1, 0])  # Disk created with this axis
+    rotation = _alignment_matrix(to_align=disk_axis, target=beam)
+    mesh.setRotationFromMatrix(rotation.flatten())
 
     text_position = tuple(position.value + np.array([0, bounding_box[1], 0]))
     text_mesh = _text_mesh(text_position,
@@ -158,13 +163,13 @@ def _get_camera(plt):
 def instrument_view(scipp_obj=None,
                     positions="position",
                     pixel_size=None,
-                    also_plot=None,
+                    components=None,
                     **kwargs):
     """
     :param scipp_obj: scipp object holding geometries
     :param positions: Key for coord/attr holding positions to use for pixels
     :param pixel_size: Custom pixel size to use for detector pixels
-    :param also_plot: Dictionary containing names and outlines for
+    :param components: Dictionary containing names and shape names for
      items with known positions to be shown
     :param kwargs: Additional keyword arguments to pass to scipp.plotting.plot
     :return: The 3D plot object
@@ -198,9 +203,9 @@ def instrument_view(scipp_obj=None,
                **kwargs)
 
     # Add additional components from the beamline
-    if also_plot and not isinstance(plot, PlotDict):
+    if components and not isinstance(plot, PlotDict):
         scene = plt.view.figure.scene
-        z = _plot_additional(scipp_obj, also_plot, positions_var, scene)
+        z = _plot_additional(scipp_obj, components, positions_var, scene)
         # Reset camera
         if z:
             camera = _get_camera(plt)
