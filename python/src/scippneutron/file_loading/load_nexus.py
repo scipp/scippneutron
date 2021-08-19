@@ -26,6 +26,7 @@ nx_instrument = "NXinstrument"
 nx_sample = "NXsample"
 nx_source = "NXsource"
 nx_detector = "NXdetector"
+nx_chopper = "NXdisk_chopper"
 
 
 @contextmanager
@@ -63,6 +64,14 @@ def _load_instrument_name(instrument_groups: List[Group], data: ScippData,
              f"loading name from {instrument_groups[0].group.name} only")
     _add_string_attr_to_loaded_data(instrument_groups[0].group, "name",
                                     "instrument_name", data, nexus)
+
+
+def _load_chopper(chopper_groups: List[Group], data: ScippData, nexus: LoadFromNexus):
+    choppers = sc.Dataset()
+    for chopper_group in chopper_groups:
+        chopper_name = chopper_group.path.split("/")[-1]
+        choppers[chopper_name] = sc.DataArray(data=sc.scalar(value=1))
+    data['choppers'] = sc.scalar(value=choppers)
 
 
 def _load_sample(sample_groups: List[Group], data: ScippData, file_root: h5py.File,
@@ -132,7 +141,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     # looking for any NXClass that can be read.
     # groups is a dict with a key for each category (nx_log, nx_instrument...)
     groups = nexus.find_by_nx_class((nx_event_data, nx_log, nx_entry, nx_instrument,
-                                     nx_sample, nx_source, nx_detector), root_node)
+                                     nx_sample, nx_source, nx_detector, nx_chopper),
+                                    root_node)
     if len(groups[nx_entry]) > 1:
         # We can't sensibly load from multiple NXentry, for example each
         # could could contain a description of the same detector bank
@@ -171,6 +181,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         _load_source(groups[nx_source], loaded_data, nexus_file, nexus)
     if groups[nx_instrument]:
         _load_instrument_name(groups[nx_instrument], loaded_data, nexus)
+    if groups[nx_chopper]:
+        _load_chopper(groups[nx_chopper], loaded_data, nexus)
     # Return None if we have an empty dataset at this point
     if no_event_data and not loaded_data.keys():
         loaded_data = None

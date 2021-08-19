@@ -1,15 +1,6 @@
-from .nexus_helpers import (
-    NexusBuilder,
-    EventData,
-    Detector,
-    Log,
-    Sample,
-    Source,
-    Transformation,
-    TransformationType,
-    Link,
-    in_memory_hdf5_file_with_two_nxentry,
-)
+from .nexus_helpers import (NexusBuilder, EventData, Detector, Log, Sample, Source,
+                            Transformation, TransformationType, Link,
+                            in_memory_hdf5_file_with_two_nxentry, Chopper)
 import numpy as np
 import pytest
 import scippneutron
@@ -1544,3 +1535,11 @@ def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
         loaded_data = load_function(builder)
 
         assert "test_log_1" not in loaded_data
+
+
+def test_nexus_file_with_choppers(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_instrument("dummy")
+    builder.add_chopper(Chopper("chopper_1", 10.0, 60, "m", "Hz"))
+    loaded_data = load_function(builder)
+    assert "choppers" in loaded_data
