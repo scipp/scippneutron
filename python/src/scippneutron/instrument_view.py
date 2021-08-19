@@ -5,25 +5,7 @@
 import numpy as np
 import pythreejs as p3
 import scipp as sc
-
-
-def _box(position, display_text, bounding_box, color):
-    geometry = p3.BoxGeometry(width=bounding_box[0],
-                              height=bounding_box[1],
-                              depth=bounding_box[2],
-                              widthSegments=2,
-                              heightSegments=2,
-                              depthSegments=2)
-
-    material = p3.MeshBasicMaterial(color=color)
-    mesh = p3.Mesh(geometry=geometry, material=material)
-    mesh.position = position
-    text_position = (position[0], position[1] + bounding_box[1], position[2])
-    text_mesh = _text_mesh(text_position,
-                           display_text=display_text,
-                           x_width=bounding_box[0],
-                           y_width=bounding_box[1])
-    return mesh, text_mesh
+from scipy.spatial.transform import Rotation as Rot
 
 
 def _text_mesh(position, display_text, x_width, y_width):
@@ -39,7 +21,63 @@ def _text_mesh(position, display_text, x_width, y_width):
     return text_mesh
 
 
-def _cylinder(position, display_text, bounding_box, color):
+def _box(position, display_text, bounding_box, color, **kwargs):
+    geometry = p3.BoxGeometry(width=bounding_box[0],
+                              height=bounding_box[1],
+                              depth=bounding_box[2],
+                              widthSegments=2,
+                              heightSegments=2,
+                              depthSegments=2)
+
+    material = p3.MeshBasicMaterial(color=color)
+    mesh = p3.Mesh(geometry=geometry, material=material)
+    mesh.position = tuple(position.value)
+    text_position = tuple(position.value + np.array([0, bounding_box[1], 0]))
+    text_mesh = _text_mesh(text_position,
+                           display_text=display_text,
+                           x_width=bounding_box[0],
+                           y_width=bounding_box[1])
+    return mesh, text_mesh
+
+
+def _find_beam(det_com, pos):
+    # Assume beam is axis aligned and follows largest axis
+    # delta between component and detector COM
+    beam_dir = np.argmax(np.abs(det_com.value - pos.value))
+    beam = np.zeros(3)
+    beam[beam_dir] = 1
+    return beam
+
+
+def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
+    geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
+                                   radiusBottom=bounding_box[0] / 2,
+                                   height=bounding_box[0] / 100,
+                                   radialSegments=2,
+                                   heightSegments=12,
+                                   openEnded=False,
+                                   thetaStart=np.pi / 8,
+                                   thetaLength=2 * np.pi - (np.pi / 8))
+
+    material = p3.MeshBasicMaterial(color=color)
+    mesh = p3.Mesh(geometry=geometry, material=material)
+    mesh.position = tuple(position.value)
+    beam = _find_beam(kwargs['det_center'], position)
+    disk_axis = np.array([0, 1, 0])
+    rotaxis = np.cross(disk_axis, beam)
+    magnitude = np.linalg.norm(disk_axis) * np.linalg.norm(beam)
+    axis_angle = np.arcsin(rotaxis / magnitude)
+    mesh.setRotationFromMatrix(Rot.from_rotvec(axis_angle).as_matrix().flatten())
+
+    text_position = tuple(position.value + np.array([0, bounding_box[1], 0]))
+    text_mesh = _text_mesh(text_position,
+                           display_text=display_text,
+                           x_width=bounding_box[0],
+                           y_width=bounding_box[1])
+    return mesh, text_mesh
+
+
+def _cylinder(position, display_text, bounding_box, color, **kwargs):
     geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
                                    radiusBottom=bounding_box[0] / 2,
                                    height=bounding_box[1],
@@ -51,9 +89,9 @@ def _cylinder(position, display_text, bounding_box, color):
 
     material = p3.MeshBasicMaterial(color=color)
     mesh = p3.Mesh(geometry=geometry, material=material)
-    mesh.position = position
+    mesh.position = tuple(position.value)
     # Position label above cylinder
-    text_position = (position[0], position[1] + bounding_box[1], position[2])
+    text_position = tuple(position.value + np.array([0, bounding_box[1], 0]))
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
                            x_width=bounding_box[0],
@@ -69,17 +107,17 @@ def _unpack_to_scene(scene, items):
         scene.add(items)
 
 
-def _add_to_scene(position, scene, shape, display_text, bounding_box):
+def _add_to_scene(position, scene, shape, display_text, bounding_box, **kwargs):
     _unpack_to_scene(
         scene,
         shape(position,
               display_text=display_text,
               bounding_box=bounding_box,
-              color="#808080"))
+              color="#808080",
+              **kwargs))
 
 
-def _furthest_component(positions_var, scipp_obj, additional):
-    det_center = sc.mean(positions_var)
+def _furthest_component(det_center, scipp_obj, additional):
     distances = [(key, sc.norm(scipp_obj.meta[key] - det_center).value)
                  for key in additional.keys()]
     item, max_displacement = sorted(distances, key=lambda x: x[1])[-1]
@@ -87,23 +125,25 @@ def _furthest_component(positions_var, scipp_obj, additional):
 
 
 def _plot_additional(scipp_obj, additional, positions_var, scene):
-    furthest_key, furthest_distance = _furthest_component(positions_var, scipp_obj,
+    det_center = sc.mean(positions_var)
+    furthest_key, furthest_distance = _furthest_component(det_center, scipp_obj,
                                                           additional)
     # Some scaling to set width according to distance from detector center
     scaling_factor = 1 / 10.0
     width = furthest_distance * scaling_factor
-    shapes = {"cube": _box, "cylinder": _cylinder}
+    shapes = {"cube": _box, "cylinder": _cylinder, "disk": _disk_chopper}
     for item, type in additional.items():
         if type not in shapes:
             supported_shapes = ", ".join(shapes.keys())
             raise ValueError(f"Unknown shape: {type} requested for {item}. "
                              f"Allowed values are: {supported_shapes}")
         component_position = scipp_obj.meta[item]
-        _add_to_scene(position=tuple(component_position.value),
+        _add_to_scene(position=component_position,
                       scene=scene,
                       shape=shapes[type],
                       display_text=item,
-                      bounding_box=([width] * 3))
+                      bounding_box=([width] * 3),
+                      det_center=det_center)
 
     return furthest_distance * 5.0
 
