@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
-# @author Neil Vaytet
+# @author Neil Vaytet and Owen Arnold
 
 import numpy as np
 import pythreejs as p3
@@ -50,9 +50,9 @@ def _find_beam(det_com, pos):
 
 
 def _alignment_matrix(to_align, target):
-    rotaxis = np.cross(to_align, target)
+    rot_axis = np.cross(to_align, target)
     magnitude = np.linalg.norm(to_align) * np.linalg.norm(target)
-    axis_angle = np.arcsin(rotaxis / magnitude)
+    axis_angle = np.arcsin(rot_axis / magnitude)
     return Rot.from_rotvec(axis_angle).as_matrix()
 
 
@@ -151,7 +151,8 @@ def _plot_components(scipp_obj, additional, positions_var, scene):
                       det_center=det_center)
     # Reset camera
     camera = _get_camera(scene)
-    camera.far = furthest_distance * 5.0
+    if camera:
+        camera.far = furthest_distance * 5.0
 
 
 def _get_camera(scene):
