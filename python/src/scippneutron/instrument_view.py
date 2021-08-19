@@ -5,10 +5,7 @@
 import numpy as np
 
 
-def instrument_view(scipp_obj=None,
-                    positions="position",
-                    pixel_size=None,
-                    **kwargs):
+def instrument_view(scipp_obj=None, positions="position", pixel_size=None, **kwargs):
     """
     Plot a 3D view of the instrument, using the `position` coordinate as the
     detector vector positions.

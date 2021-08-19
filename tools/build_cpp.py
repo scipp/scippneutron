@@ -49,7 +49,7 @@ def main(prefix='install', build_dir='build', source_dir='.', caching=False):
     # Default cmake flags
     cmake_flags = {
         '-G': 'Ninja',
-        '-DPYTHON_EXECUTABLE': shutil.which("python"),
+        '-DPython_EXECUTABLE': shutil.which("python"),
         '-DCMAKE_INSTALL_PREFIX': prefix,
         '-DWITH_CTEST': 'OFF',
         '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'ON'
@@ -63,9 +63,8 @@ def main(prefix='install', build_dir='build', source_dir='.', caching=False):
                 '-DCMAKE_OSX_DEPLOYMENT_TARGET':
                 osxversion,
                 '-DCMAKE_OSX_SYSROOT':
-                os.path.join('/Applications', 'Xcode.app', 'Contents',
-                             'Developer', 'Platforms', 'MacOSX.platform',
-                             'Developer', 'SDKs',
+                os.path.join('/Applications', 'Xcode.app', 'Contents', 'Developer',
+                             'Platforms', 'MacOSX.platform', 'Developer', 'SDKs',
                              'MacOSX{}.sdk'.format(osxversion))
             })
 
@@ -77,9 +76,14 @@ def main(prefix='install', build_dir='build', source_dir='.', caching=False):
             cmake_flags.update({'-DCLCACHE_PATH': scripts})
         shell = True
         build_config = 'Release'
+        # cmake --build --parallel is detrimental to build performance on
+        # windows, see https://github.com/scipp/scipp/issues/2078 for
+        # details
+        build_flags = []
+    else:
+        # For other platforms we do want to add the parallel build flag.
+        build_flags = [parallel_flag]
 
-    # Additional flags for --build commands
-    build_flags = [parallel_flag]
     if len(build_config) > 0:
         build_flags += ['--config', build_config]
 
@@ -104,15 +108,13 @@ def main(prefix='install', build_dir='build', source_dir='.', caching=False):
     # Compile benchmarks, C++ tests, and python library
     start = time.time()
     for target in ['all-benchmarks', 'all-tests', 'install']:
-        run_command(['cmake', '--build', '.', '--target', target] +
-                    build_flags,
+        run_command(['cmake', '--build', '.', '--target', target] + build_flags,
                     shell=shell)
     end = time.time()
     print('Compilation took ', end - start, ' seconds')
 
     # Run C++ tests
-    run_command([os.path.join('bin', build_config, 'scippneutron-test')],
-                shell=shell)
+    run_command([os.path.join('bin', build_config, 'scippneutron-test')], shell=shell)
 
 
 if __name__ == '__main__':

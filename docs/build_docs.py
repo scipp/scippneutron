@@ -75,11 +75,11 @@ if __name__ == '__main__':
     make_dir(config_dir)
     properties_file = os.path.join(config_dir, "Mantid.user.properties")
     with open(properties_file, "a") as f:
-        f.write("\nusagereports.enabled=0\ndatasearch.directories={}\n".format(
-            data_dir))
+        f.write(
+            "\nusagereports.enabled=0\ndatasearch.directories={}\n".format(data_dir))
 
     # Build the docs with sphinx-build
     status = subprocess.check_call(
-        ['sphinx-build', '-b', args.builder, '-d', work_dir, '.', prefix],
+        ['sphinx-build', '-b', args.builder, '-d', work_dir, docs_dir, prefix],
         stderr=subprocess.STDOUT,
         shell=sys.platform == "win32")
