@@ -129,7 +129,7 @@ def _furthest_component(det_center, scipp_obj, additional):
     return item, max_displacement
 
 
-def _plot_additional(scipp_obj, additional, positions_var, scene):
+def _plot_components(scipp_obj, additional, positions_var, scene):
     det_center = sc.mean(positions_var)
     furthest_key, furthest_distance = _furthest_component(det_center, scipp_obj,
                                                           additional)
@@ -149,12 +149,13 @@ def _plot_additional(scipp_obj, additional, positions_var, scene):
                       display_text=item,
                       bounding_box=([width] * 3),
                       det_center=det_center)
+    # Reset camera
+    camera = _get_camera(scene)
+    camera.far = furthest_distance * 5.0
 
-    return furthest_distance * 5.0
 
-
-def _get_camera(plt):
-    for child in plt.view.figure.scene.children:
+def _get_camera(scene):
+    for child in scene.children:
         if isinstance(child, p3.PerspectiveCamera):
             return child
     return None
@@ -205,10 +206,6 @@ def instrument_view(scipp_obj=None,
     # Add additional components from the beamline
     if components and not isinstance(plot, PlotDict):
         scene = plt.view.figure.scene
-        z = _plot_additional(scipp_obj, components, positions_var, scene)
-        # Reset camera
-        if z:
-            camera = _get_camera(plt)
-            camera.far = z * 5.0
+        _plot_components(scipp_obj, components, positions_var, scene)
 
     return plt
