@@ -69,7 +69,8 @@ if __name__ == '__main__':
     extensions = [".nxs", ".h5", ".hdf5", ".raw"]
     download_multiple(remote_url, data_dir, extensions)
 
-    # Create Mantid properties file so that it can find the data files
+    # Create Mantid properties file so that it can find the data files.
+    # Also turn off the logging so that it doesn't appear in the docs.
     home = str(Path.home())
     config_dir = os.path.join(home, ".mantid")
     make_dir(config_dir)
@@ -77,6 +78,7 @@ if __name__ == '__main__':
     with open(properties_file, "a") as f:
         f.write(
             "\nusagereports.enabled=0\ndatasearch.directories={}\n".format(data_dir))
+        f.write("\nlogging.loggers.root.level=error\n")
 
     # Build the docs with sphinx-build
     status = subprocess.check_call(
