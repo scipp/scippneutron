@@ -36,9 +36,9 @@ class EventData:
     event_time_offset: Optional[np.ndarray]
     event_time_zero: Optional[np.ndarray]
     event_index: Optional[np.ndarray]
-    event_time_zero_unit: Optional[str] = "ns"
-    event_time_zero_offset: Optional[str] = "1970-01-01T00:00:00Z"
-    event_time_offset_unit: Optional[str] = "ns"
+    event_time_zero_unit: Optional[Union[str, bytes]] = "ns"
+    event_time_zero_offset: Optional[Union[str, bytes]] = "1970-01-01T00:00:00Z"
+    event_time_offset_unit: Optional[Union[str, bytes]] = "ns"
 
 
 @dataclass
@@ -46,15 +46,15 @@ class Log:
     name: str
     value: Optional[np.ndarray]
     time: Optional[np.ndarray] = None
-    value_units: Optional[str] = None
+    value_units: Optional[Union[str, bytes]] = None
 
     # From
     # https://manual.nexusformat.org/classes/base_classes/NXlog.html?highlight=nxlog
     # time units are non-optional if time series data is present, and the unit
     # must be a unit of time (i.e. convertible to seconds).
-    time_units: Optional[str] = "s"
+    time_units: Optional[Union[str, bytes]] = "s"
 
-    start_time: Optional[str] = None
+    start_time: Optional[Union[str, bytes]] = None
     scaling_factor: Optional[float] = None
 
 
@@ -71,8 +71,8 @@ class Transformation:
     time: Optional[np.ndarray] = None
     depends_on: Union["Transformation", str, None] = None
     offset: Optional[np.ndarray] = None
-    value_units: Optional[str] = None
-    time_units: Optional[str] = None
+    value_units: Optional[Union[str, bytes]] = None
+    time_units: Optional[Union[str, bytes]] = None
 
 
 @dataclass
@@ -83,7 +83,7 @@ class Detector:
     x_offsets: Optional[np.ndarray] = None
     y_offsets: Optional[np.ndarray] = None
     z_offsets: Optional[np.ndarray] = None
-    offsets_unit: Optional[str] = None
+    offsets_unit: Optional[Union[str, bytes]] = None
     depends_on: Optional[Transformation] = None
 
 
@@ -92,7 +92,7 @@ class Sample:
     name: str
     depends_on: Optional[Transformation] = None
     distance: Optional[float] = None
-    distance_units: Optional[str] = None
+    distance_units: Optional[Union[str, bytes]] = None
 
 
 @dataclass
@@ -100,7 +100,7 @@ class Source:
     name: str
     depends_on: Union[Transformation, None, str] = None
     distance: Optional[float] = None
-    distance_units: Optional[str] = None
+    distance_units: Optional[Union[str, bytes]] = None
 
 
 @dataclass
@@ -161,12 +161,12 @@ class InMemoryNeXusWriter:
 
     @staticmethod
     def add_dataset(parent: h5py.Group, name: str,
-                    data: Union[str, np.ndarray]) -> h5py.Dataset:
+                    data: Union[str, bytes, np.ndarray]) -> h5py.Dataset:
         return parent.create_dataset(name, data=data)
 
     @staticmethod
     def add_attribute(parent: Union[h5py.Group, h5py.Dataset], name: str,
-                      value: Union[str, np.ndarray]):
+                      value: Union[str, bytes, np.ndarray]):
         parent.attrs[name] = value
 
     @staticmethod
@@ -237,8 +237,9 @@ class JsonWriter:
             self.add_attribute(dataset, name, value)
 
     @staticmethod
-    def add_dataset(parent: Dict, name: str, data: Union[str, np.ndarray]) -> Dict:
-        if isinstance(data, str):
+    def add_dataset(parent: Dict, name: str, data: Union[str, bytes,
+                                                         np.ndarray]) -> Dict:
+        if isinstance(data, (str, bytes)):
             dataset_info = {"string_size": len(data), "type": "string"}
         elif isinstance(data, float):
             dataset_info = {"size": 1, "type": "float32"}
@@ -259,8 +260,8 @@ class JsonWriter:
         return new_dataset
 
     @staticmethod
-    def add_attribute(parent: Dict, name: str, value: Union[str, np.ndarray]):
-        if isinstance(value, str):
+    def add_attribute(parent: Dict, name: str, value: Union[str, bytes, np.ndarray]):
+        if isinstance(value, (str, bytes)):
             attr_info = {"string_size": len(value), "type": "string"}
         elif isinstance(value, float):
             attr_info = {"size": 1, "type": "float64"}
@@ -359,7 +360,7 @@ class NexusBuilder:
     def add_instrument(self, name: str):
         self._instrument_name = name
 
-    def add_title(self, title: str):
+    def add_title(self, title: str, encoding="utf-8"):
         self._title = title
 
     def add_run_start_time(self, start_time: str):

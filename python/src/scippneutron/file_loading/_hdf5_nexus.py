@@ -6,16 +6,27 @@ import warnings
 from typing import Union, Any, List, Optional, Tuple, Dict
 
 import h5py
-import h5py.h5a
-import h5py.h5t
 import numpy as np
 import scipp as sc
 from ._common import Group, MissingDataset, MissingAttribute
 
 
+def cset_to_encoding(cset: int):
+    if cset == h5py.h5t.CSET_ASCII:
+        return "ascii"
+    elif cset == h5py.h5t.CSET_UTF8:
+        return "utf-8"
+    else:
+        warnings.warn(f"Unknown character set in HDF5 data file. Expected data "
+                      f"types are {h5py.h5t.CSET_ASCII} (H5T_CSET_ASCII) or "
+                      f"{h5py.h5t.CSET_UTF8} (H5T_CSET_UTF8) but got '{cset}'. "
+                      f"Assuming data is UTF-8 encoded but this may be incorrect.")
+        return "utf-8"
+
+
 def _get_attr_as_str(h5_object, attribute_name: str):
     return _ensure_str(h5_object.attrs[attribute_name],
-                       LoadFromHdf5.get_string_encoding(h5_object, attribute_name))
+                       LoadFromHdf5.get_attr_encoding(h5_object, attribute_name))
 
 
 def _ensure_str(str_or_bytes: Union[str, bytes], encoding: str) -> str:
@@ -26,14 +37,14 @@ def _ensure_str(str_or_bytes: Union[str, bytes], encoding: str) -> str:
     error handler and then decoded using the encoding specified in the nexus file in
     order to get a correctly encoded string in all cases.
 
-    Note also that the nexus standard leaves unspecified the behaviour of H5T_CSET_ASCII
+    Note that the nexus standard leaves unspecified the behaviour of H5T_CSET_ASCII
     for characters >=128. Common extensions are the latin-1 ("extended ascii") character
     set which appear to be used in nexus files from some facilities. Attempt to load
     these strings with the latin-1 extended character set, but warn as this is
     technically unspecified behaviour.
     """
     if isinstance(str_or_bytes, str):
-        str_or_bytes = str_or_bytes.encode('utf-8', 'surrogateescape')
+        str_or_bytes = str_or_bytes.encode("utf-8", errors="surrogateescape")
 
     if encoding == "ascii":
         try:
@@ -178,7 +189,7 @@ class LoadFromHdf5:
             units = node.attrs["units"]
         except (AttributeError, KeyError):
             return "dimensionless"
-        return _ensure_str(units, LoadFromHdf5.get_string_encoding(node, "units"))
+        return _ensure_str(units, LoadFromHdf5.get_attr_encoding(node, "units"))
 
     @staticmethod
     def get_child_from_group(group: Dict,
@@ -198,25 +209,19 @@ class LoadFromHdf5:
     @staticmethod
     def load_scalar_string(group: h5py.Group, dataset_name: str) -> str:
         try:
-            return _ensure_str(group[dataset_name][...].item(),
-                               LoadFromHdf5.get_string_encoding(group, dataset_name))
+            val = group[dataset_name][...].item()
         except KeyError:
             raise MissingDataset
 
-    @staticmethod
-    def get_string_encoding(group: h5py.Group, dataset_name: str):
-        cset = h5py.h5a.get_info(group.id, dataset_name.encode("ascii")).cset
+        cset = h5py.h5d.open(group.id,
+                             dataset_name.encode("utf-8")).get_type().get_cset()
+        return _ensure_str(val, cset_to_encoding(cset))
 
-        if cset == h5py.h5t.CSET_ASCII:
-            return "ascii"
-        elif cset == h5py.h5t.CSET_UTF8:
-            return "utf-8"
-        else:
-            warnings.warn(f"Unknown character set in HDF5 data file. Expected data "
-                          f"types are {h5py.h5t.CSET_ASCII} (H5T_CSET_ASCII) or "
-                          f"{h5py.h5t.CSET_UTF8} (H5T_CSET_UTF8) but got '{cset}'. "
-                          f"Assuming data is UTF-8 encoded but this may be incorrect.")
-            return "utf-8"
+    @staticmethod
+    def get_attr_encoding(group: h5py.Group, dataset_name: str):
+        cset = h5py.h5a.open(group.id,
+                             dataset_name.encode("utf-8")).get_type().get_cset()
+        return cset_to_encoding(cset)
 
     @staticmethod
     def get_object_by_path(group: Union[h5py.Group, h5py.File],
@@ -246,10 +251,11 @@ class LoadFromHdf5:
     def get_string_attribute(node: Union[h5py.Group, h5py.Dataset],
                              attribute_name: str) -> str:
         try:
-            return _ensure_str(node.attrs[attribute_name],
-                               LoadFromHdf5.get_string_encoding(node, attribute_name))
+            val = node.attrs[attribute_name]
         except KeyError:
             raise MissingAttribute
+
+        return _ensure_str(val, LoadFromHdf5.get_attr_encoding(node, attribute_name))
 
     @staticmethod
     def is_group(node: Any):
