@@ -1543,12 +1543,11 @@ def test_nexus_file_with_choppers(load_function: Callable):
     builder.add_chopper(
         Chopper("chopper_1",
                 distance=10.0,
-                rotation_speed=60,
+                rotation_speed=60.0,
                 rotation_units="Hz",
-                distance_units="Hz"))
-    loaded_data = load_function(builder)
-    assert "choppers" in loaded_data
-    assert loaded_data["choppers"].data.value["chopper_1"].coords[
-        "rotation_speed"].value == 60.0
-    assert loaded_data["choppers"].data.value["chopper_1"].coords[
-        "distance"].value == 10.0
+                distance_units="m"))
+    loaded_data = load_from_json(builder)
+    assert sc.identical(loaded_data["chopper_1"].coords["rotation_speed"],
+                        60.0 * sc.Unit("Hz"))
+    assert sc.identical(loaded_data["chopper_1"].coords["distance"],
+                        10.0 * sc.Unit("m"))

@@ -67,19 +67,17 @@ def _load_instrument_name(instrument_groups: List[Group], data: ScippData,
 
 
 def _load_chopper(chopper_groups: List[Group], data: ScippData, nexus: LoadFromNexus):
-    choppers = sc.Dataset()
     for chopper_group in chopper_groups:
         chopper_name = chopper_group.path.split("/")[-1]
         rotation_speed = nexus.load_dataset(group=chopper_group.group,
                                             dataset_name="rotation_speed")
         distance = nexus.load_dataset(group=chopper_group.group,
                                       dataset_name="distance")
-        choppers[chopper_name] = sc.DataArray(data=sc.scalar(value=1),
-                                              coords={
-                                                  "rotation_speed": rotation_speed,
-                                                  "distance": distance
-                                              })
-    data['choppers'] = sc.scalar(value=choppers)
+        data[chopper_name] = sc.DataArray(data=sc.scalar(value=chopper_name),
+                                          coords={
+                                              "rotation_speed": rotation_speed,
+                                              "distance": distance
+                                          })
 
 
 def _load_sample(sample_groups: List[Group], data: ScippData, file_root: h5py.File,
