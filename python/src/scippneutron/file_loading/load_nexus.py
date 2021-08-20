@@ -6,6 +6,7 @@ import json
 import scipp as sc
 from ._common import Group, MissingDataset
 from ._detector_data import load_detector_data
+from ._monitor_data import load_monitor_data
 from ._log_data import load_logs
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
@@ -26,6 +27,7 @@ nx_instrument = "NXinstrument"
 nx_sample = "NXsample"
 nx_source = "NXsource"
 nx_detector = "NXdetector"
+nx_monitor = "NXmonitor"
 
 
 @contextmanager
@@ -132,7 +134,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     # looking for any NXClass that can be read.
     # groups is a dict with a key for each category (nx_log, nx_instrument...)
     groups = nexus.find_by_nx_class((nx_event_data, nx_log, nx_entry, nx_instrument,
-                                     nx_sample, nx_source, nx_detector), root_node)
+                                     nx_sample, nx_source, nx_detector, nx_monitor),
+                                    root_node)
     if len(groups[nx_entry]) > 1:
         # We can't sensibly load from multiple NXentry, for example each
         # could could contain a description of the same detector bank
@@ -165,6 +168,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
 
     load_logs(loaded_data, groups[nx_log], nexus, run_start_time=run_start_time)
 
+    if groups[nx_monitor]:
+        load_monitor_data(groups[nx_monitor], loaded_data, nexus_file, nexus)
     if groups[nx_sample]:
         _load_sample(groups[nx_sample], loaded_data, nexus_file, nexus)
     if groups[nx_source]:

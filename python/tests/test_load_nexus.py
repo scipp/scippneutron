@@ -1575,3 +1575,7 @@ def test_load_nexus_adds_single_tof_bin(load_function: Callable):
         loaded_data.coords["tof"]["tof", 1],
         sc.scalar(value=np.nextafter(np.max(event_time_offsets), float("inf")),
                   unit=sc.units.ns))
+
+
+def test_loads_monitors_in_histogram_mode(load_function: Callable):
+    pass
