@@ -1540,6 +1540,15 @@ def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
 def test_nexus_file_with_choppers(load_function: Callable):
     builder = NexusBuilder()
     builder.add_instrument("dummy")
-    builder.add_chopper(Chopper("chopper_1", 10.0, 60, "m", "Hz"))
+    builder.add_chopper(
+        Chopper("chopper_1",
+                distance=10.0,
+                rotation_speed=60,
+                rotation_units="Hz",
+                distance_units="Hz"))
     loaded_data = load_function(builder)
     assert "choppers" in loaded_data
+    assert loaded_data["choppers"].data.value["chopper_1"].coords[
+        "rotation_speed"].value == 60.0
+    assert loaded_data["choppers"].data.value["chopper_1"].coords[
+        "distance"].value == 10.0

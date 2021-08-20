@@ -66,11 +66,24 @@ def _load_instrument_name(instrument_groups: List[Group], data: ScippData,
                                     "instrument_name", data, nexus)
 
 
+def _extract_number_as_scalar(group: Group, dataset_name: str, nexus: LoadFromNexus):
+    array = nexus.load_dataset_from_group_as_numpy_array(group.group, dataset_name)
+    return sc.scalar(value=array)
+
+
 def _load_chopper(chopper_groups: List[Group], data: ScippData, nexus: LoadFromNexus):
     choppers = sc.Dataset()
     for chopper_group in chopper_groups:
         chopper_name = chopper_group.path.split("/")[-1]
-        choppers[chopper_name] = sc.DataArray(data=sc.scalar(value=1))
+        rotation_speed = _extract_number_as_scalar(chopper_group, "rotation_speed",
+                                                   nexus)
+        distance = _extract_number_as_scalar(chopper_group, "distance", nexus)
+        choppers[chopper_name] = sc.DataArray(data=sc.scalar(value=1),
+                                              coords={
+                                                  "rotation_speed": rotation_speed,
+                                                  "distance": distance
+                                              })
+        print("CHOPPER NAME", chopper_name)
     data['choppers'] = sc.scalar(value=choppers)
 
 
