@@ -360,7 +360,7 @@ class NexusBuilder:
     def add_instrument(self, name: str):
         self._instrument_name = name
 
-    def add_title(self, title: str, encoding="utf-8"):
+    def add_title(self, title: str):
         self._title = title
 
     def add_run_start_time(self, start_time: str):
