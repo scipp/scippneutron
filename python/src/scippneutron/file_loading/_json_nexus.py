@@ -190,10 +190,10 @@ class LoadFromJson:
     def load_dataset(self,
                      group: Dict,
                      dataset_name: str,
-                     dimensions: List[str],
+                     dimensions: Optional[List[str]],
                      dtype: Optional[Any] = None) -> sc.Variable:
         """
-        Load a dataset into a Scipp Variable
+        Load a dataset into a Scipp Variable (array or scalar)
         :param group: Group containing dataset to load
         :param dataset_name: Name of the dataset to load
         :param dimensions: Dimensions for the output Variable
@@ -218,12 +218,12 @@ class LoadFromJson:
             units = sc.units.dimensionless
 
         if isinstance(dataset[_nexus_values], list):
-            return sc.Variable(dims=dimensions,
-                               values=dataset[_nexus_values],
-                               dtype=dtype,
-                               unit=units)
-
-        raise NotImplementedError("Loading scalar datasets not implemented")
+            return sc.array(dims=dimensions,
+                            values=dataset[_nexus_values],
+                            dtype=dtype,
+                            unit=units)
+        else:
+            return sc.scalar(value=dataset[_nexus_values], dtype=dtype, unit=units)
 
     def load_dataset_from_group_as_numpy_array(self, group: Dict, dataset_name: str):
         """
