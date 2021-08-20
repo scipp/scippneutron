@@ -31,6 +31,7 @@ Features
 
 * ``convert`` new returns data arrays with a new coordinate array (for the converted dimension), but data and unrelated meta data is not deep-copied.
   This should improve performance in a number of cases.
+* ``load_nexus`` will read in chopper positions and frequencies if written as ``NXdisk_choppers`` (see NeXus format) from the file
 
 Bugfixes
 ~~~~~~~~
