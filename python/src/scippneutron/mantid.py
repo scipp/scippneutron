@@ -60,8 +60,7 @@ def make_variables_from_run_logs(ws):
     for property_name in ws.run().keys():
         units_string = ws.run()[property_name].units
         try:
-            unit = additional_unit_mapping.get(units_string,
-                                               sc.Unit(units_string))
+            unit = additional_unit_mapping.get(units_string, sc.Unit(units_string))
         except RuntimeError:  # TODO catch UnitError once exposed from C++
             # Parsing unit string failed
             unit = None
@@ -92,12 +91,9 @@ def make_variables_from_run_logs(ws):
 
         if is_time_series:
             # If property has timestamps, create a DataArray
-            data_array = sc.DataArray(data=property_data,
-                                      coords={
-                                          dimension_label:
-                                          sc.Variable([dimension_label],
-                                                      values=times)
-                                      })
+            data_array = sc.DataArray(
+                data=property_data,
+                coords={dimension_label: sc.Variable([dimension_label], values=times)})
             yield property_name, sc.Variable(value=data_array)
         elif not np.isscalar(values):
             # If property is multi-valued, create a wrapper single
@@ -163,8 +159,7 @@ def make_detector_info(ws, spectrum_dim):
     # mostly just gets in the way and including it in the default converter
     # is probably not required.
     spectrum = sc.array(dims=['detector'], values=spectrum[has_spectrum])
-    detector = sc.array(dims=['detector'],
-                        values=det_info.detectorIDs()[has_spectrum])
+    detector = sc.array(dims=['detector'], values=det_info.detectorIDs()[has_spectrum])
 
     # May want to include more information here, such as detector positions,
     # but for now this is not necessary.
@@ -232,10 +227,8 @@ def validate_and_get_unit(unit, allow_empty=False):
         "Energy": ['energy', sc.units.meV],
         "dSpacing": ['dspacing', sc.units.angstrom],
         "MomentumTransfer": ['Q', sc.units.dimensionless / sc.units.angstrom],
-        "QSquared": [
-            'Q^2',
-            sc.units.dimensionless / (sc.units.angstrom * sc.units.angstrom)
-        ],
+        "QSquared":
+        ['Q^2', sc.units.dimensionless / (sc.units.angstrom * sc.units.angstrom)],
         "Spectrum": ['spectrum', sc.units.dimensionless],
         "Empty": ['empty', sc.units.dimensionless],
         "Counts": ['counts', sc.units.counts]
@@ -252,8 +245,8 @@ def _to_spherical(pos, output):
     output["t"] = sc.acos(pos.fields.z / output["r"].data)
     signed_phi = sc.atan2(pos.fields.y, pos.fields.x)
     abs_phi = sc.abs(signed_phi)
-    output["p-delta"] = (
-        np.pi * sc.units.rad) - abs_phi  # angular delta (magnitude) from pole
+    output["p-delta"] = (np.pi *
+                         sc.units.rad) - abs_phi  # angular delta (magnitude) from pole
     output['p-sign'] = signed_phi  # weighted sign of phi
     return output
 
@@ -335,17 +328,12 @@ def get_detector_properties(ws,
                     y_values[idx] = p.Y()
                     z_values[idx] = p.Z()
                     idx += 1
-                    quats.append(
-                        np.array([r.imagI(),
-                                  r.imagJ(),
-                                  r.imagK(),
-                                  r.real()]))
+                    quats.append(np.array([r.imagI(), r.imagJ(), r.imagK(), r.real()]))
                     if comp_info.hasValidShape(det_idx):
                         s = comp_info.shape(det_idx)
                         bboxes.append(s.getBoundingBox().width())
-                det_rot[
-                    i, :] = sc.geometry.rotation_matrix_from_quaternion_coeffs(
-                        np.mean(quats, axis=0))
+                det_rot[i, :] = sc.geometry.rotation_matrix_from_quaternion_coeffs(
+                    np.mean(quats, axis=0))
                 det_bbox[i, :] = np.sum(bboxes, axis=0)
 
         rot_pos = rot * sc.geometry.position(pos_d["x"].data, pos_d["y"].data,
@@ -362,22 +350,18 @@ def get_detector_properties(ws,
                                                    1.0))).mean("detector")
 
         sign = averaged["p-sign"].data / sc.abs(averaged["p-sign"].data)
-        averaged["p"] = sign * (
-            (np.pi * sc.units.rad) - averaged["p-delta"].data)
-        averaged["x"] = averaged["r"].data * sc.sin(
-            averaged["t"].data) * sc.cos(averaged["p"].data)
-        averaged["y"] = averaged["r"].data * sc.sin(
-            averaged["t"].data) * sc.sin(averaged["p"].data)
+        averaged["p"] = sign * ((np.pi * sc.units.rad) - averaged["p-delta"].data)
+        averaged["x"] = averaged["r"].data * sc.sin(averaged["t"].data) * sc.cos(
+            averaged["p"].data)
+        averaged["y"] = averaged["r"].data * sc.sin(averaged["t"].data) * sc.sin(
+            averaged["p"].data)
         averaged["z"] = averaged["r"].data * sc.cos(averaged["t"].data)
 
         pos = sc.geometry.position(averaged["x"].data, averaged["y"].data,
                                    averaged["z"].data)
 
-        return (inv_rot * pos, sc.matrices(dims=[spectrum_dim],
-                                           values=det_rot),
-                sc.vectors(dims=[spectrum_dim],
-                           values=det_bbox,
-                           unit=sc.units.m))
+        return (inv_rot * pos, sc.matrices(dims=[spectrum_dim], values=det_rot),
+                sc.vectors(dims=[spectrum_dim], values=det_bbox, unit=sc.units.m))
     else:
         pos = np.zeros([nspec, 3])
 
@@ -393,18 +377,13 @@ def get_detector_properties(ws,
                     p = det_info.position(det_idx)
                     r = det_info.rotation(det_idx)
                     vec3s.append([p.X(), p.Y(), p.Z()])
-                    quats.append(
-                        np.array([r.imagI(),
-                                  r.imagJ(),
-                                  r.imagK(),
-                                  r.real()]))
+                    quats.append(np.array([r.imagI(), r.imagJ(), r.imagK(), r.real()]))
                     if comp_info.hasValidShape(det_idx):
                         s = comp_info.shape(det_idx)
                         bboxes.append(s.getBoundingBox().width())
                 pos[i, :] = np.mean(vec3s, axis=0)
-                det_rot[
-                    i, :] = sc.geometry.rotation_matrix_from_quaternion_coeffs(
-                        np.mean(quats, axis=0))
+                det_rot[i, :] = sc.geometry.rotation_matrix_from_quaternion_coeffs(
+                    np.mean(quats, axis=0))
                 det_bbox[i, :] = np.sum(bboxes, axis=0)
             else:
                 pos[i, :] = [np.nan, np.nan, np.nan]
@@ -455,20 +434,17 @@ def set_bin_masks(bin_masks, dim, index, masked_bins):
         bin_masks['spectrum', index][dim, masked_bin].value = True
 
 
-def _convert_MatrixWorkspace_info(ws,
-                                  advanced_geometry=False,
-                                  load_run_logs=True):
+def _convert_MatrixWorkspace_info(ws, advanced_geometry=False, load_run_logs=True):
     from mantid.kernel import DeltaEModeType
     common_bins = ws.isCommonBins()
     dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
     source_pos, sample_pos = make_component_info(ws)
     spec_dim, spec_coord = init_spec_axis(ws)
-    pos, rot, shp = get_detector_properties(
-        ws,
-        source_pos,
-        sample_pos,
-        spec_dim,
-        advanced_geometry=advanced_geometry)
+    pos, rot, shp = get_detector_properties(ws,
+                                            source_pos,
+                                            sample_pos,
+                                            spec_dim,
+                                            advanced_geometry=advanced_geometry)
 
     coords = {spec_dim: spec_coord}
     # possible x - coord
@@ -476,9 +452,7 @@ def _convert_MatrixWorkspace_info(ws,
         if common_bins:
             coords[dim] = sc.Variable([dim], values=ws.readX(0), unit=unit)
         else:
-            coords[dim] = sc.Variable([spec_dim, dim],
-                                      values=ws.extractX(),
-                                      unit=unit)
+            coords[dim] = sc.Variable([spec_dim, dim], values=ws.extractX(), unit=unit)
 
     info = {
         "coords": coords,
@@ -487,8 +461,7 @@ def _convert_MatrixWorkspace_info(ws,
             "sample":
             make_mantid_sample(ws),
             "instrument_name":
-            sc.Variable(
-                value=ws.componentInfo().name(ws.componentInfo().root()))
+            sc.Variable(value=ws.componentInfo().name(ws.componentInfo().root()))
         },
     }
 
@@ -502,8 +475,7 @@ def _convert_MatrixWorkspace_info(ws,
     if not np.all(np.isnan(pos.values)):
         info["coords"].update({"position": pos})
 
-    if rot is not None and shp is not None and not np.all(np.isnan(
-            pos.values)):
+    if rot is not None and shp is not None and not np.all(np.isnan(pos.values)):
         info["attrs"].update({"rotation": rot, "shape": shp})
 
     if source_pos is not None:
@@ -514,9 +486,8 @@ def _convert_MatrixWorkspace_info(ws,
 
     if ws.detectorInfo().hasMaskedDetectors():
         spectrum_info = ws.spectrumInfo()
-        mask = np.array([
-            spectrum_info.isMasked(i) for i in range(ws.getNumberHistograms())
-        ])
+        mask = np.array(
+            [spectrum_info.isMasked(i) for i in range(ws.getNumberHistograms())])
         info["masks"][spec_dim] = sc.Variable([spec_dim], values=mask)
 
     if ws.getEMode() == DeltaEModeType.Direct:
@@ -591,9 +562,7 @@ def convert_Workspace2D_to_data_array(ws,
     array = sc.DataArray(**coords_labs_data)
 
     if ws.hasAnyMaskedBins():
-        bin_mask = sc.Variable(dims=array.dims,
-                               shape=array.shape,
-                               dtype=sc.dtype.bool)
+        bin_mask = sc.Variable(dims=array.dims, shape=array.shape, dtype=sc.dtype.bool)
         for i in range(ws.getNumberHistograms()):
             # maskedBinsIndices throws instead of returning empty list
             if ws.hasMaskedBins(i):
@@ -636,18 +605,15 @@ def convert_EventWorkspace_to_data_array(ws,
                       unit=data_unit,
                       dtype=sc.dtype.float32,
                       variances=True)
-    pulse_times = sc.empty(dims=['event'],
-                           shape=[n_event],
-                           dtype=sc.dtype.datetime64,
-                           unit=sc.units.ns) if load_pulse_times else None
+    pulse_times = sc.empty(
+        dims=['event'], shape=[n_event], dtype=sc.dtype.datetime64,
+        unit=sc.units.ns) if load_pulse_times else None
 
     evtp = ws.getSpectrum(0).getEventType()
     contains_weighted_events = ((evtp == EventType.WEIGHTED)
                                 or (evtp == EventType.WEIGHTED_NOTIME))
 
-    begins = sc.Variable([spec_dim, dim],
-                         shape=[nHist, 1],
-                         dtype=sc.dtype.int64)
+    begins = sc.Variable([spec_dim, dim], shape=[nHist, 1], dtype=sc.dtype.int64)
     ends = begins.copy()
     current = 0
     for i in range(nHist):
@@ -655,12 +621,11 @@ def convert_EventWorkspace_to_data_array(ws,
         size = sp.getNumberEvents()
         coord['event', current:current + size].values = sp.getTofs()
         if load_pulse_times:
-            pulse_times['event', current:current +
-                        size].values = sp.getPulseTimesAsNumpy()
+            pulse_times['event',
+                        current:current + size].values = sp.getPulseTimesAsNumpy()
         if contains_weighted_events:
             weights['event', current:current + size].values = sp.getWeights()
-            weights['event',
-                    current:current + size].variances = sp.getWeightErrors()
+            weights['event', current:current + size].variances = sp.getWeightErrors()
         begins.values[i] = current
         ends.values[i] = current + size
         current += size
@@ -680,13 +645,10 @@ def convert_EventWorkspace_to_data_array(ws,
     # of `bins`?
     edges = coords_labs_data['coords'][dim]
     # Using range slice of thickness 1 to avoid transposing 2-D coords
-    coords_labs_data['coords'][dim] = sc.concatenate(edges[dim, :1],
-                                                     edges[dim, -1:], dim)
+    coords_labs_data['coords'][dim] = sc.concatenate(edges[dim, :1], edges[dim, -1:],
+                                                     dim)
 
-    coords_labs_data["data"] = sc.bins(begin=begins,
-                                       end=ends,
-                                       dim='event',
-                                       data=events)
+    coords_labs_data["data"] = sc.bins(begin=begins, end=ends, dim='event', data=events)
     return sc.DataArray(**coords_labs_data)
 
 
@@ -699,9 +661,9 @@ def convert_MDHistoWorkspace_to_data_array(md_histo, **ignored):
         frame = dim.getMDFrame()
         sc_dim = md_dimension(dim, i)
         coords[sc_dim] = sc.Variable(dims=[sc_dim],
-                                     values=np.linspace(
-                                         dim.getMinimum(), dim.getMaximum(),
-                                         dim.getNBins()),
+                                     values=np.linspace(dim.getMinimum(),
+                                                        dim.getMaximum(),
+                                                        dim.getNBins()),
                                      unit=md_unit(frame))
         dims_used.append(sc_dim)
     data = sc.Variable(dims=dims_used,
@@ -757,8 +719,8 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
             if columnTypes[error_index] in blacklist_variance_types:
                 # Raise error to avoid numpy square error for strings
                 raise RuntimeError("Variance can not have type string. \n" +
-                                   "Data:     " + str(data_name) + "\n" +
-                                   "Variance: " + str(error_name) + "\n")
+                                   "Data:     " + str(data_name) + "\n" + "Variance: " +
+                                   str(error_name) + "\n")
 
             variance = np.array(ws.column(error_name))**2
             dataset[data_name] = sc.Variable(['row'],
@@ -790,8 +752,7 @@ def from_mantid(workspace, **kwargs):
     monitor_ws = None
     workspaces_to_delete = []
     w_id = workspace.id()
-    if (w_id == 'Workspace2D' or w_id == 'RebinnedOutput'
-            or w_id == 'MaskWorkspace'):
+    if (w_id == 'Workspace2D' or w_id == 'RebinnedOutput' or w_id == 'MaskWorkspace'):
         n_monitor = 0
         spec_info = workspace.spectrumInfo()
         for i in range(len(spec_info)):
@@ -811,8 +772,7 @@ def from_mantid(workspace, **kwargs):
     elif w_id == 'MDHistoWorkspace':
         scipp_obj = convert_MDHistoWorkspace_to_data_array(workspace, **kwargs)
     elif w_id == 'WorkspaceGroup':
-        scipp_obj = convert_WorkspaceGroup_to_dataarray_dict(
-            workspace, **kwargs)
+        scipp_obj = convert_WorkspaceGroup_to_dataarray_dict(workspace, **kwargs)
 
     if scipp_obj is None:
         raise RuntimeError('Unsupported workspace type {}'.format(w_id))
@@ -828,8 +788,7 @@ def from_mantid(workspace, **kwargs):
                 pass
 
     if monitor_ws is not None:
-        if monitor_ws.id() == 'MaskWorkspace' or monitor_ws.id(
-        ) == 'Workspace2D':
+        if monitor_ws.id() == 'MaskWorkspace' or monitor_ws.id() == 'Workspace2D':
             converter = convert_Workspace2D_to_data_array
         elif monitor_ws.id() == 'EventWorkspace':
             converter = convert_EventWorkspace_to_data_array
@@ -960,8 +919,7 @@ def to_mantid(data, dim, instrument_file=None):
     """
     if not sc.is_data_array(data):
         raise RuntimeError(
-            "Currently only data arrays can be converted to a Mantid workspace"
-        )
+            "Currently only data arrays can be converted to a Mantid workspace")
     try:
         import mantid.simpleapi as mantid
     except ImportError:
@@ -1012,9 +970,7 @@ def to_mantid(data, dim, instrument_file=None):
     ws.getAxis(0).setUnit(unitX)
 
     if instrument_file is not None:
-        mantid.LoadInstrument(ws,
-                              FileName=instrument_file,
-                              RewriteSpectraMap=True)
+        mantid.LoadInstrument(ws, FileName=instrument_file, RewriteSpectraMap=True)
 
     return ws
 
@@ -1037,9 +993,7 @@ def _fit_workspace(ws, mantid_args):
     :param ws: The workspace on which the fit will be performed
     :returns: Dataset containing all of Fit's outputs
     """
-    with run_mantid_alg('Fit',
-                        InputWorkspace=ws,
-                        **mantid_args,
+    with run_mantid_alg('Fit', InputWorkspace=ws, **mantid_args,
                         CreateOutput=True) as fit:
         # This is assuming that all parameters are dimensionless. If this is
         # not the case we should use a dataset with a scalar variable per
@@ -1063,9 +1017,8 @@ def _fit_workspace(ws, mantid_args):
 
 def fit(data, mantid_args):
     if len(data.dims) != 1 or 'WorkspaceIndex' in mantid_args:
-        raise RuntimeError(
-            "Only 1D fitting is supported. Use scipp slicing and do not"
-            "provide a WorkspaceIndex.")
+        raise RuntimeError("Only 1D fitting is supported. Use scipp slicing and do not"
+                           "provide a WorkspaceIndex.")
     dim = data.dims[0]
     ws = to_mantid(data, dim)
     mantid_args['workspace_index'] = 0

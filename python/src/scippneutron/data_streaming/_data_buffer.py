@@ -5,10 +5,8 @@ import multiprocessing as mp
 from streaming_data_types.eventdata_ev42 import deserialise_ev42
 from streaming_data_types.logdata_f142 import deserialise_f142, LogDataInfo
 from streaming_data_types.sample_environment_senv import deserialise_senv
-from streaming_data_types.sample_environment_senv import (Response as
-                                                          FastSampleEnvData)
-from streaming_data_types.sample_environment_senv import (Location as
-                                                          TimestampLocation)
+from streaming_data_types.sample_environment_senv import (Response as FastSampleEnvData)
+from streaming_data_types.sample_environment_senv import (Location as TimestampLocation)
 from streaming_data_types.timestamps_tdct import deserialise_tdct, Timestamps
 from streaming_data_types.exceptions import WrongSchemaException
 from typing import Optional, Dict, List, Any, Union, Callable
@@ -63,8 +61,8 @@ class _SlowMetadataBuffer:
         self._buffer_size = buffer_size
         self._name = stream_info.source_name
         self._buffer_filled_size = 0
-        self._data_array = _create_metadata_buffer_array(
-            self._name, stream_info.unit, stream_info.dtype, buffer_size)
+        self._data_array = _create_metadata_buffer_array(self._name, stream_info.unit,
+                                                         stream_info.dtype, buffer_size)
 
     def append_data(self, log_event: LogDataInfo, emit_data: Callable):
         if self._buffer_filled_size == self._buffer_size:
@@ -72,8 +70,7 @@ class _SlowMetadataBuffer:
 
         # Each LogDataInfo contains a single value-timestamp pair
         with self._buffer_mutex:
-            self._data_array[self._name,
-                             self._buffer_filled_size] = log_event.value
+            self._data_array[self._name, self._buffer_filled_size] = log_event.value
             self._data_array.coords["time"][
                 self._name, self._buffer_filled_size].value = np.datetime64(
                     log_event.timestamp_unix_ns, 'ns')
@@ -98,15 +95,14 @@ class _FastMetadataBuffer:
     rapidly values which, for efficiency, publish updates directly to Kafka
     rather than via EPICS and the Forwarder.
     """
-    def __init__(self, stream_info: StreamInfo, buffer_size: int,
-                 data_queue: mp.Queue):
+    def __init__(self, stream_info: StreamInfo, buffer_size: int, data_queue: mp.Queue):
         self._buffer_mutex = threading.Lock()
         self._buffer_size = buffer_size
         self._name = stream_info.source_name
         self._data_queue = data_queue
         self._buffer_filled_size = 0
-        self._data_array = _create_metadata_buffer_array(
-            self._name, stream_info.unit, stream_info.dtype, buffer_size)
+        self._data_array = _create_metadata_buffer_array(self._name, stream_info.unit,
+                                                         stream_info.dtype, buffer_size)
 
     def append_data(self, log_events: FastSampleEnvData, emit_data: Callable):
         # Each FastSampleEnvData contains an array of values and either:
@@ -130,9 +126,9 @@ class _FastMetadataBuffer:
             return int(input_timestamp.timestamp() * 1_000_000_000)
 
         with self._buffer_mutex:
-            self._data_array[
-                self._name, self._buffer_filled_size:self._buffer_filled_size +
-                message_size].values = log_events.values
+            self._data_array[self._name,
+                             self._buffer_filled_size:self._buffer_filled_size +
+                             message_size].values = log_events.values
             if log_events.value_ts is not None:
                 timestamps = log_events.value_ts
             else:
@@ -144,8 +140,8 @@ class _FastMetadataBuffer:
                 if log_events.ts_location == TimestampLocation.Middle:
                     # Shift timestamps so that the message timestamp falls
                     # in the middle of the sample range
-                    timestamps = timestamps - int(
-                        0.5 * (timestamps[-1] - timestamps[0]))
+                    timestamps = timestamps - int(0.5 *
+                                                  (timestamps[-1] - timestamps[0]))
                 elif log_events.ts_location == TimestampLocation.End:
                     # Shift timestamps so that the message timestamp falls at
                     # the end of the sample range
@@ -158,13 +154,12 @@ class _FastMetadataBuffer:
                     # message or a breaking change was made to the schema
                     # without a new schema id being assigned (which is
                     # against ECDC policy)
-                    raise RuntimeError(
-                        "Unrecognised timestamp location in fast sample "
-                        "environment data message (flatbuffer id: "
-                        f"'{FAST_FB_ID}')")
-            self._data_array[
-                self._name, self._buffer_filled_size:self._buffer_filled_size +
-                message_size].coords["time"].values = timestamps
+                    raise RuntimeError("Unrecognised timestamp location in fast sample "
+                                       "environment data message (flatbuffer id: "
+                                       f"'{FAST_FB_ID}')")
+            self._data_array[self._name,
+                             self._buffer_filled_size:self._buffer_filled_size +
+                             message_size].coords["time"].values = timestamps
             self._buffer_filled_size += message_size
 
     def get_metadata_array(self) -> sc.Variable:
@@ -183,8 +178,7 @@ class _ChopperMetadataBuffer:
     Buffer for chopper top-dead-centre timestamps from Kafka messages
     serialised according to the flatbuffer schema with id CHOPPER_FB_ID.
     """
-    def __init__(self, stream_info: StreamInfo, buffer_size: int,
-                 data_queue: mp.Queue):
+    def __init__(self, stream_info: StreamInfo, buffer_size: int, data_queue: mp.Queue):
         self._buffer_mutex = threading.Lock()
         self._buffer_size = buffer_size
         self._name = stream_info.source_name
@@ -212,9 +206,9 @@ class _ChopperMetadataBuffer:
             emit_data()
 
         with self._buffer_mutex:
-            self._data_array[
-                self._name, self._buffer_filled_size:self._buffer_filled_size +
-                message_size].values = chopper_timestamps.timestamps
+            self._data_array[self._name,
+                             self._buffer_filled_size:self._buffer_filled_size +
+                             message_size].values = chopper_timestamps.timestamps
             self._buffer_filled_size += message_size
 
     def get_metadata_array(self) -> sc.Variable:
@@ -244,9 +238,8 @@ class StreamedDataBuffer:
     separate place in the future?
     """
     def __init__(self, queue: mp.Queue, event_buffer_size: int,
-                 slow_metadata_buffer_size: int,
-                 fast_metadata_buffer_size: int, chopper_buffer_size: int,
-                 interval_s: float):
+                 slow_metadata_buffer_size: int, fast_metadata_buffer_size: int,
+                 chopper_buffer_size: int, interval_s: float):
         self._buffer_mutex = threading.Lock()
         self._interval_s = interval_s
         self._event_buffer_size = event_buffer_size
@@ -265,9 +258,7 @@ class StreamedDataBuffer:
                                shape=[event_buffer_size],
                                unit=sc.units.ns,
                                dtype=sc.dtype.int64)
-        weights = sc.ones(dims=['event'],
-                          shape=[event_buffer_size],
-                          variances=True)
+        weights = sc.ones(dims=['event'], shape=[event_buffer_size], variances=True)
         self._events_buffer = sc.DataArray(weights, {
             'tof': tof_buffer,
             'detector_id': id_buffer,
@@ -301,8 +292,7 @@ class StreamedDataBuffer:
             elif stream.flatbuffer_id == FAST_FB_ID:
                 self._metadata_buffers[stream.flatbuffer_id][
                     stream.source_name] = _FastMetadataBuffer(
-                        stream, self._fast_metadata_buffer_size,
-                        self._emit_queue)
+                        stream, self._fast_metadata_buffer_size, self._emit_queue)
             elif stream.flatbuffer_id == CHOPPER_FB_ID:
                 self._metadata_buffers[stream.flatbuffer_id][
                     stream.source_name] = _ChopperMetadataBuffer(
@@ -335,8 +325,7 @@ class StreamedDataBuffer:
                         f"Received {self._unrecognised_fb_id_count}"
                         " messages with unrecognised FlatBuffer ids"))
                 self._unrecognised_fb_id_count = 0
-            new_data = self._events_buffer[
-                'event', :self._current_event].copy()
+            new_data = self._events_buffer['event', :self._current_event].copy()
             for _, buffers in self._metadata_buffers.items():
                 for name, buffer in buffers.items():
                     metadata_array = buffer.get_metadata_array()
@@ -367,11 +356,10 @@ class StreamedDataBuffer:
             if self._current_event + message_size > self._event_buffer_size:
                 self._emit_data()
             with self._buffer_mutex:
-                frame = self._events_buffer[
-                    'event',
-                    self._current_event:self._current_event + message_size]
-                frame.coords[
-                    'detector_id'].values = deserialised_data.detector_id
+                frame = self._events_buffer['event',
+                                            self._current_event:self._current_event +
+                                            message_size]
+                frame.coords['detector_id'].values = deserialised_data.detector_id
                 frame.coords['tof'].values = deserialised_data.time_of_flight
                 frame.coords['pulse_time'].values = \
                     deserialised_data.pulse_time * \
@@ -386,10 +374,10 @@ class StreamedDataBuffer:
         try:
             deserialised_data = deserialise(new_data)
             try:
-                self._metadata_buffers[fb_id][getattr(
-                    deserialised_data,
-                    source_field_name)].append_data(deserialised_data,
-                                                    self._emit_data)
+                self._metadata_buffers[fb_id][getattr(deserialised_data,
+                                                      source_field_name)].append_data(
+                                                          deserialised_data,
+                                                          self._emit_data)
                 return True
             except KeyError:
                 # Ignore data from unknown source name
@@ -407,11 +395,9 @@ class StreamedDataBuffer:
         if self._handled_metadata(new_data, "source_name", deserialise_f142,
                                   SLOW_FB_ID):
             return
-        if self._handled_metadata(new_data, "name", deserialise_senv,
-                                  FAST_FB_ID):
+        if self._handled_metadata(new_data, "name", deserialise_senv, FAST_FB_ID):
             return
-        if self._handled_metadata(new_data, "name", deserialise_tdct,
-                                  CHOPPER_FB_ID):
+        if self._handled_metadata(new_data, "name", deserialise_tdct, CHOPPER_FB_ID):
             return
         # new data were not handled
         self._unrecognised_fb_id_count += 1

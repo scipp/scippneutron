@@ -45,8 +45,8 @@ def convert_from_pickleable_dict(data_dict: Dict) -> sc.DataArray:
                                             attrs=v["attrs"])
                     else:
                         try:
-                            if any(scipp_container_type in str(v["dtype"]) for
-                                   scipp_container_type in _scipp_containers):
+                            if any(scipp_container_type in str(v["dtype"])
+                                   for scipp_container_type in _scipp_containers):
                                 del v["dtype"]
                         except KeyError:
                             pass
@@ -68,9 +68,8 @@ def convert_from_pickleable_dict(data_dict: Dict) -> sc.DataArray:
                                 delete_dtype = True
                             except AttributeError:
                                 d[k] = sc.dtype.string
-                        elif any(
-                                scipp_container_type in k
-                                for scipp_container_type in _scipp_containers):
+                        elif any(scipp_container_type in k
+                                 for scipp_container_type in _scipp_containers):
                             delete_dtype = True
         # Delete now, not while looping through dictionary
         if delete_dtype:
