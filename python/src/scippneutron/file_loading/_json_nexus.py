@@ -196,7 +196,7 @@ class LoadFromJson:
         Load a dataset into a Scipp Variable (array or scalar)
         :param group: Group containing dataset to load
         :param dataset_name: Name of the dataset to load
-        :param dimensions: Dimensions for the output Variable
+        :param dimensions: Dimensions for the output Variable. If empty, yields scalar.
         :param dtype: Cast to this dtype during load,
           otherwise retain dataset dtype
         """
@@ -217,13 +217,13 @@ class LoadFromJson:
         except MissingAttribute:
             units = sc.units.dimensionless
 
+        common_creation_args = {'dtype': dtype, 'unit': units}
         if isinstance(dataset[_nexus_values], list):
             return sc.array(dims=dimensions,
                             values=dataset[_nexus_values],
-                            dtype=dtype,
-                            unit=units)
+                            **common_creation_args)
         else:
-            return sc.scalar(value=dataset[_nexus_values], dtype=dtype, unit=units)
+            return sc.scalar(value=dataset[_nexus_values], **common_creation_args)
 
     def load_dataset_from_group_as_numpy_array(self, group: Dict, dataset_name: str):
         """

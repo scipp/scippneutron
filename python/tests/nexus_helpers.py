@@ -250,7 +250,7 @@ class JsonWriter:
         if isinstance(data, str):
             dataset_info = {"string_size": len(data), "type": "string"}
         elif isinstance(data, float):
-            dataset_info = {"size": 1, "type": "float64"}  # This is worth considering!
+            dataset_info = {"size": 1, "type": "float64"}
         elif isinstance(data, int):
             dataset_info = {"size": 1, "type": "int32"}
         else:
