@@ -64,7 +64,7 @@ def _setup(data_dir):
 
 if __name__ == '__main__':
 
-    args = parser.parse_known_args()
+    args = parser.parse_known_args()[0]
 
     docs_dir = Path(__file__).parent.absolute()
     work_dir = _get_abs_path(path=args.work_dir, root=docs_dir)
