@@ -8,11 +8,13 @@ import shutil
 import subprocess
 import multiprocessing
 import sys
+import time
 
 parser = argparse.ArgumentParser(description='Build C++ library and run tests')
 parser.add_argument('--prefix', default='install')
 parser.add_argument('--source_dir', default='.')
 parser.add_argument('--build_dir', default='build')
+parser.add_argument('--caching', action='store_true', default=False)
 
 
 def run_command(cmd, shell):
@@ -23,7 +25,7 @@ def run_command(cmd, shell):
     return subprocess.check_call(cmd, stderr=subprocess.STDOUT, shell=shell)
 
 
-def main(prefix='install', build_dir='build', source_dir='.'):
+def main(prefix='install', build_dir='build', source_dir='.', caching=False):
     """
     Platform-independent function to run cmake, build, install and C++ tests.
     """
@@ -68,11 +70,20 @@ def main(prefix='install', build_dir='build', source_dir='.'):
 
     if platform == 'win32':
         cmake_flags.update({'-G': 'Visual Studio 16 2019', '-A': 'x64'})
+        # clcache conda installed to env Scripts dir in env if present
+        scripts = os.path.join(os.environ.get('CONDA_PREFIX'), 'Scripts')
+        if caching and os.path.exists(os.path.join(scripts, 'clcache.exe')):
+            cmake_flags.update({'-DCLCACHE_PATH': scripts})
         shell = True
         build_config = 'Release'
+        # cmake --build --parallel is detrimental to build performance on
+        # windows, see https://github.com/scipp/scipp/issues/2078 for
+        # details
+        build_flags = []
+    else:
+        # For other platforms we do want to add the parallel build flag.
+        build_flags = [parallel_flag]
 
-    # Additional flags for --build commands
-    build_flags = [parallel_flag]
     if len(build_config) > 0:
         build_flags += ['--config', build_config]
 
@@ -95,9 +106,12 @@ def main(prefix='install', build_dir='build', source_dir='.'):
     run_command(['cmake', '-B', '.', '-S', source_dir, '-LA'], shell=shell)
 
     # Compile benchmarks, C++ tests, and python library
+    start = time.time()
     for target in ['all-benchmarks', 'all-tests', 'install']:
         run_command(['cmake', '--build', '.', '--target', target] + build_flags,
                     shell=shell)
+    end = time.time()
+    print('Compilation took ', end - start, ' seconds')
 
     # Run C++ tests
     run_command([os.path.join('bin', build_config, 'scippneutron-test')], shell=shell)
@@ -105,4 +119,7 @@ def main(prefix='install', build_dir='build', source_dir='.'):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    main(prefix=args.prefix, build_dir=args.build_dir, source_dir=args.source_dir)
+    main(prefix=args.prefix,
+         build_dir=args.build_dir,
+         source_dir=args.source_dir,
+         caching=args.caching)

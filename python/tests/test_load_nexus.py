@@ -98,6 +98,165 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
                           expected_detector_ids)
 
 
+@pytest.mark.parametrize("unit,multiplier",
+                         (("ns", 10**9), ("us", 10**6), ("ms", 10**3), ("s", 1.)))
+def test_loads_pulse_times_from_single_event_with_different_units(
+        load_function: Callable, unit: str, multiplier: float):
+
+    offsets = np.array([12, 34, 56, 78])
+    zeros = np.array([12., 34., 56., 78.], dtype="float64") * multiplier
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 4]),
+        event_time_offset=offsets,
+        event_time_zero=zeros,
+        event_index=np.array([0, 3, 3, 4]),
+        event_time_zero_unit=unit,
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([1, 2, 3, 4]), event_data=event_data))
+
+    loaded_data = load_function(builder)
+
+    for event, pulse_time in enumerate([12, 12, 12, 56]):
+        _time = np.array("1970-01-01").astype("datetime64[s]") \
+                + np.array(pulse_time).astype("timedelta64[s]")
+
+        assert sc.identical(
+            loaded_data.values[event].attrs['pulse_time'],
+            sc.array(dims=["event"],
+                     values=[_time],
+                     unit=sc.units.s,
+                     dtype=sc.dtype.datetime64))
+
+
+@pytest.mark.parametrize("time_zero_offset,time_zero,time_zero_unit,expected_time", (
+    ("1980-01-01T00:00:00Z", 30, "s", "1980-01-01T00:00:30Z"),
+    ("1990-01-01T00:00:00Z", 5000, "ms", "1990-01-01T00:00:05Z"),
+    ("2000-01-01T00:00:00Z", 3 * 10**6, "us", "2000-01-01T00:00:03Z"),
+    ("2010-01-01T00:00:00Z", 12, "hour", "2010-01-01T12:00:00Z"),
+))
+def test_loads_pulse_times_with_combinations_of_offset_and_units(
+        load_function: Callable, time_zero_offset: str, time_zero: float,
+        time_zero_unit: str, expected_time: str):
+
+    offsets = np.array([0])
+    zeros = np.array([time_zero], dtype="float64")
+    event_data = EventData(
+        event_id=np.array([0]),
+        event_time_offset=offsets,
+        event_time_zero_offset=time_zero_offset,
+        event_time_zero=zeros,
+        event_index=np.array([0]),
+        event_time_zero_unit=time_zero_unit,
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(Detector(detector_numbers=np.array([0]),
+                                  event_data=event_data))
+
+    loaded_data = load_function(builder)
+
+    _time = np.array(expected_time).astype("datetime64[s]")
+
+    assert sc.identical(
+        loaded_data.values[0].attrs['pulse_time'],
+        sc.array(dims=["event"],
+                 values=[_time],
+                 unit=sc.units.s,
+                 dtype=sc.dtype.datetime64))
+
+
+def test_does_not_load_events_if_time_zero_unit_not_convertible_to_s(
+        load_function: Callable):
+    event_data_1 = EventData(
+        event_id=np.array([0, 1]),
+        event_time_offset=np.array([0, 1]),
+        event_time_zero=np.array([0, 1]),
+        event_index=np.array([0, 2]),
+        event_time_zero_unit="m",  # time in metres, should fail
+    )
+    event_data_2 = EventData(
+        event_id=np.array([2, 3]),
+        event_time_offset=np.array([2, 3]),
+        event_time_zero=np.array([2, 3]),
+        event_index=np.array([0, 2]),
+        event_time_zero_unit="s",  # time in secs, should work.
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([0, 1]), event_data=event_data_1))
+    builder.add_detector(
+        Detector(detector_numbers=np.array([2, 3]), event_data=event_data_2))
+
+    with pytest.warns(UserWarning, match="Could not load pulse times: units "):
+        loaded_data = load_function(builder)
+
+    # Detectors 0 and 1 shouldn't have events loaded; units were invalid.
+    assert len(loaded_data.values[0].values) == 0
+    assert len(loaded_data.values[1].values) == 0
+    # Detectors 2 and 3 should have their events loaded; units were valid.
+    assert len(loaded_data.values[2].values) > 0
+    assert len(loaded_data.values[3].values) > 0
+
+
+def test_does_not_load_events_if_index_not_ordered(load_function: Callable):
+    event_data_1 = EventData(
+        event_id=np.array([0, 1]),
+        event_time_offset=np.array([0, 1]),
+        event_time_zero=np.array([0, 1]),
+        event_index=np.array([2, 0]),
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([0, 1]), event_data=event_data_1))
+
+    with pytest.warns(UserWarning, match="Event index in NXEvent at "):
+        load_function(builder)
+
+
+def test_loads_pulse_times_from_multiple_event_data_groups(load_function: Callable):
+    offsets = np.array([0, 0, 0, 0])
+
+    zeros_1 = np.array([12 * 10**9, 34 * 10**9, 56 * 10**9, 78 * 10**9])
+    zeros_2 = np.array([87 * 10**9, 65 * 10**9, 43 * 10**9, 21 * 10**9])
+
+    event_data_1 = EventData(
+        event_id=np.array([0, 1, 2, 3]),
+        event_time_offset=offsets,
+        event_time_zero=zeros_1,
+        event_index=np.array([0, 3, 3, 4]),
+    )
+    event_data_2 = EventData(
+        event_id=np.array([4, 5, 6, 7]),
+        event_time_offset=offsets,
+        event_time_zero=zeros_2,
+        event_index=np.array([0, 3, 3, 4]),
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([0, 1, 2, 3]), event_data=event_data_1))
+    builder.add_detector(
+        Detector(detector_numbers=np.array([4, 5, 6, 7]), event_data=event_data_2))
+
+    loaded_data = load_function(builder)
+
+    for event, pulse_time in enumerate([12, 12, 12, 56, 87, 87, 87, 43]):
+        _time = np.array("1970-01-01").astype("datetime64[s]") \
+                + np.array(pulse_time).astype("timedelta64[s]")
+
+        assert sc.identical(
+            loaded_data.values[event].attrs['pulse_time'],
+            sc.array(dims=["event"],
+                     values=[_time],
+                     unit=sc.units.s,
+                     dtype=sc.dtype.datetime64))
+
+
 def test_loads_data_from_multiple_event_data_groups(load_function: Callable):
     pulse_times = np.array([
         1600766730000000000, 1600766731000000000, 1600766732000000000,
