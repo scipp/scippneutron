@@ -217,13 +217,10 @@ class LoadFromJson:
         except MissingAttribute:
             units = sc.units.dimensionless
 
-        common_creation_args = {'dtype': dtype, 'unit': units}
-        if isinstance(dataset[_nexus_values], list):
-            return sc.array(dims=dimensions,
-                            values=dataset[_nexus_values],
-                            **common_creation_args)
-        else:
-            return sc.scalar(value=dataset[_nexus_values], **common_creation_args)
+        return sc.array(dims=dimensions,
+                        values=np.asarray(dataset[_nexus_values]),
+                        dtype=dtype,
+                        unit=units)
 
     def load_dataset_from_group_as_numpy_array(self, group: Dict, dataset_name: str):
         """
