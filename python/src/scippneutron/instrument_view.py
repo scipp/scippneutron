@@ -136,7 +136,7 @@ def _plot_components(scipp_obj, additional, positions_var, scene):
     # Some scaling to set width according to distance from detector center
     scaling_factor = 1 / 10.0
     width = furthest_distance * scaling_factor
-    shapes = {"cube": _box, "cylinder": _cylinder, "disk": _disk_chopper}
+    shapes = {"sample": _box, "source": _cylinder, "chopper": _disk_chopper}
     for item, type in additional.items():
         if type not in shapes:
             supported_shapes = ", ".join(shapes.keys())
