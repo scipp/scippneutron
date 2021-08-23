@@ -11,7 +11,18 @@ import scipp as sc
 from ._common import Group, MissingDataset, MissingAttribute
 
 
-def cset_to_encoding(cset: int):
+def _cset_to_encoding(cset: int) -> str:
+    """
+    Converts a HDF5 cset into a python encoding. Allowed values for cset are
+    h5py.h5t.CSET_ASCII and h5py.h5t.CSET_UTF8.
+
+    Args:
+        cset: The HDF character set to convert
+
+    Returns:
+        A string describing the encoding suitable for calls to str(encoding=...)
+        Either "ascii" or "utf-8".
+    """
     if cset == h5py.h5t.CSET_ASCII:
         return "ascii"
     elif cset == h5py.h5t.CSET_UTF8:
@@ -24,7 +35,7 @@ def cset_to_encoding(cset: int):
         return "utf-8"
 
 
-def _get_attr_as_str(h5_object, attribute_name: str):
+def _get_attr_as_str(h5_object, attribute_name: str) -> str:
     return _ensure_str(h5_object.attrs[attribute_name],
                        LoadFromHdf5.get_attr_encoding(h5_object, attribute_name))
 
@@ -37,11 +48,11 @@ def _ensure_str(str_or_bytes: Union[str, bytes], encoding: str) -> str:
     error handler and then decoded using the encoding specified in the nexus file in
     order to get a correctly encoded string in all cases.
 
-    Note that the nexus standard leaves unspecified the behaviour of H5T_CSET_ASCII
+    Note that the nexus standard leaves unspecified the behavior of H5T_CSET_ASCII
     for characters >=128. Common extensions are the latin-1 ("extended ascii") character
     set which appear to be used in nexus files from some facilities. Attempt to load
     these strings with the latin-1 extended character set, but warn as this is
-    technically unspecified behaviour.
+    technically unspecified behavior.
     """
     if isinstance(str_or_bytes, str):
         str_or_bytes = str_or_bytes.encode("utf-8", errors="surrogateescape")
@@ -53,7 +64,7 @@ def _ensure_str(str_or_bytes: Union[str, bytes], encoding: str) -> str:
             decoded = str(str_or_bytes, encoding="latin-1")
             warnings.warn(f"Encoding for bytes '{str_or_bytes}' declared as ascii, "
                           f"but contains characters in extended ascii range. Assuming "
-                          f"extended ASCII (latin-1), but this behaviour is not "
+                          f"extended ASCII (latin-1), but this behavior is not "
                           f"specified by the HDF5 or nexus standards and may therefore "
                           f"be incorrect. Decoded string using latin-1 is '{decoded}'. "
                           f"Error was '{str(e)}'.")
@@ -215,13 +226,13 @@ class LoadFromHdf5:
 
         cset = h5py.h5d.open(group.id,
                              dataset_name.encode("utf-8")).get_type().get_cset()
-        return _ensure_str(val, cset_to_encoding(cset))
+        return _ensure_str(val, _cset_to_encoding(cset))
 
     @staticmethod
-    def get_attr_encoding(group: h5py.Group, dataset_name: str):
+    def get_attr_encoding(group: h5py.Group, dataset_name: str) -> str:
         cset = h5py.h5a.open(group.id,
                              dataset_name.encode("utf-8")).get_type().get_cset()
-        return cset_to_encoding(cset)
+        return _cset_to_encoding(cset)
 
     @staticmethod
     def get_object_by_path(group: Union[h5py.Group, h5py.File],
