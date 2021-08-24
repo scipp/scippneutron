@@ -28,7 +28,10 @@ def load_monitor_data(monitor_groups: List[Group], loaded_data: sc.Dataset,
     for group in monitor_groups:
         monitor_name = group.path.split("/")[-1]
         data = _load_data_from_histogram_mode_monitor(group, file_root, nexus)
-        loaded_data[monitor_name] = sc.Variable(value=data)
+        if isinstance(loaded_data, sc.DataArray):
+            loaded_data.attrs[monitor_name] = sc.Variable(value=data)
+        else:
+            loaded_data[monitor_name] = sc.Variable(value=data)
 
         # Look for event mode data structures in NXMonitor
         if nexus.dataset_in_group(group.group, "event_index")[0]:
@@ -37,4 +40,7 @@ def load_monitor_data(monitor_groups: List[Group], loaded_data: sc.Dataset,
     # If any monitors contain event-mode data, load it
     if event_groups:
         monitor_events = load_detector_data(event_groups, [], file_root, nexus, True)
-        loaded_data["monitor_events"] = sc.Variable(value=monitor_events)
+        if isinstance(loaded_data, sc.DataArray):
+            loaded_data.attrs["monitor_events"] = sc.Variable(value=monitor_events)
+        else:
+            loaded_data["monitor_events"] = sc.Variable(value=monitor_events)
