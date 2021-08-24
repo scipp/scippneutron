@@ -1635,8 +1635,8 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
                         sc.scalar(1, dtype=sc.dtype.int32))
 
     assert sc.identical(
-        loaded_event_data["detector_id", 0].values.coords["tof"],
+        loaded_event_data["detector_id", 0].values[0].coords["tof"],
         sc.Variable(dims=["event"], values=[1, 2, 3, 4, 5], unit=sc.units.ns))
     assert sc.identical(
-        loaded_event_data["detector_id", 1].values.coords["tof"],
+        loaded_event_data["detector_id", 1].values[0].coords["tof"],
         sc.Variable(dims=["event"], values=[6, 7, 8, 9, 10], unit=sc.units.ns))
