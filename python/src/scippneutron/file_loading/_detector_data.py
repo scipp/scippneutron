@@ -330,12 +330,42 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
 
     pixel_positions_loaded = all(
         [data.pixel_positions is not None for data in event_data])
+
+    _min_tof = min(
+        sc.min(data.events.coords[_time_of_flight]).values for data in event_data)
+    _max_tof = max(
+        sc.max(data.events.coords[_time_of_flight]).values for data in event_data)
+
+    # This can happen if there were no events in the file at all as sc.min will return
+    # double_max and sc.max will return double_min
+    if _min_tof >= _max_tof:
+        _min_tof, _max_tof = _max_tof, _min_tof
+
     detector_data = event_data.pop(0)
+
+    tof_dtype = detector_data.events.coords[_time_of_flight].dtype
+
+    if str(tof_dtype).startswith("int"):
+        _max_tof += 1
+    else:
+        _max_tof = np.nextafter(_max_tof, float("inf"))
+
+    _tof_edges = sc.array(
+        values=[
+            _min_tof,
+            _max_tof,
+        ],
+        dims=[_time_of_flight],
+        unit=detector_data.events.coords[_time_of_flight].unit,
+        dtype=detector_data.events.coords[_time_of_flight].dtype,
+    )
 
     # Events in the NeXus file are effectively binned by pulse
     # (because they are recorded chronologically)
     # but for reduction it is more useful to bin by detector id
-    events = sc.bin(detector_data.events, groups=[detector_data.detector_ids])
+    events = sc.bin(detector_data.events,
+                    groups=[detector_data.detector_ids],
+                    edges=[_tof_edges])
 
     if pixel_positions_loaded:
         # TODO: the name 'position' should probably not be hard-coded but moved
@@ -344,12 +374,15 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
     while event_data:
         detector_data = event_data.pop(0)
 
-        new_events = sc.bin(detector_data.events, groups=[detector_data.detector_ids])
+        new_events = sc.bin(detector_data.events,
+                            groups=[detector_data.detector_ids],
+                            edges=[_tof_edges])
 
         if pixel_positions_loaded:
             new_events.coords['position'] = detector_data.pixel_positions
 
         events = sc.concatenate(events, new_events, dim=_detector_dimension)
+
     return events
 
 
