@@ -1548,6 +1548,36 @@ def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
         assert "test_log_1" not in loaded_data
 
 
+def test_load_nexus_adds_single_tof_bin(load_function: Callable):
+    event_time_offsets = np.array([456, 743, 347, 345, 632], dtype="float64")
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 3]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+
+    builder = NexusBuilder()
+    builder.add_event_data(event_data)
+
+    loaded_data = load_function(builder)
+
+    # Size 2 for each of the two bin edges around a single bin
+    assert loaded_data.coords["tof"].shape == [2]
+
+    # Assert bin edges correspond to smallest and largest+1 time-of-flights
+    # in data.
+    assert sc.identical(loaded_data.coords["tof"]["tof", 0],
+                        sc.scalar(value=np.min(event_time_offsets), unit=sc.units.ns))
+    assert sc.identical(
+        loaded_data.coords["tof"]["tof", 1],
+        sc.scalar(value=np.nextafter(np.max(event_time_offsets), float("inf")),
+                  unit=sc.units.ns))
+
+
 def test_load_monitors(load_function: Callable):
     builder = NexusBuilder()
 
