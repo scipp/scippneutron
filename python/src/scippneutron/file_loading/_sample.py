@@ -6,8 +6,7 @@ from ._common import Group, _add_attr_to_loaded_data
 from ._nexus import LoadFromNexus, GroupObject
 
 
-def _get_matrix_of_component(group: GroupObject, nx_class: str,
-                             nexus: LoadFromNexus,
+def _get_matrix_of_component(group: GroupObject, nx_class: str, nexus: LoadFromNexus,
                              name: str) -> Tuple[np.ndarray, sc.Unit]:
     matrix_found, _ = nexus.dataset_in_group(group, name)
     if matrix_found:
@@ -29,14 +28,11 @@ def _get_u_of_component(group: GroupObject, nx_class: str,
                                     "orientation_matrix"), sc.units.one
 
 
-def load_ub_matrices_of_components(groups: List[Group],
-                                   data: Union[sc.DataArray, sc.Dataset],
-                                   name: str, nx_class: str,
-                                   file_root: h5py.File, nexus: LoadFromNexus):
-    properties = {
-        "ub_matrix": _get_ub_of_component,
-        "u_matrix": _get_u_of_component
-    }
+def load_ub_matrices_of_components(groups: List[Group], data: Union[sc.DataArray,
+                                                                    sc.Dataset],
+                                   name: str, nx_class: str, file_root: h5py.File,
+                                   nexus: LoadFromNexus):
+    properties = {"ub_matrix": _get_ub_of_component, "u_matrix": _get_u_of_component}
     for sc_property, extractor in properties.items():
         for group in groups:
             matrix, units = extractor(group.group, nx_class, nexus)
@@ -49,9 +45,8 @@ def load_ub_matrices_of_components(groups: List[Group],
                                          unit=units,
                                          dtype=sc.dtype.matrix_3_float64)
             else:
-                _add_attr_to_loaded_data(
-                    f"{nexus.get_name(group.group)}_{sc_property}",
-                    data,
-                    matrix,
-                    unit=units,
-                    dtype=sc.dtype.matrix_3_float64)
+                _add_attr_to_loaded_data(f"{nexus.get_name(group.group)}_{sc_property}",
+                                         data,
+                                         matrix,
+                                         unit=units,
+                                         dtype=sc.dtype.matrix_3_float64)
