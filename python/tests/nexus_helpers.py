@@ -149,6 +149,14 @@ class Stream:
     value_units: str = "m"
 
 
+@dataclass
+class Monitor:
+    name: str
+    data: np.ndarray
+    axes: List[Tuple[str, np.ndarray]]
+    events: Optional[EventData] = None
+
+
 class InMemoryNeXusWriter:
     def add_dataset_at_path(self, file_root: h5py.File, path: str, data: np.ndarray,
                             attributes: Dict):
@@ -335,6 +343,7 @@ class NexusBuilder:
         self._writer = None
         self._datasets: List[DatasetAtPath] = []
         self._streams = []
+        self._monitors = []
 
     def add_dataset_at_path(self, path: str, data: np.ndarray, attributes: Dict):
         self._datasets.append(DatasetAtPath(path, data, attributes))
@@ -396,6 +405,9 @@ class NexusBuilder:
         elif isinstance(component, Source):
             self.add_source(component)
 
+    def add_monitor(self, monitor: Monitor):
+        self._monitors.append(monitor)
+
     @property
     def json_string(self):
         self._writer = JsonWriter()
@@ -452,6 +464,7 @@ class NexusBuilder:
         self._write_datasets(nexus_file)
         self._write_streams(nexus_file)
         self._write_links(nexus_file)
+        self._write_monitors(nexus_file)
 
     def create_file_on_disk(self, filename: str):
         """
@@ -535,6 +548,26 @@ class NexusBuilder:
             self._add_event_data_group_to_file(event_data, parent_group,
                                                f"events_{event_data_index}")
 
+    def _write_monitors(self, parent_group: Union[h5py.Group, Dict]):
+        for monitor in self._monitors:
+            self._add_monitor_group_to_file(monitor, parent_group)
+
+    def _add_monitor_group_to_file(self, monitor: Monitor, parent_group: h5py.Group):
+        monitor_group = self._create_nx_class(monitor.name, "NXmonitor", parent_group)
+        data_group = self._writer.add_dataset(monitor_group, "data", monitor.data)
+        self._writer.add_attribute(data_group, "axes",
+                                   ",".join(name for name, _ in monitor.axes))
+
+        if monitor.events:
+            self._write_event_data_to_group(monitor_group, monitor.events)
+
+        for axis_name, axis_data in monitor.axes:
+            # We write event data (if exists) first - if we've already written event
+            # data the event index will already have been created so we skip writing
+            # it here.
+            if not monitor.events or not axis_name == "event_index":
+                self._writer.add_dataset(monitor_group, axis_name, axis_data)
+
     def _write_logs(self, parent_group: Union[h5py.Group, Dict]):
         for log in self._logs:
             self._add_log_group_to_file(log, parent_group)
@@ -542,6 +575,9 @@ class NexusBuilder:
     def _add_event_data_group_to_file(self, data: EventData, parent_group: h5py.Group,
                                       group_name: str):
         event_group = self._create_nx_class(group_name, "NXevent_data", parent_group)
+        self._write_event_data_to_group(event_group, data)
+
+    def _write_event_data_to_group(self, event_group: h5py.Group, data: EventData):
         if data.event_id is not None:
             self._writer.add_dataset(event_group, "event_id", data=data.event_id)
         if data.event_time_offset is not None:

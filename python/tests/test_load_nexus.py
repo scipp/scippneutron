@@ -8,6 +8,7 @@ from .nexus_helpers import (
     Transformation,
     TransformationType,
     Link,
+    Monitor,
     in_memory_hdf5_file_with_two_nxentry,
 )
 import numpy as np
@@ -1547,35 +1548,95 @@ def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
         assert "test_log_1" not in loaded_data
 
 
-def test_load_nexus_adds_single_tof_bin(load_function: Callable):
-    event_time_offsets = np.array([456, 743, 347, 345, 632], dtype="float64")
-    event_data = EventData(
-        event_id=np.array([1, 2, 3, 1, 3]),
-        event_time_offset=event_time_offsets,
-        event_time_zero=np.array([
-            1600766730000000000, 1600766731000000000, 1600766732000000000,
-            1600766733000000000
-        ]),
-        event_index=np.array([0, 3, 3, 5]),
-    )
-
+def test_load_monitors(load_function: Callable):
     builder = NexusBuilder()
-    builder.add_event_data(event_data)
 
-    loaded_data = load_function(builder)
+    # Monitor with data
+    builder.add_monitor(
+        Monitor(
+            name="monitor1",
+            data=np.ones(shape=(2, 4, 6), dtype="float64"),
+            axes=[
+                ("event_index", np.arange(3, 5, dtype="float64")),
+                ("period_index", np.arange(3, 7, dtype="float64")),
+                ("time_of_flight", np.arange(3, 9, dtype="float64")),
+            ],
+        ))
 
-    # Size 2 for each of the two bin edges around a single bin
-    assert loaded_data.coords["tof"].shape == [2]
+    # Monitor with only one "axis" and only one data item
+    builder.add_monitor(
+        Monitor("monitor2",
+                data=np.array([1.]),
+                axes=[("time_of_flight", np.array([1.]))]))
 
-    # Assert bin edges correspond to smallest and largest+1 time-of-flights
-    # in data.
-    assert sc.identical(loaded_data.coords["tof"]["tof", 0],
-                        sc.scalar(value=np.min(event_time_offsets), unit=sc.units.ns))
     assert sc.identical(
-        loaded_data.coords["tof"]["tof", 1],
-        sc.scalar(value=np.nextafter(np.max(event_time_offsets), float("inf")),
-                  unit=sc.units.ns))
+        load_function(builder)["monitor1"].data.values,
+        sc.DataArray(data=sc.ones(
+            dims=["event_index", "period_index", "time_of_flight"],
+            shape=(2, 4, 6),
+            dtype=sc.dtype.float64),
+                     coords={
+                         "event_index":
+                         sc.Variable(dims=["event_index"],
+                                     values=np.arange(3, 5, dtype="float64")),
+                         "period_index":
+                         sc.Variable(dims=["period_index"],
+                                     values=np.arange(3, 7, dtype="float64")),
+                         "time_of_flight":
+                         sc.Variable(dims=["time_of_flight"],
+                                     values=np.arange(3, 9, dtype="float64")),
+                     }))
+
+    assert sc.identical(
+        load_function(builder)["monitor2"].data.values,
+        sc.DataArray(data=sc.ones(dims=["time_of_flight"], shape=(1, )),
+                     coords={
+                         "time_of_flight":
+                         sc.Variable(dims=["time_of_flight"], values=np.array([1.])),
+                     }))
 
 
-def test_loads_monitors_in_histogram_mode(load_function: Callable):
-    pass
+def test_load_monitors_with_event_mode_data(load_function: Callable):
+    builder = NexusBuilder()
+
+    # Monitor with data
+    builder.add_monitor(
+        Monitor(name="monitor1",
+                data=np.ones(shape=(2, 3, 4), dtype="float64"),
+                axes=[
+                    ("event_index", np.array([0, 5])),
+                    ("period_index", np.array([2, 3, 4])),
+                    ("time_of_flight", np.array([3, 4, 5, 6])),
+                ],
+                events=EventData(
+                    event_id=np.array([0, 0, 0, 0, 0]),
+                    event_time_offset=np.array([1, 2, 3, 4, 5]),
+                    event_time_zero=np.array([0, 1]),
+                    event_index=np.array([0, 5]),
+                )))
+
+    # Monitor with only one "axis" and only one data item
+    builder.add_monitor(
+        Monitor("monitor2",
+                data=np.array([1.]),
+                axes=[("time_of_flight", np.array([1.]))],
+                events=EventData(
+                    event_id=np.array([1, 1, 1, 1, 1]),
+                    event_time_offset=np.array([6, 7, 8, 9, 10]),
+                    event_time_zero=np.array([0, 1]),
+                    event_index=np.array([0, 5]),
+                )))
+
+    loaded_event_data = load_function(builder)["monitor_events"].data.values
+
+    assert sc.identical(loaded_event_data["detector_id", 0].attrs["detector_id"],
+                        sc.scalar(0, dtype=sc.dtype.int32))
+    assert sc.identical(loaded_event_data["detector_id", 1].attrs["detector_id"],
+                        sc.scalar(1, dtype=sc.dtype.int32))
+
+    assert sc.identical(
+        loaded_event_data["detector_id", 0].values.coords["tof"],
+        sc.Variable(dims=["event"], values=[1, 2, 3, 4, 5], unit=sc.units.ns))
+    assert sc.identical(
+        loaded_event_data["detector_id", 1].values.coords["tof"],
+        sc.Variable(dims=["event"], values=[6, 7, 8, 9, 10], unit=sc.units.ns))

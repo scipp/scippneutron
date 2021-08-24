@@ -217,13 +217,10 @@ class LoadFromJson:
         except MissingAttribute:
             units = sc.units.dimensionless
 
-        if isinstance(dataset[_nexus_values], list):
-            return sc.Variable(dims=dimensions,
-                               values=dataset[_nexus_values],
-                               dtype=dtype,
-                               unit=units)
-
-        raise NotImplementedError("Loading scalar datasets not implemented")
+        return sc.array(dims=dimensions,
+                        values=np.asarray(dataset[_nexus_values]),
+                        dtype=dtype,
+                        unit=units)
 
     def load_dataset_from_group_as_numpy_array(self, group: Dict, dataset_name: str):
         """
