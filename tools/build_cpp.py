@@ -2,6 +2,7 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 
 import scippbuildtools as sbt
+import os
 
 if __name__ == '__main__':
     os.write(1, "SBT version: {}\n".format(sbt.__version__).encode())
