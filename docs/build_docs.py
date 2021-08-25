@@ -55,9 +55,6 @@ import scippbuildtools as sbt
 
 if __name__ == '__main__':
 
-    os.write(1, "SBT version: {}\n".format(sbt.__version__).encode())
-    os.write(1, "DIR: {}\n".format(dir(sbt)).encode())
-
     args = sbt.docs_argument_parser().parse_known_args()[0]
 
     docs_dir = Path(__file__).parent.absolute()
