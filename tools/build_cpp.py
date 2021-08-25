@@ -5,8 +5,8 @@ import scippbuildtools as sbt
 import os
 
 if __name__ == '__main__':
-    os.write(1, "SBT version: {}\n".format(sbt.__version__).encode())
-    os.write(1, "DIR: {}\n".format(dir(sbt)).encode())
+    # os.write(1, "SBT version: {}\n".format(sbt.__version__).encode())
+    os.write(1, "SBT DIR: {}\n".format(dir(sbt)).encode())
 
     args = sbt.cpp_argument_parser().parse_known_args()[0]
 
