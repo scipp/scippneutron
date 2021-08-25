@@ -1634,39 +1634,45 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
         Monitor(name="monitor1",
                 data=np.ones(shape=(2, 3, 4), dtype="float64"),
                 axes=[
-                    ("event_index", np.array([0, 5])),
-                    ("period_index", np.array([2, 3, 4])),
-                    ("time_of_flight", np.array([3, 4, 5, 6])),
+                    ("event_index", np.array([0, 5], dtype="int64")),
+                    ("period_index", np.array([2, 3, 4], dtype="int64")),
+                    ("time_of_flight", np.array([3, 4, 5, 6], dtype="float64")),
                 ],
                 events=EventData(
-                    event_id=np.array([0, 0, 0, 0, 0]),
-                    event_time_offset=np.array([1, 2, 3, 4, 5]),
-                    event_time_zero=np.array([0, 1]),
-                    event_index=np.array([0, 5]),
+                    event_id=np.array([0, 0, 0, 0, 0], dtype="int64"),
+                    event_time_offset=np.array([1, 2, 3, 4, 5], dtype="float64"),
+                    event_time_zero=np.array([0, 1], dtype="float64"),
+                    event_index=np.array([0, 5], dtype="int64"),
                 )))
 
     # Monitor with only one "axis" and only one data item
     builder.add_monitor(
         Monitor("monitor2",
-                data=np.array([1.]),
-                axes=[("time_of_flight", np.array([1.]))],
+                data=np.array([1.], dtype="float64"),
+                axes=[("time_of_flight", np.array([1.], dtype="float64"))],
                 events=EventData(
-                    event_id=np.array([1, 1, 1, 1, 1]),
-                    event_time_offset=np.array([6, 7, 8, 9, 10]),
-                    event_time_zero=np.array([0, 1]),
-                    event_index=np.array([0, 5]),
+                    event_id=np.array([1, 1, 1, 1, 1], dtype="int64"),
+                    event_time_offset=np.array([6, 7, 8, 9, 10], dtype="float64"),
+                    event_time_zero=np.array([0, 1], dtype="float64"),
+                    event_index=np.array([0, 5], dtype="int64"),
                 )))
 
     loaded_event_data = load_function(builder)["monitor_events"].data.values
 
     assert sc.identical(loaded_event_data["detector_id", 0].attrs["detector_id"],
-                        sc.scalar(0, dtype=sc.dtype.int32))
+                        sc.scalar(0, dtype=sc.dtype.int64))
     assert sc.identical(loaded_event_data["detector_id", 1].attrs["detector_id"],
-                        sc.scalar(1, dtype=sc.dtype.int32))
+                        sc.scalar(1, dtype=sc.dtype.int64))
 
     assert sc.identical(
         loaded_event_data["detector_id", 0].values[0].coords["tof"],
-        sc.Variable(dims=["event"], values=[1, 2, 3, 4, 5], unit=sc.units.ns))
+        sc.Variable(dims=["event"],
+                    values=[1, 2, 3, 4, 5],
+                    unit=sc.units.ns,
+                    dtype=sc.dtype.float64))
     assert sc.identical(
         loaded_event_data["detector_id", 1].values[0].coords["tof"],
-        sc.Variable(dims=["event"], values=[6, 7, 8, 9, 10], unit=sc.units.ns))
+        sc.Variable(dims=["event"],
+                    values=[6, 7, 8, 9, 10],
+                    unit=sc.units.ns,
+                    dtype=sc.dtype.float64))
