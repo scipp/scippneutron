@@ -15,6 +15,7 @@ dependencies:
   - tbb-devel
   - scipp
   - cmake
+  - scipp/label/dev::scippbuildtools
 
   # Run
   - appdirs

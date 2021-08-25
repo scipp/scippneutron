@@ -19,6 +19,7 @@ dependencies:
   - scipp
   - cmake
   - pip
+  - scipp/label/dev::scippbuildtools
 
   # Run
   - appdirs
