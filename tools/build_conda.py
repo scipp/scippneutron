@@ -3,8 +3,6 @@
 # @author Neil Vaytet
 
 import os
-import shutil
-import glob
 import sys
 import build_cpp
 import scippbuildtools as sbt

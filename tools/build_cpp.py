@@ -4,7 +4,7 @@
 import scippbuildtools as sbt
 
 if __name__ == '__main__':
-    args = sbt.cpp_argument_parser().parse_args()
+    args = sbt.cpp_argument_parser().parse_known_args()[0]
 
     builder = sbt.CppBuilder(prefix=args.prefix,
                              build_dir=args.build_dir,
