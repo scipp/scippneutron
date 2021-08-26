@@ -61,7 +61,7 @@ class TestMantidConversion(unittest.TestCase):
         target_tof = binned_mantid.coords['tof']
         d = scn.mantid.convert_EventWorkspace_to_data_array(eventWS,
                                                             load_pulse_times=False)
-        binned = sc.histogram(d, target_tof)
+        binned = sc.histogram(d, bins=target_tof)
 
         delta = sc.sum(binned_mantid - binned, 'spectrum')
         delta = sc.sum(delta, 'tof')
@@ -144,8 +144,8 @@ class TestMantidConversion(unittest.TestCase):
 
         da = scn.mantid.convert_EventWorkspace_to_data_array(eventWS,
                                                              load_pulse_times=False)
-        da = sc.histogram(da, target_tof)
-        d = sc.Dataset({da.name: da})
+        da = sc.histogram(da, bins=target_tof)
+        d = sc.Dataset(data={da.name: da})
         converted = scn.convert(d, 'tof', 'wavelength', scatter=True)
 
         self.assertTrue(
@@ -250,8 +250,8 @@ class TestMantidConversion(unittest.TestCase):
 
         ds = scn.mantid.convert_Workspace2D_to_data_array(masked_ws)
 
-        mask = sc.Variable(dims=ds.dims, shape=ds.shape, dtype=sc.dtype.bool)
-        mask['spectrum', 0:3]['tof', 0:3] |= sc.Variable(value=True)
+        mask = sc.zeros(dims=ds.dims, shape=ds.shape, dtype=sc.dtype.bool)
+        mask['spectrum', 0:3]['tof', 0:3] |= sc.scalar(True)
         assert sc.identical(ds.masks['bin'], mask)
 
         np.testing.assert_array_equal(ds.masks["spectrum"].values[0:3],
@@ -425,10 +425,10 @@ class TestMantidConversion(unittest.TestCase):
         expected_bins = data_len + 1
         expected_number_spectra = 10
 
-        y = sc.Variable(['spectrum', param_dim],
+        y = sc.Variable(dims=['spectrum', param_dim],
                         values=np.random.rand(expected_number_spectra, data_len))
 
-        x = sc.Variable(['spectrum', param_dim],
+        x = sc.Variable(dims=['spectrum', param_dim],
                         values=np.arange(expected_number_spectra * expected_bins,
                                          dtype=np.float64).reshape(
                                              (expected_number_spectra, expected_bins)))
@@ -561,9 +561,9 @@ class TestMantidConversion(unittest.TestCase):
 
     def _exec_to_spherical(self, x, y, z):
         in_out = sc.Dataset()
-        in_out['x'] = sc.Variable(value=x, unit=sc.units.m)
-        in_out['y'] = sc.Variable(value=y, unit=sc.units.m)
-        in_out['z'] = sc.Variable(value=z, unit=sc.units.m)
+        in_out['x'] = sc.scalar(x, unit=sc.units.m)
+        in_out['y'] = sc.scalar(y, unit=sc.units.m)
+        in_out['z'] = sc.scalar(z, unit=sc.units.m)
         point = sc.geometry.position(in_out['x'].data, in_out['y'].data,
                                      in_out['z'].data)
         scn.mantid._to_spherical(point, in_out)
@@ -656,11 +656,11 @@ def test_to_workspace_2d(param_dim):
     expected_bins = data_len + 1
     expected_number_spectra = 10
 
-    y = sc.Variable(['spectrum', param_dim],
+    y = sc.Variable(dims=['spectrum', param_dim],
                     values=np.random.rand(expected_number_spectra, data_len),
                     variances=np.random.rand(expected_number_spectra, data_len))
 
-    x = sc.Variable(['spectrum', param_dim],
+    x = sc.Variable(dims=['spectrum', param_dim],
                     values=np.arange(expected_number_spectra * expected_bins,
                                      dtype=np.float64).reshape(
                                          (expected_number_spectra, expected_bins)))
@@ -688,8 +688,8 @@ def test_to_workspace_2d_handles_single_spectra():
     expected_y = [10., 20., 30.]
     expected_e = [4., 4., 4.]
 
-    x = sc.Variable(['tof'], values=expected_x)
-    y = sc.Variable(['tof'], values=expected_y, variances=expected_e)
+    x = sc.Variable(dims=['tof'], values=expected_x)
+    y = sc.Variable(dims=['tof'], values=expected_y, variances=expected_e)
     data = sc.DataArray(data=y, coords={'tof': x})
 
     ws = scn.to_mantid(data, "tof")
@@ -710,8 +710,8 @@ def test_to_workspace_2d_handles_single_x_array():
     expected_y = [[10., 20., 30.], [40., 50., 60.]]
     expected_e = [[4., 4., 4.], [4., 4., 4.]]
 
-    x = sc.Variable(['tof'], values=expected_x)
-    y = sc.Variable(['spectrum', 'tof'],
+    x = sc.Variable(dims=['tof'], values=expected_x)
+    y = sc.Variable(dims=['spectrum', 'tof'],
                     values=np.array(expected_y),
                     variances=np.array(expected_e))
     data = sc.DataArray(data=y, coords={'tof': x})
@@ -768,10 +768,11 @@ def test_time_series_log_extraction():
     da = scn.from_mantid(ws)
     da.attrs['time_log'].value.coords['time'].dtype == sc.dtype.datetime64
     # check times
-    sc.identical(sc.Variable(['time'], values=np.array(times).astype('datetime64[ns]')),
-                 da.attrs['time_log'].value.coords['time'])
+    sc.identical(
+        sc.Variable(dims=['time'], values=np.array(times).astype('datetime64[ns]')),
+        da.attrs['time_log'].value.coords['time'])
     # check values
-    sc.identical(sc.Variable(['time'], values=np.arange(3.)),
+    sc.identical(sc.Variable(dims=['time'], values=np.arange(3.)),
                  da.attrs['time_log'].value.data)
     sapi.DeleteWorkspace(ws)
 

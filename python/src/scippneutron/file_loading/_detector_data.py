@@ -43,8 +43,10 @@ def _check_for_missing_fields(group: Group, nexus: LoadFromNexus):
 
 def _convert_array_to_metres(array: np.ndarray, unit: str) -> np.ndarray:
     return sc.to_unit(
-        sc.Variable(["temporary_variable"], values=array, unit=unit, dtype=np.float64),
-        "m").values
+        sc.Variable(dims=["temporary_variable"],
+                    values=array,
+                    unit=unit,
+                    dtype=np.float64), "m").values
 
 
 def _load_pixel_positions(detector_group: GroupObject, detector_ids_size: int,
@@ -118,7 +120,7 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
                                     detector_id_dtype: Any = np.int32) -> sc.DataArray:
     return sc.DataArray(data=sc.empty(dims=[_event_dimension],
                                       shape=[0],
-                                      variances=True,
+                                      with_variances=True,
                                       dtype=np.float32),
                         coords={
                             _time_of_flight:
@@ -230,7 +232,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     weights = sc.ones(dims=[_event_dimension],
                       shape=event_id.shape,
                       dtype=np.float32,
-                      variances=True)
+                      with_variances=True)
 
     if detector_data.detector_ids is None:
         # If detector ids were not found in an associated detector group
