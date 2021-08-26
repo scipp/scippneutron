@@ -9,9 +9,9 @@ if __name__ == '__main__':
 
     args = sbt.docs_argument_parser().parse_known_args()[0]
 
-    docs_dir = Path(__file__).parent.absolute()
+    docs_dir = str(Path(__file__).parent.absolute())
 
-    builder = sbt.DocsBuilder(docs_dir=Path(__file__).parent.absolute(),
+    builder = sbt.DocsBuilder(docs_dir=docs_dir,
                               prefix=args.prefix,
                               work_dir=args.work_dir,
                               data_dir=args.data_dir)
