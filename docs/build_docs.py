@@ -23,4 +23,4 @@ if __name__ == '__main__':
             "logging.loggers.root.level=error\n".format(
                 os.path.join(args.data_dir, "scippneutron")))
 
-    builder.run_sphinx(builder=args.builder)
+    builder.run_sphinx(builder=args.builder, docs_dir=docs_dir)
