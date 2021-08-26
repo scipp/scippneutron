@@ -21,6 +21,6 @@ if __name__ == '__main__':
         builder.make_mantid_config(
             content="\nusagereports.enabled=0\ndatasearch.directories={}\n"
             "logging.loggers.root.level=error\n".format(
-                os.path.join(args.data_dir, "scippneutron")))
+                os.path.join(builder._data_dir, "scippneutron")))
 
     builder.run_sphinx(builder=args.builder, docs_dir=docs_dir)
