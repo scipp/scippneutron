@@ -17,7 +17,7 @@ if __name__ == '__main__':
                               data_dir=args.data_dir)
 
     if not args.no_setup:
-        builder.download_test_data()
+        builder.download_test_data(tar_name="scippneutron.tar.gz")
         builder.make_mantid_config(
             content="\nusagereports.enabled=0\ndatasearch.directories={}\n"
             "logging.loggers.root.level=error\n".format(
