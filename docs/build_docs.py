@@ -6,15 +6,10 @@ from pathlib import Path
 import scippbuildtools as sbt
 
 if __name__ == '__main__':
-
     args = sbt.docs_argument_parser().parse_known_args()[0]
-
     docs_dir = str(Path(__file__).parent.absolute())
-
-    builder = sbt.DocsBuilder(docs_dir=docs_dir,
-                              prefix=args.prefix,
-                              work_dir=args.work_dir,
-                              data_dir=args.data_dir)
+    # Convert Namespace object `args` to a dict with `vars(args)`
+    builder = sbt.DocsBuilder(docs_dir=docs_dir, **vars(args))
 
     if not args.no_setup:
         builder.download_test_data(tar_name="scippneutron.tar.gz")
