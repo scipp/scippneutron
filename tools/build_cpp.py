@@ -15,6 +15,6 @@ def main(**kwargs):
 
 if __name__ == '__main__':
 
-    args = sbt.cpp_argument_parser().parse_known_args()[0]
+    args, _ = sbt.cpp_argument_parser().parse_known_args()
     # Convert Namespace object `args` to a dict with `vars(args)`
     main(**vars(args))
