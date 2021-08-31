@@ -336,7 +336,7 @@ class NexusBuilder:
         self._detectors: List[Detector] = []
         self._logs: List[Log] = []
         self._instrument_name: Optional[str] = None
-        self._choppers: Optional[Chopper] = []
+        self._choppers: List[Chopper] = []
         self._title: Optional[str] = None
         self._start_time: Optional[str] = None
         self._end_time: Optional[str] = None
