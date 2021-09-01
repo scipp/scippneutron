@@ -46,6 +46,7 @@ Documentation
    user-guide/groupby
    user-guide/from-mantid-to-scipp
    user-guide/instrument-view
+   user-guide/recipes
 
 .. toctree::
    :caption: Tutorials
