@@ -104,6 +104,15 @@ class Source:
 
 
 @dataclass
+class Chopper:
+    name: str
+    distance: float
+    rotation_speed: float
+    distance_units: Optional[str] = None
+    rotation_units: Optional[str] = None
+
+
+@dataclass
 class Link:
     new_path: str
     target_path: str
@@ -241,7 +250,9 @@ class JsonWriter:
         if isinstance(data, str):
             dataset_info = {"string_size": len(data), "type": "string"}
         elif isinstance(data, float):
-            dataset_info = {"size": 1, "type": "float32"}
+            dataset_info = {"size": 1, "type": "float64"}
+        elif isinstance(data, int):
+            dataset_info = {"size": 1, "type": "int32"}
         else:
             dataset_info = {
                 "size": data.shape,
@@ -325,6 +336,7 @@ class NexusBuilder:
         self._detectors: List[Detector] = []
         self._logs: List[Log] = []
         self._instrument_name: Optional[str] = None
+        self._choppers: List[Chopper] = []
         self._title: Optional[str] = None
         self._start_time: Optional[str] = None
         self._end_time: Optional[str] = None
@@ -358,6 +370,9 @@ class NexusBuilder:
 
     def add_instrument(self, name: str):
         self._instrument_name = name
+
+    def add_chopper(self, chopper: Chopper):
+        self._choppers.append(chopper)
 
     def add_title(self, title: str):
         self._title = title
@@ -448,6 +463,7 @@ class NexusBuilder:
         else:
             parent_group = self._write_instrument(entry_group)
             parent_path = "/entry/instrument"
+        self._write_choppers(parent_group)
         self._write_detectors(parent_group, parent_path)
         self._write_datasets(nexus_file)
         self._write_streams(nexus_file)
@@ -529,6 +545,22 @@ class NexusBuilder:
                     detector.depends_on, detector_group,
                     f"{parent_path}/{detector_name}")
                 self._writer.add_dataset(detector_group, "depends_on", data=depends_on)
+
+    def _write_choppers(self, parent_group: Union[h5py.Group, Dict]):
+
+        for chopper in self._choppers:
+            chopper_group = self._create_nx_class(chopper.name, "NXdisk_chopper",
+                                                  parent_group)
+            distance_ds = self._writer.add_dataset(chopper_group,
+                                                   "distance",
+                                                   data=chopper.distance)
+            rotation_ds = self._writer.add_dataset(chopper_group,
+                                                   "rotation_speed",
+                                                   data=chopper.rotation_speed)
+            if chopper.distance_units is not None:
+                self._writer.add_attribute(distance_ds, "units", chopper.distance_units)
+            if chopper.rotation_units is not None:
+                self._writer.add_attribute(rotation_ds, "units", chopper.rotation_units)
 
     def _write_event_data(self, parent_group: Union[h5py.Group, Dict]):
         for event_data_index, event_data in enumerate(self._event_data):
