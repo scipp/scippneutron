@@ -834,12 +834,14 @@ def load(filename="",
              instrument geometry.
     :rtype: Dataset
     """
-    from mantid.api import FileFinder
+    from mantid.api import FileLoaderRegistry
 
     if mantid_args is None:
         mantid_args = {}
 
-    if not FileFinder.getFullPath(filename):
+    try:
+        FileLoaderRegistry.chooseLoader(filename)
+    except ValueError:
         raise ValueError(
             f"Mantid cannot find file {filename} and therefore will not load it.")
 
