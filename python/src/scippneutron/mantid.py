@@ -834,9 +834,14 @@ def load(filename="",
              instrument geometry.
     :rtype: Dataset
     """
+    from mantid.api import FileFinder
 
     if mantid_args is None:
         mantid_args = {}
+
+    if not FileFinder.getFullPath(filename):
+        raise ValueError(
+            f"Mantid cannot find file {filename} and therefore will not load it.")
 
     with run_mantid_alg(mantid_alg, filename, **mantid_args) as loaded:
         # Determine what Load has provided us
@@ -845,7 +850,7 @@ def load(filename="",
             # A single workspace
             data_ws = loaded
         else:
-            # Seperate data and monitor workspaces
+            # Separate data and monitor workspaces
             data_ws = loaded.OutputWorkspace
 
         if instrument_filename is not None:
