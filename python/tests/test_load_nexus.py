@@ -1,15 +1,6 @@
-from .nexus_helpers import (
-    NexusBuilder,
-    EventData,
-    Detector,
-    Log,
-    Sample,
-    Source,
-    Transformation,
-    TransformationType,
-    Link,
-    in_memory_hdf5_file_with_two_nxentry,
-)
+from .nexus_helpers import (NexusBuilder, EventData, Detector, Log, Sample, Source,
+                            Transformation, TransformationType, Link,
+                            in_memory_hdf5_file_with_two_nxentry, Chopper)
 import numpy as np
 import pytest
 import scippneutron
@@ -1575,3 +1566,44 @@ def test_load_nexus_adds_single_tof_bin(load_function: Callable):
         loaded_data.coords["tof"]["tof", 1],
         sc.scalar(value=np.nextafter(np.max(event_time_offsets), float("inf")),
                   unit=sc.units.ns))
+
+
+def test_nexus_file_with_choppers(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_instrument("dummy")
+    builder.add_chopper(
+        Chopper("chopper_1",
+                distance=10.0,
+                rotation_speed=60.0,
+                rotation_units="Hz",
+                distance_units="m"))
+    loaded_data = load_function(builder)
+    assert sc.identical(loaded_data["chopper_1"].attrs["rotation_speed"],
+                        60.0 * sc.Unit("Hz"))
+    assert sc.identical(loaded_data["chopper_1"].attrs["distance"], 10.0 * sc.Unit("m"))
+
+
+def test_nexus_file_with_two_choppers(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_instrument("dummy")
+    builder.add_chopper(
+        Chopper("chopper_1",
+                distance=11.0 * 1000,
+                rotation_speed=65.0 / 1000,
+                rotation_units="MHz",
+                distance_units="mm"))
+    builder.add_chopper(
+        Chopper("chopper_2",
+                distance=10.0,
+                rotation_speed=60.0,
+                rotation_units="Hz",
+                distance_units="m"))
+    loaded_data = load_function(builder)
+
+    assert sc.identical(loaded_data["chopper_1"].attrs["rotation_speed"],
+                        (65.0 / 1000) * sc.Unit("MHz"))
+    assert sc.identical(loaded_data["chopper_1"].attrs["distance"],
+                        (11.0 * 1000) * sc.Unit("mm"))
+    assert sc.identical(loaded_data["chopper_2"].attrs["rotation_speed"],
+                        60.0 * sc.Unit("Hz"))
+    assert sc.identical(loaded_data["chopper_2"].attrs["distance"], 10.0 * sc.Unit("m"))
