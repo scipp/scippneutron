@@ -1598,8 +1598,7 @@ def test_utf8_encoded_attribute(load_function: Callable):
     loaded_data = load_function(builder)
     assert loaded_data["testlog"].data.values.unit == sc.units.deg
 
-    
-    
+
 def test_load_nexus_adds_single_tof_bin(load_function: Callable):
     event_time_offsets = np.array([456, 743, 347, 345, 632], dtype="float64")
     event_data = EventData(
