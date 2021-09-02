@@ -839,7 +839,7 @@ def load(filename="",
     if mantid_args is None:
         mantid_args = {}
 
-    _check_file_path(filename, mantid_alg)
+    _check_file_path(str(filename), mantid_alg)
 
     with run_mantid_alg(mantid_alg, filename, **mantid_args) as loaded:
         # Determine what Load has provided us
