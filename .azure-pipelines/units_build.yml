@@ -25,7 +25,7 @@ extends:
   template: stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-    conda_channels: '--channel scipp/label/test --channel ess-dmsc'
+    conda_channels: '--channel scipp/label/dev --channel ess-dmsc'
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
