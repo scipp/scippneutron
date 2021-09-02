@@ -9,6 +9,14 @@ from typing import List, Type, Union, Callable
 from scippneutron.file_loading.load_nexus import _load_nexus_json
 from dateutil.parser import parse as parse_date
 
+# representative sample of UTF-8 test strings from
+# https://www.w3.org/2001/06/utf-8-test/UTF-8-demo.html
+UTF8_TEST_STRINGS = (
+    "∮ E⋅da = Q,  n → ∞, ∑ f(i) = ∏ g(i), ∀x∈ℝ: ⌈x⌉ = −⌊−x⌋, α ∧ ¬β = ¬(¬α ∨ β)",
+    "2H₂ + O₂ ⇌ 2H₂O, R = 4.7 kΩ, ⌀ 200 mm",
+    "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
+)
+
 
 def _timestamp(date: str):
     return parse_date(date).timestamp()
@@ -1565,8 +1573,61 @@ def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
 
     with pytest.warns(UserWarning, match="The run start time "):
         loaded_data = load_function(builder)
-
         assert "test_log_1" not in loaded_data
+
+
+def test_extended_ascii_in_ascii_encoded_dataset(load_function: Callable):
+    if load_function == load_from_json:
+        pytest.skip("JSON serialiser can only serialize strings, not bytes.")
+
+    builder = NexusBuilder()
+    # When writing, if we use bytes h5py will write as ascii encoding
+    # 0xb0 = degrees symbol in latin-1 encoding.
+    builder.add_title(b"run at rot=90" + bytes([0xb0]))
+
+    with pytest.warns(UserWarning, match="contains characters in extended ascii range"):
+        loaded_data = load_function(builder)
+
+        assert sc.identical(loaded_data["experiment_title"],
+                            sc.DataArray(data=sc.scalar("run at rot=90°")))
+
+
+@pytest.mark.parametrize("test_string", UTF8_TEST_STRINGS)
+def test_utf8_encoded_dataset(load_function: Callable, test_string):
+    builder = NexusBuilder()
+    # When writing, if we use str h5py will write as utf8 encoding
+    builder.add_title(test_string)
+
+    loaded_data = load_function(builder)
+
+    assert sc.identical(loaded_data["experiment_title"],
+                        sc.DataArray(data=sc.scalar(test_string)))
+
+
+def test_extended_ascii_in_ascii_encoded_attribute(load_function: Callable):
+    if load_function == load_from_json:
+        pytest.skip("JSON serialiser can only serialize strings, not bytes.")
+
+    builder = NexusBuilder()
+    # When writing, if we use bytes h5py will write as ascii encoding
+    # 0xb0 = degrees symbol in latin-1 encoding.
+    builder.add_log(Log(name="testlog", value_units=bytes([0xb0]), value=np.array([0])))
+
+    with pytest.warns(UserWarning, match="contains characters in extended ascii range"):
+        loaded_data = load_function(builder)
+
+        assert loaded_data["testlog"].data.values.unit == sc.units.deg
+
+
+# Can't use UTF-8 test strings as above for this test as the units need to be valid.
+# Just do a single test with degrees.
+def test_utf8_encoded_attribute(load_function: Callable):
+    builder = NexusBuilder()
+    # When writing, if we use str h5py will write as utf8 encoding
+    builder.add_log(Log(name="testlog", value_units="°", value=np.array([0])))
+
+    loaded_data = load_function(builder)
+    assert loaded_data["testlog"].data.values.unit == sc.units.deg
 
 
 def test_load_nexus_adds_single_tof_bin(load_function: Callable):

@@ -42,6 +42,7 @@ Bugfixes
   Duplicate named detectors (including monitors) will have unique names created by concatenating the name with the spectrum number for that detector.
   This fixes a bug with monitors where previously, duplicate entries encoutered after the first were rejected from the output metadata.
   In the case of instruments such as POLARIS, all monitors will now be translated.
+* ``load_nexus`` will no longer fail to load nexus files containing strings with non-ascii characters, for example a log with units of '°'.
 
 Contributors
 ~~~~~~~~~~~~
