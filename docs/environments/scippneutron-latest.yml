@@ -19,3 +19,4 @@ dependencies:
   - scipp/label/dev::mantid-framework
   - scipp/label/dev::scippneutron
   - scipp::scipp
+  - scipy

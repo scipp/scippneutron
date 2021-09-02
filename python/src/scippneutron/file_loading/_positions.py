@@ -1,5 +1,5 @@
 from _warnings import warn
-from typing import List, Optional, Any, Tuple
+from typing import List, Optional, Tuple, Any
 import h5py
 import numpy as np
 import scipp as sc
