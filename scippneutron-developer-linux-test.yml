@@ -12,7 +12,7 @@ dependencies:
   - conan
   - ninja
   - tbb-devel
-  - scipp/label/test::scipp
+  - scipp/label/dev::scipp
   - cmake
   - gxx_linux-64 11.1.*
 

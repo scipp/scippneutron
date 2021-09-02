@@ -16,7 +16,7 @@ dependencies:
   - conan
   - ninja
   - tbb-devel
-  - scipp/label/test::scipp
+  - scipp/label/dev::scipp
   - cmake
   - pip
 
