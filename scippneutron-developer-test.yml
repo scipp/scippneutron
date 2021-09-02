@@ -14,12 +14,13 @@ dependencies:
   - tbb-devel
   - scipp/label/test::scipp
   - cmake
+  - gxx_linux-64 11.1.*
 
   # Run
   - appdirs
   - ipympl
   - ipywidgets
-  - scipp/label/main::mantid-framework
+  - scipp::mantid-framework
   - matplotlib-base
   - numpy >=1.15.3
   - python
