@@ -972,8 +972,7 @@ def test_skips_component_position_from_distance_dataset_missing_unit(
     builder.add_component(
         component_class(component_name, distance=distance, distance_units=None))
     with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-    assert loaded_data is None
+        load_function(builder)
 
 
 @pytest.mark.parametrize("component_class,component_name", [(Sample, "sample"),
@@ -1076,9 +1075,7 @@ def test_skips_component_position_with_empty_value_log_transformation(
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
     with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-
-    assert loaded_data is None
+        load_function(builder)
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -1120,8 +1117,7 @@ def test_skips_component_position_from_transformation_missing_unit(
                                     np.array([2.3]))
     builder.add_component(component_class(component_name, depends_on=transformation))
     with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-    assert loaded_data is None
+        load_function(builder)
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -1143,8 +1139,7 @@ def test_skips_component_position_with_transformation_with_small_vector(
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
     with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-    assert loaded_data is None
+        load_function(builder)
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -1375,6 +1370,42 @@ def test_linked_datasets_are_found(load_function: Callable):
     expected_detector_ids = np.array([1, 2, 3])
     assert np.array_equal(loaded_data.coords['detector_id'].values,
                           expected_detector_ids)
+
+
+def test_loads_sample_ub_matrix(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_component(Sample("sample", ub_matrix=np.ones(shape=[3, 3])))
+    loaded_data = load_function(builder)
+    assert "sample_ub_matrix" in loaded_data
+    print(loaded_data["sample_ub_matrix"].data)
+    assert sc.identical(
+        loaded_data["sample_ub_matrix"].data,
+        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.angstrom**-1))
+    assert "sample_u_matrix" not in loaded_data
+
+
+def test_loads_sample_u_matrix(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_component(Sample("sample", orientation_matrix=np.ones(shape=[3, 3])))
+    loaded_data = load_function(builder)
+    assert "sample_u_matrix" in loaded_data
+    assert sc.identical(loaded_data["sample_u_matrix"].data,
+                        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.one))
+    assert "sample_ub_matrix" not in loaded_data
+
+
+def test_loads_multiple_sample_ub_matrix(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_component(Sample("sample1", ub_matrix=np.ones(shape=[3, 3])))
+    builder.add_component(Sample("sample2", ub_matrix=np.identity(3)))
+    builder.add_component(Sample("sample3"))  # No ub specified
+    loaded_data = load_function(builder)
+    assert sc.identical(
+        loaded_data["sample1_ub_matrix"].data,
+        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.angstrom**-1))
+    assert sc.identical(loaded_data["sample2_ub_matrix"].data,
+                        sc.matrix(value=np.identity(3), unit=sc.units.angstrom**-1))
+    assert "sample3_ub_matrix" not in loaded_data
 
 
 def test_warning_but_no_error_for_unrecognised_log_unit(load_function: Callable):
