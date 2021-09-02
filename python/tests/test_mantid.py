@@ -6,7 +6,9 @@ import warnings
 import numpy as np
 import pytest
 import os
+import sys
 import tempfile
+import importlib
 
 import scipp as sc
 import scippneutron as scn
@@ -895,14 +897,56 @@ def test_load_error_when_file_not_found_via_fuzzy_match():
         scn.load("fictional.nxs")
 
 
+def make_dynamic_algorithm_without_fileproperty(alg_name):
+    from mantid.api import PythonAlgorithm, AlgorithmFactory,\
+        WorkspaceProperty, WorkspaceFactory
+    from mantid.kernel import Direction
+    # Loader without FileProperty
+    if AlgorithmFactory.exists(alg_name):
+        return
+
+    class Alg(PythonAlgorithm):
+        def PyInit(self):
+            self.declareProperty("Filename", "")
+            self.declareProperty(
+                WorkspaceProperty(name="OutputWorkspace",
+                                  defaultValue="",
+                                  direction=Direction.Output))
+
+        def PyExec(self):
+            self.setProperty("OutputWorkspace", WorkspaceFactory.createTable())
+
+    Alg.__name__ = alg_name
+    AlgorithmFactory.subscribe(Alg)
+    importlib.reload(sys.modules["mantid.simpleapi"])
+
+
 @pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_load_error_when_file_not_found_via_exact_match():
-
+    make_dynamic_algorithm_without_fileproperty("DummyLoader")
     with pytest.raises(ValueError):
-        # CreateWorkspace has no FileProperty and forces
+        # DummyLoader has no FileProperty and forces
         # load to evaluate the path given as an absolute path
-        scn.load("fictional.nxs", mantid_alg="CreateWorkspace")
+        scn.load("fictional.nxs", mantid_alg="DummyLoader")
 
+    with tempfile.NamedTemporaryFile() as fp:
+        scn.load(fp.name, mantid_alg="DummyLoader")
+
+
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
+def test_load_via_exact_match():
+    make_dynamic_algorithm_without_fileproperty("DummyLoader")
+    # scn.load will need to check file exists
+    # DummyLoader simply returns a TableWorkspace
+    with tempfile.NamedTemporaryFile() as fp:
+        scn.load(fp.name, mantid_alg="DummyLoader")
+        # Sanity check corrupt full path will fail
+        with pytest.raises(ValueError):
+            scn.load("fictional_" + fp.name, mantid_alg="DummyLoader")
+
+
+if __name__ == "__main__":
+    unittest.main()
 
 if __name__ == "__main__":
     unittest.main()
