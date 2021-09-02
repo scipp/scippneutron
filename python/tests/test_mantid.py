@@ -889,5 +889,20 @@ def test_duplicate_monitor_names():
     assert da.attrs['monitor_14'].value.attrs['spectrum'].value == 14
 
 
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
+def test_load_error_when_file_not_found_via_fuzzy_match():
+    with pytest.raises(ValueError):
+        scn.load("fictional.nxs")
+
+
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
+def test_load_error_when_file_not_found_via_exact_match():
+
+    with pytest.raises(ValueError):
+        # CreateWorkspace has no FileProperty and forces
+        # load to evaluate the path given as an absolute path
+        scn.load("fictional.nxs", mantid_alg="CreateWorkspace")
+
+
 if __name__ == "__main__":
     unittest.main()

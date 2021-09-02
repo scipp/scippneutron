@@ -9,6 +9,7 @@ import uuid
 import warnings
 import numpy as np
 import scipp as sc
+import os
 
 
 @contextmanager
@@ -834,16 +835,11 @@ def load(filename="",
              instrument geometry.
     :rtype: Dataset
     """
-    from mantid.api import FileLoaderRegistry
 
     if mantid_args is None:
         mantid_args = {}
 
-    try:
-        FileLoaderRegistry.chooseLoader(filename)
-    except ValueError:
-        raise ValueError(
-            f"Mantid cannot find file {filename} and therefore will not load it.")
+    _check_file_path(filename, mantid_alg)
 
     with run_mantid_alg(mantid_alg, filename, **mantid_args) as loaded:
         # Determine what Load has provided us
@@ -864,6 +860,28 @@ def load(filename="",
                            load_pulse_times=load_pulse_times,
                            error_connection=error_connection,
                            advanced_geometry=advanced_geometry)
+
+
+def _check_file_path(filename, mantid_alg):
+    from mantid.api import FileFinder, AlgorithmManager, FrameworkManager, FileProperty
+    FrameworkManager.Instance()
+    alg = AlgorithmManager.createUnmanaged(mantid_alg)
+    filename_property = [
+        prop for prop in alg.getProperties() if isinstance(prop, FileProperty)
+    ]
+    # if the top level Load algorithm is requested (has no properties of its own)
+    # but we know that child algorithm use FileProperty or the child algorithm
+    # is known called directly and we find FileProperty. Only with File property
+    # can Mantid take fuzzy matches to filenames and run numbers
+    if filename_property or mantid_alg == 'Load':
+        if not FileFinder.getFullPath(filename):
+            raise ValueError(
+                f"Mantid cannot find file {filename} and therefore will not load it."
+            ) from None
+    else:
+        if not os.path.isfile(filename):
+            raise ValueError(
+                f"Cannot find file {filename} and therefore will not load it.")
 
 
 def validate_dim_and_get_mantid_string(unit_dim):
