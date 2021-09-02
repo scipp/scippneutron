@@ -3,9 +3,6 @@ parameters:
   displayName: Verbose
   type: boolean
   default: false
-- name: scipp_channel
-  type: string
-  default: scipp
 
 # Note: the 'endpoint' refers to the Azure service connection, which can be
 # found on the Azure pipelines web interface under
