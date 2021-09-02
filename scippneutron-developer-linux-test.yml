@@ -14,6 +14,7 @@ dependencies:
   - tbb-devel
   - scipp/label/test::scipp
   - cmake
+  - gxx_linux-64 11.1.*
 
   # Run
   - appdirs
