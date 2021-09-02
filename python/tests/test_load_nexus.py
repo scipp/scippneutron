@@ -9,6 +9,14 @@ from typing import List, Type, Union, Callable
 from scippneutron.file_loading.load_nexus import _load_nexus_json
 from dateutil.parser import parse as parse_date
 
+# representative sample of UTF-8 test strings from
+# https://www.w3.org/2001/06/utf-8-test/UTF-8-demo.html
+UTF8_TEST_STRINGS = (
+    "∮ E⋅da = Q,  n → ∞, ∑ f(i) = ∏ g(i), ∀x∈ℝ: ⌈x⌉ = −⌊−x⌋, α ∧ ¬β = ¬(¬α ∨ β)",
+    "2H₂ + O₂ ⇌ 2H₂O, R = 4.7 kΩ, ⌀ 200 mm",
+    "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
+)
+
 
 def _timestamp(date: str):
     return parse_date(date).timestamp()
@@ -964,8 +972,7 @@ def test_skips_component_position_from_distance_dataset_missing_unit(
     builder.add_component(
         component_class(component_name, distance=distance, distance_units=None))
     with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-    assert loaded_data is None
+        load_function(builder)
 
 
 @pytest.mark.parametrize("component_class,component_name", [(Sample, "sample"),
@@ -1068,9 +1075,7 @@ def test_skips_component_position_with_empty_value_log_transformation(
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
     with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-
-    assert loaded_data is None
+        load_function(builder)
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -1112,8 +1117,7 @@ def test_skips_component_position_from_transformation_missing_unit(
                                     np.array([2.3]))
     builder.add_component(component_class(component_name, depends_on=transformation))
     with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-    assert loaded_data is None
+        load_function(builder)
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -1135,8 +1139,7 @@ def test_skips_component_position_with_transformation_with_small_vector(
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
     with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-    assert loaded_data is None
+        load_function(builder)
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -1369,6 +1372,42 @@ def test_linked_datasets_are_found(load_function: Callable):
                           expected_detector_ids)
 
 
+def test_loads_sample_ub_matrix(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_component(Sample("sample", ub_matrix=np.ones(shape=[3, 3])))
+    loaded_data = load_function(builder)
+    assert "sample_ub_matrix" in loaded_data
+    print(loaded_data["sample_ub_matrix"].data)
+    assert sc.identical(
+        loaded_data["sample_ub_matrix"].data,
+        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.angstrom**-1))
+    assert "sample_u_matrix" not in loaded_data
+
+
+def test_loads_sample_u_matrix(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_component(Sample("sample", orientation_matrix=np.ones(shape=[3, 3])))
+    loaded_data = load_function(builder)
+    assert "sample_u_matrix" in loaded_data
+    assert sc.identical(loaded_data["sample_u_matrix"].data,
+                        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.one))
+    assert "sample_ub_matrix" not in loaded_data
+
+
+def test_loads_multiple_sample_ub_matrix(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_component(Sample("sample1", ub_matrix=np.ones(shape=[3, 3])))
+    builder.add_component(Sample("sample2", ub_matrix=np.identity(3)))
+    builder.add_component(Sample("sample3"))  # No ub specified
+    loaded_data = load_function(builder)
+    assert sc.identical(
+        loaded_data["sample1_ub_matrix"].data,
+        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.angstrom**-1))
+    assert sc.identical(loaded_data["sample2_ub_matrix"].data,
+                        sc.matrix(value=np.identity(3), unit=sc.units.angstrom**-1))
+    assert "sample3_ub_matrix" not in loaded_data
+
+
 def test_warning_but_no_error_for_unrecognised_log_unit(load_function: Callable):
     values = np.array([1.1, 2.2, 3.3])
     times = np.array([4.4, 5.5, 6.6])
@@ -1534,8 +1573,61 @@ def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
 
     with pytest.warns(UserWarning, match="The run start time "):
         loaded_data = load_function(builder)
-
         assert "test_log_1" not in loaded_data
+
+
+def test_extended_ascii_in_ascii_encoded_dataset(load_function: Callable):
+    if load_function == load_from_json:
+        pytest.skip("JSON serialiser can only serialize strings, not bytes.")
+
+    builder = NexusBuilder()
+    # When writing, if we use bytes h5py will write as ascii encoding
+    # 0xb0 = degrees symbol in latin-1 encoding.
+    builder.add_title(b"run at rot=90" + bytes([0xb0]))
+
+    with pytest.warns(UserWarning, match="contains characters in extended ascii range"):
+        loaded_data = load_function(builder)
+
+        assert sc.identical(loaded_data["experiment_title"],
+                            sc.DataArray(data=sc.scalar("run at rot=90°")))
+
+
+@pytest.mark.parametrize("test_string", UTF8_TEST_STRINGS)
+def test_utf8_encoded_dataset(load_function: Callable, test_string):
+    builder = NexusBuilder()
+    # When writing, if we use str h5py will write as utf8 encoding
+    builder.add_title(test_string)
+
+    loaded_data = load_function(builder)
+
+    assert sc.identical(loaded_data["experiment_title"],
+                        sc.DataArray(data=sc.scalar(test_string)))
+
+
+def test_extended_ascii_in_ascii_encoded_attribute(load_function: Callable):
+    if load_function == load_from_json:
+        pytest.skip("JSON serialiser can only serialize strings, not bytes.")
+
+    builder = NexusBuilder()
+    # When writing, if we use bytes h5py will write as ascii encoding
+    # 0xb0 = degrees symbol in latin-1 encoding.
+    builder.add_log(Log(name="testlog", value_units=bytes([0xb0]), value=np.array([0])))
+
+    with pytest.warns(UserWarning, match="contains characters in extended ascii range"):
+        loaded_data = load_function(builder)
+
+        assert loaded_data["testlog"].data.values.unit == sc.units.deg
+
+
+# Can't use UTF-8 test strings as above for this test as the units need to be valid.
+# Just do a single test with degrees.
+def test_utf8_encoded_attribute(load_function: Callable):
+    builder = NexusBuilder()
+    # When writing, if we use str h5py will write as utf8 encoding
+    builder.add_log(Log(name="testlog", value_units="°", value=np.array([0])))
+
+    loaded_data = load_function(builder)
+    assert loaded_data["testlog"].data.values.unit == sc.units.deg
 
 
 def test_load_nexus_adds_single_tof_bin(load_function: Callable):

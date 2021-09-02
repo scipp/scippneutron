@@ -18,6 +18,7 @@ from warnings import warn
 import numpy as np
 from ._positions import (load_position_of_unique_component,
                          load_positions_of_components)
+from ._sample import load_ub_matrices_of_components
 
 nx_event_data = "NXevent_data"
 nx_log = "NXlog"
@@ -89,6 +90,8 @@ def _load_sample(sample_groups: List[Group], data: ScippData, file_root: h5py.Fi
                                  file_root,
                                  nexus,
                                  default_position=np.array([0, 0, 0]))
+    load_ub_matrices_of_components(sample_groups, data, "sample", nx_sample, file_root,
+                                   nexus)
 
 
 def _load_source(source_groups: List[Group], data: ScippData, file_root: h5py.File,
@@ -123,13 +126,13 @@ def load_nexus(data_file: Union[str, h5py.File],
     Usage example:
       data = sc.neutron.load_nexus('PG3_4844_event.nxs')
     """
-    total_time = timer()
+    start_time = timer()
 
     with _open_if_path(data_file) as nexus_file:
         loaded_data = _load_data(nexus_file, root, LoadFromHdf5(), quiet)
 
     if not quiet:
-        print("Total time:", timer() - total_time)
+        print("Total time:", timer() - start_time)
     return loaded_data
 
 
