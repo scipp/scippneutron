@@ -929,9 +929,6 @@ def test_load_error_when_file_not_found_via_exact_match():
         # load to evaluate the path given as an absolute path
         scn.load("fictional.nxs", mantid_alg="DummyLoader")
 
-    with tempfile.NamedTemporaryFile() as fp:
-        scn.load(fp.name, mantid_alg="DummyLoader")
-
 
 @pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_load_via_exact_match():

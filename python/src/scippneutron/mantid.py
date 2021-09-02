@@ -869,10 +869,11 @@ def _check_file_path(filename, mantid_alg):
     filename_property = [
         prop for prop in alg.getProperties() if isinstance(prop, FileProperty)
     ]
-    # if the top level Load algorithm is requested (has no properties of its own)
-    # but we know that child algorithm use FileProperty or the child algorithm
-    # is known called directly and we find FileProperty. Only with File property
-    # can Mantid take fuzzy matches to filenames and run numbers
+    # Only with FileProperty can Mantid take fuzzy matches to filenames and run numbers
+    # If the top level Load algorithm is requested (has no properties of its own)
+    # we know that it's child algorithm uses FileProperty. If the child algorithm
+    # is called directly we attempt to find FileProperty. Otherwise paths should be
+    # absolute
     if filename_property or mantid_alg == 'Load':
         if not FileFinder.getFullPath(filename):
             raise ValueError(
