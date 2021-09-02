@@ -58,8 +58,6 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
 
-find_package(scipp 0.7 REQUIRED)
-
 # Conan dependencies
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
   message(
@@ -95,6 +93,7 @@ find_package(Eigen3 REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 find_package(Python 3.7 REQUIRED COMPONENTS Interpreter Development)
 find_package(pybind11 CONFIG REQUIRED)
+find_package(scipp 0.7 REQUIRED)
 find_package(LLNL-Units REQUIRED)
 
 # MP : Parallel compile, add before any targets so all use it
