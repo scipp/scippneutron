@@ -205,7 +205,7 @@ def instrument_view(scipp_obj=None,
                **kwargs)
 
     # Add additional components from the beamline
-    if components and not isinstance(plot, PlotDict):
+    if components and not isinstance(plt, PlotDict):
         scene = plt.view.figure.scene
         _plot_components(scipp_obj, components, positions_var, scene)
 
