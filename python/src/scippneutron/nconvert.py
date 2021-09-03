@@ -140,24 +140,14 @@ def conversion_graph(data, origin, target, scatter):
         return NO_SCATTER_GRAPH
 
 
-def _remove_attr(data, name):
-    if isinstance(data, sc.DataArray):
-        del data.attrs[name]
-    else:
-        for array in data.values():
-            _remove_attr(array, name)
-
-
-def convert(data, origin, target, scatter, keep_origin=False):
+def convert(data, origin, target, scatter):
     try:
         converted = data.transform_coords(target,
                                           graph=conversion_graph(
                                               data, origin, target, scatter))
     except KeyError as err:
-        raise RuntimeError(
-            f"Missing coordinate '{err.args[0]}' for conversion "
-            f"from '{origin}' to '{target}'"
-        ) from None
+        raise RuntimeError(f"Missing coordinate '{err.args[0]}' for conversion "
+                           f"from '{origin}' to '{target}'") from None
 
     if not keep_origin:
         _remove_attr(converted, origin)
