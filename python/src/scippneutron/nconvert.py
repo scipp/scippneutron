@@ -72,8 +72,6 @@ SCATTER_GRAPH_DETECTOR_TO_PHYS = {
     'dspacing': _dspacing_from_tof,
 }
 
-SCATTER_GRAPH_PHYS_TO_DETECTOR = {}
-
 
 def incoming(edge):
     if isinstance(edge, str):
@@ -128,7 +126,7 @@ def _scatter_graph(data, origin, target):
     if target == 'energy_transfer':
         return _inelastic_scatter_graph(data)
     # else: elastic
-    for graph in (SCATTER_GRAPH_DETECTOR_TO_PHYS, SCATTER_GRAPH_PHYS_TO_DETECTOR):
+    for graph in (SCATTER_GRAPH_DETECTOR_TO_PHYS, ):
         if path_exists(origin, target, graph):
             return graph
 
