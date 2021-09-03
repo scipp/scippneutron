@@ -87,6 +87,8 @@ def _path_exists_impl(origin, target, graph):
     except KeyError:
         return False
     for node in incoming(target_node):
+        if node == target:
+            continue  # Node that produces its input as output.
         if node == origin:
             return True
         if _path_exists_impl(origin, node, graph):
