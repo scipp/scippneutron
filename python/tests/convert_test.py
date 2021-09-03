@@ -72,21 +72,6 @@ def check_tof_conversion_metadata(converted, target, coord_unit):
     assert coord.unit == coord_unit
 
 
-def check_tof_round_trip(via):
-    tof_original = make_tof_dataset()
-    converted = scn.convert(tof_original, origin='tof', target=via, scatter=True)
-    tof = scn.convert(converted, origin=via, target='tof', scatter=True)
-
-    assert 'counts' in tof
-    assert sc.all(
-        sc.isclose(tof.coords['tof'],
-                   tof_original.coords['tof'],
-                   rtol=sc.scalar(0.0),
-                   atol=sc.scalar(1e-12, unit=tof.coords['tof'].unit))).value
-    for key in ('position', 'source_position', 'sample_position'):
-        assert sc.identical(tof.coords[key], tof_original.coords[key])
-
-
 def make_dataset_in(dim):
     if dim == 'tof':
         return make_tof_dataset()  # TODO triggers segfault otherwise
@@ -222,13 +207,6 @@ def test_convert_tof_to_dspacing():
         np.testing.assert_almost_equal(val, 3956.0 / (L / t) * lambda_to_d, val * 1e-3)
 
 
-def test_convert_dspacing_to_tof():
-    """Assuming the tof_to_dspacing test is correct and passing we can test the
-    inverse conversion by simply comparing a round trip conversion with the
-    original data."""
-    check_tof_round_trip(via='dspacing')
-
-
 def test_convert_tof_to_wavelength():
     tof = make_tof_dataset()
     wavelength = scn.convert(tof, origin='tof', target='wavelength', scatter=True)
@@ -249,13 +227,6 @@ def test_convert_tof_to_wavelength():
     for val, t in zip(wavelength.coords['wavelength']['spectrum', 1].values,
                       tof_in_seconds.values):
         np.testing.assert_almost_equal(val, 3956.0 / (L / t), val * 1e-3)
-
-
-def test_convert_wavelength_to_tof():
-    """Assuming the tof_to_wavelength test is correct and passing we can test the
-    inverse conversion by simply comparing a round trip conversion with the
-    original data."""
-    check_tof_round_trip(via='wavelength')
 
 
 def test_convert_tof_to_Q():
@@ -295,13 +266,6 @@ def test_convert_tof_to_Q():
                       tof_in_seconds.values):
         np.testing.assert_almost_equal(val, lambda_to_Q / (3956.0 / (L / t)),
                                        val * 1e-3)
-
-
-def test_convert_Q_to_tof():
-    """Assuming the tof_to_Q test is correct and passing we can test the
-    inverse conversion by simply comparing a round trip conversion with the
-    original data."""
-    check_tof_round_trip(via='Q')
 
 
 def test_convert_tof_to_energy_elastic():
@@ -347,13 +311,6 @@ def test_convert_tof_to_energy_elastic_fails_if_inelastic_params_present():
     tof.coords['final_energy'] = 2.1 * sc.units.meV
     with pytest.raises(RuntimeError):
         scn.convert(tof, origin='tof', target='energy', scatter=True)
-
-
-def test_convert_energy_to_tof_elastic():
-    """Assuming the tof_to_energy_elastic test is correct and passing we can test
-    the inverse conversion by simply comparing a round trip conversion with the
-    original data."""
-    check_tof_round_trip(via='energy')
 
 
 def test_convert_tof_to_energy_transfer_direct():
