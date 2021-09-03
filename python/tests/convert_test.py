@@ -135,22 +135,6 @@ def test_convert_slice(target):
                     scatter=True)['counts'].data)
 
 
-@pytest.mark.parametrize('target', TOF_TARGET_DIMS)
-def test_convert_fail_count_density(target):
-    tof = make_tof_dataset()
-    # conversion with plain counts works
-    converted = scn.convert(tof, origin='tof', target=target, scatter=True)
-    scn.convert(converted, origin=target, target='tof', scatter=True)
-
-    tof[''] = make_count_density_variable(tof.coords['tof'].unit)
-    converted[''] = make_count_density_variable(converted.coords[target].unit)
-    # conversion with count densities fails
-    with pytest.raises(sc.UnitError):
-        scn.convert(tof, origin='tof', target=target, scatter=True)
-    with pytest.raises(sc.UnitError):
-        scn.convert(converted, origin=target, target='tof', scatter=True)
-
-
 def test_convert_scattering_conversion_fails_with_noscatter_mode():
     tof = make_tof_dataset()
     scn.convert(tof, origin='tof', target='dspacing', scatter=True)  # no exception
