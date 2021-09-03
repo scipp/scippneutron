@@ -8,6 +8,7 @@ import math
 import numpy as np
 import pytest
 import scipp as sc
+from scipp.constants import m_n
 import scippneutron as scn
 
 
@@ -275,18 +276,16 @@ def test_convert_tof_to_energy_elastic():
     for key in ('position', 'source_position', 'sample_position'):
         assert sc.identical(energy['counts'].attrs[key], tof.coords[key])
 
-    # Rule of thumb (https://www.psi.ch/niag/neutron-physics):
-    # v [m/s] = 3956 / \lambda [ Angstrom ]
-    tof_in_seconds = tof.coords['tof'] * 1e-6
+    tof_in_seconds = sc.to_unit(tof.coords['tof'], 's')
     # e [J] = 1/2 m(n) [kg] (l [m] / tof [s])^2
-    joule_to_mev = 6.241509125883257e21
-    neutron_mass = 1.674927471e-27
+    joule_to_mev = sc.to_unit(1.0 * sc.Unit('J'), sc.units.meV).value
+    neutron_mass = sc.to_unit(m_n, sc.units.kg).value
 
     # Spectrum 0 is 11 m from source
     for val, t in zip(energy.coords['energy']['spectrum', 0].values,
                       tof_in_seconds.values):
         np.testing.assert_almost_equal(val,
-                                       joule_to_mev * 0.5 * neutron_mass * (11 / t)**2,
+                                       joule_to_mev * neutron_mass / 2 * (11 / t)**2,
                                        val * 1e-3)
     # Spectrum 1
     L = 10.0 + math.sqrt(1.0 * 1.0 + 0.1 * 0.1)
