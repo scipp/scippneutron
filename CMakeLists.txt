@@ -9,7 +9,11 @@ execute_process(
   OUTPUT_VARIABLE SCIPPNEUTRON_VERSION
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-project(scippneutron VERSION ${SCIPPNEUTRON_VERSION})
+project(
+  scippneutron
+  VERSION ${SCIPPNEUTRON_VERSION}
+  LANGUAGES CXX
+)
 
 if(NOT DEFINED CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -75,6 +79,9 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
 
 conan_cmake_autodetect(conan_settings)
+conan_add_remote(
+  NAME scipp URL https://artifactoryconan.esss.dk/artifactory/api/conan/scipp
+)
 conan_cmake_install(
   PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR} SETTINGS ${conan_settings} BUILD
   outdated
@@ -87,6 +94,7 @@ find_package(GTest CONFIG REQUIRED)
 find_package(Python 3.7 REQUIRED COMPONENTS Interpreter Development)
 find_package(pybind11 CONFIG REQUIRED)
 find_package(scipp 0.7 REQUIRED)
+find_package(LLNL-Units REQUIRED)
 
 # MP : Parallel compile, add before any targets so all use it
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:-MP>)
@@ -150,10 +158,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 # Custom target for building tests. all excludes tests by default
 add_custom_target(all-tests)
 
-# Custom target for building documentation
+# Custom install target for docs to depend on.
 add_custom_target(
-  docs COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/docs/build_docs.py
+  install-scippneutron COMMAND cmake --build ${CMAKE_CURRENT_BINARY_DIR}
+                               --target install
 )
+
+include(docs)
+add_docs_target(docs BUILDER html DEPENDS install-scippneutron)
+add_docs_target(doctest BUILDER doctest DEPENDS docs)
+add_docs_target(linkcheck BUILDER linkcheck DEPENDS docs)
 
 include(GNUInstallDirs)
 set(PYTHONDIR scippneutron)

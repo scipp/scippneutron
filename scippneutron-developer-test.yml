@@ -1,8 +1,5 @@
 # This is used for incremental CI builds and local development.
 # All dependencies should be installed here (i.e. the union of build, run, test and documentation build dependencies).
-# This file is identical to scipp-developer.yml but does not include Mantid or Kafka+Serialisation libraries
-# (for platforms these have yet to be packaged for)
-# or
 # See https://scipp.github.io/developer/dependencies.html
 
 name: scippneutron-developer
@@ -15,14 +12,14 @@ dependencies:
   - conan
   - ninja
   - tbb-devel
-  - scipp::scipp
+  - scipp/label/dev::scipp
   - cmake
-  - pip
 
   # Run
   - appdirs
   - ipympl
   - ipywidgets
+  - scipp::mantid-framework
   - matplotlib-base
   - numpy >=1.15.3
   - python
@@ -32,6 +29,8 @@ dependencies:
   - tbb
   - traitlets
   - h5py
+  - python-confluent-kafka
+  - ess-dmsc::ess-streaming-data-types
 
   # Test
   - psutil

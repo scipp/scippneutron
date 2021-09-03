@@ -1,15 +1,6 @@
-from .nexus_helpers import (
-    NexusBuilder,
-    EventData,
-    Detector,
-    Log,
-    Sample,
-    Source,
-    Transformation,
-    TransformationType,
-    Link,
-    in_memory_hdf5_file_with_two_nxentry,
-)
+from .nexus_helpers import (NexusBuilder, EventData, Detector, Log, Sample, Source,
+                            Transformation, TransformationType, Link,
+                            in_memory_hdf5_file_with_two_nxentry, Chopper)
 import numpy as np
 import pytest
 import scippneutron
@@ -17,6 +8,14 @@ import scipp as sc
 from typing import List, Type, Union, Callable
 from scippneutron.file_loading.load_nexus import _load_nexus_json
 from dateutil.parser import parse as parse_date
+
+# representative sample of UTF-8 test strings from
+# https://www.w3.org/2001/06/utf-8-test/UTF-8-demo.html
+UTF8_TEST_STRINGS = (
+    "∮ E⋅da = Q,  n → ∞, ∑ f(i) = ∏ g(i), ∀x∈ℝ: ⌈x⌉ = −⌊−x⌋, α ∧ ¬β = ¬(¬α ∨ β)",
+    "2H₂ + O₂ ⇌ 2H₂O, R = 4.7 kΩ, ⌀ 200 mm",
+    "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
+)
 
 
 def _timestamp(date: str):
@@ -81,20 +80,180 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
     # Expect time of flight to match the values in the
     # event_time_offset dataset
     # May be reordered due to binning (hence np.sort)
-    assert np.array_equal(
-        np.sort(
-            loaded_data.bins.concatenate('detector_id').values.coords['tof'].values),
-        np.sort(event_time_offsets))
+    assert sc.identical(
+        sc.sort(loaded_data.bins.concatenate('detector_id').values[0].coords['tof'],
+                key="event"),
+        sc.sort(sc.array(dims=["event"], values=event_time_offsets, unit=sc.units.ns),
+                key="event"))
 
     counts_on_detectors = loaded_data.bins.sum()
     # No detector_number dataset in file so expect detector_id to be
     # binned according to whatever detector_ids are present in event_id
     # dataset: 2 on det 1, 1 on det 2, 2 on det 3
-    expected_counts = np.array([2, 1, 2])
+    expected_counts = np.array([[2], [1], [2]])
     assert np.array_equal(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
     assert np.array_equal(loaded_data.coords['detector_id'].values,
                           expected_detector_ids)
+
+
+@pytest.mark.parametrize("unit,multiplier",
+                         (("ns", 10**9), ("us", 10**6), ("ms", 10**3), ("s", 1.)))
+def test_loads_pulse_times_from_single_event_with_different_units(
+        load_function: Callable, unit: str, multiplier: float):
+
+    offsets = np.array([12, 34, 56, 78])
+    zeros = np.array([12., 34., 56., 78.], dtype="float64") * multiplier
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 4]),
+        event_time_offset=offsets,
+        event_time_zero=zeros,
+        event_index=np.array([0, 3, 3, 4]),
+        event_time_zero_unit=unit,
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([1, 2, 3, 4]), event_data=event_data))
+
+    loaded_data = load_function(builder)
+
+    for event, pulse_time in enumerate([12, 12, 12, 56]):
+        _time = np.array("1970-01-01").astype("datetime64[s]") \
+                + np.array(pulse_time).astype("timedelta64[s]")
+
+        assert sc.identical(
+            loaded_data.values[event].attrs['pulse_time'],
+            sc.array(dims=["event"],
+                     values=[_time],
+                     unit=sc.units.s,
+                     dtype=sc.dtype.datetime64))
+
+
+@pytest.mark.parametrize("time_zero_offset,time_zero,time_zero_unit,expected_time", (
+    ("1980-01-01T00:00:00Z", 30, "s", "1980-01-01T00:00:30Z"),
+    ("1990-01-01T00:00:00Z", 5000, "ms", "1990-01-01T00:00:05Z"),
+    ("2000-01-01T00:00:00Z", 3 * 10**6, "us", "2000-01-01T00:00:03Z"),
+    ("2010-01-01T00:00:00Z", 12, "hour", "2010-01-01T12:00:00Z"),
+))
+def test_loads_pulse_times_with_combinations_of_offset_and_units(
+        load_function: Callable, time_zero_offset: str, time_zero: float,
+        time_zero_unit: str, expected_time: str):
+
+    offsets = np.array([0])
+    zeros = np.array([time_zero], dtype="float64")
+    event_data = EventData(
+        event_id=np.array([0]),
+        event_time_offset=offsets,
+        event_time_zero_offset=time_zero_offset,
+        event_time_zero=zeros,
+        event_index=np.array([0]),
+        event_time_zero_unit=time_zero_unit,
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(Detector(detector_numbers=np.array([0]),
+                                  event_data=event_data))
+
+    loaded_data = load_function(builder)
+
+    _time = np.array(expected_time).astype("datetime64[s]")
+
+    assert sc.identical(
+        loaded_data.values[0].attrs['pulse_time'],
+        sc.array(dims=["event"],
+                 values=[_time],
+                 unit=sc.units.s,
+                 dtype=sc.dtype.datetime64))
+
+
+def test_does_not_load_events_if_time_zero_unit_not_convertible_to_s(
+        load_function: Callable):
+    event_data_1 = EventData(
+        event_id=np.array([0, 1]),
+        event_time_offset=np.array([0, 1]),
+        event_time_zero=np.array([0, 1]),
+        event_index=np.array([0, 2]),
+        event_time_zero_unit="m",  # time in metres, should fail
+    )
+    event_data_2 = EventData(
+        event_id=np.array([2, 3]),
+        event_time_offset=np.array([2, 3]),
+        event_time_zero=np.array([2, 3]),
+        event_index=np.array([0, 2]),
+        event_time_zero_unit="s",  # time in secs, should work.
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([0, 1]), event_data=event_data_1))
+    builder.add_detector(
+        Detector(detector_numbers=np.array([2, 3]), event_data=event_data_2))
+
+    with pytest.warns(UserWarning, match="Could not load pulse times: units "):
+        loaded_data = load_function(builder)
+
+    # Detectors 0 and 1 shouldn't have events loaded; units were invalid.
+    assert len(loaded_data.values[0].values) == 0
+    assert len(loaded_data.values[1].values) == 0
+    # Detectors 2 and 3 should have their events loaded; units were valid.
+    assert len(loaded_data.values[2].values) > 0
+    assert len(loaded_data.values[3].values) > 0
+
+
+def test_does_not_load_events_if_index_not_ordered(load_function: Callable):
+    event_data_1 = EventData(
+        event_id=np.array([0, 1]),
+        event_time_offset=np.array([0, 1]),
+        event_time_zero=np.array([0, 1]),
+        event_index=np.array([2, 0]),
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([0, 1]), event_data=event_data_1))
+
+    with pytest.warns(UserWarning, match="Event index in NXEvent at "):
+        load_function(builder)
+
+
+def test_loads_pulse_times_from_multiple_event_data_groups(load_function: Callable):
+    offsets = np.array([0, 0, 0, 0])
+
+    zeros_1 = np.array([12 * 10**9, 34 * 10**9, 56 * 10**9, 78 * 10**9])
+    zeros_2 = np.array([87 * 10**9, 65 * 10**9, 43 * 10**9, 21 * 10**9])
+
+    event_data_1 = EventData(
+        event_id=np.array([0, 1, 2, 3]),
+        event_time_offset=offsets,
+        event_time_zero=zeros_1,
+        event_index=np.array([0, 3, 3, 4]),
+    )
+    event_data_2 = EventData(
+        event_id=np.array([4, 5, 6, 7]),
+        event_time_offset=offsets,
+        event_time_zero=zeros_2,
+        event_index=np.array([0, 3, 3, 4]),
+    )
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([0, 1, 2, 3]), event_data=event_data_1))
+    builder.add_detector(
+        Detector(detector_numbers=np.array([4, 5, 6, 7]), event_data=event_data_2))
+
+    loaded_data = load_function(builder)
+
+    for event, pulse_time in enumerate([12, 12, 12, 56, 87, 87, 87, 43]):
+        _time = np.array("1970-01-01").astype("datetime64[s]") \
+                + np.array(pulse_time).astype("timedelta64[s]")
+
+        assert sc.identical(
+            loaded_data.values[event].attrs['pulse_time'],
+            sc.array(dims=["event"],
+                     values=[_time],
+                     unit=sc.units.s,
+                     dtype=sc.dtype.datetime64))
 
 
 def test_loads_data_from_multiple_event_data_groups(load_function: Callable):
@@ -130,13 +289,13 @@ def test_loads_data_from_multiple_event_data_groups(load_function: Callable):
     # May be reordered due to binning (hence np.sort)
     assert np.array_equal(
         np.sort(
-            loaded_data.bins.concatenate('detector_id').values.coords['tof'].values),
+            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
         np.sort(np.concatenate((event_time_offsets_1, event_time_offsets_2))))
 
     counts_on_detectors = loaded_data.bins.sum()
     # There are detector_number datasets in the NXdetector for each
     # NXevent_data, these are used for detector_id binning
-    expected_counts = np.array([0, 2, 1, 2, 2, 1, 2, 0])
+    expected_counts = np.array([[0], [2], [1], [2], [2], [1], [2], [0]])
     assert np.array_equal(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.concatenate((detector_1_ids, detector_2_ids))
     assert np.array_equal(loaded_data.coords['detector_id'].values,
@@ -424,14 +583,14 @@ def test_loads_event_and_log_data_from_single_file(load_function: Callable):
     # May be reordered due to binning (hence np.sort)
     assert np.allclose(
         np.sort(
-            loaded_data.bins.concatenate('detector_id').values.coords['tof'].values),
+            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
         np.sort(event_time_offsets))
 
     counts_on_detectors = loaded_data.bins.sum()
     # No detector_number dataset in file so expect detector_id to be
     # binned from the min to the max detector_id recorded in event_id
     # dataset: 2 on det 1, 1 on det 2, 2 on det 3
-    expected_counts = np.array([2, 1, 2])
+    expected_counts = np.array([[2], [1], [2]])
     assert np.allclose(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
     assert np.allclose(loaded_data.coords['detector_id'].values, expected_detector_ids)
@@ -660,7 +819,7 @@ def test_loads_event_data_when_missing_from_some_detectors(load_function: Callab
 
     # The event data from detector_1 has been loaded
     counts_on_detectors = loaded_data.bins.sum()
-    expected_counts = np.array([0, 2, 1, 2, 0, 0, 0, 0])
+    expected_counts = np.array([[0], [2], [1], [2], [0], [0], [0], [0]])
     assert np.allclose(counts_on_detectors.data.values, expected_counts)
     assert np.allclose(loaded_data.coords['detector_id'].values,
                        np.concatenate((detector_1_ids, detector_2_ids.flatten())))
@@ -813,8 +972,7 @@ def test_skips_component_position_from_distance_dataset_missing_unit(
     builder.add_component(
         component_class(component_name, distance=distance, distance_units=None))
     with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-    assert loaded_data is None
+        load_function(builder)
 
 
 @pytest.mark.parametrize("component_class,component_name", [(Sample, "sample"),
@@ -917,9 +1075,7 @@ def test_skips_component_position_with_empty_value_log_transformation(
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
     with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-
-    assert loaded_data is None
+        load_function(builder)
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -961,8 +1117,7 @@ def test_skips_component_position_from_transformation_missing_unit(
                                     np.array([2.3]))
     builder.add_component(component_class(component_name, depends_on=transformation))
     with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-    assert loaded_data is None
+        load_function(builder)
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -984,8 +1139,7 @@ def test_skips_component_position_with_transformation_with_small_vector(
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
     with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-    assert loaded_data is None
+        load_function(builder)
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -1146,14 +1300,14 @@ def test_links_to_event_data_group_are_ignored(load_function: Callable):
     # May be reordered due to binning (hence np.sort)
     assert np.array_equal(
         np.sort(
-            loaded_data.bins.concatenate('detector_id').values.coords['tof'].values),
+            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
         np.sort(event_time_offsets))
 
     counts_on_detectors = loaded_data.bins.sum()
     # No detector_number dataset in file so expect detector_id to be
     # binned according to whatever detector_ids are present in event_id
     # dataset: 2 on det 1, 1 on det 2, 2 on det 3
-    expected_counts = np.array([2, 1, 2])
+    expected_counts = np.array([[2], [1], [2]])
     assert np.array_equal(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
     assert np.array_equal(loaded_data.coords['detector_id'].values,
@@ -1207,15 +1361,51 @@ def test_linked_datasets_are_found(load_function: Callable):
 
     assert np.array_equal(
         np.sort(
-            loaded_data.bins.concatenate('detector_id').values.coords['tof'].values),
+            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
         np.sort(replaced_tofs))
 
     counts_on_detectors = loaded_data.bins.sum()
-    expected_counts = np.array([3, 1, 1])
+    expected_counts = np.array([[3], [1], [1]])
     assert np.array_equal(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
     assert np.array_equal(loaded_data.coords['detector_id'].values,
                           expected_detector_ids)
+
+
+def test_loads_sample_ub_matrix(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_component(Sample("sample", ub_matrix=np.ones(shape=[3, 3])))
+    loaded_data = load_function(builder)
+    assert "sample_ub_matrix" in loaded_data
+    print(loaded_data["sample_ub_matrix"].data)
+    assert sc.identical(
+        loaded_data["sample_ub_matrix"].data,
+        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.angstrom**-1))
+    assert "sample_u_matrix" not in loaded_data
+
+
+def test_loads_sample_u_matrix(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_component(Sample("sample", orientation_matrix=np.ones(shape=[3, 3])))
+    loaded_data = load_function(builder)
+    assert "sample_u_matrix" in loaded_data
+    assert sc.identical(loaded_data["sample_u_matrix"].data,
+                        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.one))
+    assert "sample_ub_matrix" not in loaded_data
+
+
+def test_loads_multiple_sample_ub_matrix(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_component(Sample("sample1", ub_matrix=np.ones(shape=[3, 3])))
+    builder.add_component(Sample("sample2", ub_matrix=np.identity(3)))
+    builder.add_component(Sample("sample3"))  # No ub specified
+    loaded_data = load_function(builder)
+    assert sc.identical(
+        loaded_data["sample1_ub_matrix"].data,
+        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.angstrom**-1))
+    assert sc.identical(loaded_data["sample2_ub_matrix"].data,
+                        sc.matrix(value=np.identity(3), unit=sc.units.angstrom**-1))
+    assert "sample3_ub_matrix" not in loaded_data
 
 
 def test_warning_but_no_error_for_unrecognised_log_unit(load_function: Callable):
@@ -1383,5 +1573,129 @@ def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
 
     with pytest.warns(UserWarning, match="The run start time "):
         loaded_data = load_function(builder)
-
         assert "test_log_1" not in loaded_data
+
+
+def test_extended_ascii_in_ascii_encoded_dataset(load_function: Callable):
+    if load_function == load_from_json:
+        pytest.skip("JSON serialiser can only serialize strings, not bytes.")
+
+    builder = NexusBuilder()
+    # When writing, if we use bytes h5py will write as ascii encoding
+    # 0xb0 = degrees symbol in latin-1 encoding.
+    builder.add_title(b"run at rot=90" + bytes([0xb0]))
+
+    with pytest.warns(UserWarning, match="contains characters in extended ascii range"):
+        loaded_data = load_function(builder)
+
+        assert sc.identical(loaded_data["experiment_title"],
+                            sc.DataArray(data=sc.scalar("run at rot=90°")))
+
+
+@pytest.mark.parametrize("test_string", UTF8_TEST_STRINGS)
+def test_utf8_encoded_dataset(load_function: Callable, test_string):
+    builder = NexusBuilder()
+    # When writing, if we use str h5py will write as utf8 encoding
+    builder.add_title(test_string)
+
+    loaded_data = load_function(builder)
+
+    assert sc.identical(loaded_data["experiment_title"],
+                        sc.DataArray(data=sc.scalar(test_string)))
+
+
+def test_extended_ascii_in_ascii_encoded_attribute(load_function: Callable):
+    if load_function == load_from_json:
+        pytest.skip("JSON serialiser can only serialize strings, not bytes.")
+
+    builder = NexusBuilder()
+    # When writing, if we use bytes h5py will write as ascii encoding
+    # 0xb0 = degrees symbol in latin-1 encoding.
+    builder.add_log(Log(name="testlog", value_units=bytes([0xb0]), value=np.array([0])))
+
+    with pytest.warns(UserWarning, match="contains characters in extended ascii range"):
+        loaded_data = load_function(builder)
+
+        assert loaded_data["testlog"].data.values.unit == sc.units.deg
+
+
+# Can't use UTF-8 test strings as above for this test as the units need to be valid.
+# Just do a single test with degrees.
+def test_utf8_encoded_attribute(load_function: Callable):
+    builder = NexusBuilder()
+    # When writing, if we use str h5py will write as utf8 encoding
+    builder.add_log(Log(name="testlog", value_units="°", value=np.array([0])))
+
+    loaded_data = load_function(builder)
+    assert loaded_data["testlog"].data.values.unit == sc.units.deg
+
+
+def test_load_nexus_adds_single_tof_bin(load_function: Callable):
+    event_time_offsets = np.array([456, 743, 347, 345, 632], dtype="float64")
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 3]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+
+    builder = NexusBuilder()
+    builder.add_event_data(event_data)
+
+    loaded_data = load_function(builder)
+
+    # Size 2 for each of the two bin edges around a single bin
+    assert loaded_data.coords["tof"].shape == [2]
+
+    # Assert bin edges correspond to smallest and largest+1 time-of-flights
+    # in data.
+    assert sc.identical(loaded_data.coords["tof"]["tof", 0],
+                        sc.scalar(value=np.min(event_time_offsets), unit=sc.units.ns))
+    assert sc.identical(
+        loaded_data.coords["tof"]["tof", 1],
+        sc.scalar(value=np.nextafter(np.max(event_time_offsets), float("inf")),
+                  unit=sc.units.ns))
+
+
+def test_nexus_file_with_choppers(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_instrument("dummy")
+    builder.add_chopper(
+        Chopper("chopper_1",
+                distance=10.0,
+                rotation_speed=60.0,
+                rotation_units="Hz",
+                distance_units="m"))
+    loaded_data = load_function(builder)
+    assert sc.identical(loaded_data["chopper_1"].attrs["rotation_speed"],
+                        60.0 * sc.Unit("Hz"))
+    assert sc.identical(loaded_data["chopper_1"].attrs["distance"], 10.0 * sc.Unit("m"))
+
+
+def test_nexus_file_with_two_choppers(load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_instrument("dummy")
+    builder.add_chopper(
+        Chopper("chopper_1",
+                distance=11.0 * 1000,
+                rotation_speed=65.0 / 1000,
+                rotation_units="MHz",
+                distance_units="mm"))
+    builder.add_chopper(
+        Chopper("chopper_2",
+                distance=10.0,
+                rotation_speed=60.0,
+                rotation_units="Hz",
+                distance_units="m"))
+    loaded_data = load_function(builder)
+
+    assert sc.identical(loaded_data["chopper_1"].attrs["rotation_speed"],
+                        (65.0 / 1000) * sc.Unit("MHz"))
+    assert sc.identical(loaded_data["chopper_1"].attrs["distance"],
+                        (11.0 * 1000) * sc.Unit("mm"))
+    assert sc.identical(loaded_data["chopper_2"].attrs["rotation_speed"],
+                        60.0 * sc.Unit("Hz"))
+    assert sc.identical(loaded_data["chopper_2"].attrs["distance"], 10.0 * sc.Unit("m"))

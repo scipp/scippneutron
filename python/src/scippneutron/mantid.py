@@ -107,8 +107,21 @@ def make_variables_from_run_logs(ws):
             yield property_name, property_data
 
 
-def make_sample(ws):
+def make_mantid_sample(ws):
     return sc.scalar(deepcopy(ws.sample()))
+
+
+def make_sample_ub(ws):
+    # B matrix transforms the h,k,l triplet into a Cartesian system
+    # https://docs.mantidproject.org/nightly/concepts/Lattice.html
+    return sc.matrix(value=ws.sample().getOrientedLattice().getUB(),
+                     unit=sc.units.angstrom**-1)
+
+
+def make_sample_u(ws):
+    # U matrix rotation for sample alignment
+    # https://docs.mantidproject.org/nightly/concepts/Lattice.html
+    return sc.matrix(value=ws.sample().getOrientedLattice().getU())
 
 
 def make_component_info(ws):
@@ -230,7 +243,7 @@ def validate_and_get_unit(unit, allow_empty=False):
 def _to_spherical(pos, output):
     output["r"] = sc.sqrt(sc.dot(pos, pos))
     output["t"] = sc.acos(pos.fields.z / output["r"].data)
-    signed_phi = sc.atan2(pos.fields.y, pos.fields.x)
+    signed_phi = sc.atan2(y=pos.fields.y, x=pos.fields.x)
     abs_phi = sc.abs(signed_phi)
     output["p-delta"] = (np.pi *
                          sc.units.rad) - abs_phi  # angular delta (magnitude) from pole
@@ -447,7 +460,7 @@ def _convert_MatrixWorkspace_info(ws, advanced_geometry=False, load_run_logs=Tru
         "coords": coords,
         "masks": {},
         "attrs": {
-            "sample": make_sample(ws),
+            "sample": make_mantid_sample(ws),
             "instrument_name":
             sc.scalar(ws.componentInfo().name(ws.componentInfo().root()))
         },
@@ -482,6 +495,12 @@ def _convert_MatrixWorkspace_info(ws, advanced_geometry=False, load_run_logs=Tru
         info["coords"]["incident_energy"] = _extract_einitial(ws)
     elif ws.getEMode() == DeltaEModeType.Indirect:
         info["coords"]["final_energy"] = _extract_efinal(ws, spec_dim)
+
+    if ws.sample().hasOrientedLattice():
+        info["attrs"].update({
+            "sample_ub": make_sample_ub(ws),
+            "sample_u": make_sample_u(ws)
+        })
     return info
 
 
@@ -544,7 +563,7 @@ def convert_Workspace2D_to_data_array(ws,
     array = sc.DataArray(**coords_labs_data)
 
     if ws.hasAnyMaskedBins():
-        bin_mask = sc.Variable(dims=array.dims, shape=array.shape, dtype=sc.dtype.bool)
+        bin_mask = sc.zeros(dims=array.dims, shape=array.shape, dtype=sc.dtype.bool)
         for i in range(ws.getNumberHistograms()):
             # maskedBinsIndices throws instead of returning empty list
             if ws.hasMaskedBins(i):
@@ -896,7 +915,7 @@ def to_mantid(data, dim, instrument_file=None):
     :returns: Workspace containing converted data. The concrete workspace type
               may differ depending on the content of `data`.
     """
-    if not sc.is_data_array(data):
+    if not isinstance(data, sc.DataArray):
         raise RuntimeError(
             "Currently only data arrays can be converted to a Mantid workspace")
     try:
@@ -957,8 +976,7 @@ def to_mantid(data, dim, instrument_file=None):
 def _table_to_data_array(table, key, value, stddev):
     stddevs = table[stddev].values
     dim = 'parameter'
-    coord = table[key].data.copy()
-    coord.rename_dims({'row': dim})
+    coord = table[key].data.copy().rename_dims({'row': dim})
     return sc.DataArray(data=sc.Variable(dims=[dim],
                                          values=table[value].values,
                                          variances=stddevs * stddevs),
@@ -1027,11 +1045,12 @@ def _get_instrument_efixed(workspace):
 
 
 def _extract_einitial(ws):
-    ei = None
     if ws.run().hasProperty("Ei"):
         ei = ws.run().getProperty("Ei").value
     elif ws.run().hasProperty('EnergyRequest'):
         ei = ws.run().getProperty('EnergyRequest').value[-1]
+    else:
+        ei = 0
     return sc.scalar(ei, unit=sc.Unit("meV"))
 
 

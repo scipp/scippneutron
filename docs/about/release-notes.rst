@@ -6,8 +6,12 @@ Release Notes
 Since v0.2.0
 ------------
 
+* ``load_nexus`` will read ub_matrix and orientation_matrix information from nexus files. Likewise, the Mantid converters will propagate the same information if present.
+
 Features
 ~~~~~~~~
+
+* `load_nexus` will now load pulse times along with event data.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -29,6 +33,8 @@ Features
 
 * ``convert`` new returns data arrays with a new coordinate array (for the converted dimension), but data and unrelated meta data is not deep-copied.
   This should improve performance in a number of cases.
+* ``load_nexus`` will read in chopper positions and frequencies if written as ``NXdisk_choppers`` (see NeXus format) from the file
+* ``instrument_view`` can show the positions of non-detector components such as choppers, and the sample on the beamline.
 
 Bugfixes
 ~~~~~~~~
@@ -37,6 +43,7 @@ Bugfixes
   Duplicate named detectors (including monitors) will have unique names created by concatenating the name with the spectrum number for that detector.
   This fixes a bug with monitors where previously, duplicate entries encoutered after the first were rejected from the output metadata.
   In the case of instruments such as POLARIS, all monitors will now be translated.
+* ``load_nexus`` will no longer fail to load nexus files containing strings with non-ascii characters, for example a log with units of '°'.
 
 Contributors
 ~~~~~~~~~~~~

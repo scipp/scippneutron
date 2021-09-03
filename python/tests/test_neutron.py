@@ -9,15 +9,16 @@ import numpy as np
 
 def make_dataset_with_beamline():
     positions = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0]]
-    d = sc.Dataset({'a': sc.Variable(['position', 'tof'], values=np.random.rand(4, 9))},
-                   coords={
-                       'tof':
-                       sc.Variable(['tof'],
-                                   values=np.arange(1000.0, 1010.0),
-                                   unit=sc.units.us),
-                       'position':
-                       sc.vectors(dims=['position'], values=positions, unit=sc.units.m)
-                   })
+    d = sc.Dataset(
+        data={'a': sc.Variable(dims=['position', 'tof'], values=np.random.rand(4, 9))},
+        coords={
+            'tof':
+            sc.Variable(dims=['tof'],
+                        values=np.arange(1000.0, 1010.0),
+                        unit=sc.units.us),
+            'position':
+            sc.vectors(dims=['position'], values=positions, unit=sc.units.m)
+        })
 
     d.coords['source_position'] = sc.vector(value=np.array([0, 0, -10]),
                                             unit=sc.units.m)
@@ -62,7 +63,7 @@ def test_neutron_instrument_view_3d():
 
 def test_neutron_instrument_view_with_dataset():
     d = make_dataset_with_beamline()
-    d['b'] = sc.Variable(['position', 'tof'], values=np.arange(36.).reshape(4, 9))
+    d['b'] = sc.Variable(dims=['position', 'tof'], values=np.arange(36.).reshape(4, 9))
     scn.instrument_view(d)
 
 
@@ -76,4 +77,8 @@ def test_neutron_instrument_view_with_masks():
 
 def test_neutron_instrument_view_with_cmap_args():
     d = make_dataset_with_beamline()
-    scn.instrument_view(d["a"], vmin=0.001, vmax=5.0, cmap="magma", norm="log")
+    scn.instrument_view(d["a"],
+                        vmin=0.001 * sc.units.one,
+                        vmax=5.0 * sc.units.one,
+                        cmap="magma",
+                        norm="log")

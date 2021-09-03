@@ -36,6 +36,9 @@ class EventData:
     event_time_offset: Optional[np.ndarray]
     event_time_zero: Optional[np.ndarray]
     event_index: Optional[np.ndarray]
+    event_time_zero_unit: Optional[Union[str, bytes]] = "ns"
+    event_time_zero_offset: Optional[Union[str, bytes]] = "1970-01-01T00:00:00Z"
+    event_time_offset_unit: Optional[Union[str, bytes]] = "ns"
 
 
 @dataclass
@@ -43,15 +46,15 @@ class Log:
     name: str
     value: Optional[np.ndarray]
     time: Optional[np.ndarray] = None
-    value_units: Optional[str] = None
+    value_units: Optional[Union[str, bytes]] = None
 
     # From
     # https://manual.nexusformat.org/classes/base_classes/NXlog.html?highlight=nxlog
     # time units are non-optional if time series data is present, and the unit
     # must be a unit of time (i.e. convertible to seconds).
-    time_units: Optional[str] = "s"
+    time_units: Optional[Union[str, bytes]] = "s"
 
-    start_time: Optional[str] = None
+    start_time: Optional[Union[str, bytes]] = None
     scaling_factor: Optional[float] = None
 
 
@@ -68,8 +71,8 @@ class Transformation:
     time: Optional[np.ndarray] = None
     depends_on: Union["Transformation", str, None] = None
     offset: Optional[np.ndarray] = None
-    value_units: Optional[str] = None
-    time_units: Optional[str] = None
+    value_units: Optional[Union[str, bytes]] = None
+    time_units: Optional[Union[str, bytes]] = None
 
 
 @dataclass
@@ -80,7 +83,7 @@ class Detector:
     x_offsets: Optional[np.ndarray] = None
     y_offsets: Optional[np.ndarray] = None
     z_offsets: Optional[np.ndarray] = None
-    offsets_unit: Optional[str] = None
+    offsets_unit: Optional[Union[str, bytes]] = None
     depends_on: Optional[Transformation] = None
 
 
@@ -89,7 +92,9 @@ class Sample:
     name: str
     depends_on: Optional[Transformation] = None
     distance: Optional[float] = None
-    distance_units: Optional[str] = None
+    distance_units: Optional[Union[str, bytes]] = None
+    ub_matrix: Optional[np.ndarray] = None
+    orientation_matrix: Optional[np.ndarray] = None
 
 
 @dataclass
@@ -97,7 +102,16 @@ class Source:
     name: str
     depends_on: Union[Transformation, None, str] = None
     distance: Optional[float] = None
+    distance_units: Optional[Union[str, bytes]] = None
+
+
+@dataclass
+class Chopper:
+    name: str
+    distance: float
+    rotation_speed: float
     distance_units: Optional[str] = None
+    rotation_units: Optional[str] = None
 
 
 @dataclass
@@ -158,12 +172,12 @@ class InMemoryNeXusWriter:
 
     @staticmethod
     def add_dataset(parent: h5py.Group, name: str,
-                    data: Union[str, np.ndarray]) -> h5py.Dataset:
+                    data: Union[str, bytes, np.ndarray]) -> h5py.Dataset:
         return parent.create_dataset(name, data=data)
 
     @staticmethod
     def add_attribute(parent: Union[h5py.Group, h5py.Dataset], name: str,
-                      value: Union[str, np.ndarray]):
+                      value: Union[str, bytes, np.ndarray]):
         parent.attrs[name] = value
 
     @staticmethod
@@ -234,11 +248,14 @@ class JsonWriter:
             self.add_attribute(dataset, name, value)
 
     @staticmethod
-    def add_dataset(parent: Dict, name: str, data: Union[str, np.ndarray]) -> Dict:
-        if isinstance(data, str):
+    def add_dataset(parent: Dict, name: str, data: Union[str, bytes,
+                                                         np.ndarray]) -> Dict:
+        if isinstance(data, (str, bytes)):
             dataset_info = {"string_size": len(data), "type": "string"}
         elif isinstance(data, float):
-            dataset_info = {"size": 1, "type": "float32"}
+            dataset_info = {"size": 1, "type": "float64"}
+        elif isinstance(data, int):
+            dataset_info = {"size": 1, "type": "int32"}
         else:
             dataset_info = {
                 "size": data.shape,
@@ -256,8 +273,8 @@ class JsonWriter:
         return new_dataset
 
     @staticmethod
-    def add_attribute(parent: Dict, name: str, value: Union[str, np.ndarray]):
-        if isinstance(value, str):
+    def add_attribute(parent: Dict, name: str, value: Union[str, bytes, np.ndarray]):
+        if isinstance(value, (str, bytes)):
             attr_info = {"string_size": len(value), "type": "string"}
         elif isinstance(value, float):
             attr_info = {"size": 1, "type": "float64"}
@@ -322,6 +339,7 @@ class NexusBuilder:
         self._detectors: List[Detector] = []
         self._logs: List[Log] = []
         self._instrument_name: Optional[str] = None
+        self._choppers: List[Chopper] = []
         self._title: Optional[str] = None
         self._start_time: Optional[str] = None
         self._end_time: Optional[str] = None
@@ -355,6 +373,9 @@ class NexusBuilder:
 
     def add_instrument(self, name: str):
         self._instrument_name = name
+
+    def add_chopper(self, chopper: Chopper):
+        self._choppers.append(chopper)
 
     def add_title(self, title: str):
         self._title = title
@@ -445,6 +466,7 @@ class NexusBuilder:
         else:
             parent_group = self._write_instrument(entry_group)
             parent_path = "/entry/instrument"
+        self._write_choppers(parent_group)
         self._write_detectors(parent_group, parent_path)
         self._write_datasets(nexus_file)
         self._write_streams(nexus_file)
@@ -485,6 +507,16 @@ class NexusBuilder:
                 if sample.distance_units is not None:
                     self._writer.add_attribute(distance_ds, "units",
                                                sample.distance_units)
+
+            if sample.ub_matrix is not None:
+                self._writer.add_dataset(sample_group,
+                                         "ub_matrix",
+                                         data=sample.ub_matrix)
+
+            if sample.orientation_matrix is not None:
+                self._writer.add_dataset(sample_group,
+                                         "orientation_matrix",
+                                         data=sample.orientation_matrix)
 
     def _write_source(self, parent_group: Union[h5py.Group, Dict]):
         for source in self._source:
@@ -527,6 +559,22 @@ class NexusBuilder:
                     f"{parent_path}/{detector_name}")
                 self._writer.add_dataset(detector_group, "depends_on", data=depends_on)
 
+    def _write_choppers(self, parent_group: Union[h5py.Group, Dict]):
+
+        for chopper in self._choppers:
+            chopper_group = self._create_nx_class(chopper.name, "NXdisk_chopper",
+                                                  parent_group)
+            distance_ds = self._writer.add_dataset(chopper_group,
+                                                   "distance",
+                                                   data=chopper.distance)
+            rotation_ds = self._writer.add_dataset(chopper_group,
+                                                   "rotation_speed",
+                                                   data=chopper.rotation_speed)
+            if chopper.distance_units is not None:
+                self._writer.add_attribute(distance_ds, "units", chopper.distance_units)
+            if chopper.rotation_units is not None:
+                self._writer.add_attribute(rotation_ds, "units", chopper.rotation_units)
+
     def _write_event_data(self, parent_group: Union[h5py.Group, Dict]):
         for event_data_index, event_data in enumerate(self._event_data):
             self._add_event_data_group_to_file(event_data, parent_group,
@@ -545,12 +593,16 @@ class NexusBuilder:
             event_time_offset_ds = self._writer.add_dataset(event_group,
                                                             "event_time_offset",
                                                             data=data.event_time_offset)
-            self._writer.add_attribute(event_time_offset_ds, "units", "ns")
+            self._writer.add_attribute(event_time_offset_ds, "units",
+                                       data.event_time_offset_unit)
         if data.event_time_zero is not None:
             event_time_zero_ds = self._writer.add_dataset(event_group,
                                                           "event_time_zero",
                                                           data=data.event_time_zero)
-            self._writer.add_attribute(event_time_zero_ds, "units", "ns")
+            self._writer.add_attribute(event_time_zero_ds, "units",
+                                       data.event_time_zero_unit)
+            self._writer.add_attribute(event_time_zero_ds, "offset",
+                                       data.event_time_zero_offset)
         if data.event_index is not None:
             self._writer.add_dataset(event_group, "event_index", data=data.event_index)
 
