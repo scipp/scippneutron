@@ -3,12 +3,14 @@
 # @author Jan-Lukas Wynen
 
 import scipp as sc
+import scipp.constants as const
+
 from ._scippneutron import conversions
 
 # TODO check old convert for disallowed combinations of coords, e.g. inelastic energy
 
 
-def _Ltotal_no_scatter(source_position, position):
+def _total_beam_length_no_scatter(source_position, position):
     return sc.norm(position - source_position)
 
 
@@ -36,15 +38,21 @@ def _total_beam_length_scatter(L1, L2):
 
 
 def _wavelength_from_tof(tof, Ltotal):
-    return conversions.wavelength_from_tof(tof, Ltotal)
+    c = sc.to_unit(const.h / const.m_n,
+                   sc.units.angstrom * Ltotal.unit / tof.unit,
+                   copy=False)
+    return c / Ltotal * tof
 
 
 def _Q_from_wavelength(wavelength, two_theta):
-    return conversions.Q_from_wavelength(wavelength, two_theta)
+    return (4 * const.pi) * sc.sin(two_theta / 2) / wavelength
 
 
 def _energy_from_tof(tof, Ltotal):
-    return conversions.energy_from_tof(tof, Ltotal)
+    c = sc.to_unit(const.m_n / 2,
+                   sc.units.meV * (tof.unit / Ltotal.unit)**2,
+                   copy=False)
+    return c * sc.pow(Ltotal / tof, sc.scalar(2))
 
 
 def _energy_transfer_direct_from_tof(tof, L1, L2, incident_energy):
@@ -56,11 +64,17 @@ def _energy_transfer_indirect_from_tof(tof, L1, L2, final_energy):
 
 
 def _dspacing_from_tof(tof, Ltotal, two_theta):
-    return conversions.dspacing_from_tof(tof, Ltotal, two_theta)
+    c = sc.to_unit(2 * const.m_n / const.h,
+                   tof.unit / sc.units.angstrom / Ltotal.unit,
+                   copy=False)
+    return tof / (c * Ltotal * sc.sin(two_theta / 2))
 
 
 # TODO consumes position, do we want that in scatter=False?
-NO_SCATTER_GRAPH = {'Ltotal': _Ltotal_no_scatter, 'wavelength': _wavelength_from_tof}
+NO_SCATTER_GRAPH = {
+    'Ltotal': _total_beam_length_no_scatter,
+    'wavelength': _wavelength_from_tof
+}
 
 SCATTER_GRAPH_DETECTOR_TO_PHYS = {
     ('incident_beam', 'scattered_beam'): _scattering_beams,
