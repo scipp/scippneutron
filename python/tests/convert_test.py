@@ -62,15 +62,13 @@ def check_tof_conversion_metadata(converted, target, coord_unit):
     assert 'tof' not in converted.coords
     assert target in converted.coords
     assert 'counts' in converted
-    assert converted['counts'].dims == ['spectrum', target]
-    assert converted['counts'].shape == [2, 3]
+    assert converted['counts'].sizes == {'spectrum': 2, target: 3}
     assert converted['counts'].unit == sc.units.counts
     np.testing.assert_array_equal(converted['counts'].values.flat, np.arange(1, 7))
 
     coord = converted.coords[target]
     # Due to conversion, the coordinate now also depends on 'spectrum'.
-    assert coord.dims == ['spectrum', target]
-    assert coord.shape == [2, 4]
+    assert coord.sizes == {'spectrum': 2, target: 4}
     assert coord.unit == coord_unit
 
 
