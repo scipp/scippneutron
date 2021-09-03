@@ -8,20 +8,20 @@ import scipp as sc
 from scipy.spatial.transform import Rotation as Rot
 
 
-def _text_mesh(position, display_text, x_width, y_width):
+def _text_mesh(position, display_text, x_width, y_width, text_size):
     text_geometry = p3.PlaneGeometry(width=x_width,
                                      height=y_width,
                                      widthSegments=2,
                                      heightSegments=2)
 
-    text = p3.TextTexture(string=display_text, color='black', size=20)
+    text = p3.TextTexture(string=display_text, color='black', size=text_size)
     text_material = p3.MeshBasicMaterial(map=text, transparent=True)
     text_mesh = p3.Mesh(geometry=text_geometry, material=text_material)
     text_mesh.position = position
     return text_mesh
 
 
-def _box(position, display_text, bounding_box, color, **kwargs):
+def _box(position, display_text, bounding_box, text_size, color, **kwargs):
     geometry = p3.BoxGeometry(width=bounding_box[0],
                               height=bounding_box[1],
                               depth=bounding_box[2],
@@ -36,7 +36,8 @@ def _box(position, display_text, bounding_box, color, **kwargs):
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
                            x_width=bounding_box[0],
-                           y_width=bounding_box[1])
+                           y_width=bounding_box[1],
+                           text_size=text_size)
     return mesh, text_mesh
 
 
@@ -56,7 +57,7 @@ def _alignment_matrix(to_align, target):
     return Rot.from_rotvec(axis_angle).as_matrix()
 
 
-def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
+def _disk_chopper(position, display_text, bounding_box, text_size, color, **kwargs):
     geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
                                    radiusBottom=bounding_box[0] / 2,
                                    height=bounding_box[0] / 100,
@@ -78,11 +79,12 @@ def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
                            x_width=bounding_box[0],
-                           y_width=bounding_box[1])
+                           y_width=bounding_box[1],
+                           text_size=text_size)
     return mesh, text_mesh
 
 
-def _cylinder(position, display_text, bounding_box, color, **kwargs):
+def _cylinder(position, display_text, bounding_box, text_size, color, **kwargs):
     geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
                                    radiusBottom=bounding_box[0] / 2,
                                    height=bounding_box[1],
@@ -100,7 +102,8 @@ def _cylinder(position, display_text, bounding_box, color, **kwargs):
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
                            x_width=bounding_box[0],
-                           y_width=bounding_box[1])
+                           y_width=bounding_box[1],
+                           text_size=text_size)
     return mesh, text_mesh
 
 
@@ -112,42 +115,50 @@ def _unpack_to_scene(scene, items):
         scene.add(items)
 
 
-def _add_to_scene(position, scene, shape, display_text, bounding_box, **kwargs):
+def _add_to_scene(position, scene, shape, display_text, bounding_box, text_size, color,
+                  **kwargs):
     _unpack_to_scene(
         scene,
         shape(position,
               display_text=display_text,
               bounding_box=bounding_box,
-              color="#808080",
+              text_size=text_size,
+              color=color,
               **kwargs))
 
 
 def _furthest_component(det_center, scipp_obj, additional):
-    distances = [(key, sc.norm(scipp_obj.meta[key] - det_center).value)
-                 for key in additional.keys()]
+    distances = [(settings["at"],
+                  sc.norm(scipp_obj.meta[settings["at"]] - det_center).value)
+                 for settings in list(additional.values())]
     item, max_displacement = sorted(distances, key=lambda x: x[1])[-1]
     return item, max_displacement
 
 
-def _plot_components(scipp_obj, additional, positions_var, scene):
+def _plot_components(scipp_obj, components, positions_var, scene):
     det_center = sc.mean(positions_var)
     furthest_key, furthest_distance = _furthest_component(det_center, scipp_obj,
-                                                          additional)
+                                                          components)
     # Some scaling to set width according to distance from detector center
-    scaling_factor = 1 / 10.0
-    width = furthest_distance * scaling_factor
     shapes = {"cube": _box, "cylinder": _cylinder, "disk": _disk_chopper}
-    for item, type in additional.items():
+    for name, settings in components.items():
+        type = settings["type"]
+        color = settings.get("color", "#808080")
+        size = settings["size"]
+        text_size = settings.get("text_size", size)
+        at = settings["at"]
         if type not in shapes:
             supported_shapes = ", ".join(shapes.keys())
-            raise ValueError(f"Unknown shape: {type} requested for {item}. "
+            raise ValueError(f"Unknown shape: {type} requested for {name}. "
                              f"Allowed values are: {supported_shapes}")
-        component_position = scipp_obj.meta[item]
+        component_position = scipp_obj.meta[at]
         _add_to_scene(position=component_position,
                       scene=scene,
                       shape=shapes[type],
-                      display_text=item,
-                      bounding_box=([width] * 3),
+                      display_text=name,
+                      bounding_box=tuple(size),
+                      text_size=text_size,
+                      color=color,
                       det_center=det_center)
     # Reset camera
     camera = _get_camera(scene)
