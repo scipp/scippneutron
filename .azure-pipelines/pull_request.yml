@@ -14,7 +14,7 @@ resources:
     name: scipp/pipelines
     type: github
     endpoint: scipp
-    ref: main
+    ref: with_scippbuildtools
 
 trigger:
   branches:
@@ -28,10 +28,10 @@ pr:
       - '*'
 
 extends:
-  template: stages.yml@SharedPipelines
+  template: pipelines/stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-    conda_channels: '--channel scipp --channel ess-dmsc --channel scipp/label/dev'
+    conda_channels: '--channel ess-dmsc'
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:

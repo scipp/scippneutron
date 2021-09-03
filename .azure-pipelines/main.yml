@@ -3,28 +3,18 @@ parameters:
   displayName: Verbose
   type: boolean
   default: false
-- name: scipp_channel
-  type: string
-  default: scipp
 
 # Note: the 'endpoint' refers to the Azure service connection, which can be
 # found on the Azure pipelines web interface under
 # scipp > scippneutron > Settings > Service connections
 
-# New stable runs/releases of scipp will automatically cause this pipeline to run.
-# Upstream scipp packages are scipp/label/main
 resources:
   repositories:
   - repository: SharedPipelines
     name: scipp/pipelines
     type: github
     endpoint: scipp
-    ref: main
-  pipelines:
-  - pipeline: upstream_scipp_release
-    project: scipp
-    source: Release
-    trigger: true
+    ref: with_scippbuildtools
 
 trigger:
   - main
@@ -32,10 +22,10 @@ trigger:
 pr: none
 
 extends:
-  template: stages.yml@SharedPipelines
+  template: pipelines/stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-    conda_channels: '--channel scipp --channel ess-dmsc'
+    conda_channels: '--channel ess-dmsc'
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
