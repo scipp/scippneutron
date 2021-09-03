@@ -79,9 +79,7 @@ def make_dataset_in(dim):
     return scn.convert(make_tof_dataset(), origin='tof', target=dim, scatter=True)
 
 
-@pytest.mark.parametrize(('origin', 'target'),
-                         itertools.product(('tof', 'dspacing', 'wavelength', 'energy'),
-                                           repeat=2))
+@pytest.mark.parametrize(('origin', 'target'), (('tof', 'dspacing'), ('tof', 'wavelength'), ('tof', 'energy')))
 def test_convert_dataset_vs_dataarray(origin, target):
     if target == 'tof' and origin == 'tof':
         return  # TODO triggers segfault otherwise
