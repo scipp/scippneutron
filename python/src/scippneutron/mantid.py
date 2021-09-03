@@ -862,8 +862,21 @@ def load(filename="",
                            advanced_geometry=advanced_geometry)
 
 
+def _is_mantid_loadable(filename):
+    from mantid.api import FileFinder
+    if FileFinder.getFullPath(filename):
+        return True
+    else:
+        try:
+            # findRuns throws rather than return empty so need try-catch
+            FileFinder.findRuns(filename)
+            return True
+        except Exception:
+            return False
+
+
 def _check_file_path(filename, mantid_alg):
-    from mantid.api import FileFinder, AlgorithmManager, FrameworkManager, FileProperty
+    from mantid.api import AlgorithmManager, FrameworkManager, FileProperty
     FrameworkManager.Instance()
     alg = AlgorithmManager.createUnmanaged(mantid_alg)
     filename_property = [
@@ -875,9 +888,9 @@ def _check_file_path(filename, mantid_alg):
     # is called directly we attempt to find FileProperty. Otherwise paths should be
     # absolute
     if filename_property or mantid_alg == 'Load':
-        if not FileFinder.getFullPath(filename):
+        if not _is_mantid_loadable(filename):
             raise ValueError(
-                f"Mantid cannot find file {filename} and therefore will not load it."
+                f"Mantid cannot find {filename} and therefore will not load it."
             ) from None
     else:
         if not os.path.isfile(filename):
