@@ -149,6 +149,4 @@ def convert(data, origin, target, scatter):
         raise RuntimeError(f"Missing coordinate '{err.args[0]}' for conversion "
                            f"from '{origin}' to '{target}'") from None
 
-    if not keep_origin:
-        _remove_attr(converted, origin)
     return converted
