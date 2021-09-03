@@ -11,6 +11,8 @@
 
 #include "scippneutron_export.h"
 
+#include <iostream>
+
 namespace scipp::neutron::conversions {
 constexpr auto tof_to_energy = [](auto &coord, const auto &c) {
   coord = c / (coord * coord);
@@ -45,18 +47,6 @@ constexpr auto energy_transfer_to_tof = [](auto &coord, const auto &scale,
 };
 
 [[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
-wavelength_from_tof(const variable::Variable &tof,
-                    const variable::Variable &Ltotal);
-
-[[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
-Q_from_wavelength(const variable::Variable &wavelength,
-                  const variable::Variable &two_theta);
-
-[[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
-energy_from_tof(const variable::Variable &tof,
-                const variable::Variable &Ltotal);
-
-[[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
 energy_transfer_direct_from_tof(const variable::Variable &tof,
                                 const variable::Variable &L1,
                                 const variable::Variable &L2,
@@ -67,10 +57,5 @@ energy_transfer_indirect_from_tof(const variable::Variable &tof,
                                   const variable::Variable &L1,
                                   const variable::Variable &L2,
                                   const variable::Variable &final_energy);
-
-[[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
-dspacing_from_tof(const variable::Variable &tof,
-                  const variable::Variable &Ltotal,
-                  const variable::Variable &two_theta);
 
 } // namespace scipp::neutron::conversions

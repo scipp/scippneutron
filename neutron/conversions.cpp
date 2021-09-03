@@ -32,42 +32,6 @@ measurement_cast(const llnl::units::precise_measurement &m) {
 } // namespace
 
 namespace scipp::neutron::conversions {
-Variable wavelength_from_tof(const Variable &tof, const Variable &Ltotal) {
-  static constexpr auto kernel = overloaded{
-      core::element::arg_list<double>, [](const auto &l, const auto &t) {
-        static constexpr auto c =
-            measurement_cast<decltype(t)>(tof_to_wavelength_physical_constants);
-        return c / l * t;
-      }};
-  return transform(Ltotal, tof, kernel, "wavelength_from_tof");
-}
-
-Variable Q_from_wavelength(const Variable &wavelength,
-                           const Variable &two_theta) {
-  static constexpr auto kernel =
-      overloaded{core::element::arg_list<double>,
-                 core::transform_flags::expect_no_variance_arg<1>,
-                 [](const auto &lambda, const auto &angle) {
-                   static constexpr auto four_pi =
-                       measurement_cast<decltype(lambda)>(c_4pi);
-                   static constexpr auto two =
-                       measurement_cast<decltype(lambda)>(c_two);
-                   using std::sin;
-                   return four_pi * sin(angle / two) / lambda;
-                 }};
-  return transform(wavelength, two_theta, kernel, "Q_from_wavelength");
-}
-
-Variable energy_from_tof(const Variable &tof, const Variable &Ltotal) {
-  static constexpr auto kernel = overloaded{
-      core::element::arg_list<double>, [](const auto &l, const auto &t) {
-        static constexpr auto c =
-            measurement_cast<decltype(t)>(tof_to_energy_physical_constants);
-        return c * l * l / t / t;
-      }};
-  return transform(Ltotal, tof, kernel, "energy_from_tof");
-}
-
 namespace {
 Variable inelastic_t0(const Variable &L12, const Variable &Eif) {
   static constexpr auto kernel = overloaded{
@@ -111,24 +75,6 @@ Variable energy_transfer_indirect_from_tof(const Variable &tof,
                  }};
   return transform(final_energy, L1, tof, inelastic_t0(L2, final_energy),
                    kernel, "energy_transfer_indirect_from_tof");
-}
-
-Variable dspacing_from_tof(const Variable &tof, const Variable &Ltotal,
-                           const Variable &two_theta) {
-  static constexpr auto kernel = overloaded{
-      core::element::arg_list<double>,
-      core::transform_flags::expect_no_variance_arg<2>,
-      [](const auto t, const auto l, const auto angle) {
-        static constexpr auto c =
-            measurement_cast<decltype(l)>(tof_to_dspacing_physical_constants);
-        static constexpr auto two = measurement_cast<decltype(l)>(c_two);
-        using std::sin;
-        return t / (c * l * sin(angle / two));
-      }};
-  return transform(
-      tof, Ltotal,
-      to_unit(two_theta, scipp::units::rad, scipp::CopyPolicy::TryAvoid),
-      kernel, "dspacing_from_tof");
 }
 
 } // namespace scipp::neutron::conversions
