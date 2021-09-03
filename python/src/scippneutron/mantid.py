@@ -841,7 +841,7 @@ def load(filename="",
 
     _check_file_path(str(filename), mantid_alg)
 
-    with run_mantid_alg(mantid_alg, filename, **mantid_args) as loaded:
+    with run_mantid_alg(mantid_alg, str(filename), **mantid_args) as loaded:
         # Determine what Load has provided us
         from mantid.api import Workspace
         if isinstance(loaded, Workspace):
