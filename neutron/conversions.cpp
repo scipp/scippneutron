@@ -46,21 +46,6 @@ Variable inelastic_t0(const Variable &L12, const Variable &Eif) {
 }
 } // namespace
 
-Variable energy_transfer_direct_from_tof(const Variable &tof,
-                                         const Variable &L1, const Variable &L2,
-                                         const Variable &incident_energy) {
-  static constexpr auto kernel =
-      overloaded{core::element::arg_list<double>,
-                 [](const auto Ei, const auto l, const auto t, const auto t0) {
-                   static constexpr auto c = measurement_cast<decltype(l)>(
-                       tof_to_energy_physical_constants);
-                   const auto tt0 = t - t0;
-                   return Ei - c * l * l / tt0 / tt0;
-                 }};
-  return transform(incident_energy, L2, tof, inelastic_t0(L1, incident_energy),
-                   kernel, "energy_transfer_direct_from_tof");
-}
-
 Variable energy_transfer_indirect_from_tof(const Variable &tof,
                                            const Variable &L1,
                                            const Variable &L2,

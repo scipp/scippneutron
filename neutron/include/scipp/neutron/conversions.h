@@ -47,12 +47,6 @@ constexpr auto energy_transfer_to_tof = [](auto &coord, const auto &scale,
 };
 
 [[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
-energy_transfer_direct_from_tof(const variable::Variable &tof,
-                                const variable::Variable &L1,
-                                const variable::Variable &L2,
-                                const variable::Variable &incident_energy);
-
-[[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
 energy_transfer_indirect_from_tof(const variable::Variable &tof,
                                   const variable::Variable &L1,
                                   const variable::Variable &L2,

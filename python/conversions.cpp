@@ -14,8 +14,6 @@ namespace py = pybind11;
 
 void init_conversions(py::module &base_module) {
   auto m = base_module.def_submodule("conversions");
-  m.def("energy_transfer_direct_from_tof",
-        conversions::energy_transfer_direct_from_tof);
   m.def("energy_transfer_indirect_from_tof",
         conversions::energy_transfer_indirect_from_tof);
 }
