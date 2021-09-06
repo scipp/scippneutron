@@ -11,28 +11,79 @@ from scipp.constants import m_n
 import scippneutron as scn
 
 
-def make_beamline_dataset():
-    dset = sc.Dataset()
-    dset.coords['source_position'] = sc.vector(value=[0.0, 0.0, -10.0], unit='m')
+def make_source_position():
+    return sc.vector(value=[0.0, 0.0, -10.0], unit='m')
+
+
+def make_sample_position():
     # Test assume that the sample is in the origin.
-    dset.coords['sample_position'] = sc.vector(value=[0.0, 0.0, 0.0], unit='m')
-    dset.coords['position'] = sc.vectors(dims=['spectrum'],
-                                         values=[[1.0, 0.0, 0.0], [0.1, 0.0, 1.0]],
-                                         unit='m')
-    return dset
+    return sc.vector(value=[0.0, 0.0, 0.0], unit='m')
 
 
-def make_tof_dataset():
-    dset = make_beamline_dataset()
-    dset['counts'] = sc.arange('x', 1, 7,
-                               unit='counts').fold('x', {
-                                   'spectrum': 2,
-                                   'tof': 3
-                               })
-    dset.coords['tof'] = sc.array(dims=['tof'],
-                                  values=[4000.0, 5000.0, 6100.0, 7300.0],
-                                  unit='us')
-    return dset
+def make_position():
+    return sc.vectors(dims=['spectrum'],
+                      values=[[1.0, 0.0, 0.0], [0.1, 0.0, 1.0]],
+                      unit='m')
+
+
+def make_incident_beam():
+    return sc.vector(value=[0.0, 0.0, 10.0], unit='m')
+
+
+def make_scattered_beam():
+    return sc.vectors(dims=['spectrum'],
+                      values=[[1.0, 0.0, 0.0], [0.1, 0.0, 1.0]],
+                      unit='m')
+
+
+def make_L1():
+    return sc.norm(make_incident_beam())
+
+
+def make_L2():
+    return sc.norm(make_scattered_beam())
+
+
+def make_Ltotal():
+    return make_L1() + make_L2()
+
+
+def make_two_theta():
+    return sc.acos(
+        sc.array(dims=['spectrum'], values=[0, 10], unit='m^2') / make_L1() / make_L2())
+
+
+def make_tof():
+    return sc.array(dims=['tof'], values=[4000.0, 5000.0, 6100.0, 7300.0], unit='us')
+
+
+_COORD_MAKERS = {
+    'source_position': make_source_position,
+    'sample_position': make_sample_position,
+    'position': make_position,
+    'incident_beam': make_incident_beam,
+    'scattered_beam': make_scattered_beam,
+    'L1': make_L1,
+    'L2': make_L2,
+    'Ltotal': make_Ltotal,
+    'two_theta': make_two_theta,
+    'tof': make_tof
+}
+
+
+def make_test_data(coords=(), dataset=False):
+    da = sc.DataArray(
+        sc.arange('x', 1, 7, unit='counts').fold('x', {
+            'spectrum': 2,
+            'tof': 3
+        }))
+    for name, maker in _COORD_MAKERS.items():
+        if name in coords:
+            da.coords[name] = maker()
+
+    if dataset:
+        return sc.Dataset(data={'counts': da})
+    return da
 
 
 def make_tof_binned_events():
@@ -73,12 +124,15 @@ def check_tof_conversion_metadata(converted, target, coord_unit):
 
 
 def make_dataset_in(dim):
+    tof_dset = make_test_data(coords=('tof', 'Ltotal', 'two_theta'), dataset=True)
     if dim == 'tof':
-        return make_tof_dataset()  # TODO triggers segfault otherwise
-    return scn.convert(make_tof_dataset(), origin='tof', target=dim, scatter=True)
+        return tof_dset  # TODO triggers segfault otherwise
+    return scn.convert(tof_dset, origin='tof', target=dim, scatter=True)
 
 
-@pytest.mark.parametrize(('origin', 'target'), (('tof', 'dspacing'), ('tof', 'wavelength'), ('tof', 'energy')))
+@pytest.mark.parametrize(
+    ('origin', 'target'),
+    (('tof', 'dspacing'), ('tof', 'wavelength'), ('tof', 'energy')))
 def test_convert_dataset_vs_dataarray(origin, target):
     if target == 'tof' and origin == 'tof':
         return  # TODO triggers segfault otherwise
@@ -94,7 +148,7 @@ def test_convert_dataset_vs_dataarray(origin, target):
 
 
 def test_convert_input_unchanged():
-    inputs = make_tof_dataset()
+    inputs = make_test_data(coords=('tof', 'Ltotal'), dataset=True)
     original = inputs.copy(deep=True)
     result = scn.convert(inputs, origin='tof', target='wavelength', scatter=True)
     assert not sc.identical(result, original)
@@ -106,7 +160,7 @@ TOF_TARGET_DIMS = ('dspacing', 'wavelength', 'energy')
 
 @pytest.mark.parametrize('target', TOF_TARGET_DIMS)
 def test_convert_slice(target):
-    tof = make_tof_dataset()
+    tof = make_test_data(coords=('tof', 'Ltotal', 'two_theta'), dataset=True)
     expected = scn.convert(tof['counts'], origin='tof', target=target,
                            scatter=True)['spectrum', 0].copy()
     # A side-effect of `convert` is that it turns relevant meta data into
@@ -133,7 +187,7 @@ def test_convert_slice(target):
 
 
 def test_convert_scattering_conversion_fails_with_noscatter_mode():
-    tof = make_tof_dataset()
+    tof = make_test_data(coords=('tof', 'Ltotal', 'two_theta'), dataset=True)
     scn.convert(tof, origin='tof', target='dspacing', scatter=True)  # no exception
     with pytest.raises(RuntimeError):
         scn.convert(tof, origin='tof', target='dspacing', scatter=False)
@@ -145,8 +199,8 @@ def test_convert_scattering_conversion_fails_with_noscatter_mode():
 
 
 def test_convert_coords_vs_attributes():
-    with_coords = make_tof_dataset()
-    with_attrs = make_tof_dataset()
+    with_coords = make_test_data(coords=('tof', 'Ltotal', 'two_theta'), dataset=True)
+    with_attrs = with_coords.copy()
     for key in ('sample_position', 'source_position', 'position'):
         with_attrs['counts'].attrs[key] = with_attrs.coords.pop(key)
 
@@ -163,42 +217,41 @@ def test_convert_coords_vs_attributes():
 
 @pytest.mark.parametrize('target', ('incident_beam', 'scattered_beam'))
 def test_convert_beams(target):
-    for sample_position in (sc.vector(value=[0.0, 0.0, 0.0], unit='m'),
-                            sc.vectors(dims=['spectrum'],
-                                       values=[[1.0, 0.0, 0.2], [2.1, -0.3, 1.4]],
-                                       unit='m')):
-        original = make_tof_dataset()['counts'].copy()
-        original.coords['sample_position'] = sample_position
-        converted = scn.convert(original,
-                                origin='position',
-                                target=target,
-                                scatter=True)
-        for key in ('position', 'source_position', 'sample_position'):
-            assert key not in converted.coords
-        assert sc.identical(
-            converted.coords['incident_beam'],
-            original.coords['sample_position'] - original.coords['source_position'])
-        assert sc.identical(
-            converted.coords['scattered_beam'],
-            original.coords['position'] - original.coords['sample_position'])
+    # A single sample position.
+    original = make_test_data(coords=('position', 'sample_position', 'source_position'))
+    converted = scn.convert(original, origin='position', target=target, scatter=True)
+    for key in ('position', 'source_position', 'sample_position'):
+        assert key not in converted.coords
+    assert sc.identical(converted.coords['incident_beam'], make_incident_beam())
+    assert sc.identical(converted.coords['scattered_beam'], make_scattered_beam())
+
+    # Two sample positions.
+    original = make_test_data(coords=('position', 'source_position'))
+    original.coords['sample_position'] = sc.vectors(dims=['spectrum'],
+                                                    values=[[1.0, 0.0, 0.2],
+                                                            [2.1, -0.3, 1.4]],
+                                                    unit='m')
+    converted = scn.convert(original, origin='position', target=target, scatter=True)
+    for key in ('position', 'source_position', 'sample_position'):
+        assert key not in converted.coords
+    assert sc.allclose(converted.coords['incident_beam'],
+                       sc.vectors(dims=['spectrum'],
+                                  values=[[1.0, 0.0, 10.2], [2.1, -0.3, 11.4]],
+                                  unit='m'),
+                       rtol=1e-14 * sc.units.one)
+    assert sc.allclose(converted.coords['scattered_beam'],
+                       sc.vectors(dims=['spectrum'],
+                                  values=[[0.0, 0.0, -0.2], [-2.0, 0.3, -0.4]],
+                                  unit='m'),
+                       rtol=1e-14 * sc.units.one)
 
 
 @pytest.mark.parametrize('target', ('L1', 'L2', 'two_theta', 'Ltotal'))
 def test_convert_beam_length_and_angle(target):
-    incident_beam = sc.vector(value=[10.0, 0.0, 1.0], unit='m')
-    scattered_beam = sc.vectors(dims=['spectrum'],
-                                values=[[-2.0, 1.0, 1.0], [1.0, 0.0, 8.0]],
-                                unit='m')
-    L1 = sc.scalar(math.sqrt(101), unit='m')
-    L2 = sc.array(dims=['spectrum'], values=[math.sqrt(6), math.sqrt(65)], unit='m')
-    two_theta = sc.acos(
-        sc.array(dims=['spectrum'], values=[-19, 18], unit='m^2') / L1 / L2)
-
-    original = make_tof_dataset()['counts'].copy()
-    for key in ('position', 'source_position', 'sample_position'):
-        del original.coords[key]
-    original.coords['incident_beam'] = incident_beam
-    original.coords['scattered_beam'] = scattered_beam
+    original = make_test_data(coords=('incident_beam', 'scattered_beam'))
+    L1 = make_L1()
+    L2 = make_L2()
+    two_theta = make_two_theta()
 
     converted = scn.convert(original, origin='position', target=target, scatter=True)
     assert sc.identical(converted.meta['L1'], L1)
@@ -209,11 +262,9 @@ def test_convert_beam_length_and_angle(target):
 
 
 def test_convert_tof_to_dspacing():
-    tof = make_tof_dataset()
+    tof = make_test_data(coords=('tof', 'Ltotal', 'two_theta'), dataset=True)
     dspacing = scn.convert(tof, origin='tof', target='dspacing', scatter=True)
     check_tof_conversion_metadata(dspacing, 'dspacing', sc.units.angstrom)
-    for key in ('position', 'source_position', 'sample_position'):
-        assert sc.identical(dspacing['counts'].attrs[key], tof.coords[key])
 
     # Rule of thumb (https://www.psi.ch/niag/neutron-physics):
     # v [m/s] = 3956 / \lambda [ Angstrom ]
@@ -237,11 +288,9 @@ def test_convert_tof_to_dspacing():
 
 
 def test_convert_tof_to_wavelength():
-    tof = make_tof_dataset()
+    tof = make_test_data(coords=('tof', 'Ltotal'), dataset=True)
     wavelength = scn.convert(tof, origin='tof', target='wavelength', scatter=True)
     check_tof_conversion_metadata(wavelength, 'wavelength', sc.units.angstrom)
-    for key in ('position', 'source_position', 'sample_position'):
-        assert sc.identical(wavelength['counts'].attrs[key], tof.coords[key])
 
     # Rule of thumb (https://www.psi.ch/niag/neutron-physics):
     # v [m/s] = 3956 / \lambda [ Angstrom ]
@@ -259,7 +308,7 @@ def test_convert_tof_to_wavelength():
 
 
 def test_convert_tof_to_Q():
-    tof = make_tof_dataset()
+    tof = make_test_data(coords=('tof', 'Ltotal', 'two_theta'), dataset=True)
     wavelength = scn.convert(tof, origin='tof', target='wavelength', scatter=True)
     Q_from_tof = scn.convert(tof, origin='tof', target='Q', scatter=True)
     Q_from_wavelength = scn.convert(wavelength,
@@ -272,8 +321,6 @@ def test_convert_tof_to_Q():
     # wavelength is intermediate in this case and thus kept but not in the other case.
     del Q_from_tof['counts'].attrs['wavelength']
     assert sc.identical(Q_from_tof, Q_from_wavelength)
-    for key in ('position', 'source_position', 'sample_position'):
-        assert sc.identical(wavelength['counts'].attrs[key], tof.coords[key])
 
     # Rule of thumb (c):
     # v [m/s] = 3956 / \lambda [ Angstrom ]
@@ -298,11 +345,9 @@ def test_convert_tof_to_Q():
 
 
 def test_convert_tof_to_energy_elastic():
-    tof = make_tof_dataset()
+    tof = make_test_data(coords=('tof', 'Ltotal'), dataset=True)
     energy = scn.convert(tof, origin='tof', target='energy', scatter=True)
     check_tof_conversion_metadata(energy, 'energy', sc.units.meV)
-    for key in ('position', 'source_position', 'sample_position'):
-        assert sc.identical(energy['counts'].attrs[key], tof.coords[key])
 
     tof_in_seconds = sc.to_unit(tof.coords['tof'], 's')
     # e [J] = 1/2 m(n) [kg] (l [m] / tof [s])^2
@@ -327,7 +372,7 @@ def test_convert_tof_to_energy_elastic():
 def test_convert_tof_to_energy_elastic_fails_if_inelastic_params_present():
     # Note these conversion fail only because they are not implemented.
     # It should definitely be possible to support this.
-    tof = make_tof_dataset()
+    tof = make_test_data(coords=('tof', 'L1', 'L2'), dataset=True)
     scn.convert(tof, origin='tof', target='energy', scatter=True)
     tof.coords['incident_energy'] = 2.1 * sc.units.meV
     with pytest.raises(RuntimeError):
@@ -341,7 +386,7 @@ def test_convert_tof_to_energy_elastic_fails_if_inelastic_params_present():
 
 
 def test_convert_tof_to_energy_transfer_direct():
-    tof = make_tof_dataset()
+    tof = make_test_data(coords=('tof', 'L1', 'L2'), dataset=True)
     with pytest.raises(RuntimeError):
         scn.convert(tof, origin='tof', target='energy_transfer', scatter=True)
     tof.coords['incident_energy'] = 35.0 * sc.units.meV
@@ -362,7 +407,7 @@ def test_convert_tof_to_energy_transfer_direct():
 
 
 def test_convert_tof_to_energy_transfer_indirect():
-    tof = make_tof_dataset()
+    tof = make_test_data(coords=('tof', 'L1', 'L2'), dataset=True)
     with pytest.raises(RuntimeError):
         scn.convert(tof, origin='tof', target='energy_transfer', scatter=True)
     tof.coords['incident_energy'] = 25.0 * sc.units.meV
@@ -387,14 +432,14 @@ def test_convert_tof_to_energy_transfer_indirect():
 
 
 def test_convert_tof_to_energy_transfer_direct_indirect_are_distinct():
-    tof_direct = make_tof_dataset()
+    tof_direct = make_test_data(coords=('tof', 'L1', 'L2'), dataset=True)
     tof_direct.coords['incident_energy'] = 22.0 * sc.units.meV
     direct = scn.convert(tof_direct,
                          origin='tof',
                          target='energy_transfer',
                          scatter=True)
 
-    tof_indirect = make_tof_dataset()
+    tof_indirect = make_test_data(coords=('tof', 'L1', 'L2'), dataset=True)
     tof_indirect.coords['final_energy'] = 22.0 * sc.units.meV
     indirect = scn.convert(tof_indirect,
                            origin='tof',
@@ -409,7 +454,7 @@ def test_convert_tof_to_energy_transfer_direct_indirect_are_distinct():
 
 @pytest.mark.parametrize('target', TOF_TARGET_DIMS)
 def test_convert_with_factor_type_promotion(target):
-    tof = make_tof_dataset()
+    tof = make_test_data(coords=('Ltotal', 'two_theta'))
     tof.coords['tof'] = sc.array(dims=['tof'],
                                  values=[4000, 5000, 6100, 7300],
                                  unit='us',
@@ -422,7 +467,7 @@ def test_convert_with_factor_type_promotion(target):
 
 @pytest.mark.parametrize('target', TOF_TARGET_DIMS)
 def test_convert_binned_events_converted(target):
-    tof = make_tof_dataset()
+    tof = make_test_data(coords=('Ltotal', 'two_theta'), dataset=True)
     # Standard dense coord for comparison purposes. The final 0 is a dummy.
     tof.coords['tof'] = sc.array(dims=['spectrum', 'tof'],
                                  values=[[1000.0, 3000.0, 2000.0, 4000.0],
@@ -444,7 +489,7 @@ def test_convert_binned_events_converted(target):
 
 @pytest.mark.parametrize('target', TOF_TARGET_DIMS)
 def test_convert_binned_convert_slice(target):
-    tof = make_tof_dataset()['counts']['tof', 0].copy()
+    tof = make_test_data(coords=('tof', 'Ltotal', 'two_theta'))['tof', 0].copy()
     tof.data = make_tof_binned_events()
     original = tof.copy()
     full = scn.convert(tof, origin='tof', target=target, scatter=True)
