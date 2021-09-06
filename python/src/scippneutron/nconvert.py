@@ -21,15 +21,17 @@ def _scattering_beams(source_position, sample_position, position):
     }
 
 
-def _beam_lengths_and_angle(incident_beam, scattered_beam):
-    def normalized(v):
-        return v / sc.norm(v)
+def two_theta(incident_beam, scattered_beam, L1, L2):
+    return sc.acos(sc.dot(incident_beam / L1, scattered_beam / L2))
 
+
+def _beam_lengths_and_angle(incident_beam, scattered_beam):
+    L1 = sc.norm(incident_beam)
+    L2 = sc.norm(scattered_beam)
     return {
-        'L1': sc.norm(incident_beam),
-        'L2': sc.norm(scattered_beam),
-        'two_theta':
-        sc.acos(sc.dot(normalized(incident_beam), normalized(scattered_beam)))
+        'L1': L1,
+        'L2': L2,
+        'two_theta': two_theta(incident_beam, scattered_beam, L1, L2)
     }
 
 
