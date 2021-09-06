@@ -190,13 +190,13 @@ class LoadFromJson:
     def load_dataset(self,
                      group: Dict,
                      dataset_name: str,
-                     dimensions: List[str],
+                     dimensions: Optional[List[str]] = [],
                      dtype: Optional[Any] = None) -> sc.Variable:
         """
-        Load a dataset into a Scipp Variable
+        Load a dataset into a Scipp Variable (array or scalar)
         :param group: Group containing dataset to load
         :param dataset_name: Name of the dataset to load
-        :param dimensions: Dimensions for the output Variable
+        :param dimensions: Dimensions for the output Variable. If empty, yields scalar.
         :param dtype: Cast to this dtype during load,
           otherwise retain dataset dtype
         """

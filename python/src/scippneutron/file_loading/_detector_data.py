@@ -118,6 +118,7 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
                                     detector_id_dtype: Any = np.int32) -> sc.DataArray:
     return sc.DataArray(data=sc.empty(dims=[_event_dimension],
                                       shape=[0],
+                                      unit='counts',
                                       variances=True,
                                       dtype=np.float32),
                         coords={
@@ -240,6 +241,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
                       shape=event_id.shape,
+                      unit='counts',
                       dtype=np.float32,
                       variances=True)
 
