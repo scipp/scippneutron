@@ -2,7 +2,6 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # @author Jan-Lukas Wynen
 
-import itertools
 import math
 
 import numpy as np
@@ -160,6 +159,53 @@ def test_convert_coords_vs_attributes():
                              target='wavelength',
                              scatter=True)
     assert sc.identical(from_coords, from_attrs)
+
+
+@pytest.mark.parametrize('target', ('incident_beam', 'scattered_beam'))
+def test_convert_beams(target):
+    for sample_position in (sc.vector(value=[0.0, 0.0, 0.0], unit='m'),
+                            sc.vectors(dims=['spectrum'],
+                                       values=[[1.0, 0.0, 0.2], [2.1, -0.3, 1.4]],
+                                       unit='m')):
+        original = make_tof_dataset()['counts'].copy()
+        original.coords['sample_position'] = sample_position
+        converted = scn.convert(original,
+                                origin='position',
+                                target=target,
+                                scatter=True)
+        for key in ('position', 'source_position', 'sample_position'):
+            assert key not in converted.coords
+        assert sc.identical(
+            converted.coords['incident_beam'],
+            original.coords['sample_position'] - original.coords['source_position'])
+        assert sc.identical(
+            converted.coords['scattered_beam'],
+            original.coords['position'] - original.coords['sample_position'])
+
+
+@pytest.mark.parametrize('target', ('L1', 'L2', 'two_theta', 'Ltotal'))
+def test_convert_beam_length_and_angle(target):
+    incident_beam = sc.vector(value=[10.0, 0.0, 1.0], unit='m')
+    scattered_beam = sc.vectors(dims=['spectrum'],
+                                values=[[-2.0, 1.0, 1.0], [1.0, 0.0, 8.0]],
+                                unit='m')
+    L1 = sc.scalar(math.sqrt(101), unit='m')
+    L2 = sc.array(dims=['spectrum'], values=[math.sqrt(6), math.sqrt(65)], unit='m')
+    two_theta = sc.acos(
+        sc.array(dims=['spectrum'], values=[-19, 18], unit='m^2') / L1 / L2)
+
+    original = make_tof_dataset()['counts'].copy()
+    for key in ('position', 'source_position', 'sample_position'):
+        del original.coords[key]
+    original.coords['incident_beam'] = incident_beam
+    original.coords['scattered_beam'] = scattered_beam
+
+    converted = scn.convert(original, origin='position', target=target, scatter=True)
+    assert sc.identical(converted.meta['L1'], L1)
+    assert sc.identical(converted.meta['L2'], L2)
+    assert sc.identical(converted.meta['two_theta'], two_theta)
+    if target == 'Ltotal':
+        assert sc.identical(converted.coords['Ltotal'], L1 + L2)
 
 
 def test_convert_tof_to_dspacing():
