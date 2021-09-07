@@ -5,8 +5,6 @@
 import scipp as sc
 import scipp.constants as const
 
-from ._scippneutron import conversions
-
 # TODO check old convert for disallowed combinations of coords, e.g. inelastic energy
 
 
@@ -80,7 +78,9 @@ def _energy_transfer_direct_from_tof(tof, L1, L2, incident_energy):
 
 
 def _energy_transfer_indirect_from_tof(tof, L1, L2, final_energy):
-    return conversions.energy_transfer_indirect_from_tof(tof, L1, L2, final_energy)
+    t0 = _energy_transfer_t0(final_energy, tof, L2)
+    c = _energy_constant(_elem_unit(final_energy), tof, L1)
+    return c * (L1 / (tof - t0))**2 - final_energy
 
 
 def _dspacing_from_tof(tof, Ltotal, two_theta):
