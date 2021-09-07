@@ -12,6 +12,9 @@ if os.name == "nt":
     with importlib.resources.path("scipp", "__init__.py") as path:
         dll_directory = (path.parent).resolve()
         os.environ["PATH"] += os.pathsep + str(dll_directory)
+    with importlib.resources.path("scippneutron", "__init__.py") as path:
+        dll_directory = (path.parent).resolve()
+        os.environ["PATH"] += os.pathsep + str(dll_directory)
 
 from ._scippneutron import __version__
 from ._scippneutron import convert
