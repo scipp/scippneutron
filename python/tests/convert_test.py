@@ -201,10 +201,9 @@ def test_convert_scattering_conversion_fails_with_noscatter_mode():
 
 
 def test_convert_coords_vs_attributes():
-    with_coords = make_test_data(coords=('tof', 'Ltotal', 'two_theta'), dataset=True)
+    with_coords = make_test_data(coords=('tof', 'Ltotal'), dataset=True)
     with_attrs = with_coords.copy()
-    for key in ('sample_position', 'source_position', 'position'):
-        with_attrs['counts'].attrs[key] = with_attrs.coords.pop(key)
+    with_attrs['counts'].attrs['Ltotal'] = with_attrs.coords.pop('Ltotal')
 
     from_coords = scn.convert(with_coords,
                               origin='tof',
