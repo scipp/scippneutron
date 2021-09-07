@@ -124,7 +124,8 @@ def _dspacing_from_tof(tof, Ltotal, two_theta):
 
 NO_SCATTER_GRAPH = {
     'Ltotal': _total_beam_length_no_scatter,
-    'wavelength': _wavelength_from_tof
+    'wavelength': _wavelength_from_tof,
+    'energy': _energy_from_tof,
 }
 
 SCATTER_GRAPH_DETECTOR_TO_PHYS = {
@@ -207,9 +208,8 @@ def _elastic_scatter_graph(data, origin, target):
 
 
 def _scatter_graph(data, origin, target):
-    graph = _inelastic_scatter_graph(
-        data) if target == 'energy_transfer' else _elastic_scatter_graph(
-            data, origin, target)
+    graph = (_inelastic_scatter_graph(data) if target == 'energy_transfer' else
+             _elastic_scatter_graph(data, origin, target))
     if not graph:
         raise RuntimeError(f"No viable conversion from '{origin}' to '{target}'.")
     return graph
@@ -228,6 +228,9 @@ def convert(data, origin, target, scatter):
                                           graph=conversion_graph(
                                               data, origin, target, scatter))
     except KeyError as err:
+        if err.args[0] == target:
+            raise RuntimeError(f"No viable conversion from '{origin}' to '{target}' "
+                               f"with scatter={scatter}.")
         raise RuntimeError(f"Missing coordinate '{err.args[0]}' for conversion "
                            f"from '{origin}' to '{target}'") from None
 

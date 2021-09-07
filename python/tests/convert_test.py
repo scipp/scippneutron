@@ -91,9 +91,9 @@ def make_tof_binned_events():
         sc.zeros(dims=['event'], shape=[7], dtype=float),
         coords={
             'tof':
-                sc.array(dims=['event'],
-                         values=[1000.0, 3000.0, 2000.0, 4000.0, 5000.0, 6000.0, 3000.0],
-                         unit='us')
+            sc.array(dims=['event'],
+                     values=[1000.0, 3000.0, 2000.0, 4000.0, 5000.0, 6000.0, 3000.0],
+                     unit='us')
         })
     return sc.bins(data=buffer,
                    dim='event',
@@ -104,9 +104,9 @@ def make_tof_binned_events():
 def make_count_density_variable(unit):
     return sc.arange('x', 1.0, 7.0,
                      unit=sc.units.counts / unit).fold('x', {
-        'spectrum': 2,
-        'tof': 3
-    })
+                         'spectrum': 2,
+                         'tof': 3
+                     })
 
 
 def check_tof_conversion_metadata(converted, target, coord_unit):
@@ -315,6 +315,14 @@ def test_convert_tof_to_wavelength():
         np.testing.assert_almost_equal(val, 3956.0 / (L / t), val * 1e-3)
 
 
+def test_convert_tof_to_wavelength_no_scatter():
+    # scatter=True and scatter=False only differ in how Ltotal is computed.
+    tof = make_test_data(coords=('tof', 'Ltotal'), dataset=True)
+    no_scatter = scn.convert(tof, origin='tof', target='wavelength', scatter=False)
+    scatter = scn.convert(tof, origin='tof', target='wavelength', scatter=True)
+    assert sc.identical(no_scatter, scatter)
+
+
 def test_convert_tof_to_Q():
     tof = make_test_data(coords=('tof', 'Ltotal', 'two_theta'), dataset=True)
     wavelength = scn.convert(tof, origin='tof', target='wavelength', scatter=True)
@@ -365,15 +373,23 @@ def test_convert_tof_to_energy_elastic():
     for val, t in zip(energy.coords['energy']['spectrum', 0].values,
                       tof_in_seconds.values):
         np.testing.assert_almost_equal(val,
-                                       joule_to_mev * neutron_mass / 2 * (11 / t) ** 2,
+                                       joule_to_mev * neutron_mass / 2 * (11 / t)**2,
                                        val * 1e-3)
     # Spectrum 1
     L = 10.0 + math.sqrt(1.0 * 1.0 + 0.1 * 0.1)
     for val, t in zip(energy.coords['energy']['spectrum', 1].values,
                       tof_in_seconds.values):
         np.testing.assert_almost_equal(val,
-                                       joule_to_mev * 0.5 * neutron_mass * (L / t) ** 2,
+                                       joule_to_mev * 0.5 * neutron_mass * (L / t)**2,
                                        val * 1e-3)
+
+
+def test_convert_tof_to_energy_elastic_no_scatter():
+    # scatter=True and scatter=False only differ in how Ltotal is computed.
+    tof = make_test_data(coords=('tof', 'Ltotal'), dataset=True)
+    no_scatter = scn.convert(tof, origin='tof', target='energy', scatter=False)
+    scatter = scn.convert(tof, origin='tof', target='energy', scatter=True)
+    assert sc.identical(no_scatter, scatter)
 
 
 def test_convert_tof_to_energy_elastic_fails_if_inelastic_params_present():
@@ -404,7 +420,7 @@ def test_convert_tof_to_energy_transfer_direct():
     t = tof.coords['tof']
     t0 = sc.to_unit(tof.coords['L1'] * sc.sqrt(m_n / ei), t.unit)
     assert sc.all(t0 < t).value  # only test physical region here
-    ref = ei - sc.to_unit(m_n / 2 * (tof.coords['L2'] / (t - t0)) ** 2,
+    ref = ei - sc.to_unit(m_n / 2 * (tof.coords['L2'] / (t - t0))**2,
                           ei.unit).rename_dims({'tof': 'energy_transfer'})
     assert sc.allclose(direct.coords['energy_transfer'], ref, rtol=sc.scalar(1e-13))
 
@@ -449,7 +465,7 @@ def test_convert_tof_to_energy_transfer_indirect():
     t = tof.coords['tof']
     t0 = sc.to_unit(tof.coords['L2'] * sc.sqrt(m_n / ef), t.unit)
     assert sc.all(t0 < t).value  # only test physical region here
-    ref = sc.to_unit(m_n / 2 * (tof.coords['L1'] / (t - t0)) ** 2, ef.unit).rename_dims(
+    ref = sc.to_unit(m_n / 2 * (tof.coords['L1'] / (t - t0))**2, ef.unit).rename_dims(
         {'tof': 'energy_transfer'}) - ef
     assert sc.allclose(indirect.coords['energy_transfer'], ref, rtol=sc.scalar(1e-13))
 
