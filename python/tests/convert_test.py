@@ -160,7 +160,9 @@ TOF_TARGET_DIMS = ('dspacing', 'wavelength', 'energy')
 
 @pytest.mark.parametrize('target', TOF_TARGET_DIMS)
 def test_convert_slice(target):
-    tof = make_test_data(coords=('tof', 'Ltotal', 'two_theta'), dataset=True)
+    tof = make_test_data(coords=('tof', 'position', 'sample_position',
+                                 'source_position'),
+                         dataset=True)
     expected = scn.convert(tof['counts'], origin='tof', target=target,
                            scatter=True)['spectrum', 0].copy()
     # A side-effect of `convert` is that it turns relevant meta data into
