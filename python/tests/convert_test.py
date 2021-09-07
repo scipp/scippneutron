@@ -54,7 +54,7 @@ def make_two_theta():
 
 
 def make_tof():
-    return sc.array(dims=['tof'], values=[4000.0, 5000.0, 6100.0, 7300.0], unit='us')
+    return sc.array(dims=['tof'], values=[5300.0, 6000.0, 6100.0, 7300.0], unit='us')
 
 
 _COORD_MAKERS = {
