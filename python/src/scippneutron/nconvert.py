@@ -48,7 +48,7 @@ def _wavelength_from_tof(tof, Ltotal):
     c = sc.to_unit(const.h / const.m_n,
                    sc.units.angstrom * _elem_unit(Ltotal) / _elem_unit(tof),
                    copy=False)
-    return c / Ltotal * tof
+    return (c / Ltotal).astype(tof.dtype, copy=False) * tof
 
 
 def _Q_from_wavelength(wavelength, two_theta):
@@ -61,43 +61,60 @@ def _energy_constant(energy_unit, tof, length):
                       copy=False)
 
 
+def _common_dtype(a, b):
+    """
+    Very limited type promotion.
+    Only useful to check if the combination of a and b results in
+    single or double precision float.
+    """
+    if a.dtype == sc.dtype.float32 and b.dtype == sc.dtype.float32:
+        return sc.dtype.float32
+    return sc.dtype.float64
+
+
 def _energy_transfer_t0(energy, tof, length):
+    dtype = _common_dtype(energy, tof)
     c = sc.to_unit(const.m_n,
-                   _elem_unit(tof)**2 * _elem_unit(energy) / _elem_unit(length)**2)
-    return length * sc.sqrt(c / energy)
+                   _elem_unit(tof)**2 * _elem_unit(energy) /
+                   _elem_unit(length)**2).astype(dtype, copy=False)
+    return length.astype(dtype, copy=False) * sc.sqrt(c / energy)
 
 
 def _energy_from_tof(tof, Ltotal):
     c = _energy_constant(sc.units.meV, tof, Ltotal)
-    return c * (Ltotal / tof)**2
+    return (c * Ltotal**2).astype(tof.dtype, copy=False) / tof**sc.scalar(
+        2, dtype='float32')
 
 
 def _energy_transfer_direct_from_tof(tof, L1, L2, incident_energy):
     t0 = _energy_transfer_t0(incident_energy, tof, L1)
     c = _energy_constant(_elem_unit(incident_energy), tof, L2)
+    dtype = _common_dtype(incident_energy, tof)
+    scale = (c * L2**2).astype(dtype, copy=False)
     delta_tof = tof - t0
     return sc.where(delta_tof <= sc.scalar(0, unit=_elem_unit(delta_tof)),
-                    sc.scalar(np.nan, unit=_elem_unit(incident_energy)),
-                    incident_energy - c * (L2 / delta_tof)**2)
+                    sc.scalar(np.nan, dtype=dtype, unit=_elem_unit(incident_energy)),
+                    incident_energy - scale / delta_tof**2)
 
 
 def _energy_transfer_indirect_from_tof(tof, L1, L2, final_energy):
     t0 = _energy_transfer_t0(final_energy, tof, L2)
     c = _energy_constant(_elem_unit(final_energy), tof, L1)
+    dtype = _common_dtype(final_energy, tof)
+    scale = (c * L1**2).astype(dtype, copy=False)
     delta_tof = tof - t0
     return sc.where(delta_tof <= sc.scalar(0, unit=_elem_unit(delta_tof)),
-                    sc.scalar(np.nan, unit=_elem_unit(final_energy)),
-                    c * (L1 / delta_tof)**2 - final_energy)
+                    sc.scalar(np.nan, dtype=dtype, unit=_elem_unit(final_energy)),
+                    scale / delta_tof**2 - final_energy)
 
 
 def _dspacing_from_tof(tof, Ltotal, two_theta):
     c = sc.to_unit(2 * const.m_n / const.h,
                    _elem_unit(tof) / sc.units.angstrom / _elem_unit(Ltotal),
                    copy=False)
-    return tof / (c * Ltotal * sc.sin(two_theta / 2))
+    return tof / (c * Ltotal * sc.sin(two_theta / 2)).astype(tof.dtype, copy=False)
 
 
-# TODO consumes position, do we want that in scatter=False?
 NO_SCATTER_GRAPH = {
     'Ltotal': _total_beam_length_no_scatter,
     'wavelength': _wavelength_from_tof

@@ -371,7 +371,7 @@ def test_convert_tof_to_energy_elastic():
 
 
 def test_convert_tof_to_energy_elastic_fails_if_inelastic_params_present():
-    # Note these conversion fail only because they are not implemented.
+    # Note these conversions fail only because they are not implemented.
     # It should definitely be possible to support this.
     tof = make_test_data(coords=('tof', 'L1', 'L2'), dataset=True)
     scn.convert(tof, origin='tof', target='energy', scatter=True)
@@ -488,17 +488,24 @@ def test_convert_tof_to_energy_transfer_direct_indirect_are_distinct():
                            atol=1e-11 * sc.units.meV)
 
 
-@pytest.mark.parametrize('target', TOF_TARGET_DIMS)
-def test_convert_with_factor_type_promotion(target):
-    tof = make_test_data(coords=('Ltotal', 'two_theta'))
+def test_convert_with_factor_type_promotion():
+    tof = make_test_data(coords=('tof', 'L1', 'L2', 'two_theta'))
     tof.coords['tof'] = sc.array(dims=['tof'],
                                  values=[4000, 5000, 6100, 7300],
                                  unit='us',
                                  dtype='float32')
-    res = scn.convert(tof, origin='tof', target=target, scatter=True)
-    assert res.coords[target].dtype == sc.dtype.float32
-    res = scn.convert(res, origin=target, target='tof', scatter=True)
-    assert res.coords['tof'].dtype == sc.dtype.float32
+    for target in TOF_TARGET_DIMS:
+        res = scn.convert(tof, origin='tof', target=target, scatter=True)
+        assert res.coords[target].dtype == sc.dtype.float32
+
+    for key in ('incident_energy', 'final_energy'):
+        inelastic = tof.copy()
+        inelastic.coords[key] = sc.scalar(35, dtype=sc.dtype.float32, unit=sc.units.meV)
+        res = scn.convert(inelastic,
+                          origin='tof',
+                          target='energy_transfer',
+                          scatter=True)
+        assert res.coords['energy_transfer'].dtype == sc.dtype.float32
 
 
 @pytest.mark.parametrize('target', TOF_TARGET_DIMS)
