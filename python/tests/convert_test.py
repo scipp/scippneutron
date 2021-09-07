@@ -320,7 +320,6 @@ def test_convert_tof_to_Q():
     check_tof_conversion_metadata(Q_from_wavelength, 'Q',
                                   sc.units.one / sc.units.angstrom)
     # wavelength is intermediate in this case and thus kept but not in the other case.
-    del Q_from_tof['counts'].attrs['wavelength']
     assert sc.identical(Q_from_tof, Q_from_wavelength)
 
     # Rule of thumb (c):
