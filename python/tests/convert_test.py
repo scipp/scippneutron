@@ -402,6 +402,34 @@ def test_convert_tof_to_energy_transfer_direct():
     assert sc.allclose(direct.coords['energy_transfer'], ref, rtol=sc.scalar(1e-13))
 
 
+def make_unphysical_tof(t0, da):
+    tof = sc.concatenate(
+        sc.concatenate(
+            t0 - t0 / 2,  # 0 < t < t0
+            sc.full_like(t0, -2),  # t < 0
+            'tof'),
+        2 * t0,  # t > t0
+        'tof')
+    is_unphysical = sc.array(dims=['energy_transfer'],
+                             values=[True, True,
+                                     False]).broadcast(['energy_transfer', 'spectrum'],
+                                                       [3, da.sizes['spectrum']])
+    return tof, is_unphysical
+
+
+def test_convert_tof_to_energy_transfer_direct_unphysical():
+    tof = make_test_data(coords=('tof', 'L1', 'L2'), dataset=True)
+    ei = 35.0 * sc.units.meV
+    tof.coords['incident_energy'] = ei
+    t0 = sc.to_unit(tof.coords['L1'] * sc.sqrt(m_n / ei), sc.units.s)
+    coord, is_unphysical = make_unphysical_tof(t0, tof)
+    tof.coords['tof'] = coord
+
+    result = scn.convert(tof, origin='tof', target='energy_transfer', scatter=True)
+    assert sc.identical(sc.isnan(result.coords['energy_transfer']),
+                        is_unphysical.transpose(result.dims))
+
+
 def test_convert_tof_to_energy_transfer_indirect():
     tof = make_test_data(coords=('tof', 'L1', 'L2'), dataset=True)
     with pytest.raises(RuntimeError):
@@ -417,6 +445,18 @@ def test_convert_tof_to_energy_transfer_indirect():
     ref = sc.to_unit(m_n / 2 * (tof.coords['L1'] / (t - t0))**2, ef.unit).rename_dims(
         {'tof': 'energy_transfer'}) - ef
     assert sc.allclose(indirect.coords['energy_transfer'], ref, rtol=sc.scalar(1e-13))
+
+
+def test_convert_tof_to_energy_transfer_indirect_unphysical():
+    tof = make_test_data(coords=('tof', 'L1', 'L2'), dataset=True)
+    ef = 25.0 * sc.units.meV
+    tof.coords['final_energy'] = ef
+    t0 = sc.to_unit(tof.coords['L2'] * sc.sqrt(m_n / ef), sc.units.s)
+    coord, is_unphysical = make_unphysical_tof(t0, tof)
+    tof.coords['tof'] = coord
+
+    result = scn.convert(tof, origin='tof', target='energy_transfer', scatter=True)
+    assert sc.identical(sc.isnan(result.coords['energy_transfer']), is_unphysical)
 
 
 def test_convert_tof_to_energy_transfer_both_coords():

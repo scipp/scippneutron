@@ -2,6 +2,7 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # @author Jan-Lukas Wynen
 
+import numpy as np
 import scipp as sc
 import scipp.constants as const
 
@@ -74,13 +75,19 @@ def _energy_from_tof(tof, Ltotal):
 def _energy_transfer_direct_from_tof(tof, L1, L2, incident_energy):
     t0 = _energy_transfer_t0(incident_energy, tof, L1)
     c = _energy_constant(_elem_unit(incident_energy), tof, L2)
-    return incident_energy - c * (L2 / (tof - t0))**2
+    delta_tof = tof - t0
+    return sc.where(delta_tof <= sc.scalar(0, unit=_elem_unit(delta_tof)),
+                    sc.scalar(np.nan, unit=_elem_unit(incident_energy)),
+                    incident_energy - c * (L2 / delta_tof)**2)
 
 
 def _energy_transfer_indirect_from_tof(tof, L1, L2, final_energy):
     t0 = _energy_transfer_t0(final_energy, tof, L2)
     c = _energy_constant(_elem_unit(final_energy), tof, L1)
-    return c * (L1 / (tof - t0))**2 - final_energy
+    delta_tof = tof - t0
+    return sc.where(delta_tof <= sc.scalar(0, unit=_elem_unit(delta_tof)),
+                    sc.scalar(np.nan, unit=_elem_unit(final_energy)),
+                    c * (L1 / delta_tof)**2 - final_energy)
 
 
 def _dspacing_from_tof(tof, Ltotal, two_theta):
