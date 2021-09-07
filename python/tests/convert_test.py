@@ -125,8 +125,6 @@ def check_tof_conversion_metadata(converted, target, coord_unit):
 
 def make_dataset_in(dim):
     tof_dset = make_test_data(coords=('tof', 'Ltotal', 'two_theta'), dataset=True)
-    if dim == 'tof':
-        return tof_dset  # TODO triggers segfault otherwise
     return scn.convert(tof_dset, origin='tof', target=dim, scatter=True)
 
 
@@ -134,8 +132,6 @@ def make_dataset_in(dim):
     ('origin', 'target'),
     (('tof', 'dspacing'), ('tof', 'wavelength'), ('tof', 'energy')))
 def test_convert_dataset_vs_dataarray(origin, target):
-    if target == 'tof' and origin == 'tof':
-        return  # TODO triggers segfault otherwise
     inputs = make_dataset_in(origin)
     expected = scn.convert(inputs, origin=origin, target=target, scatter=True)
     result = sc.Dataset(
