@@ -5,11 +5,10 @@
 set(TARGET_NAME "scippneutron")
 set(INC_FILES
     include/scipp/neutron/constants.h include/scipp/neutron/conversions.h
-    include/scipp/neutron/convert.h include/scipp/neutron/beamline.h
-    include/scipp/neutron/logging.h
+    include/scipp/neutron/beamline.h include/scipp/neutron/logging.h
 )
 
-set(SRC_FILES beamline.cpp convert.cpp logging.cpp)
+set(SRC_FILES beamline.cpp logging.cpp)
 
 set(LINK_TYPE "STATIC")
 if(DYNAMIC_LIB)
