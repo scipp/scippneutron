@@ -389,16 +389,16 @@ def test_convert_tof_to_energy_transfer_direct():
     tof = make_test_data(coords=('tof', 'L1', 'L2'), dataset=True)
     with pytest.raises(RuntimeError):
         scn.convert(tof, origin='tof', target='energy_transfer', scatter=True)
-    ei = 35.0 * sc.units.meV
+    ei = 45.0 * sc.units.meV
     tof.coords['incident_energy'] = ei
     direct = scn.convert(tof, origin='tof', target='energy_transfer', scatter=True)
     check_tof_conversion_metadata(direct, 'energy_transfer', sc.units.meV)
 
     t = tof.coords['tof']
     t0 = sc.to_unit(tof.coords['L1'] * sc.sqrt(m_n / ei), t.unit)
+    assert sc.all(t0 < t).value  # only test physical region here
     ref = ei - sc.to_unit(m_n / 2 * (tof.coords['L2'] / (t - t0))**2,
                           ei.unit).rename_dims({'tof': 'energy_transfer'})
-
     assert sc.allclose(direct.coords['energy_transfer'], ref, rtol=sc.scalar(1e-13))
 
 
@@ -413,6 +413,7 @@ def test_convert_tof_to_energy_transfer_indirect():
 
     t = tof.coords['tof']
     t0 = sc.to_unit(tof.coords['L2'] * sc.sqrt(m_n / ef), t.unit)
+    assert sc.all(t0 < t).value  # only test physical region here
     ref = sc.to_unit(m_n / 2 * (tof.coords['L1'] / (t - t0))**2, ef.unit).rename_dims(
         {'tof': 'energy_transfer'}) - ef
     assert sc.allclose(indirect.coords['energy_transfer'], ref, rtol=sc.scalar(1e-13))
