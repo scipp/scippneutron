@@ -152,7 +152,6 @@ def _path_exists_impl(origin, target, graph):
     return False
 
 
-# TODO move into sc.coords?
 def path_exists(origin, target, graph):
     if origin == target:
         return True
