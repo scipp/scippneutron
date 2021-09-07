@@ -159,36 +159,54 @@ def path_exists(origin, target, graph):
     return _path_exists_impl(origin, target, sc.coords.Graph(graph))
 
 
+def _find_inelastic_inputs(data):
+    return [name for name in ('incident_energy', 'final_energy') if name in data.coords]
+
+
 def _inelastic_scatter_graph(data):
-    if 'incident_energy' in data.coords:
-        if 'final_energy' in data.coords:
+    inputs = _find_inelastic_inputs(data)
+    if len(inputs) > 1:
+        raise RuntimeError(
+            "Data contains coords for incident *and* final energy, cannot have "
+            "both for inelastic scattering.")
+    if len(inputs) == 0:
+        raise RuntimeError(
+            "Data contains neither coords for incident nor for final energy, this "
+            "does not appear to be inelastic-scattering data, cannot convert to "
+            "energy transfer.")
+
+    inelastic_step = {
+        'incident_energy': {
+            'energy_transfer': _energy_transfer_direct_from_tof
+        },
+        'final_energy': {
+            'energy_transfer': _energy_transfer_indirect_from_tof
+        }
+    }[inputs[0]]
+    return {**SCATTER_GRAPH_DETECTOR_TO_PHYS, **inelastic_step}
+
+
+def _elastic_scatter_graph(data, origin, target):
+    if target == 'energy':
+        inelastic_inputs = _find_inelastic_inputs(data)
+        if inelastic_inputs:
             raise RuntimeError(
-                "Data contains coords for incident *and* final energy, cannot have "
-                "both for inelastic scattering.")
-        return {
-            **SCATTER_GRAPH_DETECTOR_TO_PHYS, 'energy_transfer':
-            _energy_transfer_direct_from_tof
-        }
-    elif 'final_energy' in data.coords:
-        return {
-            **SCATTER_GRAPH_DETECTOR_TO_PHYS, 'energy_transfer':
-            _energy_transfer_indirect_from_tof
-        }
-    raise RuntimeError(
-        "Data contains neither coords for incident nor for final energy, this "
-        "does not appear to be inelastic-scattering data, cannot convert to "
-        "energy transfer.")
-
-
-def _scatter_graph(data, origin, target):
-    if target == 'energy_transfer':
-        return _inelastic_scatter_graph(data)
-    # else: elastic
+                f"Data contains coords for inelastic scattering "
+                f"({inelastic_inputs}) but conversion to elastic energy requested. "
+                f"This is not implemented.")
     for graph in (SCATTER_GRAPH_DETECTOR_TO_PHYS, ):
         if path_exists(origin, target, graph):
             return graph
+    return None
 
-    raise RuntimeError(f"No viable conversion from '{origin}' to '{target}'.")
+
+def _scatter_graph(data, origin, target):
+    graph = _inelastic_scatter_graph(
+        data) if target == 'energy_transfer' else _elastic_scatter_graph(
+            data, origin, target)
+    if not graph:
+        raise RuntimeError(f"No viable conversion from '{origin}' to '{target}'.")
+    return graph
 
 
 def conversion_graph(data, origin, target, scatter):
