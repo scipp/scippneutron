@@ -6,8 +6,6 @@ import numpy as np
 import scipp as sc
 import scipp.constants as const
 
-# TODO check old convert for disallowed combinations of coords, e.g. inelastic energy
-
 
 def _elem_unit(var):
     if var.bins is not None:
