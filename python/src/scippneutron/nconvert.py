@@ -15,6 +15,12 @@ def _elem_unit(var):
     return var.unit
 
 
+def _elem_dtype(var):
+    if var.bins is not None:
+        return var.events.dtype
+    return var.dtype
+
+
 def _total_beam_length_no_scatter(source_position, position):
     return sc.norm(position - source_position)
 
@@ -48,7 +54,7 @@ def _wavelength_from_tof(tof, Ltotal):
     c = sc.to_unit(const.h / const.m_n,
                    sc.units.angstrom * _elem_unit(Ltotal) / _elem_unit(tof),
                    copy=False)
-    return (c / Ltotal).astype(tof.dtype, copy=False) * tof
+    return (c / Ltotal).astype(_elem_dtype(tof), copy=False) * tof
 
 
 def _Q_from_wavelength(wavelength, two_theta):
@@ -67,7 +73,7 @@ def _common_dtype(a, b):
     Only useful to check if the combination of a and b results in
     single or double precision float.
     """
-    if a.dtype == sc.dtype.float32 and b.dtype == sc.dtype.float32:
+    if _elem_dtype(a) == sc.dtype.float32 and _elem_dtype(b) == sc.dtype.float32:
         return sc.dtype.float32
     return sc.dtype.float64
 
@@ -82,7 +88,7 @@ def _energy_transfer_t0(energy, tof, length):
 
 def _energy_from_tof(tof, Ltotal):
     c = _energy_constant(sc.units.meV, tof, Ltotal)
-    return (c * Ltotal**2).astype(tof.dtype, copy=False) / tof**sc.scalar(
+    return (c * Ltotal**2).astype(_elem_dtype(tof), copy=False) / tof**sc.scalar(
         2, dtype='float32')
 
 
@@ -112,7 +118,8 @@ def _dspacing_from_tof(tof, Ltotal, two_theta):
     c = sc.to_unit(2 * const.m_n / const.h,
                    _elem_unit(tof) / sc.units.angstrom / _elem_unit(Ltotal),
                    copy=False)
-    return tof / (c * Ltotal * sc.sin(two_theta / 2)).astype(tof.dtype, copy=False)
+    return tof / (c * Ltotal * sc.sin(two_theta / 2)).astype(_elem_dtype(tof),
+                                                             copy=False)
 
 
 NO_SCATTER_GRAPH = {
