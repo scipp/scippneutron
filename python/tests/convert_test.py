@@ -401,17 +401,6 @@ def test_convert_tof_to_energy_transfer_direct():
 
     assert sc.allclose(direct.coords['energy_transfer'], ref, rtol=sc.scalar(1e-3))
 
-    tof_direct = scn.convert(direct,
-                             origin='energy_transfer',
-                             target='tof',
-                             scatter=True)
-    assert sc.allclose(tof_direct.coords['tof'],
-                       tof.coords['tof'],
-                       rtol=0.0 * sc.units.one,
-                       atol=1e-11 * sc.units.us)
-    tof_direct.coords['tof'] = tof.coords['tof']
-    assert sc.identical(tof_direct, tof)
-
 
 def test_convert_tof_to_energy_transfer_indirect():
     tof = make_test_data(coords=('tof', 'L1', 'L2'), dataset=True)
@@ -425,17 +414,14 @@ def test_convert_tof_to_energy_transfer_indirect():
     indirect = scn.convert(tof, origin='tof', target='energy_transfer', scatter=True)
     assert 'energy_transfer' in indirect.coords
     assert 'tof' not in indirect.coords
-    tof_indirect = scn.convert(indirect,
-                               origin='energy_transfer',
-                               target='tof',
-                               scatter=True)
-    assert sc.all(
-        sc.isclose(tof_indirect.coords['tof'],
-                   tof.coords['tof'],
-                   rtol=0.0 * sc.units.one,
-                   atol=1e-11 * sc.units.us)).value
-    tof_indirect.coords['tof'] = tof.coords['tof']
-    assert sc.identical(tof_indirect, tof)
+
+
+def test_convert_tof_to_energy_transfer_both_coords():
+    tof = make_test_data(coords=('tof', 'L1', 'L2'), dataset=True)
+    tof.coords['incident_energy'] = 25.0 * sc.units.meV
+    tof.coords['final_energy'] = 35.0 * sc.units.meV
+    with pytest.raises(RuntimeError):
+        scn.convert(tof, origin='tof', target='energy_transfer', scatter=True)
 
 
 def test_convert_tof_to_energy_transfer_direct_indirect_are_distinct():
