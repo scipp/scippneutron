@@ -10,11 +10,15 @@ import os
 if os.name == "nt":
     import importlib.resources
     with importlib.resources.path("scipp", "__init__.py") as path:
-        dll_directory = (path.parent).resolve()
-        os.environ["PATH"] += os.pathsep + str(dll_directory)
+        # For scipp libs
+        os.environ["PATH"] += os.pathsep + str(path.parent.resolve())
+        # For TBB
+        os.environ["PATH"] += os.pathsep + str(
+            (path.parent.parent.parent / "Library" / "Bin").resolve())
+
     with importlib.resources.path("scippneutron", "__init__.py") as path:
-        dll_directory = (path.parent).resolve()
-        os.environ["PATH"] += os.pathsep + str(dll_directory)
+        # For scippneutron lib
+        os.environ["PATH"] += os.pathsep + str((path.parent).resolve())
 
 from ._scippneutron import __version__
 from ._scippneutron import convert
