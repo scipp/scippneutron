@@ -116,7 +116,6 @@ def main(prefix='install', build_dir='build', source_dir='.', caching=False):
     if platform == "win32":
         import importlib.resources
         with importlib.resources.path("scipp", "__init__.py") as path:
-            dll_directory = (path.parent.parent / "bin").resolve()
             # For scipp dlls
             os.environ["PATH"] += os.pathsep + str(path.parent.resolve())
             # For tbb dlls
