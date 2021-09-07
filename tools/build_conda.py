@@ -15,6 +15,10 @@ class FileMover():
         self.destination_root = destination_root
 
     def move_file(self, src, dst):
+        if os.path.isdir(src) and os.path.exists(dst) and os.path.isdir(dst):
+            os.write(
+                1, "(skipped - already exists) move {} {}\n".format(src, dst).encode())
+            return
         os.write(1, "move {} {}\n".format(src, dst).encode())
         shutil.move(src, dst)
 
@@ -25,9 +29,11 @@ class FileMover():
             dst = glob.glob(dst)[-1]
         if '*' in src:
             for f in glob.glob(src):
-                self.move_file(f, dst)
+                os.makedirs(dst, exist_ok=True)
+                self.move_file(f, os.path.join(dst, os.path.split(f)[1]))
         else:
-            self.move_file(src, dst)
+            os.makedirs(dst, exist_ok=True)
+            self.move_file(src, os.path.join(dst, os.path.split(src)[1]))
 
 
 if __name__ == '__main__':
@@ -49,20 +55,21 @@ if __name__ == '__main__':
 
     # Depending on the platform, directories have different names.
     if sys.platform == "win32":
-        lib_dest = 'lib'
-        bin_src = 'bin'
-        lib_src = 'Lib'
+        lib_dest = 'lib\\'
+        dll_src = os.path.join("Lib", "scippneutron")
+        dll_dest = os.path.join("Lib", "scippneutron")
+        lib_src = 'Lib\\'
         inc_src = 'include'
     else:
         lib_dest = os.path.join('lib', 'python*')
-        bin_src = None
+        dll_src = None
+        dll_dest = None
         lib_src = 'lib'
         inc_src = 'include'
 
     m.move(['scippneutron'], [lib_dest])
-    if bin_src is not None:
-        m.move([bin_src, 'scippneutron*.dll'], [bin_src])
+    if dll_src is not None:
+        m.move([dll_src, 'scippneutron-*'], [dll_dest])
     m.move([lib_src, '*scippneutron*'], [lib_src])
-    m.move([lib_src, 'cmake', 'scippneutron'], [lib_src, 'cmake'])
+    m.move([lib_src, 'cmake', 'scippneutron', '*'], [lib_src, 'cmake', 'scippneutron'])
     m.move([inc_src, 'scippneutron*'], [inc_src])
-    m.move([inc_src, 'scipp', 'neutron'], [inc_src, 'scipp'])
