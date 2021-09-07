@@ -46,10 +46,4 @@ constexpr auto energy_transfer_to_tof = [](auto &coord, const auto &scale,
   coord = tof_shift + sqrt(scale / (coord + energy_shift));
 };
 
-[[nodiscard]] SCIPPNEUTRON_EXPORT variable::Variable
-energy_transfer_indirect_from_tof(const variable::Variable &tof,
-                                  const variable::Variable &L1,
-                                  const variable::Variable &L2,
-                                  const variable::Variable &final_energy);
-
 } // namespace scipp::neutron::conversions

@@ -9,7 +9,7 @@ set(INC_FILES
     include/scipp/neutron/logging.h
 )
 
-set(SRC_FILES beamline.cpp conversions.cpp convert.cpp logging.cpp)
+set(SRC_FILES beamline.cpp convert.cpp logging.cpp)
 
 set(LINK_TYPE "STATIC")
 if(DYNAMIC_LIB)

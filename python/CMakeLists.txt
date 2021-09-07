@@ -2,9 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # ~~~
-python_add_library(
-  _scippneutron MODULE conversions.cpp neutron.cpp scippneutron.cpp
-)
+python_add_library(_scippneutron MODULE neutron.cpp scippneutron.cpp)
 target_include_directories(
   _scippneutron PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
 )

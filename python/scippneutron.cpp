@@ -6,7 +6,6 @@
 
 namespace py = pybind11;
 
-void init_conversions(py::module &);
 void init_neutron(py::module &);
 
 PYBIND11_MODULE(_scippneutron, m) {
@@ -16,5 +15,4 @@ PYBIND11_MODULE(_scippneutron, m) {
   m.attr("__version__") = py::str("unknown version");
 #endif
   init_neutron(m);
-  init_conversions(m);
 }
