@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     m.move(['scippneutron'], [lib_dest])
     if dll_src is not None:
-        m.move([dll_src, 'scippneutron-*'], [dll_dest])
+        m.move([dll_src, 'scippneutron*'], [dll_dest])
     m.move([lib_src, '*scippneutron*'], [lib_src])
     m.move([lib_src, 'cmake', 'scippneutron', '*'], [lib_src, 'cmake', 'scippneutron'])
     m.move([inc_src, 'scippneutron*'], [inc_src])
