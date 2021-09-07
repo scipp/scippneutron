@@ -5,6 +5,14 @@
 
 # flake8: noqa
 
+import os
+
+if os.name == "nt":
+    import importlib.resources
+    with importlib.resources.path("scipp", "__init__.py") as path:
+        dll_directory = (path.parent).resolve()
+        os.environ["PATH"] += os.pathsep + str(dll_directory)
+
 from ._scippneutron import __version__
 from ._scippneutron import convert
 from ._scippneutron import position, source_position, sample_position, incident_beam, scattered_beam, Ltotal, L1, L2, two_theta
