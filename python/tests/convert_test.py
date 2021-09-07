@@ -399,7 +399,7 @@ def test_convert_tof_to_energy_transfer_direct():
     ref = ei - sc.to_unit(m_n / 2 * (tof.coords['L2'] / (t - t0))**2,
                           ei.unit).rename_dims({'tof': 'energy_transfer'})
 
-    assert sc.allclose(direct.coords['energy_transfer'], ref, rtol=sc.scalar(1e-3))
+    assert sc.allclose(direct.coords['energy_transfer'], ref, rtol=sc.scalar(1e-13))
 
 
 def test_convert_tof_to_energy_transfer_indirect():
