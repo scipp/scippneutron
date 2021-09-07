@@ -9,6 +9,7 @@ import uuid
 import warnings
 import numpy as np
 import scipp as sc
+import os
 
 
 @contextmanager
@@ -857,14 +858,16 @@ def load(filename="",
     if mantid_args is None:
         mantid_args = {}
 
-    with run_mantid_alg(mantid_alg, filename, **mantid_args) as loaded:
+    _check_file_path(str(filename), mantid_alg)
+
+    with run_mantid_alg(mantid_alg, str(filename), **mantid_args) as loaded:
         # Determine what Load has provided us
         from mantid.api import Workspace
         if isinstance(loaded, Workspace):
             # A single workspace
             data_ws = loaded
         else:
-            # Seperate data and monitor workspaces
+            # Separate data and monitor workspaces
             data_ws = loaded.OutputWorkspace
 
         if instrument_filename is not None:
@@ -876,6 +879,42 @@ def load(filename="",
                            load_pulse_times=load_pulse_times,
                            error_connection=error_connection,
                            advanced_geometry=advanced_geometry)
+
+
+def _is_mantid_loadable(filename):
+    from mantid.api import FileFinder
+    if FileFinder.getFullPath(filename):
+        return True
+    else:
+        try:
+            # findRuns throws rather than return empty so need try-catch
+            FileFinder.findRuns(filename)
+            return True
+        except Exception:
+            return False
+
+
+def _check_file_path(filename, mantid_alg):
+    from mantid.api import AlgorithmManager, FrameworkManager, FileProperty
+    FrameworkManager.Instance()
+    alg = AlgorithmManager.createUnmanaged(mantid_alg)
+    filename_property = [
+        prop for prop in alg.getProperties() if isinstance(prop, FileProperty)
+    ]
+    # Only with FileProperty can Mantid take fuzzy matches to filenames and run numbers
+    # If the top level Load algorithm is requested (has no properties of its own)
+    # we know that it's child algorithm uses FileProperty. If the child algorithm
+    # is called directly we attempt to find FileProperty. Otherwise paths should be
+    # absolute
+    if filename_property or mantid_alg == 'Load':
+        if not _is_mantid_loadable(filename):
+            raise ValueError(
+                f"Mantid cannot find {filename} and therefore will not load it."
+            ) from None
+    else:
+        if not os.path.isfile(filename):
+            raise ValueError(
+                f"Cannot find file {filename} and therefore will not load it.")
 
 
 def validate_dim_and_get_mantid_string(unit_dim):
