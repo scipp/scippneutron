@@ -32,7 +32,7 @@ class DataStreamWidget:
             self.set_stop_time(stop_time_ms)
 
         display(
-            widgets.VBox([
+            widgets.HBox([
                 self._stop_button,
                 widgets.HBox([widgets.Label('Run title:'), self._title]),
                 widgets.HBox([widgets.Label('Start time:'), self._start_time]),
