@@ -3,25 +3,27 @@
 # @author Matthew Jones
 
 import numpy as np
-from typing import Tuple, List, Union
+from typing import Tuple, List, Union, Dict
 import scipp as sc
 from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
-from ._nexus import LoadFromNexus, ScippData
+from ._nexus import LoadFromNexus
 from warnings import warn
 from dateutil.parser import parse as parse_date, ParserError
 
 
-def load_logs(loaded_data: ScippData, log_groups: List[Group], nexus: LoadFromNexus,
-              run_start_time: str):
+def load_logs(log_groups: List[Group], nexus: LoadFromNexus,
+              run_start_time: str) -> Dict:
+    logs = {}
     for group in log_groups:
         try:
             log_data_name, log_data = _load_log_data_from_group(
                 group, nexus, run_start_time)
-            _add_log_to_data(log_data_name, log_data, group.path, loaded_data)
+            _add_log_to_data(log_data_name, log_data, group.path, logs)
         except BadSource as e:
             warn(f"Skipped loading {group.path} due to:\n{e}")
         except SkipSource:
             pass  # skip without warning user
+    return logs
 
 
 def _correct_nxlog_times(raw_times: sc.Variable,
@@ -93,18 +95,13 @@ def _correct_nxlog_times(raw_times: sc.Variable,
 
 
 def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,
-                     data: ScippData):
+                     data: Dict):
     """
     Add an attribute with a unique name.
     If an attribute name already exists, we iteratively walk up the file tree
     and prepend the parent name to the attribute name, until a unique name is
     found.
     """
-    try:
-        data = data.attrs
-    except AttributeError:
-        pass
-
     group_path = group_path.split('/')
     path_position = -2
     name_changed = False

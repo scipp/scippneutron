@@ -6,8 +6,7 @@ from ._nexus import LoadFromNexus
 from ._detector_data import load_detector_data
 
 
-def _load_data_from_histogram_mode_monitor(group: Dict, file_root: h5py.File,
-                                           nexus: LoadFromNexus):
+def _load_data_from_histogram_mode_monitor(group: Group, nexus: LoadFromNexus):
     try:
         dims = nexus.get_string_attribute(
             nexus.get_child_from_group(group.group, "data"), "axes").split(",")
@@ -22,25 +21,18 @@ def _load_data_from_histogram_mode_monitor(group: Dict, file_root: h5py.File,
     return sc.DataArray(data=data, coords=coords)
 
 
-def load_monitor_data(monitor_groups: List[Group], loaded_data: sc.Dataset,
-                      file_root: h5py.File, nexus: LoadFromNexus):
-    event_groups = []
+def load_monitor_data(monitor_groups: List[Group], file_root: h5py.File,
+                      nexus: LoadFromNexus) -> Dict:
+    monitor_data = {}
     for group in monitor_groups:
         monitor_name = group.path.split("/")[-1]
-        data = _load_data_from_histogram_mode_monitor(group, file_root, nexus)
-        if isinstance(loaded_data, sc.DataArray):
-            loaded_data.attrs[monitor_name] = sc.Variable(value=data)
-        else:
-            loaded_data[monitor_name] = sc.Variable(value=data)
+        data = _load_data_from_histogram_mode_monitor(group, nexus)
+        monitor_data[monitor_name] = sc.Variable(value=data)
 
         # Look for event mode data structures in NXMonitor
         if nexus.dataset_in_group(group.group, "event_index")[0]:
-            event_groups.append(group)
 
-    # If any monitors contain event-mode data, load it
-    if event_groups:
-        monitor_events = load_detector_data(event_groups, [], file_root, nexus, True)
-        if isinstance(loaded_data, sc.DataArray):
-            loaded_data.attrs["monitor_events"] = sc.Variable(value=monitor_events)
-        else:
-            loaded_data["monitor_events"] = sc.Variable(value=monitor_events)
+            monitor_events = load_detector_data([group], [], file_root, nexus, True)
+            monitor_data[f"{monitor_name}_events"] = sc.Variable(value=monitor_events)
+
+    return monitor_data
