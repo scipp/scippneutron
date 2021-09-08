@@ -1,17 +1,14 @@
 import h5py
 from typing import List, Dict
-from ._common import (MissingAttribute, Group)
+from ._common import Group
 import scipp as sc
 from ._nexus import LoadFromNexus
 from ._detector_data import load_detector_data
 
 
 def _load_data_from_histogram_mode_monitor(group: Group, nexus: LoadFromNexus):
-    try:
-        dims = nexus.get_string_attribute(
-            nexus.get_child_from_group(group.group, "data"), "axes").split(",")
-    except MissingAttribute:
-        dims = ["time_of_flight"]
+    dims = nexus.get_string_attribute(nexus.get_child_from_group(group.group, "data"),
+                                      "axes").split(",")
 
     data = nexus.load_dataset(group.group, "data", dimensions=dims)
     coords = {
