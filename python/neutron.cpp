@@ -3,7 +3,6 @@
 /// @file
 /// @author Simon Heybrock
 #include "scipp/neutron/beamline.h"
-#include "scipp/neutron/convert.h"
 
 #include "pybind11.h"
 
