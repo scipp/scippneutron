@@ -506,6 +506,23 @@ def test_convert_tof_to_energy_transfer_direct_indirect_are_distinct():
                            atol=1e-11 * sc.units.meV)
 
 
+@pytest.mark.parametrize('keep_tof', (False, True))
+def test_convert_wavelength_to_energy(keep_tof):
+    tof = make_test_data(coords=('tof', 'Ltotal'), dataset=True)
+    wavelength = scn.convert(tof, origin='tof', target='wavelength', scatter=True)
+    if not keep_tof:
+        del wavelength['counts'].attrs['tof']
+    energy_from_wavelength = scn.convert(wavelength,
+                                         origin='wavelength',
+                                         target='energy',
+                                         scatter=True)
+    check_tof_conversion_metadata(energy_from_wavelength, 'energy', sc.units.meV)
+    energy_from_tof = scn.convert(tof, origin='tof', target='energy', scatter=True)
+    assert sc.allclose(energy_from_wavelength.coords['energy'],
+                       energy_from_tof.coords['energy'],
+                       rtol=1e-14 * sc.units.one)
+
+
 def test_convert_with_factor_type_promotion():
     tof = make_test_data(coords=('tof', 'L1', 'L2', 'two_theta'))
     tof.coords['tof'] = sc.array(dims=['tof'],
@@ -540,7 +557,7 @@ def test_convert_binned_events_converted(target):
 
     res = scn.convert(tof, origin='tof', target=target, scatter=True)
     values = res['events'].values
-    for bin_index in range(1):
+    for bin_index in range(2):
         expected = res.coords[target]['spectrum',
                                       bin_index].rename_dims({target: 'event'})
         assert 'tof' not in values[bin_index].coords

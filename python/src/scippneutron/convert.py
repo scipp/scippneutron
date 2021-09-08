@@ -59,6 +59,14 @@ def _Q_from_wavelength(wavelength, two_theta):
     return (4 * const.pi) * sc.sin(two_theta / 2) / wavelength
 
 
+def _dspacing_from_tof(tof, Ltotal, two_theta):
+    c = sc.to_unit(2 * const.m_n / const.h,
+                   _elem_unit(tof) / sc.units.angstrom / _elem_unit(Ltotal),
+                   copy=False)
+    return tof / (c * Ltotal * sc.sin(two_theta / 2)).astype(_elem_dtype(tof),
+                                                             copy=False)
+
+
 def _energy_constant(energy_unit, tof, length):
     return sc.to_unit(const.m_n / 2,
                       energy_unit * (_elem_unit(tof) / _elem_unit(length))**2,
@@ -112,28 +120,38 @@ def _energy_transfer_indirect_from_tof(tof, L1, L2, final_energy):
                     scale / delta_tof**2 - final_energy)
 
 
-def _dspacing_from_tof(tof, Ltotal, two_theta):
-    c = sc.to_unit(2 * const.m_n / const.h,
-                   _elem_unit(tof) / sc.units.angstrom / _elem_unit(Ltotal),
-                   copy=False)
-    return tof / (c * Ltotal * sc.sin(two_theta / 2)).astype(_elem_dtype(tof),
-                                                             copy=False)
+def _energy_from_wavelength(wavelength):
+    c = sc.to_unit(const.h**2 / 2 / const.m_n, sc.units.meV * _elem_unit(wavelength)**2).astype(_elem_dtype(wavelength))
+    return c / wavelength**2
 
+
+NO_SCATTER_GRAPH_KINEMATICS = {
+    'Ltotal': _total_beam_length_no_scatter,
+}
 
 NO_SCATTER_GRAPH = {
-    'Ltotal': _total_beam_length_no_scatter,
+    **NO_SCATTER_GRAPH_KINEMATICS,
     'wavelength': _wavelength_from_tof,
     'energy': _energy_from_tof,
 }
 
-SCATTER_GRAPH_DETECTOR_TO_PHYS = {
+SCATTER_GRAPH_KINEMATICS = {
     ('incident_beam', 'scattered_beam'): _scattering_beams,
     ('L1', 'L2', 'two_theta'): _beam_lengths_and_angle,
     'Ltotal': _total_beam_length_scatter,
-    'wavelength': _wavelength_from_tof,
-    'Q': _Q_from_wavelength,
-    'energy': _energy_from_tof,
-    'dspacing': _dspacing_from_tof,
+}
+
+SCATTER_GRAPHS_DYNAMICS = {
+    'tof': {
+        'dspacing': _dspacing_from_tof,
+        'energy': _energy_from_tof,
+        'Q': _Q_from_wavelength,
+        'wavelength': _wavelength_from_tof,
+    },
+    'wavelength': {
+        'energy': _energy_from_wavelength,
+        'Q': _Q_from_wavelength,
+    }
 }
 
 
@@ -168,7 +186,7 @@ def _find_inelastic_inputs(data):
     return [name for name in ('incident_energy', 'final_energy') if name in data.coords]
 
 
-def _inelastic_scatter_graph(data):
+def _inelastic_scatter_graph(data, origin, target):
     inputs = _find_inelastic_inputs(data)
     if len(inputs) > 1:
         raise RuntimeError(
@@ -188,7 +206,18 @@ def _inelastic_scatter_graph(data):
             'energy_transfer': _energy_transfer_indirect_from_tof
         }
     }[inputs[0]]
-    return {**SCATTER_GRAPH_DETECTOR_TO_PHYS, **inelastic_step}
+    return {**_elastic_scatter_graph(data, origin, target), **inelastic_step}
+
+
+def _reachable_by(target, graph):
+    return any(target == targets if isinstance(targets, str) else target in targets
+               for targets in graph.keys())
+
+
+def _elastic_scatter_base_graph(origin, target):
+    if _reachable_by(target, SCATTER_GRAPH_KINEMATICS):
+        return dict(SCATTER_GRAPH_KINEMATICS)
+    return {**SCATTER_GRAPH_KINEMATICS, **SCATTER_GRAPHS_DYNAMICS[origin]}
 
 
 def _elastic_scatter_graph(data, origin, target):
@@ -199,15 +228,12 @@ def _elastic_scatter_graph(data, origin, target):
                 f"Data contains coords for inelastic scattering "
                 f"({inelastic_inputs}) but conversion to elastic energy requested. "
                 f"This is not implemented.")
-    for graph in (SCATTER_GRAPH_DETECTOR_TO_PHYS, ):
-        if path_exists(origin, target, graph):
-            return graph
-    return None
+    return _elastic_scatter_base_graph(origin, target)
 
 
 def _scatter_graph(data, origin, target):
-    graph = (_inelastic_scatter_graph(data) if target == 'energy_transfer' else
-             _elastic_scatter_graph(data, origin, target))
+    graph = (_inelastic_scatter_graph(data, origin, target) if target
+             == 'energy_transfer' else _elastic_scatter_graph(data, origin, target))
     if not graph:
         raise RuntimeError(f"No viable conversion from '{origin}' to '{target}'.")
     return graph
