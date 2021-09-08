@@ -1,4 +1,3 @@
-import ipywidgets as widgets
 from IPython.display import display
 from datetime import datetime
 from typing import Optional
@@ -13,6 +12,7 @@ class DataStreamWidget:
                  start_time_ms: Optional[int] = None,
                  stop_time_ms: Optional[int] = None,
                  run_title: Optional[str] = None):
+        import ipywidgets as widgets
         self._stop_button = widgets.ToggleButton(description="Stop stream")
         self._stop_button.observe(self._on_button_clicked, "value")
         self._title = widgets.Label("-")
