@@ -181,33 +181,6 @@ SCATTER_GRAPHS_DYNAMICS = {
 }
 
 
-def incoming(edge):
-    if isinstance(edge, str):
-        return edge
-    return sc.coords._argnames(edge)
-
-
-def _path_exists_impl(origin, target, graph):
-    try:
-        target_node = graph[target]
-    except KeyError:
-        return False
-    for node in incoming(target_node):
-        if node == target:
-            continue  # Node that produces its input as output.
-        if node == origin:
-            return True
-        if _path_exists_impl(origin, node, graph):
-            return True
-    return False
-
-
-def path_exists(origin, target, graph):
-    if origin == target:
-        return True
-    return _path_exists_impl(origin, target, sc.coords.Graph(graph))
-
-
 def _find_inelastic_inputs(data):
     return [name for name in ('incident_energy', 'final_energy') if name in data.coords]
 
