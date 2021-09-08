@@ -121,8 +121,16 @@ def _energy_transfer_indirect_from_tof(tof, L1, L2, final_energy):
 
 
 def _energy_from_wavelength(wavelength):
-    c = sc.to_unit(const.h**2 / 2 / const.m_n, sc.units.meV * _elem_unit(wavelength)**2).astype(_elem_dtype(wavelength))
+    c = sc.to_unit(const.h**2 / 2 / const.m_n,
+                   sc.units.meV * _elem_unit(wavelength)**2).astype(
+                       _elem_dtype(wavelength))
     return c / wavelength**2
+
+
+def _wavelength_from_energy(energy):
+    c = sc.to_unit(const.h**2 / 2 / const.m_n, sc.units.angstrom**2 *
+                   _elem_unit(energy)).astype(_elem_dtype(energy))
+    return sc.sqrt(c / energy)
 
 
 NO_SCATTER_GRAPH_KINEMATICS = {
@@ -151,6 +159,9 @@ SCATTER_GRAPHS_DYNAMICS = {
     'wavelength': {
         'energy': _energy_from_wavelength,
         'Q': _Q_from_wavelength,
+    },
+    'energy': {
+        'wavelength': _wavelength_from_energy,
     }
 }
 

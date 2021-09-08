@@ -506,20 +506,22 @@ def test_convert_tof_to_energy_transfer_direct_indirect_are_distinct():
                            atol=1e-11 * sc.units.meV)
 
 
+# Test conversions between quantities that are themselves
+# outputs of conversions from tof.
 @pytest.mark.parametrize('keep_tof', (False, True))
-def test_convert_wavelength_to_energy(keep_tof):
+@pytest.mark.parametrize(('target', 'target_unit'),
+                         (('energy', sc.units.meV), ('wavelength', sc.units.angstrom)))
+@pytest.mark.parametrize('origin', ('energy', 'wavelength'))
+def test_convert_non_tof(origin, target, target_unit, keep_tof):
     tof = make_test_data(coords=('tof', 'Ltotal'), dataset=True)
-    wavelength = scn.convert(tof, origin='tof', target='wavelength', scatter=True)
+    original = scn.convert(tof, origin='tof', target=origin, scatter=True)
     if not keep_tof:
-        del wavelength['counts'].attrs['tof']
-    energy_from_wavelength = scn.convert(wavelength,
-                                         origin='wavelength',
-                                         target='energy',
-                                         scatter=True)
-    check_tof_conversion_metadata(energy_from_wavelength, 'energy', sc.units.meV)
-    energy_from_tof = scn.convert(tof, origin='tof', target='energy', scatter=True)
-    assert sc.allclose(energy_from_wavelength.coords['energy'],
-                       energy_from_tof.coords['energy'],
+        del original['counts'].attrs['tof']
+    converted = scn.convert(original, origin=origin, target=target, scatter=True)
+    check_tof_conversion_metadata(converted, target, target_unit)
+    converted_from_tof = scn.convert(tof, origin='tof', target=target, scatter=True)
+    assert sc.allclose(converted.coords[target],
+                       converted_from_tof.coords[target],
                        rtol=1e-14 * sc.units.one)
 
 
