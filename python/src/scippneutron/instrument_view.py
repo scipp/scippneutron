@@ -8,20 +8,20 @@ import scipp as sc
 from scipy.spatial.transform import Rotation as Rot
 
 
-def _text_mesh(position, display_text, x_width, y_width, text_size):
+def _text_mesh(position, display_text, x_width, y_width):
     text_geometry = p3.PlaneGeometry(width=x_width,
                                      height=y_width,
                                      widthSegments=2,
                                      heightSegments=2)
 
-    text = p3.TextTexture(string=display_text, color='black', size=text_size)
+    text = p3.TextTexture(string=display_text, color='black', size=20)
     text_material = p3.MeshBasicMaterial(map=text, transparent=True)
     text_mesh = p3.Mesh(geometry=text_geometry, material=text_material)
     text_mesh.position = position
     return text_mesh
 
 
-def _box(position, display_text, bounding_box, text_size, color, **kwargs):
+def _box(position, display_text, bounding_box, color, **kwargs):
     geometry = p3.BoxGeometry(width=bounding_box[0],
                               height=bounding_box[1],
                               depth=bounding_box[2],
@@ -36,8 +36,7 @@ def _box(position, display_text, bounding_box, text_size, color, **kwargs):
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
                            x_width=bounding_box[0],
-                           y_width=bounding_box[1],
-                           text_size=text_size)
+                           y_width=bounding_box[1])
     return mesh, text_mesh
 
 
@@ -57,7 +56,7 @@ def _alignment_matrix(to_align, target):
     return Rot.from_rotvec(axis_angle).as_matrix()
 
 
-def _disk_chopper(position, display_text, bounding_box, text_size, color, **kwargs):
+def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
     geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
                                    radiusBottom=bounding_box[0] / 2,
                                    height=bounding_box[0] / 100,
@@ -79,12 +78,11 @@ def _disk_chopper(position, display_text, bounding_box, text_size, color, **kwar
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
                            x_width=bounding_box[0],
-                           y_width=bounding_box[1],
-                           text_size=text_size)
+                           y_width=bounding_box[1])
     return mesh, text_mesh
 
 
-def _cylinder(position, display_text, bounding_box, text_size, color, **kwargs):
+def _cylinder(position, display_text, bounding_box, color, **kwargs):
     geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
                                    radiusBottom=bounding_box[0] / 2,
                                    height=bounding_box[1],
@@ -102,8 +100,7 @@ def _cylinder(position, display_text, bounding_box, text_size, color, **kwargs):
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
                            x_width=bounding_box[0],
-                           y_width=bounding_box[1],
-                           text_size=text_size)
+                           y_width=bounding_box[1])
     return mesh, text_mesh
 
 
@@ -115,14 +112,12 @@ def _unpack_to_scene(scene, items):
         scene.add(items)
 
 
-def _add_to_scene(position, scene, shape, display_text, bounding_box, text_size, color,
-                  **kwargs):
+def _add_to_scene(position, scene, shape, display_text, bounding_box, color, **kwargs):
     _unpack_to_scene(
         scene,
         shape(position,
               display_text=display_text,
               bounding_box=bounding_box,
-              text_size=text_size,
               color=color,
               **kwargs))
 
@@ -143,10 +138,9 @@ def _plot_components(scipp_obj, components, positions_var, scene):
     shapes = {"cube": _box, "cylinder": _cylinder, "disk": _disk_chopper}
     for name, settings in components.items():
         type = settings["type"]
-        color = settings.get("color", "#808080")
         size = settings["size"]
-        text_size = settings.get("text_size", size)
         at = settings["at"]
+        color = settings.get("color", "#808080")
         if type not in shapes:
             supported_shapes = ", ".join(shapes.keys())
             raise ValueError(f"Unknown shape: {type} requested for {name}. "
@@ -157,7 +151,6 @@ def _plot_components(scipp_obj, components, positions_var, scene):
                       shape=shapes[type],
                       display_text=name,
                       bounding_box=tuple(size),
-                      text_size=text_size,
                       color=color,
                       det_center=det_center)
     # Reset camera
