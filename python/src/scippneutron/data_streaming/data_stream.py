@@ -89,8 +89,7 @@ async def data_stream(
     """
 
     validate_buffer_size_args(chopper_buffer_size, event_buffer_size,
-                              fast_metadata_buffer_size,
-                              slow_metadata_buffer_size)
+                              fast_metadata_buffer_size, slow_metadata_buffer_size)
 
     ctx = mp.get_context("spawn")
     data_queue = ctx.Queue()
@@ -98,24 +97,23 @@ async def data_stream(
 
     # Use "async for" as "yield from" cannot be used in an async function, see
     # https://www.python.org/dev/peps/pep-0525/#asynchronous-yield-from
-    async for data_chunk in _data_stream(
-        data_queue, instruction_queue, kafka_broker, topics, interval,
-        event_buffer_size, slow_metadata_buffer_size,
-        fast_metadata_buffer_size, chopper_buffer_size, run_info_topic,
-        start_time, stop_time):  # noqa: E125
+    async for data_chunk in _data_stream(data_queue, instruction_queue, kafka_broker,
+                                         topics, interval, event_buffer_size,
+                                         slow_metadata_buffer_size,
+                                         fast_metadata_buffer_size, chopper_buffer_size,
+                                         run_info_topic, start_time,
+                                         stop_time):  # noqa: E125
         yield data_chunk
 
 
 def validate_buffer_size_args(chopper_buffer_size, event_buffer_size,
-                              fast_metadata_buffer_size,
-                              slow_metadata_buffer_size):
-    for buffer_name, buffer_size in (("event_buffer_size", event_buffer_size),
-                                     ("slow_metadata_buffer_size",
-                                      slow_metadata_buffer_size),
+                              fast_metadata_buffer_size, slow_metadata_buffer_size):
+    for buffer_name, buffer_size in (("event_buffer_size",
+                                      event_buffer_size), ("slow_metadata_buffer_size",
+                                                           slow_metadata_buffer_size),
                                      ("fast_metadata_buffer_size",
                                       fast_metadata_buffer_size),
-                                     ("chopper_buffer_size",
-                                      chopper_buffer_size)):
+                                     ("chopper_buffer_size", chopper_buffer_size)):
         if buffer_size < 1:
             raise ValueError(f"{buffer_name} must be greater than zero")
 
@@ -156,8 +154,7 @@ async def _data_stream(
     try:
         from ._consumer import (get_run_start_message, KafkaQueryConsumer)
         from ._data_consumption_manager import (data_consumption_manager,
-                                                ManagerInstruction,
-                                                InstructionType)
+                                                ManagerInstruction, InstructionType)
     except ImportError:
         raise ImportError(_missing_dependency_message)
 
@@ -198,8 +195,8 @@ async def _data_stream(
         if end_at == StopTime.END_OF_RUN and run_start_info.stop_time != 0:
             stop_time_ms = run_start_info.stop_time
         if topics is None:
-            loaded_data, stream_info = _load_nexus_json(
-                run_start_info.nexus_structure, get_start_info=True)
+            loaded_data, stream_info = _load_nexus_json(run_start_info.nexus_structure,
+                                                        get_start_info=True)
             topics = [stream.topic for stream in stream_info]
         else:
             loaded_data, _ = _load_nexus_json(run_start_info.nexus_structure,
@@ -228,11 +225,10 @@ async def _data_stream(
     # https://pytorch.org/docs/stable/notes/multiprocessing.html
     data_collect_process = mp.get_context("spawn").Process(
         target=data_consumption_manager,
-        args=(start_time_ms, stop_time_ms, run_id, topics, kafka_broker,
-              consumer_type, stream_info, interval_s, event_buffer_size,
-              slow_metadata_buffer_size, fast_metadata_buffer_size,
-              chopper_buffer_size, worker_instruction_queue, data_queue,
-              test_message_queue))
+        args=(start_time_ms, stop_time_ms, run_id, topics, kafka_broker, consumer_type,
+              stream_info, interval_s, event_buffer_size, slow_metadata_buffer_size,
+              fast_metadata_buffer_size, chopper_buffer_size, worker_instruction_queue,
+              data_queue, test_message_queue))
     try:
         data_stream_widget = DataStreamWidget(start_time_ms=start_time_ms,
                                               stop_time_ms=stop_time_ms,
@@ -249,8 +245,7 @@ async def _data_stream(
         ) and n_data_chunks < halt_after_n_data_chunks and \
                 n_warnings < halt_after_n_warnings and \
                 not data_stream_widget.stop_requested:
-            if timeout is not None and (time.time() -
-                                        start_timeout) > timeout_s:
+            if timeout is not None and (time.time() - start_timeout) > timeout_s:
                 raise TimeoutError("data_stream timed out in test")
             try:
                 new_data = data_queue.get_nowait()
@@ -265,9 +260,8 @@ async def _data_stream(
                     data_stream_widget.set_stop_time(new_data.stop_time_ms)
                     if end_at == StopTime.END_OF_RUN:
                         worker_instruction_queue.put(
-                            ManagerInstruction(
-                                InstructionType.UPDATE_STOP_TIME,
-                                new_data.stop_time_ms))
+                            ManagerInstruction(InstructionType.UPDATE_STOP_TIME,
+                                               new_data.stop_time_ms))
                     continue
                 n_data_chunks += 1
                 yield convert_from_pickleable_dict(new_data)
@@ -275,14 +269,12 @@ async def _data_stream(
                 await asyncio.sleep(0.5 * interval_s)
     finally:
         # Ensure cleanup happens however the loop exits
-        worker_instruction_queue.put(
-            ManagerInstruction(InstructionType.STOP_NOW))
+        worker_instruction_queue.put(ManagerInstruction(InstructionType.STOP_NOW))
         if data_collect_process.is_alive():
             process_halt_timeout_s = 4.
             data_collect_process.join(process_halt_timeout_s)
         if data_collect_process.is_alive():
             data_collect_process.terminate()
-        for queue in (data_queue, worker_instruction_queue,
-                      test_message_queue):
+        for queue in (data_queue, worker_instruction_queue, test_message_queue):
             _cleanup_queue(queue)
         data_stream_widget.set_stopped()

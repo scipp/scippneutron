@@ -10,5 +10,5 @@ add_executable(
 )
 add_dependencies(all-benchmarks neutron_convert_benchmark)
 target_link_libraries(
-  neutron_convert_benchmark LINK_PRIVATE benchmark scippneutron
+  neutron_convert_benchmark LINK_PRIVATE benchmark::benchmark scippneutron
 )

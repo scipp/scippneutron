@@ -40,14 +40,9 @@ nbsphinx_prolog = """`Download this Jupyter notebook <https://raw.githubusercont
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.doctest',
-    'IPython.sphinxext.ipython_directive',
-    'IPython.sphinxext.ipython_console_highlighting',
-    'nbsphinx'
+    'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.intersphinx',
+    'sphinx.ext.mathjax', 'sphinx.ext.doctest', 'IPython.sphinxext.ipython_directive',
+    'IPython.sphinxext.ipython_console_highlighting', 'nbsphinx'
 ]
 
 autodoc_typehints = 'description'
@@ -185,8 +180,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'scipp.tex', u'scipp Documentation', u'Simon Heybrock',
-     'manual'),
+    (master_doc, 'scipp.tex', u'scipp Documentation', u'Simon Heybrock', 'manual'),
 ]
 
 # -- Options for manual page output ---------------------------------------

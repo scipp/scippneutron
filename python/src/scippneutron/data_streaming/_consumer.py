@@ -205,8 +205,7 @@ class KafkaQueryConsumer:
         """
         return self._consumer.poll(timeout=timeout)
 
-    def get_watermark_offsets(self,
-                              partition: TopicPartition) -> Tuple[int, int]:
+    def get_watermark_offsets(self, partition: TopicPartition) -> Tuple[int, int]:
         """
         Get the offset of the first and last available
         message in the given partition
@@ -241,8 +240,7 @@ def create_consumers(
         query_consumer = KafkaQueryConsumer(kafka_broker)
         for topic in topics:
             topic_partitions.extend(
-                query_consumer.get_topic_partitions(topic,
-                                                    offset=start_time_ms))
+                query_consumer.get_topic_partitions(topic, offset=start_time_ms))
         topic_partitions = query_consumer.offsets_for_times(topic_partitions)
 
     # Run start messages are typically much larger than the
@@ -264,8 +262,8 @@ def create_consumers(
 
     if consumer_type_enum == ConsumerType.REAL:
         consumers = [
-            KafkaConsumer(topic_partition, Consumer(config), callback,
-                          stop_time_ms) for topic_partition in topic_partitions
+            KafkaConsumer(topic_partition, Consumer(config), callback, stop_time_ms)
+            for topic_partition in topic_partitions
         ]
     else:
         consumers = [
@@ -328,8 +326,7 @@ def get_run_start_message(topic: str,
         query_consumer.seek(partition)
         message = query_consumer.poll(timeout=2.)
         if message is None:
-            raise RunStartError(
-                "Timed out when trying to retrieve run start message")
+            raise RunStartError("Timed out when trying to retrieve run start message")
         elif message.error():
             raise RunStartError(f"Error encountered consuming run start "
                                 f"message: {message.error()}")

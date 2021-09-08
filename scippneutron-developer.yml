@@ -10,10 +10,11 @@ channels:
 
 dependencies:
   # Build
-  - boost-cpp=1.75 # see https://github.com/scipp/scipp/issues/1888
+  - conan
   - ninja
   - tbb-devel
   - scipp
+  - cmake
 
   # Run
   - appdirs
@@ -31,6 +32,7 @@ dependencies:
   - h5py
   - python-confluent-kafka
   - ess-dmsc::ess-streaming-data-types
+  - scipy
 
   # Test
   - psutil
