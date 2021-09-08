@@ -51,8 +51,9 @@ def _load_instrument_name(instrument_groups: List[Group], nexus: LoadFromNexus) 
             warn(f"More than one {nx_instrument} found in file, "
                  f"loading name from {instrument_groups[0].group.name} only")
         return {
-            "name": nexus.load_scalar_string(instrument_groups[0].group,
-                                             "instrument_name")
+            "instrument_name":
+            sc.Variable(
+                value=nexus.load_scalar_string(instrument_groups[0].group, "name"))
         }
     except MissingDataset:
         return {}
@@ -97,7 +98,8 @@ def _load_source(source_groups: List[Group], data: ScippData, file_root: h5py.Fi
 def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:
     try:
         return {
-            "title": nexus.load_scalar_string(entry_group.group, "experiment_title")
+            "experiment_title":
+            sc.Variable(value=nexus.load_scalar_string(entry_group.group, "title"))
         }
     except MissingDataset:
         return {}

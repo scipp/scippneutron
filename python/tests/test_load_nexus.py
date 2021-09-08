@@ -1800,21 +1800,23 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
                 )))
 
     mon_1_events = load_function(builder)["monitor1_events"].data.values
-    mon_2_events = load_function(builder)["monitor1_events"].data.values
-
-    assert sc.identical(mon_1_events["detector_id", 0].attrs["detector_id"],
-                        sc.scalar(0, dtype=sc.dtype.int64))
-    assert sc.identical(mon_2_events["detector_id", 0].attrs["detector_id"],
-                        sc.scalar(1, dtype=sc.dtype.int64))
+    mon_2_events = load_function(builder)["monitor2_events"].data.values
 
     assert sc.identical(
-        mon_1_events["detector_id", 0].values[0].coords["tof"],
+        mon_1_events.coords["detector_id"],
+        sc.Variable(dims=["detector_id"], values=[0], dtype=sc.dtype.int64))
+    assert sc.identical(
+        mon_2_events.coords["detector_id"],
+        sc.Variable(dims=["detector_id"], values=[1], dtype=sc.dtype.int64))
+
+    assert sc.identical(
+        mon_1_events.values[0].coords["tof"],
         sc.Variable(dims=["event"],
                     values=[1, 2, 3, 4, 5],
                     unit=sc.units.ns,
                     dtype=sc.dtype.float64))
     assert sc.identical(
-        mon_2_events["detector_id", 1].values[0].coords["tof"],
+        mon_2_events.values[0].coords["tof"],
         sc.Variable(dims=["event"],
                     values=[6, 7, 8, 9, 10],
                     unit=sc.units.ns,
