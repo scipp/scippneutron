@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 from dataclasses import dataclass
 from ..file_loading.load_nexus import StreamInfo
 from typing import Optional, List
@@ -21,14 +23,14 @@ class ManagerInstruction:
     stop_time_ms: Optional[int] = None  # milliseconds from unix epoch
 
 
-def data_consumption_manager(
-        start_time_ms: int, stop_time_ms: Optional[int], run_id: str,
-        topics: List[str], kafka_broker: str, consumer_type: ConsumerType,
-        stream_info: Optional[List[StreamInfo]], interval_s: float,
-        event_buffer_size: int, slow_metadata_buffer_size: int,
-        fast_metadata_buffer_size: int, chopper_buffer_size: int,
-        worker_instruction_queue: mp.Queue, data_queue: mp.Queue,
-        test_message_queue: Optional[mp.Queue]):
+def data_consumption_manager(start_time_ms: int, stop_time_ms: Optional[int],
+                             run_id: str, topics: List[str], kafka_broker: str,
+                             consumer_type: ConsumerType,
+                             stream_info: Optional[List[StreamInfo]], interval_s: float,
+                             event_buffer_size: int, slow_metadata_buffer_size: int,
+                             fast_metadata_buffer_size: int, chopper_buffer_size: int,
+                             worker_instruction_queue: mp.Queue, data_queue: mp.Queue,
+                             test_message_queue: Optional[mp.Queue]):
     """
     Starts and stops buffers and data consumers which collect data and
     send them back to the main process via a queue.
@@ -37,16 +39,14 @@ def data_consumption_manager(
     as a multiprocessing.Process.
     """
     buffer = StreamedDataBuffer(data_queue, event_buffer_size,
-                                slow_metadata_buffer_size,
-                                fast_metadata_buffer_size, chopper_buffer_size,
-                                interval_s, run_id)
+                                slow_metadata_buffer_size, fast_metadata_buffer_size,
+                                chopper_buffer_size, interval_s, run_id)
 
     if stream_info is not None:
         buffer.init_metadata_buffers(stream_info)
 
-    consumers = create_consumers(start_time_ms, stop_time_ms, set(topics),
-                                 kafka_broker, consumer_type, buffer.new_data,
-                                 test_message_queue)
+    consumers = create_consumers(start_time_ms, stop_time_ms, set(topics), kafka_broker,
+                                 consumer_type, buffer.new_data, test_message_queue)
 
     start_consumers(consumers)
     buffer.start()
