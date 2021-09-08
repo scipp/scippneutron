@@ -1799,8 +1799,8 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
                     event_index=np.array([0, 5], dtype="int64"),
                 )))
 
-    mon_1_events = load_function(builder)["monitor1_events"].data.values
-    mon_2_events = load_function(builder)["monitor2_events"].data.values
+    mon_1_events = load_function(builder)["monitor1"].data.values
+    mon_2_events = load_function(builder)["monitor2"].data.values
 
     assert sc.identical(
         mon_1_events.coords["detector_id"],

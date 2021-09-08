@@ -23,13 +23,14 @@ def load_monitor_data(monitor_groups: List[Group], file_root: h5py.File,
     monitor_data = {}
     for group in monitor_groups:
         monitor_name = group.path.split("/")[-1]
-        data = _load_data_from_histogram_mode_monitor(group, nexus)
-        monitor_data[monitor_name] = sc.Variable(value=data)
 
-        # Look for event mode data structures in NXMonitor
-        if nexus.dataset_in_group(group.group, "event_index")[0]:
-
-            monitor_events = load_detector_data([group], [], file_root, nexus, True)
-            monitor_data[f"{monitor_name}_events"] = sc.Variable(value=monitor_events)
+        # Look for event mode data structures in NXMonitor. Event-mode data takes
+        # precedence over histogram-mode-data if available.
+        if nexus.dataset_in_group(group.group, "event_id")[0]:
+            events = load_detector_data([group], [], file_root, nexus, True)
+            monitor_data[monitor_name] = sc.Variable(value=events)
+        else:
+            data = _load_data_from_histogram_mode_monitor(group, nexus)
+            monitor_data[monitor_name] = sc.Variable(value=data)
 
     return monitor_data
