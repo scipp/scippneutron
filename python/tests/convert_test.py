@@ -510,10 +510,11 @@ def test_convert_tof_to_energy_transfer_direct_indirect_are_distinct():
 # outputs of conversions from tof.
 @pytest.mark.parametrize('keep_tof', (False, True))
 @pytest.mark.parametrize(('target', 'target_unit'),
-                         (('energy', sc.units.meV), ('wavelength', sc.units.angstrom)))
+                         (('energy', sc.units.meV), ('wavelength', sc.units.angstrom),
+                          ('dspacing', sc.units.angstrom)))
 @pytest.mark.parametrize('origin', ('energy', 'wavelength'))
 def test_convert_non_tof(origin, target, target_unit, keep_tof):
-    tof = make_test_data(coords=('tof', 'Ltotal'), dataset=True)
+    tof = make_test_data(coords=('tof', 'Ltotal', 'two_theta'), dataset=True)
     original = scn.convert(tof, origin='tof', target=origin, scatter=True)
     if not keep_tof:
         del original['counts'].attrs['tof']
