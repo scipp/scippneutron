@@ -257,13 +257,43 @@ def _scatter_graph(data, origin, target):
 
 
 def conversion_graph(data, origin, target, scatter):
+    """
+    Get the conversion graph used by :py:func:`scippneutron.convert`
+    when called with identical arguments.
+
+    The graph can be used with `scipp.transform_coords`.
+
+    :param data: Input data to a conversion.
+    :param origin: Name of the input coordinate.
+    :param target: Name of the output coordinate.
+    :param scatter: Choose whether to use scattering or non-scattering conversions.
+    :return: Conversion graph.
+    :seealso: :py:func:`scippneutron.convert`.
+    """
+
+    # Results are copied to ensure users do not modify the global dictionaries.
     if scatter:
-        return _scatter_graph(data, origin, target)
+        return dict(_scatter_graph(data, origin, target))
     else:
-        return NO_SCATTER_GRAPH
+        return dict(NO_SCATTER_GRAPH)
 
 
 def convert(data, origin, target, scatter):
+    """
+    Perform a unit conversion from the given origin unit to target.
+    See the the documentation page on "Unit conversions"
+    (https://scipp.github.io/scippneutron/user-guide/unit-conversions.html)
+    for more details.
+
+    :param data: Input data.
+    :param origin: Name of the input coordinate.
+    :param target: Name of the output coordinate.
+    :param scatter: Choose whether to use scattering or non-scattering conversions.
+    :return: A new scipp.DataArray or scipp.Dataset with the new coordinate.
+    :seealso: :py:func:`scippneutron.conversion_graph` to inspect
+              the possible conversions.
+    """
+
     try:
         converted = data.transform_coords(target,
                                           graph=conversion_graph(
