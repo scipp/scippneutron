@@ -146,11 +146,15 @@ def _plot_components(scipp_obj, components, positions_var, scene):
             raise ValueError(f"Unknown shape: {type} requested for {name}. "
                              f"Allowed values are: {supported_shapes}")
         component_position = scipp_obj.meta[at]
+        if not component_position.unit == size.unit:
+            raise ValueError(
+                f"item at {at} has a position with unit {component_position.unit},"
+                f"but size has unit {size.unit}")
         _add_to_scene(position=component_position,
                       scene=scene,
                       shape=shapes[type],
                       display_text=name,
-                      bounding_box=tuple(size),
+                      bounding_box=tuple(size.values),
                       color=color,
                       det_center=det_center)
     # Reset camera
