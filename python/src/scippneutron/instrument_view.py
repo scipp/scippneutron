@@ -32,11 +32,11 @@ def _box(position, display_text, bounding_box, color, **kwargs):
     material = p3.MeshBasicMaterial(color=color)
     mesh = p3.Mesh(geometry=geometry, material=material)
     mesh.position = tuple(position.value)
-    text_position = tuple(position.value + np.array([0, bounding_box[1], 0]))
+    text_position = tuple(position.value + np.array([0, 0.6*bounding_box[1], 0]))
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
-                           x_width=bounding_box[0],
-                           y_width=bounding_box[1])
+                           x_width=max(bounding_box),
+                           y_width=max(bounding_box))
     return mesh, text_mesh
 
 
@@ -74,11 +74,11 @@ def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
     rotation = _alignment_matrix(to_align=disk_axis, target=beam)
     mesh.setRotationFromMatrix(rotation.flatten())
 
-    text_position = tuple(position.value + np.array([0, bounding_box[1], 0]))
+    text_position = tuple(position.value + np.array([0, 0.6 * bounding_box[1], 0]))
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
-                           x_width=bounding_box[0],
-                           y_width=bounding_box[1])
+                           x_width=max(bounding_box),
+                           y_width=max(bounding_box))
     return mesh, text_mesh
 
 
@@ -96,11 +96,11 @@ def _cylinder(position, display_text, bounding_box, color, **kwargs):
     mesh = p3.Mesh(geometry=geometry, material=material)
     mesh.position = tuple(position.value)
     # Position label above cylinder
-    text_position = tuple(position.value + np.array([0, bounding_box[1], 0]))
+    text_position = tuple(position.value + np.array([0, 0.6 * bounding_box[1], 0]))
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
-                           x_width=bounding_box[0],
-                           y_width=bounding_box[1])
+                           x_width=max(bounding_box),
+                           y_width=max(bounding_box))
     return mesh, text_mesh
 
 
