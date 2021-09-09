@@ -9,21 +9,17 @@ from scipy.spatial.transform import Rotation as Rot
 
 
 def _text_mesh(position, display_text, x_width, y_width):
-    text_geometry = p3.PlaneGeometry(width=x_width,
-                                     height=y_width,
-                                     widthSegments=2,
-                                     heightSegments=2)
-
     text = p3.TextTexture(string=display_text, color='black', size=20)
-    text_material = p3.MeshBasicMaterial(map=text, transparent=True)
-    text_mesh = p3.Mesh(geometry=text_geometry, material=text_material)
-    text_mesh.position = position
-    return text_mesh
+    text_material = p3.SpriteMaterial(map=text, transparent=True)
+    size = 1.0
+    return p3.Sprite(material=text_material,
+                     position=position,
+                     scale=[size, size, size])
 
 
 def _create_text_mesh(position, bounding_box, display_text):
     # Position offset in y
-    text_position = tuple(position.value + np.array([0, 0.7 * bounding_box[1], 0]))
+    text_position = tuple(position.value + np.array([0, 0.8 * bounding_box[1], 0]))
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
                            x_width=max(bounding_box),
