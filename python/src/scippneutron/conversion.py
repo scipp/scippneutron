@@ -223,7 +223,7 @@ def _inelastic_scatter_graph(data, origin, target):
             'energy_transfer': _energy_transfer_indirect_from_tof
         }
     }[inputs[0]]
-    return {**_elastic_scatter_graph(data, origin, target), **inelastic_step}
+    return {**SCATTER_GRAPH_KINEMATICS, **inelastic_step}
 
 
 def _reachable_by(target, graph):
