@@ -175,7 +175,8 @@ def instrument_view(scipp_obj=None,
     :param scipp_obj: scipp object holding geometries
     :param positions: Key for coord/attr holding positions to use for pixels
     :param pixel_size: Custom pixel size to use for detector pixels
-    :param components: Dictionary containing names and shape names for
+    :param components: Dictionary containing display names and corresponding
+    settings (also a Dictionary) for additional components to display
      items with known positions to be shown
     :param kwargs: Additional keyword arguments to pass to scipp.plotting.plot
     :return: The 3D plot object
@@ -191,6 +192,16 @@ def instrument_view(scipp_obj=None,
     between the positions of the first two pixel positions.
     The aspect ratio of the positions is preserved by default, but this can
     be changed to automatic scaling using `aspect="equal"`.
+
+    `components` dictionary uses the key as the name to display the component.
+    This can be any desired name, it does not have to relate to the input
+    `scipp_obj` naming. The value for each entry is itself a dictionary that
+    provides the display settings and requires an `at`, `size`, `type` and
+    optionally a `color`. `at` should correspond to the meta item where the
+    position to place the component is taken from. `size` is a 3-element tuple
+    describing the bounding box to use. `type` is one of any known shape types
+    including box, cylinder and disk. The `color` is a hexidecimal color code
+    such as #F00000 to use as fill color.
     """
 
     from scipp.plotting import plot
