@@ -30,7 +30,7 @@ def _scattering_beams(source_position, sample_position, position):
     }
 
 
-def two_theta(incident_beam, scattered_beam, L1, L2):
+def _two_theta(incident_beam, scattered_beam, L1, L2):
     return sc.acos(sc.dot(incident_beam / L1, scattered_beam / L2))
 
 
@@ -40,7 +40,7 @@ def _beam_lengths_and_angle(incident_beam, scattered_beam):
     return {
         'L1': L1,
         'L2': L2,
-        'two_theta': two_theta(incident_beam, scattered_beam, L1, L2)
+        'two_theta': _two_theta(incident_beam, scattered_beam, L1, L2)
     }
 
 
