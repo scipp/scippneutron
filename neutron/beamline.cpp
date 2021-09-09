@@ -158,15 +158,4 @@ Variable two_theta(const dataset::Coords &meta) {
   return acos(cos_two_theta(meta));
 }
 
-Variable incident_energy(const dataset::Coords &meta) {
-  return meta.contains(NeutronDim::IncidentEnergy)
-             ? meta[NeutronDim::IncidentEnergy]
-             : Variable{};
-}
-
-Variable final_energy(const dataset::Coords &meta) {
-  return meta.contains(NeutronDim::FinalEnergy) ? meta[NeutronDim::FinalEnergy]
-                                                : Variable{};
-}
-
 } // namespace scipp::neutron
