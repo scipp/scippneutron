@@ -203,7 +203,7 @@ def _find_inelastic_inputs(data):
     return [name for name in ('incident_energy', 'final_energy') if name in data.coords]
 
 
-def _inelastic_scatter_graph(data, origin, target):
+def _inelastic_scatter_graph(data):
     inputs = _find_inelastic_inputs(data)
     if len(inputs) > 1:
         raise RuntimeError(
@@ -249,7 +249,7 @@ def _elastic_scatter_graph(data, origin, target):
 
 
 def _scatter_graph(data, origin, target):
-    graph = (_inelastic_scatter_graph(data, origin, target) if target
+    graph = (_inelastic_scatter_graph(data) if target
              == 'energy_transfer' else _elastic_scatter_graph(data, origin, target))
     if not graph:
         raise RuntimeError(f"No viable conversion from '{origin}' to '{target}'.")
