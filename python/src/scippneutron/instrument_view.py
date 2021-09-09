@@ -27,7 +27,20 @@ def _create_text_mesh(position, bounding_box, display_text):
     return text_mesh
 
 
-def _box(position, display_text, bounding_box, color, **kwargs):
+def _create_mesh(geometry, color, wireframe, position):
+    if wireframe:
+        edges = p3.EdgesGeometry(geometry)
+        mesh = p3.LineSegments(geometry=edges,
+                               material=p3.LineBasicMaterial(color=color))
+
+    else:
+        material = p3.MeshBasicMaterial(color=color)
+        mesh = p3.Mesh(geometry=geometry, material=material)
+    mesh.position = tuple(position.value)
+    return mesh
+
+
+def _box(position, display_text, bounding_box, color, wireframe, **kwargs):
     geometry = p3.BoxGeometry(width=bounding_box[0],
                               height=bounding_box[1],
                               depth=bounding_box[2],
@@ -35,9 +48,10 @@ def _box(position, display_text, bounding_box, color, **kwargs):
                               heightSegments=2,
                               depthSegments=2)
 
-    material = p3.MeshBasicMaterial(color=color)
-    mesh = p3.Mesh(geometry=geometry, material=material)
-    mesh.position = tuple(position.value)
+    mesh = _create_mesh(geometry=geometry,
+                        color=color,
+                        wireframe=wireframe,
+                        position=position)
     text_mesh = _create_text_mesh(position=position,
                                   bounding_box=bounding_box,
                                   display_text=display_text)
@@ -60,7 +74,7 @@ def _alignment_matrix(to_align, target):
     return Rot.from_rotvec(axis_angle).as_matrix()
 
 
-def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
+def _disk_chopper(position, display_text, bounding_box, color, wireframe, **kwargs):
     geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
                                    radiusBottom=bounding_box[0] / 2,
                                    height=bounding_box[0] / 100,
@@ -70,9 +84,10 @@ def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
                                    thetaStart=np.pi / 8,
                                    thetaLength=2 * np.pi - (np.pi / 8))
 
-    material = p3.MeshBasicMaterial(color=color)
-    mesh = p3.Mesh(geometry=geometry, material=material)
-    mesh.position = tuple(position.value)
+    mesh = _create_mesh(geometry=geometry,
+                        color=color,
+                        wireframe=wireframe,
+                        position=position)
     beam = _find_beam(det_com=kwargs['det_center'], pos=position)
     disk_axis = np.array([0, 1, 0])  # Disk created with this axis
     rotation = _alignment_matrix(to_align=disk_axis, target=beam)
@@ -83,7 +98,7 @@ def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
     return mesh, text_mesh
 
 
-def _cylinder(position, display_text, bounding_box, color, **kwargs):
+def _cylinder(position, display_text, bounding_box, color, wireframe, **kwargs):
     geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
                                    radiusBottom=bounding_box[0] / 2,
                                    height=bounding_box[1],
@@ -92,10 +107,10 @@ def _cylinder(position, display_text, bounding_box, color, **kwargs):
                                    openEnded=False,
                                    thetaStart=0,
                                    thetaLength=2.0 * np.pi)
-
-    material = p3.MeshBasicMaterial(color=color)
-    mesh = p3.Mesh(geometry=geometry, material=material)
-    mesh.position = tuple(position.value)
+    mesh = _create_mesh(geometry=geometry,
+                        color=color,
+                        wireframe=wireframe,
+                        position=position)
     # Position label above cylinder
     text_mesh = _create_text_mesh(position=position,
                                   bounding_box=bounding_box,
@@ -111,13 +126,15 @@ def _unpack_to_scene(scene, items):
         scene.add(items)
 
 
-def _add_to_scene(position, scene, shape, display_text, bounding_box, color, **kwargs):
+def _add_to_scene(position, scene, shape, display_text, bounding_box, color, wireframe,
+                  **kwargs):
     _unpack_to_scene(
         scene,
         shape(position,
               display_text=display_text,
               bounding_box=bounding_box,
               color=color,
+              wireframe=wireframe,
               **kwargs))
 
 
@@ -140,6 +157,7 @@ def _plot_components(scipp_obj, components, positions_var, scene):
         size = settings["size"]
         at = settings["at"]
         color = settings.get("color", "#808080")
+        wireframe = settings.get("wireframe", False)
         if type not in shapes:
             supported_shapes = ", ".join(shapes.keys())
             raise ValueError(f"Unknown shape: {type} requested for {name}. "
@@ -155,6 +173,7 @@ def _plot_components(scipp_obj, components, positions_var, scene):
                       display_text=name,
                       bounding_box=tuple(size.values),
                       color=color,
+                      wireframe=wireframe,
                       det_center=det_center)
     # Reset camera
     camera = _get_camera(scene)
@@ -200,11 +219,13 @@ def instrument_view(scipp_obj=None,
     This can be any desired name, it does not have to relate to the input
     `scipp_obj` naming. The value for each entry is itself a dictionary that
     provides the display settings and requires an `at`, `size`, `type` and
-    optionally a `color`. `at` should correspond to the meta item where the
-    position to place the component is taken from. `size` is a scipp scalar
-    vector describing the bounding box to use. `type` is one of any known
-    shape types including box, cylinder and disk. The `color` is a hexadecimal
-    color code such as #F00000 to use as fill color.
+    optionally a `color` and `wireframe` flag. `at` should correspond to the
+    meta item where the position to place the component is taken from. `size`
+    is a scipp scalar vector describing the bounding box to use. `type` is one
+    of any known shape types including box, cylinder and disk. The `color`
+    is a hexadecimal color code such as #F00000 to use as fill or line color,
+    which depends on the `wireframe` flag. `wireframe` is a bool that defaults
+    to False, but if set True, provides a wireframe to represent the shape.
     """
 
     from scipp.plotting import plot
