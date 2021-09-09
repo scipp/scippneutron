@@ -2,6 +2,8 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # @author Jan-Lukas Wynen
 
+from typing import Callable, Dict, Tuple, Union
+
 import numpy as np
 import scipp as sc
 import scipp.constants as const
@@ -249,14 +251,15 @@ def _elastic_scatter_graph(data, origin, target):
 
 
 def _scatter_graph(data, origin, target):
-    graph = (_inelastic_scatter_graph(data) if target
-             == 'energy_transfer' else _elastic_scatter_graph(data, origin, target))
+    graph = (_inelastic_scatter_graph(data) if target == 'energy_transfer' else
+             _elastic_scatter_graph(data, origin, target))
     if not graph:
         raise RuntimeError(f"No viable conversion from '{origin}' to '{target}'.")
     return graph
 
 
-def conversion_graph(data, origin, target, scatter):
+def conversion_graph(data: Union[sc.DataArray, sc.Dataset], origin: str, target: str,
+                     scatter: bool) -> Dict[Union[str, Tuple[str]], Callable]:
     """
     Get the conversion graph used by :py:func:`scippneutron.convert`
     when called with identical arguments.
@@ -278,7 +281,8 @@ def conversion_graph(data, origin, target, scatter):
         return dict(NO_SCATTER_GRAPH)
 
 
-def convert(data, origin, target, scatter):
+def convert(data: Union[sc.DataArray, sc.Dataset], origin: str, target: str,
+            scatter: bool) -> Union[sc.DataArray, sc.Dataset]:
     """
     Perform a unit conversion from the given origin unit to target.
     See the the documentation page on "Unit conversions"
