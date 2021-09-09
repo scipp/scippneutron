@@ -77,6 +77,8 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
 
     loaded_data = load_function(builder)
 
+    assert loaded_data.events.unit == 'counts'
+
     # Expect time of flight to match the values in the
     # event_time_offset dataset
     # May be reordered due to binning (hence np.sort)
@@ -91,7 +93,13 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
     # binned according to whatever detector_ids are present in event_id
     # dataset: 2 on det 1, 1 on det 2, 2 on det 3
     expected_counts = np.array([[2], [1], [2]])
-    assert np.array_equal(counts_on_detectors.data.values, expected_counts)
+    assert sc.identical(
+        counts_on_detectors.data,
+        sc.array(dims=['detector_id', 'tof'],
+                 unit='counts',
+                 dtype='float32',
+                 values=expected_counts,
+                 variances=expected_counts))
     expected_detector_ids = np.array([1, 2, 3])
     assert np.array_equal(loaded_data.coords['detector_id'].values,
                           expected_detector_ids)
