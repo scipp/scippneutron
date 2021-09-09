@@ -27,6 +27,7 @@ Unit Conversion
    :toctree: ../generated
 
    convert
+   conversion_graph
 
 Beamline geometry
 ~~~~~~~~~~~~~~~~~
