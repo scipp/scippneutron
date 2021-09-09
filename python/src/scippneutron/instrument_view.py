@@ -156,7 +156,7 @@ def _plot_components(scipp_obj, components, positions_var, scene):
     # Reset camera
     camera = _get_camera(scene)
     if camera:
-        camera.far = furthest_distance * 5.0
+        camera.far = max(camera.far, furthest_distance * 5.0)
 
 
 def _get_camera(scene):
