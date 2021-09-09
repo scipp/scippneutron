@@ -21,6 +21,16 @@ def _text_mesh(position, display_text, x_width, y_width):
     return text_mesh
 
 
+def _create_text_mesh(position, bounding_box, display_text):
+    # Position offset in y
+    text_position = tuple(position.value + np.array([0, 0.7 * bounding_box[1], 0]))
+    text_mesh = _text_mesh(text_position,
+                           display_text=display_text,
+                           x_width=max(bounding_box),
+                           y_width=max(bounding_box))
+    return text_mesh
+
+
 def _box(position, display_text, bounding_box, color, **kwargs):
     geometry = p3.BoxGeometry(width=bounding_box[0],
                               height=bounding_box[1],
@@ -32,11 +42,9 @@ def _box(position, display_text, bounding_box, color, **kwargs):
     material = p3.MeshBasicMaterial(color=color)
     mesh = p3.Mesh(geometry=geometry, material=material)
     mesh.position = tuple(position.value)
-    text_position = tuple(position.value + np.array([0, 0.7 * bounding_box[1], 0]))
-    text_mesh = _text_mesh(text_position,
-                           display_text=display_text,
-                           x_width=max(bounding_box),
-                           y_width=max(bounding_box))
+    text_mesh = _create_text_mesh(position=position,
+                                  bounding_box=bounding_box,
+                                  display_text=display_text)
     return mesh, text_mesh
 
 
@@ -73,12 +81,9 @@ def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
     disk_axis = np.array([0, 1, 0])  # Disk created with this axis
     rotation = _alignment_matrix(to_align=disk_axis, target=beam)
     mesh.setRotationFromMatrix(rotation.flatten())
-
-    text_position = tuple(position.value + np.array([0, 0.7 * bounding_box[1], 0]))
-    text_mesh = _text_mesh(text_position,
-                           display_text=display_text,
-                           x_width=max(bounding_box),
-                           y_width=max(bounding_box))
+    text_mesh = _create_text_mesh(position=position,
+                                  bounding_box=bounding_box,
+                                  display_text=display_text)
     return mesh, text_mesh
 
 
@@ -96,11 +101,9 @@ def _cylinder(position, display_text, bounding_box, color, **kwargs):
     mesh = p3.Mesh(geometry=geometry, material=material)
     mesh.position = tuple(position.value)
     # Position label above cylinder
-    text_position = tuple(position.value + np.array([0, 0.7 * bounding_box[1], 0]))
-    text_mesh = _text_mesh(text_position,
-                           display_text=display_text,
-                           x_width=max(bounding_box),
-                           y_width=max(bounding_box))
+    text_mesh = _create_text_mesh(position=position,
+                                  bounding_box=bounding_box,
+                                  display_text=display_text)
     return mesh, text_mesh
 
 
