@@ -32,7 +32,7 @@ def _box(position, display_text, bounding_box, color, **kwargs):
     material = p3.MeshBasicMaterial(color=color)
     mesh = p3.Mesh(geometry=geometry, material=material)
     mesh.position = tuple(position.value)
-    text_position = tuple(position.value + np.array([0, 0.6*bounding_box[1], 0]))
+    text_position = tuple(position.value + np.array([0, 0.7 * bounding_box[1], 0]))
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
                            x_width=max(bounding_box),
@@ -74,7 +74,7 @@ def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
     rotation = _alignment_matrix(to_align=disk_axis, target=beam)
     mesh.setRotationFromMatrix(rotation.flatten())
 
-    text_position = tuple(position.value + np.array([0, 0.6 * bounding_box[1], 0]))
+    text_position = tuple(position.value + np.array([0, 0.7 * bounding_box[1], 0]))
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
                            x_width=max(bounding_box),
@@ -96,7 +96,7 @@ def _cylinder(position, display_text, bounding_box, color, **kwargs):
     mesh = p3.Mesh(geometry=geometry, material=material)
     mesh.position = tuple(position.value)
     # Position label above cylinder
-    text_position = tuple(position.value + np.array([0, 0.6 * bounding_box[1], 0]))
+    text_position = tuple(position.value + np.array([0, 0.7 * bounding_box[1], 0]))
     text_mesh = _text_mesh(text_position,
                            display_text=display_text,
                            x_width=max(bounding_box),
@@ -135,7 +135,7 @@ def _plot_components(scipp_obj, components, positions_var, scene):
     furthest_key, furthest_distance = _furthest_component(det_center, scipp_obj,
                                                           components)
     # Some scaling to set width according to distance from detector center
-    shapes = {"cube": _box, "cylinder": _cylinder, "disk": _disk_chopper}
+    shapes = {"box": _box, "cylinder": _cylinder, "disk": _disk_chopper}
     for name, settings in components.items():
         type = settings["type"]
         size = settings["size"]
