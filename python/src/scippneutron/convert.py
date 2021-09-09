@@ -55,10 +55,6 @@ def _wavelength_from_tof(tof, Ltotal):
     return (c / Ltotal).astype(_elem_dtype(tof), copy=False) * tof
 
 
-def _Q_from_wavelength(wavelength, two_theta):
-    return (4 * const.pi) * sc.sin(two_theta / 2) / wavelength
-
-
 def _dspacing_from_tof(tof, Ltotal, two_theta):
     c = sc.to_unit(2 * const.m_n / const.h,
                    _elem_unit(tof) / sc.units.angstrom / _elem_unit(Ltotal),
@@ -133,6 +129,23 @@ def _wavelength_from_energy(energy):
     return sc.sqrt(c / energy)
 
 
+def _wavelength_Q_conversions(x, two_theta):
+    """
+    Convert either from Q to wavelength or vice-versa.
+    """
+    dtype = _elem_dtype(x)
+    c = (4 * const.pi).astype(dtype)
+    return c * sc.sin(two_theta.astype(dtype, copy=False) / 2) / x
+
+
+def _Q_from_wavelength(wavelength, two_theta):
+    return _wavelength_Q_conversions(wavelength, two_theta)
+
+
+def _wavelength_from_Q(Q, two_theta):
+    return _wavelength_Q_conversions(Q, two_theta)
+
+
 def _dspacing_from_wavelength(wavelength, two_theta):
     dtype = _elem_dtype(wavelength)
     c = sc.scalar(0.5, unit=sc.units.angstrom / _elem_unit(wavelength)).astype(dtype)
@@ -163,21 +176,24 @@ SCATTER_GRAPH_KINEMATICS = {
 }
 
 SCATTER_GRAPHS_DYNAMICS = {
+    'energy': {
+        'dspacing': _dspacing_from_energy,
+        'wavelength': _wavelength_from_energy,
+    },
     'tof': {
         'dspacing': _dspacing_from_tof,
         'energy': _energy_from_tof,
         'Q': _Q_from_wavelength,
         'wavelength': _wavelength_from_tof,
     },
+    'Q': {
+        'wavelength': _wavelength_from_Q,
+    },
     'wavelength': {
         'dspacing': _dspacing_from_wavelength,
         'energy': _energy_from_wavelength,
         'Q': _Q_from_wavelength,
     },
-    'energy': {
-        'dspacing': _dspacing_from_energy,
-        'wavelength': _wavelength_from_energy,
-    }
 }
 
 

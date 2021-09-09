@@ -355,6 +355,20 @@ def test_convert_tof_to_Q():
                                        val * 1e-3)
 
 
+def test_convert_Q_to_wavelength():
+    tof = make_test_data(coords=('tof', 'Ltotal', 'two_theta'))
+    Q = scn.convert(tof, origin='tof', target='Q', scatter=True)
+    del Q.attrs['wavelength']
+    wavelength_from_Q = scn.convert(Q, origin='Q', target='wavelength', scatter=True)
+    wavelength_from_tof = scn.convert(tof,
+                                      origin='tof',
+                                      target='wavelength',
+                                      scatter=True)
+    assert sc.allclose(wavelength_from_Q.coords['wavelength'],
+                       wavelength_from_tof.coords['wavelength'],
+                       rtol=1e-14 * sc.units.one)
+
+
 def test_convert_tof_to_energy_elastic():
     tof = make_test_data(coords=('tof', 'Ltotal'), dataset=True)
     energy = scn.convert(tof, origin='tof', target='energy', scatter=True)
