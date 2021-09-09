@@ -202,10 +202,10 @@ def instrument_view(scipp_obj=None,
     `scipp_obj` naming. The value for each entry is itself a dictionary that
     provides the display settings and requires an `at`, `size`, `type` and
     optionally a `color`. `at` should correspond to the meta item where the
-    position to place the component is taken from. `size` is a 3-element tuple
-    describing the bounding box to use. `type` is one of any known shape types
-    including box, cylinder and disk. The `color` is a hexidecimal color code
-    such as #F00000 to use as fill color.
+    position to place the component is taken from. `size` is a scipp scalar
+    vector describing the bounding box to use. `type` is one of any known
+    shape types including box, cylinder and disk. The `color` is a hexadecimal
+    color code such as #F00000 to use as fill color.
     """
 
     from scipp.plotting import plot
