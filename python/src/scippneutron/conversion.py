@@ -23,25 +23,24 @@ def _total_beam_length_no_scatter(source_position, position):
     return sc.norm(position - source_position)
 
 
-def _scattering_beams(source_position, sample_position, position):
-    return {
-        'incident_beam': sample_position - source_position,
-        'scattered_beam': position - sample_position
-    }
+def _incident_beam(source_position, sample_position):
+    return sample_position - source_position
+
+
+def _scattered_beam(position, sample_position):
+    return position - sample_position
+
+
+def _L1(incident_beam):
+    return sc.norm(incident_beam)
+
+
+def _L2(scattered_beam):
+    return sc.norm(scattered_beam)
 
 
 def _two_theta(incident_beam, scattered_beam, L1, L2):
     return sc.acos(sc.dot(incident_beam / L1, scattered_beam / L2))
-
-
-def _beam_lengths_and_angle(incident_beam, scattered_beam):
-    L1 = sc.norm(incident_beam)
-    L2 = sc.norm(scattered_beam)
-    return {
-        'L1': L1,
-        'L2': L2,
-        'two_theta': _two_theta(incident_beam, scattered_beam, L1, L2)
-    }
 
 
 def _total_beam_length_scatter(L1, L2):
@@ -170,8 +169,11 @@ NO_SCATTER_GRAPH = {
 }
 
 SCATTER_GRAPH_KINEMATICS = {
-    ('incident_beam', 'scattered_beam'): _scattering_beams,
-    ('L1', 'L2', 'two_theta'): _beam_lengths_and_angle,
+    'incident_beam': _incident_beam,
+    'scattered_beam': _scattered_beam,
+    'L1': _L1,
+    'L2': _L2,
+    'two_theta': _two_theta,
     'Ltotal': _total_beam_length_scatter,
 }
 

@@ -161,12 +161,6 @@ def test_convert_slice(target):
                          dataset=True)
     expected = scn.convert(tof['counts'], origin='tof', target=target,
                            scatter=True)['spectrum', 0].copy()
-    # A side-effect of `convert` is that it turns relevant meta data into
-    # coords or attrs, depending on the target unit. Slicing (without range)
-    # turns coords into attrs, but applying `convert` effectively reverses
-    # this, which is why we have this slightly unusual behavior here:
-    if target != 'dspacing':
-        expected.coords['two_theta'] = expected.attrs.pop('two_theta')
     assert sc.identical(
         scn.convert(tof['counts']['spectrum', 0].copy(),
                     origin='tof',
@@ -214,13 +208,18 @@ def test_convert_coords_vs_attributes():
 
 @pytest.mark.parametrize('target', ('incident_beam', 'scattered_beam'))
 def test_convert_beams(target):
+    def check_positions(data):
+        assert 'sample_position' not in data.coords
+        assert ('source_position' in data.coords) == (target == 'scattered_beam')
+        assert ('position' in data.coords) == (target == 'incident_beam')
+
     # A single sample position.
     original = make_test_data(coords=('position', 'sample_position', 'source_position'))
     converted = scn.convert(original, origin='position', target=target, scatter=True)
-    for key in ('position', 'source_position', 'sample_position'):
-        assert key not in converted.coords
-    assert sc.identical(converted.coords['incident_beam'], make_incident_beam())
-    assert sc.identical(converted.coords['scattered_beam'], make_scattered_beam())
+    check_positions(converted)
+    assert sc.identical(
+        converted.coords[target],
+        make_incident_beam() if target == 'incident_beam' else make_scattered_beam())
 
     # Two sample positions.
     original = make_test_data(coords=('position', 'source_position'))
@@ -229,33 +228,29 @@ def test_convert_beams(target):
                                                             [2.1, -0.3, 1.4]],
                                                     unit='m')
     converted = scn.convert(original, origin='position', target=target, scatter=True)
-    for key in ('position', 'source_position', 'sample_position'):
-        assert key not in converted.coords
-    assert sc.allclose(converted.coords['incident_beam'],
-                       sc.vectors(dims=['spectrum'],
-                                  values=[[1.0, 0.0, 10.2], [2.1, -0.3, 11.4]],
-                                  unit='m'),
-                       rtol=1e-14 * sc.units.one)
-    assert sc.allclose(converted.coords['scattered_beam'],
-                       sc.vectors(dims=['spectrum'],
-                                  values=[[0.0, 0.0, -0.2], [-2.0, 0.3, -0.4]],
-                                  unit='m'),
-                       rtol=1e-14 * sc.units.one)
+    check_positions(converted)
+    if target == 'incident_beam':
+        assert sc.allclose(converted.coords['incident_beam'],
+                           sc.vectors(dims=['spectrum'],
+                                      values=[[1.0, 0.0, 10.2], [2.1, -0.3, 11.4]],
+                                      unit='m'),
+                           rtol=1e-14 * sc.units.one)
+    if target == 'scattered_beam':
+        assert sc.allclose(converted.coords['scattered_beam'],
+                           sc.vectors(dims=['spectrum'],
+                                      values=[[0.0, 0.0, -0.2], [-2.0, 0.3, -0.4]],
+                                      unit='m'),
+                           rtol=1e-14 * sc.units.one)
 
 
-@pytest.mark.parametrize('target', ('L1', 'L2', 'two_theta', 'Ltotal'))
-def test_convert_beam_length_and_angle(target):
+@pytest.mark.parametrize(
+    ('target', 'make_ref'),
+    (('L1', make_L1), ('L2', make_L2), ('two_theta', make_two_theta),
+     ('Ltotal', lambda: make_L1() + make_L2())))
+def test_convert_beam_length_and_angle(target, make_ref):
     original = make_test_data(coords=('incident_beam', 'scattered_beam'))
-    L1 = make_L1()
-    L2 = make_L2()
-    two_theta = make_two_theta()
-
     converted = scn.convert(original, origin='position', target=target, scatter=True)
-    assert sc.identical(converted.meta['L1'], L1)
-    assert sc.identical(converted.meta['L2'], L2)
-    assert sc.identical(converted.meta['two_theta'], two_theta)
-    if target == 'Ltotal':
-        assert sc.identical(converted.coords['Ltotal'], L1 + L2)
+    assert sc.identical(converted.meta[target], make_ref())
 
 
 def test_convert_beam_length_no_scatter():
