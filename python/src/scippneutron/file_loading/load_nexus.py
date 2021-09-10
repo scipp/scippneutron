@@ -126,6 +126,8 @@ def load_nexus(data_file: Union[str, h5py.File],
     :param root: path of group in file, only load data from the subtree of
       this group
     :param quiet: if False prints some details of what is being loaded
+    :param raw_detector_data: if True, loads detector and event data structures as they
+      appear in the nexus file, without any binning. Defaults to False.
 
     Usage example:
       data = sc.neutron.load_nexus('PG3_4844_event.nxs')
