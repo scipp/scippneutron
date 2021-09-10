@@ -35,13 +35,15 @@ def test_no_exception_if_single_nxentry_found_below_root():
         assert scippneutron.load_nexus(nexus_file, root='/entry_1') is None
 
 
-def load_from_nexus(builder: NexusBuilder) -> Union[sc.Dataset, sc.DataArray, None]:
+def load_from_nexus(builder: NexusBuilder, *args, **kwargs)\
+        -> Union[sc.Dataset, sc.DataArray, None]:
     with builder.file() as nexus_file:
-        return scippneutron.load_nexus(nexus_file)
+        return scippneutron.load_nexus(nexus_file, *args, **kwargs)
 
 
-def load_from_json(builder: NexusBuilder) -> Union[sc.Dataset, sc.DataArray, None]:
-    loaded_data, _ = _load_nexus_json(builder.json_string)
+def load_from_json(builder: NexusBuilder, *args, **kwargs)\
+        -> Union[sc.Dataset, sc.DataArray, None]:
+    loaded_data, _ = _load_nexus_json(builder.json_string, *args, **kwargs)
     return loaded_data
 
 
@@ -1707,3 +1709,52 @@ def test_nexus_file_with_two_choppers(load_function: Callable):
     assert sc.identical(loaded_data["chopper_2"].attrs["rotation_speed"],
                         60.0 * sc.Unit("Hz"))
     assert sc.identical(loaded_data["chopper_2"].attrs["distance"], 10.0 * sc.Unit("m"))
+
+
+def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
+    event_time_offsets = np.array([456, 743, 347, 345, 632])
+    event_ids = np.array([1, 2, 3, 1, 3])
+    time_zeros = np.array([
+        1600766730000000000, 1600766731000000000, 1600766732000000000,
+        1600766733000000000
+    ])
+    event_index = np.array([0, 3, 3, 5])
+    event_data = EventData(
+        event_id=event_ids,
+        event_time_offset=event_time_offsets,
+        event_time_zero=time_zeros,
+        event_index=event_index,
+    )
+
+    detector_numbers = np.array([1, 2, 3, 4])
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=detector_numbers, event_data=event_data))
+
+    loaded_data = load_function(builder, raw_detector_data=True)
+
+    assert sc.identical(
+        loaded_data["events"].data.values,
+        sc.Dataset(
+            data={
+                "event_id":
+                sc.Variable(dims=["event_id"], values=event_ids),
+                "event_time_zero":
+                sc.Variable(
+                    dims=["event_time_zero"], values=time_zeros, unit=sc.units.ns),
+                "event_index":
+                sc.Variable(dims=["event_index"], values=event_index),
+                "event_time_offset":
+                sc.Variable(dims=["event_time_offset"],
+                            values=event_time_offsets,
+                            unit=sc.units.ns),
+            }))
+
+    assert sc.identical(
+        loaded_data["detector_0"].data.values,
+        sc.Dataset(
+            data={
+                "detector_number":
+                sc.Variable(dims=["detector_number"], values=detector_numbers),
+            }))

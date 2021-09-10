@@ -6,6 +6,8 @@ from dataclasses import dataclass
 import h5py
 from typing import Optional, List, Any, Dict, Union
 import numpy as np
+import scipp
+
 from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
 import scipp as sc
 from warnings import warn
@@ -459,3 +461,36 @@ def _load_data_from_each_nx_detector(detector_groups: List[Group], file_root: h5
         detector_data[detector_group.path] = _load_detector(detector_group, file_root,
                                                             nexus)
     return detector_data
+
+
+def load_raw_detector_structures(event_groups, detector_groups, nexus: LoadFromNexus):
+    loaded_data = scipp.Dataset()
+
+    for group in event_groups:
+        name = nexus.get_name(group.group)
+        data = scipp.Dataset()
+        for structure in [
+                "event_id", "event_index", "event_time_bins", "event_time_offset",
+                "event_time_zero"
+        ]:
+            try:
+                data[structure] = nexus.load_dataset(group.group, structure,
+                                                     [structure])
+            except MissingDataset:
+                pass
+        loaded_data[name] = sc.scalar(value=data)
+
+    for group in detector_groups:
+        name = nexus.get_name(group.group)
+        data = scipp.Dataset()
+        for structure in [
+                "detector_number", "x_pixel_offset", "y_pixel_offset", "z_pixel_offset"
+        ]:
+            try:
+                data[structure] = nexus.load_dataset(group.group, structure,
+                                                     [structure])
+            except MissingDataset:
+                pass
+        loaded_data[name] = sc.scalar(value=data)
+
+    return loaded_data
