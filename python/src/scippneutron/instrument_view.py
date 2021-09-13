@@ -163,10 +163,9 @@ def _plot_components(scipp_obj, components, positions_var, scene):
             raise ValueError(f"Unknown shape: {type} requested for {name}. "
                              f"Allowed values are: {supported_shapes}")
         component_position = scipp_obj.meta[at]
-        if not component_position.unit == size.unit:
-            raise ValueError(
-                f"item at {at} has a position with unit {component_position.unit},"
-                f"but size has unit {size.unit}")
+        # TODO copy=False, cannot be enabled till after scipp 0.8 release
+        component_position = sc.to_unit(component_position, positions_var.unit)
+        size = sc.to_unit(size, positions_var.unit)
         _add_to_scene(position=component_position,
                       scene=scene,
                       shape=shapes[type],
@@ -217,15 +216,23 @@ def instrument_view(scipp_obj=None,
 
     `components` dictionary uses the key as the name to display the component.
     This can be any desired name, it does not have to relate to the input
-    `scipp_obj` naming. The value for each entry is itself a dictionary that
-    provides the display settings and requires an `at`, `size`, `type` and
-    optionally a `color` and `wireframe` flag. `at` should correspond to the
-    meta item where the position to place the component is taken from. `size`
-    is a scipp scalar vector describing the bounding box to use. `type` is one
-    of any known shape types including box, cylinder and disk. The `color`
-    is a hexadecimal color code such as #F00000 to use as fill or line color,
-    which depends on the `wireframe` flag. `wireframe` is a bool that defaults
-    to False, but if set True, provides a wireframe to represent the shape.
+    `scipp_obj` naming.
+    The value for each entry is itself a dictionary that provides the display
+    settings and requires:
+
+    * `at` - name of meta item where the position to place the component is
+    taken from
+    * `size` - scipp scalar vector describing the bounding box to use in the
+    same length units as positions
+    * `type` - known shape type to use including box, cylinder and disk
+
+    Optional arguments are:
+
+    * `color` - a hexadecimal color code such as #F00000 to use as fill or
+    line color
+    * `wireframe` - wireframe is a bool that defaults to False. If set to True,
+    the returned geometrical shape is a wireframe instead of a shape with
+    opaque faces
     """
 
     from scipp.plotting import plot
