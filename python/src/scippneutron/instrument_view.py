@@ -159,14 +159,14 @@ def _plot_components(scipp_obj, components, positions_var, scene):
     for name, settings in components.items():
         type = settings["type"]
         size = settings["size"]
-        at = settings["at"]
+        center = settings["center"]
         color = settings.get("color", "#808080")
         wireframe = settings.get("wireframe", False)
         if type not in shapes:
             supported_shapes = ", ".join(shapes.keys())
             raise ValueError(f"Unknown shape: {type} requested for {name}. "
                              f"Allowed values are: {supported_shapes}")
-        component_position = scipp_obj.meta[at]
+        component_position = scipp_obj.meta[center]
         # TODO copy=False, cannot be enabled till after scipp 0.8 release
         component_position = sc.to_unit(component_position, positions_var.unit)
         size = sc.to_unit(size, positions_var.unit)
@@ -235,8 +235,8 @@ def instrument_view(scipp_obj=None,
     The value for each entry is itself a dictionary that provides the display
     settings and requires:
 
-    * `at` - name of meta item where the position to place the component is
-    taken from
+    * `center` - name of meta item where the position to place the component is
+    taken from.
     * `size` - scipp scalar vector describing the bounding box to use in the
     same length units as positions
     * `type` - known shape type to use including box, cylinder and disk.
