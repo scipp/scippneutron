@@ -146,12 +146,16 @@ def _furthest_component(det_center, scipp_obj, additional):
     return item, max_displacement
 
 
+def _instrument_view_shape_types():
+    return {"box": _box, "cylinder": _cylinder, "disk": _disk_chopper}
+
+
 def _plot_components(scipp_obj, components, positions_var, scene):
     det_center = sc.mean(positions_var)
     furthest_key, furthest_distance = _furthest_component(det_center, scipp_obj,
                                                           components)
     # Some scaling to set width according to distance from detector center
-    shapes = {"box": _box, "cylinder": _cylinder, "disk": _disk_chopper}
+    shapes = _instrument_view_shape_types()
     for name, settings in components.items():
         type = settings["type"]
         size = settings["size"]
@@ -185,6 +189,17 @@ def _get_camera(scene):
         if isinstance(child, p3.PerspectiveCamera):
             return child
     return None
+
+
+def instrument_view_shape_types():
+    """
+    Returns a list of valid shape type names that the `instrument_view`
+    understands.
+    These can be used as the `type` value in the settings for `components`
+    on the `instrument_view`.
+    :return: list of shape names available
+    """
+    return list(_instrument_view_shape_types().keys())
 
 
 def instrument_view(scipp_obj=None,
@@ -224,7 +239,8 @@ def instrument_view(scipp_obj=None,
     taken from
     * `size` - scipp scalar vector describing the bounding box to use in the
     same length units as positions
-    * `type` - known shape type to use including box, cylinder and disk
+    * `type` - known shape type to use including box, cylinder and disk.
+    Function `instrument_view_shape_types` lists all valid types available.
 
     Optional arguments are:
 
