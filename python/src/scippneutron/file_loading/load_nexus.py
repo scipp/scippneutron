@@ -8,7 +8,7 @@ import scipp as sc
 import scipp
 
 from ._common import Group, MissingDataset
-from ._detector_data import load_detector_data, load_raw_detector_structures
+from ._detector_data import load_detector_data
 from ._log_data import load_logs
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
@@ -173,12 +173,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             "to specify which to load data from, for example"
             f"{__name__}('my_file.nxs', '/entry_2')")
 
-    if raw_detector_data:
-        loaded_data = load_raw_detector_structures(groups[nx_event_data],
-                                                   groups[nx_detector], nexus)
-    else:
-        loaded_data = load_detector_data(groups[nx_event_data], groups[nx_detector],
-                                         nexus_file, nexus, quiet)
+    loaded_data = load_detector_data(groups[nx_event_data], groups[nx_detector],
+                                     nexus_file, nexus, quiet, raw_detector_data)
     # If no event data are found, make a Dataset and add the metadata as
     # Dataset entries. Otherwise, make a DataArray.
     if loaded_data is None:

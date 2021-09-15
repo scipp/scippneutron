@@ -1714,16 +1714,14 @@ def test_nexus_file_with_two_choppers(load_function: Callable):
 def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
     event_time_offsets = np.array([456, 743, 347, 345, 632])
     event_ids = np.array([1, 2, 3, 1, 3])
-    time_zeros = np.array([
-        1600766730000000000, 1600766731000000000, 1600766732000000000,
-        1600766733000000000
-    ])
+    time_zeros = np.array([1, 2, 3, 4])
     event_index = np.array([0, 3, 3, 5])
     event_data = EventData(
         event_id=event_ids,
         event_time_offset=event_time_offsets,
         event_time_zero=time_zeros,
         event_index=event_index,
+        event_time_zero_unit="s",
     )
 
     detector_numbers = np.array([1, 2, 3, 4])
@@ -1734,27 +1732,32 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
 
     loaded_data = load_function(builder, raw_detector_data=True)
 
-    assert sc.identical(
-        loaded_data["events"].data.values,
-        sc.Dataset(
-            data={
-                "event_id":
-                sc.Variable(dims=["event_id"], values=event_ids),
-                "event_time_zero":
-                sc.Variable(
-                    dims=["event_time_zero"], values=time_zeros, unit=sc.units.ns),
-                "event_index":
-                sc.Variable(dims=["event_index"], values=event_index),
-                "event_time_offset":
-                sc.Variable(dims=["event_time_offset"],
-                            values=event_time_offsets,
-                            unit=sc.units.ns),
-            }))
+    expected = sc.bins(
+        dim="event",
+        data=sc.DataArray(data=sc.array(dims=["event"],
+                                        values=[1, 1, 1, 1, 1],
+                                        variances=[1, 1, 1, 1, 1],
+                                        unit=sc.units.counts,
+                                        dtype=sc.dtype.float32),
+                          coords={
+                              "tof":
+                              sc.array(dims=["event"],
+                                       values=event_time_offsets,
+                                       unit=sc.units.ns),
+                              "detector_id":
+                              sc.array(dims=["event"], values=event_ids),
+                          },
+                          attrs={
+                              "pulse_time":
+                              sc.Variable(
+                                  dims=["event"],
+                                  values=np.array([1, 1, 1, 3, 3]),
+                                  dtype=sc.dtype.datetime64,
+                                  unit=sc.units.s,
+                              ),
+                          }),
+        begin=sc.array(dims=["event"], values=[0, 3, 3, 5], dtype=sc.dtype.int64),
+        end=sc.array(dims=["event"], values=[3, 3, 5, 5], dtype=sc.dtype.int64),
+    )
 
-    assert sc.identical(
-        loaded_data["detector_0"].data.values,
-        sc.Dataset(
-            data={
-                "detector_number":
-                sc.Variable(dims=["detector_number"], values=detector_numbers),
-            }))
+    assert sc.identical(loaded_data, expected)
