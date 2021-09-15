@@ -87,7 +87,6 @@ conan_cmake_install(
   outdated
 )
 
-find_package(Benchmark)
 find_package(Boost 1.67 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(GTest CONFIG REQUIRED)
@@ -181,7 +180,6 @@ else()
   set(CMAKE_INSTALL_RPATH @loader_path)
 endif()
 
-add_subdirectory(benchmark)
 add_subdirectory(neutron)
 add_subdirectory(python)
 
