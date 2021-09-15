@@ -264,7 +264,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
 
     if raw:
 
-        detector_data.event_index = sc.Variable(dims=[_event_dimension],
+        detector_data.event_index = sc.array(dims=[_event_dimension],
                                                 values=event_index,
                                                 dtype=sc.dtype.int64)
     else:
