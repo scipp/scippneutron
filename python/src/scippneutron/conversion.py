@@ -179,7 +179,7 @@ SCATTER_GRAPH_KINEMATICS = {
     'Ltotal': _total_beam_length_scatter,
 }
 
-SCATTER_GRAPHS_DYNAMICS = {
+SCATTER_GRAPH_DYNAMICS_BY_ORIGIN = {
     'energy': {
         'dspacing': _dspacing_from_energy,
         'wavelength': _wavelength_from_energy,
@@ -236,7 +236,7 @@ def _reachable_by(target, graph):
 def _elastic_scatter_base_graph(origin, target):
     if _reachable_by(target, SCATTER_GRAPH_KINEMATICS):
         return dict(SCATTER_GRAPH_KINEMATICS)
-    return {**SCATTER_GRAPH_KINEMATICS, **SCATTER_GRAPHS_DYNAMICS[origin]}
+    return {**SCATTER_GRAPH_KINEMATICS, **SCATTER_GRAPH_DYNAMICS_BY_ORIGIN[origin]}
 
 
 def _elastic_scatter_graph(data, origin, target):
