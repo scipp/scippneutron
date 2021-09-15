@@ -249,19 +249,21 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
                       dtype=np.float32,
                       variances=True)
 
-    if raw:
-        data_dict = {
-            "data": weights,
-            "coords": {
-                _time_of_flight: event_time_offset,
-                _detector_dimension: event_id,
-            },
-            "attrs": {
-                _pulse_time: _load_pulse_times(group, nexus, number_of_event_ids),
-            },
-        }
+    data_dict = {
+        "data": weights,
+        "coords": {
+            _time_of_flight: event_time_offset,
+            _detector_dimension: event_id,
+        },
+        "attrs": {
+            _pulse_time: _load_pulse_times(group, nexus, number_of_event_ids),
+        },
+    }
 
-        detector_data.events = sc.DataArray(**data_dict)
+    detector_data.events = sc.DataArray(**data_dict)
+
+    if raw:
+
         detector_data.event_index = sc.Variable(dims=[_event_dimension],
                                                 values=event_index,
                                                 dtype=sc.dtype.int64)
@@ -276,19 +278,6 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
 
         _check_event_ids_and_det_number_types_valid(detector_data.detector_ids.dtype,
                                                     event_id.dtype)
-
-        data_dict = {
-            "data": weights,
-            "coords": {
-                _time_of_flight: event_time_offset,
-                _detector_dimension: event_id,
-            },
-            "attrs": {
-                _pulse_time: _load_pulse_times(group, nexus, number_of_event_ids),
-            },
-        }
-
-        detector_data.events = sc.DataArray(**data_dict)
 
         detector_group = group.parent
         pixel_positions_found, _ = nexus.dataset_in_group(detector_group,
@@ -343,12 +332,14 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
         # If there were no data to load we are done
         return
 
-    def get_detector_id(data: DetectorData):
-        # Assume different detector banks do not have
-        # intersecting ranges of detector ids
-        return data.detector_ids.values[0]
+    if not raw:
 
-    event_data.sort(key=get_detector_id)
+        def get_detector_id(data: DetectorData):
+            # Assume different detector banks do not have
+            # intersecting ranges of detector ids
+            return data.detector_ids.values[0]
+
+        event_data.sort(key=get_detector_id)
 
     _create_empty_event_data(event_data)
 
@@ -391,7 +382,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
             begins = data.event_index
             ends = sc.array(dims=[_event_dimension],
                             values=np.append(data.event_index.values[1:],
-                                             len(data.event_index.values) + 1))
+                                             data.event_index.values[-1]))
 
             return sc.bins(data=data.events,
                            dim=_event_dimension,
