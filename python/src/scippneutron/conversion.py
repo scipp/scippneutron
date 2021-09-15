@@ -243,7 +243,8 @@ def conversion_graph(origin: str, target: str, scatter: bool,
     :param energy_mode: Select if energy is conserved. One of `'elastic'`,
                         `'direct_inelastic'`, `'indirect_inelastic'`.
     :return: Conversion graph.
-    :seealso: :py:func:`scippneutron.convert`.
+    :seealso: :py:func:`scippneutron.convert`,
+              :py:func:`scippneutron.deduce_conversion_graph`.
     """
 
     # Results are copied to ensure users do not modify the global dictionaries.
@@ -283,6 +284,24 @@ def _deduce_energy_mode(data, origin, target):
     return 'elastic'
 
 
+def deduce_conversion_graph(data: Union[sc.DataArray,
+                                        sc.Dataset], origin: str, target: str,
+                            scatter: bool) -> Dict[Union[str, Tuple[str]], Callable]:
+    """
+    Get the conversion graph used by :py:func:`scippneutron.convert`
+    when called with identical arguments.
+
+    :param data: Input data.
+    :param origin: Name of the input coordinate.
+    :param target: Name of the output coordinate.
+    :param scatter: Choose whether to use scattering or non-scattering conversions.
+    :return: Conversion graph.
+    :seealso: :py:func:`scippneutron.convert`, :py:func:`scippneutron.conversion_graph`.
+    """
+    return conversion_graph(origin, target, scatter,
+                            _deduce_energy_mode(data, origin, target))
+
+
 def convert(data: Union[sc.DataArray, sc.Dataset], origin: str, target: str,
             scatter: bool) -> Union[sc.DataArray, sc.Dataset]:
     """
@@ -296,16 +315,15 @@ def convert(data: Union[sc.DataArray, sc.Dataset], origin: str, target: str,
     :param target: Name of the output coordinate.
     :param scatter: Choose whether to use scattering or non-scattering conversions.
     :return: A new scipp.DataArray or scipp.Dataset with the new coordinate.
-    :seealso: :py:func:`scippneutron.conversion_graph` to inspect
+    :seealso: :py:func:`scippneutron.deduce_conversion_graph` and
+              :py:func:`scippneutron.conversion_graph`to inspect
               the possible conversions.
     """
 
-    energy_mode = _deduce_energy_mode(data, origin, target)
+    graph = deduce_conversion_graph(data, origin, target, scatter)
 
     try:
-        converted = data.transform_coords(target,
-                                          graph=conversion_graph(
-                                              origin, target, scatter, energy_mode))
+        converted = data.transform_coords(target, graph=graph)
     except KeyError as err:
         if err.args[0] == target:
             raise RuntimeError(f"No viable conversion from '{origin}' to '{target}' "
