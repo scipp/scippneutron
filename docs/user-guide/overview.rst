@@ -28,6 +28,7 @@ Unit Conversion
 
    convert
    conversion_graph
+   deduce_conversion_graph
 
 Beamline geometry
 ~~~~~~~~~~~~~~~~~
