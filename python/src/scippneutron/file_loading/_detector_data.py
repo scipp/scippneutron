@@ -265,8 +265,8 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     if raw:
 
         detector_data.event_index = sc.array(dims=[_event_dimension],
-                                                values=event_index,
-                                                dtype=sc.dtype.int64)
+                                             values=event_index,
+                                             dtype=sc.dtype.int64)
     else:
         if detector_data.detector_ids is None:
             # If detector ids were not found in an associated detector group
