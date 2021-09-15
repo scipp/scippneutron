@@ -26,6 +26,7 @@ test:
     - neutron
   requires:
     - h5py
+    - ipykernel = 6.3.1  # see https://github.com/ipython/ipykernel/issues/771
     - ipywidgets
     - matplotlib-base
     - psutil

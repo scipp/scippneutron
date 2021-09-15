@@ -12,12 +12,12 @@ dependencies:
   - conan
   - ninja
   - tbb-devel
-  - scipp/label/dev::scipp
+  - scipp::scipp
   - cmake
-  - gxx_linux-64 11.1.*
 
   # Run
   - appdirs
+  - ipykernel = 6.3.1  # see https://github.com/ipython/ipykernel/issues/771
   - ipympl
   - ipywidgets
   - scipp::mantid-framework
@@ -32,6 +32,7 @@ dependencies:
   - h5py
   - python-confluent-kafka
   - ess-dmsc::ess-streaming-data-types
+  - scipy
 
   # Test
   - psutil
