@@ -160,17 +160,17 @@ def _dspacing_from_energy(energy, two_theta):
     return sc.sqrt(c / energy) / sc.sin(two_theta.astype(dtype, copy=False) / 2)
 
 
-NO_SCATTER_GRAPH_KINEMATICS = {
+_NO_SCATTER_GRAPH_KINEMATICS = {
     'Ltotal': _total_beam_length_no_scatter,
 }
 
-NO_SCATTER_GRAPH = {
-    **NO_SCATTER_GRAPH_KINEMATICS,
+_NO_SCATTER_GRAPH = {
+    **_NO_SCATTER_GRAPH_KINEMATICS,
     'wavelength': _wavelength_from_tof,
     'energy': _energy_from_tof,
 }
 
-SCATTER_GRAPH_KINEMATICS = {
+_SCATTER_GRAPH_KINEMATICS = {
     'incident_beam': _incident_beam,
     'scattered_beam': _scattered_beam,
     'L1': _L1,
@@ -179,7 +179,7 @@ SCATTER_GRAPH_KINEMATICS = {
     'Ltotal': _total_beam_length_scatter,
 }
 
-SCATTER_GRAPH_DYNAMICS_BY_ORIGIN = {
+_SCATTER_GRAPH_DYNAMICS_BY_ORIGIN = {
     'energy': {
         'dspacing': _dspacing_from_energy,
         'wavelength': _wavelength_from_energy,
@@ -225,7 +225,7 @@ def _inelastic_scatter_graph(data):
             'energy_transfer': _energy_transfer_indirect_from_tof
         }
     }[inputs[0]]
-    return {**SCATTER_GRAPH_KINEMATICS, **inelastic_step}
+    return {**_SCATTER_GRAPH_KINEMATICS, **inelastic_step}
 
 
 def _reachable_by(target, graph):
@@ -234,9 +234,9 @@ def _reachable_by(target, graph):
 
 
 def _elastic_scatter_base_graph(origin, target):
-    if _reachable_by(target, SCATTER_GRAPH_KINEMATICS):
-        return dict(SCATTER_GRAPH_KINEMATICS)
-    return {**SCATTER_GRAPH_KINEMATICS, **SCATTER_GRAPH_DYNAMICS_BY_ORIGIN[origin]}
+    if _reachable_by(target, _SCATTER_GRAPH_KINEMATICS):
+        return dict(_SCATTER_GRAPH_KINEMATICS)
+    return {**_SCATTER_GRAPH_KINEMATICS, **_SCATTER_GRAPH_DYNAMICS_BY_ORIGIN[origin]}
 
 
 def _elastic_scatter_graph(data, origin, target):
@@ -278,7 +278,7 @@ def conversion_graph(data: Union[sc.DataArray, sc.Dataset], origin: str, target:
     if scatter:
         return dict(_scatter_graph(data, origin, target))
     else:
-        return dict(NO_SCATTER_GRAPH)
+        return dict(_NO_SCATTER_GRAPH)
 
 
 def convert(data: Union[sc.DataArray, sc.Dataset], origin: str, target: str,
