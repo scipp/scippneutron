@@ -558,23 +558,21 @@ def test_convert_with_factor_type_promotion():
 @pytest.mark.parametrize('target', TOF_TARGET_DIMS)
 def test_convert_binned_events_converted(target):
     tof = make_test_data(coords=('Ltotal', 'two_theta'), dataset=True)
-    # Standard dense coord for comparison purposes. The final 0 is a dummy.
-    tof.coords['tof'] = sc.array(dims=['spectrum', 'tof'],
-                                 values=[[1000.0, 3000.0, 2000.0, 4000.0],
-                                         [5000.0, 6000.0, 3000.0, 0.0]],
-                                 unit='us')
+    del tof['counts']
     tof['events'] = make_tof_binned_events()
-    original = tof.copy(deep=True)
-    assert sc.identical(tof, original)
+
+    # Construct events with all coords.
+    dense_tof = tof['events'].copy()
+    for name in ('Ltotal', 'two_theta'):
+        dense_tof.events.coords[name] = sc.empty(sizes=tof['events'].events.sizes,
+                                                 dtype='float64',
+                                                 unit=tof.coords[name].unit)
+        dense_tof.bins.coords[name][...] = tof.coords[name]
+    dense_tof = dense_tof.events
+    expected = scn.convert(dense_tof, origin='tof', target=target, scatter=True)
 
     res = scn.convert(tof, origin='tof', target=target, scatter=True)
-    values = res['events'].values
-    for bin_index in range(2):
-        expected = res.coords[target]['spectrum',
-                                      bin_index].rename_dims({target: 'event'})
-        assert 'tof' not in values[bin_index].coords
-        assert target in values[bin_index].coords
-        assert sc.identical(values[bin_index].coords[target], expected)
+    assert sc.identical(res['events'].events.coords[target], expected.coords[target])
 
 
 @pytest.mark.parametrize('target', TOF_TARGET_DIMS)
