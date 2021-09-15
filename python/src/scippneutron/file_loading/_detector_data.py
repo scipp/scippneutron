@@ -43,8 +43,10 @@ def _check_for_missing_fields(group: Group, nexus: LoadFromNexus):
 
 def _convert_array_to_metres(array: np.ndarray, unit: str) -> np.ndarray:
     return sc.to_unit(
-        sc.Variable(["temporary_variable"], values=array, unit=unit, dtype=np.float64),
-        "m").values
+        sc.Variable(dims=["temporary_variable"],
+                    values=array,
+                    unit=unit,
+                    dtype=np.float64), "m").values
 
 
 def _load_pixel_positions(detector_group: GroupObject, detector_ids_size: int,
@@ -119,7 +121,7 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
     return sc.DataArray(data=sc.empty(dims=[_event_dimension],
                                       shape=[0],
                                       unit='counts',
-                                      variances=True,
+                                      with_variances=True,
                                       dtype=np.float32),
                         coords={
                             _time_of_flight:
@@ -161,32 +163,21 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus,
         raise BadSource(f"Event index in NXEvent at {group.path}/event_index was not"
                         f"ordered. The index must be ordered to load pulse times.")
 
-    pulse_times = np.repeat(_raw_pulse_times.values, _diffs).astype('timedelta64')
+    try:
+        pulse_times = sc.to_unit(sc.array(dims=[_event_dimension],
+                                          values=np.repeat(_raw_pulse_times.values,
+                                                           _diffs),
+                                          unit=_raw_pulse_times.unit,
+                                          dtype=sc.dtype.int64),
+                                 sc.units.s,
+                                 copy=False)
+    except sc.UnitError:
+        raise BadSource(f"Could not load pulse times: units attribute "
+                        f"'{_raw_pulse_times.unit}' in NXEvent at "
+                        f"{group.path}/{time_zero_group} is not convertible"
+                        f" to seconds.")
 
-    if _raw_pulse_times.unit != sc.units.s:
-        # scipp doesn't have time offsets so do time offset arithmetic in
-        # numpy and then convert back to scipp. Skip this step in the fast
-        # case where the unit is already correct to avoid unnecessary
-        # conversion to/from numpy.
-        try:
-            pulse_times = sc.to_unit(
-                sc.Variable(dims=[_event_dimension],
-                            values=pulse_times,
-                            unit=_raw_pulse_times.unit,
-                            dtype=sc.dtype.float64),
-                sc.units.s).values.astype("timedelta64[s]")
-        except sc.UnitError:
-            raise BadSource(f"Could not load pulse times: units attribute "
-                            f"'{_raw_pulse_times.unit}' in NXEvent at "
-                            f"{group.path}/{time_zero_group} is not convertible"
-                            f" to seconds.")
-
-    return sc.Variable(
-        dims=[_event_dimension],
-        values=np.array([time_offset]).astype('datetime64[s]') + pulse_times,
-        unit=sc.units.s,
-        dtype=sc.dtype.datetime64,
-    )
+    return sc.scalar(np.datetime64(time_offset), unit=sc.units.s) + pulse_times
 
 
 def _load_detector(group: Group, file_root: h5py.File,
@@ -243,7 +234,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
                       shape=event_id.shape,
                       unit='counts',
                       dtype=np.float32,
-                      variances=True)
+                      with_variances=True)
 
     if detector_data.detector_ids is None:
         # If detector ids were not found in an associated detector group

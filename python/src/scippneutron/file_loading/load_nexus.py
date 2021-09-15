@@ -52,8 +52,7 @@ def _add_string_attr_to_loaded_data(group: GroupObject, dataset_name: str,
         pass
 
     try:
-        data[attr_name] = sc.Variable(
-            value=nexus.load_scalar_string(group, dataset_name))
+        data[attr_name] = sc.scalar(nexus.load_scalar_string(group, dataset_name))
     except MissingDataset:
         pass
 
@@ -166,7 +165,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     # Dataset entries. Otherwise, make a DataArray.
     if loaded_data is None:
         no_event_data = True
-        loaded_data = sc.Dataset({})
+        loaded_data = sc.Dataset()
     else:
         no_event_data = False
 
