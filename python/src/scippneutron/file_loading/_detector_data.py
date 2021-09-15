@@ -377,8 +377,12 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
 
     def _bin_events(data):
         if not raw:
+            # Events in the NeXus file are effectively binned by pulse
+            # (because they are recorded chronologically)
+            # but for reduction it is more useful to bin by detector id
             return sc.bin(data.events, groups=[data.detector_ids], edges=[_tof_edges])
         else:
+            # If loading "raw" data, leave binned by pulse.
             begins = data.event_index
             ends = sc.array(dims=[_event_dimension],
                             values=np.append(data.event_index.values[1:],
@@ -389,9 +393,6 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
                            begin=begins,
                            end=ends)
 
-    # Events in the NeXus file are effectively binned by pulse
-    # (because they are recorded chronologically)
-    # but for reduction it is more useful to bin by detector id
     events = _bin_events(detector_data)
 
     if pixel_positions_loaded:
@@ -408,7 +409,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
 
         events = sc.concatenate(events, new_events, dim=_detector_dimension)
 
-    return events
+    return sc.DataArray(data=events) if raw else events
 
 
 def _create_empty_event_data(event_data: List[DetectorData]):

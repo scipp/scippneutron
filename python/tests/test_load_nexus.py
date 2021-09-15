@@ -1760,4 +1760,4 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
         end=sc.array(dims=["event"], values=[3, 3, 5, 5], dtype=sc.dtype.int64),
     )
 
-    assert sc.identical(loaded_data, expected)
+    assert sc.identical(loaded_data, sc.DataArray(data=expected))
