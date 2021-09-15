@@ -3,8 +3,11 @@
 Release Notes
 =============
 
-Since v0.2.0
+Since v0.3.0
 ------------
+
+v0.3.0 (September 2021)
+-----------------------
 
 * ``load_nexus`` will read ub_matrix and orientation_matrix information from nexus files. Likewise, the Mantid converters will propagate the same information if present.
 
@@ -16,14 +19,16 @@ Features
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
+* `load_nexus` will now add a single TOF bin around event data
+
 Contributors
 ~~~~~~~~~~~~
 
-Owen Arnold,
-Simon Heybrock,
-Matthew D. Jones,
-Neil Vaytet,
-and Jan-Lukas Wynen
+Owen Arnold :sup:`b, c`\ ,
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+Tom Willemsen :sup:`b, c`\ ,
+and Jan-Lukas Wynen :sup:`a`\
 
 v0.2.0 (June 2021)
 -------------------
@@ -85,7 +90,8 @@ Breaking changes
   Previously the conversion mode was determined automatically based on the presence of a ``sample_position`` coordinate.
   This is error prone hidden/implicit behavior, which is now avoided.
 
-Contributors
-~~~~~~~~~~~~
-
-Everyone contributing originally to ``scipp.neutron``.
+Contributing Organizations
+--------------------------
+* :sup:`a`\  `European Spallation Source ERIC <https://europeanspallationsource.se/>`_, Sweden
+* :sup:`b`\  `Science and Technology Facilities Council <https://www.ukri.org/councils/stfc/>`_, UK
+* :sup:`c`\  `Tessella <https://www.tessella.com/>`_, UK
