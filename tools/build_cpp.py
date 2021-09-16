@@ -113,6 +113,15 @@ def main(prefix='install', build_dir='build', source_dir='.', caching=False):
     end = time.time()
     print('Compilation took ', end - start, ' seconds')
 
+    if platform == "win32":
+        import importlib.resources
+        with importlib.resources.path("scipp", "__init__.py") as path:
+            # For scipp dlls
+            os.environ["PATH"] += os.pathsep + str(path.parent.resolve())
+            # For tbb dlls
+            os.environ["PATH"] += os.pathsep + str(
+                (path.parent.parent.parent / "Library" / "Bin").resolve())
+
     # Run C++ tests
     run_command([os.path.join('bin', build_config, 'scippneutron-test')], shell=shell)
 

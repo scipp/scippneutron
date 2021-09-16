@@ -180,10 +180,10 @@ def _load_log_data_from_group(group: Group, nexus: LoadFromNexus,
                         f"this is not yet implemented")
 
     if np.ndim(values) == 0:
-        property_data = sc.Variable(value=values,
-                                    unit=unit,
-                                    dtype=nexus.get_dataset_numpy_dtype(
-                                        group.group, value_dataset_name))
+        property_data = sc.scalar(values,
+                                  unit=unit,
+                                  dtype=nexus.get_dataset_numpy_dtype(
+                                      group.group, value_dataset_name))
     else:
         property_data = sc.Variable(values=values,
                                     unit=unit,
@@ -194,10 +194,10 @@ def _load_log_data_from_group(group: Group, nexus: LoadFromNexus,
     if is_time_series:
         # If property has timestamps, create a DataArray
         data_array = {"data": property_data, "coords": {dimension_label: times}}
-        return property_name, sc.Variable(value=sc.DataArray(**data_array))
+        return property_name, sc.scalar(sc.DataArray(**data_array))
     elif not np.isscalar(values):
         # If property is multi-valued, create a wrapper single
         # value variable. This prevents interference with
         # global dimensions for the output Dataset.
-        return property_name, sc.Variable(value=property_data)
+        return property_name, sc.scalar(property_data)
     return property_name, property_data

@@ -47,14 +47,12 @@ def _open_if_path(file_in: Union[str, h5py.File]):
 
 def _load_instrument_name(instrument_groups: List[Group], nexus: LoadFromNexus) -> Dict:
     try:
-        if len(instrument_groups) > 1:
-            warn(f"More than one {nx_instrument} found in file, "
-                 f"loading name from {instrument_groups[0].group.name} only")
-        return {
-            "instrument_name":
-            sc.Variable(
-                value=nexus.load_scalar_string(instrument_groups[0].group, "name"))
-        }
+        data = data.attrs
+    except AttributeError:
+        pass
+
+    try:
+        data[attr_name] = sc.scalar(nexus.load_scalar_string(group, dataset_name))
     except MissingDataset:
         return {}
 
@@ -170,7 +168,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     # Dataset entries. Otherwise, make a DataArray.
     if loaded_data is None:
         no_event_data = True
-        loaded_data = sc.Dataset({})
+        loaded_data = sc.Dataset()
     else:
         no_event_data = False
 

@@ -39,14 +39,17 @@ EVENT_FB_ID = "ev42"
 
 def _create_metadata_buffer_array(name: str, unit: sc.Unit, dtype: Any,
                                   buffer_size: int):
-    return sc.DataArray(
-        sc.zeros(dims=[name], shape=(buffer_size, ), unit=unit, dtype=dtype), {
-            "time":
-            sc.zeros(dims=[name],
-                     shape=(buffer_size, ),
-                     unit=sc.Unit("nanoseconds"),
-                     dtype=np.dtype('datetime64[ns]'))
-        })
+    return sc.DataArray(sc.zeros(dims=[name],
+                                 shape=(buffer_size, ),
+                                 unit=unit,
+                                 dtype=dtype),
+                        coords={
+                            "time":
+                            sc.zeros(dims=[name],
+                                     shape=(buffer_size, ),
+                                     unit=sc.Unit("nanoseconds"),
+                                     dtype=np.dtype('datetime64[ns]'))
+                        })
 
 
 class _SlowMetadataBuffer:
@@ -84,7 +87,7 @@ class _SlowMetadataBuffer:
             return_array = self._data_array[
                 self._name, :self._buffer_filled_size].copy()
             self._buffer_filled_size = 0
-        return sc.Variable(value=return_array)
+        return sc.scalar(return_array)
 
 
 class _FastMetadataBuffer:
@@ -170,7 +173,7 @@ class _FastMetadataBuffer:
             return_array = self._data_array[
                 self._name, :self._buffer_filled_size].copy()
             self._buffer_filled_size = 0
-        return sc.Variable(value=return_array)
+        return sc.scalar(return_array)
 
 
 class _ChopperMetadataBuffer:
@@ -219,7 +222,7 @@ class _ChopperMetadataBuffer:
             return_array = self._data_array[
                 self._name, :self._buffer_filled_size].copy()
             self._buffer_filled_size = 0
-        return sc.Variable(value=return_array)
+        return sc.scalar(return_array)
 
 
 metadata_ids = (SLOW_FB_ID, FAST_FB_ID, CHOPPER_FB_ID)
@@ -258,12 +261,15 @@ class StreamedDataBuffer:
                                shape=[event_buffer_size],
                                unit=sc.units.ns,
                                dtype=sc.dtype.int64)
-        weights = sc.ones(dims=['event'], shape=[event_buffer_size], variances=True)
-        self._events_buffer = sc.DataArray(weights, {
-            'tof': tof_buffer,
-            'detector_id': id_buffer,
-            'pulse_time': pulse_times
-        })
+        weights = sc.ones(dims=['event'],
+                          shape=[event_buffer_size],
+                          with_variances=True)
+        self._events_buffer = sc.DataArray(weights,
+                                           coords={
+                                               'tof': tof_buffer,
+                                               'detector_id': id_buffer,
+                                               'pulse_time': pulse_times
+                                           })
         self._current_event = 0
         self._cancelled = False
         self._unrecognised_fb_id_count = 0

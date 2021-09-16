@@ -7,12 +7,9 @@ Provides "unit conversions" and technique specific tools based on physics of (ti
 News
 ----
 
-- Just like scipp, scippneutron has switched from GPLv3 to the more permissive BSD-3 license which fits better into the Python eco system.
+- [September 2021] `scipp-0.8 <https://scipp.github.io/about/release-notes.html#v0-8-0-september-2021>`_ has been released.
 - [June 2021] `scippneutron-0.2 <https://scipp.github.io/scippneutron/about/release-notes.html#v0-2-0-june-2021>`_ has been released.
-- [June 2021] `scipp-0.7 <https://scipp.github.io/about/release-notes.html#v0-7-0-june-2021>`_ has been released.
-- [March 2021] `scippneutron-0.1 <https://scipp.github.io/scippneutron/about/release-notes.html#v0-1-0-march-2021>`_ has been released.
-- [March 2021] `scipp-0.6 <https://scipp.github.io/about/release-notes.html#v0-6-0-march-2021>`_ has been released.
-  The `What's new <https://scipp.github.io/about/whats-new/whats-new-0.6.0.html>`_ notebook provides an overview of the highlights and major changes in both scipp and scippneutron.
+- Just like scipp, scippneutron has switched from GPLv3 to the more permissive BSD-3 license which fits better into the Python eco system.
 
 Where can I get help?
 ---------------------
@@ -46,6 +43,7 @@ Documentation
    user-guide/groupby
    user-guide/from-mantid-to-scipp
    user-guide/instrument-view
+   user-guide/recipes
 
 .. toctree::
    :caption: Tutorials
