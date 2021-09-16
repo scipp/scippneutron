@@ -9,28 +9,31 @@ class MantidScippComparison(ABC):
     def __init__(self, test_description=None):
         self._test_description = test_description
 
-    def _execute_with_timing(self, op, input):
+    @staticmethod
+    def _execute_with_timing(op, input):
         start = time.time()
         result = op(input)
         stop = time.time()
         return result, (stop - start) * sc.Unit('s')
 
-    def _assert(self, a, b, allow_failure):
+    @staticmethod
+    def _assert(a, b, allow_failure):
         try:
             rtol = 1e-9 * sc.units.one
             atol = 1e-9 * a.unit
             if isinstance(a, sc.DataArray):
-                assert sc.all(
-                    sc.isclose(a.data, b.data, rtol=rtol,
-                               atol=atol)).value and sc.utils.comparison.isnear(
-                                   a, b, rtol=1e-6 * sc.units.one, include_data=False)
+                assert (sc.allclose(a.data, b.data, rtol=rtol, atol=atol)
+                        and sc.utils.comparison.isnear(
+                            a, b, rtol=1e-6 * sc.units.one, include_data=False))
             else:
                 assert sc.all(sc.isclose(a, b, rtol=rtol, atol=atol)).value
-        except AssertionError as ae:
+        # Catching RuntimeError because isnear raises it when the
+        # number of meta items does not match.
+        except (AssertionError, RuntimeError) as ae:
             if allow_failure:
                 print(ae)
             else:
-                raise (ae)
+                raise ae
 
     def _run_from_workspace(self, in_ws, allow_failure):
         out_mantid, time_mantid = self._execute_with_timing(self._run_mantid,
