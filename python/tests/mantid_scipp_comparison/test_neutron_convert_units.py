@@ -108,16 +108,24 @@ class DirectInElasticComparison(Comparison):
 class TestNeutronConversionUnits:
     def test_neutron_convert_units_tof_to_wavelength(self):
         test = ElasticComparison(origin='tof', target='wavelength')
-        test.run()
-
-    def test_neutron_convert_units_wavelength_to_tof(self):
-        test = ElasticComparison(origin='wavelength', target='tof')
-        test.run()
+        self._check_coords(test.run(allow_failure=True), ('wavelength', 'spectrum'),
+                           rtol=1e-8)
 
     def test_neutron_convert_units_tof_to_d_space(self):
         test = ElasticComparison(origin='tof', target='dspacing')
-        test.run()
+        self._check_coords(test.run(allow_failure=True), ('dspacing', 'spectrum'),
+                           rtol=1e-8)
 
     def test_neutron_convert_units_tof_to_wavelength_direct(self):
         test = DirectInElasticComparison(origin='tof', target='energy_transfer')
-        test.run()
+        self._check_coords(test.run(allow_failure=True),
+                           ('energy_transfer', 'spectrum'),
+                           rtol=1e-6)
+
+    @staticmethod
+    def _check_coords(results_dict, names, rtol):
+        for results in results_dict.values():
+            for name in names:
+                assert sc.allclose(results['scipp'].coords[name],
+                                   results['mantid'].coords[name],
+                                   rtol=rtol * sc.units.one)
