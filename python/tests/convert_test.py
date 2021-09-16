@@ -423,7 +423,7 @@ def test_convert_tof_to_energy_transfer_direct():
     check_tof_conversion_metadata(direct, 'energy_transfer', sc.units.meV)
 
     t = tof.coords['tof']
-    t0 = sc.to_unit(tof.coords['L1'] * sc.sqrt(m_n / ei), t.unit)
+    t0 = sc.to_unit(tof.coords['L1'] * sc.sqrt(m_n / 2 / ei), t.unit)
     assert sc.all(t0 < t).value  # only test physical region here
     ref = ei - sc.to_unit(m_n / 2 * (tof.coords['L2'] / (t - t0))**2,
                           ei.unit).rename_dims({'tof': 'energy_transfer'})
@@ -468,7 +468,7 @@ def test_convert_tof_to_energy_transfer_indirect():
     check_tof_conversion_metadata(indirect, 'energy_transfer', sc.units.meV)
 
     t = tof.coords['tof']
-    t0 = sc.to_unit(tof.coords['L2'] * sc.sqrt(m_n / ef), t.unit)
+    t0 = sc.to_unit(tof.coords['L2'] * sc.sqrt(m_n / 2 / ef), t.unit)
     assert sc.all(t0 < t).value  # only test physical region here
     ref = sc.to_unit(m_n / 2 * (tof.coords['L1'] / (t - t0))**2, ef.unit).rename_dims(
         {'tof': 'energy_transfer'}) - ef
