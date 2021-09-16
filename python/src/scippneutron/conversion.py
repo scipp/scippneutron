@@ -83,7 +83,8 @@ def _common_dtype(a, b):
 
 def _energy_transfer_t0(energy, tof, length):
     dtype = _common_dtype(energy, tof)
-    c = _energy_constant(_elem_unit(energy), tof, length)
+    c = _energy_constant(_elem_unit(energy), tof, length).astype(energy.dtype,
+                                                                 copy=False)
     return length.astype(dtype, copy=False) * sc.sqrt(c / energy)
 
 
