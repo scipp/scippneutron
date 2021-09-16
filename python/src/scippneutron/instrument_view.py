@@ -139,8 +139,8 @@ def _add_to_scene(position, scene, shape, display_text, bounding_box, color, wir
 
 
 def _furthest_component(det_center, scipp_obj, additional):
-    distances = [(settings["at"],
-                  sc.norm(scipp_obj.meta[settings["at"]] - det_center).value)
+    distances = [(settings["center"],
+                  sc.norm(scipp_obj.meta[settings["center"]] - det_center).value)
                  for settings in list(additional.values())]
     item, max_displacement = sorted(distances, key=lambda x: x[1])[-1]
     return item, max_displacement
@@ -167,7 +167,6 @@ def _plot_components(scipp_obj, components, positions_var, scene):
             raise ValueError(f"Unknown shape: {type} requested for {name}. "
                              f"Allowed values are: {supported_shapes}")
         component_position = scipp_obj.meta[center]
-        # TODO copy=False, cannot be enabled till after scipp 0.8 release
         component_position = sc.to_unit(component_position, positions_var.unit)
         size = sc.to_unit(size, positions_var.unit)
         _add_to_scene(position=component_position,
