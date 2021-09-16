@@ -21,10 +21,10 @@ def convert_to_pickleable_dict(data: sc.DataArray) -> Dict:
                 d[k] = str(v)
             elif k == "dtype":
                 d[k] = str(v)
-                if any(scipp_container_type in d[k]
+                if any(scipp_container_type == d[k]
                        for scipp_container_type in _scipp_containers):
-                    d["value"] = sc.to_dict(d["value"])
-                    _unit_and_dtype_to_str(d["value"])
+                    d["values"] = sc.to_dict(d["values"])
+                    _unit_and_dtype_to_str(d["values"])
 
     _unit_and_dtype_to_str(data_dict)
     return data_dict
@@ -58,16 +58,6 @@ def convert_from_pickleable_dict(data_dict: Dict) -> sc.DataArray:
                     except TypeError:
                         if v == "string":
                             d[k] = sc.dtype.string
-
-                            try:
-                                # Workaround for not being able to construct a
-                                # variable from a scalar string numpy array.
-                                # See
-                                # https://github.com/scipp/scipp/issues/1974
-                                d["value"] = d["value"].item()
-                                delete_dtype = True
-                            except AttributeError:
-                                d[k] = sc.dtype.string
                         elif any(scipp_container_type in k
                                  for scipp_container_type in _scipp_containers):
                             delete_dtype = True

@@ -113,8 +113,8 @@ def _add_coord_to_loaded_data(attr_name: str,
             if dtype == sc.dtype.vector_3_float64:
                 data[attr_name] = sc.vector(value=value, unit=unit)
             else:
-                data[attr_name] = sc.Variable(value=value, dtype=dtype, unit=unit)
+                data[attr_name] = sc.scalar(value, dtype=dtype, unit=unit)
         else:
-            data[attr_name] = sc.Variable(value=value, unit=unit)
+            data[attr_name] = sc.scalar(value, unit=unit)
     except KeyError:
         pass

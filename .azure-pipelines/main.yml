@@ -3,9 +3,6 @@ parameters:
   displayName: Verbose
   type: boolean
   default: false
-- name: scipp_channel
-  type: string
-  default: scipp
 
 # Note: the 'endpoint' refers to the Azure service connection, which can be
 # found on the Azure pipelines web interface under
@@ -43,7 +40,7 @@ extends:
         conda_env: 'scippneutron-developer.yml'
       osx:
         py_versions: ['3.7']
-        conda_env: 'scippneutron-developer.yml'
+        conda_env: 'scippneutron-developer-osx.yml'
       windows:
         py_versions: ['3.7']
         conda_env: 'scippneutron-developer-no-mantid.yml'
