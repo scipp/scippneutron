@@ -26,6 +26,7 @@ test:
   requires:
     - cmake
     - conan
+    - gxx_linux-64 11.1.* [linux64]
     - h5py
     - ipykernel = 6.3.1  # see https://github.com/ipython/ipykernel/issues/771
     - ipywidgets
