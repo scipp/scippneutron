@@ -390,16 +390,19 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
             begins = data.event_index[_pulse_dimension, :-1]
             ends = data.event_index[_pulse_dimension, 1:]
 
-            print(f"about to bin {data.events}")
-
             binned = sc.bins(data=data.events,
                              dim=_event_dimension,
                              begin=begins,
                              end=ends)
 
-            print(f"binned {binned}")
-
-            return sc.DataArray(data=binned, coords={"pulse_time": data.pulse_times})
+            da = sc.DataArray(data=binned,
+                              coords={"pulse_time": data.pulse_times["pulse", :-1]})
+            da.events.coords['pulse_time'] = sc.empty(sizes=da.events.sizes,
+                                                      dtype=data.pulse_times.dtype,
+                                                      unit=data.pulse_times.unit)
+            da.bins.coords['pulse_time'][...] = da.coords['pulse_time']
+            del da.coords["pulse_time"]
+            return da
 
     events = _bin_events(detector_data)
 
