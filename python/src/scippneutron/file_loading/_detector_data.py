@@ -420,9 +420,6 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
 
         _dim = _event_dimension if raw else _detector_dimension
 
-        print(f"concatenating new events \n\n{new_events}\n\n with existing events "
-              f"\n\n{events}\n\n along dim {_dim}")
-
         events = sc.concatenate(events, new_events, dim=_dim)
 
     return events
