@@ -52,7 +52,7 @@ def _load_instrument_name(instrument_groups: List[Group], nexus: LoadFromNexus) 
                  f"loading name from {instrument_groups[0].group.name} only")
         return {
             "instrument_name":
-            sc.Variable(
+            sc.scalar(
                 value=nexus.load_scalar_string(instrument_groups[0].group, "name"))
         }
     except MissingDataset:
@@ -99,7 +99,7 @@ def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:
     try:
         return {
             "experiment_title":
-            sc.Variable(value=nexus.load_scalar_string(entry_group.group, "title"))
+            sc.scalar(value=nexus.load_scalar_string(entry_group.group, "title"))
         }
     except MissingDataset:
         return {}
@@ -109,7 +109,7 @@ def _load_start_and_end_time(entry_group: Group, nexus: LoadFromNexus) -> Dict:
     times = {}
     for time in ["start_time", "end_time"]:
         try:
-            times[time] = sc.Variable(
+            times[time] = sc.scalar(
                 value=nexus.load_scalar_string(entry_group.group, time))
         except MissingDataset:
             pass

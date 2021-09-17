@@ -29,12 +29,12 @@ def load_monitor_data(monitor_groups: List[Group], file_root: h5py.File,
         # precedence over histogram-mode-data if available.
         if nexus.dataset_in_group(group.group, "event_id")[0]:
             events = load_detector_data([group], [], file_root, nexus, True)
-            monitor_data[monitor_name] = sc.Variable(value=events)
+            monitor_data[monitor_name] = sc.scalar(value=events)
             warnings.warn(f"Event data present in NXMonitor group {group.path}. "
                           f"Histogram-mode monitor data from this group will be "
                           f"ignored.")
         else:
             data = _load_data_from_histogram_mode_monitor(group, nexus)
-            monitor_data[monitor_name] = sc.Variable(value=data)
+            monitor_data[monitor_name] = sc.scalar(value=data)
 
     return monitor_data
