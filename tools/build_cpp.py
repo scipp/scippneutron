@@ -12,6 +12,7 @@ import time
 
 parser = argparse.ArgumentParser(description='Build C++ library and run tests')
 parser.add_argument('--prefix', default='install')
+parser.add_argument('--site-packages-dir', default='')
 parser.add_argument('--source_dir', default='.')
 parser.add_argument('--build_dir', default='build')
 parser.add_argument('--caching', action='store_true', default=False)
@@ -25,7 +26,7 @@ def run_command(cmd, shell):
     return subprocess.check_call(cmd, stderr=subprocess.STDOUT, shell=shell)
 
 
-def main(prefix='install', build_dir='build', source_dir='.', caching=False):
+def main(*, prefix='install', site_packages_dir, build_dir='build', source_dir='.', caching=False):
     """
     Platform-independent function to run cmake, build, install and C++ tests.
     """
@@ -51,6 +52,7 @@ def main(prefix='install', build_dir='build', source_dir='.', caching=False):
         '-G': 'Ninja',
         '-DPython_EXECUTABLE': shutil.which("python"),
         '-DCMAKE_INSTALL_PREFIX': prefix,
+        '-DSITE_PACKAGES_DIR': site_packages_dir,
         '-DWITH_CTEST': 'OFF',
         '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'ON'
     }
@@ -129,6 +131,7 @@ def main(prefix='install', build_dir='build', source_dir='.', caching=False):
 if __name__ == '__main__':
     args = parser.parse_args()
     main(prefix=args.prefix,
+         site_packages_dir=args.site_packages_dir,
          build_dir=args.build_dir,
          source_dir=args.source_dir,
          caching=args.caching)

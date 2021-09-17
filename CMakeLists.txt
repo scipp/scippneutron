@@ -170,7 +170,12 @@ add_docs_target(doctest BUILDER doctest DEPENDS docs)
 add_docs_target(linkcheck BUILDER linkcheck DEPENDS docs)
 
 include(GNUInstallDirs)
-set(PYTHONDIR scippneutron)
+set(SITE_PACKAGES_DIR
+    ""
+    CACHE STRING
+          "Python site-packages directory to use for installing Python module."
+)
+set(PYTHONDIR ${SITE_PACKAGES_DIR}/scippneutron)
 set(INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
 
 set(EXPORT_NAME ${PROJECT_NAME}-targets)
