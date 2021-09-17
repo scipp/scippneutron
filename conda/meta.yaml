@@ -16,7 +16,7 @@ requirements:
     - scipp::scipp {{ scipp }}
     - tbb-devel
   run:
-    - scipp {{ scipp }}
+    - scipp::scipp {{ scipp }}
     - h5py
     - scipy
 
@@ -24,6 +24,7 @@ test:
   imports:
     - scippneutron
   requires:
+    - cmake
     - h5py
     - ipykernel = 6.3.1  # see https://github.com/ipython/ipykernel/issues/771
     - ipywidgets
@@ -33,6 +34,7 @@ test:
     - pytest-asyncio
     - pythreejs
     - scipp::mantid-framework [not win]
+    - tbb-devel
     - python-confluent-kafka [not win]
     - ess-dmsc::ess-streaming-data-types [not win]
     - requests
@@ -42,6 +44,8 @@ test:
     - nbsphinx
     - python-graphviz
     - docutils=0.16 # see https://github.com/spatialaudio/nbsphinx/issues/549
+  files:
+    - cmake-package-test/
   source_files:
     - python/tests/
     - docs/
