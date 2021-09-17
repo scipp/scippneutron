@@ -133,7 +133,7 @@ def test_loads_pulse_times_from_single_event_with_different_units(
                 + np.array(pulse_time).astype("timedelta64[s]")
 
         assert sc.identical(
-            loaded_data.values[event].attrs['pulse_time'],
+            loaded_data.values[event].coords['pulse_time'],
             sc.array(dims=["event"],
                      values=[_time],
                      unit=sc.units.s,
@@ -170,45 +170,11 @@ def test_loads_pulse_times_with_combinations_of_offset_and_units(
     _time = np.array(expected_time).astype("datetime64[s]")
 
     assert sc.identical(
-        loaded_data.values[0].attrs['pulse_time'],
+        loaded_data.values[0].coords['pulse_time'],
         sc.array(dims=["event"],
                  values=[_time],
                  unit=sc.units.s,
                  dtype=sc.dtype.datetime64))
-
-
-def test_does_not_load_events_if_time_zero_unit_not_convertible_to_s(
-        load_function: Callable):
-    event_data_1 = EventData(
-        event_id=np.array([0, 1]),
-        event_time_offset=np.array([0, 1]),
-        event_time_zero=np.array([0, 1]),
-        event_index=np.array([0, 2]),
-        event_time_zero_unit="m",  # time in metres, should fail
-    )
-    event_data_2 = EventData(
-        event_id=np.array([2, 3]),
-        event_time_offset=np.array([2, 3]),
-        event_time_zero=np.array([2, 3]),
-        event_index=np.array([0, 2]),
-        event_time_zero_unit="s",  # time in secs, should work.
-    )
-
-    builder = NexusBuilder()
-    builder.add_detector(
-        Detector(detector_numbers=np.array([0, 1]), event_data=event_data_1))
-    builder.add_detector(
-        Detector(detector_numbers=np.array([2, 3]), event_data=event_data_2))
-
-    with pytest.warns(UserWarning, match="Could not load pulse times: units "):
-        loaded_data = load_function(builder)
-
-    # Detectors 0 and 1 shouldn't have events loaded; units were invalid.
-    assert len(loaded_data.values[0].values) == 0
-    assert len(loaded_data.values[1].values) == 0
-    # Detectors 2 and 3 should have their events loaded; units were valid.
-    assert len(loaded_data.values[2].values) > 0
-    assert len(loaded_data.values[3].values) > 0
 
 
 def test_does_not_load_events_if_index_not_ordered(load_function: Callable):
@@ -259,7 +225,7 @@ def test_loads_pulse_times_from_multiple_event_data_groups(load_function: Callab
                 + np.array(pulse_time).astype("timedelta64[s]")
 
         assert sc.identical(
-            loaded_data.values[event].attrs['pulse_time'],
+            loaded_data.values[event].coords['pulse_time'],
             sc.array(dims=["event"],
                      values=[_time],
                      unit=sc.units.s,
@@ -1732,7 +1698,7 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
 
     loaded_data = load_function(builder, raw_detector_data=True)
 
-    expected = sc.bins(
+    binned = sc.bins(
         dim="event",
         data=sc.DataArray(data=sc.array(dims=["event"],
                                         values=[1, 1, 1, 1, 1],
@@ -1746,18 +1712,18 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
                                        unit=sc.units.ns),
                               "detector_id":
                               sc.array(dims=["event"], values=event_ids),
-                          },
-                          attrs={
-                              "pulse_time":
-                              sc.Variable(
-                                  dims=["event"],
-                                  values=np.array([1, 1, 1, 3, 3]),
-                                  dtype=sc.dtype.datetime64,
-                                  unit=sc.units.s,
-                              ),
                           }),
-        begin=sc.array(dims=["event"], values=[0, 3, 3, 5], dtype=sc.dtype.int64),
-        end=sc.array(dims=["event"], values=[3, 3, 5, 5], dtype=sc.dtype.int64),
+        begin=sc.array(dims=["pulse"], values=[0, 3, 3], dtype=sc.dtype.int64),
+        end=sc.array(dims=["pulse"], values=[3, 3, 5], dtype=sc.dtype.int64),
     )
 
-    assert sc.identical(loaded_data, sc.DataArray(data=expected))
+    expected = sc.DataArray(data=binned,
+                            coords={
+                                "pulse_time":
+                                sc.Variable(dims=["pulse"],
+                                            values=time_zeros,
+                                            unit=sc.units.s,
+                                            dtype=sc.dtype.datetime64)
+                            })
+
+    assert sc.identical(loaded_data, expected)

@@ -16,6 +16,7 @@ from ._nexus import LoadFromNexus, GroupObject
 
 _detector_dimension = "detector_id"
 _event_dimension = "event"
+_pulse_dimension = "pulse"
 _pulse_time = "pulse_time"
 _time_of_flight = "tof"
 
@@ -116,6 +117,7 @@ class DetectorData:
     detector_ids: Optional[sc.Variable] = None
     pixel_positions: Optional[sc.Variable] = None
     event_index: Optional[sc.Variable] = None
+    pulse_times: Optional[sc.Variable] = None
 
 
 def _create_empty_events_data_array(tof_dtype: Any = np.int64,
@@ -144,8 +146,8 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
                         })
 
 
-def _load_pulse_times(group: Group, nexus: LoadFromNexus,
-                      number_of_event_ids: int) -> sc.Variable:
+def _load_pulse_times(group: Group, nexus: LoadFromNexus, number_of_event_ids: int,
+                      times_per_event: bool) -> sc.Variable:
     time_zero_group = "event_time_zero"
 
     _raw_pulse_times = nexus.load_dataset(group.group, time_zero_group,
@@ -160,18 +162,24 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus,
     except MissingAttribute:
         time_offset = "1970-01-01T00:00:00Z"
 
-    _diffs = np.diff(event_index, append=number_of_event_ids)
+    if times_per_event:
+        _diffs = np.diff(event_index, append=number_of_event_ids)
 
-    if any(_diffs < 0):
-        raise BadSource(f"Event index in NXEvent at {group.path}/event_index was not"
-                        f"ordered. The index must be ordered to load pulse times.")
+        if any(_diffs < 0):
+            raise BadSource(
+                f"Event index in NXEvent at {group.path}/event_index was not"
+                f"ordered. The index must be ordered to load pulse times.")
+
+        _raw_pulse_times_np = np.repeat(_raw_pulse_times.values, _diffs)
+    else:
+        _raw_pulse_times_np = _raw_pulse_times.values
 
     try:
-        pulse_times = sc.to_unit(sc.array(dims=[_event_dimension],
-                                          values=np.repeat(_raw_pulse_times.values,
-                                                           _diffs),
-                                          unit=_raw_pulse_times.unit,
-                                          dtype=sc.dtype.int64),
+        pulse_times = sc.to_unit(sc.array(
+            dims=[_event_dimension if times_per_event else _pulse_dimension],
+            values=_raw_pulse_times_np,
+            unit=_raw_pulse_times.unit,
+            dtype=sc.dtype.int64),
                                  sc.units.s,
                                  copy=False)
     except sc.UnitError:
@@ -246,19 +254,23 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
             _time_of_flight: event_time_offset,
             _detector_dimension: event_id,
         },
-        "attrs": {
-            _pulse_time: _load_pulse_times(group, nexus, number_of_event_ids),
-        },
     }
 
     detector_data.events = sc.DataArray(**data_dict)
 
     if raw:
 
-        detector_data.event_index = sc.array(dims=[_event_dimension],
+        detector_data.event_index = sc.array(dims=[_pulse_dimension],
                                              values=event_index,
                                              dtype=sc.dtype.int64)
+        detector_data.pulse_times = _load_pulse_times(group,
+                                                      nexus,
+                                                      number_of_event_ids,
+                                                      times_per_event=False)
     else:
+        detector_data.events.coords[_pulse_time] = _load_pulse_times(
+            group, nexus, number_of_event_ids, times_per_event=True)
+
         if detector_data.detector_ids is None:
             # If detector ids were not found in an associated detector group
             # we will just have to bin according to whatever
@@ -273,6 +285,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
         detector_group = group.parent
         pixel_positions_found, _ = nexus.dataset_in_group(detector_group,
                                                           "x_pixel_offset")
+
         # Checking for positions here is needed because, in principle, the standard
         # allows not to always have them. ESS files should however always have
         # them.
@@ -366,7 +379,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
         dtype=detector_data.events.coords[_time_of_flight].dtype,
     )
 
-    def _bin_events(data):
+    def _bin_events(data: DetectorData):
         if not raw:
             # Events in the NeXus file are effectively binned by pulse
             # (because they are recorded chronologically)
@@ -374,15 +387,19 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
             return sc.bin(data.events, groups=[data.detector_ids], edges=[_tof_edges])
         else:
             # If loading "raw" data, leave binned by pulse.
-            begins = data.event_index
-            ends = sc.array(dims=[_event_dimension],
-                            values=np.append(data.event_index.values[1:],
-                                             data.event_index.values[-1]))
+            begins = data.event_index[_pulse_dimension, :-1]
+            ends = data.event_index[_pulse_dimension, 1:]
 
-            return sc.bins(data=data.events,
-                           dim=_event_dimension,
-                           begin=begins,
-                           end=ends)
+            print(f"about to bin {data.events}")
+
+            binned = sc.bins(data=data.events,
+                             dim=_event_dimension,
+                             begin=begins,
+                             end=ends)
+
+            print(f"binned {binned}")
+
+            return sc.DataArray(data=binned, coords={"pulse_time": data.pulse_times})
 
     events = _bin_events(detector_data)
 
@@ -398,9 +415,14 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
         if pixel_positions_loaded:
             new_events.coords['position'] = detector_data.pixel_positions
 
-        events = sc.concatenate(events, new_events, dim=_detector_dimension)
+        _dim = _event_dimension if raw else _detector_dimension
 
-    return sc.DataArray(data=events) if raw else events
+        print(f"concatenating new events \n\n{new_events}\n\n with existing events "
+              f"\n\n{events}\n\n along dim {_dim}")
+
+        events = sc.concatenate(events, new_events, dim=_dim)
+
+    return events
 
 
 def _create_empty_event_data(event_data: List[DetectorData]):
