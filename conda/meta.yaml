@@ -16,7 +16,7 @@ requirements:
     - scipp::scipp {{ scipp }}
     - tbb-devel
   run:
-    - scipp::scipp {{ scipp }}
+    - scipp {{ scipp }}
     - h5py
     - scipy
 
@@ -25,6 +25,7 @@ test:
     - scippneutron
   requires:
     - cmake
+    - conan
     - h5py
     - ipykernel = 6.3.1  # see https://github.com/ipython/ipykernel/issues/771
     - ipywidgets

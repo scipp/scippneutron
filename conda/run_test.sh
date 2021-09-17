@@ -2,7 +2,7 @@
 
 cd cmake-package-test
 mkdir -p build && cd build
-cmake -DPKG_VERSION=$PKG_VERSION ..
+cmake -DPKG_VERSION=$PKG_VERSION -DCMAKE_BUILD_TYPE=Release ..
 cmake --build .
 cd ..
 
