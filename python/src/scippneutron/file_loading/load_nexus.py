@@ -51,7 +51,8 @@ def _load_instrument_name(instrument_groups: List[Group], nexus: LoadFromNexus) 
             warn(f"More than one {nx_instrument} found in file, "
                  f"loading name from {instrument_groups[0].group.name} only")
         return {
-            "instrument_name": sc.Variable(
+            "instrument_name":
+            sc.Variable(
                 value=nexus.load_scalar_string(instrument_groups[0].group, "name"))
         }
     except MissingDataset:
