@@ -216,7 +216,7 @@ def _load_detector(group: Group, file_root: h5py.File,
 
 def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
                       detector_data: DetectorData, quiet: bool,
-                      raw: bool) -> DetectorData:
+                      bin_by_pixel: bool) -> DetectorData:
     _check_for_missing_fields(group, nexus)
 
     # There is some variation in the last recorded event_index in files
@@ -258,16 +258,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
 
     detector_data.events = sc.DataArray(**data_dict)
 
-    if raw:
-
-        detector_data.event_index = sc.array(dims=[_pulse_dimension],
-                                             values=event_index,
-                                             dtype=sc.dtype.int64)
-        detector_data.pulse_times = _load_pulse_times(group,
-                                                      nexus,
-                                                      number_of_event_ids,
-                                                      times_per_event=False)
-    else:
+    if bin_by_pixel:
         detector_data.events.coords[_pulse_time] = _load_pulse_times(
             group, nexus, number_of_event_ids, times_per_event=True)
 
@@ -292,6 +283,15 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
         if pixel_positions_found:
             detector_data.pixel_positions = _load_pixel_positions(
                 detector_group, detector_data.detector_ids.shape[0], file_root, nexus)
+    else:
+
+        detector_data.event_index = sc.array(dims=[_pulse_dimension],
+                                             values=event_index,
+                                             dtype=sc.dtype.int64)
+        detector_data.pulse_times = _load_pulse_times(group,
+                                                      nexus,
+                                                      number_of_event_ids,
+                                                      times_per_event=False)
 
     if not quiet:
         print(f"Loaded event data from "
@@ -326,17 +326,18 @@ def _check_event_ids_and_det_number_types_valid(detector_id_type: Any,
 
 def load_detector_data(event_data_groups: List[Group], detector_groups: List[Group],
                        file_root: h5py.File, nexus: LoadFromNexus, quiet: bool,
-                       raw: bool) -> Optional[sc.DataArray]:
+                       bin_by_pixel: bool) -> Optional[sc.DataArray]:
     detector_data = _load_data_from_each_nx_detector(detector_groups, file_root, nexus)
 
     event_data = _load_data_from_each_nx_event_data(detector_data, event_data_groups,
-                                                    file_root, nexus, quiet, raw)
+                                                    file_root, nexus, quiet,
+                                                    bin_by_pixel)
 
     if not event_data:
         # If there were no data to load we are done
         return
 
-    if not raw:
+    if bin_by_pixel:
 
         def get_detector_id(data: DetectorData):
             # Assume different detector banks do not have
@@ -380,7 +381,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
     )
 
     def _bin_events(data: DetectorData):
-        if not raw:
+        if bin_by_pixel:
             # Events in the NeXus file are effectively binned by pulse
             # (because they are recorded chronologically)
             # but for reduction it is more useful to bin by detector id
@@ -418,7 +419,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
         if pixel_positions_loaded:
             new_events.coords['position'] = detector_data.pixel_positions
 
-        _dim = _event_dimension if raw else _detector_dimension
+        _dim = _detector_dimension if bin_by_pixel else _event_dimension
 
         events = sc.concatenate(events, new_events, dim=_dim)
 
@@ -462,14 +463,15 @@ def _create_empty_event_data(event_data: List[DetectorData]):
 def _load_data_from_each_nx_event_data(detector_data: Dict,
                                        event_data_groups: List[Group],
                                        file_root: h5py.File, nexus: LoadFromNexus,
-                                       quiet: bool, raw: bool) -> List[DetectorData]:
+                                       quiet: bool,
+                                       bin_by_pixel: bool) -> List[DetectorData]:
     event_data = []
     for group in event_data_groups:
         parent_path = "/".join(group.path.split("/")[:-1])
         try:
             new_event_data = _load_event_group(
                 group, file_root, nexus, detector_data.get(parent_path, DetectorData()),
-                quiet, raw)
+                quiet, bin_by_pixel)
             event_data.append(new_event_data)
             # Only pop from dictionary if we did not raise an
             # exception when loading events

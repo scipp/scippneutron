@@ -117,7 +117,7 @@ def _load_start_and_end_time(entry_group: Group, data: ScippData, nexus: LoadFro
 def load_nexus(data_file: Union[str, h5py.File],
                root: str = "/",
                quiet=True,
-               raw_detector_data: bool = False) -> Optional[ScippData]:
+               bin_by_pixel: bool = True) -> Optional[ScippData]:
     """
     Load a NeXus file and return required information.
 
@@ -125,8 +125,8 @@ def load_nexus(data_file: Union[str, h5py.File],
     :param root: path of group in file, only load data from the subtree of
       this group
     :param quiet: if False prints some details of what is being loaded
-    :param raw_detector_data: if True, loads detector and event data structures as they
-      appear in the nexus file, without any binning. Defaults to False.
+    :param bin_by_pixel: if True, bins the loaded detector data by pixel. If False, bins
+      by pulse. Defaults to True.
 
     Usage example:
       data = sc.neutron.load_nexus('PG3_4844_event.nxs')
@@ -138,7 +138,7 @@ def load_nexus(data_file: Union[str, h5py.File],
                                  root,
                                  LoadFromHdf5(),
                                  quiet,
-                                 raw_detector_data=raw_detector_data)
+                                 bin_by_pixel=bin_by_pixel)
 
     if not quiet:
         print("Total time:", timer() - start_time)
@@ -146,7 +146,7 @@ def load_nexus(data_file: Union[str, h5py.File],
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
-               nexus: LoadFromNexus, quiet: bool, raw_detector_data: bool = False) \
+               nexus: LoadFromNexus, quiet: bool, bin_by_pixel: bool) \
         -> Optional[ScippData]:
     """
     Main implementation for loading data is extracted to this function so that
@@ -173,7 +173,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             f"{__name__}('my_file.nxs', '/entry_2')")
 
     loaded_data = load_detector_data(groups[nx_event_data], groups[nx_detector],
-                                     nexus_file, nexus, quiet, raw_detector_data)
+                                     nexus_file, nexus, quiet, bin_by_pixel)
     # If no event data are found, make a Dataset and add the metadata as
     # Dataset entries. Otherwise, make a DataArray.
     if loaded_data is None:
@@ -213,7 +213,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
 def _load_nexus_json(
     json_template: str,
     get_start_info: bool = False,
-    raw_detector_data: bool = False,
+    bin_by_pixel: bool = True,
 ) -> Tuple[Optional[ScippData], Optional[sc.Variable], Optional[Set[StreamInfo]]]:
     """
     Use this function for testing so that file io is not required
@@ -228,12 +228,12 @@ def _load_nexus_json(
                       None,
                       LoadFromJson(loaded_json),
                       True,
-                      raw_detector_data=raw_detector_data), streams
+                      bin_by_pixel=bin_by_pixel), streams
 
 
 def load_nexus_json(json_filename: str,
-                    raw_detector_data: bool = False) -> Optional[ScippData]:
+                    bin_by_pixel: bool = True) -> Optional[ScippData]:
     with open(json_filename, 'r') as json_file:
         json_string = json_file.read()
-    loaded_data, _ = _load_nexus_json(json_string, raw_detector_data=raw_detector_data)
+    loaded_data, _ = _load_nexus_json(json_string, bin_by_pixel=bin_by_pixel)
     return loaded_data

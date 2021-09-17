@@ -1696,7 +1696,7 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
     builder.add_detector(
         Detector(detector_numbers=detector_numbers, event_data=event_data))
 
-    loaded_data = load_function(builder, raw_detector_data=True)
+    loaded_data = load_function(builder, bin_by_pixel=False)
 
     binned = sc.bins(
         dim="event",
