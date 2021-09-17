@@ -139,11 +139,12 @@ def _add_to_scene(position, scene, shape, display_text, bounding_box, color, wir
 
 
 def _furthest_component(det_center, scipp_obj, additional):
-    distances = [(settings["center"],
-                  sc.norm(scipp_obj.meta[settings["center"]] - det_center).value)
-                 for settings in list(additional.values())]
-    item, max_displacement = sorted(distances, key=lambda x: x[1])[-1]
-    return item, max_displacement
+    distances = [
+        sc.norm(scipp_obj.meta[settings["center"]] - det_center).value
+        for settings in list(additional.values())
+    ]
+    max_displacement = sorted(distances)[-1]
+    return max_displacement
 
 
 def _instrument_view_shape_types():
@@ -152,8 +153,6 @@ def _instrument_view_shape_types():
 
 def _plot_components(scipp_obj, components, positions_var, scene):
     det_center = sc.mean(positions_var)
-    furthest_key, furthest_distance = _furthest_component(det_center, scipp_obj,
-                                                          components)
     # Some scaling to set width according to distance from detector center
     shapes = _instrument_view_shape_types()
     for name, settings in components.items():
@@ -180,6 +179,7 @@ def _plot_components(scipp_obj, components, positions_var, scene):
     # Reset camera
     camera = _get_camera(scene)
     if camera:
+        furthest_distance = _furthest_component(det_center, scipp_obj, components)
         camera.far = max(camera.far, furthest_distance * 5.0)
 
 
