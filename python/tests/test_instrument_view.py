@@ -2,6 +2,7 @@ import scippneutron as scn
 import scipp as sc
 import numpy as np
 from .common import make_dataset_with_beamline
+import pytest
 
 
 def test_neutron_instrument_view_3d():
@@ -30,3 +31,49 @@ def test_neutron_instrument_view_with_cmap_args():
                         vmax=5.0 * sc.units.one,
                         cmap="magma",
                         norm="log")
+
+
+def _make_component_settings(*,
+                             center='source_position',
+                             type='box',
+                             size_unit=sc.units.m,
+                             wireframe=False):
+    sample_settings = {
+        'center': center,
+        'size': sc.vector(value=[0.1, 0.1, 0.1], unit=size_unit),
+        'type': type
+    }
+    return sample_settings
+
+
+def test_neutron_instrument_view_components_valid():
+    d = make_dataset_with_beamline()
+    scn.instrument_view(d["a"], components={'sample': _make_component_settings()})
+
+
+def test_neutron_instrument_view_components_with_wireframe():
+    d = make_dataset_with_beamline()
+    scn.instrument_view(
+        d["a"], components={'sample': _make_component_settings(wireframe=False)})
+    scn.instrument_view(d["a"],
+                        components={'sample': _make_component_settings(wireframe=True)})
+
+
+def test_neutron_instrument_view_components_with_invalid_type():
+    d = make_dataset_with_beamline()
+    with pytest.raises(ValueError):
+        scn.instrument_view(
+            d["a"],
+            components={'sample': _make_component_settings(type='trefoil_knot')})
+
+
+def test_neutron_instrument_view_components_with_invalid_size_unit():
+    d = make_dataset_with_beamline()
+    # mm is fine, source_position is set in meters. Just a scaling factor.
+    scn.instrument_view(
+        d["a"], components={'sample': _make_component_settings(size_unit=sc.units.mm)})
+    # cannot scale us to meters. This should throw
+    with pytest.raises(sc.core.UnitError):
+        scn.instrument_view(
+            d["a"],
+            components={'sample': _make_component_settings(size_unit=sc.units.us)})
