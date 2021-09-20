@@ -6,10 +6,11 @@ import json
 import scipp as sc
 from ._common import Group, MissingDataset
 from ._detector_data import load_detector_data
+from ._monitor_data import load_monitor_data
 from ._log_data import load_logs
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
-from ._nexus import LoadFromNexus, GroupObject, ScippData
+from ._nexus import LoadFromNexus, ScippData
 import h5py
 from timeit import default_timer as timer
 from typing import Union, List, Optional, Dict, Tuple, Set
@@ -28,6 +29,7 @@ nx_sample = "NXsample"
 nx_source = "NXsource"
 nx_detector = "NXdetector"
 nx_disk_chopper = "NXdisk_chopper"
+nx_monitor = "NXmonitor"
 
 
 @contextmanager
@@ -43,41 +45,35 @@ def _open_if_path(file_in: Union[str, h5py.File]):
         yield file_in
 
 
-def _add_string_attr_to_loaded_data(group: GroupObject, dataset_name: str,
-                                    attr_name: str, data: ScippData,
-                                    nexus: LoadFromNexus):
+def _load_instrument_name(instrument_groups: List[Group], nexus: LoadFromNexus) -> Dict:
     try:
-        data = data.attrs
-    except AttributeError:
-        pass
-
-    try:
-        data[attr_name] = sc.scalar(nexus.load_scalar_string(group, dataset_name))
+        if len(instrument_groups) > 1:
+            warn(f"More than one {nx_instrument} found in file, "
+                 f"loading name from {instrument_groups[0].group.name} only")
+        return {
+            "instrument_name":
+            sc.scalar(
+                value=nexus.load_scalar_string(instrument_groups[0].group, "name"))
+        }
     except MissingDataset:
-        pass
+        return {}
 
 
-def _load_instrument_name(instrument_groups: List[Group], data: ScippData,
-                          nexus: LoadFromNexus):
-    if len(instrument_groups) > 1:
-        warn(f"More than one {nx_instrument} found in file, "
-             f"loading name from {instrument_groups[0].group.name} only")
-    _add_string_attr_to_loaded_data(instrument_groups[0].group, "name",
-                                    "instrument_name", data, nexus)
-
-
-def _load_chopper(chopper_groups: List[Group], data: ScippData, nexus: LoadFromNexus):
+def _load_chopper(chopper_groups: List[Group], nexus: LoadFromNexus) -> Dict:
+    choppers = {}
     for chopper_group in chopper_groups:
         chopper_name = chopper_group.path.split("/")[-1]
         rotation_speed = nexus.load_dataset(group=chopper_group.group,
                                             dataset_name="rotation_speed")
         distance = nexus.load_dataset(group=chopper_group.group,
                                       dataset_name="distance")
-        data[chopper_name] = sc.DataArray(data=sc.scalar(value=chopper_name),
-                                          attrs={
-                                              "rotation_speed": rotation_speed,
-                                              "distance": distance
-                                          })
+        choppers[chopper_name] = sc.DataArray(data=sc.scalar(value=chopper_name),
+                                              attrs={
+                                                  "rotation_speed": rotation_speed,
+                                                  "distance": distance
+                                              })
+
+    return choppers
 
 
 def _load_sample(sample_groups: List[Group], data: ScippData, file_root: h5py.File,
@@ -99,16 +95,25 @@ def _load_source(source_groups: List[Group], data: ScippData, file_root: h5py.Fi
                                       file_root, nexus)
 
 
-def _load_title(entry_group: Group, data: ScippData, nexus: LoadFromNexus):
-    _add_string_attr_to_loaded_data(entry_group.group, "title", "experiment_title",
-                                    data, nexus)
+def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:
+    try:
+        return {
+            "experiment_title":
+            sc.scalar(value=nexus.load_scalar_string(entry_group.group, "title"))
+        }
+    except MissingDataset:
+        return {}
 
 
-def _load_start_and_end_time(entry_group: Group, data: ScippData, nexus: LoadFromNexus):
-    _add_string_attr_to_loaded_data(entry_group.group, "start_time", "start_time", data,
-                                    nexus)
-    _add_string_attr_to_loaded_data(entry_group.group, "end_time", "end_time", data,
-                                    nexus)
+def _load_start_and_end_time(entry_group: Group, nexus: LoadFromNexus) -> Dict:
+    times = {}
+    for time in ["start_time", "end_time"]:
+        try:
+            times[time] = sc.scalar(
+                value=nexus.load_scalar_string(entry_group.group, time))
+        except MissingDataset:
+            pass
+    return times
 
 
 def load_nexus(data_file: Union[str, h5py.File],
@@ -150,7 +155,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     # groups is a dict with a key for each category (nx_log, nx_instrument...)
     groups = nexus.find_by_nx_class(
         (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample, nx_source,
-         nx_detector, nx_disk_chopper), root_node)
+         nx_detector, nx_monitor, nx_disk_chopper), root_node)
     if len(groups[nx_entry]) > 1:
         # We can't sensibly load from multiple NXentry, for example each
         # could could contain a description of the same detector bank
@@ -169,9 +174,16 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     else:
         no_event_data = False
 
+    def add_metadata(metadata: Dict[str, sc.Variable]):
+        for key, value in metadata.items():
+            if isinstance(loaded_data, sc.DataArray):
+                loaded_data.attrs[key] = value
+            else:
+                loaded_data[key] = value
+
     if groups[nx_entry]:
-        _load_title(groups[nx_entry][0], loaded_data, nexus)
-        _load_start_and_end_time(groups[nx_entry][0], loaded_data, nexus)
+        add_metadata(_load_title(groups[nx_entry][0], nexus))
+        add_metadata(_load_start_and_end_time(groups[nx_entry][0], nexus))
 
         try:
             run_start_time = nexus.load_scalar_string(groups[nx_entry][0].group,
@@ -181,16 +193,19 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     else:
         run_start_time = None
 
-    load_logs(loaded_data, groups[nx_log], nexus, run_start_time=run_start_time)
+    add_metadata(load_logs(groups[nx_log], nexus, run_start_time=run_start_time))
 
+    if groups[nx_monitor]:
+        add_metadata(load_monitor_data(groups[nx_monitor], nexus_file, nexus))
     if groups[nx_sample]:
         _load_sample(groups[nx_sample], loaded_data, nexus_file, nexus)
     if groups[nx_source]:
         _load_source(groups[nx_source], loaded_data, nexus_file, nexus)
     if groups[nx_instrument]:
-        _load_instrument_name(groups[nx_instrument], loaded_data, nexus)
+        add_metadata(_load_instrument_name(groups[nx_instrument], nexus))
     if groups[nx_disk_chopper]:
-        _load_chopper(groups[nx_disk_chopper], loaded_data, nexus)
+        add_metadata(_load_chopper(groups[nx_disk_chopper], nexus))
+
     # Return None if we have an empty dataset at this point
     if no_event_data and not loaded_data.keys():
         loaded_data = None
