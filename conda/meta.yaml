@@ -13,7 +13,7 @@ requirements:
     - git
     - ninja
     - python {{ python }}
-    - scipp::scipp {{ scipp }}
+    - scipp {{ scipp }}
     - tbb-devel
   run:
     - scipp {{ scipp }}
@@ -35,10 +35,10 @@ test:
     - pytest
     - pytest-asyncio
     - pythreejs
-    - scipp::mantid-framework [not win]
+    - mantid-framework [not win]
     - tbb-devel
     - python-confluent-kafka [not win]
-    - ess-dmsc::ess-streaming-data-types [not win]
+    - ess-streaming-data-types [not win]
     - requests
     - pandoc
     - sphinx
