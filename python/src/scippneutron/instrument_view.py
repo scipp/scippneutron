@@ -190,17 +190,6 @@ def _get_camera(scene):
     return None
 
 
-def instrument_view_shape_types():
-    """
-    Returns a list of valid shape type names that the `instrument_view`
-    understands.
-    These can be used as the `type` value in the settings for `components`
-    on the `instrument_view`.
-    :return: list of shape names available
-    """
-    return list(_instrument_view_shape_types().keys())
-
-
 def instrument_view(scipp_obj=None,
                     positions="position",
                     pixel_size=None,
@@ -238,8 +227,8 @@ def instrument_view(scipp_obj=None,
     taken from.
     * `size` - scipp scalar vector describing the bounding box to use in the
     same length units as positions
-    * `type` - known shape type to use including box, cylinder and disk.
-    Function `instrument_view_shape_types` lists all valid types available.
+    * `type` - known shape type to use.
+    Valid types are: 'box', 'cylinder' or 'disk'.
 
     Optional arguments are:
 
