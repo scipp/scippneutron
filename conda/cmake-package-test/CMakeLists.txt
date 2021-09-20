@@ -43,7 +43,10 @@ find_package(Boost 1.67 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(LLNL-Units REQUIRED)
 
-set(PKG_VERSION "undefined" CACHE STRING "Package version to require.")
+set(PKG_VERSION
+    "undefined"
+    CACHE STRING "Package version to require."
+)
 find_package(scippneutron ${PKG_VERSION} REQUIRED)
 
 add_executable(test main.cpp)
