@@ -34,7 +34,7 @@ def test_neutron_instrument_view_with_cmap_args():
 
 
 def _make_component_settings(*,
-                             center='source_position',
+                             center='sample_position',
                              type='box',
                              size_unit=sc.units.m,
                              wireframe=False):
@@ -49,6 +49,16 @@ def _make_component_settings(*,
 def test_neutron_instrument_view_components_valid():
     d = make_dataset_with_beamline()
     scn.instrument_view(d["a"], components={'sample': _make_component_settings()})
+
+
+def test_neutron_instrument_view_components_multiple_valid():
+    d = make_dataset_with_beamline()
+    scn.instrument_view(d["a"],
+                        components={
+                            'sample':
+                            _make_component_settings(center='sample_position'),
+                            'source': _make_component_settings(center='source_position')
+                        })
 
 
 def test_neutron_instrument_view_components_with_wireframe():
