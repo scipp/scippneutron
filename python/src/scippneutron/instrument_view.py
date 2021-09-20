@@ -151,11 +151,11 @@ def _instrument_view_shape_types():
     return {"box": _box, "cylinder": _cylinder, "disk": _disk_chopper}
 
 
-def _as_vector(center):
-    if center.dtype == sc.dtype.vector_3_float64:
-        return center
+def _as_vector(var):
+    if var.dtype == sc.dtype.vector_3_float64:
+        return var
     else:
-        return sc.geometry.position(x=center, y=center, z=center)
+        return sc.geometry.position(x=var, y=var, z=var)
 
 
 def _plot_components(scipp_obj, components, positions_var, scene):
