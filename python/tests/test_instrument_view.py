@@ -37,18 +37,23 @@ def _make_component_settings(*,
                              center='sample_position',
                              type='box',
                              size_unit=sc.units.m,
-                             wireframe=False):
-    sample_settings = {
-        'center': center,
-        'size': sc.vector(value=[0.1, 0.1, 0.1], unit=size_unit),
-        'type': type
-    }
+                             wireframe=False,
+                             component_size=(0.1, 0.1, 0.1)):
+    comp_size = sc.vector(value=component_size, unit=size_unit) if isinstance(
+        component_size, tuple) else sc.scalar(value=component_size, unit=size_unit)
+    sample_settings = {'center': center, 'size': comp_size, 'type': type}
     return sample_settings
 
 
 def test_neutron_instrument_view_components_valid():
     d = make_dataset_with_beamline()
     scn.instrument_view(d["a"], components={'sample': _make_component_settings()})
+
+
+def test_neutron_instrument_view_with_size_scalar():
+    d = make_dataset_with_beamline()
+    scn.instrument_view(
+        d["a"], components={'sample': _make_component_settings(component_size=2.0)})
 
 
 def test_neutron_instrument_view_components_multiple_valid():

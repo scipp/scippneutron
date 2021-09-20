@@ -151,13 +151,20 @@ def _instrument_view_shape_types():
     return {"box": _box, "cylinder": _cylinder, "disk": _disk_chopper}
 
 
+def _as_vector(center):
+    if center.dtype == sc.dtype.vector_3_float64:
+        return center
+    else:
+        return sc.geometry.position(x=center, y=center, z=center)
+
+
 def _plot_components(scipp_obj, components, positions_var, scene):
     det_center = sc.mean(positions_var)
     # Some scaling to set width according to distance from detector center
     shapes = _instrument_view_shape_types()
     for name, settings in components.items():
         type = settings["type"]
-        size = settings["size"]
+        size = _as_vector(settings["size"])
         center = settings["center"]
         color = settings.get("color", "#808080")
         wireframe = settings.get("wireframe", False)
