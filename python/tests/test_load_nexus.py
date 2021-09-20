@@ -1721,16 +1721,9 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
                             coords={
                                 "pulse_time":
                                 sc.Variable(dims=["pulse"],
-                                            values=time_zeros[:-1],
+                                            values=time_zeros,
                                             unit=sc.units.s,
                                             dtype=sc.dtype.datetime64)
                             })
-
-    expected.events.coords['pulse_time'] = sc.empty(
-        sizes=expected.events.sizes,
-        dtype=expected.coords['pulse_time'].dtype,
-        unit=expected.coords['pulse_time'].unit)
-    expected.bins.coords['pulse_time'][...] = expected.coords['pulse_time']
-    del expected.coords["pulse_time"]
 
     assert sc.identical(loaded_data, expected)

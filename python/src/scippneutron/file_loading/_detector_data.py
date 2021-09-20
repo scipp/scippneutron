@@ -150,8 +150,11 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus, number_of_event_ids: i
                       times_per_event: bool) -> sc.Variable:
     time_zero_group = "event_time_zero"
 
-    _raw_pulse_times = nexus.load_dataset(group.group, time_zero_group,
-                                          [_event_dimension])
+    _raw_pulse_times = nexus.load_dataset(
+        group.group,
+        time_zero_group,
+        dimensions=[_event_dimension if times_per_event else _pulse_dimension],
+        dtype=sc.dtype.int64)
 
     event_index = nexus.load_dataset_from_group_as_numpy_array(
         group.group, "event_index")
@@ -171,17 +174,16 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus, number_of_event_ids: i
                 f"ordered. The index must be ordered to load pulse times.")
 
         _raw_pulse_times_np = np.repeat(_raw_pulse_times.values, _diffs)
-    else:
-        _raw_pulse_times_np = _raw_pulse_times.values
-
-    try:
-        pulse_times = sc.to_unit(sc.array(
+        _raw_pulse_times_sc = sc.array(
             dims=[_event_dimension if times_per_event else _pulse_dimension],
             values=_raw_pulse_times_np,
             unit=_raw_pulse_times.unit,
-            dtype=sc.dtype.int64),
-                                 sc.units.s,
-                                 copy=False)
+            dtype=sc.dtype.int64)
+    else:
+        _raw_pulse_times_sc = _raw_pulse_times
+
+    try:
+        pulse_times = sc.to_unit(_raw_pulse_times_sc, sc.units.s, copy=False)
     except sc.UnitError:
         raise BadSource(f"Could not load pulse times: units attribute "
                         f"'{_raw_pulse_times.unit}' in NXEvent at "
@@ -396,13 +398,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
                              begin=begins,
                              end=ends)
 
-            da = sc.DataArray(data=binned,
-                              coords={"pulse_time": data.pulse_times["pulse", :-1]})
-            da.events.coords['pulse_time'] = sc.empty(sizes=da.events.sizes,
-                                                      dtype=data.pulse_times.dtype,
-                                                      unit=data.pulse_times.unit)
-            da.bins.coords['pulse_time'][...] = da.coords['pulse_time']
-            del da.coords["pulse_time"]
+            da = sc.DataArray(data=binned, coords={"pulse_time": data.pulse_times})
             return da
 
     events = _bin_events(detector_data)
