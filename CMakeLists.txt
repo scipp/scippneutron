@@ -175,7 +175,11 @@ set(SITE_PACKAGES_DIR
     CACHE STRING
           "Python site-packages directory to use for installing Python module."
 )
-set(PYTHONDIR ${SITE_PACKAGES_DIR}/scippneutron)
+if ("${SITE_PACKAGES_DIR}" STREQUAL "")
+  set(PYTHONDIR scippneutron)
+else()
+  set(PYTHONDIR ${SITE_PACKAGES_DIR}/scippneutron)
+endif()
 set(INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
 
 set(EXPORT_NAME ${PROJECT_NAME}-targets)
