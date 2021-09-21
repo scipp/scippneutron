@@ -119,12 +119,12 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
 
 
 @pytest.mark.parametrize("unit,multiplier",
-                         (("ns", 10**9), ("us", 10**6), ("ms", 10**3), ("s", 1.)))
+                         (("ns", 1), ("us", 10**3), ("ms", 10**6), ("s", 10**9)))
 def test_loads_pulse_times_from_single_event_with_different_units(
         load_function: Callable, unit: str, multiplier: float):
 
     offsets = np.array([12, 34, 56, 78])
-    zeros = np.array([12., 34., 56., 78.], dtype="float64") * multiplier
+    zeros = np.array([12., 34., 56., 78.], dtype="float64")
     event_data = EventData(
         event_id=np.array([1, 2, 3, 4]),
         event_time_offset=offsets,
@@ -140,22 +140,20 @@ def test_loads_pulse_times_from_single_event_with_different_units(
     loaded_data = load_function(builder)
 
     for event, pulse_time in enumerate([12, 12, 12, 56]):
-        _time = np.array("1970-01-01").astype("datetime64[s]") \
-                + np.array(pulse_time).astype("timedelta64[s]")
+        _time = np.array("1970-01-01").astype("datetime64[ns]") \
+                + np.array(pulse_time).astype("timedelta64[ns]") * multiplier
 
-        assert sc.identical(
-            loaded_data.values[event].coords['pulse_time'],
-            sc.array(dims=["event"],
-                     values=[_time],
-                     unit=sc.units.s,
-                     dtype=sc.dtype.datetime64))
+        # Allow 1ns difference for rounding errors between different routes
+        assert all(
+            np.abs(loaded_data.values[event].coords['pulse_time'].values -
+                   _time) <= np.array(1).astype("timedelta64[ns]"))
 
 
 @pytest.mark.parametrize("time_zero_offset,time_zero,time_zero_unit,expected_time", (
-    ("1980-01-01T00:00:00Z", 30, "s", "1980-01-01T00:00:30Z"),
-    ("1990-01-01T00:00:00Z", 5000, "ms", "1990-01-01T00:00:05Z"),
-    ("2000-01-01T00:00:00Z", 3 * 10**6, "us", "2000-01-01T00:00:03Z"),
-    ("2010-01-01T00:00:00Z", 12, "hour", "2010-01-01T12:00:00Z"),
+    ("1980-01-01T00:00:00.0Z", 30, "s", "1980-01-01T00:00:30.0Z"),
+    ("1990-01-01T00:00:00.0Z", 5000, "ms", "1990-01-01T00:00:05.0Z"),
+    ("2000-01-01T00:00:00.0Z", 3 * 10**6, "us", "2000-01-01T00:00:03.0Z"),
+    ("2010-01-01T00:00:00.0Z", 12, "hour", "2010-01-01T12:00:00.0Z"),
 ))
 def test_loads_pulse_times_with_combinations_of_offset_and_units(
         load_function: Callable, time_zero_offset: str, time_zero: float,
@@ -178,14 +176,11 @@ def test_loads_pulse_times_with_combinations_of_offset_and_units(
 
     loaded_data = load_function(builder)
 
-    _time = np.array(expected_time).astype("datetime64[s]")
+    _time = np.array(expected_time).astype("datetime64[ns]")
 
-    assert sc.identical(
-        loaded_data.values[0].coords['pulse_time'],
-        sc.array(dims=["event"],
-                 values=[_time],
-                 unit=sc.units.s,
-                 dtype=sc.dtype.datetime64))
+    # Allow 1ns difference for rounding errors between different routes
+    assert np.abs(loaded_data.values[0].coords['pulse_time'].values[0] -
+                  _time) <= np.array(1).astype("timedelta64[ns]")
 
 
 def test_does_not_load_events_if_index_not_ordered(load_function: Callable):
@@ -232,14 +227,14 @@ def test_loads_pulse_times_from_multiple_event_data_groups(load_function: Callab
     loaded_data = load_function(builder)
 
     for event, pulse_time in enumerate([12, 12, 12, 56, 87, 87, 87, 43]):
-        _time = np.array("1970-01-01").astype("datetime64[s]") \
+        _time = np.array("1970-01-01").astype("datetime64[ns]") \
                 + np.array(pulse_time).astype("timedelta64[s]")
 
         assert sc.identical(
             loaded_data.values[event].coords['pulse_time'],
             sc.array(dims=["event"],
                      values=[_time],
-                     unit=sc.units.s,
+                     unit=sc.units.ns,
                      dtype=sc.dtype.datetime64))
 
 
@@ -1801,7 +1796,7 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
         event_time_offset=event_time_offsets,
         event_time_zero=time_zeros,
         event_index=event_index,
-        event_time_zero_unit="s",
+        event_time_zero_unit="ns",
     )
 
     detector_numbers = np.array([1, 2, 3, 4])
@@ -1836,7 +1831,7 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
                                 "pulse_time":
                                 sc.Variable(dims=["pulse"],
                                             values=time_zeros,
-                                            unit=sc.units.s,
+                                            unit=sc.units.ns,
                                             dtype=sc.dtype.datetime64)
                             })
 

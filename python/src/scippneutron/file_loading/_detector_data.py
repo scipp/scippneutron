@@ -142,7 +142,7 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
                             sc.empty(dims=[_event_dimension],
                                      shape=[0],
                                      dtype=sc.dtype.datetime64,
-                                     unit=sc.units.s),
+                                     unit=sc.units.ns),
                         })
 
 
@@ -153,8 +153,15 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus, number_of_event_ids: i
     _raw_pulse_times = nexus.load_dataset(
         group.group,
         time_zero_group,
-        dimensions=[_event_dimension if times_per_event else _pulse_dimension],
-        dtype=sc.dtype.int64)
+        dimensions=[_event_dimension if times_per_event else _pulse_dimension])
+
+    try:
+        pulse_times = sc.to_unit(_raw_pulse_times, sc.units.ns, copy=False)
+    except sc.UnitError:
+        raise BadSource(f"Could not load pulse times: units attribute "
+                        f"'{_raw_pulse_times.unit}' in NXEvent at "
+                        f"{group.path}/{time_zero_group} is not convertible"
+                        f" to nanoseconds.")
 
     event_index = nexus.load_dataset_from_group_as_numpy_array(
         group.group, "event_index")
@@ -173,24 +180,23 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus, number_of_event_ids: i
                 f"Event index in NXEvent at {group.path}/event_index was not"
                 f"ordered. The index must be ordered to load pulse times.")
 
-        _raw_pulse_times_np = np.repeat(_raw_pulse_times.values, _diffs)
-        _raw_pulse_times_sc = sc.array(
+        pulse_times = sc.array(
             dims=[_event_dimension if times_per_event else _pulse_dimension],
-            values=_raw_pulse_times_np,
-            unit=_raw_pulse_times.unit,
+            values=np.repeat(pulse_times.values, _diffs),
+            unit=sc.units.ns,
             dtype=sc.dtype.int64)
     else:
-        _raw_pulse_times_sc = _raw_pulse_times
+        # Need to convert the values which were loaded as float64 into int64 to be able
+        # to do datetime arithmetic. This needs to be done after conversion to ns to
+        # avoid unnecessary loss of accuracy.
+        pulse_times = sc.array(
+            dims=[_event_dimension if times_per_event else _pulse_dimension],
+            values=pulse_times.values,
+            unit=sc.units.ns,
+            dtype=sc.dtype.int64)
 
-    try:
-        pulse_times = sc.to_unit(_raw_pulse_times_sc, sc.units.s, copy=False)
-    except sc.UnitError:
-        raise BadSource(f"Could not load pulse times: units attribute "
-                        f"'{_raw_pulse_times.unit}' in NXEvent at "
-                        f"{group.path}/{time_zero_group} is not convertible"
-                        f" to seconds.")
-
-    return sc.scalar(np.datetime64(time_offset), unit=sc.units.s) + pulse_times
+    return pulse_times + sc.scalar(
+        np.datetime64(time_offset), unit=sc.units.ns, dtype=sc.dtype.datetime64)
 
 
 def _load_detector(group: Group, file_root: h5py.File,
