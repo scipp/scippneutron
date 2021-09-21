@@ -76,6 +76,10 @@ def test_neutron_instrument_view_components_with_wireframe():
 
 def test_neutron_instrument_view_components_with_invalid_type():
     d = make_dataset_with_beamline()
+    # Check that all our valid shape types work
+    for shape_type in ['box', 'cylinder', 'disk']:
+        scn.instrument_view(
+            d["a"], components={'sample': _make_component_settings(type=shape_type)})
     with pytest.raises(ValueError):
         scn.instrument_view(
             d["a"],

@@ -8,23 +8,15 @@ import scipp as sc
 from scipy.spatial.transform import Rotation as Rot
 
 
-def _text_mesh(position, display_text, x_width, y_width):
-    text = p3.TextTexture(string=display_text, color='black', size=20)
+def _create_text_sprite(position, bounding_box, display_text):
+    # Position offset in y
+    text_position = tuple(position.value + np.array([0, 0.8 * bounding_box[1], 0]))
+    text = p3.TextTexture(string=display_text, color='black', size=300)
     text_material = p3.SpriteMaterial(map=text, transparent=True)
     size = 1.0
     return p3.Sprite(material=text_material,
-                     position=position,
+                     position=text_position,
                      scale=[size, size, size])
-
-
-def _create_text_mesh(position, bounding_box, display_text):
-    # Position offset in y
-    text_position = tuple(position.value + np.array([0, 0.8 * bounding_box[1], 0]))
-    text_mesh = _text_mesh(text_position,
-                           display_text=display_text,
-                           x_width=max(bounding_box),
-                           y_width=max(bounding_box))
-    return text_mesh
 
 
 def _create_mesh(geometry, color, wireframe, position):
@@ -52,9 +44,9 @@ def _box(position, display_text, bounding_box, color, wireframe, **kwargs):
                         color=color,
                         wireframe=wireframe,
                         position=position)
-    text_mesh = _create_text_mesh(position=position,
-                                  bounding_box=bounding_box,
-                                  display_text=display_text)
+    text_mesh = _create_text_sprite(position=position,
+                                    bounding_box=bounding_box,
+                                    display_text=display_text)
     return mesh, text_mesh
 
 
@@ -92,9 +84,9 @@ def _disk_chopper(position, display_text, bounding_box, color, wireframe, **kwar
     disk_axis = np.array([0, 1, 0])  # Disk created with this axis
     rotation = _alignment_matrix(to_align=disk_axis, target=beam)
     mesh.setRotationFromMatrix(rotation.flatten())
-    text_mesh = _create_text_mesh(position=position,
-                                  bounding_box=bounding_box,
-                                  display_text=display_text)
+    text_mesh = _create_text_sprite(position=position,
+                                    bounding_box=bounding_box,
+                                    display_text=display_text)
     return mesh, text_mesh
 
 
@@ -112,9 +104,9 @@ def _cylinder(position, display_text, bounding_box, color, wireframe, **kwargs):
                         wireframe=wireframe,
                         position=position)
     # Position label above cylinder
-    text_mesh = _create_text_mesh(position=position,
-                                  bounding_box=bounding_box,
-                                  display_text=display_text)
+    text_mesh = _create_text_sprite(position=position,
+                                    bounding_box=bounding_box,
+                                    display_text=display_text)
     return mesh, text_mesh
 
 
