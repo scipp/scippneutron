@@ -132,7 +132,7 @@ def _add_to_scene(position, scene, shape, display_text, bounding_box, color, wir
 
 def _furthest_component(det_center, scipp_obj, additional):
     distances = [
-        sc.norm(scipp_obj.meta[settings["center"]] - det_center).value
+        sc.norm(settings["center"] - det_center).value
         for settings in list(additional.values())
     ]
     max_displacement = sorted(distances)[-1]
@@ -157,14 +157,13 @@ def _plot_components(scipp_obj, components, positions_var, scene):
     for name, settings in components.items():
         type = settings["type"]
         size = _as_vector(settings["size"])
-        center = settings["center"]
+        component_position = settings["center"]
         color = settings.get("color", "#808080")
         wireframe = settings.get("wireframe", False)
         if type not in shapes:
             supported_shapes = ", ".join(shapes.keys())
             raise ValueError(f"Unknown shape: {type} requested for {name}. "
                              f"Allowed values are: {supported_shapes}")
-        component_position = scipp_obj.meta[center]
         component_position = sc.to_unit(component_position, positions_var.unit)
         size = sc.to_unit(size, positions_var.unit)
         _add_to_scene(position=component_position,
@@ -222,7 +221,7 @@ def instrument_view(scipp_obj=None,
     The value for each entry is itself a dictionary that provides the display
     settings and requires:
 
-    * `center` - name of meta item where the position to place the component is
+    * `center` - Variable (0D vector) position to place the component is
     taken from.
     * `size` - scipp scalar vector describing the bounding box to use in the
     same length units as positions
