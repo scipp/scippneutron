@@ -221,8 +221,7 @@ def instrument_view(scipp_obj=None,
     The value for each entry is itself a dictionary that provides the display
     settings and requires:
 
-    * `center` - Variable (0D vector) position to place the component is
-    taken from.
+    * `center` - scipp scalar vector describing position to place item at.
     * `size` - scipp scalar vector describing the bounding box to use in the
     same length units as positions
     * `type` - known shape type to use.
