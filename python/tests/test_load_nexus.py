@@ -46,13 +46,15 @@ def test_no_exception_if_single_nxentry_found_below_root():
         assert scippneutron.load_nexus(nexus_file, root='/entry_1') is None
 
 
-def load_from_nexus(builder: NexusBuilder) -> Union[sc.Dataset, sc.DataArray, None]:
+def load_from_nexus(builder: NexusBuilder, *args, **kwargs)\
+        -> Union[sc.Dataset, sc.DataArray, None]:
     with builder.file() as nexus_file:
-        return scippneutron.load_nexus(nexus_file)
+        return scippneutron.load_nexus(nexus_file, *args, **kwargs)
 
 
-def load_from_json(builder: NexusBuilder) -> Union[sc.Dataset, sc.DataArray, None]:
-    loaded_data, _ = _load_nexus_json(builder.json_string)
+def load_from_json(builder: NexusBuilder, *args, **kwargs)\
+        -> Union[sc.Dataset, sc.DataArray, None]:
+    loaded_data, _ = _load_nexus_json(builder.json_string, *args, **kwargs)
     return loaded_data
 
 
@@ -117,12 +119,12 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
 
 
 @pytest.mark.parametrize("unit,multiplier",
-                         (("ns", 10**9), ("us", 10**6), ("ms", 10**3), ("s", 1.)))
+                         (("ns", 1), ("us", 10**3), ("ms", 10**6), ("s", 10**9)))
 def test_loads_pulse_times_from_single_event_with_different_units(
         load_function: Callable, unit: str, multiplier: float):
 
     offsets = np.array([12, 34, 56, 78])
-    zeros = np.array([12., 34., 56., 78.], dtype="float64") * multiplier
+    zeros = np.array([12., 34., 56., 78.], dtype="float64")
     event_data = EventData(
         event_id=np.array([1, 2, 3, 4]),
         event_time_offset=offsets,
@@ -138,22 +140,20 @@ def test_loads_pulse_times_from_single_event_with_different_units(
     loaded_data = load_function(builder)
 
     for event, pulse_time in enumerate([12, 12, 12, 56]):
-        _time = np.array("1970-01-01").astype("datetime64[s]") \
-                + np.array(pulse_time).astype("timedelta64[s]")
+        _time = np.array("1970-01-01").astype("datetime64[ns]") \
+                + np.array(pulse_time).astype("timedelta64[ns]") * multiplier
 
-        assert sc.identical(
-            loaded_data.values[event].attrs['pulse_time'],
-            sc.array(dims=["event"],
-                     values=[_time],
-                     unit=sc.units.s,
-                     dtype=sc.dtype.datetime64))
+        # Allow 1ns difference for rounding errors between different routes
+        assert all(
+            np.abs(loaded_data.values[event].coords['pulse_time'].values -
+                   _time) <= np.array(1).astype("timedelta64[ns]"))
 
 
 @pytest.mark.parametrize("time_zero_offset,time_zero,time_zero_unit,expected_time", (
-    ("1980-01-01T00:00:00Z", 30, "s", "1980-01-01T00:00:30Z"),
-    ("1990-01-01T00:00:00Z", 5000, "ms", "1990-01-01T00:00:05Z"),
-    ("2000-01-01T00:00:00Z", 3 * 10**6, "us", "2000-01-01T00:00:03Z"),
-    ("2010-01-01T00:00:00Z", 12, "hour", "2010-01-01T12:00:00Z"),
+    ("1980-01-01T00:00:00.0Z", 30, "s", "1980-01-01T00:00:30.0Z"),
+    ("1990-01-01T00:00:00.0Z", 5000, "ms", "1990-01-01T00:00:05.0Z"),
+    ("2000-01-01T00:00:00.0Z", 3 * 10**6, "us", "2000-01-01T00:00:03.0Z"),
+    ("2010-01-01T00:00:00.0Z", 12, "hour", "2010-01-01T12:00:00.0Z"),
 ))
 def test_loads_pulse_times_with_combinations_of_offset_and_units(
         load_function: Callable, time_zero_offset: str, time_zero: float,
@@ -176,48 +176,11 @@ def test_loads_pulse_times_with_combinations_of_offset_and_units(
 
     loaded_data = load_function(builder)
 
-    _time = np.array(expected_time).astype("datetime64[s]")
+    _time = np.array(expected_time).astype("datetime64[ns]")
 
-    assert sc.identical(
-        loaded_data.values[0].attrs['pulse_time'],
-        sc.array(dims=["event"],
-                 values=[_time],
-                 unit=sc.units.s,
-                 dtype=sc.dtype.datetime64))
-
-
-def test_does_not_load_events_if_time_zero_unit_not_convertible_to_s(
-        load_function: Callable):
-    event_data_1 = EventData(
-        event_id=np.array([0, 1]),
-        event_time_offset=np.array([0, 1]),
-        event_time_zero=np.array([0, 1]),
-        event_index=np.array([0, 2]),
-        event_time_zero_unit="m",  # time in metres, should fail
-    )
-    event_data_2 = EventData(
-        event_id=np.array([2, 3]),
-        event_time_offset=np.array([2, 3]),
-        event_time_zero=np.array([2, 3]),
-        event_index=np.array([0, 2]),
-        event_time_zero_unit="s",  # time in secs, should work.
-    )
-
-    builder = NexusBuilder()
-    builder.add_detector(
-        Detector(detector_numbers=np.array([0, 1]), event_data=event_data_1))
-    builder.add_detector(
-        Detector(detector_numbers=np.array([2, 3]), event_data=event_data_2))
-
-    with pytest.warns(UserWarning, match="Could not load pulse times: units "):
-        loaded_data = load_function(builder)
-
-    # Detectors 0 and 1 shouldn't have events loaded; units were invalid.
-    assert len(loaded_data.values[0].values) == 0
-    assert len(loaded_data.values[1].values) == 0
-    # Detectors 2 and 3 should have their events loaded; units were valid.
-    assert len(loaded_data.values[2].values) > 0
-    assert len(loaded_data.values[3].values) > 0
+    # Allow 1ns difference for rounding errors between different routes
+    assert np.abs(loaded_data.values[0].coords['pulse_time'].values[0] -
+                  _time) <= np.array(1).astype("timedelta64[ns]")
 
 
 def test_does_not_load_events_if_index_not_ordered(load_function: Callable):
@@ -264,14 +227,14 @@ def test_loads_pulse_times_from_multiple_event_data_groups(load_function: Callab
     loaded_data = load_function(builder)
 
     for event, pulse_time in enumerate([12, 12, 12, 56, 87, 87, 87, 43]):
-        _time = np.array("1970-01-01").astype("datetime64[s]") \
+        _time = np.array("1970-01-01").astype("datetime64[ns]") \
                 + np.array(pulse_time).astype("timedelta64[s]")
 
         assert sc.identical(
-            loaded_data.values[event].attrs['pulse_time'],
+            loaded_data.values[event].coords['pulse_time'],
             sc.array(dims=["event"],
                      values=[_time],
-                     unit=sc.units.s,
+                     unit=sc.units.ns,
                      dtype=sc.dtype.datetime64))
 
 
@@ -1821,3 +1784,55 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
                     values=[6, 7, 8, 9, 10],
                     unit=sc.units.ns,
                     dtype=sc.dtype.float64))
+
+
+def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
+    event_time_offsets = np.array([456, 743, 347, 345, 632])
+    event_ids = np.array([1, 2, 3, 1, 3])
+    time_zeros = np.array([1, 2, 3, 4])
+    event_index = np.array([0, 3, 3, 5])
+    event_data = EventData(
+        event_id=event_ids,
+        event_time_offset=event_time_offsets,
+        event_time_zero=time_zeros,
+        event_index=event_index,
+        event_time_zero_unit="ns",
+    )
+
+    detector_numbers = np.array([1, 2, 3, 4])
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=detector_numbers, event_data=event_data))
+
+    loaded_data = load_function(builder, bin_by_pixel=False)
+
+    binned = sc.bins(
+        dim="event",
+        data=sc.DataArray(data=sc.array(dims=["event"],
+                                        values=[1, 1, 1, 1, 1],
+                                        variances=[1, 1, 1, 1, 1],
+                                        unit=sc.units.counts,
+                                        dtype=sc.dtype.float32),
+                          coords={
+                              "tof":
+                              sc.array(dims=["event"],
+                                       values=event_time_offsets,
+                                       unit=sc.units.ns),
+                              "detector_id":
+                              sc.array(dims=["event"], values=event_ids),
+                          }),
+        begin=sc.array(dims=["pulse"], values=[0, 3, 3], dtype=sc.dtype.int64),
+        end=sc.array(dims=["pulse"], values=[3, 3, 5], dtype=sc.dtype.int64),
+    )
+
+    expected = sc.DataArray(data=binned,
+                            coords={
+                                "pulse_time":
+                                sc.Variable(dims=["pulse"],
+                                            values=time_zeros,
+                                            unit=sc.units.ns,
+                                            dtype=sc.dtype.datetime64)
+                            })
+
+    assert sc.identical(loaded_data, expected)

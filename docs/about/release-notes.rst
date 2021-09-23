@@ -10,6 +10,7 @@ v0.3.0 (September 2021)
 -----------------------
 
 * ``load_nexus`` will read ub_matrix and orientation_matrix information from nexus files. Likewise, the Mantid converters will propagate the same information if present.
+* ``load_nexus`` now has an optional flag, ``raw_detector_data``, which specifies that detector and event data should be loaded as it appears in the nexus file (without any binning or preprocessing).
 * ``load_nexus`` will now load monitor data from nexus files.
 
 Features

@@ -28,7 +28,7 @@ def load_monitor_data(monitor_groups: List[Group], file_root: h5py.File,
         # Look for event mode data structures in NXMonitor. Event-mode data takes
         # precedence over histogram-mode-data if available.
         if nexus.dataset_in_group(group.group, "event_id")[0]:
-            events = load_detector_data([group], [], file_root, nexus, True)
+            events = load_detector_data([group], [], file_root, nexus, True, True)
             monitor_data[monitor_name] = sc.scalar(value=events)
             warnings.warn(f"Event data present in NXMonitor group {group.path}. "
                           f"Histogram-mode monitor data from this group will be "
