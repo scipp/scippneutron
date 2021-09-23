@@ -3,9 +3,13 @@
 # @author Neil Vaytet and Owen Arnold
 
 import numpy as np
-import pythreejs as p3
 import scipp as sc
 from scipy.spatial.transform import Rotation as Rot
+try:
+    import pythreejs as p3
+except ImportError as ex:
+    p3 = None
+    _pythreejs_import_error = ex
 
 
 def _create_text_sprite(position, bounding_box, display_text):
@@ -235,6 +239,8 @@ def instrument_view(scipp_obj=None,
     the returned geometrical shape is a wireframe instead of a shape with
     opaque faces
     """
+    if not p3:
+        raise _pythreejs_import_error
 
     from scipp.plotting import plot
     from scipp.plotting.objects import PlotDict
