@@ -180,20 +180,15 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus, number_of_event_ids: i
                 f"Event index in NXEvent at {group.path}/event_index was not"
                 f"ordered. The index must be ordered to load pulse times.")
 
-        pulse_times = sc.array(
-            dims=[_event_dimension if times_per_event else _pulse_dimension],
-            values=np.repeat(pulse_times.values, _diffs),
-            unit=sc.units.ns,
-            dtype=sc.dtype.int64)
+        pulse_times = sc.array(dims=[_event_dimension],
+                               values=np.repeat(pulse_times.values, _diffs),
+                               unit=sc.units.ns,
+                               dtype=sc.dtype.int64)
     else:
         # Need to convert the values which were loaded as float64 into int64 to be able
         # to do datetime arithmetic. This needs to be done after conversion to ns to
         # avoid unnecessary loss of accuracy.
-        pulse_times = sc.array(
-            dims=[_event_dimension if times_per_event else _pulse_dimension],
-            values=pulse_times.values,
-            unit=sc.units.ns,
-            dtype=sc.dtype.int64)
+        pulse_times = pulse_times.astype(sc.dtype.int64, copy=False)
 
     return pulse_times + sc.scalar(
         np.datetime64(time_offset), unit=sc.units.ns, dtype=sc.dtype.datetime64)
