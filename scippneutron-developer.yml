@@ -23,17 +23,16 @@ dependencies:
   - ipywidgets
   - scipp::mantid-framework
   - matplotlib-base
-  - numpy >=1.15.3
+  - numpy>=1.20.0
   - python
   - python-configuration
   - pythreejs
   - pyyaml
   - tbb
-  - traitlets
   - h5py
   - python-confluent-kafka
   - ess-dmsc::ess-streaming-data-types
-  - scipy
+  - scipy>=1.7.0
 
   # Test
   - psutil
