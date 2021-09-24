@@ -34,8 +34,8 @@ test:
     - pytest-asyncio
     - pythreejs
     - mantid-framework [not win]
-    - python-confluent-kafka [not win]
-    - ess-streaming-data-types [not win]
+    - python-confluent-kafka [linux64]
+    - ess-streaming-data-types [linux64]
   source_files:
     - python/tests/
     - neutron/
