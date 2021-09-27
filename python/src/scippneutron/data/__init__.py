@@ -2,9 +2,10 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 import scipp as sc
-from .._scippneutron import __version__
 
-_version = __version__.split('-')[0]
+_version = '1'
+
+__all__ = ['tutorial_dense_data', 'tutorial_event_data']
 
 
 def _make_pooch():
