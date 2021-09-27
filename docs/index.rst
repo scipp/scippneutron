@@ -52,6 +52,7 @@ Documentation
 
    tutorials/exploring-data
    tutorials/working-with-masks
+   tutorials/understanding-event-data
    tutorials/powder-diffraction
 
 .. toctree::
