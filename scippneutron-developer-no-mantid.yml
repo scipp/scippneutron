@@ -9,30 +9,29 @@ name: scippneutron-developer
 
 channels:
   - conda-forge
-  - scipp
 
 dependencies:
   # Build
   - conan
   - ninja
   - tbb-devel
-  - scipp
+  - scipp::scipp
   - cmake
-  - pip
 
   # Run
   - appdirs
+  - ipykernel = 6.3.1  # see https://github.com/ipython/ipykernel/issues/771
   - ipympl
   - ipywidgets
   - matplotlib-base
-  - numpy >=1.15.3
+  - numpy>=1.20.0
   - python
   - python-configuration
   - pythreejs
   - pyyaml
   - tbb
-  - traitlets
   - h5py
+  - scipy>=1.7.0
 
   # Test
   - psutil
@@ -48,7 +47,7 @@ dependencies:
   - ipython
   - pandoc
   - sphinx
-  - sphinx_rtd_theme
+  - sphinx_rtd_theme=0.5.2 # 1.0.0 broken CSS?
   - nbsphinx
   - python-graphviz
   - docutils=0.16 # see https://github.com/spatialaudio/nbsphinx/issues/549

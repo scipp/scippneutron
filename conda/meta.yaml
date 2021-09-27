@@ -8,7 +8,7 @@ source:
 requirements:
   build:
     - cmake
-    - gxx_linux-64 9.3.* [linux64]
+    - gxx_linux-64 11.1.* [linux64]
     - git
     - ninja
     - python {{ python }}
@@ -26,15 +26,17 @@ test:
     - neutron
   requires:
     - h5py
+    - ipykernel = 6.3.1  # see https://github.com/ipython/ipykernel/issues/771
     - ipywidgets
     - matplotlib-base
+    - pooch
     - psutil
     - pytest
     - pytest-asyncio
     - pythreejs
     - mantid-framework [not win]
-    - python-confluent-kafka [not win]
-    - ess-streaming-data-types [not win]
+    - python-confluent-kafka [linux64]
+    - ess-streaming-data-types [linux64]
   source_files:
     - python/tests/
     - neutron/

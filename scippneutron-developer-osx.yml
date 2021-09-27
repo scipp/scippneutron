@@ -14,7 +14,6 @@ dependencies:
   - tbb-devel
   - scipp::scipp
   - cmake
-  - gxx_linux-64 11.1.*
 
   # Run
   - appdirs
@@ -30,8 +29,6 @@ dependencies:
   - pyyaml
   - tbb
   - h5py
-  - python-confluent-kafka
-  - ess-dmsc::ess-streaming-data-types
   - scipy>=1.7.0
 
   # Test
@@ -47,7 +44,6 @@ dependencies:
   # Docs
   - ipython
   - pandoc
-  - pooch
   - sphinx
   - sphinx_rtd_theme=0.5.2 # 1.0.0 broken CSS?
   - nbsphinx
