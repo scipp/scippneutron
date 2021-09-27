@@ -29,6 +29,7 @@ test:
     - ipykernel = 6.3.1  # see https://github.com/ipython/ipykernel/issues/771
     - ipywidgets
     - matplotlib-base
+    - pooch
     - psutil
     - pytest
     - pytest-asyncio
