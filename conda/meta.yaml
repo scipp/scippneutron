@@ -31,14 +31,15 @@ test:
     - ipykernel = 6.3.1  # see https://github.com/ipython/ipykernel/issues/771
     - ipywidgets
     - matplotlib-base
+    - pooch
     - psutil
     - pytest
     - pytest-asyncio
     - pythreejs
     - mantid-framework [not win]
     - tbb-devel
-    - python-confluent-kafka [not win]
-    - ess-streaming-data-types [not win]
+    - python-confluent-kafka [linux64]
+    - ess-streaming-data-types [linux64]
     - requests
     - pandoc
     - sphinx
