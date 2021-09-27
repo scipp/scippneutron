@@ -175,7 +175,7 @@ set(SITE_PACKAGES_DIR
     CACHE STRING
           "Python site-packages directory to use for installing Python module."
 )
-if ("${SITE_PACKAGES_DIR}" STREQUAL "")
+if("${SITE_PACKAGES_DIR}" STREQUAL "")
   set(PYTHONDIR scippneutron)
 else()
   set(PYTHONDIR ${SITE_PACKAGES_DIR}/scippneutron)
