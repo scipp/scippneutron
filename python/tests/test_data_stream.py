@@ -119,7 +119,7 @@ class FakeQueryConsumer:
 
 # Short time to use for buffer emit and data_stream interval in tests
 # pass or fail fast!
-SHORT_TEST_INTERVAL = 10. * sc.Unit('milliseconds')
+SHORT_TEST_INTERVAL = 100. * sc.Unit('milliseconds')
 # Small buffer of 20 events is sufficient for the tests
 TEST_BUFFER_SIZE = 20
 
@@ -132,7 +132,7 @@ TEST_STREAM_ARGS = {
     "fast_metadata_buffer_size": TEST_BUFFER_SIZE,
     "chopper_buffer_size": TEST_BUFFER_SIZE,
     "consumer_type": ConsumerType.FAKE,
-    "timeout": 4. * sc.units.s
+    "timeout": 10. * sc.units.s
 }
 # "timeout" arg: if something gets broken then this makes sure the
 # test will not get stuck in the _data_stream loop indefinitely.
