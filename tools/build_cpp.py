@@ -11,8 +11,8 @@ import sys
 import time
 
 parser = argparse.ArgumentParser(description='Build C++ library and run tests')
-parser.add_argument('--prefix', default='install')
-parser.add_argument('--site-packages-dir', default='')
+parser.add_argument('--prefix', default=os.environ.get('PREFIX', 'install'))
+parser.add_argument('--site-packages-dir', default=os.environ.get('SP_DIR', ''))
 parser.add_argument('--source_dir', default='.')
 parser.add_argument('--build_dir', default='build')
 parser.add_argument('--caching', action='store_true', default=False)

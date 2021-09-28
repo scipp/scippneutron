@@ -55,12 +55,13 @@ test:
     - docs/
   commands:
     - python -m pytest -v python
+    - python cmake-package-test/build.py
+    - python docs/build_and_test.py
 
 build:
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
   script:
-    - python tools/build_cpp.py --prefix="$PREFIX" --site-packages-dir="$SP_DIR" # [not win]
-    - python tools/build_cpp.py --prefix="%PREFIX%" --site-packages-dir="%SP_DIR%" # [win]
+    - python tools/build_cpp.py
 
 about:
   home: https://github.com/scipp/scippneutron
