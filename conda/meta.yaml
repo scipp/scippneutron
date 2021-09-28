@@ -15,6 +15,7 @@ requirements:
     - scipp {{ scipp }}
     - tbb-devel
   run:
+    - pooch
     - python {{ python }}
     - scipp {{ scipp }}
     - h5py
@@ -29,7 +30,6 @@ test:
     - ipykernel = 6.3.1  # see https://github.com/ipython/ipykernel/issues/771
     - ipywidgets
     - matplotlib-base
-    - pooch
     - psutil
     - pytest
     - pytest-asyncio
