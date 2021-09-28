@@ -53,6 +53,8 @@ test:
   source_files:
     - python/tests/
     - docs/
+  script_env:
+    - DOCS_BUILD_DIR
   commands:
     - python -m pytest -v python
     - python cmake-package-test/build.py

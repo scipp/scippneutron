@@ -6,6 +6,9 @@ import tempfile
 shell = sys.platform == 'win32'
 
 with tempfile.TemporaryDirectory() as build_dir:
+    build_dir = os.environ.get('DOCS_BUILD_DIR', build_dir)
+    if not os.path.exists(build_dir):
+        os.makedirs(build_dir)
     with tempfile.TemporaryDirectory() as work_dir:
         subprocess.check_call([
             'python', 'build_docs.py', '--builder=html', f'--prefix={build_dir}',
