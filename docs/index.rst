@@ -50,9 +50,9 @@ Documentation
    :caption: Tutorials
    :maxdepth: 3
 
-   tutorials/exploring-data
-   tutorials/working-with-masks
-   tutorials/understanding-event-data
+   tutorials/1_exploring-data
+   tutorials/2_working-with-masks
+   tutorials/3_understanding-event-data
    tutorials/powder-diffraction
 
 .. toctree::
