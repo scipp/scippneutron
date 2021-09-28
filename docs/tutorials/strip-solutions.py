@@ -2,7 +2,6 @@ import argparse
 import os
 from traitlets.config import Config
 from nbconvert.exporters import NotebookExporter
-from nbconvert.preprocessors import TagRemovePreprocessor
 
 c = Config()
 c.TagRemovePreprocessor.remove_cell_tags = ("solution", )
