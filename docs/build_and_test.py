@@ -5,6 +5,8 @@ import tempfile
 
 shell = sys.platform == 'win32'
 
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
 with tempfile.TemporaryDirectory() as build_dir:
     build_dir = os.environ.get('DOCS_BUILD_DIR', build_dir)
     if not os.path.exists(build_dir):
