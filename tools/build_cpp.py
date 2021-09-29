@@ -64,7 +64,16 @@ def main(*,
 
     if platform == 'darwin':
         cmake_flags.update({'-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'OFF'})
-        cmake_flags['-DCMAKE_OSX_SYSROOT'] = os.environ['CONDA_BUILD_SYSROOT']
+        osxversion = os.environ.get('OSX_VERSION')
+        if osxversion is not None:
+            cmake_flags.update({
+                '-DCMAKE_OSX_DEPLOYMENT_TARGET':
+                osxversion,
+                '-DCMAKE_OSX_SYSROOT':
+                os.path.join('/Applications', 'Xcode.app', 'Contents', 'Developer',
+                             'Platforms', 'MacOSX.platform', 'Developer', 'SDKs',
+                             'MacOSX{}.sdk'.format(osxversion))
+            })
 
     if platform == 'win32':
         cmake_flags.update({'-G': 'Visual Studio 16 2019', '-A': 'x64'})
