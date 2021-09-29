@@ -62,6 +62,8 @@ test:
 
 build:
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
+  script_env:
+    - OSX_VERSION [osx]
   script:
     - python tools/build_cpp.py
 
