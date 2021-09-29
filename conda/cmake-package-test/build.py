@@ -14,7 +14,7 @@ cmake_flags = [
     f'-DPKG_VERSION={os.environ["PKG_VERSION"]}', '-DCMAKE_BUILD_TYPE=Release'
 ]
 
-if platform == 'darwin':
+if sys.platform == 'darwin':
     cmake_flags.append(
         f'-DCMAKE_OSX_DEPLOYMENT_TARGET={os.getenv("OSX_VERSION", "10.14")}')
 
