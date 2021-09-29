@@ -178,7 +178,7 @@ set(SITE_PACKAGES_DIR
 if("${SITE_PACKAGES_DIR}" STREQUAL "")
   set(PYTHONDIR scippneutron)
 else()
-  set(PYTHONDIR ${SITE_PACKAGES_DIR}/scippneutron)
+  file(TO_CMAKE_PATH ${SITE_PACKAGES_DIR}/scippneutron PYTHONDIR)
 endif()
 set(INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
 
