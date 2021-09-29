@@ -10,10 +10,15 @@ if not os.path.exists(build_dir):
     os.makedirs(build_dir)
 os.chdir(build_dir)
 
-subprocess.check_call([
-    'cmake', f'-DPKG_VERSION={os.environ["PKG_VERSION"]}', '-DCMAKE_BUILD_TYPE=Release',
-    '..'
-],
+cmake_flags = [
+    f'-DPKG_VERSION={os.environ["PKG_VERSION"]}', '-DCMAKE_BUILD_TYPE=Release'
+]
+
+if platform == 'darwin':
+    cmake_flags.append(
+        f'-DCMAKE_OSX_DEPLOYMENT_TARGET={os.getenv("OSX_VERSION", "10.14")}')
+
+subprocess.check_call(['cmake'] + cmake_flags + ['..'],
                       stderr=subprocess.STDOUT,
                       shell=shell)
 subprocess.check_call(['cmake', '--build', '.'], stderr=subprocess.STDOUT, shell=shell)
