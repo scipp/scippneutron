@@ -63,18 +63,13 @@ def main(*,
     }
 
     if platform == 'darwin':
-        cmake_flags.update({'-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'OFF'})
-        osxversion = os.environ.get('OSX_VERSION')
-        if osxversion is not None:
-            cmake_flags.update({
-                '-DCMAKE_OSX_DEPLOYMENT_TARGET':
-                osxversion,
-                '-DCMAKE_OSX_SYSROOT':
-                os.path.join('/Applications', 'Xcode.app', 'Contents', 'Developer',
-                             'Platforms', 'MacOSX.platform', 'Developer', 'SDKs',
-                             'MacOSX{}.sdk'.format(osxversion))
-            })
-
+        # Note 10.14 is the minimum supported osx version
+        # conda-build otherwise defaults to 10.9
+        osxversion = os.getenv('OSX_VERSION', '10.14')
+        cmake_flags.update({
+            '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'OFF',
+            '-DCMAKE_OSX_DEPLOYMENT_TARGET': osxversion
+        })
     if platform == 'win32':
         cmake_flags.update({'-G': 'Visual Studio 16 2019', '-A': 'x64'})
         # clcache conda installed to env Scripts dir in env if present
