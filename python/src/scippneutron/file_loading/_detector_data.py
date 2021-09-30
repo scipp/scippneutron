@@ -226,21 +226,15 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
                       dtype=np.float32,
                       with_variances=True)
 
-    data_dict = {
-        "data": weights,
-        "coords": {
-            _time_of_flight: event_time_offset,
-            _detector_dimension: event_id,
-        },
-    }
-
-    events = sc.DataArray(**data_dict)
+    events = sc.DataArray(data=weights,
+                          coords={
+                              _time_of_flight: event_time_offset,
+                              _detector_dimension: event_id,
+                          })
 
     _check_event_ids_and_det_number_types_valid(
         event_id.dtype if detector_data.detector_ids is None else
         detector_data.detector_ids.dtype, event_id.dtype)
-
-    detector_group = group.parent
 
     event_index = sc.array(dims=[_pulse_dimension],
                            values=event_index,
