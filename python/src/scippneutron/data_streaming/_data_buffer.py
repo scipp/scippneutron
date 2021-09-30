@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 import scipp as sc
 import numpy as np
 import threading
@@ -8,11 +10,12 @@ from streaming_data_types.sample_environment_senv import deserialise_senv
 from streaming_data_types.sample_environment_senv import (Response as FastSampleEnvData)
 from streaming_data_types.sample_environment_senv import (Location as TimestampLocation)
 from streaming_data_types.timestamps_tdct import deserialise_tdct, Timestamps
+from streaming_data_types.run_stop_6s4t import deserialise_6s4t
 from streaming_data_types.exceptions import WrongSchemaException
-from typing import Optional, Dict, List, Any, Union, Callable
+from typing import Optional, Dict, List, Any, Union, Callable, Tuple
 from ..file_loading._json_nexus import StreamInfo
+from ._stop_time import StopTimeUpdate
 from datetime import datetime
-from time import sleep
 from ._serialisation import convert_to_pickleable_dict
 from ._warnings import UnknownFlatbufferIdWarning, BufferSizeWarning
 """
@@ -37,8 +40,7 @@ CHOPPER_FB_ID = "tdct"
 EVENT_FB_ID = "ev42"
 
 
-def _create_metadata_buffer_array(name: str, unit: sc.Unit, dtype: Any,
-                                  buffer_size: int):
+def _create_metadata_buffer_array(name: str, unit: str, dtype: Any, buffer_size: int):
     return sc.DataArray(sc.zeros(dims=[name],
                                  shape=(buffer_size, ),
                                  unit=unit,
@@ -79,15 +81,16 @@ class _SlowMetadataBuffer:
                     log_event.timestamp_unix_ns, 'ns')
             self._buffer_filled_size += 1
 
-    def get_metadata_array(self) -> sc.Variable:
+    def get_metadata_array(self) -> Tuple[bool, sc.Variable]:
         """
         Copy collected data from the buffer
         """
         with self._buffer_mutex:
             return_array = self._data_array[
                 self._name, :self._buffer_filled_size].copy()
+            new_data_exists = self._buffer_filled_size != 0
             self._buffer_filled_size = 0
-        return sc.scalar(return_array)
+        return new_data_exists, sc.scalar(return_array)
 
 
 class _FastMetadataBuffer:
@@ -165,15 +168,16 @@ class _FastMetadataBuffer:
                              message_size].coords["time"].values = timestamps
             self._buffer_filled_size += message_size
 
-    def get_metadata_array(self) -> sc.Variable:
+    def get_metadata_array(self) -> Tuple[bool, sc.Variable]:
         """
         Copy collected data from the buffer
         """
         with self._buffer_mutex:
             return_array = self._data_array[
                 self._name, :self._buffer_filled_size].copy()
+            new_data_exists = self._buffer_filled_size != 0
             self._buffer_filled_size = 0
-        return sc.scalar(return_array)
+        return new_data_exists, sc.scalar(return_array)
 
 
 class _ChopperMetadataBuffer:
@@ -214,15 +218,16 @@ class _ChopperMetadataBuffer:
                              message_size].values = chopper_timestamps.timestamps
             self._buffer_filled_size += message_size
 
-    def get_metadata_array(self) -> sc.Variable:
+    def get_metadata_array(self) -> Tuple[bool, sc.Variable]:
         """
         Copy collected data from the buffer
         """
         with self._buffer_mutex:
             return_array = self._data_array[
                 self._name, :self._buffer_filled_size].copy()
+            new_data_exists = self._buffer_filled_size != 0
             self._buffer_filled_size = 0
-        return sc.scalar(return_array)
+        return new_data_exists, sc.scalar(return_array)
 
 
 metadata_ids = (SLOW_FB_ID, FAST_FB_ID, CHOPPER_FB_ID)
@@ -242,13 +247,14 @@ class StreamedDataBuffer:
     """
     def __init__(self, queue: mp.Queue, event_buffer_size: int,
                  slow_metadata_buffer_size: int, fast_metadata_buffer_size: int,
-                 chopper_buffer_size: int, interval_s: float):
+                 chopper_buffer_size: int, interval_s: float, run_id: str):
         self._buffer_mutex = threading.Lock()
         self._interval_s = interval_s
         self._event_buffer_size = event_buffer_size
         self._slow_metadata_buffer_size = slow_metadata_buffer_size
         self._fast_metadata_buffer_size = fast_metadata_buffer_size
         self._chopper_buffer_size = chopper_buffer_size
+        self._current_run_id = run_id
         tof_buffer = sc.zeros(dims=['event'],
                               shape=[event_buffer_size],
                               unit=sc.units.ns,
@@ -272,6 +278,7 @@ class StreamedDataBuffer:
                                            })
         self._current_event = 0
         self._cancelled = False
+        self._notify_cancelled = threading.Condition()
         self._unrecognised_fb_id_count = 0
         self._periodic_emit: Optional[threading.Thread] = None
         self._emit_queue = queue
@@ -320,8 +327,11 @@ class StreamedDataBuffer:
 
     def stop(self):
         self._cancelled = True
-        if self._periodic_emit is not None:
+        with self._notify_cancelled:
+            self._notify_cancelled.notifyAll()
+        if (self._periodic_emit is not None and self._periodic_emit.is_alive()):
             self._periodic_emit.join(5.)
+        self._emit_data()  # flush the buffer
 
     def _emit_data(self):
         with self._buffer_mutex:
@@ -332,16 +342,21 @@ class StreamedDataBuffer:
                         " messages with unrecognised FlatBuffer ids"))
                 self._unrecognised_fb_id_count = 0
             new_data = self._events_buffer['event', :self._current_event].copy()
+            new_data_exists = (self._current_event != 0)
             for _, buffers in self._metadata_buffers.items():
                 for name, buffer in buffers.items():
-                    metadata_array = buffer.get_metadata_array()
+                    (new_metadata_exists, metadata_array) = buffer.get_metadata_array()
                     new_data.attrs[name] = metadata_array
+                    if new_metadata_exists:
+                        new_data_exists = True
             self._current_event = 0
-        self._emit_queue.put(convert_to_pickleable_dict(new_data))
+        if new_data_exists:
+            self._emit_queue.put(convert_to_pickleable_dict(new_data))
 
     def _emit_loop(self):
         while not self._cancelled:
-            sleep(self._interval_s)
+            with self._notify_cancelled:
+                self._notify_cancelled.wait(timeout=self._interval_s)
             self._emit_data()
 
     def _handled_event_data(self, new_data: bytes) -> bool:
@@ -392,6 +407,15 @@ class StreamedDataBuffer:
             return False
         return False
 
+    def _handled_stop_run(self, new_data: bytes):
+        try:
+            stop_run_data = deserialise_6s4t(new_data)
+            if stop_run_data.job_id == self._current_run_id:
+                self._emit_queue.put(StopTimeUpdate(stop_run_data.stop_time))
+            return True
+        except WrongSchemaException:
+            return False
+
     def new_data(self, new_data: bytes):
         """
         This is the callback which is given to the consumers.
@@ -404,6 +428,8 @@ class StreamedDataBuffer:
         if self._handled_metadata(new_data, "name", deserialise_senv, FAST_FB_ID):
             return
         if self._handled_metadata(new_data, "name", deserialise_tdct, CHOPPER_FB_ID):
+            return
+        if self._handled_stop_run(new_data):
             return
         # new data were not handled
         self._unrecognised_fb_id_count += 1
