@@ -354,7 +354,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
             _min_tof, _max_tof = _max_tof, _min_tof
         if np.issubdtype(type(_max_tof.value), np.integer):
             if _max_tof.value != np.iinfo(type(_max_tof.value)).max:
-                _max_tof.value += 1
+                _max_tof += sc.ones_like(_max_tof)
         else:
             if _max_tof.value != np.finfo(type(_max_tof.value)).max:
                 _max_tof.value = np.nextafter(_max_tof.value, float("inf"))
