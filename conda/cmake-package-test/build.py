@@ -21,4 +21,7 @@ if sys.platform == 'darwin':
 subprocess.check_call(['cmake'] + cmake_flags + ['..'],
                       stderr=subprocess.STDOUT,
                       shell=shell)
+with open(os.path.join(['CMakeFiles', 'CMakeOutput.log'])) as f:
+    for line in f.readlines():
+        print(line)
 subprocess.check_call(['cmake', '--build', '.'], stderr=subprocess.STDOUT, shell=shell)
