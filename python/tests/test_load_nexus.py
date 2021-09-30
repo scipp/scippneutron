@@ -1789,8 +1789,8 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
 def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
     event_time_offsets = np.array([456, 743, 347, 345, 632])
     event_ids = np.array([1, 2, 3, 1, 3])
-    time_zeros = np.array([1, 2, 3, 4])
-    event_index = np.array([0, 3, 3, 5])
+    time_zeros = np.array([1, 2, 3])
+    event_index = np.array([0, 3, 3])
     event_data = EventData(
         event_id=event_ids,
         event_time_offset=event_time_offsets,
