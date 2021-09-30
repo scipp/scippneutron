@@ -315,57 +315,55 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
         [data.pixel_positions is not None for data in detectors])
 
     def _bin_events(data: DetectorData):
-        if bin_by_pixel:
-            if data.detector_ids is None:
-                # If detector ids were not found in an associated detector group
-                # we will just have to bin according to whatever
-                # ids we have a events for (pixels with no recorded events
-                # will not have a bin)
-                event_id = data.event_data.bins.constituents['data'].coords[
-                    _detector_dimension]
-                data.detector_ids = sc.array(dims=[_detector_dimension],
-                                             values=np.unique(event_id.values))
-
-            # Events in the NeXus file are effectively binned by pulse
-            # (because they are recorded chronologically)
-            # but for reduction it is more useful to bin by detector id
-            # Broadcast pulse times to events
-            data.event_data.events.coords['pulse_time'] = sc.empty(
-                sizes=data.event_data.events.sizes, dtype='datetime64', unit='ns')
-            data.event_data.bins.coords['pulse_time'][
-                ...] = data.event_data.coords['pulse_time']
-            # TODO Look into using `erase=[_pulse_dimension]` instead of binning
-            # underlying buffer. Must prove that performance can be unaffected.
-            da = sc.bin(data.event_data.bins.constituents['data'],
-                        groups=[data.detector_ids])
-            # Add a single time-of-flight bin
-            da = sc.DataArray(data=sc.broadcast(da.data,
-                                                dims=da.dims + [_time_of_flight],
-                                                shape=da.shape + [1]),
-                              coords={_detector_dimension: data.detector_ids})
-            event_tofs = da.events.coords[_time_of_flight]
-            _min_tof = event_tofs.min()
-            _max_tof = event_tofs.max()
-            # This can happen if there were no events in the file at all as sc.min will
-            # return double_max and sc.max will return double_min
-            if _min_tof.value >= _max_tof.value:
-                _min_tof, _max_tof = _max_tof, _min_tof
-            if np.issubdtype(type(_max_tof.value), np.integer):
-                if _max_tof.value != np.iinfo(type(_max_tof.value)).max:
-                    _max_tof.value += 1
-            else:
-                if _max_tof.value != np.finfo(type(_max_tof.value)).max:
-                    _max_tof.value = np.nextafter(_max_tof.value, float("inf"))
-            da.coords[_time_of_flight] = sc.concatenate(_min_tof, _max_tof,
-                                                        _time_of_flight)
-            if pixel_positions_loaded:
-                # TODO: the name 'position' should probably not be hard-coded but moved
-                # to a variable that cah be changed in a single place.
-                da.coords['position'] = data.pixel_positions
-            return da
-        else:
+        if not bin_by_pixel:
             # If loading "raw" data, leave binned by pulse.
             return data.event_data
+        if data.detector_ids is None:
+            # If detector ids were not found in an associated detector group
+            # we will just have to bin according to whatever
+            # ids we have a events for (pixels with no recorded events
+            # will not have a bin)
+            event_id = data.event_data.bins.constituents['data'].coords[
+                _detector_dimension]
+            data.detector_ids = sc.array(dims=[_detector_dimension],
+                                         values=np.unique(event_id.values))
+
+        # Events in the NeXus file are effectively binned by pulse
+        # (because they are recorded chronologically)
+        # but for reduction it is more useful to bin by detector id
+        # Broadcast pulse times to events
+        data.event_data.events.coords['pulse_time'] = sc.empty(
+            sizes=data.event_data.events.sizes, dtype='datetime64', unit='ns')
+        data.event_data.bins.coords['pulse_time'][
+            ...] = data.event_data.coords['pulse_time']
+        # TODO Look into using `erase=[_pulse_dimension]` instead of binning
+        # underlying buffer. Must prove that performance can be unaffected.
+        da = sc.bin(data.event_data.bins.constituents['data'],
+                    groups=[data.detector_ids])
+        # Add a single time-of-flight bin
+        da = sc.DataArray(data=sc.broadcast(da.data,
+                                            dims=da.dims + [_time_of_flight],
+                                            shape=da.shape + [1]),
+                          coords={_detector_dimension: data.detector_ids})
+        event_tofs = da.events.coords[_time_of_flight]
+        _min_tof = event_tofs.min()
+        _max_tof = event_tofs.max()
+        # This can happen if there were no events in the file at all as sc.min will
+        # return double_max and sc.max will return double_min
+        if _min_tof.value >= _max_tof.value:
+            _min_tof, _max_tof = _max_tof, _min_tof
+        if np.issubdtype(type(_max_tof.value), np.integer):
+            if _max_tof.value != np.iinfo(type(_max_tof.value)).max:
+                _max_tof.value += 1
+        else:
+            if _max_tof.value != np.finfo(type(_max_tof.value)).max:
+                _max_tof.value = np.nextafter(_max_tof.value, float("inf"))
+        da.coords[_time_of_flight] = sc.concatenate(_min_tof, _max_tof, _time_of_flight)
+        if pixel_positions_loaded:
+            # TODO: the name 'position' should probably not be hard-coded but moved
+            # to a variable that cah be changed in a single place.
+            da.coords['position'] = data.pixel_positions
+        return da
 
     events = _bin_events(detectors.pop(0))
 
