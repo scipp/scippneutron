@@ -122,7 +122,7 @@ class DetectorData:
 def _create_empty_events_data_array(tof_dtype: Any = np.int64,
                                     tof_unit: Union[str, sc.Unit] = "ns",
                                     detector_id_dtype: Any = np.int32) -> sc.DataArray:
-    return sc.DataArray(data=sc.empty(dims=[_event_dimension],
+    data = sc.DataArray(data=sc.empty(dims=[_event_dimension],
                                       shape=[0],
                                       unit='counts',
                                       with_variances=True,
@@ -137,11 +137,18 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
                             sc.empty(dims=[_event_dimension],
                                      shape=[0],
                                      dtype=detector_id_dtype),
-                            _pulse_time:
-                            sc.empty(dims=[_event_dimension],
+                        })
+    indices = sc.array(dims=[_pulse_dimension], values=[], dtype='int64')
+    return sc.DataArray(data=sc.bins(begin=indices,
+                                     end=indices,
+                                     dim=_event_dimension,
+                                     data=data),
+                        coords={
+                            'pulse_time':
+                            sc.zeros(dims=[_pulse_dimension],
                                      shape=[0],
-                                     dtype=sc.dtype.datetime64,
-                                     unit=sc.units.ns),
+                                     dtype='datetime64',
+                                     unit='ns')
                         })
 
 
@@ -272,7 +279,11 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     ends = sc.concatenate(event_index[_pulse_dimension, 1:],
                           sc.scalar(number_of_event_ids), _pulse_dimension)
 
-    binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
+    try:
+        binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
+    except sc.SliceError:
+        raise BadSource(f"Event index in NXEvent at {group.path}/event_index was not"
+                        f"ordered. The index must be ordered to load pulse times.")
 
     detector_data.event_data = sc.DataArray(data=binned,
                                             coords={"pulse_time": pulse_times})
@@ -346,9 +357,11 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
     detector_data = detectors.pop(0)
 
     if np.issubdtype(type(_max_tof), np.integer):
-        _max_tof += 1
+        if _max_tof != np.iinfo(type(_max_tof)).max:
+            _max_tof += 1
     else:
-        _max_tof = np.nextafter(_max_tof, float("inf"))
+        if _max_tof != np.finfo(type(_max_tof)).max:
+            _max_tof = np.nextafter(_max_tof, float("inf"))
 
     _tof_edges = sc.array(
         values=[
