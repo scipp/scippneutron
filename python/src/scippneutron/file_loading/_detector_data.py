@@ -156,8 +156,8 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus) -> sc.Variable:
     time_zero_group = "event_time_zero"
 
     event_time_zero = nexus.load_dataset(group.group,
-                                          time_zero_group,
-                                          dimensions=[_pulse_dimension])
+                                         time_zero_group,
+                                         dimensions=[_pulse_dimension])
 
     try:
         pulse_times = sc.to_unit(event_time_zero, sc.units.ns, copy=False)
@@ -208,26 +208,13 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
                       detector_data: DetectorData, quiet: bool) -> DetectorData:
     _check_for_missing_fields(group, nexus)
 
-    # There is some variation in the last recorded event_index in files
-    # from different institutions. We try to make sure here that it is what
-    # would be the first index of the next pulse.
-    # In other words, ensure that event_index includes the bin edge for
-    # the last pulse.
     event_id = nexus.load_dataset(group.group, "event_id", [_event_dimension])
-    number_of_event_ids = event_id.sizes['event']
+    number_of_event_ids = event_id.sizes[_event_dimension]
     event_index = nexus.load_dataset_from_group_as_numpy_array(
         group.group, "event_index")
-    # TODO Hacky fix for uint64 -> int64 conversion
-    event_index = np.where(event_index < 0, number_of_event_ids, event_index)
-    #if event_index[-1] < number_of_event_ids:
-    #    event_index = np.append(
-    #        event_index,
-    #        np.array([number_of_event_ids]).astype(event_index.dtype),
-    #    )
-    #else:
-    #    event_index[-1] = number_of_event_ids
-
-    #number_of_events = event_index[-1]
+    # Some files contain uint64 "max" indices, which turn into negatives during
+    # conversion to int64. This is a hack to get arround this.
+    event_index[event_index < 0] = number_of_event_ids
 
     event_time_offset = nexus.load_dataset(group.group, "event_time_offset",
                                            [_event_dimension])
@@ -249,26 +236,11 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
 
     events = sc.DataArray(**data_dict)
 
-    if detector_data.detector_ids is None:
-        # If detector ids were not found in an associated detector group
-        # we will just have to bin according to whatever
-        # ids we have a events for (pixels with no recorded events
-        # will not have a bin)
-        detector_data.detector_ids = sc.Variable(dims=[_detector_dimension],
-                                                 values=np.unique(event_id.values))
-
-    _check_event_ids_and_det_number_types_valid(detector_data.detector_ids.dtype,
-                                                event_id.dtype)
+    _check_event_ids_and_det_number_types_valid(
+        event_id.dtype if detector_data.detector_ids is None else
+        detector_data.detector_ids.dtype, event_id.dtype)
 
     detector_group = group.parent
-    pixel_positions_found, _ = nexus.dataset_in_group(detector_group, "x_pixel_offset")
-
-    # Checking for positions here is needed because, in principle, the standard
-    # allows not to always have them. ESS files should however always have
-    # them.
-    if pixel_positions_found:
-        detector_data.pixel_positions = _load_pixel_positions(
-            detector_group, detector_data.detector_ids.shape[0], file_root, nexus)
 
     event_index = sc.array(dims=[_pulse_dimension],
                            values=event_index,
@@ -276,6 +248,10 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     pulse_times = _load_pulse_times(group, nexus)
 
     begins = event_index
+    # There is some variation in the last recorded event_index in files # from different
+    # institutions. We try to make sure here that it is what would be the first index of
+    # the next pulse. In other words, ensure that event_index includes the bin edge for
+    # the last pulse.
     ends = sc.concatenate(event_index[_pulse_dimension, 1:],
                           sc.scalar(number_of_event_ids), _pulse_dimension)
 
@@ -334,6 +310,8 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
     def get_detector_id(data: DetectorData):
         # Assume different detector banks do not have
         # intersecting ranges of detector ids
+        if data.detector_ids is None:
+            return 0
         return data.detector_ids.values[0]
 
     detectors.sort(key=get_detector_id)
@@ -375,6 +353,16 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
 
     def _bin_events(data: DetectorData):
         if bin_by_pixel:
+            if data.detector_ids is None:
+                # If detector ids were not found in an associated detector group
+                # we will just have to bin according to whatever
+                # ids we have a events for (pixels with no recorded events
+                # will not have a bin)
+                event_id = data.event_data.bins.constituents['data'].coords[
+                    _detector_dimension]
+                data.detector_ids = sc.array(dims=[_detector_dimension],
+                                             values=np.unique(event_id.values))
+
             # Events in the NeXus file are effectively binned by pulse
             # (because they are recorded chronologically)
             # but for reduction it is more useful to bin by detector id
