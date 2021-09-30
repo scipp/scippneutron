@@ -155,15 +155,15 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
 def _load_pulse_times(group: Group, nexus: LoadFromNexus) -> sc.Variable:
     time_zero_group = "event_time_zero"
 
-    _raw_pulse_times = nexus.load_dataset(group.group,
+    event_time_zero = nexus.load_dataset(group.group,
                                           time_zero_group,
                                           dimensions=[_pulse_dimension])
 
     try:
-        pulse_times = sc.to_unit(_raw_pulse_times, sc.units.ns, copy=False)
+        pulse_times = sc.to_unit(event_time_zero, sc.units.ns, copy=False)
     except sc.UnitError:
         raise BadSource(f"Could not load pulse times: units attribute "
-                        f"'{_raw_pulse_times.unit}' in NXEvent at "
+                        f"'{event_time_zero.unit}' in NXEvent at "
                         f"{group.path}/{time_zero_group} is not convertible"
                         f" to nanoseconds.")
 
