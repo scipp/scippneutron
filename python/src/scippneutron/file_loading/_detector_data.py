@@ -14,6 +14,7 @@ from warnings import warn
 from ._transformations import get_full_transformation_matrix
 from ._nexus import LoadFromNexus, GroupObject
 
+_bank_dimension = "bank"
 _detector_dimension = "detector_id"
 _event_dimension = "event"
 _pulse_dimension = "pulse"
@@ -147,10 +148,9 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
 def _load_pulse_times(group: Group, nexus: LoadFromNexus) -> sc.Variable:
     time_zero_group = "event_time_zero"
 
-    _raw_pulse_times = nexus.load_dataset(
-        group.group,
-        time_zero_group,
-        dimensions=[_pulse_dimension])
+    _raw_pulse_times = nexus.load_dataset(group.group,
+                                          time_zero_group,
+                                          dimensions=[_pulse_dimension])
 
     try:
         pulse_times = sc.to_unit(_raw_pulse_times, sc.units.ns, copy=False)
@@ -254,8 +254,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
                                                 event_id.dtype)
 
     detector_group = group.parent
-    pixel_positions_found, _ = nexus.dataset_in_group(detector_group,
-                                                      "x_pixel_offset")
+    pixel_positions_found, _ = nexus.dataset_in_group(detector_group, "x_pixel_offset")
 
     # Checking for positions here is needed because, in principle, the standard
     # allows not to always have them. ESS files should however always have
@@ -264,19 +263,19 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
         detector_data.pixel_positions = _load_pixel_positions(
             detector_group, detector_data.detector_ids.shape[0], file_root, nexus)
 
-
-
     event_index = sc.array(dims=[_pulse_dimension],
-                                         values=event_index,
-                                         dtype=sc.dtype.int64)
+                           values=event_index,
+                           dtype=sc.dtype.int64)
     pulse_times = _load_pulse_times(group, nexus)
 
     begins = event_index
-    ends = sc.concatenate(event_index[_pulse_dimension, 1:], sc.scalar(number_of_event_ids), _pulse_dimension)
+    ends = sc.concatenate(event_index[_pulse_dimension, 1:],
+                          sc.scalar(number_of_event_ids), _pulse_dimension)
 
     binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
 
-    detector_data.event_data = sc.DataArray(data=binned, coords={"pulse_time": pulse_times})
+    detector_data.event_data = sc.DataArray(data=binned,
+                                            coords={"pulse_time": pulse_times})
 
     if not quiet:
         print(f"Loaded event data from "
@@ -315,7 +314,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
     detectors = _load_data_from_each_nx_detector(detector_groups, file_root, nexus)
 
     detectors = _load_data_from_each_nx_event_data(detectors, event_data_groups,
-                                                    file_root, nexus, quiet)
+                                                   file_root, nexus, quiet)
 
     if not detectors:
         # If there were no data to load we are done
@@ -333,10 +332,11 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
     pixel_positions_loaded = all(
         [data.pixel_positions is not None for data in detectors])
 
-    _min_tof = min(
-        data.event_data.events.coords[_time_of_flight].min().value for data in detectors)
-    _max_tof = max(
-        data.event_data.events.coords[_time_of_flight].max().value for data in detectors)
+    # TODO Refactor once we have sc.concatenate support for lists of inputs
+    _min_tof = min(data.event_data.events.coords[_time_of_flight].min().value
+                   for data in detectors)
+    _max_tof = max(data.event_data.events.coords[_time_of_flight].max().value
+                   for data in detectors)
 
     # This can happen if there were no events in the file at all as sc.min will return
     # double_max and sc.max will return double_min
@@ -366,9 +366,13 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
             # (because they are recorded chronologically)
             # but for reduction it is more useful to bin by detector id
             # Broadcast pulse times to events
-            data.event_data.events.coords['pulse_time'] = sc.empty(sizes=data.event_data.events.sizes, dtype='datetime64', unit='ns')
-            data.event_data.bins.coords['pulse_time'][...] = data.event_data.coords['pulse_time']
-            da = sc.bin(data.event_data.bins.constituents['data'], groups=[data.detector_ids], edges=[_tof_edges])
+            data.event_data.events.coords['pulse_time'] = sc.empty(
+                sizes=data.event_data.events.sizes, dtype='datetime64', unit='ns')
+            data.event_data.bins.coords['pulse_time'][
+                ...] = data.event_data.coords['pulse_time']
+            da = sc.bin(data.event_data.bins.constituents['data'],
+                        groups=[data.detector_ids],
+                        edges=[_tof_edges])
             if pixel_positions_loaded:
                 # TODO: the name 'position' should probably not be hard-coded but moved
                 # to a variable that cah be changed in a single place.
@@ -381,17 +385,8 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
     events = _bin_events(detector_data)
 
     while detectors:
-        new_events = _bin_events(detectors.pop(0))
-
-        # TODO why _event_dimension here??
-        _dim = _detector_dimension if bin_by_pixel else 'NXevent_data'
-
-        # TODO
-        # instead of concat:
-        # - make buffer, copy slices
-        # - setup sc.bins along 'bank'
-        # - sc.bin into pixels, erase 'bank' (ensure performance)
-        events = sc.concatenate(events, new_events, dim=_dim)
+        _dim = _detector_dimension if bin_by_pixel else _bank_dimension
+        events = sc.concatenate(events, _bin_events(detectors.pop(0)), dim=_dim)
 
     return events
 
