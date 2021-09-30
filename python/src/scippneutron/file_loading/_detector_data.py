@@ -334,7 +334,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
                 sizes=data.event_data.events.sizes, dtype='datetime64', unit='ns')
             data.event_data.bins.coords['pulse_time'][
                 ...] = data.event_data.coords['pulse_time']
-            # TODO Looking into using `erase=[_pulse_dimension]` instead of binning
+            # TODO Look into using `erase=[_pulse_dimension]` instead of binning
             # underlying buffer. Must prove that performance can be unaffected.
             da = sc.bin(data.event_data.bins.constituents['data'],
                         groups=[data.detector_ids])
