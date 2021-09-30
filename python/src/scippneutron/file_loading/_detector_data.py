@@ -248,7 +248,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     pulse_times = _load_pulse_times(group, nexus)
 
     begins = event_index
-    # There is some variation in the last recorded event_index in files # from different
+    # There is some variation in the last recorded event_index in files from different
     # institutions. We try to make sure here that it is what would be the first index of
     # the next pulse. In other words, ensure that event_index includes the bin edge for
     # the last pulse.
@@ -340,6 +340,8 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
                 sizes=data.event_data.events.sizes, dtype='datetime64', unit='ns')
             data.event_data.bins.coords['pulse_time'][
                 ...] = data.event_data.coords['pulse_time']
+            # TODO Looking into using `erase=[_pulse_dimension]` instead of binning
+            # underlying buffer. Must prove that performance can be unaffected.
             da = sc.bin(data.event_data.bins.constituents['data'],
                         groups=[data.detector_ids])
             # Add a single time-of-flight bin
