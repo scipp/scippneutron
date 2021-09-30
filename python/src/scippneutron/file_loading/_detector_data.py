@@ -299,7 +299,6 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
                        file_root: h5py.File, nexus: LoadFromNexus, quiet: bool,
                        bin_by_pixel: bool) -> Optional[sc.DataArray]:
     detectors = _load_data_from_each_nx_detector(detector_groups, file_root, nexus)
-
     detectors = _load_data_from_each_nx_event_data(detectors, event_data_groups,
                                                    file_root, nexus, quiet)
 
@@ -320,36 +319,6 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
 
     pixel_positions_loaded = all(
         [data.pixel_positions is not None for data in detectors])
-
-    # TODO Refactor once we have sc.concatenate support for lists of inputs
-    _min_tof = min(data.event_data.events.coords[_time_of_flight].min().value
-                   for data in detectors)
-    _max_tof = max(data.event_data.events.coords[_time_of_flight].max().value
-                   for data in detectors)
-
-    # This can happen if there were no events in the file at all as sc.min will return
-    # double_max and sc.max will return double_min
-    if _min_tof >= _max_tof:
-        _min_tof, _max_tof = _max_tof, _min_tof
-
-    detector_data = detectors.pop(0)
-
-    if np.issubdtype(type(_max_tof), np.integer):
-        if _max_tof != np.iinfo(type(_max_tof)).max:
-            _max_tof += 1
-    else:
-        if _max_tof != np.finfo(type(_max_tof)).max:
-            _max_tof = np.nextafter(_max_tof, float("inf"))
-
-    _tof_edges = sc.array(
-        values=[
-            _min_tof,
-            _max_tof,
-        ],
-        dims=[_time_of_flight],
-        unit=detector_data.event_data.events.coords[_time_of_flight].unit,
-        dtype=detector_data.event_data.events.coords[_time_of_flight].dtype,
-    )
 
     def _bin_events(data: DetectorData):
         if bin_by_pixel:
@@ -372,8 +341,27 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
             data.event_data.bins.coords['pulse_time'][
                 ...] = data.event_data.coords['pulse_time']
             da = sc.bin(data.event_data.bins.constituents['data'],
-                        groups=[data.detector_ids],
-                        edges=[_tof_edges])
+                        groups=[data.detector_ids])
+            # Add a single time-of-flight bin
+            da = sc.DataArray(data=sc.broadcast(da.data,
+                                                dims=da.dims + [_time_of_flight],
+                                                shape=da.shape + [1]),
+                              coords={_detector_dimension: data.detector_ids})
+            event_tofs = da.events.coords[_time_of_flight]
+            _min_tof = event_tofs.min()
+            _max_tof = event_tofs.max()
+            # This can happen if there were no events in the file at all as sc.min will
+            # return double_max and sc.max will return double_min
+            if _min_tof.value >= _max_tof.value:
+                _min_tof, _max_tof = _max_tof, _min_tof
+            if np.issubdtype(type(_max_tof.value), np.integer):
+                if _max_tof.value != np.iinfo(type(_max_tof.value)).max:
+                    _max_tof.value += 1
+            else:
+                if _max_tof.value != np.finfo(type(_max_tof.value)).max:
+                    _max_tof.value = np.nextafter(_max_tof.value, float("inf"))
+            da.coords[_time_of_flight] = sc.concatenate(_min_tof, _max_tof,
+                                                        _time_of_flight)
             if pixel_positions_loaded:
                 # TODO: the name 'position' should probably not be hard-coded but moved
                 # to a variable that cah be changed in a single place.
@@ -383,7 +371,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
             # If loading "raw" data, leave binned by pulse.
             return data.event_data
 
-    events = _bin_events(detector_data)
+    events = _bin_events(detectors.pop(0))
 
     while detectors:
         _dim = _detector_dimension if bin_by_pixel else _bank_dimension
@@ -414,7 +402,6 @@ def _create_empty_event_data(detectors: List[DetectorData]):
         elif data.detector_ids is not None:
             detector_id_dtype = data.detector_ids.dtype
     if empty_events is None:
-        # TODO refactor to use bins
         if detector_id_dtype is None:
             # Create empty data array with types/unit matching streamed event
             # data, this avoids need to convert to concatenate with event data
