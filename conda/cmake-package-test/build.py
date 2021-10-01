@@ -11,7 +11,9 @@ if not os.path.exists(build_dir):
 os.chdir(build_dir)
 
 cmake_flags = [
-    f'-DPKG_VERSION={os.environ["PKG_VERSION"]}', '-DCMAKE_BUILD_TYPE=Release'
+    f'-DPKG_VERSION={os.environ["PKG_VERSION"]}',
+    '-DCMAKE_BUILD_TYPE=Release',
+    '-DCMAKE_VERBOSE_MAKEFILE=ON',
 ]
 
 if sys.platform == 'darwin':
