@@ -57,7 +57,7 @@ test:
   commands:
     - python -m pytest -v python
     - python cmake-package-test/build.py
-    - python docs/build_and_test.py
+    - python docs/build_and_test.py [not win]
 
 build:
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
