@@ -3,25 +3,40 @@
 # @author Neil Vaytet and Owen Arnold
 
 import numpy as np
-import pythreejs as p3
 import scipp as sc
 from scipy.spatial.transform import Rotation as Rot
+try:
+    import pythreejs as p3
+except ImportError as ex:
+    p3 = None
+    _pythreejs_import_error = ex
 
 
-def _text_mesh(position, display_text, x_width, y_width):
-    text_geometry = p3.PlaneGeometry(width=x_width,
-                                     height=y_width,
-                                     widthSegments=2,
-                                     heightSegments=2)
-
-    text = p3.TextTexture(string=display_text, color='black', size=20)
-    text_material = p3.MeshBasicMaterial(map=text, transparent=True)
-    text_mesh = p3.Mesh(geometry=text_geometry, material=text_material)
-    text_mesh.position = position
-    return text_mesh
+def _create_text_sprite(position, bounding_box, display_text):
+    # Position offset in y
+    text_position = tuple(position.value + np.array([0, 0.8 * bounding_box[1], 0]))
+    text = p3.TextTexture(string=display_text, color='black', size=300)
+    text_material = p3.SpriteMaterial(map=text, transparent=True)
+    size = 1.0
+    return p3.Sprite(material=text_material,
+                     position=text_position,
+                     scale=[size, size, size])
 
 
-def _box(position, display_text, bounding_box, color, **kwargs):
+def _create_mesh(geometry, color, wireframe, position):
+    if wireframe:
+        edges = p3.EdgesGeometry(geometry)
+        mesh = p3.LineSegments(geometry=edges,
+                               material=p3.LineBasicMaterial(color=color))
+
+    else:
+        material = p3.MeshBasicMaterial(color=color)
+        mesh = p3.Mesh(geometry=geometry, material=material)
+    mesh.position = tuple(position.value)
+    return mesh
+
+
+def _box(position, display_text, bounding_box, color, wireframe, **kwargs):
     geometry = p3.BoxGeometry(width=bounding_box[0],
                               height=bounding_box[1],
                               depth=bounding_box[2],
@@ -29,14 +44,13 @@ def _box(position, display_text, bounding_box, color, **kwargs):
                               heightSegments=2,
                               depthSegments=2)
 
-    material = p3.MeshBasicMaterial(color=color)
-    mesh = p3.Mesh(geometry=geometry, material=material)
-    mesh.position = tuple(position.value)
-    text_position = tuple(position.value + np.array([0, bounding_box[1], 0]))
-    text_mesh = _text_mesh(text_position,
-                           display_text=display_text,
-                           x_width=bounding_box[0],
-                           y_width=bounding_box[1])
+    mesh = _create_mesh(geometry=geometry,
+                        color=color,
+                        wireframe=wireframe,
+                        position=position)
+    text_mesh = _create_text_sprite(position=position,
+                                    bounding_box=bounding_box,
+                                    display_text=display_text)
     return mesh, text_mesh
 
 
@@ -56,7 +70,7 @@ def _alignment_matrix(to_align, target):
     return Rot.from_rotvec(axis_angle).as_matrix()
 
 
-def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
+def _disk_chopper(position, display_text, bounding_box, color, wireframe, **kwargs):
     geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
                                    radiusBottom=bounding_box[0] / 2,
                                    height=bounding_box[0] / 100,
@@ -66,23 +80,21 @@ def _disk_chopper(position, display_text, bounding_box, color, **kwargs):
                                    thetaStart=np.pi / 8,
                                    thetaLength=2 * np.pi - (np.pi / 8))
 
-    material = p3.MeshBasicMaterial(color=color)
-    mesh = p3.Mesh(geometry=geometry, material=material)
-    mesh.position = tuple(position.value)
+    mesh = _create_mesh(geometry=geometry,
+                        color=color,
+                        wireframe=wireframe,
+                        position=position)
     beam = _find_beam(det_com=kwargs['det_center'], pos=position)
     disk_axis = np.array([0, 1, 0])  # Disk created with this axis
     rotation = _alignment_matrix(to_align=disk_axis, target=beam)
     mesh.setRotationFromMatrix(rotation.flatten())
-
-    text_position = tuple(position.value + np.array([0, bounding_box[1], 0]))
-    text_mesh = _text_mesh(text_position,
-                           display_text=display_text,
-                           x_width=bounding_box[0],
-                           y_width=bounding_box[1])
+    text_mesh = _create_text_sprite(position=position,
+                                    bounding_box=bounding_box,
+                                    display_text=display_text)
     return mesh, text_mesh
 
 
-def _cylinder(position, display_text, bounding_box, color, **kwargs):
+def _cylinder(position, display_text, bounding_box, color, wireframe, **kwargs):
     geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
                                    radiusBottom=bounding_box[0] / 2,
                                    height=bounding_box[1],
@@ -91,16 +103,14 @@ def _cylinder(position, display_text, bounding_box, color, **kwargs):
                                    openEnded=False,
                                    thetaStart=0,
                                    thetaLength=2.0 * np.pi)
-
-    material = p3.MeshBasicMaterial(color=color)
-    mesh = p3.Mesh(geometry=geometry, material=material)
-    mesh.position = tuple(position.value)
+    mesh = _create_mesh(geometry=geometry,
+                        color=color,
+                        wireframe=wireframe,
+                        position=position)
     # Position label above cylinder
-    text_position = tuple(position.value + np.array([0, bounding_box[1], 0]))
-    text_mesh = _text_mesh(text_position,
-                           display_text=display_text,
-                           x_width=bounding_box[0],
-                           y_width=bounding_box[1])
+    text_mesh = _create_text_sprite(position=position,
+                                    bounding_box=bounding_box,
+                                    display_text=display_text)
     return mesh, text_mesh
 
 
@@ -112,47 +122,67 @@ def _unpack_to_scene(scene, items):
         scene.add(items)
 
 
-def _add_to_scene(position, scene, shape, display_text, bounding_box, **kwargs):
+def _add_to_scene(position, scene, shape, display_text, bounding_box, color, wireframe,
+                  **kwargs):
     _unpack_to_scene(
         scene,
         shape(position,
               display_text=display_text,
               bounding_box=bounding_box,
-              color="#808080",
+              color=color,
+              wireframe=wireframe,
               **kwargs))
 
 
 def _furthest_component(det_center, scipp_obj, additional):
-    distances = [(key, sc.norm(scipp_obj.meta[key] - det_center).value)
-                 for key in additional.keys()]
-    item, max_displacement = sorted(distances, key=lambda x: x[1])[-1]
-    return item, max_displacement
+    distances = [
+        sc.norm(settings["center"] - det_center).value
+        for settings in list(additional.values())
+    ]
+    max_displacement = sorted(distances)[-1]
+    return max_displacement
 
 
-def _plot_components(scipp_obj, additional, positions_var, scene):
+def _instrument_view_shape_types():
+    return {"box": _box, "cylinder": _cylinder, "disk": _disk_chopper}
+
+
+def _as_vector(var):
+    if var.dtype == sc.dtype.vector_3_float64:
+        return var
+    else:
+        return sc.geometry.position(x=var, y=var, z=var)
+
+
+def _plot_components(scipp_obj, components, positions_var, scene):
     det_center = sc.mean(positions_var)
-    furthest_key, furthest_distance = _furthest_component(det_center, scipp_obj,
-                                                          additional)
     # Some scaling to set width according to distance from detector center
-    scaling_factor = 1 / 10.0
-    width = furthest_distance * scaling_factor
-    shapes = {"cube": _box, "cylinder": _cylinder, "disk": _disk_chopper}
-    for item, type in additional.items():
+    shapes = _instrument_view_shape_types()
+    for name, settings in components.items():
+        type = settings["type"]
+        size = _as_vector(settings["size"])
+        component_position = settings["center"]
+        color = settings.get("color", "#808080")
+        wireframe = settings.get("wireframe", False)
         if type not in shapes:
             supported_shapes = ", ".join(shapes.keys())
-            raise ValueError(f"Unknown shape: {type} requested for {item}. "
+            raise ValueError(f"Unknown shape: {type} requested for {name}. "
                              f"Allowed values are: {supported_shapes}")
-        component_position = scipp_obj.meta[item]
+        component_position = sc.to_unit(component_position, positions_var.unit)
+        size = sc.to_unit(size, positions_var.unit)
         _add_to_scene(position=component_position,
                       scene=scene,
                       shape=shapes[type],
-                      display_text=item,
-                      bounding_box=([width] * 3),
+                      display_text=name,
+                      bounding_box=tuple(size.values),
+                      color=color,
+                      wireframe=wireframe,
                       det_center=det_center)
     # Reset camera
     camera = _get_camera(scene)
     if camera:
-        camera.far = furthest_distance * 5.0
+        furthest_distance = _furthest_component(det_center, scipp_obj, components)
+        camera.far = max(camera.far, furthest_distance * 5.0)
 
 
 def _get_camera(scene):
@@ -171,7 +201,8 @@ def instrument_view(scipp_obj=None,
     :param scipp_obj: scipp object holding geometries
     :param positions: Key for coord/attr holding positions to use for pixels
     :param pixel_size: Custom pixel size to use for detector pixels
-    :param components: Dictionary containing names and shape names for
+    :param components: Dictionary containing display names and corresponding
+    settings (also a Dictionary) for additional components to display
      items with known positions to be shown
     :param kwargs: Additional keyword arguments to pass to scipp.plotting.plot
     :return: The 3D plot object
@@ -187,7 +218,29 @@ def instrument_view(scipp_obj=None,
     between the positions of the first two pixel positions.
     The aspect ratio of the positions is preserved by default, but this can
     be changed to automatic scaling using `aspect="equal"`.
+
+    `components` dictionary uses the key as the name to display the component.
+    This can be any desired name, it does not have to relate to the input
+    `scipp_obj` naming.
+    The value for each entry is itself a dictionary that provides the display
+    settings and requires:
+
+    * `center` - scipp scalar vector describing position to place item at.
+    * `size` - scipp scalar vector describing the bounding box to use in the
+    same length units as positions
+    * `type` - known shape type to use.
+    Valid types are: 'box', 'cylinder' or 'disk'.
+
+    Optional arguments are:
+
+    * `color` - a hexadecimal color code such as #F00000 to use as fill or
+    line color
+    * `wireframe` - wireframe is a bool that defaults to False. If set to True,
+    the returned geometrical shape is a wireframe instead of a shape with
+    opaque faces
     """
+    if not p3:
+        raise _pythreejs_import_error
 
     from scipp.plotting import plot
     from scipp.plotting.objects import PlotDict

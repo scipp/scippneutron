@@ -23,17 +23,16 @@ dependencies:
   - ipywidgets
   - scipp::mantid-framework
   - matplotlib-base
-  - numpy >=1.15.3
+  - numpy>=1.20.0
   - python
   - python-configuration
   - pythreejs
   - pyyaml
   - tbb
-  - traitlets
   - h5py
   - python-confluent-kafka
   - ess-dmsc::ess-streaming-data-types
-  - scipy
+  - scipy>=1.7.0
 
   # Test
   - psutil
@@ -48,8 +47,9 @@ dependencies:
   # Docs
   - ipython
   - pandoc
+  - pooch
   - sphinx
-  - sphinx_rtd_theme
+  - sphinx_rtd_theme=0.5.2 # 1.0.0 broken CSS?
   - nbsphinx
   - python-graphviz
   - docutils=0.16 # see https://github.com/spatialaudio/nbsphinx/issues/549

@@ -290,18 +290,24 @@ Try using ``scippneutron.data_stream``, for example
 
         import asyncio
         import scippneutron as scn
-        from scippneutron.data_streaming.data_stream import StartTime
+        from scippneutron.data_streaming.data_stream import StartTime, StopTime
 
         async def my_stream_func():
             detector_ids = sc.Variable(dims=["detector_id"],
                                        values=np.arange(32*288).astype(np.int32))
-            async for data in scn.data_stream('localhost:9092', run_info_topic="AMOR_runInfo", start_time=StartTime.start_of_run, interval=2. * sc.units.s):
+            async for data in scn.data_stream('localhost:9092', run_info_topic="AMOR_runInfo",
+                                              start_time=StartTime.START_OF_RUN, stop_time=StopTime.END_OF_RUN,
+                                              interval=2. * sc.units.s):
                 events = sc.bin(data, groups=[detector_ids])
                 counts = events.bins.sum()
-                plot_data.values = plot_data.values + sc.fold(counts, dim='detector_id', sizes={'y': 288, 'x': 32}).values
+                plot_data.values = plot_data.values + sc.fold(sc.flatten(counts, to="counts"), dim='counts', sizes={'y': 288, 'x': 32}).values
                 det_plot.redraw()
 
         streaming_task = asyncio.create_task(my_stream_func())
+
+If it is being used in a notebook, ``data_stream`` can be stopped by pressing the stop button in the widget.
+As ``stop_time=StopTime.END_OF_RUN`` has been specified it will automatically stop when it reaches the end
+of the data run published by the NeXus Streamer.
 
 Clean Up
 ~~~~~~~~

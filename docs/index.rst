@@ -7,8 +7,9 @@ Provides "unit conversions" and technique specific tools based on physics of (ti
 News
 ----
 
+- [|SCIPPNEUTRON_RELEASE_MONTH|] scippneutron-|SCIPPNEUTRON_VERSION| `has been released <about/release-notes.rst>`_.
+  Check out the `What's new <about/whats-new.rst>`_ notebook for an overview of recent highlights and major changes.
 - [September 2021] `scipp-0.8 <https://scipp.github.io/about/release-notes.html#v0-8-0-september-2021>`_ has been released.
-- [June 2021] `scippneutron-0.2 <https://scipp.github.io/scippneutron/about/release-notes.html#v0-2-0-june-2021>`_ has been released.
 - Just like scipp, scippneutron has switched from GPLv3 to the more permissive BSD-3 license which fits better into the Python eco system.
 
 Where can I get help?
@@ -43,13 +44,15 @@ Documentation
    user-guide/groupby
    user-guide/from-mantid-to-scipp
    user-guide/instrument-view
+   user-guide/recipes
 
 .. toctree::
    :caption: Tutorials
    :maxdepth: 3
 
-   tutorials/exploring-data
-   tutorials/working-with-masks
+   tutorials/1_exploring-data
+   tutorials/2_working-with-masks
+   tutorials/3_understanding-event-data
    tutorials/powder-diffraction
 
 .. toctree::
@@ -67,5 +70,6 @@ Documentation
    :maxdepth: 3
 
    about/about
+   about/whats-new
    about/contributing
    about/release-notes

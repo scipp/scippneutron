@@ -1,12 +1,16 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 from confluent_kafka import Consumer, TopicPartition, KafkaError
-from typing import Callable, List, Dict, Optional, Tuple
+from typing import Callable, List, Union, Optional, Tuple
 from warnings import warn
 import threading
-from streaming_data_types.run_start_pl72 import deserialise_pl72
+from streaming_data_types.run_start_pl72 import deserialise_pl72, RunStartInfo
 from streaming_data_types.exceptions import WrongSchemaException
 from ._consumer_type import ConsumerType
 import multiprocessing as mp
 from queue import Empty as QueueEmpty
+import numpy as np
+from time import time_ns
 """
 This module uses the confluent-kafka-python implementation of the
 Kafka Client API to communicate with Kafka servers (brokers)
@@ -30,94 +34,132 @@ class RunStartError(Exception):
     pass
 
 
-class KafkaConsumer:
-    def __init__(self, topic_partitions: List[TopicPartition], conf: Dict,
-                 callback: Callable):
-        # The "partition.eof" is used by the stop_message logic.
-        conf['enable.partition.eof'] = True
-        self._consumer = Consumer(conf)
-        # To consume messages the consumer must "subscribe" to one
-        # or more topics or "assign" specific topic partitions, the
-        # latter allows us to start consuming at an offset specified
-        # in the TopicPartition.
-        #
-        # Note that offsets are integer indices pointing to a position in the
-        # topic, they are not a bytes offset.
-        self._consumer.assign(topic_partitions)
-        self._callback = callback
-        self._reached_eop = False
-        self._cancelled = False
-        self._consume_data: Optional[threading.Thread] = None
-        self.stopped = True
-
-    def start(self):
-        self.stopped = False
-        self._cancelled = False
-        self._consume_data = threading.Thread(target=self._consume_loop)
-        self._consume_data.start()
-
-    def _consume_loop(self):
-        while not self._cancelled:
-            msg = self._consumer.poll(timeout=1.0)
-            if msg is None:
-                continue
-            if msg.error():
-                if msg.error().code() == KafkaError._PARTITION_EOF:
-                    continue
-                warn(f"Message error in consumer: {msg.error()}")
-                break
-            self._callback(msg.value())
-
-    def stop(self):
-        if not self._cancelled:
-            self._cancelled = True
-            if self._consume_data is not None and self._consume_data.is_alive():
-                self._consume_data.join(5.)
-        self._consumer.close()
-        self.stopped = True
-
-
 class FakeConsumer:
     """
-    Use in place of KafkaConsumer to avoid having to do
-    network IO in unit tests.
+    Use in place of confluent_kafka.Consumer
+    to avoid network io in unit tests
     """
-    def __init__(self, callback: Callable, input_queue: Optional[mp.Queue]):
+    def __init__(self, input_queue: Optional[mp.Queue]):
         if input_queue is None:
             raise RuntimeError("A multiprocessing queue for test messages "
                                "must be provided when using FakeConsumer")
-        self.stopped = True
-        self._cancelled = False
-        self._callback = callback
-        self._consume_data: Optional[threading.Thread] = None
         # This queue is used to provide the consumer with
-        # messages in unit tests
+        # messages in unit tests, instead of it getting messages
+        # from the Kafka broker
         self._input_queue = input_queue
+
+    def assign(self, topic_partitions: List[TopicPartition]):
+        pass
+
+    def poll(self, timeout: float):
+        try:
+            msg = self._input_queue.get(timeout=0.1)
+            return msg
+        except QueueEmpty:
+            pass
+
+    def close(self):
+        pass
+
+
+class KafkaConsumer:
+    def __init__(self,
+                 topic_partition: TopicPartition,
+                 consumer: Union[Consumer, FakeConsumer],
+                 callback: Callable,
+                 stop_time_ms: Optional[int] = None):
+        self._consumer = consumer
+        # To consume messages the consumer must "subscribe" to one
+        # or more topics or "assign" specific topic partitions, the
+        # latter allows us to start consuming at an offset specified
+        # in the TopicPartition. Each KafkaConsumer consumes from only
+        # a single partition, this simplifies the logic around run stop
+        # behaviour.
+        # Note that offsets are integer indices pointing to a position in the
+        # topic partition, they are not a bytes offset.
+        self._consumer.assign([topic_partition])
+        self._callback = callback
+        self._reached_eop = False
+        self.cancelled = False
+        self._consume_data: Optional[threading.Thread] = None
+        self.stopped = True
+        self._stop_time_mutex = threading.Lock()
+        # default stop time to distant future (run until manually stopped)
+        self._stop_time = np.iinfo(np.int64).max
+        if stop_time_ms is not None:
+            self._stop_time = stop_time_ms
 
     def start(self):
         self.stopped = False
-        self._cancelled = False
+        self.cancelled = False
         self._consume_data = threading.Thread(target=self._consume_loop)
         self._consume_data.start()
 
     def _consume_loop(self):
-        while not self._cancelled:
-            try:
-                msg = self._input_queue.get(timeout=.1)
-                self._callback(msg)
-            except QueueEmpty:
-                pass
-            except (ValueError, OSError):
-                # Queue has been closed, stop worker
-                self.stop()
+        def time_now_ms() -> int:
+            return time_ns() // 1_000_000
+
+        reached_message_after_stop_time = False
+        reached_stop_time = False
+        at_end_of_partition = False
+
+        while not self.cancelled:
+            with self._stop_time_mutex:
+                if time_now_ms() > self._stop_time:
+                    reached_stop_time = True
+                    # Wall clock time is after the run stop time.
+                    # Now we just continue until we either consume a
+                    # message with a timestamp that is after the stop time
+                    # or we reach the end of messages available on Kafka
+                    # (end of partition error).
+                    if reached_message_after_stop_time:
+                        # We've already seen a message timestamped
+                        # after the stop time.
+                        self.cancelled = True
+                        break
+            msg = self._consumer.poll(timeout=2.0)
+            if msg is None:
+                if reached_stop_time and at_end_of_partition:
+                    self.cancelled = True
+                    break
+                continue
+            if msg.error():
+                if msg.error().code() == KafkaError._PARTITION_EOF:
+                    at_end_of_partition = True
+                    if reached_stop_time:
+                        # Wall clock time is after run stop time and there
+                        # are no more messages available on Kafka for us to
+                        # consume, so cancel running the consumer.
+                        self.cancelled = True
+                        break
+                    continue
+                warn(f"Message error in consumer: {msg.error()}")
+                self.cancelled = True
                 break
 
+            at_end_of_partition = False
+            with self._stop_time_mutex:
+                if msg.timestamp()[1] > self._stop_time:
+                    reached_message_after_stop_time = True
+                    if reached_stop_time:
+                        # Wall clock time is after run stop time and remaining
+                        # messages on Kafka have timestamps after the stop
+                        # time, so cancel running the consumer.
+                        self.cancelled = True
+                        break
+                    continue
+            self._callback(msg.value())
+
     def stop(self):
-        if not self._cancelled:
-            self._cancelled = True
-            if self._consume_data is not None and self._consume_data.is_alive():
-                self._consume_data.join(5.)
+        self.cancelled = True
+        if self._consume_data is not None and self._consume_data.is_alive():
+            self._consume_data.join(5.)
+        self._consumer.close()
         self.stopped = True
+
+    def update_stop_time(self, new_stop_time_ms: int):
+        with self._stop_time_mutex:
+            self._stop_time = new_stop_time_ms
 
 
 class KafkaQueryConsumer:
@@ -181,6 +223,7 @@ class KafkaQueryConsumer:
 
 def create_consumers(
         start_time_ms: int,
+        stop_time_ms: Optional[int],
         topics: List[str],
         kafka_broker: str,
         consumer_type_enum: ConsumerType,  # so we can inject fake consumer
@@ -202,10 +245,13 @@ def create_consumers(
                 query_consumer.get_topic_partitions(topic, offset=start_time_ms))
         topic_partitions = query_consumer.offsets_for_times(topic_partitions)
 
+    # Run start messages are typically much larger than the
+    # default maximum message size of 1MB. There are
+    # corresponding settings on the broker.
     # Note: the "message.max.bytes" does not necessarily have to agree with the
     # size set in the broker. The lower of the two will set the limit.
     # If a message exceeds this maximum size, an error should be reported by
-    # the broker or NICOS.
+    # the software publishing the run start message (for example NICOS).
     config = {
         "bootstrap.servers": kafka_broker,
         "group.id": "consumer_group_name",
@@ -213,15 +259,19 @@ def create_consumers(
         "enable.auto.commit": False,
         "message.max.bytes": 100_000_000,
         "fetch.message.max.bytes": 100_000_000,
+        "enable.partition.eof": True,  # used by consumer stop logic
     }
 
     if consumer_type_enum == ConsumerType.REAL:
         consumers = [
-            KafkaConsumer([topic_partition], config, callback)
+            KafkaConsumer(topic_partition, Consumer(config), callback, stop_time_ms)
             for topic_partition in topic_partitions
         ]
     else:
-        consumers = [FakeConsumer(callback, test_message_queue)]
+        consumers = [
+            KafkaConsumer(TopicPartition(""), FakeConsumer(test_message_queue),
+                          callback, stop_time_ms)
+        ]
 
     return consumers
 
@@ -236,7 +286,20 @@ def stop_consumers(consumers: List[KafkaConsumer]):
         consumer.stop()
 
 
-def get_run_start_message(topic: str, query_consumer: KafkaQueryConsumer):
+def all_consumers_stopped(consumers: List[KafkaConsumer]) -> bool:
+    for consumer in consumers:
+        if not consumer.stopped:
+            # if the consumer is cancelled then cleanly stop it
+            # (join the thread)
+            if consumer.cancelled:
+                consumer.stop()
+                continue
+            return False
+    return True
+
+
+def get_run_start_message(topic: str,
+                          query_consumer: KafkaQueryConsumer) -> RunStartInfo:
     """
     Get the last run start message on the given topic.
 

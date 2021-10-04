@@ -47,6 +47,11 @@ extensions = [
 
 autodoc_typehints = 'description'
 
+rst_epilog = f"""
+.. |SCIPPNEUTRON_RELEASE_MONTH| replace:: {os.popen("git show -s --format=%cd --date=format:'%B %Y'").read()}
+.. |SCIPPNEUTRON_VERSION| replace:: {os.popen("git describe --tags --abbrev=0").read()}
+"""  # noqa: E501
+
 intersphinx_mapping = {
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'xarray': ('https://xarray.pydata.org/en/stable/', None)
