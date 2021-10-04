@@ -22,7 +22,7 @@ if os.name == "nt":
 
 from ._scippneutron import __version__
 from ._scippneutron import position, source_position, sample_position, incident_beam, scattered_beam, Ltotal, L1, L2, two_theta
-from .conversion import convert, conversion_graph
+from .conversion import convert, conversion_graph, deduce_conversion_graph
 from .mantid import from_mantid, to_mantid, load, fit
 from .instrument_view import instrument_view
 from .file_loading.load_nexus import load_nexus, load_nexus_json
