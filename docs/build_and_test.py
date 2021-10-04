@@ -1,3 +1,4 @@
+from pathlib import Path
 import os
 import sys
 import subprocess
@@ -18,6 +19,7 @@ with tempfile.TemporaryDirectory() as build_dir:
         ],
                               stderr=subprocess.STDOUT,
                               shell=shell)
+
     with tempfile.TemporaryDirectory() as work_dir:
         subprocess.check_call([
             'python', 'build_docs.py', '--builder=doctest', f'--prefix={build_dir}',
@@ -25,3 +27,8 @@ with tempfile.TemporaryDirectory() as build_dir:
         ],
                               stderr=subprocess.STDOUT,
                               shell=shell)
+
+    # Remove Jupyter notebooks used for documentation build,
+    # they are not accessible and create size bloat
+    for path in Path(build_dir).rglob('*.ipynb'):
+        os.remove(name)
