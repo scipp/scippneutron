@@ -17,11 +17,7 @@ resources:
     ref: ci-redo
 
 trigger:
-  branches:
-    exclude:
-      - '*'
-    include:
-      - main
+  - main
 
 pr:
   autoCancel: true
