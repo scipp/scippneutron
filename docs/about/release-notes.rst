@@ -7,7 +7,7 @@ Since v0.3.0
 ------------
 
 v0.3.0 (September 2021)
-------------------
+-----------------------
 
 * ``load_nexus`` will read ub_matrix and orientation_matrix information from nexus files. Likewise, the Mantid converters will propagate the same information if present.
 
