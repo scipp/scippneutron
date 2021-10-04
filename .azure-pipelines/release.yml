@@ -21,6 +21,15 @@ trigger:
     include:
       - '*.*.*'
 
+schedules:
+  - cron: "0 0 * * *"
+    displayName: 'Nightly dev build'
+    branches:
+      include:
+        - 'main'
+    always: false
+
+
 pr: none
 
 extends:
@@ -40,5 +49,9 @@ extends:
         py_versions: ['3.7', '3.8']
         conda_env: 'scippneutron-developer-no-mantid.yml'
     deploy: true
-    conda_label: 'main'
-    release: true
+    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:  # nightly
+      conda_label: 'dev'
+      publish_docs: true
+    ${{ if ne(variables['Build.SourceBranchName'], 'main') }}:  # tagged release
+      conda_label: 'main'
+      release: true
