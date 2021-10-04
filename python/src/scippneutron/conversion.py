@@ -315,7 +315,7 @@ def convert(data: Union[sc.DataArray, sc.Dataset], origin: str, target: str,
     :param scatter: Choose whether to use scattering or non-scattering conversions.
     :return: A new scipp.DataArray or scipp.Dataset with the new coordinate.
     :seealso: :py:func:`scippneutron.deduce_conversion_graph` and
-              :py:func:`scippneutron.conversion_graph`to inspect
+              :py:func:`scippneutron.conversion_graph` to inspect
               the possible conversions.
     """
 
