@@ -357,20 +357,21 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
         _dim = _detector_dimension if bin_by_pixel else _bank_dimension
         events = sc.concatenate(events, _bin_events(detectors.pop(0)), dim=_dim)
 
-    event_tofs = events.events.coords[_time_of_flight]
-    _min_tof = event_tofs.min()
-    _max_tof = event_tofs.max()
-    # This can happen if there were no events in the file at all as sc.min will
-    # return double_max and sc.max will return double_min
-    if _min_tof.value >= _max_tof.value:
-        _min_tof, _max_tof = _max_tof, _min_tof
-    if np.issubdtype(type(_max_tof.value), np.integer):
-        if _max_tof.value != np.iinfo(type(_max_tof.value)).max:
-            _max_tof += sc.ones_like(_max_tof)
-    else:
-        if _max_tof.value != np.finfo(type(_max_tof.value)).max:
-            _max_tof.value = np.nextafter(_max_tof.value, float("inf"))
-    events.coords[_time_of_flight] = sc.concatenate(_min_tof, _max_tof, _time_of_flight)
+    if bin_by_pixel:
+        event_tofs = events.events.coords[_time_of_flight]
+        _min_tof = event_tofs.min()
+        _max_tof = event_tofs.max()
+        # This can happen if there were no events in the file at all as sc.min will
+        # return double_max and sc.max will return double_min
+        if _min_tof.value >= _max_tof.value:
+            _min_tof, _max_tof = _max_tof, _min_tof
+        if np.issubdtype(type(_max_tof.value), np.integer):
+            if _max_tof.value != np.iinfo(type(_max_tof.value)).max:
+                _max_tof += sc.ones_like(_max_tof)
+        else:
+            if _max_tof.value != np.finfo(type(_max_tof.value)).max:
+                _max_tof.value = np.nextafter(_max_tof.value, float("inf"))
+        events.coords[_time_of_flight] = sc.concatenate(_min_tof, _max_tof, _time_of_flight)
 
     return events
 
