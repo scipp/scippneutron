@@ -20,7 +20,8 @@ trigger:
   branches:
     exclude:
       - '*'
-    - main
+    include:
+      - main
 
 pr:
   autoCancel: true
