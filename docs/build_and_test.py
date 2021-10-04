@@ -31,4 +31,4 @@ with tempfile.TemporaryDirectory() as build_dir:
     # Remove Jupyter notebooks used for documentation build,
     # they are not accessible and create size bloat
     for path in Path(build_dir).rglob('*.ipynb'):
-        os.remove(name)
+        os.remove(path)
