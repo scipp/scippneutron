@@ -35,5 +35,11 @@ def tutorial_event_data():
     return sc.io.open_hdf5(_pooch.fetch('powder-event.h5'))
 
 
-def locate(name):
+def locate(name: str) -> str:
+    """
+    Return the path to a data file bundled with scippneutron.
+
+    This function only works with example data and cannot handle
+    paths to custom files.
+    """
     return _pooch.fetch(name)
