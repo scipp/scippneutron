@@ -60,8 +60,8 @@ def _dspacing_from_tof(tof, Ltotal, two_theta):
     c = sc.to_unit(2 * const.m_n / const.h,
                    _elem_unit(tof) / sc.units.angstrom / _elem_unit(Ltotal),
                    copy=False)
-    return tof / (c * Ltotal * sc.sin(two_theta / 2)).astype(_elem_dtype(tof),
-                                                             copy=False)
+    return 1 / (c * Ltotal * sc.sin(two_theta / 2)).astype(_elem_dtype(tof),
+                                                           copy=False) * tof
 
 
 def _energy_constant(energy_unit, tof, length):
@@ -110,7 +110,7 @@ def _energy_transfer_indirect_from_tof(tof, L1, L2, final_energy):
     c = _energy_constant(_elem_unit(final_energy), tof, L1)
     dtype = _common_dtype(final_energy, tof)
     scale = (c * L1**2).astype(dtype, copy=False)
-    delta_tof = tof - t0
+    delta_tof = -t0 + tof  # Order chosen such that output.dims = ['spectrum', 'tof']
     return sc.where(delta_tof <= sc.scalar(0, unit=_elem_unit(delta_tof)),
                     sc.scalar(np.nan, dtype=dtype, unit=_elem_unit(final_energy)),
                     scale / delta_tof**2 - final_energy)
