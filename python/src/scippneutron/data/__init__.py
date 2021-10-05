@@ -3,8 +3,6 @@
 # @author Simon Heybrock
 import scipp as sc
 
-from ..mantid import load
-
 _version = '1'
 
 __all__ = ['tutorial_dense_data', 'tutorial_event_data']
@@ -37,5 +35,5 @@ def tutorial_event_data():
     return sc.io.open_hdf5(_pooch.fetch('powder-event.h5'))
 
 
-def example_data(name, *args, **kwargs):
-    return load(_pooch.fetch(name), *args, **kwargs)
+def locate(name):
+    return _pooch.fetch(name)
