@@ -285,6 +285,19 @@ class TestMantidConversion(unittest.TestCase):
         np.testing.assert_array_equal(ds.masks["spectrum"].values[0:3],
                                       [True, True, True])
 
+    @staticmethod
+    def check_monitor_metadata(monitor):
+        assert 'position' in monitor.coords
+        assert 'source_position' in monitor.coords
+        assert 'sample_position' not in monitor.coords
+        assert 'sample_position' in monitor.attrs
+        # Absence of the following is not crucial, but currently there is
+        # no need for these, and it avoids duplication:
+        assert 'detector_info' not in monitor.coords
+        assert 'sample' not in monitor.coords
+        assert 'SampleTemp' not in monitor.coords, \
+            "Expect run logs not be duplicated in monitor workspaces"
+
     def test_Workspace2D_with_separate_monitors(self):
         from mantid.simpleapi import mtd
         mtd.clear()
@@ -303,9 +316,10 @@ class TestMantidConversion(unittest.TestCase):
         assert expected_monitor_attrs.issubset(attrs)
 
         for monitor_name in expected_monitor_attrs:
-            monitors = ds.attrs[monitor_name].values
-            assert isinstance(monitors, sc.DataArray)
-            assert monitors.shape == [4471]
+            monitor = ds.attrs[monitor_name].value
+            assert isinstance(monitor, sc.DataArray)
+            assert monitor.shape == [4471]
+            self.check_monitor_metadata(monitor)
 
     def test_Workspace2D_with_include_monitors(self):
         from mantid.simpleapi import mtd
@@ -324,9 +338,10 @@ class TestMantidConversion(unittest.TestCase):
         }
         assert expected_monitor_attrs.issubset(attrs)
         for monitor_name in expected_monitor_attrs:
-            monitors = ds.attrs[monitor_name].values
-            assert isinstance(monitors, sc.DataArray)
-            assert monitors.shape == [4471]
+            monitor = ds.attrs[monitor_name].value
+            assert isinstance(monitor, sc.DataArray)
+            assert monitor.shape == [4471]
+            self.check_monitor_metadata(monitor)
 
     def test_EventWorkspace_with_monitors(self):
         from mantid.simpleapi import mtd
@@ -341,15 +356,7 @@ class TestMantidConversion(unittest.TestCase):
             monitor = ds.attrs[monitor_name].value
             assert isinstance(monitor, sc.DataArray)
             assert monitor.shape == [200001]
-            assert 'position' in monitor.coords
-            assert 'source_position' in monitor.coords
-            assert 'sample_position' in monitor.coords
-            # Absence of the following is not crucial, but currently there is
-            # no need for these, and it avoids duplication:
-            assert 'detector_info' not in monitor.coords
-            assert 'sample' not in monitor.coords
-            assert 'SampleTemp' not in monitor.coords,\
-                "Expect run logs not be duplicated in monitor workspaces"
+            self.check_monitor_metadata(monitor)
 
     def test_mdhisto_workspace_q(self):
         from mantid.simpleapi import (CreateMDWorkspace, FakeMDEventData, BinMD)
