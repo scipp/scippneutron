@@ -526,6 +526,8 @@ def convert_monitors_ws(ws, converter, **ignored):
                             WorkspaceIndexList=[index]) as monitor_ws:
             # Run logs are already loaded in the data workspace
             single_monitor = converter(monitor_ws, load_run_logs=False)
+        single_monitor.attrs['sample_position'] = single_monitor.coords.pop(
+            'sample_position')
         # Remove redundant information that is duplicated from workspace
         # We get this extra information from the generic converter reuse
         if 'detector_info' in single_monitor.coords:
