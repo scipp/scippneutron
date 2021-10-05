@@ -1,0 +1,14 @@
+[requires]
+boost/1.76.0
+eigen/3.3.9
+LLNL-Units/0.5.0@scipp/stable
+
+[options]
+boost:header_only=True
+LLNL-Units:shared=False
+LLNL-Units:fPIC=True
+LLNL-Units:base_type=uint64_t
+LLNL-Units:namespace=llnl::units
+
+[generators]
+cmake_find_package_multi
