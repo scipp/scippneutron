@@ -17,15 +17,20 @@ resources:
     ref: refs/tags/1.0.0
 
 trigger:
-  branches:
-    exclude:
-      - '*'
-
-pr:
-  autoCancel: true
-  branches:
+  tags:
     include:
-      - '*'
+      - '*.*.*'
+
+schedules:
+  - cron: "0 0 * * *"
+    displayName: 'Nightly dev build'
+    branches:
+      include:
+        - 'main'
+    always: false
+
+
+pr: none
 
 extends:
   template: stages.yml@SharedPipelines
@@ -35,11 +40,18 @@ extends:
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
-        py_versions: ['3.7']
+        py_versions: ['3.7', '3.8']
         conda_env: 'scippneutron-developer.yml'
       osx:
-        py_versions: ['3.7']
+        py_versions: ['3.7', '3.8']
         conda_env: 'scippneutron-developer-osx.yml'
       windows:
-        py_versions: ['3.7']
+        py_versions: ['3.7', '3.8']
         conda_env: 'scippneutron-developer-no-mantid.yml'
+    deploy: true
+    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:  # nightly
+      conda_label: 'dev'
+      publish_docs: true
+    ${{ if ne(variables['Build.SourceBranchName'], 'main') }}:  # tagged release
+      conda_label: 'main'
+      release: true
