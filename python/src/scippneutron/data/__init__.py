@@ -5,7 +5,7 @@ import scipp as sc
 
 _version = '1'
 
-__all__ = ['tutorial_dense_data', 'tutorial_event_data']
+__all__ = ['tutorial_dense_data', 'tutorial_event_data', 'locate']
 
 
 def _make_pooch():
