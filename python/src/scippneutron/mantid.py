@@ -506,9 +506,8 @@ def _convert_MatrixWorkspace_info(ws, advanced_geometry=False, load_run_logs=Tru
 
 
 def convert_monitors_ws(ws, converter, **ignored):
-    dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
     spec_dim, spec_coord = init_spec_axis(ws)
-    spec_info = spec_info = ws.spectrumInfo()
+    spec_info = ws.spectrumInfo()
     comp_info = ws.componentInfo()
     monitors = []
     spec_indices = ((ws.getIndexFromSpectrumNumber(int(i)), i)
@@ -526,6 +525,13 @@ def convert_monitors_ws(ws, converter, **ignored):
                             WorkspaceIndexList=[index]) as monitor_ws:
             # Run logs are already loaded in the data workspace
             single_monitor = converter(monitor_ws, load_run_logs=False)
+        # Storing sample_position as a coord of monitors means that monitor
+        # data cannot be combined with scattered data even after conversion
+        # to wavelength, d-spacing, etc. because conversions of monitors do
+        # not use the sample position.
+        # But keep it as an attr in case a user needs it.
+        single_monitor.attrs['sample_position'] = single_monitor.coords.pop(
+            'sample_position')
         # Remove redundant information that is duplicated from workspace
         # We get this extra information from the generic converter reuse
         if 'detector_info' in single_monitor.coords:

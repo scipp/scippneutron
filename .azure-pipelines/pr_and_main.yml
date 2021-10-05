@@ -8,25 +8,22 @@ parameters:
 # found on the Azure pipelines web interface under
 # scipp > scippneutron > Settings > Service connections
 
-# New stable runs/releases of scipp will automatically cause this pipeline to run.
-# Upstream scipp packages are scipp/label/main
 resources:
   repositories:
   - repository: SharedPipelines
     name: scipp/pipelines
     type: github
     endpoint: scipp
-    ref: refs/tags/1.0.0
-  pipelines:
-  - pipeline: upstream_scipp_release
-    project: scipp
-    source: Release
-    trigger: true
+    ref: main  # TODO: change to tag once new tag is created in pipelines repo
 
 trigger:
   - main
 
-pr: none
+pr:
+  autoCancel: true
+  branches:
+    include:
+      - '*'
 
 extends:
   template: stages.yml@SharedPipelines
@@ -44,6 +41,3 @@ extends:
       windows:
         py_versions: ['3.7']
         conda_env: 'scippneutron-developer-no-mantid.yml'
-    deploy: true
-    conda_label: 'dev'
-    publish_docs: true
