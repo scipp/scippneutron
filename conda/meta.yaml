@@ -52,6 +52,7 @@ test:
   source_files:
     - python/tests/
     - docs/
+    - .git/  # Docs build uses git to determine version and release month
   script_env:
     - DOCS_BUILD_DIR
   commands:
