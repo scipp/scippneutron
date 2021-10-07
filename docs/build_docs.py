@@ -75,7 +75,9 @@ if __name__ == '__main__':
         _setup(data_dir=data_dir)
 
     # Build the docs with sphinx-build
-    status = subprocess.check_call(
-        ['sphinx-build', '-b', args.builder, '-d', work_dir, docs_dir, prefix],
-        stderr=subprocess.STDOUT,
-        shell=sys.platform == "win32")
+    status = subprocess.check_call([
+        'sphinx-build', '-j', 'auto', '-b', args.builder, '-d', work_dir, docs_dir,
+        prefix
+    ],
+                                   stderr=subprocess.STDOUT,
+                                   shell=sys.platform == "win32")
