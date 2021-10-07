@@ -14,7 +14,7 @@ resources:
     name: scipp/pipelines
     type: github
     endpoint: scipp
-    ref: main  # TODO: change to tag once new tag is created in pipelines repo
+    ref: micromamba  # TODO: change to tag once new tag is created in pipelines repo
 
 trigger:
   - main
