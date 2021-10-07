@@ -82,10 +82,7 @@ _map_to_supported_type = {
 
 
 def _ensure_supported_int_type(dataset_type: Any):
-    try:
-        return _map_to_supported_type[dataset_type]
-    except KeyError:
-        return dataset_type
+    return _map_to_supported_type.get(dataset_type, dataset_type)
 
 
 class LoadFromHdf5:
