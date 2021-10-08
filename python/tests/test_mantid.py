@@ -12,7 +12,14 @@ import importlib
 
 import scipp as sc
 import scippneutron as scn
-from .mantid_data_helper import MantidDataHelper, mantid_is_available
+
+
+def mantid_is_available():
+    try:
+        import mantid  # noqa: F401
+        return True
+    except ModuleNotFoundError:
+        return False
 
 
 def memory_is_at_least_gb(required):
@@ -32,7 +39,7 @@ class TestMantidConversion(unittest.TestCase):
         # This needs OutputWorkspace specified, as it doesn't
         # pick up the name from the class variable name
         cls.base_event_ws = mantid.LoadEventNexus(
-            MantidDataHelper.find_known_file(filename),
+            scn.data.get_path(filename),
             OutputWorkspace="test_ws{}".format(__file__),
             SpectrumMax=200,
             StoreInADS=False)
@@ -301,9 +308,8 @@ class TestMantidConversion(unittest.TestCase):
     def test_Workspace2D_with_separate_monitors(self):
         from mantid.simpleapi import mtd
         mtd.clear()
-        filename = MantidDataHelper.find_known_file("WISH00016748.raw")
         # This test would use 20 GB of memory if "SpectrumMax" was not set
-        ds = scn.load(filename,
+        ds = scn.load(scn.data.get_path("WISH00016748.raw"),
                       mantid_args={
                           "LoadMonitors": "Separate",
                           "SpectrumMax": 10000
@@ -324,9 +330,8 @@ class TestMantidConversion(unittest.TestCase):
     def test_Workspace2D_with_include_monitors(self):
         from mantid.simpleapi import mtd
         mtd.clear()
-        filename = MantidDataHelper.find_known_file("WISH00016748.raw")
         # This test would use 20 GB of memory if "SpectrumMax" was not set
-        ds = scn.load(filename,
+        ds = scn.load(scn.data.get_path("WISH00016748.raw"),
                       mantid_args={
                           "LoadMonitors": "Include",
                           "SpectrumMax": 100
@@ -346,8 +351,11 @@ class TestMantidConversion(unittest.TestCase):
     def test_EventWorkspace_with_monitors(self):
         from mantid.simpleapi import mtd
         mtd.clear()
-        filename = MantidDataHelper.find_known_file("CNCS_51936_event.nxs")
-        ds = scn.load(filename, mantid_args={"LoadMonitors": True, "SpectrumMax": 1})
+        ds = scn.load(scn.data.get_path("CNCS_51936_event.nxs"),
+                      mantid_args={
+                          "LoadMonitors": True,
+                          "SpectrumMax": 1
+                      })
         self.assertEqual(len(mtd), 0, mtd.getObjectNames())
         attrs = [str(key) for key in ds.attrs.keys()]
         expected_monitor_attrs = {"monitor2", "monitor3"}
@@ -463,8 +471,7 @@ class TestMantidConversion(unittest.TestCase):
         from mantid.simpleapi import mtd
         mtd.clear()
 
-        data = scn.load(
-            filename=MantidDataHelper.find_known_file("iris26176_graphite002_sqw.nxs"))
+        data = scn.load(scn.data.get_path("iris26176_graphite002_sqw.nxs"))
 
         params, diff = scn.fit(data['Q', 0],
                                mantid_args={
@@ -878,8 +885,8 @@ def test_extract_energy_final_when_not_present():
 def test_extract_energy_initial():
     from mantid.simpleapi import mtd
     mtd.clear()
-    filename = MantidDataHelper.find_known_file("CNCS_51936_event.nxs")
-    ds = scn.load(filename, mantid_args={"SpectrumMax": 1})
+    ds = scn.load(scn.data.get_path("CNCS_51936_event.nxs"),
+                  mantid_args={"SpectrumMax": 1})
     assert sc.identical(ds.coords["incident_energy"],
                         sc.scalar(value=3.0, unit=sc.Unit("meV")))
 
