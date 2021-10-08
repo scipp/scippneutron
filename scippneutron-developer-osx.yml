@@ -29,6 +29,8 @@ dependencies:
   - pyyaml
   - tbb
   - h5py
+  - python-confluent-kafka
+  - ess-dmsc::ess-streaming-data-types
   - scipy>=1.7.0
 
   # Test
