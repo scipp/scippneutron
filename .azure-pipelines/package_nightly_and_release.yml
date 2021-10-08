@@ -48,6 +48,7 @@ extends:
       windows:
         py_versions: ['3.7', '3.8']
         conda_env: 'scippneutron-developer-no-mantid.yml'
+    package: true
     deploy: true
     ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:  # nightly
       conda_label: 'dev'
