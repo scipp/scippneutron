@@ -976,10 +976,3 @@ def test_load_via_exact_match():
         # Sanity check corrupt full path will fail
         with pytest.raises(ValueError):
             scn.load("fictional_" + fp.name, mantid_alg="DummyLoader")
-
-
-if __name__ == "__main__":
-    unittest.main()
-
-if __name__ == "__main__":
-    unittest.main()
