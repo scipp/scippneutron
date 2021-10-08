@@ -803,14 +803,14 @@ def test_time_series_log_extraction():
     for i, t in enumerate(times):
         sapi.AddTimeSeriesLog(ws, Name='time_log', Time=str(t), Value=float(i))
     da = scn.from_mantid(ws)
-    da.attrs['time_log'].value.coords['time'].dtype == sc.dtype.datetime64
+    assert da.attrs['time_log'].value.coords['time'].dtype == sc.dtype.datetime64
     # check times
-    sc.identical(
+    assert sc.identical(
         sc.Variable(dims=['time'], values=np.array(times).astype('datetime64[ns]')),
         da.attrs['time_log'].value.coords['time'])
     # check values
-    sc.identical(sc.Variable(dims=['time'], values=np.arange(3.)),
-                 da.attrs['time_log'].value.data)
+    assert sc.identical(sc.Variable(dims=['time'], values=np.arange(3.)),
+                        da.attrs['time_log'].value.data)
     sapi.DeleteWorkspace(ws)
 
 
@@ -909,8 +909,8 @@ def test_EventWorkspace_with_pulse_times():
                                                 NumEvents=10)
     d = scn.mantid.convert_EventWorkspace_to_data_array(small_event_ws,
                                                         load_pulse_times=True)
-    d.data.values[0].coords['pulse_time'].dtype == sc.dtype.datetime64
-    sc.identical(
+    assert d.data.values[0].coords['pulse_time'].dtype == sc.dtype.datetime64
+    assert sc.identical(
         d.data.values[0].coords['pulse_time']['event', 0],
         sc.scalar(
             value=small_event_ws.getSpectrum(0).getPulseTimes()[0].to_datetime64()))
