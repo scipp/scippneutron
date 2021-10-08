@@ -5,7 +5,7 @@ import scipp as sc
 
 _version = '1'
 
-__all__ = ['tutorial_dense_data', 'tutorial_event_data', 'locate']
+__all__ = ['tutorial_dense_data', 'tutorial_event_data', 'get_path']
 
 
 def _make_pooch():
@@ -35,7 +35,7 @@ def tutorial_event_data():
     return sc.io.open_hdf5(_pooch.fetch('powder-event.h5'))
 
 
-def locate(name: str) -> str:
+def get_path(name: str) -> str:
     """
     Return the path to a data file bundled with scippneutron.
 
