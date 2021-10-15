@@ -13,13 +13,7 @@ import importlib
 import scipp as sc
 import scippneutron as scn
 
-
-def mantid_is_available():
-    try:
-        import mantid  # noqa: F401
-        return True
-    except ModuleNotFoundError:
-        return False
+from .mantid_helper import mantid_is_available
 
 
 def memory_is_at_least_gb(required):
