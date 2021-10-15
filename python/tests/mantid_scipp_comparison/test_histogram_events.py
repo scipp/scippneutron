@@ -1,5 +1,5 @@
 from .mantid_scipp_comparison import MantidScippComparison
-from tests.mantid_data_helper import mantid_is_available
+from ..mantid_helper import mantid_is_available
 import pytest
 import scippneutron.mantid as converter
 import scipp as sc
@@ -12,7 +12,7 @@ class HistogramEventsTest(MantidScippComparison):
 
     @property
     def _filenames(self):
-        return {"CNCS_51936_event.nxs": ("5ba401e489260a44374b5be12b780911", "MD5")}
+        return ["CNCS_51936_event.nxs"]
 
     def _run_mantid(self, input):
         import mantid.simpleapi as sapi

@@ -1,6 +1,6 @@
-from ..mantid_data_helper import MantidDataHelper
 import scipp as sc
 import scippneutron.mantid as mantid
+from scippneutron.data import get_path
 import time
 from abc import ABC, abstractmethod
 
@@ -53,12 +53,12 @@ class MantidScippComparison(ABC):
         results = {}
         if self._filenames == {} and self._workspaces == {}:
             raise RuntimeError('No _files or _workspaces provided for testing ')
-        for name, (hash, algorithm) in self._filenames.items():
-            file = MantidDataHelper.find_file(hash, algorithm)
-            print('Loading', name)
+        for filename in self._filenames:
+            file = get_path(filename)
+            print('Loading', filename)
             in_ws = sapi.Load(Filename=file, StoreInADS=False)
             result = self._run_from_workspace(in_ws, allow_failure)
-            self._append_result(name, result, results)
+            self._append_result(filename, result, results)
         for name, in_ws in self._workspaces.items():
             result = self._run_from_workspace(in_ws, allow_failure)
             self._append_result(name, result, results)
