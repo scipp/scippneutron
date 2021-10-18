@@ -27,6 +27,6 @@ from .mantid import from_mantid, to_mantid, load, fit
 from .instrument_view import instrument_view
 from .file_loading.load_nexus import load_nexus, load_nexus_json, load_nexus_monitors, \
     load_nexus_instrument_name, load_nexus_disk_chopper, load_nexus_sample, \
-    load_nexus_source, load_nexus_start_and_end_time, load_nexus_title
+    load_nexus_source, load_nexus_start_and_end_time, load_nexus_title, load_nexus_logs
 from .data_streaming.data_stream import data_stream
 from . import data

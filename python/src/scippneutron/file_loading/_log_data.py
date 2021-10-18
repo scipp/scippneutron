@@ -5,9 +5,8 @@
 import numpy as np
 from typing import Tuple, List, Union, Dict
 import scipp as sc
-from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group,
-                      NexusMeta)
-from ._nexus import LoadFromNexus
+from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
+from ._nexus import LoadFromNexus, NexusMeta
 from warnings import warn
 from dateutil.parser import parse as parse_date, ParserError
 

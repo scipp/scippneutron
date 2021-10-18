@@ -8,12 +8,11 @@ from typing import Optional, List, Any, Dict, Union
 import numpy as np
 import scipp
 
-from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group,
-                      NexusMeta)
+from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
 import scipp as sc
 from warnings import warn
 from ._transformations import get_full_transformation_matrix
-from ._nexus import LoadFromNexus, GroupObject
+from ._nexus import LoadFromNexus, GroupObject, NexusMeta
 
 _bank_dimension = "bank"
 _detector_dimension = "detector_id"
@@ -205,8 +204,8 @@ def _load_detector(group: Group, file_root: h5py.File,
     return DetectorData(detector_ids=detector_ids, pixel_positions=pixel_positions)
 
 
-def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
-                      detector_data: DetectorData, quiet: bool) -> DetectorData:
+def _load_event_group(group: Group, nexus: LoadFromNexus, detector_data: DetectorData,
+                      quiet: bool) -> DetectorData:
     _check_for_missing_fields(group, nexus)
 
     event_id = nexus.load_dataset(group.group, "event_id", [_event_dimension])
@@ -296,7 +295,6 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
     detectors = _load_data_from_each_nx_detector(detector_groups, nexus_meta.nexus_file,
                                                  nexus_meta.nexus)
     detectors = _load_data_from_each_nx_event_data(detectors, event_data_groups,
-                                                   nexus_meta.nexus_file,
                                                    nexus_meta.nexus, quiet)
 
     if not detectors:
@@ -418,15 +416,14 @@ def _create_empty_event_data(detectors: List[DetectorData]):
 
 def _load_data_from_each_nx_event_data(detector_data: Dict,
                                        event_data_groups: List[Group],
-                                       file_root: h5py.File, nexus: LoadFromNexus,
+                                       nexus: LoadFromNexus,
                                        quiet: bool) -> List[DetectorData]:
     event_data = []
     for group in event_data_groups:
         parent_path = "/".join(group.path.split("/")[:-1])
         try:
             new_event_data = _load_event_group(
-                group, file_root, nexus, detector_data.get(parent_path, DetectorData()),
-                quiet)
+                group, nexus, detector_data.get(parent_path, DetectorData()), quiet)
             event_data.append(new_event_data)
             # Only pop from dictionary if we did not raise an
             # exception when loading events

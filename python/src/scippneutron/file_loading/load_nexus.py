@@ -14,7 +14,7 @@ from ._monitor_data import load_monitor_data
 from ._log_data import load_logs
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
-from ._nexus import ScippData
+from ._nexus import ScippData, NexusMeta
 import h5py
 from timeit import default_timer as timer
 from typing import Union, List, Optional, Dict, Tuple, Set
@@ -24,7 +24,6 @@ import numpy as np
 from ._positions import (load_position_of_unique_component,
                          load_positions_of_components)
 from ._sample import load_ub_matrices_of_components
-from ._common import NexusMeta
 
 nx_event_data = "NXevent_data"
 nx_log = "NXlog"
@@ -138,7 +137,7 @@ def load_nexus(data_file: Union[str, h5py.File],
       by pulse. Defaults to True.
 
     Usage example:
-      data = sc.neutron.load_nexus('PG3_4844_event.nxs')
+      data = scn.load_nexus('PG3_4844_event.nxs')
     """
     start_time = timer()
 
@@ -219,7 +218,8 @@ def _load_data(nexus_meta: NexusMeta, quiet: bool, bin_by_pixel: bool) \
     return loaded_data
 
 
-def _generate_wrapper(func: typing.Callable, nx_group_name: str) -> typing.Callable:
+def _generate_wrapper(func: typing.Callable, nx_group_name: str, doc_summary: str) \
+        -> typing.Callable:
     """
     Generates user-facing wrappers around each individual metadata-loading function.
 
@@ -227,6 +227,7 @@ def _generate_wrapper(func: typing.Callable, nx_group_name: str) -> typing.Calla
         func: the function to wrap. This function is expected to have the signature:
             func(nx_groups: List[Group], nexus_meta: NexusMeta) -> Dict[str, ScippData]
         nx_group_name: the class of nexus groups to pass to func
+        doc_summary: a short summary of the purpose of this function (for docstring)
     """
     def _wrapper(data_file: Union[str, h5py.File],
                  root: str = "/",
@@ -248,17 +249,48 @@ def _generate_wrapper(func: typing.Callable, nx_group_name: str) -> typing.Calla
             print("Total time:", timer() - start_time)
         return loaded_data
 
+    _wrapper.__doc__ = f"""
+        {doc_summary}.
+
+        :param data_file: path of NeXus file containing data to load
+        :param root: path of group in file, only load data from the subtree of
+          this group
+        :param quiet: if False prints some details of what is being loaded
+        """
+
     return _wrapper
 
 
-load_nexus_instrument_name = _generate_wrapper(_load_instrument_name, nx_instrument)
-load_nexus_disk_chopper = _generate_wrapper(_load_chopper, nx_disk_chopper)
-load_nexus_monitors = _generate_wrapper(load_monitor_data, nx_monitor)
-load_nexus_sample = _generate_wrapper(_load_sample, nx_sample)
-load_nexus_source = _generate_wrapper(_load_source, nx_source)
-load_nexus_logs = _generate_wrapper(load_logs, nx_log)
-load_nexus_start_and_end_time = _generate_wrapper(_load_start_and_end_time, nx_entry)
-load_nexus_title = _generate_wrapper(_load_title, nx_entry)
+load_nexus_instrument_name = _generate_wrapper(
+    _load_instrument_name,
+    nx_instrument,
+    doc_summary="Loads the instrument name from the provided nexus file")
+load_nexus_disk_chopper = _generate_wrapper(
+    _load_chopper,
+    nx_disk_chopper,
+    doc_summary="Loads disk chopper metadata from the provided nexus file")
+load_nexus_monitors = _generate_wrapper(
+    load_monitor_data,
+    nx_monitor,
+    doc_summary="Loads data from monitors in the provided nexus file")
+load_nexus_sample = _generate_wrapper(
+    _load_sample,
+    nx_sample,
+    doc_summary="Loads sample position metadata from the provided nexus file")
+load_nexus_source = _generate_wrapper(
+    _load_source,
+    nx_source,
+    doc_summary="Loads source position metadata from the provided nexus file")
+load_nexus_logs = _generate_wrapper(
+    load_logs, nx_log, doc_summary="Loads logs from the provided nexus file")
+load_nexus_start_and_end_time = _generate_wrapper(
+    _load_start_and_end_time,
+    nx_entry,
+    doc_summary="Loads the run start and end times from the provided nexus file")
+load_nexus_title = _generate_wrapper(
+    _load_title,
+    nx_entry,
+    doc_summary="Loads the run title from the provided nexus file")
 
 
 def _load_nexus_json(

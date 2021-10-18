@@ -2,7 +2,7 @@ from typing import List, Dict
 import warnings
 from ._common import Group
 import scipp as sc
-from ._nexus import LoadFromNexus
+from ._nexus import LoadFromNexus, NexusMeta
 from ._detector_data import load_detector_data
 
 
@@ -18,7 +18,7 @@ def _load_data_from_histogram_mode_monitor(group: Group, nexus: LoadFromNexus):
     return sc.DataArray(data=data, coords=coords)
 
 
-def load_monitor_data(monitor_groups: List[Group], nexus_meta) -> Dict:
+def load_monitor_data(monitor_groups: List[Group], nexus_meta: NexusMeta) -> Dict:
     monitor_data = {}
     for group in monitor_groups:
         monitor_name = group.path.split("/")[-1]

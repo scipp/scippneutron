@@ -3,9 +3,8 @@
 # @author Matthew Jones
 
 from dataclasses import dataclass
-from typing import Union, Dict, Optional
+from typing import Union, Dict
 import h5py
-from ._nexus import LoadFromNexus
 
 
 class BadSource(Exception):
@@ -43,13 +42,3 @@ class Group:
     parent: Union[h5py.Group, Dict]
     path: str
     contains_stream: bool = False
-
-
-@dataclass
-class NexusMeta:
-    """
-    Data class to encapsulate access to an open nexus file.
-    """
-    nexus_file: Union[h5py.File, Dict]
-    nexus: LoadFromNexus
-    root: Optional[str] = "/"
