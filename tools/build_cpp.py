@@ -107,9 +107,9 @@ def main(*,
     # Show cmake settings
     run_command(['cmake', '-B', '.', '-S', source_dir, '-LA'], shell=shell)
 
-    # Compile benchmarks, C++ tests, and python library
+    # Compile C++ tests, and python library
     start = time.time()
-    for target in ['all-benchmarks', 'all-tests', 'install']:
+    for target in ['all-tests', 'install']:
         run_command(['cmake', '--build', '.', '--target', target] + build_flags,
                     shell=shell)
     end = time.time()
