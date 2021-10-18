@@ -3,10 +3,9 @@
 # @author Matthew Jones
 
 from dataclasses import dataclass
-from typing import Union, Dict, Optional, Any
+from typing import Union, Dict, Optional
 import h5py
-import scipp as sc
-import numpy as np
+from ._nexus import LoadFromNexus
 
 
 class BadSource(Exception):
@@ -46,25 +45,11 @@ class Group:
     contains_stream: bool = False
 
 
-def _add_attr_to_loaded_data(attr_name: str,
-                             data: sc.Variable,
-                             value: np.ndarray,
-                             unit: sc.Unit,
-                             dtype: Optional[Any] = None):
-    try:
-        data = data.attrs
-    except AttributeError:
-        pass
-
-    try:
-        if dtype is not None:
-            if dtype == sc.dtype.vector_3_float64:
-                data[attr_name] = sc.vector(value=value, unit=unit)
-            elif dtype == sc.dtype.matrix_3_float64:
-                data[attr_name] = sc.matrix(value=value, unit=unit)
-            else:
-                data[attr_name] = sc.Variable(value=value, dtype=dtype, unit=unit)
-        else:
-            data[attr_name] = sc.Variable(value=value, unit=unit)
-    except KeyError:
-        pass
+@dataclass
+class NexusMeta:
+    """
+    Data class to encapsulate access to an open nexus file.
+    """
+    nexus_file: Union[h5py.File, Dict]
+    nexus: LoadFromNexus
+    root: Optional[str] = "/"

@@ -5,19 +5,34 @@
 import numpy as np
 from typing import Tuple, List, Union, Dict
 import scipp as sc
-from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
+from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group,
+                      NexusMeta)
 from ._nexus import LoadFromNexus
 from warnings import warn
 from dateutil.parser import parse as parse_date, ParserError
 
 
-def load_logs(log_groups: List[Group], nexus: LoadFromNexus,
-              run_start_time: str) -> Dict:
+def _get_run_start_time(nexus_meta: NexusMeta):
+    entry_groups = nexus_meta.nexus.find_by_nx_class(("NXentry", ),
+                                                     nexus_meta.nexus_file)
+    if entry_groups:
+        try:
+            return nexus_meta.nexus.load_scalar_string(entry_groups["NXentry"][0].group,
+                                                       "start_time")
+        except (AttributeError, TypeError, MissingDataset):
+            return None
+    else:
+        return None
+
+
+def load_logs(log_groups: List[Group], nexus_meta: NexusMeta) -> Dict:
+    run_start_time = _get_run_start_time(nexus_meta)
+
     logs = {}
     for group in log_groups:
         try:
             log_data_name, log_data = _load_log_data_from_group(
-                group, nexus, run_start_time)
+                group, nexus_meta.nexus, run_start_time)
             _add_log_to_data(log_data_name, log_data, group.path, logs)
         except BadSource as e:
             warn(f"Skipped loading {group.path} due to:\n{e}")

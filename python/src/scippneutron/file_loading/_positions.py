@@ -1,5 +1,5 @@
 from _warnings import warn
-from typing import List, Optional, Tuple, Any
+from typing import List, Optional, Tuple
 import h5py
 import numpy as np
 import scipp as sc
@@ -13,7 +13,6 @@ class PositionError(Exception):
 
 
 def load_position_of_unique_component(groups: List[Group],
-                                      data: sc.Variable,
                                       name: str,
                                       nx_class: str,
                                       file_root: h5py.File,
@@ -22,26 +21,23 @@ def load_position_of_unique_component(groups: List[Group],
     if len(groups) > 1:
         warn(f"More than one {nx_class} found in file, "
              f"skipping loading {name} position")
-        return
+        return {}
     try:
         position, units = _get_position_of_component(groups[0].group, name, nx_class,
                                                      file_root, nexus, default_position)
     except PositionError:
-        return
-    _add_coord_to_loaded_data(f"{name}_position",
-                              data,
-                              position,
-                              unit=units,
-                              dtype=sc.dtype.vector_3_float64)
+        return {}
+
+    return {f"{name}_position": sc.vector(value=position, unit=units)}
 
 
 def load_positions_of_components(groups: List[Group],
-                                 data: sc.Variable,
                                  name: str,
                                  nx_class: str,
                                  file_root: h5py.File,
                                  nexus: LoadFromNexus,
                                  default_position: Optional[np.ndarray] = None):
+    positions = {}
     for group in groups:
         try:
             position, units = _get_position_of_component(group.group, name, nx_class,
@@ -49,18 +45,14 @@ def load_positions_of_components(groups: List[Group],
                                                          default_position)
         except PositionError:
             continue
+
         if len(groups) == 1:
-            _add_coord_to_loaded_data(f"{name}_position",
-                                      data,
-                                      position,
-                                      unit=units,
-                                      dtype=sc.dtype.vector_3_float64)
+            name = f"{name}_position"
         else:
-            _add_coord_to_loaded_data(f"{nexus.get_name(group.group)}_position",
-                                      data,
-                                      position,
-                                      unit=units,
-                                      dtype=sc.dtype.vector_3_float64)
+            name = f"{nexus.get_name(group.group)}_position"
+
+        positions[name] = sc.vector(value=position, unit=units)
+    return positions
 
 
 def _get_position_of_component(
@@ -97,24 +89,3 @@ def _get_position_of_component(
         units = sc.units.m
 
     return position, units
-
-
-def _add_coord_to_loaded_data(attr_name: str,
-                              data: sc.Variable,
-                              value: np.ndarray,
-                              unit: sc.Unit,
-                              dtype: Optional[Any] = None):
-
-    if isinstance(data, sc.DataArray):
-        data = data.coords
-
-    try:
-        if dtype is not None:
-            if dtype == sc.dtype.vector_3_float64:
-                data[attr_name] = sc.vector(value=value, unit=unit)
-            else:
-                data[attr_name] = sc.scalar(value, dtype=dtype, unit=unit)
-        else:
-            data[attr_name] = sc.scalar(value, unit=unit)
-    except KeyError:
-        pass

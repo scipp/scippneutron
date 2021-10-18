@@ -8,7 +8,8 @@ from typing import Optional, List, Any, Dict, Union
 import numpy as np
 import scipp
 
-from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
+from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group,
+                      NexusMeta)
 import scipp as sc
 from warnings import warn
 from ._transformations import get_full_transformation_matrix
@@ -290,11 +291,13 @@ def _check_event_ids_and_det_number_types_valid(detector_id_type: Any,
 
 
 def load_detector_data(event_data_groups: List[Group], detector_groups: List[Group],
-                       file_root: h5py.File, nexus: LoadFromNexus, quiet: bool,
+                       nexus_meta: NexusMeta, quiet: bool,
                        bin_by_pixel: bool) -> Optional[sc.DataArray]:
-    detectors = _load_data_from_each_nx_detector(detector_groups, file_root, nexus)
+    detectors = _load_data_from_each_nx_detector(detector_groups, nexus_meta.nexus_file,
+                                                 nexus_meta.nexus)
     detectors = _load_data_from_each_nx_event_data(detectors, event_data_groups,
-                                                   file_root, nexus, quiet)
+                                                   nexus_meta.nexus_file,
+                                                   nexus_meta.nexus, quiet)
 
     if not detectors:
         # If there were no data to load we are done
