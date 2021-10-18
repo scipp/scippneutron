@@ -53,3 +53,4 @@ Loading Nexus files
    :toctree: ../generated
 
    load
+   load_nexus

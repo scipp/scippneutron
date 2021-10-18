@@ -12,7 +12,8 @@ import importlib
 
 import scipp as sc
 import scippneutron as scn
-from .mantid_data_helper import MantidDataHelper, mantid_is_available
+
+from .mantid_helper import mantid_is_available
 
 
 def memory_is_at_least_gb(required):
@@ -32,7 +33,7 @@ class TestMantidConversion(unittest.TestCase):
         # This needs OutputWorkspace specified, as it doesn't
         # pick up the name from the class variable name
         cls.base_event_ws = mantid.LoadEventNexus(
-            MantidDataHelper.find_known_file(filename),
+            scn.data.get_path(filename),
             OutputWorkspace="test_ws{}".format(__file__),
             SpectrumMax=200,
             StoreInADS=False)
@@ -301,9 +302,8 @@ class TestMantidConversion(unittest.TestCase):
     def test_Workspace2D_with_separate_monitors(self):
         from mantid.simpleapi import mtd
         mtd.clear()
-        filename = MantidDataHelper.find_known_file("WISH00016748.raw")
         # This test would use 20 GB of memory if "SpectrumMax" was not set
-        ds = scn.load(filename,
+        ds = scn.load(scn.data.get_path("WISH00016748.raw"),
                       mantid_args={
                           "LoadMonitors": "Separate",
                           "SpectrumMax": 10000
@@ -324,9 +324,8 @@ class TestMantidConversion(unittest.TestCase):
     def test_Workspace2D_with_include_monitors(self):
         from mantid.simpleapi import mtd
         mtd.clear()
-        filename = MantidDataHelper.find_known_file("WISH00016748.raw")
         # This test would use 20 GB of memory if "SpectrumMax" was not set
-        ds = scn.load(filename,
+        ds = scn.load(scn.data.get_path("WISH00016748.raw"),
                       mantid_args={
                           "LoadMonitors": "Include",
                           "SpectrumMax": 100
@@ -346,8 +345,11 @@ class TestMantidConversion(unittest.TestCase):
     def test_EventWorkspace_with_monitors(self):
         from mantid.simpleapi import mtd
         mtd.clear()
-        filename = MantidDataHelper.find_known_file("CNCS_51936_event.nxs")
-        ds = scn.load(filename, mantid_args={"LoadMonitors": True, "SpectrumMax": 1})
+        ds = scn.load(scn.data.get_path("CNCS_51936_event.nxs"),
+                      mantid_args={
+                          "LoadMonitors": True,
+                          "SpectrumMax": 1
+                      })
         self.assertEqual(len(mtd), 0, mtd.getObjectNames())
         attrs = [str(key) for key in ds.attrs.keys()]
         expected_monitor_attrs = {"monitor2", "monitor3"}
@@ -463,8 +465,7 @@ class TestMantidConversion(unittest.TestCase):
         from mantid.simpleapi import mtd
         mtd.clear()
 
-        data = scn.load(
-            filename=MantidDataHelper.find_known_file("iris26176_graphite002_sqw.nxs"))
+        data = scn.load(scn.data.get_path("iris26176_graphite002_sqw.nxs"))
 
         params, diff = scn.fit(data['Q', 0],
                                mantid_args={
@@ -796,14 +797,14 @@ def test_time_series_log_extraction():
     for i, t in enumerate(times):
         sapi.AddTimeSeriesLog(ws, Name='time_log', Time=str(t), Value=float(i))
     da = scn.from_mantid(ws)
-    da.attrs['time_log'].value.coords['time'].dtype == sc.dtype.datetime64
+    assert da.attrs['time_log'].value.coords['time'].dtype == sc.dtype.datetime64
     # check times
-    sc.identical(
+    assert sc.identical(
         sc.Variable(dims=['time'], values=np.array(times).astype('datetime64[ns]')),
         da.attrs['time_log'].value.coords['time'])
     # check values
-    sc.identical(sc.Variable(dims=['time'], values=np.arange(3.)),
-                 da.attrs['time_log'].value.data)
+    assert sc.identical(sc.Variable(dims=['time'], values=np.arange(3.)),
+                        da.attrs['time_log'].value.data)
     sapi.DeleteWorkspace(ws)
 
 
@@ -878,8 +879,8 @@ def test_extract_energy_final_when_not_present():
 def test_extract_energy_initial():
     from mantid.simpleapi import mtd
     mtd.clear()
-    filename = MantidDataHelper.find_known_file("CNCS_51936_event.nxs")
-    ds = scn.load(filename, mantid_args={"SpectrumMax": 1})
+    ds = scn.load(scn.data.get_path("CNCS_51936_event.nxs"),
+                  mantid_args={"SpectrumMax": 1})
     assert sc.identical(ds.coords["incident_energy"],
                         sc.scalar(value=3.0, unit=sc.Unit("meV")))
 
@@ -902,8 +903,8 @@ def test_EventWorkspace_with_pulse_times():
                                                 NumEvents=10)
     d = scn.mantid.convert_EventWorkspace_to_data_array(small_event_ws,
                                                         load_pulse_times=True)
-    d.data.values[0].coords['pulse_time'].dtype == sc.dtype.datetime64
-    sc.identical(
+    assert d.data.values[0].coords['pulse_time'].dtype == sc.dtype.datetime64
+    assert sc.identical(
         d.data.values[0].coords['pulse_time']['event', 0],
         sc.scalar(
             value=small_event_ws.getSpectrum(0).getPulseTimes()[0].to_datetime64()))
@@ -969,10 +970,3 @@ def test_load_via_exact_match():
         # Sanity check corrupt full path will fail
         with pytest.raises(ValueError):
             scn.load("fictional_" + fp.name, mantid_alg="DummyLoader")
-
-
-if __name__ == "__main__":
-    unittest.main()
-
-if __name__ == "__main__":
-    unittest.main()
