@@ -40,11 +40,10 @@ Documentation
    :maxdepth: 3
 
    user-guide/overview
-   user-guide/unit-conversions
+   user-guide/coordinate-transformations
    user-guide/groupby
    user-guide/from-mantid-to-scipp
    user-guide/instrument-view
-   user-guide/coordinate-transformations
    user-guide/recipes
 
 .. toctree::

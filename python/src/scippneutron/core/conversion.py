@@ -307,8 +307,8 @@ def convert(data: Union[sc.DataArray, sc.Dataset], origin: str, target: str,
             scatter: bool) -> Union[sc.DataArray, sc.Dataset]:
     """
     Perform a unit conversion from the given origin unit to target.
-    See the the documentation page on "Unit conversions"
-    (https://scipp.github.io/scippneutron/user-guide/unit-conversions.html)
+    See the the documentation page on "Coordinate Transformations"
+    (https://scipp.github.io/scippneutron/user-guide/coordinate-transformations.html)
     for more details.
 
     :param data: Input data.
