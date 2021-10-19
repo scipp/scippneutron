@@ -2,6 +2,7 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 import scipp as sc
+from ..mantid import load
 
 _version = '1'
 
@@ -20,6 +21,7 @@ def _make_pooch():
             'powder-event.h5': 'md5:b8ad26eb3efc2159687134a5396a2671',
             "CNCS_51936_event.nxs": "md5:5ba401e489260a44374b5be12b780911",
             'GEM40979.raw': 'md5:6df0f1c2fc472af200eec43762e9a874',
+            'PG3_4844_calibration.h5': 'md5:290f5108aa9ff0b1c5a2ac8dc2c1cb15',
             'PG3_4844_event.nxs': 'md5:d5ae38871d0a09a28ae01f85d969de1e',
             'PG3_4866_event.nxs': 'md5:3d543bc6a646e622b3f4542bc3435e7e',
             'PG3_4871_event.nxs': 'md5:a3d0edcb36ab8e9e3342cd8a4440b779',
@@ -36,6 +38,14 @@ def tutorial_dense_data():
 
 def tutorial_event_data():
     return sc.io.open_hdf5(_pooch.fetch('powder-event.h5'))
+
+
+def powder_sample():
+    return load(_pooch.fetch('PG3_4844_event.nxs'))
+
+
+def powder_calibration():
+    return sc.io.open_hdf5(_pooch.fetch('PG3_4844_calibration.h5'))
 
 
 def get_path(name: str) -> str:
