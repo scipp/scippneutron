@@ -4,8 +4,8 @@ import numpy as np
 from .common import make_dataset_with_beamline
 import pytest
 
-
 import matplotlib
+
 matplotlib.use('Agg')
 
 
