@@ -3,7 +3,12 @@
 # @author Simon Heybrock
 from ..core.conversion import _SCATTER_GRAPH_KINEMATICS, _NO_SCATTER_GRAPH_KINEMATICS, \
         _SCATTER_GRAPH_DYNAMICS_BY_ORIGIN, _energy_transfer_direct_from_tof, \
-        _energy_transfer_indirect_from_tof
+        _energy_transfer_indirect_from_tof, _wavelength_from_tof, \
+        _energy_from_tof, _incident_beam
+
+
+def incident_beam():
+    return {'incident_beam': _incident_beam}
 
 
 def beamline(scatter: bool):
@@ -11,6 +16,13 @@ def beamline(scatter: bool):
         return dict(_SCATTER_GRAPH_KINEMATICS)
     else:
         return dict(_NO_SCATTER_GRAPH_KINEMATICS)
+
+
+def kinematic(start: str):
+    """
+    Returns a purely kinematic graph with no scattering.
+    """
+    return {'wavelength': _wavelength_from_tof, 'energy': _energy_from_tof}
 
 
 def elastic(start: str):
