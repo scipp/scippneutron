@@ -40,7 +40,7 @@ def beamline(scatter: bool):
 
 def kinematic(start: str):
     """
-    Purely kinematic graph with no scattering.
+    Graph with pure kinematics without scattering.
 
     :param start: Input coordinate. Currently only 'tof' is supported.
     """

@@ -39,12 +39,17 @@ Documentation
    :caption: User Guide
    :maxdepth: 3
 
-   user-guide/overview
    user-guide/coordinate-transformations
    user-guide/groupby
    user-guide/from-mantid-to-scipp
    user-guide/instrument-view
    user-guide/recipes
+
+.. toctree::
+   :caption: Reference
+   :maxdepth: 3
+
+   reference/api
 
 .. toctree::
    :caption: Tutorials
