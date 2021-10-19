@@ -5,6 +5,10 @@ from .common import make_dataset_with_beamline
 import pytest
 
 
+import matplotlib
+matplotlib.use('Agg')
+
+
 def test_neutron_instrument_view_3d():
     d = make_dataset_with_beamline()
     scn.instrument_view(d["a"])
