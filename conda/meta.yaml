@@ -12,14 +12,15 @@ requirements:
     - gxx_linux-64 11.1.* [linux64]
     - git
     - ninja
-    - python {{ python }}
-    - scipp {{ scipp }}
+    - python
+    - scipp=0.8.*
     - tbb-devel
   run:
     - pooch
-    - scipp {{ scipp }}
+    - scipp=0.8.*
     - h5py
-    - scipy
+    - scipy>=1.7.0
+    - numpy>=1.20.0
 
 test:
   imports:
@@ -36,6 +37,7 @@ test:
     - psutil
     - pytest
     - pytest-asyncio
+    - python-configuration
     - pythreejs
     - mantid-framework [not win]
     - tbb-devel
