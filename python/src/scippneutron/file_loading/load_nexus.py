@@ -92,7 +92,7 @@ def _load_sample(sample_groups: List[Group], nexus_meta: NexusMeta):
     ub_matrices = load_ub_matrices_of_components(sample_groups, "sample",
                                                  nexus_meta.nexus)
 
-    return positions | ub_matrices
+    return {**positions, **ub_matrices}
 
 
 def _load_source(source_groups: List[Group], nexus_meta: NexusMeta):
