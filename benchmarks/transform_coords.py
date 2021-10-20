@@ -1,7 +1,7 @@
 import scippneutron as scn
 
 
-class Conversion:
+class TransformCoords:
     def setup(self):
         da = scn.data.tutorial_event_data()
         self.var_tof = da
