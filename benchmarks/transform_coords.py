@@ -1,9 +1,10 @@
+import scipp as sc
 import scippneutron as scn
 
 
 class TransformCoords:
     def setup(self):
-        da = scn.load_nexus(scn.data.get_path('PG3_4844_event.nxs'))
+        da = sc.io.open_hdf5(scn.data.get_path('powder-event.h5'))
         self.var_tof = da
         self.var_wavelength = scn.convert(self.var_tof, "tof", "wavelength", False)
         self.var_dspacing = scn.convert(self.var_tof, "tof", "dspacing", False)
