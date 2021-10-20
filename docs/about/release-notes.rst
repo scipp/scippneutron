@@ -11,6 +11,16 @@ Features
 
 * Add ``tof.conversions`` module with building blocks for custom coordinate transformation graphs `#187 <https://github.com/scipp/scipp/pull/187>`_.
 
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+* Changed behavior of ``convert`` `#162 <https://github.com/scipp/scipp/pull/162>`_.
+
+  * It is no longer possible to convert *to* time-of-flight.
+  * To compensate, it is now possible to convert between wavelength, energy, and d-spacing directly.
+  * Some input coords which used to be preserved are now turned into attributes.
+    See `Coordinate transformations <https://scipp.github.io/user-guide/coordinate-transformations.html>`_ in scipp for details.
+
 Contributors
 ~~~~~~~~~~~~
 
