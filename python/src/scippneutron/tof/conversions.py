@@ -12,7 +12,7 @@ Typically multiple graphs need to be combined for a full transformation, e.g., a
 from ..core.conversion import _SCATTER_GRAPH_KINEMATICS, _NO_SCATTER_GRAPH_KINEMATICS, \
         _SCATTER_GRAPH_DYNAMICS_BY_ORIGIN, _energy_transfer_direct_from_tof, \
         _energy_transfer_indirect_from_tof, _wavelength_from_tof, \
-        _energy_from_tof, _incident_beam
+        _energy_from_tof, _incident_beam, _scattered_beam
 
 
 def incident_beam():
@@ -20,6 +20,54 @@ def incident_beam():
     Graph for computing 'incident_beam'.
     """
     return {'incident_beam': _incident_beam}
+
+
+def scattered_beam():
+    """
+    Graph for computing 'scattered_beam'.
+    """
+    return {'scattered_beam': _scattered_beam}
+
+
+def two_theta():
+    """
+    Graph for computing 'two_theta'.
+    """
+    graph = beamline(scatter=True)
+    for node in ['L1', 'L2', 'Ltotal']:
+        del graph[node]
+    return graph
+
+
+def L1():
+    """
+    Graph for computing 'L1'.
+    """
+    graph = beamline(scatter=True)
+    for node in ['scattered_beam', 'two_theta', 'L2', 'Ltotal']:
+        del graph[node]
+    return graph
+
+
+def L2():
+    """
+    Graph for computing 'L2'.
+    """
+    graph = beamline(scatter=True)
+    for node in ['incident_beam', 'two_theta', 'L1', 'Ltotal']:
+        del graph[node]
+    return graph
+
+
+def Ltotal(scatter: bool):
+    """
+    Graph for computing 'Ltotal'.
+    """
+    graph = beamline(scatter=scatter)
+    if not scatter:
+        return graph
+    del graph['two_theta']
+    return graph
 
 
 def beamline(scatter: bool):
