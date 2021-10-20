@@ -20,6 +20,7 @@ Breaking changes
   * To compensate, it is now possible to convert between wavelength, energy, and d-spacing directly.
   * Some input coords which used to be preserved are now turned into attributes.
     See `Coordinate transformations <https://scipp.github.io/user-guide/coordinate-transformations.html>`_ in scipp for details.
+  * The ``out`` argument is no longer supported.
 
 Contributors
 ~~~~~~~~~~~~
