@@ -104,9 +104,54 @@ def elastic(start: str):
     """
     Graph for elastic scattering transformations.
 
-    :param start: Input coordinate. One of 'energy', 'tof', 'Q', or 'wavelength'.
+    :param start: Input coordinate. One of 'dspacing', 'energy', 'tof', 'Q',
+                  or 'wavelength'.
     """
     return dict(_SCATTER_GRAPH_DYNAMICS_BY_ORIGIN[start])
+
+
+def _strip_elastic(start: str, keep: dict):
+    graph = elastic(start)
+    for node in ['dspacing', 'energy', 'Q', 'wavelength']:
+        if node not in keep and node in graph:
+            del graph[node]
+    return graph
+
+
+def elastic_dspacing(start: str):
+    """
+    Graph for elastic scattering transformation to dspacing.
+
+    :param start: Input coordinate. One of 'energy', or 'tof', or 'wavelength'.
+    """
+    return _strip_elastic(start, keep=['dspacing'])
+
+
+def elastic_energy(start: str):
+    """
+    Graph for elastic scattering transformation to energy.
+
+    :param start: Input coordinate. One of 'tof' or 'wavelength'.
+    """
+    return _strip_elastic(start, keep=['energy'])
+
+
+def elastic_Q(start: str):
+    """
+    Graph for elastic scattering transformation to Q.
+
+    :param start: Input coordinate. One of 'tof' or 'wavelength'.
+    """
+    return _strip_elastic(start, keep=['Q', 'wavelength'])
+
+
+def elastic_wavelength(start: str):
+    """
+    Graph for elastic scattering transformation to wavelength.
+
+    :param start: Input coordinate. One of 'energy', 'tof', or 'Q'.
+    """
+    return _strip_elastic(start, keep=['wavelength'])
 
 
 def direct_inelastic(start: str):
