@@ -3,7 +3,7 @@ import scippneutron as scn
 
 class TransformCoords:
     def setup(self):
-        da = scn.data.tutorial_event_data()
+        da = scn.load_nexus(scn.data.get_path('PG3_4844_event.nxs'))
         self.var_tof = da
         self.var_wavelength = scn.convert(self.var_tof, "tof", "wavelength", False)
         self.var_dspacing = scn.convert(self.var_tof, "tof", "dspacing", False)
