@@ -14,8 +14,8 @@ Mantid Compatibility
    to_mantid
    fit
 
-Unit Conversion
-~~~~~~~~~~~~~~~
+Coordinate transformations (Unit conversion)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: ../generated
