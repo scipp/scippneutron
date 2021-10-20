@@ -9,7 +9,8 @@ Typically multiple graphs need to be combined for a full transformation, e.g., a
 "beamline" graph with an "elastic" graph.
 """
 
-from ..core.conversion import _SCATTER_GRAPH_KINEMATICS, _NO_SCATTER_GRAPH_KINEMATICS, \
+from ..core.conversions import _SCATTER_GRAPH_KINEMATICS, \
+        _NO_SCATTER_GRAPH_KINEMATICS, \
         _SCATTER_GRAPH_DYNAMICS_BY_ORIGIN, _energy_transfer_direct_from_tof, \
         _energy_transfer_indirect_from_tof, _wavelength_from_tof, \
         _energy_from_tof, _incident_beam, _scattered_beam
