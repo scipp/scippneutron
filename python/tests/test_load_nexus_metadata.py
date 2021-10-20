@@ -75,7 +75,7 @@ def test_load_nexus_sample_metadata():
 
 def test_load_nexus_disk_chopper_metadata():
     builder = NexusBuilder()
-    builder.add_chopper(Chopper(name="chopper_1", distance=8.0, rotation_speed=300))
+    builder.add_chopper(Chopper(name="chopper_1", distance=8.0, rotation_speed=300.0))
 
     with builder.file() as file:
         loaded = load_nexus_disk_chopper(file)
@@ -86,7 +86,7 @@ def test_load_nexus_disk_chopper_metadata():
                      coords={},
                      attrs={
                          "distance": sc.scalar(8.0),
-                         "rotation_speed": sc.scalar(300, dtype=sc.dtype.int32),
+                         "rotation_speed": sc.scalar(300.0),
                      }))
 
 
