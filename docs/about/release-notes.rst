@@ -9,8 +9,16 @@ Since v0.3.0
 Features
 ~~~~~~~~
 
+* Add ``tof.conversions`` module with building blocks for custom coordinate transformation graphs `#187 <https://github.com/scipp/scipp/pull/187>`_.
+
 Contributors
 ~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Samuel Jones :sup:`b`\ ,
+Neil Vaytet :sup:`a`\ ,
+Tom Willemsen :sup:`b, c`\ ,
+and Jan-Lukas Wynen :sup:`a`\
 
 v0.3.0 (September 2021)
 -----------------------
