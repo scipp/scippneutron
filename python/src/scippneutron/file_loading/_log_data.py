@@ -25,11 +25,12 @@ def load_logs(log_groups: List[Group], nexus: LoadFromNexus,
     return logs
 
 
-def _correct_nxlog_times(raw_times: sc.Variable,
-                         group_path: str,
-                         run_start: str = None,
-                         log_start: str = None,
-                         scaling_factor: Union[float, np.float_] = None) -> sc.Variable:
+def _convert_nxlog_time_to_datetime64(
+        raw_times: sc.Variable,
+        group_path: str,
+        run_start: str = None,
+        log_start: str = None,
+        scaling_factor: Union[float, np.float_] = None) -> sc.Variable:
     """
     The nexus standard allows an arbitrary scaling factor to be inserted
     between the numbers in the `time` series and the unit of time reported
@@ -165,11 +166,11 @@ def _load_log_data_from_group(group: Group, nexus: LoadFromNexus,
         except (MissingAttribute, TypeError):
             scaling_factor = None
 
-        times = _correct_nxlog_times(raw_times=raw_times,
-                                     log_start=log_start_time,
-                                     scaling_factor=scaling_factor,
-                                     run_start=run_start_time,
-                                     group_path=group.path)
+        times = _convert_nxlog_time_to_datetime64(raw_times=raw_times,
+                                                  log_start=log_start_time,
+                                                  scaling_factor=scaling_factor,
+                                                  run_start=run_start_time,
+                                                  group_path=group.path)
 
         if tuple(times.shape) != values.shape:
             raise BadSource(f"NXlog '{property_name}' has time and value "
