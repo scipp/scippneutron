@@ -44,7 +44,12 @@ def kinematic(start: str):
 
     :param start: Input coordinate. Currently only 'tof' is supported.
     """
-    return {'wavelength': _wavelength_from_tof, 'energy': _energy_from_tof}
+    return {
+        'tof': {
+            'wavelength': _wavelength_from_tof,
+            'energy': _energy_from_tof
+        }
+    }[start]
 
 
 def elastic(start: str):
