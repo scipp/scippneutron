@@ -366,7 +366,6 @@ def test_loads_data_from_single_log_with_no_units(load_function: Callable):
 
     # Expect a sc.Dataset with log names as keys
     assert np.array_equal(loaded_data[name].data.values.values, values)
-    assert np.array_equal(loaded_data[name].data.values.coords['time'].values, times)
 
 
 def test_loads_data_from_single_log_with_units(load_function: Callable):
@@ -380,9 +379,7 @@ def test_loads_data_from_single_log_with_units(load_function: Callable):
 
     # Expect a sc.Dataset with log names as keys
     assert np.allclose(loaded_data[name].data.values.values, values)
-    assert np.allclose(loaded_data[name].data.values.coords['time'].values, times)
     assert loaded_data[name].data.values.unit == sc.units.m
-    assert loaded_data[name].data.values.coords['time'].unit == sc.units.s
 
 
 def test_loads_data_from_multiple_logs(load_function: Callable):
@@ -396,11 +393,7 @@ def test_loads_data_from_multiple_logs(load_function: Callable):
 
     # Expect a sc.Dataset with log names as keys
     assert np.allclose(loaded_data[log_1.name].data.values.values, log_1.value)
-    assert np.allclose(loaded_data[log_1.name].data.values.coords['time'].values,
-                       log_1.time)
     assert np.array_equal(loaded_data[log_2.name].data.values.values, log_2.value)
-    assert np.array_equal(loaded_data[log_2.name].data.values.coords['time'].values,
-                          log_2.time)
 
 
 def test_loads_logs_with_non_supported_int_types(load_function: Callable):
@@ -424,8 +417,6 @@ def test_loads_logs_with_non_supported_int_types(load_function: Callable):
     # Expect a sc.Dataset with log names as keys
     for log in logs:
         assert np.allclose(loaded_data[log.name].data.values.values, log.value)
-        assert np.allclose(loaded_data[log.name].data.values.coords['time'].values,
-                           log.time)
 
 
 def test_skips_multidimensional_log(load_function: Callable):
@@ -582,11 +573,7 @@ def test_loads_event_and_log_data_from_single_file(load_function: Callable):
 
     # Logs should have been added to the DataArray as attributes
     assert np.allclose(loaded_data.attrs[log_1.name].values.values, log_1.value)
-    assert np.allclose(loaded_data.attrs[log_1.name].values.coords['time'].values,
-                       log_1.time)
     assert np.allclose(loaded_data.attrs[log_2.name].values.values, log_2.value)
-    assert np.allclose(loaded_data.attrs[log_2.name].values.coords['time'].values,
-                       log_2.time)
 
 
 def test_loads_pixel_positions_with_event_data(load_function: Callable):
@@ -1402,10 +1389,7 @@ def test_warning_but_no_error_for_unrecognised_log_unit(load_function: Callable)
         loaded_data = load_function(builder)
 
     # Expect a sc.Dataset with log names as keys
-    assert np.allclose(loaded_data[name].data.values.values, values)
-    assert np.allclose(loaded_data[name].data.values.coords['time'].values, times)
-    assert loaded_data[name].data.values.unit == sc.units.dimensionless
-    assert loaded_data[name].data.values.coords['time'].unit == sc.units.s
+    assert name in loaded_data
 
 
 def test_start_and_end_times_appear_in_dataset_if_set(load_function: Callable):
@@ -1421,61 +1405,100 @@ def test_start_and_end_times_appear_in_dataset_if_set(load_function: Callable):
                         sc.DataArray(sc.scalar("2002-02-02T00:00:00Z")))
 
 
-@pytest.mark.parametrize("run_start,log_start,start_time_delta",
-                         (("2000-01-01T00:00:00Z", "2000-01-01T01:00:00Z", 60 * 60),
-                          ("2000-01-01T01:00:00Z", "2000-01-01T00:00:00Z", -60 * 60)))
-def test_adjust_log_times_without_scaling_factor(run_start: str, log_start: str,
-                                                 start_time_delta: float,
-                                                 load_function: Callable):
-    # Sanity check
-    assert _timestamp(log_start) - _timestamp(run_start) == start_time_delta
+@pytest.mark.parametrize("log_start,scaling_factor", (("2000-01-01T01:00:00Z", 1000),
+                                                      ("2000-01-01T00:00:00Z", 0.001),
+                                                      ("2010-01-01T00:00:00Z", None)))
+def test_load_log_times(log_start: str, scaling_factor: float, load_function: Callable):
 
-    times = [0, 10, 20, 30, 40, 50]
+    times = np.array([0., 10., 20., 30., 40., 50.], dtype="float64")
 
     builder = NexusBuilder()
-    builder.add_run_start_time(run_start)
     builder.add_log(
         Log(name="test_log",
             value=np.zeros(shape=(len(times), )),
-            time=np.array(times),
-            start_time=log_start))
-
-    loaded_data = load_function(builder)
-
-    assert np.allclose(loaded_data["test_log"].values.coords['time'].values,
-                       (np.array(times) + start_time_delta))
-    assert loaded_data["test_log"].values.coords['time'].unit == sc.units.s
-
-
-@pytest.mark.parametrize("run_start,log_start,scaling_factor",
-                         (("2000-01-01T00:00:00Z", "2000-01-01T01:00:00Z", 1000),
-                          ("2000-01-01T01:00:00Z", "2000-01-01T00:00:00Z", 0.001)))
-def test_adjust_log_times_with_scaling_factor(run_start: str, log_start: str,
-                                              scaling_factor: float,
-                                              load_function: Callable):
-
-    time_delta = _timestamp(log_start) - _timestamp(run_start)
-
-    times = [0, 10, 20, 30, 40, 50]
-
-    builder = NexusBuilder()
-    builder.add_run_start_time(run_start)
-    builder.add_log(
-        Log(name="test_log",
-            value=np.zeros(shape=(len(times), )),
-            time=np.array(times),
+            time=times,
             start_time=log_start,
             scaling_factor=scaling_factor))
 
     loaded_data = load_function(builder)
 
-    assert np.allclose(loaded_data["test_log"].values.coords['time'].values,
-                       ((np.array(times) * scaling_factor) + time_delta))
-    assert loaded_data["test_log"].values.coords['time'].unit == sc.units.s
+    times_ns = sc.to_unit(
+        sc.array(dims=["time"],
+                 values=times * (scaling_factor or 1.0),
+                 unit=sc.units.s,
+                 dtype=sc.dtype.float64), sc.units.ns).astype(sc.dtype.int64)
+
+    expected = sc.scalar(value=np.datetime64(log_start),
+                         unit=sc.units.ns,
+                         dtype=sc.dtype.datetime64) + times_ns
+
+    actual = loaded_data["test_log"].values.coords['time']
+
+    diffs = np.abs(actual.values - expected.values)
+
+    # Allow 1ns difference for rounding errors between different routes
+    assert all(diffs <= np.array(1).astype("timedelta64[ns]"))
 
 
-@pytest.mark.parametrize("units",
-                         ("ps", "ns", "us", "ms", "s", "minute", "hour", "day", "year"))
+def test_load_log_times_when_logs_do_not_have_start_time(load_function: Callable):
+    # If an NXLog doesn't have a start time attribute then the run start time should
+    # be used instead.
+    run_start_time = "2020-01-01T01:00:00Z"
+
+    times = np.array([0., 10., 20., 30., 40., 50.], dtype="float64")
+
+    builder = NexusBuilder()
+    builder.add_run_start_time(run_start_time)
+    builder.add_log(
+        Log(name="test_log",
+            value=np.zeros(shape=(len(times), )),
+            time=times,
+            start_time=None))
+
+    loaded_data = load_function(builder)
+
+    times_ns = sc.to_unit(
+        sc.array(dims=["time"], values=times, unit=sc.units.s, dtype=sc.dtype.float64),
+        sc.units.ns).astype(sc.dtype.int64)
+
+    expected = sc.scalar(value=np.datetime64(run_start_time),
+                         unit=sc.units.ns,
+                         dtype=sc.dtype.datetime64) + times_ns
+
+    actual = loaded_data["test_log"].values.coords['time']
+
+    diffs = np.abs(actual.values - expected.values)
+
+    # Allow 1ns difference for rounding errors between different routes
+    assert all(diffs <= np.array(1).astype("timedelta64[ns]"))
+
+
+def test_loading_nxlog_with_neither_start_time_nor_run_start_time_warns(
+        load_function: Callable):
+    builder = NexusBuilder()
+    builder.add_log(
+        Log(
+            name="test_log_1",
+            value=np.zeros(shape=(1, )),
+            time=np.zeros(shape=(1, )),
+            start_time=None,  # No start time and no run start time, should fail.
+        ))
+    builder.add_log(
+        Log(
+            name="test_log_2",
+            value=np.zeros(shape=(1, )),
+            time=np.zeros(shape=(1, )),
+            start_time="2000-01-01T00:00:00Z",  # Should be loaded.
+        ))
+
+    with pytest.warns(UserWarning, match="could not be loaded because both"):
+        data = load_function(builder)
+
+    assert "test_log_1" not in data
+    assert "test_log_2" in data
+
+
+@pytest.mark.parametrize("units", ("ps", "ns", "us", "ms", "s", "minute", "hour"))
 def test_adjust_log_times_with_different_time_units(units, load_function: Callable):
 
     times = [1, 2, 3]
@@ -1485,17 +1508,25 @@ def test_adjust_log_times_with_different_time_units(units, load_function: Callab
         Log(name="test_log",
             value=np.zeros(shape=(len(times), )),
             time=np.array(times, dtype="float64"),
-            time_units=units))
+            time_units=units,
+            start_time="2000-01-01T00:00:00Z"), )
 
     loaded_data = load_function(builder)
 
-    expected = sc.to_unit(
-        sc.Variable(dims=["time"],
-                    values=np.array(times),
-                    unit=sc.Unit(units),
-                    dtype=sc.dtype.float64), sc.units.s)
+    times_ns = sc.to_unit(
+        sc.array(dims=["time"], values=times, unit=units, dtype=sc.dtype.int64),
+        sc.units.ns)
 
-    assert sc.identical(expected, loaded_data["test_log"].values.coords['time'])
+    expected = sc.scalar(value=np.datetime64("2000-01-01T00:00:00Z"),
+                         unit=sc.units.ns,
+                         dtype=sc.dtype.datetime64) + times_ns
+
+    actual = loaded_data["test_log"].values.coords['time']
+
+    diffs = np.abs(actual.values - expected.values)
+
+    # Allow 1ns difference for rounding errors between different routes
+    assert all(diffs <= np.array(1).astype("timedelta64[ns]"))
 
 
 def test_nexus_file_with_invalid_nxlog_time_units_warns_and_skips_log(
@@ -1543,7 +1574,7 @@ def test_nexus_file_with_invalid_log_start_date_warns_and_skips_log(
         assert "test_log_2" in loaded_data
 
 
-def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
+def test_nexus_file_with_invalid_run_start_warns_and_skips_logs_if_log_start_undefined(
         load_function: Callable):
     builder = NexusBuilder()
     builder.add_run_start_time("this_inst_a_valid_run_start_time")
@@ -1551,7 +1582,7 @@ def test_nexus_file_with_invalid_run_start_date_warns_and_skips_logs(
         Log(name="test_log_1",
             value=np.zeros(shape=(1, )),
             time=np.array([1]),
-            start_time="1970-01-01T00:00:00Z"))
+            start_time=None))
 
     with pytest.warns(UserWarning, match="The run start time "):
         loaded_data = load_function(builder)
