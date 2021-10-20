@@ -1,13 +1,12 @@
-import scipp as sc
 import scippneutron as scn
 
 
 class Conversion:
     def setup(self):
         da = scn.data.tutorial_event_data()
-        self.var_wavelength= scn.convert(da, "tof", "wavelength", False)
         self.var_tof = da
-        self.var_dspacing = scn.convert(da, "tof", "dspacing", False)
+        self.var_wavelength = scn.convert(self.var_tof, "tof", "wavelength", False)
+        self.var_dspacing = scn.convert(self.var_tof, "tof", "dspacing", False)
         self.var_energy = scn.convert(self.var_tof, "tof", "energy", False)
 
     def time_wavelength_to_tof(self):

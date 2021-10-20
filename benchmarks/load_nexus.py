@@ -1,4 +1,3 @@
-import scipp as sc
 import scippneutron as scn
 
 
