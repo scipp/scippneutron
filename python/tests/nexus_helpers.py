@@ -54,7 +54,7 @@ class Log:
     # must be a unit of time (i.e. convertible to seconds).
     time_units: Optional[Union[str, bytes]] = "s"
 
-    start_time: Optional[Union[str, bytes]] = None
+    start_time: Optional[Union[str, bytes]] = "1970-01-01T00:00:00Z"
     scaling_factor: Optional[float] = None
 
 
