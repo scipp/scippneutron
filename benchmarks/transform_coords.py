@@ -8,7 +8,6 @@ class TransformCoords:
         da = scn.load(scn.data.get_path('PG3_4844_event.nxs'))
         self.var_tof = da
         self.var_wavelength = scn.convert(self.var_tof, "tof", "wavelength", False)
-        # self.var_dspacing = scn.convert(self.var_tof, "tof", "dspacing", True)
         self.var_energy = scn.convert(self.var_tof, "tof", "energy", False)
 
     def time_wavelength_to_tof(self):
