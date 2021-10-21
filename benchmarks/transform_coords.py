@@ -1,12 +1,14 @@
-import scipp as sc
 import scippneutron as scn
+from mantid.kernel import ConfigService
+ConfigService.setLogLevel(1)
 
 
 class TransformCoords:
     def setup(self):
-        da = sc.io.open_hdf5(scn.data.get_path('powder-event.h5'))
+        da = scn.load(scn.data.get_path('PG3_4844_event.nxs'))
         self.var_tof = da
         self.var_wavelength = scn.convert(self.var_tof, "tof", "wavelength", False)
+        # self.var_dspacing = scn.convert(self.var_tof, "tof", "dspacing", True)
         self.var_energy = scn.convert(self.var_tof, "tof", "energy", False)
 
     def time_wavelength_to_tof(self):
@@ -14,6 +16,9 @@ class TransformCoords:
 
     def time_tof_to_wavelength(self):
         scn.convert(self.var_wavelength, "wavelength", "tof", False)
+
+    def time_tof_to_dspacing(self):
+        scn.convert(self.var_tof, "tof", "dspacing", True)
 
     def time_tof_to_energy(self):
         scn.convert(self.var_tof, "tof", "energy", False)
