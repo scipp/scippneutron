@@ -41,8 +41,10 @@ def _L2(scattered_beam):
     return sc.norm(scattered_beam)
 
 
-def _two_theta(incident_beam, scattered_beam, L1, L2):
-    return sc.acos(sc.dot(incident_beam / L1, scattered_beam / L2))
+def _two_theta(incident_beam, scattered_beam):
+    return sc.acos(
+        sc.dot(incident_beam / _L1(incident_beam),
+               scattered_beam / _L2(scattered_beam)))
 
 
 def _total_beam_length_scatter(L1, L2):
@@ -305,8 +307,8 @@ def convert(data: Union[sc.DataArray, sc.Dataset], origin: str, target: str,
             scatter: bool) -> Union[sc.DataArray, sc.Dataset]:
     """
     Perform a unit conversion from the given origin unit to target.
-    See the the documentation page on "Unit conversions"
-    (https://scipp.github.io/scippneutron/user-guide/unit-conversions.html)
+    See the the documentation page on "Coordinate Transformations"
+    (https://scipp.github.io/scippneutron/user-guide/coordinate-transformations.html)
     for more details.
 
     :param data: Input data.

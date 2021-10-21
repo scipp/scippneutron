@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
-# @file
 # @author Simon Heybrock
 
 # flake8: noqa
@@ -20,9 +19,9 @@ if os.name == "nt":
         # For scippneutron lib
         os.environ["PATH"] += os.pathsep + str((path.parent).resolve())
 
-from ._scippneutron import __version__
-from ._scippneutron import position, source_position, sample_position, incident_beam, scattered_beam, Ltotal, L1, L2, two_theta
-from .conversion import convert, conversion_graph, deduce_conversion_graph
+from .core import __version__
+from .core import position, source_position, sample_position, incident_beam, scattered_beam, Ltotal, L1, L2, two_theta
+from .core import convert
 from .mantid import from_mantid, to_mantid, load, fit
 from .instrument_view import instrument_view
 from .file_loading.load_nexus import load_nexus, load_nexus_json
