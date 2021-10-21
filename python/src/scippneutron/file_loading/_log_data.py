@@ -34,9 +34,8 @@ def _convert_nxlog_time_to_datetime64(
     in the nexus attribute.
 
     The times are also relative to a given log start time, which might be
-    different for each log. If this log start time is not available, times are instead
-    assumed to be relative to the run start time. If this too is not available, then the
-    log is not loaded and a warning is raised.
+    different for each log. If this log start time is not available, the start of the
+    unix epoch (1970-01-01T00:00:00Z) is used instead.
 
     See https://manual.nexusformat.org/classes/base_classes/NXlog.html
 
@@ -44,9 +43,6 @@ def _convert_nxlog_time_to_datetime64(
         raw_times: The raw time data from a nexus file.
         group_path: The path within the nexus file to the log being read.
             Used to generate warnings if loading the log fails.
-        run_start: Optional, the start time of the run in an ISO8601
-            string. If not provided, defaults to the beginning of the
-            unix epoch (1970-01-01T00:00:00Z).
         log_start: Optional, the start time of the log in an ISO8601
             string. If not provided, defaults to the beginning of the
             unix epoch (1970-01-01T00:00:00Z).
