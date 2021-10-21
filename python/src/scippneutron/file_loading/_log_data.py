@@ -10,13 +10,11 @@ from ._nexus import LoadFromNexus
 from warnings import warn
 
 
-def load_logs(log_groups: List[Group], nexus: LoadFromNexus,
-              run_start_time: str) -> Dict:
+def load_logs(log_groups: List[Group], nexus: LoadFromNexus) -> Dict:
     logs = {}
     for group in log_groups:
         try:
-            log_data_name, log_data = _load_log_data_from_group(
-                group, nexus, run_start_time)
+            log_data_name, log_data = _load_log_data_from_group(group, nexus)
             _add_log_to_data(log_data_name, log_data, group.path, logs)
         except BadSource as e:
             warn(f"Skipped loading {group.path} due to:\n{e}")
@@ -28,7 +26,6 @@ def load_logs(log_groups: List[Group], nexus: LoadFromNexus,
 def _convert_nxlog_time_to_datetime64(
         raw_times: sc.Variable,
         group_path: str,
-        run_start: str = None,
         log_start: str = None,
         scaling_factor: Union[float, np.float_] = None) -> sc.Variable:
     """
@@ -75,21 +72,10 @@ def _convert_nxlog_time_to_datetime64(
                 f"The date string '{log_start}' in the NXLog entry at "
                 f"'{group_path}/time@start' failed to parse as an ISO8601 date. "
                 f"Skipping loading NXLog at '{group_path}'")
-    elif run_start is not None:
-        # If log_start was not present in nexus file, fall back to making times relative
-        # to run start instead
-        try:
-            _start_ts = sc.scalar(value=np.datetime64(run_start),
-                                  unit=sc.units.ns,
-                                  dtype=sc.dtype.datetime64)
-        except ValueError:
-            raise BadSource(f"The run start time '{run_start}' at "
-                            f"'/<NXEntry>/start_time' failed to parse as an ISO8601 "
-                            f"date. Skipping loading NXLog at '{group_path}'.")
     else:
-        raise BadSource(f"The NXLog entry at {group_path} could not be loaded because "
-                        f"both the '{group_path}/time{{start}}' attribute and "
-                        f"the '/<NXEntry>/start_time' attribute were missing.")
+        _start_ts = sc.scalar(value=np.datetime64("1970-01-01T00:00:00Z"),
+                              unit=sc.units.ns,
+                              dtype=sc.dtype.datetime64)
 
     _scale = sc.scalar(value=scaling_factor if scaling_factor is not None else 1.,
                        unit=sc.units.dimensionless,
@@ -123,8 +109,8 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,
              f"{log_data_name} used as attribute name.")
 
 
-def _load_log_data_from_group(group: Group, nexus: LoadFromNexus,
-                              run_start_time: str) -> Tuple[str, sc.Variable]:
+def _load_log_data_from_group(group: Group,
+                              nexus: LoadFromNexus) -> Tuple[str, sc.Variable]:
     property_name = nexus.get_name(group.group)
     value_dataset_name = "value"
     time_dataset_name = "time"
@@ -169,7 +155,6 @@ def _load_log_data_from_group(group: Group, nexus: LoadFromNexus,
         times = _convert_nxlog_time_to_datetime64(raw_times=raw_times,
                                                   log_start=log_start_time,
                                                   scaling_factor=scaling_factor,
-                                                  run_start=run_start_time,
                                                   group_path=group.path)
 
         if tuple(times.shape) != values.shape:

@@ -1441,14 +1441,12 @@ def test_load_log_times(log_start: str, scaling_factor: float, load_function: Ca
 
 
 def test_load_log_times_when_logs_do_not_have_start_time(load_function: Callable):
-    # If an NXLog doesn't have a start time attribute then the run start time should
-    # be used instead.
-    run_start_time = "2020-01-01T01:00:00Z"
+    # If an NXLog doesn't have a start time attribute then 1970-01-01 should be
+    # assumed instead
 
-    times = np.array([0., 10., 20., 30., 40., 50.], dtype="float64")
+    times = np.array([-10., 0., 10., 20., 30., 40., 50.], dtype="float64")
 
     builder = NexusBuilder()
-    builder.add_run_start_time(run_start_time)
     builder.add_log(
         Log(name="test_log",
             value=np.zeros(shape=(len(times), )),
@@ -1461,7 +1459,7 @@ def test_load_log_times_when_logs_do_not_have_start_time(load_function: Callable
         sc.array(dims=["time"], values=times, unit=sc.units.s, dtype=sc.dtype.float64),
         sc.units.ns).astype(sc.dtype.int64)
 
-    expected = sc.scalar(value=np.datetime64(run_start_time),
+    expected = sc.scalar(value=np.datetime64("1970-01-01T00:00:00Z"),
                          unit=sc.units.ns,
                          dtype=sc.dtype.datetime64) + times_ns
 
@@ -1471,31 +1469,6 @@ def test_load_log_times_when_logs_do_not_have_start_time(load_function: Callable
 
     # Allow 1ns difference for rounding errors between different routes
     assert all(diffs <= np.array(1).astype("timedelta64[ns]"))
-
-
-def test_loading_nxlog_with_neither_start_time_nor_run_start_time_warns(
-        load_function: Callable):
-    builder = NexusBuilder()
-    builder.add_log(
-        Log(
-            name="test_log_1",
-            value=np.zeros(shape=(1, )),
-            time=np.zeros(shape=(1, )),
-            start_time=None,  # No start time and no run start time, should fail.
-        ))
-    builder.add_log(
-        Log(
-            name="test_log_2",
-            value=np.zeros(shape=(1, )),
-            time=np.zeros(shape=(1, )),
-            start_time="2000-01-01T00:00:00Z",  # Should be loaded.
-        ))
-
-    with pytest.warns(UserWarning, match="could not be loaded because both"):
-        data = load_function(builder)
-
-    assert "test_log_1" not in data
-    assert "test_log_2" in data
 
 
 @pytest.mark.parametrize("units", ("ps", "ns", "us", "ms", "s", "minute", "hour"))
@@ -1572,21 +1545,6 @@ def test_nexus_file_with_invalid_log_start_date_warns_and_skips_log(
 
         assert "test_log_1" not in loaded_data
         assert "test_log_2" in loaded_data
-
-
-def test_nexus_file_with_invalid_run_start_warns_and_skips_logs_if_log_start_undefined(
-        load_function: Callable):
-    builder = NexusBuilder()
-    builder.add_run_start_time("this_inst_a_valid_run_start_time")
-    builder.add_log(
-        Log(name="test_log_1",
-            value=np.zeros(shape=(1, )),
-            time=np.array([1]),
-            start_time=None))
-
-    with pytest.warns(UserWarning, match="The run start time "):
-        loaded_data = load_function(builder)
-        assert "test_log_1" not in loaded_data
 
 
 def test_extended_ascii_in_ascii_encoded_dataset(load_function: Callable):
