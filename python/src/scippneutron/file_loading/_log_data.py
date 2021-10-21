@@ -51,33 +51,27 @@ def _convert_nxlog_time_to_datetime64(
             not provided, defaults to 1 (a no-op scaling factor).
     """
     try:
-        raw_times_ns = sc.to_unit(raw_times, sc.units.ns)
+        raw_times_ns = sc.to_unit(raw_times, sc.units.ns, copy=False)
     except sc.UnitError:
         raise BadSource(f"The units of time in the NXlog entry at "
                         f"'{group_path}/time{{units}}' must be convertible to seconds, "
                         f"but this cannot be done for '{raw_times.unit}'. Skipping "
                         f"loading NXLog at '{group_path}'.")
 
-    if log_start is not None:
-        try:
-            _start_ts = sc.scalar(value=np.datetime64(log_start),
-                                  unit=sc.units.ns,
-                                  dtype=sc.dtype.datetime64)
-        except ValueError:
-            raise BadSource(
-                f"The date string '{log_start}' in the NXLog entry at "
-                f"'{group_path}/time@start' failed to parse as an ISO8601 date. "
-                f"Skipping loading NXLog at '{group_path}'")
-    else:
-        _start_ts = sc.scalar(value=np.datetime64("1970-01-01T00:00:00Z"),
+    try:
+        _start_ts = sc.scalar(value=np.datetime64(log_start or "1970-01-01T00:00:00Z"),
                               unit=sc.units.ns,
                               dtype=sc.dtype.datetime64)
+    except ValueError:
+        raise BadSource(
+            f"The date string '{log_start}' in the NXLog entry at "
+            f"'{group_path}/time@start' failed to parse as an ISO8601 date. "
+            f"Skipping loading NXLog at '{group_path}'")
 
-    _scale = sc.scalar(value=scaling_factor if scaling_factor is not None else 1.,
-                       unit=sc.units.dimensionless,
-                       dtype=sc.dtype.float64)
+    _scale = sc.scalar(value=scaling_factor if scaling_factor is not None else 1,
+                       unit=sc.units.dimensionless)
 
-    return _start_ts + (raw_times_ns * _scale).astype(sc.dtype.int64)
+    return _start_ts + (raw_times_ns * _scale).astype(sc.dtype.int64, copy=False)
 
 
 def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,
@@ -133,9 +127,8 @@ def _load_log_data_from_group(group: Group,
     try:
         dimension_label = "time"
         is_time_series = True
-        raw_times = nexus.load_dataset(group.group,
-                                       time_dataset_name, [dimension_label],
-                                       dtype=sc.dtype.float64)
+        raw_times = nexus.load_dataset(group.group, time_dataset_name,
+                                       [dimension_label])
 
         time_dataset = nexus.get_dataset_from_group(group.group, time_dataset_name)
         try:
