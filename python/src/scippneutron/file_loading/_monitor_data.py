@@ -1,4 +1,3 @@
-import h5py
 from typing import List, Dict
 import warnings
 from ._common import Group
@@ -19,8 +18,7 @@ def _load_data_from_histogram_mode_monitor(group: Group, nexus: LoadFromNexus):
     return sc.DataArray(data=data, coords=coords)
 
 
-def load_monitor_data(monitor_groups: List[Group], file_root: h5py.File,
-                      nexus: LoadFromNexus) -> Dict:
+def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict:
     monitor_data = {}
     for group in monitor_groups:
         monitor_name = group.path.split("/")[-1]
@@ -28,7 +26,7 @@ def load_monitor_data(monitor_groups: List[Group], file_root: h5py.File,
         # Look for event mode data structures in NXMonitor. Event-mode data takes
         # precedence over histogram-mode-data if available.
         if nexus.dataset_in_group(group.group, "event_id")[0]:
-            events = load_detector_data([group], [], file_root, nexus, True, True)
+            events = load_detector_data([group], [], nexus, True, True)
             monitor_data[monitor_name] = sc.scalar(value=events)
             warnings.warn(f"Event data present in NXMonitor group {group.path}. "
                           f"Histogram-mode monitor data from this group will be "

@@ -34,16 +34,44 @@ class MissingAttribute(Exception):
 
 
 @dataclass
-class Group:
+class JSONGroup:
     """
     This class exists because h5py.Group has a "parent" property,
     but we also need to access the parent when parsing Dict
     loaded from json
     """
-    group: Union[h5py.Group, Dict]
-    parent: Union[h5py.Group, Dict]
+    group: Dict
+    parent: Dict
     path: str
+    file_root: Dict
     contains_stream: bool = False
+
+
+class H5PYGroup:
+    """
+    Thin wrapper around a h5py group to give it the same interface as JSONGroup above.
+    """
+    def __init__(self, group: h5py.Group):
+        self.group: h5py.Group = group
+
+    @property
+    def parent(self) -> h5py.Group:
+        return self.group.parent
+
+    @property
+    def path(self) -> str:
+        return self.group.name
+
+    @property
+    def contains_stream(self) -> bool:
+        return False
+
+    @property
+    def file_root(self) -> h5py.File:
+        return self.group.file
+
+
+Group = Union[H5PYGroup, JSONGroup]
 
 
 def _add_attr_to_loaded_data(attr_name: str,

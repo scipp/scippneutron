@@ -5,7 +5,7 @@
 from typing import Tuple, Dict, List, Optional, Any, Union
 import scipp as sc
 import numpy as np
-from ._common import Group, MissingDataset, MissingAttribute
+from ._common import Group, JSONGroup, MissingDataset, MissingAttribute
 from dataclasses import dataclass
 
 _nexus_class = "NX_class"
@@ -70,7 +70,8 @@ def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
                 nx_class = _get_attribute_value(child, _nexus_class)
                 if nx_class in nx_class_names:
                     groups_with_requested_nx_class[nx_class].append(
-                        Group(child, root, "/".join(path), contains_stream(child)))
+                        JSONGroup(child, root, "/".join(path), root,
+                                  contains_stream(child)))
             except MissingAttribute:
                 # It may be a group but not an NX_class,
                 # that's fine, continue to its children
@@ -107,17 +108,18 @@ def _find_by_type(type_name: str, root: Dict) -> List[Group]:
     Returns a list of objects with requested type
     """
     def _visit_nodes_for_type(obj: Dict, requested_type: str,
-                              objects_found: List[Dict]):
+                              objects_found: List[Group]):
         try:
             for child in obj[_nexus_children]:
                 if child["type"] == requested_type:
-                    objects_found.append(Group(child, obj, ""))
+                    objects_found.append(
+                        JSONGroup(group=child, parent=obj, path="", file_root=root))
                 _visit_nodes_for_type(child, requested_type, objects_found)
         except KeyError:
             # If this object does not have "children" array then go to next
             pass
 
-    objects_with_requested_type: List[Dict] = []
+    objects_with_requested_type: List[Group] = []
     _visit_nodes_for_type(root, type_name, objects_with_requested_type)
 
     return objects_with_requested_type
