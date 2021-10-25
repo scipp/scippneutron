@@ -15,9 +15,9 @@ def load_logs(log_groups: List[Group], nexus: LoadFromNexus) -> Dict:
     for group in log_groups:
         try:
             log_data_name, log_data = _load_log_data_from_group(group, nexus)
-            _add_log_to_data(log_data_name, log_data, group.path, logs)
+            _add_log_to_data(log_data_name, log_data, group.name, logs)
         except BadSource as e:
-            warn(f"Skipped loading {group.path} due to:\n{e}")
+            warn(f"Skipped loading {group.name} due to:\n{e}")
         except SkipSource:
             pass  # skip without warning user
     return logs
@@ -101,36 +101,34 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,
 
 def _load_log_data_from_group(group: Group,
                               nexus: LoadFromNexus) -> Tuple[str, sc.Variable]:
-    property_name = nexus.get_name(group.group)
+    property_name = nexus.get_name(group)
     value_dataset_name = "value"
     time_dataset_name = "time"
 
     try:
-        values = nexus.load_dataset_from_group_as_numpy_array(
-            group.group, value_dataset_name)
+        values = nexus.load_dataset_from_group_as_numpy_array(group, value_dataset_name)
     except MissingDataset:
-        if group.contains_stream:
+        if nexus.contains_stream(group):
             raise SkipSource("Log is missing value dataset but contains stream")
         raise BadSource(f"NXlog '{property_name}' has no value dataset")
 
     if values.size == 0:
         raise BadSource(f"NXlog '{property_name}' has an empty value dataset")
 
-    unit = nexus.get_unit(nexus.get_dataset_from_group(group.group, value_dataset_name))
+    unit = nexus.get_unit(nexus.get_dataset_from_group(group, value_dataset_name))
     try:
         unit = sc.Unit(unit)
     except sc.UnitError:
         warn(f"Unrecognized unit '{unit}' for value dataset "
-             f"in NXlog '{group.path}'; setting unit as 'dimensionless'")
+             f"in NXlog '{group.name}'; setting unit as 'dimensionless'")
         unit = sc.units.dimensionless
 
     try:
         dimension_label = "time"
         is_time_series = True
-        raw_times = nexus.load_dataset(group.group, time_dataset_name,
-                                       [dimension_label])
+        raw_times = nexus.load_dataset(group, time_dataset_name, [dimension_label])
 
-        time_dataset = nexus.get_dataset_from_group(group.group, time_dataset_name)
+        time_dataset = nexus.get_dataset_from_group(group, time_dataset_name)
         try:
             log_start_time = nexus.get_string_attribute(time_dataset, "start")
         except (MissingAttribute, TypeError):
@@ -144,7 +142,7 @@ def _load_log_data_from_group(group: Group,
         times = _convert_nxlog_time_to_datetime64(raw_times=raw_times,
                                                   log_start=log_start_time,
                                                   scaling_factor=scaling_factor,
-                                                  group_path=group.path)
+                                                  group_path=group.name)
 
         if tuple(times.shape) != values.shape:
             raise BadSource(f"NXlog '{property_name}' has time and value "
@@ -162,13 +160,13 @@ def _load_log_data_from_group(group: Group,
         property_data = sc.scalar(values,
                                   unit=unit,
                                   dtype=nexus.get_dataset_numpy_dtype(
-                                      group.group, value_dataset_name))
+                                      group, value_dataset_name))
     else:
         property_data = sc.Variable(values=values,
                                     unit=unit,
                                     dims=[dimension_label],
                                     dtype=nexus.get_dataset_numpy_dtype(
-                                        group.group, value_dataset_name))
+                                        group, value_dataset_name))
 
     if is_time_series:
         # If property has timestamps, create a DataArray

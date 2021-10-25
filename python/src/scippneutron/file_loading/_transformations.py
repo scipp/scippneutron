@@ -4,8 +4,8 @@
 import warnings
 
 import numpy as np
-from ._common import MissingDataset, MissingAttribute
-from typing import Union, List, Tuple, Dict
+from ._common import MissingDataset, MissingAttribute, Group
+from typing import Union, List, Tuple
 import scipp as sc
 import h5py
 from cmath import isclose
@@ -38,31 +38,25 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
     return i - np.sin(angle_radians) * ll + (1 - np.cos(angle_radians)) * ll_2
 
 
-def get_position_from_transformations(group: GroupObject, root: [h5py.File, h5py.Group],
-                                      nexus: LoadFromNexus) -> np.ndarray:
+def get_position_from_transformations(group: Group, nexus: LoadFromNexus) -> np.ndarray:
     """
     Get position of a component which has a "depends_on" dataset
 
     :param group: The HDF5 group of the component, containing depends_on
-    :param root: The root of the NeXus file, transformation paths are
-      assumed to be relative to this
     :param nexus: wrap data access to hdf file or objects from json
     :return: Position of the component as a three-element numpy array
     """
-    total_transform_matrix = get_full_transformation_matrix(group, root, nexus)
+    total_transform_matrix = get_full_transformation_matrix(group, nexus)
     return np.matmul(total_transform_matrix, np.array([0, 0, 0, 1], dtype=float))[0:3]
 
 
-def get_full_transformation_matrix(group: GroupObject, root: h5py.File,
-                                   nexus: LoadFromNexus) -> np.ndarray:
+def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> np.ndarray:
     """
     Get the 4x4 transformation matrix for a component, resulting
     from the full chain of transformations linked by "depends_on"
     attributes
 
     :param group: The HDF5 group of the component, containing depends_on
-    :param root: The root of the NeXus file, transformation paths are
-      assumed to be relative to this
     :param nexus: wrap data access to hdf file or objects from json
     :return: 4x4 passive transformation matrix as a numpy array
     """
@@ -71,7 +65,7 @@ def get_full_transformation_matrix(group: GroupObject, root: h5py.File,
         depends_on = nexus.load_scalar_string(group, "depends_on")
     except MissingDataset:
         depends_on = '.'
-    _get_transformations(depends_on, transformations, root, nexus.get_name(group),
+    _get_transformations(depends_on, transformations, group, nexus.get_name(group),
                          nexus)
     total_transform_matrix = np.identity(4)
     for transformation in transformations:
@@ -80,8 +74,7 @@ def get_full_transformation_matrix(group: GroupObject, root: h5py.File,
 
 
 def _get_transformations(transform_path: str, transformations: List[np.ndarray],
-                         root: Union[h5py.File,
-                                     Dict], group_name: str, nexus: LoadFromNexus):
+                         group: Group, group_name: str, nexus: LoadFromNexus):
     """
     Get all transformations in the depends_on chain.
 
@@ -97,14 +90,14 @@ def _get_transformations(transform_path: str, transformations: List[np.ndarray],
 
     if transform_path != '.':
         try:
-            transform = nexus.get_object_by_path(root, transform_path)
+            transform = nexus.get_object_by_path(group.file, transform_path)
         except KeyError:
             raise TransformationError(
                 f"Non-existent depends_on path '{transform_path}' found "
                 f"in transformations chain for {group_name}")
         next_depends_on = _append_transformation(transform, transformations, group_name,
                                                  nexus)
-        _get_transformations(next_depends_on, transformations, root, group_name, nexus)
+        _get_transformations(next_depends_on, transformations, group, group_name, nexus)
 
 
 def _transformation_is_nx_log_stream(transform: Union[h5py.Dataset, GroupObject],

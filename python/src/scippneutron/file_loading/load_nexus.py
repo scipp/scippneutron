@@ -52,11 +52,10 @@ def _load_instrument_name(instrument_groups: List[Group], nexus: LoadFromNexus) 
     try:
         if len(instrument_groups) > 1:
             warn(f"More than one {nx_instrument} found in file, "
-                 f"loading name from {instrument_groups[0].group.name} only")
+                 f"loading name from {instrument_groups[0].name} only")
         return {
             "instrument_name":
-            sc.scalar(
-                value=nexus.load_scalar_string(instrument_groups[0].group, "name"))
+            sc.scalar(value=nexus.load_scalar_string(instrument_groups[0], "name"))
         }
     except MissingDataset:
         return {}
@@ -65,11 +64,10 @@ def _load_instrument_name(instrument_groups: List[Group], nexus: LoadFromNexus) 
 def _load_chopper(chopper_groups: List[Group], nexus: LoadFromNexus) -> Dict:
     choppers = {}
     for chopper_group in chopper_groups:
-        chopper_name = chopper_group.path.split("/")[-1]
-        rotation_speed = nexus.load_dataset(group=chopper_group.group,
+        chopper_name = chopper_group.name.split("/")[-1]
+        rotation_speed = nexus.load_dataset(group=chopper_group,
                                             dataset_name="rotation_speed")
-        distance = nexus.load_dataset(group=chopper_group.group,
-                                      dataset_name="distance")
+        distance = nexus.load_dataset(group=chopper_group, dataset_name="distance")
         choppers[chopper_name] = sc.DataArray(data=sc.scalar(value=chopper_name),
                                               attrs={
                                                   "rotation_speed": rotation_speed,
@@ -79,30 +77,25 @@ def _load_chopper(chopper_groups: List[Group], nexus: LoadFromNexus) -> Dict:
     return choppers
 
 
-def _load_sample(sample_groups: List[Group], data: ScippData, file_root: h5py.File,
-                 nexus: LoadFromNexus):
+def _load_sample(sample_groups: List[Group], data: ScippData, nexus: LoadFromNexus):
     load_positions_of_components(sample_groups,
                                  data,
                                  "sample",
                                  nx_sample,
-                                 file_root,
                                  nexus,
                                  default_position=np.array([0, 0, 0]))
-    load_ub_matrices_of_components(sample_groups, data, "sample", nx_sample, file_root,
-                                   nexus)
+    load_ub_matrices_of_components(sample_groups, data, "sample", nx_sample, nexus)
 
 
-def _load_source(source_groups: List[Group], data: ScippData, file_root: h5py.File,
-                 nexus: LoadFromNexus):
-    load_position_of_unique_component(source_groups, data, "source", nx_source,
-                                      file_root, nexus)
+def _load_source(source_groups: List[Group], data: ScippData, nexus: LoadFromNexus):
+    load_position_of_unique_component(source_groups, data, "source", nx_source, nexus)
 
 
 def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:
     try:
         return {
             "experiment_title":
-            sc.scalar(value=nexus.load_scalar_string(entry_group.group, "title"))
+            sc.scalar(value=nexus.load_scalar_string(entry_group, "title"))
         }
     except MissingDataset:
         return {}
@@ -112,8 +105,7 @@ def _load_start_and_end_time(entry_group: Group, nexus: LoadFromNexus) -> Dict:
     times = {}
     for time in ["start_time", "end_time"]:
         try:
-            times[time] = sc.scalar(
-                value=nexus.load_scalar_string(entry_group.group, time))
+            times[time] = sc.scalar(value=nexus.load_scalar_string(entry_group, time))
         except MissingDataset:
             pass
     return times
@@ -177,8 +169,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             "to specify which to load data from, for example"
             f"{__name__}('my_file.nxs', '/entry_2')")
 
-    loaded_data = load_detector_data(groups[nx_event_data], groups[nx_detector],
-                                     nexus_file, nexus, quiet, bin_by_pixel)
+    loaded_data = load_detector_data(groups[nx_event_data], groups[nx_detector], nexus,
+                                     quiet, bin_by_pixel)
     # If no event data are found, make a Dataset and add the metadata as
     # Dataset entries. Otherwise, make a DataArray.
     if loaded_data is None:
@@ -200,11 +192,11 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     if groups[nx_log]:
         add_metadata(load_logs(groups[nx_log], nexus))
     if groups[nx_monitor]:
-        add_metadata(load_monitor_data(groups[nx_monitor], nexus_file, nexus))
+        add_metadata(load_monitor_data(groups[nx_monitor], nexus))
     if groups[nx_sample]:
-        _load_sample(groups[nx_sample], loaded_data, nexus_file, nexus)
+        _load_sample(groups[nx_sample], loaded_data, nexus)
     if groups[nx_source]:
-        _load_source(groups[nx_source], loaded_data, nexus_file, nexus)
+        _load_source(groups[nx_source], loaded_data, nexus)
     if groups[nx_instrument]:
         add_metadata(_load_instrument_name(groups[nx_instrument], nexus))
     if groups[nx_disk_chopper]:

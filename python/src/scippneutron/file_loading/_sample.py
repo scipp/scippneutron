@@ -1,5 +1,4 @@
 from typing import List, Tuple, Union
-import h5py
 import numpy as np
 import scipp as sc
 from ._common import Group, _add_attr_to_loaded_data
@@ -30,12 +29,11 @@ def _get_u_of_component(group: GroupObject, nx_class: str,
 
 def load_ub_matrices_of_components(groups: List[Group], data: Union[sc.DataArray,
                                                                     sc.Dataset],
-                                   name: str, nx_class: str, file_root: h5py.File,
-                                   nexus: LoadFromNexus):
+                                   name: str, nx_class: str, nexus: LoadFromNexus):
     properties = {"ub_matrix": _get_ub_of_component, "u_matrix": _get_u_of_component}
     for sc_property, extractor in properties.items():
         for group in groups:
-            matrix, units = extractor(group.group, nx_class, nexus)
+            matrix, units = extractor(group, nx_class, nexus)
             if matrix is None:
                 continue
             if len(groups) == 1:
@@ -45,7 +43,7 @@ def load_ub_matrices_of_components(groups: List[Group], data: Union[sc.DataArray
                                          unit=units,
                                          dtype=sc.dtype.matrix_3_float64)
             else:
-                _add_attr_to_loaded_data(f"{nexus.get_name(group.group)}_{sc_property}",
+                _add_attr_to_loaded_data(f"{nexus.get_name(group)}_{sc_property}",
                                          data,
                                          matrix,
                                          unit=units,

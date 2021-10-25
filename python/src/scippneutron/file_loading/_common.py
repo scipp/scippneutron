@@ -2,8 +2,7 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
 
-from dataclasses import dataclass
-from typing import Union, Dict, Optional, Any
+from typing import Union, Optional, Any
 import h5py
 import scipp as sc
 import numpy as np
@@ -33,17 +32,15 @@ class MissingAttribute(Exception):
     pass
 
 
-@dataclass
-class Group:
-    """
-    This class exists because h5py.Group has a "parent" property,
-    but we also need to access the parent when parsing Dict
-    loaded from json
-    """
-    group: Union[h5py.Group, Dict]
-    parent: Union[h5py.Group, Dict]
-    path: str
-    contains_stream: bool = False
+class JSONGroup(dict):
+    def __init__(self, parent: dict, name: str, file: dict, group: dict):
+        super().__init__(**group)
+        self.parent = parent
+        self.name = name
+        self.file = file
+
+
+Group = Union[h5py.Group, JSONGroup]
 
 
 def _add_attr_to_loaded_data(attr_name: str,

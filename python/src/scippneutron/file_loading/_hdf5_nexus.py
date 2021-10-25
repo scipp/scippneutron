@@ -107,8 +107,7 @@ class LoadFromHdf5:
                 try:
                     nx_class = _get_attr_as_str(h5_object, "NX_class")
                     if nx_class in nx_class_names:
-                        found_groups[nx_class].append(
-                            Group(h5_object, h5_object.parent, h5_object.name))
+                        found_groups[nx_class].append(h5_object)
                 except KeyError:
                     pass
 
@@ -269,3 +268,8 @@ class LoadFromHdf5:
         # libraries that look like h5py but are not, in particular data
         # adapted from `tiled`.
         return hasattr(node, 'visititems')
+
+    @staticmethod
+    def contains_stream(_):
+        # HDF5 groups never contain streams.
+        return False

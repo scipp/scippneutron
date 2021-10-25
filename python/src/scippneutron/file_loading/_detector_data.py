@@ -3,7 +3,6 @@
 # @author Matthew Jones
 
 from dataclasses import dataclass
-import h5py
 from typing import Optional, List, Any, Dict, Union
 import numpy as np
 import scipp
@@ -12,7 +11,7 @@ from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, G
 import scipp as sc
 from warnings import warn
 from ._transformations import get_full_transformation_matrix
-from ._nexus import LoadFromNexus, GroupObject
+from ._nexus import LoadFromNexus
 
 _bank_dimension = "bank"
 _detector_dimension = "detector_id"
@@ -27,7 +26,7 @@ class DetectorIdError(Exception):
 
 
 def _check_for_missing_fields(group: Group, nexus: LoadFromNexus):
-    if group.contains_stream:
+    if nexus.contains_stream(group):
         # Do not warn about missing datasets if the group contains
         # a stream, as this will provide the missing data
         raise SkipSource("Data source is missing datasets"
@@ -40,7 +39,7 @@ def _check_for_missing_fields(group: Group, nexus: LoadFromNexus):
         "event_time_offset",
     )
     for field in required_fields:
-        found, msg = nexus.dataset_in_group(group.group, field)
+        found, msg = nexus.dataset_in_group(group, field)
         if not found:
             raise BadSource(msg)
 
@@ -53,8 +52,7 @@ def _convert_array_to_metres(array: np.ndarray, unit: str) -> np.ndarray:
                     dtype=np.float64), "m").values
 
 
-def _load_pixel_positions(detector_group: GroupObject, detector_ids_size: int,
-                          file_root: h5py.File,
+def _load_pixel_positions(detector_group: Group, detector_ids_size: int,
                           nexus: LoadFromNexus) -> Optional[sc.Variable]:
     offsets_unit = nexus.get_unit(
         nexus.get_dataset_from_group(detector_group, "x_pixel_offset"))
@@ -100,8 +98,7 @@ def _load_pixel_positions(detector_group: GroupObject, detector_ids_size: int,
         array = np.hstack((array, np.ones((n_rows, 1))))
 
         # Get and apply transformation matrix
-        transformation = get_full_transformation_matrix(detector_group, file_root,
-                                                        nexus)
+        transformation = get_full_transformation_matrix(detector_group, nexus)
         for row_index in range(n_rows):
             array[row_index, :] = np.matmul(transformation, array[row_index, :])
 
@@ -155,7 +152,7 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
 def _load_pulse_times(group: Group, nexus: LoadFromNexus) -> sc.Variable:
     time_zero_group = "event_time_zero"
 
-    event_time_zero = nexus.load_dataset(group.group,
+    event_time_zero = nexus.load_dataset(group,
                                          time_zero_group,
                                          dimensions=[_pulse_dimension])
 
@@ -164,12 +161,12 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus) -> sc.Variable:
     except sc.UnitError:
         raise BadSource(f"Could not load pulse times: units attribute "
                         f"'{event_time_zero.unit}' in NXEvent at "
-                        f"{group.path}/{time_zero_group} is not convertible"
+                        f"{group.name}/{time_zero_group} is not convertible"
                         f" to nanoseconds.")
 
     try:
         time_offset = nexus.get_string_attribute(
-            nexus.get_dataset_from_group(group.group, time_zero_group), "offset")
+            nexus.get_dataset_from_group(group, time_zero_group), "offset")
     except MissingAttribute:
         time_offset = "1970-01-01T00:00:00Z"
 
@@ -181,14 +178,13 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus) -> sc.Variable:
         np.datetime64(time_offset), unit=sc.units.ns, dtype=sc.dtype.datetime64)
 
 
-def _load_detector(group: Group, file_root: h5py.File,
-                   nexus: LoadFromNexus) -> DetectorData:
+def _load_detector(group: Group, nexus: LoadFromNexus) -> DetectorData:
     detector_number_ds_name = "detector_number"
-    dataset_in_group, _ = nexus.dataset_in_group(group.group, detector_number_ds_name)
+    dataset_in_group, _ = nexus.dataset_in_group(group, detector_number_ds_name)
     detector_ids = None
     if dataset_in_group:
         detector_ids = nexus.load_dataset_from_group_as_numpy_array(
-            group.group, detector_number_ds_name).flatten()
+            group, detector_number_ds_name).flatten()
         detector_id_type = detector_ids.dtype.type
 
         detector_ids = sc.Variable(dims=[_detector_dimension],
@@ -196,27 +192,25 @@ def _load_detector(group: Group, file_root: h5py.File,
                                    dtype=detector_id_type)
 
     pixel_positions = None
-    pixel_positions_found, _ = nexus.dataset_in_group(group.group, "x_pixel_offset")
+    pixel_positions_found, _ = nexus.dataset_in_group(group, "x_pixel_offset")
     if pixel_positions_found and detector_ids is not None:
-        pixel_positions = _load_pixel_positions(group.group, detector_ids.shape[0],
-                                                file_root, nexus)
+        pixel_positions = _load_pixel_positions(group, detector_ids.shape[0], nexus)
 
     return DetectorData(detector_ids=detector_ids, pixel_positions=pixel_positions)
 
 
-def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
-                      detector_data: DetectorData, quiet: bool) -> DetectorData:
+def _load_event_group(group: Group, nexus: LoadFromNexus, detector_data: DetectorData,
+                      quiet: bool) -> DetectorData:
     _check_for_missing_fields(group, nexus)
 
-    event_id = nexus.load_dataset(group.group, "event_id", [_event_dimension])
+    event_id = nexus.load_dataset(group, "event_id", [_event_dimension])
     number_of_event_ids = event_id.sizes[_event_dimension]
-    event_index = nexus.load_dataset_from_group_as_numpy_array(
-        group.group, "event_index")
+    event_index = nexus.load_dataset_from_group_as_numpy_array(group, "event_index")
     # Some files contain uint64 "max" indices, which turn into negatives during
     # conversion to int64. This is a hack to get arround this.
     event_index[event_index < 0] = number_of_event_ids
 
-    event_time_offset = nexus.load_dataset(group.group, "event_time_offset",
+    event_time_offset = nexus.load_dataset(group, "event_time_offset",
                                            [_event_dimension])
 
     # Weights are not stored in NeXus, so use 1s
@@ -252,7 +246,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
     try:
         binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
     except sc.SliceError:
-        raise BadSource(f"Event index in NXEvent at {group.path}/event_index was not"
+        raise BadSource(f"Event index in NXEvent at {group.name}/event_index was not"
                         f"ordered. The index must be ordered to load pulse times.")
 
     detector_data.event_data = sc.DataArray(data=binned,
@@ -260,7 +254,7 @@ def _load_event_group(group: Group, file_root: h5py.File, nexus: LoadFromNexus,
 
     if not quiet:
         print(f"Loaded event data from "
-              f"{group.path} containing {number_of_event_ids} events")
+              f"{group.name} containing {number_of_event_ids} events")
 
     return detector_data
 
@@ -290,11 +284,11 @@ def _check_event_ids_and_det_number_types_valid(detector_id_type: Any,
 
 
 def load_detector_data(event_data_groups: List[Group], detector_groups: List[Group],
-                       file_root: h5py.File, nexus: LoadFromNexus, quiet: bool,
+                       nexus: LoadFromNexus, quiet: bool,
                        bin_by_pixel: bool) -> Optional[sc.DataArray]:
-    detectors = _load_data_from_each_nx_detector(detector_groups, file_root, nexus)
-    detectors = _load_data_from_each_nx_event_data(detectors, event_data_groups,
-                                                   file_root, nexus, quiet)
+    detectors = _load_data_from_each_nx_detector(detector_groups, nexus)
+    detectors = _load_data_from_each_nx_event_data(detectors, event_data_groups, nexus,
+                                                   quiet)
 
     if not detectors:
         # If there were no data to load we are done
@@ -415,24 +409,23 @@ def _create_empty_event_data(detectors: List[DetectorData]):
 
 def _load_data_from_each_nx_event_data(detector_data: Dict,
                                        event_data_groups: List[Group],
-                                       file_root: h5py.File, nexus: LoadFromNexus,
+                                       nexus: LoadFromNexus,
                                        quiet: bool) -> List[DetectorData]:
     event_data = []
     for group in event_data_groups:
-        parent_path = "/".join(group.path.split("/")[:-1])
+        parent_path = "/".join(group.name.split("/")[:-1])
         try:
             new_event_data = _load_event_group(
-                group, file_root, nexus, detector_data.get(parent_path, DetectorData()),
-                quiet)
+                group, nexus, detector_data.get(parent_path, DetectorData()), quiet)
             event_data.append(new_event_data)
             # Only pop from dictionary if we did not raise an
             # exception when loading events
             detector_data.pop(parent_path, DetectorData())
         except DetectorIdError as e:
-            warn(f"Skipped loading detector ids for {group.path} due to:\n{e}")
+            warn(f"Skipped loading detector ids for {group.name} due to:\n{e}")
             detector_data.pop(parent_path, DetectorData())
         except BadSource as e:
-            warn(f"Skipped loading {group.path} due to:\n{e}")
+            warn(f"Skipped loading {group.name} due to:\n{e}")
         except SkipSource:
             pass  # skip without warning user
 
@@ -443,10 +436,9 @@ def _load_data_from_each_nx_event_data(detector_data: Dict,
     return event_data
 
 
-def _load_data_from_each_nx_detector(detector_groups: List[Group], file_root: h5py.File,
+def _load_data_from_each_nx_detector(detector_groups: List[Group],
                                      nexus: LoadFromNexus) -> Dict:
     detector_data = {}
     for detector_group in detector_groups:
-        detector_data[detector_group.path] = _load_detector(detector_group, file_root,
-                                                            nexus)
+        detector_data[detector_group.name] = _load_detector(detector_group, nexus)
     return detector_data
