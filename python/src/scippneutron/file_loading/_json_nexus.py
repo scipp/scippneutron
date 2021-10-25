@@ -285,10 +285,9 @@ class LoadFromJson:
 
     def get_object_by_path(self, group: Dict, path_str: str) -> Dict:
         for node in filter(None, path_str.split("/")):
-            msg = f"group={group} node={node} path_str={path_str}"
             group = self._get_child_from_group(group, node)
             if group is None:
-                raise MissingDataset(msg)
+                raise MissingDataset()
         return group
 
     @staticmethod

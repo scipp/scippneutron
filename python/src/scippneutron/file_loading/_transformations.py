@@ -90,7 +90,6 @@ def _get_transformations(transform_path: str, transformations: List[np.ndarray],
 
     if transform_path != '.':
         try:
-            print(f"file root in _get_transformations is {group.file_root}")
             transform = nexus.get_object_by_path(group.file_root, transform_path)
         except KeyError:
             raise TransformationError(
