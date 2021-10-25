@@ -70,8 +70,11 @@ def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
                 nx_class = _get_attribute_value(child, _nexus_class)
                 if nx_class in nx_class_names:
                     groups_with_requested_nx_class[nx_class].append(
-                        JSONGroup(child, root, "/".join(path), root,
-                                  contains_stream(child)))
+                        JSONGroup(group=child,
+                                  parent=root,
+                                  path="/".join(path),
+                                  file_root={"children": [root]},
+                                  contains_stream=contains_stream(child)))
             except MissingAttribute:
                 # It may be a group but not an NX_class,
                 # that's fine, continue to its children
@@ -113,7 +116,10 @@ def _find_by_type(type_name: str, root: Dict) -> List[Group]:
             for child in obj[_nexus_children]:
                 if child["type"] == requested_type:
                     objects_found.append(
-                        JSONGroup(group=child, parent=obj, path="", file_root=root))
+                        JSONGroup(group=child,
+                                  parent=obj,
+                                  path="",
+                                  file_root={"children": [obj]}))
                 _visit_nodes_for_type(child, requested_type, objects_found)
         except KeyError:
             # If this object does not have "children" array then go to next
@@ -279,9 +285,10 @@ class LoadFromJson:
 
     def get_object_by_path(self, group: Dict, path_str: str) -> Dict:
         for node in filter(None, path_str.split("/")):
+            msg = f"group={group} node={node} path_str={path_str}"
             group = self._get_child_from_group(group, node)
             if group is None:
-                raise MissingDataset()
+                raise MissingDataset(msg)
         return group
 
     @staticmethod

@@ -65,7 +65,7 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> np.nda
         depends_on = nexus.load_scalar_string(group.group, "depends_on")
     except MissingDataset:
         depends_on = '.'
-    _get_transformations(depends_on, transformations, group.file_root,
+    _get_transformations(depends_on, transformations, group,
                          nexus.get_name(group.group), nexus)
     total_transform_matrix = np.identity(4)
     for transformation in transformations:
@@ -74,7 +74,7 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> np.nda
 
 
 def _get_transformations(transform_path: str, transformations: List[np.ndarray],
-                         root: GroupObject, group_name: str, nexus: LoadFromNexus):
+                         group: Group, group_name: str, nexus: LoadFromNexus):
     """
     Get all transformations in the depends_on chain.
 
@@ -90,14 +90,15 @@ def _get_transformations(transform_path: str, transformations: List[np.ndarray],
 
     if transform_path != '.':
         try:
-            transform = nexus.get_object_by_path(root, transform_path)
+            print(f"file root in _get_transformations is {group.file_root}")
+            transform = nexus.get_object_by_path(group.file_root, transform_path)
         except KeyError:
             raise TransformationError(
                 f"Non-existent depends_on path '{transform_path}' found "
                 f"in transformations chain for {group_name}")
         next_depends_on = _append_transformation(transform, transformations, group_name,
                                                  nexus)
-        _get_transformations(next_depends_on, transformations, root, group_name, nexus)
+        _get_transformations(next_depends_on, transformations, group, group_name, nexus)
 
 
 def _transformation_is_nx_log_stream(transform: Union[h5py.Dataset, GroupObject],
