@@ -44,7 +44,6 @@ class JSONGroup:
     parent: Dict
     path: str
     file_root: Dict
-    contains_stream: bool = False
 
 
 class H5PYGroup:
@@ -61,10 +60,6 @@ class H5PYGroup:
     @property
     def path(self) -> str:
         return self.group.name
-
-    @property
-    def contains_stream(self) -> bool:
-        return False
 
     @property
     def file_root(self) -> h5py.File:

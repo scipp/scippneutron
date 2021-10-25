@@ -73,8 +73,7 @@ def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
                         JSONGroup(group=child,
                                   parent=root,
                                   path="/".join(path),
-                                  file_root={"children": [root]},
-                                  contains_stream=contains_stream(child)))
+                                  file_root={"children": [root]}))
             except MissingAttribute:
                 # It may be a group but not an NX_class,
                 # that's fine, continue to its children
@@ -309,6 +308,10 @@ class LoadFromJson:
             return node["type"] == _nexus_group
         except KeyError:
             return False
+
+    @staticmethod
+    def contains_stream(group: Dict):
+        return contains_stream(group)
 
 
 @dataclass

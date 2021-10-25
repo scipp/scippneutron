@@ -26,7 +26,7 @@ class DetectorIdError(Exception):
 
 
 def _check_for_missing_fields(group: Group, nexus: LoadFromNexus):
-    if group.contains_stream:
+    if nexus.contains_stream(group.group):
         # Do not warn about missing datasets if the group contains
         # a stream, as this will provide the missing data
         raise SkipSource("Data source is missing datasets"

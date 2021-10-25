@@ -109,7 +109,7 @@ def _load_log_data_from_group(group: Group,
         values = nexus.load_dataset_from_group_as_numpy_array(
             group.group, value_dataset_name)
     except MissingDataset:
-        if group.contains_stream:
+        if nexus.contains_stream(group.group):
             raise SkipSource("Log is missing value dataset but contains stream")
         raise BadSource(f"NXlog '{property_name}' has no value dataset")
 

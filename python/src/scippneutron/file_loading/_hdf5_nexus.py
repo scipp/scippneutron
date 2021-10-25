@@ -268,3 +268,8 @@ class LoadFromHdf5:
         # libraries that look like h5py but are not, in particular data
         # adapted from `tiled`.
         return hasattr(node, 'visititems')
+
+    @staticmethod
+    def contains_stream(_):
+        # HDF5 groups never contain streams.
+        return False
