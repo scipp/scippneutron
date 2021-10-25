@@ -72,8 +72,8 @@ def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
                     groups_with_requested_nx_class[nx_class].append(
                         JSONGroup(group=child,
                                   parent=root,
-                                  path="/".join(path),
-                                  file_root={"children": [root]}))
+                                  name="/".join(path),
+                                  file={"children": [root]}))
             except MissingAttribute:
                 # It may be a group but not an NX_class,
                 # that's fine, continue to its children
@@ -117,8 +117,8 @@ def _find_by_type(type_name: str, root: Dict) -> List[Group]:
                     objects_found.append(
                         JSONGroup(group=child,
                                   parent=obj,
-                                  path="",
-                                  file_root={"children": [obj]}))
+                                  name="",
+                                  file={"children": [obj]}))
                 _visit_nodes_for_type(child, requested_type, objects_found)
         except KeyError:
             # If this object does not have "children" array then go to next

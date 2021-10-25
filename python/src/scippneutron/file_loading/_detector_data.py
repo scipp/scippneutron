@@ -161,7 +161,7 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus) -> sc.Variable:
     except sc.UnitError:
         raise BadSource(f"Could not load pulse times: units attribute "
                         f"'{event_time_zero.unit}' in NXEvent at "
-                        f"{group.path}/{time_zero_group} is not convertible"
+                        f"{group.name}/{time_zero_group} is not convertible"
                         f" to nanoseconds.")
 
     try:
@@ -247,7 +247,7 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, detector_data: Detecto
     try:
         binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
     except sc.SliceError:
-        raise BadSource(f"Event index in NXEvent at {group.path}/event_index was not"
+        raise BadSource(f"Event index in NXEvent at {group.name}/event_index was not"
                         f"ordered. The index must be ordered to load pulse times.")
 
     detector_data.event_data = sc.DataArray(data=binned,
@@ -255,7 +255,7 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, detector_data: Detecto
 
     if not quiet:
         print(f"Loaded event data from "
-              f"{group.path} containing {number_of_event_ids} events")
+              f"{group.name} containing {number_of_event_ids} events")
 
     return detector_data
 
@@ -414,7 +414,7 @@ def _load_data_from_each_nx_event_data(detector_data: Dict,
                                        quiet: bool) -> List[DetectorData]:
     event_data = []
     for group in event_data_groups:
-        parent_path = "/".join(group.path.split("/")[:-1])
+        parent_path = "/".join(group.name.split("/")[:-1])
         try:
             new_event_data = _load_event_group(
                 group, nexus, detector_data.get(parent_path, DetectorData()), quiet)
@@ -423,10 +423,10 @@ def _load_data_from_each_nx_event_data(detector_data: Dict,
             # exception when loading events
             detector_data.pop(parent_path, DetectorData())
         except DetectorIdError as e:
-            warn(f"Skipped loading detector ids for {group.path} due to:\n{e}")
+            warn(f"Skipped loading detector ids for {group.name} due to:\n{e}")
             detector_data.pop(parent_path, DetectorData())
         except BadSource as e:
-            warn(f"Skipped loading {group.path} due to:\n{e}")
+            warn(f"Skipped loading {group.name} due to:\n{e}")
         except SkipSource:
             pass  # skip without warning user
 
@@ -441,5 +441,5 @@ def _load_data_from_each_nx_detector(detector_groups: List[Group],
                                      nexus: LoadFromNexus) -> Dict:
     detector_data = {}
     for detector_group in detector_groups:
-        detector_data[detector_group.path] = _load_detector(detector_group, nexus)
+        detector_data[detector_group.name] = _load_detector(detector_group, nexus)
     return detector_data

@@ -65,7 +65,7 @@ def _load_instrument_name(instrument_groups: List[Group], nexus: LoadFromNexus) 
 def _load_chopper(chopper_groups: List[Group], nexus: LoadFromNexus) -> Dict:
     choppers = {}
     for chopper_group in chopper_groups:
-        chopper_name = chopper_group.path.split("/")[-1]
+        chopper_name = chopper_group.name.split("/")[-1]
         rotation_speed = nexus.load_dataset(group=chopper_group.group,
                                             dataset_name="rotation_speed")
         distance = nexus.load_dataset(group=chopper_group.group,

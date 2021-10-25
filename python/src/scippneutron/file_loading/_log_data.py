@@ -15,9 +15,9 @@ def load_logs(log_groups: List[Group], nexus: LoadFromNexus) -> Dict:
     for group in log_groups:
         try:
             log_data_name, log_data = _load_log_data_from_group(group, nexus)
-            _add_log_to_data(log_data_name, log_data, group.path, logs)
+            _add_log_to_data(log_data_name, log_data, group.name, logs)
         except BadSource as e:
-            warn(f"Skipped loading {group.path} due to:\n{e}")
+            warn(f"Skipped loading {group.name} due to:\n{e}")
         except SkipSource:
             pass  # skip without warning user
     return logs
@@ -121,7 +121,7 @@ def _load_log_data_from_group(group: Group,
         unit = sc.Unit(unit)
     except sc.UnitError:
         warn(f"Unrecognized unit '{unit}' for value dataset "
-             f"in NXlog '{group.path}'; setting unit as 'dimensionless'")
+             f"in NXlog '{group.name}'; setting unit as 'dimensionless'")
         unit = sc.units.dimensionless
 
     try:
@@ -144,7 +144,7 @@ def _load_log_data_from_group(group: Group,
         times = _convert_nxlog_time_to_datetime64(raw_times=raw_times,
                                                   log_start=log_start_time,
                                                   scaling_factor=scaling_factor,
-                                                  group_path=group.path)
+                                                  group_path=group.name)
 
         if tuple(times.shape) != values.shape:
             raise BadSource(f"NXlog '{property_name}' has time and value "

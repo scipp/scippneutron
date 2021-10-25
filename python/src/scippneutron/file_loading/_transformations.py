@@ -90,7 +90,7 @@ def _get_transformations(transform_path: str, transformations: List[np.ndarray],
 
     if transform_path != '.':
         try:
-            transform = nexus.get_object_by_path(group.file_root, transform_path)
+            transform = nexus.get_object_by_path(group.file, transform_path)
         except KeyError:
             raise TransformationError(
                 f"Non-existent depends_on path '{transform_path}' found "

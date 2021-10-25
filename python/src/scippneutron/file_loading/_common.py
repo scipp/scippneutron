@@ -42,8 +42,8 @@ class JSONGroup:
     """
     group: Dict
     parent: Dict
-    path: str
-    file_root: Dict
+    name: str
+    file: Dict
 
 
 class H5PYGroup:
@@ -58,11 +58,11 @@ class H5PYGroup:
         return self.group.parent
 
     @property
-    def path(self) -> str:
+    def name(self) -> str:
         return self.group.name
 
     @property
-    def file_root(self) -> h5py.File:
+    def file(self) -> h5py.File:
         return self.group.file
 
 

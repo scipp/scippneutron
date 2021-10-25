@@ -21,14 +21,14 @@ def _load_data_from_histogram_mode_monitor(group: Group, nexus: LoadFromNexus):
 def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict:
     monitor_data = {}
     for group in monitor_groups:
-        monitor_name = group.path.split("/")[-1]
+        monitor_name = group.name.split("/")[-1]
 
         # Look for event mode data structures in NXMonitor. Event-mode data takes
         # precedence over histogram-mode-data if available.
         if nexus.dataset_in_group(group.group, "event_id")[0]:
             events = load_detector_data([group], [], nexus, True, True)
             monitor_data[monitor_name] = sc.scalar(value=events)
-            warnings.warn(f"Event data present in NXMonitor group {group.path}. "
+            warnings.warn(f"Event data present in NXMonitor group {group.name}. "
                           f"Histogram-mode monitor data from this group will be "
                           f"ignored.")
         else:
