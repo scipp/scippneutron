@@ -62,11 +62,11 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> np.nda
     """
     transformations = []
     try:
-        depends_on = nexus.load_scalar_string(group.group, "depends_on")
+        depends_on = nexus.load_scalar_string(group, "depends_on")
     except MissingDataset:
         depends_on = '.'
-    _get_transformations(depends_on, transformations, group,
-                         nexus.get_name(group.group), nexus)
+    _get_transformations(depends_on, transformations, group, nexus.get_name(group),
+                         nexus)
     total_transform_matrix = np.identity(4)
     for transformation in transformations:
         total_transform_matrix = np.matmul(transformation, total_transform_matrix)

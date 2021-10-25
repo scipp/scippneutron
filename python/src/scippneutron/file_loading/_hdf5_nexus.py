@@ -8,7 +8,7 @@ from typing import Union, Any, List, Optional, Tuple, Dict
 import h5py
 import numpy as np
 import scipp as sc
-from ._common import Group, H5PYGroup, MissingDataset, MissingAttribute
+from ._common import Group, MissingDataset, MissingAttribute
 
 
 def _cset_to_encoding(cset: int) -> str:
@@ -107,7 +107,7 @@ class LoadFromHdf5:
                 try:
                     nx_class = _get_attr_as_str(h5_object, "NX_class")
                     if nx_class in nx_class_names:
-                        found_groups[nx_class].append(H5PYGroup(h5_object))
+                        found_groups[nx_class].append(h5_object)
                 except KeyError:
                     pass
 

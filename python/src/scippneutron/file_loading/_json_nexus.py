@@ -73,7 +73,7 @@ def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
                         JSONGroup(group=child,
                                   parent=root,
                                   name="/".join(path),
-                                  file={"children": [root]}))
+                                  file={_nexus_children: [root]}))
             except MissingAttribute:
                 # It may be a group but not an NX_class,
                 # that's fine, continue to its children
@@ -118,7 +118,7 @@ def _find_by_type(type_name: str, root: Dict) -> List[Group]:
                         JSONGroup(group=child,
                                   parent=obj,
                                   name="",
-                                  file={"children": [obj]}))
+                                  file={_nexus_children: [obj]}))
                 _visit_nodes_for_type(child, requested_type, objects_found)
         except KeyError:
             # If this object does not have "children" array then go to next
@@ -328,12 +328,10 @@ def get_streams_info(root: Dict) -> List[StreamInfo]:
     streams = []
     for stream in found_streams:
         try:
-            dtype = _filewriter_to_supported_numpy_dtype[stream.group["stream"]
-                                                         ["dtype"]]
+            dtype = _filewriter_to_supported_numpy_dtype[stream["stream"]["dtype"]]
         except KeyError:
             try:
-                dtype = _filewriter_to_supported_numpy_dtype[stream.group["stream"]
-                                                             ["type"]]
+                dtype = _filewriter_to_supported_numpy_dtype[stream["stream"]["type"]]
             except KeyError:
                 dtype = None
 
@@ -344,7 +342,6 @@ def get_streams_info(root: Dict) -> List[StreamInfo]:
             pass
 
         streams.append(
-            StreamInfo(stream.group["stream"]["topic"],
-                       stream.group["stream"]["writer_module"],
-                       stream.group["stream"]["source"], dtype, units))
+            StreamInfo(stream["stream"]["topic"], stream["stream"]["writer_module"],
+                       stream["stream"]["source"], dtype, units))
     return streams

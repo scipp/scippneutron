@@ -52,7 +52,7 @@ def load_positions_of_components(groups: List[Group],
                                       unit=units,
                                       dtype=sc.dtype.vector_3_float64)
         else:
-            _add_coord_to_loaded_data(f"{nexus.get_name(group.group)}_position",
+            _add_coord_to_loaded_data(f"{nexus.get_name(group)}_position",
                                       data,
                                       position,
                                       unit=units,
@@ -65,8 +65,8 @@ def _get_position_of_component(
         nx_class: str,
         nexus: LoadFromNexus,
         default_position: Optional[np.ndarray] = None) -> Tuple[np.ndarray, sc.Unit]:
-    depends_on_found, _ = nexus.dataset_in_group(group.group, "depends_on")
-    distance_found, _ = nexus.dataset_in_group(group.group, "distance")
+    depends_on_found, _ = nexus.dataset_in_group(group, "depends_on")
+    distance_found, _ = nexus.dataset_in_group(group, "distance")
     if depends_on_found:
         try:
             position = get_position_from_transformations(group, nexus)
@@ -76,11 +76,10 @@ def _get_position_of_component(
         units = sc.units.m
     elif distance_found:
 
-        position = np.array([
-            0, 0,
-            nexus.load_dataset_from_group_as_numpy_array(group.group, "distance")
-        ])
-        units = nexus.get_unit(nexus.get_dataset_from_group(group.group, "distance"))
+        position = np.array(
+            [0, 0,
+             nexus.load_dataset_from_group_as_numpy_array(group, "distance")])
+        units = nexus.get_unit(nexus.get_dataset_from_group(group, "distance"))
         if units == sc.units.dimensionless:
             warn(f"'distance' dataset in {nx_class} is missing "
                  f"units attribute, skipping loading {name} position")

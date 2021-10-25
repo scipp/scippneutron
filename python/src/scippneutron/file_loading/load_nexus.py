@@ -52,11 +52,10 @@ def _load_instrument_name(instrument_groups: List[Group], nexus: LoadFromNexus) 
     try:
         if len(instrument_groups) > 1:
             warn(f"More than one {nx_instrument} found in file, "
-                 f"loading name from {instrument_groups[0].group.name} only")
+                 f"loading name from {instrument_groups[0].name} only")
         return {
             "instrument_name":
-            sc.scalar(
-                value=nexus.load_scalar_string(instrument_groups[0].group, "name"))
+            sc.scalar(value=nexus.load_scalar_string(instrument_groups[0], "name"))
         }
     except MissingDataset:
         return {}
@@ -66,10 +65,9 @@ def _load_chopper(chopper_groups: List[Group], nexus: LoadFromNexus) -> Dict:
     choppers = {}
     for chopper_group in chopper_groups:
         chopper_name = chopper_group.name.split("/")[-1]
-        rotation_speed = nexus.load_dataset(group=chopper_group.group,
+        rotation_speed = nexus.load_dataset(group=chopper_group,
                                             dataset_name="rotation_speed")
-        distance = nexus.load_dataset(group=chopper_group.group,
-                                      dataset_name="distance")
+        distance = nexus.load_dataset(group=chopper_group, dataset_name="distance")
         choppers[chopper_name] = sc.DataArray(data=sc.scalar(value=chopper_name),
                                               attrs={
                                                   "rotation_speed": rotation_speed,
@@ -97,7 +95,7 @@ def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:
     try:
         return {
             "experiment_title":
-            sc.scalar(value=nexus.load_scalar_string(entry_group.group, "title"))
+            sc.scalar(value=nexus.load_scalar_string(entry_group, "title"))
         }
     except MissingDataset:
         return {}
@@ -107,8 +105,7 @@ def _load_start_and_end_time(entry_group: Group, nexus: LoadFromNexus) -> Dict:
     times = {}
     for time in ["start_time", "end_time"]:
         try:
-            times[time] = sc.scalar(
-                value=nexus.load_scalar_string(entry_group.group, time))
+            times[time] = sc.scalar(value=nexus.load_scalar_string(entry_group, time))
         except MissingDataset:
             pass
     return times
