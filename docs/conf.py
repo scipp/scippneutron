@@ -125,7 +125,8 @@ html_theme_options = {
     "path_to_docs": "docs",
     "use_repository_button": True,
     "use_issues_button": True,
-    "use_edit_page_button": True
+    "use_edit_page_button": True,
+    "show_toc_level": 2,  # Show subheadings in secondary sidebar
 }
 html_logo = "_static/logo.png"
 html_favicon = "_static/favicon.ico"
