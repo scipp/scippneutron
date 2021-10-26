@@ -7,12 +7,15 @@ from ._detector_data import load_detector_data
 
 
 def _load_data_from_histogram_mode_monitor(group: Group, nexus: LoadFromNexus):
-    dims = nexus.get_string_attribute(nexus.get_child_from_group(group, "data"),
-                                      "axes").split(",")
+    data_group = nexus.get_child_from_group(group, "data")
+    if data_group is not None:
+        dims = nexus.get_string_attribute(data_group, "axes").split(",")
 
-    data = nexus.load_dataset(group, "data", dimensions=dims)
-    coords = {dim: nexus.load_dataset(group, dim, dimensions=[dim]) for dim in dims}
-    return sc.DataArray(data=data, coords=coords)
+        data = nexus.load_dataset(group, "data", dimensions=dims)
+        coords = {dim: nexus.load_dataset(group, dim, dimensions=[dim]) for dim in dims}
+        return sc.DataArray(data=data, coords=coords)
+    else:
+        return sc.DataArray(data=sc.Variable(dims=[], values=[]), coords={})
 
 
 def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict:

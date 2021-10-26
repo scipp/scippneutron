@@ -141,6 +141,11 @@ class LoadFromHdf5:
             dataset = group[dataset_name]
         except KeyError:
             raise MissingDataset()
+
+        if type(dataset) != h5py.Dataset:
+            raise MissingDataset(f"Attempted to load a non-dataset type "
+                                 f"({type(dataset)}) as a dataset.")
+
         if dtype is None:
             dtype = _ensure_supported_int_type(dataset.dtype.type)
         variable = sc.empty(dims=dimensions,
@@ -258,7 +263,7 @@ class LoadFromHdf5:
         try:
             val = node.attrs[attribute_name]
         except KeyError:
-            raise MissingAttribute
+            raise MissingAttribute(f"Missing attribute named {attribute_name}")
 
         return _ensure_str(val, LoadFromHdf5.get_attr_encoding(node, attribute_name))
 
