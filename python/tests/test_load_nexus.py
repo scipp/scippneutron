@@ -1016,14 +1016,13 @@ def test_skips_component_position_with_multi_value_log_transformation(
                                     time_units="s",
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
-    with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
+    loaded_data = load_function(builder)
 
     # Loading component position from transformations recorded as
     # NXlogs with multiple values is not yet implemented
     # However the NXlog itself will be loaded
     # (loaded_data is not None)
-    assert f"{component_name}_position" not in loaded_data.keys()
+    assert f"{component_name}_position" in loaded_data.keys()
 
 
 @pytest.mark.parametrize("component_class,component_name",
