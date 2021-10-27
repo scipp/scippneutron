@@ -15,7 +15,7 @@ def _load_data_from_histogram_mode_monitor(group: Group, nexus: LoadFromNexus):
         coords = {dim: nexus.load_dataset(group, dim, dimensions=[dim]) for dim in dims}
         return sc.DataArray(data=data, coords=coords)
     else:
-        return sc.DataArray(data=sc.Variable(dims=[], values=[]), coords={})
+        return None
 
 
 def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict:
@@ -33,6 +33,10 @@ def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict
                           f"ignored.")
         else:
             data = _load_data_from_histogram_mode_monitor(group, nexus)
-            monitor_data[monitor_name] = sc.scalar(value=data)
+            if data is not None:
+                monitor_data[monitor_name] = sc.scalar(value=data)
+            else:
+                warnings.warn(f"No event-mode or histogram-mode monitor data found for "
+                              f"NXMonitor group {group.name}. Skipping this group.")
 
     return monitor_data

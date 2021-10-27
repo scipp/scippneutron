@@ -142,9 +142,9 @@ class LoadFromHdf5:
         except KeyError:
             raise MissingDataset()
 
-        if type(dataset) != h5py.Dataset:
-            raise MissingDataset(f"Attempted to load a non-dataset type "
-                                 f"({type(dataset)}) as a dataset.")
+        if self.is_group(dataset):
+            raise MissingDataset(f"Attempted to load a group "
+                                 f"({dataset_name}) as a dataset.")
 
         if dtype is None:
             dtype = _ensure_supported_int_type(dataset.dtype.type)
