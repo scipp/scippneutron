@@ -182,11 +182,10 @@ def _append_translation(offset: np.ndarray, transform: GroupObject,
     # -1 as describes passive transformation
     vectors = sc.vector(
         value=direction_unit_vector) * sc.scalar(-1.0) * loaded_transform_m
-    print(f"vectors = {vectors}")
     offset_vectors = vectors + sc.vector(value=offset, unit=sc.units.m)
-    print(f"offset_vectors = {offset_vectors}")
     offset_vector = offset_vectors.values[0]
     matrix = np.block([[np.identity(3), offset_vector[np.newaxis].T], [0., 0., 0., 1.]])
+
     transformations.append(matrix)
 
 
