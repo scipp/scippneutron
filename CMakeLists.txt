@@ -55,6 +55,11 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
+option(FULL_BUILD
+       "Enable full build where the 'all' target includes tests and benchmarks."
+       OFF
+)
+
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
 
