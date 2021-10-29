@@ -65,14 +65,18 @@ def _load_chopper(chopper_groups: List[Group], nexus: LoadFromNexus) -> Dict:
     choppers = {}
     for chopper_group in chopper_groups:
         chopper_name = chopper_group.name.split("/")[-1]
-        rotation_speed = nexus.load_dataset(group=chopper_group,
-                                            dataset_name="rotation_speed")
-        distance = nexus.load_dataset(group=chopper_group, dataset_name="distance")
-        choppers[chopper_name] = sc.DataArray(data=sc.scalar(value=chopper_name),
-                                              attrs={
-                                                  "rotation_speed": rotation_speed,
-                                                  "distance": distance
-                                              })
+        try:
+            rotation_speed = nexus.load_dataset(group=chopper_group,
+                                                dataset_name="rotation_speed")
+            distance = nexus.load_dataset(group=chopper_group, dataset_name="distance")
+            choppers[chopper_name] = sc.DataArray(data=sc.scalar(value=chopper_name),
+                                                  attrs={
+                                                      "rotation_speed": rotation_speed,
+                                                      "distance": distance
+                                                  })
+        except MissingDataset as e:
+            warn(f"Skipped loading chopper {chopper_name} because "
+                 f"{e.__class__.__name__}: {e}")
 
     return choppers
 
