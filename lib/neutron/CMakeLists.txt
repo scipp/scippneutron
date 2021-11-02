@@ -29,3 +29,7 @@ set_target_properties(${TARGET_NAME} PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 add_subdirectory(test)
 
 scipp_install_component(TARGET ${TARGET_NAME})
+
+if(COVERAGE)
+  append_coverage_compiler_flags()
+endif()

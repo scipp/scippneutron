@@ -20,3 +20,7 @@ pybind11_strip(_scippneutron)
 pybind11_extension(_scippneutron)
 
 install(TARGETS _scippneutron DESTINATION ${PYTHONDIR})
+
+if(COVERAGE)
+  append_coverage_compiler_flags()
+endif()

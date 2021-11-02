@@ -133,13 +133,37 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 # Custom target for building tests. all excludes tests by default
 add_custom_target(all-tests)
 
-set(EXPORT_NAME ${PROJECT_NAME}-targets)
+option(COVERAGE "Enable code coverage run." OFF)
+if(COVERAGE)
+  include(CodeCoverage)
+  configure_file(
+    ${CMAKE_SOURCE_DIR}/tools/run-tests.sh.in
+    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run-tests.sh" COPYONLY
+  )
+  set(COVERAGE_EXCLUDES "/*/include/scipp/*" "/usr/*" "/*conan/data*"
+                        "/*miniconda*"
+  )
+  setup_target_for_coverage_lcov(
+    NAME
+    coverage
+    EXECUTABLE
+    sh
+    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run-tests.sh"
+    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+    "${CMAKE_SOURCE_DIR}/tests"
+    DEPENDENCIES
+    install-scippneutron
+    all-tests
+  )
+endif()
 
 if(NOT APPLE)
   set(CMAKE_INSTALL_RPATH $ORIGIN)
 else()
   set(CMAKE_INSTALL_RPATH @loader_path)
 endif()
+
+set(EXPORT_NAME ${PROJECT_NAME}-targets)
 
 if(DYNAMIC_LIB)
   install(
