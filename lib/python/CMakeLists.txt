@@ -19,5 +19,4 @@ set_target_properties(
 pybind11_strip(_scippneutron)
 pybind11_extension(_scippneutron)
 
-install(DIRECTORY "src/scippneutron/" DESTINATION ${PYTHONDIR})
 install(TARGETS _scippneutron DESTINATION ${PYTHONDIR})
