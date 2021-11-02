@@ -60,8 +60,8 @@ conan_add_remote(
   NAME scipp URL https://artifactoryconan.esss.dk/artifactory/api/conan/scipp
 )
 conan_cmake_install(
-  PATH_OR_REFERENCE ${CMAKE_CURRENT_SOURCE_DIR} SETTINGS ${conan_settings} BUILD
-  outdated
+  PATH_OR_REFERENCE ${CMAKE_CURRENT_SOURCE_DIR} SETTINGS ${conan_settings}
+  BUILD outdated
 )
 
 find_package(Boost 1.67 REQUIRED)
@@ -94,7 +94,8 @@ execute_process(
   COMMAND git describe --tag
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
   RESULT_VARIABLE HAVE_GIT_VERSION_INFO
-  OUTPUT_VARIABLE GIT_VERSION_INFO OUTPUT_STRIP_TRAILING_WHITESPACE
+  OUTPUT_VARIABLE GIT_VERSION_INFO
+  OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 if(${HAVE_GIT_VERSION_INFO} EQUAL 0)
   message(STATUS "Got version from Git: ${GIT_VERSION_INFO}")
