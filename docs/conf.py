@@ -188,7 +188,7 @@ texinfo_documents = [
 # -- Options for Matplotlib in notebooks ----------------------------------
 
 nbsphinx_execute_arguments = [
-    "--Session.metadata='scipp_docs_build=True'",
+    "--Session.metadata=scipp_docs_build=True",
 ]
 
 # -- Options for doctest --------------------------------------------------
