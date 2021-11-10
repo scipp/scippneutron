@@ -627,7 +627,7 @@ def convert_EventWorkspace_to_data_array(ws,
         if load_pulse_times:
             pulse_times['event',
                         current:current + size].values = sp.getPulseTimesAsNumpy()
-        if _contains_weighted_events(ws.getSpectrum(i)):
+        if _contains_weighted_events(sp):
             weights['event', current:current + size].values = sp.getWeights()
             weights['event', current:current + size].variances = sp.getWeightErrors()
         begins.values[i] = current
