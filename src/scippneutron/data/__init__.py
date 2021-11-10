@@ -20,6 +20,7 @@ def _make_pooch():
             'iris26176_graphite002_sqw.nxs': 'md5:7ea63f9137602b7e9b604fe30f0c6ec2',
             'loki-at-larmor.hdf5': 'md5:6691ef98406bd4d526e2131ece3c8d69',
             'powder-event.h5': 'md5:b8ad26eb3efc2159687134a5396a2671',
+            'mcstas_sans.h5': 'md5:a608255dd757905490882eb35e209d12',
             'CNCS_51936_event.nxs': 'md5:5ba401e489260a44374b5be12b780911',
             'GEM40979.raw': 'md5:6df0f1c2fc472af200eec43762e9a874',
             'PG3_4844_calibration.h5': 'md5:290f5108aa9ff0b1c5a2ac8dc2c1cb15',
