@@ -17,7 +17,7 @@ Features
 Bugfixes
 ~~~~~~~~
 
-* Fix bug that loaded weighted events without their weights `#211 <https://github.com/scipp/scippneutron/pull/211>`_.
+* Fix bug in ``load`` that loaded weighted events without their weights if the first spectrum is empty `#211 <https://github.com/scipp/scippneutron/pull/211>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
