@@ -69,7 +69,7 @@ find_package(Eigen3 REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 find_package(Python 3.7 REQUIRED COMPONENTS Interpreter Development)
 find_package(pybind11 CONFIG REQUIRED)
-find_package(scipp 0.8 REQUIRED)
+find_package(scipp 0.9 REQUIRED)
 find_package(LLNL-Units REQUIRED)
 
 # MP : Parallel compile, add before any targets so all use it
