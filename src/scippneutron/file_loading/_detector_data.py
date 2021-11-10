@@ -240,8 +240,9 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, detector_data: Detecto
     # institutions. We try to make sure here that it is what would be the first index of
     # the next pulse. In other words, ensure that event_index includes the bin edge for
     # the last pulse.
-    ends = sc.concatenate(event_index[_pulse_dimension, 1:],
-                          sc.scalar(number_of_event_ids), _pulse_dimension)
+    ends = sc.concat(
+        [event_index[_pulse_dimension, 1:],
+         sc.scalar(number_of_event_ids)], _pulse_dimension)
 
     try:
         binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
@@ -345,11 +346,8 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
             da.coords['position'] = data.pixel_positions
         return da
 
-    events = _bin_events(detectors.pop(0))
-
-    while detectors:
-        _dim = _detector_dimension if bin_by_pixel else _bank_dimension
-        events = sc.concatenate(events, _bin_events(detectors.pop(0)), dim=_dim)
+    _dim = _detector_dimension if bin_by_pixel else _bank_dimension
+    events = sc.concat([_bin_events(item) for item in detectors], _dim)
 
     if bin_by_pixel:
         event_tofs = events.events.coords[_time_of_flight]
@@ -365,8 +363,8 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
         else:
             if _max_tof.value != np.finfo(type(_max_tof.value)).max:
                 _max_tof.value = np.nextafter(_max_tof.value, float("inf"))
-        events.coords[_time_of_flight] = sc.concatenate(_min_tof, _max_tof,
-                                                        _time_of_flight)
+        events.coords[_time_of_flight] = sc.concat([_min_tof, _max_tof],
+                                                   _time_of_flight)
 
     return events
 

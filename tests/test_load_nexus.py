@@ -1815,7 +1815,9 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
         end=sc.array(dims=["pulse"], values=[3, 3, 5], dtype=sc.dtype.int64),
     )
 
-    expected = sc.DataArray(data=binned,
+    # Even if there is just a single NXevent_data entry in the file the
+    # output has a `bank` dimension, for consistency.
+    expected = sc.DataArray(data=sc.concat([binned], 'bank'),
                             coords={
                                 "pulse_time":
                                 sc.Variable(dims=["pulse"],
