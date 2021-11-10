@@ -17,6 +17,7 @@ requirements:
     - tbb-devel
   run:
     - pooch
+    - python {{ python }}
     - scipp {{ scipp }}
     - h5py
     - scipy
