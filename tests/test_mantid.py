@@ -665,6 +665,29 @@ class TestMantidConversion(unittest.TestCase):
         mtd.clear()
 
 
+@pytest.mark.skipif(not memory_is_at_least_gb(8), reason='Insufficient virtual memory')
+@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
+def test_load_mcstas_data():
+    import mantid.simpleapi as mantid
+    wsg = mantid.LoadMcStas(scn.data.get_path('mcstas_sans.h5'),
+                            OutputWorkspace="test_mcstas_sans_wsg")
+    ws = wsg[list(wsg.getNames()).index('EventData_test_mcstas_sans_wsg')]
+    da = scn.from_mantid(ws)
+
+    for i in range(ws.getNumberHistograms()):
+        np.testing.assert_array_equal(da.coords['tof'].values, ws.readX(i))
+        spec = ws.getSpectrum(i)
+        da_spec = da['tof', 0]['spectrum', i]
+        bin_sizes = da_spec.bins.size()
+        assert spec.getNumberEvents() == bin_sizes.value
+
+        np.testing.assert_array_equal(spec.getTofs(),
+                                      da_spec.bins.coords['tof'].values.values)
+        np.testing.assert_array_equal(spec.getPulseTimesAsNumpy(),
+                                      da_spec.bins.coords['pulse_time'].value.values)
+        np.testing.assert_array_equal(spec.getWeights(), da_spec.bins.data.value.values)
+
+
 def test_to_rot_from_vectors():
     a = sc.vector(value=[1, 0, 0])
     b = sc.vector(value=[0, 1, 0])
