@@ -433,13 +433,8 @@ def test_convert_tof_to_energy_transfer_direct():
 
 
 def make_unphysical_tof(t0, da):
-    tof = sc.concatenate(
-        sc.concatenate(
-            t0 - t0 / 2,  # 0 < t < t0
-            sc.full_like(t0, -2),  # t < 0
-            'tof'),
-        2 * t0,  # t > t0
-        'tof')
+    # 0 < t < t0, t < 0, t > t0
+    tof = sc.concat([t0 - t0 / 2, sc.full_like(t0, -2), 2 * t0], 'tof')
     is_unphysical = sc.array(dims=['energy_transfer'],
                              values=[True, True,
                                      False]).broadcast(['energy_transfer', 'spectrum'],
