@@ -591,13 +591,16 @@ def convert_Workspace2D_to_data_array(ws,
     return array
 
 
+def _contains_weighted_events(spectrum) -> bool:
+    from mantid.api import EventType
+    return spectrum.getEventType() in (EventType.WEIGHTED, EventType.WEIGHTED_NOTIME)
+
+
 def convert_EventWorkspace_to_data_array(ws,
                                          load_pulse_times=True,
                                          advanced_geometry=False,
                                          load_run_logs=True,
                                          **ignored):
-    from mantid.api import EventType
-
     dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
     spec_dim, spec_coord = init_spec_axis(ws)
     nHist = ws.getNumberHistograms()
@@ -614,10 +617,6 @@ def convert_EventWorkspace_to_data_array(ws,
         dims=['event'], shape=[n_event], dtype=sc.dtype.datetime64,
         unit=sc.units.ns) if load_pulse_times else None
 
-    evtp = ws.getSpectrum(0).getEventType()
-    contains_weighted_events = ((evtp == EventType.WEIGHTED)
-                                or (evtp == EventType.WEIGHTED_NOTIME))
-
     begins = sc.zeros(dims=[spec_dim, dim], shape=[nHist, 1], dtype=sc.dtype.int64)
     ends = begins.copy()
     current = 0
@@ -628,7 +627,7 @@ def convert_EventWorkspace_to_data_array(ws,
         if load_pulse_times:
             pulse_times['event',
                         current:current + size].values = sp.getPulseTimesAsNumpy()
-        if contains_weighted_events:
+        if _contains_weighted_events(sp):
             weights['event', current:current + size].values = sp.getWeights()
             weights['event', current:current + size].variances = sp.getWeightErrors()
         begins.values[i] = current
