@@ -3,8 +3,16 @@
 Release Notes
 =============
 
-Since v0.4.0
+Since v0.4.1
 ------------
+
+v0.4.1 (November 2021)
+---------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix bug in ``load`` that loaded weighted events without their weights if the first spectrum is empty `#211 <https://github.com/scipp/scippneutron/pull/211>`_.
 
 v0.4.0 (October 2021)
 ---------------------
@@ -13,11 +21,6 @@ Features
 ~~~~~~~~
 
 * Add ``tof.conversions`` module with building blocks for custom coordinate transformation graphs `#187 <https://github.com/scipp/scipp/pull/187>`_.
-
-Bugfixes
-~~~~~~~~
-
-* Fix bug in ``load`` that loaded weighted events without their weights if the first spectrum is empty `#211 <https://github.com/scipp/scippneutron/pull/211>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
