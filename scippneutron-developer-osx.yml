@@ -47,7 +47,7 @@ dependencies:
   - ipython
   - pandoc
   - pooch
-  - sphinx
+  - sphinx = 4.2.0
   - sphinx-book-theme
   - nbsphinx
   - python-graphviz
