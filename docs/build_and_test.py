@@ -21,11 +21,9 @@ with tempfile.TemporaryDirectory() as build_dir:
         ],
                               stderr=subprocess.STDOUT,
                               shell=shell)
-
-    with tempfile.TemporaryDirectory() as work_dir:
         subprocess.check_call([
             'python', 'build_docs.py', '--builder=doctest', f'--prefix={build_dir}',
-            f'--work_dir={work_dir}', '--no-setup'
+            f'--work_dir={work_dir}'
         ],
                               stderr=subprocess.STDOUT,
                               shell=shell)
