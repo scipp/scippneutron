@@ -348,9 +348,8 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
     events = sc.concat([_bin_events(item) for item in detectors], _dim)
 
     if bin_by_pixel:
-        event_tofs = events.bins.constituents['data'].coords[_time_of_flight]
-        _min_tof = event_tofs.min()
-        _max_tof = event_tofs.max()
+        _min_tof = events.bins.coords[_time_of_flight].min()
+        _max_tof = events.bins.coords[_time_of_flight].max()
         # This can happen if there were no events in the file at all as sc.min will
         # return double_max and sc.max will return double_min
         if _min_tof.value >= _max_tof.value:
