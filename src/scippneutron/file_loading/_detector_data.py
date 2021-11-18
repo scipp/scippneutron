@@ -207,7 +207,7 @@ def _load_event_group(group: Group,
                       select=...) -> DetectorData:
     _check_for_missing_fields(group, nexus)
 
-    max_index = group["event_id"].shape[0]
+    max_index = group["event_index"].shape[0]
     single = False
     if select is Ellipsis:
         index = select
@@ -226,7 +226,7 @@ def _load_event_group(group: Group,
         group, "event_index", index)
     pulse_times = _load_pulse_times(group, nexus, index)
 
-    number_of_event_ids = max_index
+    number_of_event_ids = group["event_id"].shape[0]
     event_index[event_index < 0] = number_of_event_ids
 
     event_select = slice(event_index[0], event_index[-1] if last_loaded else max_index)
