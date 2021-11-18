@@ -327,10 +327,8 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
         # (because they are recorded chronologically)
         # but for reduction it is more useful to bin by detector id
         # Broadcast pulse times to events
-        data.event_data.events.coords['pulse_time'] = sc.empty(
-            sizes=data.event_data.events.sizes, dtype='datetime64', unit='ns')
-        data.event_data.bins.coords['pulse_time'][
-            ...] = data.event_data.coords['pulse_time']
+        data.event_data.bins.coords['pulse_time'] = sc.bins_like(
+            data.event_data, fill_value=data.event_data.coords['pulse_time'])
         # TODO Look into using `erase=[_pulse_dimension]` instead of binning
         # underlying buffer. Must prove that performance can be unaffected.
         da = sc.bin(data.event_data.bins.constituents['data'],
@@ -350,9 +348,8 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
     events = sc.concat([_bin_events(item) for item in detectors], _dim)
 
     if bin_by_pixel:
-        event_tofs = events.events.coords[_time_of_flight]
-        _min_tof = event_tofs.min()
-        _max_tof = event_tofs.max()
+        _min_tof = events.bins.coords[_time_of_flight].min()
+        _max_tof = events.bins.coords[_time_of_flight].max()
         # This can happen if there were no events in the file at all as sc.min will
         # return double_max and sc.max will return double_min
         if _min_tof.value >= _max_tof.value:

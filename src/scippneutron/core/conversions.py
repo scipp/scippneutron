@@ -11,13 +11,13 @@ import scipp.constants as const
 
 def _elem_unit(var):
     if var.bins is not None:
-        return var.events.unit
+        return var.bins.constituents['data'].unit
     return var.unit
 
 
 def _elem_dtype(var):
     if var.bins is not None:
-        return var.events.dtype
+        return var.bins.constituents['data'].dtype
     return var.dtype
 
 
