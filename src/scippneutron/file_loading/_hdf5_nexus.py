@@ -128,7 +128,8 @@ class LoadFromHdf5:
                      group: h5py.Group,
                      dataset_name: str,
                      dimensions: Optional[List[str]] = [],
-                     dtype: Optional[Any] = None) -> sc.Variable:
+                     dtype: Optional[Any] = None,
+                     index=...) -> sc.Variable:
         """
         Load an HDF5 dataset into a Scipp Variable (array or scalar)
         :param group: Group containing dataset to load
@@ -148,19 +149,25 @@ class LoadFromHdf5:
 
         if dtype is None:
             dtype = _ensure_supported_int_type(dataset.dtype.type)
-        variable = sc.empty(dims=dimensions,
-                            shape=dataset.shape,
-                            dtype=dtype,
-                            unit=self.get_unit(dataset))
+        if index is Ellipsis:
+            variable = sc.empty(dims=dimensions,
+                                shape=dataset.shape,
+                                dtype=dtype,
+                                unit=self.get_unit(dataset))
+            if variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
+                dataset.read_direct(variable.values)
+            else:
+                variable.values = dataset
+            return variable
+        return sc.array(dims=dimensions,
+                        dtype=dtype,
+                        unit=self.get_unit(dataset),
+                        values=dataset[index])
 
-        if variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
-            dataset.read_direct(variable.values)
-        else:
-            variable.values = dataset
-        return variable
-
-    def load_dataset_from_group_as_numpy_array(self, group: h5py.Group,
-                                               dataset_name: str):
+    def load_dataset_from_group_as_numpy_array(self,
+                                               group: h5py.Group,
+                                               dataset_name: str,
+                                               index=...):
         """
         Load a dataset into a numpy array
         Prefer use of load_dataset to load directly to a scipp variable,
@@ -173,10 +180,10 @@ class LoadFromHdf5:
             dataset = group[dataset_name]
         except KeyError:
             raise MissingDataset()
-        return self.load_dataset_as_numpy_array(dataset)
+        return self.load_dataset_as_numpy_array(dataset, index)
 
     @staticmethod
-    def load_dataset_as_numpy_array(dataset: h5py.Dataset):
+    def load_dataset_as_numpy_array(dataset: h5py.Dataset, index=...):
         """
         Load a dataset into a numpy array
         Prefer use of load_dataset to load directly to a scipp variable,
@@ -184,7 +191,7 @@ class LoadFromHdf5:
         numpy array is required.
         :param dataset: The dataset to load values from
         """
-        return dataset[...].astype(_ensure_supported_int_type(dataset.dtype.type))
+        return dataset[index].astype(_ensure_supported_int_type(dataset.dtype.type))
 
     @staticmethod
     def get_dataset_numpy_dtype(group: h5py.Group, dataset_name: str) -> Any:

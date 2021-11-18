@@ -100,13 +100,18 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,
 
 
 def _load_log_data_from_group(group: Group,
-                              nexus: LoadFromNexus) -> Tuple[str, sc.Variable]:
+                              nexus: LoadFromNexus,
+                              select = ...) -> Tuple[str, sc.Variable]:
     property_name = nexus.get_name(group)
     value_dataset_name = "value"
     time_dataset_name = "time"
+    if select is Ellipsis:
+        index = select
+    else:
+        key, index = select
 
     try:
-        values = nexus.load_dataset_from_group_as_numpy_array(group, value_dataset_name)
+        values = nexus.load_dataset_from_group_as_numpy_array(group, value_dataset_name, index=index)
     except MissingDataset:
         if nexus.contains_stream(group):
             raise SkipSource("Log is missing value dataset but contains stream")
@@ -126,7 +131,7 @@ def _load_log_data_from_group(group: Group,
     try:
         dimension_label = "time"
         is_time_series = True
-        raw_times = nexus.load_dataset(group, time_dataset_name, [dimension_label])
+        raw_times = nexus.load_dataset(group, time_dataset_name, [dimension_label], index=index)
 
         time_dataset = nexus.get_dataset_from_group(group, time_dataset_name)
         try:
@@ -157,11 +162,15 @@ def _load_log_data_from_group(group: Group,
                         f"this is not yet implemented")
 
     if np.ndim(values) == 0:
+        if select is not Ellipsis:
+            raise TypeError('')
         property_data = sc.scalar(values,
                                   unit=unit,
                                   dtype=nexus.get_dataset_numpy_dtype(
                                       group, value_dataset_name))
     else:
+        if select is not Ellipsis and key != dimension_label:
+            raise KeyError('')
         property_data = sc.Variable(values=values,
                                     unit=unit,
                                     dims=[dimension_label],
