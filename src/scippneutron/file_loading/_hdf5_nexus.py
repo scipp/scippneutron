@@ -160,9 +160,8 @@ class LoadFromHdf5:
                 variable.values = dataset
             return variable
         return sc.array(dims=dimensions,
-                        dtype=dtype,
                         unit=self.get_unit(dataset),
-                        values=dataset[index])
+                        values=dataset[index].astype(dtype))
 
     def load_dataset_from_group_as_numpy_array(self,
                                                group: h5py.Group,

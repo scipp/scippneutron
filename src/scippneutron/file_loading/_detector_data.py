@@ -16,8 +16,8 @@ from ._nexus import LoadFromNexus
 _bank_dimension = "bank"
 _detector_dimension = "detector_id"
 _event_dimension = "event"
-_pulse_dimension = "pulse"
-_pulse_time = "pulse_time"
+_pulse_dimension = "time"
+_pulse_time = "time"
 _time_of_flight = "tof"
 
 
@@ -149,12 +149,13 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
                         })
 
 
-def _load_pulse_times(group: Group, nexus: LoadFromNexus) -> sc.Variable:
+def _load_pulse_times(group: Group, nexus: LoadFromNexus, index=...) -> sc.Variable:
     time_zero_group = "event_time_zero"
 
     event_time_zero = nexus.load_dataset(group,
                                          time_zero_group,
-                                         dimensions=[_pulse_dimension])
+                                         dimensions=[_pulse_dimension],
+                                         index=index)
 
     try:
         pulse_times = sc.to_unit(event_time_zero, sc.units.ns, copy=False)
@@ -199,19 +200,46 @@ def _load_detector(group: Group, nexus: LoadFromNexus) -> DetectorData:
     return DetectorData(detector_ids=detector_ids, pixel_positions=pixel_positions)
 
 
-def _load_event_group(group: Group, nexus: LoadFromNexus, detector_data: DetectorData,
-                      quiet: bool) -> DetectorData:
+def _load_event_group(group: Group,
+                      nexus: LoadFromNexus,
+                      detector_data: DetectorData,
+                      quiet: bool,
+                      select=...) -> DetectorData:
     _check_for_missing_fields(group, nexus)
 
-    event_id = nexus.load_dataset(group, "event_id", [_event_dimension])
-    number_of_event_ids = event_id.sizes[_event_dimension]
-    event_index = nexus.load_dataset_from_group_as_numpy_array(group, "event_index")
-    # Some files contain uint64 "max" indices, which turn into negatives during
-    # conversion to int64. This is a hack to get arround this.
+    max_index = group["event_id"].shape[0]
+    single = False
+    if select is Ellipsis:
+        index = select
+        last_loaded = False
+    else:
+        key, index = select
+        if isinstance(index, int):
+            index = slice(index, None if index + 2 > max_index else index + 2)
+            single = True
+        elif isinstance(index.stop, int):
+            index = slice(index.start,
+                          None if index.stop + 1 > max_index else index.stop + 1)
+        last_loaded = isinstance(index.stop, int)
+
+    event_index = nexus.load_dataset_from_group_as_numpy_array(
+        group, "event_index", index)
+    pulse_times = _load_pulse_times(group, nexus, index)
+
+    number_of_event_ids = max_index
     event_index[event_index < 0] = number_of_event_ids
 
-    event_time_offset = nexus.load_dataset(group, "event_time_offset",
-                                           [_event_dimension])
+    event_select = slice(event_index[0], event_index[-1] if last_loaded else max_index)
+
+    # Some files contain uint64 "max" indices, which turn into negatives during
+    # conversion to int64. This is a hack to get arround this.
+    event_id = nexus.load_dataset(group,
+                                  "event_id", [_event_dimension],
+                                  index=event_select)
+
+    event_time_offset = nexus.load_dataset(group,
+                                           "event_time_offset", [_event_dimension],
+                                           index=event_select)
 
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
@@ -230,31 +258,36 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, detector_data: Detecto
         event_id.dtype if detector_data.detector_ids is None else
         detector_data.detector_ids.dtype, event_id.dtype)
 
+    if not last_loaded:
+        event_index = np.append(event_index, number_of_event_ids)
+
     event_index = sc.array(dims=[_pulse_dimension],
                            values=event_index,
                            dtype=sc.DType.int64)
-    pulse_times = _load_pulse_times(group, nexus)
 
-    begins = event_index
+    event_index -= event_index.min()
+
     # There is some variation in the last recorded event_index in files from different
     # institutions. We try to make sure here that it is what would be the first index of
     # the next pulse. In other words, ensure that event_index includes the bin edge for
     # the last pulse.
-    ends = sc.concat(
-        [event_index[_pulse_dimension, 1:],
-         sc.scalar(number_of_event_ids)], _pulse_dimension)
+    begins = event_index[_pulse_dimension, :-1]
+    ends = event_index[_pulse_dimension, 1:]
+    if single:
+        begins = begins[_pulse_dimension, 0]
+        ends = ends[_pulse_dimension, 0]
 
     try:
         binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
     except sc.SliceError:
         raise BadSource(f"Event index in NXEvent at {group.name}/event_index was not"
-                        f"ordered. The index must be ordered to load pulse times.")
+                        f" ordered. The index must be ordered to load pulse times.")
 
     detector_data.event_data = sc.DataArray(data=binned,
                                             coords={"pulse_time": pulse_times})
 
     if not quiet:
-        print(f"Loaded event data from "
+        print(f"Loaded {len(event_id)} events from "
               f"{group.name} containing {number_of_event_ids} events")
 
     return detector_data

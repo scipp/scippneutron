@@ -4,4 +4,4 @@
 
 # flake8: noqa
 
-from .nexus import File, Group, open_nexus
+from .nexus import File, Group
