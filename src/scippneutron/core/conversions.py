@@ -21,6 +21,17 @@ def _elem_dtype(var):
     return var.dtype
 
 
+def _float_dtype(var):
+    dtype = _elem_dtype(var)
+    if dtype == sc.dtype.float32:
+        return sc.dtype.float32
+    return sc.dtype.float64
+
+
+def _as_float_type(var, ref):
+    return var.astype(_float_dtype(ref), copy=False)
+
+
 def _total_beam_length_no_scatter(source_position, position):
     return sc.norm(position - source_position)
 
@@ -55,15 +66,14 @@ def _wavelength_from_tof(tof, Ltotal):
     c = sc.to_unit(const.h / const.m_n,
                    sc.units.angstrom * _elem_unit(Ltotal) / _elem_unit(tof),
                    copy=False)
-    return (c / Ltotal).astype(_elem_dtype(tof), copy=False) * tof
+    return _as_float_type(c / Ltotal, tof) * tof
 
 
 def _dspacing_from_tof(tof, Ltotal, two_theta):
     c = sc.to_unit(2 * const.m_n / const.h,
                    _elem_unit(tof) / sc.units.angstrom / _elem_unit(Ltotal),
                    copy=False)
-    return 1 / (c * Ltotal * sc.sin(two_theta / 2)).astype(_elem_dtype(tof),
-                                                           copy=False) * tof
+    return 1 / _as_float_type(c * Ltotal * sc.sin(two_theta / 2), tof) * tof
 
 
 def _energy_constant(energy_unit, tof, length):
@@ -85,15 +95,14 @@ def _common_dtype(a, b):
 
 def _energy_transfer_t0(energy, tof, length):
     dtype = _common_dtype(energy, tof)
-    c = _energy_constant(_elem_unit(energy), tof, length).astype(energy.dtype,
-                                                                 copy=False)
+    c = _as_float_type(_energy_constant(_elem_unit(energy), tof, length), energy)
     return length.astype(dtype, copy=False) * sc.sqrt(c / energy)
 
 
 def _energy_from_tof(tof, Ltotal):
     c = _energy_constant(sc.units.meV, tof, Ltotal)
-    return (c * Ltotal**2).astype(_elem_dtype(tof), copy=False) / tof**sc.scalar(
-        2, dtype='float32')
+    return _as_float_type(c * Ltotal**2, tof) / tof**sc.scalar(2,
+                                                               dtype=_elem_dtype(tof))
 
 
 def _energy_transfer_direct_from_tof(tof, L1, L2, incident_energy):
@@ -119,15 +128,16 @@ def _energy_transfer_indirect_from_tof(tof, L1, L2, final_energy):
 
 
 def _energy_from_wavelength(wavelength):
-    c = sc.to_unit(const.h**2 / 2 / const.m_n,
-                   sc.units.meV * _elem_unit(wavelength)**2).astype(
-                       _elem_dtype(wavelength), copy=False)
+    c = _as_float_type(
+        sc.to_unit(const.h**2 / 2 / const.m_n,
+                   sc.units.meV * _elem_unit(wavelength)**2), wavelength)
     return c / wavelength**2
 
 
 def _wavelength_from_energy(energy):
-    c = sc.to_unit(const.h**2 / 2 / const.m_n, sc.units.angstrom**2 *
-                   _elem_unit(energy)).astype(_elem_dtype(energy), copy=False)
+    c = _as_float_type(
+        sc.to_unit(const.h**2 / 2 / const.m_n,
+                   sc.units.angstrom**2 * _elem_unit(energy)), energy)
     return sc.sqrt(c / energy)
 
 
@@ -135,9 +145,8 @@ def _wavelength_Q_conversions(x, two_theta):
     """
     Convert either from Q to wavelength or vice-versa.
     """
-    dtype = _elem_dtype(x)
-    c = (4 * const.pi).astype(dtype)
-    return c * sc.sin(two_theta.astype(dtype, copy=False) / 2) / x
+    c = _as_float_type(4 * const.pi, x)
+    return c * sc.sin(_as_float_type(two_theta, x) / 2) / x
 
 
 def _Q_from_wavelength(wavelength, two_theta):
@@ -149,16 +158,16 @@ def _wavelength_from_Q(Q, two_theta):
 
 
 def _dspacing_from_wavelength(wavelength, two_theta):
-    dtype = _elem_dtype(wavelength)
-    c = sc.scalar(0.5, unit=sc.units.angstrom / _elem_unit(wavelength)).astype(dtype)
-    return c * wavelength / sc.sin(two_theta.astype(dtype, copy=False) / 2)
+    c = _as_float_type(sc.scalar(0.5, unit=sc.units.angstrom / _elem_unit(wavelength)),
+                       wavelength)
+    return c * wavelength / sc.sin(_as_float_type(two_theta, wavelength) / 2)
 
 
 def _dspacing_from_energy(energy, two_theta):
-    dtype = _elem_dtype(energy)
-    c = sc.to_unit(const.h**2 / 8 / const.m_n,
-                   sc.units.angstrom**2 * _elem_unit(energy)).astype(dtype)
-    return sc.sqrt(c / energy) / sc.sin(two_theta.astype(dtype, copy=False) / 2)
+    c = _as_float_type(
+        sc.to_unit(const.h**2 / 8 / const.m_n,
+                   sc.units.angstrom**2 * _elem_unit(energy)), energy)
+    return sc.sqrt(c / energy) / sc.sin(_as_float_type(two_theta, energy) / 2)
 
 
 _NO_SCATTER_GRAPH_KINEMATICS = {

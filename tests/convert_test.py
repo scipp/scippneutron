@@ -553,6 +553,47 @@ def test_convert_with_factor_type_promotion():
 
 
 @pytest.mark.parametrize('target', TOF_TARGET_DIMS)
+def test_convert_integer_input_elastic(target):
+    da_float_coord = make_test_data(coords=('tof', 'L1', 'L2', 'two_theta'))
+    da_int_coord = da_float_coord.copy()
+    da_int_coord.coords['tof'] = da_float_coord.coords['tof'].astype('int64')
+
+    res = scn.convert(da_int_coord, origin='tof', target=target, scatter=True)
+    expected = scn.convert(da_float_coord, origin='tof', target=target, scatter=True)
+    assert res.coords[target].dtype == sc.dtype.float64
+    assert sc.allclose(res.coords[target],
+                       expected.coords[target],
+                       rtol=1e-15 * sc.units.one)
+
+
+@pytest.mark.parametrize('input_energy', ('incident_energy', 'final_energy'))
+@pytest.mark.parametrize('input_dtypes', (('int64', 'float64'), ('float64', 'int64'),
+                                          ('int64', 'int64')))
+def test_convert_integer_input_inelastic(input_energy, input_dtypes):
+    da_float_coord = make_test_data(coords=('tof', 'L1', 'L2', 'two_theta'))
+    da_float_coord.coords[input_energy] = sc.scalar(35,
+                                                    dtype=sc.dtype.float64,
+                                                    unit=sc.units.meV)
+
+    da_int_coord = da_float_coord.copy()
+    for i, name in enumerate(('tof', input_energy)):
+        da_int_coord.coords[name] = da_float_coord.coords[name].astype(input_dtypes[i])
+
+    res = scn.convert(da_int_coord,
+                      origin='tof',
+                      target='energy_transfer',
+                      scatter=True)
+    expected = scn.convert(da_float_coord,
+                           origin='tof',
+                           target='energy_transfer',
+                           scatter=True)
+    assert res.coords['energy_transfer'].dtype == sc.dtype.float64
+    assert sc.allclose(res.coords['energy_transfer'],
+                       expected.coords['energy_transfer'],
+                       rtol=1e-14 * sc.units.one)
+
+
+@pytest.mark.parametrize('target', TOF_TARGET_DIMS)
 def test_convert_binned_events_converted(target):
     tof = make_test_data(coords=('Ltotal', 'two_theta'), dataset=True)
     del tof['counts']
