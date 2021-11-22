@@ -14,7 +14,7 @@ resources:
     name: scipp/pipelines
     type: github
     endpoint: scipp
-    ref: refs/tags/4.0.0
+    ref: env_file_from_conda_meta # refs/tags/4.0.0
 
 trigger:
   - main
@@ -29,15 +29,12 @@ extends:
   template: pipelines/stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
-    conda_channels: '--channel scipp --channel ess-dmsc'
+    conda_channels: 'conda-forge,scipp,ess-dmsc'
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
         py_versions: ['3.7']
-        conda_env: 'scippneutron-developer.yml'
       osx:
         py_versions: ['3.7']
-        conda_env: 'scippneutron-developer-osx.yml'
       windows:
         py_versions: ['3.7']
-        conda_env: 'scippneutron-developer-no-mantid.yml'
