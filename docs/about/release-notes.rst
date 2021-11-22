@@ -9,7 +9,7 @@ Since v0.4.1
 Bugfixes
 ~~~~~~~~
 
-* Change output dtype of ``convert`` to always be floating point, fixes incorrect truncation of the result to integer if, e.g. ``tof`` is an integer `#230 <https://github.com/scipp/scippneutron/pull/230>`_.
+* Change output dtype of graphs for coordinate transformations to always be floating point, fixes incorrect truncation of the result to integer if, e.g. ``tof`` is an integer (this also affects ``convert``) `#230 <https://github.com/scipp/scippneutron/pull/230>`_.
 
 v0.4.1 (November 2021)
 ----------------------
