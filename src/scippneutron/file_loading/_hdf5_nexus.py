@@ -152,7 +152,11 @@ class LoadFromHdf5:
                             shape=dataset.shape,
                             dtype=dtype,
                             unit=self.get_unit(dataset))
-        dataset.read_direct(variable.values)
+
+        if variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
+            dataset.read_direct(variable.values)
+        else:
+            variable.values = dataset
         return variable
 
     def load_dataset_from_group_as_numpy_array(self, group: h5py.Group,
