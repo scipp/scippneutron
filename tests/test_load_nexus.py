@@ -1839,8 +1839,9 @@ def test_load_nexus_file_containing_empty_arrays(load_function: Callable):
 
     builder = NexusBuilder()
     builder.add_event_data(event_data)
-    builder.add_log(Log("test_log", np.array([0]), np.array([0])))
+    builder.add_log(Log("test_log", np.array([0, 1, 2]), np.array([4, 5, 6])))
 
     # Empty datasets should not stop other data (e.g. metadata) from being loaded.
     loaded_data = load_function(builder)
     assert "test_log" in loaded_data
+    assert all(loaded_data["test_log"].data.values.values == np.array([0, 1, 2]))
