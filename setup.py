@@ -6,10 +6,15 @@ from setuptools import find_packages
 
 
 def get_version():
-    return '0.5.0rc4'  # TODO testing only
+    return '0.5.0rc1'  # TODO testing only
     import subprocess
     return subprocess.run(['git', 'describe', '--tags', '--abbrev=0'],
                           stdout=subprocess.PIPE).stdout.decode('utf8').strip()
+
+
+def get_scipp_dir():
+    import scipp
+    return scipp.__path__[0]
 
 
 def get_cmake_args():
@@ -17,7 +22,7 @@ def get_cmake_args():
     # MACOSX_DEPLOYMENT_TARGET environment variable in the github workflow. The reason
     # is that I am not sure if cibuildwheel uses this for anything else apart from
     # configuring the actual build.
-    return []
+    return [f'-Dscipp_DIR={get_scipp_dir()}']
 
 
 setup(name='scippneutron',
