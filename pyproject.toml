@@ -7,7 +7,7 @@ requires = [
   "ninja",
   "scikit-build",
   "tbb-devel",
-  "scipp",
+  "scipp==0.10.0rc4",
 ]
 build-backend = "setuptools.build_meta"
 

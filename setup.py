@@ -32,7 +32,7 @@ setup(name='scippneutron',
       include_package_data=True,
       python_requires='>=3.7',
       install_requires=[
-          'scipp',
+          'scipp==0.10.0rc4',
       ],
       extras_require={
           "test": ["pytest"],
