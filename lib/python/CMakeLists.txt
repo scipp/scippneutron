@@ -12,8 +12,9 @@ target_link_libraries(_scippneutron LINK_PRIVATE scippneutron pybind11::headers)
 # pybind11 FAQ.
 set_target_properties(_scippneutron PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(
-  _scippneutron PROPERTIES INSTALL_RPATH
-                           "${CMAKE_INSTALL_RPATH}/../${CMAKE_INSTALL_LIBDIR}"
+  _scippneutron
+  PROPERTIES INSTALL_RPATH
+             "${CMAKE_INSTALL_RPATH}/${RELATIVE_LIB}/${CMAKE_INSTALL_LIBDIR}"
 )
 
 pybind11_strip(_scippneutron)
