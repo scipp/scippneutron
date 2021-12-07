@@ -22,7 +22,7 @@ def get_cmake_args():
     # MACOSX_DEPLOYMENT_TARGET environment variable in the github workflow. The reason
     # is that I am not sure if cibuildwheel uses this for anything else apart from
     # configuring the actual build.
-    return [f'-Dscipp_DIR={get_scipp_dir()}']
+    return [f'-Dscipp_DIR={get_scipp_dir()}/lib/cmake/scipp']
 
 
 setup(name='scippneutron',
