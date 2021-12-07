@@ -83,6 +83,7 @@ find_package(GTest CONFIG REQUIRED)
 # instead of `Development`
 find_package(Python 3.7 REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
+find_package(TBB CONFIG)
 find_package(scipp 0.9 REQUIRED)
 
 # MP : Parallel compile, add before any targets so all use it
