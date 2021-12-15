@@ -90,7 +90,7 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
 
     loaded_data = load_function(builder)
 
-    assert loaded_data.events.unit == 'counts'
+    assert loaded_data.bins.constituents['data'].unit == 'counts'
 
     # Expect time of flight to match the values in the
     # event_time_offset dataset

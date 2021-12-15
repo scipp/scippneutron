@@ -112,11 +112,11 @@ class TestMantidConversion(unittest.TestCase):
                                                      NumEvents=1)
         d = scn.mantid.convert_EventWorkspace_to_data_array(tiny_event_ws,
                                                             load_pulse_times=False)
-        self.assertEqual(d.data.events.unit, sc.units.counts)
+        self.assertEqual(d.data.bins.constituents['data'].unit, sc.units.counts)
         tiny_event_ws.setYUnit('')
         d = scn.mantid.convert_EventWorkspace_to_data_array(tiny_event_ws,
                                                             load_pulse_times=False)
-        self.assertEqual(d.data.events.unit, sc.units.one)
+        self.assertEqual(d.data.bins.constituents['data'].unit, sc.units.one)
 
     def test_from_mantid_LoadEmptyInstrument(self):
         import mantid.simpleapi as mantid
