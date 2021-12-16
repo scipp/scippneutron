@@ -251,7 +251,6 @@ def test_convert_beams(target):
      ('Ltotal', lambda: make_L1() + make_L2())))
 def test_convert_beam_length_and_angle(target, make_ref):
     original = make_test_data(coords=('incident_beam', 'scattered_beam'))
-    print(original)
     converted = scn.convert(original, origin='position', target=target, scatter=True)
     assert sc.identical(converted.meta[target], make_ref())
 
