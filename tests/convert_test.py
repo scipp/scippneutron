@@ -600,17 +600,18 @@ def test_convert_binned_events_converted(target):
     tof['events'] = make_tof_binned_events()
 
     # Construct events with all coords.
-    dense_tof = tof['events'].copy()
+    binned_tof = tof['events'].copy()
     for name in ('Ltotal', 'two_theta'):
-        dense_tof.events.coords[name] = sc.empty(sizes=tof['events'].events.sizes,
-                                                 dtype='float64',
-                                                 unit=tof.coords[name].unit)
-        dense_tof.bins.coords[name][...] = tof.coords[name]
-    dense_tof = dense_tof.events
+        binned_tof.bins.coords[name] = sc.bins_like(binned_tof, tof.coords[name])
+    dense_tof = binned_tof.bins.constituents['data']
     expected = scn.convert(dense_tof, origin='tof', target=target, scatter=True)
+    for intermediate in ('Ltotal', 'two_theta'):
+        expected.attrs.pop(intermediate, None)
+        expected.coords.pop(intermediate, None)
+    expected = sc.bins(**{**binned_tof.bins.constituents, 'data': expected})
 
     res = scn.convert(tof, origin='tof', target=target, scatter=True)
-    assert sc.identical(res['events'].events.coords[target], expected.coords[target])
+    assert sc.identical(res['events'].data, expected)
 
 
 @pytest.mark.parametrize('target', TOF_TARGET_DIMS)
