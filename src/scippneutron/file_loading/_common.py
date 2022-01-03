@@ -55,13 +55,20 @@ def _add_attr_to_loaded_data(attr_name: str,
 
     try:
         if dtype is not None:
-            if dtype == sc.dtype.vector_3_float64:
+            if dtype == sc.dtype.vector3:
                 data[attr_name] = sc.vector(value=value, unit=unit)
-            elif dtype == sc.dtype.matrix_3_float64:
-                data[attr_name] = sc.matrix(value=value, unit=unit)
+            elif dtype == sc.dtype.affine_transform3:
+                data[attr_name] = sc.spatial.affine_transform(value=value, unit=unit)
+            elif dtype == sc.dtype.linear_transform3:
+                data[attr_name] = sc.spatial.linear_transform(value=value, unit=unit)
+            elif dtype == sc.dtype.rotation3:
+                data[attr_name] = sc.spatial.rotation(value=value, unit=unit)
+            elif dtype == sc.dtype.translation3:
+                data[attr_name] = sc.spatial.translation_from_vector(value=value,
+                                                                     unit=unit)
             else:
-                data[attr_name] = sc.Variable(value=value, dtype=dtype, unit=unit)
+                data[attr_name] = sc.scalar(value=value, dtype=dtype, unit=unit)
         else:
-            data[attr_name] = sc.Variable(value=value, unit=unit)
+            data[attr_name] = sc.scalar(value=value, unit=unit)
     except KeyError:
         pass
