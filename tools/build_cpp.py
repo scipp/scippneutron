@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Neil Vaytet
 
 import os
@@ -53,13 +53,15 @@ def main(*,
     use_space = ['-G', '-A']
 
     # Default cmake flags
+    ipo = os.getenv('CMAKE_INTERPROCEDURAL_OPTIMIZATION', 'OFF')
     cmake_flags = {
         '-G': 'Ninja',
         '-DPython_EXECUTABLE': shutil.which("python"),
         '-DCMAKE_INSTALL_PREFIX': prefix,
         '-DSITE_PACKAGES_DIR': site_packages_dir,
         '-DWITH_CTEST': 'OFF',
-        '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': 'ON'
+        '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION': ipo,
+        '-DFULL_BUILD': 1,
     }
 
     if platform == 'darwin':
@@ -109,9 +111,12 @@ def main(*,
 
     # Compile C++ tests, and python library
     start = time.time()
-    for target in ['all-tests', 'install']:
-        run_command(['cmake', '--build', '.', '--target', target] + build_flags,
-                    shell=shell)
+    # WARNING We avoid building multiple targets here and instead use the FULL_BUILD
+    # option to cmake. If multiple `cmake --build` commands are used, Visual Studio
+    # builds eveything from scratch for every target, which leads to a large build
+    # time overhead on CI. Do not change unless you know what you are doing.
+    run_command(['cmake', '--build', '.', '--target', 'install'] + build_flags,
+                shell=shell)
     end = time.time()
     print('Compilation took ', end - start, ' seconds')
 

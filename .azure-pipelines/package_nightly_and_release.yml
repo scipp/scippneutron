@@ -14,7 +14,7 @@ resources:
     name: scipp/pipelines
     type: github
     endpoint: scipp
-    ref: refs/tags/2.0.0
+    ref: refs/tags/4.0.0
 
 trigger:
   tags:
@@ -33,25 +33,25 @@ schedules:
 pr: none
 
 extends:
-  template: stages.yml@SharedPipelines
+  template: pipelines/stages.yml@SharedPipelines
   parameters:
     verbose: ${{ parameters.verbose }}
     conda_channels: '--channel scipp --channel ess-dmsc'
     gh_pages_subdirectory: 'scippneutron'
     config:
       linux:
-        py_versions: ['3.7', '3.8']
+        py_versions: ['3.7', '3.8', '3.9']
         conda_env: 'scippneutron-developer.yml'
       osx:
-        py_versions: ['3.7', '3.8']
+        py_versions: ['3.7', '3.8', '3.9']
         conda_env: 'scippneutron-developer-osx.yml'
       windows:
-        py_versions: ['3.7', '3.8']
+        py_versions: ['3.7', '3.8', '3.9']
         conda_env: 'scippneutron-developer-no-mantid.yml'
     package: true
     deploy: true
-    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:  # nightly
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:  # nightly
       conda_label: 'dev'
-    ${{ if ne(variables['Build.SourceBranchName'], 'main') }}:  # tagged release
+    ${{ if ne(variables['Build.SourceBranch'], 'refs/heads/main') }}:  # tagged release
       conda_label: 'main'
       release: true

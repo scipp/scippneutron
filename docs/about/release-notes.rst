@@ -3,8 +3,22 @@
 Release Notes
 =============
 
-Since v0.4.0
+Since v0.4.1
 ------------
+
+Bugfixes
+~~~~~~~~
+
+* Change output dtype of graphs for coordinate transformations to always be floating point, fixes incorrect truncation of the result to integer if, e.g. ``tof`` is an integer (this also affects ``convert``) `#230 <https://github.com/scipp/scippneutron/pull/230>`_.
+* Fix bug in ``load_nexus`` which prevented nexus files containing any empty datasets from being loaded correctly.
+
+v0.4.1 (November 2021)
+----------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix bug in ``load`` that loaded weighted events without their weights if the first spectrum is empty `#211 <https://github.com/scipp/scippneutron/pull/211>`_.
 
 v0.4.0 (October 2021)
 ---------------------

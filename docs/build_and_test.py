@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 from pathlib import Path
 import os
 import sys
@@ -19,16 +21,18 @@ with tempfile.TemporaryDirectory() as build_dir:
         ],
                               stderr=subprocess.STDOUT,
                               shell=shell)
-
-    with tempfile.TemporaryDirectory() as work_dir:
         subprocess.check_call([
             'python', 'build_docs.py', '--builder=doctest', f'--prefix={build_dir}',
-            f'--work_dir={work_dir}', '--no-setup'
+            f'--work_dir={work_dir}'
         ],
                               stderr=subprocess.STDOUT,
                               shell=shell)
 
     # Remove Jupyter notebooks used for documentation build,
-    # they are not accessible and create size bloat
+    # they are not accessible and create size bloat.
+    # However, keep the ones in the `_sources` folder,
+    # as the download buttons links to them.
+    sources_dir = os.path.join(build_dir, '_sources')
     for path in Path(build_dir).rglob('*.ipynb'):
-        os.remove(path)
+        if not str(path).startswith(sources_dir):
+            os.remove(path)
