@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 import scippneutron
 import scipp as sc
+import scipp.spatial
 from typing import List, Type, Union, Callable
 from scippneutron.file_loading.load_nexus import _load_nexus_json
 from dateutil.parser import parse as parse_date
@@ -1348,7 +1349,8 @@ def test_loads_sample_ub_matrix(load_function: Callable):
     print(loaded_data["sample_ub_matrix"].data)
     assert sc.identical(
         loaded_data["sample_ub_matrix"].data,
-        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.angstrom**-1))
+        sc.spatial.linear_transform(value=np.ones(shape=[3, 3]),
+                                    unit=sc.units.angstrom**-1))
     assert "sample_u_matrix" not in loaded_data
 
 
@@ -1357,8 +1359,9 @@ def test_loads_sample_u_matrix(load_function: Callable):
     builder.add_component(Sample("sample", orientation_matrix=np.ones(shape=[3, 3])))
     loaded_data = load_function(builder)
     assert "sample_u_matrix" in loaded_data
-    assert sc.identical(loaded_data["sample_u_matrix"].data,
-                        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.one))
+    assert sc.identical(
+        loaded_data["sample_u_matrix"].data,
+        sc.spatial.linear_transform(value=np.ones(shape=[3, 3]), unit=sc.units.one))
     assert "sample_ub_matrix" not in loaded_data
 
 
@@ -1370,9 +1373,11 @@ def test_loads_multiple_sample_ub_matrix(load_function: Callable):
     loaded_data = load_function(builder)
     assert sc.identical(
         loaded_data["sample1_ub_matrix"].data,
-        sc.matrix(value=np.ones(shape=[3, 3]), unit=sc.units.angstrom**-1))
-    assert sc.identical(loaded_data["sample2_ub_matrix"].data,
-                        sc.matrix(value=np.identity(3), unit=sc.units.angstrom**-1))
+        sc.spatial.linear_transform(value=np.ones(shape=[3, 3]),
+                                    unit=sc.units.angstrom**-1))
+    assert sc.identical(
+        loaded_data["sample2_ub_matrix"].data,
+        sc.spatial.linear_transform(value=np.identity(3), unit=sc.units.angstrom**-1))
     assert "sample3_ub_matrix" not in loaded_data
 
 

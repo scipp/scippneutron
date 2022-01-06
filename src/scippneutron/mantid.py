@@ -9,6 +9,7 @@ import uuid
 import warnings
 import numpy as np
 import scipp as sc
+import scipp.spatial
 import os
 
 
@@ -115,14 +116,14 @@ def make_mantid_sample(ws):
 def make_sample_ub(ws):
     # B matrix transforms the h,k,l triplet into a Cartesian system
     # https://docs.mantidproject.org/nightly/concepts/Lattice.html
-    return sc.matrix(value=ws.sample().getOrientedLattice().getUB(),
-                     unit=sc.units.angstrom**-1)
+    return sc.spatial.linear_transform(value=ws.sample().getOrientedLattice().getUB(),
+                                       unit=sc.units.angstrom**-1)
 
 
 def make_sample_u(ws):
     # U matrix rotation for sample alignment
     # https://docs.mantidproject.org/nightly/concepts/Lattice.html
-    return sc.matrix(value=ws.sample().getOrientedLattice().getU())
+    return sc.linear_transform(value=ws.sample().getOrientedLattice().getU())
 
 
 def make_component_info(ws):
@@ -257,8 +258,9 @@ def _rot_from_vectors(vec1, vec2):
     b = sc.vector(value=vec2.value / np.linalg.norm(vec2.value))
     c = sc.vector(value=np.cross(a.value, b.value))
     angle = sc.acos(sc.dot(a, b)).value
-    return sc.matrix(value=sc.geometry.rotation_matrix_from_quaternion_coeffs(
-        list(c.value * np.sin(angle / 2)) + [np.cos(angle / 2)]))
+    return sc.spatial.linear_transform(
+        value=sc.geometry.rotation_matrix_from_quaternion_coeffs(
+            list(c.value * np.sin(angle / 2)) + [np.cos(angle / 2)]))
 
 
 def get_detector_pos(ws, spectrum_dim):
@@ -361,7 +363,8 @@ def get_detector_properties(ws,
         pos = sc.geometry.position(averaged["x"].data, averaged["y"].data,
                                    averaged["z"].data)
 
-        return (inv_rot * pos, sc.matrices(dims=[spectrum_dim], values=det_rot),
+        return (inv_rot * pos,
+                sc.spatial.linear_transforms(dims=[spectrum_dim], values=det_rot),
                 sc.vectors(dims=[spectrum_dim], values=det_bbox, unit=sc.units.m))
     else:
         pos = np.zeros([nspec, 3])
@@ -391,7 +394,7 @@ def get_detector_properties(ws,
                 det_rot[i, :] = [np.nan, np.nan, np.nan, np.nan]
                 det_bbox[i, :] = [np.nan, np.nan, np.nan]
         return (sc.vectors(dims=[spectrum_dim], values=pos, unit=sc.units.m),
-                sc.matrices(dims=[spectrum_dim], values=det_rot),
+                sc.spatial.linear_transforms(dims=[spectrum_dim], values=det_rot),
                 sc.vectors(
                     dims=[spectrum_dim],
                     values=det_bbox,
