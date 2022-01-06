@@ -30,7 +30,7 @@ def load_position_of_unique_component(groups: List[Group],
                               data,
                               position,
                               unit=units,
-                              dtype=sc.dtype.vector_3_float64)
+                              dtype=sc.dtype.vector3)
 
 
 def load_positions_of_components(groups: List[Group],
@@ -50,13 +50,13 @@ def load_positions_of_components(groups: List[Group],
                                       data,
                                       position,
                                       unit=units,
-                                      dtype=sc.dtype.vector_3_float64)
+                                      dtype=sc.dtype.vector3)
         else:
             _add_coord_to_loaded_data(f"{nexus.get_name(group)}_position",
                                       data,
                                       position,
                                       unit=units,
-                                      dtype=sc.dtype.vector_3_float64)
+                                      dtype=sc.dtype.vector3)
 
 
 def _get_position_of_component(
@@ -105,7 +105,7 @@ def _add_coord_to_loaded_data(attr_name: str,
 
     try:
         if dtype is not None:
-            if dtype == sc.dtype.vector_3_float64:
+            if dtype == sc.dtype.vector3:
                 data[attr_name] = sc.vector(value=value, unit=unit)
             else:
                 data[attr_name] = sc.scalar(value, dtype=dtype, unit=unit)

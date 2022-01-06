@@ -41,10 +41,10 @@ def load_ub_matrices_of_components(groups: List[Group], data: Union[sc.DataArray
                                          data,
                                          matrix,
                                          unit=units,
-                                         dtype=sc.dtype.matrix_3_float64)
+                                         dtype=sc.dtype.linear_transform3)
             else:
                 _add_attr_to_loaded_data(f"{nexus.get_name(group)}_{sc_property}",
                                          data,
                                          matrix,
                                          unit=units,
-                                         dtype=sc.dtype.matrix_3_float64)
+                                         dtype=sc.dtype.linear_transform3)
