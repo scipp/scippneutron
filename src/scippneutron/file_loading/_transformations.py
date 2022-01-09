@@ -73,6 +73,9 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> np.nda
                                                           values=[np.identity(4)],
                                                           unit=sc.units.m)
     for transformation in transformations:
+        # TODO: instead of just using the first value in each transformation, we need
+        # to calculate the overall values over time. The complication is that each
+        # individual transform may not have the same time coordinates.
         total_transform_matrix = transformation["value", 0] * total_transform_matrix
     return total_transform_matrix
 
