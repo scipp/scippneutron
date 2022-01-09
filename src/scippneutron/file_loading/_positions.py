@@ -69,7 +69,8 @@ def _get_position_of_component(
     distance_found, _ = nexus.dataset_in_group(group, "distance")
     if depends_on_found:
         try:
-            position = get_position_from_transformations(group, nexus)
+            position = get_position_from_transformations(group, nexus)["value",
+                                                                       0].values
         except TransformationError as e:
             warn(f"Skipping loading {name} position due to error: {e}")
             raise PositionError

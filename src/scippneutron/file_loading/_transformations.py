@@ -26,14 +26,16 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
 
     Args:
         axis: numpy array of length 3 specifying the rotation axis
-        angle_radians: a dataset containing the angles
+        angles: a dataset containing the angles
     Returns:
         A dataset of rotation matrices.
     """
     rotvec = sc.vector(value=axis)
     # We multiply by -1*angle to get a "passive transform"
     rotvecs = rotvec * sc.scalar(-1.0) * angles.astype(sc.dtype.float64, copy=False)
-    matrices = scipp.spatial.transform.from_rotvec(rotvecs)
+    matrices = scipp.spatial.rotations_from_rotvecs(dims=angles.dims,
+                                                    values=rotvecs.values,
+                                                    unit=sc.units.rad)
     return matrices
 
 
@@ -46,7 +48,7 @@ def get_position_from_transformations(group: Group, nexus: LoadFromNexus) -> np.
     :return: Position of the component as a three-element numpy array
     """
     total_transform_matrix = get_full_transformation_matrix(group, nexus)
-    return np.matmul(total_transform_matrix, np.array([0, 0, 0, 1], dtype=float))[0:3]
+    return total_transform_matrix * sc.vector(value=[0, 0, 0], unit=sc.units.m)
 
 
 def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> np.ndarray:
@@ -66,9 +68,12 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> np.nda
         depends_on = '.'
     _get_transformations(depends_on, transformations, group, nexus.get_name(group),
                          nexus)
-    total_transform_matrix = np.identity(4)
+
+    total_transform_matrix = sc.spatial.affine_transforms(dims=["value"],
+                                                          values=[np.identity(4)],
+                                                          unit=sc.units.m)
     for transformation in transformations:
-        total_transform_matrix = np.matmul(transformation, total_transform_matrix)
+        total_transform_matrix = transformation["value", 0] * total_transform_matrix
     return total_transform_matrix
 
 
@@ -123,8 +128,10 @@ def _append_transformation(transform: Union[h5py.Dataset, GroupObject],
                       "chain, getting its value from stream is "
                       "not yet implemented and instead it will be "
                       "treated as a 0-distance translation")
-        matrix = np.eye(4, dtype=float)
-        transformations.append(matrix)
+        transformations.append(
+            sc.spatial.affine_transforms(dims=["value"],
+                                         values=[np.identity(4, dtype=float)],
+                                         unit=sc.units.m))
     else:
         try:
             vector = nexus.get_attribute_as_numpy_array(transform,
@@ -182,11 +189,14 @@ def _append_translation(offset: np.ndarray, transform: GroupObject,
     # -1 as describes passive transformation
     vectors = sc.vector(
         value=direction_unit_vector) * sc.scalar(-1.0) * loaded_transform_m
-    offset_vectors = vectors + sc.vector(value=offset, unit=sc.units.m)
-    offset_vector = offset_vectors.values[0]
-    matrix = np.block([[np.identity(3), offset_vector[np.newaxis].T], [0., 0., 0., 1.]])
+    translations = sc.spatial.translations_from_vectors(dims=loaded_transform_m.dims,
+                                                        values=vectors.values,
+                                                        unit=sc.units.m)
 
-    transformations.append(matrix)
+    translations = translations * sc.spatial.translation_from_vector(value=offset,
+                                                                     unit=sc.units.m)
+
+    transformations.append(translations)
 
 
 def _get_unit(attributes: h5py.AttributeManager, transform_name: str) -> sc.Unit:
@@ -258,11 +268,5 @@ def _append_rotation(offset: np.ndarray, transform: GroupObject,
         raise TransformationError(f"Unit for rotation transformation must be radians "
                                   f"or degrees, problem in {transform.name}")
 
-    rotation_matrices = _rotation_matrix_from_axis_and_angle(rotation_axis, angles)
-
-    rotation_matrix = rotation_matrices.values[0]
-
-    # Make 4x4 matrix from our 3x3 rotation matrix to include
-    # possible "offset"
-    matrix = np.block([[rotation_matrix, offset[np.newaxis].T], [0., 0., 0., 1.]])
-    transformations.append(matrix)
+    rotations = _rotation_matrix_from_axis_and_angle(rotation_axis, angles)
+    transformations.append(rotations)

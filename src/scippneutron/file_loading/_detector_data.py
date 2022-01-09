@@ -90,23 +90,13 @@ def _load_pixel_positions(detector_group: Group, detector_ids_size: int,
 
     array = np.array([x_positions, y_positions, z_positions]).T
 
+    data = sc.vectors(dims=[_detector_dimension], values=array, unit=sc.units.m)
+
     found_depends_on, _ = nexus.dataset_in_group(detector_group, "depends_on")
     if found_depends_on:
-        # Add fourth element of 1 to each vertex, indicating these are
-        # positions not direction vectors
-        n_rows = array.shape[0]
-        array = np.hstack((array, np.ones((n_rows, 1))))
+        data = (get_full_transformation_matrix(detector_group, nexus) * data)
 
-        # Get and apply transformation matrix
-        transformation = get_full_transformation_matrix(detector_group, nexus)
-        for row_index in range(n_rows):
-            array[row_index, :] = np.matmul(transformation, array[row_index, :])
-
-        # Now the transformations are done we do not need the 4th
-        # element in each position
-        array = array[:, :3]
-
-    return sc.vectors(dims=[_detector_dimension], values=array, unit=sc.units.m)
+    return data
 
 
 @dataclass
