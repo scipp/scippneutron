@@ -71,18 +71,22 @@ def test_make_frames_no_shift_and_no_events_below_lambda_min_yields_tof_equal_ti
     assert sc.identical(da.bins.coords['tof'], da.bins.attrs['time_offset'])
 
 
-def test_make_frame_time_offset_pivot_defines_splitting_point():
-    time_offset = sc.array(dims=['event'], values=[5.0, 20.0], unit='ms')
+def test_make_frame_time_offset_pivot_and_min_define_frames():
+    pivot = sc.to_unit(10.0 * sc.Unit('ms'), da.bins.coords['time_offset'].bins.unit)
+    # events [before, after, after, before] pivot point
+    time_offset = sc.array(dims=['event'], values=[5.0, 70.0, 21.0, 6.0], unit='ms')
     da = array(frame_length=71.0 * sc.Unit('ms'),
                npixel=1,
-               nevent=2,
+               nevent=4,
                time_offset=time_offset)
-    pivot = sc.to_unit(10.0 * sc.Unit('ms'), da.bins.coords['time_offset'].bins.unit)
     da.coords['time_offset_pivot'] = pivot
     da.coords['tof_min'] = 200.0 * sc.Unit('ms')
     da = frames.make_frames(da, frame_length=71.0 * sc.Unit('ms'))
-    # Before pivot, so TOF is
-    assert (da.bins.coords['tof'].values[0][0] == sc.scalar(71.0 - 10.0 + 5.0 + 200.0,
-                                                            unit='ms')).value
-    assert (da.bins.coords['tof'].values[0][1] == sc.scalar(10.0 + 200.0,
-                                                            unit='ms')).value
+    tof = da.bins.coords['tof'].values[0]
+    tof_values = [
+        71.0 - 10.0 + 5.0 + 200.0,
+        60.0 + 200.0,
+        11.0 + 200.0,
+        71.0 - 10.0 + 6.0 + 200.0,
+    ]
+    assert sc.identical(tof, sc.array(dims=['event'], unit='ms', values=tof_values))
