@@ -19,35 +19,48 @@ def _tof_from_wavelength(*, wavelength, Ltotal):
 
 
 def _tof_to_time_offset(*, tof, frame_length, frame_offset):
-    unit = _elem_unit(tof)
+    unit = tof.unit
+    frame_length = sc.to_unit(frame_length, unit)
     arrival_time_offset = sc.to_unit(frame_offset, unit) + tof
     time_offset = arrival_time_offset % frame_length
     return time_offset
 
 
-def _time_offset_to_tof(*, time_offset, time_offset_split, tof_min, frame_length):
-    shift = tof_min - time_offset_split
-    tof = sc.where(time_offset >= time_offset_split, shift, shift + frame_length)
+def _time_offset_to_tof(*, time_offset, time_offset_pivot, tof_min, frame_length):
+    frame_length = sc.to_unit(frame_length, tof_min.unit)
+    shift = tof_min - time_offset_pivot
+    tof = sc.where(time_offset >= time_offset_pivot, shift, shift + frame_length)
     tof += time_offset
     return tof
 
 
-def make_frames(da, *, frame_length, frame_offset, lambda_min):
+def make_frames(da, *, frame_length, frame_offset=None, lambda_min=None):
     """
     This assumes that there is a fixed frame_length, but in practice this is
     likely not the case.
+
+    Note: This assumes elastic scattering.
     """
-    def _tof(*, time_offset, Ltotal):
-        tof_min = _tof_from_wavelength(Ltotal=Ltotal, wavelength=lambda_min)
-        frame_length_ = sc.to_unit(frame_length, tof_min.unit)
-        time_offset_split = _tof_to_time_offset(tof=tof_min,
-                                                frame_length=frame_length_,
-                                                frame_offset=frame_offset)
+    if 'tof' in da.bins.meta or 'tof' in da.meta:
+        raise ValueError("Coordinate 'tof' already define in input data array. "
+                         "Expected input with 'time_offset' coordinate.")
+
+    def _tof_min(*, Ltotal):
+        return _tof_from_wavelength(Ltotal=Ltotal, wavelength=lambda_min)
+
+    def _time_offset_pivot(*, Ltotal, tof_min):
+        return _tof_to_time_offset(tof=tof_min,
+                                   frame_length=frame_length,
+                                   frame_offset=frame_offset)
+
+    def _tof(*, time_offset, time_offset_pivot, tof_min):
         return _time_offset_to_tof(time_offset=time_offset,
-                                   time_offset_split=time_offset_split,
+                                   time_offset_pivot=time_offset_pivot,
                                    tof_min=tof_min,
-                                   frame_length=frame_length_)
+                                   frame_length=frame_length)
 
     graph = Ltotal(scatter=True)
+    graph['tof_min'] = _tof_min
+    graph['time_offset_pivot'] = _time_offset_pivot
     graph['tof'] = _tof
     return da.transform_coords('tof', graph=graph)

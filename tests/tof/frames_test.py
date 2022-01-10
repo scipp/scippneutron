@@ -7,116 +7,82 @@ import scipp as sc
 from scippneutron.tof import frames
 
 
-def array(*, npixel = 3, nevent = 1000):
-    time_offset = sc.array(dims=['event'], values=np.random.rand(nevent)*71000, unit='us')
+def array(*,
+          npixel=3,
+          nevent=1000,
+          frame_length=71.0 * sc.Unit('ms'),
+          time_offset=None):
+    frame_length = sc.to_unit(frame_length, unit='us')
+    if time_offset is None:
+        time_offset = sc.array(dims=['event'],
+                               values=np.random.rand(nevent) * frame_length.value,
+                               unit='us')
     pixel = sc.arange(dim='event', start=0, stop=nevent) % npixel
-    events = sc.DataArray(sc.ones(sizes=time_offset.sizes), coords={'time_offset':time_offset, 'pixel':pixel})
+    events = sc.DataArray(sc.ones(sizes=time_offset.sizes),
+                          coords={
+                              'time_offset': time_offset,
+                              'pixel': pixel
+                          })
     pixel = sc.arange(dim='pixel', start=0, stop=npixel)
     da = sc.bin(events, groups=[pixel])
-    #da = sc.DataArray(sc.ones(dims=['pixel'], shape=[npixel]))
-
     da.coords['L1'] = sc.scalar(value=160.0, unit='m')
-    da.coords['L2'] = sc.array(dims=['pixel'], values=[1.0,1.1,1.2], unit='m')
+    da.coords['L2'] = sc.array(dims=['pixel'], values=np.arange(npixel), unit='m')
     return da
 
 
-def test_make_frames():
+def test_make_frames_given_tof_bins_meta_data_raises_ValueError():
     da = array()
+    da.coords['tof'] = sc.scalar(1.0, unit='ms')
+    with pytest.raises(ValueError):
+        frames.make_frames(da,
+                           frame_length=71.0 * sc.Unit('ms'),
+                           frame_offset=30.1 * sc.Unit('ms'),
+                           lambda_min=2.5 * sc.Unit('Angstrom'))
+
+
+def test_make_frames_given_tof_event_meta_data_raises_ValueError():
+    da = array()
+    da.bins.coords['tof'] = da.bins.coords['time_offset']
+    with pytest.raises(ValueError):
+        frames.make_frames(da,
+                           frame_length=71.0 * sc.Unit('ms'),
+                           frame_offset=30.1 * sc.Unit('ms'),
+                           lambda_min=2.5 * sc.Unit('Angstrom'))
+
+
+def test_make_frames_no_shift_and_infinite_energy_yields_tof_equal_time_offset():
+    da = array(frame_length=71.0 * sc.Unit('ms'))
     da = frames.make_frames(da,
-                       frame_length=71.0 * sc.Unit('ms'),
-                       frame_offset=30.1 * sc.Unit('ms'),
-                       lambda_min=2.5 * sc.Unit('Angstrom'))
-    print(da)
-    assert da.sum().value == 999
+                            frame_length=71.0 * sc.Unit('ms'),
+                            frame_offset=0.0 * sc.Unit('ms'),
+                            lambda_min=0.0 * sc.Unit('Angstrom'))
+    assert sc.identical(da.bins.coords['tof'], da.bins.attrs['time_offset'])
 
 
-class TestMakeFrames:
-    def test_ab(self):
-        pass
+def test_make_frames_no_shift_and_no_events_below_lambda_min_yields_tof_equal_time_offset(
+):
+    da = array(frame_length=71.0 * sc.Unit('ms'))
+    da.bins.coords['time_offset'] += sc.to_unit(10.0 * sc.Unit('ms'),
+                                                da.bins.coords['time_offset'].bins.unit)
+    da = frames.make_frames(da,
+                            frame_length=81.0 * sc.Unit('ms'),
+                            frame_offset=0.0 * sc.Unit('ms'),
+                            lambda_min=0.2 * sc.Unit('Angstrom'))
+    assert sc.identical(da.bins.coords['tof'], da.bins.attrs['time_offset'])
 
 
-#def test_incident_beam():
-#    assert set(conversions.incident_beam().keys()) == set(['incident_beam'])
-#
-#
-#def test_scattered_beam():
-#    assert set(conversions.scattered_beam().keys()) == set(['scattered_beam'])
-#
-#
-#def test_two_theta():
-#    assert set(conversions.two_theta().keys()) == set(
-#        ['scattered_beam', 'incident_beam', 'two_theta'])
-#
-#
-#def test_L1():
-#    assert set(conversions.L1().keys()) == set(['L1', 'incident_beam'])
-#
-#
-#def test_L2():
-#    assert set(conversions.L2().keys()) == set(['L2', 'scattered_beam'])
-#
-#
-#def test_Ltotal():
-#    assert set(conversions.Ltotal(scatter=False).keys()) == set(['Ltotal'])
-#    assert set(conversions.Ltotal(scatter=True).keys()) == set(
-#        ['scattered_beam', 'incident_beam', 'L1', 'L2', 'Ltotal'])
-#
-#
-#def test_beamline():
-#    assert set(conversions.beamline(scatter=False).keys()) == set(['Ltotal'])
-#    assert set(conversions.beamline(scatter=True).keys()) == set(
-#        ['scattered_beam', 'incident_beam', 'L1', 'L2', 'Ltotal', 'two_theta'])
-#
-#
-#def test_kinematic():
-#    assert set(conversions.kinematic('tof').keys()) == set(['energy', 'wavelength'])
-#    # Other initial coords not supported for now
-#    with pytest.raises(KeyError):
-#        conversions.kinematic('energy')
-#    with pytest.raises(KeyError):
-#        conversions.kinematic('wavelength')
-#
-#
-#def test_elastic():
-#    assert set(conversions.elastic('energy').keys()) == set(['dspacing', 'wavelength'])
-#    assert set(conversions.elastic('tof').keys()) == set(
-#        ['dspacing', 'energy', 'Q', 'wavelength'])
-#    assert set(conversions.elastic('Q').keys()) == set(['wavelength'])
-#    assert set(conversions.elastic('wavelength').keys()) == set(
-#        ['dspacing', 'energy', 'Q'])
-#
-#
-#def test_elastic_dspacing():
-#    assert set(conversions.elastic_dspacing('energy').keys()) == set(['dspacing'])
-#    assert set(conversions.elastic_dspacing('tof').keys()) == set(['dspacing'])
-#    assert set(conversions.elastic_dspacing('wavelength').keys()) == set(['dspacing'])
-#
-#
-#def test_elastic_energy():
-#    assert set(conversions.elastic_energy('tof').keys()) == set(['energy'])
-#    assert set(conversions.elastic_energy('wavelength').keys()) == set(['energy'])
-#
-#
-#def test_elastic_Q():
-#    assert set(conversions.elastic_Q('tof').keys()) == set(['Q', 'wavelength'])
-#    assert set(conversions.elastic_Q('wavelength').keys()) == set(['Q'])
-#
-#
-#def test_elastic_wavelength():
-#    assert set(conversions.elastic_wavelength('energy').keys()) == set(['wavelength'])
-#    assert set(conversions.elastic_wavelength('tof').keys()) == set(['wavelength'])
-#    assert set(conversions.elastic_wavelength('Q').keys()) == set(['wavelength'])
-#
-#
-#def test_direct_inelastic():
-#    assert set(conversions.direct_inelastic('tof').keys()) == set(['energy_transfer'])
-#    # Other initial coords not supported for now
-#    with pytest.raises(KeyError):
-#        conversions.kinematic('wavelength')
-#
-#
-#def test_indirect_inelastic():
-#    assert set(conversions.indirect_inelastic('tof').keys()) == set(['energy_transfer'])
-#    # Other initial coords not supported for now
-#    with pytest.raises(KeyError):
-#        conversions.kinematic('wavelength')
+def test_make_frame_time_offset_pivot_defines_splitting_point():
+    time_offset = sc.array(dims=['event'], values=[5.0, 20.0], unit='ms')
+    da = array(frame_length=71.0 * sc.Unit('ms'),
+               npixel=1,
+               nevent=2,
+               time_offset=time_offset)
+    pivot = sc.to_unit(10.0 * sc.Unit('ms'), da.bins.coords['time_offset'].bins.unit)
+    da.coords['time_offset_pivot'] = pivot
+    da.coords['tof_min'] = 200.0 * sc.Unit('ms')
+    da = frames.make_frames(da, frame_length=71.0 * sc.Unit('ms'))
+    # Before pivot, so TOF is
+    assert (da.bins.coords['tof'].values[0][0] == sc.scalar(71.0 - 10.0 + 5.0 + 200.0,
+                                                            unit='ms')).value
+    assert (da.bins.coords['tof'].values[0][1] == sc.scalar(10.0 + 200.0,
+                                                            unit='ms')).value
