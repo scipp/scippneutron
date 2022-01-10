@@ -25,10 +25,9 @@ def test_make_frames():
     da = frames.make_frames(da,
                        frame_length=71.0 * sc.Unit('ms'),
                        frame_offset=30.1 * sc.Unit('ms'),
-                       lambda_min=2.5 * sc.Unit('Angstrom'),
-                       lambda_max=3.5 * sc.Unit('Angstrom'))
+                       lambda_min=2.5 * sc.Unit('Angstrom'))
     print(da)
-    assert da.sum().value == 1000
+    assert da.sum().value == 999
 
 
 class TestMakeFrames:
