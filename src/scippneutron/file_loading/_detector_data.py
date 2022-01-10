@@ -94,6 +94,8 @@ def _load_pixel_positions(detector_group: Group, detector_ids_size: int,
 
     found_depends_on, _ = nexus.dataset_in_group(detector_group, "depends_on")
     if found_depends_on:
+        # TODO: should not only use first value of transformation - eventually we want
+        # a dataset with time coordinate here
         data = (get_full_transformation_matrix(detector_group, nexus)["value", 0] *
                 data)
 
