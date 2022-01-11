@@ -52,6 +52,7 @@ rst_epilog = f"""
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+    'scipp': ('https://scipp.github.io/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
     'xarray': ('https://xarray.pydata.org/en/stable/', None)
 }
