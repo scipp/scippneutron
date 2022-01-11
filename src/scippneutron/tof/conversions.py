@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
-r"""
+"""
 Coordinate transformation graphs for time-of-flight neutron scattering data.
 
-Each graph is a ``dict`` and intended for use with ``sc.transform_coords``.
-Typically multiple graphs need to be combined for a full transformation, e.g., a
+Each graph is a :py:class:`dict` and intended for use with
+:py:func:`sc.transform_coords`.
+Typically, multiple graphs need to be combined for a full transformation, e.g., a
 "beamline" graph with an "elastic" graph.
 """
 
