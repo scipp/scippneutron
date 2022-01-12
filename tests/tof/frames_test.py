@@ -120,18 +120,22 @@ def tof_to_time_offset(tof, *, frame_length, frame_offset):
 def test_make_frames_reproduces_true_pulses(tof_min, frame_offset):
     from scippneutron.core.conversions import _wavelength_from_tof
     frame_length = 71.0 * sc.Unit('ms')
+    # Setup data with known 'tof' coord, which will serve as a reference
     da = tof_array(frame_length=frame_length, tof_min=tof_min)
-    lambda_min = _wavelength_from_tof(tof_min, Ltotal=da.coords['L1'] + da.coords['L2'])
-    expected = da.bins.coords['tof'].copy()
+    reference = da.bins.coords['tof'].copy()
+    # Compute backwards to "raw" input with 'time_offset'. 'tof' coord is removed
     da.bins.coords['time_offset'] = tof_to_time_offset(da.bins.coords.pop('tof'),
                                                        frame_length=frame_length,
                                                        frame_offset=frame_offset)
+    lambda_min = _wavelength_from_tof(tof_min, Ltotal=da.coords['L1'] + da.coords['L2'])
+
     da = frames.make_frames(da,
                             frame_length=frame_length,
                             frame_offset=frame_offset,
                             lambda_min=lambda_min)
 
+    # Should reproduce reference 'tof' within rounding errors
     assert sc.allclose(da.bins.coords['tof'],
-                       expected,
-                       atol=sc.scalar(1e-12, unit=expected.bins.unit),
+                       reference,
+                       atol=sc.scalar(1e-12, unit=reference.bins.unit),
                        rtol=sc.scalar(1e-12))
