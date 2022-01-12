@@ -27,7 +27,11 @@ def _tof_to_time_offset(*, tof, frame_length, frame_offset):
 
 
 def _time_offset_to_tof(*, time_offset, time_offset_pivot, tof_min, frame_length):
-    frame_length = sc.to_unit(frame_length, tof_min.unit)
+    """
+    """
+    frame_length = sc.to_unit(frame_length, _elem_unit(time_offset))
+    time_offset_pivot = sc.to_unit(time_offset_pivot, _elem_unit(time_offset))
+    tof_min = sc.to_unit(tof_min, _elem_unit(time_offset))
     shift = tof_min - time_offset_pivot
     tof = sc.where(time_offset >= time_offset_pivot, shift, shift + frame_length)
     tof += time_offset
