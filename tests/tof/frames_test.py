@@ -149,7 +149,8 @@ def time_zero_to_detection_frame_index(*, frame_offset, tof_min, frame_length,
     The source frames containing the time marked by tof_min receive index 0.
     The frame after that index 1, and so on, until frame_stride-1.
     """
-    return ((time_zero - tof_min) // (frame_length)).value % frame_stride
+    tof_min = frame_length * (tof_min // frame_length)
+    return ((time_zero + tof_min) // (frame_length)).value % frame_stride
 
 
 class Test_time_zero_to_detection_frame_index:
@@ -181,27 +182,27 @@ class Test_time_zero_to_detection_frame_index:
                       frame_offset=frame_offset,
                       tof_min=tof_min)
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=1.0 * sc.Unit('ms')) == 0
+                                                  time_zero=0.0 * sc.Unit('ms')) == 0
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=71.1 * sc.Unit('ms')) == 1
+                                                  time_zero=71.0 * sc.Unit('ms')) == 1
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=150.0 * sc.Unit('ms')) == 0
+                                                  time_zero=142.0 * sc.Unit('ms')) == 0
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=221.0 * sc.Unit('ms')) == 1
+                                                  time_zero=213.0 * sc.Unit('ms')) == 1
 
     def test_frame_stride_2_with_tof_min_yields_detection_frame_index(self):
         frame_length = 100.0 * sc.Unit('ms')
         frame_offset = 0.0 * sc.Unit('ms')
-        tof_min = 217 * sc.Unit('ms')
+        tof_min = 317 * sc.Unit('ms')  # offset is 3 frames (plus some, irrelevent for index)
         params = dict(frame_length=frame_length,
                       frame_stride=2,
                       frame_offset=frame_offset,
                       tof_min=tof_min)
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=218.0 * sc.Unit('ms')) == 0
+                                                  time_zero=000.0 * sc.Unit('ms')) == 1
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=316.0 * sc.Unit('ms')) == 0
+                                                  time_zero=100.0 * sc.Unit('ms')) == 0
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=318.0 * sc.Unit('ms')) == 1
+                                                  time_zero=200.0 * sc.Unit('ms')) == 1
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=416.0 * sc.Unit('ms')) == 1
+                                                  time_zero=300.0 * sc.Unit('ms')) == 0
