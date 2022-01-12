@@ -139,3 +139,69 @@ def test_make_frames_reproduces_true_pulses(tof_min, frame_offset):
                        reference,
                        atol=sc.scalar(1e-12, unit=reference.bins.unit),
                        rtol=sc.scalar(1e-12))
+
+
+def time_zero_to_detection_frame_index(*, frame_offset, tof_min, frame_length,
+                                       frame_stride, time_zero):
+    """
+    Return 0-based source frame index of detection frame.
+
+    The source frames containing the time marked by tof_min receive index 0.
+    The frame after that index 1, and so on, until frame_stride-1.
+    """
+    return ((time_zero - tof_min) // (frame_length)).value % frame_stride
+
+
+class Test_time_zero_to_detection_frame_index:
+    tof_min = [234.0 * sc.Unit('ms'), 37.0 * sc.Unit('ms'), 337.0 * sc.Unit('ms')]
+    frame_offset = [0.0 * sc.Unit('ms'), 11.0 * sc.Unit('ms'), 9.999 * sc.Unit('ms')]
+    frame_length = [71.0 * sc.Unit('ms')]
+    time_zero = [
+        t0 * sc.Unit('ms') for t0 in [0.0, 11.0, 70.0, 71.0, 71.1, 300.0, 345.6]
+    ]
+
+    @pytest.mark.parametrize("tof_min", tof_min)
+    @pytest.mark.parametrize("frame_offset", frame_offset)
+    @pytest.mark.parametrize("frame_length", frame_length)
+    @pytest.mark.parametrize("time_zero", time_zero)
+    def test_frame_stride_1_yields_index_0(self, frame_length, frame_offset, tof_min,
+                                           time_zero):
+        assert time_zero_to_detection_frame_index(frame_length=frame_length,
+                                                  frame_stride=1,
+                                                  frame_offset=frame_offset,
+                                                  tof_min=tof_min,
+                                                  time_zero=time_zero) == 0
+
+    def test_frame_stride_2_with_zero_params_yields_source_frame_index(self):
+        frame_length = 71.0 * sc.Unit('ms')
+        frame_offset = 0.0 * sc.Unit('ms')
+        tof_min = 0.0 * sc.Unit('ms')
+        params = dict(frame_length=frame_length,
+                      frame_stride=2,
+                      frame_offset=frame_offset,
+                      tof_min=tof_min)
+        assert time_zero_to_detection_frame_index(**params,
+                                                  time_zero=1.0 * sc.Unit('ms')) == 0
+        assert time_zero_to_detection_frame_index(**params,
+                                                  time_zero=71.1 * sc.Unit('ms')) == 1
+        assert time_zero_to_detection_frame_index(**params,
+                                                  time_zero=150.0 * sc.Unit('ms')) == 0
+        assert time_zero_to_detection_frame_index(**params,
+                                                  time_zero=221.0 * sc.Unit('ms')) == 1
+
+    def test_frame_stride_2_with_tof_min_yields_detection_frame_index(self):
+        frame_length = 100.0 * sc.Unit('ms')
+        frame_offset = 0.0 * sc.Unit('ms')
+        tof_min = 217 * sc.Unit('ms')
+        params = dict(frame_length=frame_length,
+                      frame_stride=2,
+                      frame_offset=frame_offset,
+                      tof_min=tof_min)
+        assert time_zero_to_detection_frame_index(**params,
+                                                  time_zero=218.0 * sc.Unit('ms')) == 0
+        assert time_zero_to_detection_frame_index(**params,
+                                                  time_zero=316.0 * sc.Unit('ms')) == 0
+        assert time_zero_to_detection_frame_index(**params,
+                                                  time_zero=318.0 * sc.Unit('ms')) == 1
+        assert time_zero_to_detection_frame_index(**params,
+                                                  time_zero=416.0 * sc.Unit('ms')) == 1
