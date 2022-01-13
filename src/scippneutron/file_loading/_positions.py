@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 
-from _warnings import warn
 from typing import List, Optional, Tuple, Any
 import numpy as np
 import scipp as sc
 from ._common import Group
 from ._transformations import (get_position_from_transformations, TransformationError)
 from ._nexus import LoadFromNexus
+from ..logging import get_logger
 
 
 class PositionError(Exception):
@@ -21,8 +21,9 @@ def load_position_of_unique_component(groups: List[Group],
                                       nexus: LoadFromNexus,
                                       default_position: Optional[np.ndarray] = None):
     if len(groups) > 1:
-        warn(f"More than one {nx_class} found in file, "
-             f"skipping loading {name} position")
+        get_logger().warning(
+            "More than one %s found in file, "
+            "skipping loading %s position", nx_class, name)
         return
     try:
         position, units = _get_position_of_component(groups[0], name, nx_class, nexus,
@@ -74,7 +75,8 @@ def _get_position_of_component(
         try:
             position = get_position_from_transformations(group, nexus)
         except TransformationError as e:
-            warn(f"Skipping loading {name} position due to error: {e}")
+            get_logger().warning("Skipping loading %s position due to error: %s", name,
+                                 e)
             raise PositionError
         units = sc.units.m
     elif distance_found:
@@ -84,11 +86,12 @@ def _get_position_of_component(
              nexus.load_dataset_from_group_as_numpy_array(group, "distance")])
         units = nexus.get_unit(nexus.get_dataset_from_group(group, "distance"))
         if units == sc.units.dimensionless:
-            warn(f"'distance' dataset in {nx_class} is missing "
-                 f"units attribute, skipping loading {name} position")
+            get_logger().warning(
+                "'distance' dataset in %s is missing "
+                "units attribute, skipping loading %s position", nx_class, name)
             raise PositionError
     elif default_position is None:
-        warn(f"No position given for {name} in file")
+        get_logger().warning("No position given for %s in file", name)
         raise PositionError
     else:
         position = np.array([0, 0, 0])

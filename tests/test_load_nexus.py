@@ -926,14 +926,15 @@ def test_loads_multiple_samples(load_function: Callable):
                        expected_position)
 
 
-def test_skips_loading_source_if_more_than_one_in_file(load_function: Callable):
+def test_skips_loading_source_if_more_than_one_in_file(load_function: Callable,
+                                                       logcheck):
     # More than one source is a serious error in the file, so
     # load_nexus will display a warning and skip loading any sample rather
     # than guessing which is the "correct" one.
     builder = NexusBuilder()
     builder.add_source(Source("source_1"))
     builder.add_source(Source("source_2"))
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         loaded_data = load_function(builder)
     assert loaded_data is None
 
@@ -942,12 +943,12 @@ def test_skips_loading_source_if_more_than_one_in_file(load_function: Callable):
                          ((Sample, "sample"), (Source, "source")))
 def test_skips_component_position_from_distance_dataset_missing_unit(
         component_class: Union[Type[Source], Type[Sample]], component_name: str,
-        load_function: Callable):
+        load_function: Callable, logcheck):
     builder = NexusBuilder()
     distance = 4.2
     builder.add_component(
         component_class(component_name, distance=distance, distance_units=None))
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         load_function(builder)
 
 
@@ -1011,7 +1012,7 @@ def test_loads_component_position_from_log_transformation(
 def test_skips_component_position_with_multi_value_log_transformation(
         component_class: Union[Type[Source], Type[Sample]], component_name: str,
         transform_type: TransformationType, value: List[float], value_units: str,
-        load_function: Callable):
+        load_function: Callable, logcheck):
     builder = NexusBuilder()
     # Provide "time" data, the builder will write the transformation as
     # an NXlog. This would be encountered in a file from an experiment
@@ -1023,7 +1024,7 @@ def test_skips_component_position_with_multi_value_log_transformation(
                                     time_units="s",
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         loaded_data = load_function(builder)
 
     # Loading component position from transformations recorded as
@@ -1040,7 +1041,8 @@ def test_skips_component_position_with_multi_value_log_transformation(
                           (TransformationType.TRANSLATION, "cm")))
 def test_skips_component_position_with_empty_value_log_transformation(
         component_class: Union[Type[Source], Type[Sample]], component_name: str,
-        transform_type: TransformationType, value_units: str, load_function: Callable):
+        transform_type: TransformationType, value_units: str, load_function: Callable,
+        logcheck):
     builder = NexusBuilder()
     empty_value = np.array([])
     transformation = Transformation(transform_type,
@@ -1050,7 +1052,7 @@ def test_skips_component_position_with_empty_value_log_transformation(
                                     time_units="s",
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         load_function(builder)
 
 
@@ -1087,12 +1089,12 @@ def test_load_component_position_prefers_transform_over_distance(
                          (TransformationType.ROTATION, TransformationType.TRANSLATION))
 def test_skips_component_position_from_transformation_missing_unit(
         component_class: Union[Type[Source], Type[Sample]], component_name: str,
-        transform_type: TransformationType, load_function: Callable):
+        transform_type: TransformationType, load_function: Callable, logcheck):
     builder = NexusBuilder()
     transformation = Transformation(transform_type, np.array([0, 0, -1]),
                                     np.array([2.3]))
     builder.add_component(component_class(component_name, depends_on=transformation))
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         load_function(builder)
 
 
@@ -1103,7 +1105,8 @@ def test_skips_component_position_from_transformation_missing_unit(
                           (TransformationType.TRANSLATION, "m")))
 def test_skips_component_position_with_transformation_with_small_vector(
         component_class: Union[Type[Source], Type[Sample]], component_name: str,
-        transform_type: TransformationType, value_units: str, load_function: Callable):
+        transform_type: TransformationType, value_units: str, load_function: Callable,
+        logcheck):
     # The vector defines the direction of the translation or axis
     # of the rotation so it is ill-defined if it is close to zero
     # in magnitude
@@ -1114,7 +1117,7 @@ def test_skips_component_position_with_transformation_with_small_vector(
                                     np.array([2.3]),
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         load_function(builder)
 
 
@@ -1147,10 +1150,10 @@ def test_loads_component_position_from_multiple_transformations(
     assert loaded_data[f"{component_name}_position"].unit == sc.Unit("m")
 
 
-def test_skips_source_position_if_not_given_in_file(load_function: Callable):
+def test_skips_source_position_if_not_given_in_file(load_function: Callable, logcheck):
     builder = NexusBuilder()
     builder.add_source(Source("source"))
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         loaded_data = load_function(builder)
     assert loaded_data is None
 
