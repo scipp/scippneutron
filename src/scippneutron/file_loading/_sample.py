@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
+
 from typing import List, Tuple, Union
 import numpy as np
 import scipp as sc
@@ -41,10 +44,10 @@ def load_ub_matrices_of_components(groups: List[Group], data: Union[sc.DataArray
                                          data,
                                          matrix,
                                          unit=units,
-                                         dtype=sc.dtype.matrix_3_float64)
+                                         dtype=sc.DType.linear_transform3)
             else:
                 _add_attr_to_loaded_data(f"{nexus.get_name(group)}_{sc_property}",
                                          data,
                                          matrix,
                                          unit=units,
-                                         dtype=sc.dtype.matrix_3_float64)
+                                         dtype=sc.DType.linear_transform3)

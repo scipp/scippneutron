@@ -9,6 +9,7 @@ import uuid
 import warnings
 import numpy as np
 import scipp as sc
+import scipp.spatial
 import os
 
 
@@ -115,14 +116,14 @@ def make_mantid_sample(ws):
 def make_sample_ub(ws):
     # B matrix transforms the h,k,l triplet into a Cartesian system
     # https://docs.mantidproject.org/nightly/concepts/Lattice.html
-    return sc.matrix(value=ws.sample().getOrientedLattice().getUB(),
-                     unit=sc.units.angstrom**-1)
+    return sc.spatial.linear_transform(value=ws.sample().getOrientedLattice().getUB(),
+                                       unit=sc.units.angstrom**-1)
 
 
 def make_sample_u(ws):
     # U matrix rotation for sample alignment
     # https://docs.mantidproject.org/nightly/concepts/Lattice.html
-    return sc.matrix(value=ws.sample().getOrientedLattice().getU())
+    return sc.spatial.linear_transform(value=ws.sample().getOrientedLattice().getU())
 
 
 def make_component_info(ws):
@@ -257,8 +258,9 @@ def _rot_from_vectors(vec1, vec2):
     b = sc.vector(value=vec2.value / np.linalg.norm(vec2.value))
     c = sc.vector(value=np.cross(a.value, b.value))
     angle = sc.acos(sc.dot(a, b)).value
-    return sc.matrix(value=sc.geometry.rotation_matrix_from_quaternion_coeffs(
-        list(c.value * np.sin(angle / 2)) + [np.cos(angle / 2)]))
+    return sc.spatial.linear_transform(
+        value=sc.geometry.rotation_matrix_from_quaternion_coeffs(
+            list(c.value * np.sin(angle / 2)) + [np.cos(angle / 2)]))
 
 
 def get_detector_pos(ws, spectrum_dim):
@@ -361,7 +363,8 @@ def get_detector_properties(ws,
         pos = sc.geometry.position(averaged["x"].data, averaged["y"].data,
                                    averaged["z"].data)
 
-        return (inv_rot * pos, sc.matrices(dims=[spectrum_dim], values=det_rot),
+        return (inv_rot * pos,
+                sc.spatial.linear_transforms(dims=[spectrum_dim], values=det_rot),
                 sc.vectors(dims=[spectrum_dim], values=det_bbox, unit=sc.units.m))
     else:
         pos = np.zeros([nspec, 3])
@@ -391,7 +394,7 @@ def get_detector_properties(ws,
                 det_rot[i, :] = [np.nan, np.nan, np.nan, np.nan]
                 det_bbox[i, :] = [np.nan, np.nan, np.nan]
         return (sc.vectors(dims=[spectrum_dim], values=pos, unit=sc.units.m),
-                sc.matrices(dims=[spectrum_dim], values=det_rot),
+                sc.spatial.linear_transforms(dims=[spectrum_dim], values=det_rot),
                 sc.vectors(
                     dims=[spectrum_dim],
                     values=det_bbox,
@@ -401,18 +404,18 @@ def get_detector_properties(ws,
 
 def _get_dtype_from_values(values, coerce_floats_to_ints):
     if coerce_floats_to_ints and np.all(np.mod(values, 1.0) == 0.0):
-        dtype = sc.dtype.int32
+        dtype = sc.DType.int32
     elif hasattr(values, 'dtype'):
         dtype = values.dtype
     else:
         if len(values) > 0:
             dtype = type(values[0])
             if dtype is str:
-                dtype = sc.dtype.string
+                dtype = sc.DType.string
             elif dtype is int:
-                dtype = sc.dtype.int64
+                dtype = sc.DType.int64
             elif dtype is float:
-                dtype = sc.dtype.float64
+                dtype = sc.DType.float64
             else:
                 raise RuntimeError("Cannot handle the dtype that this "
                                    "workspace has on Axis 1.")
@@ -559,7 +562,7 @@ def convert_Workspace2D_to_data_array(ws,
         coords_labs_data["data"] = sc.Variable(dims=[spec_dim],
                                                unit=data_unit,
                                                values=ws.extractY().flatten(),
-                                               dtype=sc.dtype.bool)
+                                               dtype=sc.DType.bool)
     else:
         stddev2 = ws.extractE()
         np.multiply(stddev2, stddev2, out=stddev2)  # much faster than np.power
@@ -570,7 +573,7 @@ def convert_Workspace2D_to_data_array(ws,
     array = sc.DataArray(**coords_labs_data)
 
     if ws.hasAnyMaskedBins():
-        bin_mask = sc.zeros(dims=array.dims, shape=array.shape, dtype=sc.dtype.bool)
+        bin_mask = sc.zeros(dims=array.dims, shape=array.shape, dtype=sc.DType.bool)
         for i in range(ws.getNumberHistograms()):
             # maskedBinsIndices throws instead of returning empty list
             if ws.hasMaskedBins(i):
@@ -607,17 +610,17 @@ def convert_EventWorkspace_to_data_array(ws,
     _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
 
     n_event = ws.getNumberEvents()
-    coord = sc.zeros(dims=['event'], shape=[n_event], unit=unit, dtype=sc.dtype.float64)
+    coord = sc.zeros(dims=['event'], shape=[n_event], unit=unit, dtype=sc.DType.float64)
     weights = sc.ones(dims=['event'],
                       shape=[n_event],
                       unit=data_unit,
-                      dtype=sc.dtype.float32,
+                      dtype=sc.DType.float32,
                       with_variances=True)
     pulse_times = sc.empty(
-        dims=['event'], shape=[n_event], dtype=sc.dtype.datetime64,
+        dims=['event'], shape=[n_event], dtype=sc.DType.datetime64,
         unit=sc.units.ns) if load_pulse_times else None
 
-    begins = sc.zeros(dims=[spec_dim, dim], shape=[nHist, 1], dtype=sc.dtype.int64)
+    begins = sc.zeros(dims=[spec_dim, dim], shape=[nHist, 1], dtype=sc.DType.int64)
     ends = begins.copy()
     current = 0
     for i in range(nHist):

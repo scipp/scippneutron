@@ -540,16 +540,16 @@ def test_convert_with_factor_type_promotion():
                                  dtype='float32')
     for target in TOF_TARGET_DIMS:
         res = scn.convert(tof, origin='tof', target=target, scatter=True)
-        assert res.coords[target].dtype == sc.dtype.float32
+        assert res.coords[target].dtype == sc.DType.float32
 
     for key in ('incident_energy', 'final_energy'):
         inelastic = tof.copy()
-        inelastic.coords[key] = sc.scalar(35, dtype=sc.dtype.float32, unit=sc.units.meV)
+        inelastic.coords[key] = sc.scalar(35, dtype=sc.DType.float32, unit=sc.units.meV)
         res = scn.convert(inelastic,
                           origin='tof',
                           target='energy_transfer',
                           scatter=True)
-        assert res.coords['energy_transfer'].dtype == sc.dtype.float32
+        assert res.coords['energy_transfer'].dtype == sc.DType.float32
 
 
 @pytest.mark.parametrize('target', TOF_TARGET_DIMS)
@@ -560,7 +560,7 @@ def test_convert_integer_input_elastic(target):
 
     res = scn.convert(da_int_coord, origin='tof', target=target, scatter=True)
     expected = scn.convert(da_float_coord, origin='tof', target=target, scatter=True)
-    assert res.coords[target].dtype == sc.dtype.float64
+    assert res.coords[target].dtype == sc.DType.float64
     assert sc.allclose(res.coords[target],
                        expected.coords[target],
                        rtol=1e-15 * sc.units.one)
@@ -572,7 +572,7 @@ def test_convert_integer_input_elastic(target):
 def test_convert_integer_input_inelastic(input_energy, input_dtypes):
     da_float_coord = make_test_data(coords=('tof', 'L1', 'L2', 'two_theta'))
     da_float_coord.coords[input_energy] = sc.scalar(35,
-                                                    dtype=sc.dtype.float64,
+                                                    dtype=sc.DType.float64,
                                                     unit=sc.units.meV)
 
     da_int_coord = da_float_coord.copy()
@@ -587,7 +587,7 @@ def test_convert_integer_input_inelastic(input_energy, input_dtypes):
                            origin='tof',
                            target='energy_transfer',
                            scatter=True)
-    assert res.coords['energy_transfer'].dtype == sc.dtype.float64
+    assert res.coords['energy_transfer'].dtype == sc.DType.float64
     assert sc.allclose(res.coords['energy_transfer'],
                        expected.coords['energy_transfer'],
                        rtol=1e-14 * sc.units.one)

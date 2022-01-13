@@ -258,15 +258,15 @@ class StreamedDataBuffer:
         tof_buffer = sc.zeros(dims=['event'],
                               shape=[event_buffer_size],
                               unit=sc.units.ns,
-                              dtype=sc.dtype.int32)
+                              dtype=sc.DType.int32)
         id_buffer = sc.zeros(dims=['event'],
                              shape=[event_buffer_size],
                              unit=sc.units.one,
-                             dtype=sc.dtype.int32)
+                             dtype=sc.DType.int32)
         pulse_times = sc.zeros(dims=['event'],
                                shape=[event_buffer_size],
                                unit=sc.units.ns,
-                               dtype=sc.dtype.int64)
+                               dtype=sc.DType.int64)
         weights = sc.ones(dims=['event'],
                           shape=[event_buffer_size],
                           with_variances=True)

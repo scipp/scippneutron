@@ -27,7 +27,7 @@ class HistogramEventsTest(MantidScippComparison):
         return sc.histogram(x=input,
                             bins=sc.Variable(dims=['tof'],
                                              values=np.linspace(0, 1000, num=101),
-                                             dtype=sc.dtype.float64,
+                                             dtype=sc.DType.float64,
                                              unit=sc.units.us))
 
 

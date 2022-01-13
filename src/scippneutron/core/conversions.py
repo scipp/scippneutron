@@ -23,9 +23,9 @@ def _elem_dtype(var):
 
 def _float_dtype(var):
     dtype = _elem_dtype(var)
-    if dtype == sc.dtype.float32:
-        return sc.dtype.float32
-    return sc.dtype.float64
+    if dtype == sc.DType.float32:
+        return sc.DType.float32
+    return sc.DType.float64
 
 
 def _as_float_type(var, ref):
@@ -88,9 +88,9 @@ def _common_dtype(a, b):
     Only useful to check if the combination of a and b results in
     single or double precision float.
     """
-    if _elem_dtype(a) == sc.dtype.float32 and _elem_dtype(b) == sc.dtype.float32:
-        return sc.dtype.float32
-    return sc.dtype.float64
+    if _elem_dtype(a) == sc.DType.float32 and _elem_dtype(b) == sc.DType.float32:
+        return sc.DType.float32
+    return sc.DType.float64
 
 
 def _energy_transfer_t0(energy, tof, length):
