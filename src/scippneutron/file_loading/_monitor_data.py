@@ -1,9 +1,10 @@
 from typing import List, Dict
-import warnings
+
 from ._common import Group
 import scipp as sc
 from ._nexus import LoadFromNexus
 from ._detector_data import load_detector_data
+from ..logging import get_logger
 
 
 def _load_data_from_histogram_mode_monitor(group: Group, nexus: LoadFromNexus):
@@ -28,15 +29,17 @@ def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict
         if nexus.dataset_in_group(group, "event_id")[0]:
             events = load_detector_data([group], [], nexus, True, True)
             monitor_data[monitor_name] = sc.scalar(value=events)
-            warnings.warn(f"Event data present in NXMonitor group {group.name}. "
-                          f"Histogram-mode monitor data from this group will be "
-                          f"ignored.")
+            get_logger().warning(
+                "Event data present in NXMonitor group %s. "
+                "Histogram-mode monitor data from this group will be ignored.",
+                group.name)
         else:
             data = _load_data_from_histogram_mode_monitor(group, nexus)
             if data is not None:
                 monitor_data[monitor_name] = sc.scalar(value=data)
             else:
-                warnings.warn(f"No event-mode or histogram-mode monitor data found for "
-                              f"NXMonitor group {group.name}. Skipping this group.")
+                get_logger().warning(
+                    "No event-mode or histogram-mode monitor data found for "
+                    "NXMonitor group %s. Skipping this group.", group.name)
 
     return monitor_data
