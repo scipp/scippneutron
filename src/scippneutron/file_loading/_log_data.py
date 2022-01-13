@@ -7,7 +7,7 @@ from typing import Tuple, List, Union, Dict
 import scipp as sc
 from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
 from ._nexus import LoadFromNexus
-from warnings import warn
+from ..logging import get_logger
 
 
 def load_logs(log_groups: List[Group], nexus: LoadFromNexus) -> Dict:
@@ -17,7 +17,7 @@ def load_logs(log_groups: List[Group], nexus: LoadFromNexus) -> Dict:
             log_data_name, log_data = _load_log_data_from_group(group, nexus)
             _add_log_to_data(log_data_name, log_data, group.name, logs)
         except BadSource as e:
-            warn(f"Skipped loading {group.name} due to:\n{e}")
+            get_logger().warning("Skipped loading %s due to:\n%s", group.name, e)
         except SkipSource:
             pass  # skip without warning user
     return logs
@@ -95,8 +95,9 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,
             log_data_name = f"{group_path[path_position]}_{log_data_name}"
             path_position -= 1
     if name_changed:
-        warn(f"Name of log group at {'/'.join(group_path)} is not unique: "
-             f"{log_data_name} used as attribute name.")
+        get_logger().warning(
+            "Name of log group at %s is not unique: "
+            "%s used as attribute name.", "/".join(group_path), log_data_name)
 
 
 def _load_log_data_from_group(group: Group,
@@ -119,8 +120,9 @@ def _load_log_data_from_group(group: Group,
     try:
         unit = sc.Unit(unit)
     except sc.UnitError:
-        warn(f"Unrecognized unit '{unit}' for value dataset "
-             f"in NXlog '{group.name}'; setting unit as 'dimensionless'")
+        get_logger().warning(
+            "Unrecognized unit '%s' for value dataset "
+            "in NXlog '%s'; setting unit as 'dimensionless'", unit, group.name)
         unit = sc.units.dimensionless
 
     try:
