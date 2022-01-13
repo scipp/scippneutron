@@ -61,7 +61,7 @@ def _convert_nxlog_time_to_datetime64(
     try:
         _start_ts = sc.scalar(value=np.datetime64(log_start or "1970-01-01T00:00:00Z"),
                               unit=sc.units.ns,
-                              dtype=sc.dtype.datetime64)
+                              dtype=sc.DType.datetime64)
     except ValueError:
         raise BadSource(
             f"The date string '{log_start}' in the NXLog entry at "
@@ -71,7 +71,7 @@ def _convert_nxlog_time_to_datetime64(
     _scale = sc.scalar(value=scaling_factor if scaling_factor is not None else 1,
                        unit=sc.units.dimensionless)
 
-    return _start_ts + (raw_times_ns * _scale).astype(sc.dtype.int64, copy=False)
+    return _start_ts + (raw_times_ns * _scale).astype(sc.DType.int64, copy=False)
 
 
 def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,

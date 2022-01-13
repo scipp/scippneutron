@@ -52,8 +52,8 @@ class TestMantidConversion(unittest.TestCase):
         for i in range(ws.getNumberHistograms()):
             assert np.all(np.equal(d.values[i], ws.readY(i)))
             assert np.all(np.equal(d.variances[i], ws.readE(i) * ws.readE(i)))
-        self.assertEqual(d.coords['spectrum'].dtype, sc.dtype.int32)
-        self.assertEqual(d.coords['tof'].dtype, sc.dtype.float64)
+        self.assertEqual(d.coords['spectrum'].dtype, sc.DType.int32)
+        self.assertEqual(d.coords['tof'].dtype, sc.DType.float64)
 
     def test_EventWorkspace(self):
         import mantid.simpleapi as mantid
@@ -254,7 +254,7 @@ class TestMantidConversion(unittest.TestCase):
 
         ds = scn.mantid.convert_Workspace2D_to_data_array(masked_ws)
 
-        mask = sc.zeros(dims=ds.dims, shape=ds.shape, dtype=sc.dtype.bool)
+        mask = sc.zeros(dims=ds.dims, shape=ds.shape, dtype=sc.DType.bool)
         mask['spectrum', 0:3]['tof', 0:3] |= sc.scalar(True)
         assert sc.identical(ds.masks['bin'], mask)
 
@@ -822,7 +822,7 @@ def test_time_series_log_extraction():
     for i, t in enumerate(times):
         sapi.AddTimeSeriesLog(ws, Name='time_log', Time=str(t), Value=float(i))
     da = scn.from_mantid(ws)
-    assert da.attrs['time_log'].value.coords['time'].dtype == sc.dtype.datetime64
+    assert da.attrs['time_log'].value.coords['time'].dtype == sc.DType.datetime64
     # check times
     assert sc.identical(
         sc.Variable(dims=['time'], values=np.array(times).astype('datetime64[ns]')),
@@ -840,7 +840,7 @@ def test_from_mask_workspace():
     dir_path = path.dirname(path.realpath(__file__))
     mask = LoadMask('HYS', path.join(dir_path, 'HYS_mask.xml'))
     da = scn.from_mantid(mask)
-    assert da.data.dtype == sc.dtype.bool
+    assert da.data.dtype == sc.DType.bool
     assert da.dims == ['spectrum']
     assert da.variances is None
 
@@ -928,7 +928,7 @@ def test_EventWorkspace_with_pulse_times():
                                                 NumEvents=10)
     d = scn.mantid.convert_EventWorkspace_to_data_array(small_event_ws,
                                                         load_pulse_times=True)
-    assert d.data.values[0].coords['pulse_time'].dtype == sc.dtype.datetime64
+    assert d.data.values[0].coords['pulse_time'].dtype == sc.DType.datetime64
     assert sc.identical(
         d.data.values[0].coords['pulse_time']['event', 0],
         sc.scalar(

@@ -7,7 +7,7 @@ import numpy as np
 from ._common import MissingDataset, MissingAttribute, Group
 from typing import Union, List
 import scipp as sc
-import scipp.spatial.transform
+import scipp.spatial
 import h5py
 from cmath import isclose
 from ._nexus import LoadFromNexus, GroupObject
@@ -32,8 +32,8 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
     """
     rotvec = sc.vector(value=axis)
     # We multiply by -1*angle to get a "passive transform"
-    rotvecs = rotvec * sc.scalar(-1.0) * angles.astype(sc.dtype.float64, copy=False)
-    matrices = scipp.spatial.rotations_from_rotvecs(dims=angles.dims,
+    rotvecs = rotvec * sc.scalar(-1.0) * angles.astype(sc.DType.float64, copy=False)
+    matrices = sc.spatial.rotations_from_rotvecs(dims=angles.dims,
                                                     values=rotvecs.values,
                                                     unit=sc.units.rad)
     return matrices
@@ -184,7 +184,7 @@ def _append_translation(offset: np.ndarray, transform: GroupObject,
     loaded_transform = _get_transformation_magnitude_and_unit(
         group_name, transform, nexus)
 
-    loaded_transform_m = sc.to_unit(loaded_transform.astype(sc.dtype.float64,
+    loaded_transform_m = sc.to_unit(loaded_transform.astype(sc.DType.float64,
                                                             copy=False),
                                     sc.units.m,
                                     copy=False)
@@ -192,12 +192,11 @@ def _append_translation(offset: np.ndarray, transform: GroupObject,
     # -1 as describes passive transformation
     vectors = sc.vector(
         value=direction_unit_vector) * sc.scalar(-1.0) * loaded_transform_m
-    translations = sc.spatial.translations_from_vectors(dims=loaded_transform_m.dims,
-                                                        values=vectors.values,
-                                                        unit=sc.units.m)
+    translations = sc.spatial.translations(dims=loaded_transform_m.dims,
+                                           values=vectors.values,
+                                           unit=sc.units.m)
 
-    translations = translations * sc.spatial.translation_from_vector(value=offset,
-                                                                     unit=sc.units.m)
+    translations = translations * sc.spatial.translation(value=offset, unit=sc.units.m)
 
     transformations.append(translations)
 
@@ -264,7 +263,7 @@ def _append_rotation(offset: np.ndarray, transform: GroupObject,
                      group_name: str, nexus: LoadFromNexus):
     angles = _get_transformation_magnitude_and_unit(group_name, transform, nexus)
     try:
-        angles = sc.to_unit(angles.astype(sc.dtype.float64, copy=False),
+        angles = sc.to_unit(angles.astype(sc.DType.float64, copy=False),
                             sc.units.rad,
                             copy=False)
     except sc.UnitError:

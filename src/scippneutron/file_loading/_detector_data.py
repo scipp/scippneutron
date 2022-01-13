@@ -166,9 +166,9 @@ def _load_pulse_times(group: Group, nexus: LoadFromNexus) -> sc.Variable:
     # Need to convert the values which were loaded as float64 into int64 to be able
     # to do datetime arithmetic. This needs to be done after conversion to ns to
     # avoid unnecessary loss of accuracy.
-    pulse_times = pulse_times.astype(sc.dtype.int64, copy=False)
+    pulse_times = pulse_times.astype(sc.DType.int64, copy=False)
     return pulse_times + sc.scalar(
-        np.datetime64(time_offset), unit=sc.units.ns, dtype=sc.dtype.datetime64)
+        np.datetime64(time_offset), unit=sc.units.ns, dtype=sc.DType.datetime64)
 
 
 def _load_detector(group: Group, nexus: LoadFromNexus) -> DetectorData:
@@ -225,7 +225,7 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, detector_data: Detecto
 
     event_index = sc.array(dims=[_pulse_dimension],
                            values=event_index,
-                           dtype=sc.dtype.int64)
+                           dtype=sc.DType.int64)
     pulse_times = _load_pulse_times(group, nexus)
 
     begins = event_index
@@ -262,8 +262,8 @@ def _check_event_ids_and_det_number_types_valid(detector_id_type: Any,
     current event group.
     """
     def is_integer_type(type_to_check: Any) -> bool:
-        return type_to_check == sc.dtype.int32 or \
-               type_to_check == sc.dtype.int64
+        return type_to_check == sc.DType.int32 or \
+               type_to_check == sc.DType.int64
 
     if not is_integer_type(detector_id_type):
         raise DetectorIdError(
