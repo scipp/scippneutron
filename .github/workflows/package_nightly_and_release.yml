@@ -35,7 +35,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: conda-package-${{ matrix.os }}-py${{ matrix.python-version }}
-          path: conda/package/*/scipp*.tar.bz2
+          path: conda/package/*/scippneutron*.tar.bz2
 
       - uses: actions/upload-artifact@v2
         if: ${{ contains(matrix.os, 'ubuntu') && matrix.python-version == '3.7' }}
@@ -58,8 +58,7 @@ jobs:
 
       - uses: JamesIves/github-pages-deploy-action@v4.2.2
         with:
-          repository-name: scipp/scipp.github.io
-          branch: master
+          branch: gh-pages
           folder: html
           # Note: If this is a release, it will not deploy to the top level folder.
           # The next scheduled main build will update that.
