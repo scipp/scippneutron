@@ -826,7 +826,7 @@ def load(filename="",
     .. highlight:: python
     .. code-block:: python
 
-        from scipp.neutron import load
+        from scippneutron import load
         d = sc.Dataset()
         d["sample"] = load(filename='PG3_4844_event.nxs',
                            load_pulse_times=False,
