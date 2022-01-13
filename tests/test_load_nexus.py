@@ -1,5 +1,3 @@
-import logging
-
 from .nexus_helpers import (
     NexusBuilder,
     EventData,
@@ -186,7 +184,7 @@ def test_loads_pulse_times_with_combinations_of_offset_and_units(
                   _time) <= np.array(1).astype("timedelta64[ns]")
 
 
-def test_does_not_load_events_if_index_not_ordered(load_function: Callable):
+def test_does_not_load_events_if_index_not_ordered(load_function: Callable, logcheck):
     event_data_1 = EventData(
         event_id=np.array([0, 1]),
         event_time_offset=np.array([0, 1]),
@@ -198,7 +196,9 @@ def test_does_not_load_events_if_index_not_ordered(load_function: Callable):
     builder.add_detector(
         Detector(detector_numbers=np.array([0, 1]), event_data=event_data_1))
 
-    with pytest.warns(UserWarning, match="Event index in NXEvent at "):
+    with logcheck.logs(level="WARNING",
+                       logger=r"scipp\.neutron",
+                       message="Event index in NXEvent at"):
         load_function(builder)
 
 
@@ -287,7 +287,8 @@ def test_loads_data_from_multiple_event_data_groups(load_function: Callable):
                           expected_detector_ids)
 
 
-def test_skips_event_data_group_with_non_integer_event_ids(load_function: Callable):
+def test_skips_event_data_group_with_non_integer_event_ids(load_function: Callable,
+                                                           logcheck):
     event_time_offsets = np.array([456, 743, 347, 345, 632])
     event_data = EventData(
         event_id=np.array([1.1, 2.2, 3.3, 1.1, 3.1]),
@@ -302,7 +303,7 @@ def test_skips_event_data_group_with_non_integer_event_ids(load_function: Callab
     builder = NexusBuilder()
     builder.add_event_data(event_data)
 
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level='WARNING', logger=r'scipp\.neutron'):
         loaded_data = load_function(builder)
 
     assert loaded_data is None, "Expected no data to be loaded as " \
@@ -310,7 +311,7 @@ def test_skips_event_data_group_with_non_integer_event_ids(load_function: Callab
 
 
 def test_skips_event_data_group_with_non_integer_detector_numbers(
-        load_function: Callable):
+        load_function: Callable, logcheck):
     event_time_offsets = np.array([456, 743, 347, 345, 632])
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 3]),
@@ -326,7 +327,7 @@ def test_skips_event_data_group_with_non_integer_detector_numbers(
     builder = NexusBuilder()
     builder.add_detector(Detector(detector_numbers, event_data))
 
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=r"scipp\.neutron"):
         loaded_data = load_function(builder)
 
     assert loaded_data is None, "Expected no data to be loaded as " \
@@ -334,7 +335,7 @@ def test_skips_event_data_group_with_non_integer_detector_numbers(
 
 
 def test_skips_data_with_event_id_and_detector_number_type_unequal(
-        load_function: Callable):
+        load_function: Callable, logcheck):
     event_time_offsets = np.array([456, 743, 347, 345, 632])
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 3], dtype=np.int64),
@@ -350,7 +351,7 @@ def test_skips_data_with_event_id_and_detector_number_type_unequal(
     builder = NexusBuilder()
     builder.add_detector(Detector(detector_numbers, event_data))
 
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=r"scipp\.neutron"):
         loaded_data = load_function(builder)
 
     assert loaded_data is None, "Expected no data to be loaded as event " \
@@ -797,7 +798,8 @@ def test_loads_event_data_when_missing_from_some_detectors(load_function: Callab
                        np.concatenate((detector_1_ids, detector_2_ids.flatten())))
 
 
-def test_skips_loading_pixel_positions_with_non_matching_shape(load_function: Callable):
+def test_skips_loading_pixel_positions_with_non_matching_shape(
+        load_function: Callable, logcheck):
     pulse_times = np.array([
         1600766730000000000, 1600766731000000000, 1600766732000000000,
         1600766733000000000
@@ -841,7 +843,7 @@ def test_skips_loading_pixel_positions_with_non_matching_shape(load_function: Ca
                  y_offsets=y_pixel_offset_2,
                  offsets_unit="m"))
 
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=r"scipp\.neutron"):
         loaded_data = load_function(builder)
 
     assert "position" not in loaded_data.coords.keys(
@@ -852,7 +854,7 @@ def test_skips_loading_pixel_positions_with_non_matching_shape(load_function: Ca
     # the detector ids (loading event data from all detectors is prioritised).
 
 
-def test_skips_loading_pixel_positions_with_no_units(load_function: Callable):
+def test_skips_loading_pixel_positions_with_no_units(load_function: Callable, logcheck):
     pulse_times = np.array([
         1600766730000000000, 1600766731000000000, 1600766732000000000,
         1600766733000000000
@@ -878,7 +880,7 @@ def test_skips_loading_pixel_positions_with_no_units(load_function: Callable):
                  z_offsets=z_pixel_offset,
                  offsets_unit=None))
 
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=r"scipp\.neutron"):
         loaded_data = load_function(builder)
 
     assert "position" not in loaded_data.coords.keys()
@@ -1554,7 +1556,7 @@ def test_nexus_file_with_invalid_log_start_date_warns_and_skips_log(
         assert "test_log_2" in loaded_data
 
 
-def test_extended_ascii_in_ascii_encoded_dataset(load_function: Callable, caplog):
+def test_extended_ascii_in_ascii_encoded_dataset(load_function: Callable, logcheck):
     if load_function == load_from_json:
         pytest.skip("JSON serialiser can only serialize strings, not bytes.")
 
@@ -1563,11 +1565,10 @@ def test_extended_ascii_in_ascii_encoded_dataset(load_function: Callable, caplog
     # 0xb0 = degrees symbol in latin-1 encoding.
     builder.add_title(b"run at rot=90" + bytes([0xb0]))
 
-    loaded_data = load_function(builder)
-    [warning] = filter(
-        lambda rec: rec.name == "scipp.neutron" and rec.levelno == logging.WARNING,
-        caplog.records)
-    assert "contains characters in extended ascii range" in warning.message
+    with logcheck.logs(level='WARNING',
+                       logger=r'scipp\.neutron',
+                       message='contains characters in extended ascii range'):
+        loaded_data = load_function(builder)
     assert sc.identical(loaded_data["experiment_title"],
                         sc.DataArray(data=sc.scalar("run at rot=90°")))
 
@@ -1584,7 +1585,7 @@ def test_utf8_encoded_dataset(load_function: Callable, test_string):
                         sc.DataArray(data=sc.scalar(test_string)))
 
 
-def test_extended_ascii_in_ascii_encoded_attribute(load_function: Callable, caplog):
+def test_extended_ascii_in_ascii_encoded_attribute(load_function: Callable, logcheck):
     if load_function == load_from_json:
         pytest.skip("JSON serialiser can only serialize strings, not bytes.")
 
@@ -1593,12 +1594,11 @@ def test_extended_ascii_in_ascii_encoded_attribute(load_function: Callable, capl
     # 0xb0 = degrees symbol in latin-1 encoding.
     builder.add_log(Log(name="testlog", value_units=bytes([0xb0]), value=np.array([0])))
 
-    loaded_data = load_function(builder)
+    with logcheck.logs(level="WARNING",
+                       logger=r"scipp\.neutron",
+                       message="contains characters in extended ascii range"):
+        loaded_data = load_function(builder)
 
-    [warning] = filter(
-        lambda rec: rec.name == "scipp.neutron" and rec.levelno == logging.WARNING,
-        caplog.records)
-    assert "contains characters in extended ascii range" in warning.message
     assert loaded_data["testlog"].data.values.unit == sc.units.deg
 
 

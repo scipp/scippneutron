@@ -5,13 +5,12 @@
 from dataclasses import dataclass
 from typing import Optional, List, Any, Dict, Union
 import numpy as np
-import scipp
+import scipp as sc
 
 from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
-import scipp as sc
-from warnings import warn
 from ._transformations import get_full_transformation_matrix
 from ._nexus import LoadFromNexus
+from ..logging import get_logger
 
 _bank_dimension = "bank"
 _detector_dimension = "detector_id"
@@ -57,8 +56,9 @@ def _load_pixel_positions(detector_group: Group, detector_ids_size: int,
     offsets_unit = nexus.get_unit(
         nexus.get_dataset_from_group(detector_group, "x_pixel_offset"))
     if offsets_unit == sc.units.dimensionless:
-        warn(f"Skipped loading pixel positions as no units found on "
-             f"x_pixel_offset dataset in {nexus.get_name(detector_group)}")
+        get_logger().warning(
+            "Skipped loading pixel positions as no units found on "
+            "x_pixel_offset dataset in %s", nexus.get_name(detector_group))
         return None
 
     try:
@@ -80,8 +80,9 @@ def _load_pixel_positions(detector_group: Group, detector_ids_size: int,
         x_positions.size, y_positions.size, z_positions.size, detector_ids_size
     ]
     if list_of_sizes.count(list_of_sizes[0]) != len(list_of_sizes):
-        warn(f"Skipped loading pixel positions as pixel offset and id "
-             f"dataset sizes do not match in {nexus.get_name(detector_group)}")
+        get_logger().warning(
+            "Skipped loading pixel positions as pixel offset and id "
+            "dataset sizes do not match in %s", nexus.get_name(detector_group))
         return None
 
     x_positions = _convert_array_to_metres(x_positions, offsets_unit)
@@ -417,10 +418,11 @@ def _load_data_from_each_nx_event_data(detector_data: Dict,
             # exception when loading events
             detector_data.pop(parent_path, DetectorData())
         except DetectorIdError as e:
-            warn(f"Skipped loading detector ids for {group.name} due to:\n{e}")
+            get_logger().warning("Skipped loading detector ids for %s due to:\n%s",
+                                 group.name, e)
             detector_data.pop(parent_path, DetectorData())
         except BadSource as e:
-            warn(f"Skipped loading {group.name} due to:\n{e}")
+            get_logger().warning("Skipped loading %s due to:\n%s", group.name, e)
         except SkipSource:
             pass  # skip without warning user
 
