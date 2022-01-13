@@ -27,3 +27,5 @@ from .instrument_view import instrument_view
 from .file_loading.load_nexus import load_nexus, load_nexus_json
 from .data_streaming.data_stream import data_stream
 from . import data
+from .logging import get_logger
+from . import logging
