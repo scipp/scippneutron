@@ -1,14 +1,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
-import warnings
-
 from typing import Union, Any, List, Optional, Tuple, Dict
 
 import h5py
 import numpy as np
 import scipp as sc
 from ._common import Group, MissingDataset, MissingAttribute
+from ..logging import get_logger
 
 
 def _cset_to_encoding(cset: int) -> str:
@@ -60,12 +59,13 @@ def _ensure_str(str_or_bytes: Union[str, bytes], encoding: str) -> str:
             return str(str_or_bytes, encoding="ascii")
         except UnicodeDecodeError as e:
             decoded = str(str_or_bytes, encoding="latin-1")
-            warnings.warn(f"Encoding for bytes '{str_or_bytes}' declared as ascii, "
-                          f"but contains characters in extended ascii range. Assuming "
-                          f"extended ASCII (latin-1), but this behavior is not "
-                          f"specified by the HDF5 or nexus standards and may therefore "
-                          f"be incorrect. Decoded string using latin-1 is '{decoded}'. "
-                          f"Error was '{str(e)}'.")
+            get_logger().warning(
+                f"Encoding for bytes '{str_or_bytes}' declared as ascii, "
+                f"but contains characters in extended ascii range. Assuming "
+                f"extended ASCII (latin-1), but this behavior is not "
+                f"specified by the HDF5 or nexus standards and may therefore "
+                f"be incorrect. Decoded string using latin-1 is '{decoded}'. "
+                f"Trying to decode as ASCII gives error '{str(e)}'.")
             return decoded
     else:
         return str(str_or_bytes, encoding)

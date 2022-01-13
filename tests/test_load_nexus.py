@@ -1,3 +1,5 @@
+import logging
+
 from .nexus_helpers import (
     NexusBuilder,
     EventData,
@@ -1552,7 +1554,7 @@ def test_nexus_file_with_invalid_log_start_date_warns_and_skips_log(
         assert "test_log_2" in loaded_data
 
 
-def test_extended_ascii_in_ascii_encoded_dataset(load_function: Callable):
+def test_extended_ascii_in_ascii_encoded_dataset(load_function: Callable, caplog):
     if load_function == load_from_json:
         pytest.skip("JSON serialiser can only serialize strings, not bytes.")
 
@@ -1561,11 +1563,13 @@ def test_extended_ascii_in_ascii_encoded_dataset(load_function: Callable):
     # 0xb0 = degrees symbol in latin-1 encoding.
     builder.add_title(b"run at rot=90" + bytes([0xb0]))
 
-    with pytest.warns(UserWarning, match="contains characters in extended ascii range"):
-        loaded_data = load_function(builder)
-
-        assert sc.identical(loaded_data["experiment_title"],
-                            sc.DataArray(data=sc.scalar("run at rot=90°")))
+    loaded_data = load_function(builder)
+    [warning] = filter(
+        lambda rec: rec.name == "scipp.neutron" and rec.levelno == logging.WARNING,
+        caplog.records)
+    assert "contains characters in extended ascii range" in warning.message
+    assert sc.identical(loaded_data["experiment_title"],
+                        sc.DataArray(data=sc.scalar("run at rot=90°")))
 
 
 @pytest.mark.parametrize("test_string", UTF8_TEST_STRINGS)
@@ -1580,7 +1584,7 @@ def test_utf8_encoded_dataset(load_function: Callable, test_string):
                         sc.DataArray(data=sc.scalar(test_string)))
 
 
-def test_extended_ascii_in_ascii_encoded_attribute(load_function: Callable):
+def test_extended_ascii_in_ascii_encoded_attribute(load_function: Callable, caplog):
     if load_function == load_from_json:
         pytest.skip("JSON serialiser can only serialize strings, not bytes.")
 
@@ -1589,10 +1593,13 @@ def test_extended_ascii_in_ascii_encoded_attribute(load_function: Callable):
     # 0xb0 = degrees symbol in latin-1 encoding.
     builder.add_log(Log(name="testlog", value_units=bytes([0xb0]), value=np.array([0])))
 
-    with pytest.warns(UserWarning, match="contains characters in extended ascii range"):
-        loaded_data = load_function(builder)
+    loaded_data = load_function(builder)
 
-        assert loaded_data["testlog"].data.values.unit == sc.units.deg
+    [warning] = filter(
+        lambda rec: rec.name == "scipp.neutron" and rec.levelno == logging.WARNING,
+        caplog.records)
+    assert "contains characters in extended ascii range" in warning.message
+    assert loaded_data["testlog"].data.values.unit == sc.units.deg
 
 
 # Can't use UTF-8 test strings as above for this test as the units need to be valid.
