@@ -127,7 +127,7 @@ class LoadFromHdf5:
     def load_dataset(self,
                      group: h5py.Group,
                      dataset_name: str,
-                     dimensions: Optional[List[str]] = [],
+                     dimensions: Optional[List[str]] = None,
                      dtype: Optional[Any] = None) -> sc.Variable:
         """
         Load an HDF5 dataset into a Scipp Variable (array or scalar)
@@ -148,7 +148,7 @@ class LoadFromHdf5:
 
         if dtype is None:
             dtype = _ensure_supported_int_type(dataset.dtype.type)
-        variable = sc.empty(dims=dimensions,
+        variable = sc.empty(dims=dimensions if dimensions is not None else [],
                             shape=dataset.shape,
                             dtype=dtype,
                             unit=self.get_unit(dataset))
