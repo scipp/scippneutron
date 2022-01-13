@@ -102,8 +102,8 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> np.nda
             ],
                       dim="value"), "value")
 
-        total_transform = _interpolate_transform(transform, xnew) * \
-                          _interpolate_transform(total_transform, xnew)
+        total_transform = _interpolate_transform(
+            transform, xnew) * _interpolate_transform(total_transform, xnew)
 
     return total_transform
 
