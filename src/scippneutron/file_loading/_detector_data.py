@@ -94,10 +94,10 @@ def _load_pixel_positions(detector_group: Group, detector_ids_size: int,
 
     found_depends_on, _ = nexus.dataset_in_group(detector_group, "depends_on")
     if found_depends_on:
-        data = (get_full_transformation_matrix(detector_group, nexus) * data)["value", 0]
+        pos = (get_full_transformation_matrix(detector_group, nexus) * data)["value", 0]
         data = sc.vectors(dims=[_detector_dimension],
-                          values=data.values,
-                          unit=data.unit)
+                          values=pos.values,
+                          unit=sc.units.m)
 
     return data
 
@@ -261,6 +261,7 @@ def _check_event_ids_and_det_number_types_valid(detector_id_type: Any,
     we can give a useful warning to the user and skip loading the
     current event group.
     """
+
     def is_integer_type(type_to_check: Any) -> bool:
         return type_to_check == sc.DType.int32 or \
                type_to_check == sc.DType.int64
