@@ -65,4 +65,3 @@ jobs:
           target-folder: ${{ env.conda_label == 'main' && format('release/{0}', github.ref_name) || '' }}
           single-commit: true
           clean-exclude: release
-          ssh-key: ${{ secrets.GH_PAGES_DEPLOY_KEY }}
