@@ -9,4 +9,4 @@ include("${CMAKE_CURRENT_LIST_DIR}/scippneutron-targets.cmake")
 check_required_components(scippneutron-targets)
 
 include(CMakeFindDependencyMacro)
-find_dependency(Scipp 0.9)
+find_dependency(scipp 0.10)
