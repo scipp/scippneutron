@@ -79,8 +79,16 @@ include(GoogleTest)
 include(GenerateExportHeader)
 include(IPO)
 include(scipp-install)
+include(scipp-test)
 
-option(WITH_CTEST "Enable ctest integration of tests" ON)
+option(
+  CTEST_DISCOVER_TESTS
+  "Enable discoverage of *individual* tests by ctest. Test execution is slower, but ctest integration better. If OFF (default) each submodule test runner is registered as a *single* test."
+  OFF
+)
+option(DYNAMIC_LIB "Build shared libraries" ON)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 option(DYNAMIC_LIB "Build shared libraries" ON)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
@@ -196,8 +204,6 @@ option(FULL_BUILD
        "Enable full build where the 'all' target includes tests and benchmarks."
        OFF
 )
-
-enable_testing()
 
 add_subdirectory(neutron)
 add_subdirectory(python)

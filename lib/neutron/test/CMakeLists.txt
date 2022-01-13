@@ -13,6 +13,4 @@ set_property(
 set_property(
   TARGET ${TARGET_NAME} PROPERTY EXCLUDE_FROM_ALL $<NOT:$<BOOL:${FULL_BUILD}>>
 )
-if(${WITH_CTEST})
-  gtest_discover_tests(${TARGET_NAME} TEST_PREFIX bin/)
-endif()
+scipp_test(${TARGET_NAME} neutron)
