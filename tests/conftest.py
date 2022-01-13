@@ -55,7 +55,9 @@ class LogCheck:
              logger: Optional[Union[str, logging.Logger, re.Pattern]] = None,
              message: Optional[Union[str, re.Pattern]] = None):
         try:
-            with self._caplog.at_level(level=level, logger=logger):
+            with self._caplog.at_level(level=level,
+                                       logger=logger.name if isinstance(
+                                           logger, logging.Logger) else logger):
                 yield
         finally:
             filters = []

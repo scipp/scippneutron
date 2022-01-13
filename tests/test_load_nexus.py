@@ -19,6 +19,7 @@ import scipp as sc
 import scipp.spatial
 from typing import List, Type, Union, Callable
 from scippneutron.file_loading.load_nexus import _load_nexus_json
+from scippneutron import get_logger
 from dateutil.parser import parse as parse_date
 
 # representative sample of UTF-8 test strings from
@@ -197,7 +198,7 @@ def test_does_not_load_events_if_index_not_ordered(load_function: Callable, logc
         Detector(detector_numbers=np.array([0, 1]), event_data=event_data_1))
 
     with logcheck.logs(level="WARNING",
-                       logger=r"scipp\.neutron",
+                       logger=get_logger(),
                        message="Event index in NXEvent at"):
         load_function(builder)
 
@@ -303,7 +304,7 @@ def test_skips_event_data_group_with_non_integer_event_ids(load_function: Callab
     builder = NexusBuilder()
     builder.add_event_data(event_data)
 
-    with logcheck.logs(level='WARNING', logger=r'scipp\.neutron'):
+    with logcheck.logs(level='WARNING', logger=get_logger()):
         loaded_data = load_function(builder)
 
     assert loaded_data is None, "Expected no data to be loaded as " \
@@ -327,7 +328,7 @@ def test_skips_event_data_group_with_non_integer_detector_numbers(
     builder = NexusBuilder()
     builder.add_detector(Detector(detector_numbers, event_data))
 
-    with logcheck.logs(level="WARNING", logger=r"scipp\.neutron"):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         loaded_data = load_function(builder)
 
     assert loaded_data is None, "Expected no data to be loaded as " \
@@ -351,7 +352,7 @@ def test_skips_data_with_event_id_and_detector_number_type_unequal(
     builder = NexusBuilder()
     builder.add_detector(Detector(detector_numbers, event_data))
 
-    with logcheck.logs(level="WARNING", logger=r"scipp\.neutron"):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         loaded_data = load_function(builder)
 
     assert loaded_data is None, "Expected no data to be loaded as event " \
@@ -423,7 +424,7 @@ def test_loads_logs_with_non_supported_int_types(load_function: Callable):
         assert np.allclose(loaded_data[log.name].data.values.values, log.value)
 
 
-def test_skips_multidimensional_log(load_function: Callable):
+def test_skips_multidimensional_log(load_function: Callable, logcheck):
     # Loading NXlogs with more than 1 dimension is not yet implemented
     # We need to come up with a sensible approach to labelling the dimensions
 
@@ -432,44 +433,45 @@ def test_skips_multidimensional_log(load_function: Callable):
     builder = NexusBuilder()
     builder.add_log(Log(name, multidim_values, np.array([4, 5, 6])))
 
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         loaded_data = load_function(builder)
 
     assert loaded_data is None
 
 
-def test_skips_log_with_no_value_dataset(load_function: Callable):
+def test_skips_log_with_no_value_dataset(load_function: Callable, logcheck):
     name = "test_log"
     builder = NexusBuilder()
     builder.add_log(Log(name, None, np.array([4, 5, 6])))
 
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         loaded_data = load_function(builder)
 
     assert loaded_data is None
 
 
-def test_skips_log_with_empty_value_and_time_datasets(load_function: Callable):
+def test_skips_log_with_empty_value_and_time_datasets(load_function: Callable,
+                                                      logcheck):
     empty_values = np.array([]).astype(np.int32)
     empty_times = np.array([]).astype(np.int32)
     name = "test_log"
     builder = NexusBuilder()
     builder.add_log(Log(name, empty_values, empty_times))
 
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         loaded_data = load_function(builder)
 
     assert loaded_data is None
 
 
-def test_skips_log_with_mismatched_value_and_time(load_function: Callable):
+def test_skips_log_with_mismatched_value_and_time(load_function: Callable, logcheck):
     values = np.array([1, 2, 3]).astype(np.int32)
     times = np.array([1, 2, 3, 4]).astype(np.int32)
     name = "test_log"
     builder = NexusBuilder()
     builder.add_log(Log(name, values, times))
 
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         loaded_data = load_function(builder)
 
     assert loaded_data is None
@@ -843,7 +845,7 @@ def test_skips_loading_pixel_positions_with_non_matching_shape(
                  y_offsets=y_pixel_offset_2,
                  offsets_unit="m"))
 
-    with logcheck.logs(level="WARNING", logger=r"scipp\.neutron"):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         loaded_data = load_function(builder)
 
     assert "position" not in loaded_data.coords.keys(
@@ -880,7 +882,7 @@ def test_skips_loading_pixel_positions_with_no_units(load_function: Callable, lo
                  z_offsets=z_pixel_offset,
                  offsets_unit=None))
 
-    with logcheck.logs(level="WARNING", logger=r"scipp\.neutron"):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         loaded_data = load_function(builder)
 
     assert "position" not in loaded_data.coords.keys()
@@ -1386,7 +1388,8 @@ def test_loads_multiple_sample_ub_matrix(load_function: Callable):
     assert "sample3_ub_matrix" not in loaded_data
 
 
-def test_warning_but_no_error_for_unrecognised_log_unit(load_function: Callable):
+def test_warning_but_no_error_for_unrecognised_log_unit(load_function: Callable,
+                                                        logcheck):
     values = np.array([1.1, 2.2, 3.3])
     times = np.array([4.4, 5.5, 6.6])
     name = "test_log"
@@ -1394,7 +1397,7 @@ def test_warning_but_no_error_for_unrecognised_log_unit(load_function: Callable)
     unknown_unit = "elephants"
     builder.add_log(Log(name, values, times, value_units=unknown_unit, time_units="s"))
 
-    with pytest.warns(UserWarning):
+    with logcheck.logs(level="WARNING", logger=get_logger()):
         loaded_data = load_function(builder)
 
     # Expect a sc.Dataset with log names as keys
@@ -1512,7 +1515,7 @@ def test_adjust_log_times_with_different_time_units(units, load_function: Callab
 
 
 def test_nexus_file_with_invalid_nxlog_time_units_warns_and_skips_log(
-        load_function: Callable):
+        load_function: Callable, logcheck):
     builder = NexusBuilder()
     builder.add_log(
         Log(
@@ -1528,7 +1531,9 @@ def test_nexus_file_with_invalid_nxlog_time_units_warns_and_skips_log(
             time_units="s",
             start_time="1970-01-01T00:00:00Z"))
 
-    with pytest.warns(UserWarning, match="The units of time in the NXlog entry at "):
+    with logcheck.logs(level="WARNING",
+                       logger=get_logger(),
+                       message="The units of time in the NXlog entry at "):
         loaded_data = load_function(builder)
 
         assert "test_log_1" not in loaded_data
@@ -1536,7 +1541,7 @@ def test_nexus_file_with_invalid_nxlog_time_units_warns_and_skips_log(
 
 
 def test_nexus_file_with_invalid_log_start_date_warns_and_skips_log(
-        load_function: Callable):
+        load_function: Callable, logcheck):
     builder = NexusBuilder()
     builder.add_log(
         Log(name="test_log_1",
@@ -1549,7 +1554,8 @@ def test_nexus_file_with_invalid_log_start_date_warns_and_skips_log(
             time=np.array([1]),
             start_time="1970-01-01T00:00:00Z"))
 
-    with pytest.warns(UserWarning, match="The date string "):
+    with logcheck.logs(level="WARNING", logger=get_logger(),
+                       message="The date string "):
         loaded_data = load_function(builder)
 
         assert "test_log_1" not in loaded_data
@@ -1566,7 +1572,7 @@ def test_extended_ascii_in_ascii_encoded_dataset(load_function: Callable, logche
     builder.add_title(b"run at rot=90" + bytes([0xb0]))
 
     with logcheck.logs(level='WARNING',
-                       logger=r'scipp\.neutron',
+                       logger=get_logger(),
                        message='contains characters in extended ascii range'):
         loaded_data = load_function(builder)
     assert sc.identical(loaded_data["experiment_title"],
@@ -1595,7 +1601,7 @@ def test_extended_ascii_in_ascii_encoded_attribute(load_function: Callable, logc
     builder.add_log(Log(name="testlog", value_units=bytes([0xb0]), value=np.array([0])))
 
     with logcheck.logs(level="WARNING",
-                       logger=r"scipp\.neutron",
+                       logger=get_logger(),
                        message="contains characters in extended ascii range"):
         loaded_data = load_function(builder)
 
