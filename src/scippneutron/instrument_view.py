@@ -148,7 +148,7 @@ def _instrument_view_shape_types():
 
 
 def _as_vector(var):
-    if var.dtype == sc.dtype.vector3:
+    if var.dtype == sc.DType.vector3:
         return var
     else:
         return sc.geometry.position(x=var, y=var, z=var)

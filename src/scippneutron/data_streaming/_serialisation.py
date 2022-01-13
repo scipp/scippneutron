@@ -59,7 +59,7 @@ def convert_from_pickleable_dict(data_dict: Dict) -> sc.DataArray:
                         d[k] = np.dtype(v)
                     except TypeError:
                         if v == "string":
-                            d[k] = sc.dtype.string
+                            d[k] = sc.DType.string
                         elif any(scipp_container_type in k
                                  for scipp_container_type in _scipp_containers):
                             delete_dtype = True

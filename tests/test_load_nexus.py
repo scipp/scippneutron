@@ -236,7 +236,7 @@ def test_loads_pulse_times_from_multiple_event_data_groups(load_function: Callab
             sc.array(dims=["event"],
                      values=[_time],
                      unit=sc.units.ns,
-                     dtype=sc.dtype.datetime64))
+                     dtype=sc.DType.datetime64))
 
 
 def test_loads_data_from_multiple_event_data_groups(load_function: Callable):
@@ -1431,11 +1431,11 @@ def test_load_log_times(log_start: str, scaling_factor: float, load_function: Ca
         sc.array(dims=["time"],
                  values=times * (scaling_factor or 1.0),
                  unit=sc.units.s,
-                 dtype=sc.dtype.float64), sc.units.ns).astype(sc.dtype.int64)
+                 dtype=sc.DType.float64), sc.units.ns).astype(sc.DType.int64)
 
     expected = sc.scalar(value=np.datetime64(log_start),
                          unit=sc.units.ns,
-                         dtype=sc.dtype.datetime64) + times_ns
+                         dtype=sc.DType.datetime64) + times_ns
 
     actual = loaded_data["test_log"].values.coords['time']
 
@@ -1461,12 +1461,12 @@ def test_load_log_times_when_logs_do_not_have_start_time(load_function: Callable
     loaded_data = load_function(builder)
 
     times_ns = sc.to_unit(
-        sc.array(dims=["time"], values=times, unit=sc.units.s, dtype=sc.dtype.float64),
-        sc.units.ns).astype(sc.dtype.int64)
+        sc.array(dims=["time"], values=times, unit=sc.units.s, dtype=sc.DType.float64),
+        sc.units.ns).astype(sc.DType.int64)
 
     expected = sc.scalar(value=np.datetime64("1970-01-01T00:00:00Z"),
                          unit=sc.units.ns,
-                         dtype=sc.dtype.datetime64) + times_ns
+                         dtype=sc.DType.datetime64) + times_ns
 
     actual = loaded_data["test_log"].values.coords['time']
 
@@ -1492,12 +1492,12 @@ def test_adjust_log_times_with_different_time_units(units, load_function: Callab
     loaded_data = load_function(builder)
 
     times_ns = sc.to_unit(
-        sc.array(dims=["time"], values=times, unit=units, dtype=sc.dtype.int64),
+        sc.array(dims=["time"], values=times, unit=units, dtype=sc.DType.int64),
         sc.units.ns)
 
     expected = sc.scalar(value=np.datetime64("2000-01-01T00:00:00Z"),
                          unit=sc.units.ns,
-                         dtype=sc.dtype.datetime64) + times_ns
+                         dtype=sc.DType.datetime64) + times_ns
 
     actual = loaded_data["test_log"].values.coords['time']
 
@@ -1703,7 +1703,7 @@ def test_load_monitors(load_function: Callable):
         sc.DataArray(data=sc.ones(
             dims=["event_index", "period_index", "time_of_flight"],
             shape=(2, 4, 6),
-            dtype=sc.dtype.float64),
+            dtype=sc.DType.float64),
                      coords={
                          "event_index":
                          sc.Variable(dims=["event_index"],
@@ -1761,23 +1761,23 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
 
     assert sc.identical(
         mon_1_events.coords["detector_id"],
-        sc.Variable(dims=["detector_id"], values=[0], dtype=sc.dtype.int64))
+        sc.Variable(dims=["detector_id"], values=[0], dtype=sc.DType.int64))
     assert sc.identical(
         mon_2_events.coords["detector_id"],
-        sc.Variable(dims=["detector_id"], values=[1], dtype=sc.dtype.int64))
+        sc.Variable(dims=["detector_id"], values=[1], dtype=sc.DType.int64))
 
     assert sc.identical(
         mon_1_events.values[0].coords["tof"],
         sc.Variable(dims=["event"],
                     values=[1, 2, 3, 4, 5],
                     unit=sc.units.ns,
-                    dtype=sc.dtype.float64))
+                    dtype=sc.DType.float64))
     assert sc.identical(
         mon_2_events.values[0].coords["tof"],
         sc.Variable(dims=["event"],
                     values=[6, 7, 8, 9, 10],
                     unit=sc.units.ns,
-                    dtype=sc.dtype.float64))
+                    dtype=sc.DType.float64))
 
 
 def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
@@ -1807,7 +1807,7 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
                                         values=[1, 1, 1, 1, 1],
                                         variances=[1, 1, 1, 1, 1],
                                         unit=sc.units.counts,
-                                        dtype=sc.dtype.float32),
+                                        dtype=sc.DType.float32),
                           coords={
                               "tof":
                               sc.array(dims=["event"],
@@ -1816,8 +1816,8 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
                               "detector_id":
                               sc.array(dims=["event"], values=event_ids),
                           }),
-        begin=sc.array(dims=["pulse"], values=[0, 3, 3], dtype=sc.dtype.int64),
-        end=sc.array(dims=["pulse"], values=[3, 3, 5], dtype=sc.dtype.int64),
+        begin=sc.array(dims=["pulse"], values=[0, 3, 3], dtype=sc.DType.int64),
+        end=sc.array(dims=["pulse"], values=[3, 3, 5], dtype=sc.DType.int64),
     )
 
     # Even if there is just a single NXevent_data entry in the file the
@@ -1828,7 +1828,7 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
                                 sc.Variable(dims=["pulse"],
                                             values=time_zeros,
                                             unit=sc.units.ns,
-                                            dtype=sc.dtype.datetime64)
+                                            dtype=sc.DType.datetime64)
                             })
 
     assert sc.identical(loaded_data, expected)

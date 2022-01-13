@@ -404,18 +404,18 @@ def get_detector_properties(ws,
 
 def _get_dtype_from_values(values, coerce_floats_to_ints):
     if coerce_floats_to_ints and np.all(np.mod(values, 1.0) == 0.0):
-        dtype = sc.dtype.int32
+        dtype = sc.DType.int32
     elif hasattr(values, 'dtype'):
         dtype = values.dtype
     else:
         if len(values) > 0:
             dtype = type(values[0])
             if dtype is str:
-                dtype = sc.dtype.string
+                dtype = sc.DType.string
             elif dtype is int:
-                dtype = sc.dtype.int64
+                dtype = sc.DType.int64
             elif dtype is float:
-                dtype = sc.dtype.float64
+                dtype = sc.DType.float64
             else:
                 raise RuntimeError("Cannot handle the dtype that this "
                                    "workspace has on Axis 1.")
@@ -562,7 +562,7 @@ def convert_Workspace2D_to_data_array(ws,
         coords_labs_data["data"] = sc.Variable(dims=[spec_dim],
                                                unit=data_unit,
                                                values=ws.extractY().flatten(),
-                                               dtype=sc.dtype.bool)
+                                               dtype=sc.DType.bool)
     else:
         stddev2 = ws.extractE()
         np.multiply(stddev2, stddev2, out=stddev2)  # much faster than np.power
@@ -573,7 +573,7 @@ def convert_Workspace2D_to_data_array(ws,
     array = sc.DataArray(**coords_labs_data)
 
     if ws.hasAnyMaskedBins():
-        bin_mask = sc.zeros(dims=array.dims, shape=array.shape, dtype=sc.dtype.bool)
+        bin_mask = sc.zeros(dims=array.dims, shape=array.shape, dtype=sc.DType.bool)
         for i in range(ws.getNumberHistograms()):
             # maskedBinsIndices throws instead of returning empty list
             if ws.hasMaskedBins(i):
@@ -610,17 +610,17 @@ def convert_EventWorkspace_to_data_array(ws,
     _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
 
     n_event = ws.getNumberEvents()
-    coord = sc.zeros(dims=['event'], shape=[n_event], unit=unit, dtype=sc.dtype.float64)
+    coord = sc.zeros(dims=['event'], shape=[n_event], unit=unit, dtype=sc.DType.float64)
     weights = sc.ones(dims=['event'],
                       shape=[n_event],
                       unit=data_unit,
-                      dtype=sc.dtype.float32,
+                      dtype=sc.DType.float32,
                       with_variances=True)
     pulse_times = sc.empty(
-        dims=['event'], shape=[n_event], dtype=sc.dtype.datetime64,
+        dims=['event'], shape=[n_event], dtype=sc.DType.datetime64,
         unit=sc.units.ns) if load_pulse_times else None
 
-    begins = sc.zeros(dims=[spec_dim, dim], shape=[nHist, 1], dtype=sc.dtype.int64)
+    begins = sc.zeros(dims=[spec_dim, dim], shape=[nHist, 1], dtype=sc.DType.int64)
     ends = begins.copy()
     current = 0
     for i in range(nHist):

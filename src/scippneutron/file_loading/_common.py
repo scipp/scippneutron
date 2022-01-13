@@ -4,6 +4,8 @@
 
 from typing import Union, Optional, Any
 import h5py
+from scipp.spatial import affine_transform, linear_transform, \
+    rotation, translation
 import scipp as sc
 import numpy as np
 
@@ -55,17 +57,19 @@ def _add_attr_to_loaded_data(attr_name: str,
 
     try:
         if dtype is not None:
-            if dtype == sc.dtype.vector3:
+            if dtype == sc.DType.vector3:
                 data[attr_name] = sc.vector(value=value, unit=unit)
-            elif dtype == sc.dtype.affine_transform3:
-                data[attr_name] = sc.spatial.affine_transform(value=value, unit=unit)
-            elif dtype == sc.dtype.linear_transform3:
-                data[attr_name] = sc.spatial.linear_transform(value=value, unit=unit)
-            elif dtype == sc.dtype.rotation3:
-                data[attr_name] = sc.spatial.rotation(value=value, unit=unit)
-            elif dtype == sc.dtype.translation3:
-                data[attr_name] = sc.spatial.translation_from_vector(value=value,
-                                                                     unit=unit)
+            elif dtype == sc.DType.affine_transform3:
+                data[attr_name] = affine_transform(value=value, unit=unit)
+            elif dtype == sc.DType.linear_transform3:
+                data[attr_name] = linear_transform(value=value, unit=unit)
+            elif dtype == sc.DType.rotation3:
+                if unit != sc.units.one:
+                    raise sc.UnitError(
+                        f'Rotations must be dimensionless, got unit {unit}')
+                data[attr_name] = rotation(value=value)
+            elif dtype == sc.DType.translation3:
+                data[attr_name] = translation(value=value, unit=unit)
             else:
                 data[attr_name] = sc.scalar(value=value, dtype=dtype, unit=unit)
         else:
