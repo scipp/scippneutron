@@ -76,3 +76,38 @@ def _add_attr_to_loaded_data(attr_name: str,
             data[attr_name] = sc.scalar(value=value, unit=unit)
     except KeyError:
         pass
+
+
+def to_plain_index(dims, select, ignore_missing=False):
+    """
+    Given a valid "scipp" index 'select', return an equivalent plain numpy-style index.
+    """
+    def check_1d():
+        if len(dims) != 1:
+            raise ValueError(
+                f"Dataset has multiple dimensions {dims}, specify the dimension to index."
+            )
+
+    if select is Ellipsis:
+        return select
+    if isinstance(select, tuple) and len(select) == 0:
+        return select
+    if isinstance(select, tuple) and isinstance(select[0], str):
+        key, sel = select
+        select = {key: sel}
+
+    if isinstance(select, tuple):
+        check_1d()
+        return select
+    elif isinstance(select, int) or isinstance(select, slice):
+        check_1d()
+        return select
+    elif isinstance(select, dict):
+        index = [slice(None)] * len(dims)
+        for key, sel in select.items():
+            if not ignore_missing and key not in dims:
+                raise ValueError(
+                    f"'{key}' used for indexing not found in dataset dims {dims}.")
+            index[dims.index(key)] = sel
+        return tuple(index)
+    raise ValueError("Cannot process index {select}.")

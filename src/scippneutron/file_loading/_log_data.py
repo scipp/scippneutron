@@ -6,6 +6,7 @@ import numpy as np
 from typing import Tuple, List, Union, Dict
 import scipp as sc
 from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
+from ._common import to_plain_index
 from ._nexus import LoadFromNexus
 from warnings import warn
 
@@ -101,14 +102,12 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,
 
 def _load_log_data_from_group(group: Group,
                               nexus: LoadFromNexus,
-                              select = ...) -> Tuple[str, sc.Variable]:
+                              select =tuple()) -> Tuple[str, sc.Variable]:
     property_name = nexus.get_name(group)
     value_dataset_name = "value"
     time_dataset_name = "time"
-    if select is Ellipsis:
-        index = select
-    else:
-        key, index = select
+    # TODO This is wrong if the log just has a single value. Can we check the shape in advance?
+    index = to_plain_index(["time"], select)
 
     try:
         values = nexus.load_dataset_from_group_as_numpy_array(group, value_dataset_name, index=index)
@@ -162,15 +161,11 @@ def _load_log_data_from_group(group: Group,
                         f"this is not yet implemented")
 
     if np.ndim(values) == 0:
-        if select is not Ellipsis:
-            raise TypeError('')
         property_data = sc.scalar(values,
                                   unit=unit,
                                   dtype=nexus.get_dataset_numpy_dtype(
                                       group, value_dataset_name))
     else:
-        if select is not Ellipsis and key != dimension_label:
-            raise KeyError('')
         property_data = sc.Variable(values=values,
                                     unit=unit,
                                     dims=[dimension_label],

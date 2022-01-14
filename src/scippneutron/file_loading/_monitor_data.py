@@ -1,41 +1,9 @@
 from typing import List, Dict
 import warnings
-from ._common import Group
+from ._common import Group, to_plain_index
 import scipp as sc
 from ._nexus import LoadFromNexus
 from ._detector_data import load_detector_data
-
-
-def index_from_select(dims, select, ignore_missing=False):
-    def check_1d():
-        if len(dims) != 1:
-            raise ValueError(
-                f"Dataset has multiple dimensions {dims}, specify the dimension to index."
-            )
-
-    if select is Ellipsis:
-        return select
-    if isinstance(select, tuple) and len(select) == 0:
-        return select
-    if isinstance(select, tuple) and isinstance(select[0], str):
-        key, sel = select
-        select = {key: sel}
-
-    if isinstance(select, tuple):
-        check_1d()
-        return select
-    elif isinstance(select, int) or isinstance(select, slice):
-        check_1d()
-        return select
-    elif isinstance(select, dict):
-        index = [slice(None)] * len(dims)
-        for key, sel in select.items():
-            if not ignore_missing and key not in dims:
-                raise ValueError(
-                    f"'{key}' used for indexing not found in dataset dims {dims}.")
-            index[dims.index(key)] = sel
-        return tuple(index)
-    raise ValueError("Cannot process index {select}")
 
 
 def _load_data_from_histogram_mode_monitor(group: Group,
@@ -44,15 +12,15 @@ def _load_data_from_histogram_mode_monitor(group: Group,
     data_group = nexus.get_child_from_group(group, "data")
     if data_group is not None:
         dims = nexus.get_string_attribute(data_group, "axes").split(",")
-        index = index_from_select(dims, select)
+        index = to_plain_index(dims, select)
         data = nexus.load_dataset(group, "data", dimensions=dims, index=index)
         coords = {
             dim: nexus.load_dataset(group,
                                     dim,
                                     dimensions=[dim],
-                                    index=index_from_select([dim],
-                                                            select,
-                                                            ignore_missing=True))
+                                    index=to_plain_index([dim],
+                                                         select,
+                                                         ignore_missing=True))
             for dim in dims
         }
         return sc.DataArray(data=data, coords=coords)
