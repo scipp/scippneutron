@@ -198,7 +198,7 @@ class LoadFromJson:
                      group: Dict,
                      dataset_name: str,
                      dimensions: Optional[List[str]] = [],
-                     dtype: Optional[Any] = None) -> sc.Variable:
+                     dtype: Optional[Any] = None, index = tuple()) -> sc.Variable:
         """
         Load a dataset into a Scipp Variable (array or scalar)
         :param group: Group containing dataset to load
@@ -225,11 +225,11 @@ class LoadFromJson:
             units = sc.units.dimensionless
 
         return sc.array(dims=dimensions,
-                        values=np.asarray(dataset[_nexus_values]),
+                        values=np.asarray(dataset[_nexus_values])[index],
                         dtype=dtype,
                         unit=units)
 
-    def load_dataset_from_group_as_numpy_array(self, group: Dict, dataset_name: str):
+    def load_dataset_from_group_as_numpy_array(self, group: Dict, dataset_name: str, index=tuple()):
         """
         Load a dataset into a numpy array
         Prefer use of load_dataset to load directly to a scipp variable,
@@ -241,10 +241,10 @@ class LoadFromJson:
         dataset = self.get_dataset_from_group(group, dataset_name)
         if dataset is None:
             raise MissingDataset()
-        return self.load_dataset_as_numpy_array(dataset)
+        return self.load_dataset_as_numpy_array(dataset, index=index)
 
     @staticmethod
-    def load_dataset_as_numpy_array(dataset: Dict):
+    def load_dataset_as_numpy_array(dataset: Dict, index=tuple()):
         """
         Load a dataset into a numpy array
         Prefer use of load_dataset to load directly to a scipp variable,
@@ -258,7 +258,7 @@ class LoadFromJson:
         except KeyError:
             dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
                                                          ["dtype"]]
-        return np.array(dataset[_nexus_values]).astype(dtype)
+        return np.asarray(dataset[_nexus_values])[index].astype(dtype)
 
     def get_dataset_numpy_dtype(self, group: Dict, dataset_name: str) -> Any:
         dataset = self.get_dataset_from_group(group, dataset_name)

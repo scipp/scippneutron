@@ -14,7 +14,9 @@ def index_from_select(dims, select, ignore_missing=False):
             )
 
     if select is Ellipsis:
-        return ...
+        return select
+    if isinstance(select, tuple) and len(select) == 0:
+        return select
     if isinstance(select, tuple) and isinstance(select[0], str):
         key, sel = select
         select = {key: sel}
@@ -38,7 +40,7 @@ def index_from_select(dims, select, ignore_missing=False):
 
 def _load_data_from_histogram_mode_monitor(group: Group,
                                            nexus: LoadFromNexus,
-                                           select=...):
+                                           select=tuple()):
     data_group = nexus.get_child_from_group(group, "data")
     if data_group is not None:
         dims = nexus.get_string_attribute(data_group, "axes").split(",")
@@ -58,15 +60,12 @@ def _load_data_from_histogram_mode_monitor(group: Group,
         return None
 
 
-def load_monitor(group: Group, nexus: LoadFromNexus, select=...) -> sc.DataArray:
-
-    monitor_name = group.name.split("/")[-1]
-
+def load_monitor(group: Group, nexus: LoadFromNexus, select=tuple()) -> sc.DataArray:
     # Look for event mode data structures in NXMonitor. Event-mode data takes
     # precedence over histogram-mode-data if available.
-    if nexus.dataset_in_group(group, "event_index")[0]:
+    if nexus.dataset_in_group(group, "event_time_offset")[0]:
         events = load_detector_data([group], [], nexus, True, True)
-        warnings.warn(f"Event data present in NXMonitor group {group.name}. "
+        warnings.warn(f"Event data present in NXmonitor group {group.name}. "
                       f"Histogram-mode monitor data from this group will be "
                       f"ignored.")
         return events
@@ -82,9 +81,10 @@ def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict
     for group in monitor_groups:
         try:
             monitor = load_monitor(group, nexus)
-        except ValueError:
+            monitor_name = group.name.split("/")[-1]
+            monitor_data[monitor_name] = sc.scalar(value=monitor)
+        except ValueError as e:
             warnings.warn(f"No event-mode or histogram-mode monitor data found for "
                           f"NXMonitor group {group.name}. Skipping this group.")
-        monitor_data[monitor_name] = sc.scalar(value=monitor)
 
     return monitor_data

@@ -16,8 +16,8 @@ from ._nexus import LoadFromNexus
 _bank_dimension = "bank"
 _detector_dimension = "detector_id"
 _event_dimension = "event"
-_pulse_dimension = "time"
-_pulse_time = "time"
+_pulse_dimension = "pulse"
+_pulse_time = "pulse_time"
 _time_of_flight = "tof"
 
 
