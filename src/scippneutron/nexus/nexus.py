@@ -3,16 +3,26 @@
 # @author Simon Heybrock
 
 from contextlib import contextmanager, AbstractContextManager
+from enum import Enum, auto
 import h5py
 
 from ..file_loading._log_data import _load_log_data_from_group
+from ..file_loading._monitor_data import load_monitor
 from ..file_loading._hdf5_nexus import LoadFromHdf5
 from ..file_loading._detector_data import _load_event_group, DetectorData
+
+
+class NX_class(Enum):
+    NXentry = auto()
+    NXlog = auto()
+    NXmonitor = auto()
+    NXevent_data = auto()
 
 
 class Group():
     def __init__(self, group: h5py.Group):
         self._group = group
+        self._loader = LoadFromHdf5()
 
     def __getitem__(self, index):
         if isinstance(index, str):
@@ -21,16 +31,18 @@ class Group():
                 return Group(item)
             else:
                 return item
-        if self.NX_class == 'NXlog':
+        if self.NX_class == NX_class.NXlog:
             name, var = _load_log_data_from_group(self._group,
-                                                  LoadFromHdf5(),
+                                                  self._loader,
                                                   select=index)
             da = var.value
             da.name = name
             return da
-        if self.NX_class == 'NXevent_data':
+        if self.NX_class == NX_class.NXmonitor:
+            return load_monitor(self._group, self._loader, select=index)
+        if self.NX_class == NX_class.NXevent_data:
             detector_data = _load_event_group(self._group,
-                                              LoadFromHdf5(),
+                                              self._loader,
                                               DetectorData(),
                                               quiet=False,
                                               select=index)
@@ -42,10 +54,18 @@ class Group():
 
     @property
     def NX_class(self):
-        return self._group.attrs['NX_class'].decode('UTF-8')
+        return NX_class[self._group.attrs['NX_class'].decode('UTF-8')]
 
     def keys(self):
         return self._group.keys()
+
+    def find(self, nxclass: NX_class):
+        key = nxclass.name
+        groups = self._loader.find_by_nx_class((key, ), self._group)[key]
+        names = [self._loader.get_name(group) for group in groups]
+        if len(names) != len(set(names)):  # fall back to full path if duplicate
+            names = [group.name for group in groups]
+        return {name: Group(group) for name, group in zip(names, groups)}
 
 
 class File(AbstractContextManager, Group):

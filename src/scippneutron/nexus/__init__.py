@@ -4,4 +4,4 @@
 
 # flake8: noqa
 
-from .nexus import File, Group
+from .nexus import File, Group, NX_class
