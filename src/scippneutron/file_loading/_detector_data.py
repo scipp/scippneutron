@@ -274,6 +274,10 @@ def _load_event_group(group: Group,
 
     if not last_loaded:
         event_index = np.append(event_index, num_event)
+    else:
+        # Not a bin-edge coord, all events in bin are associate with same (previous)
+        # pulse time value
+        pulse_times = pulse_times[:-1]
 
     event_index = sc.array(dims=[_pulse_dimension],
                            values=event_index,
@@ -290,6 +294,7 @@ def _load_event_group(group: Group,
     if single:
         begins = begins[_pulse_dimension, 0]
         ends = ends[_pulse_dimension, 0]
+        pulse_times = pulse_times[_pulse_dimension, 0]
 
     try:
         binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
@@ -302,7 +307,7 @@ def _load_event_group(group: Group,
 
     if not quiet:
         print(f"Loaded {len(event_id)} events from "
-              f"{group.name} containing {num_event} events")
+              f"{nexus.get_name(group)} containing {num_event} events")
 
     return detector_data
 
