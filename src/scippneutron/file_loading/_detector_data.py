@@ -275,7 +275,7 @@ def _load_event_group(group: Group,
     if not last_loaded:
         event_index = np.append(event_index, num_event)
     else:
-        # Not a bin-edge coord, all events in bin are associate with same (previous)
+        # Not a bin-edge coord, all events in bin are associated with same (previous)
         # pulse time value
         pulse_times = pulse_times[:-1]
 

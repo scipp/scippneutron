@@ -4,6 +4,7 @@
 
 from contextlib import contextmanager, AbstractContextManager
 from enum import Enum, auto
+import functools
 import h5py
 
 from ..file_loading._log_data import _load_log_data_from_group
@@ -52,6 +53,9 @@ class Group():
             return data
         print(f'Cannot load unsupported class {self.NX_class}')
 
+    def __getattr__(self, name):
+        return getattr(self._group, name)
+
     @property
     def NX_class(self):
         return NX_class[self._group.attrs['NX_class'].decode('UTF-8')]
@@ -59,13 +63,20 @@ class Group():
     def keys(self):
         return self._group.keys()
 
-    def find(self, nxclass: NX_class):
-        key = nxclass.name
-        groups = self._loader.find_by_nx_class((key, ), self._group)[key]
-        names = [self._loader.get_name(group) for group in groups]
-        if len(names) != len(set(names)):  # fall back to full path if duplicate
-            names = [group.name for group in groups]
-        return {name: Group(group) for name, group in zip(names, groups)}
+    @functools.lru_cache
+    def by_nx_class(self):
+        keys = [c.name for c in NX_class]
+        classes = self._loader.find_by_nx_class(tuple(keys), self._group)
+        out = {}
+        for nx_class, groups in classes.items():
+            names = [self._loader.get_name(group) for group in groups]
+            if len(names) != len(set(names)):  # fall back to full path if duplicate
+                names = [group.name for group in groups]
+            out[NX_class[nx_class]] = {
+                name: Group(group)
+                for name, group in zip(names, groups)
+            }
+        return out
 
 
 class File(AbstractContextManager, Group):
