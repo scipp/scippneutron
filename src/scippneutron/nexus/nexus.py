@@ -20,7 +20,7 @@ class NX_class(Enum):
     NXevent_data = auto()
 
 
-class Group():
+class Group:
     def __init__(self, group: h5py.Group):
         self._group = group
         self._loader = LoadFromHdf5()
@@ -63,7 +63,16 @@ class Group():
     def keys(self):
         return self._group.keys()
 
-    @functools.lru_cache
+    @property
+    @functools.lru_cache()
+    def shape(self):
+        # TODO Same code in _load_event_group, refactor to better abstraction
+        if self.NX_class == NX_class.NXevent_data:
+            return self._loader.get_shape(
+                self._loader.get_dataset_from_group(self._group, "event_index"))
+        raise TypeError("Class has no shape.")
+
+    @functools.lru_cache()
     def by_nx_class(self):
         keys = [c.name for c in NX_class]
         classes = self._loader.find_by_nx_class(tuple(keys), self._group)
@@ -72,10 +81,7 @@ class Group():
             names = [self._loader.get_name(group) for group in groups]
             if len(names) != len(set(names)):  # fall back to full path if duplicate
                 names = [group.name for group in groups]
-            out[NX_class[nx_class]] = {
-                name: Group(group)
-                for name, group in zip(names, groups)
-            }
+            out[NX_class[nx_class]] = {n: Group(g) for n, g in zip(names, groups)}
         return out
 
 
