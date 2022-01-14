@@ -210,7 +210,7 @@ def _load_event_group(group: Group,
     def shape(name):
         return nexus.get_shape(nexus.get_dataset_from_group(group,name))
 
-    max_index = shape("event_time_offset")[0]
+    max_index = shape("event_index")[0]
     single = False
     if select is Ellipsis:
         index = select
@@ -230,11 +230,11 @@ def _load_event_group(group: Group,
         group, "event_index", index)
     pulse_times = _load_pulse_times(group, nexus, index)
 
-    number_of_event_ids = shape("event_id")[0]
-    event_index[event_index < 0] = number_of_event_ids
+    num_event = shape("event_time_offset")[0]
+    event_index[event_index < 0] = num_event
 
     if len(event_index) > 0:
-        event_select = slice(event_index[0], event_index[-1] if last_loaded else max_index)
+        event_select = slice(event_index[0], event_index[-1] if last_loaded else num_event)
     else:
         event_select = slice(None)
 
@@ -266,7 +266,7 @@ def _load_event_group(group: Group,
         detector_data.detector_ids.dtype, event_id.dtype)
 
     if not last_loaded:
-        event_index = np.append(event_index, number_of_event_ids)
+        event_index = np.append(event_index, num_event)
 
     event_index = sc.array(dims=[_pulse_dimension],
                            values=event_index,
