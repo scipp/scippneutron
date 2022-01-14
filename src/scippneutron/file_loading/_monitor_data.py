@@ -64,7 +64,7 @@ def load_monitor(group: Group, nexus: LoadFromNexus, select=...) -> sc.DataArray
 
     # Look for event mode data structures in NXMonitor. Event-mode data takes
     # precedence over histogram-mode-data if available.
-    if nexus.dataset_in_group(group, "event_id")[0]:
+    if nexus.dataset_in_group(group, "event_index")[0]:
         events = load_detector_data([group], [], nexus, True, True)
         warnings.warn(f"Event data present in NXMonitor group {group.name}. "
                       f"Histogram-mode monitor data from this group will be "
@@ -73,7 +73,7 @@ def load_monitor(group: Group, nexus: LoadFromNexus, select=...) -> sc.DataArray
     else:
         data = _load_data_from_histogram_mode_monitor(group, nexus, select=select)
         if data is None:
-            raise ValueError("No monitor data found in {group.name}")
+            raise ValueError(f"No monitor data found in {group.name}")
         return data
 
 
