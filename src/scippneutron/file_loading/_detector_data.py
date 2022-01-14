@@ -208,7 +208,7 @@ def _load_event_group(group: Group,
     _check_for_missing_fields(group, nexus)
 
     def shape(name):
-        return nexus.get_shape(nexus.get_dataset_from_group(group,name))
+        return nexus.get_shape(nexus.get_dataset_from_group(group, name))
 
     max_index = shape("event_index")[0]
     single = False
@@ -219,12 +219,18 @@ def _load_event_group(group: Group,
         # TODO unused key, should this take plain indices, like load_dataset?
         key, index = select
         if isinstance(index, int):
-            index = slice(index, None if index + 2 > max_index else index + 2)
             single = True
-        elif isinstance(index.stop, int):
-            index = slice(index.start,
-                          None if index.stop + 1 > max_index else index.stop + 1)
-        last_loaded = isinstance(index.stop, int)
+            start, stop, _ = slice(index, None).indices(max_index)
+            if start == stop:
+                raise IndexError('')
+            index = slice(start, start + 1)
+        start, stop, stride = index.indices(max_index)
+        if stop + stride > max_index:
+            last_loaded = False
+        else:
+            stop += stride
+            last_loaded = True
+        index = slice(start, stop, stride)
 
     event_index = nexus.load_dataset_from_group_as_numpy_array(
         group, "event_index", index)
@@ -234,7 +240,8 @@ def _load_event_group(group: Group,
     event_index[event_index < 0] = num_event
 
     if len(event_index) > 0:
-        event_select = slice(event_index[0], event_index[-1] if last_loaded else num_event)
+        event_select = slice(event_index[0],
+                             event_index[-1] if last_loaded else num_event)
     else:
         event_select = slice(None)
 
@@ -295,7 +302,7 @@ def _load_event_group(group: Group,
 
     if not quiet:
         print(f"Loaded {len(event_id)} events from "
-              f"{group.name} containing {number_of_event_ids} events")
+              f"{group.name} containing {num_event} events")
 
     return detector_data
 
