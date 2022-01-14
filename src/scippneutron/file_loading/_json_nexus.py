@@ -269,6 +269,13 @@ class LoadFromJson:
         return group[_nexus_name]
 
     @staticmethod
+    def get_shape(dataset: Dict) -> List:
+        """
+        The shape of the dataset
+        """
+        return np.asarray(dataset[_nexus_values]).shape
+
+    @staticmethod
     def get_unit(dataset: Dict) -> str:
         try:
             unit = _get_attribute_value(dataset, _nexus_units)

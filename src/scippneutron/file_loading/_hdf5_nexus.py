@@ -204,6 +204,13 @@ class LoadFromHdf5:
         return group.name.split("/")[-1]
 
     @staticmethod
+    def get_shape(dataset: h5py.Dataset) -> List:
+        """
+        The shape of the dataset
+        """
+        return dataset.shape
+
+    @staticmethod
     def get_unit(node: Union[h5py.Dataset, h5py.Group]) -> str:
         try:
             units = node.attrs["units"]

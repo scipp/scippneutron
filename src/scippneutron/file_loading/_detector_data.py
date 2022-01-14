@@ -207,12 +207,16 @@ def _load_event_group(group: Group,
                       select=...) -> DetectorData:
     _check_for_missing_fields(group, nexus)
 
-    max_index = group["event_index"].shape[0]
+    def shape(name):
+        return nexus.get_shape(nexus.get_dataset_from_group(group,name))
+
+    max_index = shape("event_index")[0]
     single = False
     if select is Ellipsis:
         index = select
         last_loaded = False
     else:
+        # TODO unused key, should this take plain indices, like load_dataset?
         key, index = select
         if isinstance(index, int):
             index = slice(index, None if index + 2 > max_index else index + 2)
@@ -226,10 +230,13 @@ def _load_event_group(group: Group,
         group, "event_index", index)
     pulse_times = _load_pulse_times(group, nexus, index)
 
-    number_of_event_ids = group["event_id"].shape[0]
+    number_of_event_ids = shape("event_id")[0]
     event_index[event_index < 0] = number_of_event_ids
 
-    event_select = slice(event_index[0], event_index[-1] if last_loaded else max_index)
+    if event_index:
+        event_select = slice(event_index[0], event_index[-1] if last_loaded else max_index)
+    else:
+        event_select = slice(None)
 
     # Some files contain uint64 "max" indices, which turn into negatives during
     # conversion to int64. This is a hack to get arround this.
