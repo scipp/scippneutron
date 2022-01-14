@@ -210,7 +210,7 @@ def _load_event_group(group: Group,
     def shape(name):
         return nexus.get_shape(nexus.get_dataset_from_group(group,name))
 
-    max_index = shape("event_index")[0]
+    max_index = shape("event_time_offset")[0]
     single = False
     if select is Ellipsis:
         index = select
@@ -233,7 +233,7 @@ def _load_event_group(group: Group,
     number_of_event_ids = shape("event_id")[0]
     event_index[event_index < 0] = number_of_event_ids
 
-    if event_index:
+    if len(event_index) > 0:
         event_select = slice(event_index[0], event_index[-1] if last_loaded else max_index)
     else:
         event_select = slice(None)
