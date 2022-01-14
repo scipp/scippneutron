@@ -25,6 +25,9 @@ class Group:
         self._group = group
         self._loader = LoadFromHdf5()
 
+    def __getattr__(self, name):
+        return getattr(self._group, name)
+
     def __getitem__(self, index):
         if isinstance(index, str):
             item = self._group[index]
@@ -53,15 +56,9 @@ class Group:
             return data
         print(f'Cannot load unsupported class {self.NX_class}')
 
-    def __getattr__(self, name):
-        return getattr(self._group, name)
-
     @property
     def NX_class(self):
         return NX_class[self._group.attrs['NX_class'].decode('UTF-8')]
-
-    def keys(self):
-        return self._group.keys()
 
     @property
     @functools.lru_cache()
