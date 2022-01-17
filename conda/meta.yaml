@@ -15,6 +15,24 @@ requirements:
     - python {{ python }}
     - scipp {{ scipp }}
     - tbb-devel
+    # doc build requirements
+    - appdirs
+    - graphlib-backport # for python < 3.9
+    - h5py
+    - ipykernel=6.3.1  # issue with pythreejs 3d plotting, see https://github.com/ipython/ipykernel/issues/771
+    - ipympl
+    - ipywidgets
+    - mantid-framework [not win]
+    - matplotlib-base
+    - nbsphinx
+    - python-configuration
+    - python-graphviz
+    - pythreejs
+    - pyyaml
+    - scipy>=1.7.0
+    - sphinx
+    - sphinx-book-theme
+    - sphinx-copybutton
   run:
     - pooch
     - python {{ python }}

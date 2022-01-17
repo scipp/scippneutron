@@ -37,6 +37,14 @@ include(docs)
 add_docs_target(docs BUILDER html DEPENDS install-scippneutron)
 add_docs_target(doctest BUILDER doctest DEPENDS docs)
 add_docs_target(linkcheck BUILDER linkcheck DEPENDS docs)
+add_custom_target(
+  cleanup_docs_html
+  COMMENT "Remove unnecessary .ipynb files from built HTML documentation."
+  COMMAND find "${CMAKE_BINARY_DIR}/html" -type f -name "*.ipynb" -not -path
+          "${CMAKE_BINARY_DIR}/html/_sources/*" -delete
+  VERBATIM
+)
+add_dependencies(cleanup_docs_html docs)
 
 include(GNUInstallDirs)
 set(SITE_PACKAGES_DIR
@@ -52,6 +60,8 @@ else()
   file(TO_CMAKE_PATH ${SITE_PACKAGES_DIR} ARCHIVEDIR)
 endif()
 set(INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
+
+enable_testing()
 
 add_subdirectory(lib)
 
