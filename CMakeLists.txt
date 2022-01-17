@@ -51,7 +51,7 @@ if(DEFINED ENV{SP_DIR}) # Defined by conda-build
   file(TO_CMAKE_PATH $ENV{SP_DIR}/scippneutron PYTHONDIR)
   file(TO_CMAKE_PATH $ENV{SP_DIR} ARCHIVEDIR)
 else()
-  set(PYTHONDIR scipp)
+  set(PYTHONDIR scippneutron)
   set(ARCHIVEDIR .)
 endif()
 set(INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
