@@ -13,7 +13,7 @@ requirements:
     - git
     - ninja
     - python {{ python }}
-    - scipp {{ scipp }}
+    - scipp::scipp {{ scipp }}
     - tbb-devel
     # doc build requirements
     - appdirs
@@ -22,7 +22,7 @@ requirements:
     - ipykernel=6.3.1  # issue with pythreejs 3d plotting, see https://github.com/ipython/ipykernel/issues/771
     - ipympl
     - ipywidgets
-    - mantid-framework [not win]
+    - scipp::mantid-framework [not win]
     - matplotlib-base
     - nbsphinx
     - python-configuration
@@ -36,7 +36,7 @@ requirements:
   run:
     - pooch
     - python {{ python }}
-    - scipp {{ scipp }}
+    - scipp::scipp {{ scipp }}
     - h5py
     - scipy
 
@@ -56,10 +56,10 @@ test:
     - pytest
     - pytest-asyncio
     - pythreejs
-    - mantid-framework [not win]
+    - scipp::mantid-framework [not win]
     - tbb-devel
     - python-confluent-kafka [linux64]
-    - ess-streaming-data-types [linux64]
+    - ess-dmsc:ess-streaming-data-types [linux64]
     - requests
     - pandoc
     - sphinx
