@@ -10,14 +10,8 @@ import h5py
 from ..file_loading._log_data import _load_log_data_from_group
 from ..file_loading._monitor_data import load_monitor
 from ..file_loading._hdf5_nexus import LoadFromHdf5
-from ..file_loading._detector_data import _load_event_group, DetectorData
-
-
-class NX_class(Enum):
-    NXentry = auto()
-    NXlog = auto()
-    NXmonitor = auto()
-    NXevent_data = auto()
+from ..file_loading._detector_data import _load_event_group, DetectorData, NXevent_data
+from ..file_loading.nxobject import NX_class, NXobject
 
 
 class Group:
@@ -63,6 +57,7 @@ class Group:
     @property
     @functools.lru_cache()
     def shape(self):
+        return self._nxobject.shape
         # TODO Same code in _load_event_group, refactor to better abstraction
         if self.NX_class == NX_class.NXevent_data:
             return self._loader.get_shape(
@@ -82,10 +77,11 @@ class Group:
         return out
 
 
-class File(AbstractContextManager, Group):
+class File(AbstractContextManager, NXobject):
     def __init__(self, *args, **kwargs):
+        # TODO how can we make this an instance of the correct subclass?
         self._file = h5py.File(*args, **kwargs)
-        Group.__init__(self, self._file)
+        NXobject.__init__(self, self._file)
 
     def __exit__(self, exc_type, exc_value, traceback):
         self._file.close()

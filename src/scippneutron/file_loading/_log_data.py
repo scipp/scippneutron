@@ -8,6 +8,7 @@ import scipp as sc
 from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
 from ._common import to_plain_index
 from ._nexus import LoadFromNexus
+from .nxobject import NXobject
 from warnings import warn
 
 
@@ -98,6 +99,32 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,
     if name_changed:
         warn(f"Name of log group at {'/'.join(group_path)} is not unique: "
              f"{log_data_name} used as attribute name.")
+
+
+class NXlog(NXobject):
+    def __init__(self, group: Group, loader: LoadFromNexus):
+        super().__init__(group, loader)
+
+    @property
+    def shape(self):
+        pass
+
+    @property
+    def dims(self):
+        pass
+
+    @property
+    def unit(self):
+        pass
+
+    def _getitem(self, index):
+        name, var = _load_log_data_from_group(self._group,
+                                              self._loader,
+                                              select=index)
+        da = var.value
+        da.name = name
+        return da
+
 
 
 def _load_log_data_from_group(group: Group,

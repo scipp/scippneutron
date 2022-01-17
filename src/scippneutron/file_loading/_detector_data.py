@@ -13,6 +13,7 @@ import scipp as sc
 from warnings import warn
 from ._transformations import get_full_transformation_matrix
 from ._nexus import LoadFromNexus
+from .nxobject import NXobject
 
 _bank_dimension = "bank"
 _detector_dimension = "detector_id"
@@ -199,6 +200,25 @@ def _load_detector(group: Group, nexus: LoadFromNexus) -> DetectorData:
         pixel_positions = _load_pixel_positions(group, detector_ids.shape[0], nexus)
 
     return DetectorData(detector_ids=detector_ids, pixel_positions=pixel_positions)
+
+
+class NXevent_data(NXobject):
+    def __init__(self, group: Group, loader: LoadFromNexus):
+        super().__init__(group, loader)
+
+    @property
+    def shape(self):
+        return self._loader.get_shape(
+            self._loader.get_dataset_from_group(self._group, "event_index"))
+
+    @property
+    def dims(self):
+        return [_pulse_dimension]
+
+    @property
+    def unit(self):
+        # Binned data, bins do not have a unit
+        return sc.units.one
 
 
 def _load_event_group(group: Group,
