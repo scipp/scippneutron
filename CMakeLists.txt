@@ -47,17 +47,12 @@ add_custom_target(
 add_dependencies(cleanup_docs_html docs)
 
 include(GNUInstallDirs)
-set(SITE_PACKAGES_DIR
-    ""
-    CACHE STRING
-          "Python site-packages directory to use for installing Python module."
-)
-if("${SITE_PACKAGES_DIR}" STREQUAL "")
-  set(PYTHONDIR scippneutron)
-  set(ARCHIVEDIR .)
+if(DEFINED ENV{SP_DIR}) # Defined by conda-build
+  file(TO_CMAKE_PATH $ENV{SP_DIR}/scippneutron PYTHONDIR)
+  file(TO_CMAKE_PATH $ENV{SP_DIR} ARCHIVEDIR)
 else()
-  file(TO_CMAKE_PATH ${SITE_PACKAGES_DIR}/scippneutron PYTHONDIR)
-  file(TO_CMAKE_PATH ${SITE_PACKAGES_DIR} ARCHIVEDIR)
+  set(PYTHONDIR scipp)
+  set(ARCHIVEDIR .)
 endif()
 set(INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
 
