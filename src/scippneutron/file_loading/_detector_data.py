@@ -8,6 +8,7 @@ import numpy as np
 import scipp
 
 from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
+from ._common import to_plain_index
 import scipp as sc
 from warnings import warn
 from ._transformations import get_full_transformation_matrix
@@ -206,18 +207,18 @@ def _load_event_group(group: Group,
                       quiet: bool,
                       select=...) -> DetectorData:
     _check_for_missing_fields(group, nexus)
+    index = to_plain_index([_pulse_dimension], select)
+    if isinstance(index, tuple):
+        index = index[0]
 
     def shape(name):
         return nexus.get_shape(nexus.get_dataset_from_group(group, name))
 
     max_index = shape("event_index")[0]
     single = False
-    if select is Ellipsis:
-        index = select
+    if index is Ellipsis:
         last_loaded = False
     else:
-        # TODO unused key, should this take plain indices, like load_dataset?
-        key, index = select
         if isinstance(index, int):
             single = True
             start, stop, _ = slice(index, None).indices(max_index)
