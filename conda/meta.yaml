@@ -25,6 +25,7 @@ requirements:
     - mantid-framework [not win]
     - matplotlib-base
     - nbsphinx
+    - pooch
     - python-configuration
     - python-graphviz
     - pythreejs
@@ -34,7 +35,6 @@ requirements:
     - sphinx-book-theme
     - sphinx-copybutton
   run:
-    - pooch
     - python {{ python }}
     - scipp {{ scipp }}
     - h5py
@@ -62,6 +62,7 @@ test:
     - ess-streaming-data-types [linux64]
     - requests
     - pandoc
+    - pooch
     - sphinx
     - sphinx-book-theme
     - nbsphinx
