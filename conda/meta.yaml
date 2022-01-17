@@ -36,7 +36,7 @@ requirements:
     - sphinx-copybutton
   run:
     - h5py
-    - ipykernel = 6.3.1  # see https://github.com/ipython/ipykernel/issues/771
+    - ipykernel=6.3.1  # see https://github.com/ipython/ipykernel/issues/771
     - pooch
     - python {{ python }}
     - scipp {{ scipp }}
