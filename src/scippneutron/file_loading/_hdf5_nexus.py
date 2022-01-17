@@ -149,7 +149,7 @@ class LoadFromHdf5:
 
         if dtype is None:
             dtype = _ensure_supported_int_type(dataset.dtype.type)
-        if index == slice(None):
+        if index == tuple():
             variable = sc.empty(dims=dimensions,
                                 shape=dataset.shape,
                                 dtype=dtype,
