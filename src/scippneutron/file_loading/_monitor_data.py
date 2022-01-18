@@ -8,9 +8,6 @@ from .nxobject import NXobject
 
 
 class NXmonitor(NXobject):
-    def __init__(self, group: Group, loader: LoadFromNexus):
-        super().__init__(group, loader)
-
     @property
     def shape(self):
         pass

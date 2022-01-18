@@ -102,9 +102,6 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,
 
 
 class NXlog(NXobject):
-    def __init__(self, group: Group, loader: LoadFromNexus):
-        super().__init__(group, loader)
-
     @property
     def shape(self):
         pass

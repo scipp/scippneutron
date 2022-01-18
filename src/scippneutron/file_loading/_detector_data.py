@@ -203,9 +203,6 @@ def _load_detector(group: Group, nexus: LoadFromNexus) -> DetectorData:
 
 
 class NXevent_data(NXobject):
-    def __init__(self, group: Group, loader: LoadFromNexus):
-        super().__init__(group, loader)
-
     @property
     def shape(self):
         return self._loader.get_shape(

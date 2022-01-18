@@ -8,11 +8,17 @@ import h5py
 from ..file_loading.nxobject import NX_class, NXobject
 
 
-class File(AbstractContextManager, NXobject):
+class NXroot(NXobject):
+    @property
+    def NX_class(self):
+        # Most files violate the standard and do not define NX_class on file root
+        return 'NXroot'
+
+
+class File(AbstractContextManager, NXroot):
     def __init__(self, *args, **kwargs):
-        # TODO how can we make this an instance of the correct subclass?
         self._file = h5py.File(*args, **kwargs)
-        NXobject.__init__(self, self._file)
+        NXroot.__init__(self, self._file)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._file.close()
+        self._group.close()

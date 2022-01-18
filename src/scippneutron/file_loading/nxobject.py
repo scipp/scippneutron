@@ -7,6 +7,7 @@ import h5py
 
 from ..file_loading._hdf5_nexus import LoadFromHdf5
 
+
 class NX_class(Enum):
     NXentry = auto()
     NXlog = auto()
@@ -14,29 +15,23 @@ class NX_class(Enum):
     NXevent_data = auto()
 
 
-
 class NXobject:
-    #nxobject = {}
-    #nxobject['NXlog'] = NXlog
-    #nxobject['NXmonitor'] = NXmonitor
-    #nxobject['NXevent_data'] = NXevent_data
+    _registry = {}
+
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        cls._registry[cls.__name__] = cls
 
     def __init__(self, group: h5py.Group, loader=LoadFromHdf5()):
         self._group = group
         self._loader = loader
 
     @staticmethod
-    def _subclass(name):
-        for cls in NXobject.__subclasses__():
-            if cls.__name__ == name:
-                return cls
-        return NXobject
-
-    @staticmethod
     def make(group, loader=LoadFromHdf5()):
         nx_class = loader.get_string_attribute(group, 'NX_class')
-        return NXobject._subclass(nx_class)(group, loader)
+        return NXobject._registry.get(nx_class, NXobject)(group, loader)
 
+    # TODO Should probably remove this and forward desired method explictly
     def __getattr__(self, name):
         return getattr(self._group, name)
 
@@ -63,7 +58,10 @@ class NXobject:
             names = [self._loader.get_name(group) for group in groups]
             if len(names) != len(set(names)):  # fall back to full path if duplicate
                 names = [group.name for group in groups]
-            out[NX_class[nx_class]] = {n: NXobject.make(g) for n, g in zip(names, groups)}
+            out[NX_class[nx_class]] = {
+                n: NXobject.make(g)
+                for n, g in zip(names, groups)
+            }
         return out
 
     @property
