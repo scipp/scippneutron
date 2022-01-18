@@ -13,6 +13,16 @@ set_property(
 set_property(
   TARGET ${TARGET_NAME} PROPERTY EXCLUDE_FROM_ALL $<NOT:$<BOOL:${FULL_BUILD}>>
 )
-if(${WITH_CTEST})
-  gtest_discover_tests(${TARGET_NAME} TEST_PREFIX bin/)
-endif()
+scipp_test(${TARGET_NAME} neutron)
+
+if(WIN32)
+  # Cmake uses ; as a separator and won't set the path correctly unless we
+  # manually escape the path first.
+  string(REPLACE ";" "\\;" PATH_STRING "$ENV{PATH}")
+  set_tests_properties(
+    scippneutron-test
+    PROPERTIES
+      ENVIRONMENT
+      "PATH=${PATH_STRING}\;$ENV{CONDA_PREFIX}\\Lib\\site-packages\\scipp"
+  )
+endif(WIN32)
