@@ -28,13 +28,13 @@ class NXobject:
         self._loader = loader
 
     @classmethod
-    def subclass(cls, nx_class):
+    def _subclass(cls, nx_class):
         return cls._registry.get(nx_class, NXobject)
 
     @classmethod
     def make(cls, group, loader=LoadFromHdf5()):
         nx_class = loader.get_string_attribute(group, 'NX_class')
-        return cls.subclass(nx_class)(group, loader)
+        return cls._subclass(nx_class)(group, loader)
 
     # TODO Should probably remove this and forward desired method explictly
     def __getattr__(self, name):
@@ -52,7 +52,18 @@ class NXobject:
     def _getitem(self, index):
         # TODO Is it better to fall back to returning h5py.Group?
         # distinguish classes not implementing _getitem, vs missing classes!
-        print(f'Cannot load unsupported class {self.NX_class}')
+        print(f'Loading {self.NX_class} is not supported.')
+
+    def keys(self):
+        return self._group.keys()
+
+    def values(self):
+        # TODO Better check for dataset
+        # TODO use loader features, not h5py
+        return [
+            self.make(v, self._loader) if isinstance(v, h5py.Group) else v
+            for v in self._group.values()
+        ]
 
     @functools.lru_cache()
     def by_nx_class(self):
@@ -72,3 +83,7 @@ class NXobject:
 
     def __repr__(self):
         return f'<{type(self).__name__} "{self._group.name}">'
+
+
+class NXentry(NXobject):
+    pass
