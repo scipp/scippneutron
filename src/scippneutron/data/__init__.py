@@ -14,6 +14,7 @@ def _make_pooch():
     return pooch.create(
         path=pooch.os_cache('scippneutron'),
         env='SCIPPNEUTRON_DATA_DIR',
+        retry_if_failed=3,
         base_url='https://public.esss.dk/groups/scipp/scippneutron/{version}/',
         version=_version,
         registry={
