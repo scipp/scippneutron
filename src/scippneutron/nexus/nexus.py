@@ -5,7 +5,7 @@
 from contextlib import contextmanager, AbstractContextManager
 import h5py
 
-from ..file_loading.nxobject import NXobject
+from ..file_loading.nxobject import NX_class, NXobject
 
 
 class File(AbstractContextManager, NXobject):

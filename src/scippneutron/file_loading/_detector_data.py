@@ -220,6 +220,18 @@ class NXevent_data(NXobject):
         # Binned data, bins do not have a unit
         return sc.units.one
 
+    def _getitem(self, index):
+        detector_data = _load_event_group(self._group,
+                                          self._loader,
+                                          DetectorData(),
+                                          quiet=False,
+                                          select=index)
+        data = detector_data.event_data
+        data.bins.coords['id'] = data.bins.coords.pop('detector_id')
+        data.bins.coords['time_offset'] = data.bins.coords.pop('tof')
+        return data
+
+
 
 def _load_event_group(group: Group,
                       nexus: LoadFromNexus,
