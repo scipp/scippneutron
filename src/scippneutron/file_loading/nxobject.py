@@ -9,6 +9,7 @@ from ..file_loading._hdf5_nexus import LoadFromHdf5
 
 
 class NX_class(Enum):
+    NXroot = auto()
     NXentry = auto()
     NXlog = auto()
     NXmonitor = auto()
@@ -26,10 +27,14 @@ class NXobject:
         self._group = group
         self._loader = loader
 
-    @staticmethod
-    def make(group, loader=LoadFromHdf5()):
+    @classmethod
+    def subclass(cls, nx_class):
+        return cls._registry.get(nx_class, NXobject)
+
+    @classmethod
+    def make(cls, group, loader=LoadFromHdf5()):
         nx_class = loader.get_string_attribute(group, 'NX_class')
-        return NXobject._registry.get(nx_class, NXobject)(group, loader)
+        return cls.subclass(nx_class)(group, loader)
 
     # TODO Should probably remove this and forward desired method explictly
     def __getattr__(self, name):
@@ -39,7 +44,7 @@ class NXobject:
         if isinstance(index, str):
             item = self._group[index]
             if hasattr(item, 'visititems'):
-                return NXobject.make(item)
+                return self.make(item)
             else:
                 return item
         return self._getitem(index)
@@ -51,20 +56,19 @@ class NXobject:
 
     @functools.lru_cache()
     def by_nx_class(self):
-        keys = [c.name for c in NX_class]
-        classes = self._loader.find_by_nx_class(tuple(keys), self._group)
+        classes = self._loader.find_by_nx_class(tuple(self._registry), self._group)
         out = {}
         for nx_class, groups in classes.items():
             names = [self._loader.get_name(group) for group in groups]
             if len(names) != len(set(names)):  # fall back to full path if duplicate
                 names = [group.name for group in groups]
-            out[NX_class[nx_class]] = {
-                n: NXobject.make(g)
-                for n, g in zip(names, groups)
-            }
+            out[NX_class[nx_class]] = {n: self.make(g) for n, g in zip(names, groups)}
         return out
 
     @property
     def NX_class(self):
         nx_class = self._loader.get_string_attribute(self._group, 'NX_class')
         return NX_class[nx_class]
+
+    def __repr__(self):
+        return f'<{type(self).__name__} "{self._group.name}">'

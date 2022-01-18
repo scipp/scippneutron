@@ -9,6 +9,9 @@ from ..file_loading.nxobject import NX_class, NXobject
 
 
 class NXroot(NXobject):
+    def __init_subclass__(cls):
+        pass
+
     @property
     def NX_class(self):
         # Most files violate the standard and do not define NX_class on file root
