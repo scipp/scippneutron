@@ -35,9 +35,11 @@ requirements:
     - sphinx-book-theme
     - sphinx-copybutton
   run:
+    - h5py
+    - ipykernel=6.3.1  # see https://github.com/ipython/ipykernel/issues/771
+    - pooch
     - python {{ python }}
     - scipp {{ scipp }}
-    - h5py
     - scipy
 
 test:
@@ -47,8 +49,6 @@ test:
     - cmake
     - conan
     - gxx_linux-64 11.1.* [linux64]
-    - h5py
-    - ipykernel = 6.3.1  # see https://github.com/ipython/ipykernel/issues/771
     - ipympl
     - ipywidgets
     - matplotlib-base
@@ -62,7 +62,6 @@ test:
     - ess-streaming-data-types [linux64]
     - requests
     - pandoc
-    - pooch
     - sphinx
     - sphinx-book-theme
     - nbsphinx
