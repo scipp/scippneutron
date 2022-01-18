@@ -4,6 +4,27 @@ from ._common import Group, to_plain_index
 import scipp as sc
 from ._nexus import LoadFromNexus
 from ._detector_data import load_detector_data
+from .nxobject import NXobject
+
+
+class NXmonitor(NXobject):
+    def __init__(self, group: Group, loader: LoadFromNexus):
+        super().__init__(group, loader)
+
+    @property
+    def shape(self):
+        pass
+
+    @property
+    def dims(self):
+        pass
+
+    @property
+    def unit(self):
+        pass
+
+    def _getitem(self, index):
+        return load_monitor(self._group, self._loader, select=index)
 
 
 def _load_data_from_histogram_mode_monitor(group: Group,
