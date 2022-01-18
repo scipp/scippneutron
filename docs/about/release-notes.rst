@@ -3,8 +3,34 @@
 Release Notes
 =============
 
-Since v0.4.1
-------------
+v0.5.0 (unreleased)
+--------------------
+
+Features
+~~~~~~~~
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+Bugfixes
+~~~~~~~~
+
+Deprecations
+~~~~~~~~~~~~
+
+Stability, Maintainability, and Testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Contributors
+~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+Tom Willemsen :sup:`b, c`\ ,
+and Jan-Lukas Wynen :sup:`a`
+
+v0.4.2 (January 2022)
+---------------------
 
 Bugfixes
 ~~~~~~~~
