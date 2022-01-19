@@ -7,7 +7,6 @@ from typing import Optional
 import pytest
 
 import scipp as sc
-import scippneutron.mantid as converter
 import scippneutron as scn
 
 try:
@@ -15,6 +14,8 @@ try:
     import mantid.kernel as kernel
 except ImportError:
     pytestmark = pytest.mark.skip('Mantid framework is unavailable')
+    sapi = None
+    kernel = None
 
 
 def mantid_coord(scipp_coord: str) -> str:
@@ -57,7 +58,7 @@ def mantid_convert_units(ws: sapi.Workspace,
                                EMode=emode,
                                EFixed=efixed.value if efixed is not None else None,
                                StoreInADS=False)
-    out = converter.from_mantid(out_ws)
+    out = scn.mantid.from_mantid(out_ws)
     # broadcast to circumvent common-bins conversion in from_mantid
     spec_shape = out.coords['spectrum'].shape
     out.coords[target] = sc.ones(dims=['spectrum'],
@@ -69,7 +70,7 @@ def test_mantid_convert_tof_to_wavelength():
     in_ws = make_workspace('tof')
     out_mantid = mantid_convert_units(in_ws, 'wavelength')
 
-    in_da = converter.from_mantid(in_ws)
+    in_da = scn.mantid.from_mantid(in_ws)
     out_scipp = scn.convert(data=in_da, origin='tof', target='wavelength', scatter=True)
 
     assert sc.allclose(out_scipp.coords['wavelength'],
@@ -84,7 +85,7 @@ def test_mantid_convert_tof_to_dspacing():
     in_ws = make_workspace('tof')
     out_mantid = mantid_convert_units(in_ws, 'dspacing')
 
-    in_da = converter.from_mantid(in_ws)
+    in_da = scn.mantid.from_mantid(in_ws)
     out_scipp = scn.convert(data=in_da, origin='tof', target='dspacing', scatter=True)
 
     assert sc.allclose(out_scipp.coords['dspacing'],
@@ -99,7 +100,7 @@ def test_mantid_convert_tof_to_energy():
     in_ws = make_workspace('tof')
     out_mantid = mantid_convert_units(in_ws, 'energy')
 
-    in_da = converter.from_mantid(in_ws)
+    in_da = scn.mantid.from_mantid(in_ws)
     out_scipp = scn.convert(data=in_da, origin='tof', target='energy', scatter=True)
 
     # Mantid reverses the order of the energy dim.
@@ -123,7 +124,7 @@ def test_mantid_convert_tof_to_direct_energy_transfer():
                                       emode='Direct',
                                       efixed=efixed)
 
-    in_da = converter.from_mantid(in_ws)
+    in_da = scn.mantid.from_mantid(in_ws)
     out_scipp = scn.convert(data=in_da,
                             origin='tof',
                             target='energy_transfer',
