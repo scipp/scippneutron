@@ -125,9 +125,15 @@ def test_mantid_convert_tof_to_direct_energy_transfer():
                             target='energy_transfer',
                             scatter=True)
 
-    assert sc.allclose(out_scipp.coords['energy_transfer'],
-                       out_mantid.coords['energy_transfer'],
-                       rtol=1e-6 * sc.units.one)
+    # The conversion consists of multiplications and additions, thus the relative error
+    # changes with the inputs. In this case, small tof yields a large error due to
+    # the 1/tof**2 factor in the conversion.
+    # rtol is chosen to account for linearly changing tof in the input data.
+    assert sc.allclose(
+        out_scipp.coords['energy_transfer'],
+        out_mantid.coords['energy_transfer'],
+        rtol=sc.linspace('energy_transfer', 1e-6, 1e-10,
+                         out_scipp.coords['energy_transfer'].sizes['energy_transfer']))
     assert sc.allclose(out_scipp.coords['spectrum'],
                        out_mantid.coords['spectrum'],
-                       rtol=1e-6 * sc.units.one)
+                       rtol=1e-8 * sc.units.one)
