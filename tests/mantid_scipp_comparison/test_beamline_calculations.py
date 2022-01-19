@@ -16,7 +16,7 @@ except ImportError:
 
 
 @pytest.fixture
-def in_ws() -> sapi.Workspace:
+def in_ws():
     ws = sapi.CreateSampleWorkspace(SourceDistanceFromSample=10.0,
                                     BankDistanceFromSample=1.1,
                                     BankPixelWidth=2,
@@ -27,7 +27,7 @@ def in_ws() -> sapi.Workspace:
 
 
 @pytest.fixture
-def in_da(in_ws: sapi.Workspace) -> sc.DataArray:
+def in_da(in_ws):
     return scn.mantid.from_mantid(in_ws)
 
 

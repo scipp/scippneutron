@@ -30,7 +30,7 @@ def mantid_coord(scipp_coord: str) -> str:
 
 def make_workspace(coord: str,
                    emode: str = 'Elastic',
-                   efixed: Optional[sc.Variable] = None) -> sapi.Workspace:
+                   efixed: Optional[sc.Variable] = None) -> 'sapi.Workspace':
     ws = sapi.CreateSampleWorkspace(XMin=1000, NumBanks=1, StoreInADS=False)
     # Crop out spectra index 0 as has two_theta=0, gives inf d-spacing
     ws = sapi.CropWorkspace(ws, StartWorkspaceIndex=1, StoreInADS=False)
@@ -49,7 +49,7 @@ def make_workspace(coord: str,
     return ws
 
 
-def mantid_convert_units(ws: sapi.Workspace,
+def mantid_convert_units(ws: 'sapi.Workspace',
                          target: str,
                          emode: str = 'Elastic',
                          efixed: Optional[sc.Variable] = None) -> sc.DataArray:
