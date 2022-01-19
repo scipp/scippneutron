@@ -121,8 +121,8 @@ class NXlog(NXobject):
         return da
 
 
-def _load_log_data_from_group(
-        group: Group, nexus: LoadFromNexus, select=tuple()) -> Tuple[str, sc.Variable]:
+def _load_log_data_from_group(group: Group, nexus: LoadFromNexus, select=tuple())\
+        -> Tuple[str, sc.Variable]:
     property_name = nexus.get_name(group)
     value_dataset_name = "value"
     time_dataset_name = "time"
