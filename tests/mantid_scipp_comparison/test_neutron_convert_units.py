@@ -18,6 +18,7 @@ def _mantid_coord(scipp_coord: str) -> str:
         'tof': 'TOF',
         'wavelength': 'Wavelength',
         'dspacing': 'dSpacing',
+        'energy': 'Energy',
         'energy_transfer': 'DeltaE'
     }[scipp_coord]
 
@@ -85,6 +86,26 @@ def test_mantid_convert_tof_to_dspacing():
     assert sc.allclose(out_scipp.coords['dspacing'],
                        out_mantid.coords['dspacing'],
                        rtol=1e-8 * sc.units.one)
+    assert sc.allclose(out_scipp.coords['spectrum'],
+                       out_mantid.coords['spectrum'],
+                       rtol=1e-8 * sc.units.one)
+
+
+def test_mantid_convert_tof_to_energy():
+    in_ws = make_workspace('tof')
+    out_mantid = mantid_convert_units(in_ws, 'energy')
+
+    in_da = converter.from_mantid(in_ws)
+    out_scipp = scn.convert(data=in_da, origin='tof', target='energy', scatter=True)
+
+    # Mantid reverses the order of the energy dim.
+    mantid_energy = sc.empty_like(out_mantid.coords['energy'])
+    assert mantid_energy.dims[1] == 'energy'
+    mantid_energy.values = out_mantid.coords['energy'].values[..., ::-1]
+
+    assert sc.allclose(out_scipp.coords['energy'],
+                       mantid_energy,
+                       rtol=1e-7 * sc.units.one)
     assert sc.allclose(out_scipp.coords['spectrum'],
                        out_mantid.coords['spectrum'],
                        rtol=1e-8 * sc.units.one)
