@@ -33,6 +33,15 @@ class Field:
     def __repr__(self):
         return f'<Nexus field "{self._dataset.name}">'
 
+    @property
+    def shape(self):
+        return self._loader.get_shape(self._dataset)
+
+    @property
+    def unit(self):
+        # TODO Prefer to return None if no such attr, provided that scipp supports this
+        return self._loader.get_unit(self._dataset)
+
 
 class NXobject:
     def __init__(self, group: Group, loader: LoadFromNexus = LoadFromHdf5()):
@@ -43,23 +52,19 @@ class NXobject:
         nx_class = self._loader.get_string_attribute(group, 'NX_class')
         return _nx_class_registry().get(nx_class, NXobject)(group, self._loader)
 
-    # TODO Should probably remove this and forward desired method explictly
-    def __getattr__(self, name):
-        return getattr(self._group, name)
-
     def __getitem__(self, index):
         if isinstance(index, str):
             item = self._group[index]
-            if hasattr(item, 'visititems'):
+            if self._loader.is_group(item):
                 return self.make(item)
             else:
-                return item
+                return Field(item, self._loader)
         return self._getitem(index)
 
     def _getitem(self, index):
         # TODO Is it better to fall back to returning h5py.Group?
         # distinguish classes not implementing _getitem, vs missing classes!
-        print(f'Loading {self.NX_class} is not supported.')
+        print(f'Loading {self.nx_class} is not supported.')
 
     def keys(self):
         return self._group.keys()

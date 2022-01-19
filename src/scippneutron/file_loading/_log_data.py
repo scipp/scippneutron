@@ -115,18 +115,14 @@ class NXlog(NXobject):
         pass
 
     def _getitem(self, index):
-        name, var = _load_log_data_from_group(self._group,
-                                              self._loader,
-                                              select=index)
+        name, var = _load_log_data_from_group(self._group, self._loader, select=index)
         da = var.value
         da.name = name
         return da
 
 
-
-def _load_log_data_from_group(group: Group,
-                              nexus: LoadFromNexus,
-                              select =tuple()) -> Tuple[str, sc.Variable]:
+def _load_log_data_from_group(
+        group: Group, nexus: LoadFromNexus, select=tuple()) -> Tuple[str, sc.Variable]:
     property_name = nexus.get_name(group)
     value_dataset_name = "value"
     time_dataset_name = "time"
@@ -134,7 +130,9 @@ def _load_log_data_from_group(group: Group,
     index = to_plain_index(["time"], select)
 
     try:
-        values = nexus.load_dataset_from_group_as_numpy_array(group, value_dataset_name, index=index)
+        values = nexus.load_dataset_from_group_as_numpy_array(group,
+                                                              value_dataset_name,
+                                                              index=index)
     except MissingDataset:
         if nexus.contains_stream(group):
             raise SkipSource("Log is missing value dataset but contains stream")
@@ -154,7 +152,9 @@ def _load_log_data_from_group(group: Group,
     try:
         dimension_label = "time"
         is_time_series = True
-        raw_times = nexus.load_dataset(group, time_dataset_name, [dimension_label], index=index)
+        raw_times = nexus.load_dataset(group,
+                                       time_dataset_name, [dimension_label],
+                                       index=index)
 
         time_dataset = nexus.get_dataset_from_group(group, time_dataset_name)
         try:
@@ -188,13 +188,15 @@ def _load_log_data_from_group(group: Group,
         property_data = sc.scalar(values,
                                   unit=unit,
                                   dtype=nexus.get_dataset_numpy_dtype(
-                                      group, value_dataset_name))
+                                      nexus.get_dataset_from_group(
+                                          group, value_dataset_name)))
     else:
         property_data = sc.Variable(values=values,
                                     unit=unit,
                                     dims=[dimension_label],
                                     dtype=nexus.get_dataset_numpy_dtype(
-                                        group, value_dataset_name))
+                                        nexus.get_dataset_from_group(
+                                            group, value_dataset_name)))
 
     if is_time_series:
         # If property has timestamps, create a DataArray

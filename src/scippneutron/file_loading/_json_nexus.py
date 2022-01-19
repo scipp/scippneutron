@@ -260,8 +260,7 @@ class LoadFromJson:
                                                          ["dtype"]]
         return np.asarray(dataset[_nexus_values])[index].astype(dtype)
 
-    def get_dataset_numpy_dtype(self, group: Dict, dataset_name: str) -> Any:
-        dataset = self.get_dataset_from_group(group, dataset_name)
+    def get_dataset_numpy_dtype(self, dataset: Dict) -> Any:
         return _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]["type"]]
 
     @staticmethod

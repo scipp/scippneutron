@@ -193,8 +193,8 @@ class LoadFromHdf5:
         return dataset[index].astype(_ensure_supported_int_type(dataset.dtype.type))
 
     @staticmethod
-    def get_dataset_numpy_dtype(group: h5py.Group, dataset_name: str) -> Any:
-        return _ensure_supported_int_type(group[dataset_name].dtype.type)
+    def get_dataset_numpy_dtype(dataset: h5py.Dataset) -> Any:
+        return _ensure_supported_int_type(dataset.dtype.type)
 
     @staticmethod
     def get_name(group: Union[h5py.Group, h5py.Dataset]) -> str:
