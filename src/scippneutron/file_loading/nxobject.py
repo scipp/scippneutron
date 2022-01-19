@@ -17,24 +17,13 @@ class NX_class(Enum):
 
 
 class NXobject:
-    _registry = {}
-
-    def __init_subclass__(cls):
-        super().__init_subclass__()
-        cls._registry[cls.__name__] = cls
-
     def __init__(self, group: h5py.Group, loader=LoadFromHdf5()):
         self._group = group
         self._loader = loader
 
-    @classmethod
-    def _subclass(cls, nx_class):
-        return cls._registry.get(nx_class, NXobject)
-
-    @classmethod
-    def make(cls, group, loader=LoadFromHdf5()):
-        nx_class = loader.get_string_attribute(group, 'NX_class')
-        return cls._subclass(nx_class)(group, loader)
+    def make(self, group):
+        nx_class = self._loader.get_string_attribute(group, 'NX_class')
+        return _nx_class_registry().get(nx_class, NXobject)(group, self._loader)
 
     # TODO Should probably remove this and forward desired method explictly
     def __getattr__(self, name):
@@ -61,13 +50,14 @@ class NXobject:
         # TODO Better check for dataset
         # TODO use loader features, not h5py
         return [
-            self.make(v, self._loader) if isinstance(v, h5py.Group) else v
+            self.make(v) if isinstance(v, h5py.Group) else v
             for v in self._group.values()
         ]
 
     @functools.lru_cache()
     def by_nx_class(self):
-        classes = self._loader.find_by_nx_class(tuple(self._registry), self._group)
+        classes = self._loader.find_by_nx_class(tuple(_nx_class_registry()),
+                                                self._group)
         out = {}
         for nx_class, groups in classes.items():
             names = [self._loader.get_name(group) for group in groups]
@@ -85,5 +75,23 @@ class NXobject:
         return f'<{type(self).__name__} "{self._group.name}">'
 
 
+class NXroot(NXobject):
+    @property
+    def NX_class(self):
+        # Most files violate the standard and do not define NX_class on file root
+        return 'NXroot'
+
+
 class NXentry(NXobject):
     pass
+
+
+@functools.lru_cache()
+def _nx_class_registry():
+    from ..file_loading._monitor_data import NXmonitor
+    from ..file_loading._detector_data import NXevent_data
+    from ..file_loading._log_data import NXlog
+    return {
+        cls.__name__: cls
+        for cls in [NXroot, NXentry, NXevent_data, NXlog, NXmonitor]
+    }
