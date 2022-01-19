@@ -5,6 +5,7 @@ from enum import Enum, auto
 import functools
 import h5py
 
+from ._nexus import LoadFromNexus
 from ..file_loading._hdf5_nexus import LoadFromHdf5
 from ._common import Group, Dataset
 
@@ -22,7 +23,7 @@ class Field:
 
     In HDF5 fields are represented as dataset.
     """
-    def __init__(self, dataset: Dataset, loader=LoadFromHdf5()):
+    def __init__(self, dataset: Dataset, loader: LoadFromNexus = LoadFromHdf5()):
         self._dataset = dataset
         self._loader = loader
 
@@ -34,7 +35,7 @@ class Field:
 
 
 class NXobject:
-    def __init__(self, group: h5py.Group, loader=LoadFromHdf5()):
+    def __init__(self, group: Group, loader: LoadFromNexus = LoadFromHdf5()):
         self._group = group
         self._loader = loader
 
@@ -93,8 +94,11 @@ class NXobject:
 class NXroot(NXobject):
     @property
     def nx_class(self):
-        # Most files violate the standard and do not define NX_class on file root
-        return 'NXroot'
+        # As an oversight in the NeXus standard and the reference implementation,
+        # the NX_class was never set to NXroot. This applies to essentially all
+        # files in existence before 2016, and files written by other implementations
+        # that were inspired by the reference implementation. We thus hardcode NXroot:
+        return NX_class['NXroot']
 
 
 class NXentry(NXobject):
