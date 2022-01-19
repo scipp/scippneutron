@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
+# @author Jan-Lukas Wynen
+
 from typing import Optional
 
 import pytest
@@ -13,7 +17,7 @@ except ImportError:
     pytestmark = pytest.mark.skip('Mantid framework is unavailable')
 
 
-def _mantid_coord(scipp_coord: str) -> str:
+def mantid_coord(scipp_coord: str) -> str:
     return {
         'tof': 'TOF',
         'wavelength': 'Wavelength',
@@ -30,7 +34,7 @@ def make_workspace(coord: str,
     # Crop out spectra index 0 as has two_theta=0, gives inf d-spacing
     ws = sapi.CropWorkspace(ws, StartWorkspaceIndex=1, StoreInADS=False)
     ws = sapi.ConvertUnits(InputWorkspace=ws,
-                           Target=_mantid_coord(coord),
+                           Target=mantid_coord(coord),
                            EMode=emode,
                            EFixed=efixed.value if efixed is not None else None,
                            StoreInADS=False)  # start in origin units
@@ -49,7 +53,7 @@ def mantid_convert_units(ws: sapi.Workspace,
                          emode: str = 'Elastic',
                          efixed: Optional[sc.Variable] = None) -> sc.DataArray:
     out_ws = sapi.ConvertUnits(InputWorkspace=ws,
-                               Target=_mantid_coord(target),
+                               Target=mantid_coord(target),
                                EMode=emode,
                                EFixed=efixed.value if efixed is not None else None,
                                StoreInADS=False)
