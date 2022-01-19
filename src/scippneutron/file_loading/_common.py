@@ -86,9 +86,8 @@ def to_plain_index(dims, select, ignore_missing=False):
     """
     def check_1d():
         if len(dims) != 1:
-            raise ValueError(
-                f"Dataset has multiple dimensions {dims}, specify the dimension to index."
-            )
+            raise ValueError(f"Dataset has multiple dimensions {dims}, "
+                             "specify the dimension to index.")
 
     if select is Ellipsis:
         return select

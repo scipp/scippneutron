@@ -2,10 +2,10 @@
 # Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 
-from contextlib import contextmanager, AbstractContextManager
+from contextlib import AbstractContextManager
 import h5py
 
-from ..file_loading.nxobject import NX_class, NXroot
+from ..file_loading.nxobject import NXroot
 
 
 class File(AbstractContextManager, NXroot):

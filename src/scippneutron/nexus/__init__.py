@@ -4,4 +4,5 @@
 
 # flake8: noqa
 
-from .nexus import File, NX_class, NXroot
+from .nexus import File, NXroot
+from ..file_loading.nxobject import NX_class

@@ -205,7 +205,8 @@ class LoadFromJson:
                      group: Dict,
                      dataset_name: str,
                      dimensions: Optional[List[str]] = [],
-                     dtype: Optional[Any] = None, index = tuple()) -> sc.Variable:
+                     dtype: Optional[Any] = None,
+                     index=tuple()) -> sc.Variable:
         """
         Load a dataset into a Scipp Variable (array or scalar)
         :param group: Group containing dataset to load
@@ -236,7 +237,10 @@ class LoadFromJson:
                         dtype=dtype,
                         unit=units)
 
-    def load_dataset_from_group_as_numpy_array(self, group: Dict, dataset_name: str, index=tuple()):
+    def load_dataset_from_group_as_numpy_array(self,
+                                               group: Dict,
+                                               dataset_name: str,
+                                               index=tuple()):
         """
         Load a dataset into a numpy array
         Prefer use of load_dataset to load directly to a scipp variable,

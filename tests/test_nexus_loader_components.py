@@ -1,22 +1,10 @@
 from .nexus_helpers import (
     NexusBuilder,
     EventData,
-    Detector,
-    Log,
-    Sample,
-    Source,
-    Transformation,
-    TransformationType,
-    Link,
-    Monitor,
-    Chopper,
-    in_memory_hdf5_file_with_two_nxentry,
 )
 import numpy as np
 import pytest
 from typing import Callable, Tuple
-import scippneutron as scn
-import scipp as sc
 from scippneutron.file_loading._detector_data import _load_event_group, DetectorData
 from scippneutron.file_loading._nexus import LoadFromNexus
 from scippneutron.file_loading._hdf5_nexus import LoadFromHdf5
@@ -42,7 +30,7 @@ def nexus_group(request):
 
 
 def test_load_nx_event_data_selection_yields_correct_pulses(
-    nexus_group: Tuple[Callable, LoadFromNexus]):
+        nexus_group: Tuple[Callable, LoadFromNexus]):
     event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 3, 2]),

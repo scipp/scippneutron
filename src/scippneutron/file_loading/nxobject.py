@@ -3,7 +3,6 @@
 # @author Simon Heybrock
 from enum import Enum, auto
 import functools
-import h5py
 
 from ._nexus import LoadFromNexus
 from ..file_loading._hdf5_nexus import LoadFromHdf5
@@ -68,7 +67,7 @@ class NXobject:
         return self._getitem(name)
 
     def _getitem(self, index):
-        raise NotImplemented(f'Loading {self.nx_class} is not supported.')
+        raise NotImplementedError(f'Loading {self.nx_class} is not supported.')
 
     @property
     def name(self):

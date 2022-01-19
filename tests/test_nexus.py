@@ -1,23 +1,13 @@
 from .nexus_helpers import (
     NexusBuilder,
     EventData,
-    Detector,
     Log,
-    Sample,
-    Source,
-    Transformation,
-    TransformationType,
-    Link,
     Monitor,
-    Chopper,
-    in_memory_hdf5_file_with_two_nxentry,
 )
 import numpy as np
 import pytest
 from typing import Callable, Tuple
-import scippneutron as scn
 import scipp as sc
-from scippneutron.file_loading._detector_data import _load_event_group, DetectorData
 from scippneutron.file_loading._nexus import LoadFromNexus
 from scippneutron.file_loading._hdf5_nexus import LoadFromHdf5
 from scippneutron.file_loading._json_nexus import LoadFromJson
@@ -102,7 +92,6 @@ def test_nxobject_tree_traversal(nexus_group: Tuple[Callable, LoadFromNexus]):
         event_data = entry['events_0']
         assert set(event_data.keys()) == set(
             ['event_id', 'event_index', 'event_time_offset', 'event_time_zero'])
-        items = dict(zip(event_data.keys(), event_data.values()))
         assert event_data.nx_class == nexus.NX_class.NXevent_data
 
 
@@ -119,8 +108,8 @@ def test_nxobject_by_nx_class_contains_everything(nexus_group: Tuple[Callable,
             ['events_0', 'events_1'])
 
 
-def test_nxobject_by_nx_class_of_child_contains_only_children(
-    nexus_group: Tuple[Callable, LoadFromNexus]):
+def test_nxobject_by_nx_class_contains_only_children(nexus_group: Tuple[Callable,
+                                                                        LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_monitor_and_log())() as f:
         root = nexus.NXroot(f, loader)

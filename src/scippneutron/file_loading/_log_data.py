@@ -126,7 +126,8 @@ def _load_log_data_from_group(
     property_name = nexus.get_name(group)
     value_dataset_name = "value"
     time_dataset_name = "time"
-    # TODO This is wrong if the log just has a single value. Can we check the shape in advance?
+    # TODO This is wrong if the log just has a single value. Can we check
+    # the shape in advance?
     index = to_plain_index(["time"], select)
 
     try:
@@ -195,7 +196,8 @@ def _load_log_data_from_group(
                                     unit=unit,
                                     dims=[dimension_label],
                                     dtype=nexus.get_dataset_numpy_dtype(
-                                        nexus.get_dataset_from_group(group, value_dataset_name)))
+                                        nexus.get_dataset_from_group(
+                                            group, value_dataset_name)))
 
     if is_time_series:
         # If property has timestamps, create a DataArray

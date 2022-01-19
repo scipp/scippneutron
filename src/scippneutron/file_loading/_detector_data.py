@@ -229,7 +229,6 @@ class NXevent_data(NXobject):
         return data
 
 
-
 def _load_event_group(group: Group,
                       nexus: LoadFromNexus,
                       detector_data: DetectorData,

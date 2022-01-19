@@ -69,7 +69,7 @@ def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict
             monitor = load_monitor(group, nexus)
             monitor_name = group.name.split("/")[-1]
             monitor_data[monitor_name] = sc.scalar(value=monitor)
-        except ValueError as e:
+        except ValueError:
             warnings.warn(f"No event-mode or histogram-mode monitor data found for "
                           f"NXMonitor group {group.name}. Skipping this group.")
 
