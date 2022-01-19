@@ -8,6 +8,7 @@ from scipp.spatial import affine_transform, linear_transform, \
     rotation, translation
 import scipp as sc
 import numpy as np
+from typing import Dict
 
 
 class BadSource(Exception):
@@ -42,6 +43,7 @@ class JSONGroup(dict):
         self.file = file
 
 
+Dataset = Union[h5py.Dataset, Dict]
 Group = Union[h5py.Group, JSONGroup]
 
 
