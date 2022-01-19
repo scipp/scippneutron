@@ -170,7 +170,7 @@ def _load_log_data_from_group(
         times = _convert_nxlog_time_to_datetime64(raw_times=raw_times,
                                                   log_start=log_start_time,
                                                   scaling_factor=scaling_factor,
-                                                  group_path=group.name)
+                                                  group_path=nexus.get_path(group))
 
         if tuple(times.shape) != values.shape:
             raise BadSource(f"NXlog '{property_name}' has time and value "
@@ -195,8 +195,7 @@ def _load_log_data_from_group(
                                     unit=unit,
                                     dims=[dimension_label],
                                     dtype=nexus.get_dataset_numpy_dtype(
-                                        nexus.get_dataset_from_group(
-                                            group, value_dataset_name)))
+                                        nexus.get_dataset_from_group(group, value_dataset_name)))
 
     if is_time_series:
         # If property has timestamps, create a DataArray

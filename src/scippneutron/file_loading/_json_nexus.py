@@ -134,6 +134,13 @@ class LoadFromJson:
     def __init__(self, root: Dict):
         self._root = root
 
+    def keys(self, group: Dict):
+        children = group[_nexus_children]
+        return [child[_nexus_name] for child in children]
+
+    def values(self, group: Dict):
+        return group[_nexus_children]
+
     def _get_child_from_group(
             self,
             group: Dict,
@@ -265,6 +272,14 @@ class LoadFromJson:
 
     @staticmethod
     def get_name(group: Dict) -> str:
+        return group[_nexus_name]
+
+    @staticmethod
+    def get_path(group: Dict) -> str:
+        # WARNING It is impossible to get a full path in a simple manner,
+        # this is just the current name.
+        # TODO JSONGroup would provide this, but apparently it is used inconsistently,
+        # in some cases we end up with a plain dict so we cannot use group.name
         return group[_nexus_name]
 
     @staticmethod

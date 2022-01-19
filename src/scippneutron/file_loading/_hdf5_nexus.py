@@ -86,6 +86,12 @@ def _ensure_supported_int_type(dataset_type: Any):
 
 
 class LoadFromHdf5:
+    def keys(self, group: h5py.Group):
+        return group.keys()
+
+    def values(self, group: h5py.Group):
+        return group.values()
+
     @staticmethod
     def find_by_nx_class(
             nx_class_names: Tuple[str, ...],
@@ -112,8 +118,6 @@ class LoadFromHdf5:
                     pass
 
         root.visititems(_match_nx_class)
-        # Also check if root itself is an NX_class
-        _match_nx_class(None, root)
         return found_groups
 
     @staticmethod
@@ -202,6 +206,13 @@ class LoadFromHdf5:
         Just the name of this group, not the full path
         """
         return group.name.split("/")[-1]
+
+    @staticmethod
+    def get_path(group: Union[h5py.Group, h5py.Dataset]) -> str:
+        """
+        The full path
+        """
+        return group.name
 
     @staticmethod
     def get_shape(dataset: h5py.Dataset) -> List:

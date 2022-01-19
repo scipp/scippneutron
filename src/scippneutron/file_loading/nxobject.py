@@ -34,6 +34,10 @@ class Field:
         return f'<Nexus field "{self._dataset.name}">'
 
     @property
+    def name(self):
+        return self._loader.get_path(self._dataset)
+
+    @property
     def shape(self):
         return self._loader.get_shape(self._dataset)
 
@@ -44,35 +48,39 @@ class Field:
 
 
 class NXobject:
+    """Base class for all NeXus groups.
+    """
     def __init__(self, group: Group, loader: LoadFromNexus = LoadFromHdf5()):
         self._group = group
         self._loader = loader
 
-    def make(self, group):
+    def _make(self, group):
         nx_class = self._loader.get_string_attribute(group, 'NX_class')
         return _nx_class_registry().get(nx_class, NXobject)(group, self._loader)
 
-    def __getitem__(self, index):
-        if isinstance(index, str):
-            item = self._group[index]
+    def __getitem__(self, name):
+        if isinstance(name, str):
+            item = self._loader.get_child_from_group(self._group, name)
             if self._loader.is_group(item):
-                return self.make(item)
+                return self._make(item)
             else:
                 return Field(item, self._loader)
-        return self._getitem(index)
+        return self._getitem(name)
 
     def _getitem(self, index):
-        # TODO Is it better to fall back to returning h5py.Group?
-        # distinguish classes not implementing _getitem, vs missing classes!
-        print(f'Loading {self.nx_class} is not supported.')
+        raise NotImplemented(f'Loading {self.nx_class} is not supported.')
+
+    @property
+    def name(self):
+        return self._loader.get_path(self._group)
 
     def keys(self):
-        return self._group.keys()
+        return self._loader.keys(self._group)
 
     def values(self):
         return [
-            self.make(v) if self._loader.is_group(v) else Field(v, self._loader)
-            for v in self._group.values()
+            self._make(v) if self._loader.is_group(v) else Field(v, self._loader)
+            for v in self._loader.values(self._group)
         ]
 
     @functools.lru_cache()
@@ -84,7 +92,7 @@ class NXobject:
             names = [self._loader.get_name(group) for group in groups]
             if len(names) != len(set(names)):  # fall back to full path if duplicate
                 names = [group.name for group in groups]
-            out[NX_class[nx_class]] = {n: self.make(g) for n, g in zip(names, groups)}
+            out[NX_class[nx_class]] = {n: self._make(g) for n, g in zip(names, groups)}
         return out
 
     @property
