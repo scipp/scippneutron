@@ -1,37 +1,45 @@
-from .mantid_scipp_comparison import MantidScippComparison
-from ..mantid_helper import mantid_is_available
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
+# @author Jan-Lukas Wynen
+
 import pytest
-import scippneutron.mantid as converter
 import scipp as sc
 import numpy as np
+import scippneutron as scn
+
+try:
+    import mantid.simpleapi as sapi
+    import mantid.kernel as kernel
+except ImportError:
+    pytestmark = pytest.mark.skip('Mantid framework is unavailable')
+    sapi = None
+    kernel = None
 
 
-class HistogramEventsTest(MantidScippComparison):
-    def __init__(self):
-        super(HistogramEventsTest, self).__init__(self.__class__.__name__)
-
-    @property
-    def _filenames(self):
-        return ["CNCS_51936_event.nxs"]
-
-    def _run_mantid(self, input):
-        import mantid.simpleapi as sapi
-        # Note Mantid rebin inclusive of last bin boundary
-        out = sapi.Rebin(InputWorkspace=input,
-                         Params=[0, 10, 1000],
-                         PreserveEvents=False,
-                         StoreInADS=False)
-        return converter.from_mantid(out)
-
-    def _run_scipp(self, input):
-        return sc.histogram(x=input,
-                            bins=sc.Variable(dims=['tof'],
-                                             values=np.linspace(0, 1000, num=101),
-                                             dtype=sc.DType.float64,
-                                             unit=sc.units.us))
+@pytest.fixture
+def in_ws():
+    filename = scn.data.get_path("CNCS_51936_event.nxs")
+    print('Loading', filename)
+    ws = sapi.Load(Filename=filename, StoreInADS=False)
+    return ws
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
-def test_histogram_events():
-    test = HistogramEventsTest()
-    test.run()
+@pytest.fixture
+def in_da(in_ws):
+    return scn.mantid.from_mantid(in_ws).astype('float64')
+
+
+def test_histogram_events(in_ws, in_da):
+    out_ws = sapi.Rebin(InputWorkspace=in_ws,
+                        Params=[0, 10, 1000],
+                        PreserveEvents=False,
+                        StoreInADS=False)
+    out_mantid = scn.mantid.from_mantid(out_ws)
+
+    out_scipp = sc.histogram(x=in_da,
+                             bins=sc.Variable(dims=['tof'],
+                                              values=np.linspace(0, 1000, num=101),
+                                              dtype='float64',
+                                              unit='us'))
+
+    assert sc.utils.comparison.isnear(out_scipp, out_mantid, rtol=1e-15 * sc.units.one)
