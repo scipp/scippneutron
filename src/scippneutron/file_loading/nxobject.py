@@ -82,9 +82,9 @@ class NXobject:
         return out
 
     @property
-    def NX_class(self):
-        nx_class = self._loader.get_string_attribute(self._group, 'NX_class')
-        return NX_class[nx_class]
+    def nx_class(self):
+        key = self._loader.get_string_attribute(self._group, 'NX_class')
+        return NX_class[key]
 
     def __repr__(self):
         return f'<{type(self).__name__} "{self._group.name}">'
@@ -92,7 +92,7 @@ class NXobject:
 
 class NXroot(NXobject):
     @property
-    def NX_class(self):
+    def nx_class(self):
         # Most files violate the standard and do not define NX_class on file root
         return 'NXroot'
 
