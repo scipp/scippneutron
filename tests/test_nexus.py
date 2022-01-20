@@ -108,7 +108,7 @@ def test_nxobject_name_property_is_full_path(nexus_group: Tuple[Callable,
 
 
 def test_nxobject_grandchild_can_be_accessed_using_path(
-    nexus_group: Tuple[Callable, LoadFromNexus]):
+        nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_monitor_and_log())() as f:
         root = nexus.NXroot(f, loader)
@@ -143,7 +143,7 @@ def test_nxobject_by_nx_class_contains_only_children(nexus_group: Tuple[Callable
 
 
 def test_nxobject_dataset_items_are_returned_as_Field(
-    nexus_group: Tuple[Callable, LoadFromNexus]):
+        nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_monitor_and_log())() as f:
         field = nexus.NXroot(f, loader)['entry/events_0/event_time_offset']
@@ -161,7 +161,7 @@ def test_field_properties(nexus_group: Tuple[Callable, LoadFromNexus]):
 
 
 def test_field_getitem_returns_numpy_array_with_correct_size_and_values(
-    nexus_group: Tuple[Callable, LoadFromNexus]):
+        nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_monitor_and_log())() as f:
         field = nexus.NXroot(f, loader)['entry/events_0/event_time_offset']
