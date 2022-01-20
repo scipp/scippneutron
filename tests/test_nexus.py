@@ -140,3 +140,26 @@ def test_nxobject_by_nx_class_contains_only_children(nexus_group: Tuple[Callable
         assert list(classes[nexus.NX_class.NXlog]) == ['log']
         assert set(classes[nexus.NX_class.NXevent_data]) == set(
             ['events_0', 'events_1'])
+
+
+def test_negative_event_index_converted_to_num_event(nexus_group: Tuple[Callable,
+                                                                        LoadFromNexus]):
+    event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 3, 2]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, -1000]),
+    )
+
+    builder = NexusBuilder()
+    builder.add_event_data(event_data)
+    resource, loader = nexus_group
+    with resource(builder)() as f:
+        root = nexus.NXroot(f, loader)
+        events = root['entry/events_0'][...]
+        assert events.bins.size().values[2] == 3
+        assert events.bins.size().values[3] == 0

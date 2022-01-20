@@ -230,12 +230,7 @@ class LoadFromJson:
             raise MissingDataset()
 
         if dtype is None:
-            try:
-                dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
-                                                             ["type"]]
-            except KeyError:
-                dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
-                                                             ["dtype"]]
+            dtype = self.get_dtype(dataset)
 
         try:
             units = _get_attribute_value(dataset, _nexus_units)
@@ -295,6 +290,13 @@ class LoadFromJson:
         # TODO JSONGroup is apparently used inconsistently, fall back to returning name
         # without path.
         return group.get(_nexus_name, '/')
+
+    @staticmethod
+    def get_dtype(dataset: Dict) -> str:
+        try:
+            return dataset[_nexus_dataset]["type"]
+        except KeyError:
+            return dataset[_nexus_dataset]["dtype"]
 
     @staticmethod
     def get_shape(dataset: Dict) -> List:

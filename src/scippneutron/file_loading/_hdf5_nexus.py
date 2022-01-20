@@ -215,6 +215,13 @@ class LoadFromHdf5:
         return group.name
 
     @staticmethod
+    def get_dtype(dataset: h5py.Dataset) -> str:
+        """
+        The dtype of the dataset
+        """
+        return dataset.dtype
+
+    @staticmethod
     def get_shape(dataset: h5py.Dataset) -> List:
         """
         The shape of the dataset
