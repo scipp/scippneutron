@@ -76,9 +76,7 @@ def test_mantid_convert_tof_to_wavelength():
     assert sc.allclose(out_scipp.coords['wavelength'],
                        out_mantid.coords['wavelength'],
                        rtol=1e-8 * sc.units.one)
-    assert sc.allclose(out_scipp.coords['spectrum'],
-                       out_mantid.coords['spectrum'],
-                       rtol=1e-8 * sc.units.one)
+    assert sc.identical(out_scipp.coords['spectrum'], out_mantid.coords['spectrum'])
 
 
 def test_mantid_convert_tof_to_dspacing():
@@ -91,9 +89,7 @@ def test_mantid_convert_tof_to_dspacing():
     assert sc.allclose(out_scipp.coords['dspacing'],
                        out_mantid.coords['dspacing'],
                        rtol=1e-8 * sc.units.one)
-    assert sc.allclose(out_scipp.coords['spectrum'],
-                       out_mantid.coords['spectrum'],
-                       rtol=1e-8 * sc.units.one)
+    assert sc.identical(out_scipp.coords['spectrum'], out_mantid.coords['spectrum'])
 
 
 def test_mantid_convert_tof_to_energy():
@@ -111,9 +107,7 @@ def test_mantid_convert_tof_to_energy():
     assert sc.allclose(out_scipp.coords['energy'],
                        mantid_energy,
                        rtol=1e-7 * sc.units.one)
-    assert sc.allclose(out_scipp.coords['spectrum'],
-                       out_mantid.coords['spectrum'],
-                       rtol=1e-8 * sc.units.one)
+    assert sc.identical(out_scipp.coords['spectrum'], out_mantid.coords['spectrum'])
 
 
 def test_mantid_convert_tof_to_direct_energy_transfer():
@@ -139,6 +133,4 @@ def test_mantid_convert_tof_to_direct_energy_transfer():
         out_mantid.coords['energy_transfer'],
         rtol=sc.linspace('energy_transfer', 1e-6, 1e-10,
                          out_scipp.coords['energy_transfer'].sizes['energy_transfer']))
-    assert sc.allclose(out_scipp.coords['spectrum'],
-                       out_mantid.coords['spectrum'],
-                       rtol=1e-8 * sc.units.one)
+    assert sc.identical(out_scipp.coords['spectrum'], out_mantid.coords['spectrum'])
