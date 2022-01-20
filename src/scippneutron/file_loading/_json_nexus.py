@@ -194,7 +194,10 @@ class LoadFromJson:
             return self.get_child_from_group(self.get_child_from_group(group, child),
                                              remainder)
         name = self.get_path(group).rstrip('/')
-        return JSONGroup(group=self._get_child_from_group(group, child_name),
+        child = self._get_child_from_group(group, child_name)
+        if child is None:
+            return child
+        return JSONGroup(group=child,
                          parent=group,
                          name=f'{name}/{child_name}',
                          file={_nexus_children: [group]})
