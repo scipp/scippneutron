@@ -1,131 +1,136 @@
-from .mantid_scipp_comparison import MantidScippComparison
-from ..mantid_helper import mantid_is_available
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
+# @author Jan-Lukas Wynen
+
+from typing import Optional
+
 import pytest
-import scippneutron.mantid as converter
-import scippneutron as sn
+
 import scipp as sc
-import enum
+import scippneutron as scn
+
+try:
+    import mantid.simpleapi as sapi
+    import mantid.kernel as kernel
+except ImportError:
+    pytestmark = pytest.mark.skip('Mantid framework is unavailable')
+    sapi = None
+    kernel = None
 
 
-class Emode(enum.Enum):
-    Elastic = 0
-    Direct = 1
+def mantid_coord(scipp_coord: str) -> str:
+    return {
+        'tof': 'TOF',
+        'wavelength': 'Wavelength',
+        'dspacing': 'dSpacing',
+        'energy': 'Energy',
+        'energy_transfer': 'DeltaE'
+    }[scipp_coord]
 
 
-class Comparison(MantidScippComparison):
-    @property
-    def _dim_map(self):
-        return {
-            'tof': 'TOF',
-            'wavelength': 'Wavelength',
-            'dspacing': 'dSpacing',
-            'energy_transfer': 'DeltaE'
-        }
-
-    @property
-    def _emode_to_mantid(self):
-        return {
-            Emode.Elastic: 'Elastic',
-            Emode.Direct: 'Direct',
-        }
-
-    def __init__(self, name, origin, target, emode, efixed):
-        self._origin = origin
-        self._target = target
-        self._emode = emode
-        self._efixed = efixed
-        super(Comparison, self).__init__(name)
-
-    @property
-    def _workspaces(self):
-        import mantid.simpleapi as sapi
-        import mantid.kernel as kernel
-        ws = sapi.CreateSampleWorkspace(XMin=1000, NumBanks=1, StoreInADS=False)
-        # Crop out spectra index 0 as has two_theta=0, gives inf d-spacing
-        ws = sapi.CropWorkspace(ws, StartWorkspaceIndex=1, StoreInADS=False)
-        ws = sapi.ConvertUnits(
-            InputWorkspace=ws,
-            Target=self._dim_map[self._origin],
-            EMode=self._emode_to_mantid[self._emode],
-            EFixed=self._efixed.value if self._efixed is not None else None,
-            StoreInADS=False)  # start in origin units
-        ws.mutableRun().addProperty(
-            'deltaE-mode',
-            kernel.StringPropertyWithValue('deltaE-mode',
-                                           self._emode_to_mantid[self._emode]), '',
-            True)
-        if self._efixed is not None:
-            ws.mutableRun().addProperty(
-                'Ei', kernel.FloatPropertyWithValue('Ei', self._efixed.value),
-                str(self._efixed.unit), False)
-        return {"sample_workspace": ws}
-
-    def _run_mantid(self, input):
-        import mantid.simpleapi as sapi
-        out = sapi.ConvertUnits(
-            InputWorkspace=input,
-            Target=self._dim_map[self._target],
-            EMode=self._emode_to_mantid[self._emode],
-            EFixed=self._efixed.value if self._efixed is not None else None,
-            StoreInADS=False)
-        out = converter.from_mantid(out)
-        # broadcast to circumvent common-bins conversion in from_mantid
-        spec_shape = out.coords['spectrum'].shape
-        out.coords[self._target] = sc.ones(dims=['spectrum'],
-                                           shape=spec_shape) * out.coords[self._target]
-        return out
-
-    def _run_scipp(self, input):
-        return sn.convert(data=input,
-                          origin=self._origin,
-                          target=self._target,
-                          scatter=True)
+def make_workspace(coord: str,
+                   emode: str = 'Elastic',
+                   efixed: Optional[sc.Variable] = None) -> 'sapi.Workspace':
+    ws = sapi.CreateSampleWorkspace(XMin=1000, NumBanks=1, StoreInADS=False)
+    # Crop out spectra index 0 as has two_theta=0, gives inf d-spacing
+    ws = sapi.CropWorkspace(ws, StartWorkspaceIndex=1, StoreInADS=False)
+    ws = sapi.ConvertUnits(InputWorkspace=ws,
+                           Target=mantid_coord(coord),
+                           EMode=emode,
+                           EFixed=efixed.value if efixed is not None else None,
+                           StoreInADS=False)  # start in origin units
+    ws.mutableRun().addProperty('deltaE-mode',
+                                kernel.StringPropertyWithValue('deltaE-mode', emode),
+                                '', True)
+    if efixed is not None:
+        ws.mutableRun().addProperty('Ei',
+                                    kernel.FloatPropertyWithValue('Ei', efixed.value),
+                                    str(efixed.unit), False)
+    return ws
 
 
-class ElasticComparison(Comparison):
-    def __init__(self, origin, target):
-        self._origin = origin
-        self._target = target
-        super(ElasticComparison, self).__init__(self.__class__.__name__,
-                                                origin,
-                                                target,
-                                                emode=Emode.Elastic,
-                                                efixed=None)
+def mantid_convert_units(ws: 'sapi.Workspace',
+                         target: str,
+                         emode: str = 'Elastic',
+                         efixed: Optional[sc.Variable] = None) -> sc.DataArray:
+    out_ws = sapi.ConvertUnits(InputWorkspace=ws,
+                               Target=mantid_coord(target),
+                               EMode=emode,
+                               EFixed=efixed.value if efixed is not None else None,
+                               StoreInADS=False)
+    out = scn.mantid.from_mantid(out_ws)
+    # broadcast to circumvent common-bins conversion in from_mantid
+    spec_shape = out.coords['spectrum'].shape
+    out.coords[target] = sc.ones(dims=['spectrum'],
+                                 shape=spec_shape) * out.coords[target]
+    return out
 
 
-class DirectInElasticComparison(Comparison):
-    def __init__(self, origin, target):
-        self._origin = origin
-        self._target = target
-        super(DirectInElasticComparison, self).__init__(self.__class__.__name__,
-                                                        origin,
-                                                        target,
-                                                        emode=Emode.Direct,
-                                                        efixed=1000 * sc.Unit('meV'))
+def test_mantid_convert_tof_to_wavelength():
+    in_ws = make_workspace('tof')
+    out_mantid = mantid_convert_units(in_ws, 'wavelength')
+
+    in_da = scn.mantid.from_mantid(in_ws)
+    out_scipp = scn.convert(data=in_da, origin='tof', target='wavelength', scatter=True)
+
+    assert sc.allclose(out_scipp.coords['wavelength'],
+                       out_mantid.coords['wavelength'],
+                       rtol=1e-8 * sc.units.one)
+    assert sc.identical(out_scipp.coords['spectrum'], out_mantid.coords['spectrum'])
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
-class TestNeutronConversionUnits:
-    def test_neutron_convert_units_tof_to_wavelength(self):
-        test = ElasticComparison(origin='tof', target='wavelength')
-        self._check_coords(test.run(allow_failure=True), ('wavelength', 'spectrum'),
-                           rtol=1e-8)
+def test_mantid_convert_tof_to_dspacing():
+    in_ws = make_workspace('tof')
+    out_mantid = mantid_convert_units(in_ws, 'dspacing')
 
-    def test_neutron_convert_units_tof_to_d_space(self):
-        test = ElasticComparison(origin='tof', target='dspacing')
-        self._check_coords(test.run(allow_failure=True), ('dspacing', 'spectrum'),
-                           rtol=1e-8)
+    in_da = scn.mantid.from_mantid(in_ws)
+    out_scipp = scn.convert(data=in_da, origin='tof', target='dspacing', scatter=True)
 
-    def test_neutron_convert_units_tof_to_wavelength_direct(self):
-        test = DirectInElasticComparison(origin='tof', target='energy_transfer')
-        self._check_coords(test.run(allow_failure=True),
-                           ('energy_transfer', 'spectrum'),
-                           rtol=1e-6)
+    assert sc.allclose(out_scipp.coords['dspacing'],
+                       out_mantid.coords['dspacing'],
+                       rtol=1e-8 * sc.units.one)
+    assert sc.identical(out_scipp.coords['spectrum'], out_mantid.coords['spectrum'])
 
-    @staticmethod
-    def _check_coords(results_dict, names, rtol):
-        for results in results_dict.values():
-            for name in names:
-                assert sc.allclose(results['scipp'].coords[name],
-                                   results['mantid'].coords[name],
-                                   rtol=rtol * sc.units.one)
+
+def test_mantid_convert_tof_to_energy():
+    in_ws = make_workspace('tof')
+    out_mantid = mantid_convert_units(in_ws, 'energy')
+
+    in_da = scn.mantid.from_mantid(in_ws)
+    out_scipp = scn.convert(data=in_da, origin='tof', target='energy', scatter=True)
+
+    # Mantid reverses the order of the energy dim.
+    mantid_energy = sc.empty_like(out_mantid.coords['energy'])
+    assert mantid_energy.dims[1] == 'energy'
+    mantid_energy.values = out_mantid.coords['energy'].values[..., ::-1]
+
+    assert sc.allclose(out_scipp.coords['energy'],
+                       mantid_energy,
+                       rtol=1e-7 * sc.units.one)
+    assert sc.identical(out_scipp.coords['spectrum'], out_mantid.coords['spectrum'])
+
+
+def test_mantid_convert_tof_to_direct_energy_transfer():
+    efixed = 1000 * sc.Unit('meV')
+    in_ws = make_workspace('tof', emode='Direct', efixed=efixed)
+    out_mantid = mantid_convert_units(in_ws,
+                                      'energy_transfer',
+                                      emode='Direct',
+                                      efixed=efixed)
+
+    in_da = scn.mantid.from_mantid(in_ws)
+    out_scipp = scn.convert(data=in_da,
+                            origin='tof',
+                            target='energy_transfer',
+                            scatter=True)
+
+    # The conversion consists of multiplications and additions, thus the relative error
+    # changes with the inputs. In this case, small tof yields a large error due to
+    # the 1/tof**2 factor in the conversion.
+    # rtol is chosen to account for linearly changing tof in the input data.
+    assert sc.allclose(
+        out_scipp.coords['energy_transfer'],
+        out_mantid.coords['energy_transfer'],
+        rtol=sc.linspace('energy_transfer', 1e-6, 1e-10,
+                         out_scipp.coords['energy_transfer'].sizes['energy_transfer']))
+    assert sc.identical(out_scipp.coords['spectrum'], out_mantid.coords['spectrum'])
