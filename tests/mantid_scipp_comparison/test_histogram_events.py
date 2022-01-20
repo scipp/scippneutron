@@ -18,9 +18,7 @@ except ImportError:
 
 @pytest.fixture
 def in_ws():
-    filename = scn.data.get_path("CNCS_51936_event.nxs")
-    print('Loading', filename)
-    ws = sapi.Load(Filename=filename, StoreInADS=False)
+    ws = sapi.Load(Filename=scn.data.get_path("CNCS_51936_event.nxs"), StoreInADS=False)
     return ws
 
 
