@@ -3,7 +3,7 @@
 # @author Matthew Jones
 
 from dataclasses import dataclass
-from typing import Optional, List, Any, Dict, Union
+from typing import Optional, List, Any, Dict, Union, Tuple
 import numpy as np
 import scipp
 
@@ -53,13 +53,13 @@ def _convert_array_to_metres(array: np.ndarray, unit: str) -> np.ndarray:
 
 
 def _load_pixel_positions(detector_group: Group, detector_ids_size: int,
-                          nexus: LoadFromNexus) -> Optional[sc.Variable]:
+                          nexus: LoadFromNexus) -> Tuple[Optional[sc.Variable], Optional[sc.Variable]]:
     offsets_unit = nexus.get_unit(
         nexus.get_dataset_from_group(detector_group, "x_pixel_offset"))
     if offsets_unit == sc.units.dimensionless:
         warn(f"Skipped loading pixel positions as no units found on "
              f"x_pixel_offset dataset in {nexus.get_name(detector_group)}")
-        return None
+        return None, None
 
     try:
         x_positions = nexus.load_dataset_from_group_as_numpy_array(
@@ -67,7 +67,7 @@ def _load_pixel_positions(detector_group: Group, detector_ids_size: int,
         y_positions = nexus.load_dataset_from_group_as_numpy_array(
             detector_group, "y_pixel_offset").flatten()
     except MissingDataset:
-        return None
+        return None, None
     try:
         z_positions = nexus.load_dataset_from_group_as_numpy_array(
             detector_group, "z_pixel_offset").flatten()
@@ -82,7 +82,7 @@ def _load_pixel_positions(detector_group: Group, detector_ids_size: int,
     if list_of_sizes.count(list_of_sizes[0]) != len(list_of_sizes):
         warn(f"Skipped loading pixel positions as pixel offset and id "
              f"dataset sizes do not match in {nexus.get_name(detector_group)}")
-        return None
+        return None, None
 
     x_positions = _convert_array_to_metres(x_positions, offsets_unit)
     y_positions = _convert_array_to_metres(y_positions, offsets_unit)
@@ -94,12 +94,11 @@ def _load_pixel_positions(detector_group: Group, detector_ids_size: int,
 
     found_depends_on, _ = nexus.dataset_in_group(detector_group, "depends_on")
     if found_depends_on:
-        pos = (get_full_transformation_matrix(detector_group, nexus) * data)["value", 0]
-        data = sc.vectors(dims=[_detector_dimension],
-                          values=pos.values,
-                          unit=sc.units.m)
+        transforms = get_full_transformation_matrix(detector_group, nexus)
+    else:
+        transforms = None
 
-    return data
+    return data, transforms
 
 
 @dataclass
@@ -107,6 +106,7 @@ class DetectorData:
     event_data: Optional[sc.DataArray] = None
     detector_ids: Optional[sc.Variable] = None
     pixel_positions: Optional[sc.Variable] = None
+    pixel_position_transforms: Optional[sc.Variable] = None
 
 
 def _create_empty_events_data_array(tof_dtype: Any = np.int64,
@@ -185,11 +185,14 @@ def _load_detector(group: Group, nexus: LoadFromNexus) -> DetectorData:
                                    dtype=detector_id_type)
 
     pixel_positions = None
+    pixel_position_transforms = None
     pixel_positions_found, _ = nexus.dataset_in_group(group, "x_pixel_offset")
     if pixel_positions_found and detector_ids is not None:
-        pixel_positions = _load_pixel_positions(group, detector_ids.shape[0], nexus)
+        pixel_positions, pixel_position_transforms = _load_pixel_positions(group, detector_ids.shape[0], nexus)
 
-    return DetectorData(detector_ids=detector_ids, pixel_positions=pixel_positions)
+    return DetectorData(detector_ids=detector_ids,
+                        pixel_positions=pixel_positions,
+                        pixel_position_transforms=pixel_position_transforms)
 
 
 def _load_event_group(group: Group, nexus: LoadFromNexus, detector_data: DetectorData,
@@ -334,7 +337,11 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
         if pixel_positions_loaded:
             # TODO: the name 'position' should probably not be hard-coded but moved
             # to a variable that cah be changed in a single place.
-            da.coords['position'] = data.pixel_positions
+            print(f"detector base positions: {data.pixel_positions}")
+            print(f"detector transforms: {data.pixel_position_transforms}")
+            da.coords['base_position'] = data.pixel_positions
+            if data.pixel_position_transforms is not None:
+                da.attrs['position_transformations'] = sc.scalar(value=data.pixel_position_transforms)
         return da
 
     _dim = _detector_dimension if bin_by_pixel else _bank_dimension
