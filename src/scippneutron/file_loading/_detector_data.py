@@ -226,6 +226,7 @@ class NXevent_data(NXobject):
         data = detector_data.event_data
         data.bins.coords['id'] = data.bins.coords.pop('detector_id')
         data.bins.coords['time_offset'] = data.bins.coords.pop('tof')
+        data.coords['time_zero'] = data.coords.pop('pulse_time')
         return data
 
 
@@ -266,6 +267,8 @@ def _load_event_group(group: Group,
     pulse_times = _load_pulse_times(group, nexus, index)
 
     num_event = shape("event_time_offset")[0]
+    # Some files contain uint64 "max" indices, which turn into negatives during
+    # conversion to int64. This is a hack to get arround this.
     event_index[event_index < 0] = num_event
 
     if len(event_index) > 0:
@@ -274,8 +277,6 @@ def _load_event_group(group: Group,
     else:
         event_select = slice(None)
 
-    # Some files contain uint64 "max" indices, which turn into negatives during
-    # conversion to int64. This is a hack to get arround this.
     event_id = nexus.load_dataset(group,
                                   "event_id", [_event_dimension],
                                   index=event_select)
