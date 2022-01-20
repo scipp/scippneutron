@@ -33,7 +33,11 @@ class Field:
         return f'<Nexus field "{self._dataset.name}">'
 
     @property
-    def name(self):
+    def dtype(self):
+        return self._loader.get_dtype(self._dataset)
+
+    @property
+    def name(self) -> str:
         return self._loader.get_path(self._dataset)
 
     @property

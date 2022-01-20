@@ -142,6 +142,34 @@ def test_nxobject_by_nx_class_contains_only_children(nexus_group: Tuple[Callable
             ['events_0', 'events_1'])
 
 
+def test_nxobject_dataset_items_are_returned_as_Field(
+    nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        field = nexus.NXroot(f, loader)['entry/events_0/event_time_offset']
+        assert isinstance(field, nexus.Field)
+
+
+def test_field_properties(nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        field = nexus.NXroot(f, loader)['entry/events_0/event_time_offset']
+        assert field.dtype == 'int64'
+        assert field.name == '/entry/events_0/event_time_offset'
+        assert field.shape == (6, )
+        assert field.unit == sc.Unit('ns')
+
+
+def test_field_getitem_returns_numpy_array_with_correct_size_and_values(
+    nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        field = nexus.NXroot(f, loader)['entry/events_0/event_time_offset']
+        assert np.array_equal(field[...], [456, 743, 347, 345, 632, 23])
+        assert np.array_equal(field[1:], [743, 347, 345, 632, 23])
+        assert np.array_equal(field[:-1], [456, 743, 347, 345, 632])
+
+
 def test_negative_event_index_converted_to_num_event(nexus_group: Tuple[Callable,
                                                                         LoadFromNexus]):
     event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
