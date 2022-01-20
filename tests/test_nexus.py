@@ -165,9 +165,12 @@ def test_field_getitem_returns_numpy_array_with_correct_size_and_values(
     resource, loader = nexus_group
     with resource(builder_with_events_monitor_and_log())() as f:
         field = nexus.NXroot(f, loader)['entry/events_0/event_time_offset']
-        assert np.array_equal(field[...], [456, 743, 347, 345, 632, 23])
-        assert np.array_equal(field[1:], [743, 347, 345, 632, 23])
-        assert np.array_equal(field[:-1], [456, 743, 347, 345, 632])
+        assert np.array_equal(field[...],
+                              np.array([456, 743, 347, 345, 632, 23], dtype='int64'))
+        assert np.array_equal(field[1:],
+                              np.array([743, 347, 345, 632, 23], dtype='int64'))
+        assert np.array_equal(field[:-1],
+                              np.array([456, 743, 347, 345, 632], dtype='int64'))
 
 
 def test_negative_event_index_converted_to_num_event(nexus_group: Tuple[Callable,
