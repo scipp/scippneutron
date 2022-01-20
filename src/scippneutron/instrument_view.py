@@ -14,7 +14,8 @@ except ImportError as ex:
 
 def _create_text_sprite(position, bounding_box, display_text):
     # Position offset in y
-    text_position = tuple(position.value + np.array([0, 0.8 * bounding_box[1], 0]))
+    text_position = tuple(position.value 
++ np.array([0, 0.8 * bounding_box[1], 0]))
     text = p3.TextTexture(string=display_text, color='black', size=300)
     text_material = p3.SpriteMaterial(map=text, transparent=True)
     size = 1.0
