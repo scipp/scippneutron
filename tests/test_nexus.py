@@ -59,12 +59,10 @@ def test_nxobject_tree_traversal(nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_monitor_and_log())() as f:
         root = nexus.NXroot(f, loader)
-        assert root.name == '/'
         assert root.nx_class == nexus.NX_class.NXroot
         assert set(root.keys()) == set(['entry', 'monitor'])
 
         monitor = root['monitor']
-        assert monitor.name == '/monitor'
         assert monitor.nx_class == nexus.NX_class.NXmonitor
         assert sc.identical(
             monitor[...],
@@ -75,12 +73,10 @@ def test_nxobject_tree_traversal(nexus_group: Tuple[Callable, LoadFromNexus]):
                          }))
 
         entry = root['entry']
-        assert entry.name == '/entry'
         assert entry.nx_class == nexus.NX_class.NXentry
         assert set(entry.keys()) == set(['events_0', 'events_1', 'log'])
 
         log = entry['log']
-        assert log.name == '/entry/log'
         assert log.nx_class == nexus.NX_class.NXlog
         assert sc.identical(
             log[...],
@@ -94,10 +90,30 @@ def test_nxobject_tree_traversal(nexus_group: Tuple[Callable, LoadFromNexus]):
                 }))
 
         event_data = entry['events_0']
-        assert event_data.name == '/entry/events_0'
         assert set(event_data.keys()) == set(
             ['event_id', 'event_index', 'event_time_offset', 'event_time_zero'])
         assert event_data.nx_class == nexus.NX_class.NXevent_data
+
+
+def test_nxobject_name_property_is_full_path(nexus_group: Tuple[Callable,
+                                                                LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        root = nexus.NXroot(f, loader)
+        assert root.name == '/'
+        assert root['monitor'].name == '/monitor'
+        assert root['entry'].name == '/entry'
+        assert root['entry']['log'].name == '/entry/log'
+        assert root['entry']['events_0'].name == '/entry/events_0'
+
+
+def test_nxobject_grandchild_can_be_accessed_using_path(
+    nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        root = nexus.NXroot(f, loader)
+        assert root['entry/log'].name == '/entry/log'
+        assert root['/entry/log'].name == '/entry/log'
 
 
 def test_nxobject_by_nx_class_contains_everything(nexus_group: Tuple[Callable,

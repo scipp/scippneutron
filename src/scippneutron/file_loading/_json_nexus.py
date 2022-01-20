@@ -187,6 +187,12 @@ class LoadFromJson:
         return groups_with_requested_nx_class
 
     def get_child_from_group(self, group: Dict, child_name: str) -> Optional[Dict]:
+        if '/' in child_name:
+            child, remainder = child_name.split('/', maxsplit=1)
+            if child == '':
+                return self.get_child_from_group(group, remainder)
+            return self.get_child_from_group(self.get_child_from_group(group, child),
+                                             remainder)
         name = self.get_path(group).rstrip('/')
         return JSONGroup(group=self._get_child_from_group(group, child_name),
                          parent=group,
