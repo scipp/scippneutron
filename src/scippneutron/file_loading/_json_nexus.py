@@ -187,7 +187,11 @@ class LoadFromJson:
         return groups_with_requested_nx_class
 
     def get_child_from_group(self, group: Dict, child_name: str) -> Optional[Dict]:
-        return self._get_child_from_group(group, child_name)
+        name = self.get_path(group).rstrip('/')
+        return JSONGroup(group=self._get_child_from_group(group, child_name),
+                         parent=group,
+                         name=f'{name}/{child_name}',
+                         file={_nexus_children: [group]})
 
     def get_dataset_from_group(self, group: Dict, dataset_name: str) -> Optional[Dict]:
         """
@@ -280,11 +284,11 @@ class LoadFromJson:
 
     @staticmethod
     def get_path(group: Dict) -> str:
-        # WARNING It is impossible to get a full path in a simple manner,
-        # this is just the current name.
-        # TODO JSONGroup would provide this, but apparently it is used inconsistently,
-        # in some cases we end up with a plain dict so we cannot use group.name
-        return group[_nexus_name]
+        if isinstance(group, JSONGroup):
+            return group.name
+        # TODO JSONGroup is apparently used inconsistently, fall back to returning name
+        # without path.
+        return group.get(_nexus_name, '/')
 
     @staticmethod
     def get_shape(dataset: Dict) -> List:
