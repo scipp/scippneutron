@@ -125,8 +125,8 @@ def test_nxobject_grandchild_can_be_accessed_using_path(
         assert root['/entry/log'].name == '/entry/log'
 
 
-def test_nxobject_by_nx_class_contains_everything(nexus_group: Tuple[Callable,
-                                                                     LoadFromNexus]):
+def test_nxobject_by_nx_class_of_root_contains_everything(
+        nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_monitor_and_log())() as f:
         root = nexus.NXroot(f, loader)
