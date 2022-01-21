@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Union
 import warnings
 from ._common import Group
 import scipp as sc
@@ -11,31 +11,37 @@ from .nxdata import NXdata
 class NXmonitor(NXobject):
     @property
     def shape(self):
-        # TODO branch to NXevent_data
-        return NXdata(self._group, self._loader, signal='data').shape
+        return self._nxbase.shape
 
     @property
     def dims(self):
-        return NXdata(self._group, self._loader, signal='data').dims
+        return self._nxbase.dims
 
     @property
     def unit(self):
-        return NXdata(self._group, self._loader, signal='data').unit
+        return self._nxbase.unit
 
     @property
     def _is_events(self) -> bool:
         return self._loader.dataset_in_group(self._group, "event_time_offset")[0]
 
+    @property
+    def _nxbase(self) -> Union[NXdata, NXevent_data]:
+        """Branch between event-mode and histogram-mode monitor."""
+        if self._is_events:
+            return NXevent_data(self._group, self._loader)
+        return NXdata(self._group, self._loader, signal='data')
+
     def _getitem(self, select):
         """
         Load monitor data. Event-mode data takes precedence over histogram-mode data.
         """
-        if self._is_events:
+        nxbase = self._nxbase
+        if isinstance(nxbase, NXevent_data):
             warnings.warn(f"Event data present in NXmonitor group {self.name}. "
                           f"Histogram-mode monitor data from this group will be "
                           f"ignored.")
-            return NXevent_data(self._group, self._loader)[select]
-        return NXdata(self._group, self._loader, signal='data')[select]
+        return nxbase[select]
 
 
 def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict:
