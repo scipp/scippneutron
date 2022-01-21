@@ -95,6 +95,15 @@ def test_nxobject_tree_traversal(nexus_group: Tuple[Callable, LoadFromNexus]):
         assert event_data.nx_class == nexus.NX_class.NXevent_data
 
 
+def test_nxobject_getting_item_that_does_not_exists_raises_KeyError(
+        nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        root = nexus.NXroot(f, loader)
+        with pytest.raises(KeyError):
+            root['abcde']
+
+
 def test_nxobject_name_property_is_full_path(nexus_group: Tuple[Callable,
                                                                 LoadFromNexus]):
     resource, loader = nexus_group
