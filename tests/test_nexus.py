@@ -184,6 +184,14 @@ def test_field_properties(nexus_group: Tuple[Callable, LoadFromNexus]):
         assert field.unit == sc.Unit('ns')
 
 
+def test_field_unit_is_none_if_no_units_attribute(nexus_group: Tuple[Callable,
+                                                                     LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        field = nexus.NXroot(f, loader)['entry/log']
+        assert field.unit is None
+
+
 def test_field_getitem_returns_numpy_array_with_correct_size_and_values(
         nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group

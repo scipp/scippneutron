@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
+import scipp as sc
 from enum import Enum, auto
 import functools
 from typing import Union
@@ -79,9 +80,10 @@ class Field:
         return self._loader.get_shape(self._dataset)
 
     @property
-    def unit(self):
-        # TODO Prefer to return None if no such attr, provided that scipp supports this
-        return self._loader.get_unit(self._dataset)
+    def unit(self) -> Union[sc.Unit, None]:
+        if 'units' in self.attrs:
+            return sc.Unit(self._loader.get_unit(self._dataset))
+        return None
 
 
 class NXobject:
