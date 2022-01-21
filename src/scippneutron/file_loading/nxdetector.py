@@ -5,6 +5,8 @@ from .nxdata import NXdata
 class NXdetector(NXobject):
     @property
     def shape(self):
+        # TODO If there is no data this could probably be determined from the
+        # detector_number field, if present?
         return self._nxbase.shape
 
     @property
