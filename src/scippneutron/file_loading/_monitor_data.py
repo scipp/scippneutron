@@ -1,10 +1,11 @@
 from typing import List, Dict
 import warnings
-from ._common import Group, to_plain_index
+from ._common import Group
 import scipp as sc
 from ._nexus import LoadFromNexus
 from ._detector_data import load_detector_data
 from .nxobject import NXobject
+from .nxdata import NXdata
 
 
 class NXmonitor(NXobject):
@@ -29,19 +30,7 @@ def _load_data_from_histogram_mode_monitor(group: Group,
                                            select=tuple()):
     data_group = nexus.get_child_from_group(group, "data")
     if data_group is not None:
-        dims = nexus.get_string_attribute(data_group, "axes").split(",")
-        index = to_plain_index(dims, select)
-        data = nexus.load_dataset(group, "data", dimensions=dims, index=index)
-        coords = {
-            dim: nexus.load_dataset(group,
-                                    dim,
-                                    dimensions=[dim],
-                                    index=to_plain_index([dim],
-                                                         select,
-                                                         ignore_missing=True))
-            for dim in dims
-        }
-        return sc.DataArray(data=data, coords=coords)
+        return NXdata(group, nexus)[select]
     else:
         return None
 

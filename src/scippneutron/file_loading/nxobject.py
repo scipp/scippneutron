@@ -3,10 +3,11 @@
 # @author Simon Heybrock
 from enum import Enum, auto
 import functools
+from typing import Union
 
 from ._nexus import LoadFromNexus
 from ..file_loading._hdf5_nexus import LoadFromHdf5
-from ._common import Group, Dataset
+from ._common import Group, Dataset, MissingAttribute
 
 
 class NX_class(Enum):
@@ -15,6 +16,31 @@ class NX_class(Enum):
     NXlog = auto()
     NXmonitor = auto()
     NXevent_data = auto()
+    NXdata = auto()
+
+
+class Attrs:
+    """HDF5 attributes.
+    """
+    def __init__(self,
+                 node: Union[Dataset, Group],
+                 loader: LoadFromNexus = LoadFromHdf5()):
+        self._node = node
+        self._loader = loader
+
+    def __contains__(self, name):
+        try:
+            _ = self[name]
+            return True
+        except MissingAttribute:
+            return False
+
+    def __getitem__(self, name):
+        # TODO Can we automatically determine whether something is a string?
+        return self._loader.get_string_attribute(self._node, name)
+
+    def get(self, name, default):
+        return self[name] if name in self else default
 
 
 class Field:
@@ -31,6 +57,10 @@ class Field:
 
     def __repr__(self):
         return f'<Nexus field "{self._dataset.name}">'
+
+    @property
+    def attrs(self):
+        return Attrs(self._dataset, self._loader)
 
     @property
     def dtype(self):
@@ -72,6 +102,10 @@ class NXobject:
 
     def _getitem(self, index):
         raise NotImplementedError(f'Loading {self.nx_class} is not supported.')
+
+    @property
+    def attrs(self):
+        return Attrs(self._group, self._loader)
 
     @property
     def name(self):
@@ -126,7 +160,8 @@ def _nx_class_registry():
     from ..file_loading._monitor_data import NXmonitor
     from ..file_loading._detector_data import NXevent_data
     from ..file_loading._log_data import NXlog
+    from ..file_loading.nxdata import NXdata
     return {
         cls.__name__: cls
-        for cls in [NXroot, NXentry, NXevent_data, NXlog, NXmonitor]
+        for cls in [NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata]
     }
