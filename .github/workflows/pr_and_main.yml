@@ -44,13 +44,10 @@ jobs:
         include:
         - os: ubuntu-latest
           cmake-preset: ci-linux
-          env-file: scippneutron-developer.yml
         - os: macos-latest
           cmake-preset: ci-macos
-          env-file: scippneutron-developer-osx.yml
         - os: windows-latest
           cmake-preset: ci-windows
-          env-file: scippneutron-developer-no-mantid.yml
 
     steps:
       - uses: actions/checkout@v2
@@ -64,14 +61,16 @@ jobs:
         with:
           key: ${{ matrix.os }}
 
+      - run: python tools/metatoenv.py --dir=conda --env-file=buildenv.yml --channels=conda-forge,scipp,ess-dmsc
+
       - name: Setup Mambaforge and dev env
         uses: conda-incubator/setup-miniconda@v2
         with:
           miniforge-version: latest
           miniforge-variant: Mambaforge
           python-version: ${{ matrix.python-version }}
-          environment-file: ${{ matrix.env-file }}
-          activate-environment: scippneutron-developer
+          environment-file: buildenv.yml
+          activate-environment: buildenv
           auto-activate-base: false
 
       - run: cmake --preset ${{ matrix.cmake-preset }}
