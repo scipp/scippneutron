@@ -11,12 +11,13 @@ from ._common import Group, Dataset, MissingAttribute
 
 
 class NX_class(Enum):
-    NXroot = auto()
+    NXdata = auto()
+    NXdetector = auto()
     NXentry = auto()
+    NXevent_data = auto()
     NXlog = auto()
     NXmonitor = auto()
-    NXevent_data = auto()
-    NXdata = auto()
+    NXroot = auto()
 
 
 class Attrs:
@@ -105,6 +106,9 @@ class NXobject:
     def _getitem(self, index):
         raise NotImplementedError(f'Loading {self.nx_class} is not supported.')
 
+    def __contains__(self, name) -> bool:
+        return self._loader.dataset_in_group(self._group, name)[0]
+
     @property
     def attrs(self):
         return Attrs(self._group, self._loader)
@@ -163,7 +167,9 @@ def _nx_class_registry():
     from ..file_loading._detector_data import NXevent_data
     from ..file_loading._log_data import NXlog
     from ..file_loading.nxdata import NXdata
+    from ..file_loading.nxdetector import NXdetector
     return {
         cls.__name__: cls
-        for cls in [NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata]
+        for cls in
+        [NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector]
     }

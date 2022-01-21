@@ -11,43 +11,43 @@ from .nxdata import NXdata
 class NXmonitor(NXobject):
     @property
     def shape(self):
-        pass
+        return NXdata(self._group, self._loader).shape
 
     @property
     def dims(self):
-        pass
+        return NXdata(self._group, self._loader).dims
 
     @property
     def unit(self):
-        pass
+        return NXdata(self._group, self._loader).unit
 
-    def _getitem(self, index):
-        return load_monitor(self._group, self._loader, select=index)
+    @property
+    def _is_events(self) -> bool:
+        return self._loader.dataset_in_group(self._group, "event_time_offset")[0]
 
-
-def load_monitor(group: Group, nexus: LoadFromNexus, select=tuple()) -> sc.DataArray:
-    # Look for event mode data structures in NXMonitor. Event-mode data takes
-    # precedence over histogram-mode-data if available.
-    if nexus.dataset_in_group(group, "event_time_offset")[0]:
-        events = load_detector_data([group], [], nexus, True, True)
-        warnings.warn(f"Event data present in NXmonitor group {group.name}. "
-                      f"Histogram-mode monitor data from this group will be "
-                      f"ignored.")
-        return events
-    try:
-        return NXdata(group, nexus)[select]
-    except KeyError:
-        raise ValueError(f"No monitor data found in {group.name}")
+    def _getitem(self, select):
+        # Look for event mode data structures in NXMonitor. Event-mode data takes
+        # precedence over histogram-mode-data if available.
+        if self._is_events:
+            if select != tuple():
+                raise NotImplementedError(
+                    "Loading slice of event-mode monitor not implemented yet.")
+            events = load_detector_data([self._group], [], self._loader, True, True)
+            warnings.warn(f"Event data present in NXmonitor group {self.name}. "
+                          f"Histogram-mode monitor data from this group will be "
+                          f"ignored.")
+            return events
+        return NXdata(self._group, self._loader)[select]
 
 
 def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict:
     monitor_data = {}
     for group in monitor_groups:
         try:
-            monitor = load_monitor(group, nexus)
+            monitor = NXmonitor(group, nexus)[()]
             monitor_name = group.name.split("/")[-1]
             monitor_data[monitor_name] = sc.scalar(value=monitor)
-        except ValueError:
+        except KeyError:
             warnings.warn(f"No event-mode or histogram-mode monitor data found for "
                           f"NXMonitor group {group.name}. Skipping this group.")
 
