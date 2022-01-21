@@ -25,16 +25,6 @@ class NXmonitor(NXobject):
         return load_monitor(self._group, self._loader, select=index)
 
 
-def _load_data_from_histogram_mode_monitor(group: Group,
-                                           nexus: LoadFromNexus,
-                                           select=tuple()):
-    data_group = nexus.get_child_from_group(group, "data")
-    if data_group is not None:
-        return NXdata(group, nexus)[select]
-    else:
-        return None
-
-
 def load_monitor(group: Group, nexus: LoadFromNexus, select=tuple()) -> sc.DataArray:
     # Look for event mode data structures in NXMonitor. Event-mode data takes
     # precedence over histogram-mode-data if available.
@@ -44,11 +34,10 @@ def load_monitor(group: Group, nexus: LoadFromNexus, select=tuple()) -> sc.DataA
                       f"Histogram-mode monitor data from this group will be "
                       f"ignored.")
         return events
-    else:
-        data = _load_data_from_histogram_mode_monitor(group, nexus, select=select)
-        if data is None:
-            raise ValueError(f"No monitor data found in {group.name}")
-        return data
+    try:
+        return NXdata(group, nexus)[select]
+    except KeyError:
+        raise ValueError(f"No monitor data found in {group.name}")
 
 
 def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict:

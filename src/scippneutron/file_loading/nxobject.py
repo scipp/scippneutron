@@ -94,6 +94,8 @@ class NXobject:
     def __getitem__(self, name):
         if isinstance(name, str):
             item = self._loader.get_child_from_group(self._group, name)
+            if item is None:
+                raise KeyError(f"Unable to open object (object '{name}' doesn't exist")
             if self._loader.is_group(item):
                 return self._make(item)
             else:
