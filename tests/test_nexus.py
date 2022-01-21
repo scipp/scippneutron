@@ -60,7 +60,7 @@ def test_nxobject_tree_traversal(nexus_group: Tuple[Callable, LoadFromNexus]):
     with resource(builder_with_events_monitor_and_log())() as f:
         root = nexus.NXroot(f, loader)
         assert root.nx_class == nexus.NX_class.NXroot
-        assert set(root.keys()) == set(['entry', 'monitor'])
+        assert set(root.keys()) == {'entry', 'monitor'}
 
         monitor = root['monitor']
         assert monitor.nx_class == nexus.NX_class.NXmonitor
@@ -74,7 +74,7 @@ def test_nxobject_tree_traversal(nexus_group: Tuple[Callable, LoadFromNexus]):
 
         entry = root['entry']
         assert entry.nx_class == nexus.NX_class.NXentry
-        assert set(entry.keys()) == set(['events_0', 'events_1', 'log'])
+        assert set(entry.keys()) == {'events_0', 'events_1', 'log'}
 
         log = entry['log']
         assert log.nx_class == nexus.NX_class.NXlog
@@ -134,8 +134,7 @@ def test_nxobject_by_nx_class_contains_everything(nexus_group: Tuple[Callable,
         assert list(classes[nexus.NX_class.NXentry]) == ['entry']
         assert list(classes[nexus.NX_class.NXmonitor]) == ['monitor']
         assert list(classes[nexus.NX_class.NXlog]) == ['log']
-        assert set(classes[nexus.NX_class.NXevent_data]) == set(
-            ['events_0', 'events_1'])
+        assert set(classes[nexus.NX_class.NXevent_data]) == {'events_0', 'events_1'}
 
 
 def test_nxobject_by_nx_class_contains_only_children(nexus_group: Tuple[Callable,

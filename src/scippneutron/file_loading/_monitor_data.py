@@ -27,8 +27,9 @@ class NXmonitor(NXobject):
         return self._loader.dataset_in_group(self._group, "event_time_offset")[0]
 
     def _getitem(self, select):
-        # Look for event mode data structures in NXMonitor. Event-mode data takes
-        # precedence over histogram-mode-data if available.
+        """
+        Load monitor data. Event-mode data takes precedence over histogram-mode data.
+        """
         if self._is_events:
             warnings.warn(f"Event data present in NXmonitor group {self.name}. "
                           f"Histogram-mode monitor data from this group will be "
@@ -38,6 +39,9 @@ class NXmonitor(NXobject):
 
 
 def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict:
+    """
+    Load monitor data. Event-mode data takes precedence over histogram-mode data.
+    """
     monitor_data = {}
     for group in monitor_groups:
         try:

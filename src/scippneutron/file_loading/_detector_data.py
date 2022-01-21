@@ -215,7 +215,7 @@ class NXevent_data(NXobject):
     @property
     def unit(self):
         # Binned data, bins do not have a unit
-        return sc.units.one
+        return None
 
     def _getitem(self, index):
         detector_data = _load_event_group(self._group,
