@@ -90,16 +90,19 @@ def to_plain_index(dims, select, ignore_missing=False):
                              "specify the dimension to index.")
 
     if select is Ellipsis:
-        return select
+        return tuple()
     if isinstance(select, tuple) and len(select) == 0:
-        return select
+        return tuple()
     if isinstance(select, tuple) and isinstance(select[0], str):
         key, sel = select
         select = {key: sel}
 
     if isinstance(select, tuple):
         check_1d()
-        return select
+        if len(select) != 1:
+            raise ValueError(f"Dataset a single dimension {dims}, "
+                             "but multiple indices {select} were specified.")
+        return select[0]
     elif isinstance(select, int) or isinstance(select, slice):
         check_1d()
         return select
@@ -110,5 +113,7 @@ def to_plain_index(dims, select, ignore_missing=False):
                 raise ValueError(
                     f"'{key}' used for indexing not found in dataset dims {dims}.")
             index[dims.index(key)] = sel
+        if len(index) == 1:
+            return index[0]
         return tuple(index)
     raise ValueError("Cannot process index {select}.")

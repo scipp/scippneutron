@@ -237,8 +237,6 @@ def _load_event_group(group: Group,
                       select=tuple()) -> DetectorData:
     _check_for_missing_fields(group, nexus)
     index = to_plain_index([_pulse_dimension], select)
-    if isinstance(index, tuple) and index != tuple():
-        index = index[0]
 
     def shape(name):
         return nexus.get_shape(nexus.get_dataset_from_group(group, name))
