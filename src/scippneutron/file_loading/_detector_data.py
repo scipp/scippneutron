@@ -234,10 +234,10 @@ def _load_event_group(group: Group,
                       nexus: LoadFromNexus,
                       detector_data: DetectorData,
                       quiet: bool,
-                      select=...) -> DetectorData:
+                      select=tuple()) -> DetectorData:
     _check_for_missing_fields(group, nexus)
     index = to_plain_index([_pulse_dimension], select)
-    if isinstance(index, tuple):
+    if isinstance(index, tuple) and index != tuple():
         index = index[0]
 
     def shape(name):
@@ -245,7 +245,7 @@ def _load_event_group(group: Group,
 
     max_index = shape("event_index")[0]
     single = False
-    if index is Ellipsis:
+    if index is Ellipsis or index == tuple():
         last_loaded = False
     else:
         if isinstance(index, int):

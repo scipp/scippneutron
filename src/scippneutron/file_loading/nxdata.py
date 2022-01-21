@@ -37,17 +37,29 @@ class NXdata(NXobject):
         return None
 
     @property
+    def _errors_name(self):
+        if self._signal_name_default is None:
+            return f'{self._signal_name_default}_errors'
+        else:
+            return 'errors'
+
+    @property
     def _signal(self):
         return self[self._signal_name]
 
     def _getitem(self, select):
         dims = self.dims
         index = to_plain_index(dims, select)
-        # TODO Handle errors
         signal = self._loader.load_dataset(self._group,
                                            self._signal_name,
                                            dimensions=dims,
                                            index=index)
+        if self._errors_name in self:
+            stddevs = self._loader.load_dataset(self._group,
+                                                self._errors_name,
+                                                dimensions=dims,
+                                                index=index)
+            signal.variances = sc.pow(stddevs, 2).values
         da = sc.DataArray(data=signal)
         for dim in dims:
             index = to_plain_index([dim], select, ignore_missing=True)

@@ -3,7 +3,7 @@ import warnings
 from ._common import Group
 import scipp as sc
 from ._nexus import LoadFromNexus
-from ._detector_data import load_detector_data
+from ._detector_data import load_detector_data, NXevent_data
 from .nxobject import NXobject
 from .nxdata import NXdata
 
@@ -30,14 +30,10 @@ class NXmonitor(NXobject):
         # Look for event mode data structures in NXMonitor. Event-mode data takes
         # precedence over histogram-mode-data if available.
         if self._is_events:
-            if select != tuple():
-                raise NotImplementedError(
-                    "Loading slice of event-mode monitor not implemented yet.")
-            events = load_detector_data([self._group], [], self._loader, True, True)
             warnings.warn(f"Event data present in NXmonitor group {self.name}. "
                           f"Histogram-mode monitor data from this group will be "
                           f"ignored.")
-            return events
+            return NXevent_data(self._group, self._loader)[select]
         return NXdata(self._group, self._loader, signal='data')[select]
 
 
@@ -45,7 +41,17 @@ def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict
     monitor_data = {}
     for group in monitor_groups:
         try:
-            monitor = NXmonitor(group, nexus)[()]
+            nxmonitor = NXmonitor(group, nexus)
+            # Standard loading requires binning monitor into pulses and adding
+            # detector IDs. This is currently encapsulated in load_detector_data,
+            # so we cannot readily use NXmonitor and bin aferwards without duplication.
+            if nxmonitor._is_events:
+                monitor = load_detector_data([group], [], nexus, True, True)
+                warnings.warn(f"Event data present in NXmonitor group {group.name}. "
+                              f"Histogram-mode monitor data from this group will be "
+                              f"ignored.")
+            else:
+                monitor = nxmonitor[()]
             monitor_name = group.name.split("/")[-1]
             monitor_data[monitor_name] = sc.scalar(value=monitor)
         except KeyError:
