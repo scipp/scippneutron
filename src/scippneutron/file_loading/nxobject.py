@@ -144,9 +144,14 @@ class NXobject:
         return out
 
     @property
-    def nx_class(self):
-        key = self._loader.get_string_attribute(self._group, 'NX_class')
-        return NX_class[key]
+    def nx_class(self) -> NX_class:
+        """The value of the NX_class attribute of the group.
+
+        In case of the subclass NXroot this returns 'NXroot' even if the attribute
+        is not actually set. This is support the majority of all legacy files, which
+        do not have this attribute.
+        """
+        return NX_class[self.attrs['NX_class']]
 
     def __repr__(self):
         return f'<{type(self).__name__} "{self._group.name}">'

@@ -252,7 +252,7 @@ def _load_event_group(group: Group,
             single = True
             start, stop, _ = slice(index, None).indices(max_index)
             if start == stop:
-                raise IndexError('')
+                raise IndexError('Index {start} is out of range')
             index = slice(start, start + 1)
         start, stop, stride = index.indices(max_index)
         if stop + stride > max_index:
@@ -319,12 +319,13 @@ def _load_event_group(group: Group,
     # institutions. We try to make sure here that it is what would be the first index of
     # the next pulse. In other words, ensure that event_index includes the bin edge for
     # the last pulse.
-    begins = event_index[_pulse_dimension, :-1]
-    ends = event_index[_pulse_dimension, 1:]
     if single:
-        begins = begins[_pulse_dimension, 0]
-        ends = ends[_pulse_dimension, 0]
+        begins = event_index[_pulse_dimension, 0]
+        ends = event_index[_pulse_dimension, 1]
         pulse_times = pulse_times[_pulse_dimension, 0]
+    else:
+        begins = event_index[_pulse_dimension, :-1]
+        ends = event_index[_pulse_dimension, 1:]
 
     try:
         binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
