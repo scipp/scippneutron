@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2021 Scipp contributors (https://github.com/scipp)
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 
+##################################################################################
 # WARNING! This file lives in the https://github.com/scipp/templates repository.
 # It should only be modified there, and changes should then be propagated to other
 # repositories in the Scipp organisation.
+##################################################################################
 
 import os
 import argparse
