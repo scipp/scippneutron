@@ -55,14 +55,26 @@ def builder_with_events_monitor_and_log():
     return builder
 
 
-def test_nxobject_tree_traversal(nexus_group: Tuple[Callable, LoadFromNexus]):
+def test_nxobject_root(nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_monitor_and_log())() as f:
         root = nexus.NXroot(f, loader)
         assert root.nx_class == nexus.NX_class.NXroot
         assert set(root.keys()) == {'entry', 'monitor'}
 
-        monitor = root['monitor']
+
+def test_nxobject_entry(nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        entry = nexus.NXroot(f, loader)['entry']
+        assert entry.nx_class == nexus.NX_class.NXentry
+        assert set(entry.keys()) == {'events_0', 'events_1', 'log'}
+
+
+def test_nxobject_monitor(nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        monitor = nexus.NXroot(f, loader)['monitor']
         assert monitor.nx_class == nexus.NX_class.NXmonitor
         assert sc.identical(
             monitor[...],
@@ -72,11 +84,11 @@ def test_nxobject_tree_traversal(nexus_group: Tuple[Callable, LoadFromNexus]):
                              sc.array(dims=['time_of_flight'], values=[1.0])
                          }))
 
-        entry = root['entry']
-        assert entry.nx_class == nexus.NX_class.NXentry
-        assert set(entry.keys()) == {'events_0', 'events_1', 'log'}
 
-        log = entry['log']
+def test_nxobject_log(nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        log = nexus.NXroot(f, loader)['entry']['log']
         assert log.nx_class == nexus.NX_class.NXlog
         assert sc.identical(
             log[...],
@@ -89,7 +101,11 @@ def test_nxobject_tree_traversal(nexus_group: Tuple[Callable, LoadFromNexus]):
                         unit='ns', dtype='int64')
                 }))
 
-        event_data = entry['events_0']
+
+def test_nxobject_event_data(nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        event_data = nexus.NXroot(f, loader)['entry']['events_0']
         assert set(event_data.keys()) == set(
             ['event_id', 'event_index', 'event_time_offset', 'event_time_zero'])
         assert event_data.nx_class == nexus.NX_class.NXevent_data
