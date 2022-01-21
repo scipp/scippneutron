@@ -224,9 +224,9 @@ class NXevent_data(NXobject):
                                           quiet=False,
                                           select=index)
         data = detector_data.event_data
-        data.bins.coords['id'] = data.bins.coords.pop('detector_id')
-        data.bins.coords['time_offset'] = data.bins.coords.pop('tof')
-        data.coords['time_zero'] = data.coords.pop('pulse_time')
+        data.bins.coords['event_id'] = data.bins.coords.pop('detector_id')
+        data.bins.coords['event_time_offset'] = data.bins.coords.pop('tof')
+        data.coords['event_time_zero'] = data.coords.pop('pulse_time')
         return data
 
 
