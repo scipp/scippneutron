@@ -6,7 +6,7 @@ import functools
 from typing import Union
 
 from ._nexus import LoadFromNexus
-from ..file_loading._hdf5_nexus import LoadFromHdf5
+from ._hdf5_nexus import LoadFromHdf5
 from ._common import Group, Dataset, MissingAttribute
 
 
@@ -37,10 +37,13 @@ class Attrs:
             return False
 
     def __getitem__(self, name):
-        # TODO Can we automatically determine whether something is a string?
-        return self._loader.get_string_attribute(self._node, name)
+        attr = self._loader.get_attribute(self._node, name)
+        # Is this check for string attributes sufficient? Is there a better way?
+        if isinstance(attr, str) or isinstance(attr, bytes):
+            return self._loader.get_string_attribute(self._node, name)
+        return attr
 
-    def get(self, name, default):
+    def get(self, name, default=None):
         return self[name] if name in self else default
 
 
@@ -93,6 +96,8 @@ class NXobject:
         return _nx_class_registry().get(nx_class, NXobject)(group, self._loader)
 
     def __getitem__(self, name):
+        if name is None:
+            raise KeyError("None is not a valid index")
         if isinstance(name, str):
             item = self._loader.get_child_from_group(self._group, name)
             if item is None:

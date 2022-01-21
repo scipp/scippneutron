@@ -1,9 +1,18 @@
 import scipp as sc
-from ._common import to_plain_index
+from ._common import to_plain_index, Group
 from .nxobject import NXobject
+from ._nexus import LoadFromNexus
+from ._hdf5_nexus import LoadFromHdf5
 
 
 class NXdata(NXobject):
+    def __init__(self,
+                 group: Group,
+                 loader: LoadFromNexus = LoadFromHdf5(),
+                 signal=None):
+        super().__init__(group, loader)
+        self._signal_name_default = signal
+
     @property
     def shape(self):
         return self._signal.shape
@@ -18,7 +27,14 @@ class NXdata(NXobject):
 
     @property
     def _signal_name(self):
-        return self.attrs.get('signal', 'data')
+        name = self.attrs.get('signal', self._signal_name_default)
+        if name is not None:
+            return name
+        # Legacy NXdata defines signal not as group attribute, but attr on dataset
+        for name in self.keys():
+            if self[name].attrs.get('signal') == 1:
+                return name
+        return None
 
     @property
     def _signal(self):

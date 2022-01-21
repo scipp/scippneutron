@@ -11,15 +11,16 @@ from .nxdata import NXdata
 class NXmonitor(NXobject):
     @property
     def shape(self):
-        return NXdata(self._group, self._loader).shape
+        # TODO branch to NXevent_data
+        return NXdata(self._group, self._loader, signal='data').shape
 
     @property
     def dims(self):
-        return NXdata(self._group, self._loader).dims
+        return NXdata(self._group, self._loader, signal='data').dims
 
     @property
     def unit(self):
-        return NXdata(self._group, self._loader).unit
+        return NXdata(self._group, self._loader, signal='data').unit
 
     @property
     def _is_events(self) -> bool:
@@ -37,7 +38,7 @@ class NXmonitor(NXobject):
                           f"Histogram-mode monitor data from this group will be "
                           f"ignored.")
             return events
-        return NXdata(self._group, self._loader)[select]
+        return NXdata(self._group, self._loader, signal='data')[select]
 
 
 def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict:
