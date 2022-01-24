@@ -134,6 +134,13 @@ class LoadFromJson:
     def __init__(self, root: Dict):
         self._root = root
 
+    def keys(self, group: Dict):
+        children = group[_nexus_children]
+        return [child[_nexus_name] for child in children]
+
+    def values(self, group: Dict):
+        return group[_nexus_children]
+
     def _get_child_from_group(
             self,
             group: Dict,
@@ -180,7 +187,20 @@ class LoadFromJson:
         return groups_with_requested_nx_class
 
     def get_child_from_group(self, group: Dict, child_name: str) -> Optional[Dict]:
-        return self._get_child_from_group(group, child_name)
+        if '/' in child_name:
+            child, remainder = child_name.split('/', maxsplit=1)
+            if child == '':
+                return self.get_child_from_group(group, remainder)
+            return self.get_child_from_group(self.get_child_from_group(group, child),
+                                             remainder)
+        name = self.get_path(group).rstrip('/')
+        child = self._get_child_from_group(group, child_name)
+        if child is None:
+            return child
+        return JSONGroup(group=child,
+                         parent=group,
+                         name=f'{name}/{child_name}',
+                         file={_nexus_children: [group]})
 
     def get_dataset_from_group(self, group: Dict, dataset_name: str) -> Optional[Dict]:
         """
@@ -198,7 +218,8 @@ class LoadFromJson:
                      group: Dict,
                      dataset_name: str,
                      dimensions: Optional[List[str]] = [],
-                     dtype: Optional[Any] = None) -> sc.Variable:
+                     dtype: Optional[Any] = None,
+                     index=tuple()) -> sc.Variable:
         """
         Load a dataset into a Scipp Variable (array or scalar)
         :param group: Group containing dataset to load
@@ -212,12 +233,7 @@ class LoadFromJson:
             raise MissingDataset()
 
         if dtype is None:
-            try:
-                dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
-                                                             ["type"]]
-            except KeyError:
-                dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
-                                                             ["dtype"]]
+            dtype = self.get_dtype(dataset)
 
         try:
             units = _get_attribute_value(dataset, _nexus_units)
@@ -225,11 +241,14 @@ class LoadFromJson:
             units = sc.units.dimensionless
 
         return sc.array(dims=dimensions,
-                        values=np.asarray(dataset[_nexus_values]),
+                        values=np.asarray(dataset[_nexus_values])[index],
                         dtype=dtype,
                         unit=units)
 
-    def load_dataset_from_group_as_numpy_array(self, group: Dict, dataset_name: str):
+    def load_dataset_from_group_as_numpy_array(self,
+                                               group: Dict,
+                                               dataset_name: str,
+                                               index=tuple()):
         """
         Load a dataset into a numpy array
         Prefer use of load_dataset to load directly to a scipp variable,
@@ -241,10 +260,10 @@ class LoadFromJson:
         dataset = self.get_dataset_from_group(group, dataset_name)
         if dataset is None:
             raise MissingDataset()
-        return self.load_dataset_as_numpy_array(dataset)
+        return self.load_dataset_as_numpy_array(dataset, index=index)
 
     @staticmethod
-    def load_dataset_as_numpy_array(dataset: Dict):
+    def load_dataset_as_numpy_array(dataset: Dict, index=tuple()):
         """
         Load a dataset into a numpy array
         Prefer use of load_dataset to load directly to a scipp variable,
@@ -258,15 +277,36 @@ class LoadFromJson:
         except KeyError:
             dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
                                                          ["dtype"]]
-        return np.array(dataset[_nexus_values]).astype(dtype)
+        return np.asarray(dataset[_nexus_values])[index].astype(dtype)
 
-    def get_dataset_numpy_dtype(self, group: Dict, dataset_name: str) -> Any:
-        dataset = self.get_dataset_from_group(group, dataset_name)
+    def get_dataset_numpy_dtype(self, dataset: Dict) -> Any:
         return _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]["type"]]
 
     @staticmethod
     def get_name(group: Dict) -> str:
         return group[_nexus_name]
+
+    @staticmethod
+    def get_path(group: Dict) -> str:
+        if isinstance(group, JSONGroup):
+            return group.name
+        # TODO JSONGroup is apparently used inconsistently, fall back to returning name
+        # without path.
+        return group.get(_nexus_name, '/')
+
+    @staticmethod
+    def get_dtype(dataset: Dict) -> str:
+        try:
+            return dataset[_nexus_dataset]["type"]
+        except KeyError:
+            return dataset[_nexus_dataset]["dtype"]
+
+    @staticmethod
+    def get_shape(dataset: Dict) -> List:
+        """
+        The shape of the dataset
+        """
+        return np.asarray(dataset[_nexus_values]).shape
 
     @staticmethod
     def get_unit(dataset: Dict) -> str:

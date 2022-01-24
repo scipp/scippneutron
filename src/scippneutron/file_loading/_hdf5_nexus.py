@@ -86,6 +86,12 @@ def _ensure_supported_int_type(dataset_type: Any):
 
 
 class LoadFromHdf5:
+    def keys(self, group: h5py.Group):
+        return group.keys()
+
+    def values(self, group: h5py.Group):
+        return group.values()
+
     @staticmethod
     def find_by_nx_class(
             nx_class_names: Tuple[str, ...],
@@ -112,8 +118,6 @@ class LoadFromHdf5:
                     pass
 
         root.visititems(_match_nx_class)
-        # Also check if root itself is an NX_class
-        _match_nx_class(None, root)
         return found_groups
 
     @staticmethod
@@ -128,7 +132,8 @@ class LoadFromHdf5:
                      group: h5py.Group,
                      dataset_name: str,
                      dimensions: Optional[List[str]] = [],
-                     dtype: Optional[Any] = None) -> sc.Variable:
+                     dtype: Optional[Any] = None,
+                     index=tuple()) -> sc.Variable:
         """
         Load an HDF5 dataset into a Scipp Variable (array or scalar)
         :param group: Group containing dataset to load
@@ -148,19 +153,24 @@ class LoadFromHdf5:
 
         if dtype is None:
             dtype = _ensure_supported_int_type(dataset.dtype.type)
-        variable = sc.empty(dims=dimensions,
-                            shape=dataset.shape,
-                            dtype=dtype,
-                            unit=self.get_unit(dataset))
+        if index == tuple():
+            variable = sc.empty(dims=dimensions,
+                                shape=dataset.shape,
+                                dtype=dtype,
+                                unit=self.get_unit(dataset))
+            if variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
+                dataset.read_direct(variable.values)
+            else:
+                variable.values = dataset
+            return variable
+        return sc.array(dims=dimensions,
+                        unit=self.get_unit(dataset),
+                        values=dataset[index].astype(dtype))
 
-        if variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
-            dataset.read_direct(variable.values)
-        else:
-            variable.values = dataset
-        return variable
-
-    def load_dataset_from_group_as_numpy_array(self, group: h5py.Group,
-                                               dataset_name: str):
+    def load_dataset_from_group_as_numpy_array(self,
+                                               group: h5py.Group,
+                                               dataset_name: str,
+                                               index=tuple()):
         """
         Load a dataset into a numpy array
         Prefer use of load_dataset to load directly to a scipp variable,
@@ -173,10 +183,10 @@ class LoadFromHdf5:
             dataset = group[dataset_name]
         except KeyError:
             raise MissingDataset()
-        return self.load_dataset_as_numpy_array(dataset)
+        return self.load_dataset_as_numpy_array(dataset, index=index)
 
     @staticmethod
-    def load_dataset_as_numpy_array(dataset: h5py.Dataset):
+    def load_dataset_as_numpy_array(dataset: h5py.Dataset, index=tuple()):
         """
         Load a dataset into a numpy array
         Prefer use of load_dataset to load directly to a scipp variable,
@@ -184,11 +194,11 @@ class LoadFromHdf5:
         numpy array is required.
         :param dataset: The dataset to load values from
         """
-        return dataset[...].astype(_ensure_supported_int_type(dataset.dtype.type))
+        return dataset[index].astype(_ensure_supported_int_type(dataset.dtype.type))
 
     @staticmethod
-    def get_dataset_numpy_dtype(group: h5py.Group, dataset_name: str) -> Any:
-        return _ensure_supported_int_type(group[dataset_name].dtype.type)
+    def get_dataset_numpy_dtype(dataset: h5py.Dataset) -> Any:
+        return _ensure_supported_int_type(dataset.dtype.type)
 
     @staticmethod
     def get_name(group: Union[h5py.Group, h5py.Dataset]) -> str:
@@ -196,6 +206,27 @@ class LoadFromHdf5:
         Just the name of this group, not the full path
         """
         return group.name.split("/")[-1]
+
+    @staticmethod
+    def get_path(group: Union[h5py.Group, h5py.Dataset]) -> str:
+        """
+        The full path
+        """
+        return group.name
+
+    @staticmethod
+    def get_dtype(dataset: h5py.Dataset) -> str:
+        """
+        The dtype of the dataset
+        """
+        return dataset.dtype
+
+    @staticmethod
+    def get_shape(dataset: h5py.Dataset) -> List:
+        """
+        The shape of the dataset
+        """
+        return dataset.shape
 
     @staticmethod
     def get_unit(node: Union[h5py.Dataset, h5py.Group]) -> str:
