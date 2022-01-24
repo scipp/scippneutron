@@ -67,11 +67,15 @@ class NXdata(NXobject):
                                                 index=index)
             signal.variances = sc.pow(stddevs, 2).values
         da = sc.DataArray(data=signal)
-        for dim in self.dims:
-            if dim in self:
-                index = to_plain_index([dim], select, ignore_missing=True)
-                da.coords[dim] = self._loader.load_dataset(self._group,
-                                                           dim,
-                                                           dimensions=[dim],
-                                                           index=index)
+        if 'axes' in self.attrs:
+            # Unlike self.dims we *drop* entries that are '.'
+            coords = [a for a in self.attrs['axes'] if a != '.']
+        else:
+            coords = self._signal.attrs['axes'].split(',')
+        for dim in coords:
+            index = to_plain_index([dim], select, ignore_missing=True)
+            da.coords[dim] = self._loader.load_dataset(self._group,
+                                                       dim,
+                                                       dimensions=[dim],
+                                                       index=index)
         return da
