@@ -217,7 +217,9 @@ class NXevent_data(NXobject):
         return None
 
     def _getitem(self, index):
-        data = _load_event_group(self._group, self._loader, quiet=False, select=index)
+        data = _load_event_group(self._group, self._loader, quiet=True, select=index)
+        # Map back to original field names from NXevent_data since _load_event_group
+        # imposes names that based on assumptions and history.
         if 'detector_id' in data.bins.coords:
             data.bins.coords['event_id'] = data.bins.coords.pop('detector_id')
         data.bins.coords['event_time_offset'] = data.bins.coords.pop('tof')
