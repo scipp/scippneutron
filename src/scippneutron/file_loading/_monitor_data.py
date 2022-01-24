@@ -23,7 +23,7 @@ class NXmonitor(NXobject):
 
     @property
     def _is_events(self) -> bool:
-        return self._loader.dataset_in_group(self._group, "event_time_offset")[0]
+        return 'event_time_offset' in self
 
     @property
     def _nxbase(self) -> Union[NXdata, NXevent_data]:

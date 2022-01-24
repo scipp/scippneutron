@@ -116,6 +116,9 @@ class NXobject:
     def __contains__(self, name) -> bool:
         return self._loader.dataset_in_group(self._group, name)[0]
 
+    def get(self, name, default=None):
+        return self[name] if name in self else default
+
     @property
     def attrs(self):
         return Attrs(self._group, self._loader)
@@ -178,11 +181,11 @@ class NXentry(NXobject):
 
 @functools.lru_cache()
 def _nx_class_registry():
-    from ..file_loading._monitor_data import NXmonitor
-    from ..file_loading._detector_data import NXevent_data
-    from ..file_loading._log_data import NXlog
-    from ..file_loading.nxdata import NXdata
-    from ..file_loading.nxdetector import NXdetector
+    from ._monitor_data import NXmonitor
+    from ._detector_data import NXevent_data
+    from ._log_data import NXlog
+    from .nxdata import NXdata
+    from .nxdetector import NXdetector
     return {
         cls.__name__: cls
         for cls in
