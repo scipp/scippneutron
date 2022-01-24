@@ -1559,7 +1559,7 @@ def test_nexus_file_with_invalid_nxlog_time_units_warns_and_skips_log(
             time_units="s",
             start_time="1970-01-01T00:00:00Z"))
 
-    with pytest.warns(UserWarning, match="The units of time in the NXlog entry at "):
+    with pytest.warns(UserWarning, match="The units of time in the entry at "):
         loaded_data = load_function(builder)
 
         assert "test_log_1" not in loaded_data
