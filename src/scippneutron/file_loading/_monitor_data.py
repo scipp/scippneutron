@@ -30,6 +30,9 @@ class NXmonitor(NXobject):
         """Branch between event-mode and histogram-mode monitor."""
         if self._is_events:
             return NXevent_data(self._group, self._loader)
+        # NXdata uses the 'signal' attribute to define the field name of the signal.
+        # NXmonitor uses a "hard-coded" signal name 'data', without specifying the
+        # attribute in the file, so we pass this explicitly to NXdata.
         return NXdata(self._group, self._loader, signal='data')
 
     def _getitem(self, select):

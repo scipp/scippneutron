@@ -22,8 +22,10 @@ class NXdetector(NXobject):
         """Return class for loading underlying data.
 
         Raises if no data found."""
-        signal_name = self.attrs.get('signal', 'data')
-        if signal_name in self:
+        # NXdata uses the 'signal' attribute to define the field name of the signal.
+        # NXdetector uses a "hard-coded" signal name 'data', without specifying the
+        # attribute in the file, so we pass this explicitly to NXdata.
+        if 'data' in self:
             return NXdata(self._group, self._loader, signal='data')
         raise NotImplementedError(f"NXdetector {self.name} does not contain data.")
 
