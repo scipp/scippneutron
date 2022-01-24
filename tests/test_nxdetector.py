@@ -21,7 +21,7 @@ def test_raises_if_no_data_found(nexus_group: Tuple[Callable, LoadFromNexus]):
     builder.add_detector(Detector(detector_numbers=np.array([1, 2, 3, 4])))
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(KeyError):
             detector[...]
 
 
@@ -33,7 +33,7 @@ def test_loads_data_without_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
         loaded = detector[...]
-        assert sc.identical(loaded, da)
+        assert sc.identical(loaded, da.rename_dims({'xx': 'dim_0', 'yy': 'dim_1'}))
 
 
 def test_loads_data_with_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
@@ -46,4 +46,4 @@ def test_loads_data_with_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
         loaded = detector[...]
-        assert sc.identical(loaded, da)
+        assert sc.identical(loaded, da.rename_dims({'yy': 'dim_1'}))

@@ -19,10 +19,11 @@ class NXdata(NXobject):
 
     @property
     def dims(self):
-        # TODO Apparently it is not possible to define dim labels unless there are
-        # corresponding coords. Handle special case of '.' entries meaning "no coord".
+        # Apparently it is not possible to define dim labels unless there are
+        # corresponding coords. Special case of '.' entries means "no coord".
         if 'axes' in self.attrs:
-            return self.attrs['axes']
+            axes = self.attrs['axes']
+            return [f'dim_{i}' if a == '.' else a for i, a in enumerate(axes)]
         # Legacy NXdata defines axes not as group attribute, but attr on dataset
         return self._signal.attrs['axes'].split(',')
 
@@ -67,9 +68,10 @@ class NXdata(NXobject):
             signal.variances = sc.pow(stddevs, 2).values
         da = sc.DataArray(data=signal)
         for dim in self.dims:
-            index = to_plain_index([dim], select, ignore_missing=True)
-            da.coords[dim] = self._loader.load_dataset(self._group,
-                                                       dim,
-                                                       dimensions=[dim],
-                                                       index=index)
+            if dim in self:
+                index = to_plain_index([dim], select, ignore_missing=True)
+                da.coords[dim] = self._loader.load_dataset(self._group,
+                                                           dim,
+                                                           dimensions=[dim],
+                                                           index=index)
         return da

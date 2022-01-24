@@ -575,9 +575,9 @@ class NexusBuilder:
             if detector.data is not None:
                 da = detector.data
                 ds = self._writer.add_dataset(detector_group, "data", data=da.values)
-                self._writer.add_attribute(ds, "axes", ','.join(da.dims))
                 self._writer.add_attribute(ds, "units", str(da.unit))
-                self._writer.add_attribute(detector_group, "axes", list(da.coords))
+                axes = [dim if dim in da.coords else '.' for dim in da.dims]
+                self._writer.add_attribute(detector_group, "axes", axes)
                 for key, coord in da.coords.items():
                     ds = self._writer.add_dataset(detector_group,
                                                   key,
