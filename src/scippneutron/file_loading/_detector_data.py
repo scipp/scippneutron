@@ -218,22 +218,14 @@ class NXevent_data(NXobject):
         return None
 
     def _getitem(self, index):
-        detector_data = _load_event_group(self._group,
-                                          self._loader,
-                                          DetectorData(),
-                                          quiet=False,
-                                          select=index)
-        data = detector_data.event_data
+        data = _load_event_group(self._group, self._loader, quiet=False, select=index)
         data.bins.coords['event_id'] = data.bins.coords.pop('detector_id')
         data.bins.coords['event_time_offset'] = data.bins.coords.pop('tof')
         data.coords['event_time_zero'] = data.coords.pop('pulse_time')
         return data
 
 
-def _load_event_group(group: Group,
-                      nexus: LoadFromNexus,
-                      detector_data: DetectorData,
-                      quiet: bool,
+def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
                       select=tuple()) -> DetectorData:
     _check_for_missing_fields(group, nexus)
     index = to_plain_index([_pulse_dimension], select)
@@ -296,10 +288,6 @@ def _load_event_group(group: Group,
                               _detector_dimension: event_id,
                           })
 
-    _check_event_ids_and_det_number_types_valid(
-        event_id.dtype if detector_data.detector_ids is None else
-        detector_data.detector_ids.dtype, event_id.dtype)
-
     if not last_loaded:
         event_index = np.append(event_index, num_event)
     else:
@@ -331,14 +319,11 @@ def _load_event_group(group: Group,
         raise BadSource(f"Event index in NXEvent at {group.name}/event_index was not"
                         f" ordered. The index must be ordered to load pulse times.")
 
-    detector_data.event_data = sc.DataArray(data=binned,
-                                            coords={"pulse_time": pulse_times})
-
     if not quiet:
         print(f"Loaded {len(event_id)} events from "
               f"{nexus.get_name(group)} containing {num_event} events")
 
-    return detector_data
+    return sc.DataArray(data=binned, coords={"pulse_time": pulse_times})
 
 
 def _check_event_ids_and_det_number_types_valid(detector_id_type: Any,
@@ -491,9 +476,17 @@ def _load_data_from_each_nx_event_data(detector_data: Dict,
     for group in event_data_groups:
         parent_path = "/".join(group.name.split("/")[:-1])
         try:
-            new_event_data = _load_event_group(
-                group, nexus, detector_data.get(parent_path, DetectorData()), quiet)
-            event_data.append(new_event_data)
+            new_detector_data = detector_data.get(parent_path, DetectorData())
+            new_event_data = _load_event_group(group, nexus, quiet)
+
+            event_id_dtype = new_event_data.bins.constituents['data'].coords[
+                _detector_dimension].dtype
+            _check_event_ids_and_det_number_types_valid(
+                event_id_dtype if new_detector_data.detector_ids is None else
+                new_detector_data.detector_ids.dtype, event_id_dtype)
+            new_detector_data.event_data = new_event_data
+
+            event_data.append(new_detector_data)
             # Only pop from dictionary if we did not raise an
             # exception when loading events
             detector_data.pop(parent_path, DetectorData())

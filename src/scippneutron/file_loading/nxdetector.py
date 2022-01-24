@@ -29,6 +29,6 @@ class NXdetector(NXobject):
 
     def _getitem(self, select):
         # Note that ._detector_data._load_detector provides a different loading
-        # facility for NXdetector, but handles only loading of detector_number,
+        # facility for NXdetector but handles only loading of detector_number,
         # as needed for event data loading
         return self._nxbase[select]

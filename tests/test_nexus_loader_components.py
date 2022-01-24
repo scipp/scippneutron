@@ -5,7 +5,7 @@ from .nexus_helpers import (
 import numpy as np
 import pytest
 from typing import Callable, Tuple
-from scippneutron.file_loading._detector_data import _load_event_group, DetectorData
+from scippneutron.file_loading._detector_data import _load_event_group
 from scippneutron.file_loading._nexus import LoadFromNexus
 from scippneutron.file_loading._hdf5_nexus import LoadFromHdf5
 from scippneutron.file_loading._json_nexus import LoadFromJson
@@ -52,11 +52,7 @@ def test_load_nx_event_data_selection_yields_correct_pulses(
 
         class Load:
             def __getitem__(self, select=...):
-                da = _load_event_group(group,
-                                       loader,
-                                       DetectorData(),
-                                       quiet=False,
-                                       select=select).event_data
+                da = _load_event_group(group, loader, quiet=False, select=select)
                 return da.bins.size().values
 
         assert np.array_equal(Load()[...], [3, 0, 2, 1])
