@@ -1,14 +1,18 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
+import numpy as np
 import scipp as sc
 from enum import Enum, auto
 import functools
-from typing import Union
+from typing import List, Union, Tuple, NoReturn, Any, Dict
 
 from ._nexus import LoadFromNexus
 from ._hdf5_nexus import LoadFromHdf5
 from ._common import Group, Dataset, MissingAttribute
+
+ScippIndex = Tuple[str, Union[int, slice]]
+NXobjectIndex = Union[str, ScippIndex]
 
 
 class NX_class(Enum):
@@ -30,21 +34,21 @@ class Attrs:
         self._node = node
         self._loader = loader
 
-    def __contains__(self, name):
+    def __contains__(self, name: str) -> bool:
         try:
             _ = self[name]
             return True
         except MissingAttribute:
             return False
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str) -> Any:
         attr = self._loader.get_attribute(self._node, name)
         # Is this check for string attributes sufficient? Is there a better way?
         if isinstance(attr, str) or isinstance(attr, bytes):
             return self._loader.get_string_attribute(self._node, name)
         return attr
 
-    def get(self, name, default=None):
+    def get(self, name: str, default=None) -> Any:
         return self[name] if name in self else default
 
 
@@ -57,18 +61,18 @@ class Field:
         self._dataset = dataset
         self._loader = loader
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> np.ndarray:
         return self._loader.load_dataset_as_numpy_array(self._dataset, index)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<Nexus field "{self._dataset.name}">'
 
     @property
-    def attrs(self):
+    def attrs(self) -> Attrs:
         return Attrs(self._dataset, self._loader)
 
     @property
-    def dtype(self):
+    def dtype(self) -> str:
         return self._loader.get_dtype(self._dataset)
 
     @property
@@ -76,7 +80,7 @@ class Field:
         return self._loader.get_path(self._dataset)
 
     @property
-    def shape(self):
+    def shape(self) -> List[int]:
         return self._loader.get_shape(self._dataset)
 
     @property
@@ -93,11 +97,12 @@ class NXobject:
         self._group = group
         self._loader = loader
 
-    def _make(self, group):
+    def _make(self, group) -> '__class__':
         nx_class = self._loader.get_string_attribute(group, 'NX_class')
         return _nx_class_registry().get(nx_class, NXobject)(group, self._loader)
 
-    def __getitem__(self, name):
+    def __getitem__(self,
+                    name: NXobjectIndex) -> Union['__class__', Field, sc.DataArray]:
         if name is None:
             raise KeyError("None is not a valid index")
         if isinstance(name, str):
@@ -110,37 +115,37 @@ class NXobject:
                 return Field(item, self._loader)
         return self._getitem(name)
 
-    def _getitem(self, index):
+    def _getitem(self, index: ScippIndex) -> NoReturn:
         raise NotImplementedError(f'Loading {self.nx_class} is not supported.')
 
-    def __contains__(self, name) -> bool:
+    def __contains__(self, name: str) -> bool:
         return self._loader.dataset_in_group(self._group, name)[0]
 
-    def get(self, name, default=None):
+    def get(self, name: str, default=None) -> Union['__class__', Field, sc.DataArray]:
         return self[name] if name in self else default
 
     @property
-    def attrs(self):
+    def attrs(self) -> Attrs:
         return Attrs(self._group, self._loader)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._loader.get_path(self._group)
 
-    def _ipython_key_completions_(self):
+    def _ipython_key_completions_(self) -> List[str]:
         return self.keys()
 
-    def keys(self):
+    def keys(self) -> List[str]:
         return self._loader.keys(self._group)
 
-    def values(self):
+    def values(self) -> List[Union[Field, '__class__']]:
         return [
             self._make(v) if self._loader.is_group(v) else Field(v, self._loader)
             for v in self._loader.values(self._group)
         ]
 
     @functools.lru_cache()
-    def by_nx_class(self):
+    def by_nx_class(self) -> Dict[NX_class, List['__class__']]:
         classes = self._loader.find_by_nx_class(tuple(_nx_class_registry()),
                                                 self._group)
         out = {}
@@ -161,13 +166,13 @@ class NXobject:
         """
         return NX_class[self.attrs['NX_class']]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<{type(self).__name__} "{self._group.name}">'
 
 
 class NXroot(NXobject):
     @property
-    def nx_class(self):
+    def nx_class(self) -> NX_class:
         # As an oversight in the NeXus standard and the reference implementation,
         # the NX_class was never set to NXroot. This applies to essentially all
         # files in existence before 2016, and files written by other implementations

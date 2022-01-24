@@ -1,5 +1,6 @@
+from typing import List, Union
 import scipp as sc
-from .nxobject import NXobject, Field
+from .nxobject import NXobject, Field, ScippIndex
 from .nxdata import NXdata
 from ._detector_data import NXevent_data
 
@@ -12,7 +13,7 @@ class NXdetector(NXobject):
     same format as NXevent_data.
     """
     @property
-    def shape(self):
+    def shape(self) -> List[int]:
         if self._is_events and self._detector_number is not None:
             return self._detector_number.shape
         # If event data but no detector_number then this gives the underlying
@@ -20,7 +21,7 @@ class NXdetector(NXobject):
         return self._nxbase.shape
 
     @property
-    def dims(self):
+    def dims(self) -> List[str]:
         if self._is_events and self._detector_number is not None:
             return self.attrs.get('axes', ['detector_number'])
         # If event data but no detector_number then this gives the underlying
@@ -28,7 +29,7 @@ class NXdetector(NXobject):
         return self._nxbase.dims
 
     @property
-    def unit(self):
+    def unit(self) -> Union[sc.Unit, None]:
         return self._nxbase.unit
 
     @property
@@ -63,7 +64,7 @@ class NXdetector(NXobject):
             return None
         return sc.array(dims=self.dims, values=self._detector_number[...])
 
-    def _getitem(self, select):
+    def _getitem(self, select: ScippIndex) -> sc.DataArray:
         # Note that ._detector_data._load_detector provides a different loading
         # facility for NXdetector but handles only loading of detector_number,
         # as needed for event data loading

@@ -13,7 +13,7 @@ import scipp as sc
 from warnings import warn
 from ._transformations import get_full_transformation_matrix
 from ._nexus import LoadFromNexus
-from .nxobject import NXobject
+from .nxobject import NXobject, ScippIndex
 
 _bank_dimension = "bank"
 _detector_dimension = "detector_id"
@@ -203,20 +203,20 @@ def _load_detector(group: Group, nexus: LoadFromNexus) -> DetectorData:
 
 class NXevent_data(NXobject):
     @property
-    def shape(self):
+    def shape(self) -> List[int]:
         return self._loader.get_shape(
             self._loader.get_dataset_from_group(self._group, "event_index"))
 
     @property
-    def dims(self):
+    def dims(self) -> List[str]:
         return [_pulse_dimension]
 
     @property
-    def unit(self):
+    def unit(self) -> None:
         # Binned data, bins do not have a unit
         return None
 
-    def _getitem(self, index):
+    def _getitem(self, index: ScippIndex) -> sc.DataArray:
         data = _load_event_group(self._group, self._loader, quiet=True, select=index)
         # Map back to original field names from NXevent_data since _load_event_group
         # imposes names that based on assumptions and history.

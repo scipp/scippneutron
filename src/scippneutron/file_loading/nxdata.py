@@ -1,6 +1,7 @@
+from typing import List, Union
 import scipp as sc
-from ._common import to_plain_index, Group
-from .nxobject import NXobject
+from ._common import to_plain_index, Dataset, Group
+from .nxobject import NXobject, ScippIndex
 from ._nexus import LoadFromNexus
 from ._hdf5_nexus import LoadFromHdf5
 
@@ -14,11 +15,11 @@ class NXdata(NXobject):
         self._signal_name_default = signal
 
     @property
-    def shape(self):
+    def shape(self) -> List[int]:
         return self._signal.shape
 
     @property
-    def dims(self):
+    def dims(self) -> List[str]:
         # Apparently it is not possible to define dim labels unless there are
         # corresponding coords. Special case of '.' entries means "no coord".
         if 'axes' in self.attrs:
@@ -28,11 +29,11 @@ class NXdata(NXobject):
         return self._signal.attrs['axes'].split(',')
 
     @property
-    def unit(self):
+    def unit(self) -> Union[sc.Unit, None]:
         return self._signal.unit
 
     @property
-    def _signal_name(self):
+    def _signal_name(self) -> str:
         name = self.attrs.get('signal', self._signal_name_default)
         if name is not None:
             return name
@@ -43,17 +44,17 @@ class NXdata(NXobject):
         return None
 
     @property
-    def _errors_name(self):
+    def _errors_name(self) -> str:
         if self._signal_name_default is None:
             return f'{self._signal_name_default}_errors'
         else:
             return 'errors'
 
     @property
-    def _signal(self):
+    def _signal(self) -> Dataset:
         return self[self._signal_name]
 
-    def _getitem(self, select):
+    def _getitem(self, select: ScippIndex) -> sc.DataArray:
         dims = self.dims
         index = to_plain_index(dims, select)
         signal = self._loader.load_dataset(self._group,

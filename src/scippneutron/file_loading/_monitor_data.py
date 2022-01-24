@@ -4,21 +4,21 @@ from ._common import Group
 import scipp as sc
 from ._nexus import LoadFromNexus
 from ._detector_data import load_detector_data, NXevent_data
-from .nxobject import NXobject
+from .nxobject import NXobject, ScippIndex
 from .nxdata import NXdata
 
 
 class NXmonitor(NXobject):
     @property
-    def shape(self):
+    def shape(self) -> List[int]:
         return self._nxbase.shape
 
     @property
-    def dims(self):
+    def dims(self) -> List[str]:
         return self._nxbase.dims
 
     @property
-    def unit(self):
+    def unit(self) -> Union[sc.Unit, None]:
         return self._nxbase.unit
 
     @property
@@ -35,7 +35,7 @@ class NXmonitor(NXobject):
         # attribute in the file, so we pass this explicitly to NXdata.
         return NXdata(self._group, self._loader, signal='data')
 
-    def _getitem(self, select):
+    def _getitem(self, select: ScippIndex) -> sc.DataArray:
         """
         Load monitor data. Event-mode data takes precedence over histogram-mode data.
         """
