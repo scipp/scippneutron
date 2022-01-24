@@ -7,7 +7,6 @@ import h5py
 from scipp.spatial import affine_transform, linear_transform, \
     rotation, translation
 import scipp as sc
-import scipp.spatial
 import numpy as np
 
 
@@ -36,6 +35,7 @@ class MissingAttribute(Exception):
 
 
 class JSONGroup(dict):
+
     def __init__(self, parent: dict, name: str, file: dict, group: dict):
         super().__init__(**group)
         self.parent = parent

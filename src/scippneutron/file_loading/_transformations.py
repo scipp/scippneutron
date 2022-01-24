@@ -40,36 +40,34 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
     return matrices
 
 
-def get_position_from_transformations(group: Group, nexus: LoadFromNexus) -> np.ndarray:
+def get_position_from_transformations(group: Group,
+                                      nexus: LoadFromNexus) -> sc.Variable:
     """
     Get position of a component which has a "depends_on" dataset
 
     :param group: The HDF5 group of the component, containing depends_on
     :param nexus: wrap data access to hdf file or objects from json
-    :return: Position of the component as a three-element numpy array
+    :return: Position of the component as a vector variable
     """
     total_transform_matrix = get_full_transformation_matrix(group, nexus)
-    return total_transform_matrix * sc.vector(value=[0, 0, 0], unit=sc.units.m)
+    return total_transform_matrix * sc.vector(value=[0, 0, 0],
+                                              unit=total_transform_matrix.unit)
 
 
 def _interpolate_transform(transform, xnew):
-    transform.coords["value"] = transform.coords["time"]
-
     # scipy can't interpolate with a single value
-    if transform.sizes["value"] == 1:
-        transform = sc.concat([transform, transform], dim="value")
+    if transform.sizes["time"] == 1:
+        transform = sc.concat([transform, transform], dim="time")
 
     transform = sc.interpolate.interp1d(transform,
-                                        "value",
+                                        "time",
                                         kind="previous",
                                         fill_value="extrapolate")(xnew=xnew)
 
-    transform.coords["time"] = transform.coords["value"]
-    del transform.coords["value"]
     return transform
 
 
-def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> np.ndarray:
+def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.DataArray:
     """
     Get the 4x4 transformation matrix for a component, resulting
     from the full chain of transformations linked by "depends_on"
@@ -77,7 +75,7 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> np.nda
 
     :param group: The HDF5 group of the component, containing depends_on
     :param nexus: wrap data access to hdf file or objects from json
-    :return: 4x4 passive transformation matrix as a numpy array
+    :return: 4x4 passive transformation matrix as a data array
     """
     transformations = []
     try:
@@ -88,10 +86,10 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> np.nda
                          nexus)
 
     total_transform = sc.DataArray(
-        data=sc.spatial.affine_transforms(dims=["value"],
+        data=sc.spatial.affine_transforms(dims=["time"],
                                           values=[np.identity(4)],
                                           unit=sc.units.m),
-        coords={"time": sc.array(dims=["value"], values=[0.], unit=sc.units.s)})
+        coords={"time": sc.array(dims=["time"], values=[0.], unit=sc.units.s)})
 
     for transform in transformations:
         xnew = sc.sort(
@@ -100,7 +98,7 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> np.nda
                                                   unit=sc.units.s),
                 transform.coords["time"].to(dtype=sc.DType.float64, unit=sc.units.s),
             ],
-                      dim="value"), "value")
+                      dim="time"), "time")
 
         total_transform = _interpolate_transform(
             transform, xnew) * _interpolate_transform(total_transform, xnew)
@@ -161,10 +159,10 @@ def _append_transformation(transform: Union[h5py.Dataset, GroupObject],
                       "treated as a 0-distance translation")
         transformations.append(
             sc.DataArray(
-                data=sc.spatial.affine_transforms(dims=["value"],
+                data=sc.spatial.affine_transforms(dims=["time"],
                                                   values=[np.identity(4, dtype=float)],
                                                   unit=sc.units.m),
-                coords={"time": sc.array(dims=["value"], values=[0], unit=sc.units.s)}))
+                coords={"time": sc.array(dims=["time"], values=[0], unit=sc.units.s)}))
     else:
         try:
             vector = nexus.get_attribute_as_numpy_array(transform,
@@ -214,19 +212,15 @@ def _append_translation(offset: np.ndarray, transform: GroupObject,
     loaded_transform = _get_transformation_magnitude_and_unit(
         group_name, transform, nexus)
 
-    loaded_transform_m = sc.to_unit(loaded_transform.astype(sc.DType.float64,
-                                                            copy=False),
-                                    sc.units.m,
-                                    copy=False)
+    loaded_transform_m = loaded_transform.to(dtype=sc.DType.float64,
+                                             unit=sc.units.m,
+                                             copy=False)
 
     # -1 as describes passive transformation
-    vectors = sc.vector(
-        value=direction_unit_vector) * sc.scalar(-1.0) * loaded_transform_m
+    vectors = sc.vector(value=(-direction_unit_vector + offset)) * loaded_transform_m
     translations = sc.spatial.translations(dims=loaded_transform_m.dims,
                                            values=vectors.values,
                                            unit=sc.units.m)
-
-    translations = translations * sc.spatial.translation(value=offset, unit=sc.units.m)
 
     transformations.append(
         sc.DataArray(data=translations,
@@ -251,12 +245,12 @@ def _get_transformation_magnitude_and_unit(group_name: str,
                                            transform: Union[h5py.Dataset, GroupObject],
                                            nexus: LoadFromNexus) -> sc.DataArray:
     """
-    Gets a scipp dataarray containing magnitutes and timestamps of a transformation.
+    Gets a scipp data array containing magnitudes and timestamps of a transformation.
     """
     if nexus.is_group(transform):
         try:
-            values = nexus.load_dataset(transform, "value", dimensions=["value"])
-            times = nexus.load_dataset(transform, "time", dimensions=["value"])
+            values = nexus.load_dataset(transform, "value", dimensions=["time"])
+            times = nexus.load_dataset(transform, "time", dimensions=["time"])
             if len(values) == 0:
                 raise TransformationError(f"Found empty NXlog as a "
                                           f"transformation for {group_name}")
@@ -284,8 +278,8 @@ def _get_transformation_magnitude_and_unit(group_name: str,
             raise TransformationError(f"Missing units for transformation at "
                                       f"{nexus.get_name(transform)}")
 
-        values = sc.array(dims=["value"], values=[magnitude], unit=unit)
-        times = sc.array(dims=["value"], values=[0.], unit=sc.units.s)
+        values = sc.array(dims=["time"], values=[magnitude], unit=unit)
+        times = sc.array(dims=["time"], values=[0.], unit=sc.units.s)
 
     return sc.DataArray(data=values, coords={"time": times})
 
@@ -295,9 +289,7 @@ def _append_rotation(offset: np.ndarray, transform: GroupObject,
                      group_name: str, nexus: LoadFromNexus):
     angles = _get_transformation_magnitude_and_unit(group_name, transform, nexus)
     try:
-        angles = sc.to_unit(angles.astype(sc.DType.float64, copy=False),
-                            sc.units.rad,
-                            copy=False)
+        angles = angles.to(dtype=sc.DType.float64, unit=sc.units.rad, copy=False)
     except sc.UnitError:
         raise TransformationError(f"Unit for rotation transformation must be radians "
                                   f"or degrees, problem in {transform.name}")
