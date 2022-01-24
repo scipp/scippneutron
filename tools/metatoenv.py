@@ -14,14 +14,40 @@ import platform as _platform
 
 parser = argparse.ArgumentParser(
     description='Generate a conda environment file from a conda recipe meta.yaml file')
-parser.add_argument('--dir', default='.')
-parser.add_argument('--meta-file', default='meta.yaml')
-parser.add_argument('--env-file', default='environment.yml')
-parser.add_argument('--env-name', '--name', default='')
-parser.add_argument('--channels', default='conda-forge')
-parser.add_argument('--platform', default=None)
-parser.add_argument('--extra', default='')
-parser.add_argument('--merge-with', default='')
+parser.add_argument('--dir',
+                    default='.',
+                    help='the directory where the conda meta.yaml file is located')
+parser.add_argument('--meta-file',
+                    default='meta.yaml',
+                    help='the name of the conda meta yaml file')
+parser.add_argument('--env-file',
+                    default='environment.yml',
+                    help='name of the output environment file')
+parser.add_argument('--env-name',
+                    '--name',
+                    default='',
+                    help='name of the environment that is stored inside the '
+                    'environment file (if no name is supplied, the name will be '
+                    'the same as the file name, without the .yml extension)')
+parser.add_argument('--channels',
+                    default='conda-forge',
+                    help='the conda channels to be added at the top of the '
+                    'environment file (to specify multiple channels, separate them '
+                    'with commas: --channels=conda-forge,scipp)')
+parser.add_argument('--platform',
+                    default=None,
+                    help='the platform (linux, osx, or win) on which the environment '
+                    'is destined to be created (if no platform is specified, the '
+                    'platform on which this script is running will be used)')
+parser.add_argument('--extra',
+                    default='',
+                    help='additional packages to be included in the environment '
+                    '(use commas to separate multiple entries, e.g. '
+                    '--extra=numpy,matplotlib,scipy)')
+parser.add_argument('--merge-with',
+                    default='',
+                    help='a second environment file that is to be merged with the '
+                    'one that would be created by the conda meta.yaml file alone')
 
 
 def _indentation_level(string):
