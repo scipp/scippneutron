@@ -37,7 +37,6 @@ def _check_for_missing_fields(group: Group, nexus: LoadFromNexus):
     required_fields = (
         "event_time_zero",
         "event_index",
-        "event_id",
         "event_time_offset",
     )
     for field in required_fields:
@@ -219,7 +218,8 @@ class NXevent_data(NXobject):
 
     def _getitem(self, index):
         data = _load_event_group(self._group, self._loader, quiet=False, select=index)
-        data.bins.coords['event_id'] = data.bins.coords.pop('detector_id')
+        if 'detector_id' in data.bins.coords:
+            data.bins.coords['event_id'] = data.bins.coords.pop('detector_id')
         data.bins.coords['event_time_offset'] = data.bins.coords.pop('tof')
         data.coords['event_time_zero'] = data.coords.pop('pulse_time')
         return data
@@ -267,9 +267,12 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
     else:
         event_select = slice(None)
 
-    event_id = nexus.load_dataset(group,
-                                  "event_id", [_event_dimension],
-                                  index=event_select)
+    if nexus.dataset_in_group(group, "event_id")[0]:
+        event_id = nexus.load_dataset(group,
+                                      "event_id", [_event_dimension],
+                                      index=event_select)
+    else:
+        event_id = None
 
     event_time_offset = nexus.load_dataset(group,
                                            "event_time_offset", [_event_dimension],
@@ -277,16 +280,14 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
 
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
-                      shape=event_id.shape,
+                      shape=event_time_offset.shape,
                       unit='counts',
                       dtype=np.float32,
                       with_variances=True)
 
-    events = sc.DataArray(data=weights,
-                          coords={
-                              _time_of_flight: event_time_offset,
-                              _detector_dimension: event_id,
-                          })
+    events = sc.DataArray(data=weights, coords={_time_of_flight: event_time_offset})
+    if event_id is not None:
+        events.coords[_detector_dimension] = event_id
 
     if not last_loaded:
         event_index = np.append(event_index, num_event)
@@ -320,7 +321,7 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
                         f" ordered. The index must be ordered to load pulse times.")
 
     if not quiet:
-        print(f"Loaded {len(event_id)} events from "
+        print(f"Loaded {len(event_time_offset)} events from "
               f"{nexus.get_name(group)} containing {num_event} events")
 
     return sc.DataArray(data=binned, coords={"pulse_time": pulse_times})

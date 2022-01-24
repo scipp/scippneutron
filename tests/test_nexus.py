@@ -226,3 +226,42 @@ def test_negative_event_index_converted_to_num_event(nexus_group: Tuple[Callable
         events = root['entry/events_0'][...]
         assert events.bins.size().values[2] == 3
         assert events.bins.size().values[3] == 0
+
+
+def builder_with_events_and_events_monitor_without_event_id():
+    event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
+    event_data = EventData(
+        event_id=None,
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+
+    builder = NexusBuilder()
+    builder.add_event_data(event_data)
+    builder.add_monitor(
+        Monitor("monitor", data=np.array([1.]), axes=[], events=event_data))
+    return builder
+
+
+def test_event_data_without_event_id_can_be_loaded(nexus_group: Tuple[Callable,
+                                                                      LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_and_events_monitor_without_event_id())() as f:
+        event_data = nexus.NXroot(f, loader)['entry/events_0']
+        da = event_data[...]
+        assert len(da.bins.coords) == 1
+        assert 'event_time_offset' in da.bins.coords
+
+
+def test_event_mode_monitor_without_event_id_can_be_loaded(
+        nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_and_events_monitor_without_event_id())() as f:
+        monitor = nexus.NXroot(f, loader)['monitor']
+        da = monitor[...]
+        assert len(da.bins.coords) == 1
+        assert 'event_time_offset' in da.bins.coords
