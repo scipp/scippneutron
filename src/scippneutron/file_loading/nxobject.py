@@ -43,7 +43,7 @@ class Attrs:
     def __getitem__(self, name: str) -> Any:
         attr = self._loader.get_attribute(self._node, name)
         # Is this check for string attributes sufficient? Is there a better way?
-        if isinstance(attr, str) or isinstance(attr, bytes):
+        if isinstance(attr, (str, bytes)):
             return self._loader.get_string_attribute(self._node, name)
         return attr
 
