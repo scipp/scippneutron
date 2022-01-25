@@ -445,6 +445,13 @@ class NexusBuilder:
             return json.dump(root, json_file, indent=4, cls=NumpyEncoder)
 
     @contextmanager
+    def json(self):
+        try:
+            yield json.loads(self.json_string)
+        finally:
+            pass
+
+    @contextmanager
     def file(self) -> Iterator[h5py.File]:
         # "core" driver means file is "in-memory" not on disk.
         # backing_store=False prevents file being written to

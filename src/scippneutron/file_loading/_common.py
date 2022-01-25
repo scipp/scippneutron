@@ -8,6 +8,7 @@ from scipp.spatial import affine_transform, linear_transform, \
     rotation, translation
 import scipp as sc
 import numpy as np
+from typing import Dict
 
 
 class BadSource(Exception):
@@ -43,6 +44,7 @@ class JSONGroup(dict):
         self.file = file
 
 
+Dataset = Union[h5py.Dataset, Dict]
 Group = Union[h5py.Group, JSONGroup]
 
 
@@ -130,8 +132,8 @@ def _convert_time_to_datetime64(
     return _start_ts + (raw_times_ns * _scale).astype(sc.DType.int64, copy=False)
 
 
-def load_time_dataset(nexus, group, dataset_name, dim, group_name=None):
-    raw_times = nexus.load_dataset(group, dataset_name, [dim])
+def load_time_dataset(nexus, group, dataset_name, dim, group_name=None, index=...):
+    raw_times = nexus.load_dataset(group, dataset_name, [dim], index=index)
 
     time_dataset = nexus.get_dataset_from_group(group, dataset_name)
     try:
@@ -148,3 +150,38 @@ def load_time_dataset(nexus, group, dataset_name, dim, group_name=None):
                                        start=start,
                                        scaling_factor=scaling_factor,
                                        group_path=group_name or group.name)
+
+
+def to_plain_index(dims, select, ignore_missing=False):
+    """
+    Given a valid "scipp" index 'select', return an equivalent plain numpy-style index.
+    """
+
+    def check_1d():
+        if len(dims) != 1:
+            raise ValueError(f"Dataset has multiple dimensions {dims}, "
+                             "specify the dimension to index.")
+
+    if select is Ellipsis:
+        return select
+    if isinstance(select, tuple) and len(select) == 0:
+        return select
+    if isinstance(select, tuple) and isinstance(select[0], str):
+        key, sel = select
+        select = {key: sel}
+
+    if isinstance(select, tuple):
+        check_1d()
+        return select
+    elif isinstance(select, int) or isinstance(select, slice):
+        check_1d()
+        return select
+    elif isinstance(select, dict):
+        index = [slice(None)] * len(dims)
+        for key, sel in select.items():
+            if not ignore_missing and key not in dims:
+                raise ValueError(
+                    f"'{key}' used for indexing not found in dataset dims {dims}.")
+            index[dims.index(key)] = sel
+        return tuple(index)
+    raise ValueError("Cannot process index {select}.")
