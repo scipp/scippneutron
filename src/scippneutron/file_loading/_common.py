@@ -2,13 +2,12 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
 
-from typing import Union, Optional, Any
+from typing import Union, Optional, Any, Tuple, Dict, List
 import h5py
 from scipp.spatial import affine_transform, linear_transform, \
     rotation, translation
 import scipp as sc
 import numpy as np
-from typing import Dict
 
 
 class BadSource(Exception):
@@ -80,7 +79,13 @@ def _add_attr_to_loaded_data(attr_name: str,
         pass
 
 
-def to_plain_index(dims, select, ignore_missing=False):
+# Note that scipp does not support dicts yet, but this HDF5 code does, to
+# allow for loading blocks of 2d (or higher) data efficiently.
+ScippIndex = Union[type(Ellipsis), int, slice, Tuple[str, Union[int, slice]],
+                   Dict[str, Union[int, slice]]]
+
+
+def to_plain_index(dims: List[str], select: ScippIndex, ignore_missing: bool = False):
     """
     Given a valid "scipp" index 'select', return an equivalent plain numpy-style index.
     """

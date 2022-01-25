@@ -5,13 +5,12 @@ import numpy as np
 import scipp as sc
 from enum import Enum, auto
 import functools
-from typing import List, Union, Tuple, NoReturn, Any, Dict
+from typing import List, Union, NoReturn, Any, Dict
 
 from ._nexus import LoadFromNexus
 from ._hdf5_nexus import LoadFromHdf5
-from ._common import Group, Dataset, MissingAttribute
+from ._common import Group, Dataset, MissingAttribute, ScippIndex
 
-ScippIndex = Tuple[str, Union[int, slice]]
 NXobjectIndex = Union[str, ScippIndex]
 
 
