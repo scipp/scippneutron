@@ -36,7 +36,6 @@ class MissingAttribute(Exception):
 
 
 class JSONGroup(dict):
-
     def __init__(self, parent: dict, name: str, file: dict, group: dict):
         super().__init__(**group)
         self.parent = parent
@@ -156,7 +155,6 @@ def to_plain_index(dims, select, ignore_missing=False):
     """
     Given a valid "scipp" index 'select', return an equivalent plain numpy-style index.
     """
-
     def check_1d():
         if len(dims) != 1:
             raise ValueError(f"Dataset has multiple dimensions {dims}, "

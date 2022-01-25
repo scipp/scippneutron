@@ -341,7 +341,6 @@ def _check_event_ids_and_det_number_types_valid(detector_id_type: Any,
     we can give a useful warning to the user and skip loading the
     current event group.
     """
-
     def is_integer_type(type_to_check: Any) -> bool:
         return type_to_check == sc.DType.int32 or \
                type_to_check == sc.DType.int64

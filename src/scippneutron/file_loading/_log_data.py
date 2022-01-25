@@ -51,7 +51,6 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,
 
 
 class NXlog(NXobject):
-
     @property
     def shape(self):
         pass

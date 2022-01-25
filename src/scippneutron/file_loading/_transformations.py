@@ -89,17 +89,23 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
         data=sc.spatial.affine_transforms(dims=["time"],
                                           values=[np.identity(4)],
                                           unit=sc.units.m),
-        coords={"time": sc.array(dims=["time"],
-                                 values=[np.datetime64('1970-01-01T00:00:00', 'ns')],
-                                 unit=sc.units.ns,
-                                 dtype=sc.DType.datetime64)})
+        coords={
+            "time":
+            sc.array(dims=["time"],
+                     values=[np.datetime64('1970-01-01T00:00:00', 'ns')],
+                     unit=sc.units.ns,
+                     dtype=sc.DType.datetime64)
+        })
 
     for transform in transformations:
 
-        xnew = sc.datetimes(values=np.unique(sc.concat([
+        xnew = sc.datetimes(values=np.unique(
+            sc.concat([
                 total_transform.coords["time"].to(unit=sc.units.ns, copy=True),
                 transform.coords["time"].to(unit=sc.units.ns, copy=True),
-            ], dim="time").values), dims=["time"])
+            ],
+                      dim="time").values),
+                            dims=["time"])
 
         total_transform = _interpolate_transform(
             transform, xnew) * _interpolate_transform(total_transform, xnew)
@@ -163,11 +169,13 @@ def _append_transformation(transform: Union[h5py.Dataset, GroupObject],
                 data=sc.spatial.affine_transforms(dims=["time"],
                                                   values=[np.identity(4, dtype=float)],
                                                   unit=sc.units.m),
-                coords={"time": sc.array(
-                    dims=["time"],
-                    values=[np.datetime64('1970-01-01T00:00:00', 'ns')],
-                    unit=sc.units.ns,
-                    dtype=sc.DType.datetime64)}))
+                coords={
+                    "time":
+                    sc.array(dims=["time"],
+                             values=[np.datetime64('1970-01-01T00:00:00', 'ns')],
+                             unit=sc.units.ns,
+                             dtype=sc.DType.datetime64)
+                }))
     else:
         try:
             vector = nexus.get_attribute_as_numpy_array(transform,
@@ -255,7 +263,11 @@ def _get_transformation_magnitude_and_unit(group_name: str,
     if nexus.is_group(transform):
         try:
             values = nexus.load_dataset(transform, "value", dimensions=["time"])
-            times = load_time_dataset(nexus, transform, "time", "time", group_name=group_name)
+            times = load_time_dataset(nexus,
+                                      transform,
+                                      "time",
+                                      "time",
+                                      group_name=group_name)
             if len(values) == 0:
                 raise TransformationError(f"Found empty NXlog as a "
                                           f"transformation for {group_name}")
