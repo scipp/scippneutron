@@ -3,11 +3,10 @@
 # @author Matthew Jones
 
 import numpy as np
-from typing import Tuple, List, Union, Dict
+from typing import Tuple, List, Dict
 import scipp as sc
-from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group,
-                      _convert_time_to_datetime64, load_time_dataset, to_plain_index)
-from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
+from ._common import (BadSource, SkipSource, MissingDataset, Group, load_time_dataset,
+                      to_plain_index)
 from ._nexus import LoadFromNexus
 from .nxobject import NXobject
 from warnings import warn
