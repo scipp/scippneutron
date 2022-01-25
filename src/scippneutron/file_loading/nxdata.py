@@ -48,9 +48,9 @@ class NXdata(NXobject):
     @property
     def _errors_name(self) -> str:
         if self._signal_name_default is None:
-            return f'{self._signal_name_default}_errors'
-        else:
             return 'errors'
+        else:
+            return f'{self._signal_name_default}_errors'
 
     @property
     def _signal(self) -> Dataset:
