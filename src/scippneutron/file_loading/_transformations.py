@@ -95,15 +95,11 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
                                  dtype=sc.DType.datetime64)})
 
     for transform in transformations:
-        print(f"total transform: {total_transform.coords['time']}")
-        print(f"transform: {transform.coords['time']}")
 
-        xnew = sc.sort(
-            sc.concat([
+        xnew = sc.datetimes(values=np.unique(sc.concat([
                 total_transform.coords["time"].to(unit=sc.units.ns, copy=True),
                 transform.coords["time"].to(unit=sc.units.ns, copy=True),
-            ],
-                      dim="time"), "time")
+            ], dim="time").values), dims=["time"])
 
         total_transform = _interpolate_transform(
             transform, xnew) * _interpolate_transform(total_transform, xnew)
@@ -226,7 +222,7 @@ def _append_translation(offset: np.ndarray, transform: GroupObject,
                                              copy=False)
 
     # -1 as describes passive transformation
-    vectors = sc.vector(value=(-direction_unit_vector + offset)) * loaded_transform_m
+    vectors = sc.vector(value=(offset - direction_unit_vector)) * loaded_transform_m
     translations = sc.spatial.translations(dims=loaded_transform_m.dims,
                                            values=vectors.values,
                                            unit=sc.units.m)
