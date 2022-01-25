@@ -150,7 +150,7 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
                         })
 
 
-def _load_pulse_times(group: Group, nexus: LoadFromNexus, index=...) -> sc.Variable:
+def _load_event_time_zero(group: Group, nexus: LoadFromNexus, index=...) -> sc.Variable:
     time_zero_group = "event_time_zero"
 
     event_time_zero = nexus.load_dataset(group,
@@ -217,14 +217,7 @@ class NXevent_data(NXobject):
         return None
 
     def _getitem(self, index: ScippIndex) -> sc.DataArray:
-        data = _load_event_group(self._group, self._loader, quiet=True, select=index)
-        # Map back to original field names from NXevent_data since _load_event_group
-        # imposes names that based on assumptions and history.
-        if 'detector_id' in data.bins.coords:
-            data.bins.coords['event_id'] = data.bins.coords.pop('detector_id')
-        data.bins.coords['event_time_offset'] = data.bins.coords.pop('tof')
-        data.coords['event_time_zero'] = data.coords.pop('pulse_time')
-        return data
+        return _load_event_group(self._group, self._loader, quiet=True, select=index)
 
 
 def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
@@ -256,7 +249,7 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
 
     event_index = nexus.load_dataset_from_group_as_numpy_array(
         group, "event_index", index)
-    pulse_times = _load_pulse_times(group, nexus, index)
+    event_time_zero = _load_event_time_zero(group, nexus, index)
 
     num_event = shape("event_time_offset")[0]
     # Some files contain uint64 "max" indices, which turn into negatives during
@@ -287,16 +280,16 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
                       dtype=np.float32,
                       with_variances=True)
 
-    events = sc.DataArray(data=weights, coords={_time_of_flight: event_time_offset})
+    events = sc.DataArray(data=weights, coords={'event_time_offset': event_time_offset})
     if event_id is not None:
-        events.coords[_detector_dimension] = event_id
+        events.coords['event_id'] = event_id
 
     if not last_loaded:
         event_index = np.append(event_index, num_event)
     else:
         # Not a bin-edge coord, all events in bin are associated with same (previous)
         # pulse time value
-        pulse_times = pulse_times[:-1]
+        event_time_zero = event_time_zero[:-1]
 
     event_index = sc.array(dims=[_pulse_dimension],
                            values=event_index,
@@ -311,7 +304,7 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
     if single:
         begins = event_index[_pulse_dimension, 0]
         ends = event_index[_pulse_dimension, 1]
-        pulse_times = pulse_times[_pulse_dimension, 0]
+        event_time_zero = event_time_zero[_pulse_dimension, 0]
     else:
         begins = event_index[_pulse_dimension, :-1]
         ends = event_index[_pulse_dimension, 1:]
@@ -326,7 +319,7 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
         print(f"Loaded {len(event_time_offset)} events from "
               f"{nexus.get_name(group)} containing {num_event} events")
 
-    return sc.DataArray(data=binned, coords={"pulse_time": pulse_times})
+    return sc.DataArray(data=binned, coords={'event_time_zero': event_time_zero})
 
 
 def _check_event_ids_and_det_number_types_valid(detector_id_type: Any,
@@ -471,6 +464,14 @@ def _create_empty_event_data(detectors: List[DetectorData]):
             data.event_data = empty_events
 
 
+def _event_data_to_canonical_naming(da: sc.DataArray) -> None:
+    """Map coord names to canonical naming as used in Mantid."""
+    if 'event_id' in da.bins.coords:
+        da.bins.coords[_detector_dimension] = da.bins.coords.pop('event_id')
+    da.bins.coords[_time_of_flight] = da.bins.coords.pop('event_time_offset')
+    da.coords[_pulse_time] = da.coords.pop('event_time_zero')
+
+
 def _load_data_from_each_nx_event_data(detector_data: Dict,
                                        event_data_groups: List[Group],
                                        nexus: LoadFromNexus,
@@ -481,6 +482,7 @@ def _load_data_from_each_nx_event_data(detector_data: Dict,
         try:
             new_detector_data = detector_data.get(parent_path, DetectorData())
             new_event_data = _load_event_group(group, nexus, quiet)
+            _event_data_to_canonical_naming(new_event_data)
 
             event_id_dtype = new_event_data.bins.constituents['data'].coords[
                 _detector_dimension].dtype
