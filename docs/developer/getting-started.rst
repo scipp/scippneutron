@@ -106,12 +106,12 @@ In Python:
   import scippneutron as scn
 
 Building using a local build of Scipp
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------
 
 Instead of using a published Scipp package as part of your ``scippneutron-developer`` conda environment,
 it is also possible to link ``scippneutron`` against a local build of Scipp.
 To avoid conflicts, you will first need to remove the ``scipp`` entry from your generated ``scippneutron-developer.yml`` file.
-Then, use the ``CMAKE_PREFIX_PATH`` to tell ``cmake`` where to find the Scipp C++ libraries:
+Then, use the ``scipp_DIR`` to tell ``cmake`` where to find the Scipp C++ libraries:
 
 .. code-block:: bash
 
@@ -122,7 +122,7 @@ Then, use the ``CMAKE_PREFIX_PATH`` to tell ``cmake`` where to find the Scipp C+
     -DCMAKE_INSTALL_PREFIX=../install \
     -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF \
     -DDYNAMIC_LIB=ON \
-    -DCMAKE_PREFIX_PATH=<your_scipp_install_dir> \
+    -Dscipp_DIR=<your_scipp_install_dir> \
     ..
 
 Then, simply run ``cmake --build`` as above.
