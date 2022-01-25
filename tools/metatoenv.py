@@ -77,15 +77,16 @@ def _parse_yaml(text):
     handle = out
     path = []
 
-    # Remove all empty lines in text
+    # Remove all comments and empty lines in text
     clean_text = []
     for line in text:
         line = line.rstrip(' \n')
         if len(line) > 0:
-            clean_text.append(line)
+            line = line.split("#")[0]
+            if len(line.strip()) > 0:
+                clean_text.append(line.rstrip(' \n'))
 
     for i, line in enumerate(clean_text):
-        line = line.rstrip(' \n')
 
         if i > 0:
             line_indent = _indentation_level(line)
@@ -127,8 +128,6 @@ def _jinja_filter(dependencies, platform):
             out[key] = _jinja_filter(value, platform)
         else:
             ok = True
-            # Strip comments from key
-            key = key.split('#')[0].strip()
             if key.count('[') > 0:
                 left = key.find('[')
                 right = key.find(']')
