@@ -26,7 +26,9 @@ class NXdata(NXobject):
             axes = self.attrs['axes']
             return [f'dim_{i}' if a == '.' else a for i, a in enumerate(axes)]
         # Legacy NXdata defines axes not as group attribute, but attr on dataset
-        return self._signal.attrs['axes'].split(',')
+        if 'axes' in self._signal.attrs:
+            return self._signal.attrs['axes'].split(',')
+        return [f'dim_{i}' for i in range(len(self.shape))]
 
     @property
     def unit(self) -> Union[sc.Unit, None]:
