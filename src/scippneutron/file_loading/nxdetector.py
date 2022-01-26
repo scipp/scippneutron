@@ -76,19 +76,20 @@ class NXdetector(NXobject):
         # facility for NXdetector but handles only loading of detector_number,
         # as needed for event data loading
         if self._is_events:
-            if self.detector_number is None:
-                # If there is no 'detector_data' then self.dims is the same as that of
-                # the underlying event data. Slicing here thus corresponds to slicing
-                # NXevent_data.
-                return self._nxbase[select]
             # If there is a 'detector_number' field it is used to bin events into
             # detector pixels. Note that due to the nature of NXevent_data, which stores
             # events from all pixels and random order, we always have to load the entire
             # bank. Slicing with the provided 'select' is done while binning.
             event_data = self._nxbase[...]
+            if self.detector_number is None:
+                id_min = event_data.bins.coords['event_id'].min()
+                id_max = event_data.bins.coords['event_id'].max()
+                detector_numbers = sc.arange(dim='detector_data',
+                                             start=id_min.value,
+                                             stop=id_max.value)
+            else:
+                detector_numbers = self.detector_number[select]
             event_data.bins.coords['detector_number'] = event_data.bins.coords.pop(
                 'event_id')
-            return sc.bin(event_data,
-                          groups=[self.detector_number[select]],
-                          erase=['pulse'])
+            return sc.bin(event_data, groups=[detector_numbers], erase=['pulse'])
         return self._nxbase[select]
