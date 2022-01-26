@@ -40,8 +40,7 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
     return matrices
 
 
-def get_position_from_transformations(group: Group,
-                                      nexus: LoadFromNexus) -> sc.Variable:
+def get_translation_from_affine(group: Group, nexus: LoadFromNexus) -> sc.Variable:
     """
     Get position of a component which has a "depends_on" dataset
 
@@ -55,16 +54,20 @@ def get_position_from_transformations(group: Group,
 
 
 def _interpolate_transform(transform, xnew):
-    # scipy can't interpolate with a single value
-    if transform.sizes["time"] == 1:
-        transform = sc.concat([transform, transform], dim="time")
+    if isinstance(transform, sc.Variable):
+        return sc.DataArray(data=transform.broadcast(dims=["time"], shape=xnew.shape),
+                            coords={"time": xnew})
+    else:
+        # scipy can't interpolate with a single value
+        if transform.sizes["time"] == 1:
+            transform = sc.concat([transform, transform], dim="time")
 
-    transform = sc.interpolate.interp1d(transform,
-                                        "time",
-                                        kind="previous",
-                                        fill_value="extrapolate")(xnew=xnew)
+        transform = sc.interpolate.interp1d(transform,
+                                            "time",
+                                            kind="previous",
+                                            fill_value="extrapolate")(xnew=xnew)
 
-    return transform
+        return transform
 
 
 def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.DataArray:
@@ -85,30 +88,26 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
     _get_transformations(depends_on, transformations, group, nexus.get_name(group),
                          nexus)
 
-    total_transform = sc.DataArray(
-        data=sc.spatial.affine_transforms(dims=["time"],
-                                          values=[np.identity(4)],
-                                          unit=sc.units.m),
-        coords={
-            "time":
-            sc.array(dims=["time"],
-                     values=[np.datetime64('1970-01-01T00:00:00', 'ns')],
-                     unit=sc.units.ns,
-                     dtype=sc.DType.datetime64)
-        })
+    total_transform = sc.spatial.affine_transform(value=np.identity(4), unit=sc.units.m)
 
     for transform in transformations:
-
-        xnew = sc.datetimes(values=np.unique(
-            sc.concat([
-                total_transform.coords["time"].to(unit=sc.units.ns, copy=True),
-                transform.coords["time"].to(unit=sc.units.ns, copy=True),
-            ],
-                      dim="time").values),
-                            dims=["time"])
-
-        total_transform = _interpolate_transform(
-            transform, xnew) * _interpolate_transform(total_transform, xnew)
+        if isinstance(total_transform, sc.DataArray):
+            xnew = sc.datetimes(values=np.unique(
+                sc.concat([
+                    total_transform.coords["time"].to(unit=sc.units.ns, copy=True),
+                    transform.coords["time"].to(unit=sc.units.ns, copy=True),
+                ],
+                          dim="time").values),
+                                dims=["time"])
+            total_transform = _interpolate_transform(
+                transform, xnew) * _interpolate_transform(total_transform, xnew)
+        else:
+            if isinstance(transform, sc.DataArray):
+                xnew = transform.coords["time"]
+                total_transform = _interpolate_transform(
+                    transform, xnew) * _interpolate_transform(total_transform, xnew)
+            else:
+                total_transform = transform * total_transform
 
     return total_transform
 
@@ -165,17 +164,8 @@ def _append_transformation(transform: Union[h5py.Dataset, GroupObject],
                       "not yet implemented and instead it will be "
                       "treated as a 0-distance translation")
         transformations.append(
-            sc.DataArray(
-                data=sc.spatial.affine_transforms(dims=["time"],
-                                                  values=[np.identity(4, dtype=float)],
-                                                  unit=sc.units.m),
-                coords={
-                    "time":
-                    sc.array(dims=["time"],
-                             values=[np.datetime64('1970-01-01T00:00:00', 'ns')],
-                             unit=sc.units.ns,
-                             dtype=sc.DType.datetime64)
-                }))
+            sc.spatial.affine_transform(value=np.identity(4, dtype=float),
+                                        unit=sc.units.m))
     else:
         try:
             vector = nexus.get_attribute_as_numpy_array(transform,
@@ -235,9 +225,13 @@ def _append_translation(offset: np.ndarray, transform: GroupObject,
                                            values=vectors.values,
                                            unit=sc.units.m)
 
-    transformations.append(
-        sc.DataArray(data=translations,
-                     coords={"time": loaded_transform.coords["time"]}))
+    if isinstance(loaded_transform, sc.DataArray):
+        t = sc.DataArray(data=translations,
+                         coords={"time": loaded_transform.coords["time"]})
+    else:
+        t = translations
+
+    transformations.append(t)
 
 
 def _get_unit(attributes: h5py.AttributeManager, transform_name: str) -> sc.Unit:
@@ -263,10 +257,10 @@ def _get_transformation_magnitude_and_unit(group_name: str,
     if nexus.is_group(transform):
         try:
             values = nexus.load_dataset(transform, "value", dimensions=["time"])
-            times = load_time_dataset(nexus,
-                                      transform,
-                                      "time",
-                                      "time",
+            times = load_time_dataset(nexus=nexus,
+                                      group=transform,
+                                      dataset_name="time",
+                                      dim="time",
                                       group_name=group_name)
             if len(values) == 0:
                 raise TransformationError(f"Found empty NXlog as a "
@@ -295,11 +289,7 @@ def _get_transformation_magnitude_and_unit(group_name: str,
             raise TransformationError(f"Missing units for transformation at "
                                       f"{nexus.get_name(transform)}")
 
-        values = sc.array(dims=["time"], values=[magnitude], unit=unit)
-        times = sc.array(dims=["time"],
-                         values=[np.datetime64('1970-01-01T00:00:00', 'ns')],
-                         unit=sc.units.ns,
-                         dtype=sc.DType.datetime64)
+        return sc.scalar(value=magnitude, unit=unit, dtype=sc.DType.float64)
 
     return sc.DataArray(data=values, coords={"time": times})
 
@@ -315,5 +305,10 @@ def _append_rotation(offset: np.ndarray, transform: GroupObject,
                                   f"or degrees, problem in {transform.name}")
 
     rotations = _rotation_matrix_from_axis_and_angle(rotation_axis, angles)
-    transformations.append(
-        sc.DataArray(data=rotations, coords={"time": angles.coords["time"]}))
+
+    if isinstance(angles, sc.DataArray):
+        t = sc.DataArray(data=rotations, coords={"time": angles.coords["time"]})
+    else:
+        t = rotations
+
+    transformations.append(t)
