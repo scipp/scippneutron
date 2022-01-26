@@ -1,5 +1,5 @@
 from .test_nexus import open_nexus, open_json
-from .nexus_helpers import NexusBuilder, Detector
+from .nexus_helpers import NexusBuilder, Detector, EventData
 import numpy as np
 import pytest
 from typing import Callable, Tuple
@@ -47,3 +47,48 @@ def test_loads_data_with_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
         detector = nexus.NXroot(f, loader)['entry/detector_0']
         loaded = detector[...]
         assert sc.identical(loaded, da.rename_dims({'yy': 'dim_1'}))
+
+
+def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
+        nexus_group: Tuple[Callable, LoadFromNexus]):
+    event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 2, 2]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([1, 2, 3, 4]), event_data=event_data))
+    resource, loader = nexus_group
+    with resource(builder)() as f:
+        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        loaded = detector[...]
+        assert sc.identical(loaded.bins.size().data,
+                            sc.array(dims=['detector_number'], values=[2, 3, 1, 0]))
+
+
+def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in_file(
+        nexus_group: Tuple[Callable, LoadFromNexus]):
+    event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
+    event_data = EventData(
+        event_id=np.array([1, 2, 4, 1, 2, 2]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+    builder = NexusBuilder()
+    builder.add_detector(Detector(event_data=event_data))
+    resource, loader = nexus_group
+    with resource(builder)() as f:
+        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        loaded = detector[...]
+        assert sc.identical(loaded.bins.size().data,
+                            sc.array(dims=['detector_number'], values=[2, 3, 0, 1]))
