@@ -82,14 +82,24 @@ class NXdetector(NXobject):
             # bank. Slicing with the provided 'select' is done while binning.
             event_data = self._nxbase[...]
             if self.detector_number is None:
+                # Ideally we would prefer to use np.unique, but a quick experiment shows
+                # that this can easily be 100x slower, so it is not an option. In
+                # practice most files have contiguous event_id values within a bank
+                # (NXevent_data).
                 id_min = event_data.bins.coords['event_id'].min()
                 id_max = event_data.bins.coords['event_id'].max()
-                detector_numbers = sc.arange(dim='detector_data',
+                detector_numbers = sc.arange(dim='detector_number',
                                              start=id_min.value,
-                                             stop=id_max.value)
+                                             stop=id_max.value,
+                                             dtype=id_min.dtype)
             else:
                 detector_numbers = self.detector_number[select]
             event_data.bins.coords['detector_number'] = event_data.bins.coords.pop(
                 'event_id')
-            return sc.bin(event_data, groups=[detector_numbers], erase=['pulse'])
+            # After loading raw NXevent_data it is guaranteed that the event table
+            # is contiguous and that there is no masking. We can therefore use the
+            # more efficient approach of binning from scratch instead of erasing the
+            # 'pulse' binning defined by NXevent_data.
+            return sc.bin(event_data.bins.constituents['data'],
+                          groups=[detector_numbers])
         return self._nxbase[select]
