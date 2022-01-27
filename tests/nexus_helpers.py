@@ -85,6 +85,7 @@ class Detector:
     z_offsets: Optional[np.ndarray] = None
     offsets_unit: Optional[Union[str, bytes]] = None
     depends_on: Optional[Transformation] = None
+    data: Optional[np.ndarray] = None
 
 
 @dataclass
@@ -281,13 +282,16 @@ class JsonWriter:
         return new_dataset
 
     @staticmethod
-    def add_attribute(parent: Dict, name: str, value: Union[str, bytes, np.ndarray]):
+    def add_attribute(parent: Dict, name: str, value: Union[str, bytes, list,
+                                                            np.ndarray]):
         if isinstance(value, (str, bytes)):
             attr_info = {"string_size": len(value), "type": "string"}
         elif isinstance(value, float):
             attr_info = {"size": 1, "type": "float64"}
         elif isinstance(value, int):
             attr_info = {"size": 1, "type": "int64"}
+        elif isinstance(value, list):
+            attr_info = {"size": len(value), "type": "string"}
         else:
             attr_info = {
                 "size": value.shape,
@@ -568,6 +572,18 @@ class NexusBuilder:
             detector_name = f"detector_{detector_index}"
             detector_group = self._add_detector_group_to_file(
                 detector, parent_group, detector_name)
+            if detector.data is not None:
+                da = detector.data
+                ds = self._writer.add_dataset(detector_group, "data", data=da.values)
+                self._writer.add_attribute(ds, "units", str(da.unit))
+                axes = [dim if dim in da.coords else '.' for dim in da.dims]
+                self._writer.add_attribute(detector_group, "axes", axes)
+                for key, coord in da.coords.items():
+                    ds = self._writer.add_dataset(detector_group,
+                                                  key,
+                                                  data=coord.values)
+                    self._writer.add_attribute(ds, "units", str(coord.unit))
+
             if detector.event_data is not None:
                 self._add_event_data_group_to_file(detector.event_data, detector_group,
                                                    "events")
