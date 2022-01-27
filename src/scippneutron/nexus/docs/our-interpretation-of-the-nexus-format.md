@@ -26,7 +26,7 @@ This probably includes [NXdetector](https://manual.nexusformat.org/classes/base_
 By extension, [NXevent_data](https://manual.nexusformat.org/classes/base_classes/NXevent_data.html) may take the role of `NXdata` for event-mode monitors or detectors.
 
 It is unclear whether the NF requires fields and attributes of the base class (`NXdata` or `NXevent_data`) as part of the subclass (such as `NXdetector`) or whether `NXdata` or `NXevent_data` should be stored as a child.
-We have observed both approach in practice.
+We have observed both approaches in practice.
 Therefore, we go with the following interpretation:
 
 1. *Both* approaches are permitted.
