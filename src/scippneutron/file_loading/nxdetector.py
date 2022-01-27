@@ -14,26 +14,34 @@ class NXdetector(NXobject):
     """
     @property
     def shape(self) -> List[int]:
-        if self._is_events and self._detector_number is not None:
+        if self._is_events:
+            if self._detector_number is None:
+                raise NexusStructureError(
+                    "Cannot get shape of NXdetector since no 'detector_number' "
+                    "field found but detector contains event data.")
             return self._detector_number.shape
-        # If event data but no detector_number then this gives the underlying
-        # shape of NXevent_data
         return self._nxbase.shape
 
     @property
     def dims(self) -> List[str]:
-        if self._is_events and self._detector_number is not None:
+        if self._is_events:
+            default = [f'dim_{i}' for i in range(self.ndim)]
+            if len(default) == 1:
+                default = ['detector_number']
             # The NeXus standard is lacking information on a number of details on
             # NXdetector, but according to personal communication with Tobias Richter
             # it is "intended" to partially "subclass" NXdata. That is, e.g., attributes
             # defined for NXdata such as 'axes' may be used.
-            default = [f'dim_{i}' for i in range(len(self.shape))]
-            if len(default) == 1:
-                default = ['detector_number']
             return self.attrs.get('axes', default)
-        # If event data but no detector_number then this gives the underlying
-        # dims of NXevent_data
         return self._nxbase.dims
+
+    @property
+    def ndim(self) -> int:
+        if self._is_events:
+            if self._detector_number is None:
+                return 1
+            return self._detector_number.ndim
+        return self['data'].ndim
 
     @property
     def unit(self) -> Union[sc.Unit, None]:

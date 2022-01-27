@@ -85,6 +85,8 @@ def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
     resource, loader = nexus_group
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
+        assert detector.dims == ['detector_number']
+        assert detector.shape == (4,)
         loaded = detector[...]
         assert sc.identical(
             loaded.bins.size().data,
@@ -97,14 +99,17 @@ def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in
     event_data = EventData(
         event_id=np.array([1, 2, 4, 1, 2, 2]),
         event_time_offset=event_time_offsets,
-        event_time_zero=np.array([1, 2, 3, 4]),
-        event_index=np.array([0, 3, 3, 5]),
+        event_time_zero=np.array([1, 2, 3]),
+        event_index=np.array([0, 3, 5]),
     )
     builder = NexusBuilder()
     builder.add_detector(Detector(event_data=event_data))
     resource, loader = nexus_group
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
+        assert detector.dims == ['detector_number']
+        with pytest.raises(nexus.NexusStructureError):
+            assert detector.shape == (4,)
         loaded = detector[...]
         assert sc.identical(
             loaded.bins.size().data,

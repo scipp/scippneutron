@@ -85,6 +85,10 @@ class Field:
         return self._loader.get_path(self._dataset)
 
     @property
+    def ndim(self) -> int:
+        return len(self.shape)
+
+    @property
     def shape(self) -> List[int]:
         return self._loader.get_shape(self._dataset)
 
