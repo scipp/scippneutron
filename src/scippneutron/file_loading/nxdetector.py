@@ -61,9 +61,6 @@ class NXdetector(NXobject):
             if 'event_time_offset' in self:
                 return NXevent_data(self._group, self._loader)
             event_entries = self.by_nx_class()[NX_class.NXevent_data]
-            if len(event_entries) != 1:
-                raise NexusStructureError("No unique NXevent_data entry in NXdetector. "
-                                          f"Found {len(event_entries)}.")
             return next(iter(event_entries.values()))
         # NXdata uses the 'signal' attribute to define the field name of the signal.
         # NXdetector uses a "hard-coded" signal name 'data', without specifying the
