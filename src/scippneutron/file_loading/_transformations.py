@@ -54,20 +54,16 @@ def get_translation_from_affine(group: Group, nexus: LoadFromNexus) -> sc.Variab
 
 
 def _interpolate_transform(transform, xnew):
-    if isinstance(transform, sc.Variable):
-        return sc.DataArray(data=transform.broadcast(dims=["time"], shape=xnew.shape),
-                            coords={"time": xnew})
-    else:
-        # scipy can't interpolate with a single value
-        if transform.sizes["time"] == 1:
-            transform = sc.concat([transform, transform], dim="time")
+    # scipy can't interpolate with a single value
+    if transform.sizes["time"] == 1:
+        transform = sc.concat([transform, transform], dim="time")
 
-        transform = sc.interpolate.interp1d(transform,
-                                            "time",
-                                            kind="previous",
-                                            fill_value="extrapolate")(xnew=xnew)
+    transform = sc.interpolate.interp1d(transform,
+                                        "time",
+                                        kind="previous",
+                                        fill_value="extrapolate")(xnew=xnew)
 
-        return transform
+    return transform
 
 
 def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.DataArray:
@@ -91,23 +87,20 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
     total_transform = sc.spatial.affine_transform(value=np.identity(4), unit=sc.units.m)
 
     for transform in transformations:
-        if isinstance(total_transform, sc.DataArray):
+        if isinstance(total_transform, sc.DataArray) and isinstance(
+                transform, sc.DataArray):
             xnew = sc.datetimes(values=np.unique(
                 sc.concat([
                     total_transform.coords["time"].to(unit=sc.units.ns, copy=True),
                     transform.coords["time"].to(unit=sc.units.ns, copy=True),
                 ],
                           dim="time").values),
-                                dims=["time"])
+                                dims=["time"],
+                                unit=sc.units.ns)
             total_transform = _interpolate_transform(
                 transform, xnew) * _interpolate_transform(total_transform, xnew)
         else:
-            if isinstance(transform, sc.DataArray):
-                xnew = transform.coords["time"]
-                total_transform = _interpolate_transform(
-                    transform, xnew) * _interpolate_transform(total_transform, xnew)
-            else:
-                total_transform = transform * total_transform
+            total_transform = transform * total_transform
 
     return total_transform
 
