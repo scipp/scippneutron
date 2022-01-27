@@ -68,8 +68,9 @@ def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
         loaded = detector[...]
-        assert sc.identical(loaded.bins.size().data,
-                            sc.array(dims=['detector_number'], values=[2, 3, 1, 0]))
+        assert sc.identical(
+            loaded.bins.size().data,
+            sc.array(dims=['detector_number'], dtype='int32', values=[2, 3, 1, 0]))
 
 
 def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in_file(
@@ -90,5 +91,6 @@ def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
         loaded = detector[...]
-        assert sc.identical(loaded.bins.size().data,
-                            sc.array(dims=['detector_number'], values=[2, 3, 0, 1]))
+        assert sc.identical(
+            loaded.bins.size().data,
+            sc.array(dims=['detector_number'], dtype='int32', values=[2, 3, 0, 1]))
