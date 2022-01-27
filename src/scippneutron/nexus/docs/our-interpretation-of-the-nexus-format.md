@@ -20,10 +20,10 @@ It is therefore to be considered implicit.
 
 ## Relation between [NXdata](https://manual.nexusformat.org/classes/base_classes/NXdata.html) and [NXevent_data](https://manual.nexusformat.org/classes/base_classes/NXevent_data.html) with "subclasses"
 
-The NF does not formally specify subclassing but, according to TR and vague hints in the manual, several classes are "similar" to `NXdata`.
+The NF does not formally specify subclassing but, according to TR and vague hints in the manual, several classes are "similar" to [NXdata](https://manual.nexusformat.org/classes/base_classes/NXdata.html).
 This probably includes [NXdetector](https://manual.nexusformat.org/classes/base_classes/NXdetector.html), [NXlog](https://manual.nexusformat.org/classes/base_classes/NXlog.html), and [NXmonitor](https://manual.nexusformat.org/classes/base_classes/NXmonitor.html) but there are likely more.
 
-By extension, `NXevent_data` may take the role of `NXdata` for event-mode monitors or detectors.
+By extension, [NXevent_data](https://manual.nexusformat.org/classes/base_classes/NXevent_data.html) may take the role of `NXdata` for event-mode monitors or detectors.
 
 It is unclear whether the NF requires fields and attributes of the base class (`NXdata` or `NXevent_data`) as part of the subclass (such as `NXdetector`) or whether `NXdata` or `NXevent_data` should be stored as a child.
 We have observed both approach in practice.
@@ -49,14 +49,14 @@ If the above results in not more than one item, the group can be loaded.
 
 ## Bin edges
 
-For `NXdetector` the NF defines a [time_of_flight](https://manual.nexusformat.org/classes/base_classes/NXdetector.html#nxdetector-time-of-flight-field) field, exceeding the data shape by one, i.e., it is meant as bin-edges.
+For [NXdetector](https://manual.nexusformat.org/classes/base_classes/NXdetector.html) the NF defines a [time_of_flight](https://manual.nexusformat.org/classes/base_classes/NXdetector.html#nxdetector-time-of-flight-field) field, exceeding the data shape by one, i.e., it is meant as bin-edges.
 `NXdata` does not appear to allow this explicitly.
 Since what is recorded in `NXdetector` may not actually be time-of-flight, in practice this coordinate may be named differently, e.g., `time_offset`.
 Therefore, we assume that this is valid in general, i.e., also for other axis tick labels (coordinates) that may be defined using the [`axes` attribute](https://manual.nexusformat.org/classes/base_classes/NXdata.html#nxdata-axes-attribute).
 
 ## Missing axis labels
 
-`NXdata` uses the [`axes` attribute](https://manual.nexusformat.org/classes/base_classes/NXdata.html#nxdata-axes-attribute) to define the names of fields that store coordinates for axes.
+[NX_data](https://manual.nexusformat.org/classes/base_classes/NX_data.html) uses the [`axes` attribute](https://manual.nexusformat.org/classes/base_classes/NXdata.html#nxdata-axes-attribute) to define the names of fields that store coordinates for axes.
 There is a legacy mechanism where the signal field has an [`axes` attribute](https://manual.nexusformat.org/classes/base_classes/NXdata.html#nxdata-data-axes-attribute) and this should not be used according to the NF.
 
 The `axes` attribute uses `'.'` to define an axis without coordinate field.
