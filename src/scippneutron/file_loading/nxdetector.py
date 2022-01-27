@@ -1,9 +1,8 @@
 from typing import List, Union
 import scipp as sc
-from .nxobject import NX_class, NXobject, Field, ScippIndex
+from .nxobject import NX_class, NXobject, Field, ScippIndex, NexusStructureError
 from .nxdata import NXdata
 from ._detector_data import NXevent_data
-from ._common import BadSource
 
 
 class NXdetector(NXobject):
@@ -45,26 +44,30 @@ class NXdetector(NXobject):
         # The standard is unclear on whether the 'data' field may be NXevent_data or
         # whether the fields of NXevent_data should be stored directly within this
         # NXdetector. Both cases are observed in the wild.
-        if 'data' in self:
-            return isinstance(self['data'], NXevent_data)
-        if len(self.by_nx_class()[NX_class.NXevent_data]) > 0:
+        event_entries = self.by_nx_class()[NX_class.NXevent_data]
+        if len(event_entries) > 1:
+            raise NexusStructureError("No unique NXevent_data entry in NXdetector. "
+                                      f"Found {len(event_entries)}.")
+        elif len(event_entries) == 1:
+            if 'data' in self and not isinstance(self['data'], NXevent_data):
+                raise NexusStructureError("NXdetector contains data and event data.")
             return True
         return 'event_time_offset' in self
 
     @property
     def _nxbase(self) -> NXdata:
         """Return class for loading underlying data."""
-        # NXdata uses the 'signal' attribute to define the field name of the signal.
-        # NXdetector uses a "hard-coded" signal name 'data', without specifying the
-        # attribute in the file, so we pass this explicitly to NXdata.
         if self._is_events:
             if 'event_time_offset' in self:
                 return NXevent_data(self._group, self._loader)
             event_entries = self.by_nx_class()[NX_class.NXevent_data]
             if len(event_entries) != 1:
-                raise BadSource("No unique NXevent_data entry in NXdetector. "
-                                f"Found {len(event_entries)}.")
+                raise NexusStructureError("No unique NXevent_data entry in NXdetector. "
+                                          f"Found {len(event_entries)}.")
             return next(iter(event_entries.values()))
+        # NXdata uses the 'signal' attribute to define the field name of the signal.
+        # NXdetector uses a "hard-coded" signal name 'data', without specifying the
+        # attribute in the file, so we pass this explicitly to NXdata.
         return NXdata(self._group, self._loader, signal='data')
 
     @property

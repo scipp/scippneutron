@@ -25,6 +25,27 @@ def test_raises_if_no_data_found(nexus_group: Tuple[Callable, LoadFromNexus]):
             detector[...]
 
 
+def test_raises_if_data_and_event_data_found(nexus_group: Tuple[Callable,
+                                                                LoadFromNexus]):
+    resource, loader = nexus_group
+    da = sc.DataArray(sc.array(dims=['xx', 'yy'], values=[[1.1, 2.2], [3.3, 4.4]]))
+    event_data = EventData(
+        event_id=np.array([1, 2, 4, 1, 2, 2]),
+        event_time_offset=np.array([456, 743, 347, 345, 632, 23]),
+        event_time_zero=np.array([1, 2, 3, 4]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([1, 2, 3, 4]),
+                 data=da,
+                 event_data=event_data))
+    with resource(builder)() as f:
+        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        with pytest.raises(nexus.NexusStructureError):
+            detector[...]
+
+
 def test_loads_data_without_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     builder = NexusBuilder()
@@ -55,10 +76,7 @@ def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 2, 2]),
         event_time_offset=event_time_offsets,
-        event_time_zero=np.array([
-            1600766730000000000, 1600766731000000000, 1600766732000000000,
-            1600766733000000000
-        ]),
+        event_time_zero=np.array([1, 2, 3, 4]),
         event_index=np.array([0, 3, 3, 5]),
     )
     builder = NexusBuilder()
@@ -70,7 +88,7 @@ def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
         loaded = detector[...]
         assert sc.identical(
             loaded.bins.size().data,
-            sc.array(dims=['detector_number'], dtype='int32', values=[2, 3, 1, 0]))
+            sc.array(dims=['detector_number'], dtype='int64', values=[2, 3, 1, 0]))
 
 
 def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in_file(
@@ -79,10 +97,7 @@ def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in
     event_data = EventData(
         event_id=np.array([1, 2, 4, 1, 2, 2]),
         event_time_offset=event_time_offsets,
-        event_time_zero=np.array([
-            1600766730000000000, 1600766731000000000, 1600766732000000000,
-            1600766733000000000
-        ]),
+        event_time_zero=np.array([1, 2, 3, 4]),
         event_index=np.array([0, 3, 3, 5]),
     )
     builder = NexusBuilder()
@@ -93,4 +108,4 @@ def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in
         loaded = detector[...]
         assert sc.identical(
             loaded.bins.size().data,
-            sc.array(dims=['detector_number'], dtype='int32', values=[2, 3, 0, 1]))
+            sc.array(dims=['detector_number'], dtype='int64', values=[2, 3, 0, 1]))

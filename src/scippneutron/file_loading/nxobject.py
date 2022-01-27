@@ -14,6 +14,12 @@ from ._common import Group, Dataset, MissingAttribute, ScippIndex
 NXobjectIndex = Union[str, ScippIndex]
 
 
+class NexusStructureError(Exception):
+    """Invalid or unsupported class and field structure in Nexus.
+    """
+    pass
+
+
 class NX_class(Enum):
     NXdata = auto()
     NXdetector = auto()
