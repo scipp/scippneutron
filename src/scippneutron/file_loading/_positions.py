@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple, Any
 import numpy as np
 import scipp as sc
 from ._common import Group
-from ._transformations import (get_position_from_transformations, TransformationError)
+from ._transformations import (get_translation_from_affine, TransformationError)
 from ._nexus import LoadFromNexus
 
 
@@ -72,7 +72,11 @@ def _get_position_of_component(
     distance_found, _ = nexus.dataset_in_group(group, "distance")
     if depends_on_found:
         try:
-            position = get_position_from_transformations(group, nexus)
+            translation = get_translation_from_affine(group, nexus)
+            if isinstance(translation, sc.Variable):
+                position = translation.value
+            else:
+                position = translation.data.values[0]
         except TransformationError as e:
             warn(f"Skipping loading {name} position due to error: {e}")
             raise PositionError

@@ -11,6 +11,7 @@ import tempfile
 import importlib
 
 import scipp as sc
+import scipp.spatial
 import scippneutron as scn
 
 from .mantid_helper import mantid_is_available
@@ -577,10 +578,11 @@ class TestMantidConversion(unittest.TestCase):
         d = scn.mantid.from_mantid(ws)
         assert sc.identical(
             d.attrs['sample_ub'],
-            sc.matrix(value=ws.sample().getOrientedLattice().getUB(),
-                      unit=sc.units.angstrom**-1))
-        assert sc.identical(d.attrs['sample_u'],
-                            sc.matrix(value=ws.sample().getOrientedLattice().getU()))
+            sc.spatial.linear_transform(value=ws.sample().getOrientedLattice().getUB(),
+                                        unit=sc.units.angstrom**-1))
+        assert sc.identical(
+            d.attrs['sample_u'],
+            sc.spatial.linear_transform(value=ws.sample().getOrientedLattice().getU()))
 
     def test_sample_without_ub(self):
         import mantid.simpleapi as mantid

@@ -999,13 +999,14 @@ def test_loads_component_position_from_log_transformation(
 
 @pytest.mark.parametrize("component_class,component_name",
                          ((Sample, "sample"), (Source, "source")))
-@pytest.mark.parametrize("transform_type,value,value_units",
-                         ((TransformationType.ROTATION, [26, 73], "deg"),
-                          (TransformationType.TRANSLATION, [230, 310], "cm")))
-def test_skips_component_position_with_multi_value_log_transformation(
+@pytest.mark.parametrize(
+    "transform_type,value,value_units,expected_position",
+    ((TransformationType.ROTATION, [0.27, 0.73], "rad", [0, 0, 0]),
+     (TransformationType.TRANSLATION, [230, 310], "cm", [0, 0, 2.3])))
+def test_loads_component_position_with_multi_value_log_transformation(
         component_class: Union[Type[Source], Type[Sample]], component_name: str,
         transform_type: TransformationType, value: List[float], value_units: str,
-        load_function: Callable):
+        expected_position: float, load_function: Callable):
     builder = NexusBuilder()
     # Provide "time" data, the builder will write the transformation as
     # an NXlog. This would be encountered in a file from an experiment
@@ -1017,14 +1018,48 @@ def test_skips_component_position_with_multi_value_log_transformation(
                                     time_units="s",
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
-    with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
+    loaded_data = load_function(builder)
 
-    # Loading component position from transformations recorded as
-    # NXlogs with multiple values is not yet implemented
-    # However the NXlog itself will be loaded
-    # (loaded_data is not None)
-    assert f"{component_name}_position" not in loaded_data.keys()
+    # Note: currently only asserting that we use the first value of the transformation
+    # this is wrong long-term; we need to add the full loaded transformation into the
+    # loaded data array.
+    assert np.allclose(loaded_data[f"{component_name}_position"].values,
+                       expected_position)
+    assert loaded_data[f"{component_name}_position"].unit == sc.Unit("m")
+
+
+@pytest.mark.parametrize("component_class,component_name",
+                         ((Sample, "sample"), (Source, "source")))
+def test_loads_component_position_with_multiple_multi_valued_log_transformations(
+        component_class: Union[Type[Source], Type[Sample]], component_name: str,
+        load_function: Callable):
+    builder = NexusBuilder()
+    # Provide "time" data, the builder will write the transformation as
+    # an NXlog. This would be encountered in a file from an experiment
+    # involving a scan of a motion axis.
+    t1 = Transformation(TransformationType.TRANSLATION,
+                        vector=np.array([0, 0, -1]),
+                        value=np.array([1, 10]),
+                        time=np.array([0, 1]),
+                        time_units="s",
+                        value_units="m")
+
+    t2 = Transformation(TransformationType.TRANSLATION,
+                        vector=np.array([0, 0, -1]),
+                        value=np.array([5, 50]),
+                        time=np.array([0, 1]),
+                        time_units="s",
+                        value_units="m",
+                        depends_on=t1)
+
+    builder.add_component(component_class(component_name, depends_on=t2))
+    loaded_data = load_function(builder)
+
+    # Note: currently only asserting that we use the first value of the transformation
+    # this is wrong long-term; we need to add the full loaded transformation into the
+    # loaded data array.
+    assert np.allclose(loaded_data[f"{component_name}_position"].values, [0, 0, 6])
+    assert loaded_data[f"{component_name}_position"].unit == sc.Unit("m")
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -1524,7 +1559,7 @@ def test_nexus_file_with_invalid_nxlog_time_units_warns_and_skips_log(
             time_units="s",
             start_time="1970-01-01T00:00:00Z"))
 
-    with pytest.warns(UserWarning, match="The units of time in the NXlog entry at "):
+    with pytest.warns(UserWarning, match="The units of time in the entry at "):
         loaded_data = load_function(builder)
 
         assert "test_log_1" not in loaded_data
