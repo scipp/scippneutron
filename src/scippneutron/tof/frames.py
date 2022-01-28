@@ -1,10 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
-from functools import partial
-r"""
-Coordinate transformation graphs for time-of-flight neutron scattering data.
-
+"""
+Frame transformations for time-of-flight neutron scattering data.
 """
 import scipp as sc
 from scipp.constants import h, m_n
