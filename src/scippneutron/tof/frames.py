@@ -11,15 +11,14 @@ from ..core.conversions import _as_float_type, _elem_unit
 
 
 def _tof_from_wavelength(*, wavelength, Ltotal):
-    scale = sc.to_unit(m_n / h,
-                       sc.units.us / _elem_unit(Ltotal) / _elem_unit(wavelength))
+    scale = (m_n / h).to(unit=sc.units.us / _elem_unit(Ltotal) / _elem_unit(wavelength))
     return _as_float_type(Ltotal * scale, wavelength) * wavelength
 
 
 def _tof_to_time_offset(*, tof, frame_length, frame_offset):
     unit = tof.unit
-    frame_length = sc.to_unit(frame_length, unit)
-    arrival_time_offset = sc.to_unit(frame_offset, unit) + tof
+    frame_length = frame_length.to(unit=unit)
+    arrival_time_offset = frame_offset.to(unit=unit) + tof
     time_offset = arrival_time_offset % frame_length
     return time_offset
 
@@ -27,9 +26,9 @@ def _tof_to_time_offset(*, tof, frame_length, frame_offset):
 def _time_offset_to_tof(*, time_offset, time_offset_pivot, tof_min, frame_length):
     """
     """
-    frame_length = sc.to_unit(frame_length, _elem_unit(time_offset))
-    time_offset_pivot = sc.to_unit(time_offset_pivot, _elem_unit(time_offset))
-    tof_min = sc.to_unit(tof_min, _elem_unit(time_offset))
+    frame_length = frame_length.to(unit=_elem_unit(time_offset))
+    time_offset_pivot = time_offset_pivot.to(unit=_elem_unit(time_offset))
+    tof_min = tof_min.to(unit=_elem_unit(time_offset))
     shift = tof_min - time_offset_pivot
     tof = sc.where(time_offset >= time_offset_pivot, shift, shift + frame_length)
     tof += time_offset

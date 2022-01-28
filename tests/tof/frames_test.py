@@ -12,7 +12,7 @@ def array(*,
           nevent=1000,
           frame_length=71.0 * sc.Unit('ms'),
           time_offset=None):
-    frame_length = sc.to_unit(frame_length, unit='us')
+    frame_length = frame_length.to(unit='us')
     if time_offset is None:
         time_offset = sc.array(dims=['event'],
                                values=np.random.rand(nevent) * frame_length.value,
@@ -98,8 +98,8 @@ def tof_array(*,
               nevent=1000,
               frame_length=71.0 * sc.Unit('ms'),
               tof_min=234.0 * sc.Unit('ms')):
-    tof = sc.array(dims=['event'], values=np.random.rand(nevent)) * sc.to_unit(
-        frame_length, tof_min.unit) + tof_min
+    tof = sc.array(dims=['event'], values=np.random.rand(nevent)) * frame_length.to(
+        unit=tof_min.unit) + tof_min
     pixel = sc.arange(dim='event', start=0, stop=nevent) % npixel
     events = sc.DataArray(sc.ones(sizes=tof.sizes), coords={'tof': tof, 'pixel': pixel})
     pixel = sc.arange(dim='pixel', start=0, stop=npixel)
@@ -111,7 +111,7 @@ def tof_array(*,
 
 def tof_to_time_offset(tof, *, frame_length, frame_offset):
     unit = tof.bins.unit
-    return (sc.to_unit(frame_offset, unit) + tof) % sc.to_unit(frame_length, unit)
+    return (frame_offset.to(unit=unit) + tof) % frame_length.to(unit=unit)
 
 
 @pytest.mark.parametrize(
