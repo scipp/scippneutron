@@ -1,20 +1,60 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
+import numpy as np
+import scipp as sc
 from enum import Enum, auto
 import functools
+from typing import List, Union, NoReturn, Any, Dict
 
 from ._nexus import LoadFromNexus
-from ..file_loading._hdf5_nexus import LoadFromHdf5
-from ._common import Group, Dataset
+from ._hdf5_nexus import LoadFromHdf5
+from ._common import Group, Dataset, MissingAttribute, ScippIndex
+
+NXobjectIndex = Union[str, ScippIndex]
+
+
+class NexusStructureError(Exception):
+    """Invalid or unsupported class and field structure in Nexus.
+    """
+    pass
 
 
 class NX_class(Enum):
-    NXroot = auto()
+    NXdata = auto()
+    NXdetector = auto()
     NXentry = auto()
+    NXevent_data = auto()
     NXlog = auto()
     NXmonitor = auto()
-    NXevent_data = auto()
+    NXroot = auto()
+
+
+class Attrs:
+    """HDF5 attributes.
+    """
+    def __init__(self,
+                 node: Union[Dataset, Group],
+                 loader: LoadFromNexus = LoadFromHdf5()):
+        self._node = node
+        self._loader = loader
+
+    def __contains__(self, name: str) -> bool:
+        try:
+            _ = self[name]
+            return True
+        except MissingAttribute:
+            return False
+
+    def __getitem__(self, name: str) -> Any:
+        attr = self._loader.get_attribute(self._node, name)
+        # Is this check for string attributes sufficient? Is there a better way?
+        if isinstance(attr, (str, bytes)):
+            return self._loader.get_string_attribute(self._node, name)
+        return attr
+
+    def get(self, name: str, default=None) -> Any:
+        return self[name] if name in self else default
 
 
 class Field:
@@ -26,14 +66,18 @@ class Field:
         self._dataset = dataset
         self._loader = loader
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> np.ndarray:
         return self._loader.load_dataset_as_numpy_array(self._dataset, index)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<Nexus field "{self._dataset.name}">'
 
     @property
-    def dtype(self):
+    def attrs(self) -> Attrs:
+        return Attrs(self._dataset, self._loader)
+
+    @property
+    def dtype(self) -> str:
         return self._loader.get_dtype(self._dataset)
 
     @property
@@ -41,13 +85,18 @@ class Field:
         return self._loader.get_path(self._dataset)
 
     @property
-    def shape(self):
+    def ndim(self) -> int:
+        return len(self.shape)
+
+    @property
+    def shape(self) -> List[int]:
         return self._loader.get_shape(self._dataset)
 
     @property
-    def unit(self):
-        # TODO Prefer to return None if no such attr, provided that scipp supports this
-        return self._loader.get_unit(self._dataset)
+    def unit(self) -> Union[sc.Unit, None]:
+        if 'units' in self.attrs:
+            return sc.Unit(self._loader.get_unit(self._dataset))
+        return None
 
 
 class NXobject:
@@ -57,37 +106,55 @@ class NXobject:
         self._group = group
         self._loader = loader
 
-    def _make(self, group):
+    def _make(self, group) -> '__class__':
         nx_class = self._loader.get_string_attribute(group, 'NX_class')
         return _nx_class_registry().get(nx_class, NXobject)(group, self._loader)
 
-    def __getitem__(self, name):
+    def __getitem__(self,
+                    name: NXobjectIndex) -> Union['__class__', Field, sc.DataArray]:
+        if name is None:
+            raise KeyError("None is not a valid index")
         if isinstance(name, str):
             item = self._loader.get_child_from_group(self._group, name)
+            if item is None:
+                raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
             if self._loader.is_group(item):
                 return self._make(item)
             else:
                 return Field(item, self._loader)
         return self._getitem(name)
 
-    def _getitem(self, index):
+    def _getitem(self, index: ScippIndex) -> NoReturn:
         raise NotImplementedError(f'Loading {self.nx_class} is not supported.')
 
+    def __contains__(self, name: str) -> bool:
+        return self._loader.dataset_in_group(self._group, name)[0]
+
+    def get(self, name: str, default=None) -> Union['__class__', Field, sc.DataArray]:
+        return self[name] if name in self else default
+
     @property
-    def name(self):
+    def attrs(self) -> Attrs:
+        return Attrs(self._group, self._loader)
+
+    @property
+    def name(self) -> str:
         return self._loader.get_path(self._group)
 
-    def keys(self):
+    def _ipython_key_completions_(self) -> List[str]:
+        return self.keys()
+
+    def keys(self) -> List[str]:
         return self._loader.keys(self._group)
 
-    def values(self):
+    def values(self) -> List[Union[Field, '__class__']]:
         return [
             self._make(v) if self._loader.is_group(v) else Field(v, self._loader)
             for v in self._loader.values(self._group)
         ]
 
     @functools.lru_cache()
-    def by_nx_class(self):
+    def by_nx_class(self) -> Dict[NX_class, List['__class__']]:
         classes = self._loader.find_by_nx_class(tuple(_nx_class_registry()),
                                                 self._group)
         out = {}
@@ -99,17 +166,22 @@ class NXobject:
         return out
 
     @property
-    def nx_class(self):
-        key = self._loader.get_string_attribute(self._group, 'NX_class')
-        return NX_class[key]
+    def nx_class(self) -> NX_class:
+        """The value of the NX_class attribute of the group.
 
-    def __repr__(self):
+        In case of the subclass NXroot this returns 'NXroot' even if the attribute
+        is not actually set. This is support the majority of all legacy files, which
+        do not have this attribute.
+        """
+        return NX_class[self.attrs['NX_class']]
+
+    def __repr__(self) -> str:
         return f'<{type(self).__name__} "{self._group.name}">'
 
 
 class NXroot(NXobject):
     @property
-    def nx_class(self):
+    def nx_class(self) -> NX_class:
         # As an oversight in the NeXus standard and the reference implementation,
         # the NX_class was never set to NXroot. This applies to essentially all
         # files in existence before 2016, and files written by other implementations
@@ -123,10 +195,13 @@ class NXentry(NXobject):
 
 @functools.lru_cache()
 def _nx_class_registry():
-    from ..file_loading._monitor_data import NXmonitor
-    from ..file_loading._detector_data import NXevent_data
-    from ..file_loading._log_data import NXlog
+    from ._monitor_data import NXmonitor
+    from ._detector_data import NXevent_data
+    from ._log_data import NXlog
+    from .nxdata import NXdata
+    from .nxdetector import NXdetector
     return {
         cls.__name__: cls
-        for cls in [NXroot, NXentry, NXevent_data, NXlog, NXmonitor]
+        for cls in
+        [NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector]
     }

@@ -8,7 +8,7 @@ import scipp as sc
 from ._common import (BadSource, SkipSource, MissingDataset, Group, load_time_dataset,
                       to_plain_index)
 from ._nexus import LoadFromNexus
-from .nxobject import NXobject
+from .nxobject import NXobject, ScippIndex
 from warnings import warn
 
 
@@ -63,7 +63,7 @@ class NXlog(NXobject):
     def unit(self):
         pass
 
-    def _getitem(self, index):
+    def _getitem(self, index: ScippIndex) -> sc.DataArray:
         name, var = _load_log_data_from_group(self._group, self._loader, select=index)
         da = var.value
         da.name = name
@@ -115,6 +115,7 @@ def _load_log_data_from_group(group: Group, nexus: LoadFromNexus, select=tuple()
         dimension_label = property_name
         is_time_series = False
 
+    # TODO Is NXlog similar to NXdata such that we could use that for loading?
     if np.ndim(values) > 1:
         raise BadSource(f"NXlog '{property_name}' has {value_dataset_name} "
                         f"dataset with more than 1 dimension, handling "

@@ -2,13 +2,12 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
 
-from typing import Union, Optional, Any
+from typing import Union, Optional, Any, Tuple, Dict, List
 import h5py
 from scipp.spatial import affine_transform, linear_transform, \
     rotation, translation
 import scipp as sc
 import numpy as np
-from typing import Dict
 
 
 class BadSource(Exception):
@@ -151,7 +150,13 @@ def load_time_dataset(nexus, group, dataset_name, dim, group_name=None, index=..
                                        group_path=group_name or group.name)
 
 
-def to_plain_index(dims, select, ignore_missing=False):
+# Note that scipp does not support dicts yet, but this HDF5 code does, to
+# allow for loading blocks of 2d (or higher) data efficiently.
+ScippIndex = Union[type(Ellipsis), int, slice, Tuple[str, Union[int, slice]],
+                   Dict[str, Union[int, slice]]]
+
+
+def to_plain_index(dims: List[str], select: ScippIndex, ignore_missing: bool = False):
     """
     Given a valid "scipp" index 'select', return an equivalent plain numpy-style index.
     """
@@ -161,16 +166,19 @@ def to_plain_index(dims, select, ignore_missing=False):
                              "specify the dimension to index.")
 
     if select is Ellipsis:
-        return select
+        return tuple()
     if isinstance(select, tuple) and len(select) == 0:
-        return select
+        return tuple()
     if isinstance(select, tuple) and isinstance(select[0], str):
         key, sel = select
         select = {key: sel}
 
     if isinstance(select, tuple):
         check_1d()
-        return select
+        if len(select) != 1:
+            raise ValueError(f"Dataset a single dimension {dims}, "
+                             "but multiple indices {select} were specified.")
+        return select[0]
     elif isinstance(select, int) or isinstance(select, slice):
         check_1d()
         return select
@@ -181,5 +189,7 @@ def to_plain_index(dims, select, ignore_missing=False):
                 raise ValueError(
                     f"'{key}' used for indexing not found in dataset dims {dims}.")
             index[dims.index(key)] = sel
+        if len(index) == 1:
+            return index[0]
         return tuple(index)
     raise ValueError("Cannot process index {select}.")
