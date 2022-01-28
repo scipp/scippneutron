@@ -36,33 +36,45 @@ def _time_offset_to_tof(*, time_offset, time_offset_pivot, tof_min, frame_length
     return tof
 
 
-def make_frames(da, *, frame_length, frame_offset=None, lambda_min=None):
+def to_tof():
     """
     This assumes that there is a fixed frame_length, but in practice this is
     likely not the case.
 
     Note: This assumes elastic scattering.
     """
-    if 'tof' in da.bins.meta or 'tof' in da.meta:
-        raise ValueError("Coordinate 'tof' already define in input data array. "
-                         "Expected input with 'event_time_offset' coordinate.")
-
-    def _tof_min(*, Ltotal):
+    def _tof_min(*, Ltotal, lambda_min):
         return _tof_from_wavelength(Ltotal=Ltotal, wavelength=lambda_min)
 
-    def _time_offset_pivot(*, Ltotal, tof_min):
+    def _time_offset_pivot(*, tof_min, frame_length, frame_offset):
         return _tof_to_time_offset(tof=tof_min,
                                    frame_length=frame_length,
                                    frame_offset=frame_offset)
 
-    def _tof(*, event_time_offset, time_offset_pivot, tof_min):
+    def _tof(*, event_time_offset, time_offset_pivot, tof_min, frame_length):
         return _time_offset_to_tof(time_offset=event_time_offset,
                                    time_offset_pivot=time_offset_pivot,
                                    tof_min=tof_min,
                                    frame_length=frame_length)
 
-    graph = Ltotal(scatter=True)
+    graph = {}
     graph['tof_min'] = _tof_min
     graph['time_offset_pivot'] = _time_offset_pivot
     graph['tof'] = _tof
+    return graph
+
+
+def make_frames(da, *, frame_length, frame_offset=None, lambda_min=None):
+    # TODO Should check if any of these exist, raise if they do
+    # TODO Do this on a shallow-copy
+    da.attrs['frame_length'] = frame_length
+    if frame_offset is not None:
+        da.attrs['frame_offset'] = frame_offset
+    if lambda_min is not None:
+        da.attrs['lambda_min'] = lambda_min
+    graph = Ltotal(scatter=True)
+    graph.update(to_tof())
+    if 'tof' in da.bins.meta or 'tof' in da.meta:
+        raise ValueError("Coordinate 'tof' already define in input data array. "
+                         "Expected input with 'event_time_offset' coordinate.")
     return da.transform_coords('tof', graph=graph)
