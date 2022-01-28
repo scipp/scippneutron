@@ -45,7 +45,7 @@ def make_frames(da, *, frame_length, frame_offset=None, lambda_min=None):
     """
     if 'tof' in da.bins.meta or 'tof' in da.meta:
         raise ValueError("Coordinate 'tof' already define in input data array. "
-                         "Expected input with 'time_offset' coordinate.")
+                         "Expected input with 'event_time_offset' coordinate.")
 
     def _tof_min(*, Ltotal):
         return _tof_from_wavelength(Ltotal=Ltotal, wavelength=lambda_min)
@@ -55,8 +55,8 @@ def make_frames(da, *, frame_length, frame_offset=None, lambda_min=None):
                                    frame_length=frame_length,
                                    frame_offset=frame_offset)
 
-    def _tof(*, time_offset, time_offset_pivot, tof_min):
-        return _time_offset_to_tof(time_offset=time_offset,
+    def _tof(*, event_time_offset, time_offset_pivot, tof_min):
+        return _time_offset_to_tof(time_offset=event_time_offset,
                                    time_offset_pivot=time_offset_pivot,
                                    tof_min=tof_min,
                                    frame_length=frame_length)
