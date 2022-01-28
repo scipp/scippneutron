@@ -59,7 +59,7 @@ def test_make_frames_no_shift_and_infinite_energy_yields_tof_equal_time_offset()
     assert sc.identical(da.bins.coords['tof'], da.bins.attrs['time_offset'])
 
 
-def test_make_frames_no_shift_and_no_events_below_lambda_min_yields_tof_equal_time_offset(
+def test_make_frames_no_shift_and_no_events_below_lambda_min_yields_tof_equal_time_offset(  # noqa #501
 ):
     da = array(frame_length=71.0 * sc.Unit('ms'))
     da.bins.coords['time_offset'] += sc.to_unit(10.0 * sc.Unit('ms'),
@@ -210,9 +210,11 @@ class Test_time_zero_to_detection_frame_index:
         assert time_zero_to_detection_frame_index(**params,
                                                   time_zero=300.0 * sc.Unit('ms')) == 0
 
-    def test_frame_stride_2_with_frame_offset_and_tof_min_yields_index_with_offset(self):
+    def test_frame_stride_2_with_frame_offset_and_tof_min_yields_index_with_offset(
+            self):
         frame_length = 100.0 * sc.Unit('ms')
-        # Given frame_offset, fastest neutrons from source frame 0 arriving in forth frame...
+        # Given frame_offset, fastest neutrons from source frame 0 arriving in fourth
+        # frame...
         frame_offset = 110.0 * sc.Unit('ms')  # offset is 1 frame
         tof_min = 317 * sc.Unit('ms')  # offset is 3 frames
         params = dict(frame_length=frame_length,
