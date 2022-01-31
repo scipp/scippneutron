@@ -1,6 +1,7 @@
 import scipp as sc
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+from scippneutron.tof.frames import _tof_from_wavelength
 
 
 class Beamline:
@@ -73,17 +74,35 @@ class Beamline:
             self._ax.axvline(x=x, ls=ls)
             x += self._frame_length.value
 
-    def add_neutron_pulse(self, tof_min=160.0 * sc.Unit('ms')):
-        x0 = self._frame_offset
-        x1 = x0  # + self._pulse_length
-        x3 = x1 + tof_min + 0.95 * self._frame_length  # small gap
-        x4 = x0 + tof_min
-        y0 = 0
-        y1 = self._Lmax.value
-        x = sc.concat([x0, x1, x3, x4], 'x')
-        self._ax.fill(x.values, [y0, y0, y1, y1], alpha=0.3)
-        x += self._frame_length
-        self._ax.fill(x.values, [y0, y0, y1, y1], alpha=0.3)
+    def add_neutrons(self,
+                     *,
+                     lambda_min: sc.Variable,
+                     lambda_max: sc.Variable = None,
+                     Lmin: sc.Variable = 0.0 * sc.units.m,
+                     Lmax: sc.Variable,
+                     time_offset: sc.Variable):
+        """
+        :param lambda_min Minimum wavelength, defining fastest neutrons.
+        :param lambda_max Maximum wavelength, defining slowest neutrons. If lambda_max
+            is None (the default) it is set such that there is no frame overlap at Lmax.
+        :param time_offset Offset time at which neutrons are emitted.
+        """
+        tof_min = _tof_from_wavelength(wavelength=lambda_min,
+                                       Ltotal=Lmax - Lmin).to(unit=self._time_unit)
+        if lambda_max is None:
+            tof_max = tof_min + 0.95 * self._frame_length  # small 5% gap
+        else:
+            tof_max = _tof_from_wavelength(wavelength=lambda_max,
+                                           Ltotal=Lmax - Lmin).to(unit=self._time_unit)
+        time_offset = time_offset.to(unit=self._time_unit)
+        t0 = time_offset
+        tmin = t0 + tof_min
+        tmax = t0 + tof_max
+        t = sc.concat([t0, t0, tmax, tmin], 't')
+        L = sc.concat([Lmin, Lmin, Lmax, Lmax], 'L')
+        self._ax.fill(t.values, L.values, alpha=0.3)
+        t += self._frame_length
+        self._ax.fill(t.values, L.values, alpha=0.3)
 
     def add_detector(self, *, distance, name='detector'):
         # TODO This could accept a list of positions and plot a rectangle from min to
@@ -102,10 +121,11 @@ class Beamline:
 
 def time_distance_diagram(tmax=300 * sc.Unit('ms')):
     fig, ax = plt.subplots(1, 1)
+    frame_offset = 1.5 * sc.Unit('ms')
     beamline = Beamline(ax,
                         tmax=tmax,
                         Lmax=40.0 * sc.Unit('m'),
-                        frame_offset=1.5 * sc.Unit('ms'))
+                        frame_offset=frame_offset)
     beamline.add_event_time_zero()
     beamline.add_source_pulse()
     beamline.add_sample(distance=20.0 * sc.Unit('m'))
@@ -113,7 +133,6 @@ def time_distance_diagram(tmax=300 * sc.Unit('ms')):
     det2 = 40.0 * sc.Unit('m')
     beamline.add_detector(distance=det1, name='detector1')
     beamline.add_detector(distance=det2, name='detector2')
-    beamline.add_neutron_pulse()
     beamline.add_annotations()
     props = dict(arrowstyle='-|>')
     ax.annotate(r'$T_0^{i+1}+t_{\mathrm{pivot}}(\mathrm{det1})$',
@@ -124,5 +143,8 @@ def time_distance_diagram(tmax=300 * sc.Unit('ms')):
                 xy=(230, det2.value),
                 xytext=(220, 15),
                 arrowprops=props)
+    beamline.add_neutrons(Lmax=1.1 * det2,
+                          lambda_min=15.0 * sc.units.angstrom,
+                          time_offset=frame_offset)
 
     return fig
