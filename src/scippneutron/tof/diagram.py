@@ -5,13 +5,11 @@ from scippneutron.tof.frames import _tof_from_wavelength
 
 
 class TimeDistanceDiagram:
-    def __init__(self, ax, *, npulse=2, tmax, Lmax, frame_rate=14.0 * sc.Unit('Hz')):
+    def __init__(self, ax, *, tmax, frame_rate=14.0 * sc.Unit('Hz')):
         self._ax = ax
-        self._npulse = npulse
         self._time_unit = sc.Unit('ms')
         self._frame_length = (1.0 / frame_rate).to(unit=self._time_unit)
         self._tmax = tmax.to(unit=self._time_unit)
-        self._Lmax = Lmax.to(unit='m')
         self._ax.set_xlabel(f"Time [{self._time_unit}]")
         self._ax.set_ylabel("Distance [m]")
 
@@ -35,15 +33,8 @@ class TimeDistanceDiagram:
                       ha="left",
                       va="top",
                       fontsize=6)
-        for i in range(self._npulse):
-            rect = Rectangle((x0, y0),
-                             x1,
-                             -psize,
-                             lw=1,
-                             fc='orange',
-                             ec='k',
-                             hatch="////",
-                             zorder=10)
+        while x0 < self._tmax.value:
+            rect = Rectangle((x0, y0), x1, -psize, lw=1, fc='orange', ec='k')
             self._ax.add_patch(rect)
             x0 += self._frame_length.value
 
@@ -60,7 +51,8 @@ class TimeDistanceDiagram:
                      lambda_max: sc.Variable = None,
                      Lmin: sc.Variable = 0.0 * sc.units.m,
                      Lmax: sc.Variable,
-                     time_offset: sc.Variable):
+                     time_offset: sc.Variable,
+                     frames=2):
         """
         Draw a wavelength band to depict propagation of neutrons. Neutrons are assumed
         to be emitted from a single point, i.e., no resolution effects are taken into
@@ -75,6 +67,7 @@ class TimeDistanceDiagram:
         :param lambda_max Maximum wavelength, defining slowest neutrons. If lambda_max
             is None (the default) it is set such that there is no frame overlap at Lmax.
         :param time_offset Offset time at which neutrons are emitted.
+        :param frames The number of frames that should be drawn.
         """
         tof_min = self.to_time(
             _tof_from_wavelength(wavelength=lambda_min, Ltotal=Lmax - Lmin))
@@ -89,7 +82,7 @@ class TimeDistanceDiagram:
         tmax = t0 + tof_max
         t = sc.concat([t0, t0, tmax, tmin], 't')
         L = sc.concat([Lmin, Lmin, Lmax, Lmax], 'L')
-        for i in range(self._npulse):
+        for i in range(frames):
             self._ax.fill(t.values, L.values, alpha=0.3)
             t += self._frame_length
 
@@ -110,7 +103,7 @@ class TimeDistanceDiagram:
 
 def time_distance_diagram(tmax=300 * sc.Unit('ms')):
     fig, ax = plt.subplots(1, 1)
-    diagram = TimeDistanceDiagram(ax, tmax=tmax, Lmax=40.0 * sc.Unit('m'))
+    diagram = TimeDistanceDiagram(ax, tmax=tmax)
     diagram.add_event_time_zero()
     diagram.add_source_pulse()
     diagram.add_sample(distance=20.0 * sc.Unit('m'))
