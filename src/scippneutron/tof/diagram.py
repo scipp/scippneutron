@@ -4,38 +4,26 @@ from matplotlib.patches import Rectangle
 from scippneutron.tof.frames import _tof_from_wavelength
 
 
-class Beamline:
-    def __init__(self,
-                 ax,
-                 *,
-                 tmax,
-                 Lmax,
-                 frame_rate=14.0 * sc.Unit('Hz'),
-                 frame_offset=0.0 * sc.Unit('ms')):
+class TimeDistanceDiagram:
+    def __init__(self, ax, *, npulse=2, tmax, Lmax, frame_rate=14.0 * sc.Unit('Hz')):
         self._ax = ax
+        self._npulse = npulse,
         self._time_unit = sc.Unit('ms')
         self._frame_length = (1.0 / frame_rate).to(unit=self._time_unit)
         self._tmax = tmax.to(unit=self._time_unit)
         self._Lmax = Lmax.to(unit='m')
-        self._frame_offset = frame_offset.to(unit=self._time_unit)
         self._ax.set_xlabel(f"Time [{self._time_unit}]")
         self._ax.set_ylabel("Distance [m]")
 
-    def add_annotations(self):
-        props = dict(arrowstyle='-|>')
-        x0 = self._frame_length
-        x1 = self._frame_length + self._frame_offset
-        self._ax.annotate(r'$T_0^i$',
-                          xy=(x0.value, 0),
-                          xytext=(x0.value - 10, 5),
-                          arrowprops=props)
-        self._ax.annotate(r'$T_0^i+\Delta T_0$',
-                          xy=(x1.value, 0),
-                          xytext=(x1.value + 3, 3),
-                          arrowprops=props)
+    @property
+    def frame_length(self):
+        return self._frame_length
+
+    def to_time(self, time):
+        return time.to(unit=self._time_unit)
 
     def add_source_pulse(self, pulse_length=3.0 * sc.Unit('ms')):
-        self._pulse_length = pulse_length.to(unit=self._time_unit)
+        self._pulse_length = self.to_time(pulse_length)
         # Define and draw source pulse
         x0 = 0.0
         x1 = self._pulse_length.value
@@ -82,27 +70,36 @@ class Beamline:
                      Lmax: sc.Variable,
                      time_offset: sc.Variable):
         """
+        Draw a wavelength band to depict propagation of neutrons. Neutrons are assumed
+        to be emitted from a single point, i.e., no resolution effects are taken into
+        account.
+
+        :param Lmin Distance where neutrons are "emitted", such as the source pulse or
+            a chopper. The default is at 0.0, i.e., the source position.
+        :param Lmax Distance where propagation of neutrons stops. This is typically set
+            to the last detector (or after), but could be set to a chopper distance if
+            a chopper extracts a smaller wavelength band.
         :param lambda_min Minimum wavelength, defining fastest neutrons.
         :param lambda_max Maximum wavelength, defining slowest neutrons. If lambda_max
             is None (the default) it is set such that there is no frame overlap at Lmax.
         :param time_offset Offset time at which neutrons are emitted.
         """
-        tof_min = _tof_from_wavelength(wavelength=lambda_min,
-                                       Ltotal=Lmax - Lmin).to(unit=self._time_unit)
+        tof_min = self.to_time(
+            _tof_from_wavelength(wavelength=lambda_min, Ltotal=Lmax - Lmin))
         if lambda_max is None:
             tof_max = tof_min + 0.95 * self._frame_length  # small 5% gap
         else:
-            tof_max = _tof_from_wavelength(wavelength=lambda_max,
-                                           Ltotal=Lmax - Lmin).to(unit=self._time_unit)
-        time_offset = time_offset.to(unit=self._time_unit)
+            tof_max = self.to_time(
+                _tof_from_wavelength(wavelength=lambda_max, Ltotal=Lmax - Lmin))
+        time_offset = self.to_time(time_offset)
         t0 = time_offset
         tmin = t0 + tof_min
         tmax = t0 + tof_max
         t = sc.concat([t0, t0, tmax, tmin], 't')
         L = sc.concat([Lmin, Lmin, Lmax, Lmax], 'L')
-        self._ax.fill(t.values, L.values, alpha=0.3)
-        t += self._frame_length
-        self._ax.fill(t.values, L.values, alpha=0.3)
+        for i in range(self._npulse):
+            self._ax.fill(t.values, L.values, alpha=0.3)
+            t += self._frame_length
 
     def add_detector(self, *, distance, name='detector'):
         # TODO This could accept a list of positions and plot a rectangle from min to
@@ -121,20 +118,27 @@ class Beamline:
 
 def time_distance_diagram(tmax=300 * sc.Unit('ms')):
     fig, ax = plt.subplots(1, 1)
-    frame_offset = 1.5 * sc.Unit('ms')
-    beamline = Beamline(ax,
-                        tmax=tmax,
-                        Lmax=40.0 * sc.Unit('m'),
-                        frame_offset=frame_offset)
-    beamline.add_event_time_zero()
-    beamline.add_source_pulse()
-    beamline.add_sample(distance=20.0 * sc.Unit('m'))
+    diagram = TimeDistanceDiagram(ax, tmax=tmax, Lmax=40.0 * sc.Unit('m'))
+    diagram.add_event_time_zero()
+    diagram.add_source_pulse()
+    diagram.add_sample(distance=20.0 * sc.Unit('m'))
     det1 = 30.0 * sc.Unit('m')
     det2 = 40.0 * sc.Unit('m')
-    beamline.add_detector(distance=det1, name='detector1')
-    beamline.add_detector(distance=det2, name='detector2')
-    beamline.add_annotations()
+    diagram.add_detector(distance=det1, name='detector1')
+    diagram.add_detector(distance=det2, name='detector2')
+
     props = dict(arrowstyle='-|>')
+    frame_offset = diagram.to_time(1.5 * sc.Unit('ms'))
+    x0 = diagram.frame_length
+    x1 = diagram.frame_length + frame_offset
+    ax.annotate(r'$T_0^i$',
+                xy=(x0.value, 0),
+                xytext=(x0.value - 10, 5),
+                arrowprops=props)
+    ax.annotate(r'$T_0^i+\Delta T_0$',
+                xy=(x1.value, 0),
+                xytext=(x1.value + 3, 3),
+                arrowprops=props)
     ax.annotate(r'$T_0^{i+1}+t_{\mathrm{pivot}}(\mathrm{det1})$',
                 xy=(191, det1.value),
                 xytext=(150, 10),
@@ -143,8 +147,8 @@ def time_distance_diagram(tmax=300 * sc.Unit('ms')):
                 xy=(230, det2.value),
                 xytext=(220, 15),
                 arrowprops=props)
-    beamline.add_neutrons(Lmax=1.1 * det2,
-                          lambda_min=15.0 * sc.units.angstrom,
-                          time_offset=frame_offset)
+    diagram.add_neutrons(Lmax=1.1 * det2,
+                         lambda_min=15.0 * sc.units.angstrom,
+                         time_offset=frame_offset)
 
     return fig
