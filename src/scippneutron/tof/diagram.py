@@ -7,7 +7,7 @@ from scippneutron.tof.frames import _tof_from_wavelength
 class TimeDistanceDiagram:
     def __init__(self, ax, *, npulse=2, tmax, Lmax, frame_rate=14.0 * sc.Unit('Hz')):
         self._ax = ax
-        self._npulse = npulse,
+        self._npulse = npulse
         self._time_unit = sc.Unit('ms')
         self._frame_length = (1.0 / frame_rate).to(unit=self._time_unit)
         self._tmax = tmax.to(unit=self._time_unit)
@@ -29,31 +29,23 @@ class TimeDistanceDiagram:
         x1 = self._pulse_length.value
         y0 = 0.0
         psize = 1.0
-        rect = Rectangle((x0, y0),
-                         x1,
-                         -psize,
-                         lw=1,
-                         fc='orange',
-                         ec='k',
-                         hatch="////",
-                         zorder=10)
-        self._ax.add_patch(rect)
-        x0 += self._frame_length.value
-        rect = Rectangle((x0, y0),
-                         x1,
-                         -psize,
-                         lw=1,
-                         fc='orange',
-                         ec='k',
-                         hatch="////",
-                         zorder=10)
-        self._ax.add_patch(rect)
         self._ax.text(x0,
                       -psize,
                       f"Source pulse ({pulse_length.value} {pulse_length.unit})",
                       ha="left",
                       va="top",
                       fontsize=6)
+        for i in range(self._npulse):
+            rect = Rectangle((x0, y0),
+                             x1,
+                             -psize,
+                             lw=1,
+                             fc='orange',
+                             ec='k',
+                             hatch="////",
+                             zorder=10)
+            self._ax.add_patch(rect)
+            x0 += self._frame_length.value
 
     def add_event_time_zero(self):
         ls = 'dotted'
