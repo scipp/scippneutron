@@ -1,5 +1,4 @@
 import scipp as sc
-import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from scippneutron.tof.frames import _tof_from_wavelength
 
@@ -10,8 +9,8 @@ class TimeDistanceDiagram:
         self._time_unit = sc.Unit('ms')
         self._frame_length = (1.0 / frame_rate).to(unit=self._time_unit)
         self._tmax = tmax.to(unit=self._time_unit)
-        self._ax.set_xlabel(f"Time [{self._time_unit}]")
-        self._ax.set_ylabel("Distance [m]")
+        self._ax.set_xlabel(f"time [{self._time_unit}]")
+        self._ax.set_ylabel("distance [m]")
 
     @property
     def frame_length(self):
@@ -21,29 +20,20 @@ class TimeDistanceDiagram:
         return time.to(unit=self._time_unit)
 
     def add_source_pulse(self, pulse_length=3.0 * sc.Unit('ms')):
-        self._pulse_length = self.to_time(pulse_length)
-        # Define and draw source pulse
-        x0 = 0.0
-        x1 = self._pulse_length.value
-        y0 = 0.0
-        psize = 1.0
-        self._ax.text(x0,
-                      -psize,
+        ls = 'dotted'
+        t0 = 0.0
+        t1 = self.to_time(pulse_length).value
+        self._ax.text(t0,
+                      -2,
                       f"Source pulse ({pulse_length.value} {pulse_length.unit})",
                       ha="left",
                       va="top",
                       fontsize=6)
-        while x0 < self._tmax.value:
-            rect = Rectangle((x0, y0), x1, -psize, lw=1, fc='orange', ec='k')
+        while t0 < self._tmax.value:
+            rect = Rectangle((t0, 0), t1, -1, lw=1, fc='orange', ec='k')
             self._ax.add_patch(rect)
-            x0 += self._frame_length.value
-
-    def add_event_time_zero(self):
-        ls = 'dotted'
-        x = 0
-        while x < self._tmax.value:
-            self._ax.axvline(x=x, ls=ls)
-            x += self._frame_length.value
+            self._ax.axvline(x=t0, ls=ls)
+            t0 += self._frame_length.value
 
     def add_neutrons(self,
                      *,
@@ -99,41 +89,3 @@ class TimeDistanceDiagram:
                       lw=3,
                       color='green')
         self._ax.text(0.0, distance.value, 'sample', va="bottom", ha="left")
-
-
-def time_distance_diagram(tmax=300 * sc.Unit('ms')):
-    fig, ax = plt.subplots(1, 1)
-    diagram = TimeDistanceDiagram(ax, tmax=tmax)
-    diagram.add_event_time_zero()
-    diagram.add_source_pulse()
-    diagram.add_sample(distance=20.0 * sc.Unit('m'))
-    det1 = 30.0 * sc.Unit('m')
-    det2 = 40.0 * sc.Unit('m')
-    diagram.add_detector(distance=det1, name='detector1')
-    diagram.add_detector(distance=det2, name='detector2')
-
-    props = dict(arrowstyle='-|>')
-    frame_offset = diagram.to_time(1.5 * sc.Unit('ms'))
-    x0 = diagram.frame_length
-    x1 = diagram.frame_length + frame_offset
-    ax.annotate(r'$T_0^i$',
-                xy=(x0.value, 0),
-                xytext=(x0.value - 10, 5),
-                arrowprops=props)
-    ax.annotate(r'$T_0^i+\Delta T_0$',
-                xy=(x1.value, 0),
-                xytext=(x1.value + 3, 3),
-                arrowprops=props)
-    ax.annotate(r'$T_0^{i+1}+t_{\mathrm{pivot}}(\mathrm{det1})$',
-                xy=(191, det1.value),
-                xytext=(150, 10),
-                arrowprops=props)
-    ax.annotate(r'$T_0^{i+2}+t_{\mathrm{pivot}}(\mathrm{det2})$',
-                xy=(230, det2.value),
-                xytext=(220, 15),
-                arrowprops=props)
-    diagram.add_neutrons(Lmax=1.1 * det2,
-                         lambda_min=15.0 * sc.units.angstrom,
-                         time_offset=frame_offset)
-
-    return fig
