@@ -35,6 +35,16 @@ class TimeDistanceDiagram:
             self._ax.axvline(x=t0, ls=ls)
             t0 += self._frame_length.value
 
+    def add_neutron(self, *, wavelength: sc.Variable, L: sc.Variable, label=None):
+        tof = self.to_time(_tof_from_wavelength(wavelength=wavelength, Ltotal=L))
+        self._ax.plot([0, tof.value], [0, L.value],
+                      marker='',
+                      color='black',
+                      ls='solid',
+                      lw=0.7)
+        if label is not None:
+            self._ax.text(tof.value, L.value, label, ha="center", va="bottom")
+
     def add_neutrons(self,
                      *,
                      lambda_min: sc.Variable,
@@ -42,6 +52,7 @@ class TimeDistanceDiagram:
                      Lmin: sc.Variable = 0.0 * sc.units.m,
                      Lmax: sc.Variable,
                      time_offset: sc.Variable,
+                     stride=1,
                      frames=2):
         """
         Draw a wavelength band to depict propagation of neutrons. Neutrons are assumed
@@ -62,7 +73,7 @@ class TimeDistanceDiagram:
         tof_min = self.to_time(
             _tof_from_wavelength(wavelength=lambda_min, Ltotal=Lmax - Lmin))
         if lambda_max is None:
-            tof_max = tof_min + 0.95 * self._frame_length  # small 5% gap
+            tof_max = tof_min + (stride - 1 + 0.95) * self._frame_length  # small 5% gap
         else:
             tof_max = self.to_time(
                 _tof_from_wavelength(wavelength=lambda_max, Ltotal=Lmax - Lmin))
@@ -74,7 +85,7 @@ class TimeDistanceDiagram:
         L = sc.concat([Lmin, Lmin, Lmax, Lmax], 'L')
         for i in range(frames):
             self._ax.fill(t.values, L.values, alpha=0.3)
-            t += self._frame_length
+            t += stride * self._frame_length
 
     def add_detector(self, *, distance, name='detector'):
         # TODO This could accept a list of positions and plot a rectangle from min to
