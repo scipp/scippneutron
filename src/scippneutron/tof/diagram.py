@@ -35,9 +35,15 @@ class TimeDistanceDiagram:
             self._ax.axvline(x=t0, ls=ls)
             t0 += self._frame_length.value
 
-    def add_neutron(self, *, wavelength: sc.Variable, L: sc.Variable, label=None):
+    def add_neutron(self,
+                    *,
+                    time_offset: sc.Variable,
+                    wavelength: sc.Variable,
+                    L: sc.Variable,
+                    label=None):
         tof = self.to_time(_tof_from_wavelength(wavelength=wavelength, Ltotal=L))
-        self._ax.plot([0, tof.value], [0, L.value],
+        t0 = self.to_time(time_offset).value
+        self._ax.plot([t0, tof.value], [0, L.value],
                       marker='',
                       color='black',
                       ls='solid',

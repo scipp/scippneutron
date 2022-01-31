@@ -17,6 +17,7 @@ def default_frame_diagram(tmax=300 * sc.Unit('ms')):
                          lambda_min=16.0 * sc.units.angstrom,
                          time_offset=frame_offset)
     diagram.add_neutron(L=det1,
+                        time_offset=frame_offset,
                         wavelength=20.0 * sc.units.angstrom,
                         label=r'$T_0^{i+1}+\Delta t$')
 
