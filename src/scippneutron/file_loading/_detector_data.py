@@ -8,10 +8,12 @@ import numpy as np
 import scipp
 
 from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
+from ._common import to_plain_index
 import scipp as sc
 from warnings import warn
 from ._transformations import get_full_transformation_matrix
 from ._nexus import LoadFromNexus
+from .nxobject import NXobject, ScippIndex
 
 _bank_dimension = "bank"
 _detector_dimension = "detector_id"
@@ -35,7 +37,6 @@ def _check_for_missing_fields(group: Group, nexus: LoadFromNexus):
     required_fields = (
         "event_time_zero",
         "event_index",
-        "event_id",
         "event_time_offset",
     )
     for field in required_fields:
@@ -97,8 +98,10 @@ def _load_pixel_positions(detector_group: Group, detector_ids_size: int,
         transforms = get_full_transformation_matrix(detector_group, nexus)
     else:
         transforms = None
-
-    return data, transforms
+    if isinstance(data, sc.DataArray):
+        return data.data, transforms
+    else:
+        return data, transforms
 
 
 @dataclass
@@ -142,12 +145,13 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
                         })
 
 
-def _load_pulse_times(group: Group, nexus: LoadFromNexus) -> sc.Variable:
+def _load_event_time_zero(group: Group, nexus: LoadFromNexus, index=...) -> sc.Variable:
     time_zero_group = "event_time_zero"
 
     event_time_zero = nexus.load_dataset(group,
                                          time_zero_group,
-                                         dimensions=[_pulse_dimension])
+                                         dimensions=[_pulse_dimension],
+                                         index=index)
 
     try:
         pulse_times = sc.to_unit(event_time_zero, sc.units.ns, copy=False)
@@ -195,65 +199,125 @@ def _load_detector(group: Group, nexus: LoadFromNexus) -> DetectorData:
                         pixel_position_transforms=pixel_position_transforms)
 
 
-def _load_event_group(group: Group, nexus: LoadFromNexus, detector_data: DetectorData,
-                      quiet: bool) -> DetectorData:
-    _check_for_missing_fields(group, nexus)
+class NXevent_data(NXobject):
+    @property
+    def shape(self) -> List[int]:
+        return self._loader.get_shape(
+            self._loader.get_dataset_from_group(self._group, "event_index"))
 
-    event_id = nexus.load_dataset(group, "event_id", [_event_dimension])
-    number_of_event_ids = event_id.sizes[_event_dimension]
-    event_index = nexus.load_dataset_from_group_as_numpy_array(group, "event_index")
+    @property
+    def dims(self) -> List[str]:
+        return [_pulse_dimension]
+
+    @property
+    def unit(self) -> None:
+        # Binned data, bins do not have a unit
+        return None
+
+    def _getitem(self, index: ScippIndex) -> sc.DataArray:
+        return _load_event_group(self._group, self._loader, quiet=True, select=index)
+
+
+def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
+                      select=tuple()) -> DetectorData:
+    _check_for_missing_fields(group, nexus)
+    index = to_plain_index([_pulse_dimension], select)
+
+    def shape(name):
+        return nexus.get_shape(nexus.get_dataset_from_group(group, name))
+
+    max_index = shape("event_index")[0]
+    single = False
+    if index is Ellipsis or index == tuple():
+        last_loaded = False
+    else:
+        if isinstance(index, int):
+            single = True
+            start, stop, _ = slice(index, None).indices(max_index)
+            if start == stop:
+                raise IndexError('Index {start} is out of range')
+            index = slice(start, start + 1)
+        start, stop, stride = index.indices(max_index)
+        if stop + stride > max_index:
+            last_loaded = False
+        else:
+            stop += stride
+            last_loaded = True
+        index = slice(start, stop, stride)
+
+    event_index = nexus.load_dataset_from_group_as_numpy_array(
+        group, "event_index", index)
+    event_time_zero = _load_event_time_zero(group, nexus, index)
+
+    num_event = shape("event_time_offset")[0]
     # Some files contain uint64 "max" indices, which turn into negatives during
     # conversion to int64. This is a hack to get arround this.
-    event_index[event_index < 0] = number_of_event_ids
+    event_index[event_index < 0] = num_event
 
-    event_time_offset = nexus.load_dataset(group, "event_time_offset",
-                                           [_event_dimension])
+    if len(event_index) > 0:
+        event_select = slice(event_index[0],
+                             event_index[-1] if last_loaded else num_event)
+    else:
+        event_select = slice(None)
+
+    if nexus.dataset_in_group(group, "event_id")[0]:
+        event_id = nexus.load_dataset(group,
+                                      "event_id", [_event_dimension],
+                                      index=event_select)
+    else:
+        event_id = None
+
+    event_time_offset = nexus.load_dataset(group,
+                                           "event_time_offset", [_event_dimension],
+                                           index=event_select)
 
     # Weights are not stored in NeXus, so use 1s
     weights = sc.ones(dims=[_event_dimension],
-                      shape=event_id.shape,
+                      shape=event_time_offset.shape,
                       unit='counts',
                       dtype=np.float32,
                       with_variances=True)
 
-    events = sc.DataArray(data=weights,
-                          coords={
-                              _time_of_flight: event_time_offset,
-                              _detector_dimension: event_id,
-                          })
+    events = sc.DataArray(data=weights, coords={'event_time_offset': event_time_offset})
+    if event_id is not None:
+        events.coords['event_id'] = event_id
 
-    _check_event_ids_and_det_number_types_valid(
-        event_id.dtype if detector_data.detector_ids is None else
-        detector_data.detector_ids.dtype, event_id.dtype)
+    if not last_loaded:
+        event_index = np.append(event_index, num_event)
+    else:
+        # Not a bin-edge coord, all events in bin are associated with same (previous)
+        # pulse time value
+        event_time_zero = event_time_zero[:-1]
 
     event_index = sc.array(dims=[_pulse_dimension],
                            values=event_index,
                            dtype=sc.DType.int64)
-    pulse_times = _load_pulse_times(group, nexus)
 
-    begins = event_index
+    event_index -= event_index.min()
+
     # There is some variation in the last recorded event_index in files from different
     # institutions. We try to make sure here that it is what would be the first index of
     # the next pulse. In other words, ensure that event_index includes the bin edge for
     # the last pulse.
-    ends = sc.concat(
-        [event_index[_pulse_dimension, 1:],
-         sc.scalar(number_of_event_ids)], _pulse_dimension)
+    if single:
+        begins = event_index[_pulse_dimension, 0]
+        ends = event_index[_pulse_dimension, 1]
+        event_time_zero = event_time_zero[_pulse_dimension, 0]
+    else:
+        begins = event_index[_pulse_dimension, :-1]
+        ends = event_index[_pulse_dimension, 1:]
 
     try:
         binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
     except sc.SliceError:
         raise BadSource(f"Event index in NXEvent at {group.name}/event_index was not"
-                        f"ordered. The index must be ordered to load pulse times.")
-
-    detector_data.event_data = sc.DataArray(data=binned,
-                                            coords={"pulse_time": pulse_times})
+                        f" ordered. The index must be ordered to load pulse times.")
 
     if not quiet:
-        print(f"Loaded event data from "
-              f"{group.name} containing {number_of_event_ids} events")
+        print(f"Loaded {len(event_time_offset)} events from "
+              f"{nexus.get_name(group)} containing {num_event} events")
 
-    return detector_data
+    return sc.DataArray(data=binned, coords={'event_time_zero': event_time_zero})
 
 
 def _check_event_ids_and_det_number_types_valid(detector_id_type: Any,
@@ -402,6 +466,14 @@ def _create_empty_event_data(detectors: List[DetectorData]):
             data.event_data = empty_events
 
 
+def _event_data_to_canonical_naming(da: sc.DataArray) -> None:
+    """Map coord names to canonical naming as used in Mantid."""
+    if 'event_id' in da.bins.coords:
+        da.bins.coords[_detector_dimension] = da.bins.coords.pop('event_id')
+    da.bins.coords[_time_of_flight] = da.bins.coords.pop('event_time_offset')
+    da.coords[_pulse_time] = da.coords.pop('event_time_zero')
+
+
 def _load_data_from_each_nx_event_data(detector_data: Dict,
                                        event_data_groups: List[Group],
                                        nexus: LoadFromNexus,
@@ -410,9 +482,18 @@ def _load_data_from_each_nx_event_data(detector_data: Dict,
     for group in event_data_groups:
         parent_path = "/".join(group.name.split("/")[:-1])
         try:
-            new_event_data = _load_event_group(
-                group, nexus, detector_data.get(parent_path, DetectorData()), quiet)
-            event_data.append(new_event_data)
+            new_detector_data = detector_data.get(parent_path, DetectorData())
+            new_event_data = _load_event_group(group, nexus, quiet)
+            _event_data_to_canonical_naming(new_event_data)
+
+            event_id_dtype = new_event_data.bins.constituents['data'].coords[
+                _detector_dimension].dtype
+            _check_event_ids_and_det_number_types_valid(
+                event_id_dtype if new_detector_data.detector_ids is None else
+                new_detector_data.detector_ids.dtype, event_id_dtype)
+            new_detector_data.event_data = new_event_data
+
+            event_data.append(new_detector_data)
             # Only pop from dictionary if we did not raise an
             # exception when loading events
             detector_data.pop(parent_path, DetectorData())

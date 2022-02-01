@@ -3,6 +3,7 @@
 import datetime
 import pytest
 import scipp as sc
+import platform
 import warnings
 from typing import List, Tuple, Optional, Union
 import numpy as np
@@ -12,6 +13,12 @@ from scippneutron.data_streaming._consumer_type import ConsumerType
 from scippneutron.data_streaming._warnings import (UnknownFlatbufferIdWarning,
                                                    BufferSizeWarning)
 from cmath import isclose
+
+if platform.system() == "Darwin":
+    pytest.skip(
+        "Streaming tests disabled on MacOS because they tend to hang"
+        " indefinitely for unknown reasons",
+        allow_module_level=True)
 
 try:
     import streaming_data_types  # noqa: F401

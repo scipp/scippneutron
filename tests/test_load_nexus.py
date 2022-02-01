@@ -1277,37 +1277,20 @@ def test_loads_pixel_positions_with_transformations(load_function: Callable):
         [x_pixel_offset_1, y_pixel_offset_1, z_pixel_offset_1]).T
     assert np.allclose(loaded_data.coords['base_position'].values, expected_pixel_positions)
 
-    expected_transforms = sc.DataArray(
-                            data=sc.spatial.affine_transforms(
-                                dims=["value"],
+    expected_transforms = sc.spatial.affine_transform(
                                 unit=sc.units.m,
-                                values=[[[1, 0, 0, 0],
-                                        [0, 1, 0, 0],
-                                        [0, 0, 1, 0.57],
-                                        [0, 0, 0, 1]],
-                                        [[1, 0, 0, 0],
-                                         [0, 1, 0, 0],
-                                         [0, 0, 1, 0.57],
-                                         [0, 0, 0, 1]]
-                                        ]),
-                            coords={
-                                "time": sc.array(dims=["value"],
-                                                 unit=sc.units.s,
-                                                 values=[0., 0.])
-                            }
-                        )
+                                value=[[1, 0, 0, 0],
+                                       [0, 1, 0, 0],
+                                       [0, 0, 1, 0.57],
+                                       [0, 0, 0, 1]])
 
     assert np.allclose(
-        loaded_data.attrs['position_transformations'].value.values,
-        expected_transforms.values
-    )
-    assert sc.identical(
-        loaded_data.attrs['position_transformations'].value.coords["time"],
-        expected_transforms.coords["time"]
+        loaded_data.attrs['position_transformations'].value,
+        expected_transforms.value
     )
 
     assert np.allclose(
-        (loaded_data.attrs["position_transformations"].value["value", 0] *
+        (loaded_data.attrs["position_transformations"].value *
          loaded_data.coords["base_position"]["detector_id", 0]).values,
         [0.1, 0.1, 0.67],
     )
@@ -1594,7 +1577,7 @@ def test_nexus_file_with_invalid_nxlog_time_units_warns_and_skips_log(
             time_units="s",
             start_time="1970-01-01T00:00:00Z"))
 
-    with pytest.warns(UserWarning, match="The units of time in the NXlog entry at "):
+    with pytest.warns(UserWarning, match="The units of time in the entry at "):
         loaded_data = load_function(builder)
 
         assert "test_log_1" not in loaded_data

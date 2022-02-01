@@ -7,8 +7,9 @@ import numpy as np
 import scipp as sc
 import scipp.spatial
 from ._common import Group
-from ._transformations import (get_position_from_transformations, TransformationError,
-                               get_full_transformation_matrix)
+from ._transformations import (TransformationError,
+                               get_full_transformation_matrix,
+                               get_translation_from_affine)
 from ._nexus import LoadFromNexus
 
 
@@ -50,18 +51,33 @@ def load_positions_of_components(groups: List[Group],
                 group, name, nx_class, nexus, default_position)
         except PositionError:
             continue
-        if len(groups) == 1:
-            _add_coord_to_loaded_data(f"{name}_base_position",
+
+        if len(groups) != 1:
+            name = nexus.get_name(group)
+
+        _add_coord_to_loaded_data(f"{name}_base_position",
+                                  data,
+                                  position,
+                                  unit=units,
+                                  dtype=sc.DType.vector3)
+        if transformation is None:
+            _add_coord_to_loaded_data(f"{name}_position",
                                       data,
                                       position,
                                       unit=units,
                                       dtype=sc.DType.vector3)
         else:
-            _add_coord_to_loaded_data(f"{nexus.get_name(group)}_base_position",
-                                      data,
-                                      position,
-                                      unit=units,
-                                      dtype=sc.DType.vector3)
+            if isinstance(transformation, sc.Variable):
+                # _add_coord_to_loaded_data(f"{name}_position",
+                #                       data,
+                #                       position,
+                #                       unit=units,
+                #                       dtype=sc.DType.vector3)
+                data[f"{name}_position"] = transformation * sc.vector(value=position,
+                                                                      unit=units)
+            else:
+                pass
+                # TODO: add transformation
 
 
 def _get_position_of_component(
@@ -73,21 +89,15 @@ def _get_position_of_component(
     depends_on_found, _ = nexus.dataset_in_group(group, "depends_on")
     distance_found, _ = nexus.dataset_in_group(group, "distance")
 
-    transformations = sc.DataArray(
-        data=sc.spatial.translations(dims=["values"],
-                                     unit=sc.units.m,
-                                     values=[[0, 0, 0]]),
-        coords={
-            "time": sc.array(dims=["values"],
-                             values=[0],
-                             unit=sc.units.s)
-        }
-    )
+    transformations = sc.spatial.translation(unit=sc.units.m, value=[0, 0, 0])
 
     if depends_on_found:
         try:
-            transformations = get_full_transformation_matrix(group, nexus)
-            base_position = np.array([0, 0, 0])
+            translation = get_translation_from_affine(group, nexus)
+            if isinstance(translation, sc.Variable):
+                base_position = translation.value
+            else:
+                base_position = translation.data.values[0]
         except TransformationError as e:
             warn(f"Skipping loading {name} position due to error: {e}")
             raise PositionError
