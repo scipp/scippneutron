@@ -1277,16 +1277,19 @@ def test_loads_pixel_positions_with_transformations(load_function: Callable):
         [x_pixel_offset_1, y_pixel_offset_1, z_pixel_offset_1]).T
     assert np.allclose(loaded_data.coords['base_position'].values, expected_pixel_positions)
 
-    expected_transforms = sc.spatial.affine_transform(
+    expected_transform = sc.spatial.affine_transform(
                                 unit=sc.units.m,
                                 value=[[1, 0, 0, 0],
                                        [0, 1, 0, 0],
                                        [0, 0, 1, 0.57],
                                        [0, 0, 0, 1]])
 
+    # print(f"v1: {loaded_data.attrs['position_transformations'].value}")
+    # print(f"v2: {expected_transforms.value}")
+
     assert np.allclose(
-        loaded_data.attrs['position_transformations'].value,
-        expected_transforms.value
+        loaded_data.attrs['position_transformations'].value.values,
+        expected_transform.values
     )
 
     assert np.allclose(

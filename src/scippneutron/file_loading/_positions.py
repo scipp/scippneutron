@@ -68,11 +68,6 @@ def load_positions_of_components(groups: List[Group],
                                       dtype=sc.DType.vector3)
         else:
             if isinstance(transformation, sc.Variable):
-                # _add_coord_to_loaded_data(f"{name}_position",
-                #                       data,
-                #                       position,
-                #                       unit=units,
-                #                       dtype=sc.DType.vector3)
                 data[f"{name}_position"] = transformation * sc.vector(value=position,
                                                                       unit=units)
             else:
