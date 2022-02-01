@@ -2,7 +2,7 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 
 from _warnings import warn
-from typing import List, Optional, Tuple, Any
+from typing import List, Optional, Tuple, Any, Union
 import numpy as np
 import scipp as sc
 import scipp.spatial
@@ -32,11 +32,8 @@ def load_position_of_unique_component(groups: List[Group],
             groups[0], name, nx_class, nexus, default_position)
     except PositionError:
         return
-    _add_coord_to_loaded_data(f"{name}_base_position",
-                              data,
-                              position,
-                              unit=units,
-                              dtype=sc.DType.vector3)
+
+    _add_position_to_data(name, data, transformations, position, units)
 
 
 def load_positions_of_components(groups: List[Group],
@@ -55,24 +52,38 @@ def load_positions_of_components(groups: List[Group],
         if len(groups) != 1:
             name = nexus.get_name(group)
 
-        _add_coord_to_loaded_data(f"{name}_base_position",
-                                  data,
-                                  position,
+        _add_position_to_data(name, data, transformation, position, units)
+
+
+def _add_position_to_data(name: str,
+                          data: sc.Variable,
+                          transformation: Optional[Union[sc.Variable, sc.DataArray]],
+                          position: np.ndarray,
+                          units: sc.Unit):
+
+    _add_coord_to_loaded_data(attr_name=f"{name}_base_position",
+                              data=data,
+                              value=position,
+                              unit=units,
+                              dtype=sc.DType.vector3)
+
+    if transformation is None:
+        _add_coord_to_loaded_data(attr_name=f"{name}_position",
+                                  data=data,
+                                  value=position,
                                   unit=units,
                                   dtype=sc.DType.vector3)
-        if transformation is None:
-            _add_coord_to_loaded_data(f"{name}_position",
-                                      data,
-                                      position,
+    else:
+        if isinstance(transformation, sc.Variable):
+            _add_coord_to_loaded_data(attr_name=f"{name}_position",
+                                      data=data,
+                                      value=(transformation * sc.vector(value=position,
+                                                                        unit=units)).values,
                                       unit=units,
                                       dtype=sc.DType.vector3)
         else:
-            if isinstance(transformation, sc.Variable):
-                data[f"{name}_position"] = transformation * sc.vector(value=position,
-                                                                      unit=units)
-            else:
-                pass
-                # TODO: add transformation
+            pass
+            # TODO: add transformation
 
 
 def _get_position_of_component(

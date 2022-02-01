@@ -962,6 +962,8 @@ def test_loads_component_position_from_single_transformation(
     builder.add_component(component_class(component_name, depends_on=transformation))
     loaded_data = load_function(builder)
 
+    print(loaded_data)
+
     assert np.allclose(loaded_data[f"{component_name}_position"].values,
                        expected_position)
     # Resulting position will always be in metres, whatever units are
@@ -1055,10 +1057,9 @@ def test_loads_component_position_with_multiple_multi_valued_log_transformations
     builder.add_component(component_class(component_name, depends_on=t2))
     loaded_data = load_function(builder)
 
-    # Note: currently only asserting that we use the first value of the transformation
-    # this is wrong long-term; we need to add the full loaded transformation into the
-    # loaded data array.
-    assert np.allclose(loaded_data[f"{component_name}_position"].values, [0, 0, 6])
+    print(loaded_data)
+
+    assert np.allclose(loaded_data[f"{component_name}_base_position"].values, [0, 0, 6])
     assert loaded_data[f"{component_name}_position"].unit == sc.Unit("m")
 
 
