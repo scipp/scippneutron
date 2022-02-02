@@ -23,7 +23,7 @@ def array(*,
                               'event_time_offset': time_offset,
                               'pixel': pixel
                           })
-    pixel = sc.arange(dim='pixel', start=0, stop=npixel)
+    pixel = sc.arange(dim='pixel', start=0, stop=npixel, dtype=pixel.dtype)
     da = sc.bin(events, groups=[pixel])
     da.coords['L1'] = sc.scalar(value=160.0, unit='m')
     da.coords['L2'] = sc.array(dims=['pixel'], values=np.arange(npixel), unit='m')
