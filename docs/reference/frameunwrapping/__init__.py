@@ -8,8 +8,8 @@ def default_frame_diagram(tmax=300 * sc.Unit('ms')):
     diagram = TimeDistanceDiagram(ax, tmax=tmax)
     det1 = 32.0 * sc.Unit('m')
     det2 = 40.0 * sc.Unit('m')
-    frame_offset = diagram.to_time(1.5 * sc.Unit('ms'))
-    diagram.add_source_pulse()
+    frame_offset = diagram.to_time(6.0 * sc.Unit('ms'))
+    diagram.add_source_pulse(15 * sc.Unit('ms'))
     diagram.add_sample(distance=20.0 * sc.Unit('m'))
     diagram.add_detector(distance=det1, name='detector1')
     diagram.add_detector(distance=det2, name='detector2')
@@ -30,14 +30,14 @@ def default_frame_diagram(tmax=300 * sc.Unit('ms')):
                 arrowprops=props)
     ax.annotate(r'$T_0^i+\Delta T_0$',
                 xy=(x1.value, 0),
-                xytext=(x1.value, 5),
+                xytext=(x1.value-20, 5),
                 arrowprops=props)
     ax.annotate(r'$T_0^{i+1}+t_{\mathrm{pivot}}(\mathrm{det1})$',
-                xy=(200, det1.value),
+                xy=(205, det1.value),
                 xytext=(150, 10),
                 arrowprops=props)
     ax.annotate(r'$T_0^{i+2}+t_{\mathrm{pivot}}(\mathrm{det2})$',
-                xy=(230, det2.value),
+                xy=(235, det2.value),
                 xytext=(220, 15),
                 arrowprops=props)
 
@@ -46,6 +46,9 @@ def default_frame_diagram(tmax=300 * sc.Unit('ms')):
             marker='',
             color='black',
             ls='dashed')
+
+    L = diagram.frame_length.value
+    ax.axvspan(2*L, 3*L, facecolor='grey', alpha=0.2)
 
     return fig
 
