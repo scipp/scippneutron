@@ -25,16 +25,16 @@ This probably includes [NXdetector](https://manual.nexusformat.org/classes/base_
 
 By extension, [NXevent_data](https://manual.nexusformat.org/classes/base_classes/NXevent_data.html) may take the role of `NXdata` for event-mode monitors or detectors.
 
-It is unclear whether the NF requires fields and attributes of the base class (`NXdata` or `NXevent_data`) as part of the subclass (such as `NXdetector`) or whether `NXdata` or `NXevent_data` should be stored as a child.
+It is unclear whether the NF requires fields and attributes of the base class (`NXdata` or `NXevent_data`) as part of the subclass (such as `NXdetector`), or whether `NXdata` or `NXevent_data` should be stored as a child.
 We have observed both approaches in practice.
 Therefore, we go with the following interpretation:
 
 1. *Both* approaches are permitted.
-2. For a concrete group in a NH there must not be more than one `NXdata` or `NXevent_data` child (or field thereof) within the group.
+2. For a concrete group in a NH, there must not be more than one `NXdata` or `NXevent_data` child (or field thereof) within the group.
    If there is more than one, the group is considered invalid.
 3. Certain classes pre-define aspects that also `NXdata` could deliver.
    For example, `NXdata` uses the [`signal` attribute](https://manual.nexusformat.org/classes/base_classes/NXdata.html#nxdata-signal-attribute) to define the field providing the signal array.
-   For `NXdetector` the NF pre-defines that its signal is `data`, so if that is found it will be used, even if not `signal` attribute is present.
+   For `NXdetector` the NF pre-defines that its signal is `data`, so if that is found it will be used, even if no `signal` attribute is present.
 
 More concretely this means that, e.g., for loading an `NXdetector` from a NH, the implementation will:
 
@@ -45,7 +45,7 @@ More concretely this means that, e.g., for loading an `NXdetector` from a NH, th
 4. Search the group for fields defined in `NXevent_data`.
 5. Search the group for fields pre-defined in the class that are equivalents of what is defined in `NXdata`, even if the `NXdata` requirements (such as `signal` attributes) are not met.
 
-If the above results in not more than one item, the group can be loaded.
+If the above yields no more than one item, the group can be loaded.
 
 ## Bin edges
 
