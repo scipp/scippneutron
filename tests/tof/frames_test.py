@@ -102,7 +102,7 @@ def tof_array(*,
         unit=tof_min.unit) + tof_min
     pixel = sc.arange(dim='event', start=0, stop=nevent) % npixel
     events = sc.DataArray(sc.ones(sizes=tof.sizes), coords={'tof': tof, 'pixel': pixel})
-    pixel = sc.arange(dim='pixel', start=0, stop=npixel)
+    pixel = sc.arange(dim='pixel', start=0, stop=npixel, dtype=pixel.dtype)
     da = sc.bin(events, groups=[pixel])
     da.coords['L1'] = sc.scalar(value=160.0, unit='m')
     da.coords['L2'] = sc.array(dims=['pixel'], values=np.arange(npixel), unit='m')
