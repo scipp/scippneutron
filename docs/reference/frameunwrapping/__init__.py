@@ -30,7 +30,7 @@ def default_frame_diagram(tmax=300 * sc.Unit('ms')):
                 arrowprops=props)
     ax.annotate(r'$T_0^i+\Delta T_0$',
                 xy=(x1.value, 0),
-                xytext=(x1.value-20, 5),
+                xytext=(x1.value - 20, 5),
                 arrowprops=props)
     ax.annotate(r'$T_0^{i+1}+t_{\mathrm{pivot}}(\mathrm{det1})$',
                 xy=(205, det1.value),
@@ -48,7 +48,7 @@ def default_frame_diagram(tmax=300 * sc.Unit('ms')):
             ls='dashed')
 
     L = diagram.frame_length.value
-    ax.axvspan(2*L, 3*L, facecolor='grey', alpha=0.2)
+    ax.axvspan(2 * L, 3 * L, facecolor='grey', alpha=0.2)
 
     return fig
 
