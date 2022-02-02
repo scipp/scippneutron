@@ -24,8 +24,6 @@ def _tof_to_time_offset(*, tof, frame_length, frame_offset):
 
 
 def _time_offset_to_tof(*, time_offset, time_offset_pivot, tof_min, frame_length):
-    """
-    """
     frame_length = frame_length.to(unit=_elem_unit(time_offset))
     time_offset_pivot = time_offset_pivot.to(unit=_elem_unit(time_offset))
     tof_min = tof_min.to(unit=_elem_unit(time_offset))
@@ -37,10 +35,18 @@ def _time_offset_to_tof(*, time_offset, time_offset_pivot, tof_min, frame_length
 
 def to_tof():
     """
-    This assumes that there is a fixed frame_length, but in practice this is
-    likely not the case.
+    Return a graph suitable for :py:func:`scipp.transform_coords` to convert frames
+    to time-of-flight.
 
-    Note: This assumes elastic scattering.
+    The graph requires the following input nodes:
+
+    - event_time_zero and event_time_offset as read from an NXevent_data group.
+    - lambda_min, used as a proxy for defining where to split and unwrap frames.
+    - frame_length and frame_offset defining the frame structure.
+
+    This assumes elastic scattering, or at least that the gaps between frames arriving
+    at detectors are sufficiently large such that a common lambda_min definition is
+    applicable.
     """
     def _tof_min(*, Ltotal, lambda_min):
         return _tof_from_wavelength(Ltotal=Ltotal, wavelength=lambda_min)
@@ -64,8 +70,8 @@ def to_tof():
 
 
 def make_frames(da, *, frame_length, frame_offset=None, lambda_min=None):
+    da = da.copy(deep=False)
     # TODO Should check if any of these exist, raise if they do
-    # TODO Do this on a shallow-copy
     da.attrs['frame_length'] = frame_length
     if frame_offset is not None:
         da.attrs['frame_offset'] = frame_offset
@@ -74,6 +80,6 @@ def make_frames(da, *, frame_length, frame_offset=None, lambda_min=None):
     graph = Ltotal(scatter=True)
     graph.update(to_tof())
     if 'tof' in da.bins.meta or 'tof' in da.meta:
-        raise ValueError("Coordinate 'tof' already define in input data array. "
+        raise ValueError("Coordinate 'tof' already defined in input data array. "
                          "Expected input with 'event_time_offset' coordinate.")
     return da.transform_coords('tof', graph=graph)
