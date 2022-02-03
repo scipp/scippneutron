@@ -97,8 +97,14 @@ def make_tof_binned_events():
         })
     return sc.bins(data=buffer,
                    dim='event',
-                   begin=sc.array(dims=['spectrum'], values=[0, 4], dtype='int64'),
-                   end=sc.array(dims=['spectrum'], values=[4, 7], dtype='int64'))
+                   begin=sc.array(dims=['spectrum'],
+                                  values=[0, 4],
+                                  dtype='int64',
+                                  unit=None),
+                   end=sc.array(dims=['spectrum'],
+                                values=[4, 7],
+                                dtype='int64',
+                                unit=None))
 
 
 def make_count_density_variable(unit):
