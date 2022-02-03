@@ -962,8 +962,6 @@ def test_loads_component_position_from_single_transformation(
     builder.add_component(component_class(component_name, depends_on=transformation))
     loaded_data = load_function(builder)
 
-    print(loaded_data)
-
     assert np.allclose(loaded_data[f"{component_name}_position"].values,
                        expected_position)
     # Resulting position will always be in metres, whatever units are
@@ -986,8 +984,6 @@ def test_loads_component_position_from_log_transformation(
     transformation = Transformation(transform_type,
                                     vector=np.array([0, 0, -1]),
                                     value=np.array([value]),
-                                    time=np.array([1.3]),
-                                    time_units="s",
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
     loaded_data = load_function(builder)
@@ -1025,9 +1021,11 @@ def test_loads_component_position_with_multi_value_log_transformation(
     # Note: currently only asserting that we use the first value of the transformation
     # this is wrong long-term; we need to add the full loaded transformation into the
     # loaded data array.
-    assert np.allclose(loaded_data[f"{component_name}_position"].values,
-                       expected_position)
-    assert loaded_data[f"{component_name}_position"].unit == sc.Unit("m")
+    assert np.allclose(loaded_data[f"{component_name}_base_position"].values,
+                       np.array([0, 0, 0]))
+    assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
+
+    # TODO: test transformed position
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -1057,10 +1055,10 @@ def test_loads_component_position_with_multiple_multi_valued_log_transformations
     builder.add_component(component_class(component_name, depends_on=t2))
     loaded_data = load_function(builder)
 
-    print(loaded_data)
+    assert np.allclose(loaded_data[f"{component_name}_base_position"].values, [0, 0, 0])
+    assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
 
-    assert np.allclose(loaded_data[f"{component_name}_base_position"].values, [0, 0, 6])
-    assert loaded_data[f"{component_name}_position"].unit == sc.Unit("m")
+    # TODO: test transforms get loaded
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -1176,6 +1174,10 @@ def test_loads_component_position_from_multiple_transformations(
                        expected_position)
     assert loaded_data[f"{component_name}_position"].unit == sc.Unit("m")
 
+    assert np.allclose(loaded_data[f"{component_name}_base_position"].values,
+                       np.array([0, 0, 0]))
+    assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
+
 
 def test_skips_source_position_if_not_given_in_file(load_function: Callable):
     builder = NexusBuilder()
@@ -1276,7 +1278,8 @@ def test_loads_pixel_positions_with_transformations(load_function: Callable):
 
     expected_pixel_positions = np.array(
         [x_pixel_offset_1, y_pixel_offset_1, z_pixel_offset_1]).T
-    assert np.allclose(loaded_data.coords['base_position'].values, expected_pixel_positions)
+    assert np.allclose(loaded_data.coords['base_position'].values,
+                       expected_pixel_positions)
 
     expected_transform = sc.spatial.affine_transform(
                                 unit=sc.units.m,
@@ -1284,9 +1287,6 @@ def test_loads_pixel_positions_with_transformations(load_function: Callable):
                                        [0, 1, 0, 0],
                                        [0, 0, 1, 0.57],
                                        [0, 0, 0, 1]])
-
-    # print(f"v1: {loaded_data.attrs['position_transformations'].value}")
-    # print(f"v2: {expected_transforms.value}")
 
     assert np.allclose(
         loaded_data.attrs['position_transformations'].value.values,
@@ -1297,6 +1297,68 @@ def test_loads_pixel_positions_with_transformations(load_function: Callable):
         (loaded_data.attrs["position_transformations"].value *
          loaded_data.coords["base_position"]["detector_id", 0]).values,
         [0.1, 0.1, 0.67],
+    )
+
+
+def test_loads_pixel_positions_with_multiple_transformations(load_function: Callable):
+    event_data_1 = EventData(
+        event_id=np.array([0, 0, 0, 0, 0]),
+        event_time_offset=(np.array([456, 743, 347, 345, 632])),
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+    event_data_2 = EventData(
+        event_id=np.array([1, 1, 1, 1, 1]),
+        event_time_offset=(np.array([456, 743, 347, 345, 632])),
+        event_time_zero=np.array([
+            1600766730000000000, 1600766731000000000, 1600766732000000000,
+            1600766733000000000
+        ]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+
+    transformation1 = Transformation(TransformationType.TRANSLATION,
+                                     vector=np.array([0, 0, -1]),
+                                     value=np.array([12]),
+                                     value_units="cm")
+    transformation2 = Transformation(TransformationType.TRANSLATION,
+                                     vector=np.array([0, 0, -1]),
+                                     value=np.array([34]),
+                                     value_units="cm")
+
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(np.array([0]),
+                 event_data_1,
+                 x_offsets=np.array([0.1]),
+                 y_offsets=np.array([0.1]),
+                 z_offsets=np.array([0.1]),
+                 offsets_unit="m",
+                 depends_on=transformation1))
+
+    builder.add_detector(
+        Detector(np.array([1]),
+                 event_data_2,
+                 x_offsets=np.array([0.6]),
+                 y_offsets=np.array([0.6]),
+                 z_offsets=np.array([0.6]),
+                 offsets_unit="m",
+                 depends_on=transformation2))
+
+    loaded_data = load_function(builder)
+
+    assert np.allclose(
+        (loaded_data.attrs["position_transformations"]["detector_id", 0].value *
+         loaded_data.coords["base_position"]["detector_id", 0]).values,
+        [0.1, 0.1, 0.1 + 0.12],
+    )
+    assert np.allclose(
+        (loaded_data.attrs["position_transformations"]["detector_id", 1].value *
+         loaded_data.coords["base_position"]["detector_id", 1]).values,
+        [0.6, 0.6, 0.6 + 0.34],
     )
 
 
@@ -1404,7 +1466,6 @@ def test_loads_sample_ub_matrix(load_function: Callable):
     builder.add_component(Sample("sample", ub_matrix=np.ones(shape=[3, 3])))
     loaded_data = load_function(builder)
     assert "sample_ub_matrix" in loaded_data
-    print(loaded_data["sample_ub_matrix"].data)
     assert sc.identical(
         loaded_data["sample_ub_matrix"].data,
         sc.spatial.linear_transform(value=np.ones(shape=[3, 3]),

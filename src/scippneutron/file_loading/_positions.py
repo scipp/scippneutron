@@ -28,7 +28,7 @@ def load_position_of_unique_component(groups: List[Group],
              f"skipping loading {name} position")
         return
     try:
-        position, units, transformations = _get_position_of_component(
+        position, units, transformations = _get_base_position_and_transforms_of_component(
             groups[0], name, nx_class, nexus, default_position)
     except PositionError:
         return
@@ -44,7 +44,7 @@ def load_positions_of_components(groups: List[Group],
                                  default_position: Optional[np.ndarray] = None):
     for group in groups:
         try:
-            position, units, transformation = _get_position_of_component(
+            position, units, transformation = _get_base_position_and_transforms_of_component(
                 group, name, nx_class, nexus, default_position)
         except PositionError:
             continue
@@ -86,7 +86,7 @@ def _add_position_to_data(name: str,
             # TODO: add transformation
 
 
-def _get_position_of_component(
+def _get_base_position_and_transforms_of_component(
         group: Group,
         name: str,
         nx_class: str,
@@ -99,11 +99,8 @@ def _get_position_of_component(
 
     if depends_on_found:
         try:
-            translation = get_translation_from_affine(group, nexus)
-            if isinstance(translation, sc.Variable):
-                base_position = translation.value
-            else:
-                base_position = translation.data.values[0]
+            transformations = get_full_transformation_matrix(group, nexus)
+            base_position = np.array([0, 0, 0])
         except TransformationError as e:
             warn(f"Skipping loading {name} position due to error: {e}")
             raise PositionError
