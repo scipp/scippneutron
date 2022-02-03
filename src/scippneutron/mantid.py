@@ -620,7 +620,10 @@ def convert_EventWorkspace_to_data_array(ws,
         dims=['event'], shape=[n_event], dtype=sc.DType.datetime64,
         unit=sc.units.ns) if load_pulse_times else None
 
-    begins = sc.zeros(dims=[spec_dim, dim], shape=[nHist, 1], dtype=sc.DType.int64)
+    begins = sc.zeros(dims=[spec_dim, dim],
+                      shape=[nHist, 1],
+                      dtype=sc.DType.int64,
+                      unit=None)
     ends = begins.copy()
     current = 0
     for i in range(nHist):
