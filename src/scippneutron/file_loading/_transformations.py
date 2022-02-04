@@ -33,10 +33,8 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
     """
     rotvec = sc.vector(value=axis)
     # We multiply by -1*angle to get a "passive transform"
-    rotvecs = rotvec * sc.scalar(-1.0) * angles.astype(sc.DType.float64, copy=False)
-    matrices = sc.spatial.rotations_from_rotvecs(dims=angles.dims,
-                                                 values=rotvecs.values,
-                                                 unit=sc.units.rad)
+    rotvecs = rotvec * -angles.astype(sc.DType.float64, copy=False)
+    matrices = sc.spatial.rotations_from_rotvecs(rotvecs)
     return matrices
 
 
