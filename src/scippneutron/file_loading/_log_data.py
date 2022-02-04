@@ -65,13 +65,13 @@ class NXlog(NXobject):
 
     @property
     def _nxbase(self) -> NXdata:
-        # NXdata uses the 'signal' attribute to define the field name of the signal.
-        # NXlog uses a "hard-coded" signal name 'value', without specifying the
-        # attribute in the file, so we pass this explicitly to NXdata.
         axes = ['.'] * self['value'].ndim
         # The outermost axis in NXlog is hard-coded to 'time' (if present)
         if 'time' in self:
             axes[0] = 'time'
+        # NXdata uses the 'signal' attribute to define the field name of the signal.
+        # NXlog uses a "hard-coded" signal name 'value', without specifying the
+        # attribute in the file, so we pass this explicitly to NXdata.
         return NXdata(self._group, self._loader, signal='value', axes=axes)
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
