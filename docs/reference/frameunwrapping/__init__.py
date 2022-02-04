@@ -27,22 +27,24 @@ def default_frame_diagram(tmax=300 * sc.Unit('ms')):
     props = dict(arrowstyle='-|>')
     x0 = diagram.frame_length
     x1 = diagram.frame_length + frame_offset
-    ax.annotate(r'$T_0^i$',
-                xy=(x0.value, 0),
-                xytext=(x0.value - 20, 3),
-                arrowprops=props)
-    ax.annotate(r'$T_0^i+\Delta T_0$',
-                xy=(x1.value, 0),
-                xytext=(x1.value - 20, 5),
-                arrowprops=props)
-    ax.annotate(r'$T_0^{i+1}+t_{\mathrm{pivot}}(\mathrm{det1})$',
-                xy=(205, det1.value),
-                xytext=(150, 10),
-                arrowprops=props)
-    ax.annotate(r'$T_0^{i+2}+t_{\mathrm{pivot}}(\mathrm{det2})$',
-                xy=(235, det2.value),
-                xytext=(220, 15),
-                arrowprops=props)
+    m = sc.Unit('m')
+    ms = sc.Unit('ms')
+    diagram.annotate(r'$T_0^i$',
+                     xy=(x0, 0 * m),
+                     xytext=(x0 - 20 * ms, 3 * m),
+                     arrowprops=props)
+    diagram.annotate(r'$T_0^i+\Delta T_0$',
+                     xy=(x1, 0 * m),
+                     xytext=(x1 - 20 * ms, 5 * m),
+                     arrowprops=props)
+    diagram.annotate(r'$T_0^{i+1}+t_{\mathrm{pivot}}(\mathrm{det1})$',
+                     xy=(205 * ms, det1),
+                     xytext=(150 * ms, 10 * m),
+                     arrowprops=props)
+    diagram.annotate(r'$T_0^{i+2}+t_{\mathrm{pivot}}(\mathrm{det2})$',
+                     xy=(235 * ms, det2),
+                     xytext=(220 * ms, 15 * m),
+                     arrowprops=props)
 
     # Pivot line
     ax.plot([x1.value, x1.value + 177], [0, 1.1 * det2.value],
@@ -74,13 +76,15 @@ def frame_skipping_diagram(tmax=500 * sc.Unit('ms')):
     props = dict(arrowstyle='-|>')
     x0 = 2 * diagram.frame_length
     x1 = 2 * diagram.frame_length + frame_offset
-    ax.annotate(r'$T_0^i$',
-                xy=(x0.value, 0),
-                xytext=(x0.value - 20, 3),
-                arrowprops=props)
-    ax.annotate(r'$T_0^i+\Delta T_0$',
-                xy=(x1.value, 0),
-                xytext=(x1.value, 5),
-                arrowprops=props)
+    m = sc.Unit('m')
+    ms = sc.Unit('ms')
+    diagram.annotate(r'$T_0^i$',
+                     xy=(x0, 0 * m),
+                     xytext=(x0 - 20 * ms, 3 * m),
+                     arrowprops=props)
+    diagram.annotate(r'$T_0^i+\Delta T_0$',
+                     xy=(x1, 0 * m),
+                     xytext=(x1, 5 * m),
+                     arrowprops=props)
 
     return fig

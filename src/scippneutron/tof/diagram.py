@@ -10,6 +10,7 @@ class TimeDistanceDiagram:
     def __init__(self, ax, *, tmax, frame_rate=14.0 * sc.Unit('Hz')):
         self._ax = ax
         self._time_unit = sc.Unit('ms')
+        self._distance_unit = sc.Unit('m')
         self._frame_length = (1.0 / frame_rate).to(unit=self._time_unit)
         self._tmax = tmax.to(unit=self._time_unit)
         self._ax.set_xlabel(f"time [{self._time_unit}]")
@@ -22,8 +23,17 @@ class TimeDistanceDiagram:
     def to_time(self, time):
         return time.to(unit=self._time_unit)
 
-    def add_source_pulse(self, pulse_length=3.0 * sc.Unit('ms')):
-        ls = 'dotted'
+    def to_distance(self, distance):
+        return distance.to(unit=self._distance_unit)
+
+    def annotate(self, text, *, xy, xytext, **kwargs):
+        def to_mpl(point):
+            x, y = point
+            return self.to_time(x).value, self.to_distance(y).value
+
+        self._ax.annotate(text, xy=to_mpl(xy), xytext=to_mpl(xytext), **kwargs)
+
+    def add_source_pulse(self, pulse_length=3.0 * sc.Unit('ms'), ls='dotted'):
         t0 = 0.0
         t1 = self.to_time(pulse_length).value
         self._ax.text(t0,
@@ -43,14 +53,17 @@ class TimeDistanceDiagram:
                     time_offset: sc.Variable,
                     wavelength: sc.Variable,
                     L: sc.Variable,
-                    label=None):
+                    label=None,
+                    color='black',
+                    ls='solid',
+                    lw=0.7):
         tof = self.to_time(_tof_from_wavelength(wavelength=wavelength, Ltotal=L))
         t0 = self.to_time(time_offset).value
         self._ax.plot([t0, tof.value], [0, L.value],
                       marker='',
-                      color='black',
-                      ls='solid',
-                      lw=0.7)
+                      color=color,
+                      ls=ls,
+                      lw=lw)
         if label is not None:
             self._ax.text(tof.value, L.value, label, ha="center", va="bottom")
 
