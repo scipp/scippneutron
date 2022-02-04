@@ -1,12 +1,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
-# @author Matthew Jones
+# @author Simon Heybrock
 
-import numpy as np
 from typing import Tuple, List, Dict
 import scipp as sc
-from ._common import (BadSource, SkipSource, MissingDataset, Group, load_time_dataset,
-                      to_plain_index, _convert_time_to_datetime64)
+from ._common import (BadSource, SkipSource, MissingDataset, Group,
+                      _convert_time_to_datetime64)
 from ._nexus import LoadFromNexus
 from .nxobject import NXobject, ScippIndex
 from .nxdata import NXdata
@@ -94,76 +93,4 @@ def _load_log_data_from_group(group: Group, nexus: LoadFromNexus, select=tuple()
         raise BadSource(f"NXlog '{property_name}' has time and value "
                         f"datasets of different shapes")
     except (KeyError, MissingDataset):
-        raise BadSource("NXlog ummm")
-    value_dataset_name = "value"
-    time_dataset_name = "time"
-    # TODO This is wrong if the log just has a single value. Can we check
-    # the shape in advance?
-    index = to_plain_index(["time"], select)
-
-    try:
-        values = nexus.load_dataset_from_group_as_numpy_array(group,
-                                                              value_dataset_name,
-                                                              index=index)
-    except MissingDataset:
-        if nexus.contains_stream(group):
-            raise SkipSource("Log is missing value dataset but contains stream")
         raise BadSource(f"NXlog '{property_name}' has no value dataset")
-
-    if values.size == 0:
-        raise BadSource(f"NXlog '{property_name}' has an empty value dataset")
-
-    unit = nexus.get_unit(nexus.get_dataset_from_group(group, value_dataset_name))
-    try:
-        unit = sc.Unit(unit)
-    except sc.UnitError:
-        warn(f"Unrecognized unit '{unit}' for value dataset "
-             f"in NXlog '{group.name}'; setting unit as 'dimensionless'")
-        unit = sc.units.dimensionless
-
-    try:
-        is_time_series = True
-        dimension_label = "time"
-        times = load_time_dataset(nexus,
-                                  group,
-                                  time_dataset_name,
-                                  dim=dimension_label,
-                                  index=index)
-
-        if tuple(times.shape) != values.shape:
-            raise BadSource(f"NXlog '{property_name}' has time and value "
-                            f"datasets of different shapes")
-    except MissingDataset:
-        dimension_label = property_name
-        is_time_series = False
-
-    # TODO Is NXlog similar to NXdata such that we could use that for loading?
-    if np.ndim(values) > 1:
-        raise BadSource(f"NXlog '{property_name}' has {value_dataset_name} "
-                        f"dataset with more than 1 dimension, handling "
-                        f"this is not yet implemented")
-
-    if np.ndim(values) == 0:
-        property_data = sc.scalar(values,
-                                  unit=unit,
-                                  dtype=nexus.get_dataset_numpy_dtype(
-                                      nexus.get_dataset_from_group(
-                                          group, value_dataset_name)))
-    else:
-        property_data = sc.Variable(values=values,
-                                    unit=unit,
-                                    dims=[dimension_label],
-                                    dtype=nexus.get_dataset_numpy_dtype(
-                                        nexus.get_dataset_from_group(
-                                            group, value_dataset_name)))
-
-    if is_time_series:
-        # If property has timestamps, create a DataArray
-        data_array = {"data": property_data, "coords": {dimension_label: times}}
-        return property_name, sc.scalar(sc.DataArray(**data_array))
-    elif not np.isscalar(values):
-        # If property is multi-valued, create a wrapper single
-        # value variable. This prevents interference with
-        # global dimensions for the output Dataset.
-        return property_name, sc.scalar(property_data)
-    return property_name, property_data
