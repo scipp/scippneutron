@@ -6,9 +6,10 @@ import numpy as np
 from typing import Tuple, List, Dict
 import scipp as sc
 from ._common import (BadSource, SkipSource, MissingDataset, Group, load_time_dataset,
-                      to_plain_index)
+                      to_plain_index, _convert_time_to_datetime64)
 from ._nexus import LoadFromNexus
 from .nxobject import NXobject, ScippIndex
+from .nxdata import NXdata
 from warnings import warn
 
 
@@ -53,21 +54,34 @@ def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,
 class NXlog(NXobject):
     @property
     def shape(self):
-        pass
+        return self._nxbase.shape
 
     @property
     def dims(self):
-        pass
+        return self._nxbase.dims
 
     @property
     def unit(self):
-        pass
+        return self._nxbase.unit
 
-    def _getitem(self, index: ScippIndex) -> sc.DataArray:
-        name, var = _load_log_data_from_group(self._group, self._loader, select=index)
-        da = var.value
-        da.name = name
-        return da
+    @property
+    def _nxbase(self) -> NXdata:
+        # NXdata uses the 'signal' attribute to define the field name of the signal.
+        # NXlog uses a "hard-coded" signal name 'value', without specifying the
+        # attribute in the file, so we pass this explicitly to NXdata.
+        axes = ['.'] * self['value'].ndim
+        axes[0] = 'time'
+        return NXdata(self._group, self._loader, signal='value', axes=axes)
+
+    def _getitem(self, select: ScippIndex) -> sc.DataArray:
+        data = self._nxbase[select]
+        if 'time' in self:
+            data.coords['time'] = _convert_time_to_datetime64(
+                raw_times=data.coords.pop('time'),
+                start=self['time'].attrs.get('start'),
+                scaling_factor=self['time'].attrs.get('scaling_factor'),
+                group_path=self['time'].name)
+        return data
 
 
 def _load_log_data_from_group(group: Group, nexus: LoadFromNexus, select=tuple())\

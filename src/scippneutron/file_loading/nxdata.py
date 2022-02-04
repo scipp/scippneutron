@@ -10,9 +10,11 @@ class NXdata(NXobject):
     def __init__(self,
                  group: Group,
                  loader: LoadFromNexus = LoadFromHdf5(),
-                 signal=None):
+                 signal=None,
+                 axes=None):
         super().__init__(group, loader)
         self._signal_name_default = signal
+        self._axes_default = axes
 
     @property
     def shape(self) -> List[int]:
@@ -22,8 +24,8 @@ class NXdata(NXobject):
     def dims(self) -> List[str]:
         # Apparently it is not possible to define dim labels unless there are
         # corresponding coords. Special case of '.' entries means "no coord".
-        if 'axes' in self.attrs:
-            axes = self.attrs['axes']
+        if self.attrs.get('axes', self._axes_default) is not None:
+            axes = self.attrs.get('axes', self._axes_default)
             return [f'dim_{i}' if a == '.' else a for i, a in enumerate(axes)]
         # Legacy NXdata defines axes not as group attribute, but attr on dataset
         if 'axes' in self._signal.attrs:
@@ -70,9 +72,10 @@ class NXdata(NXobject):
                                                 index=index)
             signal.variances = sc.pow(stddevs, 2).values
         da = sc.DataArray(data=signal)
-        if 'axes' in self.attrs:
+        if self.attrs.get('axes', self._axes_default) is not None:
+            axes = self.attrs.get('axes', self._axes_default)
             # Unlike self.dims we *drop* entries that are '.'
-            coords = [a for a in self.attrs['axes'] if a != '.']
+            coords = [a for a in axes if a != '.']
         else:
             coords = self._signal.attrs['axes'].split(',')
         for dim in coords:

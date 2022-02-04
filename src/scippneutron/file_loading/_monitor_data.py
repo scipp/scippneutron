@@ -57,7 +57,7 @@ def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict
             nxmonitor = NXmonitor(group, nexus)
             # Standard loading requires binning monitor into pulses and adding
             # detector IDs. This is currently encapsulated in load_detector_data,
-            # so we cannot readily use NXmonitor and bin aferwards without duplication.
+            # so we cannot readily use NXmonitor and bin afterwards without duplication.
             if nxmonitor._is_events:
                 monitor = load_detector_data([group], [], nexus, True, True)
                 warnings.warn(f"Event data present in NXmonitor group {group.name}. "
