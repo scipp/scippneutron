@@ -461,7 +461,9 @@ def test_loads_log_with_empty_value_and_time_datasets(load_function: Callable):
 
 def test_skips_log_with_mismatched_value_and_time(load_function: Callable):
     values = np.array([1, 2, 3]).astype(np.int32)
-    times = np.array([1, 2, 3, 4]).astype(np.int32)
+    # Note that if times exceeds length by 1 it is loaded as bin edges. It is unclear
+    # if this is considered valid Nexus.
+    times = np.array([1, 2, 3, 4, 5]).astype(np.int32)
     name = "test_log"
     builder = NexusBuilder()
     builder.add_log(Log(name, values, times))
