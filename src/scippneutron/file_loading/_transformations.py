@@ -164,7 +164,7 @@ def _append_transformation(transform: Union[h5py.Dataset, GroupObject],
         try:
             vector = nexus.get_attribute_as_numpy_array(transform,
                                                         "vector").astype(float)
-            vector = _normalise(vector, nexus.get_name(transform))
+            vector = _normalize(vector, nexus.get_name(transform))
         except MissingAttribute:
             raise TransformationError(f"Missing 'vector' attribute in transformation "
                                       f"at {nexus.get_name(transform)}")
@@ -193,7 +193,7 @@ def _append_transformation(transform: Union[h5py.Dataset, GroupObject],
     return depends_on
 
 
-def _normalise(vector: np.ndarray, transform_name: str) -> np.ndarray:
+def _normalize(vector: np.ndarray, transform_name: str) -> np.ndarray:
     norm = np.linalg.norm(vector)
     if isclose(norm, 0.):
         raise TransformationError(
@@ -226,20 +226,6 @@ def _append_translation(offset: np.ndarray, transform: GroupObject,
         t = translations
 
     transformations.append(t)
-
-
-def _get_unit(attributes: h5py.AttributeManager, transform_name: str) -> sc.Unit:
-    try:
-        unit_str = attributes["units"]
-    except KeyError:
-        raise TransformationError(
-            f"Missing units for transformation at {transform_name}")
-    try:
-        unit = sc.Unit(unit_str)
-    except RuntimeError:
-        raise TransformationError(f"Unrecognised units '{unit_str}' for "
-                                  f"transformation at {transform_name}")
-    return unit
 
 
 def _get_transformation_magnitude_and_unit(group_name: str,
