@@ -69,12 +69,16 @@ class NXlog(NXobject):
         # NXlog uses a "hard-coded" signal name 'value', without specifying the
         # attribute in the file, so we pass this explicitly to NXdata.
         axes = ['.'] * self['value'].ndim
+        # The outermost axis in NXlog is hard-coded to 'time' (if present)
         if 'time' in self:
             axes[0] = 'time'
         return NXdata(self._group, self._loader, signal='value', axes=axes)
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
         data = self._nxbase[select]
+        # The 'time' field in NXlog contains extra properties 'start' and
+        # 'scaling_factor' that are not handled by NXdata. These are used
+        # to transform to a datetime-coord.
         if 'time' in self:
             data.coords['time'] = _convert_time_to_datetime64(
                 raw_times=data.coords.pop('time'),
