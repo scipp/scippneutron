@@ -1,4 +1,4 @@
-from .test_nexus import open_nexus, open_json
+from .nexus_test import open_nexus, open_json
 from .nexus_helpers import NexusBuilder, Detector, EventData
 import numpy as np
 import pytest
