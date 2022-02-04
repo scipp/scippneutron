@@ -93,4 +93,6 @@ def _load_log_data_from_group(group: Group, nexus: LoadFromNexus, select=tuple()
         raise BadSource(f"NXlog '{property_name}' has time and value "
                         f"datasets of different shapes")
     except (KeyError, MissingDataset):
+        if nexus.contains_stream(group):
+            raise SkipSource("Log is missing value dataset but contains stream")
         raise BadSource(f"NXlog '{property_name}' has no value dataset")
