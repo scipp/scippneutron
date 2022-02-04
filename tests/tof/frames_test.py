@@ -7,11 +7,11 @@ import scipp as sc
 from scippneutron.tof import frames
 
 
-def array(*,
-          npixel=3,
-          nevent=1000,
-          frame_length=71.0 * sc.Unit('ms'),
-          time_offset=None):
+def make_array(*,
+               npixel=3,
+               nevent=1000,
+               frame_length=71.0 * sc.Unit('ms'),
+               time_offset=None):
     frame_length = frame_length.to(unit='us')
     if time_offset is None:
         time_offset = sc.array(dims=['event'],
@@ -31,7 +31,7 @@ def array(*,
 
 
 def test_make_frames_given_tof_bins_meta_data_raises_ValueError():
-    da = array()
+    da = make_array()
     da.coords['tof'] = sc.scalar(1.0, unit='ms')
     with pytest.raises(ValueError):
         frames.make_frames(da,
@@ -41,7 +41,7 @@ def test_make_frames_given_tof_bins_meta_data_raises_ValueError():
 
 
 def test_make_frames_given_tof_event_meta_data_raises_ValueError():
-    da = array()
+    da = make_array()
     da.bins.coords['tof'] = da.bins.coords['event_time_offset']
     with pytest.raises(ValueError):
         frames.make_frames(da,
@@ -51,7 +51,7 @@ def test_make_frames_given_tof_event_meta_data_raises_ValueError():
 
 
 def test_make_frames_no_shift_and_infinite_energy_yields_tof_equal_time_offset():
-    da = array(frame_length=71.0 * sc.Unit('ms'))
+    da = make_array(frame_length=71.0 * sc.Unit('ms'))
     da = frames.make_frames(da,
                             frame_length=71.0 * sc.Unit('ms'),
                             frame_offset=0.0 * sc.Unit('ms'),
@@ -61,7 +61,7 @@ def test_make_frames_no_shift_and_infinite_energy_yields_tof_equal_time_offset()
 
 def test_make_frames_no_shift_and_no_events_below_lambda_min_yields_tof_equal_time_offset(  # noqa #501
 ):
-    da = array(frame_length=71.0 * sc.Unit('ms'))
+    da = make_array(frame_length=71.0 * sc.Unit('ms'))
     da.bins.coords['event_time_offset'] += sc.to_unit(
         10.0 * sc.Unit('ms'), da.bins.coords['event_time_offset'].bins.unit)
     da = frames.make_frames(da,
@@ -74,10 +74,10 @@ def test_make_frames_no_shift_and_no_events_below_lambda_min_yields_tof_equal_ti
 def test_make_frames_time_offset_pivot_and_min_define_frames():
     # events [before, after, after, before] pivot point
     time_offset = sc.array(dims=['event'], values=[5.0, 70.0, 21.0, 6.0], unit='ms')
-    da = array(frame_length=71.0 * sc.Unit('ms'),
-               npixel=1,
-               nevent=4,
-               time_offset=time_offset)
+    da = make_array(frame_length=71.0 * sc.Unit('ms'),
+                    npixel=1,
+                    nevent=4,
+                    time_offset=time_offset)
     pivot = sc.to_unit(10.0 * sc.Unit('ms'),
                        da.bins.coords['event_time_offset'].bins.unit)
     da.coords['time_offset_pivot'] = pivot
