@@ -90,7 +90,10 @@ def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
         loaded = detector[...]
         assert sc.identical(
             loaded.bins.size().data,
-            sc.array(dims=['detector_number'], dtype='int64', values=[2, 3, 1, 0]))
+            sc.array(dims=['detector_number'],
+                     dtype='int64',
+                     values=[2, 3, 1, 0],
+                     unit=None))
 
 
 def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in_file(
@@ -113,4 +116,7 @@ def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in
         loaded = detector[...]
         assert sc.identical(
             loaded.bins.size().data,
-            sc.array(dims=['detector_number'], dtype='int64', values=[2, 3, 0, 1]))
+            sc.array(dims=['detector_number'],
+                     dtype='int64',
+                     values=[2, 3, 0, 1],
+                     unit=None))

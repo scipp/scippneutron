@@ -129,7 +129,7 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
                                      shape=[0],
                                      dtype=detector_id_dtype),
                         })
-    indices = sc.array(dims=[_pulse_dimension], values=[], dtype='int64')
+    indices = sc.array(dims=[_pulse_dimension], values=[], dtype='int64', unit=None)
     return sc.DataArray(data=sc.bins(begin=indices,
                                      end=indices,
                                      dim=_event_dimension,
@@ -286,7 +286,8 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
 
     event_index = sc.array(dims=[_pulse_dimension],
                            values=event_index,
-                           dtype=sc.DType.int64)
+                           dtype=sc.DType.int64,
+                           unit=None)
 
     event_index -= event_index.min()
 

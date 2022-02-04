@@ -1851,8 +1851,11 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
                               "detector_id":
                               sc.array(dims=["event"], values=event_ids),
                           }),
-        begin=sc.array(dims=["pulse"], values=[0, 3, 3], dtype=sc.DType.int64),
-        end=sc.array(dims=["pulse"], values=[3, 3, 5], dtype=sc.DType.int64),
+        begin=sc.array(dims=["pulse"],
+                       values=[0, 3, 3],
+                       dtype=sc.DType.int64,
+                       unit=None),
+        end=sc.array(dims=["pulse"], values=[3, 3, 5], dtype=sc.DType.int64, unit=None),
     )
 
     # Even if there is just a single NXevent_data entry in the file the
