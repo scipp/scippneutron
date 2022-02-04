@@ -4,7 +4,7 @@
 import warnings
 
 import numpy as np
-from ._common import MissingDataset, MissingAttribute, Group, load_time_dataset
+from ._common import MissingDataset, MissingAttribute, Group
 from typing import Union, List
 import scipp as sc
 import scipp.spatial
@@ -13,6 +13,7 @@ import h5py
 from cmath import isclose
 from ._nexus import LoadFromNexus, GroupObject
 from ._json_nexus import contains_stream
+from ._log_data import NXlog
 
 
 class TransformationError(Exception):
@@ -249,42 +250,24 @@ def _get_transformation_magnitude_and_unit(group_name: str,
     """
     if nexus.is_group(transform):
         try:
-            values = nexus.load_dataset(transform, "value", dimensions=["time"])
-            times = load_time_dataset(nexus=nexus,
-                                      group=transform,
-                                      dataset_name="time",
-                                      dim="time",
-                                      group_name=group_name)
-            if len(values) == 0:
-                raise TransformationError(f"Found empty NXlog as a "
-                                          f"transformation for {group_name}")
-            if len(values) != len(times):
-                raise TransformationError(f"Mismatched time and value dataset lengths "
-                                          f"for transformation at {group_name}")
-
+            da = NXlog(transform, nexus)[()]
+        except sc.DimensionError:
+            raise TransformationError(f"Mismatched time and value dataset lengths "
+                                      f"for transformation at {group_name}")
         except MissingDataset:
             raise TransformationError(
                 f"Encountered {nexus.get_name(transform)} in transformation "
                 f"chain for {group_name} but it is a group without a value "
                 "dataset; not a valid transformation")
-        unit = nexus.get_unit(nexus.get_dataset_from_group(transform, "value"))
-        if unit == sc.units.dimensionless:
-            # See if the value unit is on the NXLog itself instead
-            unit = nexus.get_unit(transform)
-            if unit == sc.units.dimensionless:
-                raise TransformationError(f"Missing units for transformation at "
-                                          f"{nexus.get_name(transform)}")
     else:
         magnitude = nexus.load_dataset_as_numpy_array(transform).astype(float).item()
         unit = nexus.get_unit(transform)
+        da = sc.scalar(value=magnitude, unit=unit, dtype=sc.DType.float64)
 
-        if unit == sc.units.dimensionless:
-            raise TransformationError(f"Missing units for transformation at "
-                                      f"{nexus.get_name(transform)}")
-
-        return sc.scalar(value=magnitude, unit=unit, dtype=sc.DType.float64)
-
-    return sc.DataArray(data=values, coords={"time": times})
+    if da.unit == sc.units.dimensionless:
+        raise TransformationError(f"Missing units for transformation at "
+                                  f"{nexus.get_name(transform)}")
+    return da
 
 
 def _append_rotation(offset: np.ndarray, transform: GroupObject,

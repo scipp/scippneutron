@@ -5,7 +5,7 @@
 from typing import Tuple, List, Dict
 import scipp as sc
 from ._common import (BadSource, SkipSource, MissingDataset, Group,
-                      _convert_time_to_datetime64)
+                      convert_time_to_datetime64)
 from ._nexus import LoadFromNexus
 from .nxobject import NXobject, ScippIndex
 from .nxdata import NXdata
@@ -80,7 +80,7 @@ class NXlog(NXobject):
         # 'scaling_factor' that are not handled by NXdata. These are used
         # to transform to a datetime-coord.
         if 'time' in self:
-            data.coords['time'] = _convert_time_to_datetime64(
+            data.coords['time'] = convert_time_to_datetime64(
                 raw_times=data.coords.pop('time'),
                 start=self['time'].attrs.get('start'),
                 scaling_factor=self['time'].attrs.get('scaling_factor'),

@@ -79,7 +79,7 @@ def _add_attr_to_loaded_data(attr_name: str,
         pass
 
 
-def _convert_time_to_datetime64(
+def convert_time_to_datetime64(
         raw_times: sc.Variable,
         group_path: str,
         start: str = None,
@@ -128,26 +128,6 @@ def _convert_time_to_datetime64(
                        unit=sc.units.dimensionless)
 
     return _start_ts + (raw_times_ns * _scale).astype(sc.DType.int64, copy=False)
-
-
-def load_time_dataset(nexus, group, dataset_name, dim, group_name=None, index=...):
-    raw_times = nexus.load_dataset(group, dataset_name, [dim], index=index)
-
-    time_dataset = nexus.get_dataset_from_group(group, dataset_name)
-    try:
-        start = nexus.get_string_attribute(time_dataset, "start")
-    except (MissingAttribute, TypeError):
-        start = None
-
-    try:
-        scaling_factor = nexus.get_attribute(time_dataset, "scaling_factor")
-    except (MissingAttribute, TypeError):
-        scaling_factor = None
-
-    return _convert_time_to_datetime64(raw_times=raw_times,
-                                       start=start,
-                                       scaling_factor=scaling_factor,
-                                       group_path=group_name or group.name)
 
 
 # Note that scipp does not support dicts yet, but this HDF5 code does, to
