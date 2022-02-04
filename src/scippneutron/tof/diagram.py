@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
+# @author Simon Heybrock
 import scipp as sc
 from matplotlib.patches import Rectangle
 from scippneutron.tof.frames import _tof_from_wavelength
