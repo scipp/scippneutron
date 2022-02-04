@@ -7,6 +7,7 @@ import scipp as sc
 import numpy as np
 from ._common import Group, JSONGroup, MissingDataset, MissingAttribute
 from dataclasses import dataclass
+from warnings import warn
 
 _nexus_class = "NX_class"
 _nexus_units = "units"
@@ -241,6 +242,12 @@ class LoadFromJson:
 
         try:
             units = _get_attribute_value(dataset, _nexus_units)
+            try:
+                units = sc.Unit(units)
+            except sc.UnitError:
+                warn(f"Unrecognized unit '{units}' for value dataset "
+                     f"in '{group.name}'; setting unit as 'dimensionless'")
+                units = sc.units.dimensionless
         except MissingAttribute:
             units = sc.units.dimensionless
 
