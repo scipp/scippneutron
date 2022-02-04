@@ -70,7 +70,8 @@ class NXlog(NXobject):
         # NXlog uses a "hard-coded" signal name 'value', without specifying the
         # attribute in the file, so we pass this explicitly to NXdata.
         axes = ['.'] * self['value'].ndim
-        axes[0] = 'time'
+        if 'time' in self:
+            axes[0] = 'time'
         return NXdata(self._group, self._loader, signal='value', axes=axes)
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
@@ -87,6 +88,13 @@ class NXlog(NXobject):
 def _load_log_data_from_group(group: Group, nexus: LoadFromNexus, select=tuple())\
         -> Tuple[str, sc.Variable]:
     property_name = nexus.get_name(group)
+    try:
+        return property_name, sc.scalar(NXlog(group, nexus)[select])
+    except sc.DimensionError:
+        raise BadSource(f"NXlog '{property_name}' has time and value "
+                        f"datasets of different shapes")
+    except (KeyError, MissingDataset):
+        raise BadSource("NXlog ummm")
     value_dataset_name = "value"
     time_dataset_name = "time"
     # TODO This is wrong if the log just has a single value. Can we check
