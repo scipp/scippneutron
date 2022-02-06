@@ -81,9 +81,11 @@ def _add_position_to_data(name: str,
                                                                         unit=units)).values,
                                       unit=units,
                                       dtype=sc.DType.vector3)
-        else:
-            pass
-            # TODO: add transformation
+
+        _add_coord_to_loaded_data(attr_name=f"{name}_transform",
+                                  data=data,
+                                  value=transformation,
+                                  unit=None)
 
 
 def _get_base_position_and_transforms_of_component(

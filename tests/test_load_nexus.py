@@ -1025,7 +1025,24 @@ def test_loads_component_position_with_multi_value_log_transformation(
                        np.array([0, 0, 0]))
     assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
 
-    # TODO: test transformed position
+    if transform_type == TransformationType.TRANSLATION:
+        expected_transformed_positions = np.array([[0, 0, 2.3], [0, 0, 3.1]])
+    else:
+        expected_transformed_positions = np.array([[0, 0, 0], [0, 0, 0]])
+
+    assert np.allclose(
+        (loaded_data[f"{component_name}_transform"].value *
+         loaded_data[f"{component_name}_base_position"]).values,
+        expected_transformed_positions
+    )
+
+    assert sc.identical(
+        loaded_data[f"{component_name}_transform"].value.coords["time"],
+        sc.Variable(dims=["time"],
+                    values=[1300000000, 6400000000],
+                    unit="ns",
+                    dtype=sc.DType.datetime64)
+    )
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -1058,7 +1075,21 @@ def test_loads_component_position_with_multiple_multi_valued_log_transformations
     assert np.allclose(loaded_data[f"{component_name}_base_position"].values, [0, 0, 0])
     assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
 
-    # TODO: test transforms get loaded
+    expected_transformed_positions = np.array([[0, 0, 6], [0, 0, 60]])
+
+    assert np.allclose(
+        (loaded_data[f"{component_name}_transform"].value *
+         loaded_data[f"{component_name}_base_position"]).values,
+        expected_transformed_positions
+    )
+    assert sc.identical(
+        loaded_data[f"{component_name}_transform"].value.coords["time"],
+        sc.to_unit(sc.Variable(dims=["time"],
+                               values=[0, 1],
+                               unit="s",
+                               dtype=sc.DType.datetime64),
+                   "ns")
+    )
 
 
 @pytest.mark.parametrize("component_class,component_name",
