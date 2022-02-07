@@ -11,7 +11,7 @@ import scipp.constants as const
 
 def _elem_unit(var):
     if var.bins is not None:
-        return var.bins.constituents['data'].unit
+        return var.bins.unit
     return var.unit
 
 
