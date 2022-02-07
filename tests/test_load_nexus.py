@@ -1311,11 +1311,11 @@ def test_loads_pixel_positions_with_transformations(load_function: Callable):
                                                             [0, 0, 1, 0.57],
                                                             [0, 0, 0, 1]])
 
-    assert np.allclose(loaded_data.attrs['position_transformations'].value.values,
+    assert np.allclose(loaded_data.coords['position_transformations'].value.values,
                        expected_transform.values)
 
     assert np.allclose(
-        (loaded_data.attrs["position_transformations"].value *
+        (loaded_data.coords["position_transformations"].value *
          loaded_data.coords["base_position"]["detector_id", 0]).values,
         [0.1, 0.1, 0.67],
     )
@@ -1372,12 +1372,12 @@ def test_loads_pixel_positions_with_multiple_transformations(load_function: Call
     loaded_data = load_function(builder)
 
     assert np.allclose(
-        (loaded_data.attrs["position_transformations"]["detector_id", 0].value *
+        (loaded_data.coords["position_transformations"]["detector_id", 0].value *
          loaded_data.coords["base_position"]["detector_id", 0]).values,
         [0.1, 0.1, 0.1 + 0.12],
     )
     assert np.allclose(
-        (loaded_data.attrs["position_transformations"]["detector_id", 1].value *
+        (loaded_data.coords["position_transformations"]["detector_id", 1].value *
          loaded_data.coords["base_position"]["detector_id", 1]).values,
         [0.6, 0.6, 0.6 + 0.34],
     )

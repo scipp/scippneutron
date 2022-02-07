@@ -408,7 +408,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
             if data.pixel_position_transforms is None:
                 da.coords['position'] = data.pixel_positions
             else:
-                da.attrs['position_transformations'] = sc.scalar(
+                da.coords['position_transformations'] = sc.scalar(
                     value=data.pixel_position_transforms)
 
                 print(data.pixel_position_transforms)
