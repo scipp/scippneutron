@@ -94,8 +94,8 @@ def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
             sc.array(dims=['detector_number'], dtype='int64', values=[2, 3, 1, 0]))
 
 
-def test_loads_event_data_with_2d_detector_numbers(
-        nexus_group: Tuple[Callable, LoadFromNexus]):
+def test_loads_event_data_with_2d_detector_numbers(nexus_group: Tuple[Callable,
+                                                                      LoadFromNexus]):
     event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 2, 2]),
