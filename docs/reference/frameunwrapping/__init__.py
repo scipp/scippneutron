@@ -11,13 +11,14 @@ def default_frame_diagram(tmax=300 * sc.Unit('ms')):
     diagram = TimeDistanceDiagram(ax, tmax=tmax)
     det1 = 32.0 * sc.Unit('m')
     det2 = 40.0 * sc.Unit('m')
+    lambda_min = 16.0 * sc.units.angstrom
     frame_offset = diagram.to_time(6.0 * sc.Unit('ms'))
     diagram.add_source_pulse(15 * sc.Unit('ms'))
     diagram.add_sample(distance=20.0 * sc.Unit('m'))
     diagram.add_detector(distance=det1, name='detector1')
     diagram.add_detector(distance=det2, name='detector2')
     diagram.add_neutrons(Lmax=1.05 * det2,
-                         lambda_min=16.0 * sc.units.angstrom,
+                         lambda_min=lambda_min,
                          time_offset=frame_offset)
     diagram.add_neutron(L=det1,
                         time_offset=frame_offset,
@@ -47,10 +48,11 @@ def default_frame_diagram(tmax=300 * sc.Unit('ms')):
                      arrowprops=props)
 
     # Pivot line
-    ax.plot([x1.value, x1.value + 177], [0, 1.1 * det2.value],
-            marker='',
-            color='black',
-            ls='dashed')
+    diagram.add_neutron(time_offset=x1,
+                        L=1.1 * det2,
+                        wavelength=lambda_min,
+                        color='black',
+                        ls='dashed')
 
     L = diagram.frame_length.value
     ax.axvspan(2 * L, 3 * L, facecolor='grey', alpha=0.2)
@@ -63,13 +65,14 @@ def frame_skipping_diagram(tmax=500 * sc.Unit('ms')):
     diagram = TimeDistanceDiagram(ax, tmax=tmax)
     det1 = 32.0 * sc.Unit('m')
     det2 = 40.0 * sc.Unit('m')
+    lambda_min = 16.0 * sc.units.angstrom
     frame_offset = diagram.to_time(1.5 * sc.Unit('ms'))
     diagram.add_source_pulse()
     diagram.add_sample(distance=20.0 * sc.Unit('m'))
     diagram.add_detector(distance=det1, name='detector1')
     diagram.add_detector(distance=det2, name='detector2')
     diagram.add_neutrons(Lmax=1.05 * det2,
-                         lambda_min=16.0 * sc.units.angstrom,
+                         lambda_min=lambda_min,
                          time_offset=frame_offset,
                          stride=2)
 

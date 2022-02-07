@@ -59,7 +59,7 @@ class TimeDistanceDiagram:
                     lw=0.7):
         tof = self.to_time(_tof_from_wavelength(wavelength=wavelength, Ltotal=L))
         t0 = self.to_time(time_offset).value
-        self._ax.plot([t0, tof.value], [0, L.value],
+        self._ax.plot([t0, t0 + tof.value], [0, L.value],
                       marker='',
                       color=color,
                       ls=ls,
