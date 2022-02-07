@@ -36,6 +36,10 @@ def _make_pooch():
 _pooch = _make_pooch()
 
 
+def bigfake():
+    return get_path('bigfake.nxs')
+
+
 def tutorial_dense_data():
     return sc.io.open_hdf5(_pooch.fetch('loki-at-larmor.hdf5'))
 

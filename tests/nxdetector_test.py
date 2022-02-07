@@ -141,6 +141,6 @@ def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in
 
 
 def test_can_load_nxdetector_from_bigfake():
-    with nexus.File(scn.data.get_path('bigfake.nxs')) as f:
+    with nexus.File(scn.data.bigfake()) as f:
         da = f['entry/instrument/detector_1'][...]
         assert da.sizes == {'dim_0': 300, 'dim_1': 300}
