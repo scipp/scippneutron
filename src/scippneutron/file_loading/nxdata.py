@@ -12,6 +12,10 @@ class NXdata(NXobject):
                  loader: LoadFromNexus = LoadFromHdf5(),
                  signal=None,
                  axes=None):
+        """
+        :param signal: Default signal name used, if no `signal` attribute found in file.
+        :param axes: Default axes used, if no `axes` attribute found in file.
+        """
         super().__init__(group, loader)
         self._signal_name_default = signal
         self._axes_default = axes

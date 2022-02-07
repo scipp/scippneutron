@@ -66,7 +66,8 @@ class NXlog(NXobject):
     @property
     def _nxbase(self) -> NXdata:
         axes = ['.'] * self['value'].ndim
-        # The outermost axis in NXlog is hard-coded to 'time' (if present)
+        # The outermost axis in NXlog is pre-defined to 'time' (if present). Note
+        # that this may be overriden by an `axes` attribute, if defined for the group.
         if 'time' in self:
             axes[0] = 'time'
         # NXdata uses the 'signal' attribute to define the field name of the signal.
