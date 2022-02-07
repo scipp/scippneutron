@@ -53,8 +53,9 @@ def _convert_array_to_metres(array: np.ndarray, unit: str) -> np.ndarray:
                     dtype=np.float64), "m").values
 
 
-def _load_pixel_positions(detector_group: Group, detector_ids_size: int,
-                          nexus: LoadFromNexus) -> Tuple[Optional[sc.Variable], Optional[sc.Variable]]:
+def _load_pixel_positions(
+        detector_group: Group, detector_ids_size: int,
+        nexus: LoadFromNexus) -> Tuple[Optional[sc.Variable], Optional[sc.Variable]]:
     offsets_unit = nexus.get_unit(
         nexus.get_dataset_from_group(detector_group, "x_pixel_offset"))
     if offsets_unit == sc.units.dimensionless:
@@ -192,7 +193,8 @@ def _load_detector(group: Group, nexus: LoadFromNexus) -> DetectorData:
     pixel_position_transforms = None
     pixel_positions_found, _ = nexus.dataset_in_group(group, "x_pixel_offset")
     if pixel_positions_found and detector_ids is not None:
-        pixel_positions, pixel_position_transforms = _load_pixel_positions(group, detector_ids.shape[0], nexus)
+        pixel_positions, pixel_position_transforms = _load_pixel_positions(
+            group, detector_ids.shape[0], nexus)
 
     return DetectorData(detector_ids=detector_ids,
                         pixel_positions=pixel_positions,
@@ -200,6 +202,7 @@ def _load_detector(group: Group, nexus: LoadFromNexus) -> DetectorData:
 
 
 class NXevent_data(NXobject):
+
     @property
     def shape(self) -> List[int]:
         return self._loader.get_shape(
@@ -328,6 +331,7 @@ def _check_event_ids_and_det_number_types_valid(detector_id_type: Any,
     we can give a useful warning to the user and skip loading the
     current event group.
     """
+
     def is_integer_type(type_to_check: Any) -> bool:
         return type_to_check == sc.DType.int32 or \
                type_to_check == sc.DType.int64
@@ -403,7 +407,8 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
             # to a variable that cah be changed in a single place.
             da.coords['base_position'] = data.pixel_positions
             if data.pixel_position_transforms is not None:
-                da.attrs['position_transformations'] = sc.scalar(value=data.pixel_position_transforms)
+                da.attrs['position_transformations'] = sc.scalar(
+                    value=data.pixel_position_transforms)
         return da
 
     _dim = _detector_dimension if bin_by_pixel else _bank_dimension

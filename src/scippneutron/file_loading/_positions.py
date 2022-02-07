@@ -7,8 +7,7 @@ import numpy as np
 import scipp as sc
 import scipp.spatial
 from ._common import Group
-from ._transformations import (TransformationError,
-                               get_full_transformation_matrix,
+from ._transformations import (TransformationError, get_full_transformation_matrix,
                                get_translation_from_affine)
 from ._nexus import LoadFromNexus
 
@@ -55,11 +54,9 @@ def load_positions_of_components(groups: List[Group],
         _add_position_to_data(name, data, transformation, position, units)
 
 
-def _add_position_to_data(name: str,
-                          data: sc.Variable,
+def _add_position_to_data(name: str, data: sc.Variable,
                           transformation: Optional[Union[sc.Variable, sc.DataArray]],
-                          position: np.ndarray,
-                          units: sc.Unit):
+                          position: np.ndarray, units: sc.Unit):
 
     _add_coord_to_loaded_data(attr_name=f"{name}_base_position",
                               data=data,
@@ -75,12 +72,12 @@ def _add_position_to_data(name: str,
                                   dtype=sc.DType.vector3)
     else:
         if isinstance(transformation, sc.Variable):
-            _add_coord_to_loaded_data(attr_name=f"{name}_position",
-                                      data=data,
-                                      value=(transformation * sc.vector(value=position,
-                                                                        unit=units)).values,
-                                      unit=units,
-                                      dtype=sc.DType.vector3)
+            _add_coord_to_loaded_data(
+                attr_name=f"{name}_position",
+                data=data,
+                value=(transformation * sc.vector(value=position, unit=units)).values,
+                unit=units,
+                dtype=sc.DType.vector3)
 
         _add_coord_to_loaded_data(attr_name=f"{name}_transform",
                                   data=data,
@@ -89,11 +86,12 @@ def _add_position_to_data(name: str,
 
 
 def _get_base_position_and_transforms_of_component(
-        group: Group,
-        name: str,
-        nx_class: str,
-        nexus: LoadFromNexus,
-        default_position: Optional[np.ndarray] = None) -> Tuple[np.ndarray, sc.Unit, sc.DataArray]:
+    group: Group,
+    name: str,
+    nx_class: str,
+    nexus: LoadFromNexus,
+    default_position: Optional[np.ndarray] = None
+) -> Tuple[np.ndarray, sc.Unit, sc.DataArray]:
     depends_on_found, _ = nexus.dataset_in_group(group, "depends_on")
     distance_found, _ = nexus.dataset_in_group(group, "distance")
 
