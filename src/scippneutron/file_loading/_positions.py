@@ -26,12 +26,12 @@ def load_position_of_unique_component(groups: List[Group],
              f"skipping loading {name} position")
         return
     try:
-        position, units, transformations = _get_base_pos_and_transforms_of_component(
+        position, transformations = _get_base_pos_and_transforms_of_component(
             groups[0], name, nx_class, nexus, default_position)
     except PositionError:
         return
 
-    _add_position_to_data(name, data, transformations, position, units)
+    _add_position_to_data(name, data, position, transformations)
 
 
 def load_positions_of_components(groups: List[Group],
@@ -42,7 +42,7 @@ def load_positions_of_components(groups: List[Group],
                                  default_position: Optional[np.ndarray] = None):
     for group in groups:
         try:
-            position, units, transformation = _get_base_pos_and_transforms_of_component(
+            position, transformation = _get_base_pos_and_transforms_of_component(
                 group, name, nx_class, nexus, default_position)
         except PositionError:
             continue
@@ -50,47 +50,40 @@ def load_positions_of_components(groups: List[Group],
         if len(groups) != 1:
             name = nexus.get_name(group)
 
-        _add_position_to_data(name, data, transformation, position, units)
+        _add_position_to_data(name, data, position, transformation)
 
 
-def _add_position_to_data(name: str, data: sc.Variable,
-                          transformation: Optional[Union[sc.Variable, sc.DataArray]],
-                          position: np.ndarray, units: sc.Unit):
+def _add_position_to_data(name: str, data: sc.Variable, position: sc.Variable,
+                          transformation: Optional[Union[sc.Variable, sc.DataArray]]):
 
     _add_coord_to_loaded_data(attr_name=f"{name}_base_position",
                               data=data,
-                              value=position,
-                              unit=units,
-                              dtype=sc.DType.vector3)
+                              coord=position)
 
     if transformation is None:
         _add_coord_to_loaded_data(attr_name=f"{name}_position",
                                   data=data,
-                                  value=position,
-                                  unit=units,
-                                  dtype=sc.DType.vector3)
+                                  coord=position)
     else:
         if isinstance(transformation, sc.Variable):
-            _add_coord_to_loaded_data(
-                attr_name=f"{name}_position",
-                data=data,
-                value=(transformation * sc.vector(value=position, unit=units)).values,
-                unit=units,
-                dtype=sc.DType.vector3)
+            # The transform will be a (scalar) variable if it is not time-dependent.
+            # This means that we can calculate the actual position easily.
+            _add_coord_to_loaded_data(attr_name=f"{name}_position",
+                                      data=data,
+                                      coord=transformation * position)
 
         _add_coord_to_loaded_data(attr_name=f"{name}_transform",
                                   data=data,
-                                  value=transformation,
-                                  unit=None)
+                                  coord=sc.scalar(value=transformation))
 
 
 def _get_base_pos_and_transforms_of_component(
-    group: Group,
-    name: str,
-    nx_class: str,
-    nexus: LoadFromNexus,
-    default_position: Optional[np.ndarray] = None
-) -> Tuple[np.ndarray, sc.Unit, sc.DataArray]:
+        group: Group,
+        name: str,
+        nx_class: str,
+        nexus: LoadFromNexus,
+        default_position: Optional[np.ndarray] = None
+) -> Tuple[sc.Variable, sc.DataArray]:
     depends_on_found, _ = nexus.dataset_in_group(group, "depends_on")
     distance_found, _ = nexus.dataset_in_group(group, "distance")
 
@@ -120,25 +113,15 @@ def _get_base_pos_and_transforms_of_component(
         base_position = np.array([0, 0, 0])
         units = sc.units.m
 
-    return base_position, units, transformations
+    return sc.vector(value=base_position, unit=units), transformations
 
 
-def _add_coord_to_loaded_data(attr_name: str,
-                              data: sc.Variable,
-                              value: np.ndarray,
-                              unit: sc.Unit,
-                              dtype: Optional[Any] = None):
+def _add_coord_to_loaded_data(attr_name: str, data: sc.Variable, coord: sc.Variable):
 
     if isinstance(data, sc.DataArray):
         data = data.coords
 
     try:
-        if dtype is not None:
-            if dtype == sc.DType.vector3:
-                data[attr_name] = sc.vector(value=value, unit=unit)
-            else:
-                data[attr_name] = sc.scalar(value, dtype=dtype, unit=unit)
-        else:
-            data[attr_name] = sc.scalar(value, unit=unit)
+        data[attr_name] = coord
     except KeyError:
         pass

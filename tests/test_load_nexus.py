@@ -632,8 +632,7 @@ def test_loads_pixel_positions_with_event_data(load_function: Callable):
         np.concatenate((y_pixel_offset_1, y_pixel_offset_2.flatten())),
         np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
     ]).T / 1_000  # Divide by 1000 for mm to metres
-    assert np.allclose(loaded_data.coords['base_position'].values,
-                       expected_pixel_positions)
+    assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
     assert loaded_data.coords[
         'base_position'].unit == sc.units.m, \
         "Expected positions to be converted to metres"
@@ -676,8 +675,7 @@ def test_loads_pixel_positions_without_event_data(load_function: Callable):
         np.concatenate((y_pixel_offset_1, y_pixel_offset_2.flatten())),
         np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
     ]).T / 1_000  # Divide by 1000 for mm to metres
-    assert np.allclose(loaded_data.coords['base_position'].values,
-                       expected_pixel_positions)
+    assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
     assert loaded_data.coords[
                'base_position'].unit == sc.units.m, \
         "Expected positions to be converted to metres"
@@ -729,8 +727,7 @@ def test_loads_pixel_positions_when_event_data_is_missing_field(
         np.concatenate((y_pixel_offset_1, y_pixel_offset_2.flatten())),
         np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
     ]).T / 1_000  # Divide by 1000 for mm to metres
-    assert np.allclose(loaded_data.coords['base_position'].values,
-                       expected_pixel_positions)
+    assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
     assert loaded_data.coords[
                'base_position'].unit == sc.units.m, \
         "Expected positions to be converted to metres"
@@ -785,8 +782,7 @@ def test_loads_event_data_when_missing_from_some_detectors(load_function: Callab
         np.concatenate((y_pixel_offset_1, y_pixel_offset_2.flatten())),
         np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
     ]).T / 1_000  # Divide by 1000 for mm to metres
-    assert np.allclose(loaded_data.coords['base_position'].values,
-                       expected_pixel_positions)
+    assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
     assert loaded_data.coords[
                'base_position'].unit == sc.units.m, \
         "Expected positions to be converted to metres"

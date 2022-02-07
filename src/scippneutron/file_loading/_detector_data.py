@@ -404,9 +404,21 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
             # TODO: the name 'position' should probably not be hard-coded but moved
             # to a variable that cah be changed in a single place.
             da.coords['base_position'] = data.pixel_positions
-            if data.pixel_position_transforms is not None:
+
+            if data.pixel_position_transforms is None:
+                da.coords['position'] = data.pixel_positions
+            else:
                 da.attrs['position_transformations'] = sc.scalar(
                     value=data.pixel_position_transforms)
+
+                print(data.pixel_position_transforms)
+                print(data.pixel_positions)
+
+                if data.pixel_position_transforms.sizes == data.pixel_positions.sizes:
+                    # If transform is not time-dependent.
+                    da.coords['position'] = (data.pixel_position_transforms *
+                                             data.pixel_positions)
+
         return da
 
     _dim = _detector_dimension if bin_by_pixel else _bank_dimension
