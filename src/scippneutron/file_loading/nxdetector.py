@@ -109,12 +109,12 @@ class NXdetector(NXobject):
                                              dtype=id_min.dtype)
             else:
                 detector_numbers = self.detector_number[select]
-            event_data.bins.coords['detector_number'] = event_data.bins.coords.pop(
-                'event_id')
+            event_id = detector_numbers.flatten(to='event_id')
             # After loading raw NXevent_data it is guaranteed that the event table
             # is contiguous and that there is no masking. We can therefore use the
             # more efficient approach of binning from scratch instead of erasing the
             # 'pulse' binning defined by NXevent_data.
-            return sc.bin(event_data.bins.constituents['data'],
-                          groups=[detector_numbers])
+            event_data = sc.bin(event_data.bins.constituents['data'], groups=[event_id])
+            event_data.coords['detector_number'] = event_data.coords.pop('event_id')
+            return event_data.fold(dim='event_id', sizes=detector_numbers.sizes)
         return self._nxbase[select]
