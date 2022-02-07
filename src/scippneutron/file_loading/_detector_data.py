@@ -401,8 +401,6 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
         if pixel_positions_loaded:
             # TODO: the name 'position' should probably not be hard-coded but moved
             # to a variable that cah be changed in a single place.
-            print(f"detector base positions: {data.pixel_positions}")
-            print(f"detector transforms: {data.pixel_position_transforms}")
             da.coords['base_position'] = data.pixel_positions
             if data.pixel_position_transforms is not None:
                 da.attrs['position_transformations'] = sc.scalar(value=data.pixel_position_transforms)
