@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from typing import Callable, Tuple
 import scipp as sc
+import scippneutron as scn
 from scippneutron.file_loading._nexus import LoadFromNexus
 from scippneutron.file_loading._hdf5_nexus import LoadFromHdf5
 from scippneutron.file_loading._json_nexus import LoadFromJson
@@ -137,3 +138,9 @@ def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in
         assert sc.identical(
             loaded.bins.size().data,
             sc.array(dims=['detector_number'], dtype='int64', values=[2, 3, 0, 1]))
+
+
+def test_can_load_nxdetector_from_bigfake():
+    with nexus.File(scn.data.get_path('bigfake.nxs')) as f:
+        da = f['entry/instrument/detector_1'][...]
+        assert da.sizes == {'dim_0': 300, 'dim_1': 300}
