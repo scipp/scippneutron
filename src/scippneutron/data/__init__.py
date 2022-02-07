@@ -18,6 +18,7 @@ def _make_pooch():
         base_url='https://public.esss.dk/groups/scipp/scippneutron/{version}/',
         version=_version,
         registry={
+            'bigfake.nxs': 'md5:ebf73017ddd03cee2a14a887c439bf35',
             'iris26176_graphite002_sqw.nxs': 'md5:7ea63f9137602b7e9b604fe30f0c6ec2',
             'loki-at-larmor.hdf5': 'md5:7fc48639bb2c409adb9a1dedd53d1c83',
             'powder-event.h5': 'md5:f92ca1da4c2d42c3d8a5d1b1d79aa5a4',
