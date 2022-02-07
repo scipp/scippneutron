@@ -635,8 +635,8 @@ def test_loads_pixel_positions_with_event_data(load_function: Callable):
     assert np.allclose(loaded_data.coords['base_position'].values,
                        expected_pixel_positions)
     assert loaded_data.coords[
-        'base_position'].unit == sc.units.m, "Expected positions " \
-                                        "to be converted to metres"
+        'base_position'].unit == sc.units.m, \
+        "Expected positions to be converted to metres"
 
 
 def test_loads_pixel_positions_without_event_data(load_function: Callable):
@@ -679,8 +679,8 @@ def test_loads_pixel_positions_without_event_data(load_function: Callable):
     assert np.allclose(loaded_data.coords['base_position'].values,
                        expected_pixel_positions)
     assert loaded_data.coords[
-               'base_position'].unit == sc.units.m, "Expected positions " \
-                                               "to be converted to metres"
+               'base_position'].unit == sc.units.m, \
+        "Expected positions to be converted to metres"
 
 
 def test_loads_pixel_positions_when_event_data_is_missing_field(
@@ -732,8 +732,8 @@ def test_loads_pixel_positions_when_event_data_is_missing_field(
     assert np.allclose(loaded_data.coords['base_position'].values,
                        expected_pixel_positions)
     assert loaded_data.coords[
-               'base_position'].unit == sc.units.m, "Expected positions " \
-                                               "to be converted to metres"
+               'base_position'].unit == sc.units.m, \
+        "Expected positions to be converted to metres"
 
 
 def test_loads_event_data_when_missing_from_some_detectors(load_function: Callable):
@@ -788,8 +788,8 @@ def test_loads_event_data_when_missing_from_some_detectors(load_function: Callab
     assert np.allclose(loaded_data.coords['base_position'].values,
                        expected_pixel_positions)
     assert loaded_data.coords[
-               'base_position'].unit == sc.units.m, "Expected positions " \
-                                               "to be converted to metres"
+               'base_position'].unit == sc.units.m, \
+        "Expected positions to be converted to metres"
 
     # The event data from detector_1 has been loaded
     counts_on_detectors = loaded_data.bins.sum()
