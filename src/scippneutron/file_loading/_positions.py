@@ -2,7 +2,7 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 
 from _warnings import warn
-from typing import List, Optional, Tuple, Any, Union
+from typing import List, Optional, Tuple, Union
 import numpy as np
 import scipp as sc
 import scipp.spatial
