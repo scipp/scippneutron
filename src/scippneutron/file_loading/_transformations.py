@@ -13,7 +13,7 @@ import h5py
 from cmath import isclose
 from ._nexus import LoadFromNexus, GroupObject
 from ._json_nexus import contains_stream
-from ._log_data import NXlog
+from .nxlog import NXlog
 
 
 class TransformationError(Exception):
