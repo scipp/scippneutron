@@ -84,7 +84,8 @@ class NXdetector(NXobject):
         """Read and return the 'detector_number' field, None if it does not exist."""
         if self._detector_number is None:
             return None
-        return sc.array(dims=self.dims, values=self._detector_number[...])
+        var = self._detector_number[...]
+        return var.rename_dims(dict(zip(var.dims, self.dims)))
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
         # Note that ._detector_data._load_detector provides a different loading
