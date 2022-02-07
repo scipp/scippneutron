@@ -7,8 +7,7 @@ import numpy as np
 import scipp as sc
 import scipp.spatial
 from ._common import Group
-from ._transformations import (TransformationError, get_full_transformation_matrix,
-                               get_translation_from_affine)
+from ._transformations import TransformationError, get_full_transformation_matrix
 from ._nexus import LoadFromNexus
 
 
@@ -27,7 +26,7 @@ def load_position_of_unique_component(groups: List[Group],
              f"skipping loading {name} position")
         return
     try:
-        position, units, transformations = _get_base_position_and_transforms_of_component(
+        position, units, transformations = _get_base_pos_and_transforms_of_component(
             groups[0], name, nx_class, nexus, default_position)
     except PositionError:
         return
@@ -43,7 +42,7 @@ def load_positions_of_components(groups: List[Group],
                                  default_position: Optional[np.ndarray] = None):
     for group in groups:
         try:
-            position, units, transformation = _get_base_position_and_transforms_of_component(
+            position, units, transformation = _get_base_pos_and_transforms_of_component(
                 group, name, nx_class, nexus, default_position)
         except PositionError:
             continue
@@ -85,7 +84,7 @@ def _add_position_to_data(name: str, data: sc.Variable,
                                   unit=None)
 
 
-def _get_base_position_and_transforms_of_component(
+def _get_base_pos_and_transforms_of_component(
     group: Group,
     name: str,
     nx_class: str,
