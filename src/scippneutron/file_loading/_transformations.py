@@ -236,7 +236,7 @@ def _get_transformation_magnitude_and_unit(group_name: str,
     """
     if nexus.is_group(transform):
         try:
-            da = NXlog(transform, nexus)[()]
+            log = NXlog(transform, nexus)[()]
         except sc.DimensionError:
             raise TransformationError(f"Mismatched time and value dataset lengths "
                                       f"for transformation at {group_name}")
@@ -248,12 +248,12 @@ def _get_transformation_magnitude_and_unit(group_name: str,
     else:
         magnitude = nexus.load_dataset_as_numpy_array(transform).astype(float).item()
         unit = nexus.get_unit(transform)
-        da = sc.scalar(value=magnitude, unit=unit, dtype=sc.DType.float64)
+        log = sc.scalar(value=magnitude, unit=unit, dtype=sc.DType.float64)
 
-    if da.unit == sc.units.dimensionless:
+    if log.unit == sc.units.dimensionless:
         raise TransformationError(f"Missing units for transformation at "
                                   f"{nexus.get_name(transform)}")
-    return da
+    return log
 
 
 def _append_rotation(offset: np.ndarray, transform: GroupObject,
