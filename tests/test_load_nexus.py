@@ -420,19 +420,20 @@ def test_loads_logs_with_non_supported_int_types(load_function: Callable):
         assert np.allclose(loaded_data[log.name].data.values.values, log.value)
 
 
-def test_skips_multidimensional_log(load_function: Callable):
-    # Loading NXlogs with more than 1 dimension is not yet implemented
-    # We need to come up with a sensible approach to labelling the dimensions
-
+def test_loads_multidimensional_log(load_function: Callable):
     multidim_values = np.array([[1, 2, 3], [1, 2, 3]])
+    times = np.array([4, 5])
     name = "test_log"
     builder = NexusBuilder()
-    builder.add_log(Log(name, multidim_values, np.array([4, 5, 6])))
+    builder.add_log(Log(name, multidim_values, times))
 
-    with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
+    loaded_data = load_function(builder)
 
-    assert loaded_data is None
+    log = loaded_data[name].data.value
+    expected = sc.DataArray(sc.array(dims=['time', 'dim_1'], values=multidim_values))
+    expected.coords['time'] = sc.epoch(unit='ns') + sc.array(
+        dims=['time'], values=times, unit='s').to(unit='ns')
+    assert sc.identical(log, expected)
 
 
 def test_skips_log_with_no_value_dataset(load_function: Callable):
@@ -446,22 +447,23 @@ def test_skips_log_with_no_value_dataset(load_function: Callable):
     assert loaded_data is None
 
 
-def test_skips_log_with_empty_value_and_time_datasets(load_function: Callable):
+def test_loads_log_with_empty_value_and_time_datasets(load_function: Callable):
     empty_values = np.array([]).astype(np.int32)
     empty_times = np.array([]).astype(np.int32)
     name = "test_log"
     builder = NexusBuilder()
     builder.add_log(Log(name, empty_values, empty_times))
 
-    with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
+    loaded_data = load_function(builder)
 
-    assert loaded_data is None
+    assert loaded_data[name].data.values.sizes == {'time': 0}
 
 
 def test_skips_log_with_mismatched_value_and_time(load_function: Callable):
     values = np.array([1, 2, 3]).astype(np.int32)
-    times = np.array([1, 2, 3, 4]).astype(np.int32)
+    # Note that if times exceeds length by 1 it is loaded as bin edges. It is unclear
+    # if this is considered valid Nexus.
+    times = np.array([1, 2, 3, 4, 5]).astype(np.int32)
     name = "test_log"
     builder = NexusBuilder()
     builder.add_log(Log(name, values, times))

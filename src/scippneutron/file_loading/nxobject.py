@@ -197,7 +197,7 @@ class NXentry(NXobject):
 def _nx_class_registry():
     from ._monitor_data import NXmonitor
     from ._detector_data import NXevent_data
-    from ._log_data import NXlog
+    from .nxlog import NXlog
     from .nxdata import NXdata
     from .nxdetector import NXdetector
     return {

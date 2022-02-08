@@ -10,7 +10,7 @@ import scipp
 from ._common import Group, MissingDataset
 from ._detector_data import load_detector_data
 from ._monitor_data import load_monitor_data
-from ._log_data import load_logs
+from .nxlog import load_logs
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
 from ._nexus import LoadFromNexus, ScippData

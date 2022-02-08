@@ -7,6 +7,7 @@ import scipp as sc
 import numpy as np
 from ._common import Group, JSONGroup, MissingDataset, MissingAttribute
 from dataclasses import dataclass
+from warnings import warn
 
 _nexus_class = "NX_class"
 _nexus_units = "units"
@@ -214,6 +215,10 @@ class LoadFromJson:
         return False, (f"Unable to load data from NXevent_data "
                        f" due to missing '{dataset_name}' field\n")
 
+    @staticmethod
+    def supported_int_type(dataset):
+        return _filewriter_to_supported_numpy_dtype[LoadFromJson.get_dtype(dataset)]
+
     def load_dataset(self,
                      group: Dict,
                      dataset_name: str,
@@ -233,10 +238,16 @@ class LoadFromJson:
             raise MissingDataset()
 
         if dtype is None:
-            dtype = self.get_dtype(dataset)
+            dtype = self.supported_int_type(dataset)
 
         try:
             units = _get_attribute_value(dataset, _nexus_units)
+            try:
+                units = sc.Unit(units)
+            except sc.UnitError:
+                warn(f"Unrecognized unit '{units}' for value dataset "
+                     f"in '{group.name}'; setting unit as 'dimensionless'")
+                units = sc.units.dimensionless
         except MissingAttribute:
             units = sc.units.dimensionless
 
@@ -271,12 +282,7 @@ class LoadFromJson:
         numpy array is required.
         :param dataset: The dataset to load values from
         """
-        try:
-            dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
-                                                         ["type"]]
-        except KeyError:
-            dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
-                                                         ["dtype"]]
+        dtype = LoadFromJson.supported_int_type(dataset)
         return np.asarray(dataset[_nexus_values])[index].astype(dtype)
 
     def get_dataset_numpy_dtype(self, dataset: Dict) -> Any:

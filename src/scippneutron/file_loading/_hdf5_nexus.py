@@ -234,7 +234,14 @@ class LoadFromHdf5:
             units = node.attrs["units"]
         except (AttributeError, KeyError):
             return "dimensionless"
-        return _ensure_str(units, LoadFromHdf5.get_attr_encoding(node, "units"))
+        units = _ensure_str(units, LoadFromHdf5.get_attr_encoding(node, "units"))
+        try:
+            sc.Unit(units)
+        except sc.UnitError:
+            warnings.warn(f"Unrecognized unit '{units}' for value dataset "
+                          f"in '{node.name}'; setting unit as 'dimensionless'")
+            return "dimensionless"
+        return units
 
     @staticmethod
     def get_child_from_group(group: Dict,
