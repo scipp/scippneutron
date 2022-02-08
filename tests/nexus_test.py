@@ -34,7 +34,7 @@ def nexus_group(request):
 
 
 def builder_with_events_monitor_and_log():
-    event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
+    event_time_offsets = np.array([456, 743, 347, 345, 632, 23], dtype='int64')
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 3, 2]),
         event_time_offset=event_time_offsets,
