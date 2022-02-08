@@ -153,6 +153,8 @@ class LoadFromHdf5:
 
         if dtype is None:
             dtype = _ensure_supported_int_type(dataset.dtype.type)
+        if h5py.check_string_dtype(dataset.dtype):
+            dtype = sc.DType.string
 
         shape = list(dataset.shape)
         if isinstance(index, slice):
@@ -164,7 +166,9 @@ class LoadFromHdf5:
                             shape=shape,
                             dtype=dtype,
                             unit=self.get_unit(dataset))
-        if variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
+        if dtype == sc.DType.string:
+            variable.values = dataset[index].flatten()
+        elif variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
             dataset.read_direct(variable.values, source_sel=index)
         else:
             variable.values = dataset[index]
