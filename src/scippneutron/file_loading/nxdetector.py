@@ -87,6 +87,20 @@ class NXdetector(NXobject):
         var = self._detector_number[...]
         return var.rename_dims(dict(zip(var.dims, self.dims)))
 
+    @property
+    def pixel_offset(self) -> sc.Variable:
+        """Read the [xyz]_pixel_offset fields and return a variable of pixel offset
+        vectors, None if x_pixel_offset does not exist."""
+        if 'x_pixel_offset' not in self:
+            return None
+        x = self['x_pixel_offset'][()]
+        offset = sc.zeros(sizes=x.sizes, unit=x.unit, dtype=sc.DType.vector3)
+        offset.fields.x = x
+        for comp in ['y_pixel_offset', 'z_pixel_offset']:
+            if comp in self:
+                offset.fields.y = self[comp][()].to(unit=x.unit, copy=False)
+        return offset.rename_dims(dict(zip(offset.dims, self.dims)))
+
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
         # Note that ._detector_data._load_detector provides a different loading
         # facility for NXdetector but handles only loading of detector_number,
@@ -97,7 +111,8 @@ class NXdetector(NXobject):
             # events from all pixels and random order, we always have to load the entire
             # bank. Slicing with the provided 'select' is done while binning.
             event_data = self._nxbase[...]
-            if self.detector_number is None:
+            detector_numbers = self.detector_number
+            if detector_numbers is None:
                 # Ideally we would prefer to use np.unique, but a quick experiment shows
                 # that this can easily be 100x slower, so it is not an option. In
                 # practice most files have contiguous event_id values within a bank
@@ -109,7 +124,7 @@ class NXdetector(NXobject):
                                              stop=id_max.value + 1,
                                              dtype=id_min.dtype)
             else:
-                detector_numbers = self.detector_number[select]
+                detector_numbers = detector_numbers[select]
             event_id = detector_numbers.flatten(to='event_id')
             # After loading raw NXevent_data it is guaranteed that the event table
             # is contiguous and that there is no masking. We can therefore use the
@@ -117,5 +132,10 @@ class NXdetector(NXobject):
             # 'pulse' binning defined by NXevent_data.
             event_data = sc.bin(event_data.bins.constituents['data'], groups=[event_id])
             event_data.coords['detector_number'] = event_data.coords.pop('event_id')
-            return event_data.fold(dim='event_id', sizes=detector_numbers.sizes)
-        return self._nxbase[select]
+            da = event_data.fold(dim='event_id', sizes=detector_numbers.sizes)
+        else:
+            da = self._nxbase[select]
+        pixel_offset = self.pixel_offset
+        if pixel_offset is not None:
+            da.coords['pixel_offset'] = pixel_offset[select]
+        return da
