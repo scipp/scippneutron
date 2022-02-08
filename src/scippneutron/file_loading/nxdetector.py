@@ -106,13 +106,13 @@ class NXdetector(NXobject):
         # Note that ._detector_data._load_detector provides a different loading
         # facility for NXdetector but handles only loading of detector_number,
         # as needed for event data loading
+        detector_number = self.detector_number(select)
         if self._is_events:
             # If there is a 'detector_number' field it is used to bin events into
             # detector pixels. Note that due to the nature of NXevent_data, which stores
             # events from all pixels and random order, we always have to load the entire
             # bank. Slicing with the provided 'select' is done while binning.
             event_data = self._nxbase[...]
-            detector_number = self.detector_number(select)
             if detector_number is None:
                 # Ideally we would prefer to use np.unique, but a quick experiment shows
                 # that this can easily be 100x slower, so it is not an option. In
@@ -135,6 +135,8 @@ class NXdetector(NXobject):
             da = event_data.fold(dim='event_id', sizes=detector_number.sizes)
         else:
             da = self._nxbase[select]
+            if detector_number is not None:
+                da.coords['detector_number'] = detector_number
         pixel_offset = self.pixel_offset(select)
         if pixel_offset is not None:
             da.coords['pixel_offset'] = pixel_offset

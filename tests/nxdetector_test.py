@@ -51,11 +51,15 @@ def test_loads_data_without_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     builder = NexusBuilder()
     da = sc.DataArray(sc.array(dims=['xx', 'yy'], values=[[1.1, 2.2], [3.3, 4.4]]))
-    builder.add_detector(Detector(detector_numbers=np.array([1, 2, 3, 4]), data=da))
+    detector_numbers = np.array([[1, 2], [3, 4]])
+    builder.add_detector(Detector(detector_numbers=detector_numbers, data=da))
+    expected = da.rename_dims({'xx': 'dim_0', 'yy': 'dim_1'})
+    expected.coords['detector_number'] = sc.array(dims=expected.dims,
+                                                  values=detector_numbers)
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
         loaded = detector[...]
-        assert sc.identical(loaded, da.rename_dims({'xx': 'dim_0', 'yy': 'dim_1'}))
+        assert sc.identical(loaded, expected)
 
 
 def test_loads_data_with_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
@@ -64,11 +68,15 @@ def test_loads_data_with_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='K', values=[[1.1, 2.2], [3.3, 4.4]]))
     da.coords['xx'] = sc.array(dims=['xx'], unit='m', values=[0.1, 0.2])
-    builder.add_detector(Detector(detector_numbers=np.array([1, 2, 3, 4]), data=da))
+    detector_numbers = np.array([[1, 2], [3, 4]])
+    builder.add_detector(Detector(detector_numbers=detector_numbers, data=da))
+    expected = da.rename_dims({'yy': 'dim_1'})
+    expected.coords['detector_number'] = sc.array(dims=expected.dims,
+                                                  values=detector_numbers)
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
         loaded = detector[...]
-        assert sc.identical(loaded, da.rename_dims({'yy': 'dim_1'}))
+        assert sc.identical(loaded, expected)
 
 
 def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
