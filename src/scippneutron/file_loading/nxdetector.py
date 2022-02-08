@@ -3,6 +3,7 @@ import scipp as sc
 from .nxobject import NX_class, NXobject, Field, ScippIndex, NexusStructureError
 from .nxdata import NXdata
 from ._detector_data import NXevent_data
+from ._common import to_plain_index
 
 
 class NXdetector(NXobject):
@@ -79,26 +80,26 @@ class NXdetector(NXobject):
     def _detector_number(self) -> Field:
         return self.get('detector_number', None)
 
-    @property
-    def detector_number(self) -> sc.Variable:
+    def detector_number(self, select) -> sc.Variable:
         """Read and return the 'detector_number' field, None if it does not exist."""
         if self._detector_number is None:
             return None
-        var = self._detector_number[...]
+        index = to_plain_index(self.dims, select, ignore_missing=True)
+        var = self._detector_number[index]
         return var.rename_dims(dict(zip(var.dims, self.dims)))
 
-    @property
-    def pixel_offset(self) -> sc.Variable:
+    def pixel_offset(self, select) -> sc.Variable:
         """Read the [xyz]_pixel_offset fields and return a variable of pixel offset
         vectors, None if x_pixel_offset does not exist."""
         if 'x_pixel_offset' not in self:
             return None
-        x = self['x_pixel_offset'][()]
+        index = to_plain_index(self.dims, select, ignore_missing=True)
+        x = self['x_pixel_offset'][index]
         offset = sc.zeros(sizes=x.sizes, unit=x.unit, dtype=sc.DType.vector3)
         offset.fields.x = x
         for comp in ['y_pixel_offset', 'z_pixel_offset']:
             if comp in self:
-                offset.fields.y = self[comp][()].to(unit=x.unit, copy=False)
+                offset.fields.y = self[comp][index].to(unit=x.unit, copy=False)
         return offset.rename_dims(dict(zip(offset.dims, self.dims)))
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
@@ -111,31 +112,30 @@ class NXdetector(NXobject):
             # events from all pixels and random order, we always have to load the entire
             # bank. Slicing with the provided 'select' is done while binning.
             event_data = self._nxbase[...]
-            detector_numbers = self.detector_number
-            if detector_numbers is None:
+            detector_number = self.detector_number(select)
+            if detector_number is None:
                 # Ideally we would prefer to use np.unique, but a quick experiment shows
                 # that this can easily be 100x slower, so it is not an option. In
                 # practice most files have contiguous event_id values within a bank
                 # (NXevent_data).
                 id_min = event_data.bins.coords['event_id'].min()
                 id_max = event_data.bins.coords['event_id'].max()
-                detector_numbers = sc.arange(dim='detector_number',
-                                             start=id_min.value,
-                                             stop=id_max.value + 1,
-                                             dtype=id_min.dtype)
-            else:
-                detector_numbers = detector_numbers[select]
-            event_id = detector_numbers.flatten(to='event_id')
+                detector_number = sc.arange(dim='detector_number',
+                                            start=id_min.value,
+                                            stop=id_max.value + 1,
+                                            dtype=id_min.dtype)
+                # TODO This is ignoring `select`!
+            event_id = detector_number.flatten(to='event_id')
             # After loading raw NXevent_data it is guaranteed that the event table
             # is contiguous and that there is no masking. We can therefore use the
             # more efficient approach of binning from scratch instead of erasing the
             # 'pulse' binning defined by NXevent_data.
             event_data = sc.bin(event_data.bins.constituents['data'], groups=[event_id])
             event_data.coords['detector_number'] = event_data.coords.pop('event_id')
-            da = event_data.fold(dim='event_id', sizes=detector_numbers.sizes)
+            da = event_data.fold(dim='event_id', sizes=detector_number.sizes)
         else:
             da = self._nxbase[select]
-        pixel_offset = self.pixel_offset
+        pixel_offset = self.pixel_offset(select)
         if pixel_offset is not None:
-            da.coords['pixel_offset'] = pixel_offset[select]
+            da.coords['pixel_offset'] = pixel_offset
         return da
