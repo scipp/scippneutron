@@ -116,6 +116,11 @@ class NXdetector(NXobject):
             # bank. Slicing with the provided 'select' is done while binning.
             event_data = self._nxbase[...]
             if coords['detector_number'] is None:
+                if select not in (Ellipsis, tuple()):
+                    raise NexusStructureError(
+                        "Cannot load slice of NXdetector since it contains event data "
+                        "but no 'detector_number' field, i.e., the shape is unknown. "
+                        "Use ellipsis or an empty tuple to load the full detector.")
                 # Ideally we would prefer to use np.unique, but a quick experiment shows
                 # that this can easily be 100x slower, so it is not an option. In
                 # practice most files have contiguous event_id values within a bank
@@ -126,7 +131,6 @@ class NXdetector(NXobject):
                                                       start=id_min.value,
                                                       stop=id_max.value + 1,
                                                       dtype=id_min.dtype)
-                # TODO This is ignoring `select`!
             event_id = coords['detector_number'].flatten(to='event_id')
             # After loading raw NXevent_data it is guaranteed that the event table
             # is contiguous and that there is no masking. We can therefore use the

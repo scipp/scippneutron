@@ -125,8 +125,7 @@ def test_loads_event_data_with_2d_detector_numbers(nexus_group: Tuple[Callable,
             sc.array(dims=['dim_0', 'dim_1'], dtype='int64', values=[[2, 3], [1, 0]]))
 
 
-def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in_file(
-        nexus_group: Tuple[Callable, LoadFromNexus]):
+def builder_with_events_and_no_detector_number():
     event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
     event_data = EventData(
         event_id=np.array([1, 2, 4, 1, 2, 2]),
@@ -136,16 +135,43 @@ def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in
     )
     builder = NexusBuilder()
     builder.add_detector(Detector(event_data=event_data))
+    return builder
+
+
+def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in_file(
+        nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
-    with resource(builder)() as f:
+    with resource(builder_with_events_and_no_detector_number())() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
         assert detector.dims == ['detector_number']
         with pytest.raises(nexus.NexusStructureError):
-            assert detector.shape == (4, )
+            detector.shape
         loaded = detector[...]
         assert sc.identical(
             loaded.bins.size().data,
             sc.array(dims=['detector_number'], dtype='int64', values=[2, 3, 0, 1]))
+
+
+def test_loading_event_data_with_selection_and_automatic_detector_numbers_raises(
+        nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_and_no_detector_number())() as f:
+        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        assert detector.dims == ['detector_number']
+        with pytest.raises(nexus.NexusStructureError):
+            detector['detector_number', 0]
+        with pytest.raises(nexus.NexusStructureError):
+            detector[:]
+
+
+def test_loading_event_data_with_full_selection_and_automatic_detector_numbers_works(
+        nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_and_no_detector_number())() as f:
+        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        assert detector.dims == ['detector_number']
+        assert detector[...].shape == [4]
+        assert detector[()].shape == [4]
 
 
 def test_can_load_nxdetector_from_bigfake():
