@@ -4,6 +4,7 @@ from .nexus_helpers import (
     Log,
     Monitor,
 )
+from .test_load_nexus import UTF8_TEST_STRINGS
 import numpy as np
 import pytest
 from typing import Callable, Tuple
@@ -215,6 +216,23 @@ def test_field_getitem_returns_variable_with_correct_size_and_values(
                      unit='ns',
                      values=[456, 743, 347, 345, 632],
                      dtype='int64'))
+
+
+@pytest.mark.parametrize("string", UTF8_TEST_STRINGS)
+def test_field_of_utf8_encoded_dataset_is_loaded_correctly(
+        nexus_group: Tuple[Callable, LoadFromNexus], string):
+    resource, loader = nexus_group
+    builder = NexusBuilder()
+    if isinstance(loader, LoadFromHdf5):
+        encoded1 = np.char.encode(string, 'utf-8')
+        encoded2 = np.char.encode(string + string, 'utf-8')
+        builder.add_title(np.array([encoded1, encoded2]))
+    else:  # json encodes itself
+        builder.add_title(np.array([string, string + string]))
+    with resource(builder)() as f:
+        title = nexus.NXroot(f, loader)['entry/title']
+        assert sc.identical(title[...],
+                            sc.array(dims=['dim_0'], values=[string, string + string]))
 
 
 def test_negative_event_index_converted_to_num_event(nexus_group: Tuple[Callable,

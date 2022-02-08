@@ -67,9 +67,10 @@ class Field:
         self._loader = loader
 
     def __getitem__(self, index) -> np.ndarray:
-        values = self._loader.load_dataset_as_numpy_array(self._dataset, index)
         dims = [f'dim_{i}' for i in range(self.ndim)]
-        return sc.array(dims=dims, unit=self.unit, values=values)
+        return self._loader.load_dataset_direct(self._dataset,
+                                                dimensions=dims,
+                                                index=index)
 
     def __repr__(self) -> str:
         return f'<Nexus field "{self._dataset.name}">'

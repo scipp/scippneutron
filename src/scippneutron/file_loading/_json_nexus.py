@@ -31,7 +31,8 @@ _filewriter_to_supported_numpy_dtype = {
     "uint8": np.int32,
     "uint16": np.int32,
     "uint32": np.int32,
-    "uint64": np.int64
+    "uint64": np.int64,
+    "string": np.str_
 }
 
 
@@ -236,7 +237,16 @@ class LoadFromJson:
         dataset = self.get_dataset_from_group(group, dataset_name)
         if dataset is None:
             raise MissingDataset()
+        return self.load_dataset_direct(dataset,
+                                        dimensions=dimensions,
+                                        dtype=dtype,
+                                        index=index)
 
+    def load_dataset_direct(self,
+                            dataset: Dict,
+                            dimensions: Optional[List[str]] = [],
+                            dtype: Optional[Any] = None,
+                            index=tuple()) -> sc.Variable:
         if dtype is None:
             dtype = self.supported_int_type(dataset)
 
@@ -246,7 +256,7 @@ class LoadFromJson:
                 units = sc.Unit(units)
             except sc.UnitError:
                 warn(f"Unrecognized unit '{units}' for value dataset "
-                     f"in '{group.name}'; setting unit as 'dimensionless'")
+                     f"in '{self.get_name(dataset)}'; setting unit as 'dimensionless'")
                 units = sc.units.dimensionless
         except MissingAttribute:
             units = sc.units.dimensionless

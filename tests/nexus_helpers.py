@@ -222,7 +222,8 @@ numpy_to_filewriter_type = {
     np.uint8: "uint8",
     np.uint16: "uint16",
     np.uint32: "uint32",
-    np.uint64: "uint64"
+    np.uint64: "uint64",
+    np.str_: "string"
 }
 
 
