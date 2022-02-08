@@ -106,38 +106,38 @@ class NXdetector(NXobject):
         # Note that ._detector_data._load_detector provides a different loading
         # facility for NXdetector but handles only loading of detector_number,
         # as needed for event data loading
-        detector_number = self.detector_number(select)
+        coords = {}
+        coords['detector_number'] = self.detector_number(select)
+        coords['pixel_offset'] = self.pixel_offset(select)
         if self._is_events:
             # If there is a 'detector_number' field it is used to bin events into
             # detector pixels. Note that due to the nature of NXevent_data, which stores
             # events from all pixels and random order, we always have to load the entire
             # bank. Slicing with the provided 'select' is done while binning.
             event_data = self._nxbase[...]
-            if detector_number is None:
+            if coords['detector_number'] is None:
                 # Ideally we would prefer to use np.unique, but a quick experiment shows
                 # that this can easily be 100x slower, so it is not an option. In
                 # practice most files have contiguous event_id values within a bank
                 # (NXevent_data).
                 id_min = event_data.bins.coords['event_id'].min()
                 id_max = event_data.bins.coords['event_id'].max()
-                detector_number = sc.arange(dim='detector_number',
-                                            start=id_min.value,
-                                            stop=id_max.value + 1,
-                                            dtype=id_min.dtype)
+                coords['detector_number'] = sc.arange(dim='detector_number',
+                                                      start=id_min.value,
+                                                      stop=id_max.value + 1,
+                                                      dtype=id_min.dtype)
                 # TODO This is ignoring `select`!
-            event_id = detector_number.flatten(to='event_id')
+            event_id = coords['detector_number'].flatten(to='event_id')
             # After loading raw NXevent_data it is guaranteed that the event table
             # is contiguous and that there is no masking. We can therefore use the
             # more efficient approach of binning from scratch instead of erasing the
             # 'pulse' binning defined by NXevent_data.
             event_data = sc.bin(event_data.bins.constituents['data'], groups=[event_id])
-            event_data.coords['detector_number'] = event_data.coords.pop('event_id')
-            da = event_data.fold(dim='event_id', sizes=detector_number.sizes)
+            del event_data.coords['event_id']  # same as detector_number
+            da = event_data.fold(dim='event_id', sizes=coords['detector_number'].sizes)
         else:
             da = self._nxbase[select]
-            if detector_number is not None:
-                da.coords['detector_number'] = detector_number
-        pixel_offset = self.pixel_offset(select)
-        if pixel_offset is not None:
-            da.coords['pixel_offset'] = pixel_offset
+        for name, coord in coords.items():
+            if coord is not None:
+                da.coords[name] = coord
         return da
