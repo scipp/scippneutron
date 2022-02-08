@@ -375,8 +375,12 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
             # will not have a bin)
             event_id = data.event_data.bins.constituents['data'].coords[
                 _detector_dimension]
-            data.detector_ids = sc.array(dims=[_detector_dimension],
-                                         values=np.unique(event_id.values))
+            id_min = event_id.min()
+            id_max = event_id.max()
+            data.detector_ids = sc.arange(dim=_detector_dimension,
+                                          start=id_min.value,
+                                          stop=id_max.value + 1,
+                                          dtype=id_min.dtype)
 
         # Events in the NeXus file are effectively binned by pulse
         # (because they are recorded chronologically)
