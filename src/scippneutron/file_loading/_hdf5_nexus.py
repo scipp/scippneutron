@@ -153,19 +153,22 @@ class LoadFromHdf5:
 
         if dtype is None:
             dtype = _ensure_supported_int_type(dataset.dtype.type)
-        if index == tuple():
-            variable = sc.empty(dims=dimensions,
-                                shape=dataset.shape,
-                                dtype=dtype,
-                                unit=self.get_unit(dataset))
-            if variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
-                dataset.read_direct(variable.values)
-            else:
-                variable.values = dataset
-            return variable
-        return sc.array(dims=dimensions,
-                        unit=self.get_unit(dataset),
-                        values=dataset[index].astype(dtype))
+
+        shape = list(dataset.shape)
+        if isinstance(index, slice):
+            index = (index, )
+        for i, ind in enumerate(index):
+            shape[i] = len(range(*ind.indices(shape[i])))
+
+        variable = sc.empty(dims=dimensions,
+                            shape=shape,
+                            dtype=dtype,
+                            unit=self.get_unit(dataset))
+        if variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
+            dataset.read_direct(variable.values, source_sel=index)
+        else:
+            variable.values = dataset[index]
+        return variable
 
     def load_dataset_from_group_as_numpy_array(self,
                                                group: h5py.Group,
