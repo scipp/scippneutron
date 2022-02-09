@@ -195,10 +195,9 @@ def to_plain_index(dims: List[str], select: ScippIndex, ignore_missing: bool = F
     raise ValueError("Cannot process index {select}.")
 
 
-def add_position_and_transforms_to_data(data: Union[sc.DataArray, sc.Dataset],
-                                        transform_name: str,
-                                        position_name: str,
-                                        base_position_name: str,
+def add_position_and_transforms_to_data(data: Union[sc.DataArray,
+                                                    sc.Dataset], transform_name: str,
+                                        position_name: str, base_position_name: str,
                                         transforms: sc.Variable,
                                         positions: sc.Variable):
     if isinstance(data, sc.DataArray):

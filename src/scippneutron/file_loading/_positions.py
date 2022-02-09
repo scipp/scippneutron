@@ -31,13 +31,12 @@ def load_position_of_unique_component(groups: List[Group],
     except PositionError:
         return
 
-    add_position_and_transforms_to_data(
-        data=data,
-        transform_name=f"{name}_transform",
-        position_name=f"{name}_position",
-        base_position_name=f"{name}_base_position",
-        positions=position,
-        transforms=transformations)
+    add_position_and_transforms_to_data(data=data,
+                                        transform_name=f"{name}_transform",
+                                        position_name=f"{name}_position",
+                                        base_position_name=f"{name}_base_position",
+                                        positions=position,
+                                        transforms=transformations)
 
 
 def load_positions_of_components(groups: List[Group],
@@ -56,13 +55,12 @@ def load_positions_of_components(groups: List[Group],
         if len(groups) != 1:
             name = nexus.get_name(group)
 
-        add_position_and_transforms_to_data(
-            data=data,
-            transform_name=f"{name}_transform",
-            position_name=f"{name}_position",
-            base_position_name=f"{name}_base_position",
-            positions=position,
-            transforms=transformations)
+        add_position_and_transforms_to_data(data=data,
+                                            transform_name=f"{name}_transform",
+                                            position_name=f"{name}_position",
+                                            base_position_name=f"{name}_base_position",
+                                            positions=position,
+                                            transforms=transformations)
 
 
 def _get_base_pos_and_transforms_of_component(
