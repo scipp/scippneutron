@@ -610,7 +610,7 @@ def convert_EventWorkspace_to_data_array(ws,
     _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
 
     n_event = ws.getNumberEvents()
-    coord = sc.zeros(dims=['event'], shape=[n_event], unit=unit, dtype=sc.DType.float64)
+    coord = sc.empty(dims=['event'], shape=[n_event], unit=unit, dtype=sc.DType.float64)
     weights = sc.ones(dims=['event'],
                       shape=[n_event],
                       unit=data_unit,

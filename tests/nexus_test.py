@@ -179,7 +179,7 @@ def test_field_properties(nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_monitor_and_log())() as f:
         field = nexus.NXroot(f, loader)['entry/events_0/event_time_offset']
-        assert field.dtype == sc.DType.int64
+        assert field.dtype == 'int64'
         assert field.name == '/entry/events_0/event_time_offset'
         assert field.shape == (6, )
         assert field.unit == sc.Unit('ns')
