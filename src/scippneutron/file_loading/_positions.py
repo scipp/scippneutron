@@ -121,7 +121,4 @@ def _add_coord_to_loaded_data(attr_name: str, data: sc.Variable, coord: sc.Varia
     if isinstance(data, sc.DataArray):
         data = data.coords
 
-    try:
-        data[attr_name] = coord
-    except KeyError:
-        pass
+    data[attr_name] = coord

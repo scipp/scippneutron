@@ -411,10 +411,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
                 da.coords['position_transformations'] = sc.scalar(
                     value=data.pixel_position_transforms)
 
-                print(data.pixel_position_transforms)
-                print(data.pixel_positions)
-
-                if data.pixel_position_transforms.sizes == data.pixel_positions.sizes:
+                if isinstance(data.pixel_position_transforms, sc.Variable):
                     # If transform is not time-dependent.
                     da.coords['position'] = (data.pixel_position_transforms *
                                              data.pixel_positions)
