@@ -627,6 +627,8 @@ def convert_EventWorkspace_to_data_array(ws,
         for i in range(nHist):
             sp = ws.getSpectrum(i)
             size = sp.getNumberEvents()
+            if size == 0:  # Skip expensive getters
+                continue
             coord['event', current:current + size].values = sp.getTofs()
             if load_pulse_times:
                 pulse_times['event',
