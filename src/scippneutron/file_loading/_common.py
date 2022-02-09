@@ -210,12 +210,11 @@ def add_position_and_transforms_to_data(data: Union[sc.DataArray,
     if transforms is None:
         coords[position_name] = positions
         attrs[base_position_name] = positions
+    elif isinstance(transforms, sc.Variable):
+        # If transform is not time-dependent.
+        coords[position_name] = transforms * positions
+        attrs[base_position_name] = positions
+        attrs[transform_name] = sc.scalar(value=transforms)
     else:
+        coords[base_position_name] = positions
         coords[transform_name] = sc.scalar(value=transforms)
-
-        if isinstance(transforms, sc.Variable):
-            # If transform is not time-dependent.
-            coords[position_name] = transforms * positions
-            attrs[base_position_name] = positions
-        else:
-            coords[base_position_name] = positions
