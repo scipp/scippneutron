@@ -193,3 +193,30 @@ def to_plain_index(dims: List[str], select: ScippIndex, ignore_missing: bool = F
             return index[0]
         return tuple(index)
     raise ValueError("Cannot process index {select}.")
+
+
+def add_position_and_transforms_to_data(data: Union[sc.DataArray, sc.Dataset],
+                                        transform_name: str,
+                                        position_name: str,
+                                        base_position_name: str,
+                                        transforms: sc.Variable,
+                                        positions: sc.Variable):
+    if isinstance(data, sc.DataArray):
+        coords = data.coords
+        attrs = data.attrs
+    else:
+        coords = data
+        attrs = data
+
+    if transforms is None:
+        coords[position_name] = positions
+        attrs[base_position_name] = positions
+    else:
+        coords[transform_name] = sc.scalar(value=transforms)
+
+        if isinstance(transforms, sc.Variable):
+            # If transform is not time-dependent.
+            coords[position_name] = transforms * positions
+            attrs[base_position_name] = positions
+        else:
+            coords[base_position_name] = positions

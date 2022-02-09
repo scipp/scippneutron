@@ -7,7 +7,8 @@ from typing import Optional, List, Any, Dict, Union, Tuple
 import numpy as np
 import scipp
 
-from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group)
+from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, Group,
+                      add_position_and_transforms_to_data)
 from ._common import to_plain_index
 import scipp as sc
 from warnings import warn
@@ -403,21 +404,13 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
         if pixel_positions_loaded:
             # TODO: the name 'position' should probably not be hard-coded but moved
             # to a variable that cah be changed in a single place.
-
-            if data.pixel_position_transforms is None:
-                da.coords['position'] = data.pixel_positions
-                da.attrs['base_position'] = data.pixel_positions
-            else:
-                da.coords['position_transformations'] = sc.scalar(
-                    value=data.pixel_position_transforms)
-
-                if isinstance(data.pixel_position_transforms, sc.Variable):
-                    # If transform is not time-dependent.
-                    da.coords['position'] = (data.pixel_position_transforms *
-                                             data.pixel_positions)
-                    da.attrs['base_position'] = data.pixel_positions
-                else:
-                    da.coords['base_position'] = data.pixel_positions
+            add_position_and_transforms_to_data(
+                data=da,
+                transform_name="position_transformations",
+                position_name="position",
+                base_position_name="base_position",
+                positions=data.pixel_positions,
+                transforms=data.pixel_position_transforms)
 
         return da
 
