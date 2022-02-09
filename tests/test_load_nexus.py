@@ -568,7 +568,7 @@ def test_loads_event_and_log_data_from_single_file(load_function: Callable):
     assert np.allclose(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
     assert np.allclose(loaded_data.coords['detector_id'].values, expected_detector_ids)
-    assert "base_position" not in loaded_data.coords.keys(
+    assert "base_position" not in loaded_data.meta.keys(
     ), "The NXdetectors had no pixel position datasets so we " \
        "should not find 'base_position' coord"
 
@@ -633,7 +633,7 @@ def test_loads_pixel_positions_with_event_data(load_function: Callable):
         np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
     ]).T / 1_000  # Divide by 1000 for mm to metres
     assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
-    assert loaded_data.coords[
+    assert loaded_data.meta[
         'base_position'].unit == sc.units.m, \
         "Expected positions to be converted to metres"
 
@@ -676,7 +676,7 @@ def test_loads_pixel_positions_without_event_data(load_function: Callable):
         np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
     ]).T / 1_000  # Divide by 1000 for mm to metres
     assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
-    assert loaded_data.coords[
+    assert loaded_data.meta[
                'base_position'].unit == sc.units.m, \
         "Expected positions to be converted to metres"
 
@@ -728,7 +728,7 @@ def test_loads_pixel_positions_when_event_data_is_missing_field(
         np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
     ]).T / 1_000  # Divide by 1000 for mm to metres
     assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
-    assert loaded_data.coords[
+    assert loaded_data.meta[
                'base_position'].unit == sc.units.m, \
         "Expected positions to be converted to metres"
 
@@ -783,7 +783,7 @@ def test_loads_event_data_when_missing_from_some_detectors(load_function: Callab
         np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
     ]).T / 1_000  # Divide by 1000 for mm to metres
     assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
-    assert loaded_data.coords[
+    assert loaded_data.meta[
                'base_position'].unit == sc.units.m, \
         "Expected positions to be converted to metres"
 
@@ -842,7 +842,7 @@ def test_skips_loading_pixel_positions_with_non_matching_shape(load_function: Ca
     with pytest.warns(UserWarning):
         loaded_data = load_function(builder)
 
-    assert "base_position" not in loaded_data.coords.keys(
+    assert "base_position" not in loaded_data.meta.keys(
     ), "One of the NXdetectors pixel positions arrays did not match the " \
        "size of its detector ids so we should not find 'base_position' coord"
     # Even though detector_1's offsets and ids are matches in size, we do not
@@ -879,7 +879,7 @@ def test_skips_loading_pixel_positions_with_no_units(load_function: Callable):
     with pytest.warns(UserWarning):
         loaded_data = load_function(builder)
 
-    assert "base_position" not in loaded_data.coords.keys()
+    assert "base_position" not in loaded_data.meta.keys()
 
 
 def test_sample_position_at_origin_if_not_explicit_in_file(load_function: Callable):
@@ -1303,7 +1303,7 @@ def test_loads_pixel_positions_with_transformations(load_function: Callable):
 
     expected_pixel_positions = np.array(
         [x_pixel_offset_1, y_pixel_offset_1, z_pixel_offset_1]).T
-    assert np.allclose(loaded_data.coords['base_position'].values,
+    assert np.allclose(loaded_data.meta['base_position'].values,
                        expected_pixel_positions)
 
     expected_transform = sc.spatial.affine_transform(unit=sc.units.m,
@@ -1316,9 +1316,12 @@ def test_loads_pixel_positions_with_transformations(load_function: Callable):
 
     assert np.allclose(
         (loaded_data.coords["position_transformations"].value *
-         loaded_data.coords["base_position"]["detector_id", 0]).values,
+         loaded_data.meta["base_position"]["detector_id", 0]).values,
         [0.1, 0.1, 0.67],
     )
+
+    assert np.allclose(
+        loaded_data.coords["position"]["detector_id", 0].values, [0.1, 0.1, 0.67])
 
 
 def test_loads_pixel_positions_with_multiple_transformations(load_function: Callable):
@@ -1373,12 +1376,12 @@ def test_loads_pixel_positions_with_multiple_transformations(load_function: Call
 
     assert np.allclose(
         (loaded_data.coords["position_transformations"]["detector_id", 0].value *
-         loaded_data.coords["base_position"]["detector_id", 0]).values,
+         loaded_data.meta["base_position"]["detector_id", 0]).values,
         [0.1, 0.1, 0.1 + 0.12],
     )
     assert np.allclose(
         (loaded_data.coords["position_transformations"]["detector_id", 1].value *
-         loaded_data.coords["base_position"]["detector_id", 1]).values,
+         loaded_data.meta["base_position"]["detector_id", 1]).values,
         [0.6, 0.6, 0.6 + 0.34],
     )
 

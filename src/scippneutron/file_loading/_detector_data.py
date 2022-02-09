@@ -403,10 +403,10 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
         if pixel_positions_loaded:
             # TODO: the name 'position' should probably not be hard-coded but moved
             # to a variable that cah be changed in a single place.
-            da.coords['base_position'] = data.pixel_positions
 
             if data.pixel_position_transforms is None:
                 da.coords['position'] = data.pixel_positions
+                da.attrs['base_position'] = data.pixel_positions
             else:
                 da.coords['position_transformations'] = sc.scalar(
                     value=data.pixel_position_transforms)
@@ -415,6 +415,9 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
                     # If transform is not time-dependent.
                     da.coords['position'] = (data.pixel_position_transforms *
                                              data.pixel_positions)
+                    da.attrs['base_position'] = data.pixel_positions
+                else:
+                    da.coords['base_position'] = data.pixel_positions
 
         return da
 
