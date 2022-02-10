@@ -100,6 +100,8 @@ def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
         assert sc.identical(
             loaded.bins.size().data,
             sc.array(dims=['detector_number'], dtype='int64', values=[2, 3, 1, 0]))
+        assert 'event_time_offset' in loaded.bins.coords
+        assert 'event_time_zero' in loaded.bins.coords
 
 
 def test_loads_event_data_with_2d_detector_numbers(nexus_group: Tuple[Callable,
