@@ -247,6 +247,9 @@ class LoadFromJson:
                             dimensions: Optional[List[str]] = [],
                             dtype: Optional[Any] = None,
                             index=tuple()) -> sc.Variable:
+        """
+        Same as `load_dataset` but dataset given directly instead of by group and name.
+        """
         if dtype is None:
             dtype = self.supported_int_type(dataset)
 

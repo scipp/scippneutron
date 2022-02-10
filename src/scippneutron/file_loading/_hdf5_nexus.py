@@ -160,6 +160,9 @@ class LoadFromHdf5:
                             dimensions: Optional[List[str]] = [],
                             dtype: Optional[Any] = None,
                             index=tuple()) -> sc.Variable:
+        """
+        Same as `load_dataset` but dataset given directly instead of by group and name.
+        """
         if dtype is None:
             dtype = _ensure_supported_int_type(dataset.dtype.type)
         if h5py.check_string_dtype(dataset.dtype):
