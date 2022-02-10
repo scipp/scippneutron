@@ -958,9 +958,34 @@ def test_loads_component_position_from_single_transformation(
         expected_position: List[float], load_function: Callable):
     builder = NexusBuilder()
     transformation = Transformation(transform_type,
-                                    vector=np.array([0, 0, -1]),
+                                    vector=np.array([0, 0, 1]),
                                     value=np.array([value]),
                                     value_units=value_units)
+    builder.add_component(component_class(component_name, depends_on=transformation))
+    loaded_data = load_function(builder)
+
+    assert np.allclose(loaded_data[f"{component_name}_position"].values,
+                       expected_position)
+    # Resulting position will always be in metres, whatever units are
+    # used in the NeXus file
+    assert loaded_data[f"{component_name}_position"].unit == sc.Unit("m")
+
+
+@pytest.mark.parametrize("component_class,component_name", [(Sample, "sample"),
+                                                            (Source, "source")])
+@pytest.mark.parametrize("transform_type,value,value_units,expected_position",
+                         ((TransformationType.ROTATION, 180, "deg", [-1, -2, 3]),
+                          (TransformationType.TRANSLATION, 230, "cm", [1, 2, 5.3])))
+def test_loads_component_position_from_single_transformation_with_offset(
+        component_class: Union[Type[Source], Type[Sample]], component_name: str,
+        transform_type: TransformationType, value: float, value_units: str,
+        expected_position: List[float], load_function: Callable):
+    builder = NexusBuilder()
+    transformation = Transformation(transform_type,
+                                    vector=np.array([0, 0, 1]),
+                                    value=np.array([value]),
+                                    value_units=value_units,
+                                    offset=[1, 2, 3])
     builder.add_component(component_class(component_name, depends_on=transformation))
     loaded_data = load_function(builder)
 

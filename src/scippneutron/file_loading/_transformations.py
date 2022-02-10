@@ -33,8 +33,7 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
         A dataset of rotation matrices.
     """
     rotvec = sc.vector(value=axis)
-    # We multiply by -1*angle to get a "passive transform"
-    rotvecs = rotvec * sc.scalar(-1.0) * angles.astype(sc.DType.float64, copy=False)
+    rotvecs = rotvec * angles.astype(sc.DType.float64, copy=False)
     matrices = sc.spatial.rotations_from_rotvecs(dims=angles.dims,
                                                  values=rotvecs.values,
                                                  unit=sc.units.rad)
@@ -75,7 +74,7 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
 
     :param group: The HDF5 group of the component, containing depends_on
     :param nexus: wrap data access to hdf file or objects from json
-    :return: 4x4 passive transformation matrix as a data array
+    :return: 4x4 active transformation matrix as a data array
     """
     transformations = []
     try:
@@ -179,8 +178,11 @@ def _append_transformation(transform: Union[h5py.Dataset, GroupObject],
         try:
             offset = nexus.get_attribute_as_numpy_array(transform,
                                                         "offset").astype(float)
+            offset_unit = nexus.get_string_attribute(transform, "offset_units")
+            offset = sc.vector(value=offset, unit=offset_unit)
         except MissingAttribute:
-            offset = np.array([0., 0., 0.], dtype=float)
+            offset = sc.vector(value=np.array([0., 0., 0.], dtype=float),
+                               unit=sc.units.m)
 
         transform_type = nexus.get_string_attribute(transform, "transformation_type")
         if transform_type == 'translation':
@@ -209,7 +211,7 @@ def _normalize(vector: np.ndarray, transform_name: str) -> np.ndarray:
     return vector / norm
 
 
-def _append_translation(offset: np.ndarray, transform: GroupObject,
+def _append_translation(offset: sc.Variable, transform: GroupObject,
                         transformations: List[np.ndarray],
                         direction_unit_vector: np.ndarray, group_name: str,
                         nexus: LoadFromNexus):
@@ -220,8 +222,7 @@ def _append_translation(offset: np.ndarray, transform: GroupObject,
                                              unit=sc.units.m,
                                              copy=False)
 
-    # -1 as describes passive transformation
-    vectors = sc.vector(value=(offset - direction_unit_vector)) * loaded_transform_m
+    vectors = sc.vector(value=direction_unit_vector) * loaded_transform_m + offset
     translations = sc.spatial.translations(dims=loaded_transform_m.dims,
                                            values=vectors.values,
                                            unit=sc.units.m)
@@ -263,7 +264,7 @@ def _get_transformation_magnitude_and_unit(group_name: str,
     return log
 
 
-def _append_rotation(offset: np.ndarray, transform: GroupObject,
+def _append_rotation(offset: sc.Variable, transform: GroupObject,
                      transformations: List[np.ndarray], rotation_axis: np.ndarray,
                      group_name: str, nexus: LoadFromNexus):
     angles = _get_transformation_magnitude_and_unit(group_name, transform, nexus)
@@ -273,7 +274,9 @@ def _append_rotation(offset: np.ndarray, transform: GroupObject,
         raise TransformationError(f"Unit for rotation transformation must be radians "
                                   f"or degrees, problem in {transform.name}")
 
-    rotations = _rotation_matrix_from_axis_and_angle(rotation_axis, angles)
+    offset = sc.spatial.translation(value=offset.values, unit=offset.unit)
+
+    rotations = _rotation_matrix_from_axis_and_angle(rotation_axis, angles) * offset
 
     if isinstance(angles, sc.DataArray):
         t = sc.DataArray(data=rotations, coords={"time": angles.coords["time"]})

@@ -757,6 +757,7 @@ class NexusBuilder:
                                    transform.transform_type.value)
         if transform.offset is not None:
             self._writer.add_attribute(added_transform, "offset", transform.offset)
+            self._writer.add_attribute(added_transform, "offset_units", 'm')
         if depends_on is not None:
             self._writer.add_attribute(added_transform, "depends_on", depends_on)
         else:
