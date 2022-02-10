@@ -133,6 +133,8 @@ class NXdetector(NXobject):
                                                       stop=id_max.value + 1,
                                                       dtype=id_min.dtype)
             event_id = coords['detector_number'].flatten(to='event_id')
+            event_data.bins.coords['event_time_zero'] = sc.bins_like(
+                event_data, fill_value=event_data.coords['event_time_zero'])
             # After loading raw NXevent_data it is guaranteed that the event table
             # is contiguous and that there is no masking. We can therefore use the
             # more efficient approach of binning from scratch instead of erasing the
