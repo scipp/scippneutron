@@ -150,22 +150,43 @@ class LoadFromHdf5:
         if self.is_group(dataset):
             raise MissingDataset(f"Attempted to load a group "
                                  f"({dataset_name}) as a dataset.")
+        return self.load_dataset_direct(dataset,
+                                        dimensions=dimensions,
+                                        dtype=dtype,
+                                        index=index)
 
+    def load_dataset_direct(self,
+                            dataset: h5py.Dataset,
+                            dimensions: Optional[List[str]] = [],
+                            dtype: Optional[Any] = None,
+                            index=tuple()) -> sc.Variable:
+        """
+        Same as `load_dataset` but dataset given directly instead of by group and name.
+        """
         if dtype is None:
             dtype = _ensure_supported_int_type(dataset.dtype.type)
-        if index == tuple():
-            variable = sc.empty(dims=dimensions,
-                                shape=dataset.shape,
-                                dtype=dtype,
-                                unit=self.get_unit(dataset))
-            if variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
-                dataset.read_direct(variable.values)
-            else:
-                variable.values = dataset
-            return variable
-        return sc.array(dims=dimensions,
-                        unit=self.get_unit(dataset),
-                        values=dataset[index].astype(dtype))
+        if h5py.check_string_dtype(dataset.dtype):
+            dtype = sc.DType.string
+
+        shape = list(dataset.shape)
+        if index is Ellipsis:
+            index = tuple()
+        if isinstance(index, slice):
+            index = (index, )
+        for i, ind in enumerate(index):
+            shape[i] = len(range(*ind.indices(shape[i])))
+
+        variable = sc.empty(dims=dimensions,
+                            shape=shape,
+                            dtype=dtype,
+                            unit=self.get_unit(dataset))
+        if dtype == sc.DType.string:
+            variable.values = np.asarray(dataset[index]).flatten()
+        elif variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
+            dataset.read_direct(variable.values, source_sel=index)
+        else:
+            variable.values = dataset[index]
+        return variable
 
     def load_dataset_from_group_as_numpy_array(self,
                                                group: h5py.Group,
@@ -264,10 +285,13 @@ class LoadFromHdf5:
             val = group[dataset_name][...].item()
         except KeyError:
             raise MissingDataset
+        return _ensure_str(val, LoadFromHdf5.get_dataset_encoding(group, dataset_name))
 
+    @staticmethod
+    def get_dataset_encoding(group: h5py.Group, dataset_name: str) -> str:
         cset = h5py.h5d.open(group.id,
                              dataset_name.encode("utf-8")).get_type().get_cset()
-        return _ensure_str(val, _cset_to_encoding(cset))
+        return _cset_to_encoding(cset)
 
     @staticmethod
     def get_attr_encoding(group: h5py.Group, dataset_name: str) -> str:
