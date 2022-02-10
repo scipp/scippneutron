@@ -123,12 +123,18 @@ def _get_transformations(transform_path: str, transformations: List[np.ndarray],
     if transform_path != '.':
         try:
             transform = nexus.get_object_by_path(group.file, transform_path)
-        except KeyError:
+        except MissingDataset:
             raise TransformationError(
                 f"Non-existent depends_on path '{transform_path}' found "
                 f"in transformations chain for {group_name}")
         next_depends_on = _append_transformation(transform, transformations, group_name,
                                                  nexus)
+
+        if not next_depends_on == "." and not next_depends_on.startswith("/"):
+            # Path is relative - convert it to an absolute path relative to the parent
+            # of the transform it was loaded from.
+            next_depends_on = f"/{transform.parent.name}/{next_depends_on}"
+
         _get_transformations(next_depends_on, transformations, group, group_name, nexus)
 
 
