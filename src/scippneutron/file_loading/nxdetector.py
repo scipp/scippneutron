@@ -106,9 +106,10 @@ class NXdetector(NXobject):
         # Note that ._detector_data._load_detector provides a different loading
         # facility for NXdetector but handles only loading of detector_number,
         # as needed for event data loading
-        coords = {}
-        coords['detector_number'] = self.detector_number(select)
-        coords['pixel_offset'] = self.pixel_offset(select)
+        coords = {
+            'detector_number': self.detector_number(select),
+            'pixel_offset': self.pixel_offset(select)
+        }
         if self._is_events:
             # If there is a 'detector_number' field it is used to bin events into
             # detector pixels. Note that due to the nature of NXevent_data, which stores
