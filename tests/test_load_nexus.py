@@ -1009,7 +1009,7 @@ def test_loads_component_position_from_log_transformation(
     # Provide "time" data, the builder will write the transformation as
     # an NXlog
     transformation = Transformation(transform_type,
-                                    vector=np.array([0, 0, -1]),
+                                    vector=np.array([0, 0, 1]),
                                     value=np.array([value]),
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
@@ -1037,7 +1037,7 @@ def test_loads_component_position_with_multi_value_log_transformation(
     # an NXlog. This would be encountered in a file from an experiment
     # involving a scan of a motion axis.
     transformation = Transformation(transform_type,
-                                    vector=np.array([0, 0, -1]),
+                                    vector=np.array([0, 0, 1]),
                                     value=np.array(value),
                                     time=np.array([1.3, 6.4]),
                                     time_units="s",
@@ -1079,14 +1079,14 @@ def test_loads_component_position_with_multiple_multi_valued_log_transformations
     # an NXlog. This would be encountered in a file from an experiment
     # involving a scan of a motion axis.
     t1 = Transformation(TransformationType.TRANSLATION,
-                        vector=np.array([0, 0, -1]),
+                        vector=np.array([0, 0, 1]),
                         value=np.array([1, 10]),
                         time=np.array([0, 1]),
                         time_units="s",
                         value_units="m")
 
     t2 = Transformation(TransformationType.TRANSLATION,
-                        vector=np.array([0, 0, -1]),
+                        vector=np.array([0, 0, 1]),
                         value=np.array([5, 50]),
                         time=np.array([0, 1]),
                         time_units="s",
@@ -1124,7 +1124,7 @@ def test_skips_component_position_with_empty_value_log_transformation(
     builder = NexusBuilder()
     empty_value = np.array([])
     transformation = Transformation(transform_type,
-                                    vector=np.array([0, 0, -1]),
+                                    vector=np.array([0, 0, 1]),
                                     value=empty_value,
                                     time=np.array([1.3, 6.4]),
                                     time_units="s",
@@ -1145,7 +1145,7 @@ def test_load_component_position_prefers_transform_over_distance(
     # can define position and orientation in 3D.
     builder = NexusBuilder()
     transformation = Transformation(TransformationType.TRANSLATION,
-                                    np.array([0, 0, -1]),
+                                    np.array([0, 0, 1]),
                                     np.array([2.3]),
                                     value_units="m")
     builder.add_component(
@@ -1312,7 +1312,7 @@ def test_loads_pixel_positions_with_transformations(load_function: Callable):
 
     distance = 57  # cm
     transformation = Transformation(TransformationType.TRANSLATION,
-                                    vector=np.array([0, 0, -1]),
+                                    vector=np.array([0, 0, 1]),
                                     value=np.array([distance]),
                                     value_units="cm")
 
@@ -1372,11 +1372,11 @@ def test_loads_pixel_positions_with_multiple_transformations(load_function: Call
     )
 
     transformation1 = Transformation(TransformationType.TRANSLATION,
-                                     vector=np.array([0, 0, -1]),
+                                     vector=np.array([0, 0, 1]),
                                      value=np.array([12]),
                                      value_units="cm")
     transformation2 = Transformation(TransformationType.TRANSLATION,
-                                     vector=np.array([0, 0, -1]),
+                                     vector=np.array([0, 0, 1]),
                                      value=np.array([34]),
                                      value_units="cm")
 
@@ -1460,7 +1460,7 @@ def test_links_in_transformation_paths_are_followed(load_function: Callable):
     builder.add_component(Source("source"))
     builder.add_dataset_at_path(
         "/entry/transform", np.array([distance]), {
-            "vector": np.array([0, 0, -1]),
+            "vector": np.array([0, 0, 1]),
             "units": "m",
             "transformation_type": "translation",
             "depends_on": "."
