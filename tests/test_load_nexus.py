@@ -1013,7 +1013,7 @@ def test_raises_if_offset_but_not_offset_units_found(
                                     offset_unit=None)
     builder.add_component(component_class(component_name, depends_on=transformation))
     loaded_data = load_function(builder)
-    assert f"{component_name}_position" not in loaded_data
+    assert loaded_data is None
 
 
 @pytest.mark.parametrize("component_class,component_name",

@@ -178,7 +178,12 @@ def _append_transformation(transform: Union[h5py.Dataset, GroupObject],
         try:
             offset = nexus.get_attribute_as_numpy_array(transform,
                                                         "offset").astype(float)
-            offset_unit = nexus.get_string_attribute(transform, "offset_units")
+            try:
+                offset_unit = nexus.get_string_attribute(transform, "offset_units")
+            except MissingAttribute:
+                raise TransformationError(
+                    f"Found offset={offset} but no corresponding 'offset_units' "
+                    f"attribute at {nexus.get_name(transform)}")
             offset = sc.vector(value=offset, unit=offset_unit)
         except MissingAttribute:
             offset = sc.vector(value=np.array([0., 0., 0.], dtype=float),
