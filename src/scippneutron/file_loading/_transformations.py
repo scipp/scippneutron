@@ -134,7 +134,8 @@ def _get_transformations(transform_path: str, transformations: List[np.ndarray],
         if not next_depends_on == "." and not next_depends_on.startswith("/"):
             # Path is relative - convert it to an absolute path relative to the parent
             # of the transform it was loaded from.
-            next_depends_on = f"/{transform.parent.name}/{next_depends_on}"
+            parent = "/".join(nexus.get_path(transform).split("/")[:-1])
+            next_depends_on = f"{parent}/{next_depends_on}"
 
         _get_transformations(next_depends_on, transformations, group, group_name, nexus)
 

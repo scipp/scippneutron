@@ -1450,6 +1450,33 @@ def test_links_in_transformation_paths_are_followed(load_function: Callable):
     assert loaded_data["source_position"].unit == sc.Unit("m")
 
 
+def test_relative_links_in_transformation_paths_are_followed(load_function: Callable):
+    builder = NexusBuilder()
+    distance = 13.6
+    builder.add_component(Source("source"))
+    builder.add_dataset_at_path(
+        "/entry/transform1", np.array([distance]), {
+            "vector": np.array([0, 0, -1]),
+            "units": "m",
+            "transformation_type": "translation",
+            "depends_on": "."
+        })
+    builder.add_dataset_at_path(
+        "/entry/transform2", np.array([distance]), {
+            "vector": np.array([0, 0, -1]),
+            "units": "m",
+            "transformation_type": "translation",
+            "depends_on": "transform1"
+        })
+    builder.add_dataset_at_path("/entry/source/depends_on", "/entry/transform2", {})
+    loaded_data = load_function(builder)
+
+    assert np.allclose(loaded_data["source_position"].values, [0, 0, 2 * distance])
+    # Resulting position will always be in metres, whatever units are
+    # used in the NeXus file
+    assert loaded_data["source_position"].unit == sc.Unit("m")
+
+
 def test_linked_datasets_are_found(load_function: Callable):
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 3]),

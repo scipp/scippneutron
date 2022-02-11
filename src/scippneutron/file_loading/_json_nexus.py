@@ -12,6 +12,7 @@ from warnings import warn
 _nexus_class = "NX_class"
 _nexus_units = "units"
 _nexus_name = "name"
+_nexus_path = "path"
 _nexus_values = "values"
 _nexus_dataset = "dataset"
 _nexus_group = "group"
@@ -156,6 +157,7 @@ class LoadFromJson:
         for child in group[_nexus_children]:
             try:
                 if child[_nexus_name] == name:
+                    child[_nexus_path] = f"{self.get_path(group)}/{name}"
                     if child["type"] == _nexus_link:
                         child = self.get_object_by_path(self._root, child["target"])
                     if child["type"] in allowed_nexus_classes:
@@ -309,9 +311,8 @@ class LoadFromJson:
     def get_path(group: Dict) -> str:
         if isinstance(group, JSONGroup):
             return group.name
-        # TODO JSONGroup is apparently used inconsistently, fall back to returning name
-        # without path.
-        return group.get(_nexus_name, '/')
+        else:
+            return group.get(_nexus_path, '/')
 
     @staticmethod
     def get_dtype(dataset: Dict) -> str:
