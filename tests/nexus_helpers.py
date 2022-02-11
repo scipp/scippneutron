@@ -71,6 +71,7 @@ class Transformation:
     time: Optional[np.ndarray] = None
     depends_on: Union["Transformation", str, None] = None
     offset: Optional[np.ndarray] = None
+    offset_unit: Optional[str] = None
     value_units: Optional[Union[str, bytes]] = None
     time_units: Optional[Union[str, bytes]] = None
 
@@ -757,7 +758,9 @@ class NexusBuilder:
                                    transform.transform_type.value)
         if transform.offset is not None:
             self._writer.add_attribute(added_transform, "offset", transform.offset)
-            self._writer.add_attribute(added_transform, "offset_units", 'm')
+        if transform.offset_unit is not None:
+            self._writer.add_attribute(added_transform, "offset_units",
+                                       transform.offset_unit)
         if depends_on is not None:
             self._writer.add_attribute(added_transform, "depends_on", depends_on)
         else:
