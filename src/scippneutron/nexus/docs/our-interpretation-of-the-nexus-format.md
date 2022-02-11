@@ -52,19 +52,21 @@ If the above yields no more than one item, the group can be loaded.
 For [NXdetector](https://manual.nexusformat.org/classes/base_classes/NXdetector.html) the NF defines a [time_of_flight](https://manual.nexusformat.org/classes/base_classes/NXdetector.html#nxdetector-time-of-flight-field) field, exceeding the data shape by one, i.e., it is meant as bin-edges.
 `NXdata` does not appear to allow this explicitly.
 Since what is recorded in `NXdetector` may not actually be time-of-flight, in practice this coordinate may be named differently, e.g., `time_offset`.
-Therefore, we assume that this is valid in general, i.e., also for other axis tick labels (coordinates) that may be defined using the [`axes` attribute](https://manual.nexusformat.org/classes/base_classes/NXdata.html#nxdata-axes-attribute).
+Therefore, we assume that this is valid in general, i.e., also for other axis values (axis tick labels) that may be defined using the [`axes` attribute](https://manual.nexusformat.org/classes/base_classes/NXdata.html#nxdata-axes-attribute).
+
+According to TR this is also used frequently in some fields/applications of [NX_data](https://manual.nexusformat.org/classes/base_classes/NX_data.html).
 
 ## Missing axis labels
 
 [NX_data](https://manual.nexusformat.org/classes/base_classes/NX_data.html) uses the [`axes` attribute](https://manual.nexusformat.org/classes/base_classes/NXdata.html#nxdata-axes-attribute) to define the names of fields that store coordinates for axes.
 There is a legacy mechanism where the signal field has an [`axes` attribute](https://manual.nexusformat.org/classes/base_classes/NXdata.html#nxdata-data-axes-attribute) and this should not be used according to the NF.
 
-The `axes` attribute uses `'.'` to define an axis without coordinate field.
-The implication of the above is that there is no way to define the *name* of an axis.
+The `axes` attribute uses `'.'` to define an axis without values, i.e., without a field.
+The implication of the above is that there is no way to define the *label* of an axis, unless also values are defined.
 For example, an `NXdata` group storing a stack of images may not define a coordinate for the "image" dimension of the signal dataset.
 The NF does not specify any other way to define such an axis name.
 We therefore have to fall back to a generic and meaningless dimension label.
 
-Note that the `axes` attribute of the signal field could in principle be used to define such names and the `axes` attribute of the group would then only define the field names of coordinates.
-That is, both attributes would work in conjunction.
-It is unclear whether this is allowed or actually considered invalid in the NF.
+Note that the `axes` attribute of the signal field could in principle be used to define such axis labels.
+The `axes` attribute of the group would then define which axis has a corresponding field with values.
+That is, both attributes would work in conjunction, but this is not considered valid under the NF currently.
