@@ -40,19 +40,6 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
     return matrices
 
 
-def get_translation_from_affine(group: Group, nexus: LoadFromNexus) -> sc.Variable:
-    """
-    Get position of a component which has a "depends_on" dataset
-
-    :param group: The HDF5 group of the component, containing depends_on
-    :param nexus: wrap data access to hdf file or objects from json
-    :return: Position of the component as a vector variable
-    """
-    total_transform_matrix = get_full_transformation_matrix(group, nexus)
-    return total_transform_matrix * sc.vector(value=[0, 0, 0],
-                                              unit=total_transform_matrix.unit)
-
-
 def _interpolate_transform(transform, xnew):
     # scipy can't interpolate with a single value
     if transform.sizes["time"] == 1:
