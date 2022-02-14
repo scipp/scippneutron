@@ -62,6 +62,22 @@ def test_loads_data_without_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
         assert sc.identical(loaded, expected)
 
 
+def test_select_events_raises_if_detector_contains_data(
+        nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    builder = NexusBuilder()
+    da = sc.DataArray(sc.array(dims=['xx', 'yy'], values=[[1.1, 2.2], [3.3, 4.4]]))
+    detector_numbers = np.array([[1, 2], [3, 4]])
+    builder.add_detector(Detector(detector_numbers=detector_numbers, data=da))
+    expected = da.rename_dims({'xx': 'dim_0', 'yy': 'dim_1'})
+    expected.coords['detector_number'] = sc.array(dims=expected.dims,
+                                                  values=detector_numbers)
+    with resource(builder)() as f:
+        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        with pytest.raises(nexus.NexusStructureError):
+            detector.select_events
+
+
 def test_loads_data_with_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     builder = NexusBuilder()
@@ -127,6 +143,56 @@ def test_loads_event_data_with_2d_detector_numbers(nexus_group: Tuple[Callable,
             sc.array(dims=['dim_0', 'dim_1'], dtype='int64', values=[[2, 3], [1, 0]]))
 
 
+def test_select_events_slices_underlying_event_data(nexus_group: Tuple[Callable,
+                                                                       LoadFromNexus]):
+    event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 2, 2]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([1, 2, 3, 4]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([[1, 2], [3, 4]]), event_data=event_data))
+    resource, loader = nexus_group
+    with resource(builder)() as f:
+        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        assert sc.identical(
+            detector.select_events['pulse', :2][...].bins.size().data,
+            sc.array(dims=['dim_0', 'dim_1'], dtype='int64', values=[[1, 1], [1, 0]]))
+        assert sc.identical(
+            detector.select_events['pulse', :3][...].bins.size().data,
+            sc.array(dims=['dim_0', 'dim_1'], dtype='int64', values=[[2, 2], [1, 0]]))
+        assert sc.identical(
+            detector.select_events['pulse', 3][...].bins.size().data,
+            sc.array(dims=['dim_0', 'dim_1'], dtype='int64', values=[[0, 1], [0, 0]]))
+        assert sc.identical(
+            detector.select_events[...][...].bins.size().data,
+            sc.array(dims=['dim_0', 'dim_1'], dtype='int64', values=[[2, 3], [1, 0]]))
+
+
+def test_select_events_slice_does_not_affect_original_detector(
+        nexus_group: Tuple[Callable, LoadFromNexus]):
+    event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 2, 2]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([1, 2, 3, 4]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([[1, 2], [3, 4]]), event_data=event_data))
+    resource, loader = nexus_group
+    with resource(builder)() as f:
+        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector.select_events['pulse', 0][...]
+        assert sc.identical(
+            detector[...].bins.size().data,
+            sc.array(dims=['dim_0', 'dim_1'], dtype='int64', values=[[2, 3], [1, 0]]))
+
+
 def builder_with_events_and_no_detector_number():
     event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
     event_data = EventData(
@@ -162,8 +228,6 @@ def test_loading_event_data_with_selection_and_automatic_detector_numbers_raises
         assert detector.dims == ['detector_number']
         with pytest.raises(nexus.NexusStructureError):
             detector['detector_number', 0]
-        with pytest.raises(nexus.NexusStructureError):
-            detector[:]
 
 
 def test_loading_event_data_with_full_selection_and_automatic_detector_numbers_works(
