@@ -2,11 +2,12 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 
 from _warnings import warn
-from typing import List, Optional, Tuple, Any
+from typing import List, Optional, Tuple
 import numpy as np
 import scipp as sc
-from ._common import Group
-from ._transformations import (get_translation_from_affine, TransformationError)
+import scipp.spatial
+from ._common import Group, add_position_and_transforms_to_data
+from ._transformations import TransformationError, get_full_transformation_matrix
 from ._nexus import LoadFromNexus
 
 
@@ -25,15 +26,17 @@ def load_position_of_unique_component(groups: List[Group],
              f"skipping loading {name} position")
         return
     try:
-        position, units = _get_position_of_component(groups[0], name, nx_class, nexus,
-                                                     default_position)
+        position, transformations = _get_base_pos_and_transforms_of_component(
+            groups[0], name, nx_class, nexus, default_position)
     except PositionError:
         return
-    _add_coord_to_loaded_data(f"{name}_position",
-                              data,
-                              position,
-                              unit=units,
-                              dtype=sc.DType.vector3)
+
+    add_position_and_transforms_to_data(data=data,
+                                        transform_name=f"{name}_transform",
+                                        position_name=f"{name}_position",
+                                        base_position_name=f"{name}_base_position",
+                                        positions=position,
+                                        transforms=transformations)
 
 
 def load_positions_of_components(groups: List[Group],
@@ -44,46 +47,44 @@ def load_positions_of_components(groups: List[Group],
                                  default_position: Optional[np.ndarray] = None):
     for group in groups:
         try:
-            position, units = _get_position_of_component(group, name, nx_class, nexus,
-                                                         default_position)
+            position, transformations = _get_base_pos_and_transforms_of_component(
+                group, name, nx_class, nexus, default_position)
         except PositionError:
             continue
-        if len(groups) == 1:
-            _add_coord_to_loaded_data(f"{name}_position",
-                                      data,
-                                      position,
-                                      unit=units,
-                                      dtype=sc.DType.vector3)
-        else:
-            _add_coord_to_loaded_data(f"{nexus.get_name(group)}_position",
-                                      data,
-                                      position,
-                                      unit=units,
-                                      dtype=sc.DType.vector3)
+
+        if len(groups) != 1:
+            name = nexus.get_name(group)
+
+        add_position_and_transforms_to_data(data=data,
+                                            transform_name=f"{name}_transform",
+                                            position_name=f"{name}_position",
+                                            base_position_name=f"{name}_base_position",
+                                            positions=position,
+                                            transforms=transformations)
 
 
-def _get_position_of_component(
+def _get_base_pos_and_transforms_of_component(
         group: Group,
         name: str,
         nx_class: str,
         nexus: LoadFromNexus,
-        default_position: Optional[np.ndarray] = None) -> Tuple[np.ndarray, sc.Unit]:
+        default_position: Optional[np.ndarray] = None
+) -> Tuple[sc.Variable, sc.DataArray]:
     depends_on_found, _ = nexus.dataset_in_group(group, "depends_on")
     distance_found, _ = nexus.dataset_in_group(group, "distance")
+
+    transformations = sc.spatial.translation(unit=sc.units.m, value=[0, 0, 0])
+
     if depends_on_found:
         try:
-            translation = get_translation_from_affine(group, nexus)
-            if isinstance(translation, sc.Variable):
-                position = translation.value
-            else:
-                position = translation.data.values[0]
+            transformations = get_full_transformation_matrix(group, nexus)
+            base_position = np.array([0, 0, 0])
         except TransformationError as e:
             warn(f"Skipping loading {name} position due to error: {e}")
             raise PositionError
         units = sc.units.m
     elif distance_found:
-
-        position = np.array(
+        base_position = np.array(
             [0, 0,
              nexus.load_dataset_from_group_as_numpy_array(group, "distance")])
         units = nexus.get_unit(nexus.get_dataset_from_group(group, "distance"))
@@ -95,28 +96,7 @@ def _get_position_of_component(
         warn(f"No position given for {name} in file")
         raise PositionError
     else:
-        position = np.array([0, 0, 0])
+        base_position = np.array([0, 0, 0])
         units = sc.units.m
 
-    return position, units
-
-
-def _add_coord_to_loaded_data(attr_name: str,
-                              data: sc.Variable,
-                              value: np.ndarray,
-                              unit: sc.Unit,
-                              dtype: Optional[Any] = None):
-
-    if isinstance(data, sc.DataArray):
-        data = data.coords
-
-    try:
-        if dtype is not None:
-            if dtype == sc.DType.vector3:
-                data[attr_name] = sc.vector(value=value, unit=unit)
-            else:
-                data[attr_name] = sc.scalar(value, dtype=dtype, unit=unit)
-        else:
-            data[attr_name] = sc.scalar(value, unit=unit)
-    except KeyError:
-        pass
+    return sc.vector(value=base_position, unit=units), transformations

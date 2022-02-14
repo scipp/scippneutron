@@ -8,3 +8,4 @@ Specifics for time-of-flight neutron-scattering data reduction, including coordi
 """
 
 from . import conversions
+from .diagram import TimeDistanceDiagram

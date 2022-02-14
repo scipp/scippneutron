@@ -4,6 +4,7 @@ from .nexus_helpers import (
     Log,
     Monitor,
 )
+from .test_load_nexus import UTF8_TEST_STRINGS
 import numpy as np
 import pytest
 from typing import Callable, Tuple
@@ -33,7 +34,7 @@ def nexus_group(request):
 
 
 def builder_with_events_monitor_and_log():
-    event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
+    event_time_offsets = np.array([456, 743, 347, 345, 632, 23], dtype='int64')
     event_data = EventData(
         event_id=np.array([1, 2, 3, 1, 3, 2]),
         event_time_offset=event_time_offsets,
@@ -51,7 +52,9 @@ def builder_with_events_monitor_and_log():
         Monitor("monitor",
                 data=np.array([1.]),
                 axes=[("time_of_flight", np.array([1.]))]))
-    builder.add_log(Log("log", np.array([1.1, 2.2, 3.3]), np.array([4.4, 5.5, 6.6])))
+    builder.add_log(
+        Log("log", np.array([1.1, 2.2, 3.3]), np.array([4.4, 5.5, 6.6]),
+            value_units=''))
     return builder
 
 
@@ -178,7 +181,7 @@ def test_field_properties(nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_monitor_and_log())() as f:
         field = nexus.NXroot(f, loader)['entry/events_0/event_time_offset']
-        assert field.dtype == np.array(1).dtype
+        assert field.dtype == 'int64'
         assert field.name == '/entry/events_0/event_time_offset'
         assert field.shape == (6, )
         assert field.unit == sc.Unit('ns')
@@ -187,22 +190,57 @@ def test_field_properties(nexus_group: Tuple[Callable, LoadFromNexus]):
 def test_field_unit_is_none_if_no_units_attribute(nexus_group: Tuple[Callable,
                                                                      LoadFromNexus]):
     resource, loader = nexus_group
-    with resource(builder_with_events_monitor_and_log())() as f:
-        field = nexus.NXroot(f, loader)['entry/log']
+    builder = builder_with_events_monitor_and_log()
+    builder.add_log(
+        Log("mylog",
+            np.array([1.1, 2.2, 3.3]),
+            np.array([4.4, 5.5, 6.6]),
+            value_units=None))
+    with resource(builder)() as f:
+        field = nexus.NXroot(f, loader)['entry/mylog']
         assert field.unit is None
 
 
-def test_field_getitem_returns_numpy_array_with_correct_size_and_values(
+def test_field_getitem_returns_variable_with_correct_size_and_values(
         nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_monitor_and_log())() as f:
         field = nexus.NXroot(f, loader)['entry/events_0/event_time_offset']
-        assert np.array_equal(field[...],
-                              np.array([456, 743, 347, 345, 632, 23], dtype='int64'))
-        assert np.array_equal(field[1:],
-                              np.array([743, 347, 345, 632, 23], dtype='int64'))
-        assert np.array_equal(field[:-1],
-                              np.array([456, 743, 347, 345, 632], dtype='int64'))
+        assert sc.identical(
+            field[...],
+            sc.array(dims=['dim_0'],
+                     unit='ns',
+                     values=[456, 743, 347, 345, 632, 23],
+                     dtype='int64'))
+        assert sc.identical(
+            field[1:],
+            sc.array(dims=['dim_0'],
+                     unit='ns',
+                     values=[743, 347, 345, 632, 23],
+                     dtype='int64'))
+        assert sc.identical(
+            field[:-1],
+            sc.array(dims=['dim_0'],
+                     unit='ns',
+                     values=[456, 743, 347, 345, 632],
+                     dtype='int64'))
+
+
+@pytest.mark.parametrize("string", UTF8_TEST_STRINGS)
+def test_field_of_utf8_encoded_dataset_is_loaded_correctly(
+        nexus_group: Tuple[Callable, LoadFromNexus], string):
+    resource, loader = nexus_group
+    builder = NexusBuilder()
+    if isinstance(loader, LoadFromHdf5):
+        encoded1 = np.char.encode(string, 'utf-8')
+        encoded2 = np.char.encode(string + string, 'utf-8')
+        builder.add_title(np.array([encoded1, encoded2]))
+    else:  # json encodes itself
+        builder.add_title(np.array([string, string + string]))
+    with resource(builder)() as f:
+        title = nexus.NXroot(f, loader)['entry/title']
+        assert sc.identical(title[...],
+                            sc.array(dims=['dim_0'], values=[string, string + string]))
 
 
 def test_negative_event_index_converted_to_num_event(nexus_group: Tuple[Callable,

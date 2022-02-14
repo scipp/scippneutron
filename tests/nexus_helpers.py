@@ -71,6 +71,7 @@ class Transformation:
     time: Optional[np.ndarray] = None
     depends_on: Union["Transformation", str, None] = None
     offset: Optional[np.ndarray] = None
+    offset_unit: Optional[str] = None
     value_units: Optional[Union[str, bytes]] = None
     time_units: Optional[Union[str, bytes]] = None
 
@@ -222,7 +223,8 @@ numpy_to_filewriter_type = {
     np.uint8: "uint8",
     np.uint16: "uint16",
     np.uint32: "uint32",
-    np.uint64: "uint64"
+    np.uint64: "uint64",
+    np.str_: "string"
 }
 
 
@@ -623,6 +625,7 @@ class NexusBuilder:
     def _add_monitor_group_to_file(self, monitor: Monitor, parent_group: h5py.Group):
         monitor_group = self._create_nx_class(monitor.name, "NXmonitor", parent_group)
         data_group = self._writer.add_dataset(monitor_group, "data", monitor.data)
+        self._writer.add_attribute(data_group, "units", '')
         self._writer.add_attribute(data_group, "axes",
                                    ",".join(name for name, _ in monitor.axes))
 
@@ -634,7 +637,8 @@ class NexusBuilder:
             # data the event index will already have been created so we skip writing
             # it here.
             if not monitor.events or not axis_name == "event_index":
-                self._writer.add_dataset(monitor_group, axis_name, axis_data)
+                ds = self._writer.add_dataset(monitor_group, axis_name, axis_data)
+                self._writer.add_attribute(ds, "units", '')
 
     def _write_logs(self, parent_group: Union[h5py.Group, Dict]):
         for log in self._logs:
@@ -756,6 +760,9 @@ class NexusBuilder:
                                    transform.transform_type.value)
         if transform.offset is not None:
             self._writer.add_attribute(added_transform, "offset", transform.offset)
+        if transform.offset_unit is not None:
+            self._writer.add_attribute(added_transform, "offset_units",
+                                       transform.offset_unit)
         if depends_on is not None:
             self._writer.add_attribute(added_transform, "depends_on", depends_on)
         else:

@@ -67,7 +67,10 @@ class Field:
         self._loader = loader
 
     def __getitem__(self, index) -> np.ndarray:
-        return self._loader.load_dataset_as_numpy_array(self._dataset, index)
+        dims = [f'dim_{i}' for i in range(self.ndim)]
+        return self._loader.load_dataset_direct(self._dataset,
+                                                dimensions=dims,
+                                                index=index)
 
     def __repr__(self) -> str:
         return f'<Nexus field "{self._dataset.name}">'
@@ -197,7 +200,7 @@ class NXentry(NXobject):
 def _nx_class_registry():
     from ._monitor_data import NXmonitor
     from ._detector_data import NXevent_data
-    from ._log_data import NXlog
+    from .nxlog import NXlog
     from .nxdata import NXdata
     from .nxdetector import NXdetector
     return {

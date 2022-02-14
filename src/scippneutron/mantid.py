@@ -610,7 +610,7 @@ def convert_EventWorkspace_to_data_array(ws,
     _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
 
     n_event = ws.getNumberEvents()
-    coord = sc.zeros(dims=['event'], shape=[n_event], unit=unit, dtype=sc.DType.float64)
+    coord = sc.empty(dims=['event'], shape=[n_event], unit=unit, dtype=sc.DType.float64)
     weights = sc.ones(dims=['event'],
                       shape=[n_event],
                       unit=data_unit,
@@ -625,20 +625,24 @@ def convert_EventWorkspace_to_data_array(ws,
                       dtype=sc.DType.int64,
                       unit=None)
     ends = begins.copy()
-    current = 0
-    for i in range(nHist):
-        sp = ws.getSpectrum(i)
-        size = sp.getNumberEvents()
-        coord['event', current:current + size].values = sp.getTofs()
-        if load_pulse_times:
-            pulse_times['event',
-                        current:current + size].values = sp.getPulseTimesAsNumpy()
-        if _contains_weighted_events(sp):
-            weights['event', current:current + size].values = sp.getWeights()
-            weights['event', current:current + size].variances = sp.getWeightErrors()
-        begins.values[i] = current
-        ends.values[i] = current + size
-        current += size
+    if n_event > 0:  # Skip expensive loop if there are no events
+        current = 0
+        for i in range(nHist):
+            sp = ws.getSpectrum(i)
+            size = sp.getNumberEvents()
+            if size == 0:  # Skip expensive getters
+                continue
+            coord['event', current:current + size].values = sp.getTofs()
+            if load_pulse_times:
+                pulse_times['event',
+                            current:current + size].values = sp.getPulseTimesAsNumpy()
+            if _contains_weighted_events(sp):
+                weights['event', current:current + size].values = sp.getWeights()
+                weights['event',
+                        current:current + size].variances = sp.getWeightErrors()
+            begins.values[i] = current
+            ends.values[i] = current + size
+            current += size
 
     proto_events = {'data': weights, 'coords': {dim: coord}}
     if load_pulse_times:

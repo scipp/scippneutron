@@ -1,8 +1,27 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
+# @author Simon Heybrock
+from __future__ import annotations
+from copy import copy
 from typing import List, Union
 import scipp as sc
 from .nxobject import NX_class, NXobject, Field, ScippIndex, NexusStructureError
 from .nxdata import NXdata
 from ._detector_data import NXevent_data
+from ._common import to_plain_index
+
+
+class EventSelector:
+    """A proxy object for creating an NXdetector based on a selection of events.
+    """
+    def __init__(self, detector):
+        self._detector = detector
+
+    def __getitem__(self, select: ScippIndex) -> NXdetector:
+        """Return an NXdetector based on a selection (slice) of events."""
+        det = copy(self._detector)
+        det._event_select = select
+        return det
 
 
 class NXdetector(NXobject):
@@ -12,6 +31,10 @@ class NXdetector(NXobject):
     is used to map event do detector pixels. Otherwise this returns event data in the
     same format as NXevent_data.
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._event_select = tuple()
+
     @property
     def shape(self) -> List[int]:
         if self._is_events:
@@ -63,7 +86,7 @@ class NXdetector(NXobject):
         return 'event_time_offset' in self
 
     @property
-    def _nxbase(self) -> NXdata:
+    def _nxbase(self) -> Union[NXdata, NXevent_data]:
         """Return class for loading underlying data."""
         if self._is_events:
             if 'event_time_offset' in self:
@@ -76,45 +99,92 @@ class NXdetector(NXobject):
         return NXdata(self._group, self._loader, signal='data')
 
     @property
+    def events(self) -> Union[None, NXevent_data]:
+        """Return the underlying NXevent_data group, None if not event data."""
+        if self._is_events:
+            return self._nxbase
+
+    @property
+    def select_events(self) -> EventSelector:
+        """
+        Return a proxy object for selecting a slice of the underlying NXevent_data
+        group, while keeping wrapping the NXdetector.
+        """
+        if not self._is_events:
+            raise NexusStructureError(
+                "Cannot select events in NXdetector not containing NXevent_data.")
+        return EventSelector(self)
+
+    @property
     def _detector_number(self) -> Field:
         return self.get('detector_number', None)
 
-    @property
-    def detector_number(self) -> sc.Variable:
+    def detector_number(self, select) -> sc.Variable:
         """Read and return the 'detector_number' field, None if it does not exist."""
         if self._detector_number is None:
             return None
-        return sc.array(dims=self.dims, values=self._detector_number[...])
+        index = to_plain_index(self.dims, select, ignore_missing=True)
+        var = self._detector_number[index]
+        return var.rename_dims(dict(zip(var.dims, self.dims)))
+
+    def pixel_offset(self, select) -> sc.Variable:
+        """Read the [xyz]_pixel_offset fields and return a variable of pixel offset
+        vectors, None if x_pixel_offset does not exist."""
+        if 'x_pixel_offset' not in self:
+            return None
+        index = to_plain_index(self.dims, select, ignore_missing=True)
+        x = self['x_pixel_offset'][index]
+        offset = sc.zeros(sizes=x.sizes, unit=x.unit, dtype=sc.DType.vector3)
+        offset.fields.x = x
+        for comp in ['y_pixel_offset', 'z_pixel_offset']:
+            if comp in self:
+                offset.fields.y = self[comp][index].to(unit=x.unit, copy=False)
+        return offset.rename_dims(dict(zip(offset.dims, self.dims)))
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
         # Note that ._detector_data._load_detector provides a different loading
         # facility for NXdetector but handles only loading of detector_number,
         # as needed for event data loading
+        coords = {
+            'detector_number': self.detector_number(select),
+            'pixel_offset': self.pixel_offset(select)
+        }
         if self._is_events:
             # If there is a 'detector_number' field it is used to bin events into
             # detector pixels. Note that due to the nature of NXevent_data, which stores
             # events from all pixels and random order, we always have to load the entire
             # bank. Slicing with the provided 'select' is done while binning.
-            event_data = self._nxbase[...]
-            if self.detector_number is None:
+            event_data = self._nxbase[self._event_select]
+            if coords['detector_number'] is None:
+                if select not in (Ellipsis, tuple()) and select != slice(None):
+                    raise NexusStructureError(
+                        "Cannot load slice of NXdetector since it contains event data "
+                        "but no 'detector_number' field, i.e., the shape is unknown. "
+                        "Use ellipsis or an empty tuple to load the full detector.")
                 # Ideally we would prefer to use np.unique, but a quick experiment shows
                 # that this can easily be 100x slower, so it is not an option. In
                 # practice most files have contiguous event_id values within a bank
                 # (NXevent_data).
                 id_min = event_data.bins.coords['event_id'].min()
                 id_max = event_data.bins.coords['event_id'].max()
-                detector_numbers = sc.arange(dim='detector_number',
-                                             start=id_min.value,
-                                             stop=id_max.value + 1,
-                                             dtype=id_min.dtype)
-            else:
-                detector_numbers = self.detector_number[select]
-            event_data.bins.coords['detector_number'] = event_data.bins.coords.pop(
-                'event_id')
+                coords['detector_number'] = sc.arange(dim='detector_number',
+                                                      unit=None,
+                                                      start=id_min.value,
+                                                      stop=id_max.value + 1,
+                                                      dtype=id_min.dtype)
+            event_id = coords['detector_number'].flatten(to='event_id')
+            event_data.bins.coords['event_time_zero'] = sc.bins_like(
+                event_data, fill_value=event_data.coords['event_time_zero'])
             # After loading raw NXevent_data it is guaranteed that the event table
             # is contiguous and that there is no masking. We can therefore use the
             # more efficient approach of binning from scratch instead of erasing the
             # 'pulse' binning defined by NXevent_data.
-            return sc.bin(event_data.bins.constituents['data'],
-                          groups=[detector_numbers])
-        return self._nxbase[select]
+            event_data = sc.bin(event_data.bins.constituents['data'], groups=[event_id])
+            del event_data.coords['event_id']  # same as detector_number
+            da = event_data.fold(dim='event_id', sizes=coords['detector_number'].sizes)
+        else:
+            da = self._nxbase[select]
+        for name, coord in coords.items():
+            if coord is not None:
+                da.coords[name] = coord
+        return da

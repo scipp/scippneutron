@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
+# @author Simon Heybrock
 from typing import List, Dict, Union
 import warnings
 from ._common import Group
@@ -57,7 +60,7 @@ def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict
             nxmonitor = NXmonitor(group, nexus)
             # Standard loading requires binning monitor into pulses and adding
             # detector IDs. This is currently encapsulated in load_detector_data,
-            # so we cannot readily use NXmonitor and bin aferwards without duplication.
+            # so we cannot readily use NXmonitor and bin afterwards without duplication.
             if nxmonitor._is_events:
                 monitor = load_detector_data([group], [], nexus, True, True)
                 warnings.warn(f"Event data present in NXmonitor group {group.name}. "

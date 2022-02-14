@@ -7,10 +7,12 @@ import scipp as sc
 import numpy as np
 from ._common import Group, JSONGroup, MissingDataset, MissingAttribute
 from dataclasses import dataclass
+from warnings import warn
 
 _nexus_class = "NX_class"
 _nexus_units = "units"
 _nexus_name = "name"
+_nexus_path = "path"
 _nexus_values = "values"
 _nexus_dataset = "dataset"
 _nexus_group = "group"
@@ -30,7 +32,8 @@ _filewriter_to_supported_numpy_dtype = {
     "uint8": np.int32,
     "uint16": np.int32,
     "uint32": np.int32,
-    "uint64": np.int64
+    "uint64": np.int64,
+    "string": np.str_
 }
 
 
@@ -154,6 +157,7 @@ class LoadFromJson:
         for child in group[_nexus_children]:
             try:
                 if child[_nexus_name] == name:
+                    child[_nexus_path] = f"{self.get_path(group)}/{name}"
                     if child["type"] == _nexus_link:
                         child = self.get_object_by_path(self._root, child["target"])
                     if child["type"] in allowed_nexus_classes:
@@ -214,6 +218,10 @@ class LoadFromJson:
         return False, (f"Unable to load data from NXevent_data "
                        f" due to missing '{dataset_name}' field\n")
 
+    @staticmethod
+    def supported_int_type(dataset):
+        return _filewriter_to_supported_numpy_dtype[LoadFromJson.get_dtype(dataset)]
+
     def load_dataset(self,
                      group: Dict,
                      dataset_name: str,
@@ -231,14 +239,32 @@ class LoadFromJson:
         dataset = self.get_dataset_from_group(group, dataset_name)
         if dataset is None:
             raise MissingDataset()
+        return self.load_dataset_direct(dataset,
+                                        dimensions=dimensions,
+                                        dtype=dtype,
+                                        index=index)
 
+    def load_dataset_direct(self,
+                            dataset: Dict,
+                            dimensions: Optional[List[str]] = [],
+                            dtype: Optional[Any] = None,
+                            index=tuple()) -> sc.Variable:
+        """
+        Same as `load_dataset` but dataset given directly instead of by group and name.
+        """
         if dtype is None:
-            dtype = self.get_dtype(dataset)
+            dtype = self.supported_int_type(dataset)
 
         try:
             units = _get_attribute_value(dataset, _nexus_units)
+            try:
+                units = sc.Unit(units)
+            except sc.UnitError:
+                warn(f"Unrecognized unit '{units}' for value dataset "
+                     f"in '{self.get_name(dataset)}'; setting unit as 'dimensionless'")
+                units = sc.units.dimensionless
         except MissingAttribute:
-            units = sc.units.dimensionless
+            units = None
 
         return sc.array(dims=dimensions,
                         values=np.asarray(dataset[_nexus_values])[index],
@@ -271,12 +297,7 @@ class LoadFromJson:
         numpy array is required.
         :param dataset: The dataset to load values from
         """
-        try:
-            dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
-                                                         ["type"]]
-        except KeyError:
-            dtype = _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]
-                                                         ["dtype"]]
+        dtype = LoadFromJson.supported_int_type(dataset)
         return np.asarray(dataset[_nexus_values])[index].astype(dtype)
 
     def get_dataset_numpy_dtype(self, dataset: Dict) -> Any:
@@ -290,9 +311,8 @@ class LoadFromJson:
     def get_path(group: Dict) -> str:
         if isinstance(group, JSONGroup):
             return group.name
-        # TODO JSONGroup is apparently used inconsistently, fall back to returning name
-        # without path.
-        return group.get(_nexus_name, '/')
+        else:
+            return group.get(_nexus_path, '/')
 
     @staticmethod
     def get_dtype(dataset: Dict) -> str:
@@ -313,7 +333,7 @@ class LoadFromJson:
         try:
             unit = _get_attribute_value(dataset, _nexus_units)
         except MissingAttribute:
-            unit = "dimensionless"
+            unit = None
         return unit
 
     def load_scalar_string(self, group: Dict, dataset_name: str) -> sc.Variable:

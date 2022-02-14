@@ -9,7 +9,7 @@ News
 
 - [|SCIPPNEUTRON_RELEASE_MONTH|] scippneutron-|SCIPPNEUTRON_VERSION| `has been released <about/release-notes.rst>`_.
   Check out the `What's new <about/whats-new.rst>`_ notebook for an overview of recent highlights and major changes.
-- [September 2021] `scipp-0.8 <https://scipp.github.io/about/release-notes.html#v0-8-0-september-2021>`_ has been released.
+- [January 2022] `scipp-0.11 <https://scipp.github.io/about/release-notes.html#v0-11-0-january-2022>`_ has been released.
 - Just like scipp, scippneutron has switched from GPLv3 to the more permissive BSD-3 license which fits better into the Python eco system.
 
 Where can I get help?
@@ -50,6 +50,7 @@ Documentation
    :maxdepth: 3
 
    reference/api
+   reference/frame-unwrapping
 
 .. toctree::
    :caption: Tutorials
