@@ -12,12 +12,12 @@ from ._common import to_plain_index
 
 
 class EventSelector:
-    """A proxy object for creating and NXdetector based on a selection of events.
+    """A proxy object for creating an NXdetector based on a selection of events.
     """
     def __init__(self, detector):
         self._detector = detector
 
-    def __getitem__(self, select) -> NXdetector:
+    def __getitem__(self, select: ScippIndex) -> NXdetector:
         """Return an NXdetector based on a selection (slice) of events."""
         det = copy(self._detector)
         det._event_select = select
