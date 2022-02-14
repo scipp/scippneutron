@@ -15,6 +15,8 @@ Breaking changes
 Bugfixes
 ~~~~~~~~
 
+* Fix bug in ``load_nexus``, which interpreted ``NXtransformations`` as passive transformations `#275 <https://github.com/scipp/scippneutron/pull/275>`_.
+
 Deprecations
 ~~~~~~~~~~~~
 
