@@ -1490,14 +1490,14 @@ def test_relative_links_in_transformation_paths_are_followed(load_function: Call
     builder.add_component(Source("source"))
     builder.add_dataset_at_path(
         "/entry/transform1", np.array([distance]), {
-            "vector": np.array([0, 0, -1]),
+            "vector": np.array([0, 0, 1]),
             "units": "m",
             "transformation_type": "translation",
             "depends_on": "."
         })
     builder.add_dataset_at_path(
         "/entry/transform2", np.array([distance]), {
-            "vector": np.array([0, 0, -1]),
+            "vector": np.array([0, 0, 1]),
             "units": "m",
             "transformation_type": "translation",
             "depends_on": "transform1"
