@@ -62,6 +62,22 @@ def test_loads_data_without_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
         assert sc.identical(loaded, expected)
 
 
+def test_select_events_raises_if_detector_contains_data(
+        nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    builder = NexusBuilder()
+    da = sc.DataArray(sc.array(dims=['xx', 'yy'], values=[[1.1, 2.2], [3.3, 4.4]]))
+    detector_numbers = np.array([[1, 2], [3, 4]])
+    builder.add_detector(Detector(detector_numbers=detector_numbers, data=da))
+    expected = da.rename_dims({'xx': 'dim_0', 'yy': 'dim_1'})
+    expected.coords['detector_number'] = sc.array(dims=expected.dims,
+                                                  values=detector_numbers)
+    with resource(builder)() as f:
+        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        with pytest.raises(nexus.NexusStructureError):
+            detector.select_events
+
+
 def test_loads_data_with_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     builder = NexusBuilder()

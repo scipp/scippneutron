@@ -110,6 +110,9 @@ class NXdetector(NXobject):
         Return a proxy object for selecting a slice of the underlying NXevent_data
         group, while keeping wrapping the NXdetector.
         """
+        if not self._is_events:
+            raise NexusStructureError(
+                "Cannot select events in NXdetector not containing NXevent_data.")
         return EventSelector(self)
 
     @property
