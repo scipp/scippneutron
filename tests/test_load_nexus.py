@@ -1135,6 +1135,47 @@ def test_loads_component_position_with_multiple_multi_valued_log_transformations
 
 @pytest.mark.parametrize("component_class,component_name",
                          ((Sample, "sample"), (Source, "source")))
+def test_multi_valued_log_transformations_time_axis_interpolated_and_trimmed(
+        component_class: Union[Type[Source], Type[Sample]], component_name: str,
+        load_function: Callable):
+    builder = NexusBuilder()
+    t1 = Transformation(TransformationType.TRANSLATION,
+                        vector=np.array([0, 0, 1]),
+                        value=np.array([1, 10]),
+                        time=np.array([0, 1]),
+                        time_units="s",
+                        value_units="m")
+    t2 = Transformation(TransformationType.TRANSLATION,
+                        vector=np.array([0, 0, 1]),
+                        value=np.array([5, 50]),
+                        time=np.array([0.1, 1.1]),
+                        time_units="s",
+                        value_units="m",
+                        depends_on=t1)
+    builder.add_component(component_class(component_name, depends_on=t2))
+
+    loaded_data = load_function(builder)
+
+    assert np.allclose(loaded_data[f"{component_name}_base_position"].values, [0, 0, 0])
+    assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
+
+    expected_transformed_positions = np.array([[0, 0, 6], [0, 0, 15], [0, 0, 60]])
+
+    assert np.allclose((loaded_data[f"{component_name}_transform"].value *
+                        loaded_data[f"{component_name}_base_position"]).values,
+                       expected_transformed_positions)
+    # Note the start at 100 ms, since there is no known value of t2 at 0 ms (when
+    # t1 starts)
+    assert sc.identical(
+        loaded_data[f"{component_name}_transform"].value.coords["time"],
+        sc.array(dims=["time"],
+                 values=[100, 1000, 1100],
+                 unit="ms",
+                 dtype=sc.DType.datetime64).to(unit="ns"))
+
+
+@pytest.mark.parametrize("component_class,component_name",
+                         ((Sample, "sample"), (Source, "source")))
 @pytest.mark.parametrize("transform_type,value_units",
                          ((TransformationType.ROTATION, "deg"),
                           (TransformationType.TRANSLATION, "cm")))

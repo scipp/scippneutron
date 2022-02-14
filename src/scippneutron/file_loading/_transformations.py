@@ -101,7 +101,11 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
                 transform, xnew) * _interpolate_transform(total_transform, xnew)
         else:
             total_transform = transform * total_transform
-
+    if isinstance(total_transform, sc.DataArray):
+        time_dependent = [t for t in transformations if isinstance(t, sc.DataArray)]
+        times = [da.coords['time'][0] for da in time_dependent]
+        latest_log_start = sc.reduce(times).max()
+        return total_transform['time', latest_log_start:].copy()
     return total_transform
 
 
