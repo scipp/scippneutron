@@ -91,8 +91,8 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
                 transform, sc.DataArray):
             xnew = sc.datetimes(values=np.unique(
                 sc.concat([
-                    total_transform.coords["time"].to(unit=sc.units.ns, copy=True),
-                    transform.coords["time"].to(unit=sc.units.ns, copy=True),
+                    total_transform.coords["time"].to(unit=sc.units.ns, copy=False),
+                    transform.coords["time"].to(unit=sc.units.ns, copy=False),
                 ],
                           dim="time").values),
                                 dims=["time"],
