@@ -1,9 +1,27 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
+# @author Simon Heybrock
+from __future__ import annotations
+from copy import copy
 from typing import List, Union
 import scipp as sc
 from .nxobject import NX_class, NXobject, Field, ScippIndex, NexusStructureError
 from .nxdata import NXdata
 from ._detector_data import NXevent_data
 from ._common import to_plain_index
+
+
+class EventSelector:
+    """A proxy object for creating and NXdetector based on a selection of events.
+    """
+    def __init__(self, detector):
+        self._detector = detector
+
+    def __getitem__(self, select) -> NXdetector:
+        """Return an NXdetector based on a selection (slice) of events."""
+        det = copy(self._detector)
+        det._event_select = select
+        return det
 
 
 class NXdetector(NXobject):
@@ -13,6 +31,10 @@ class NXdetector(NXobject):
     is used to map event do detector pixels. Otherwise this returns event data in the
     same format as NXevent_data.
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._event_select = tuple()
+
     @property
     def shape(self) -> List[int]:
         if self._is_events:
@@ -64,7 +86,7 @@ class NXdetector(NXobject):
         return 'event_time_offset' in self
 
     @property
-    def _nxbase(self) -> NXdata:
+    def _nxbase(self) -> Union[NXdata, NXevent_data]:
         """Return class for loading underlying data."""
         if self._is_events:
             if 'event_time_offset' in self:
@@ -75,6 +97,20 @@ class NXdetector(NXobject):
         # NXdetector uses a "hard-coded" signal name 'data', without specifying the
         # attribute in the file, so we pass this explicitly to NXdata.
         return NXdata(self._group, self._loader, signal='data')
+
+    @property
+    def events(self) -> Union[None, NXevent_data]:
+        """Return the underlying NXevent_data group, None if not event data."""
+        if self._is_events:
+            return self._nxbase
+
+    @property
+    def select_events(self) -> EventSelector:
+        """
+        Return a proxy object for selecting a slice of the underlying NXevent_data
+        group, while keeping wrapping the NXdetector.
+        """
+        return EventSelector(self)
 
     @property
     def _detector_number(self) -> Field:
@@ -115,9 +151,9 @@ class NXdetector(NXobject):
             # detector pixels. Note that due to the nature of NXevent_data, which stores
             # events from all pixels and random order, we always have to load the entire
             # bank. Slicing with the provided 'select' is done while binning.
-            event_data = self._nxbase[...]
+            event_data = self._nxbase[self._event_select]
             if coords['detector_number'] is None:
-                if select not in (Ellipsis, tuple()):
+                if select not in (Ellipsis, tuple()) and select != slice(None):
                     raise NexusStructureError(
                         "Cannot load slice of NXdetector since it contains event data "
                         "but no 'detector_number' field, i.e., the shape is unknown. "
