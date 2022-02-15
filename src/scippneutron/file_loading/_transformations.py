@@ -260,7 +260,7 @@ def _get_transformation_magnitude_and_unit(group_name: str,
         unit = nexus.get_unit(transform)
         log = sc.scalar(value=magnitude, unit=unit, dtype=sc.DType.float64)
 
-    if log.unit == sc.units.dimensionless:
+    if log.unit is None:
         raise TransformationError(f"Missing units for transformation at "
                                   f"{nexus.get_name(transform)}")
     return log
