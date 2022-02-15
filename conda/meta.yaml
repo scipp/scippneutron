@@ -39,7 +39,7 @@ requirements:
     - ipykernel=6.3.1  # issue with pythreejs 3d plotting, see https://github.com/ipython/ipykernel/issues/771
     - ipympl
     - ipywidgets
-    - mantid-framework [not win]
+    - mantid [py==38]
     - matplotlib-base
     - nbsphinx
     - pooch
@@ -73,7 +73,7 @@ test:
     - pytest
     - pytest-asyncio
     - pythreejs
-    - mantid-framework [not win]
+    - mantid [py==38]
     - tbb-devel
     - python-confluent-kafka [linux64]
     - ess-streaming-data-types [linux64]

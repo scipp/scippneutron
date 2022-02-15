@@ -46,7 +46,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.7"]
+        python-version: ["3.8"]
         include:
         - os: ubuntu-latest
           cmake-preset: ci-linux
@@ -68,7 +68,7 @@ jobs:
         with:
           key: ${{ matrix.os }}
 
-      - run: python tools/metatoenv.py --dir=conda --env-file=buildenv.yml --channels=conda-forge,scipp,ess-dmsc
+      - run: python tools/metatoenv.py --dir=conda --env-file=buildenv.yml --channels=conda-forge,scipp,ess-dmsc,mantid
 
       - name: Setup Mambaforge and dev env
         uses: conda-incubator/setup-miniconda@v2
