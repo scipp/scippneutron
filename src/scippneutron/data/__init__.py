@@ -4,7 +4,7 @@
 import scipp as sc
 from ..mantid import load
 
-_version = '2'
+_version = '3'
 
 __all__ = ['tutorial_dense_data', 'tutorial_event_data', 'get_path']
 
@@ -21,7 +21,7 @@ def _make_pooch():
             'bigfake.nxs': 'md5:ebf73017ddd03cee2a14a887c439bf35',
             'iris26176_graphite002_sqw.nxs': 'md5:7ea63f9137602b7e9b604fe30f0c6ec2',
             'loki-at-larmor.hdf5': 'md5:7fc48639bb2c409adb9a1dedd53d1c83',
-            'powder-event.h5': 'md5:f92ca1da4c2d42c3d8a5d1b1d79aa5a4',
+            'powder-event.h5': 'md5:b02a00ab9e7f86d50a13147a521c0d25',
             'mcstas_sans.h5': 'md5:a608255dd757905490882eb35e209d12',
             'CNCS_51936_event.nxs': 'md5:5ba401e489260a44374b5be12b780911',
             'GEM40979.raw': 'md5:6df0f1c2fc472af200eec43762e9a874',
