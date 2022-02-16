@@ -66,6 +66,20 @@ def test_nxobject_root(nexus_group: Tuple[Callable, LoadFromNexus]):
         assert set(root.keys()) == {'entry', 'monitor'}
 
 
+def test_nxobject_items(nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        root = nexus.NXroot(f, loader)
+        items = root.items()
+        assert len(items) == 2
+        for k, v in items:
+            if k == 'entry':
+                assert v.nx_class == nexus.NX_class.NXentry
+            else:
+                assert k == 'monitor'
+                assert v.nx_class == nexus.NX_class.NXmonitor
+
+
 def test_nxobject_entry(nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_monitor_and_log())() as f:
