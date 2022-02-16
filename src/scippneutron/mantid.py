@@ -163,8 +163,10 @@ def make_detector_info(ws, spectrum_dim):
     # Store only information about detectors with data (a spectrum). The rest
     # mostly just gets in the way and including it in the default converter
     # is probably not required.
-    spectrum = sc.array(dims=['detector'], values=spectrum[has_spectrum])
-    detector = sc.array(dims=['detector'], values=det_info.detectorIDs()[has_spectrum])
+    spectrum = sc.array(dims=['detector'], values=spectrum[has_spectrum], unit=None)
+    detector = sc.array(dims=['detector'],
+                        values=det_info.detectorIDs()[has_spectrum],
+                        unit=None)
 
     # May want to include more information here, such as detector positions,
     # but for now this is not necessary.
