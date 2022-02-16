@@ -231,7 +231,7 @@ def validate_and_get_unit(unit, allow_empty=False):
         "MomentumTransfer": ['Q', sc.units.dimensionless / sc.units.angstrom],
         "QSquared":
         ['Q^2', sc.units.dimensionless / (sc.units.angstrom * sc.units.angstrom)],
-        "Spectrum": ['spectrum', sc.units.dimensionless],
+        "Spectrum": ['spectrum', None],
         "Empty": ['empty', sc.units.dimensionless],
         "Counts": ['counts', sc.units.counts]
     }
