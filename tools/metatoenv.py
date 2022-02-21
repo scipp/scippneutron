@@ -10,7 +10,11 @@
 import os
 import argparse
 from functools import reduce
+import operator
+from packaging import version
 import platform as _platform
+import re
+import sys
 
 parser = argparse.ArgumentParser(
     description='Generate a conda environment file from a conda recipe meta.yaml file')
@@ -48,6 +52,11 @@ parser.add_argument('--merge-with',
                     default='',
                     help='a second environment file that is to be merged with the '
                     'one that would be created by the conda meta.yaml file alone')
+parser.add_argument('--py',
+                    default=None,
+                    help='the python version to use for filtering out requirements '
+                    'if unspecified, the version of python used to run the script will '
+                    'be used)')
 
 
 def _indentation_level(string):
@@ -118,10 +127,29 @@ def _parse_yaml(text):
     return out
 
 
-def _jinja_filter(dependencies, platform):
+def _parse_py_version(ver):
+    """
+    If the input version string has no '.' character, e.g. `38`, then change it to
+    `3.8`.
+    Return a version parsed through the `packaging.version` tool.
+    """
+    if (len(ver) > 1) and '.' not in ver:
+        ver = f'{ver[0]}.{ver[1:]}'
+    return version.parse(ver)
+
+
+def _jinja_filter(dependencies, platform, pyversion):
     """
     Filter out deps for requested platform via jinja syntax.
     """
+    ops = {
+        ">": operator.gt,
+        "<": operator.lt,
+        "==": operator.eq,
+        ">=": operator.ge,
+        "<=": operator.le
+    }
+
     out = {}
     for key, value in dependencies.items():
         if isinstance(value, dict):
@@ -136,13 +164,24 @@ def _jinja_filter(dependencies, platform):
                                        "unmatched square brackets or closing bracket "
                                        "found before opening bracket: {}".format(key))
                 selector = key[left:right + 1]
-                if selector.startswith('[not'):
-                    if (platform in selector) or (selector.replace(
-                            '[not', '')[:-1].strip() in platform):
+                raw_selector = selector.lstrip('[ ').rstrip(' ]').replace(
+                    'python', 'py').replace('64', '').replace('32', '')
+
+                if raw_selector.startswith('py'):
+                    # Check for python version
+                    select_ver = re.split(r'<|>|\=', raw_selector)[-1]
+                    select_op = re.search(r'(<|>|\=)+', raw_selector)[0]
+                    if not ops[select_op](_parse_py_version(pyversion),
+                                          _parse_py_version(select_ver)):
                         ok = False
                 else:
-                    if (platform not in selector) and (selector[1:-1] not in platform):
-                        ok = False
+                    # Check for platform
+                    is_not = raw_selector.startswith('not')
+                    if platform in raw_selector:
+                        ok = not is_not
+                    else:
+                        ok = is_not
+
                 if ok:
                     key = key.replace(selector, '').strip(' \n')
             if ok:
@@ -177,12 +216,17 @@ def _write_dict(d, file_handle, indent):
             _write_dict(value, file_handle=file_handle, indent=indent + 2)
 
 
-def main(metafile, envfile, envname, channels, platform, extra, mergewith):
+def main(metafile, envfile, envname, channels, platform, extra, mergewith, pyversion):
 
     # Find current platform
     if platform is None:
         platform_mapping = {"Linux": "linux", "Darwin": "osx", "Windows": "win"}
         platform = platform_mapping[_platform.system()]
+
+    # Detect python version
+    if pyversion is None:
+        sysver = sys.version_info
+        pyversion = f'{sysver.major}.{sysver.minor}.{sysver.micro}'
 
     # Read and parse metafile
     with open(metafile, "r") as f:
@@ -214,7 +258,9 @@ def main(metafile, envfile, envname, channels, platform, extra, mergewith):
         envname = os.path.splitext(envfile)[0]
 
     # Apply Jinja syntax filtering depending on platform
-    meta_dependencies = _jinja_filter(meta_dependencies, platform=platform)
+    meta_dependencies = _jinja_filter(meta_dependencies,
+                                      platform=platform,
+                                      pyversion=pyversion)
 
     # Write to output env file
     with open(envfile, "w") as out:
@@ -248,4 +294,5 @@ if __name__ == '__main__':
          channels=channels,
          platform=args.platform,
          extra=extra,
-         mergewith=args.merge_with)
+         mergewith=args.merge_with,
+         pyversion=args.py)
