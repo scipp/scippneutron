@@ -135,10 +135,10 @@ def _parse_py_version(ver, drop_micro):
     # If the input version string has has length 2 and no '.' character, e.g. `38`,
     # then change it to `3.8`.
     if (len(ver) > 1) and ('.' not in ver):
-        ver = f'{ver[0]}.{ver[1:]}'
+        ver = ver[0] + '.' + ver[1:]
     out = version.parse(ver)
     if drop_micro:
-        out = version.parse(f'{out.major}.{out.minor}')
+        out = version.parse('{}.{}'.format(out.major, out.minor))
     return out
 
 
@@ -157,7 +157,7 @@ def _jinja_filter(dependencies, platform, pyversion):
     out = {}
     for key, value in dependencies.items():
         if isinstance(value, dict):
-            out[key] = _jinja_filter(value, platform)
+            out[key] = _jinja_filter(value, platform, pyversion)
         else:
             ok = True
             if key.count('[') > 0:
@@ -231,7 +231,7 @@ def main(metafile, envfile, envname, channels, platform, extra, mergewith, pyver
     # Detect python version
     if pyversion is None:
         sysver = sys.version_info
-        pyversion = f'{sysver.major}.{sysver.minor}.{sysver.micro}'
+        pyversion = '{}.{}.{}'.format(sysver.major, sysver.minor, sysver.micro)
 
     # Read and parse metafile
     with open(metafile, "r") as f:
