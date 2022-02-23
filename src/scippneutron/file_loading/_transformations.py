@@ -37,19 +37,6 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
     return sc.spatial.rotations_from_rotvecs(rotvecs)
 
 
-def get_translation_from_affine(group: Group, nexus: LoadFromNexus) -> sc.Variable:
-    """
-    Get position of a component which has a "depends_on" dataset
-
-    :param group: The HDF5 group of the component, containing depends_on
-    :param nexus: wrap data access to hdf file or objects from json
-    :return: Position of the component as a vector variable
-    """
-    total_transform_matrix = get_full_transformation_matrix(group, nexus)
-    return total_transform_matrix * sc.vector(value=[0, 0, 0],
-                                              unit=total_transform_matrix.unit)
-
-
 def _interpolate_transform(transform, xnew):
     # scipy can't interpolate with a single value
     if transform.sizes["time"] == 1:
@@ -88,8 +75,8 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
                 transform, sc.DataArray):
             xnew = sc.datetimes(values=np.unique(
                 sc.concat([
-                    total_transform.coords["time"].to(unit=sc.units.ns, copy=True),
-                    transform.coords["time"].to(unit=sc.units.ns, copy=True),
+                    total_transform.coords["time"].to(unit=sc.units.ns, copy=False),
+                    transform.coords["time"].to(unit=sc.units.ns, copy=False),
                 ],
                           dim="time").values),
                                 dims=["time"],
@@ -98,7 +85,11 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
                 transform, xnew) * _interpolate_transform(total_transform, xnew)
         else:
             total_transform = transform * total_transform
-
+    if isinstance(total_transform, sc.DataArray):
+        time_dependent = [t for t in transformations if isinstance(t, sc.DataArray)]
+        times = [da.coords['time'][0] for da in time_dependent]
+        latest_log_start = sc.reduce(times).max()
+        return total_transform['time', latest_log_start:].copy()
     return total_transform
 
 

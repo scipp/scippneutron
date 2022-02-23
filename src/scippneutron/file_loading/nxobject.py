@@ -145,7 +145,7 @@ class NXobject:
         return self._loader.get_path(self._group)
 
     def _ipython_key_completions_(self) -> List[str]:
-        return self.keys()
+        return list(self.keys())
 
     def keys(self) -> List[str]:
         return self._loader.keys(self._group)
