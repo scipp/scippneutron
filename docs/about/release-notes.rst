@@ -11,7 +11,7 @@ Features
 
 * Added Utilities for unwrapping frames `#242 <https://github.com/scipp/scippneutron/pull/242>`_.
 * Added First draft of low-level utilities for loading NeXus files `#249 <https://github.com/scipp/scippneutron/pull/249>`_.
-* Multi-valued transforms are now loaded by :func:`scippneutron.load_nexus` `#267 <https://github.com/scipp/scippneutron/pull/267>`_.
+* Multi-valued transforms are now loaded from ``NXlog`` groups in NeXus files by :func:`scippneutron.load_nexus` `#267 <https://github.com/scipp/scippneutron/pull/267>`_.
 
 Bugfixes
 ~~~~~~~~
