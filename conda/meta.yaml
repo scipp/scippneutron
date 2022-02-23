@@ -103,8 +103,8 @@ build:
     - cmake --preset package-macos [osx]
     - cmake --preset package-windows [win]
     - cmake --build --preset build
-    - cmake --build --preset package-docs [linux]
-    - cp -r build/html $DOCS_HTML_DIR [linux]
+    - cmake --build --preset package-docs [linux and py==38]
+    - cp -r build/html $DOCS_HTML_DIR [linux and py==38]
     - ctest --preset test
 
 
