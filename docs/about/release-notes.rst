@@ -3,25 +3,20 @@
 Release Notes
 =============
 
-v0.5.0 (unreleased)
---------------------
+v0.5.0 (February 2022)
+----------------------
 
 Features
 ~~~~~~~~
 
-Breaking changes
-~~~~~~~~~~~~~~~~
+* Added Utilities for unwrapping frames `#242 <https://github.com/scipp/scippneutron/pull/242>`_.
+* Added First draft of low-level utilities for loading NeXus files `#249 <https://github.com/scipp/scippneutron/pull/249>`_.
+* Transformation chains containing multiple values (based on ``NXlog`` groups) are now loaded by :func:`scippneutron.load_nexus` `#267 <https://github.com/scipp/scippneutron/pull/267>`_.
 
 Bugfixes
 ~~~~~~~~
 
-* Fix bug in ``load_nexus``, which interpreted ``NXtransformations`` as passive transformations `#275 <https://github.com/scipp/scippneutron/pull/275>`_.
-
-Deprecations
-~~~~~~~~~~~~
-
-Stability, Maintainability, and Testing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Fixed bug in ``load_nexus``, which interpreted ``NXtransformations`` as passive transformations `#275 <https://github.com/scipp/scippneutron/pull/275>`_.
 
 Contributors
 ~~~~~~~~~~~~
