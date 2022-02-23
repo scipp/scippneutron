@@ -625,6 +625,7 @@ class NexusBuilder:
     def _add_monitor_group_to_file(self, monitor: Monitor, parent_group: h5py.Group):
         monitor_group = self._create_nx_class(monitor.name, "NXmonitor", parent_group)
         data_group = self._writer.add_dataset(monitor_group, "data", monitor.data)
+        self._writer.add_attribute(data_group, "units", '')
         self._writer.add_attribute(data_group, "axes",
                                    ",".join(name for name, _ in monitor.axes))
 
@@ -636,7 +637,8 @@ class NexusBuilder:
             # data the event index will already have been created so we skip writing
             # it here.
             if not monitor.events or not axis_name == "event_index":
-                self._writer.add_dataset(monitor_group, axis_name, axis_data)
+                ds = self._writer.add_dataset(monitor_group, axis_name, axis_data)
+                self._writer.add_attribute(ds, "units", '')
 
     def _write_logs(self, parent_group: Union[h5py.Group, Dict]):
         for log in self._logs:

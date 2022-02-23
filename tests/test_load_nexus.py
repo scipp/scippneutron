@@ -425,7 +425,7 @@ def test_loads_multidimensional_log(load_function: Callable):
     times = np.array([4, 5])
     name = "test_log"
     builder = NexusBuilder()
-    builder.add_log(Log(name, multidim_values, times))
+    builder.add_log(Log(name, multidim_values, times, value_units=''))
 
     loaded_data = load_function(builder)
 
@@ -2007,23 +2007,23 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
 
     assert sc.identical(
         mon_1_events.coords["detector_id"],
-        sc.Variable(dims=["detector_id"], values=[0], dtype=sc.DType.int64))
+        sc.array(dims=["detector_id"], unit=None, values=[0], dtype=sc.DType.int64))
     assert sc.identical(
         mon_2_events.coords["detector_id"],
-        sc.Variable(dims=["detector_id"], values=[1], dtype=sc.DType.int64))
+        sc.array(dims=["detector_id"], unit=None, values=[1], dtype=sc.DType.int64))
 
     assert sc.identical(
         mon_1_events.values[0].coords["tof"],
-        sc.Variable(dims=["event"],
-                    values=[1, 2, 3, 4, 5],
-                    unit=sc.units.ns,
-                    dtype=sc.DType.float64))
+        sc.array(dims=["event"],
+                 values=[1, 2, 3, 4, 5],
+                 unit=sc.units.ns,
+                 dtype=sc.DType.float64))
     assert sc.identical(
         mon_2_events.values[0].coords["tof"],
-        sc.Variable(dims=["event"],
-                    values=[6, 7, 8, 9, 10],
-                    unit=sc.units.ns,
-                    dtype=sc.DType.float64))
+        sc.array(dims=["event"],
+                 values=[6, 7, 8, 9, 10],
+                 unit=sc.units.ns,
+                 dtype=sc.DType.float64))
 
 
 def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
@@ -2060,10 +2060,13 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
                                        values=event_time_offsets,
                                        unit=sc.units.ns),
                               "detector_id":
-                              sc.array(dims=["event"], values=event_ids),
+                              sc.array(dims=["event"], unit=None, values=event_ids),
                           }),
-        begin=sc.array(dims=["pulse"], values=[0, 3, 3], dtype=sc.DType.int64),
-        end=sc.array(dims=["pulse"], values=[3, 3, 5], dtype=sc.DType.int64),
+        begin=sc.array(dims=["pulse"],
+                       values=[0, 3, 3],
+                       dtype=sc.DType.int64,
+                       unit=None),
+        end=sc.array(dims=["pulse"], values=[3, 3, 5], dtype=sc.DType.int64, unit=None),
     )
 
     # Even if there is just a single NXevent_data entry in the file the
@@ -2071,10 +2074,10 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
     expected = sc.DataArray(data=sc.concat([binned], 'bank'),
                             coords={
                                 "pulse_time":
-                                sc.Variable(dims=["pulse"],
-                                            values=time_zeros,
-                                            unit=sc.units.ns,
-                                            dtype=sc.DType.datetime64)
+                                sc.array(dims=["pulse"],
+                                         values=time_zeros,
+                                         unit=sc.units.ns,
+                                         dtype=sc.DType.datetime64)
                             })
 
     assert sc.identical(loaded_data, expected)

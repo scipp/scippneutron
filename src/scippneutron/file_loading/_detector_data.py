@@ -59,7 +59,7 @@ def _load_pixel_positions(
         nexus: LoadFromNexus) -> Tuple[Optional[sc.Variable], Optional[sc.Variable]]:
     offsets_unit = nexus.get_unit(
         nexus.get_dataset_from_group(detector_group, "x_pixel_offset"))
-    if offsets_unit == sc.units.dimensionless:
+    if offsets_unit is None:
         warn(f"Skipped loading pixel positions as no units found on "
              f"x_pixel_offset dataset in {nexus.get_name(detector_group)}")
         return None, None
@@ -130,10 +130,11 @@ def _create_empty_events_data_array(tof_dtype: Any = np.int64,
                                      unit=tof_unit),
                             _detector_dimension:
                             sc.empty(dims=[_event_dimension],
+                                     unit=None,
                                      shape=[0],
                                      dtype=detector_id_dtype),
                         })
-    indices = sc.array(dims=[_pulse_dimension], values=[], dtype='int64')
+    indices = sc.array(dims=[_pulse_dimension], values=[], dtype='int64', unit=None)
     return sc.DataArray(data=sc.bins(begin=indices,
                                      end=indices,
                                      dim=_event_dimension,
@@ -187,6 +188,7 @@ def _load_detector(group: Group, nexus: LoadFromNexus) -> DetectorData:
         detector_id_type = detector_ids.dtype.type
 
         detector_ids = sc.Variable(dims=[_detector_dimension],
+                                   unit=None,
                                    values=detector_ids,
                                    dtype=detector_id_type)
 
@@ -294,7 +296,8 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
 
     event_index = sc.array(dims=[_pulse_dimension],
                            values=event_index,
-                           dtype=sc.DType.int64)
+                           dtype=sc.DType.int64,
+                           unit=None)
 
     event_index -= event_index.min()
 
@@ -386,6 +389,7 @@ def load_detector_data(event_data_groups: List[Group], detector_groups: List[Gro
             id_min = event_id.min()
             id_max = event_id.max()
             data.detector_ids = sc.arange(dim=_detector_dimension,
+                                          unit=None,
                                           start=id_min.value,
                                           stop=id_max.value + 1,
                                           dtype=id_min.dtype)

@@ -254,7 +254,7 @@ class LoadFromHdf5:
         try:
             units = node.attrs["units"]
         except (AttributeError, KeyError):
-            return "dimensionless"
+            return None
         units = _ensure_str(units, LoadFromHdf5.get_attr_encoding(node, "units"))
         try:
             sc.Unit(units)

@@ -52,7 +52,9 @@ def builder_with_events_monitor_and_log():
         Monitor("monitor",
                 data=np.array([1.]),
                 axes=[("time_of_flight", np.array([1.]))]))
-    builder.add_log(Log("log", np.array([1.1, 2.2, 3.3]), np.array([4.4, 5.5, 6.6])))
+    builder.add_log(
+        Log("log", np.array([1.1, 2.2, 3.3]), np.array([4.4, 5.5, 6.6]),
+            value_units=''))
     return builder
 
 
@@ -62,6 +64,20 @@ def test_nxobject_root(nexus_group: Tuple[Callable, LoadFromNexus]):
         root = nexus.NXroot(f, loader)
         assert root.nx_class == nexus.NX_class.NXroot
         assert set(root.keys()) == {'entry', 'monitor'}
+
+
+def test_nxobject_items(nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        root = nexus.NXroot(f, loader)
+        items = root.items()
+        assert len(items) == 2
+        for k, v in items:
+            if k == 'entry':
+                assert v.nx_class == nexus.NX_class.NXentry
+            else:
+                assert k == 'monitor'
+                assert v.nx_class == nexus.NX_class.NXmonitor
 
 
 def test_nxobject_entry(nexus_group: Tuple[Callable, LoadFromNexus]):
@@ -188,8 +204,14 @@ def test_field_properties(nexus_group: Tuple[Callable, LoadFromNexus]):
 def test_field_unit_is_none_if_no_units_attribute(nexus_group: Tuple[Callable,
                                                                      LoadFromNexus]):
     resource, loader = nexus_group
-    with resource(builder_with_events_monitor_and_log())() as f:
-        field = nexus.NXroot(f, loader)['entry/log']
+    builder = builder_with_events_monitor_and_log()
+    builder.add_log(
+        Log("mylog",
+            np.array([1.1, 2.2, 3.3]),
+            np.array([4.4, 5.5, 6.6]),
+            value_units=None))
+    with resource(builder)() as f:
+        field = nexus.NXroot(f, loader)['entry/mylog']
         assert field.unit is None
 
 

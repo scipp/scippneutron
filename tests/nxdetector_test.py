@@ -55,6 +55,7 @@ def test_loads_data_without_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
     builder.add_detector(Detector(detector_numbers=detector_numbers, data=da))
     expected = da.rename_dims({'xx': 'dim_0', 'yy': 'dim_1'})
     expected.coords['detector_number'] = sc.array(dims=expected.dims,
+                                                  unit=None,
                                                   values=detector_numbers)
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
@@ -71,6 +72,7 @@ def test_select_events_raises_if_detector_contains_data(
     builder.add_detector(Detector(detector_numbers=detector_numbers, data=da))
     expected = da.rename_dims({'xx': 'dim_0', 'yy': 'dim_1'})
     expected.coords['detector_number'] = sc.array(dims=expected.dims,
+                                                  unit=None,
                                                   values=detector_numbers)
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
@@ -88,6 +90,7 @@ def test_loads_data_with_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
     builder.add_detector(Detector(detector_numbers=detector_numbers, data=da))
     expected = da.rename_dims({'yy': 'dim_1'})
     expected.coords['detector_number'] = sc.array(dims=expected.dims,
+                                                  unit=None,
                                                   values=detector_numbers)
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
@@ -115,7 +118,10 @@ def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
         loaded = detector[...]
         assert sc.identical(
             loaded.bins.size().data,
-            sc.array(dims=['detector_number'], dtype='int64', values=[2, 3, 1, 0]))
+            sc.array(dims=['detector_number'],
+                     unit=None,
+                     dtype='int64',
+                     values=[2, 3, 1, 0]))
         assert 'event_time_offset' in loaded.bins.coords
         assert 'event_time_zero' in loaded.bins.coords
 
@@ -140,7 +146,10 @@ def test_loads_event_data_with_2d_detector_numbers(nexus_group: Tuple[Callable,
         loaded = detector[...]
         assert sc.identical(
             loaded.bins.size().data,
-            sc.array(dims=['dim_0', 'dim_1'], dtype='int64', values=[[2, 3], [1, 0]]))
+            sc.array(dims=['dim_0', 'dim_1'],
+                     unit=None,
+                     dtype='int64',
+                     values=[[2, 3], [1, 0]]))
 
 
 def test_select_events_slices_underlying_event_data(nexus_group: Tuple[Callable,
@@ -160,16 +169,28 @@ def test_select_events_slices_underlying_event_data(nexus_group: Tuple[Callable,
         detector = nexus.NXroot(f, loader)['entry/detector_0']
         assert sc.identical(
             detector.select_events['pulse', :2][...].bins.size().data,
-            sc.array(dims=['dim_0', 'dim_1'], dtype='int64', values=[[1, 1], [1, 0]]))
+            sc.array(dims=['dim_0', 'dim_1'],
+                     unit=None,
+                     dtype='int64',
+                     values=[[1, 1], [1, 0]]))
         assert sc.identical(
             detector.select_events['pulse', :3][...].bins.size().data,
-            sc.array(dims=['dim_0', 'dim_1'], dtype='int64', values=[[2, 2], [1, 0]]))
+            sc.array(dims=['dim_0', 'dim_1'],
+                     unit=None,
+                     dtype='int64',
+                     values=[[2, 2], [1, 0]]))
         assert sc.identical(
             detector.select_events['pulse', 3][...].bins.size().data,
-            sc.array(dims=['dim_0', 'dim_1'], dtype='int64', values=[[0, 1], [0, 0]]))
+            sc.array(dims=['dim_0', 'dim_1'],
+                     unit=None,
+                     dtype='int64',
+                     values=[[0, 1], [0, 0]]))
         assert sc.identical(
             detector.select_events[...][...].bins.size().data,
-            sc.array(dims=['dim_0', 'dim_1'], dtype='int64', values=[[2, 3], [1, 0]]))
+            sc.array(dims=['dim_0', 'dim_1'],
+                     unit=None,
+                     dtype='int64',
+                     values=[[2, 3], [1, 0]]))
 
 
 def test_select_events_slice_does_not_affect_original_detector(
@@ -190,7 +211,10 @@ def test_select_events_slice_does_not_affect_original_detector(
         detector.select_events['pulse', 0][...]
         assert sc.identical(
             detector[...].bins.size().data,
-            sc.array(dims=['dim_0', 'dim_1'], dtype='int64', values=[[2, 3], [1, 0]]))
+            sc.array(dims=['dim_0', 'dim_1'],
+                     unit=None,
+                     dtype='int64',
+                     values=[[2, 3], [1, 0]]))
 
 
 def builder_with_events_and_no_detector_number():
@@ -217,7 +241,10 @@ def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in
         loaded = detector[...]
         assert sc.identical(
             loaded.bins.size().data,
-            sc.array(dims=['detector_number'], dtype='int64', values=[2, 3, 0, 1]))
+            sc.array(dims=['detector_number'],
+                     unit=None,
+                     dtype='int64',
+                     values=[2, 3, 0, 1]))
 
 
 def test_loading_event_data_with_selection_and_automatic_detector_numbers_raises(

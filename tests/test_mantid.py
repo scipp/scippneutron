@@ -44,16 +44,14 @@ class TestMantidConversion(unittest.TestCase):
         eventWS = self.base_event_ws
         ws = mantid.Rebin(eventWS, 10000, PreserveEvents=False)
         d = scn.mantid.convert_Workspace2D_to_data_array(ws)
-        self.assertEqual(
-            d.attrs["run_start"].value,
-            "2012-05-21T15:14:56.279289666",
-        )
-        self.assertEqual(d.data.unit, sc.units.counts)
+        assert d.attrs["run_start"].value == "2012-05-21T15:14:56.279289666"
+        assert d.data.unit == sc.units.counts
         for i in range(ws.getNumberHistograms()):
             assert np.all(np.equal(d.values[i], ws.readY(i)))
             assert np.all(np.equal(d.variances[i], ws.readE(i) * ws.readE(i)))
-        self.assertEqual(d.coords['spectrum'].dtype, sc.DType.int32)
-        self.assertEqual(d.coords['tof'].dtype, sc.DType.float64)
+        assert d.coords['spectrum'].dtype == sc.DType.int32
+        assert d.coords['spectrum'].unit is None
+        assert d.coords['tof'].dtype == sc.DType.float64
 
     def test_EventWorkspace(self):
         import mantid.simpleapi as mantid

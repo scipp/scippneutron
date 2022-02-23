@@ -264,7 +264,7 @@ class LoadFromJson:
                      f"in '{self.get_name(dataset)}'; setting unit as 'dimensionless'")
                 units = sc.units.dimensionless
         except MissingAttribute:
-            units = sc.units.dimensionless
+            units = None
 
         return sc.array(dims=dimensions,
                         values=np.asarray(dataset[_nexus_values])[index],
@@ -333,7 +333,7 @@ class LoadFromJson:
         try:
             unit = _get_attribute_value(dataset, _nexus_units)
         except MissingAttribute:
-            unit = "dimensionless"
+            unit = None
         return unit
 
     def load_scalar_string(self, group: Dict, dataset_name: str) -> sc.Variable:

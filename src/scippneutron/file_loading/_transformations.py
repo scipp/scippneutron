@@ -34,10 +34,7 @@ def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
     """
     rotvec = sc.vector(value=axis)
     rotvecs = rotvec * angles.astype(sc.DType.float64, copy=False)
-    matrices = sc.spatial.rotations_from_rotvecs(dims=angles.dims,
-                                                 values=rotvecs.values,
-                                                 unit=sc.units.rad)
-    return matrices
+    return sc.spatial.rotations_from_rotvecs(rotvecs)
 
 
 def _interpolate_transform(transform, xnew):
@@ -254,7 +251,7 @@ def _get_transformation_magnitude_and_unit(group_name: str,
         unit = nexus.get_unit(transform)
         log = sc.scalar(value=magnitude, unit=unit, dtype=sc.DType.float64)
 
-    if log.unit == sc.units.dimensionless:
+    if log.unit is None:
         raise TransformationError(f"Missing units for transformation at "
                                   f"{nexus.get_name(transform)}")
     return log

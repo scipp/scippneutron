@@ -5,7 +5,7 @@ import numpy as np
 import scipp as sc
 from enum import Enum, auto
 import functools
-from typing import List, Union, NoReturn, Any, Dict
+from typing import List, Union, NoReturn, Any, Dict, Tuple
 
 from ._nexus import LoadFromNexus
 from ._hdf5_nexus import LoadFromHdf5
@@ -155,6 +155,9 @@ class NXobject:
             self._make(v) if self._loader.is_group(v) else Field(v, self._loader)
             for v in self._loader.values(self._group)
         ]
+
+    def items(self) -> List[Tuple[str, Union[Field, '__class__']]]:
+        return list(zip(self.keys(), self.values()))
 
     @functools.lru_cache()
     def by_nx_class(self) -> Dict[NX_class, List['__class__']]:

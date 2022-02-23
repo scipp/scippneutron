@@ -88,7 +88,7 @@ def _get_base_pos_and_transforms_of_component(
             [0, 0,
              nexus.load_dataset_from_group_as_numpy_array(group, "distance")])
         units = nexus.get_unit(nexus.get_dataset_from_group(group, "distance"))
-        if units == sc.units.dimensionless:
+        if units is None:
             warn(f"'distance' dataset in {nx_class} is missing "
                  f"units attribute, skipping loading {name} position")
             raise PositionError

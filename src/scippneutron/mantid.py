@@ -163,8 +163,10 @@ def make_detector_info(ws, spectrum_dim):
     # Store only information about detectors with data (a spectrum). The rest
     # mostly just gets in the way and including it in the default converter
     # is probably not required.
-    spectrum = sc.array(dims=['detector'], values=spectrum[has_spectrum])
-    detector = sc.array(dims=['detector'], values=det_info.detectorIDs()[has_spectrum])
+    spectrum = sc.array(dims=['detector'], values=spectrum[has_spectrum], unit=None)
+    detector = sc.array(dims=['detector'],
+                        values=det_info.detectorIDs()[has_spectrum],
+                        unit=None)
 
     # May want to include more information here, such as detector positions,
     # but for now this is not necessary.
@@ -231,7 +233,7 @@ def validate_and_get_unit(unit, allow_empty=False):
         "MomentumTransfer": ['Q', sc.units.dimensionless / sc.units.angstrom],
         "QSquared":
         ['Q^2', sc.units.dimensionless / (sc.units.angstrom * sc.units.angstrom)],
-        "Spectrum": ['spectrum', sc.units.dimensionless],
+        "Spectrum": ['spectrum', None],
         "Empty": ['empty', sc.units.dimensionless],
         "Counts": ['counts', sc.units.counts]
     }
@@ -620,7 +622,10 @@ def convert_EventWorkspace_to_data_array(ws,
         dims=['event'], shape=[n_event], dtype=sc.DType.datetime64,
         unit=sc.units.ns) if load_pulse_times else None
 
-    begins = sc.zeros(dims=[spec_dim, dim], shape=[nHist, 1], dtype=sc.DType.int64)
+    begins = sc.zeros(dims=[spec_dim, dim],
+                      shape=[nHist, 1],
+                      dtype=sc.DType.int64,
+                      unit=None)
     ends = begins.copy()
     if n_event > 0:  # Skip expensive loop if there are no events
         current = 0

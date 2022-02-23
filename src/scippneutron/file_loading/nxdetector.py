@@ -122,6 +122,12 @@ class NXdetector(NXobject):
     def detector_number(self, select) -> sc.Variable:
         """Read and return the 'detector_number' field, None if it does not exist."""
         if self._detector_number is None:
+            if self._is_events and select not in (Ellipsis,
+                                                  tuple()) and select != slice(None):
+                raise NexusStructureError(
+                    "Cannot load slice of NXdetector since it contains event data "
+                    "but no 'detector_number' field, i.e., the shape is unknown. "
+                    "Use ellipsis or an empty tuple to load the full detector.")
             return None
         index = to_plain_index(self.dims, select, ignore_missing=True)
         var = self._detector_number[index]
@@ -156,11 +162,6 @@ class NXdetector(NXobject):
             # bank. Slicing with the provided 'select' is done while binning.
             event_data = self._nxbase[self._event_select]
             if coords['detector_number'] is None:
-                if select not in (Ellipsis, tuple()) and select != slice(None):
-                    raise NexusStructureError(
-                        "Cannot load slice of NXdetector since it contains event data "
-                        "but no 'detector_number' field, i.e., the shape is unknown. "
-                        "Use ellipsis or an empty tuple to load the full detector.")
                 # Ideally we would prefer to use np.unique, but a quick experiment shows
                 # that this can easily be 100x slower, so it is not an option. In
                 # practice most files have contiguous event_id values within a bank
@@ -168,6 +169,7 @@ class NXdetector(NXobject):
                 id_min = event_data.bins.coords['event_id'].min()
                 id_max = event_data.bins.coords['event_id'].max()
                 coords['detector_number'] = sc.arange(dim='detector_number',
+                                                      unit=None,
                                                       start=id_min.value,
                                                       stop=id_max.value + 1,
                                                       dtype=id_min.dtype)
