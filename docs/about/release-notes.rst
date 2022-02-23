@@ -3,8 +3,8 @@
 Release Notes
 =============
 
-v0.5.0 (unreleased)
---------------------
+v0.5.0
+------
 
 Features
 ~~~~~~~~
@@ -13,19 +13,10 @@ Features
 * Added First draft of low-level utilities for loading NeXus files `#249 <https://github.com/scipp/scippneutron/pull/249>`_.
 * Multi-valued transforms are now loaded by :func:`scippneutron.load_nexus` `#267 <https://github.com/scipp/scippneutron/pull/267>`_.
 
-Breaking changes
-~~~~~~~~~~~~~~~~
-
 Bugfixes
 ~~~~~~~~
 
 * Fixed bug in ``load_nexus``, which interpreted ``NXtransformations`` as passive transformations `#275 <https://github.com/scipp/scippneutron/pull/275>`_.
-
-Deprecations
-~~~~~~~~~~~~
-
-Stability, Maintainability, and Testing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Contributors
 ~~~~~~~~~~~~
