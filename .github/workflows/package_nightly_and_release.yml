@@ -38,7 +38,7 @@ jobs:
           path: conda/package/*/scippneutron*.tar.bz2
 
       - uses: actions/upload-artifact@v2
-        if: ${{ contains(matrix.os, 'ubuntu') && matrix.python-version == '3.7' }}
+        if: ${{ contains(matrix.os, 'ubuntu') && matrix.python-version == '3.8' }}
         with:
           name: html
           path: docs_html

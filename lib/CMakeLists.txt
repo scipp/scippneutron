@@ -68,7 +68,7 @@ conan_cmake_install(
 )
 
 find_package(GTest CONFIG REQUIRED)
-find_package(Python 3.7 REQUIRED COMPONENTS Interpreter Development)
+find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development)
 find_package(pybind11 CONFIG REQUIRED)
 find_package(scipp 0.12 REQUIRED)
 

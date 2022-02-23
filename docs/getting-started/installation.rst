@@ -3,7 +3,7 @@
 Installation
 ============
 
-Scippneutron requires Python 3.7 or above.
+Scippneutron requires Python 3.8 or above.
 
 Conda
 -----
@@ -83,7 +83,7 @@ This is due to some dependencies being too old to work in the same environment a
       -n env_with_scipp_and_mantid \
       -c conda-forge \
       -c scipp \
-      python=3.7 \
+      python=3.8 \
       scippneutron \
       mantid-framework
 
