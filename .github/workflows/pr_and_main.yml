@@ -68,6 +68,7 @@ jobs:
         with:
           key: ${{ matrix.os }}
 
+      - run: python3 -m pip install packaging
       - run: python3 tools/metatoenv.py --dir=conda --env-file=buildenv.yml --channels=conda-forge,scipp,ess-dmsc,mantid --py=${{ matrix.python-version }}
 
       - name: Setup Mambaforge and dev env
