@@ -17,6 +17,6 @@ dependencies:
   - nodejs
   - python-confluent-kafka
   - pythreejs
-  - scipp::mantid-framework
+  - mantid::mantid
   - scipp::scippneutron
   - scipy
