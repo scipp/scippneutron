@@ -23,16 +23,8 @@ import numpy as np
 from ._positions import (load_position_of_unique_component,
                          load_positions_of_components)
 from ._sample import load_ub_matrices_of_components
-
-nx_event_data = "NXevent_data"
-nx_log = "NXlog"
-nx_entry = "NXentry"
-nx_instrument = "NXinstrument"
-nx_sample = "NXsample"
-nx_source = "NXsource"
-nx_detector = "NXdetector"
-nx_disk_chopper = "NXdisk_chopper"
-nx_monitor = "NXmonitor"
+from ._nx_classes import (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample,
+                          nx_source, nx_detector, nx_disk_chopper, nx_monitor)
 
 
 @contextmanager
@@ -82,17 +74,26 @@ def _load_chopper(chopper_groups: List[Group], nexus: LoadFromNexus) -> Dict:
 
 
 def _load_sample(sample_groups: List[Group], data: ScippData, nexus: LoadFromNexus):
-    load_positions_of_components(sample_groups,
-                                 data,
-                                 "sample",
-                                 nx_sample,
-                                 nexus,
-                                 default_position=np.array([0, 0, 0]))
-    load_ub_matrices_of_components(sample_groups, data, "sample", nx_sample, nexus)
+    load_positions_of_components(groups=sample_groups,
+                                 data=data,
+                                 name="sample",
+                                 nx_class=nx_sample,
+                                 nexus=nexus,
+                                 default_position=[0, 0, 0])
+    load_ub_matrices_of_components(groups=sample_groups,
+                                   data=data,
+                                   name="sample",
+                                   nx_class=nx_sample,
+                                   nexus=nexus)
 
 
 def _load_source(source_groups: List[Group], data: ScippData, nexus: LoadFromNexus):
-    load_position_of_unique_component(source_groups, data, "source", nx_source, nexus)
+    load_position_of_unique_component(groups=source_groups,
+                                      data=data,
+                                      name="source",
+                                      nx_class=nx_source,
+                                      nexus=nexus,
+                                      default_position=[0, 0, 0])
 
 
 def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:
