@@ -27,7 +27,7 @@ def load_position_of_unique_component(groups: List[Group],
                                       name: str,
                                       nx_class: str,
                                       nexus: LoadFromNexus,
-                                      default_position: ArrayLike,
+                                      default_position: Optional[ArrayLike] = None,
                                       name_prefix: Optional[str] = None):
     if len(groups) > 1:
         warn(f"More than one {nx_class} found in file, "
@@ -35,7 +35,11 @@ def load_position_of_unique_component(groups: List[Group],
         return
     try:
         position, transformations = _get_base_pos_and_transforms_of_component(
-            groups[0], name, nx_class, nexus, default_position)
+            group=groups[0],
+            name=name,
+            nx_class=nx_class,
+            nexus=nexus,
+            default_position=default_position)
     except PositionError:
         return
     transform_name, position_name, base_position_name = _make_prefixed_names(
@@ -54,12 +58,16 @@ def load_positions_of_components(groups: List[Group],
                                  name: str,
                                  nx_class: str,
                                  nexus: LoadFromNexus,
-                                 default_position: ArrayLike,
+                                 default_position: Optional[ArrayLike] = None,
                                  name_prefix: Optional[str] = None):
     for group in groups:
         try:
             position, transformations = _get_base_pos_and_transforms_of_component(
-                group, name, nx_class, nexus, default_position)
+                group=group,
+                name=name,
+                nx_class=nx_class,
+                nexus=nexus,
+                default_position=default_position)
         except PositionError:
             continue
 
@@ -101,6 +109,9 @@ def _get_base_pos_and_transforms_of_component(
             warn(f"'distance' dataset in {nx_class} is missing "
                  f"units attribute, skipping loading {name} position")
             raise PositionError
+    elif default_position is None:
+        warn(f"No position given for {name} in file")
+        raise PositionError
     else:
         base_position = np.asarray(default_position)
         units = sc.units.m

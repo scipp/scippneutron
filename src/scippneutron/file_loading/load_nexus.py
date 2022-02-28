@@ -91,8 +91,7 @@ def _load_source(source_groups: List[Group], data: ScippData, nexus: LoadFromNex
                                       data=data,
                                       name="source",
                                       nx_class=nx_source,
-                                      nexus=nexus,
-                                      default_position=[0, 0, 0])
+                                      nexus=nexus)
 
 
 def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:

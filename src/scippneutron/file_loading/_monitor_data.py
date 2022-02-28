@@ -76,8 +76,7 @@ def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict
                                          name=monitor_name,
                                          nx_class=nx_monitor,
                                          nexus=nexus,
-                                         name_prefix="",
-                                         default_position=[0, 0, 0])
+                                         name_prefix="")
             monitor_data[monitor_name] = sc.scalar(value=monitor)
         except KeyError:
             warnings.warn(f"No event-mode or histogram-mode monitor data found for "
