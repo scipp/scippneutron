@@ -2026,6 +2026,40 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
                  dtype=sc.DType.float64))
 
 
+def test_load_monitor_with_transformation(load_function: Callable):
+    builder = NexusBuilder()
+
+    transformation = Transformation(TransformationType.TRANSLATION,
+                                    vector=np.array([0, 0, 1]),
+                                    value=np.array([6.5]),
+                                    value_units='m',
+                                    offset=[1, 2, 3],
+                                    offset_unit='m')
+
+    # Monitor with data and transformation
+    builder.add_monitor(
+        Monitor(name="monitor1",
+                data=np.ones(shape=(2, 4, 6), dtype="float64"),
+                axes=[
+                    ("event_index", np.arange(3, 5, dtype="float64")),
+                    ("period_index", np.arange(3, 7, dtype="float64")),
+                    ("time_of_flight", np.arange(3, 9, dtype="float64")),
+                ],
+                depends_on=transformation))
+
+    loaded = load_function(builder)["monitor1"].data.values
+
+    assert sc.identical(loaded.coords["position"],
+                        sc.vector(value=[1., 2., 9.5], unit="m"))
+    assert sc.identical(loaded.attrs["base_position"],
+                        sc.vector(value=[0, 0, 0], unit="m"))
+    assert sc.identical(
+        loaded.attrs["transform"].value,
+        sc.spatial.affine_transform(value=[[1., 0., 0., 1.], [0., 1., 0., 2.],
+                                           [0., 0., 1., 9.5], [0., 0., 0., 1.]],
+                                    unit='m'))
+
+
 def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
     event_time_offsets = np.array([456, 743, 347, 345, 632])
     event_ids = np.array([1, 2, 3, 1, 3])
