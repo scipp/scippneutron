@@ -19,7 +19,6 @@ from timeit import default_timer as timer
 from typing import Union, List, Optional, Dict, Tuple, Set
 from contextlib import contextmanager
 from warnings import warn
-import numpy as np
 from ._positions import (load_position_of_unique_component,
                          load_positions_of_components)
 from ._sample import load_ub_matrices_of_components
