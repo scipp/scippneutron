@@ -70,6 +70,12 @@ def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict
                               f"ignored.")
             else:
                 monitor = nxmonitor[()]
+            # print("group.keys()", group.keys())
+            # # print(group.parent)
+            # for c in group['children']:
+            #     print(c['name'])
+            # # print(group['children'][1])
+            # print(group['children'][4])
             monitor_name = group.name.split("/")[-1]
             load_positions_of_components(groups=[group],
                                          data=monitor,

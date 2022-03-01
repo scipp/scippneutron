@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
+
 from .nexus_helpers import (
     NexusBuilder,
     EventData,
@@ -2027,6 +2030,7 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
 
 
 def test_load_monitor_with_transformation(load_function: Callable):
+    print(load_function)
     builder = NexusBuilder()
 
     transformation = Transformation(TransformationType.TRANSLATION,
@@ -2048,6 +2052,7 @@ def test_load_monitor_with_transformation(load_function: Callable):
                 depends_on=transformation))
 
     loaded = load_function(builder)["monitor1"].data.values
+    print(list(loaded.coords.keys()))
 
     assert sc.identical(loaded.coords["position"],
                         sc.vector(value=[1., 2., 9.5], unit="m"))

@@ -65,10 +65,13 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
         depends_on = nexus.load_scalar_string(group, "depends_on")
     except MissingDataset:
         depends_on = '.'
+    print('depends_on', depends_on)
     _get_transformations(depends_on, transformations, group, nexus.get_name(group),
                          nexus)
+    print('get_full_transformation_matrix 1')
 
     total_transform = sc.spatial.affine_transform(value=np.identity(4), unit=sc.units.m)
+    print('get_full_transformation_matrix 2')
 
     for transform in transformations:
         if isinstance(total_transform, sc.DataArray) and isinstance(
@@ -85,11 +88,13 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
                 transform, xnew) * _interpolate_transform(total_transform, xnew)
         else:
             total_transform = transform * total_transform
+    print('get_full_transformation_matrix 3')
     if isinstance(total_transform, sc.DataArray):
         time_dependent = [t for t in transformations if isinstance(t, sc.DataArray)]
         times = [da.coords['time'][0] for da in time_dependent]
         latest_log_start = sc.reduce(times).max()
         return total_transform['time', latest_log_start:].copy()
+    print('get_full_transformation_matrix 4')
     return total_transform
 
 
@@ -110,6 +115,9 @@ def _get_transformations(transform_path: str, transformations: List[np.ndarray],
 
     if transform_path != '.':
         try:
+            print(group.file)
+            print("##################")
+            print(transform_path)
             transform = nexus.get_object_by_path(group.file, transform_path)
         except MissingDataset:
             raise TransformationError(

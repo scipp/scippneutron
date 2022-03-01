@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
+
 from dataclasses import dataclass
 from typing import List, Union, Iterator, Optional, Dict, Any, Tuple
 import h5py
@@ -168,8 +171,8 @@ class Monitor:
     data: np.ndarray
     axes: List[Tuple[str, np.ndarray]]
     events: Optional[EventData] = None
-    distance: Optional[float] = None
-    distance_units: Optional[Union[str, bytes]] = None
+    # distance: Optional[float] = None
+    # distance_units: Optional[Union[str, bytes]] = None
     depends_on: Optional[Transformation] = None
 
 
@@ -647,14 +650,14 @@ class NexusBuilder:
                 depends_on = monitor.depends_on
             else:
                 depends_on = self._add_transformations_to_file(
-                    monitor.depends_on, monitor_group, f"{monitor.name}")
+                    monitor.depends_on, monitor_group, f"/{monitor.name}")
             self._writer.add_dataset(monitor_group, "depends_on", data=depends_on)
-        if monitor.distance is not None:
-            distance_ds = self._writer.add_dataset(monitor_group,
-                                                   "distance",
-                                                   data=monitor.distance)
-            if monitor.distance_units is not None:
-                self._writer.add_attribute(distance_ds, "units", monitor.distance_units)
+        # if monitor.distance is not None:
+        #     distance_ds = self._writer.add_dataset(monitor_group,
+        #                                            "distance",
+        #                                            data=monitor.distance)
+        #     if monitor.distance_units is not None:
+        #         self._writer.add_attribute(distance_ds, "units", monitor.distance_units)
 
     def _write_logs(self, parent_group: Union[h5py.Group, Dict]):
         for log in self._logs:

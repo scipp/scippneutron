@@ -195,6 +195,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     if groups[nx_log]:
         add_metadata(load_logs(groups[nx_log], nexus))
     if groups[nx_monitor]:
+        print("adding monitor data")
         add_metadata(load_monitor_data(groups[nx_monitor], nexus))
     if groups[nx_sample]:
         _load_sample(groups[nx_sample], loaded_data, nexus)
