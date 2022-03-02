@@ -104,6 +104,13 @@ class TestMantidConversion(unittest.TestCase):
         assert sc.identical(sc.sum(da.meta['shape']),
                             sc.vector(value=[0, 0, 0], unit=sc.units.m))
 
+    def test_advanced_geometry_detector_info(self):
+        da = scn.from_mantid(self.base_event_ws, advanced_geometry=True)
+        detector_info = da.coords['detector_info'].value
+        assert detector_info.dim == 'detector'
+        assert detector_info.coords['detector'].unit is None
+        assert detector_info.coords['spectrum'].unit is None
+
     def test_EventWorkspace_no_y_unit(self):
         import mantid.simpleapi as mantid
         tiny_event_ws = mantid.CreateSampleWorkspace(WorkspaceType='Event',
