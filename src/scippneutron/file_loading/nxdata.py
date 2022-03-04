@@ -87,7 +87,8 @@ class NXdata(NXobject):
 
         for name in items:
             # Newly written files should always contain indices attributes, but the
-            # standard recommends that readers should also make "best effort" guess.
+            # standard recommends that readers should also make "best effort" guess
+            # since legacy files do not set this attribute.
             indices = self.attrs.get(f'{name}_indices')
             if indices is None:
                 if self.attrs.get('axes', self._axes_default) is not None:
@@ -117,7 +118,7 @@ class NXdata(NXobject):
                     if len(shape) != 0:
                         raise NexusStructureError("Could not determine axis indices")
             else:
-                dims = [np.array(da.dims)[indices]]
+                dims = np.array(da.dims)[np.array(indices).flatten()]
             index = to_plain_index(dims, select, ignore_missing=True)
             da.coords[name] = self._loader.load_dataset(self._group,
                                                         name,
