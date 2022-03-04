@@ -116,7 +116,8 @@ class NXdata(NXobject):
                             dims += [dim]
                             shape.pop(0)
                     if len(shape) != 0:
-                        raise NexusStructureError("Could not determine axis indices")
+                        raise NexusStructureError(
+                            "Could not determine axis indices for {self[name].name}")
             else:
                 dims = np.array(da.dims)[np.array(indices).flatten()]
             index = to_plain_index(dims, select, ignore_missing=True)
