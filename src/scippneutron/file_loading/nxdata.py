@@ -68,6 +68,15 @@ class NXdata(NXobject):
     def _signal(self) -> Dataset:
         return self[self._signal_name]
 
+    def _get_axes(self):
+        """Return labels of named axes."""
+        if (axes := self.attrs.get('axes', self._axes_default)) is not None:
+            # Unlike self.dims we *drop* entries that are '.'
+            return [a for a in axes if a != '.']
+        elif 'axes' in self._signal.attrs:
+            return self._signal.attrs['axes'].split(',')
+        return []
+
     def _guess_dims(self, da: sc.DataArray, name: str):
         """Guess dims of non-signal dataset based on shape.
 
@@ -112,14 +121,7 @@ class NXdata(NXobject):
             # since legacy files do not set this attribute.
             indices = self.attrs.get(f'{name}_indices')
             if indices is None:
-                if (axes := self.attrs.get('axes', self._axes_default)) is not None:
-                    # Unlike self.dims we *drop* entries that are '.'
-                    axes = [a for a in axes if a != '.']
-                elif 'axes' in self._signal.attrs:
-                    axes = self._signal.attrs['axes'].split(',')
-                else:
-                    axes = None
-                if name in axes:
+                if name in self._get_axes():
                     # If there are named axes then items of same name are "dimension
                     # coordinates", i.e., have a dim matching their name.
                     dims = [name]
