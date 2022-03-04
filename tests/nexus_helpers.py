@@ -667,7 +667,7 @@ class NexusBuilder:
         # Note: We are deliberately NOT adding AXISNAME_indices attributes for the
         # coords, since these were added late to the Nexus standard and therefore we
         # also need to support loading without the attributes. The attribute should be
-        # set manualy by the user if desired.
+        # set manually by the user if desired.
         for name, coord in da.coords.items():
             ds = self._writer.add_dataset(group, name, coord.values)
             self._writer.add_attribute(ds, "units", str(coord.unit))
