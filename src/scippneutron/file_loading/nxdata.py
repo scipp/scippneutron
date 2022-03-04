@@ -82,6 +82,7 @@ class NXdata(NXobject):
         da = sc.DataArray(data=signal)
 
         skip = [self._signal_name, self._errors_name]
+        skip += list(self.attrs.get('auxiliary_signals', []))
         items = [k for k in self.keys() if isinstance(self[k], Field)]
         items = [k for k in items if k not in skip]
 

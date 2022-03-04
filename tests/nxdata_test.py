@@ -119,3 +119,19 @@ def test_transpose_indices_attribute_for_coord(nexus_group: Tuple[Callable,
         data = nexus.NXroot(f, loader)['entry/data1']
         loaded = data[...]
         assert sc.identical(loaded, da)
+
+
+def test_auxiliary_signal_is_not_loaded_as_coord(nexus_group: Tuple[Callable,
+                                                                    LoadFromNexus]):
+    resource, loader = nexus_group
+    builder = NexusBuilder()
+    da = sc.DataArray(
+        sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
+    da.coords['xx'] = da.data['xx', 0]
+    # We flag 'xx' as auxiliary_signal. It should this not be loaded as a coord.
+    builder.add_data(Data(name='data1', data=da, attrs={'auxiliary_signals': ['xx']}))
+    with resource(builder)() as f:
+        data = nexus.NXroot(f, loader)['entry/data1']
+        loaded = data[...]
+        del da.coords['xx']
+        assert sc.identical(loaded, da)
