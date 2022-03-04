@@ -92,8 +92,7 @@ class NXdata(NXobject):
             # since legacy files do not set this attribute.
             indices = self.attrs.get(f'{name}_indices')
             if indices is None:
-                if self.attrs.get('axes', self._axes_default) is not None:
-                    axes = self.attrs.get('axes', self._axes_default)
+                if (axes := self.attrs.get('axes', self._axes_default)) is not None:
                     # Unlike self.dims we *drop* entries that are '.'
                     axes = [a for a in axes if a != '.']
                 elif 'axes' in self._signal.attrs:
