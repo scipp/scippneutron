@@ -96,7 +96,10 @@ class NXdetector(NXobject):
         # NXdata uses the 'signal' attribute to define the field name of the signal.
         # NXdetector uses a "hard-coded" signal name 'data', without specifying the
         # attribute in the file, so we pass this explicitly to NXdata.
-        return NXdata(self._group, self._loader, signal='data')
+        return NXdata(self._group,
+                      self._loader,
+                      signal='data',
+                      skip=['detector_number'])
 
     @property
     def events(self) -> Union[None, NXevent_data]:

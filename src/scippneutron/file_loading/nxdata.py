@@ -14,8 +14,9 @@ class NXdata(NXobject):
     def __init__(self,
                  group: Group,
                  loader: LoadFromNexus = LoadFromHdf5(),
-                 signal=None,
-                 axes=None):
+                 signal: str = None,
+                 axes: List[str] = None,
+                 skip: List[str] = None):
         """
         :param signal: Default signal name used, if no `signal` attribute found in file.
         :param axes: Default axes used, if no `axes` attribute found in file.
@@ -23,6 +24,7 @@ class NXdata(NXobject):
         super().__init__(group, loader)
         self._signal_name_default = signal
         self._axes_default = axes
+        self._skip = skip if skip is not None else []
 
     @property
     def shape(self) -> List[int]:
@@ -81,7 +83,8 @@ class NXdata(NXobject):
             signal.variances = sc.pow(stddevs, 2).values
         da = sc.DataArray(data=signal)
 
-        skip = [self._signal_name, self._errors_name]
+        skip = self._skip
+        skip += [self._signal_name, self._errors_name]
         skip += list(self.attrs.get('auxiliary_signals', []))
         items = [k for k in self.keys() if isinstance(self[k], Field)]
         items = [k for k in items if k not in skip]
@@ -104,18 +107,16 @@ class NXdata(NXobject):
                     # coordinates", i.e., have a dim matching their name.
                     dims = [name]
                 else:
-                    # Guess based on shape. Here we assume that axis order is same as
-                    # for data (but axes may be missing). Favors first dim of matching
-                    # length. We do not check for potential bin-edge coord in this case.
+                    # Guess based on shape. We do not check for potential bin-edge
+                    # coord in this case.
+                    lut = {}
+                    for d, s in da.sizes.items():
+                        if da.shape.count(s) == 1:
+                            lut[s] = d
                     shape = list(self[name].shape)
-                    dims = []
-                    for dim, l in da.sizes.items():
-                        if len(shape) == 0:
-                            break
-                        if shape[0] == l:
-                            dims += [dim]
-                            shape.pop(0)
-                    if len(shape) != 0:
+                    try:
+                        dims = [lut[s] for s in shape]
+                    except KeyError:
                         raise NexusStructureError(
                             "Could not determine axis indices for {self[name].name}")
             else:

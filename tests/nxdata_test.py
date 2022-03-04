@@ -82,8 +82,21 @@ def test_guessed_dim_for_2d_coord_not_matching_axis_name(
         assert sc.identical(loaded, da)
 
 
-def test_raises_if_dim_guessing_not_possible_due_to_transposition(
+def test_raises_if_dim_guessing_finds_ambiguous_shape(
         nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    builder = NexusBuilder()
+    da = sc.DataArray(sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2], [4, 5]]))
+    da.coords['yy2'] = da.data['xx', 0]
+    builder.add_data(Data(name='data1', data=da))
+    with resource(builder)() as f:
+        data = nexus.NXroot(f, loader)['entry/data1']
+        with pytest.raises(nexus.NexusStructureError):
+            data[...]
+
+
+def test_guesses_transposed_dims_for_2d_coord(nexus_group: Tuple[Callable,
+                                                                 LoadFromNexus]):
     resource, loader = nexus_group
     builder = NexusBuilder()
     da = sc.DataArray(
@@ -92,8 +105,8 @@ def test_raises_if_dim_guessing_not_possible_due_to_transposition(
     builder.add_data(Data(name='data1', data=da))
     with resource(builder)() as f:
         data = nexus.NXroot(f, loader)['entry/data1']
-        with pytest.raises(nexus.NexusStructureError):
-            data[...]
+        loaded = data[...]
+        assert sc.identical(loaded, da)
 
 
 def test_integer_indices_attribute_for_coord(nexus_group: Tuple[Callable,
