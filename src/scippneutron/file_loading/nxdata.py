@@ -119,16 +119,14 @@ class NXdata(NXobject):
             # Newly written files should always contain indices attributes, but the
             # standard recommends that readers should also make "best effort" guess
             # since legacy files do not set this attribute.
-            indices = self.attrs.get(f'{name}_indices')
-            if indices is None:
-                if name in self._get_axes():
-                    # If there are named axes then items of same name are "dimension
-                    # coordinates", i.e., have a dim matching their name.
-                    dims = [name]
-                else:
-                    dims = self._guess_dims(da, name)
-            else:
+            if (indices := self.attrs.get(f'{name}_indices')) is not None:
                 dims = np.array(da.dims)[np.array(indices).flatten()]
+            elif name in self._get_axes():
+                # If there are named axes then items of same name are "dimension
+                # coordinates", i.e., have a dim matching their name.
+                dims = [name]
+            else:
+                dims = self._guess_dims(da, name)
             index = to_plain_index(dims, select, ignore_missing=True)
             da.coords[name] = self._loader.load_dataset(self._group,
                                                         name,
