@@ -45,6 +45,19 @@ def test_guessed_dim_for_coord_not_matching_axis_name(
     builder = NexusBuilder()
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
+    da.coords['xx2'] = da.data['yy', 1]
+    builder.add_data(Data(name='data1', data=da))
+    with resource(builder)() as f:
+        data = nexus.NXroot(f, loader)['entry/data1']
+        loaded = data[...]
+        assert sc.identical(loaded, da)
+
+
+def test_multiple_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    builder = NexusBuilder()
+    da = sc.DataArray(
+        sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
     da.coords['xx'] = da.data['yy', 0]
     da.coords['xx2'] = da.data['yy', 1]
     da.coords['yy'] = da.data['xx', 0]
