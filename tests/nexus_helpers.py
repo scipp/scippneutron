@@ -664,9 +664,16 @@ class NexusBuilder:
         self._writer.add_attribute(group, "signal", "signal1")
         signal = self._writer.add_dataset(group, "signal1", da.values)
         self._writer.add_attribute(signal, "units", str(da.unit))
+        # Note: We are deliberately NOT adding AXISNAME_indices attributes for the
+        # coords, since these were added late to the Nexus standard and therefore we
+        # also need to support loading without the attributes. The attribute should be
+        # set manualy by the user if desired.
         for name, coord in da.coords.items():
             ds = self._writer.add_dataset(group, name, coord.values)
             self._writer.add_attribute(ds, "units", str(coord.unit))
+        if data.attrs is not None:
+            for k, v in data.attrs.items():
+                self._writer.add_attribute(group, k, v)
 
     def _write_logs(self, parent_group: Union[h5py.Group, Dict]):
         for log in self._logs:
