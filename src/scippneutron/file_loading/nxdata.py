@@ -68,6 +68,23 @@ class NXdata(NXobject):
     def _signal(self) -> Dataset:
         return self[self._signal_name]
 
+    def _guess_dims(self, da: sc.DataArray, name: str):
+        """Guess dims of non-signal dataset based on shape.
+
+        Does not check for potential bin-edge coord.
+        """
+        lut = {}
+        for d, s in da.sizes.items():
+            if da.shape.count(s) == 1:
+                lut[s] = d
+        shape = list(self[name].shape)
+        try:
+            dims = [lut[s] for s in shape]
+        except KeyError:
+            raise NexusStructureError(
+                "Could not determine axis indices for {self[name].name}")
+        return dims
+
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
         dims = self.dims
         index = to_plain_index(dims, select)
@@ -107,18 +124,7 @@ class NXdata(NXobject):
                     # coordinates", i.e., have a dim matching their name.
                     dims = [name]
                 else:
-                    # Guess based on shape. We do not check for potential bin-edge
-                    # coord in this case.
-                    lut = {}
-                    for d, s in da.sizes.items():
-                        if da.shape.count(s) == 1:
-                            lut[s] = d
-                    shape = list(self[name].shape)
-                    try:
-                        dims = [lut[s] for s in shape]
-                    except KeyError:
-                        raise NexusStructureError(
-                            "Could not determine axis indices for {self[name].name}")
+                    dims = self._guess_dims(da, name)
             else:
                 dims = np.array(da.dims)[np.array(indices).flatten()]
             index = to_plain_index(dims, select, ignore_missing=True)
