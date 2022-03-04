@@ -3,8 +3,9 @@
 # @author Simon Heybrock
 from typing import List, Union
 import scipp as sc
+import numpy as np
 from ._common import to_plain_index, Dataset, Group
-from .nxobject import NXobject, ScippIndex
+from .nxobject import Field, NXobject, ScippIndex, NexusStructureError
 from ._nexus import LoadFromNexus
 from ._hdf5_nexus import LoadFromHdf5
 
@@ -79,16 +80,48 @@ class NXdata(NXobject):
                                                 index=index)
             signal.variances = sc.pow(stddevs, 2).values
         da = sc.DataArray(data=signal)
-        if self.attrs.get('axes', self._axes_default) is not None:
-            axes = self.attrs.get('axes', self._axes_default)
-            # Unlike self.dims we *drop* entries that are '.'
-            coords = [a for a in axes if a != '.']
-        else:
-            coords = self._signal.attrs['axes'].split(',')
-        for dim in coords:
-            index = to_plain_index([dim], select, ignore_missing=True)
-            da.coords[dim] = self._loader.load_dataset(self._group,
-                                                       dim,
-                                                       dimensions=[dim],
-                                                       index=index)
+
+        skip = [self._signal_name, self._errors_name]
+        items = [k for k in self.keys() if isinstance(self[k], Field)]
+        items = [k for k in items if k not in skip]
+
+        for name in items:
+            # Newly written files should always contain indices attributes, but the
+            # standard recommends that readers should also make "best effort" guess.
+            indices = self.attrs.get(f'{name}_indices')
+            if indices is None:
+                if self.attrs.get('axes', self._axes_default) is not None:
+                    axes = self.attrs.get('axes', self._axes_default)
+                    # Unlike self.dims we *drop* entries that are '.'
+                    axes = [a for a in axes if a != '.']
+                elif 'axes' in self._signal.attrs:
+                    axes = self._signal.attrs['axes'].split(',')
+                else:
+                    axes = None
+                if name in axes:
+                    # If there are named axes then items of same name are "dimension
+                    # coordinates", i.e., have a dim matching their name.
+                    dims = [name]
+                else:
+                    # Guess based on shape. Here we assume that axis order is same as
+                    # for data (but axes may be missing). Favors first dim of matching
+                    # length. We do not check for potential bin-edge coord in this case.
+                    shape = list(self[name].shape)
+                    dims = []
+                    for dim, l in da.sizes.items():
+                        if len(shape) == 0:
+                            break
+                        if shape[0] == l:
+                            dims += [dim]
+                            shape.pop(0)
+                    if len(shape) != 0:
+                        raise NexusStructureError("Could not determine axis indices")
+            else:
+                dims = np.array(da.dims)[indices]
+            index = to_plain_index(dims, select, ignore_missing=True)
+            da.coords[name] = self._loader.load_dataset(self._group,
+                                                        name,
+                                                        dimensions=dims,
+                                                        index=index)
+
         return da
