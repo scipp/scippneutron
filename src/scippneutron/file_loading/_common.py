@@ -162,7 +162,7 @@ def _to_canonical_select(dims: List[str], select: ScippIndex) -> ScippIndex:
     return select
 
 
-def to_plain_index(dims: List[str], select: ScippIndex, ignore_missing: bool = False):
+def to_plain_index(dims: List[str], select: ScippIndex):
     """
     Given a valid "scipp" index 'select', return an equivalent plain numpy-style index.
     """
@@ -171,7 +171,7 @@ def to_plain_index(dims: List[str], select: ScippIndex, ignore_missing: bool = F
         raise ValueError("Cannot process index {select}.")
     index = [slice(None)] * len(dims)
     for key, sel in select.items():
-        if not ignore_missing and key not in dims:
+        if key not in dims:
             raise ValueError(
                 f"'{key}' used for indexing not found in dataset dims {dims}.")
         index[dims.index(key)] = sel
