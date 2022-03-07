@@ -136,14 +136,29 @@ ScippIndex = Union[type(Ellipsis), int, slice, Tuple[str, Union[int, slice]],
                    Dict[str, Union[int, slice]]]
 
 
-def _to_canonical_select(select: ScippIndex) -> ScippIndex:
+def _to_canonical_select(dims: List[str], select: ScippIndex) -> ScippIndex:
+    """Return selection as dict with explicit dim labels"""
+    def check_1d():
+        if len(dims) != 1:
+            raise ValueError(f"Dataset has multiple dimensions {dims}, "
+                             "specify the dimension to index.")
+
     if select is Ellipsis:
-        return tuple()
+        return {}
     if isinstance(select, tuple) and len(select) == 0:
-        return tuple()
+        return {}
     if isinstance(select, tuple) and isinstance(select[0], str):
         key, sel = select
-        select = {key: sel}
+        return {key: sel}
+    if isinstance(select, tuple):
+        check_1d()
+        if len(select) != 1:
+            raise ValueError(f"Dataset has single dimension {dims}, "
+                             "but multiple indices {select} were specified.")
+        return {dims[0]: select[0]}
+    elif isinstance(select, int) or isinstance(select, slice):
+        check_1d()
+        return {dims[0]: select}
     return select
 
 
@@ -151,35 +166,18 @@ def to_plain_index(dims: List[str], select: ScippIndex, ignore_missing: bool = F
     """
     Given a valid "scipp" index 'select', return an equivalent plain numpy-style index.
     """
-    def check_1d():
-        if len(dims) != 1:
-            raise ValueError(f"Dataset has multiple dimensions {dims}, "
-                             "specify the dimension to index.")
-
-    select = _to_canonical_select(select)
-
-    if isinstance(select, tuple) and len(select) == 0:
-        return tuple()
-    if isinstance(select, tuple):
-        check_1d()
-        if len(select) != 1:
-            raise ValueError(f"Dataset has single dimension {dims}, "
-                             "but multiple indices {select} were specified.")
-        return select[0]
-    elif isinstance(select, int) or isinstance(select, slice):
-        check_1d()
-        return select
-    elif isinstance(select, dict):
-        index = [slice(None)] * len(dims)
-        for key, sel in select.items():
-            if not ignore_missing and key not in dims:
-                raise ValueError(
-                    f"'{key}' used for indexing not found in dataset dims {dims}.")
-            index[dims.index(key)] = sel
-        if len(index) == 1:
-            return index[0]
-        return tuple(index)
-    raise ValueError("Cannot process index {select}.")
+    select = _to_canonical_select(dims, select)
+    if not isinstance(select, dict):
+        raise ValueError("Cannot process index {select}.")
+    index = [slice(None)] * len(dims)
+    for key, sel in select.items():
+        if not ignore_missing and key not in dims:
+            raise ValueError(
+                f"'{key}' used for indexing not found in dataset dims {dims}.")
+        index[dims.index(key)] = sel
+    if len(index) == 1:
+        return index[0]
+    return tuple(index)
 
 
 def to_child_select(dims: List[str], child_dims: List[str],
@@ -192,11 +190,7 @@ def to_child_select(dims: List[str], child_dims: List[str],
     """
     if set(dims) == set(child_dims):
         return select
-    select = _to_canonical_select(select)
-    if not isinstance(select, dict):
-        if len(dims) == 1 and len(child_dims) == 0:
-            return tuple()
-        return select
+    select = _to_canonical_select(dims, select)
     for d in dims:
         if d not in child_dims and d in select:
             del select[d]

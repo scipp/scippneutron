@@ -125,7 +125,7 @@ class NXobject:
     def _get_child(
             self,
             name: NXobjectIndex,
-            use_field_dims: bool = True) -> Union['__class__', Field, sc.DataArray]:
+            use_field_dims: bool = False) -> Union['__class__', Field, sc.DataArray]:
         """Get item, with flag to control whether fields diems should be inferred"""
         if name is None:
             raise KeyError("None is not a valid index")

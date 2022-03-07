@@ -53,7 +53,7 @@ class NXdata(NXobject):
             return name
         # Legacy NXdata defines signal not as group attribute, but attr on dataset
         for name in self.keys():
-            if self._get_child(name, use_field_dims=False).attrs.get('signal') == 1:
+            if self._get_child(name).attrs.get('signal') == 1:
                 return name
         return None
 
@@ -66,7 +66,7 @@ class NXdata(NXobject):
 
     @property
     def _signal(self) -> Dataset:
-        return self._get_child(self._signal_name, use_field_dims=False)
+        return self._get_child(self._signal_name)
 
     def _get_axes(self):
         """Return labels of named axes."""
@@ -86,7 +86,9 @@ class NXdata(NXobject):
         for d, s in zip(self.dims, self.shape):
             if self.shape.count(s) == 1:
                 lut[s] = d
-        shape = self._get_child(name, use_field_dims=False).shape
+        shape = self._get_child(name).shape
+        if self.shape == shape:
+            return self.dims
         try:
             dims = [lut[s] for s in shape]
         except KeyError:
