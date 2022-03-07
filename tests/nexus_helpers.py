@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 
+import scipp as sc
 from dataclasses import dataclass
 from typing import List, Union, Iterator, Optional, Dict, Any, Tuple
 import h5py
@@ -90,6 +91,13 @@ class Detector:
     offsets_unit: Optional[Union[str, bytes]] = None
     depends_on: Optional[Transformation] = None
     data: Optional[np.ndarray] = None
+
+
+@dataclass
+class Data:
+    name: str
+    data: sc.DataArray
+    attrs: dict = None
 
 
 @dataclass
@@ -371,6 +379,7 @@ class NexusBuilder:
         self._datasets: List[DatasetAtPath] = []
         self._streams = []
         self._monitors = []
+        self._datas = []
 
     def add_dataset_at_path(self, path: str, data: np.ndarray, attributes: Dict):
         self._datasets.append(DatasetAtPath(path, data, attributes))
@@ -385,6 +394,9 @@ class NexusBuilder:
 
     def add_detector(self, detector: Detector):
         self._detectors.append(detector)
+
+    def add_data(self, data: Data):
+        self._datas.append(data)
 
     def add_event_data(self, event_data: EventData):
         self._event_data.append(event_data)
@@ -503,6 +515,7 @@ class NexusBuilder:
         self._write_streams(nexus_file)
         self._write_links(nexus_file)
         self._write_monitors(nexus_file)
+        self._write_datas(parent_group)
 
     def create_file_on_disk(self, filename: str):
         """
@@ -658,6 +671,28 @@ class NexusBuilder:
         #                                            data=monitor.distance)
         #     if monitor.distance_units is not None:
         #         self._writer.add_attribute(distance_ds, "units", monitor.distance_units)
+
+    def _write_datas(self, parent_group: Union[h5py.Group, Dict]):
+        for data in self._datas:
+            self._add_data_group_to_file(data, parent_group)
+
+    def _add_data_group_to_file(self, data: Data, parent_group: h5py.Group):
+        da = data.data
+        group = self._create_nx_class(data.name, "NXdata", parent_group)
+        self._writer.add_attribute(group, "axes", da.dims)
+        self._writer.add_attribute(group, "signal", "signal1")
+        signal = self._writer.add_dataset(group, "signal1", da.values)
+        self._writer.add_attribute(signal, "units", str(da.unit))
+        # Note: We are deliberately NOT adding AXISNAME_indices attributes for the
+        # coords, since these were added late to the Nexus standard and therefore we
+        # also need to support loading without the attributes. The attribute should be
+        # set manually by the user if desired.
+        for name, coord in da.coords.items():
+            ds = self._writer.add_dataset(group, name, coord.values)
+            self._writer.add_attribute(ds, "units", str(coord.unit))
+        if data.attrs is not None:
+            for k, v in data.attrs.items():
+                self._writer.add_attribute(group, k, v)
 
     def _write_logs(self, parent_group: Union[h5py.Group, Dict]):
         for log in self._logs:
