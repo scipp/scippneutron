@@ -10,6 +10,7 @@ from typing import List, Union, NoReturn, Any, Dict, Tuple
 from ._nexus import LoadFromNexus
 from ._hdf5_nexus import LoadFromHdf5
 from ._common import Group, Dataset, MissingAttribute, ScippIndex
+from ._common import to_plain_index
 
 NXobjectIndex = Union[str, ScippIndex]
 
@@ -70,7 +71,8 @@ class Field:
         self._loader = loader
         self._dims = [f'dim_{i}' for i in range(self.ndim)] if dims is None else dims
 
-    def __getitem__(self, index) -> np.ndarray:
+    def __getitem__(self, select) -> np.ndarray:
+        index = to_plain_index(self.dims, select)
         return self._loader.load_dataset_direct(self._dataset,
                                                 dimensions=self.dims,
                                                 index=index)

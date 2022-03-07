@@ -4,7 +4,7 @@
 from typing import List, Union
 import scipp as sc
 import numpy as np
-from ._common import to_plain_index, Dataset, Group
+from ._common import to_child_select, Dataset, Group
 from .nxobject import Field, NXobject, ScippIndex, NexusStructureError
 from ._nexus import LoadFromNexus
 from ._hdf5_nexus import LoadFromHdf5
@@ -114,11 +114,9 @@ class NXdata(NXobject):
             return None
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
-        dims = self.dims
-        index = to_plain_index(dims, select)
-        signal = self[self._signal_name][index]
+        signal = self[self._signal_name][select]
         if self._errors_name in self:
-            stddevs = self[self._errors_name][index]
+            stddevs = self[self._errors_name][select]
             signal.variances = sc.pow(stddevs, 2).values
         da = sc.DataArray(data=signal)
 
@@ -129,7 +127,6 @@ class NXdata(NXobject):
         for name, field in self.items():
             if (not isinstance(field, Field)) or (name in skip):
                 continue
-            index = to_plain_index(field.dims, select, ignore_missing=True)
-            da.coords[name] = self[name][index]
+            da.coords[name] = self[name][to_child_select(self.dims, field.dims, select)]
 
         return da

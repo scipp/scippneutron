@@ -136,6 +136,17 @@ ScippIndex = Union[type(Ellipsis), int, slice, Tuple[str, Union[int, slice]],
                    Dict[str, Union[int, slice]]]
 
 
+def _to_canonical_select(select: ScippIndex) -> ScippIndex:
+    if select is Ellipsis:
+        return tuple()
+    if isinstance(select, tuple) and len(select) == 0:
+        return tuple()
+    if isinstance(select, tuple) and isinstance(select[0], str):
+        key, sel = select
+        select = {key: sel}
+    return select
+
+
 def to_plain_index(dims: List[str], select: ScippIndex, ignore_missing: bool = False):
     """
     Given a valid "scipp" index 'select', return an equivalent plain numpy-style index.
@@ -145,14 +156,10 @@ def to_plain_index(dims: List[str], select: ScippIndex, ignore_missing: bool = F
             raise ValueError(f"Dataset has multiple dimensions {dims}, "
                              "specify the dimension to index.")
 
-    if select is Ellipsis:
-        return tuple()
+    select = _to_canonical_select(select)
+
     if isinstance(select, tuple) and len(select) == 0:
         return tuple()
-    if isinstance(select, tuple) and isinstance(select[0], str):
-        key, sel = select
-        select = {key: sel}
-
     if isinstance(select, tuple):
         check_1d()
         if len(select) != 1:
@@ -173,6 +180,27 @@ def to_plain_index(dims: List[str], select: ScippIndex, ignore_missing: bool = F
             return index[0]
         return tuple(index)
     raise ValueError("Cannot process index {select}.")
+
+
+def to_child_select(dims: List[str], child_dims: List[str],
+                    select: ScippIndex) -> ScippIndex:
+    """
+    Given a valid "scipp" index 'select' for a Nexus class, return a selection for a
+    child field of the class, which may have fewer dimensions.
+
+    This removes any selections that apply to the parent but not the child.
+    """
+    if set(dims) == set(child_dims):
+        return select
+    select = _to_canonical_select(select)
+    if not isinstance(select, dict):
+        if len(dims) == 1 and len(child_dims) == 0:
+            return tuple()
+        return select
+    for d in dims:
+        if d not in child_dims and d in select:
+            del select[d]
+    return select
 
 
 def add_position_and_transforms_to_data(data: Union[sc.DataArray,
