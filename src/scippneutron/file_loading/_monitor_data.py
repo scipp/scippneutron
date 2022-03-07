@@ -38,6 +38,17 @@ class NXmonitor(NXobject):
         # attribute in the file, so we pass this explicitly to NXdata.
         return NXdata(self._group, self._loader, signal='data')
 
+    def _get_field_dims(self, name: str) -> Union[None, List[str]]:
+        if self._is_events:
+            if name in [
+                    'event_time_zero', 'event_index', 'event_time_offset', 'event_id'
+            ]:
+                # Event field is direct child of this class
+                return self._nxbase._get_field_dims(name)
+            else:
+                return self.dims
+        return self._nxbase._get_field_dims(name)
+
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
         """
         Load monitor data. Event-mode data takes precedence over histogram-mode data.
