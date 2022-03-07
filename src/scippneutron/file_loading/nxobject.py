@@ -62,14 +62,17 @@ class Field:
 
     In HDF5 fields are represented as dataset.
     """
-    def __init__(self, dataset: Dataset, loader: LoadFromNexus = LoadFromHdf5()):
+    def __init__(self,
+                 dataset: Dataset,
+                 loader: LoadFromNexus = LoadFromHdf5(),
+                 dims=None):
         self._dataset = dataset
         self._loader = loader
+        self._dims = [f'dim_{i}' for i in range(self.ndim)] if dims is None else dims
 
     def __getitem__(self, index) -> np.ndarray:
-        dims = [f'dim_{i}' for i in range(self.ndim)]
         return self._loader.load_dataset_direct(self._dataset,
-                                                dimensions=dims,
+                                                dimensions=self.dims,
                                                 index=index)
 
     def __repr__(self) -> str:
@@ -94,6 +97,10 @@ class Field:
     @property
     def shape(self) -> List[int]:
         return self._loader.get_shape(self._dataset)
+
+    @property
+    def dims(self) -> List[str]:
+        return self._dims
 
     @property
     def unit(self) -> Union[sc.Unit, None]:
@@ -124,11 +131,15 @@ class NXobject:
             if self._loader.is_group(item):
                 return self._make(item)
             else:
-                return Field(item, self._loader)
+                return Field(item, self._loader, dims=self._get_field_dims(name))
         return self._getitem(name)
 
     def _getitem(self, index: ScippIndex) -> NoReturn:
         raise NotImplementedError(f'Loading {self.nx_class} is not supported.')
+
+    def _get_field_dims(self, name: str) -> Union[None, List[str]]:
+        """Subclasses should reimplement this to provide dimension labels for fields."""
+        return None
 
     def __contains__(self, name: str) -> bool:
         return self._loader.dataset_in_group(self._group, name)[0]
@@ -151,10 +162,7 @@ class NXobject:
         return self._loader.keys(self._group)
 
     def values(self) -> List[Union[Field, '__class__']]:
-        return [
-            self._make(v) if self._loader.is_group(v) else Field(v, self._loader)
-            for v in self._loader.values(self._group)
-        ]
+        return [self[name] for name in self.keys()]
 
     def items(self) -> List[Tuple[str, Union[Field, '__class__']]]:
         return list(zip(self.keys(), self.values()))
