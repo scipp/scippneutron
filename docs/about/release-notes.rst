@@ -3,6 +3,15 @@
 Release Notes
 =============
 
+v0.5.1 (March 2022)
+-------------------
+
+Features
+~~~~~~~~
+
+* :func:`scippneutron.load_nexus` now loads all axis indices of ``NXData`` groups `293 <https://github.com/scipp/scippneutron/pull/293>`_.
+
+
 v0.5.0 (February 2022)
 ----------------------
 
