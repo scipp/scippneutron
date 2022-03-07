@@ -97,17 +97,11 @@ class NXdata(NXobject):
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
         dims = self.dims
         index = to_plain_index(dims, select)
-        signal = self._loader.load_dataset(self._group,
-                                           self._signal_name,
-                                           dimensions=dims,
-                                           index=index)
+        signal = self[self._signal_name][index]
         if self._errors_name in self:
-            stddevs = self._loader.load_dataset(self._group,
-                                                self._errors_name,
-                                                dimensions=dims,
-                                                index=index)
+            stddevs = self[self._errors_name][index]
             signal.variances = sc.pow(stddevs, 2).values
-        da = sc.DataArray(data=signal)
+        da = sc.DataArray(data=signal.rename_dims(dict(zip(signal.dims, dims))))
 
         skip = self._skip
         skip += [self._signal_name, self._errors_name]
@@ -128,9 +122,7 @@ class NXdata(NXobject):
             else:
                 dims = self._guess_dims(da, name)
             index = to_plain_index(dims, select, ignore_missing=True)
-            da.coords[name] = self._loader.load_dataset(self._group,
-                                                        name,
-                                                        dimensions=dims,
-                                                        index=index)
+            coord = self[name][index]
+            da.coords[name] = coord.rename_dims(dict(zip(coord.dims, dims)))
 
         return da
