@@ -86,12 +86,13 @@ def test_raises_if_dim_guessing_finds_ambiguous_shape(
         nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     builder = NexusBuilder()
-    da = sc.DataArray(sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2], [4, 5]]))
+    da = sc.DataArray(
+        sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
     da.coords['yy2'] = da.data['xx', 0]
     builder.add_data(Data(name='data1', data=da))
     with resource(builder)() as f:
         data = nexus.NXroot(f, loader)['entry/data1']
-        with pytest.raises(nexus.NexusStructureError):
+        with pytest.raises(sc.DimensionError):
             data[...]
 
 

@@ -120,8 +120,11 @@ class NXobject:
         nx_class = self._loader.get_string_attribute(group, 'NX_class')
         return _nx_class_registry().get(nx_class, NXobject)(group, self._loader)
 
-    def __getitem__(self,
-                    name: NXobjectIndex) -> Union['__class__', Field, sc.DataArray]:
+    def _get_child(
+            self,
+            name: NXobjectIndex,
+            use_field_dims: bool = True) -> Union['__class__', Field, sc.DataArray]:
+        """Get item, with flag to control whether fields diems should be inferred"""
         if name is None:
             raise KeyError("None is not a valid index")
         if isinstance(name, str):
@@ -131,8 +134,13 @@ class NXobject:
             if self._loader.is_group(item):
                 return self._make(item)
             else:
-                return Field(item, self._loader, dims=self._get_field_dims(name))
+                dims = self._get_field_dims(name) if use_field_dims else None
+                return Field(item, self._loader, dims=dims)
         return self._getitem(name)
+
+    def __getitem__(self,
+                    name: NXobjectIndex) -> Union['__class__', Field, sc.DataArray]:
+        return self._get_child(name, use_field_dims=True)
 
     def _getitem(self, index: ScippIndex) -> NoReturn:
         raise NotImplementedError(f'Loading {self.nx_class} is not supported.')

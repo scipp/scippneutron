@@ -53,7 +53,7 @@ class NXdata(NXobject):
             return name
         # Legacy NXdata defines signal not as group attribute, but attr on dataset
         for name in self.keys():
-            if self[name].attrs.get('signal') == 1:
+            if self._get_child(name, use_field_dims=False).attrs.get('signal') == 1:
                 return name
         return None
 
@@ -66,7 +66,7 @@ class NXdata(NXobject):
 
     @property
     def _signal(self) -> Dataset:
-        return self[self._signal_name]
+        return self._get_child(self._signal_name, use_field_dims=False)
 
     def _get_axes(self):
         """Return labels of named axes."""
@@ -77,22 +77,41 @@ class NXdata(NXobject):
             return self._signal.attrs['axes'].split(',')
         return []
 
-    def _guess_dims(self, da: sc.DataArray, name: str):
+    def _guess_dims(self, name: str):
         """Guess dims of non-signal dataset based on shape.
 
         Does not check for potential bin-edge coord.
         """
         lut = {}
-        for d, s in da.sizes.items():
-            if da.shape.count(s) == 1:
+        for d, s in zip(self.dims, self.shape):
+            if self.shape.count(s) == 1:
                 lut[s] = d
-        shape = list(self[name].shape)
+        shape = self._get_child(name, use_field_dims=False).shape
         try:
             dims = [lut[s] for s in shape]
         except KeyError:
             raise NexusStructureError(
                 "Could not determine axis indices for {self[name].name}")
         return dims
+
+    def _get_field_dims(self, name: str) -> Union[None, List[str]]:
+        # Newly written files should always contain indices attributes, but the
+        # standard recommends that readers should also make "best effort" guess
+        # since legacy files do not set this attribute.
+        if (indices := self.attrs.get(f'{name}_indices')) is not None:
+            return np.array(self.dims)[np.array(indices).flatten()]
+        signals = [self._signal_name, self._errors_name]
+        signals += list(self.attrs.get('auxiliary_signals', []))
+        if name in signals:
+            return self.dims
+        if name in self._get_axes():
+            # If there are named axes then items of same name are "dimension
+            # coordinates", i.e., have a dim matching their name.
+            return [name]
+        try:
+            return self._guess_dims(name)
+        except NexusStructureError:
+            return None
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
         dims = self.dims
@@ -101,28 +120,16 @@ class NXdata(NXobject):
         if self._errors_name in self:
             stddevs = self[self._errors_name][index]
             signal.variances = sc.pow(stddevs, 2).values
-        da = sc.DataArray(data=signal.rename_dims(dict(zip(signal.dims, dims))))
+        da = sc.DataArray(data=signal)
 
         skip = self._skip
         skip += [self._signal_name, self._errors_name]
         skip += list(self.attrs.get('auxiliary_signals', []))
-        items = [k for k in self.keys() if isinstance(self[k], Field)]
-        items = [k for k in items if k not in skip]
 
-        for name in items:
-            # Newly written files should always contain indices attributes, but the
-            # standard recommends that readers should also make "best effort" guess
-            # since legacy files do not set this attribute.
-            if (indices := self.attrs.get(f'{name}_indices')) is not None:
-                dims = np.array(da.dims)[np.array(indices).flatten()]
-            elif name in self._get_axes():
-                # If there are named axes then items of same name are "dimension
-                # coordinates", i.e., have a dim matching their name.
-                dims = [name]
-            else:
-                dims = self._guess_dims(da, name)
-            index = to_plain_index(dims, select, ignore_missing=True)
-            coord = self[name][index]
-            da.coords[name] = coord.rename_dims(dict(zip(coord.dims, dims)))
+        for name, field in self.items():
+            if (not isinstance(field, Field)) or (name in skip):
+                continue
+            index = to_plain_index(field.dims, select, ignore_missing=True)
+            da.coords[name] = self[name][index]
 
         return da
