@@ -71,8 +71,7 @@ def test_multiple_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
 def test_slice_of_1d(nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     builder = NexusBuilder()
-    da = sc.DataArray(
-        sc.array(dims=['xx'], unit='m', values=[1, 2, 3]))
+    da = sc.DataArray(sc.array(dims=['xx'], unit='m', values=[1, 2, 3]))
     da.coords['xx'] = da.data
     da.coords['xx2'] = da.data
     da.coords['scalar'] = sc.scalar(1.2)
