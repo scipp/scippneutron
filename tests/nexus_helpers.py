@@ -179,8 +179,6 @@ class Monitor:
     data: np.ndarray
     axes: List[Tuple[str, np.ndarray]]
     events: Optional[EventData] = None
-    # distance: Optional[float] = None
-    # distance_units: Optional[Union[str, bytes]] = None
     depends_on: Optional[Transformation] = None
 
 
@@ -665,12 +663,6 @@ class NexusBuilder:
                 depends_on = self._add_transformations_to_file(
                     monitor.depends_on, monitor_group, f"/{monitor.name}")
             self._writer.add_dataset(monitor_group, "depends_on", data=depends_on)
-        # if monitor.distance is not None:
-        #     distance_ds = self._writer.add_dataset(monitor_group,
-        #                                            "distance",
-        #                                            data=monitor.distance)
-        #     if monitor.distance_units is not None:
-        #         self._writer.add_attribute(distance_ds, "units", monitor.distance_units)
 
     def _write_datas(self, parent_group: Union[h5py.Group, Dict]):
         for data in self._datas:
