@@ -222,6 +222,13 @@ class NXevent_data(NXobject):
     def _getitem(self, index: ScippIndex) -> sc.DataArray:
         return _load_event_group(self._group, self._loader, quiet=True, select=index)
 
+    def _get_field_dims(self, name: str) -> Union[None, List[str]]:
+        if name in ['event_time_zero', 'event_index']:
+            return [_pulse_dimension]
+        if name in ['event_time_offset', 'event_id']:
+            return [_event_dimension]
+        return None
+
 
 def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
                       select=tuple()) -> DetectorData:
