@@ -156,7 +156,7 @@ def to_plain_index(dims: List[str], select: ScippIndex, ignore_missing: bool = F
     if isinstance(select, tuple):
         check_1d()
         if len(select) != 1:
-            raise ValueError(f"Dataset a single dimension {dims}, "
+            raise ValueError(f"Dataset has single dimension {dims}, "
                              "but multiple indices {select} were specified.")
         return select[0]
     elif isinstance(select, int) or isinstance(select, slice):
