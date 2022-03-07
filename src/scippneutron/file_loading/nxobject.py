@@ -126,7 +126,7 @@ class NXobject:
             self,
             name: NXobjectIndex,
             use_field_dims: bool = False) -> Union['__class__', Field, sc.DataArray]:
-        """Get item, with flag to control whether fields diems should be inferred"""
+        """Get item, with flag to control whether fields dims should be inferred"""
         if name is None:
             raise KeyError("None is not a valid index")
         if isinstance(name, str):
