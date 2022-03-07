@@ -152,23 +152,9 @@ class LoadFromJson:
         """
         Returns dictionary for dataset or None if not found
         """
-        print("_get_child_from_group", group.keys(), name, allowed_nexus_classes)
         if allowed_nexus_classes is None:
             allowed_nexus_classes = (_nexus_dataset, _nexus_group, _nexus_stream)
-        print("_get_child_from_group", allowed_nexus_classes)
-        print(group.keys())
-        print(len(group[_nexus_children]))
         for child in group[_nexus_children]:
-            print(child.keys(), _nexus_name, name)
-            if 'children' in child:
-                print(child['children'])
-                print(len(child['children']))
-                # child = child['children']
-                for c in child['children']:
-                    print("===================")
-                    print(c)
-                # return self._get_child_from_group(
-                #     group=child, name=name, allowed_nexus_classes=allowed_nexus_classes)
             try:
                 if child[_nexus_name] == name:
                     child[_nexus_path] = f"{self.get_path(group)}/{name}"
@@ -357,9 +343,7 @@ class LoadFromJson:
         return dataset[_nexus_values]
 
     def get_object_by_path(self, group: Dict, path_str: str) -> Dict:
-        print("get_object_by_path", group.keys(), path_str)
         for node in filter(None, path_str.split("/")):
-            print("get_object_by_path", node)
             group = self._get_child_from_group(group, node)
             if group is None:
                 raise MissingDataset()
