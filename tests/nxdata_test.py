@@ -190,3 +190,20 @@ def test_auxiliary_signal_is_not_loaded_as_coord(nexus_group: Tuple[Callable,
         loaded = data[...]
         del da.coords['xx']
         assert sc.identical(loaded, da)
+
+
+def test_field_dims_match_NXdata_dims(nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    builder = NexusBuilder()
+    da = sc.DataArray(
+        sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
+    da.coords['xx'] = da.data['yy', 0]
+    da.coords['xx2'] = da.data['yy', 1]
+    da.coords['yy'] = da.data['xx', 0]
+    builder.add_data(Data(name='data1', data=da))
+    with resource(builder)() as f:
+        data = nexus.NXroot(f, loader)['entry/data1']
+        assert sc.identical(data['xx', :2].data, data['signal1']['xx', :2])
+        assert sc.identical(data['xx', :2].coords['xx'], data['xx']['xx', :2])
+        assert sc.identical(data['xx', :2].coords['xx2'], data['xx2']['xx', :2])
+        assert sc.identical(data['xx', :2].coords['yy'], data['yy'][:])
