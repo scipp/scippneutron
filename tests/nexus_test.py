@@ -201,6 +201,22 @@ def test_field_properties(nexus_group: Tuple[Callable, LoadFromNexus]):
         assert field.unit == sc.Unit('ns')
 
 
+def test_field_dim_labels(nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    with resource(builder_with_events_monitor_and_log())() as f:
+        event_data = nexus.NXroot(f, loader)['entry/events_0']
+        assert event_data['event_time_offset'].dims == ['event']
+        assert event_data['event_time_zero'].dims == ['pulse']
+        assert event_data['event_index'].dims == ['pulse']
+        assert event_data['event_id'].dims == ['event']
+        log = nexus.NXroot(f, loader)['entry/log']
+        assert log['time'].dims == ['time']
+        assert log['value'].dims == ['time']
+        monitor = nexus.NXroot(f, loader)['monitor']
+        assert monitor['time_of_flight'].dims == ['time_of_flight']
+        assert monitor['data'].dims == ['time_of_flight']
+
+
 def test_field_unit_is_none_if_no_units_attribute(nexus_group: Tuple[Callable,
                                                                      LoadFromNexus]):
     resource, loader = nexus_group
