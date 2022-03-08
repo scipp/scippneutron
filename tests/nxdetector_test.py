@@ -288,4 +288,3 @@ def test_event_data_field_dims_labels(nexus_group: Tuple[Callable, LoadFromNexus
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
         assert detector['detector_number'].dims == ['detector_number']
-        assert detector['event_time_offset'].dims == ['event']
