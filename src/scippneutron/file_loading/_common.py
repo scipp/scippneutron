@@ -159,6 +159,8 @@ def _to_canonical_select(dims: List[str], select: ScippIndex) -> ScippIndex:
     elif isinstance(select, int) or isinstance(select, slice):
         check_1d()
         return {dims[0]: select}
+    if not isinstance(select, dict):
+        raise ValueError("Cannot process index {select}.")
     return select
 
 
@@ -167,8 +169,6 @@ def to_plain_index(dims: List[str], select: ScippIndex):
     Given a valid "scipp" index 'select', return an equivalent plain numpy-style index.
     """
     select = _to_canonical_select(dims, select)
-    if not isinstance(select, dict):
-        raise ValueError("Cannot process index {select}.")
     index = [slice(None)] * len(dims)
     for key, sel in select.items():
         if key not in dims:
