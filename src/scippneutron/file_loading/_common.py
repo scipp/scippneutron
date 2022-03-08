@@ -160,7 +160,7 @@ def _to_canonical_select(dims: List[str], select: ScippIndex) -> ScippIndex:
         check_1d()
         return {dims[0]: select}
     if not isinstance(select, dict):
-        raise ValueError("Cannot process index {select}.")
+        raise ValueError(f"Cannot process index {select}.")
     return select
 
 
