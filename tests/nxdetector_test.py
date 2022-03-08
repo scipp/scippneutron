@@ -271,3 +271,20 @@ def test_can_load_nxdetector_from_bigfake():
     with nexus.File(scn.data.bigfake()) as f:
         da = f['entry/instrument/detector_1'][...]
         assert da.sizes == {'dim_0': 300, 'dim_1': 300}
+
+
+def test_event_data_field_dims_labels(nexus_group: Tuple[Callable, LoadFromNexus]):
+    event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
+    event_data = EventData(
+        event_id=np.array([1, 2, 3, 1, 2, 2]),
+        event_time_offset=event_time_offsets,
+        event_time_zero=np.array([1, 2, 3, 4]),
+        event_index=np.array([0, 3, 3, 5]),
+    )
+    builder = NexusBuilder()
+    builder.add_detector(
+        Detector(detector_numbers=np.array([1, 2, 3, 4]), event_data=event_data))
+    resource, loader = nexus_group
+    with resource(builder)() as f:
+        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        assert detector['detector_number'].dims == ['detector_number']

@@ -68,6 +68,34 @@ def test_multiple_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
         assert sc.identical(loaded, da)
 
 
+def test_slice_of_1d(nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    builder = NexusBuilder()
+    da = sc.DataArray(sc.array(dims=['xx'], unit='m', values=[1, 2, 3]))
+    da.coords['xx'] = da.data
+    da.coords['xx2'] = da.data
+    da.coords['scalar'] = sc.scalar(1.2)
+    builder.add_data(Data(name='data1', data=da))
+    with resource(builder)() as f:
+        data = nexus.NXroot(f, loader)['entry/data1']
+        assert sc.identical(data['xx', :2], da['xx', :2])
+        assert sc.identical(data[:2], da['xx', :2])
+
+
+def test_slice_of_multiple_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    builder = NexusBuilder()
+    da = sc.DataArray(
+        sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
+    da.coords['xx'] = da.data['yy', 0]
+    da.coords['xx2'] = da.data['yy', 1]
+    da.coords['yy'] = da.data['xx', 0]
+    builder.add_data(Data(name='data1', data=da))
+    with resource(builder)() as f:
+        data = nexus.NXroot(f, loader)['entry/data1']
+        assert sc.identical(data['xx', :2], da['xx', :2])
+
+
 def test_guessed_dim_for_2d_coord_not_matching_axis_name(
         nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
@@ -82,17 +110,18 @@ def test_guessed_dim_for_2d_coord_not_matching_axis_name(
         assert sc.identical(loaded, da)
 
 
-def test_raises_if_dim_guessing_finds_ambiguous_shape(
+def test_skips_axis_if_dim_guessing_finds_ambiguous_shape(
         nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     builder = NexusBuilder()
-    da = sc.DataArray(sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2], [4, 5]]))
+    da = sc.DataArray(
+        sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
     da.coords['yy2'] = da.data['xx', 0]
     builder.add_data(Data(name='data1', data=da))
     with resource(builder)() as f:
         data = nexus.NXroot(f, loader)['entry/data1']
-        with pytest.raises(nexus.NexusStructureError):
-            data[...]
+        da = data[...]
+        assert 'yy2' not in da.coords
 
 
 def test_guesses_transposed_dims_for_2d_coord(nexus_group: Tuple[Callable,
@@ -161,3 +190,34 @@ def test_auxiliary_signal_is_not_loaded_as_coord(nexus_group: Tuple[Callable,
         loaded = data[...]
         del da.coords['xx']
         assert sc.identical(loaded, da)
+
+
+def test_field_dims_match_NXdata_dims(nexus_group: Tuple[Callable, LoadFromNexus]):
+    resource, loader = nexus_group
+    builder = NexusBuilder()
+    da = sc.DataArray(
+        sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
+    da.coords['xx'] = da.data['yy', 0]
+    da.coords['xx2'] = da.data['yy', 1]
+    da.coords['yy'] = da.data['xx', 0]
+    builder.add_data(Data(name='data1', data=da))
+    with resource(builder)() as f:
+        data = nexus.NXroot(f, loader)['entry/data1']
+        assert sc.identical(data['xx', :2].data, data['signal1']['xx', :2])
+        assert sc.identical(data['xx', :2].coords['xx'], data['xx']['xx', :2])
+        assert sc.identical(data['xx', :2].coords['xx2'], data['xx2']['xx', :2])
+        assert sc.identical(data['xx', :2].coords['yy'], data['yy'][:])
+
+
+def test_uses_default_field_dims_if_inference_fails(nexus_group: Tuple[Callable,
+                                                                       LoadFromNexus]):
+    resource, loader = nexus_group
+    builder = NexusBuilder()
+    da = sc.DataArray(
+        sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
+    da.coords['yy2'] = sc.arange('yy', 4)
+    builder.add_data(Data(name='data1', data=da))
+    with resource(builder)() as f:
+        data = nexus.NXroot(f, loader)['entry/data1']
+        assert 'yy2' not in data[()].coords
+        assert sc.identical(data['yy2'][()], da.coords['yy2'].rename(yy='dim_0'))

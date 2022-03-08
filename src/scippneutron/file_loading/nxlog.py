@@ -2,7 +2,7 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Union
 import scipp as sc
 from ._common import (BadSource, SkipSource, MissingDataset, Group,
                       convert_time_to_datetime64)
@@ -65,7 +65,7 @@ class NXlog(NXobject):
 
     @property
     def _nxbase(self) -> NXdata:
-        axes = ['.'] * self['value'].ndim
+        axes = ['.'] * self._get_child('value', use_field_dims=False).ndim
         # The outermost axis in NXlog is pre-defined to 'time' (if present). Note
         # that this may be overriden by an `axes` attribute, if defined for the group.
         if 'time' in self:
@@ -81,12 +81,18 @@ class NXlog(NXobject):
         # 'scaling_factor' that are not handled by NXdata. These are used
         # to transform to a datetime-coord.
         if 'time' in self:
+            if 'time' not in data.coords:
+                raise sc.DimensionError(
+                    "NXlog is time-dependent, but failed to load `time` dataset")
             data.coords['time'] = convert_time_to_datetime64(
                 raw_times=data.coords.pop('time'),
                 start=self['time'].attrs.get('start'),
                 scaling_factor=self['time'].attrs.get('scaling_factor'),
                 group_path=self['time'].name)
         return data
+
+    def _get_field_dims(self, name: str) -> Union[None, List[str]]:
+        return self._nxbase._get_field_dims(name)
 
 
 def _load_log_data_from_group(group: Group, nexus: LoadFromNexus, select=tuple())\

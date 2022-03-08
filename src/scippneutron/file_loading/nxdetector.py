@@ -8,7 +8,7 @@ import scipp as sc
 from .nxobject import NX_class, NXobject, Field, ScippIndex, NexusStructureError
 from .nxdata import NXdata
 from ._detector_data import NXevent_data
-from ._common import to_plain_index
+from ._common import to_child_select
 
 
 class EventSelector:
@@ -61,9 +61,10 @@ class NXdetector(NXobject):
     @property
     def ndim(self) -> int:
         if self._is_events:
-            if self._detector_number is None:
+            if 'detector_number' not in self:
                 return 1
-            return self._detector_number.ndim
+            det_field = self._get_child('detector_number')
+            return det_field.ndim
         return self['data'].ndim
 
     @property
@@ -80,7 +81,7 @@ class NXdetector(NXobject):
             raise NexusStructureError("No unique NXevent_data entry in NXdetector. "
                                       f"Found {len(event_entries)}.")
         elif len(event_entries) == 1:
-            if 'data' in self and not isinstance(self['data'], NXevent_data):
+            if 'data' in self and not isinstance(self._get_child('data'), NXevent_data):
                 raise NexusStructureError("NXdetector contains data and event data.")
             return True
         return 'event_time_offset' in self
@@ -124,7 +125,8 @@ class NXdetector(NXobject):
 
     def detector_number(self, select) -> sc.Variable:
         """Read and return the 'detector_number' field, None if it does not exist."""
-        if self._detector_number is None:
+        field = self._detector_number
+        if field is None:
             if self._is_events and select not in (Ellipsis,
                                                   tuple()) and select != slice(None):
                 raise NexusStructureError(
@@ -132,23 +134,34 @@ class NXdetector(NXobject):
                     "but no 'detector_number' field, i.e., the shape is unknown. "
                     "Use ellipsis or an empty tuple to load the full detector.")
             return None
-        index = to_plain_index(self.dims, select, ignore_missing=True)
-        var = self._detector_number[index]
-        return var.rename_dims(dict(zip(var.dims, self.dims)))
+        select = to_child_select(self.dims, field.dims, select)
+        return field[select]
 
     def pixel_offset(self, select) -> sc.Variable:
         """Read the [xyz]_pixel_offset fields and return a variable of pixel offset
         vectors, None if x_pixel_offset does not exist."""
         if 'x_pixel_offset' not in self:
             return None
-        index = to_plain_index(self.dims, select, ignore_missing=True)
-        x = self['x_pixel_offset'][index]
+        x = self['x_pixel_offset']
+        select = to_child_select(self.dims, x.dims, select)
+        x = x[select]
         offset = sc.zeros(sizes=x.sizes, unit=x.unit, dtype=sc.DType.vector3)
         offset.fields.x = x
         for comp in ['y_pixel_offset', 'z_pixel_offset']:
             if comp in self:
-                offset.fields.y = self[comp][index].to(unit=x.unit, copy=False)
+                offset.fields.y = self[comp][select].to(unit=x.unit, copy=False)
         return offset.rename_dims(dict(zip(offset.dims, self.dims)))
+
+    def _get_field_dims(self, name: str) -> Union[None, List[str]]:
+        if self._is_events:
+            if name in [
+                    'event_time_zero', 'event_index', 'event_time_offset', 'event_id'
+            ]:
+                # Event field is direct child of this class
+                return self._nxbase._get_field_dims(name)
+            else:
+                return self.dims
+        return self._nxbase._get_field_dims(name)
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
         # Note that ._detector_data._load_detector provides a different loading
