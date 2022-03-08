@@ -2,6 +2,7 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 from typing import List, Union
+from warnings import warn
 import scipp as sc
 import numpy as np
 from ._common import to_child_select, Dataset, Group
@@ -129,6 +130,10 @@ class NXdata(NXobject):
         for name, field in self.items():
             if (not isinstance(field, Field)) or (name in skip):
                 continue
-            da.coords[name] = self[name][to_child_select(self.dims, field.dims, select)]
+            try:
+                sel = to_child_select(self.dims, field.dims, select)
+                da.coords[name] = self[name][sel]
+            except sc.DimensionError as e:
+                warn(f"Skipped load of axis {name} due to: {e}")
 
         return da
