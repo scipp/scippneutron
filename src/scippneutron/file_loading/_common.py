@@ -164,7 +164,7 @@ def _to_canonical_select(dims: List[str], select: ScippIndex) -> ScippIndex:
     return select
 
 
-def to_plain_index(dims: List[str], select: ScippIndex):
+def to_plain_index(dims: List[str], select: ScippIndex) -> Union[int, tuple]:
     """
     Given a valid "scipp" index 'select', return an equivalent plain numpy-style index.
     """
