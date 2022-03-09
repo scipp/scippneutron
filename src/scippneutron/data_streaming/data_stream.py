@@ -225,12 +225,17 @@ async def _data_stream(
     # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
     # pytorch docs mention Queue problem:
     # https://pytorch.org/docs/stable/notes/multiprocessing.html
+    #
+    # Note also that daemonising this Process is important so that resources are
+    # properly freed when restarting the notebook kernel (or shutting down the
+    # notebook entirely).
     data_collect_process = mp.get_context("spawn").Process(
         target=data_consumption_manager,
         args=(start_time_ms, stop_time_ms, run_id, topics, kafka_broker, consumer_type,
               stream_info, interval_s, event_buffer_size, slow_metadata_buffer_size,
               fast_metadata_buffer_size, chopper_buffer_size, worker_instruction_queue,
-              data_queue, test_message_queue))
+              data_queue, test_message_queue),
+        daemon=True)
     try:
         data_stream_widget = DataStreamWidget(start_time_ms=start_time_ms,
                                               stop_time_ms=stop_time_ms,
