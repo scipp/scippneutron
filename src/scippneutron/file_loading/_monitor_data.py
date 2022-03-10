@@ -1,14 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
-from typing import List, Dict, Union
+from typing import List, Union
 import warnings
-from ._common import Group
 import scipp as sc
-from ._nexus import LoadFromNexus
-from ._detector_data import load_detector_data, NXevent_data
-from ._nx_classes import nx_monitor
-from ._positions import load_positions_of_components
+from ._detector_data import NXevent_data
 from .nxobject import NXobject, ScippIndex
 from .nxdata import NXdata
 
@@ -56,41 +52,8 @@ class NXmonitor(NXobject):
         Load monitor data. Event-mode data takes precedence over histogram-mode data.
         """
         nxbase = self._nxbase
-        if isinstance(nxbase, NXevent_data):
+        if isinstance(nxbase, NXevent_data) and 'data' in self:
             warnings.warn(f"Event data present in NXmonitor group {self.name}. "
                           f"Histogram-mode monitor data from this group will be "
                           f"ignored.")
         return nxbase[select]
-
-
-def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict:
-    """
-    Load monitor data. Event-mode data takes precedence over histogram-mode data.
-    """
-    monitor_data = {}
-    for group in monitor_groups:
-        try:
-            nxmonitor = NXmonitor(group, nexus)
-            # Standard loading requires binning monitor into pulses and adding
-            # detector IDs. This is currently encapsulated in load_detector_data,
-            # so we cannot readily use NXmonitor and bin afterwards without duplication.
-            if nxmonitor._is_events:
-                monitor = load_detector_data([group], [], nexus, True, True)
-                warnings.warn(f"Event data present in NXmonitor group {group.name}. "
-                              f"Histogram-mode monitor data from this group will be "
-                              f"ignored.")
-            else:
-                monitor = nxmonitor[()]
-            monitor_name = group.name.split("/")[-1]
-            load_positions_of_components(groups=[group],
-                                         data=monitor,
-                                         name=monitor_name,
-                                         nx_class=nx_monitor,
-                                         nexus=nexus,
-                                         name_prefix="")
-            monitor_data[monitor_name] = sc.scalar(value=monitor)
-        except KeyError:
-            warnings.warn(f"No event-mode or histogram-mode monitor data found for "
-                          f"NXMonitor group {group.name}. Skipping this group.")
-
-    return monitor_data
