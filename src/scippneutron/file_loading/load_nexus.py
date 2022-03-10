@@ -6,7 +6,7 @@ import scipp as sc
 
 from ..nexus import NXroot, NX_class
 
-from ._common import Group, MissingDataset, BadSource
+from ._common import Group, MissingDataset, BadSource, SkipSource
 from ._detector_data import load_detector_data
 from ._monitor_data import load_monitor_data
 from ._hdf5_nexus import LoadFromHdf5
@@ -200,8 +200,9 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     for name, log in classes.get(NX_class.NXlog, {}).items():
         try:
             logs[name] = sc.scalar(log[()])
-        except (RuntimeError, KeyError, BadSource) as e:
-            warn(f"Skipped loading {log.name} due to:\n{e}")
+        except (RuntimeError, KeyError, BadSource, SkipSource) as e:
+            if not nexus.contains_stream(log._group):
+                warn(f"Skipped loading {log.name} due to:\n{e}")
     add_metadata(logs)
 
     if groups[nx_monitor]:
