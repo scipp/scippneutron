@@ -210,10 +210,9 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         for name, group in groups.items():
             try:
                 items[name] = sc.scalar(process(group[()]))
-            except SkipSource:
-                pass  # skip without warning user
-            except (RuntimeError, KeyError, BadSource) as e:
-                warn(f"Skipped loading {group.name} due to:\n{e}")
+            except (RuntimeError, KeyError, BadSource, SkipSource) as e:
+                if not nexus.contains_stream(group._group):
+                    warn(f"Skipped loading {group.name} due to:\n{e}")
         add_metadata(items)
 
     load_and_add_metadata(classes.get(NX_class.NXlog, {}))
