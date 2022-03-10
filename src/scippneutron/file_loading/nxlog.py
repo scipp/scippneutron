@@ -2,52 +2,11 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 
-from typing import Tuple, List, Dict, Union
+from typing import List, Union
 import scipp as sc
-from ._common import (BadSource, SkipSource, MissingDataset, Group,
-                      convert_time_to_datetime64)
-from ._nexus import LoadFromNexus
+from ._common import convert_time_to_datetime64
 from .nxobject import NXobject, ScippIndex
 from .nxdata import NXdata
-from warnings import warn
-
-
-def load_logs(log_groups: List[Group], nexus: LoadFromNexus) -> Dict:
-    logs = {}
-    for group in log_groups:
-        try:
-            log_data_name, log_data = _load_log_data_from_group(group, nexus)
-            _add_log_to_data(log_data_name, log_data, group.name, logs)
-        except BadSource as e:
-            warn(f"Skipped loading {group.name} due to:\n{e}")
-        except SkipSource:
-            pass  # skip without warning user
-    return logs
-
-
-def _add_log_to_data(log_data_name: str, log_data: sc.Variable, group_path: str,
-                     data: Dict):
-    """
-    Add an attribute with a unique name.
-    If an attribute name already exists, we iteratively walk up the file tree
-    and prepend the parent name to the attribute name, until a unique name is
-    found.
-    """
-    group_path = group_path.split('/')
-    path_position = -2
-    name_changed = False
-    unique_name_found = False
-    while not unique_name_found:
-        if log_data_name not in data.keys():
-            data[log_data_name] = log_data
-            unique_name_found = True
-        else:
-            name_changed = True
-            log_data_name = f"{group_path[path_position]}_{log_data_name}"
-            path_position -= 1
-    if name_changed:
-        warn(f"Name of log group at {'/'.join(group_path)} is not unique: "
-             f"{log_data_name} used as attribute name.")
 
 
 class NXlog(NXobject):
@@ -93,17 +52,3 @@ class NXlog(NXobject):
 
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:
         return self._nxbase._get_field_dims(name)
-
-
-def _load_log_data_from_group(group: Group, nexus: LoadFromNexus, select=tuple())\
-        -> Tuple[str, sc.Variable]:
-    property_name = nexus.get_name(group)
-    try:
-        return property_name, sc.scalar(NXlog(group, nexus)[select])
-    except sc.DimensionError:
-        raise BadSource(f"NXlog '{property_name}' has time and value "
-                        f"datasets of different shapes")
-    except (KeyError, MissingDataset):
-        if nexus.contains_stream(group):
-            raise SkipSource("Log is missing value dataset but contains stream")
-        raise BadSource(f"NXlog '{property_name}' has no value dataset")

@@ -498,18 +498,13 @@ def test_loads_data_from_multiple_logs_with_same_name(load_function: Callable):
 
     loaded_data = load_function(builder)
 
-    # Expect two logs
-    # The log group name for one of them should have been prefixed with
-    # its the parent group name to avoid duplicate log names
-    if np.allclose(loaded_data[name].data.values.values, values_1):
-        # Then the other log should be
-        assert np.allclose(loaded_data[f"detector_0_{name}"].data.values.values,
-                           values_2)
-    elif np.allclose(loaded_data[name].data.values.values, values_2):
-        # Then the other log should be
-        assert np.allclose(loaded_data[f"entry_{name}"].data.values.values, values_1)
-    else:
-        assert False
+    assert len(loaded_data) == 2
+    for key, da in loaded_data.items():
+        assert key.endswith('test_log')
+        if 'detector_0' in key:
+            assert np.allclose(da.value.values, values_2)
+        else:
+            assert np.allclose(da.value.values, values_1)
 
 
 def test_load_instrument_name(load_function: Callable):
