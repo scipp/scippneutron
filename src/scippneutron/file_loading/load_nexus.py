@@ -199,9 +199,10 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     for name, log in classes.get(NX_class.NXlog, {}).items():
         try:
             logs[name] = sc.scalar(log[()])
-        except (RuntimeError, KeyError, BadSource, SkipSource) as e:
-            if not nexus.contains_stream(log._group):
-                warn(f"Skipped loading {log.name} due to:\n{e}")
+        except SkipSource:
+            pass  # skip without warning user
+        except (RuntimeError, KeyError, BadSource) as e:
+            warn(f"Skipped loading {log.name} due to:\n{e}")
     add_metadata(logs)
 
     if groups[nx_monitor]:
