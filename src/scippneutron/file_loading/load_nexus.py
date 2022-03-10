@@ -195,15 +195,18 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         add_metadata(_load_title(groups[nx_entry][0], nexus))
         add_metadata(_load_start_and_end_time(groups[nx_entry][0], nexus))
 
-    logs = {}
-    for name, log in classes.get(NX_class.NXlog, {}).items():
-        try:
-            logs[name] = sc.scalar(log[()])
-        except SkipSource:
-            pass  # skip without warning user
-        except (RuntimeError, KeyError, BadSource) as e:
-            warn(f"Skipped loading {log.name} due to:\n{e}")
-    add_metadata(logs)
+    def load_and_add_metadata(groups):
+        items = {}
+        for name, group in groups.items():
+            try:
+                items[name] = sc.scalar(group[()])
+            except SkipSource:
+                pass  # skip without warning user
+            except (RuntimeError, KeyError, BadSource) as e:
+                warn(f"Skipped loading {group.name} due to:\n{e}")
+        add_metadata(items)
+
+    load_and_add_metadata(classes.get(NX_class.NXlog, {}))
 
     if groups[nx_monitor]:
         add_metadata(load_monitor_data(groups[nx_monitor], nexus))
