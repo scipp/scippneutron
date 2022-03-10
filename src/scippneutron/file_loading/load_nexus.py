@@ -2,15 +2,13 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
 import json
-
 import scipp as sc
 
-import scipp
+from ..nexus import NXroot, NX_class
 
-from ._common import Group, MissingDataset
+from ._common import Group, MissingDataset, BadSource
 from ._detector_data import load_detector_data
 from ._monitor_data import load_monitor_data
-from .nxlog import load_logs
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
 from ._nexus import LoadFromNexus, ScippData
@@ -190,11 +188,22 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             else:
                 loaded_data[key] = value
 
+    # Note: Currently this wastefully walks the tree in the file a second time.
+    root = NXroot(nexus_file, nexus)
+    classes = root.by_nx_class()
+
     if groups[nx_entry]:
         add_metadata(_load_title(groups[nx_entry][0], nexus))
         add_metadata(_load_start_and_end_time(groups[nx_entry][0], nexus))
-    if groups[nx_log]:
-        add_metadata(load_logs(groups[nx_log], nexus))
+
+    logs = {}
+    for name, log in classes.get(NX_class.NXlog, {}).items():
+        try:
+            logs[name] = sc.scalar(log[()])
+        except (RuntimeError, KeyError, BadSource) as e:
+            warn(f"Skipped loading {log.name} due to:\n{e}")
+    add_metadata(logs)
+
     if groups[nx_monitor]:
         add_metadata(load_monitor_data(groups[nx_monitor], nexus))
     if groups[nx_sample]:
