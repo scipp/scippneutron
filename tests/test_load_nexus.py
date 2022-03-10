@@ -2004,13 +2004,6 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
     mon_2_events = load_function(builder)["monitor2"].data.values
 
     assert sc.identical(
-        mon_1_events.coords["detector_id"],
-        sc.array(dims=["detector_id"], unit=None, values=[0], dtype=sc.DType.int64))
-    assert sc.identical(
-        mon_2_events.coords["detector_id"],
-        sc.array(dims=["detector_id"], unit=None, values=[1], dtype=sc.DType.int64))
-
-    assert sc.identical(
         mon_1_events.values[0].coords["tof"],
         sc.array(dims=["event"],
                  values=[1, 2, 3, 4, 5],
