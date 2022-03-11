@@ -1554,23 +1554,23 @@ def test_loads_sample_ub_matrix(load_function: Callable):
     builder = NexusBuilder()
     builder.add_component(Sample("sample", ub_matrix=np.ones(shape=[3, 3])))
     loaded_data = load_function(builder)
-    assert "sample_ub_matrix" in loaded_data
+    sample = loaded_data['sample'].value
     assert sc.identical(
-        loaded_data["sample_ub_matrix"].data,
+        sample['ub_matrix'].data,
         sc.spatial.linear_transform(value=np.ones(shape=[3, 3]),
                                     unit=sc.units.angstrom**-1))
-    assert "sample_u_matrix" not in loaded_data
+    assert "orientation_matrix" not in sample
 
 
-def test_loads_sample_u_matrix(load_function: Callable):
+def test_loads_sample_orientation_matrix(load_function: Callable):
     builder = NexusBuilder()
     builder.add_component(Sample("sample", orientation_matrix=np.ones(shape=[3, 3])))
     loaded_data = load_function(builder)
-    assert "sample_u_matrix" in loaded_data
+    sample = loaded_data['sample'].value
     assert sc.identical(
-        loaded_data["sample_u_matrix"].data,
+        sample["orientation_matrix"].data,
         sc.spatial.linear_transform(value=np.ones(shape=[3, 3]), unit=sc.units.one))
-    assert "sample_ub_matrix" not in loaded_data
+    assert "ub_matrix" not in sample
 
 
 def test_loads_multiple_sample_ub_matrix(load_function: Callable):
@@ -1580,13 +1580,13 @@ def test_loads_multiple_sample_ub_matrix(load_function: Callable):
     builder.add_component(Sample("sample3"))  # No ub specified
     loaded_data = load_function(builder)
     assert sc.identical(
-        loaded_data["sample1_ub_matrix"].data,
+        loaded_data["sample1"].value["ub_matrix"].data,
         sc.spatial.linear_transform(value=np.ones(shape=[3, 3]),
                                     unit=sc.units.angstrom**-1))
     assert sc.identical(
-        loaded_data["sample2_ub_matrix"].data,
+        loaded_data["sample2"].value["ub_matrix"].data,
         sc.spatial.linear_transform(value=np.identity(3), unit=sc.units.angstrom**-1))
-    assert "sample3_ub_matrix" not in loaded_data
+    assert "ub_matrix" not in loaded_data['sample3'].value
 
 
 def test_warning_but_no_error_for_unrecognised_log_unit(load_function: Callable):

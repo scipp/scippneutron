@@ -16,8 +16,6 @@ from timeit import default_timer as timer
 from typing import Union, List, Optional, Dict, Tuple, Set
 from contextlib import contextmanager
 from warnings import warn
-from ._positions import load_positions_of_components
-from ._sample import load_ub_matrices_of_components
 from ._nx_classes import (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample,
                           nx_source, nx_detector, nx_disk_chopper, nx_monitor)
 
@@ -66,20 +64,6 @@ def _load_chopper(chopper_groups: List[Group], nexus: LoadFromNexus) -> Dict:
                  f"{e.__class__.__name__}: {e}")
 
     return choppers
-
-
-def _load_sample(sample_groups: List[Group], data: ScippData, nexus: LoadFromNexus):
-    load_positions_of_components(groups=sample_groups,
-                                 data=data,
-                                 name="sample",
-                                 nx_class=nx_sample,
-                                 nexus=nexus,
-                                 default_position=[0, 0, 0])
-    load_ub_matrices_of_components(groups=sample_groups,
-                                   data=data,
-                                   name="sample",
-                                   nx_class=nx_sample,
-                                   nexus=nexus)
 
 
 def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:

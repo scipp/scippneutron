@@ -2,6 +2,7 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 import scipp as sc
+from scipp.spatial import linear_transform
 from ._common import to_plain_index
 from .nxobject import NXobject, ScippIndex
 
@@ -22,4 +23,8 @@ class NXsample(NXobject):
         ds = sc.Dataset()
         if 'distance' in self:
             ds['distance'] = self['distance'][()]
+        for name, unit in zip(['orientation_matrix', 'ub_matrix'],
+                              ['one', '1/Angstrom']):
+            if (m := self.get(name)) is not None:
+                ds[name] = linear_transform(value=m[()].values, unit=unit)
         return ds
