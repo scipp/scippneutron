@@ -60,6 +60,7 @@ class NXmonitor(NXobject):
         da = nxbase[select]
         if 'depends_on' in self:
             transform = get_full_transformation_matrix(self._group, self._loader)
+            # Note: We are not supporting a transformation that is time-dependent here
             da.coords['position'] = transform * sc.vector(value=[0, 0, 0],
                                                           unit=transform.unit)
         return da
