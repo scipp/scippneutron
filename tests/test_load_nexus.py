@@ -1062,25 +1062,9 @@ def test_loads_component_position_with_multi_value_log_transformation(
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
     loaded_data = load_function(builder)
-
-    # Note: currently only asserting that we use the first value of the transformation
-    # this is wrong long-term; we need to add the full loaded transformation into the
-    # loaded data array.
-    assert np.allclose(loaded_data[f"{component_name}_base_position"].values,
-                       np.array([0, 0, 0]))
-    assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
-
-    if transform_type == TransformationType.TRANSLATION:
-        expected_transformed_positions = np.array([[0, 0, 2.3], [0, 0, 3.1]])
-    else:
-        expected_transformed_positions = np.array([[0, 0, 0], [0, 0, 0]])
-
-    assert np.allclose((loaded_data[f"{component_name}_transform"].value *
-                        loaded_data[f"{component_name}_base_position"]).values,
-                       expected_transformed_positions)
-
+    assert f'{component_name}_position' not in loaded_data
     assert sc.identical(
-        loaded_data[f"{component_name}_transform"].value.coords["time"],
+        loaded_data[component_name].value.coords['depends_on'].value.coords["time"],
         sc.Variable(dims=["time"],
                     values=[1300000000, 6400000000],
                     unit="ns",
