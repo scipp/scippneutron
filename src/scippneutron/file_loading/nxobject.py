@@ -200,6 +200,13 @@ class NXobject:
         """
         return NX_class[self.attrs['NX_class']]
 
+    @property
+    def transformation(self) -> Union[None, sc.Variable, sc.DataArray]:
+        from .nxtransformations import get_full_transformation_matrix
+        if 'depends_on' in self:
+            return get_full_transformation_matrix(self._group, self._loader)
+        return None
+
     def __repr__(self) -> str:
         return f'<{type(self).__name__} "{self._group.name}">'
 
