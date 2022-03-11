@@ -4,6 +4,7 @@
 from _warnings import warn
 from typing import List, Optional, Tuple
 import numpy as np
+from numpy.typing import ArrayLike
 import scipp as sc
 import scipp.spatial
 from ._common import Group, add_position_and_transforms_to_data
@@ -15,26 +16,39 @@ class PositionError(Exception):
     pass
 
 
+def _make_prefixed_names(name, prefix):
+    if prefix is None:
+        prefix = f"{name}_"
+    return prefix + "transform", prefix + "position", prefix + "base_position"
+
+
 def load_position_of_unique_component(groups: List[Group],
                                       data: sc.Variable,
                                       name: str,
                                       nx_class: str,
                                       nexus: LoadFromNexus,
-                                      default_position: Optional[np.ndarray] = None):
+                                      default_position: Optional[ArrayLike] = None,
+                                      name_prefix: Optional[str] = None):
     if len(groups) > 1:
         warn(f"More than one {nx_class} found in file, "
              f"skipping loading {name} position")
         return
     try:
         position, transformations = _get_base_pos_and_transforms_of_component(
-            groups[0], name, nx_class, nexus, default_position)
+            group=groups[0],
+            name=name,
+            nx_class=nx_class,
+            nexus=nexus,
+            default_position=default_position)
     except PositionError:
         return
+    transform_name, position_name, base_position_name = _make_prefixed_names(
+        name=name, prefix=name_prefix)
 
     add_position_and_transforms_to_data(data=data,
-                                        transform_name=f"{name}_transform",
-                                        position_name=f"{name}_position",
-                                        base_position_name=f"{name}_base_position",
+                                        transform_name=transform_name,
+                                        position_name=position_name,
+                                        base_position_name=base_position_name,
                                         positions=position,
                                         transforms=transformations)
 
@@ -44,32 +58,35 @@ def load_positions_of_components(groups: List[Group],
                                  name: str,
                                  nx_class: str,
                                  nexus: LoadFromNexus,
-                                 default_position: Optional[np.ndarray] = None):
+                                 default_position: Optional[ArrayLike] = None,
+                                 name_prefix: Optional[str] = None):
     for group in groups:
         try:
             position, transformations = _get_base_pos_and_transforms_of_component(
-                group, name, nx_class, nexus, default_position)
+                group=group,
+                name=name,
+                nx_class=nx_class,
+                nexus=nexus,
+                default_position=default_position)
         except PositionError:
             continue
 
         if len(groups) != 1:
             name = nexus.get_name(group)
+        transform_name, position_name, base_position_name = _make_prefixed_names(
+            name=name, prefix=name_prefix)
 
         add_position_and_transforms_to_data(data=data,
-                                            transform_name=f"{name}_transform",
-                                            position_name=f"{name}_position",
-                                            base_position_name=f"{name}_base_position",
+                                            transform_name=transform_name,
+                                            position_name=position_name,
+                                            base_position_name=base_position_name,
                                             positions=position,
                                             transforms=transformations)
 
 
 def _get_base_pos_and_transforms_of_component(
-        group: Group,
-        name: str,
-        nx_class: str,
-        nexus: LoadFromNexus,
-        default_position: Optional[np.ndarray] = None
-) -> Tuple[sc.Variable, sc.DataArray]:
+        group: Group, name: str, nx_class: str, nexus: LoadFromNexus,
+        default_position: ArrayLike) -> Tuple[sc.Variable, sc.DataArray]:
     depends_on_found, _ = nexus.dataset_in_group(group, "depends_on")
     distance_found, _ = nexus.dataset_in_group(group, "distance")
 
@@ -96,7 +113,7 @@ def _get_base_pos_and_transforms_of_component(
         warn(f"No position given for {name} in file")
         raise PositionError
     else:
-        base_position = np.array([0, 0, 0])
+        base_position = np.asarray(default_position)
         units = sc.units.m
 
     return sc.vector(value=base_position, unit=units), transformations

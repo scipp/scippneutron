@@ -56,11 +56,11 @@ def _get_attribute_value(element: Dict,
     raise MissingAttribute
 
 
-def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
+def _visit_nodes(root: Dict, group: Dict, nx_class_names: Tuple[str, ...],
                  groups_with_requested_nx_class: Dict[str,
                                                       List[Group]], path: List[str]):
     try:
-        for child in root[_nexus_children]:
+        for child in group[_nexus_children]:
             try:
                 path.append(child[_nexus_name])
             except KeyError:
@@ -74,14 +74,15 @@ def _visit_nodes(root: Dict, nx_class_names: Tuple[str, ...],
                 if nx_class in nx_class_names:
                     groups_with_requested_nx_class[nx_class].append(
                         JSONGroup(group=child,
-                                  parent=root,
+                                  parent=group,
                                   name="/".join(path),
-                                  file={_nexus_children: [root]}))
+                                  file=root))
             except MissingAttribute:
                 # It may be a group but not an NX_class,
                 # that's fine, continue to its children
                 pass
-            _visit_nodes(child, nx_class_names, groups_with_requested_nx_class, path)
+            _visit_nodes(root, child, nx_class_names, groups_with_requested_nx_class,
+                         path)
             path.pop(-1)
     except KeyError:
         pass
@@ -157,7 +158,10 @@ class LoadFromJson:
         for child in group[_nexus_children]:
             try:
                 if child[_nexus_name] == name:
-                    child[_nexus_path] = f"{self.get_path(group)}/{name}"
+                    path = self.get_path(group)
+                    if path == '/':
+                        path = ''
+                    child[_nexus_path] = f"{path}/{name}"
                     if child["type"] == _nexus_link:
                         child = self.get_object_by_path(self._root, child["target"])
                     if child["type"] in allowed_nexus_classes:
@@ -186,7 +190,7 @@ class LoadFromJson:
             path.append(root[_nexus_name])
         except KeyError:
             pass
-        _visit_nodes(root, nx_class_names, groups_with_requested_nx_class, path)
+        _visit_nodes(root, root, nx_class_names, groups_with_requested_nx_class, path)
 
         return groups_with_requested_nx_class
 

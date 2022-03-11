@@ -7,6 +7,8 @@ from ._common import Group
 import scipp as sc
 from ._nexus import LoadFromNexus
 from ._detector_data import load_detector_data, NXevent_data
+from ._nx_classes import nx_monitor
+from ._positions import load_positions_of_components
 from .nxobject import NXobject, ScippIndex
 from .nxdata import NXdata
 
@@ -80,6 +82,12 @@ def load_monitor_data(monitor_groups: List[Group], nexus: LoadFromNexus) -> Dict
             else:
                 monitor = nxmonitor[()]
             monitor_name = group.name.split("/")[-1]
+            load_positions_of_components(groups=[group],
+                                         data=monitor,
+                                         name=monitor_name,
+                                         nx_class=nx_monitor,
+                                         nexus=nexus,
+                                         name_prefix="")
             monitor_data[monitor_name] = sc.scalar(value=monitor)
         except KeyError:
             warnings.warn(f"No event-mode or histogram-mode monitor data found for "

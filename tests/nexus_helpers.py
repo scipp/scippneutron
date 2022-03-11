@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
+
 import scipp as sc
 from dataclasses import dataclass
 from typing import List, Union, Iterator, Optional, Dict, Any, Tuple
@@ -176,6 +179,7 @@ class Monitor:
     data: np.ndarray
     axes: List[Tuple[str, np.ndarray]]
     events: Optional[EventData] = None
+    depends_on: Optional[Transformation] = None
 
 
 class InMemoryNeXusWriter:
@@ -652,6 +656,13 @@ class NexusBuilder:
             if not monitor.events or not axis_name == "event_index":
                 ds = self._writer.add_dataset(monitor_group, axis_name, axis_data)
                 self._writer.add_attribute(ds, "units", '')
+        if monitor.depends_on is not None:
+            if isinstance(monitor.depends_on, str):
+                depends_on = monitor.depends_on
+            else:
+                depends_on = self._add_transformations_to_file(
+                    monitor.depends_on, monitor_group, f"/{monitor.name}")
+            self._writer.add_dataset(monitor_group, "depends_on", data=depends_on)
 
     def _write_datas(self, parent_group: Union[h5py.Group, Dict]):
         for data in self._datas:
