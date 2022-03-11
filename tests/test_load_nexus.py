@@ -568,9 +568,9 @@ def test_loads_event_and_log_data_from_single_file(load_function: Callable):
     assert np.allclose(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
     assert np.allclose(loaded_data.coords['detector_id'].values, expected_detector_ids)
-    assert "base_position" not in loaded_data.meta.keys(
+    assert "position" not in loaded_data.meta.keys(
     ), "The NXdetectors had no pixel position datasets so we " \
-       "should not find 'base_position' coord"
+       "should not find 'position' coord"
 
     # Logs should have been added to the DataArray as attributes
     assert np.allclose(loaded_data.attrs[log_1.name].values.values, log_1.value)
@@ -634,7 +634,7 @@ def test_loads_pixel_positions_with_event_data(load_function: Callable):
     ]).T / 1_000  # Divide by 1000 for mm to metres
     assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
     assert loaded_data.meta[
-        'base_position'].unit == sc.units.m, \
+        'position'].unit == sc.units.m, \
         "Expected positions to be converted to metres"
 
 
@@ -1279,10 +1279,6 @@ def test_loads_component_position_from_multiple_transformations(
     assert np.allclose(loaded_data[f"{component_name}_position"].values,
                        expected_position)
     assert loaded_data[f"{component_name}_position"].unit == sc.Unit("m")
-
-    assert np.allclose(loaded_data[f"{component_name}_base_position"].values,
-                       np.array([0, 0, 0]))
-    assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
 
 
 def test_skips_source_position_if_not_given_in_file(load_function: Callable):

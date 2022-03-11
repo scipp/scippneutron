@@ -6,7 +6,7 @@ import scipp as sc
 
 from ..nexus import NXroot, NX_class
 
-from ._common import Group, MissingDataset, BadSource, SkipSource
+from ._common import Group, MissingDataset
 from ._detector_data import load_detector_data
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
@@ -214,25 +214,28 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
 
     def load_and_add_metadata(groups, process=lambda x: x):
         items = {}
+        loaded_groups = []
         for name, group in groups.items():
             try:
                 items[name] = sc.scalar(process(group[()]))
-            except (RuntimeError, KeyError, BadSource, SkipSource) as e:
+                loaded_groups.append(name)
+            except Exception as e:
                 if not nexus.contains_stream(group._group):
                     warn(f"Skipped loading {group.name} due to:\n{e}")
         add_metadata(items)
+        return loaded_groups
 
     load_and_add_metadata(classes.get(NX_class.NXlog, {}))
     load_and_add_metadata(classes.get(NX_class.NXmonitor, {}), _monitor_to_canonical)
     for name, tag in {'sample': NX_class.NXsample, 'source': NX_class.NXsource}.items():
         comps = classes.get(tag, {})
-        load_and_add_metadata(comps)
+        comps = load_and_add_metadata(comps)
+        attrs = loaded_data if isinstance(loaded_data,
+                                          sc.Dataset) else loaded_data.attrs
+        coords = loaded_data if isinstance(loaded_data,
+                                           sc.Dataset) else loaded_data.coords
         if len(comps) == 1:
-            attrs = loaded_data if isinstance(loaded_data,
-                                              sc.Dataset) else loaded_data.attrs
-            coords = loaded_data if isinstance(loaded_data,
-                                               sc.Dataset) else loaded_data.coords
-            comp = attrs[next(iter(comps))].value
+            comp = attrs[comps[0]].value
             if (position := _depends_on_to_position(comp)) is not None:
                 coords[f'{name}_position'] = position
             elif (distance := comp.get('distance')) is not None:
