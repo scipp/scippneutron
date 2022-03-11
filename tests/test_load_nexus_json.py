@@ -26,5 +26,5 @@ def test_stream_object_as_transformation_results_in_warning():
 
     # A 0 distance translation is used in place of the streamed transformation
     default = [0, 0, 0]
-    assert np.allclose(loaded_data["source_base_position"].values, default)
-    assert loaded_data["source_base_position"].unit == sc.Unit("m")
+    assert np.allclose(loaded_data["source_position"].values, default)
+    assert loaded_data["source_position"].unit == sc.Unit("m")
