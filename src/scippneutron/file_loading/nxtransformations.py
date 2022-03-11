@@ -14,15 +14,6 @@ from cmath import isclose
 from ._nexus import LoadFromNexus, GroupObject
 from ._json_nexus import contains_stream
 from .nxlog import NXlog
-from .nxobject import NXobject
-
-
-class TransformationChain:
-    pass
-
-
-class NXtransformations(NXobject):
-    pass
 
 
 class TransformationError(Exception):
