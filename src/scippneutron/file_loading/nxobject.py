@@ -225,11 +225,8 @@ def _nx_class_registry():
     from .nxlog import NXlog
     from .nxdata import NXdata
     from .nxdetector import NXdetector
-    from .nxtransformations import NXtransformations
     return {
         cls.__name__: cls
-        for cls in [
-            NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector,
-            NXtransformations
-        ]
+        for cls in
+        [NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector]
     }
