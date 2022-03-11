@@ -12,7 +12,7 @@ from ._common import (BadSource, SkipSource, MissingDataset, MissingAttribute, G
 from ._common import to_plain_index
 import scipp as sc
 from warnings import warn
-from ._transformations import get_full_transformation_matrix
+from .nxtransformations import get_full_transformation_matrix
 from ._nexus import LoadFromNexus
 from .nxobject import NXobject, ScippIndex
 
