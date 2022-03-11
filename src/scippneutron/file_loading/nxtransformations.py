@@ -14,27 +14,19 @@ from cmath import isclose
 from ._nexus import LoadFromNexus, GroupObject
 from ._json_nexus import contains_stream
 from .nxlog import NXlog
+from .nxobject import NXobject
+
+
+class TransformationChain:
+    pass
+
+
+class NXtransformations(NXobject):
+    pass
 
 
 class TransformationError(Exception):
     pass
-
-
-def _rotation_matrix_from_axis_and_angle(axis: np.ndarray,
-                                         angles: sc.DataArray) -> sc.DataArray:
-    """
-    From a provided Dataset containing N angles, produce N rotation matrices
-    corresponding to a rotation of angle around the rotation axis given in axis.
-
-    Args:
-        axis: numpy array of length 3 specifying the rotation axis
-        angles: a dataset containing the angles
-    Returns:
-        A dataset of rotation matrices.
-    """
-    rotvec = sc.vector(value=axis)
-    rotvecs = rotvec * angles.astype(sc.DType.float64, copy=False)
-    return sc.spatial.rotations_from_rotvecs(rotvecs)
 
 
 def _interpolate_transform(transform, xnew):
@@ -269,7 +261,8 @@ def _append_rotation(offset: sc.Variable, transform: GroupObject,
 
     offset = sc.spatial.translation(value=offset.values, unit=offset.unit)
 
-    rotations = _rotation_matrix_from_axis_and_angle(rotation_axis, angles) * offset
+    rotvecs = sc.vector(value=rotation_axis) * angles.astype('float64', copy=False)
+    rotations = sc.spatial.rotations_from_rotvecs(rotvecs) * offset
 
     if isinstance(angles, sc.DataArray):
         t = sc.DataArray(data=rotations, coords={"time": angles.coords["time"]})
