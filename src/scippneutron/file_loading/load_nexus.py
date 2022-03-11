@@ -238,9 +238,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             elif (distance := comp.get('distance')) is not None:
                 coords[f'{name}_position'] = sc.vector(value=[0, 0, distance.value],
                                                        unit=distance.unit)
-    coords = loaded_data if isinstance(loaded_data, sc.Dataset) else loaded_data.coords
-    if 'sample_position' not in coords:
-        coords['sample_position'] = _origin('m')
+        if name == 'sample' and len(comps) != 0 and 'sample_position' not in coords:
+            coords['sample_position'] = _origin('m')
 
     if groups[nx_instrument]:
         add_metadata(_load_instrument_name(groups[nx_instrument], nexus))
