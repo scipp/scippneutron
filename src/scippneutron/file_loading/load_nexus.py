@@ -133,13 +133,16 @@ def load_nexus(data_file: Union[str, h5py.File],
     return loaded_data
 
 
+def _origin(unit) -> sc.Variable:
+    return sc.vector(value=[0, 0, 0], unit=unit)
+
+
 def _depends_on_to_position(da) -> Union[None, sc.Variable]:
     if (transform := da.coords.get('depends_on')) is not None:
-        zero = sc.vector(value=[0, 0, 0], unit=transform.unit)
         if transform.dtype == sc.DType.DataArray:
             return None  # cannot compute position if time-dependent
         else:
-            return transform * zero
+            return transform * _origin(transform.unit)
 
 
 def _monitor_to_canonical(monitor):
@@ -221,22 +224,24 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
 
     load_and_add_metadata(classes.get(NX_class.NXlog, {}))
     load_and_add_metadata(classes.get(NX_class.NXmonitor, {}), _monitor_to_canonical)
-    sources = classes.get(NX_class.NXsource, {})
-    load_and_add_metadata(sources)
-    if len(sources) == 1:
-        attrs = loaded_data if isinstance(loaded_data,
-                                          sc.Dataset) else loaded_data.attrs
-        coords = loaded_data if isinstance(loaded_data,
-                                           sc.Dataset) else loaded_data.coords
-        source = attrs[next(iter(sources))].value
-        if (position := _depends_on_to_position(source)) is not None:
-            coords['source_position'] = position
-        elif (distance := source.get('distance')) is not None:
-            coords['source_position'] = sc.vector(value=[0, 0, distance.value],
-                                                  unit=distance.unit)
+    for name, tag in {'sample': NX_class.NXsample, 'source': NX_class.NXsource}.items():
+        comps = classes.get(tag, {})
+        load_and_add_metadata(comps)
+        if len(comps) == 1:
+            attrs = loaded_data if isinstance(loaded_data,
+                                              sc.Dataset) else loaded_data.attrs
+            coords = loaded_data if isinstance(loaded_data,
+                                               sc.Dataset) else loaded_data.coords
+            comp = attrs[next(iter(comps))].value
+            if (position := _depends_on_to_position(comp)) is not None:
+                coords[f'{name}_position'] = position
+            elif (distance := comp.get('distance')) is not None:
+                coords[f'{name}_position'] = sc.vector(value=[0, 0, distance.value],
+                                                       unit=distance.unit)
+    coords = loaded_data if isinstance(loaded_data, sc.Dataset) else loaded_data.coords
+    if 'sample_position' not in coords:
+        coords['sample_position'] = _origin('m')
 
-    if groups[nx_sample]:
-        _load_sample(groups[nx_sample], loaded_data, nexus)
     if groups[nx_instrument]:
         add_metadata(_load_instrument_name(groups[nx_instrument], nexus))
     if groups[nx_disk_chopper]:

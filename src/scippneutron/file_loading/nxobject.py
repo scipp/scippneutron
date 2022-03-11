@@ -28,6 +28,7 @@ class NX_class(Enum):
     NXlog = auto()
     NXmonitor = auto()
     NXroot = auto()
+    NXsample = auto()
     NXsource = auto()
 
 
@@ -247,9 +248,12 @@ def _nx_class_registry():
     from .nxlog import NXlog
     from .nxdata import NXdata
     from .nxdetector import NXdetector
+    from .nxsample import NXsample
     from .nxsource import NXsource
     return {
         cls.__name__: cls
-        for cls in
-        [NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector, NXsource]
+        for cls in [
+            NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector,
+            NXsample, NXsource
+        ]
     }
