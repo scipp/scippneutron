@@ -28,6 +28,7 @@ class NX_class(Enum):
     NXlog = auto()
     NXmonitor = auto()
     NXroot = auto()
+    NXsource = auto()
 
 
 class Attrs:
@@ -151,7 +152,9 @@ class NXobject:
                 return Field(item, self._loader, dims=dims)
         da = self._getitem(name)
         if (depends_on := self.depends_on) is not None:
-            da.coords['depends_on'] = depends_on[()]
+            obj = depends_on[()]
+            da.coords['depends_on'] = obj if isinstance(obj,
+                                                        sc.Variable) else sc.scalar(obj)
         return da
 
     def __getitem__(self,
@@ -244,8 +247,9 @@ def _nx_class_registry():
     from .nxlog import NXlog
     from .nxdata import NXdata
     from .nxdetector import NXdetector
+    from .nxsource import NXsource
     return {
         cls.__name__: cls
         for cls in
-        [NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector]
+        [NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector, NXsource]
     }

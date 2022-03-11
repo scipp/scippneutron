@@ -16,8 +16,7 @@ from timeit import default_timer as timer
 from typing import Union, List, Optional, Dict, Tuple, Set
 from contextlib import contextmanager
 from warnings import warn
-from ._positions import (load_position_of_unique_component,
-                         load_positions_of_components)
+from ._positions import load_positions_of_components
 from ._sample import load_ub_matrices_of_components
 from ._nx_classes import (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample,
                           nx_source, nx_detector, nx_disk_chopper, nx_monitor)
@@ -83,14 +82,6 @@ def _load_sample(sample_groups: List[Group], data: ScippData, nexus: LoadFromNex
                                    nexus=nexus)
 
 
-def _load_source(source_groups: List[Group], data: ScippData, nexus: LoadFromNexus):
-    load_position_of_unique_component(groups=source_groups,
-                                      data=data,
-                                      name="source",
-                                      nx_class=nx_source,
-                                      nexus=nexus)
-
-
 def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:
     try:
         return {
@@ -142,6 +133,15 @@ def load_nexus(data_file: Union[str, h5py.File],
     return loaded_data
 
 
+def _depends_on_to_position(da) -> Union[None, sc.Variable]:
+    if (transform := da.coords.get('depends_on')) is not None:
+        zero = sc.vector(value=[0, 0, 0], unit=transform.unit)
+        if transform.dtype == sc.DType.DataArray:
+            return None  # cannot compute position if time-dependent
+        else:
+            return transform * zero
+
+
 def _monitor_to_canonical(monitor):
     if monitor.bins is not None:
         monitor.bins.coords['tof'] = monitor.bins.coords.pop('event_time_offset')
@@ -152,9 +152,8 @@ def _monitor_to_canonical(monitor):
             sc.broadcast(monitor.data.bins.concat('pulse'), dims=['tof'], shape=[1]))
     else:
         da = monitor.copy(deep=False)
-    if (transform := monitor.coords.get('depends_on')) is not None:
-        da.coords['position'] = transform * sc.vector(value=[0, 0, 0],
-                                                      unit=transform.unit)
+    if (position := _depends_on_to_position(monitor)) is not None:
+        da.coords['position'] = position
     return da
 
 
@@ -222,11 +221,22 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
 
     load_and_add_metadata(classes.get(NX_class.NXlog, {}))
     load_and_add_metadata(classes.get(NX_class.NXmonitor, {}), _monitor_to_canonical)
+    sources = classes.get(NX_class.NXsource, {})
+    load_and_add_metadata(sources)
+    if len(sources) == 1:
+        attrs = loaded_data if isinstance(loaded_data,
+                                          sc.Dataset) else loaded_data.attrs
+        coords = loaded_data if isinstance(loaded_data,
+                                           sc.Dataset) else loaded_data.coords
+        source = attrs[next(iter(sources))].value
+        if (position := _depends_on_to_position(source)) is not None:
+            coords['source_position'] = position
+        elif (distance := source.get('distance')) is not None:
+            coords['source_position'] = sc.vector(value=[0, 0, distance.value],
+                                                  unit=distance.unit)
 
     if groups[nx_sample]:
         _load_sample(groups[nx_sample], loaded_data, nexus)
-    if groups[nx_source]:
-        _load_source(groups[nx_source], loaded_data, nexus)
     if groups[nx_instrument]:
         add_metadata(_load_instrument_name(groups[nx_instrument], nexus))
     if groups[nx_disk_chopper]:

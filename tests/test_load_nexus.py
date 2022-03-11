@@ -1288,9 +1288,8 @@ def test_loads_component_position_from_multiple_transformations(
 def test_skips_source_position_if_not_given_in_file(load_function: Callable):
     builder = NexusBuilder()
     builder.add_source(Source("source"))
-    with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-    assert loaded_data is None
+    loaded_data = load_function(builder)
+    assert 'source_position' not in loaded_data
 
 
 @pytest.mark.parametrize("component_class,component_name",

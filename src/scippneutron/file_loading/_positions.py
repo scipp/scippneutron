@@ -22,37 +22,6 @@ def _make_prefixed_names(name, prefix):
     return prefix + "transform", prefix + "position", prefix + "base_position"
 
 
-def load_position_of_unique_component(groups: List[Group],
-                                      data: sc.Variable,
-                                      name: str,
-                                      nx_class: str,
-                                      nexus: LoadFromNexus,
-                                      default_position: Optional[ArrayLike] = None,
-                                      name_prefix: Optional[str] = None):
-    if len(groups) > 1:
-        warn(f"More than one {nx_class} found in file, "
-             f"skipping loading {name} position")
-        return
-    try:
-        position, transformations = _get_base_pos_and_transforms_of_component(
-            group=groups[0],
-            name=name,
-            nx_class=nx_class,
-            nexus=nexus,
-            default_position=default_position)
-    except PositionError:
-        return
-    transform_name, position_name, base_position_name = _make_prefixed_names(
-        name=name, prefix=name_prefix)
-
-    add_position_and_transforms_to_data(data=data,
-                                        transform_name=transform_name,
-                                        position_name=position_name,
-                                        base_position_name=base_position_name,
-                                        positions=position,
-                                        transforms=transformations)
-
-
 def load_positions_of_components(groups: List[Group],
                                  data: sc.Variable,
                                  name: str,
