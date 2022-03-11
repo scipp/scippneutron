@@ -220,7 +220,7 @@ class NXentry(NXobject):
 
 @functools.lru_cache()
 def _nx_class_registry():
-    from ._monitor_data import NXmonitor
+    from .nxmonitor import NXmonitor
     from ._detector_data import NXevent_data
     from .nxlog import NXlog
     from .nxdata import NXdata

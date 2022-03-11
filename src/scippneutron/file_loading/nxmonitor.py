@@ -7,6 +7,7 @@ import scipp as sc
 from ._detector_data import NXevent_data
 from .nxobject import NXobject, ScippIndex
 from .nxdata import NXdata
+from .nxtransformations import get_full_transformation_matrix
 
 
 class NXmonitor(NXobject):
@@ -56,4 +57,9 @@ class NXmonitor(NXobject):
             warnings.warn(f"Event data present in NXmonitor group {self.name}. "
                           f"Histogram-mode monitor data from this group will be "
                           f"ignored.")
-        return nxbase[select]
+        da = nxbase[select]
+        if 'depends_on' in self:
+            transform = get_full_transformation_matrix(self._group, self._loader)
+            da.coords['position'] = transform * sc.vector(value=[0, 0, 0],
+                                                          unit=transform.unit)
+        return da

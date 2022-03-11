@@ -2042,13 +2042,6 @@ def test_load_monitor_with_transformation(load_function: Callable):
 
     assert sc.identical(loaded.coords["position"],
                         sc.vector(value=[1., 2., 9.5], unit="m"))
-    assert sc.identical(loaded.attrs["base_position"],
-                        sc.vector(value=[0, 0, 0], unit="m"))
-    assert sc.identical(
-        loaded.attrs["transform"].value,
-        sc.spatial.affine_transform(value=[[1., 0., 0., 1.], [0., 1., 0., 2.],
-                                           [0., 0., 1., 9.5], [0., 0., 0., 1.]],
-                                    unit='m'))
 
 
 def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
