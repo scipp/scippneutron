@@ -921,28 +921,28 @@ def test_loads_multiple_samples(load_function: Callable):
 
 
 def test_skips_loading_source_if_more_than_one_in_file(load_function: Callable):
-    # More than one source is a serious error in the file, so
-    # load_nexus will display a warning and skip loading any sample rather
-    # than guessing which is the "correct" one.
+    # More than one source is a serious error in the file, so load_nexus will not
+    # define a source_position rather than guessing which is the "correct" one.
     builder = NexusBuilder()
     builder.add_source(Source("source_1"))
     builder.add_source(Source("source_2"))
-    with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-    assert loaded_data is None
+    loaded_data = load_function(builder)
+    assert 'source_1' in loaded_data
+    assert 'source_2' in loaded_data
+    assert 'source_position' not in loaded_data
 
 
 @pytest.mark.parametrize("component_class,component_name",
                          ((Sample, "sample"), (Source, "source")))
-def test_skips_component_position_from_distance_dataset_missing_unit(
+def test_component_position_from_distance_dataset_missing_unit(
         component_class: Union[Type[Source], Type[Sample]], component_name: str,
         load_function: Callable):
     builder = NexusBuilder()
     distance = 4.2
     builder.add_component(
         component_class(component_name, distance=distance, distance_units=None))
-    with pytest.warns(UserWarning):
-        load_function(builder)
+    loaded_data = load_function(builder)
+    assert loaded_data[f'{component_name}_position'].unit is None
 
 
 @pytest.mark.parametrize("component_class,component_name", [(Sample, "sample"),
@@ -1062,7 +1062,6 @@ def test_loads_component_position_with_multi_value_log_transformation(
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
     loaded_data = load_function(builder)
-    assert f'{component_name}_position' not in loaded_data
     assert sc.identical(
         loaded_data[component_name].value.coords['depends_on'].value.coords["time"],
         sc.Variable(dims=["time"],
@@ -1097,17 +1096,9 @@ def test_loads_component_position_with_multiple_multi_valued_log_transformations
 
     builder.add_component(component_class(component_name, depends_on=t2))
     loaded_data = load_function(builder)
-
-    assert np.allclose(loaded_data[f"{component_name}_base_position"].values, [0, 0, 0])
-    assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
-
-    expected_transformed_positions = np.array([[0, 0, 6], [0, 0, 60]])
-
-    assert np.allclose((loaded_data[f"{component_name}_transform"].value *
-                        loaded_data[f"{component_name}_base_position"]).values,
-                       expected_transformed_positions)
+    comp = loaded_data[component_name].value
     assert sc.identical(
-        loaded_data[f"{component_name}_transform"].value.coords["time"],
+        comp.coords['depends_on'].value.coords["time"],
         sc.to_unit(
             sc.Variable(dims=["time"],
                         values=[0, 1],
@@ -1138,18 +1129,11 @@ def test_multi_valued_log_transformations_time_axis_interpolated_and_trimmed(
 
     loaded_data = load_function(builder)
 
-    assert np.allclose(loaded_data[f"{component_name}_base_position"].values, [0, 0, 0])
-    assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
-
-    expected_transformed_positions = np.array([[0, 0, 6], [0, 0, 15], [0, 0, 60]])
-
-    assert np.allclose((loaded_data[f"{component_name}_transform"].value *
-                        loaded_data[f"{component_name}_base_position"]).values,
-                       expected_transformed_positions)
     # Note the start at 100 ms, since there is no known value of t2 at 0 ms (when
     # t1 starts)
+    comp = loaded_data[component_name].value
     assert sc.identical(
-        loaded_data[f"{component_name}_transform"].value.coords["time"],
+        comp.coords['depends_on'].value.coords["time"],
         sc.array(dims=["time"],
                  values=[100, 1000, 1100],
                  unit="ms",

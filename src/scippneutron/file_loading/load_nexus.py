@@ -234,18 +234,15 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                                           sc.Dataset) else loaded_data.attrs
         coords = loaded_data if isinstance(loaded_data,
                                            sc.Dataset) else loaded_data.coords
-        if len(comps) == 1:
-            comp = attrs[comps[0]].value
+        for comp_name in comps:
+            comp = attrs[comp_name].value
             if (position := _depends_on_to_position(comp)) is not None:
-                coords[f'{name}_position'] = position
+                coords[f'{comp_name}_position'] = position
             elif (distance := comp.get('distance')) is not None:
-                coords[f'{name}_position'] = sc.vector(value=[0, 0, distance.value],
-                                                       unit=distance.unit)
-        if name == 'sample' and len(comps) == 1 and 'sample_position' not in coords:
-            # Store default sample_position, but only of there is no time-dependence
-            if (transform := comp.coords.get('depends_on')) is not None:
-                if transform.dtype != sc.DType.DataArray:
-                    coords['sample_position'] = _origin('m')
+                coords[f'{comp_name}_position'] = sc.vector(
+                    value=[0, 0, distance.value], unit=distance.unit)
+            elif name == 'sample':
+                coords[f'{comp_name}_position'] = _origin('m')
 
     if groups[nx_instrument]:
         add_metadata(_load_instrument_name(groups[nx_instrument], nexus))
