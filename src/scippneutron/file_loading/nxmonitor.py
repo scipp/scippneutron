@@ -56,8 +56,4 @@ class NXmonitor(NXobject):
             warnings.warn(f"Event data present in NXmonitor group {self.name}. "
                           f"Histogram-mode monitor data from this group will be "
                           f"ignored.")
-        da = nxbase[select]
-        if (transform := self.transformation) is not None:
-            da.coords['position'] = transform * sc.vector(value=[0, 0, 0],
-                                                          unit=transform.unit)
-        return da
+        return nxbase[select]

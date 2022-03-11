@@ -143,14 +143,19 @@ def load_nexus(data_file: Union[str, h5py.File],
 
 
 def _monitor_to_canonical(monitor):
-    if monitor.bins is None:
-        return monitor
-    monitor.bins.coords['tof'] = monitor.bins.coords.pop('event_time_offset')
-    monitor.bins.coords['detector_id'] = monitor.bins.coords.pop('event_id')
-    monitor.bins.coords['pulse_time'] = sc.bins_like(
-        monitor, fill_value=monitor.coords.pop('event_time_zero'))
-    return sc.DataArray(
-        sc.broadcast(monitor.data.bins.concat('pulse'), dims=['tof'], shape=[1]))
+    if monitor.bins is not None:
+        monitor.bins.coords['tof'] = monitor.bins.coords.pop('event_time_offset')
+        monitor.bins.coords['detector_id'] = monitor.bins.coords.pop('event_id')
+        monitor.bins.coords['pulse_time'] = sc.bins_like(
+            monitor, fill_value=monitor.coords.pop('event_time_zero'))
+        da = sc.DataArray(
+            sc.broadcast(monitor.data.bins.concat('pulse'), dims=['tof'], shape=[1]))
+    else:
+        da = monitor.copy(deep=False)
+    if (transform := monitor.coords.get('depends_on')) is not None:
+        da.coords['position'] = transform * sc.vector(value=[0, 0, 0],
+                                                      unit=transform.unit)
+    return da
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
