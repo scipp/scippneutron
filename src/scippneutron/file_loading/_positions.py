@@ -8,7 +8,7 @@ from numpy.typing import ArrayLike
 import scipp as sc
 import scipp.spatial
 from ._common import Group, add_position_and_transforms_to_data
-from ._transformations import TransformationError, get_full_transformation_matrix
+from .nxtransformations import TransformationError, get_full_transformation_matrix
 from ._nexus import LoadFromNexus
 
 

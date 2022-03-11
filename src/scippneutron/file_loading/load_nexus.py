@@ -8,7 +8,6 @@ from ..nexus import NXroot, NX_class
 
 from ._common import Group, MissingDataset, BadSource, SkipSource
 from ._detector_data import load_detector_data
-from ._monitor_data import load_monitor_data
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
 from ._nexus import LoadFromNexus, ScippData
@@ -143,6 +142,17 @@ def load_nexus(data_file: Union[str, h5py.File],
     return loaded_data
 
 
+def _monitor_to_canonical(monitor):
+    if monitor.bins is None:
+        return monitor
+    monitor.bins.coords['tof'] = monitor.bins.coords.pop('event_time_offset')
+    monitor.bins.coords['detector_id'] = monitor.bins.coords.pop('event_id')
+    monitor.bins.coords['pulse_time'] = sc.bins_like(
+        monitor, fill_value=monitor.coords.pop('event_time_zero'))
+    return sc.DataArray(
+        sc.broadcast(monitor.data.bins.concat('pulse'), dims=['tof'], shape=[1]))
+
+
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                nexus: LoadFromNexus, quiet: bool, bin_by_pixel: bool) \
         -> Optional[ScippData]:
@@ -195,17 +205,19 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         add_metadata(_load_title(groups[nx_entry][0], nexus))
         add_metadata(_load_start_and_end_time(groups[nx_entry][0], nexus))
 
-    logs = {}
-    for name, log in classes.get(NX_class.NXlog, {}).items():
-        try:
-            logs[name] = sc.scalar(log[()])
-        except (RuntimeError, KeyError, BadSource, SkipSource) as e:
-            if not nexus.contains_stream(log._group):
-                warn(f"Skipped loading {log.name} due to:\n{e}")
-    add_metadata(logs)
+    def load_and_add_metadata(groups, process=lambda x: x):
+        items = {}
+        for name, group in groups.items():
+            try:
+                items[name] = sc.scalar(process(group[()]))
+            except (RuntimeError, KeyError, BadSource, SkipSource) as e:
+                if not nexus.contains_stream(group._group):
+                    warn(f"Skipped loading {group.name} due to:\n{e}")
+        add_metadata(items)
 
-    if groups[nx_monitor]:
-        add_metadata(load_monitor_data(groups[nx_monitor], nexus))
+    load_and_add_metadata(classes.get(NX_class.NXlog, {}))
+    load_and_add_metadata(classes.get(NX_class.NXmonitor, {}), _monitor_to_canonical)
+
     if groups[nx_sample]:
         _load_sample(groups[nx_sample], loaded_data, nexus)
     if groups[nx_source]:

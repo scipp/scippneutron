@@ -2004,13 +2004,6 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
     mon_2_events = load_function(builder)["monitor2"].data.values
 
     assert sc.identical(
-        mon_1_events.coords["detector_id"],
-        sc.array(dims=["detector_id"], unit=None, values=[0], dtype=sc.DType.int64))
-    assert sc.identical(
-        mon_2_events.coords["detector_id"],
-        sc.array(dims=["detector_id"], unit=None, values=[1], dtype=sc.DType.int64))
-
-    assert sc.identical(
         mon_1_events.values[0].coords["tof"],
         sc.array(dims=["event"],
                  values=[1, 2, 3, 4, 5],
@@ -2049,13 +2042,6 @@ def test_load_monitor_with_transformation(load_function: Callable):
 
     assert sc.identical(loaded.coords["position"],
                         sc.vector(value=[1., 2., 9.5], unit="m"))
-    assert sc.identical(loaded.attrs["base_position"],
-                        sc.vector(value=[0, 0, 0], unit="m"))
-    assert sc.identical(
-        loaded.attrs["transform"].value,
-        sc.spatial.affine_transform(value=[[1., 0., 0., 1.], [0., 1., 0., 2.],
-                                           [0., 0., 1., 9.5], [0., 0., 0., 1.]],
-                                    unit='m'))
 
 
 def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
