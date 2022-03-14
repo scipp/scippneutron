@@ -568,9 +568,9 @@ def test_loads_event_and_log_data_from_single_file(load_function: Callable):
     assert np.allclose(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
     assert np.allclose(loaded_data.coords['detector_id'].values, expected_detector_ids)
-    assert "base_position" not in loaded_data.meta.keys(
+    assert "position" not in loaded_data.meta.keys(
     ), "The NXdetectors had no pixel position datasets so we " \
-       "should not find 'base_position' coord"
+       "should not find 'position' coord"
 
     # Logs should have been added to the DataArray as attributes
     assert np.allclose(loaded_data.attrs[log_1.name].values.values, log_1.value)
@@ -634,7 +634,7 @@ def test_loads_pixel_positions_with_event_data(load_function: Callable):
     ]).T / 1_000  # Divide by 1000 for mm to metres
     assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
     assert loaded_data.meta[
-        'base_position'].unit == sc.units.m, \
+        'position'].unit == sc.units.m, \
         "Expected positions to be converted to metres"
 
 
@@ -921,28 +921,28 @@ def test_loads_multiple_samples(load_function: Callable):
 
 
 def test_skips_loading_source_if_more_than_one_in_file(load_function: Callable):
-    # More than one source is a serious error in the file, so
-    # load_nexus will display a warning and skip loading any sample rather
-    # than guessing which is the "correct" one.
+    # More than one source is a serious error in the file, so load_nexus will not
+    # define a source_position rather than guessing which is the "correct" one.
     builder = NexusBuilder()
     builder.add_source(Source("source_1"))
     builder.add_source(Source("source_2"))
-    with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-    assert loaded_data is None
+    loaded_data = load_function(builder)
+    assert 'source_1' in loaded_data
+    assert 'source_2' in loaded_data
+    assert 'source_position' not in loaded_data
 
 
 @pytest.mark.parametrize("component_class,component_name",
                          ((Sample, "sample"), (Source, "source")))
-def test_skips_component_position_from_distance_dataset_missing_unit(
+def test_component_position_from_distance_dataset_missing_unit(
         component_class: Union[Type[Source], Type[Sample]], component_name: str,
         load_function: Callable):
     builder = NexusBuilder()
     distance = 4.2
     builder.add_component(
         component_class(component_name, distance=distance, distance_units=None))
-    with pytest.warns(UserWarning):
-        load_function(builder)
+    loaded_data = load_function(builder)
+    assert loaded_data[f'{component_name}_position'].unit is None
 
 
 @pytest.mark.parametrize("component_class,component_name", [(Sample, "sample"),
@@ -1062,25 +1062,8 @@ def test_loads_component_position_with_multi_value_log_transformation(
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
     loaded_data = load_function(builder)
-
-    # Note: currently only asserting that we use the first value of the transformation
-    # this is wrong long-term; we need to add the full loaded transformation into the
-    # loaded data array.
-    assert np.allclose(loaded_data[f"{component_name}_base_position"].values,
-                       np.array([0, 0, 0]))
-    assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
-
-    if transform_type == TransformationType.TRANSLATION:
-        expected_transformed_positions = np.array([[0, 0, 2.3], [0, 0, 3.1]])
-    else:
-        expected_transformed_positions = np.array([[0, 0, 0], [0, 0, 0]])
-
-    assert np.allclose((loaded_data[f"{component_name}_transform"].value *
-                        loaded_data[f"{component_name}_base_position"]).values,
-                       expected_transformed_positions)
-
     assert sc.identical(
-        loaded_data[f"{component_name}_transform"].value.coords["time"],
+        loaded_data[component_name].value.coords['depends_on'].value.coords["time"],
         sc.Variable(dims=["time"],
                     values=[1300000000, 6400000000],
                     unit="ns",
@@ -1113,17 +1096,9 @@ def test_loads_component_position_with_multiple_multi_valued_log_transformations
 
     builder.add_component(component_class(component_name, depends_on=t2))
     loaded_data = load_function(builder)
-
-    assert np.allclose(loaded_data[f"{component_name}_base_position"].values, [0, 0, 0])
-    assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
-
-    expected_transformed_positions = np.array([[0, 0, 6], [0, 0, 60]])
-
-    assert np.allclose((loaded_data[f"{component_name}_transform"].value *
-                        loaded_data[f"{component_name}_base_position"]).values,
-                       expected_transformed_positions)
+    comp = loaded_data[component_name].value
     assert sc.identical(
-        loaded_data[f"{component_name}_transform"].value.coords["time"],
+        comp.coords['depends_on'].value.coords["time"],
         sc.to_unit(
             sc.Variable(dims=["time"],
                         values=[0, 1],
@@ -1154,18 +1129,11 @@ def test_multi_valued_log_transformations_time_axis_interpolated_and_trimmed(
 
     loaded_data = load_function(builder)
 
-    assert np.allclose(loaded_data[f"{component_name}_base_position"].values, [0, 0, 0])
-    assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
-
-    expected_transformed_positions = np.array([[0, 0, 6], [0, 0, 15], [0, 0, 60]])
-
-    assert np.allclose((loaded_data[f"{component_name}_transform"].value *
-                        loaded_data[f"{component_name}_base_position"]).values,
-                       expected_transformed_positions)
     # Note the start at 100 ms, since there is no known value of t2 at 0 ms (when
     # t1 starts)
+    comp = loaded_data[component_name].value
     assert sc.identical(
-        loaded_data[f"{component_name}_transform"].value.coords["time"],
+        comp.coords['depends_on'].value.coords["time"],
         sc.array(dims=["time"],
                  values=[100, 1000, 1100],
                  unit="ms",
@@ -1280,17 +1248,12 @@ def test_loads_component_position_from_multiple_transformations(
                        expected_position)
     assert loaded_data[f"{component_name}_position"].unit == sc.Unit("m")
 
-    assert np.allclose(loaded_data[f"{component_name}_base_position"].values,
-                       np.array([0, 0, 0]))
-    assert loaded_data[f"{component_name}_base_position"].unit == sc.Unit("m")
-
 
 def test_skips_source_position_if_not_given_in_file(load_function: Callable):
     builder = NexusBuilder()
     builder.add_source(Source("source"))
-    with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-    assert loaded_data is None
+    loaded_data = load_function(builder)
+    assert 'source_position' not in loaded_data
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -1591,23 +1554,23 @@ def test_loads_sample_ub_matrix(load_function: Callable):
     builder = NexusBuilder()
     builder.add_component(Sample("sample", ub_matrix=np.ones(shape=[3, 3])))
     loaded_data = load_function(builder)
-    assert "sample_ub_matrix" in loaded_data
+    sample = loaded_data['sample'].value
     assert sc.identical(
-        loaded_data["sample_ub_matrix"].data,
+        sample['ub_matrix'].data,
         sc.spatial.linear_transform(value=np.ones(shape=[3, 3]),
                                     unit=sc.units.angstrom**-1))
-    assert "sample_u_matrix" not in loaded_data
+    assert "orientation_matrix" not in sample
 
 
-def test_loads_sample_u_matrix(load_function: Callable):
+def test_loads_sample_orientation_matrix(load_function: Callable):
     builder = NexusBuilder()
     builder.add_component(Sample("sample", orientation_matrix=np.ones(shape=[3, 3])))
     loaded_data = load_function(builder)
-    assert "sample_u_matrix" in loaded_data
+    sample = loaded_data['sample'].value
     assert sc.identical(
-        loaded_data["sample_u_matrix"].data,
+        sample["orientation_matrix"].data,
         sc.spatial.linear_transform(value=np.ones(shape=[3, 3]), unit=sc.units.one))
-    assert "sample_ub_matrix" not in loaded_data
+    assert "ub_matrix" not in sample
 
 
 def test_loads_multiple_sample_ub_matrix(load_function: Callable):
@@ -1617,13 +1580,13 @@ def test_loads_multiple_sample_ub_matrix(load_function: Callable):
     builder.add_component(Sample("sample3"))  # No ub specified
     loaded_data = load_function(builder)
     assert sc.identical(
-        loaded_data["sample1_ub_matrix"].data,
+        loaded_data["sample1"].value["ub_matrix"].data,
         sc.spatial.linear_transform(value=np.ones(shape=[3, 3]),
                                     unit=sc.units.angstrom**-1))
     assert sc.identical(
-        loaded_data["sample2_ub_matrix"].data,
+        loaded_data["sample2"].value["ub_matrix"].data,
         sc.spatial.linear_transform(value=np.identity(3), unit=sc.units.angstrom**-1))
-    assert "sample3_ub_matrix" not in loaded_data
+    assert "ub_matrix" not in loaded_data['sample3'].value
 
 
 def test_warning_but_no_error_for_unrecognised_log_unit(load_function: Callable):

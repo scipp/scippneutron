@@ -16,11 +16,9 @@ from timeit import default_timer as timer
 from typing import Union, List, Optional, Dict, Tuple, Set
 from contextlib import contextmanager
 from warnings import warn
-from ._positions import (load_position_of_unique_component,
-                         load_positions_of_components)
-from ._sample import load_ub_matrices_of_components
 from ._nx_classes import (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample,
                           nx_source, nx_detector, nx_disk_chopper, nx_monitor)
+from .nxtransformations import TransformationError
 
 
 @contextmanager
@@ -67,28 +65,6 @@ def _load_chopper(chopper_groups: List[Group], nexus: LoadFromNexus) -> Dict:
                  f"{e.__class__.__name__}: {e}")
 
     return choppers
-
-
-def _load_sample(sample_groups: List[Group], data: ScippData, nexus: LoadFromNexus):
-    load_positions_of_components(groups=sample_groups,
-                                 data=data,
-                                 name="sample",
-                                 nx_class=nx_sample,
-                                 nexus=nexus,
-                                 default_position=[0, 0, 0])
-    load_ub_matrices_of_components(groups=sample_groups,
-                                   data=data,
-                                   name="sample",
-                                   nx_class=nx_sample,
-                                   nexus=nexus)
-
-
-def _load_source(source_groups: List[Group], data: ScippData, nexus: LoadFromNexus):
-    load_position_of_unique_component(groups=source_groups,
-                                      data=data,
-                                      name="source",
-                                      nx_class=nx_source,
-                                      nexus=nexus)
 
 
 def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:
@@ -142,15 +118,31 @@ def load_nexus(data_file: Union[str, h5py.File],
     return loaded_data
 
 
+def _origin(unit) -> sc.Variable:
+    return sc.vector(value=[0, 0, 0], unit=unit)
+
+
+def _depends_on_to_position(da) -> Union[None, sc.Variable]:
+    if (transform := da.coords.get('depends_on')) is not None:
+        if transform.dtype == sc.DType.DataArray:
+            return None  # cannot compute position if time-dependent
+        else:
+            return transform * _origin(transform.unit)
+
+
 def _monitor_to_canonical(monitor):
-    if monitor.bins is None:
-        return monitor
-    monitor.bins.coords['tof'] = monitor.bins.coords.pop('event_time_offset')
-    monitor.bins.coords['detector_id'] = monitor.bins.coords.pop('event_id')
-    monitor.bins.coords['pulse_time'] = sc.bins_like(
-        monitor, fill_value=monitor.coords.pop('event_time_zero'))
-    return sc.DataArray(
-        sc.broadcast(monitor.data.bins.concat('pulse'), dims=['tof'], shape=[1]))
+    if monitor.bins is not None:
+        monitor.bins.coords['tof'] = monitor.bins.coords.pop('event_time_offset')
+        monitor.bins.coords['detector_id'] = monitor.bins.coords.pop('event_id')
+        monitor.bins.coords['pulse_time'] = sc.bins_like(
+            monitor, fill_value=monitor.coords.pop('event_time_zero'))
+        da = sc.DataArray(
+            sc.broadcast(monitor.data.bins.concat('pulse'), dims=['tof'], shape=[1]))
+    else:
+        da = monitor.copy(deep=False)
+    if (position := _depends_on_to_position(monitor)) is not None:
+        da.coords['position'] = position
+    return da
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
@@ -207,21 +199,37 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
 
     def load_and_add_metadata(groups, process=lambda x: x):
         items = {}
+        loaded_groups = []
         for name, group in groups.items():
             try:
                 items[name] = sc.scalar(process(group[()]))
-            except (RuntimeError, KeyError, BadSource, SkipSource) as e:
+                loaded_groups.append(name)
+            except (BadSource, SkipSource, TransformationError, sc.DimensionError,
+                    KeyError) as e:
                 if not nexus.contains_stream(group._group):
                     warn(f"Skipped loading {group.name} due to:\n{e}")
         add_metadata(items)
+        return loaded_groups
 
     load_and_add_metadata(classes.get(NX_class.NXlog, {}))
     load_and_add_metadata(classes.get(NX_class.NXmonitor, {}), _monitor_to_canonical)
+    for name, tag in {'sample': NX_class.NXsample, 'source': NX_class.NXsource}.items():
+        comps = classes.get(tag, {})
+        comps = load_and_add_metadata(comps)
+        attrs = loaded_data if isinstance(loaded_data,
+                                          sc.Dataset) else loaded_data.attrs
+        coords = loaded_data if isinstance(loaded_data,
+                                           sc.Dataset) else loaded_data.coords
+        for comp_name in comps:
+            comp = attrs[comp_name].value
+            if (position := _depends_on_to_position(comp)) is not None:
+                coords[f'{comp_name}_position'] = position
+            elif (distance := comp.get('distance')) is not None:
+                coords[f'{comp_name}_position'] = sc.vector(
+                    value=[0, 0, distance.value], unit=distance.unit)
+            elif name == 'sample':
+                coords[f'{comp_name}_position'] = _origin('m')
 
-    if groups[nx_sample]:
-        _load_sample(groups[nx_sample], loaded_data, nexus)
-    if groups[nx_source]:
-        _load_source(groups[nx_source], loaded_data, nexus)
     if groups[nx_instrument]:
         add_metadata(_load_instrument_name(groups[nx_instrument], nexus))
     if groups[nx_disk_chopper]:

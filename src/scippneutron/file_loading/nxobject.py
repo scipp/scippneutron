@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
-import numpy as np
 import scipp as sc
 from enum import Enum, auto
 import functools
@@ -29,7 +28,8 @@ class NX_class(Enum):
     NXlog = auto()
     NXmonitor = auto()
     NXroot = auto()
-    NXtransformations = auto()
+    NXsample = auto()
+    NXsource = auto()
 
 
 class Attrs:
@@ -72,7 +72,7 @@ class Field:
         self._loader = loader
         self._dims = [f'dim_{i}' for i in range(self.ndim)] if dims is None else dims
 
-    def __getitem__(self, select) -> np.ndarray:
+    def __getitem__(self, select) -> sc.Variable:
         index = to_plain_index(self.dims, select)
         return self._loader.load_dataset_direct(self._dataset,
                                                 dimensions=self.dims,
@@ -112,6 +112,18 @@ class Field:
         return None
 
 
+class DependsOn:
+    def __init__(self, field: Field):
+        self._field = field
+
+    def __getitem__(self, select) -> sc.Variable:
+        index = to_plain_index([], select)
+        if index != tuple():
+            raise ValueError("Cannot select slice when loading 'depends_on'")
+        from .nxtransformations import get_full_transformation_matrix
+        return get_full_transformation_matrix(self._field._group, self._field._loader)
+
+
 class NXobject:
     """Base class for all NeXus groups.
     """
@@ -139,7 +151,12 @@ class NXobject:
             else:
                 dims = self._get_field_dims(name) if use_field_dims else None
                 return Field(item, self._loader, dims=dims)
-        return self._getitem(name)
+        da = self._getitem(name)
+        if (depends_on := self.depends_on) is not None:
+            obj = depends_on[()]
+            da.coords['depends_on'] = obj if isinstance(obj,
+                                                        sc.Variable) else sc.scalar(obj)
+        return da
 
     def __getitem__(self,
                     name: NXobjectIndex) -> Union['__class__', Field, sc.DataArray]:
@@ -200,6 +217,12 @@ class NXobject:
         """
         return NX_class[self.attrs['NX_class']]
 
+    @property
+    def depends_on(self) -> DependsOn:
+        if 'depends_on' in self:
+            return DependsOn(self)
+        return None
+
     def __repr__(self) -> str:
         return f'<{type(self).__name__} "{self._group.name}">'
 
@@ -225,8 +248,12 @@ def _nx_class_registry():
     from .nxlog import NXlog
     from .nxdata import NXdata
     from .nxdetector import NXdetector
+    from .nxsample import NXsample
+    from .nxsource import NXsource
     return {
         cls.__name__: cls
-        for cls in
-        [NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector]
+        for cls in [
+            NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector,
+            NXsample, NXsource
+        ]
     }
