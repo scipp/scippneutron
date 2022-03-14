@@ -79,7 +79,7 @@ class NXevent_data(NXobject):
         return None
 
     def _getitem(self, index: ScippIndex) -> sc.DataArray:
-        return _load_event_group(self._group, self._loader, quiet=True, select=index)
+        return self._load_event_group(self._group, self._loader, select=index)
 
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:
         if name in ['event_time_zero', 'event_index']:
@@ -88,108 +88,105 @@ class NXevent_data(NXobject):
             return [_event_dimension]
         return None
 
+    def _load_event_group(self, group: Group, nexus: LoadFromNexus,
+                          select=tuple()) -> sc.DataArray:
+        _check_for_missing_fields(group, nexus)
+        index = to_plain_index([_pulse_dimension], select)
 
-def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
-                      select=tuple()) -> sc.DataArray:
-    _check_for_missing_fields(group, nexus)
-    index = to_plain_index([_pulse_dimension], select)
+        def shape(name):
+            return nexus.get_shape(nexus.get_dataset_from_group(group, name))
 
-    def shape(name):
-        return nexus.get_shape(nexus.get_dataset_from_group(group, name))
-
-    max_index = shape("event_index")[0]
-    single = False
-    if index is Ellipsis or index == tuple():
-        last_loaded = False
-    else:
-        if isinstance(index, int):
-            single = True
-            start, stop, _ = slice(index, None).indices(max_index)
-            if start == stop:
-                raise IndexError('Index {start} is out of range')
-            index = slice(start, start + 1)
-        start, stop, stride = index.indices(max_index)
-        if stop + stride > max_index:
+        max_index = shape("event_index")[0]
+        single = False
+        if index is Ellipsis or index == tuple():
             last_loaded = False
         else:
-            stop += stride
-            last_loaded = True
-        index = slice(start, stop, stride)
+            if isinstance(index, int):
+                single = True
+                start, stop, _ = slice(index, None).indices(max_index)
+                if start == stop:
+                    raise IndexError('Index {start} is out of range')
+                index = slice(start, start + 1)
+            start, stop, stride = index.indices(max_index)
+            if stop + stride > max_index:
+                last_loaded = False
+            else:
+                stop += stride
+                last_loaded = True
+            index = slice(start, stop, stride)
 
-    event_index = nexus.load_dataset_from_group_as_numpy_array(
-        group, "event_index", index)
-    event_time_zero = _load_event_time_zero(group, nexus, index)
+        event_index = nexus.load_dataset_from_group_as_numpy_array(
+            group, "event_index", index)
+        event_time_zero = _load_event_time_zero(group, nexus, index)
 
-    num_event = shape("event_time_offset")[0]
-    # Some files contain uint64 "max" indices, which turn into negatives during
-    # conversion to int64. This is a hack to get arround this.
-    event_index[event_index < 0] = num_event
+        num_event = shape("event_time_offset")[0]
+        # Some files contain uint64 "max" indices, which turn into negatives during
+        # conversion to int64. This is a hack to get arround this.
+        event_index[event_index < 0] = num_event
 
-    if len(event_index) > 0:
-        event_select = slice(event_index[0],
-                             event_index[-1] if last_loaded else num_event)
-    else:
-        event_select = slice(None)
+        if len(event_index) > 0:
+            event_select = slice(event_index[0],
+                                 event_index[-1] if last_loaded else num_event)
+        else:
+            event_select = slice(None)
 
-    if nexus.dataset_in_group(group, "event_id")[0]:
-        event_id = nexus.load_dataset(group,
-                                      "event_id", [_event_dimension],
-                                      index=event_select)
-        if event_id.dtype not in [sc.DType.int32, sc.DType.int64]:
-            raise NexusStructureError(
-                "NXevent_data contains event_id field with non-integer values")
-    else:
-        event_id = None
+        if nexus.dataset_in_group(group, "event_id")[0]:
+            event_id = nexus.load_dataset(group,
+                                          "event_id", [_event_dimension],
+                                          index=event_select)
+            if event_id.dtype not in [sc.DType.int32, sc.DType.int64]:
+                raise NexusStructureError(
+                    "NXevent_data contains event_id field with non-integer values")
+        else:
+            event_id = None
 
-    event_time_offset = nexus.load_dataset(group,
-                                           "event_time_offset", [_event_dimension],
-                                           index=event_select)
+        event_time_offset = nexus.load_dataset(group,
+                                               "event_time_offset", [_event_dimension],
+                                               index=event_select)
 
-    # Weights are not stored in NeXus, so use 1s
-    weights = sc.ones(dims=[_event_dimension],
-                      shape=event_time_offset.shape,
-                      unit='counts',
-                      dtype=np.float32,
-                      with_variances=True)
+        # Weights are not stored in NeXus, so use 1s
+        weights = sc.ones(dims=[_event_dimension],
+                          shape=event_time_offset.shape,
+                          unit='counts',
+                          dtype=np.float32,
+                          with_variances=True)
 
-    events = sc.DataArray(data=weights, coords={'event_time_offset': event_time_offset})
-    if event_id is not None:
-        events.coords['event_id'] = event_id
+        events = sc.DataArray(data=weights,
+                              coords={'event_time_offset': event_time_offset})
+        if event_id is not None:
+            events.coords['event_id'] = event_id
 
-    if not last_loaded:
-        event_index = np.append(event_index, num_event)
-    else:
-        # Not a bin-edge coord, all events in bin are associated with same (previous)
-        # pulse time value
-        event_time_zero = event_time_zero[:-1]
+        if not last_loaded:
+            event_index = np.append(event_index, num_event)
+        else:
+            # Not a bin-edge coord, all events in bin are associated with same
+            # (previous) pulse time value
+            event_time_zero = event_time_zero[:-1]
 
-    event_index = sc.array(dims=[_pulse_dimension],
-                           values=event_index,
-                           dtype=sc.DType.int64,
-                           unit=None)
+        event_index = sc.array(dims=[_pulse_dimension],
+                               values=event_index,
+                               dtype=sc.DType.int64,
+                               unit=None)
 
-    event_index -= event_index.min()
+        event_index -= event_index.min()
 
-    # There is some variation in the last recorded event_index in files from different
-    # institutions. We try to make sure here that it is what would be the first index of
-    # the next pulse. In other words, ensure that event_index includes the bin edge for
-    # the last pulse.
-    if single:
-        begins = event_index[_pulse_dimension, 0]
-        ends = event_index[_pulse_dimension, 1]
-        event_time_zero = event_time_zero[_pulse_dimension, 0]
-    else:
-        begins = event_index[_pulse_dimension, :-1]
-        ends = event_index[_pulse_dimension, 1:]
+        # There is some variation in the last recorded event_index in files from
+        # different institutions. We try to make sure here that it is what would be the
+        # first index of the next pulse. In other words, ensure that event_index
+        # includes the bin edge for the last pulse.
+        if single:
+            begins = event_index[_pulse_dimension, 0]
+            ends = event_index[_pulse_dimension, 1]
+            event_time_zero = event_time_zero[_pulse_dimension, 0]
+        else:
+            begins = event_index[_pulse_dimension, :-1]
+            ends = event_index[_pulse_dimension, 1:]
 
-    try:
-        binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
-    except sc.SliceError:
-        raise BadSource(f"Event index in NXEvent at {group.name}/event_index was not"
-                        f" ordered. The index must be ordered to load pulse times.")
+        try:
+            binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
+        except sc.SliceError:
+            raise BadSource(
+                f"Event index in NXEvent at {group.name}/event_index was not"
+                f" ordered. The index must be ordered to load pulse times.")
 
-    if not quiet:
-        print(f"Loaded {len(event_time_offset)} events from "
-              f"{nexus.get_name(group)} containing {num_event} events")
-
-    return sc.DataArray(data=binned, coords={'event_time_zero': event_time_zero})
+        return sc.DataArray(data=binned, coords={'event_time_zero': event_time_zero})
