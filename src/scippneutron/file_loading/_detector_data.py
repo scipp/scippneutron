@@ -102,7 +102,8 @@ class NXevent_data(NXobject):
         else:
             # Not a bin-edge coord, all events in bin are associated with same
             # (previous) pulse time value
-            event_time_zero = event_time_zero[:-1]
+            # Copy to avoid confusing size display in _repr_html_
+            event_time_zero = event_time_zero[:-1].copy()
 
         event_index = sc.array(dims=[_pulse_dimension],
                                values=event_index,
@@ -118,7 +119,7 @@ class NXevent_data(NXobject):
         if single:
             begins = event_index[_pulse_dimension, 0]
             ends = event_index[_pulse_dimension, 1]
-            event_time_zero = event_time_zero[_pulse_dimension, 0]
+            event_time_zero = event_time_zero[_pulse_dimension, 0].copy()
         else:
             begins = event_index[_pulse_dimension, :-1]
             ends = event_index[_pulse_dimension, 1:]
