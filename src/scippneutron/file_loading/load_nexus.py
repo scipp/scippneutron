@@ -18,8 +18,7 @@ from typing import Union, List, Optional, Dict, Tuple, Set
 from contextlib import contextmanager
 from warnings import warn
 from .nxtransformations import TransformationError
-from ._nx_classes import (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample,
-                          nx_source, nx_detector, nx_disk_chopper, nx_monitor)
+from .nxobject import NexusStructureError
 
 nx_entry = "NXentry"
 nx_instrument = "NXinstrument"
@@ -177,7 +176,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                     positions=det.coords.pop('pixel_offset'),
                     transforms=det.coords.pop('depends_on', None))
             loaded_detectors.append(det)
-        except Exception as e:
+        except (BadSource, SkipSource, NexusStructureError, KeyError, sc.DTypeError,
+                ValueError) as e:
             if not nexus.contains_stream(group._group):
                 warn(f"Skipped loading {group.name} due to:\n{e}")
 
@@ -202,7 +202,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                     det_id = sc.arange('detector_id', det_min, det_max + 1, unit=None)
                     events = sc.bin(events, groups=[det_id], erase=['pulse', 'bank'])
                 loaded_events.append(events)
-            except Exception as e:
+            except (NexusStructureError) as e:
                 if not nexus.contains_stream(group._group):
                     warn(f"Skipped loading {group.name} due to:\n{e}")
         if len(loaded_events):
