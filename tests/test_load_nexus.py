@@ -1853,9 +1853,9 @@ def test_nexus_file_with_choppers(load_function: Callable):
                 rotation_units="Hz",
                 distance_units="m"))
     loaded_data = load_function(builder)
-    assert sc.identical(loaded_data["chopper_1"].attrs["rotation_speed"],
-                        60.0 * sc.Unit("Hz"))
-    assert sc.identical(loaded_data["chopper_1"].attrs["distance"], 10.0 * sc.Unit("m"))
+    chopper = loaded_data['chopper_1'].value
+    assert sc.identical(chopper["rotation_speed"].data, 60.0 * sc.Unit("Hz"))
+    assert sc.identical(chopper["distance"].data, 10.0 * sc.Unit("m"))
 
 
 def test_nexus_file_with_two_choppers(load_function: Callable):
@@ -1874,14 +1874,12 @@ def test_nexus_file_with_two_choppers(load_function: Callable):
                 rotation_units="Hz",
                 distance_units="m"))
     loaded_data = load_function(builder)
-
-    assert sc.identical(loaded_data["chopper_1"].attrs["rotation_speed"],
-                        (65.0 / 1000) * sc.Unit("MHz"))
-    assert sc.identical(loaded_data["chopper_1"].attrs["distance"],
-                        (11.0 * 1000) * sc.Unit("mm"))
-    assert sc.identical(loaded_data["chopper_2"].attrs["rotation_speed"],
-                        60.0 * sc.Unit("Hz"))
-    assert sc.identical(loaded_data["chopper_2"].attrs["distance"], 10.0 * sc.Unit("m"))
+    chopper1 = loaded_data['chopper_1'].value
+    chopper2 = loaded_data['chopper_2'].value
+    assert sc.identical(chopper1["rotation_speed"].data, (65.0 / 1000) * sc.Unit("MHz"))
+    assert sc.identical(chopper1["distance"].data, (11.0 * 1000) * sc.Unit("mm"))
+    assert sc.identical(chopper2["rotation_speed"].data, 60.0 * sc.Unit("Hz"))
+    assert sc.identical(chopper2["distance"].data, 10.0 * sc.Unit("m"))
 
 
 def test_load_monitors(load_function: Callable):

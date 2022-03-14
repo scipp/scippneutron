@@ -47,26 +47,6 @@ def _load_instrument_name(instrument_groups: List[Group], nexus: LoadFromNexus) 
         return {}
 
 
-def _load_chopper(chopper_groups: List[Group], nexus: LoadFromNexus) -> Dict:
-    choppers = {}
-    for chopper_group in chopper_groups:
-        chopper_name = chopper_group.name.split("/")[-1]
-        try:
-            rotation_speed = nexus.load_dataset(group=chopper_group,
-                                                dataset_name="rotation_speed")
-            distance = nexus.load_dataset(group=chopper_group, dataset_name="distance")
-            choppers[chopper_name] = sc.DataArray(data=sc.scalar(value=chopper_name),
-                                                  attrs={
-                                                      "rotation_speed": rotation_speed,
-                                                      "distance": distance
-                                                  })
-        except MissingDataset as e:
-            warn(f"Skipped loading chopper {chopper_name} because "
-                 f"{e.__class__.__name__}: {e}")
-
-    return choppers
-
-
 def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:
     try:
         return {
@@ -211,6 +191,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         add_metadata(items)
         return loaded_groups
 
+    load_and_add_metadata(classes.get(NX_class.NXdisk_chopper, {}))
     load_and_add_metadata(classes.get(NX_class.NXlog, {}))
     load_and_add_metadata(classes.get(NX_class.NXmonitor, {}), _monitor_to_canonical)
     for name, tag in {'sample': NX_class.NXsample, 'source': NX_class.NXsource}.items():
@@ -232,8 +213,6 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
 
     if groups[nx_instrument]:
         add_metadata(_load_instrument_name(groups[nx_instrument], nexus))
-    if groups[nx_disk_chopper]:
-        add_metadata(_load_chopper(groups[nx_disk_chopper], nexus))
 
     # Return None if we have an empty dataset at this point
     if no_event_data and not loaded_data.keys():

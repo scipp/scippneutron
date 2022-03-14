@@ -23,6 +23,7 @@ class NexusStructureError(Exception):
 class NX_class(Enum):
     NXdata = auto()
     NXdetector = auto()
+    NXdisk_chopper = auto()
     NXentry = auto()
     NXevent_data = auto()
     NXlog = auto()
@@ -243,17 +244,18 @@ class NXentry(NXobject):
 
 @functools.lru_cache()
 def _nx_class_registry():
-    from .nxmonitor import NXmonitor
     from ._detector_data import NXevent_data
-    from .nxlog import NXlog
     from .nxdata import NXdata
     from .nxdetector import NXdetector
+    from .nxdisk_chopper import NXdisk_chopper
+    from .nxlog import NXlog
+    from .nxmonitor import NXmonitor
     from .nxsample import NXsample
     from .nxsource import NXsource
     return {
         cls.__name__: cls
         for cls in [
             NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector,
-            NXsample, NXsource
+            NXsample, NXsource, NXdisk_chopper
         ]
     }
