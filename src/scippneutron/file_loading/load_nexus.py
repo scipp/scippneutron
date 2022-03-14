@@ -8,7 +8,7 @@ import scipp as sc
 from ..nexus import NXroot, NX_class
 
 from ._common import Group, MissingDataset, BadSource, SkipSource
-from ._common add_position_and_transforms_to_data
+from ._common import add_position_and_transforms_to_data
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
 from ._nexus import LoadFromNexus, ScippData
@@ -17,9 +17,12 @@ from timeit import default_timer as timer
 from typing import Union, List, Optional, Dict, Tuple, Set
 from contextlib import contextmanager
 from warnings import warn
+from .nxtransformations import TransformationError
 from ._nx_classes import (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample,
                           nx_source, nx_detector, nx_disk_chopper, nx_monitor)
-from .nxtransformations import TransformationError
+
+nx_entry = "NXentry"
+nx_instrument = "NXinstrument"
 
 
 @contextmanager
@@ -133,10 +136,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         root_node = nexus_file
     # Use visititems (in find_by_nx_class) to traverse the entire file tree,
     # looking for any NXClass that can be read.
-    # groups is a dict with a key for each category (nx_log, nx_instrument...)
-    groups = nexus.find_by_nx_class(
-        (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample, nx_source,
-         nx_detector, nx_monitor, nx_disk_chopper), root_node)
+    # groups is a dict with a key for each category (nx_entry, nx_instrument...)
+    groups = nexus.find_by_nx_class((nx_entry, nx_instrument), root_node)
 
     if len(groups[nx_entry]) > 1:
         # We can't sensibly load from multiple NXentry, for example each
@@ -199,10 +200,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                 if len(events.bins.constituents['data']) != 0:
                     # See scipp/scipp#2490
                     det_id = sc.arange('detector_id', det_min, det_max + 1, unit=None)
-                    events = sc.bin(
-                        events,
-                        groups=[det_id],
-                        erase=['pulse', 'bank'])
+                    events = sc.bin(events, groups=[det_id], erase=['pulse', 'bank'])
                 loaded_events.append(events)
             except Exception as e:
                 if not nexus.contains_stream(group._group):
