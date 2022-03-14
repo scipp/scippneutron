@@ -124,10 +124,12 @@ def convert_time_to_datetime64(
             f"'{group_path}/time@start' failed to parse as an ISO8601 date. "
             f"Skipping loading group at '{group_path}'")
 
-    _scale = sc.scalar(value=scaling_factor if scaling_factor is not None else 1,
-                       unit=sc.units.dimensionless)
-
-    return _start_ts + (raw_times_ns * _scale).astype(sc.DType.int64, copy=False)
+    if scaling_factor is None:
+        times = raw_times_ns.astype(sc.DType.int64, copy=False)
+    else:
+        _scale = sc.scalar(value=scaling_factor)
+        times = (raw_times_ns * _scale).astype(sc.DType.int64, copy=False)
+    return _start_ts + times
 
 
 # Note that scipp does not support dicts yet, but this HDF5 code does, to
