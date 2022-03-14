@@ -7,7 +7,7 @@ from typing import List, Union
 import scipp as sc
 from .nxobject import NX_class, NXobject, Field, ScippIndex, NexusStructureError
 from .nxdata import NXdata
-from ._detector_data import NXevent_data
+from .nxevent_data import NXevent_data
 from ._common import to_child_select
 
 

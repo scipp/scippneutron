@@ -4,7 +4,7 @@
 from typing import List, Union
 import warnings
 import scipp as sc
-from ._detector_data import NXevent_data
+from .nxevent_data import NXevent_data
 from .nxobject import NXobject, ScippIndex
 from .nxdata import NXdata
 

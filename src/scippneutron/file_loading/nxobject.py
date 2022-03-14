@@ -244,7 +244,7 @@ class NXentry(NXobject):
 
 @functools.lru_cache()
 def _nx_class_registry():
-    from ._detector_data import NXevent_data
+    from .nxevent_data import NXevent_data
     from .nxdata import NXdata
     from .nxdetector import NXdetector
     from .nxdisk_chopper import NXdisk_chopper
