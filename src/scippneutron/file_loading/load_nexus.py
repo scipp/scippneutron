@@ -202,7 +202,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                     det_id = sc.arange('detector_id', det_min, det_max + 1, unit=None)
                     events = sc.bin(events, groups=[det_id], erase=['pulse', 'bank'])
                 loaded_events.append(events)
-            except (NexusStructureError) as e:
+            except (BadSource, SkipSource, NexusStructureError) as e:
                 if not nexus.contains_stream(group._group):
                     warn(f"Skipped loading {group.name} due to:\n{e}")
         if len(loaded_events):
