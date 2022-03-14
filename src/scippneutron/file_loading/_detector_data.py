@@ -100,19 +100,13 @@ class NXevent_data(NXobject):
         else:
             event_select = slice(None)
 
-        if nexus.dataset_in_group(group, "event_id")[0]:
-            event_id = nexus.load_dataset(group,
-                                          "event_id", [_event_dimension],
-                                          index=event_select)
+        if (event_id := self.get('event_id')) is not None:
+            event_id = event_id[event_select]
             if event_id.dtype not in [sc.DType.int32, sc.DType.int64]:
                 raise NexusStructureError(
                     "NXevent_data contains event_id field with non-integer values")
-        else:
-            event_id = None
 
-        event_time_offset = nexus.load_dataset(group,
-                                               "event_time_offset", [_event_dimension],
-                                               index=event_select)
+        event_time_offset = self['event_time_offset'][event_select]
 
         # Weights are not stored in NeXus, so use 1s
         weights = sc.ones(dims=[_event_dimension],
