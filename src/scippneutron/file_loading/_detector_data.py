@@ -93,10 +93,7 @@ class NXevent_data(NXobject):
         _check_for_missing_fields(group, nexus)
         index = to_plain_index([_pulse_dimension], select)
 
-        def shape(name):
-            return nexus.get_shape(nexus.get_dataset_from_group(group, name))
-
-        max_index = shape("event_index")[0]
+        max_index = self["event_index"].shape[0]
         single = False
         if index is Ellipsis or index == tuple():
             last_loaded = False
@@ -119,7 +116,7 @@ class NXevent_data(NXobject):
             group, "event_index", index)
         event_time_zero = _load_event_time_zero(group, nexus, index)
 
-        num_event = shape("event_time_offset")[0]
+        num_event = self["event_time_offset"].shape[0]
         # Some files contain uint64 "max" indices, which turn into negatives during
         # conversion to int64. This is a hack to get arround this.
         event_index[event_index < 0] = num_event
