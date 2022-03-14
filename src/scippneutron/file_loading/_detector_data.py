@@ -14,7 +14,7 @@ import scipp as sc
 from warnings import warn
 from .nxtransformations import get_full_transformation_matrix
 from ._nexus import LoadFromNexus
-from .nxobject import NXobject, ScippIndex
+from .nxobject import NXobject, ScippIndex, NexusStructureError
 
 _bank_dimension = "bank"
 _detector_dimension = "detector_id"
@@ -276,6 +276,9 @@ def _load_event_group(group: Group, nexus: LoadFromNexus, quiet: bool,
         event_id = nexus.load_dataset(group,
                                       "event_id", [_event_dimension],
                                       index=event_select)
+        if event_id.dtype not in [sc.DType.int32, sc.DType.int64]:
+            raise NexusStructureError(
+                "NXevent_data contains event_id field with non-integer values")
     else:
         event_id = None
 

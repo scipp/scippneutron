@@ -135,6 +135,9 @@ class NXdetector(NXobject):
                     "Use ellipsis or an empty tuple to load the full detector.")
             return None
         select = to_child_select(self.dims, field.dims, select)
+        if field.dtype not in ['int32', 'int64']:
+            raise NexusStructureError(
+                "NXdetector contains detector_number field with non-integer values")
         return field[select]
 
     def pixel_offset(self, select) -> sc.Variable:

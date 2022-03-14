@@ -178,6 +178,37 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     if len(loaded_detectors):
         no_event_data = False
         loaded_data = sc.concat(loaded_detectors, 'detector_id')
+    elif len(detectors) == 0:
+        # If there are no NXdetector groups, load NXevent_data directly
+        loaded_events = []
+        for name, group in classes.get(NX_class.NXevent_data, {}).items():
+            no_event_data = False
+            try:
+                events = group[()]
+                events.coords['pulse_time'] = events.coords.pop('event_time_zero')
+                events.bins.coords['tof'] = events.bins.coords.pop('event_time_offset')
+                events.bins.coords['detector_id'] = events.bins.coords.pop('event_id')
+                det_min = events.bins.coords['detector_id'].min().value
+                det_max = events.bins.coords['detector_id'].max().value
+                events = sc.bin(
+                    events,
+                    groups=[sc.arange('detector_id', det_min, det_max + 1, unit=None)],
+                    erase=['pulse', 'bank'])
+                loaded_events.append(events)
+            except Exception as e:
+                if not nexus.contains_stream(group._group):
+                    warn(f"Skipped loading {group.name} due to:\n{e}")
+        if len(loaded_events):
+            no_event_data = False
+            loaded_data = sc.concat(loaded_events, 'detector_id')
+        else:
+            no_event_data = True
+            loaded_data = sc.Dataset()
+    else:
+        no_event_data = True
+        loaded_data = sc.Dataset()
+
+    if not no_event_data:
         loaded_data = sc.DataArray(loaded_data.data.fold(dim='detector_id',
                                                          sizes={
                                                              'detector_id': -1,
@@ -187,27 +218,6 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                                            for k, v in loaded_data.coords.items()},
                                    attrs={k: v
                                           for k, v in loaded_data.attrs.items()})
-    else:
-        loaded_events = []
-        for name, group in classes.get(NX_class.NXevent_data, {}).items():
-            no_event_data = False
-            try:
-                events = group[()]
-                events.coords['pulse_time'] = events.coords.pop('event_time_zero')
-                events.bins.coords['tof'] = events.bins.coords.pop('event_time_offset')
-                events.bins.coords['detector_id'] = events.bins.coords.pop('event_id')
-                loaded_events.append(events)
-            except Exception as e:
-                if not nexus.contains_stream(group._group):
-                    warn(f"Skipped loading {group.name} due to:\n{e}")
-        if len(loaded_events):
-            no_event_data = False
-            loaded_data = sc.concat(loaded_events, 'bank')
-        else:
-            no_event_data = True
-            loaded_data = sc.Dataset()
-
-    if not no_event_data:
         tof_min = loaded_data.bins.coords['tof'].min().to(dtype='float64')
         tof_max = loaded_data.bins.coords['tof'].max().to(dtype='float64')
         tof_max.value = np.nextafter(tof_max.value, float("inf"))
