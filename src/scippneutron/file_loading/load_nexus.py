@@ -80,7 +80,6 @@ def load_nexus(data_file: Union[str, h5py.File],
     :param root: path of group in file, only load data from the subtree of
       this group
     :param quiet: if False prints some details of what is being loaded
-      by pulse. Defaults to True.
 
     Usage example:
       data = sc.neutron.load_nexus('PG3_4844_event.nxs')
