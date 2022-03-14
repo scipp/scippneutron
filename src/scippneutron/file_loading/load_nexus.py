@@ -183,8 +183,24 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         no_event_data = False
         loaded_data = sc.concat(loaded_detectors, 'detector_id')
     else:
-        no_event_data = True
-        loaded_data = sc.Dataset()
+        loaded_events = []
+        for name, group in classes.get(NX_class.NXevent_data, {}).items():
+            no_event_data = False
+            try:
+                events = group[()]
+                events.coords['pulse_time'] = events.coords.pop('event_time_zero')
+                events.bins.coords['tof'] = events.bins.coords.pop('event_time_offset')
+                events.bins.coords['detector_id'] = events.bins.coords.pop('event_id')
+                loaded_events.append(events)
+            except Exception as e:
+                if not nexus.contains_stream(group._group):
+                    warn(f"Skipped loading {group.name} due to:\n{e}")
+        if len(loaded_events):
+            no_event_data = False
+            loaded_data = sc.concat(loaded_events, 'bank')
+        else:
+            no_event_data = True
+            loaded_data = sc.Dataset()
 
     def add_metadata(metadata: Dict[str, sc.Variable]):
         for key, value in metadata.items():

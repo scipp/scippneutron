@@ -2019,8 +2019,9 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
     detector_numbers = np.array([1, 2, 3, 4])
 
     builder = NexusBuilder()
-    builder.add_detector(
-        Detector(detector_numbers=detector_numbers, event_data=event_data))
+    builder.add_event_data(event_data)
+    #builder.add_detector(
+    #    Detector(detector_numbers=detector_numbers, event_data=event_data))
 
     loaded_data = load_function(builder, bin_by_pixel=False)
 
@@ -2057,6 +2058,7 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
                                          dtype=sc.DType.datetime64)
                             })
 
+    print(loaded_data, expected)
     assert sc.identical(loaded_data, expected)
 
 
@@ -2074,5 +2076,5 @@ def test_load_nexus_file_containing_empty_arrays(load_function: Callable):
 
     # Empty datasets should not stop other data (e.g. metadata) from being loaded.
     loaded_data = load_function(builder)
-    assert "test_log" in loaded_data
-    assert all(loaded_data["test_log"].data.values.values == np.array([0, 1, 2]))
+    assert "test_log" in loaded_data.attrs
+    assert all(loaded_data.attrs["test_log"].value.values == np.array([0, 1, 2]))
