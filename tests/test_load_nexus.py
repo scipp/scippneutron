@@ -199,7 +199,7 @@ def test_does_not_load_events_if_index_not_ordered(load_function: Callable):
     builder.add_detector(
         Detector(detector_numbers=np.array([0, 1]), event_data=event_data_1))
 
-    with pytest.warns(UserWarning, match="Event index in NXEvent at "):
+    with pytest.warns(UserWarning, match="Event index in NXevent_data at "):
         load_function(builder)
 
 
