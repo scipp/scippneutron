@@ -2,6 +2,7 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
 import json
+import numpy as np
 import scipp as sc
 
 from ..nexus import NXroot, NX_class
@@ -85,10 +86,7 @@ def load_nexus(data_file: Union[str, h5py.File],
     start_time = timer()
 
     with _open_if_path(data_file) as nexus_file:
-        loaded_data = _load_data(nexus_file,
-                                 root,
-                                 LoadFromHdf5(),
-                                 quiet)
+        loaded_data = _load_data(nexus_file, root, LoadFromHdf5(), quiet)
 
     if not quiet:
         print("Total time:", timer() - start_time)
@@ -161,6 +159,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             det = det.flatten(to='detector_id')
             det.bins.coords['tof'] = det.bins.coords.pop('event_time_offset')
             det.bins.coords['pulse_time'] = det.bins.coords.pop('event_time_zero')
+            det.coords['detector_id'] = det.coords.pop('detector_number')
             if 'pixel_offset' in det.coords:
                 add_position_and_transforms_to_data(
                     data=det,
@@ -179,6 +178,15 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     if len(loaded_detectors):
         no_event_data = False
         loaded_data = sc.concat(loaded_detectors, 'detector_id')
+        loaded_data = sc.DataArray(loaded_data.data.fold(dim='detector_id',
+                                                         sizes={
+                                                             'detector_id': -1,
+                                                             'tof': 1
+                                                         }),
+                                   coords={k: v
+                                           for k, v in loaded_data.coords.items()},
+                                   attrs={k: v
+                                          for k, v in loaded_data.attrs.items()})
     else:
         loaded_events = []
         for name, group in classes.get(NX_class.NXevent_data, {}).items():
@@ -198,6 +206,12 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         else:
             no_event_data = True
             loaded_data = sc.Dataset()
+
+    if not no_event_data:
+        tof_min = loaded_data.bins.coords['tof'].min().to(dtype='float64')
+        tof_max = loaded_data.bins.coords['tof'].max().to(dtype='float64')
+        tof_max.value = np.nextafter(tof_max.value, float("inf"))
+        loaded_data.coords['tof'] = sc.concat([tof_min, tof_max], 'tof')
 
     def add_metadata(metadata: Dict[str, sc.Variable]):
         for key, value in metadata.items():
@@ -266,10 +280,7 @@ def _load_nexus_json(
     streams = None
     if get_start_info:
         streams = get_streams_info(loaded_json)
-    return _load_data(loaded_json,
-                      None,
-                      LoadFromJson(loaded_json),
-                      True), streams
+    return _load_data(loaded_json, None, LoadFromJson(loaded_json), True), streams
 
 
 def load_nexus_json(json_filename: str) -> Optional[ScippData]:
