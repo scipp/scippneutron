@@ -2,12 +2,13 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
 import json
+import numpy as np
 import scipp as sc
 
 from ..nexus import NXroot, NX_class
 
 from ._common import Group, MissingDataset, BadSource, SkipSource
-from ._detector_data import load_detector_data
+from ._common import add_position_and_transforms_to_data
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
 from ._nexus import LoadFromNexus, ScippData
@@ -16,9 +17,11 @@ from timeit import default_timer as timer
 from typing import Union, List, Optional, Dict, Tuple, Set
 from contextlib import contextmanager
 from warnings import warn
-from ._nx_classes import (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample,
-                          nx_source, nx_detector, nx_disk_chopper, nx_monitor)
 from .nxtransformations import TransformationError
+from .nxobject import NexusStructureError
+
+nx_entry = "NXentry"
+nx_instrument = "NXinstrument"
 
 
 @contextmanager
@@ -69,8 +72,7 @@ def _load_start_and_end_time(entry_group: Group, nexus: LoadFromNexus) -> Dict:
 
 def load_nexus(data_file: Union[str, h5py.File],
                root: str = "/",
-               quiet=True,
-               bin_by_pixel: bool = True) -> Optional[ScippData]:
+               quiet=True) -> Optional[ScippData]:
     """
     Load a NeXus file and return required information.
 
@@ -78,8 +80,6 @@ def load_nexus(data_file: Union[str, h5py.File],
     :param root: path of group in file, only load data from the subtree of
       this group
     :param quiet: if False prints some details of what is being loaded
-    :param bin_by_pixel: if True, bins the loaded detector data by pixel. If False, bins
-      by pulse. Defaults to True.
 
     Usage example:
       data = sc.neutron.load_nexus('PG3_4844_event.nxs')
@@ -87,11 +87,7 @@ def load_nexus(data_file: Union[str, h5py.File],
     start_time = timer()
 
     with _open_if_path(data_file) as nexus_file:
-        loaded_data = _load_data(nexus_file,
-                                 root,
-                                 LoadFromHdf5(),
-                                 quiet,
-                                 bin_by_pixel=bin_by_pixel)
+        loaded_data = _load_data(nexus_file, root, LoadFromHdf5(), quiet)
 
     if not quiet:
         print("Total time:", timer() - start_time)
@@ -126,7 +122,7 @@ def _monitor_to_canonical(monitor):
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
-               nexus: LoadFromNexus, quiet: bool, bin_by_pixel: bool) \
+               nexus: LoadFromNexus, quiet: bool) \
         -> Optional[ScippData]:
     """
     Main implementation for loading data is extracted to this function so that
@@ -138,10 +134,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         root_node = nexus_file
     # Use visititems (in find_by_nx_class) to traverse the entire file tree,
     # looking for any NXClass that can be read.
-    # groups is a dict with a key for each category (nx_log, nx_instrument...)
-    groups = nexus.find_by_nx_class(
-        (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample, nx_source,
-         nx_detector, nx_monitor, nx_disk_chopper), root_node)
+    # groups is a dict with a key for each category (nx_entry, nx_instrument...)
+    groups = nexus.find_by_nx_class((nx_entry, nx_instrument), root_node)
 
     if len(groups[nx_entry]) > 1:
         # We can't sensibly load from multiple NXentry, for example each
@@ -152,15 +146,81 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             "to specify which to load data from, for example"
             f"{__name__}('my_file.nxs', '/entry_2')")
 
-    loaded_data = load_detector_data(groups[nx_event_data], groups[nx_detector], nexus,
-                                     quiet, bin_by_pixel)
+    no_event_data = True
+    loaded_data = sc.Dataset()
+
+    # Note: Currently this wastefully walks the tree in the file a second time.
+    root = NXroot(nexus_file, nexus)
+    classes = root.by_nx_class()
+
+    # In the following, we map the file structure onto a partially flattened in-memory
+    # structure. This behavior is quite error prone and cumbersome and will probably
+    # disappear in this form. We therefore keep this length code directly in this
+    # function to provide an overview and facility future refactoring steps.
+    detectors = classes.get(NX_class.NXdetector, {})
+    loaded_detectors = []
+    for name, group in detectors.items():
+        try:
+            det = group[()]
+            det = det.flatten(to='detector_id')
+            det.bins.coords['tof'] = det.bins.coords.pop('event_time_offset')
+            det.bins.coords['pulse_time'] = det.bins.coords.pop('event_time_zero')
+            det.coords['detector_id'] = det.coords.pop('detector_number')
+            if 'pixel_offset' in det.coords:
+                add_position_and_transforms_to_data(
+                    data=det,
+                    transform_name="position_transformations",
+                    position_name="position",
+                    base_position_name="base_position",
+                    positions=det.coords.pop('pixel_offset'),
+                    transforms=det.coords.pop('depends_on', None))
+            loaded_detectors.append(det)
+        except (BadSource, SkipSource, NexusStructureError, KeyError, sc.DTypeError,
+                ValueError) as e:
+            if not nexus.contains_stream(group._group):
+                warn(f"Skipped loading {group.name} due to:\n{e}")
+
     # If no event data are found, make a Dataset and add the metadata as
     # Dataset entries. Otherwise, make a DataArray.
-    if loaded_data is None:
-        no_event_data = True
-        loaded_data = sc.Dataset()
-    else:
+    if len(loaded_detectors):
         no_event_data = False
+        loaded_data = sc.concat(loaded_detectors, 'detector_id')
+    elif len(detectors) == 0:
+        # If there are no NXdetector groups, load NXevent_data directly
+        loaded_events = []
+        for name, group in classes.get(NX_class.NXevent_data, {}).items():
+            try:
+                events = group[()]
+                events.coords['pulse_time'] = events.coords.pop('event_time_zero')
+                events.bins.coords['tof'] = events.bins.coords.pop('event_time_offset')
+                events.bins.coords['detector_id'] = events.bins.coords.pop('event_id')
+                det_min = events.bins.coords['detector_id'].min().value
+                det_max = events.bins.coords['detector_id'].max().value
+                if len(events.bins.constituents['data']) != 0:
+                    # See scipp/scipp#2490
+                    det_id = sc.arange('detector_id', det_min, det_max + 1, unit=None)
+                    events = sc.bin(events, groups=[det_id], erase=['pulse', 'bank'])
+                loaded_events.append(events)
+            except (BadSource, SkipSource, NexusStructureError) as e:
+                if not nexus.contains_stream(group._group):
+                    warn(f"Skipped loading {group.name} due to:\n{e}")
+        if len(loaded_events):
+            no_event_data = False
+            loaded_data = sc.concat(loaded_events, 'detector_id')
+
+    if not no_event_data:
+        # Add single tof bin
+        loaded_data = sc.DataArray(loaded_data.data.fold(dim='detector_id',
+                                                         sizes={
+                                                             'detector_id': -1,
+                                                             'tof': 1
+                                                         }),
+                                   coords=dict(loaded_data.coords.items()),
+                                   attrs=dict(loaded_data.attrs.items()))
+        tof_min = loaded_data.bins.coords['tof'].min().to(dtype='float64')
+        tof_max = loaded_data.bins.coords['tof'].max().to(dtype='float64')
+        tof_max.value = np.nextafter(tof_max.value, float("inf"))
+        loaded_data.coords['tof'] = sc.concat([tof_min, tof_max], 'tof')
 
     def add_metadata(metadata: Dict[str, sc.Variable]):
         for key, value in metadata.items():
@@ -168,10 +228,6 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                 loaded_data.attrs[key] = value
             else:
                 loaded_data[key] = value
-
-    # Note: Currently this wastefully walks the tree in the file a second time.
-    root = NXroot(nexus_file, nexus)
-    classes = root.by_nx_class()
 
     if groups[nx_entry]:
         add_metadata(_load_title(groups[nx_entry][0], nexus))
@@ -223,7 +279,6 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
 def _load_nexus_json(
     json_template: str,
     get_start_info: bool = False,
-    bin_by_pixel: bool = True,
 ) -> Tuple[Optional[ScippData], Optional[sc.Variable], Optional[Set[StreamInfo]]]:
     """
     Use this function for testing so that file io is not required
@@ -234,16 +289,11 @@ def _load_nexus_json(
     streams = None
     if get_start_info:
         streams = get_streams_info(loaded_json)
-    return _load_data(loaded_json,
-                      None,
-                      LoadFromJson(loaded_json),
-                      True,
-                      bin_by_pixel=bin_by_pixel), streams
+    return _load_data(loaded_json, None, LoadFromJson(loaded_json), True), streams
 
 
-def load_nexus_json(json_filename: str,
-                    bin_by_pixel: bool = True) -> Optional[ScippData]:
+def load_nexus_json(json_filename: str) -> Optional[ScippData]:
     with open(json_filename, 'r') as json_file:
         json_string = json_file.read()
-    loaded_data, _ = _load_nexus_json(json_string, bin_by_pixel=bin_by_pixel)
+    loaded_data, _ = _load_nexus_json(json_string)
     return loaded_data

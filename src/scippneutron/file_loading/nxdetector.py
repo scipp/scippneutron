@@ -135,6 +135,9 @@ class NXdetector(NXobject):
                     "Use ellipsis or an empty tuple to load the full detector.")
             return None
         select = to_child_select(self.dims, field.dims, select)
+        if field.dtype not in ['int32', 'int64', 'uint32', 'uint64']:
+            raise NexusStructureError(
+                "NXdetector contains detector_number field with non-integer values")
         return field[select]
 
     def pixel_offset(self, select) -> sc.Variable:
@@ -147,9 +150,10 @@ class NXdetector(NXobject):
         x = x[select]
         offset = sc.zeros(sizes=x.sizes, unit=x.unit, dtype=sc.DType.vector3)
         offset.fields.x = x
-        for comp in ['y_pixel_offset', 'z_pixel_offset']:
-            if comp in self:
-                offset.fields.y = self[comp][select].to(unit=x.unit, copy=False)
+        if (y := self.get('y_pixel_offset')) is not None:
+            offset.fields.y = y[select].to(unit=x.unit, copy=False)
+        if (z := self.get('z_pixel_offset')) is not None:
+            offset.fields.z = z[select].to(unit=x.unit, copy=False)
         return offset.rename_dims(dict(zip(offset.dims, self.dims)))
 
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:
