@@ -78,8 +78,8 @@ class NXevent_data(NXobject):
         # Binned data, bins do not have a unit
         return None
 
-    def _getitem(self, index: ScippIndex) -> sc.DataArray:
-        return self._load_event_group(self._group, self._loader, select=index)
+    def _getitem(self, select: ScippIndex) -> sc.DataArray:
+        return self._load_event_group(self._group, self._loader, select=select)
 
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:
         if name in ['event_time_zero', 'event_index']:
@@ -89,7 +89,7 @@ class NXevent_data(NXobject):
         return None
 
     def _load_event_group(self, group: Group, nexus: LoadFromNexus,
-                          select=tuple()) -> sc.DataArray:
+                          select) -> sc.DataArray:
         _check_for_missing_fields(group, nexus)
         index = to_plain_index([_pulse_dimension], select)
 
