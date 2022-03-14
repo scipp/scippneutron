@@ -215,10 +215,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                                                              'detector_id': -1,
                                                              'tof': 1
                                                          }),
-                                   coords={k: v
-                                           for k, v in loaded_data.coords.items()},
-                                   attrs={k: v
-                                          for k, v in loaded_data.attrs.items()})
+                                   coords=dict(loaded_data.coords.items()),
+                                   attrs=dict(loaded_data.attrs.items()))
         tof_min = loaded_data.bins.coords['tof'].min().to(dtype='float64')
         tof_max = loaded_data.bins.coords['tof'].max().to(dtype='float64')
         tof_max.value = np.nextafter(tof_max.value, float("inf"))
