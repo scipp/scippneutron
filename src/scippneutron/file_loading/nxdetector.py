@@ -38,6 +38,8 @@ class NXdetector(NXobject):
     @property
     def shape(self) -> List[int]:
         if self._is_events:
+            if (signal := self._signal) is not None:
+                return signal.shape
             if self._detector_number is None:
                 raise NexusStructureError(
                     "Cannot get shape of NXdetector since no 'detector_number' "
@@ -47,6 +49,8 @@ class NXdetector(NXobject):
 
     @property
     def dims(self) -> List[str]:
+        if (signal := self._signal) is not None:
+            return signal.dims
         if self._is_events:
             default = [f'dim_{i}' for i in range(self.ndim)]
             if len(default) == 1:
@@ -87,6 +91,23 @@ class NXdetector(NXobject):
         return 'event_time_offset' in self
 
     @property
+    def _signal(self) -> Union[Field, None]:
+        nxdata = self._nxdata
+        name = nxdata._signal_name
+        if name is not None and name in nxdata:
+            return nxdata._signal
+
+    @property
+    def _nxdata(self) -> NXdata:
+        # NXdata uses the 'signal' attribute to define the field name of the signal.
+        # NXdetector uses a "hard-coded" signal name 'data', without specifying the
+        # attribute in the file, so we pass this explicitly to NXdata.
+        return NXdata(self._group,
+                      self._loader,
+                      signal='data' if 'data' in self else None,
+                      skip=['detector_number'])
+
+    @property
     def _nxbase(self) -> Union[NXdata, NXevent_data]:
         """Return class for loading underlying data."""
         if self._is_events:
@@ -94,13 +115,7 @@ class NXdetector(NXobject):
                 return NXevent_data(self._group, self._loader)
             event_entries = self.by_nx_class()[NX_class.NXevent_data]
             return next(iter(event_entries.values()))
-        # NXdata uses the 'signal' attribute to define the field name of the signal.
-        # NXdetector uses a "hard-coded" signal name 'data', without specifying the
-        # attribute in the file, so we pass this explicitly to NXdata.
-        return NXdata(self._group,
-                      self._loader,
-                      signal='data',
-                      skip=['detector_number'])
+        return self._nxdata
 
     @property
     def events(self) -> Union[None, NXevent_data]:
@@ -121,7 +136,9 @@ class NXdetector(NXobject):
 
     @property
     def _detector_number(self) -> Field:
-        return self.get('detector_number', None)
+        if 'detector_number' in self:
+            return self['detector_number']
+        return self.get('pixel_id', None)
 
     def detector_number(self, select) -> sc.Variable:
         """Read and return the 'detector_number' field, None if it does not exist."""
@@ -148,12 +165,15 @@ class NXdetector(NXobject):
         x = self['x_pixel_offset']
         select = to_child_select(self.dims, x.dims, select)
         x = x[select]
-        offset = sc.zeros(sizes=x.sizes, unit=x.unit, dtype=sc.DType.vector3)
-        offset.fields.x = x
+        offset = sc.zeros(dims=self.dims,
+                          shape=self.shape,
+                          unit=x.unit,
+                          dtype=sc.DType.vector3)
+        offset.fields.x = x.to(dtype='float64', copy=False)
         if (y := self.get('y_pixel_offset')) is not None:
-            offset.fields.y = y[select].to(unit=x.unit, copy=False)
+            offset.fields.y = y[select].to(dtype='float64', unit=x.unit, copy=False)
         if (z := self.get('z_pixel_offset')) is not None:
-            offset.fields.z = z[select].to(unit=x.unit, copy=False)
+            offset.fields.z = z[select].to(dtype='float64', unit=x.unit, copy=False)
         return offset.rename_dims(dict(zip(offset.dims, self.dims)))
 
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:
@@ -163,9 +183,11 @@ class NXdetector(NXobject):
             ]:
                 # Event field is direct child of this class
                 return self._nxbase._get_field_dims(name)
-            else:
+            elif self._signal is None:
                 return self.dims
-        return self._nxbase._get_field_dims(name)
+            else:
+                self._nxdata._get_field_dims(name)
+        return self._nxdata._get_field_dims(name)
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
         # Note that ._detector_data._load_detector provides a different loading

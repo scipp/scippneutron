@@ -54,7 +54,8 @@ class NXdata(NXobject):
             return name
         # Legacy NXdata defines signal not as group attribute, but attr on dataset
         for name in self.keys():
-            if self._get_child(name).attrs.get('signal') == 1:
+            # TODO What is the meaning of the attribute value?
+            if 'signal' in self._get_child(name).attrs:
                 return name
         return None
 
