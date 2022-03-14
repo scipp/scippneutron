@@ -681,175 +681,6 @@ def test_loads_pixel_positions_without_event_data(load_function: Callable):
         "Expected positions to be converted to metres"
 
 
-def test_loads_pixel_positions_when_event_data_is_missing_field(
-        load_function: Callable):
-    pulse_times = np.array([
-        1600766730000000000, 1600766731000000000, 1600766732000000000,
-        1600766733000000000
-    ])
-    event_data_missing_event_time_offsets = EventData(
-        event_id=np.array([1, 2, 3, 1, 3]),
-        event_time_offset=None,  # Missing, event data will not be loaded!
-        event_time_zero=pulse_times,
-        event_index=np.array([0, 3, 3, 5]),
-    )
-    detector_ids = np.array([0, 1, 2, 3])
-
-    x_pixel_offset_1 = np.array([0.1, 0.2, 0.1, 0.2])
-    y_pixel_offset_1 = np.array([0.1, 0.1, 0.2, 0.2])
-    z_pixel_offset_1 = np.array([0.1, 0.2, 0.3, 0.4])
-
-    detector_2_ids = np.array([[4, 5], [6, 7]])
-    x_pixel_offset_2 = np.array([[1.1, 1.2], [1.1, 1.2]])
-    y_pixel_offset_2 = np.array([[0.1, 0.1], [0.2, 0.2]])
-
-    builder = NexusBuilder()
-    offsets_units = "mm"
-    builder.add_detector(
-        Detector(detector_numbers=detector_ids,
-                 event_data=event_data_missing_event_time_offsets,
-                 x_offsets=x_pixel_offset_1,
-                 y_offsets=y_pixel_offset_1,
-                 z_offsets=z_pixel_offset_1,
-                 offsets_unit=offsets_units))
-    builder.add_detector(
-        Detector(detector_numbers=detector_2_ids,
-                 x_offsets=x_pixel_offset_2,
-                 y_offsets=y_pixel_offset_2,
-                 offsets_unit=offsets_units))
-
-    loaded_data = load_function(builder)
-
-    # If z offsets are missing they should be zero
-    z_pixel_offset_2 = np.array([[0., 0.], [0., 0.]])
-    expected_pixel_positions = np.array([
-        np.concatenate((x_pixel_offset_1, x_pixel_offset_2.flatten())),
-        np.concatenate((y_pixel_offset_1, y_pixel_offset_2.flatten())),
-        np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
-    ]).T / 1_000  # Divide by 1000 for mm to metres
-    assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
-    assert loaded_data.meta[
-               'base_position'].unit == sc.units.m, \
-        "Expected positions to be converted to metres"
-
-
-def test_loads_event_data_when_missing_from_some_detectors(load_function: Callable):
-    pulse_times = np.array([
-        1600766730000000000, 1600766731000000000, 1600766732000000000,
-        1600766733000000000
-    ])
-    event_time_offsets = np.array([456, 743, 347, 345, 632])
-    event_data_missing_event_time_offsets = EventData(
-        event_id=np.array([1, 2, 3, 1, 3]),
-        event_time_offset=event_time_offsets,
-        event_time_zero=pulse_times,
-        event_index=np.array([0, 3, 3, 5]),
-    )
-    detector_1_ids = np.array([0, 1, 2, 3])
-
-    x_pixel_offset_1 = np.array([0.1, 0.2, 0.1, 0.2])
-    y_pixel_offset_1 = np.array([0.1, 0.1, 0.2, 0.2])
-    z_pixel_offset_1 = np.array([0.1, 0.2, 0.3, 0.4])
-
-    detector_2_ids = np.array([[4, 5], [6, 7]])
-    x_pixel_offset_2 = np.array([[1.1, 1.2], [1.1, 1.2]])
-    y_pixel_offset_2 = np.array([[0.1, 0.1], [0.2, 0.2]])
-
-    # There is one detector with event data, detector ids
-    # and pixel offsets, and another detector with only
-    # detector ids and pixel offsets
-    builder = NexusBuilder()
-    offsets_units = "mm"
-    builder.add_detector(
-        Detector(detector_numbers=detector_1_ids,
-                 event_data=event_data_missing_event_time_offsets,
-                 x_offsets=x_pixel_offset_1,
-                 y_offsets=y_pixel_offset_1,
-                 z_offsets=z_pixel_offset_1,
-                 offsets_unit=offsets_units))
-    builder.add_detector(
-        Detector(detector_numbers=detector_2_ids,
-                 x_offsets=x_pixel_offset_2,
-                 y_offsets=y_pixel_offset_2,
-                 offsets_unit=offsets_units))
-
-    loaded_data = load_function(builder)
-
-    # If z offsets are missing they should be zero
-    z_pixel_offset_2 = np.array([[0., 0.], [0., 0.]])
-    expected_pixel_positions = np.array([
-        np.concatenate((x_pixel_offset_1, x_pixel_offset_2.flatten())),
-        np.concatenate((y_pixel_offset_1, y_pixel_offset_2.flatten())),
-        np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
-    ]).T / 1_000  # Divide by 1000 for mm to metres
-    assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
-    assert loaded_data.meta[
-               'base_position'].unit == sc.units.m, \
-        "Expected positions to be converted to metres"
-
-    # The event data from detector_1 has been loaded
-    counts_on_detectors = loaded_data.bins.sum()
-    expected_counts = np.array([[0], [2], [1], [2], [0], [0], [0], [0]])
-    assert np.allclose(counts_on_detectors.data.values, expected_counts)
-    assert np.allclose(loaded_data.coords['detector_id'].values,
-                       np.concatenate((detector_1_ids, detector_2_ids.flatten())))
-
-
-def test_skips_loading_pixel_positions_with_non_matching_shape(load_function: Callable):
-    pulse_times = np.array([
-        1600766730000000000, 1600766731000000000, 1600766732000000000,
-        1600766733000000000
-    ])
-    event_time_offsets_1 = np.array([456, 743, 347, 345, 632])
-    event_data_1 = EventData(
-        event_id=np.array([1, 2, 3, 1, 3]),
-        event_time_offset=event_time_offsets_1,
-        event_time_zero=pulse_times,
-        event_index=np.array([0, 3, 3, 5]),
-    )
-    detector_1_ids = np.array([0, 1, 2, 3])
-    x_pixel_offset_1 = np.array([0.1, 0.2, 0.1, 0.2])
-    y_pixel_offset_1 = np.array([0.1, 0.1, 0.2, 0.2])
-    z_pixel_offset_1 = np.array([0.1, 0.2, 0.3, 0.4])
-
-    event_time_offsets_2 = np.array([682, 237, 941, 162, 52])
-    event_data_2 = EventData(
-        event_id=np.array([4, 5, 6, 4, 6]),
-        event_time_offset=event_time_offsets_2,
-        event_time_zero=pulse_times,
-        event_index=np.array([0, 3, 3, 5]),
-    )
-    # The size of the ids and the pixel offsets do not match
-    detector_2_ids = np.array([[4, 5, 6, 7, 8]])
-    x_pixel_offset_2 = np.array([1.1, 1.2, 1.1, 1.2])
-    y_pixel_offset_2 = np.array([0.1, 0.1, 0.2, 0.2])
-
-    builder = NexusBuilder()
-    builder.add_detector(
-        Detector(detector_1_ids,
-                 event_data_1,
-                 x_offsets=x_pixel_offset_1,
-                 y_offsets=y_pixel_offset_1,
-                 z_offsets=z_pixel_offset_1,
-                 offsets_unit="m"))
-    builder.add_detector(
-        Detector(detector_2_ids,
-                 event_data_2,
-                 x_offsets=x_pixel_offset_2,
-                 y_offsets=y_pixel_offset_2,
-                 offsets_unit="m"))
-
-    with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
-
-    assert "base_position" not in loaded_data.meta.keys(
-    ), "One of the NXdetectors pixel positions arrays did not match the " \
-       "size of its detector ids so we should not find 'base_position' coord"
-    # Even though detector_1's offsets and ids are matches in size, we do not
-    # load them as the "base_position" coord would not have positions for all
-    # the detector ids (loading event data from all detectors is prioritised).
-
-
 def test_skips_loading_pixel_positions_with_no_units(load_function: Callable):
     pulse_times = np.array([
         1600766730000000000, 1600766731000000000, 1600766732000000000,
@@ -879,7 +710,7 @@ def test_skips_loading_pixel_positions_with_no_units(load_function: Callable):
     with pytest.warns(UserWarning):
         loaded_data = load_function(builder)
 
-    assert "base_position" not in loaded_data.meta.keys()
+    assert loaded_data is None, "Load of NXdetector should be skipped"
 
 
 def test_sample_position_at_origin_if_not_explicit_in_file(load_function: Callable):
@@ -2005,63 +1836,9 @@ def test_load_monitor_with_transformation(load_function: Callable):
                         sc.vector(value=[1., 2., 9.5], unit="m"))
 
 
-def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
-    event_time_offsets = np.array([456, 743, 347, 345, 632])
-    event_ids = np.array([1, 2, 3, 1, 3])
-    time_zeros = np.array([1, 2, 3])
-    event_index = np.array([0, 3, 3])
-    event_data = EventData(
-        event_id=event_ids,
-        event_time_offset=event_time_offsets,
-        event_time_zero=time_zeros,
-        event_index=event_index,
-        event_time_zero_unit="ns",
-    )
-
-    builder = NexusBuilder()
-    builder.add_event_data(event_data)
-
-    loaded_data = load_function(builder)
-
-    binned = sc.bins(
-        dim="event",
-        data=sc.DataArray(data=sc.array(dims=["event"],
-                                        values=[1, 1, 1, 1, 1],
-                                        variances=[1, 1, 1, 1, 1],
-                                        unit=sc.units.counts,
-                                        dtype=sc.DType.float32),
-                          coords={
-                              "tof":
-                              sc.array(dims=["event"],
-                                       values=event_time_offsets,
-                                       unit=sc.units.ns),
-                              "detector_id":
-                              sc.array(dims=["event"], unit=None, values=event_ids),
-                          }),
-        begin=sc.array(dims=["pulse"],
-                       values=[0, 3, 3],
-                       dtype=sc.DType.int64,
-                       unit=None),
-        end=sc.array(dims=["pulse"], values=[3, 3, 5], dtype=sc.DType.int64, unit=None),
-    )
-
-    # Even if there is just a single NXevent_data entry in the file the
-    # output has a `bank` dimension, for consistency.
-    expected = sc.DataArray(data=sc.concat([binned], 'bank'),
-                            coords={
-                                "pulse_time":
-                                sc.array(dims=["pulse"],
-                                         values=time_zeros,
-                                         unit=sc.units.ns,
-                                         dtype=sc.DType.datetime64)
-                            })
-
-    assert sc.identical(loaded_data, expected)
-
-
 def test_load_nexus_file_containing_empty_arrays(load_function: Callable):
     event_data = EventData(
-        event_id=np.array([]),
+        event_id=np.array([], dtype='int32'),
         event_time_offset=np.array([]),
         event_time_zero=np.array([]),
         event_index=np.array([]),

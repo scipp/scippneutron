@@ -147,6 +147,9 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             "to specify which to load data from, for example"
             f"{__name__}('my_file.nxs', '/entry_2')")
 
+    no_event_data = True
+    loaded_data = sc.Dataset()
+
     # Note: Currently this wastefully walks the tree in the file a second time.
     root = NXroot(nexus_file, nexus)
     classes = root.by_nx_class()
@@ -182,7 +185,6 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         # If there are no NXdetector groups, load NXevent_data directly
         loaded_events = []
         for name, group in classes.get(NX_class.NXevent_data, {}).items():
-            no_event_data = False
             try:
                 events = group[()]
                 events.coords['pulse_time'] = events.coords.pop('event_time_zero')
@@ -190,10 +192,13 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                 events.bins.coords['detector_id'] = events.bins.coords.pop('event_id')
                 det_min = events.bins.coords['detector_id'].min().value
                 det_max = events.bins.coords['detector_id'].max().value
-                events = sc.bin(
-                    events,
-                    groups=[sc.arange('detector_id', det_min, det_max + 1, unit=None)],
-                    erase=['pulse', 'bank'])
+                if len(events.bins.constituents['data']) != 0:
+                    # See scipp/scipp#2490
+                    det_id = sc.arange('detector_id', det_min, det_max + 1, unit=None)
+                    events = sc.bin(
+                        events,
+                        groups=[det_id],
+                        erase=['pulse', 'bank'])
                 loaded_events.append(events)
             except Exception as e:
                 if not nexus.contains_stream(group._group):
@@ -201,14 +206,9 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         if len(loaded_events):
             no_event_data = False
             loaded_data = sc.concat(loaded_events, 'detector_id')
-        else:
-            no_event_data = True
-            loaded_data = sc.Dataset()
-    else:
-        no_event_data = True
-        loaded_data = sc.Dataset()
 
     if not no_event_data:
+        # Add single tof bin
         loaded_data = sc.DataArray(loaded_data.data.fold(dim='detector_id',
                                                          sizes={
                                                              'detector_id': -1,
