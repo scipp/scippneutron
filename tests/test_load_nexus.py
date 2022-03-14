@@ -636,6 +636,8 @@ def test_loads_pixel_positions_with_event_data(load_function: Callable):
     assert loaded_data.meta['position'].unit == 'mm'
 
 
+@pytest.mark.skip(reason="It is unclear of NXdetector with either data or event_data "
+                  "needs to be considered valid.")
 def test_loads_pixel_positions_without_event_data(load_function: Callable):
     """
     This is important in the live-data feature as geometry and event data
