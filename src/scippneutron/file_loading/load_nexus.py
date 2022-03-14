@@ -7,6 +7,7 @@ import scipp as sc
 from ..nexus import NXroot, NX_class
 
 from ._common import Group, MissingDataset, BadSource, SkipSource
+from ._common add_position_and_transforms_to_data
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
 from ._nexus import LoadFromNexus, ScippData
@@ -158,15 +159,20 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     detectors = classes.get(NX_class.NXdetector, {})
     loaded_detectors = []
     for name, group in detectors.items():
-        det = group[()]
-        det = det.flatten(to='detector_id')
-        det.bins.coords['tof'] = det.bins.coords.pop('event_time_offset')
-        det.bins.coords['pulse_time'] = det.bins.coords.pop('event_time_zero')
-        if 'pixel_offset' in det.coords:
-            det.coords['position'] = det.coords.pop('pixel_offset')
-        loaded_detectors.append(det)
         try:
-            pass
+            det = group[()]
+            det = det.flatten(to='detector_id')
+            det.bins.coords['tof'] = det.bins.coords.pop('event_time_offset')
+            det.bins.coords['pulse_time'] = det.bins.coords.pop('event_time_zero')
+            if 'pixel_offset' in det.coords:
+                add_position_and_transforms_to_data(
+                    data=det,
+                    transform_name="position_transformations",
+                    position_name="position",
+                    base_position_name="base_position",
+                    positions=det.coords.pop('pixel_offset'),
+                    transforms=det.coords.pop('depends_on', None))
+            loaded_detectors.append(det)
         except Exception as e:
             if not nexus.contains_stream(group._group):
                 warn(f"Skipped loading {group.name} due to:\n{e}")
