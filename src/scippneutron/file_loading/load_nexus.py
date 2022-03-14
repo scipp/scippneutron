@@ -154,6 +154,10 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     root = NXroot(nexus_file, nexus)
     classes = root.by_nx_class()
 
+    # In the following, we map the file structure onto a partially flattened in-memory
+    # structure. This behavior is quite error prone and cumbersome and will probably
+    # disappear in this form. We therefore keep this length code directly in this
+    # function to provide an overview and facility future refactoring steps.
     detectors = classes.get(NX_class.NXdetector, {})
     loaded_detectors = []
     for name, group in detectors.items():
