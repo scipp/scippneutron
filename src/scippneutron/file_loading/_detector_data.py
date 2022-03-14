@@ -6,8 +6,8 @@ from typing import List, Union
 import numpy as np
 import scipp as sc
 
-from ._common import (BadSource, SkipSource, MissingAttribute, Group)
-from ._common import to_plain_index
+from ._common import (BadSource, SkipSource, Group)
+from ._common import to_plain_index, convert_time_to_datetime64
 from ._nexus import LoadFromNexus
 from .nxobject import NXobject, ScippIndex, NexusStructureError
 
@@ -31,36 +31,6 @@ def _check_for_missing_fields(group: Group, nexus: LoadFromNexus):
         found, msg = nexus.dataset_in_group(group, field)
         if not found:
             raise BadSource(msg)
-
-
-def _load_event_time_zero(group: Group, nexus: LoadFromNexus, index=...) -> sc.Variable:
-    time_zero_group = "event_time_zero"
-
-    event_time_zero = nexus.load_dataset(group,
-                                         time_zero_group,
-                                         dimensions=[_pulse_dimension],
-                                         index=index)
-
-    try:
-        pulse_times = sc.to_unit(event_time_zero, sc.units.ns, copy=False)
-    except sc.UnitError:
-        raise BadSource(f"Could not load pulse times: units attribute "
-                        f"'{event_time_zero.unit}' in NXEvent at "
-                        f"{group.name}/{time_zero_group} is not convertible"
-                        f" to nanoseconds.")
-
-    try:
-        time_offset = nexus.get_string_attribute(
-            nexus.get_dataset_from_group(group, time_zero_group), "offset")
-    except MissingAttribute:
-        time_offset = "1970-01-01T00:00:00Z"
-
-    # Need to convert the values which were loaded as float64 into int64 to be able
-    # to do datetime arithmetic. This needs to be done after conversion to ns to
-    # avoid unnecessary loss of accuracy.
-    pulse_times = pulse_times.astype(sc.DType.int64, copy=False)
-    return pulse_times + sc.scalar(
-        np.datetime64(time_offset), unit=sc.units.ns, dtype=sc.DType.datetime64)
 
 
 class NXevent_data(NXobject):
@@ -112,9 +82,12 @@ class NXevent_data(NXobject):
                 last_loaded = True
             index = slice(start, stop, stride)
 
-        event_index = nexus.load_dataset_from_group_as_numpy_array(
-            group, "event_index", index)
-        event_time_zero = _load_event_time_zero(group, nexus, index)
+        event_index = self['event_index'][index].values
+        event_time_zero = self['event_time_zero']
+        event_time_zero = convert_time_to_datetime64(
+            event_time_zero[index],
+            start=event_time_zero.attrs.get('offset'),
+            group_path=self.name)
 
         num_event = self["event_time_offset"].shape[0]
         # Some files contain uint64 "max" indices, which turn into negatives during
