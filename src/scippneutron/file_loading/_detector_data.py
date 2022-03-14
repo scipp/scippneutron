@@ -48,9 +48,6 @@ class NXevent_data(NXobject):
         # Binned data, bins do not have a unit
         return None
 
-    def _getitem(self, select: ScippIndex) -> sc.DataArray:
-        return self._load_event_group(self._group, self._loader, select=select)
-
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:
         if name in ['event_time_zero', 'event_index']:
             return [_pulse_dimension]
@@ -58,9 +55,8 @@ class NXevent_data(NXobject):
             return [_event_dimension]
         return None
 
-    def _load_event_group(self, group: Group, nexus: LoadFromNexus,
-                          select) -> sc.DataArray:
-        _check_for_missing_fields(group, nexus)
+    def _getitem(self, select: ScippIndex) -> sc.DataArray:
+        _check_for_missing_fields(self._group, self._loader)
         index = to_plain_index([_pulse_dimension], select)
 
         max_index = self["event_index"].shape[0]
@@ -150,7 +146,7 @@ class NXevent_data(NXobject):
             binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
         except sc.SliceError:
             raise BadSource(
-                f"Event index in NXEvent at {group.name}/event_index was not"
+                f"Event index in NXEvent at {self.name}/event_index was not"
                 f" ordered. The index must be ordered to load pulse times.")
 
         return sc.DataArray(data=binned, coords={'event_time_zero': event_time_zero})
