@@ -1,36 +1,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
-# @author Matthew Jones
+# @author Simon Heybrock
 
 from typing import List, Union
 import numpy as np
 import scipp as sc
 
-from ._common import (BadSource, SkipSource, Group)
+from ._common import BadSource, SkipSource
 from ._common import to_plain_index, convert_time_to_datetime64
-from ._nexus import LoadFromNexus
 from .nxobject import NXobject, ScippIndex, NexusStructureError
 
 _event_dimension = "event"
 _pulse_dimension = "pulse"
-
-
-def _check_for_missing_fields(group: Group, nexus: LoadFromNexus):
-    if nexus.contains_stream(group):
-        # Do not warn about missing datasets if the group contains
-        # a stream, as this will provide the missing data
-        raise SkipSource("Data source is missing datasets"
-                         "but contains a stream source for the data")
-
-    required_fields = (
-        "event_time_zero",
-        "event_index",
-        "event_time_offset",
-    )
-    for field in required_fields:
-        found, msg = nexus.dataset_in_group(group, field)
-        if not found:
-            raise BadSource(msg)
 
 
 class NXevent_data(NXobject):
@@ -56,7 +37,7 @@ class NXevent_data(NXobject):
         return None
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
-        _check_for_missing_fields(self._group, self._loader)
+        self._check_for_missing_fields()
         index = to_plain_index([_pulse_dimension], select)
 
         max_index = self["event_index"].shape[0]
@@ -145,8 +126,18 @@ class NXevent_data(NXobject):
         try:
             binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
         except sc.SliceError:
-            raise BadSource(
-                f"Event index in NXEvent at {self.name}/event_index was not"
-                f" ordered. The index must be ordered to load pulse times.")
+            raise BadSource(f"Event index in NXEvent at {self.name}/event_index was not"
+                            f" ordered. The index must be ordered to load pulse times.")
 
         return sc.DataArray(data=binned, coords={'event_time_zero': event_time_zero})
+
+    def _check_for_missing_fields(self):
+        if self._loader.contains_stream(self._group):
+            # Do not warn about missing datasets if the group contains
+            # a stream, as this will provide the missing data
+            raise SkipSource("Data source is missing datasets"
+                             "but contains a stream source for the data")
+
+        for field in ("event_time_zero", "event_index", "event_time_offset"):
+            if field not in self:
+                raise BadSource(f"Required field {field} not found in NXevent_data")
