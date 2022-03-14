@@ -631,11 +631,9 @@ def test_loads_pixel_positions_with_event_data(load_function: Callable):
         np.concatenate((x_pixel_offset_1, x_pixel_offset_2.flatten())),
         np.concatenate((y_pixel_offset_1, y_pixel_offset_2.flatten())),
         np.concatenate((z_pixel_offset_1, z_pixel_offset_2.flatten()))
-    ]).T / 1_000  # Divide by 1000 for mm to metres
+    ]).T
     assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
-    assert loaded_data.meta[
-        'position'].unit == sc.units.m, \
-        "Expected positions to be converted to metres"
+    assert loaded_data.meta['position'].unit == 'mm'
 
 
 def test_loads_pixel_positions_without_event_data(load_function: Callable):

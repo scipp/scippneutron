@@ -147,9 +147,10 @@ class NXdetector(NXobject):
         x = x[select]
         offset = sc.zeros(sizes=x.sizes, unit=x.unit, dtype=sc.DType.vector3)
         offset.fields.x = x
-        for comp in ['y_pixel_offset', 'z_pixel_offset']:
-            if comp in self:
-                offset.fields.y = self[comp][select].to(unit=x.unit, copy=False)
+        if (y := self.get('y_pixel_offset')) is not None:
+            offset.fields.y = y[select].to(unit=x.unit, copy=False)
+        if (z := self.get('z_pixel_offset')) is not None:
+            offset.fields.z = z[select].to(unit=x.unit, copy=False)
         return offset.rename_dims(dict(zip(offset.dims, self.dims)))
 
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:

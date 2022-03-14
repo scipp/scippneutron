@@ -7,7 +7,6 @@ import scipp as sc
 from ..nexus import NXroot, NX_class
 
 from ._common import Group, MissingDataset, BadSource, SkipSource
-from ._detector_data import load_detector_data
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
 from ._nexus import LoadFromNexus, ScippData
@@ -152,15 +151,34 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             "to specify which to load data from, for example"
             f"{__name__}('my_file.nxs', '/entry_2')")
 
-    loaded_data = load_detector_data(groups[nx_event_data], groups[nx_detector], nexus,
-                                     quiet, bin_by_pixel)
+    # Note: Currently this wastefully walks the tree in the file a second time.
+    root = NXroot(nexus_file, nexus)
+    classes = root.by_nx_class()
+
+    detectors = classes.get(NX_class.NXdetector, {})
+    loaded_detectors = []
+    for name, group in detectors.items():
+        det = group[()]
+        det = det.flatten(to='detector_id')
+        det.bins.coords['tof'] = det.bins.coords.pop('event_time_offset')
+        det.bins.coords['pulse_time'] = det.bins.coords.pop('event_time_zero')
+        if 'pixel_offset' in det.coords:
+            det.coords['position'] = det.coords.pop('pixel_offset')
+        loaded_detectors.append(det)
+        try:
+            pass
+        except Exception as e:
+            if not nexus.contains_stream(group._group):
+                warn(f"Skipped loading {group.name} due to:\n{e}")
+
     # If no event data are found, make a Dataset and add the metadata as
     # Dataset entries. Otherwise, make a DataArray.
-    if loaded_data is None:
+    if len(loaded_detectors):
+        no_event_data = False
+        loaded_data = sc.concat(loaded_detectors, 'detector_id')
+    else:
         no_event_data = True
         loaded_data = sc.Dataset()
-    else:
-        no_event_data = False
 
     def add_metadata(metadata: Dict[str, sc.Variable]):
         for key, value in metadata.items():
@@ -168,10 +186,6 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                 loaded_data.attrs[key] = value
             else:
                 loaded_data[key] = value
-
-    # Note: Currently this wastefully walks the tree in the file a second time.
-    root = NXroot(nexus_file, nexus)
-    classes = root.by_nx_class()
 
     if groups[nx_entry]:
         add_metadata(_load_title(groups[nx_entry][0], nexus))
