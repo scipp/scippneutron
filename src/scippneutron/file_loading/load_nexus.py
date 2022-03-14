@@ -69,8 +69,7 @@ def _load_start_and_end_time(entry_group: Group, nexus: LoadFromNexus) -> Dict:
 
 def load_nexus(data_file: Union[str, h5py.File],
                root: str = "/",
-               quiet=True,
-               bin_by_pixel: bool = True) -> Optional[ScippData]:
+               quiet=True) -> Optional[ScippData]:
     """
     Load a NeXus file and return required information.
 
@@ -78,7 +77,6 @@ def load_nexus(data_file: Union[str, h5py.File],
     :param root: path of group in file, only load data from the subtree of
       this group
     :param quiet: if False prints some details of what is being loaded
-    :param bin_by_pixel: if True, bins the loaded detector data by pixel. If False, bins
       by pulse. Defaults to True.
 
     Usage example:
@@ -90,8 +88,7 @@ def load_nexus(data_file: Union[str, h5py.File],
         loaded_data = _load_data(nexus_file,
                                  root,
                                  LoadFromHdf5(),
-                                 quiet,
-                                 bin_by_pixel=bin_by_pixel)
+                                 quiet)
 
     if not quiet:
         print("Total time:", timer() - start_time)
@@ -126,7 +123,7 @@ def _monitor_to_canonical(monitor):
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
-               nexus: LoadFromNexus, quiet: bool, bin_by_pixel: bool) \
+               nexus: LoadFromNexus, quiet: bool) \
         -> Optional[ScippData]:
     """
     Main implementation for loading data is extracted to this function so that
@@ -259,7 +256,6 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
 def _load_nexus_json(
     json_template: str,
     get_start_info: bool = False,
-    bin_by_pixel: bool = True,
 ) -> Tuple[Optional[ScippData], Optional[sc.Variable], Optional[Set[StreamInfo]]]:
     """
     Use this function for testing so that file io is not required
@@ -273,13 +269,11 @@ def _load_nexus_json(
     return _load_data(loaded_json,
                       None,
                       LoadFromJson(loaded_json),
-                      True,
-                      bin_by_pixel=bin_by_pixel), streams
+                      True), streams
 
 
-def load_nexus_json(json_filename: str,
-                    bin_by_pixel: bool = True) -> Optional[ScippData]:
+def load_nexus_json(json_filename: str) -> Optional[ScippData]:
     with open(json_filename, 'r') as json_file:
         json_string = json_file.read()
-    loaded_data, _ = _load_nexus_json(json_string, bin_by_pixel=bin_by_pixel)
+    loaded_data, _ = _load_nexus_json(json_string)
     return loaded_data

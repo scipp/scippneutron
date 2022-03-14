@@ -2016,14 +2016,10 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
         event_time_zero_unit="ns",
     )
 
-    detector_numbers = np.array([1, 2, 3, 4])
-
     builder = NexusBuilder()
     builder.add_event_data(event_data)
-    #builder.add_detector(
-    #    Detector(detector_numbers=detector_numbers, event_data=event_data))
 
-    loaded_data = load_function(builder, bin_by_pixel=False)
+    loaded_data = load_function(builder)
 
     binned = sc.bins(
         dim="event",
@@ -2058,7 +2054,6 @@ def test_load_raw_detector_data_from_nexus_file(load_function: Callable):
                                          dtype=sc.DType.datetime64)
                             })
 
-    print(loaded_data, expected)
     assert sc.identical(loaded_data, expected)
 
 
