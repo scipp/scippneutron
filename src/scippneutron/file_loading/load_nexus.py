@@ -6,7 +6,7 @@ import scipp as sc
 
 from ..nexus import NXroot, NX_class
 
-from ._common import Group, MissingDataset
+from ._common import Group, MissingDataset, BadSource, SkipSource
 from ._detector_data import load_detector_data
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
@@ -18,6 +18,7 @@ from contextlib import contextmanager
 from warnings import warn
 from ._nx_classes import (nx_event_data, nx_log, nx_entry, nx_instrument, nx_sample,
                           nx_source, nx_detector, nx_disk_chopper, nx_monitor)
+from .nxtransformations import TransformationError
 
 
 @contextmanager
@@ -203,7 +204,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             try:
                 items[name] = sc.scalar(process(group[()]))
                 loaded_groups.append(name)
-            except Exception as e:
+            except (BadSource, SkipSource, TransformationError, sc.DimensionError,
+                    KeyError) as e:
                 if not nexus.contains_stream(group._group):
                     warn(f"Skipped loading {group.name} due to:\n{e}")
         add_metadata(items)
