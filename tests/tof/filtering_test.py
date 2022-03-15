@@ -87,14 +87,16 @@ def test_remove_bad_pulses_contiguous_section():
     proton_charge = data.attrs['proton_charge'].value
     begin_removed = proton_charge.coords['pulse_time'][100]
     end_removed = proton_charge.coords['pulse_time'][120]
-    data.coords['should_be_removed'] = (data.bins.coords['pulse_time'] >
-                                        begin_removed) & (data.bins.coords['pulse_time']
-                                                          < end_removed)
+    data.bins.coords['should_be_removed'] = (
+        data.bins.coords['pulse_time'] >
+        begin_removed) & (data.bins.coords['pulse_time'] < end_removed)
 
     filtered = filtering.remove_bad_pulses(data,
                                            proton_charge=proton_charge,
                                            threshold_factor=0.9)
 
-    assert not sc.any(filtered.coords['should_be_removed']).value
-    assert sc.identical(filtered.bins.size(),
-                        data.bins.size() - data.coords['should_be_removed'].sum())
+    assert not sc.any(filtered.bins.coords['should_be_removed']).value
+    n_events_filtered = filtered.bins.size().sum().data
+    expected_n_events_filtered = data.bins.size().sum(
+    ).data - data.bins.coords['should_be_removed'].sum()
+    assert sc.identical(n_events_filtered, expected_n_events_filtered)
