@@ -26,10 +26,15 @@ def _with_pulse_time_edges(da):
 
 
 def remove_bad_pulses(data, *, proton_charge, threshold_factor):
+    """
+    assumes that there are bad pulses
+    """
     min_charge = proton_charge.data.mean() * threshold_factor
     good_pulse = _with_pulse_time_edges(proton_charge >= min_charge)
     with _temporary_bin_coord(
             data, 'good_pulse',
             sc.lookup(good_pulse, good_pulse.dim)[data.bins.coords[good_pulse.dim]]):
         filtered = sc.bin(data, groups=[sc.array(dims=['good_pulse'], values=[True])])
-    return filtered.squeeze('good_pulse')
+    filtered = filtered.squeeze('good_pulse').copy(deep=False)
+    del filtered.attrs['good_pulse']
+    return filtered
