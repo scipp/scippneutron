@@ -77,6 +77,44 @@ def test_make_data_with_pulse_time_and_proton_charge():
     assert (data.attrs['proton_charge'].value.data[3] > bad_charge).value
 
 
+def test_remove_bad_pulses_does_not_modify_input():
+    rng = np.random.default_rng(65501)
+    bad_charge = sc.scalar(1.0e5, unit='pC')
+    data = make_data_with_pulse_time_and_proton_charge(
+        rng, 100, 300, bad_charge, bad_charge_indices=[0, 10, 100, 150, 200])
+    original = data.copy()
+    _ = filtering.remove_bad_pulses(data,
+                                    proton_charge=data.attrs['proton_charge'].value,
+                                    threshold_factor=0.9)
+    assert sc.identical(data, original)
+
+
+def test_remove_bad_pulses_without_bad_pulses():
+    rng = np.random.default_rng(65501)
+    bad_charge = sc.scalar(1.0e5, unit='pC')
+    data = make_data_with_pulse_time_and_proton_charge(rng,
+                                                       100,
+                                                       300,
+                                                       bad_charge,
+                                                       bad_charge_indices=[])
+    filtered = filtering.remove_bad_pulses(
+        data, proton_charge=data.attrs['proton_charge'].value, threshold_factor=0.0)
+    assert sc.identical(filtered, data)
+
+
+def test_remove_bad_pulses_without_good_pulses():
+    rng = np.random.default_rng(65501)
+    bad_charge = sc.scalar(1.0e5, unit='pC')
+    data = make_data_with_pulse_time_and_proton_charge(
+        rng, 100, 300, bad_charge, bad_charge_indices=np.arange(300))
+    filtered = filtering.remove_bad_pulses(
+        data, proton_charge=data.attrs['proton_charge'].value, threshold_factor=10.0)
+    empty = data.copy()
+    empty.bins.constituents['begin'][...] = sc.index(0)
+    empty.bins.constituents['end'][...] = sc.index(0)
+    assert sc.identical(filtered, empty)
+
+
 def test_remove_bad_pulses_contiguous_section():
     rng = np.random.default_rng(65501)
     bad_charge = sc.scalar(1.0e5, unit='pC')
