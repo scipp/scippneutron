@@ -98,43 +98,10 @@ class NXdetector(NXobject):
     @property
     def shape(self) -> List[int]:
         return self._signal.shape
-        #if self._is_events:
-        #    if (signal := self._signal) is not None:
-        #        return signal.shape
-        #    if self._detector_number is None:
-        #        raise NexusStructureError(
-        #            "Cannot get shape of NXdetector since no 'detector_number' "
-        #            "field found but detector contains event data.")
-        #    return self._detector_number.shape
-        #return self._nxbase.shape
 
     @property
     def dims(self) -> List[str]:
         return self._signal.dims
-        #if (signal := self._signal) is not None:
-        #    return signal.dims
-        #if self._is_events:
-        #    default = [f'dim_{i}' for i in range(self.ndim)]
-        #    if len(default) == 1:
-        #        default = ['detector_number']
-        #    # The NeXus standard is lacking information on a number of details on
-        #    # NXdetector, but according to personal communication with Tobias Richter
-        #    # it is "intended" to partially "subclass" NXdata. That is, e.g., attributes
-        #    # defined for NXdata such as 'axes' may be used.
-        #    return self.attrs.get('axes', default)
-        #return self._nxbase.dims
-
-    @property
-    def ndim(self) -> int:
-        if self._is_events:
-            return self._detector_number.ndim
-        return self._signal.ndim
-        #if self._is_events:
-        #    if 'detector_number' not in self:
-        #        return 1
-        #    det_field = self._get_child('detector_number')
-        #    return det_field.ndim
-        #return self['data'].ndim
 
     @property
     def unit(self) -> Union[sc.Unit, None]:
@@ -162,10 +129,6 @@ class NXdetector(NXobject):
                                          self._detector_number)
         else:
             return self._nxbase._signal
-        #nxdata = self._nxdata
-        #name = nxdata._signal_name
-        #if name is not None and name in nxdata:
-        #    return nxdata._signal
 
     @property
     def _nxdata(self) -> NXdata:
@@ -207,24 +170,8 @@ class NXdetector(NXobject):
     def _detector_number(self) -> Field:
         if 'detector_number' in self:
             return self['detector_number']
+        # TODO
         return self.get('pixel_id', None)
-
-    def detector_number(self, select) -> sc.Variable:
-        """Read and return the 'detector_number' field, None if it does not exist."""
-        field = self._detector_number
-        if field is None:
-            if self._is_events and select not in (Ellipsis,
-                                                  tuple()) and select != slice(None):
-                raise NexusStructureError(
-                    "Cannot load slice of NXdetector since it contains event data "
-                    "but no 'detector_number' field, i.e., the shape is unknown. "
-                    "Use ellipsis or an empty tuple to load the full detector.")
-            return None
-        select = to_child_select(self.dims, field.dims, select)
-        if field.dtype not in ['int32', 'int64', 'uint32', 'uint64']:
-            raise NexusStructureError(
-                "NXdetector contains detector_number field with non-integer values")
-        return field[select]
 
     def pixel_offset(self, select) -> sc.Variable:
         """Read the [xyz]_pixel_offset fields and return a variable of pixel offset
@@ -256,13 +203,7 @@ class NXdetector(NXobject):
             return self._nxdata._get_field_dims(name)
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
-        # Note that ._detector_data._load_detector provides a different loading
-        # facility for NXdetector but handles only loading of detector_number,
-        # as needed for event data loading
-        coords = {
-            #'detector_number': self.detector_number(select),
-            'pixel_offset': self.pixel_offset(select)
-        }
+        coords = {'pixel_offset': self.pixel_offset(select)}
         if self._is_events:
             da = self._signal[select]
         else:
