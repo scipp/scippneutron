@@ -135,10 +135,11 @@ class NXdetector(NXobject):
         return 'event_time_offset' in self
 
     @property
-    def _detector_number(self) -> Field:
-        if 'detector_number' in self:
-            return self['detector_number']
-        return self.get('pixel_id', None)
+    def _detector_number(self) -> Union[None, Field]:
+        for key in self._detector_number_fields:
+            if key in self:
+                return self[key]
+        return None
 
     @property
     def _signal(self) -> Union[Field, NXevent_data_by_pixel]:
