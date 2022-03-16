@@ -5,7 +5,7 @@ from typing import List, Union
 from warnings import warn
 import scipp as sc
 import numpy as np
-from ._common import to_child_select, Dataset, Group
+from ._common import to_child_select, Group
 from .nxobject import Field, NXobject, ScippIndex, NexusStructureError
 from ._nexus import LoadFromNexus
 from ._hdf5_nexus import LoadFromHdf5
@@ -16,6 +16,7 @@ class NXdata(NXobject):
                  group: Group,
                  loader: LoadFromNexus = LoadFromHdf5(),
                  signal_name_default: str = None,
+                 signal=None,
                  axes: List[str] = None,
                  skip: List[str] = None):
         """
@@ -24,6 +25,7 @@ class NXdata(NXobject):
         """
         super().__init__(group, loader)
         self._signal_name_default = signal_name_default
+        self._signal_override = signal
         self._axes_default = axes
         self._skip = skip if skip is not None else []
 
@@ -69,7 +71,9 @@ class NXdata(NXobject):
             return f'{self._signal_name_default}_errors'
 
     @property
-    def _signal(self) -> Dataset:
+    def _signal(self) -> Field:
+        if self._signal_override is not None:
+            return self._signal_override
         return self[self._signal_name]
 
     def _get_axes(self):
@@ -120,11 +124,12 @@ class NXdata(NXobject):
             return None
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
-        signal = self[self._signal_name][select]
+        signal = self._signal[select]
         if self._errors_name in self:
             stddevs = self[self._errors_name][select]
             signal.variances = sc.pow(stddevs, 2).values
-        da = sc.DataArray(data=signal)
+
+        da = sc.DataArray(data=signal) if isinstance(signal, sc.Variable) else signal
 
         skip = self._skip
         skip += [self._signal_name, self._errors_name]

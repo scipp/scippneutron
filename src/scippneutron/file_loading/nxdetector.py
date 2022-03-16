@@ -8,7 +8,6 @@ import scipp as sc
 from .nxobject import NX_class, NXobject, Field, ScippIndex, NexusStructureError
 from .nxdata import NXdata
 from .nxevent_data import NXevent_data
-from ._common import to_child_select
 
 
 class EventSelector:
@@ -37,6 +36,10 @@ class NXevent_data_by_pixel:
         self._nxevent_data = nxevent_data
         self._event_select = event_select
         self._detector_number = detector_number
+
+    @property
+    def attrs(self):
+        return self._nxevent_data.attrs
 
     @property
     def dims(self):
@@ -85,7 +88,7 @@ class NXevent_data_by_pixel:
         # more efficient approach of binning from scratch instead of erasing the
         # 'pulse' binning defined by NXevent_data.
         event_data = sc.bin(event_data.bins.constituents['data'], groups=[event_id])
-        event_data.coords['detector_number'] = event_data.coords['event_id']
+        event_data.coords['detector_number'] = event_data.coords.pop('event_id')
         return event_data.fold(dim='event_id', sizes=detector_number.sizes)
 
 
@@ -128,7 +131,14 @@ class NXdetector(NXobject):
         return 'event_time_offset' in self
 
     @property
-    def _signal(self) -> Union[Field, None]:
+    def _detector_number(self) -> Field:
+        if 'detector_number' in self:
+            return self['detector_number']
+        # TODO
+        return self.get('pixel_id', None)
+
+    @property
+    def _signal(self) -> Union[Field, NXevent_data_by_pixel]:
         if self._is_events:
             return NXevent_data_by_pixel(self._nxbase, self._event_select,
                                          self._detector_number)
@@ -140,9 +150,11 @@ class NXdetector(NXobject):
         # NXdata uses the 'signal' attribute to define the field name of the signal.
         # NXdetector uses a "hard-coded" signal name 'data', without specifying the
         # attribute in the file, so we pass this explicitly to NXdata.
+        signal_override = self._signal if self._is_events else None
         return NXdata(self._group,
                       self._loader,
-                      signal_name_default='data' if 'data' in self else None)
+                      signal_name_default='data' if 'data' in self else None,
+                      signal=signal_override)
 
     @property
     def _nxbase(self) -> Union[NXdata, NXevent_data]:
@@ -171,31 +183,23 @@ class NXdetector(NXobject):
                 "Cannot select events in NXdetector not containing NXevent_data.")
         return EventSelector(self)
 
-    @property
-    def _detector_number(self) -> Field:
-        if 'detector_number' in self:
-            return self['detector_number']
-        # TODO
-        return self.get('pixel_id', None)
-
-    def pixel_offset(self, select) -> sc.Variable:
+    def _zip_pixel_offset(self, da: sc.DataArray) -> sc.DataArray:
         """Read the [xyz]_pixel_offset fields and return a variable of pixel offset
         vectors, None if x_pixel_offset does not exist."""
-        if 'x_pixel_offset' not in self:
-            return None
-        x = self['x_pixel_offset']
-        select = to_child_select(self.dims, x.dims, select)
-        x = x[select]
-        offset = sc.zeros(dims=self.dims,
-                          shape=self.shape,
+        if 'x_pixel_offset' not in da.coords:
+            return da
+        x = da.coords.pop('x_pixel_offset')
+        offset = sc.zeros(dims=da.dims,
+                          shape=da.shape,
                           unit=x.unit,
                           dtype=sc.DType.vector3)
         offset.fields.x = x.to(dtype='float64', copy=False)
-        if (y := self.get('y_pixel_offset')) is not None:
-            offset.fields.y = y[select].to(dtype='float64', unit=x.unit, copy=False)
-        if (z := self.get('z_pixel_offset')) is not None:
-            offset.fields.z = z[select].to(dtype='float64', unit=x.unit, copy=False)
-        return offset.rename_dims(dict(zip(offset.dims, self.dims)))
+        if (y := da.coords.pop('y_pixel_offset', None)) is not None:
+            offset.fields.y = y.to(dtype='float64', unit=x.unit, copy=False)
+        if (z := da.coords.pop('z_pixel_offset', None)) is not None:
+            offset.fields.z = z.to(dtype='float64', unit=x.unit, copy=False)
+        da.coords['pixel_offset'] = offset.rename_dims(dict(zip(offset.dims, da.dims)))
+        return da
 
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:
         if self._is_events:
@@ -204,16 +208,11 @@ class NXdetector(NXobject):
             ]:
                 # Event field is direct child of this class
                 return self._nxbase._get_field_dims(name)
+            if name == 'detector_number':
+                return None
         if self._nxdata._signal_name is not None:
             return self._nxdata._get_field_dims(name)
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
-        coords = {'pixel_offset': self.pixel_offset(select)}
-        if self._is_events:
-            da = self._signal[select]
-        else:
-            da = self._nxbase[select]
-        for name, coord in coords.items():
-            if coord is not None:
-                da.coords[name] = coord
-        return da
+        da = self._nxdata[select]
+        return self._zip_pixel_offset(da)
