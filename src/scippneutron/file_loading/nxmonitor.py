@@ -34,7 +34,7 @@ class NXmonitor(NXobject):
         # NXdata uses the 'signal' attribute to define the field name of the signal.
         # NXmonitor uses a "hard-coded" signal name 'data', without specifying the
         # attribute in the file, so we pass this explicitly to NXdata.
-        return NXdata(self._group, self._loader, signal='data')
+        return NXdata(self._group, self._loader, signal_name_default='data')
 
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:
         if self._is_events:

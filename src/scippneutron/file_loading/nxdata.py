@@ -15,7 +15,7 @@ class NXdata(NXobject):
     def __init__(self,
                  group: Group,
                  loader: LoadFromNexus = LoadFromHdf5(),
-                 signal: str = None,
+                 signal_name_default: str = None,
                  axes: List[str] = None,
                  skip: List[str] = None):
         """
@@ -23,7 +23,7 @@ class NXdata(NXobject):
         :param axes: Default axes used, if no `axes` attribute found in file.
         """
         super().__init__(group, loader)
-        self._signal_name_default = signal
+        self._signal_name_default = signal_name_default
         self._axes_default = axes
         self._skip = skip if skip is not None else []
 

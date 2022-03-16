@@ -142,7 +142,7 @@ class NXdetector(NXobject):
         # attribute in the file, so we pass this explicitly to NXdata.
         return NXdata(self._group,
                       self._loader,
-                      signal='data' if 'data' in self else None)
+                      signal_name_default='data' if 'data' in self else None)
 
     @property
     def _nxbase(self) -> Union[NXdata, NXevent_data]:
