@@ -121,6 +121,24 @@ def _monitor_to_canonical(monitor):
     return da
 
 
+def _zip_pixel_offset(da: sc.DataArray) -> sc.DataArray:
+    """Remove [xyz]_pixel_offset and replace them by single 'pixel_offset' coord.
+
+    Returns unchanged data array if x_pixel_offset is not found.
+    """
+    if 'x_pixel_offset' not in da.coords:
+        return da
+    x = da.coords.pop('x_pixel_offset')
+    offset = sc.zeros(dims=da.dims, shape=da.shape, unit=x.unit, dtype=sc.DType.vector3)
+    offset.fields.x = x.to(dtype='float64', copy=False)
+    if (y := da.coords.pop('y_pixel_offset', None)) is not None:
+        offset.fields.y = y.to(dtype='float64', unit=x.unit, copy=False)
+    if (z := da.coords.pop('z_pixel_offset', None)) is not None:
+        offset.fields.z = z.to(dtype='float64', unit=x.unit, copy=False)
+    da.coords['pixel_offset'] = offset.rename_dims(dict(zip(offset.dims, da.dims)))
+    return da
+
+
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                nexus: LoadFromNexus, quiet: bool) \
         -> Optional[ScippData]:
@@ -162,6 +180,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     for name, group in detectors.items():
         try:
             det = group[()]
+            det = _zip_pixel_offset(det)
             det = det.flatten(to='detector_id')
             det.bins.coords['tof'] = det.bins.coords.pop('event_time_offset')
             det.bins.coords['pulse_time'] = det.bins.coords.pop('event_time_zero')

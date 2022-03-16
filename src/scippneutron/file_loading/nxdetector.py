@@ -143,7 +143,7 @@ class NXdetector(NXobject):
             return NXevent_data_by_pixel(self._nxbase, self._event_select,
                                          self._detector_number)
         else:
-            return self._nxbase._signal
+            return self._nxdata._signal
 
     @property
     def _nxdata(self) -> NXdata:
@@ -183,24 +183,6 @@ class NXdetector(NXobject):
                 "Cannot select events in NXdetector not containing NXevent_data.")
         return EventSelector(self)
 
-    def _zip_pixel_offset(self, da: sc.DataArray) -> sc.DataArray:
-        """Read the [xyz]_pixel_offset fields and return a variable of pixel offset
-        vectors, None if x_pixel_offset does not exist."""
-        if 'x_pixel_offset' not in da.coords:
-            return da
-        x = da.coords.pop('x_pixel_offset')
-        offset = sc.zeros(dims=da.dims,
-                          shape=da.shape,
-                          unit=x.unit,
-                          dtype=sc.DType.vector3)
-        offset.fields.x = x.to(dtype='float64', copy=False)
-        if (y := da.coords.pop('y_pixel_offset', None)) is not None:
-            offset.fields.y = y.to(dtype='float64', unit=x.unit, copy=False)
-        if (z := da.coords.pop('z_pixel_offset', None)) is not None:
-            offset.fields.z = z.to(dtype='float64', unit=x.unit, copy=False)
-        da.coords['pixel_offset'] = offset.rename_dims(dict(zip(offset.dims, da.dims)))
-        return da
-
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:
         if self._is_events:
             if name in [
@@ -209,10 +191,8 @@ class NXdetector(NXobject):
                 # Event field is direct child of this class
                 return self._nxbase._get_field_dims(name)
             if name == 'detector_number':
-                return None
-        if self._nxdata._signal_name is not None:
-            return self._nxdata._get_field_dims(name)
+                return None  # TODO We can probably do better here
+        return self._nxdata._get_field_dims(name)
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
-        da = self._nxdata[select]
-        return self._zip_pixel_offset(da)
+        return self._nxdata[select]
