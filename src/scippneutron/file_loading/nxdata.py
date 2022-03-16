@@ -35,12 +35,11 @@ class NXdata(NXobject):
     def dims(self) -> List[str]:
         # Apparently it is not possible to define dim labels unless there are
         # corresponding coords. Special case of '.' entries means "no coord".
-        if self.attrs.get('axes', self._axes_default) is not None:
-            axes = self.attrs.get('axes', self._axes_default)
+        if (axes := self.attrs.get('axes', self._axes_default)) is not None:
             return [f'dim_{i}' if a == '.' else a for i, a in enumerate(axes)]
         # Legacy NXdata defines axes not as group attribute, but attr on dataset
-        if 'axes' in self._signal.attrs:
-            return self._signal.attrs['axes'].split(',')
+        if (axes := self._signal.attrs.get('axes')) is not None:
+            return axes.split(',')
         return [f'dim_{i}' for i in range(len(self.shape))]
 
     @property
