@@ -273,6 +273,12 @@ def test_can_load_nxdetector_from_bigfake():
         assert da.sizes == {'dim_0': 300, 'dim_1': 300}
 
 
+def test_can_load_nxdetector_from_PG3():
+    with nexus.File(scn.data.get_path('PG3_4844_event.nxs')) as f:
+        da = f['entry/instrument/bank24'][...]
+        assert da.sizes == {'x_pixel_offset': 154, 'y_pixel_offset': 7}
+
+
 def test_event_data_field_dims_labels(nexus_group: Tuple[Callable, LoadFromNexus]):
     event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
     event_data = EventData(

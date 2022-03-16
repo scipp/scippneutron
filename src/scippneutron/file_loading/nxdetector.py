@@ -102,6 +102,10 @@ class NXdetector(NXobject):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._event_select = tuple()
+        self._nxevent_data_fields = [
+            'event_time_zero', 'event_index', 'event_time_offset', 'event_id'
+        ]
+        self._detector_number_fields = ['detector_number', 'pixel_id']
 
     @property
     def shape(self) -> List[int]:
@@ -134,7 +138,6 @@ class NXdetector(NXobject):
     def _detector_number(self) -> Field:
         if 'detector_number' in self:
             return self['detector_number']
-        # TODO
         return self.get('pixel_id', None)
 
     @property
@@ -154,7 +157,8 @@ class NXdetector(NXobject):
         return NXdata(self._group,
                       self._loader,
                       signal_name_default='data' if 'data' in self else None,
-                      signal=signal_override)
+                      signal=signal_override,
+                      skip=self._nxevent_data_fields)
 
     @property
     def events(self) -> Union[None, NXevent_data]:
@@ -179,12 +183,15 @@ class NXdetector(NXobject):
 
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:
         if self._is_events:
-            if name in [
-                    'event_time_zero', 'event_index', 'event_time_offset', 'event_id'
-            ]:
+            if name in self._nxevent_data_fields:
                 # Event field is direct child of this class
                 return self.events._get_field_dims(name)
-            if name == 'detector_number':
+            if name in self._detector_number_fields:
+                nxdata = NXdata(self._group, self._loader)
+                # If there is a signal field in addition to the event data it can be
+                # used to define dimension labels
+                if nxdata._signal_name is not None:
+                    return nxdata._get_field_dims(name)
                 return None  # TODO We can probably do better here
         return self._nxdata._get_field_dims(name)
 
