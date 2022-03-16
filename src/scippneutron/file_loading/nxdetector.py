@@ -28,7 +28,7 @@ class NXevent_data_by_pixel:
     """NXevent_data binned into pixels.
 
     This has no equivalent in the NeXus format, but represents the conceptual
-    event-data "signal" of an NXdetector.
+    event-data "signal" dataset of an NXdetector.
     """
     def __init__(self,
                  nxevent_data: NXevent_data,
@@ -52,7 +52,11 @@ class NXevent_data_by_pixel:
                 "field found but detector contains event data.")
         return self._detector_number.shape
 
-    def __getitem__(self, select) -> sc.Variable:
+    @property
+    def unit(self):
+        self._nxevent_data.unit
+
+    def __getitem__(self, select: ScippIndex) -> sc.DataArray:
         event_data = self._nxevent_data[self._event_select]
         if self._detector_number is None:
             if select not in (Ellipsis, tuple()) and select != slice(None):
