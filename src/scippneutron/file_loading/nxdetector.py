@@ -81,6 +81,7 @@ class NXevent_data_by_pixel:
         # more efficient approach of binning from scratch instead of erasing the
         # 'pulse' binning defined by NXevent_data.
         event_data = sc.bin(event_data.bins.constituents['data'], groups=[event_id])
+        event_data.coords['detector_number'] = event_data.coords['event_id']
         return event_data.fold(dim='event_id', sizes=detector_number.sizes)
 
 
