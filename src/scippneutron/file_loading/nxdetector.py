@@ -142,22 +142,21 @@ class NXdetector(NXobject):
 
     @property
     def _signal(self) -> Union[Field, NXevent_data_by_pixel]:
-        if self._is_events:
-            return NXevent_data_by_pixel(self.events, self._event_select,
-                                         self._detector_number)
-        else:
-            return self._nxdata._signal
+        return self._nxdata()._signal
 
-    @property
-    def _nxdata(self) -> NXdata:
+    def _nxdata(self, use_event_signal=True) -> NXdata:
+        if use_event_signal and self._is_events:
+            signal = NXevent_data_by_pixel(self.events, self._event_select,
+                                           self._detector_number)
+        else:
+            signal = None
         # NXdata uses the 'signal' attribute to define the field name of the signal.
         # NXdetector uses a "hard-coded" signal name 'data', without specifying the
         # attribute in the file, so we pass this explicitly to NXdata.
-        signal_override = self._signal if self._is_events else None
         return NXdata(self._group,
                       self._loader,
                       signal_name_default='data' if 'data' in self else None,
-                      signal=signal_override,
+                      signal=signal,
                       skip=self._nxevent_data_fields)
 
     @property
@@ -187,13 +186,13 @@ class NXdetector(NXobject):
                 # Event field is direct child of this class
                 return self.events._get_field_dims(name)
             if name in self._detector_number_fields:
-                nxdata = NXdata(self._group, self._loader)
                 # If there is a signal field in addition to the event data it can be
                 # used to define dimension labels
+                nxdata = self._nxdata(use_event_signal=False)
                 if nxdata._signal_name is not None:
                     return nxdata._get_field_dims(name)
-                return None  # TODO We can probably do better here
-        return self._nxdata._get_field_dims(name)
+                return None
+        return self._nxdata()._get_field_dims(name)
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
-        return self._nxdata[select]
+        return self._nxdata()[select]
