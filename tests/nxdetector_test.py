@@ -113,12 +113,12 @@ def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
     resource, loader = nexus_group
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
-        assert detector.dims == ['detector_number']
+        assert detector.dims == ['dim_0']
         assert detector.shape == (4, )
         loaded = detector[...]
         assert sc.identical(
             loaded.bins.size().data,
-            sc.array(dims=['detector_number'],
+            sc.array(dims=['dim_0'],
                      unit=None,
                      dtype='int64',
                      values=[2, 3, 1, 0]))
@@ -287,7 +287,7 @@ def test_event_data_field_dims_labels(nexus_group: Tuple[Callable, LoadFromNexus
     resource, loader = nexus_group
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
-        assert detector['detector_number'].dims == ['detector_number']
+        assert detector['detector_number'].dims == ['dim_0']
 
 
 def test_nxevent_data_selection_yields_correct_pulses(
