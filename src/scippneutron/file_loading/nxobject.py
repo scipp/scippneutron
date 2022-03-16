@@ -71,13 +71,12 @@ class Field:
                  dims=None):
         self._dataset = dataset
         self._loader = loader
-        if dims is None:
-            if (axes := self.attrs.get('axes')) is not None:
-                self._dims = axes.split(',')
-            else:
-                self._dims = [f'dim_{i}' for i in range(self.ndim)]
-        else:
+        if dims is not None:
             self._dims = dims
+        elif (axes := self.attrs.get('axes')) is not None:
+            self._dims = axes.split(',')
+        else:
+            self._dims = [f'dim_{i}' for i in range(self.ndim)]
 
     def __getitem__(self, select) -> sc.Variable:
         index = to_plain_index(self.dims, select)

@@ -37,10 +37,9 @@ class NXdata(NXobject):
         # corresponding coords. Special case of '.' entries means "no coord".
         if (axes := self.attrs.get('axes', self._axes_default)) is not None:
             return [f'dim_{i}' if a == '.' else a for i, a in enumerate(axes)]
-        # Legacy NXdata defines axes not as group attribute, but attr on dataset
-        if (axes := self._signal.attrs.get('axes')) is not None:
-            return axes.split(',')
-        return [f'dim_{i}' for i in range(len(self.shape))]
+        # Legacy NXdata defines axes not as group attribute, but attr on dataset.
+        # This is handled by class Field.
+        return self._signal.dims
 
     @property
     def unit(self) -> Union[sc.Unit, None]:
@@ -48,8 +47,7 @@ class NXdata(NXobject):
 
     @property
     def _signal_name(self) -> str:
-        name = self.attrs.get('signal', self._signal_name_default)
-        if name is not None:
+        if (name := self.attrs.get('signal', self._signal_name_default)) is not None:
             return name
         # Legacy NXdata defines signal not as group attribute, but attr on dataset
         for name in self.keys():
