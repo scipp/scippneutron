@@ -68,12 +68,12 @@ class NXdata(NXobject):
         return self._get_child(self._signal_name)
 
     def _get_axes(self):
-        """Return labels of named axes."""
+        """Return labels of named axes. Does not include default 'dim_{i}' names."""
         if (axes := self.attrs.get('axes', self._axes_default)) is not None:
             # Unlike self.dims we *drop* entries that are '.'
             return [a for a in axes if a != '.']
-        elif 'axes' in self._signal.attrs:
-            return self._signal.attrs['axes'].split(',')
+        elif (axes := self._signal.attrs.get('axes')) is not None:
+            return axes.split(',')
         return []
 
     def _guess_dims(self, name: str):
