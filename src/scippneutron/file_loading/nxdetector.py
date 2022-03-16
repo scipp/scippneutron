@@ -140,7 +140,7 @@ class NXdetector(NXobject):
     @property
     def _signal(self) -> Union[Field, NXevent_data_by_pixel]:
         if self._is_events:
-            return NXevent_data_by_pixel(self._nxbase, self._event_select,
+            return NXevent_data_by_pixel(self.events, self._event_select,
                                          self._detector_number)
         else:
             return self._nxdata._signal
@@ -157,20 +157,14 @@ class NXdetector(NXobject):
                       signal=signal_override)
 
     @property
-    def _nxbase(self) -> Union[NXdata, NXevent_data]:
-        """Return class for loading underlying data."""
-        if self._is_events:
-            if 'event_time_offset' in self:
-                return NXevent_data(self._group, self._loader)
-            event_entries = self.by_nx_class()[NX_class.NXevent_data]
-            return next(iter(event_entries.values()))
-        return self._nxdata
-
-    @property
     def events(self) -> Union[None, NXevent_data]:
         """Return the underlying NXevent_data group, None if not event data."""
-        if self._is_events:
-            return self._nxbase
+        if not self._is_events:
+            return None
+        if 'event_time_offset' in self:
+            return NXevent_data(self._group, self._loader)
+        event_entries = self.by_nx_class()[NX_class.NXevent_data]
+        return next(iter(event_entries.values()))
 
     @property
     def select_events(self) -> EventSelector:
@@ -189,7 +183,7 @@ class NXdetector(NXobject):
                     'event_time_zero', 'event_index', 'event_time_offset', 'event_id'
             ]:
                 # Event field is direct child of this class
-                return self._nxbase._get_field_dims(name)
+                return self.events._get_field_dims(name)
             if name == 'detector_number':
                 return None  # TODO We can probably do better here
         return self._nxdata._get_field_dims(name)
