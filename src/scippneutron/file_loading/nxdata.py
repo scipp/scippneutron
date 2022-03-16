@@ -31,12 +31,17 @@ class NXdata(NXobject):
     def shape(self) -> List[int]:
         return self._signal.shape
 
-    @property
-    def dims(self) -> List[str]:
+    def _get_group_dims(self) -> Union[None, List[str]]:
         # Apparently it is not possible to define dim labels unless there are
         # corresponding coords. Special case of '.' entries means "no coord".
         if (axes := self.attrs.get('axes', self._axes_default)) is not None:
             return [f'dim_{i}' if a == '.' else a for i, a in enumerate(axes)]
+        return None
+
+    @property
+    def dims(self) -> List[str]:
+        if (d := self._get_group_dims()) is not None:
+            return d
         # Legacy NXdata defines axes not as group attribute, but attr on dataset.
         # This is handled by class Field.
         return self._signal.dims
@@ -65,7 +70,7 @@ class NXdata(NXobject):
 
     @property
     def _signal(self) -> Dataset:
-        return self._get_child(self._signal_name)
+        return self[self._signal_name]
 
     def _get_axes(self):
         """Return labels of named axes. Does not include default 'dim_{i}' names."""
@@ -104,7 +109,7 @@ class NXdata(NXobject):
         signals = [self._signal_name, self._errors_name]
         signals += list(self.attrs.get('auxiliary_signals', []))
         if name in signals:
-            return self.dims
+            return self._get_group_dims()  # if None, field determines dims itself
         if name in self._get_axes():
             # If there are named axes then items of same name are "dimension
             # coordinates", i.e., have a dim matching their name.

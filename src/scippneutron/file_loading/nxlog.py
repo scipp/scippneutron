@@ -24,7 +24,7 @@ class NXlog(NXobject):
 
     @property
     def _nxbase(self) -> NXdata:
-        axes = ['.'] * self._get_child('value', use_field_dims=False).ndim
+        axes = ['.'] * self._get_child('value').ndim
         # The outermost axis in NXlog is pre-defined to 'time' (if present). Note
         # that this may be overriden by an `axes` attribute, if defined for the group.
         if 'time' in self:
