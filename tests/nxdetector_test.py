@@ -118,10 +118,7 @@ def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
         loaded = detector[...]
         assert sc.identical(
             loaded.bins.size().data,
-            sc.array(dims=['dim_0'],
-                     unit=None,
-                     dtype='int64',
-                     values=[2, 3, 1, 0]))
+            sc.array(dims=['dim_0'], unit=None, dtype='int64', values=[2, 3, 1, 0]))
         assert 'event_time_offset' in loaded.bins.coords
         assert 'event_time_zero' in loaded.bins.coords
 
