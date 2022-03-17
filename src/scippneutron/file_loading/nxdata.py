@@ -13,13 +13,14 @@ from ._hdf5_nexus import LoadFromHdf5
 
 
 class NXdata(NXobject):
-    def __init__(self,
-                 group: Group,
-                 loader: LoadFromNexus = LoadFromHdf5(),
-                 signal_name_default: str = None,
-                 signal_override: Union[Field, EventField] = None,
-                 axes: List[str] = None,
-                 skip: List[str] = None):
+    def __init__(
+            self,
+            group: Group,
+            loader: LoadFromNexus = LoadFromHdf5(),
+            signal_name_default: str = None,
+            signal_override: Union[Field, EventField] = None,  # noqa: F821
+            axes: List[str] = None,
+            skip: List[str] = None):
         """
         :param signal_name_default: Default signal name used, if no `signal`
             attribute found in file.
@@ -77,7 +78,7 @@ class NXdata(NXobject):
             return f'{self._signal_name_default}_errors'
 
     @property
-    def _signal(self) -> Union[Field, EventField]:
+    def _signal(self) -> Union[Field, EventField]:  # noqa: F821
         if self._signal_override is not None:
             return self._signal_override
         return self[self._signal_name]
