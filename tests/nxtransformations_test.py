@@ -44,7 +44,7 @@ def test_Transformation_with_single_value(nexus_group: Tuple[Callable, LoadFromN
         assert t.depends_on is None
         assert sc.identical(t.offset, offset)
         assert sc.identical(t.vector, vector)
-        assert sc.identical(t[()], value)
+        assert sc.identical(t.value(()), value)
 
 
 def test_Transformation_with_multiple_values(nexus_group: Tuple[Callable,
@@ -72,4 +72,4 @@ def test_Transformation_with_multiple_values(nexus_group: Tuple[Callable,
         assert t.depends_on is None
         assert sc.identical(t.offset, offset)
         assert sc.identical(t.vector, vector)
-        assert sc.identical(t[()], log)
+        assert sc.identical(t.value(()), log)

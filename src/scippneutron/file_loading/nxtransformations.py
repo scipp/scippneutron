@@ -56,8 +56,23 @@ class Transformation:
     def vector(self) -> sc.Variable:
         return sc.vector(value=self.attrs.get('vector'))
 
-    def __getitem__(self, select: ScippIndex):
+    def value(self, select: ScippIndex):
         return self._obj[select]
+
+    def __getitem__(self, select: ScippIndex):
+        transformation_type = self.attrs.get('transformation_type')
+        t = self.value(select) * self.vector
+        if transformation_type == 'translation':
+            t = sc.spatial.translations(dims=t.dims, values=t.values, unit=t.unit)
+        elif transformation_type == 'rotation':
+            t = sc.spatial.rotations_from_rotvecs(t)
+        else:
+            raise TransformationError(
+                f"{transformation_type=} attribute at {self.name},"
+                " expected 'translation' or 'rotation'.")
+        if (offset := self.offset) is None:
+            return t
+        return t * offset
 
 
 def _interpolate_transform(transform, xnew):
