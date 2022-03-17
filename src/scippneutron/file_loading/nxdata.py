@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
+from __future__ import annotations
 from typing import List, Union
 from warnings import warn
 import scipp as sc
@@ -16,16 +17,21 @@ class NXdata(NXobject):
                  group: Group,
                  loader: LoadFromNexus = LoadFromHdf5(),
                  signal_name_default: str = None,
-                 signal=None,
+                 signal_override: Union[Field, EventField] = None,
                  axes: List[str] = None,
                  skip: List[str] = None):
         """
-        :param signal: Default signal name used, if no `signal` attribute found in file.
+        :param signal_name_default: Default signal name used, if no `signal`
+            attribute found in file.
+        :param signal_override Signal field-like to use instead of trying to read
+            signal from the file. This is used when there is no signal or to provide
+            a signal computed from NXevent_data
         :param axes: Default axes used, if no `axes` attribute found in file.
+        :param skip: Names of fields to skip when loading coords.
         """
         super().__init__(group, loader)
         self._signal_name_default = signal_name_default
-        self._signal_override = signal
+        self._signal_override = signal_override
         self._axes_default = axes
         self._skip = skip if skip is not None else []
 
@@ -71,7 +77,7 @@ class NXdata(NXobject):
             return f'{self._signal_name_default}_errors'
 
     @property
-    def _signal(self) -> Field:
+    def _signal(self) -> Union[Field, EventField]:
         if self._signal_override is not None:
             return self._signal_override
         return self[self._signal_name]
