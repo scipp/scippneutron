@@ -41,9 +41,10 @@ def test_Transformation_with_single_value(nexus_group: Tuple[Callable, LoadFromN
     expected = sc.spatial.translations(dims=t.dims, values=t.values, unit=t.unit)
     expected = expected * offset
     with resource(builder)() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        root = nexus.NXroot(f, loader)
+        detector = root['entry/detector_0']
         depends_on = detector['depends_on'][()].value
-        t = nxtransformations.Transformation(detector[depends_on])
+        t = nxtransformations.Transformation(root[depends_on])
         assert t.depends_on is None
         assert sc.identical(t.offset, offset)
         assert sc.identical(t.vector, vector)
@@ -72,9 +73,10 @@ def test_Transformation_with_multiple_values(nexus_group: Tuple[Callable,
     t.data = sc.spatial.translations(dims=t.dims, values=t.values, unit=t.unit)
     expected = t * offset
     with resource(builder)() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        root = nexus.NXroot(f, loader)
+        detector = root['entry/detector_0']
         depends_on = detector['depends_on'][()].value
-        t = nxtransformations.Transformation(detector[depends_on])
+        t = nxtransformations.Transformation(root[depends_on])
         assert t.depends_on is None
         assert sc.identical(t.offset, offset)
         assert sc.identical(t.vector, vector)

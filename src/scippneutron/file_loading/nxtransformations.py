@@ -14,7 +14,7 @@ from cmath import isclose
 from ._nexus import LoadFromNexus, GroupObject
 from ._json_nexus import contains_stream
 from .nxlog import NXlog
-from .nxobject import Field, ScippIndex
+from .nxobject import Field, NXobject, ScippIndex
 
 
 class TransformationError(Exception):
@@ -37,9 +37,9 @@ class Transformation:
     def depends_on(self):
         if (path := self.attrs.get('depends_on')) is not None:
             if path.startswith('/'):
-                return self._obj[path]
+                return self._obj.file[path]
             elif path != '.':
-                return self._obj['..'][path]  # relative to parent group
+                return self._obj.parent[path]  # relative to parent group
         return None
 
     @property

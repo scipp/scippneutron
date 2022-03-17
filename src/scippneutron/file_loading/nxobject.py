@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
+from __future__ import annotations
 import scipp as sc
 from enum import Enum, auto
 import functools
@@ -191,6 +192,14 @@ class NXobject:
     @property
     def name(self) -> str:
         return self._loader.get_path(self._group)
+
+    @property
+    def file(self) -> NXroot:
+        return NXroot(self._group.file, self._loader)
+
+    @property
+    def parent(self) -> NXobject:
+        return self._make(self._group.parent)
 
     def _ipython_key_completions_(self) -> List[str]:
         return list(self.keys())
