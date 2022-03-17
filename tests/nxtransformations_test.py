@@ -27,14 +27,14 @@ def builder_with_detector(*, depends_on):
 
 def test_Transformation_with_single_value(nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
-    offset = sc.vector(value=[1, 2, 3], unit='m')
+    offset = sc.spatial.translation(value=[1, 2, 3], unit='m')
     vector = sc.vector(value=[0, 0, 1])
     value = sc.scalar(6.5, unit='m')
     translation = Transformation(TransformationType.TRANSLATION,
                                  vector=vector.value,
                                  value=value.value,
                                  value_units=str(value.unit),
-                                 offset=offset.value,
+                                 offset=offset.values,
                                  offset_unit=str(offset.unit))
     builder = builder_with_detector(depends_on=translation)
     with resource(builder)() as f:
@@ -50,7 +50,7 @@ def test_Transformation_with_single_value(nexus_group: Tuple[Callable, LoadFromN
 def test_Transformation_with_multiple_values(nexus_group: Tuple[Callable,
                                                                 LoadFromNexus]):
     resource, loader = nexus_group
-    offset = sc.vector(value=[1, 2, 3], unit='m')
+    offset = sc.spatial.translation(value=[1, 2, 3], unit='m')
     vector = sc.vector(value=[0, 0, 1])
     log = sc.DataArray(
         sc.array(dims=['time'], values=[1.1, 2.2], unit='m'),
@@ -61,7 +61,7 @@ def test_Transformation_with_multiple_values(nexus_group: Tuple[Callable,
                                  value_units=str(log.unit),
                                  time=log.coords['time'].values,
                                  time_units=str(log.coords['time'].unit),
-                                 offset=offset.value,
+                                 offset=offset.values,
                                  offset_unit=str(offset.unit))
     log.coords['time'] = sc.epoch(unit='ns') + log.coords['time'].to(unit='ns')
     builder = builder_with_detector(depends_on=translation)

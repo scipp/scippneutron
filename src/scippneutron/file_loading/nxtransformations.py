@@ -50,7 +50,7 @@ class Transformation:
             raise TransformationError(
                 f"Found {offset=} but no corresponding 'offset_units' "
                 f"attribute at {self.name}")
-        return sc.vector(value=offset, unit=offset_units)
+        return sc.spatial.translation(value=offset, unit=offset_units)
 
     @property
     def vector(self) -> sc.Variable:
