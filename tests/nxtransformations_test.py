@@ -27,9 +27,9 @@ def builder_with_detector(*, depends_on):
 
 def test_Transformation_with_single_value(nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
-    offset = sc.spatial.translation(value=[1, 2, 3], unit='m')
+    offset = sc.spatial.translation(value=[1, 2, 3], unit='mm')
     vector = sc.vector(value=[0, 0, 1])
-    value = sc.scalar(6.5, unit='m')
+    value = sc.scalar(6.5, unit='mm')
     translation = Transformation(TransformationType.TRANSLATION,
                                  vector=vector.value,
                                  value=value.value,
@@ -37,9 +37,9 @@ def test_Transformation_with_single_value(nexus_group: Tuple[Callable, LoadFromN
                                  offset=offset.values,
                                  offset_unit=str(offset.unit))
     builder = builder_with_detector(depends_on=translation)
-    t = value * vector
+    t = value.to(unit='m') * vector
     expected = sc.spatial.translations(dims=t.dims, values=t.values, unit=t.unit)
-    expected = expected * offset
+    expected = expected * sc.spatial.translation(value=[0.001, 0.002, 0.003], unit='m')
     with resource(builder)() as f:
         root = nexus.NXroot(f, loader)
         detector = root['entry/detector_0']

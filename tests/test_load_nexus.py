@@ -787,7 +787,7 @@ def test_loads_component_position_from_single_transformation(
     builder = NexusBuilder()
     transformation = Transformation(transform_type,
                                     vector=np.array([0, 0, 1]),
-                                    value=np.array([value]),
+                                    value=np.array(value),
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
     loaded_data = load_function(builder)
@@ -810,7 +810,7 @@ def test_loads_component_position_from_single_transformation_with_offset(
     builder = NexusBuilder()
     transformation = Transformation(transform_type,
                                     vector=np.array([0, 0, 1]),
-                                    value=np.array([value]),
+                                    value=np.array(value),
                                     value_units=value_units,
                                     offset=[1, 2, 3],
                                     offset_unit='m')
@@ -835,7 +835,7 @@ def test_raises_if_offset_but_not_offset_units_found(
     builder = NexusBuilder()
     transformation = Transformation(transform_type,
                                     vector=np.array([0, 0, 1]),
-                                    value=np.array([value]),
+                                    value=np.array(value),
                                     value_units=value_units,
                                     offset=[1, 2, 3],
                                     offset_unit=None)
@@ -858,7 +858,7 @@ def test_loads_component_position_from_log_transformation(
     # an NXlog
     transformation = Transformation(transform_type,
                                     vector=np.array([0, 0, 1]),
-                                    value=np.array([value]),
+                                    value=np.array(value),
                                     value_units=value_units)
     builder.add_component(component_class(component_name, depends_on=transformation))
     loaded_data = load_function(builder)
@@ -1002,8 +1002,8 @@ def test_load_component_position_prefers_transform_over_distance(
     # can define position and orientation in 3D.
     builder = NexusBuilder()
     transformation = Transformation(TransformationType.TRANSLATION,
-                                    np.array([0, 0, 1]),
-                                    np.array([2.3]),
+                                    vector=np.array([0, 0, 1]),
+                                    value=np.array(2.3),
                                     value_units="m")
     builder.add_component(
         component_class(component_name,
@@ -1012,7 +1012,7 @@ def test_load_component_position_prefers_transform_over_distance(
                         distance_units="m"))
     loaded_data = load_function(builder)
 
-    expected_position = np.array([0, 0, transformation.value[0]])
+    expected_position = np.array([0, 0, transformation.value])
     assert np.allclose(loaded_data[f"{component_name}_position"].values,
                        expected_position)
     assert loaded_data[f"{component_name}_position"].unit == sc.Unit("m")
@@ -1027,29 +1027,7 @@ def test_skips_component_position_from_transformation_missing_unit(
         transform_type: TransformationType, load_function: Callable):
     builder = NexusBuilder()
     transformation = Transformation(transform_type, np.array([0, 0, -1]),
-                                    np.array([2.3]))
-    builder.add_component(component_class(component_name, depends_on=transformation))
-    with pytest.warns(UserWarning):
-        load_function(builder)
-
-
-@pytest.mark.parametrize("component_class,component_name",
-                         ((Sample, "sample"), (Source, "source")))
-@pytest.mark.parametrize("transform_type,value_units",
-                         ((TransformationType.ROTATION, "deg"),
-                          (TransformationType.TRANSLATION, "m")))
-def test_skips_component_position_with_transformation_with_small_vector(
-        component_class: Union[Type[Source], Type[Sample]], component_name: str,
-        transform_type: TransformationType, value_units: str, load_function: Callable):
-    # The vector defines the direction of the translation or axis
-    # of the rotation so it is ill-defined if it is close to zero
-    # in magnitude
-    builder = NexusBuilder()
-    zero_vector = np.array([0, 0, 0])
-    transformation = Transformation(transform_type,
-                                    zero_vector,
-                                    np.array([2.3]),
-                                    value_units=value_units)
+                                    value=np.array(2.3))
     builder.add_component(component_class(component_name, depends_on=transformation))
     with pytest.warns(UserWarning):
         load_function(builder)
@@ -1063,11 +1041,11 @@ def test_loads_component_position_from_multiple_transformations(
     builder = NexusBuilder()
     transformation_1 = Transformation(TransformationType.ROTATION,
                                       np.array([0, 1, 0]),
-                                      np.array([90]),
+                                      value=np.array(90),
                                       value_units="deg")
     transformation_2 = Transformation(TransformationType.TRANSLATION,
                                       np.array([0, 0, 1]),
-                                      np.array([2.3]),
+                                      value=np.array(2.3),
                                       value_units="m",
                                       depends_on=transformation_1)
     builder.add_component(component_class(component_name, depends_on=transformation_2))
@@ -1112,18 +1090,18 @@ def test_loads_source_position_dependent_on_sample_position(load_function: Calla
     builder = NexusBuilder()
     transformation_0 = Transformation(TransformationType.ROTATION,
                                       np.array([0, 1, 0]),
-                                      np.array([90]),
+                                      value=np.array(90),
                                       value_units="deg")
     transformation_1 = Transformation(TransformationType.TRANSLATION,
                                       np.array([0, 0, 1]),
-                                      np.array([2.3]),
+                                      value=np.array(2.3),
                                       value_units="m",
                                       depends_on=transformation_0)
     builder.add_sample(Sample("sample", depends_on=transformation_1))
     transformation_2 = Transformation(
         TransformationType.TRANSLATION,
         np.array([0, 0, 1]),
-        np.array([1.0]),
+        value=np.array(1.0),
         value_units="m",
         depends_on="/entry/sample/transformations/transform_1")
     builder.add_source(Source("source", depends_on=transformation_2))
@@ -1154,7 +1132,7 @@ def test_loads_pixel_positions_with_transformations(load_function: Callable):
     distance = 57  # cm
     transformation = Transformation(TransformationType.TRANSLATION,
                                     vector=np.array([0, 0, 1]),
-                                    value=np.array([distance]),
+                                    value=np.array(distance),
                                     value_units="cm")
 
     builder = NexusBuilder()
@@ -1214,11 +1192,11 @@ def test_loads_pixel_positions_with_multiple_transformations(load_function: Call
 
     transformation1 = Transformation(TransformationType.TRANSLATION,
                                      vector=np.array([0, 0, 1]),
-                                     value=np.array([12]),
+                                     value=np.array(12),
                                      value_units="cm")
     transformation2 = Transformation(TransformationType.TRANSLATION,
                                      vector=np.array([0, 0, 1]),
-                                     value=np.array([34]),
+                                     value=np.array(34),
                                      value_units="cm")
 
     builder = NexusBuilder()
@@ -1300,7 +1278,7 @@ def test_links_in_transformation_paths_are_followed(load_function: Callable):
     distance = 13.6
     builder.add_component(Source("source"))
     builder.add_dataset_at_path(
-        "/entry/transform", np.array([distance]), {
+        "/entry/transform", np.array(distance), {
             "vector": np.array([0, 0, 1]),
             "units": "m",
             "transformation_type": "translation",
@@ -1321,14 +1299,14 @@ def test_relative_links_in_transformation_paths_are_followed(load_function: Call
     distance = 13.6
     builder.add_component(Source("source"))
     builder.add_dataset_at_path(
-        "/entry/transform1", np.array([distance]), {
+        "/entry/transform1", np.array(distance), {
             "vector": np.array([0, 0, 1]),
             "units": "m",
             "transformation_type": "translation",
             "depends_on": "."
         })
     builder.add_dataset_at_path(
-        "/entry/transform2", np.array([distance]), {
+        "/entry/transform2", np.array(distance), {
             "vector": np.array([0, 0, 1]),
             "units": "m",
             "transformation_type": "translation",
@@ -1813,7 +1791,7 @@ def test_load_monitor_with_transformation(load_function: Callable):
 
     transformation = Transformation(TransformationType.TRANSLATION,
                                     vector=np.array([0, 0, 1]),
-                                    value=np.array([6.5]),
+                                    value=np.array(6.5),
                                     value_units='m',
                                     offset=[1, 2, 3],
                                     offset_unit='m')

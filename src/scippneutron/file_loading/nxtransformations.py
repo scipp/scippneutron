@@ -37,9 +37,9 @@ class Transformation:
     def depends_on(self):
         if (path := self.attrs.get('depends_on')) is not None:
             if path.startswith('/'):
-                return self._obj.file[path]
+                return Transformation(self._obj.file[path])
             elif path != '.':
-                return self._obj.parent[path]  # relative to parent group
+                return Transformation(self._obj.parent[path])
         return None
 
     @property
@@ -61,6 +61,7 @@ class Transformation:
         t = self._obj[select] * self.vector
         v = t if isinstance(t, sc.Variable) else t.data
         if transformation_type == 'translation':
+            v = v.to(unit='m', copy=False)
             v = sc.spatial.translations(dims=v.dims, values=v.values, unit=v.unit)
         elif transformation_type == 'rotation':
             v = sc.spatial.rotations_from_rotvecs(v)
@@ -74,6 +75,8 @@ class Transformation:
             t.data = v
         if (offset := self.offset) is None:
             return t
+        offset = sc.vector(value=offset.values, unit=offset.unit).to(unit='m')
+        offset = sc.spatial.translation(value=offset.value, unit=offset.unit)
         return t * offset
 
 
@@ -143,6 +146,18 @@ def _get_transformations(transform_path: str, transformations: List[np.ndarray],
     :param root: root of the file, depends_on paths assumed to be
       relative to this
     """
+    if transform_path == '.':
+        return
+
+    g = NXobject(group, nexus)
+    if transform_path.startswith('/'):
+        t = Transformation(g.file[transform_path])
+    else:
+        t = Transformation(g[transform_path])
+    while t is not None:
+        transformations.append(t[()])
+        t = t.depends_on
+    return
 
     # TODO: this list of transformation should probably be cached in the future
     # to deal with changing beamline components (e.g. pixel positions) during a

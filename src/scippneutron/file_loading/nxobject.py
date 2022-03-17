@@ -101,6 +101,14 @@ class Field:
         return self._loader.get_path(self._dataset)
 
     @property
+    def file(self) -> NXroot:
+        return NXroot(self._dataset.file, self._loader)
+
+    @property
+    def parent(self) -> NXobject:
+        return _make(self._dataset.parent, self._loader)
+
+    @property
     def ndim(self) -> int:
         return len(self.shape)
 
@@ -138,13 +146,6 @@ class NXobject:
         self._group = group
         self._loader = loader
 
-    def _make(self, group) -> '__class__':
-        try:
-            nx_class = self._loader.get_string_attribute(group, 'NX_class')
-            return _nx_class_registry().get(nx_class, NXobject)(group, self._loader)
-        except MissingAttribute:
-            return group  # Return underlying (h5py) group
-
     def _get_child(
             self,
             name: NXobjectIndex,
@@ -157,13 +158,13 @@ class NXobject:
             if item is None:
                 raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
             if self._loader.is_group(item):
-                return self._make(item)
+                return _make(item, self._loader)
             else:
                 dims = self._get_field_dims(name) if use_field_dims else None
                 return Field(item, self._loader, dims=dims)
         da = self._getitem(name)
         if (depends_on := self.depends_on) is not None:
-            obj = depends_on[()]
+            obj = depends_on[()].squeeze()  # TODO What is the meaning of the dim?
             da.coords['depends_on'] = obj if isinstance(obj,
                                                         sc.Variable) else sc.scalar(obj)
         return da
@@ -199,7 +200,7 @@ class NXobject:
 
     @property
     def parent(self) -> NXobject:
-        return self._make(self._group.parent)
+        return _make(self._group.parent, self._loader)
 
     def _ipython_key_completions_(self) -> List[str]:
         return list(self.keys())
@@ -222,7 +223,10 @@ class NXobject:
             names = [self._loader.get_name(group) for group in groups]
             if len(names) != len(set(names)):  # fall back to full path if duplicate
                 names = [group.name for group in groups]
-            out[NX_class[nx_class]] = {n: self._make(g) for n, g in zip(names, groups)}
+            out[NX_class[nx_class]] = {
+                n: _make(g, self._loader)
+                for n, g in zip(names, groups)
+            }
         return out
 
     @property
@@ -257,6 +261,14 @@ class NXroot(NXobject):
 
 class NXentry(NXobject):
     pass
+
+
+def _make(group, loader) -> NXobject:
+    try:
+        nx_class = loader.get_string_attribute(group, 'NX_class')
+        return _nx_class_registry().get(nx_class, NXobject)(group, loader)
+    except MissingAttribute:
+        return group  # Return underlying (h5py) group
 
 
 @functools.lru_cache()
