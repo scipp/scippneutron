@@ -272,8 +272,17 @@ def test_can_load_nxdetector_from_bigfake():
 
 def test_can_load_nxdetector_from_PG3():
     with nexus.File(scn.data.get_path('PG3_4844_event.nxs')) as f:
-        da = f['entry/instrument/bank24'][...]
+        det = f['entry/instrument/bank24']
+        da = det[...]
         assert da.sizes == {'x_pixel_offset': 154, 'y_pixel_offset': 7}
+        assert 'detector_number' not in da.coords
+        assert da.coords['pixel_id'].sizes == da.sizes
+        assert da.coords['distance'].sizes == da.sizes
+        assert da.coords['polar_angle'].sizes == da.sizes
+        assert da.coords['azimuthal_angle'].sizes == da.sizes
+        assert da.coords['x_pixel_offset'].sizes == {'x_pixel_offset': 154}
+        assert da.coords['y_pixel_offset'].sizes == {'y_pixel_offset': 7}
+        assert sc.identical(da.sum(), det.events[()].sum())  # no event lost in binning
 
 
 def test_event_data_field_dims_labels(nexus_group: Tuple[Callable, LoadFromNexus]):
