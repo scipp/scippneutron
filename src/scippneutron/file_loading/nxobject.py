@@ -128,15 +128,16 @@ class Field:
 
 
 class DependsOn:
-    def __init__(self, field: Field):
-        self._field = field
+    def __init__(self, group: NXobject):
+        self._field = group
 
     def __getitem__(self, select) -> sc.Variable:
         index = to_plain_index([], select)
         if index != tuple():
             raise ValueError("Cannot select slice when loading 'depends_on'")
-        from .nxtransformations import get_full_transformation_matrix
-        return get_full_transformation_matrix(self._field._group, self._field._loader)
+        from .nxtransformations import get_full_transformation, make_transformation
+        if (t := make_transformation(self._field, self._field[()].value)) is not None:
+            return get_full_transformation(t)
 
 
 class NXobject:
@@ -242,7 +243,7 @@ class NXobject:
     @property
     def depends_on(self) -> DependsOn:
         if 'depends_on' in self:
-            return DependsOn(self)
+            return DependsOn(self['depends_on'])
         return None
 
     def __repr__(self) -> str:

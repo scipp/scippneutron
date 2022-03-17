@@ -4,12 +4,10 @@
 import warnings
 
 import numpy as np
-from ._common import MissingDataset, Group
-from typing import List
+from typing import Union
 import scipp as sc
 import scipp.spatial
 import scipp.interpolate
-from ._nexus import LoadFromNexus
 from ._json_nexus import contains_stream
 from .nxobject import Field, NXobject, ScippIndex
 
@@ -18,8 +16,17 @@ class TransformationError(Exception):
     pass
 
 
+def make_transformation(obj, /, path):
+    if path is not None:
+        if path.startswith('/'):
+            return Transformation(obj.file[path])
+        elif path != '.':
+            return Transformation(obj.parent[path])
+    return None
+
+
 class Transformation:
-    def __init__(self, obj: Field):  # could be an NXlog
+    def __init__(self, obj: Union[Field, NXobject]):  # could be an NXlog
         self._obj = obj
 
     @property
@@ -32,12 +39,7 @@ class Transformation:
 
     @property
     def depends_on(self):
-        if (path := self.attrs.get('depends_on')) is not None:
-            if path.startswith('/'):
-                return Transformation(self._obj.file[path])
-            elif path != '.':
-                return Transformation(self._obj.parent[path])
-        return None
+        return make_transformation(self._obj, self.attrs.get('depends_on'))
 
     @property
     def offset(self):
@@ -90,7 +92,7 @@ def _interpolate_transform(transform, xnew):
     return transform
 
 
-def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.DataArray:
+def get_full_transformation(transformation: Transformation) -> sc.DataArray:
     """
     Get the 4x4 transformation matrix for a component, resulting
     from the full chain of transformations linked by "depends_on"
@@ -100,13 +102,7 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
     :param nexus: wrap data access to hdf file or objects from json
     :return: 4x4 active transformation matrix as a data array
     """
-    transformations = []
-    try:
-        depends_on = nexus.load_scalar_string(group, "depends_on")
-    except MissingDataset:
-        depends_on = '.'
-    _get_transformations(depends_on, transformations, group, nexus.get_name(group),
-                         nexus)
+    transformations = _get_transformations(transformation)
 
     total_transform = sc.spatial.affine_transform(value=np.identity(4), unit=sc.units.m)
 
@@ -134,6 +130,7 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
 
 
 def _transformation_is_nx_log_stream(t):
+    t = t._obj
     if (not isinstance(t, (Field, NXobject))):
         return True
     transform = t._group if isinstance(t, NXobject) else t._dataset
@@ -152,25 +149,10 @@ def _transformation_is_nx_log_stream(t):
     return False
 
 
-def _get_transformations(transform_path: str, transformations: List[np.ndarray],
-                         group: Group, group_name: str, nexus: LoadFromNexus):
-    """
-    Get all transformations in the depends_on chain.
-
-    :param transform_path: The first depends_on path string
-    :param transformations: List of transformations to populate
-    :param root: root of the file, depends_on paths assumed to be
-      relative to this
-    """
-    if transform_path == '.':
-        return
-
-    g = NXobject(group, nexus)
-    if transform_path.startswith('/'):
-        t = g.file[transform_path]
-    else:
-        t = g[transform_path]
-    if _transformation_is_nx_log_stream(t):
+def _get_transformations(transform: Union[Field, NXobject]):
+    """Get all transformations in the depends_on chain."""
+    transformations = []
+    if _transformation_is_nx_log_stream(transform):
         warnings.warn("Streamed NXlog found in transformation "
                       "chain, getting its value from stream is "
                       "not yet implemented and instead it will be "
@@ -178,11 +160,12 @@ def _get_transformations(transform_path: str, transformations: List[np.ndarray],
         transformations.append(
             sc.spatial.affine_transform(value=np.identity(4, dtype=float),
                                         unit=sc.units.m))
-        return
-    t = Transformation(t)
-    while t is not None:
-        transformations.append(t[()])
-        t = t.depends_on
+    else:
+        t = transform
+        while t is not None:
+            transformations.append(t[()])
+            t = t.depends_on
     # TODO: this list of transformation should probably be cached in the future
     # to deal with changing beamline components (e.g. pixel positions) during a
     # live data stream (see https://github.com/scipp/scippneutron/issues/76).
+    return transformations
