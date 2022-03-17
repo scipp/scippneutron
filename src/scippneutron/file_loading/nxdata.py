@@ -149,6 +149,6 @@ class NXdata(NXobject):
                 sel = to_child_select(self.dims, field.dims, select)
                 da.coords[name] = self[name][sel]
             except sc.DimensionError as e:
-                warn(f"Skipped load of axis {name} due to: {e}")
+                warn(f"Skipped load of axis {field.name} due to:\n{e}")
 
         return da
