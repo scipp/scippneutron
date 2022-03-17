@@ -136,6 +136,22 @@ def get_full_transformation_matrix(group: Group, nexus: LoadFromNexus) -> sc.Dat
     return total_transform
 
 
+def _transformation_is_nx_log_stream(transform: Union[h5py.Dataset, GroupObject],
+                                     nexus: LoadFromNexus):
+    # Stream objects are only in the dict loaded from json
+    if isinstance(transform, dict):
+        # If transform is a group and contains a stream but not a value dataset
+        # then assume it is a streamed NXlog transformation
+        try:
+            if nexus.is_group(transform):
+                found_value_dataset, _ = nexus.dataset_in_group(transform, "value")
+                if not found_value_dataset and contains_stream(transform):
+                    return True
+        except KeyError:
+            pass
+    return False
+
+
 def _get_transformations(transform_path: str, transformations: List[np.ndarray],
                          group: Group, group_name: str, nexus: LoadFromNexus):
     """
@@ -151,9 +167,20 @@ def _get_transformations(transform_path: str, transformations: List[np.ndarray],
 
     g = NXobject(group, nexus)
     if transform_path.startswith('/'):
-        t = Transformation(g.file[transform_path])
+        t = g.file[transform_path]
     else:
-        t = Transformation(g[transform_path])
+        t = g[transform_path]
+    if (not isinstance(t, (Field, NXobject))) or _transformation_is_nx_log_stream(
+            t._group if isinstance(t, NXobject) else t._dataset, t._loader):
+        warnings.warn("Streamed NXlog found in transformation "
+                      "chain, getting its value from stream is "
+                      "not yet implemented and instead it will be "
+                      "treated as a 0-distance translation")
+        transformations.append(
+            sc.spatial.affine_transform(value=np.identity(4, dtype=float),
+                                        unit=sc.units.m))
+        return
+    t = Transformation(t)
     while t is not None:
         transformations.append(t[()])
         t = t.depends_on
@@ -180,22 +207,6 @@ def _get_transformations(transform_path: str, transformations: List[np.ndarray],
             next_depends_on = f"{parent}/{next_depends_on}"
 
         _get_transformations(next_depends_on, transformations, group, group_name, nexus)
-
-
-def _transformation_is_nx_log_stream(transform: Union[h5py.Dataset, GroupObject],
-                                     nexus: LoadFromNexus):
-    # Stream objects are only in the dict loaded from json
-    if isinstance(transform, dict):
-        # If transform is a group and contains a stream but not a value dataset
-        # then assume it is a streamed NXlog transformation
-        try:
-            if nexus.is_group(transform):
-                found_value_dataset, _ = nexus.dataset_in_group(transform, "value")
-                if not found_value_dataset and contains_stream(transform):
-                    return True
-        except KeyError:
-            pass
-    return False
 
 
 def _append_transformation(transform: Union[h5py.Dataset, GroupObject],
