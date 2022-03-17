@@ -37,6 +37,9 @@ def test_Transformation_with_single_value(nexus_group: Tuple[Callable, LoadFromN
                                  offset=offset.values,
                                  offset_unit=str(offset.unit))
     builder = builder_with_detector(depends_on=translation)
+    t = value * vector
+    expected = sc.spatial.translations(dims=t.dims, values=t.values, unit=t.unit)
+    expected = expected * offset
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
         depends_on = detector['depends_on'][()].value
@@ -44,7 +47,7 @@ def test_Transformation_with_single_value(nexus_group: Tuple[Callable, LoadFromN
         assert t.depends_on is None
         assert sc.identical(t.offset, offset)
         assert sc.identical(t.vector, vector)
-        assert sc.identical(t.value(()), value)
+        assert sc.identical(t[()], expected)
 
 
 def test_Transformation_with_multiple_values(nexus_group: Tuple[Callable,
@@ -65,6 +68,9 @@ def test_Transformation_with_multiple_values(nexus_group: Tuple[Callable,
                                  offset_unit=str(offset.unit))
     log.coords['time'] = sc.epoch(unit='ns') + log.coords['time'].to(unit='ns')
     builder = builder_with_detector(depends_on=translation)
+    t = log * vector
+    t.data = sc.spatial.translations(dims=t.dims, values=t.values, unit=t.unit)
+    expected = t * offset
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
         depends_on = detector['depends_on'][()].value
@@ -72,4 +78,4 @@ def test_Transformation_with_multiple_values(nexus_group: Tuple[Callable,
         assert t.depends_on is None
         assert sc.identical(t.offset, offset)
         assert sc.identical(t.vector, vector)
-        assert sc.identical(t.value(()), log)
+        assert sc.identical(t[()], expected)
