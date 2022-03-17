@@ -14,10 +14,50 @@ from cmath import isclose
 from ._nexus import LoadFromNexus, GroupObject
 from ._json_nexus import contains_stream
 from .nxlog import NXlog
+from .nxobject import Field, ScippIndex
 
 
 class TransformationError(Exception):
     pass
+
+
+class Transformation:
+    def __init__(self, obj: Field):  # could be an NXlog
+        self._obj = obj
+
+    @property
+    def attrs(self):
+        return self._obj.attrs
+
+    @property
+    def name(self):
+        return self._obj.name
+
+    @property
+    def depends_on(self):
+        if (path := self.attrs.get('depends_on')) is not None:
+            if path.startswith('/'):
+                return self._obj[path]
+            elif path != '.':
+                return self._obj['..'][path]  # relative to parent group
+        return None
+
+    @property
+    def offset(self):
+        if (offset := self.attrs.get('offset')) is None:
+            return None
+        if (offset_units := self.attrs.get('offset_units')) is None:
+            raise TransformationError(
+                f"Found {offset=} but no corresponding 'offset_units' "
+                f"attribute at {self.name}")
+        return sc.vector(value=offset, unit=offset_units)
+
+    @property
+    def vector(self) -> sc.Variable:
+        return sc.vector(value=self.attrs.get('vector'))
+
+    def __getitem__(self, select: ScippIndex):
+        return self._obj[select]
 
 
 def _interpolate_transform(transform, xnew):
