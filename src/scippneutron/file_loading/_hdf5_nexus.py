@@ -151,6 +151,10 @@ class LoadFromHdf5:
             dtype = sc.DType.string
 
         shape = list(dataset.shape)
+        if dimensions == [] and shape == [1]:
+            # NeXus treats [] and [1] interchangeably, in general this is ill-defined,
+            # but this is the best we can do.
+            shape = []
         if index is Ellipsis:
             index = tuple()
         if isinstance(index, slice):
