@@ -128,12 +128,11 @@ class LoadFromHdf5:
                            f" field\n")
         return True, ""
 
-    def load_dataset(self,
-                     group: h5py.Group,
-                     dataset_name: str,
-                     dimensions: Optional[List[str]] = [],
-                     dtype: Optional[Any] = None,
-                     index=tuple()) -> sc.Variable:
+    def load_dataset_direct(self,
+                            dataset: h5py.Dataset,
+                            dimensions: Optional[List[str]] = [],
+                            dtype: Optional[Any] = None,
+                            index=tuple()) -> sc.Variable:
         """
         Load an HDF5 dataset into a Scipp Variable (array or scalar)
         :param group: Group containing dataset to load
@@ -141,27 +140,6 @@ class LoadFromHdf5:
         :param dimensions: Dimensions for the output Variable. Empty for reading scalars
         :param dtype: Cast to this dtype during load,
           otherwise retain dataset dtype
-        """
-        try:
-            dataset = group[dataset_name]
-        except KeyError:
-            raise MissingDataset()
-
-        if self.is_group(dataset):
-            raise MissingDataset(f"Attempted to load a group "
-                                 f"({dataset_name}) as a dataset.")
-        return self.load_dataset_direct(dataset,
-                                        dimensions=dimensions,
-                                        dtype=dtype,
-                                        index=index)
-
-    def load_dataset_direct(self,
-                            dataset: h5py.Dataset,
-                            dimensions: Optional[List[str]] = [],
-                            dtype: Optional[Any] = None,
-                            index=tuple()) -> sc.Variable:
-        """
-        Same as `load_dataset` but dataset given directly instead of by group and name.
         """
         if dtype is None:
             dtype = _ensure_supported_int_type(dataset.dtype.type)
@@ -187,39 +165,6 @@ class LoadFromHdf5:
         else:
             variable.values = dataset[index]
         return variable
-
-    def load_dataset_from_group_as_numpy_array(self,
-                                               group: h5py.Group,
-                                               dataset_name: str,
-                                               index=tuple()):
-        """
-        Load a dataset into a numpy array
-        Prefer use of load_dataset to load directly to a scipp variable,
-        this function should only be used in rare cases that a
-        numpy array is required.
-        :param group: Group containing dataset to load
-        :param dataset_name: Name of the dataset to load
-        """
-        try:
-            dataset = group[dataset_name]
-        except KeyError:
-            raise MissingDataset()
-        return self.load_dataset_as_numpy_array(dataset, index=index)
-
-    @staticmethod
-    def load_dataset_as_numpy_array(dataset: h5py.Dataset, index=tuple()):
-        """
-        Load a dataset into a numpy array
-        Prefer use of load_dataset to load directly to a scipp variable,
-        this function should only be used in rare cases that a
-        numpy array is required.
-        :param dataset: The dataset to load values from
-        """
-        return dataset[index].astype(_ensure_supported_int_type(dataset.dtype.type))
-
-    @staticmethod
-    def get_dataset_numpy_dtype(dataset: h5py.Dataset) -> Any:
-        return _ensure_supported_int_type(dataset.dtype.type)
 
     @staticmethod
     def get_name(group: Union[h5py.Group, h5py.Dataset]) -> str:
@@ -306,14 +251,6 @@ class LoadFromHdf5:
             return group[path]
         except KeyError:
             raise MissingDataset
-
-    @staticmethod
-    def get_attribute_as_numpy_array(node: Union[h5py.Group, h5py.Dataset],
-                                     attribute_name: str) -> np.ndarray:
-        try:
-            return np.asarray(node.attrs[attribute_name])
-        except KeyError:
-            raise MissingAttribute
 
     @staticmethod
     def get_attribute(node: Union[h5py.Group, h5py.Dataset],

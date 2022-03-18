@@ -226,12 +226,11 @@ class LoadFromJson:
     def supported_int_type(dataset):
         return _filewriter_to_supported_numpy_dtype[LoadFromJson.get_dtype(dataset)]
 
-    def load_dataset(self,
-                     group: Dict,
-                     dataset_name: str,
-                     dimensions: Optional[List[str]] = [],
-                     dtype: Optional[Any] = None,
-                     index=tuple()) -> sc.Variable:
+    def load_dataset_direct(self,
+                            dataset: Dict,
+                            dimensions: Optional[List[str]] = [],
+                            dtype: Optional[Any] = None,
+                            index=tuple()) -> sc.Variable:
         """
         Load a dataset into a Scipp Variable (array or scalar)
         :param group: Group containing dataset to load
@@ -239,22 +238,6 @@ class LoadFromJson:
         :param dimensions: Dimensions for the output Variable. If empty, yields scalar.
         :param dtype: Cast to this dtype during load,
           otherwise retain dataset dtype
-        """
-        dataset = self.get_dataset_from_group(group, dataset_name)
-        if dataset is None:
-            raise MissingDataset()
-        return self.load_dataset_direct(dataset,
-                                        dimensions=dimensions,
-                                        dtype=dtype,
-                                        index=index)
-
-    def load_dataset_direct(self,
-                            dataset: Dict,
-                            dimensions: Optional[List[str]] = [],
-                            dtype: Optional[Any] = None,
-                            index=tuple()) -> sc.Variable:
-        """
-        Same as `load_dataset` but dataset given directly instead of by group and name.
         """
         if dtype is None:
             dtype = self.supported_int_type(dataset)
@@ -274,38 +257,6 @@ class LoadFromJson:
                         values=np.asarray(dataset[_nexus_values])[index],
                         dtype=dtype,
                         unit=units)
-
-    def load_dataset_from_group_as_numpy_array(self,
-                                               group: Dict,
-                                               dataset_name: str,
-                                               index=tuple()):
-        """
-        Load a dataset into a numpy array
-        Prefer use of load_dataset to load directly to a scipp variable,
-        this function should only be used in rare cases that a
-        numpy array is required.
-        :param group: Group containing dataset to load
-        :param dataset_name: Name of the dataset to load
-        """
-        dataset = self.get_dataset_from_group(group, dataset_name)
-        if dataset is None:
-            raise MissingDataset()
-        return self.load_dataset_as_numpy_array(dataset, index=index)
-
-    @staticmethod
-    def load_dataset_as_numpy_array(dataset: Dict, index=tuple()):
-        """
-        Load a dataset into a numpy array
-        Prefer use of load_dataset to load directly to a scipp variable,
-        this function should only be used in rare cases that a
-        numpy array is required.
-        :param dataset: The dataset to load values from
-        """
-        dtype = LoadFromJson.supported_int_type(dataset)
-        return np.asarray(dataset[_nexus_values])[index].astype(dtype)
-
-    def get_dataset_numpy_dtype(self, dataset: Dict) -> Any:
-        return _filewriter_to_supported_numpy_dtype[dataset[_nexus_dataset]["type"]]
 
     @staticmethod
     def get_name(group: Dict) -> str:
@@ -352,11 +303,6 @@ class LoadFromJson:
             if group is None:
                 raise MissingDataset()
         return group
-
-    @staticmethod
-    def get_attribute_as_numpy_array(node: Dict, attribute_name: str) -> np.ndarray:
-        attribute_value = _get_attribute_value(node, attribute_name)
-        return np.array(attribute_value)
 
     @staticmethod
     def get_attribute(node: Dict, attribute_name: str) -> Any:
