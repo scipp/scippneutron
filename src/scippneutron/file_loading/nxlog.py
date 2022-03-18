@@ -24,7 +24,7 @@ class NXlog(NXobject):
 
     @property
     def _nxbase(self) -> NXdata:
-        axes = ['.'] * self._get_child('value', use_field_dims=False).ndim
+        axes = ['.'] * self._get_child('value').ndim
         # The outermost axis in NXlog is pre-defined to 'time' (if present). Note
         # that this may be overriden by an `axes` attribute, if defined for the group.
         if 'time' in self:
@@ -32,7 +32,7 @@ class NXlog(NXobject):
         # NXdata uses the 'signal' attribute to define the field name of the signal.
         # NXlog uses a "hard-coded" signal name 'value', without specifying the
         # attribute in the file, so we pass this explicitly to NXdata.
-        return NXdata(self._group, self._loader, signal='value', axes=axes)
+        return NXdata(self._group, self._loader, signal_name_default='value', axes=axes)
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
         data = self._nxbase[select]

@@ -71,7 +71,12 @@ class Field:
                  dims=None):
         self._dataset = dataset
         self._loader = loader
-        self._dims = [f'dim_{i}' for i in range(self.ndim)] if dims is None else dims
+        if dims is not None:
+            self._dims = dims
+        elif (axes := self.attrs.get('axes')) is not None:
+            self._dims = axes.split(',')
+        else:
+            self._dims = [f'dim_{i}' for i in range(self.ndim)]
 
     def __getitem__(self, select) -> sc.Variable:
         index = to_plain_index(self.dims, select)
@@ -133,8 +138,11 @@ class NXobject:
         self._loader = loader
 
     def _make(self, group) -> '__class__':
-        nx_class = self._loader.get_string_attribute(group, 'NX_class')
-        return _nx_class_registry().get(nx_class, NXobject)(group, self._loader)
+        try:
+            nx_class = self._loader.get_string_attribute(group, 'NX_class')
+            return _nx_class_registry().get(nx_class, NXobject)(group, self._loader)
+        except MissingAttribute:
+            return group  # Return underlying (h5py) group
 
     def _get_child(
             self,

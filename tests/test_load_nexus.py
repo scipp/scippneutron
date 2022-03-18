@@ -199,7 +199,7 @@ def test_does_not_load_events_if_index_not_ordered(load_function: Callable):
     builder.add_detector(
         Detector(detector_numbers=np.array([0, 1]), event_data=event_data_1))
 
-    with pytest.warns(UserWarning, match="Event index in NXevent_data at "):
+    with pytest.warns(UserWarning, match="Invalid index in NXevent_data at "):
         load_function(builder)
 
 
@@ -681,7 +681,7 @@ def test_loads_pixel_positions_without_event_data(load_function: Callable):
         "Expected positions to be converted to metres"
 
 
-def test_skips_loading_pixel_positions_with_no_units(load_function: Callable):
+def test_loads_pixel_positions_with_no_units(load_function: Callable):
     pulse_times = np.array([
         1600766730000000000, 1600766731000000000, 1600766732000000000,
         1600766733000000000
@@ -707,10 +707,9 @@ def test_skips_loading_pixel_positions_with_no_units(load_function: Callable):
                  z_offsets=z_pixel_offset,
                  offsets_unit=None))
 
-    with pytest.warns(UserWarning):
-        loaded_data = load_function(builder)
+    loaded_data = load_function(builder)
 
-    assert loaded_data is None, "Load of NXdetector should be skipped"
+    assert loaded_data.coords['position'].unit is None
 
 
 def test_sample_position_at_origin_if_not_explicit_in_file(load_function: Callable):

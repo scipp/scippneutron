@@ -124,10 +124,9 @@ class NXevent_data(NXobject):
 
         try:
             binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
-        except sc.SliceError:
+        except sc.SliceError as e:
             raise BadSource(
-                f"Event index in NXevent_data at {self.name}/event_index "
-                "was not ordered. The index must be ordered to load pulse times.")
+                f"Invalid index in NXevent_data at {self.name}/event_index:\n{e}.")
 
         return sc.DataArray(data=binned, coords={'event_time_zero': event_time_zero})
 

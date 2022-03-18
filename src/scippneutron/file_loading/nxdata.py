@@ -1,29 +1,38 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
+from __future__ import annotations
 from typing import List, Union
 from warnings import warn
 import scipp as sc
 import numpy as np
-from ._common import to_child_select, Dataset, Group
+from ._common import to_child_select, Group
 from .nxobject import Field, NXobject, ScippIndex, NexusStructureError
 from ._nexus import LoadFromNexus
 from ._hdf5_nexus import LoadFromHdf5
 
 
 class NXdata(NXobject):
-    def __init__(self,
-                 group: Group,
-                 loader: LoadFromNexus = LoadFromHdf5(),
-                 signal: str = None,
-                 axes: List[str] = None,
-                 skip: List[str] = None):
+    def __init__(
+            self,
+            group: Group,
+            loader: LoadFromNexus = LoadFromHdf5(),
+            signal_name_default: str = None,
+            signal_override: Union[Field, _EventField] = None,  # noqa: F821
+            axes: List[str] = None,
+            skip: List[str] = None):
         """
-        :param signal: Default signal name used, if no `signal` attribute found in file.
+        :param signal_name_default: Default signal name used, if no `signal`
+            attribute found in file.
+        :param signal_override Signal field-like to use instead of trying to read
+            signal from the file. This is used when there is no signal or to provide
+            a signal computed from NXevent_data
         :param axes: Default axes used, if no `axes` attribute found in file.
+        :param skip: Names of fields to skip when loading coords.
         """
         super().__init__(group, loader)
-        self._signal_name_default = signal
+        self._signal_name_default = signal_name_default
+        self._signal_override = signal_override
         self._axes_default = axes
         self._skip = skip if skip is not None else []
 
@@ -31,17 +40,20 @@ class NXdata(NXobject):
     def shape(self) -> List[int]:
         return self._signal.shape
 
-    @property
-    def dims(self) -> List[str]:
+    def _get_group_dims(self) -> Union[None, List[str]]:
         # Apparently it is not possible to define dim labels unless there are
         # corresponding coords. Special case of '.' entries means "no coord".
-        if self.attrs.get('axes', self._axes_default) is not None:
-            axes = self.attrs.get('axes', self._axes_default)
+        if (axes := self.attrs.get('axes', self._axes_default)) is not None:
             return [f'dim_{i}' if a == '.' else a for i, a in enumerate(axes)]
-        # Legacy NXdata defines axes not as group attribute, but attr on dataset
-        if 'axes' in self._signal.attrs:
-            return self._signal.attrs['axes'].split(',')
-        return [f'dim_{i}' for i in range(len(self.shape))]
+        return None
+
+    @property
+    def dims(self) -> List[str]:
+        if (d := self._get_group_dims()) is not None:
+            return d
+        # Legacy NXdata defines axes not as group attribute, but attr on dataset.
+        # This is handled by class Field.
+        return self._signal.dims
 
     @property
     def unit(self) -> Union[sc.Unit, None]:
@@ -49,12 +61,12 @@ class NXdata(NXobject):
 
     @property
     def _signal_name(self) -> str:
-        name = self.attrs.get('signal', self._signal_name_default)
-        if name is not None:
+        if (name := self.attrs.get('signal', self._signal_name_default)) is not None:
             return name
         # Legacy NXdata defines signal not as group attribute, but attr on dataset
         for name in self.keys():
-            if self._get_child(name).attrs.get('signal') == 1:
+            # TODO What is the meaning of the attribute value?
+            if 'signal' in self._get_child(name).attrs:
                 return name
         return None
 
@@ -66,16 +78,18 @@ class NXdata(NXobject):
             return f'{self._signal_name_default}_errors'
 
     @property
-    def _signal(self) -> Dataset:
-        return self._get_child(self._signal_name)
+    def _signal(self) -> Union[Field, _EventField]:  # noqa: F821
+        if self._signal_override is not None:
+            return self._signal_override
+        return self[self._signal_name]
 
     def _get_axes(self):
-        """Return labels of named axes."""
+        """Return labels of named axes. Does not include default 'dim_{i}' names."""
         if (axes := self.attrs.get('axes', self._axes_default)) is not None:
             # Unlike self.dims we *drop* entries that are '.'
             return [a for a in axes if a != '.']
-        elif 'axes' in self._signal.attrs:
-            return self._signal.attrs['axes'].split(',')
+        elif (axes := self._signal.attrs.get('axes')) is not None:
+            return axes.split(',')
         return []
 
     def _guess_dims(self, name: str):
@@ -106,7 +120,7 @@ class NXdata(NXobject):
         signals = [self._signal_name, self._errors_name]
         signals += list(self.attrs.get('auxiliary_signals', []))
         if name in signals:
-            return self.dims
+            return self._get_group_dims()  # if None, field determines dims itself
         if name in self._get_axes():
             # If there are named axes then items of same name are "dimension
             # coordinates", i.e., have a dim matching their name.
@@ -117,11 +131,12 @@ class NXdata(NXobject):
             return None
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
-        signal = self[self._signal_name][select]
+        signal = self._signal[select]
         if self._errors_name in self:
             stddevs = self[self._errors_name][select]
             signal.variances = sc.pow(stddevs, 2).values
-        da = sc.DataArray(data=signal)
+
+        da = sc.DataArray(data=signal) if isinstance(signal, sc.Variable) else signal
 
         skip = self._skip
         skip += [self._signal_name, self._errors_name]
@@ -134,6 +149,6 @@ class NXdata(NXobject):
                 sel = to_child_select(self.dims, field.dims, select)
                 da.coords[name] = self[name][sel]
             except sc.DimensionError as e:
-                warn(f"Skipped load of axis {name} due to: {e}")
+                warn(f"Skipped load of axis {field.name} due to:\n{e}")
 
         return da

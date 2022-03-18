@@ -26,8 +26,8 @@ def test_raises_if_no_data_found(nexus_group: Tuple[Callable, LoadFromNexus]):
             detector[...]
 
 
-def test_raises_if_data_and_event_data_found(nexus_group: Tuple[Callable,
-                                                                LoadFromNexus]):
+def test_loads_events_when_data_and_events_found(nexus_group: Tuple[Callable,
+                                                                    LoadFromNexus]):
     resource, loader = nexus_group
     da = sc.DataArray(sc.array(dims=['xx', 'yy'], values=[[1.1, 2.2], [3.3, 4.4]]))
     event_data = EventData(
@@ -38,13 +38,12 @@ def test_raises_if_data_and_event_data_found(nexus_group: Tuple[Callable,
     )
     builder = NexusBuilder()
     builder.add_detector(
-        Detector(detector_numbers=np.array([1, 2, 3, 4]),
+        Detector(detector_numbers=np.array([[1, 2], [3, 4]]),
                  data=da,
                  event_data=event_data))
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
-        with pytest.raises(nexus.NexusStructureError):
-            detector[...]
+        assert detector[...].bins is not None
 
 
 def test_loads_data_without_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
@@ -113,15 +112,12 @@ def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
     resource, loader = nexus_group
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
-        assert detector.dims == ['detector_number']
+        assert detector.dims == ['dim_0']
         assert detector.shape == (4, )
         loaded = detector[...]
         assert sc.identical(
             loaded.bins.size().data,
-            sc.array(dims=['detector_number'],
-                     unit=None,
-                     dtype='int64',
-                     values=[2, 3, 1, 0]))
+            sc.array(dims=['dim_0'], unit=None, dtype='int64', values=[2, 3, 1, 0]))
         assert 'event_time_offset' in loaded.bins.coords
         assert 'event_time_zero' in loaded.bins.coords
 
@@ -273,6 +269,21 @@ def test_can_load_nxdetector_from_bigfake():
         assert da.sizes == {'dim_0': 300, 'dim_1': 300}
 
 
+def test_can_load_nxdetector_from_PG3():
+    with nexus.File(scn.data.get_path('PG3_4844_event.nxs')) as f:
+        det = f['entry/instrument/bank24']
+        da = det[...]
+        assert da.sizes == {'x_pixel_offset': 154, 'y_pixel_offset': 7}
+        assert 'detector_number' not in da.coords
+        assert da.coords['pixel_id'].sizes == da.sizes
+        assert da.coords['distance'].sizes == da.sizes
+        assert da.coords['polar_angle'].sizes == da.sizes
+        assert da.coords['azimuthal_angle'].sizes == da.sizes
+        assert da.coords['x_pixel_offset'].sizes == {'x_pixel_offset': 154}
+        assert da.coords['y_pixel_offset'].sizes == {'y_pixel_offset': 7}
+        assert sc.identical(da.sum(), det.events[()].sum())  # no event lost in binning
+
+
 def test_event_data_field_dims_labels(nexus_group: Tuple[Callable, LoadFromNexus]):
     event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
     event_data = EventData(
@@ -287,7 +298,7 @@ def test_event_data_field_dims_labels(nexus_group: Tuple[Callable, LoadFromNexus
     resource, loader = nexus_group
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
-        assert detector['detector_number'].dims == ['detector_number']
+        assert detector['detector_number'].dims == ['dim_0']
 
 
 def test_nxevent_data_selection_yields_correct_pulses(
