@@ -159,10 +159,7 @@ class LoadFromHdf5:
         for i, ind in enumerate(index):
             shape[i] = len(range(*ind.indices(shape[i])))
 
-        variable = sc.empty(dims=dimensions,
-                            shape=shape,
-                            dtype=dtype,
-                            unit=unit)
+        variable = sc.empty(dims=dimensions, shape=shape, dtype=dtype, unit=unit)
         if dtype == sc.DType.string:
             try:
                 strings = dataset.asstr()[index]
