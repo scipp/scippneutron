@@ -254,13 +254,6 @@ class LoadFromJson:
         except KeyError:
             return dataset[_nexus_dataset]["dtype"]
 
-    @staticmethod
-    def get_shape(dataset: Dict) -> List:
-        """
-        The shape of the dataset
-        """
-        return np.asarray(dataset[_nexus_values]).shape
-
     def get_object_by_path(self, group: Dict, path_str: str) -> Dict:
         for node in filter(None, path_str.split("/")):
             group = self._get_child_from_group(group, node)
@@ -293,6 +286,34 @@ class JSONAttributeManager:
 
     def __getitem__(self, name):
         return _get_attribute_value(self._node, name)
+
+
+class JSONDataset:
+    def __init__(self, node: dict, loader: LoadFromJson):
+        self._node = node
+        self._loader = loader
+
+    @property
+    def dtype(self) -> str:
+        try:
+            return self._node[_nexus_dataset]["type"]
+        except KeyError:
+            return self._node[_nexus_dataset]["dtype"]
+
+    @property
+    def name(self) -> str:
+        if isinstance(self._node, JSONGroup):
+            return self._node.name
+        else:
+            return self._node.get(_nexus_path, '/')
+
+    @property
+    def file(self):
+        return self._node.file
+
+    @property
+    def shape(self):
+        return np.asarray(self._node[_nexus_values]).shape
 
 
 @dataclass

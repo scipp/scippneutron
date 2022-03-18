@@ -10,7 +10,7 @@ import scipp as sc
 
 from ._nexus import LoadFromNexus
 from ._hdf5_nexus import LoadFromHdf5, _cset_to_encoding, _ensure_str
-from ._json_nexus import JSONAttributeManager
+from ._json_nexus import JSONAttributeManager, JSONDataset
 from ._common import Group, Dataset, ScippIndex
 from ._common import to_plain_index
 
@@ -42,7 +42,7 @@ class Attrs:
     """
     def __init__(self, node: Union[Dataset, Group]):
         self._node = node
-        if isinstance(node, dict):
+        if isinstance(node, (dict, JSONDataset)):
             self._attrs = JSONAttributeManager(node)
         else:
             self._attrs = node.attrs
@@ -74,7 +74,8 @@ class Field:
                  dataset: Dataset,
                  loader: LoadFromNexus = LoadFromHdf5(),
                  dims=None):
-        self._dataset = dataset
+        self._dataset = dataset if isinstance(loader, LoadFromHdf5) else JSONDataset(
+            dataset, loader)
         self._loader = loader
         if dims is not None:
             self._dims = dims
@@ -83,9 +84,13 @@ class Field:
         else:
             self._dims = [f'dim_{i}' for i in range(self.ndim)]
 
+    def _ds(self):
+        return self._dataset._node if isinstance(self._dataset,
+                                                 JSONDataset) else self._dataset
+
     def __getitem__(self, select) -> sc.Variable:
         index = to_plain_index(self.dims, select)
-        return self._loader.load_dataset_direct(self._dataset,
+        return self._loader.load_dataset_direct(self._ds(),
                                                 dimensions=self.dims,
                                                 unit=self.unit,
                                                 index=index)
@@ -95,15 +100,15 @@ class Field:
 
     @property
     def attrs(self) -> Attrs:
-        return Attrs(self._dataset)
+        return Attrs(self._ds())
 
     @property
     def dtype(self) -> str:
-        return self._loader.get_dtype(self._dataset)
+        return self._dataset.dtype
 
     @property
     def name(self) -> str:
-        return self._loader.get_path(self._dataset)
+        return self._dataset.name
 
     @property
     def file(self) -> NXroot:
@@ -111,7 +116,7 @@ class Field:
 
     @property
     def parent(self) -> NXobject:
-        return _make(self._dataset.parent, self._loader)
+        return _make(self._ds().parent, self._loader)
 
     @property
     def ndim(self) -> int:
@@ -119,7 +124,7 @@ class Field:
 
     @property
     def shape(self) -> List[int]:
-        return self._loader.get_shape(self._dataset)
+        return self._dataset.shape
 
     @property
     def dims(self) -> List[str]:

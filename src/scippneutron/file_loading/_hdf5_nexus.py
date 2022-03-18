@@ -198,13 +198,6 @@ class LoadFromHdf5:
         return dataset.dtype
 
     @staticmethod
-    def get_shape(dataset: h5py.Dataset) -> List:
-        """
-        The shape of the dataset
-        """
-        return dataset.shape
-
-    @staticmethod
     def get_child_from_group(group: Dict,
                              child_name: str) -> Union[h5py.Dataset, h5py.Group, None]:
         try:
