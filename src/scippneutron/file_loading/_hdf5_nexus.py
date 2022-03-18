@@ -191,13 +191,6 @@ class LoadFromHdf5:
         return group.name
 
     @staticmethod
-    def get_dtype(dataset: h5py.Dataset) -> str:
-        """
-        The dtype of the dataset
-        """
-        return dataset.dtype
-
-    @staticmethod
     def get_child_from_group(group: Dict,
                              child_name: str) -> Union[h5py.Dataset, h5py.Group, None]:
         try:
