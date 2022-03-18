@@ -97,10 +97,6 @@ def get_full_transformation(transformation: Transformation) -> sc.DataArray:
     Get the 4x4 transformation matrix for a component, resulting
     from the full chain of transformations linked by "depends_on"
     attributes
-
-    :param group: The HDF5 group of the component, containing depends_on
-    :param nexus: wrap data access to hdf file or objects from json
-    :return: 4x4 active transformation matrix as a data array
     """
     transformations = _get_transformations(transformation)
 
