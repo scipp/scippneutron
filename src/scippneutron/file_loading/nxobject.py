@@ -7,6 +7,7 @@ from enum import Enum, auto
 import functools
 from typing import List, Union, NoReturn, Any, Dict, Tuple
 import scipp as sc
+import h5py
 
 from ._nexus import LoadFromNexus
 from ._hdf5_nexus import LoadFromHdf5, _cset_to_encoding, _ensure_str
@@ -40,12 +41,8 @@ class NX_class(Enum):
 class Attrs:
     """HDF5 attributes.
     """
-    def __init__(self, node: Union[Dataset, Group]):
-        self._node = node
-        if isinstance(node, (dict, JSONDataset)):
-            self._attrs = JSONAttributeManager(node)
-        else:
-            self._attrs = node.attrs
+    def __init__(self, attrs: Union[h5py.AttributeManager, JSONAttributeManager]):
+        self._attrs = attrs
 
     def __contains__(self, name: str) -> bool:
         return name in self._attrs
@@ -55,9 +52,7 @@ class Attrs:
         # Is this check for string attributes sufficient? Is there a better way?
         is_json = isinstance(self._attrs, JSONAttributeManager)
         if isinstance(attr, (str, bytes)) and not is_json:
-            import h5py
-            cset = h5py.h5a.open(self._node.id,
-                                 name.encode("utf-8")).get_type().get_cset()
+            cset = self._attrs.get_id(name.encode("utf-8")).get_type().get_cset()
             return _ensure_str(attr, _cset_to_encoding(cset))
         return attr
 
@@ -100,7 +95,7 @@ class Field:
 
     @property
     def attrs(self) -> Attrs:
-        return Attrs(self._ds())
+        return Attrs(self._dataset.attrs)
 
     @property
     def dtype(self) -> str:
@@ -189,7 +184,8 @@ class NXobject:
 
     @property
     def attrs(self) -> Attrs:
-        return Attrs(self._group)
+        return Attrs(self._group.attrs if isinstance(self._loader, LoadFromHdf5) else
+                     JSONAttributeManager(self._group))
 
     @property
     def name(self) -> str:
@@ -271,7 +267,8 @@ class NXinstrument(NXobject):
 
 
 def _make(group, loader) -> NXobject:
-    if (nx_class := Attrs(group).get('NX_class')) is not None:
+    if (nx_class := Attrs(group.attrs if isinstance(loader, LoadFromHdf5) else
+                          JSONAttributeManager(group)).get('NX_class')) is not None:
         return _nx_class_registry().get(nx_class, NXobject)(group, loader)
     return group  # Return underlying (h5py) group
 

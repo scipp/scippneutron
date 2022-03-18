@@ -294,6 +294,10 @@ class JSONDataset:
         self._loader = loader
 
     @property
+    def attrs(self) -> JSONAttributeManager:
+        return JSONAttributeManager(self._node)
+
+    @property
     def dtype(self) -> str:
         try:
             return self._node[_nexus_dataset]["type"]
