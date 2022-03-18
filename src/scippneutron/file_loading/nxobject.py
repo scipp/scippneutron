@@ -39,15 +39,12 @@ class NX_class(Enum):
 class Attrs:
     """HDF5 attributes.
     """
-    def __init__(self,
-                 node: Union[Dataset, Group],
-                 loader: LoadFromNexus = LoadFromHdf5()):
+    def __init__(self, node: Union[Dataset, Group]):
         self._node = node
-        self._loader = loader
-        if isinstance(loader, LoadFromHdf5):
-            self._attrs = node.attrs
+        if isinstance(node, dict):
+            self._attrs = JSONAttributeManager(node)
         else:
-            self._attrs = JSONAttributeManager(node, loader)
+            self._attrs = node.attrs
 
     def __contains__(self, name: str) -> bool:
         return name in self._attrs
@@ -55,7 +52,8 @@ class Attrs:
     def __getitem__(self, name: str) -> Any:
         attr = self._attrs[name]
         # Is this check for string attributes sufficient? Is there a better way?
-        if isinstance(attr, (str, bytes)) and isinstance(self._loader, LoadFromHdf5):
+        is_json = isinstance(self._attrs, JSONAttributeManager)
+        if isinstance(attr, (str, bytes)) and not is_json:
             import h5py
             cset = h5py.h5a.open(self._node.id,
                                  name.encode("utf-8")).get_type().get_cset()
@@ -95,7 +93,7 @@ class Field:
 
     @property
     def attrs(self) -> Attrs:
-        return Attrs(self._dataset, self._loader)
+        return Attrs(self._dataset)
 
     @property
     def dtype(self) -> str:
@@ -179,7 +177,7 @@ class NXobject:
 
     @property
     def attrs(self) -> Attrs:
-        return Attrs(self._group, self._loader)
+        return Attrs(self._group)
 
     @property
     def name(self) -> str:
@@ -261,7 +259,7 @@ class NXinstrument(NXobject):
 
 
 def _make(group, loader) -> NXobject:
-    if (nx_class := Attrs(group, loader).get('NX_class')) is not None:
+    if (nx_class := Attrs(group).get('NX_class')) is not None:
         return _nx_class_registry().get(nx_class, NXobject)(group, loader)
     return group  # Return underlying (h5py) group
 

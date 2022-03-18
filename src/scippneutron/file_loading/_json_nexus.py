@@ -291,14 +291,6 @@ class LoadFromJson:
         return group
 
     @staticmethod
-    def get_attribute(node: Dict, attribute_name: str) -> Any:
-        return _get_attribute_value(node, attribute_name)
-
-    @staticmethod
-    def get_string_attribute(node: Dict, attribute_name: str) -> str:
-        return _get_attribute_value(node, attribute_name)
-
-    @staticmethod
     def is_group(node: Any):
         try:
             return node["type"] == _nexus_group
@@ -311,9 +303,8 @@ class LoadFromJson:
 
 
 class JSONAttributeManager:
-    def __init__(self, node: dict, loader: LoadFromJson):
+    def __init__(self, node: dict):
         self._node = node
-        self._loader = loader
 
     def __contains__(self, name):
         try:
@@ -323,7 +314,7 @@ class JSONAttributeManager:
         return True
 
     def __getitem__(self, name):
-        return self._loader.get_attribute(self._node, name)
+        return _get_attribute_value(self._node, name)
 
 
 @dataclass

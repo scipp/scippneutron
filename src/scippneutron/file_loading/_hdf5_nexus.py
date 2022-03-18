@@ -8,7 +8,7 @@ from typing import Union, Any, List, Optional, Tuple, Dict
 import h5py
 import numpy as np
 import scipp as sc
-from ._common import Group, MissingDataset, MissingAttribute
+from ._common import Group, MissingDataset
 
 
 def _cset_to_encoding(cset: int) -> str:
@@ -239,24 +239,6 @@ class LoadFromHdf5:
             return group[path]
         except KeyError:
             raise MissingDataset
-
-    @staticmethod
-    def get_attribute(node: Union[h5py.Group, h5py.Dataset],
-                      attribute_name: str) -> Any:
-        try:
-            return node.attrs[attribute_name]
-        except KeyError:
-            raise MissingAttribute
-
-    @staticmethod
-    def get_string_attribute(node: Union[h5py.Group, h5py.Dataset],
-                             attribute_name: str) -> str:
-        try:
-            val = node.attrs[attribute_name]
-        except KeyError:
-            raise MissingAttribute(f"Missing attribute named {attribute_name}")
-
-        return _ensure_str(val, LoadFromHdf5.get_attr_encoding(node, attribute_name))
 
     @staticmethod
     def is_group(node: Any):
