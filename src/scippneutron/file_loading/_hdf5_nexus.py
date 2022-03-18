@@ -29,8 +29,8 @@ def _cset_to_encoding(cset: int) -> str:
         return "utf-8"
     else:
         raise ValueError(f"Unknown character set in HDF5 data file. Expected data "
-                         f"types are {h5py.h5t.CSET_ASCII} (H5T_CSET_ASCII) or "
-                         f"{h5py.h5t.CSET_UTF8} (H5T_CSET_UTF8) but got '{cset}'. ")
+                         f"types are {h5py.h5t.CSET_ASCII=} or "
+                         f"{h5py.h5t.CSET_UTF8=} but got '{cset}'. ")
 
 
 def _get_attr_as_str(h5_object, attribute_name: str) -> str:
