@@ -116,9 +116,9 @@ def get_full_transformation(depends_on: Field) -> Union[None, sc.DataArray]:
                 transform.coords["time"].to(unit='ns', copy=False)
             ],
                              dim="time")
-            xnew = sc.datetimes(values=np.unique(time.values), dims=["time"], unit='ns')
-            total_transform = _interpolate_transform(transform, xnew) \
-                * _interpolate_transform(total_transform, xnew)
+            time = sc.datetimes(values=np.unique(time.values), dims=["time"], unit='ns')
+            total_transform = _interpolate_transform(transform, time) \
+                * _interpolate_transform(total_transform, time)
         else:
             total_transform = transform * total_transform
     if isinstance(total_transform, sc.DataArray):
