@@ -7,18 +7,18 @@ import scipp as sc
 
 from ..nexus import NXroot, NX_class
 
-from ._common import Group, BadSource, SkipSource
+from ._common import BadSource, SkipSource
 from ._common import add_position_and_transforms_to_data
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
 from ._nexus import LoadFromNexus, ScippData
 import h5py
 from timeit import default_timer as timer
-from typing import Union, List, Optional, Dict, Tuple, Set
+from typing import Union, Optional, Dict, Tuple, Set
 from contextlib import contextmanager
 from warnings import warn
 from .nxtransformations import TransformationError
-from .nxobject import NexusStructureError
+from .nxobject import NexusStructureError, NXobject
 
 nx_entry = "NXentry"
 nx_instrument = "NXinstrument"
@@ -37,26 +37,27 @@ def _open_if_path(file_in: Union[str, h5py.File]):
         yield file_in
 
 
-def _load_instrument_name(instrument_groups: List[Group], nexus: LoadFromNexus) -> Dict:
-    if len(instrument_groups) > 1:
+def _load_instrument_name(instruments: Dict[str, NXobject]) -> Dict:
+    instrument = next(iter(instruments.values()))
+    if len(instruments) > 1:
         warn(f"More than one {nx_instrument} found in file, "
-             f"loading name from {instrument_groups[0].name} only")
-    if (name := nexus.get_dataset_from_group(instrument_groups[0], "name")) is not None:
-        return {"instrument_name": nexus.load_dataset_direct(name)}
+             f"loading name from {instrument.name} only")
+    if (name := instrument.get("name")) is not None:
+        return {"instrument_name": name[()]}
     return {}
 
 
-def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:
-    if (title := nexus.get_dataset_from_group(entry_group, "title")) is not None:
-        return {"experiment_title": nexus.load_dataset_direct(title)}
+def _load_title(entry: NXobject) -> Dict:
+    if (title := entry.get('title')) is not None:
+        return {"experiment_title": title[()]}
     return {}
 
 
-def _load_start_and_end_time(entry_group: Group, nexus: LoadFromNexus) -> Dict:
+def _load_start_and_end_time(entry: NXobject) -> Dict:
     times = {}
     for time in ["start_time", "end_time"]:
-        if (dataset := nexus.get_dataset_from_group(entry_group, time)) is not None:
-            times[time] = nexus.load_dataset_direct(dataset)
+        if (dataset := entry.get(time)) is not None:
+            times[time] = dataset[()]
     return times
 
 
@@ -241,9 +242,12 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             else:
                 loaded_data[key] = value
 
-    if groups[nx_entry]:
-        add_metadata(_load_title(groups[nx_entry][0], nexus))
-        add_metadata(_load_start_and_end_time(groups[nx_entry][0], nexus))
+    if (entries := classes[NX_class.NXentry]):
+        entry = next(iter(entries.values()))
+        add_metadata(_load_title(entry))
+        add_metadata(_load_start_and_end_time(entry))
+    if (instruments := classes[NX_class.NXinstrument]):
+        add_metadata(_load_instrument_name(instruments))
 
     def load_and_add_metadata(groups, process=lambda x: x):
         items = {}
@@ -278,9 +282,6 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                     value=[0, 0, distance.value], unit=distance.unit)
             elif name == 'sample':
                 coords[f'{comp_name}_position'] = _origin('m')
-
-    if groups[nx_instrument]:
-        add_metadata(_load_instrument_name(groups[nx_instrument], nexus))
 
     # Return None if we have an empty dataset at this point
     if no_event_data and not loaded_data.keys():

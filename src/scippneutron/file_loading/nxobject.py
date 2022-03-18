@@ -27,6 +27,7 @@ class NX_class(Enum):
     NXdisk_chopper = auto()
     NXentry = auto()
     NXevent_data = auto()
+    NXinstrument = auto()
     NXlog = auto()
     NXmonitor = auto()
     NXroot = auto()
@@ -201,7 +202,7 @@ class NXobject:
         return list(zip(self.keys(), self.values()))
 
     @functools.lru_cache()
-    def by_nx_class(self) -> Dict[NX_class, List['__class__']]:
+    def by_nx_class(self) -> Dict[NX_class, Dict[str, '__class__']]:
         classes = self._loader.find_by_nx_class(tuple(_nx_class_registry()),
                                                 self._group)
         out = {}
@@ -251,6 +252,10 @@ class NXentry(NXobject):
     pass
 
 
+class NXinstrument(NXobject):
+    pass
+
+
 def _make(group, loader) -> NXobject:
     try:
         nx_class = loader.get_string_attribute(group, 'NX_class')
@@ -273,6 +278,6 @@ def _nx_class_registry():
         cls.__name__: cls
         for cls in [
             NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector,
-            NXsample, NXsource, NXdisk_chopper
+            NXsample, NXsource, NXdisk_chopper, NXinstrument
         ]
     }

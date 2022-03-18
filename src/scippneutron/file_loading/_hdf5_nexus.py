@@ -238,12 +238,6 @@ class LoadFromHdf5:
         return None
 
     @staticmethod
-    def get_dataset_encoding(group: h5py.Group, dataset_name: str) -> str:
-        cset = h5py.h5d.open(group.id,
-                             dataset_name.encode("utf-8")).get_type().get_cset()
-        return _cset_to_encoding(cset)
-
-    @staticmethod
     def get_attr_encoding(group: h5py.Group, dataset_name: str) -> str:
         cset = h5py.h5a.open(group.id,
                              dataset_name.encode("utf-8")).get_type().get_cset()
