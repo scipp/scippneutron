@@ -87,13 +87,10 @@ def _interpolate_transform(transform, xnew):
     # scipy can't interpolate with a single value
     if transform.sizes["time"] == 1:
         transform = sc.concat([transform, transform], dim="time")
-
-    transform = sc.interpolate.interp1d(transform,
-                                        "time",
-                                        kind="previous",
-                                        fill_value="extrapolate")(xnew=xnew)
-
-    return transform
+    return sc.interpolate.interp1d(transform,
+                                   "time",
+                                   kind="previous",
+                                   fill_value="extrapolate")(xnew=xnew)
 
 
 def get_full_transformation(depends_on: Field) -> Union[None, sc.DataArray]:
