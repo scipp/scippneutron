@@ -271,6 +271,20 @@ def test_field_of_utf8_encoded_dataset_is_loaded_correctly(
                             sc.array(dims=['dim_0'], values=[string, string + string]))
 
 
+def test_field_of_extended_ascii_in_ascii_encoded_dataset_is_loaded_correctly():
+    resource, loader = open_nexus, LoadFromHdf5()
+    builder = NexusBuilder()
+    # When writing, if we use bytes h5py will write as ascii encoding
+    # 0xb0 = degrees symbol in latin-1 encoding.
+    string = b"run at rot=90" + bytes([0xb0])
+    builder.add_title(np.array([string, string + b'x']))
+    with resource(builder)() as f:
+        title = nexus.NXroot(f, loader)['entry/title']
+        assert sc.identical(
+            title[...],
+            sc.array(dims=['dim_0'], values=["run at rot=90°", "run at rot=90°x"]))
+
+
 def test_negative_event_index_converted_to_num_event(nexus_group: Tuple[Callable,
                                                                         LoadFromNexus]):
     event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
