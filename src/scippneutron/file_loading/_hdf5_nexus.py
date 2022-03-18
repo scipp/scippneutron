@@ -29,13 +29,22 @@ def _cset_to_encoding(cset: int) -> str:
         return "utf-8"
     else:
         raise ValueError(f"Unknown character set in HDF5 data file. Expected data "
-                         f"types are {h5py.h5t.CSET_ASCII} (H5T_CSET_ASCII) or "
-                         f"{h5py.h5t.CSET_UTF8} (H5T_CSET_UTF8) but got '{cset}'. ")
+                         f"types are {h5py.h5t.CSET_ASCII=} or "
+                         f"{h5py.h5t.CSET_UTF8=} but got '{cset}'. ")
 
 
 def _get_attr_as_str(h5_object, attribute_name: str) -> str:
     return _ensure_str(h5_object.attrs[attribute_name],
                        LoadFromHdf5.get_attr_encoding(h5_object, attribute_name))
+
+
+def _warn_latin1_decode(obj, decoded, error):
+    warnings.warn(f"Encoding for bytes '{obj}' declared as ascii, "
+                  f"but contains characters in extended ascii range. Assuming "
+                  f"extended ASCII (latin-1), but this behavior is not "
+                  f"specified by the HDF5 or nexus standards and may therefore "
+                  f"be incorrect. Decoded string using latin-1 is '{decoded}'. "
+                  f"Error was '{error}'.")
 
 
 def _ensure_str(str_or_bytes: Union[str, bytes], encoding: str) -> str:
@@ -60,12 +69,7 @@ def _ensure_str(str_or_bytes: Union[str, bytes], encoding: str) -> str:
             return str(str_or_bytes, encoding="ascii")
         except UnicodeDecodeError as e:
             decoded = str(str_or_bytes, encoding="latin-1")
-            warnings.warn(f"Encoding for bytes '{str_or_bytes}' declared as ascii, "
-                          f"but contains characters in extended ascii range. Assuming "
-                          f"extended ASCII (latin-1), but this behavior is not "
-                          f"specified by the HDF5 or nexus standards and may therefore "
-                          f"be incorrect. Decoded string using latin-1 is '{decoded}'. "
-                          f"Error was '{str(e)}'.")
+            _warn_latin1_decode(str_or_bytes, decoded, str(e))
             return decoded
     else:
         return str(str_or_bytes, encoding)
@@ -121,19 +125,14 @@ class LoadFromHdf5:
         return found_groups
 
     @staticmethod
-    def dataset_in_group(group: h5py.Group, dataset_name: str) -> Tuple[bool, str]:
-        if dataset_name not in group:
-            return False, (f"Unable to load data from NXevent_data "
-                           f"at '{group.name}' due to missing '{dataset_name}'"
-                           f" field\n")
-        return True, ""
+    def dataset_in_group(group: h5py.Group, dataset_name: str) -> bool:
+        return dataset_name in group
 
-    def load_dataset(self,
-                     group: h5py.Group,
-                     dataset_name: str,
-                     dimensions: Optional[List[str]] = [],
-                     dtype: Optional[Any] = None,
-                     index=tuple()) -> sc.Variable:
+    def load_dataset_direct(self,
+                            dataset: h5py.Dataset,
+                            dimensions: Optional[List[str]] = [],
+                            dtype: Optional[Any] = None,
+                            index=tuple()) -> sc.Variable:
         """
         Load an HDF5 dataset into a Scipp Variable (array or scalar)
         :param group: Group containing dataset to load
@@ -142,33 +141,16 @@ class LoadFromHdf5:
         :param dtype: Cast to this dtype during load,
           otherwise retain dataset dtype
         """
-        try:
-            dataset = group[dataset_name]
-        except KeyError:
-            raise MissingDataset()
-
-        if self.is_group(dataset):
-            raise MissingDataset(f"Attempted to load a group "
-                                 f"({dataset_name}) as a dataset.")
-        return self.load_dataset_direct(dataset,
-                                        dimensions=dimensions,
-                                        dtype=dtype,
-                                        index=index)
-
-    def load_dataset_direct(self,
-                            dataset: h5py.Dataset,
-                            dimensions: Optional[List[str]] = [],
-                            dtype: Optional[Any] = None,
-                            index=tuple()) -> sc.Variable:
-        """
-        Same as `load_dataset` but dataset given directly instead of by group and name.
-        """
         if dtype is None:
             dtype = _ensure_supported_int_type(dataset.dtype.type)
         if h5py.check_string_dtype(dataset.dtype):
             dtype = sc.DType.string
 
         shape = list(dataset.shape)
+        if dimensions == [] and shape == [1]:
+            # NeXus treats [] and [1] interchangeably, in general this is ill-defined,
+            # but this is the best we can do.
+            shape = []
         if index is Ellipsis:
             index = tuple()
         if isinstance(index, slice):
@@ -181,45 +163,17 @@ class LoadFromHdf5:
                             dtype=dtype,
                             unit=self.get_unit(dataset))
         if dtype == sc.DType.string:
-            variable.values = np.asarray(dataset[index]).flatten()
+            try:
+                strings = dataset.asstr()[index]
+            except UnicodeDecodeError as e:
+                strings = dataset.asstr(encoding='latin-1')[index]
+                _warn_latin1_decode(dataset, strings, str(e))
+            variable.values = np.asarray(strings).flatten()
         elif variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
             dataset.read_direct(variable.values, source_sel=index)
         else:
             variable.values = dataset[index]
         return variable
-
-    def load_dataset_from_group_as_numpy_array(self,
-                                               group: h5py.Group,
-                                               dataset_name: str,
-                                               index=tuple()):
-        """
-        Load a dataset into a numpy array
-        Prefer use of load_dataset to load directly to a scipp variable,
-        this function should only be used in rare cases that a
-        numpy array is required.
-        :param group: Group containing dataset to load
-        :param dataset_name: Name of the dataset to load
-        """
-        try:
-            dataset = group[dataset_name]
-        except KeyError:
-            raise MissingDataset()
-        return self.load_dataset_as_numpy_array(dataset, index=index)
-
-    @staticmethod
-    def load_dataset_as_numpy_array(dataset: h5py.Dataset, index=tuple()):
-        """
-        Load a dataset into a numpy array
-        Prefer use of load_dataset to load directly to a scipp variable,
-        this function should only be used in rare cases that a
-        numpy array is required.
-        :param dataset: The dataset to load values from
-        """
-        return dataset[index].astype(_ensure_supported_int_type(dataset.dtype.type))
-
-    @staticmethod
-    def get_dataset_numpy_dtype(dataset: h5py.Dataset) -> Any:
-        return _ensure_supported_int_type(dataset.dtype.type)
 
     @staticmethod
     def get_name(group: Union[h5py.Group, h5py.Dataset]) -> str:
@@ -272,27 +226,6 @@ class LoadFromHdf5:
         except KeyError:
             return None
 
-    def get_dataset_from_group(self, group: h5py.Group,
-                               dataset_name: str) -> Optional[h5py.Dataset]:
-        dataset = self.get_child_from_group(group, dataset_name)
-        if not self.is_group(dataset):
-            return dataset
-        return None
-
-    @staticmethod
-    def load_scalar_string(group: h5py.Group, dataset_name: str) -> str:
-        try:
-            val = group[dataset_name][...].item()
-        except KeyError:
-            raise MissingDataset
-        return _ensure_str(val, LoadFromHdf5.get_dataset_encoding(group, dataset_name))
-
-    @staticmethod
-    def get_dataset_encoding(group: h5py.Group, dataset_name: str) -> str:
-        cset = h5py.h5d.open(group.id,
-                             dataset_name.encode("utf-8")).get_type().get_cset()
-        return _cset_to_encoding(cset)
-
     @staticmethod
     def get_attr_encoding(group: h5py.Group, dataset_name: str) -> str:
         cset = h5py.h5a.open(group.id,
@@ -306,14 +239,6 @@ class LoadFromHdf5:
             return group[path]
         except KeyError:
             raise MissingDataset
-
-    @staticmethod
-    def get_attribute_as_numpy_array(node: Union[h5py.Group, h5py.Dataset],
-                                     attribute_name: str) -> np.ndarray:
-        try:
-            return np.asarray(node.attrs[attribute_name])
-        except KeyError:
-            raise MissingAttribute
 
     @staticmethod
     def get_attribute(node: Union[h5py.Group, h5py.Dataset],

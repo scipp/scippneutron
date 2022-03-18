@@ -138,7 +138,7 @@ def _transformation_is_nx_log_stream(t):
         # then assume it is a streamed NXlog transformation
         try:
             if nexus.is_group(transform):
-                found_value_dataset, _ = nexus.dataset_in_group(transform, "value")
+                found_value_dataset = nexus.dataset_in_group(transform, "value")
                 if not found_value_dataset and contains_stream(transform):
                     return True
         except KeyError:

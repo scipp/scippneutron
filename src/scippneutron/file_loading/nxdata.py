@@ -147,7 +147,12 @@ class NXdata(NXobject):
                 continue
             try:
                 sel = to_child_select(self.dims, field.dims, select)
-                da.coords[name] = self[name][sel]
+                coord = self[name][sel]
+                # NeXus treats [] and [1] interchangeably, in general this is
+                # ill-defined, but this is the best we can do.
+                if coord.shape == [1] and da.sizes.get(coord.dim) != 1:
+                    coord = coord.squeeze()
+                da.coords[name] = coord
             except sc.DimensionError as e:
                 warn(f"Skipped load of axis {field.name} due to:\n{e}")
 

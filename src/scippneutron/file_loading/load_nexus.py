@@ -7,18 +7,18 @@ import scipp as sc
 
 from ..nexus import NXroot, NX_class
 
-from ._common import Group, MissingDataset, BadSource, SkipSource
+from ._common import BadSource, SkipSource
 from ._common import add_position_and_transforms_to_data
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
 from ._nexus import LoadFromNexus, ScippData
 import h5py
 from timeit import default_timer as timer
-from typing import Union, List, Optional, Dict, Tuple, Set
+from typing import Union, Optional, Dict, Tuple, Set
 from contextlib import contextmanager
 from warnings import warn
 from .nxtransformations import TransformationError
-from .nxobject import NexusStructureError
+from .nxobject import NexusStructureError, NXobject
 
 nx_entry = "NXentry"
 nx_instrument = "NXinstrument"
@@ -37,36 +37,27 @@ def _open_if_path(file_in: Union[str, h5py.File]):
         yield file_in
 
 
-def _load_instrument_name(instrument_groups: List[Group], nexus: LoadFromNexus) -> Dict:
-    try:
-        if len(instrument_groups) > 1:
-            warn(f"More than one {nx_instrument} found in file, "
-                 f"loading name from {instrument_groups[0].name} only")
-        return {
-            "instrument_name":
-            sc.scalar(value=nexus.load_scalar_string(instrument_groups[0], "name"))
-        }
-    except MissingDataset:
-        return {}
+def _load_instrument_name(instruments: Dict[str, NXobject]) -> Dict:
+    instrument = next(iter(instruments.values()))
+    if len(instruments) > 1:
+        warn(f"More than one {nx_instrument} found in file, "
+             f"loading name from {instrument.name} only")
+    if (name := instrument.get("name")) is not None:
+        return {"instrument_name": name[()]}
+    return {}
 
 
-def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:
-    try:
-        return {
-            "experiment_title":
-            sc.scalar(value=nexus.load_scalar_string(entry_group, "title"))
-        }
-    except MissingDataset:
-        return {}
+def _load_title(entry: NXobject) -> Dict:
+    if (title := entry.get('title')) is not None:
+        return {"experiment_title": title[()]}
+    return {}
 
 
-def _load_start_and_end_time(entry_group: Group, nexus: LoadFromNexus) -> Dict:
+def _load_start_and_end_time(entry: NXobject) -> Dict:
     times = {}
     for time in ["start_time", "end_time"]:
-        try:
-            times[time] = sc.scalar(value=nexus.load_scalar_string(entry_group, time))
-        except MissingDataset:
-            pass
+        if (dataset := entry.get(time)) is not None:
+            times[time] = dataset[()]
     return times
 
 
@@ -140,36 +131,21 @@ def _zip_pixel_offset(da: sc.DataArray) -> sc.DataArray:
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
-               nexus: LoadFromNexus, quiet: bool) \
-        -> Optional[ScippData]:
+               nexus: LoadFromNexus, quiet: bool) -> Optional[ScippData]:
     """
     Main implementation for loading data is extracted to this function so that
     in-memory data can be used for unit tests.
     """
-    if root is not None:
-        root_node = nexus_file[root]
-    else:
-        root_node = nexus_file
-    # Use visititems (in find_by_nx_class) to traverse the entire file tree,
-    # looking for any NXClass that can be read.
-    # groups is a dict with a key for each category (nx_entry, nx_instrument...)
-    groups = nexus.find_by_nx_class((nx_entry, nx_instrument), root_node)
+    root = NXroot(nexus_file if root is None else nexus_file[root], nexus)
+    classes = root.by_nx_class()
 
-    if len(groups[nx_entry]) > 1:
+    if len(classes[NX_class.NXentry]) > 1:
         # We can't sensibly load from multiple NXentry, for example each
         # could could contain a description of the same detector bank
         # and lead to problems with clashing detector ids etc
-        raise RuntimeError(
-            f"More than one {nx_entry} group in file, use 'root' argument "
-            "to specify which to load data from, for example"
-            f"{__name__}('my_file.nxs', '/entry_2')")
-
-    no_event_data = True
-    loaded_data = sc.Dataset()
-
-    # Note: Currently this wastefully walks the tree in the file a second time.
-    root = NXroot(nexus_file, nexus)
-    classes = root.by_nx_class()
+        raise RuntimeError(f"More than one NXentry group in file, use 'root' argument "
+                           "to specify which to load data from, for example"
+                           f"{__name__}('my_file.nxs', '/entry_2')")
 
     # In the following, we map the file structure onto a partially flattened in-memory
     # structure. This behavior is quite error prone and cumbersome and will probably
@@ -201,6 +177,9 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                 ValueError) as e:
             if not nexus.contains_stream(group._group):
                 warn(f"Skipped loading {group.name} due to:\n{e}")
+
+    no_event_data = True
+    loaded_data = sc.Dataset()
 
     # If no event data are found, make a Dataset and add the metadata as
     # Dataset entries. Otherwise, make a DataArray.
@@ -251,9 +230,12 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             else:
                 loaded_data[key] = value
 
-    if groups[nx_entry]:
-        add_metadata(_load_title(groups[nx_entry][0], nexus))
-        add_metadata(_load_start_and_end_time(groups[nx_entry][0], nexus))
+    if (entries := classes[NX_class.NXentry]):
+        entry = next(iter(entries.values()))
+        add_metadata(_load_title(entry))
+        add_metadata(_load_start_and_end_time(entry))
+    if (instruments := classes[NX_class.NXinstrument]):
+        add_metadata(_load_instrument_name(instruments))
 
     def load_and_add_metadata(groups, process=lambda x: x):
         items = {}
@@ -288,9 +270,6 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                     value=[0, 0, distance.value], unit=distance.unit)
             elif name == 'sample':
                 coords[f'{comp_name}_position'] = _origin('m')
-
-    if groups[nx_instrument]:
-        add_metadata(_load_instrument_name(groups[nx_instrument], nexus))
 
     # Return None if we have an empty dataset at this point
     if no_event_data and not loaded_data.keys():
