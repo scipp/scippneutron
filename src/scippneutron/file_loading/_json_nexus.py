@@ -7,7 +7,6 @@ import scipp as sc
 import numpy as np
 from ._common import Group, JSONGroup, MissingDataset, MissingAttribute
 from dataclasses import dataclass
-from warnings import warn
 
 _nexus_class = "NX_class"
 _nexus_units = "units"
@@ -220,6 +219,7 @@ class LoadFromJson:
 
     def load_dataset_direct(self,
                             dataset: Dict,
+                            unit: Optional[sc.Unit] = None,
                             dimensions: Optional[List[str]] = [],
                             dtype: Optional[Any] = None,
                             index=tuple()) -> sc.Variable:
@@ -234,21 +234,10 @@ class LoadFromJson:
         if dtype is None:
             dtype = self.supported_int_type(dataset)
 
-        try:
-            units = _get_attribute_value(dataset, _nexus_units)
-            try:
-                units = sc.Unit(units)
-            except sc.UnitError:
-                warn(f"Unrecognized unit '{units}' for value dataset "
-                     f"in '{self.get_name(dataset)}'; setting unit as 'dimensionless'")
-                units = sc.units.dimensionless
-        except MissingAttribute:
-            units = None
-
         return sc.array(dims=dimensions,
                         values=np.asarray(dataset[_nexus_values])[index],
                         dtype=dtype,
-                        unit=units)
+                        unit=unit)
 
     @staticmethod
     def get_name(group: Dict) -> str:
@@ -274,14 +263,6 @@ class LoadFromJson:
         The shape of the dataset
         """
         return np.asarray(dataset[_nexus_values]).shape
-
-    @staticmethod
-    def get_unit(dataset: Dict) -> str:
-        try:
-            unit = _get_attribute_value(dataset, _nexus_units)
-        except MissingAttribute:
-            unit = None
-        return unit
 
     def get_object_by_path(self, group: Dict, path_str: str) -> Dict:
         for node in filter(None, path_str.split("/")):

@@ -2,6 +2,7 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 from __future__ import annotations
+import warnings
 from enum import Enum, auto
 import functools
 from typing import List, Union, NoReturn, Any, Dict, Tuple
@@ -86,6 +87,7 @@ class Field:
         index = to_plain_index(self.dims, select)
         return self._loader.load_dataset_direct(self._dataset,
                                                 dimensions=self.dims,
+                                                unit=self.unit,
                                                 index=index)
 
     def __repr__(self) -> str:
@@ -125,8 +127,13 @@ class Field:
 
     @property
     def unit(self) -> Union[sc.Unit, None]:
-        if 'units' in self.attrs:
-            return sc.Unit(self._loader.get_unit(self._dataset))
+        if (unit := self.attrs.get('units')) is not None:
+            try:
+                return sc.Unit(unit)
+            except sc.UnitError:
+                warnings.warn(f"Unrecognized unit '{unit}' for value dataset "
+                              f"in '{self.name}'; setting unit as 'dimensionless'")
+                return sc.units.one
         return None
 
 

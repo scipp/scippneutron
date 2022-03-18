@@ -130,6 +130,7 @@ class LoadFromHdf5:
 
     def load_dataset_direct(self,
                             dataset: h5py.Dataset,
+                            unit: Optional[sc.Unit] = None,
                             dimensions: Optional[List[str]] = [],
                             dtype: Optional[Any] = None,
                             index=tuple()) -> sc.Variable:
@@ -161,7 +162,7 @@ class LoadFromHdf5:
         variable = sc.empty(dims=dimensions,
                             shape=shape,
                             dtype=dtype,
-                            unit=self.get_unit(dataset))
+                            unit=unit)
         if dtype == sc.DType.string:
             try:
                 strings = dataset.asstr()[index]
@@ -202,21 +203,6 @@ class LoadFromHdf5:
         The shape of the dataset
         """
         return dataset.shape
-
-    @staticmethod
-    def get_unit(node: Union[h5py.Dataset, h5py.Group]) -> str:
-        try:
-            units = node.attrs["units"]
-        except (AttributeError, KeyError):
-            return None
-        units = _ensure_str(units, LoadFromHdf5.get_attr_encoding(node, "units"))
-        try:
-            sc.Unit(units)
-        except sc.UnitError:
-            warnings.warn(f"Unrecognized unit '{units}' for value dataset "
-                          f"in '{node.name}'; setting unit as 'dimensionless'")
-            return "dimensionless"
-        return units
 
     @staticmethod
     def get_child_from_group(group: Dict,
