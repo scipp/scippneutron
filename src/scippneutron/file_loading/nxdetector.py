@@ -3,7 +3,7 @@
 # @author Simon Heybrock
 from __future__ import annotations
 from copy import copy
-from typing import List, Union
+from typing import List, Optional, Union
 import scipp as sc
 from .nxobject import NX_class, NXobject, Field, ScippIndex, NexusStructureError
 from .nxdata import NXdata
@@ -32,7 +32,7 @@ class _EventField:
     def __init__(self,
                  nxevent_data: NXevent_data,
                  event_select: ScippIndex,
-                 detector_number: Field = None):
+                 detector_number: Optional[Field] = None):
         self._nxevent_data = nxevent_data
         self._event_select = event_select
         self._detector_number = detector_number
@@ -62,7 +62,7 @@ class _EventField:
     def __getitem__(self, select: ScippIndex) -> sc.DataArray:
         event_data = self._nxevent_data[self._event_select]
         if self._detector_number is None:
-            if select not in (Ellipsis, tuple()) and select != slice(None):
+            if select not in (Ellipsis, tuple(), slice(None)):
                 raise NexusStructureError(
                     "Cannot load slice of NXdetector since it contains event data "
                     "but no 'detector_number' field, i.e., the shape is unknown. "
