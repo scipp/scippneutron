@@ -131,8 +131,7 @@ def _zip_pixel_offset(da: sc.DataArray) -> sc.DataArray:
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
-               nexus: LoadFromNexus, quiet: bool) \
-        -> Optional[ScippData]:
+               nexus: LoadFromNexus, quiet: bool) -> Optional[ScippData]:
     """
     Main implementation for loading data is extracted to this function so that
     in-memory data can be used for unit tests.
@@ -141,26 +140,20 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         root_node = nexus_file[root]
     else:
         root_node = nexus_file
-    # Use visititems (in find_by_nx_class) to traverse the entire file tree,
-    # looking for any NXClass that can be read.
-    # groups is a dict with a key for each category (nx_entry, nx_instrument...)
-    groups = nexus.find_by_nx_class((nx_entry, nx_instrument), root_node)
-
-    if len(groups[nx_entry]) > 1:
-        # We can't sensibly load from multiple NXentry, for example each
-        # could could contain a description of the same detector bank
-        # and lead to problems with clashing detector ids etc
-        raise RuntimeError(
-            f"More than one {nx_entry} group in file, use 'root' argument "
-            "to specify which to load data from, for example"
-            f"{__name__}('my_file.nxs', '/entry_2')")
 
     no_event_data = True
     loaded_data = sc.Dataset()
 
-    # Note: Currently this wastefully walks the tree in the file a second time.
-    root = NXroot(nexus_file, nexus)
+    root = NXroot(root_node, nexus)
     classes = root.by_nx_class()
+
+    if len(classes[NX_class.NXentry]) > 1:
+        # We can't sensibly load from multiple NXentry, for example each
+        # could could contain a description of the same detector bank
+        # and lead to problems with clashing detector ids etc
+        raise RuntimeError(f"More than one NXentry group in file, use 'root' argument "
+                           "to specify which to load data from, for example"
+                           f"{__name__}('my_file.nxs', '/entry_2')")
 
     # In the following, we map the file structure onto a partially flattened in-memory
     # structure. This behavior is quite error prone and cumbersome and will probably
