@@ -2,14 +2,15 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 from __future__ import annotations
-import scipp as sc
 from enum import Enum, auto
 import functools
 from typing import List, Union, NoReturn, Any, Dict, Tuple
+import scipp as sc
 
 from ._nexus import LoadFromNexus
-from ._hdf5_nexus import LoadFromHdf5
-from ._common import Group, Dataset, MissingAttribute, ScippIndex
+from ._hdf5_nexus import LoadFromHdf5, _cset_to_encoding, _ensure_str
+from ._json_nexus import JSONAttributeManager
+from ._common import Group, Dataset, ScippIndex
 from ._common import to_plain_index
 
 NXobjectIndex = Union[str, ScippIndex]
@@ -43,19 +44,22 @@ class Attrs:
                  loader: LoadFromNexus = LoadFromHdf5()):
         self._node = node
         self._loader = loader
+        if isinstance(loader, LoadFromHdf5):
+            self._attrs = node.attrs
+        else:
+            self._attrs = JSONAttributeManager(node, loader)
 
     def __contains__(self, name: str) -> bool:
-        try:
-            _ = self[name]
-            return True
-        except MissingAttribute:
-            return False
+        return name in self._attrs
 
     def __getitem__(self, name: str) -> Any:
-        attr = self._loader.get_attribute(self._node, name)
+        attr = self._attrs[name]
         # Is this check for string attributes sufficient? Is there a better way?
-        if isinstance(attr, (str, bytes)):
-            return self._loader.get_string_attribute(self._node, name)
+        if isinstance(attr, (str, bytes)) and isinstance(self._loader, LoadFromHdf5):
+            import h5py
+            cset = h5py.h5a.open(self._node.id,
+                                 name.encode("utf-8")).get_type().get_cset()
+            return _ensure_str(attr, _cset_to_encoding(cset))
         return attr
 
     def get(self, name: str, default=None) -> Any:
@@ -257,11 +261,9 @@ class NXinstrument(NXobject):
 
 
 def _make(group, loader) -> NXobject:
-    try:
-        nx_class = loader.get_string_attribute(group, 'NX_class')
+    if (nx_class := Attrs(group, loader).get('NX_class')) is not None:
         return _nx_class_registry().get(nx_class, NXobject)(group, loader)
-    except MissingAttribute:
-        return group  # Return underlying (h5py) group
+    return group  # Return underlying (h5py) group
 
 
 @functools.lru_cache()

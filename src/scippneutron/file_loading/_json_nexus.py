@@ -310,6 +310,22 @@ class LoadFromJson:
         return contains_stream(group)
 
 
+class JSONAttributeManager:
+    def __init__(self, node: dict, loader: LoadFromJson):
+        self._node = node
+        self._loader = loader
+
+    def __contains__(self, name):
+        try:
+            self[name]
+        except MissingAttribute:
+            return False
+        return True
+
+    def __getitem__(self, name):
+        return self._loader.get_attribute(self._node, name)
+
+
 @dataclass
 class StreamInfo:
     topic: str
