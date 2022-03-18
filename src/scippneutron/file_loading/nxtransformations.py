@@ -58,7 +58,10 @@ class Transformation:
 
     def __getitem__(self, select: ScippIndex):
         transformation_type = self.attrs.get('transformation_type')
-        t = self._obj[select] * self.vector
+        # According to private communication with Tobias Richter, NeXus allows 0-D or
+        # shape=[1] for single values. It is unclear how and if this could be
+        # distinguished from a scan of length 1.
+        t = self._obj[select].squeeze() * self.vector
         v = t if isinstance(t, sc.Variable) else t.data
         if transformation_type == 'translation':
             v = v.to(unit='m', copy=False)

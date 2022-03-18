@@ -151,10 +151,8 @@ class NXobject:
                 dims = self._get_field_dims(name) if use_field_dims else None
                 return Field(item, self._loader, dims=dims)
         da = self._getitem(name)
-        if (depends_on := self.depends_on) is not None:
-            obj = depends_on.squeeze()  # TODO What is the meaning of the dim?
-            da.coords['depends_on'] = obj if isinstance(obj,
-                                                        sc.Variable) else sc.scalar(obj)
+        if (t := self.depends_on) is not None:
+            da.coords['depends_on'] = t if isinstance(t, sc.Variable) else sc.scalar(t)
         return da
 
     def __getitem__(self,
