@@ -1026,7 +1026,8 @@ def test_skips_component_position_from_transformation_missing_unit(
         component_class: Union[Type[Source], Type[Sample]], component_name: str,
         transform_type: TransformationType, load_function: Callable):
     builder = NexusBuilder()
-    transformation = Transformation(transform_type, np.array([0, 0, -1]),
+    transformation = Transformation(transform_type,
+                                    np.array([0, 0, -1]),
                                     value=np.array(2.3))
     builder.add_component(component_class(component_name, depends_on=transformation))
     with pytest.warns(UserWarning):
