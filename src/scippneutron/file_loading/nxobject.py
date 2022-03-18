@@ -127,19 +127,6 @@ class Field:
         return None
 
 
-class DependsOn:
-    def __init__(self, group: NXobject):
-        self._field = group
-
-    def __getitem__(self, select) -> sc.Variable:
-        index = to_plain_index([], select)
-        if index != tuple():
-            raise ValueError("Cannot select slice when loading 'depends_on'")
-        from .nxtransformations import get_full_transformation, make_transformation
-        if (t := make_transformation(self._field, self._field[()].value)) is not None:
-            return get_full_transformation(t)
-
-
 class NXobject:
     """Base class for all NeXus groups.
     """
@@ -165,7 +152,7 @@ class NXobject:
                 return Field(item, self._loader, dims=dims)
         da = self._getitem(name)
         if (depends_on := self.depends_on) is not None:
-            obj = depends_on[()].squeeze()  # TODO What is the meaning of the dim?
+            obj = depends_on.squeeze()  # TODO What is the meaning of the dim?
             da.coords['depends_on'] = obj if isinstance(obj,
                                                         sc.Variable) else sc.scalar(obj)
         return da
@@ -241,9 +228,11 @@ class NXobject:
         return NX_class[self.attrs['NX_class']]
 
     @property
-    def depends_on(self) -> DependsOn:
-        if 'depends_on' in self:
-            return DependsOn(self['depends_on'])
+    def depends_on(self) -> Union[sc.Variable, sc.DataArray, None]:
+        if (path := self.get('depends_on')) is not None:
+            from .nxtransformations import get_full_transformation, make_transformation
+            if (t := make_transformation(path, path[()].value)) is not None:
+                return get_full_transformation(t)
         return None
 
     def __repr__(self) -> str:
