@@ -213,10 +213,6 @@ class LoadFromJson:
         return self._get_child_from_group(group, dataset_name,
                                           (_nexus_dataset, )) is not None
 
-    @staticmethod
-    def supported_int_type(dataset):
-        return _filewriter_to_supported_numpy_dtype[LoadFromJson.get_dtype(dataset)]
-
     def load_dataset_direct(self,
                             dataset: Dict,
                             unit: Optional[sc.Unit] = None,
@@ -232,7 +228,8 @@ class LoadFromJson:
           otherwise retain dataset dtype
         """
         if dtype is None:
-            dtype = self.supported_int_type(dataset)
+            dtype = _filewriter_to_supported_numpy_dtype[LoadFromJson.get_dtype(
+                dataset)]
 
         return sc.array(dims=dimensions,
                         values=np.asarray(dataset[_nexus_values])[index],
