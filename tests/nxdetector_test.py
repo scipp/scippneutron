@@ -26,8 +26,8 @@ def test_raises_if_no_data_found(nexus_group: Tuple[Callable, LoadFromNexus]):
             detector[...]
 
 
-def test_raises_if_data_and_event_data_found(nexus_group: Tuple[Callable,
-                                                                LoadFromNexus]):
+def test_loads_events_when_data_and_events_found(nexus_group: Tuple[Callable,
+                                                                    LoadFromNexus]):
     resource, loader = nexus_group
     da = sc.DataArray(sc.array(dims=['xx', 'yy'], values=[[1.1, 2.2], [3.3, 4.4]]))
     event_data = EventData(
@@ -38,13 +38,12 @@ def test_raises_if_data_and_event_data_found(nexus_group: Tuple[Callable,
     )
     builder = NexusBuilder()
     builder.add_detector(
-        Detector(detector_numbers=np.array([1, 2, 3, 4]),
+        Detector(detector_numbers=np.array([[1, 2], [3, 4]]),
                  data=da,
                  event_data=event_data))
     with resource(builder)() as f:
         detector = nexus.NXroot(f, loader)['entry/detector_0']
-        with pytest.raises(nexus.NexusStructureError):
-            detector[...]
+        assert detector[...].bins is not None
 
 
 def test_loads_data_without_coords(nexus_group: Tuple[Callable, LoadFromNexus]):

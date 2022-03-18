@@ -123,21 +123,6 @@ class NXdetector(NXobject):
         return self._signal.unit
 
     @property
-    def _is_events(self) -> bool:
-        # The standard is unclear on whether the 'data' field may be NXevent_data or
-        # whether the fields of NXevent_data should be stored directly within this
-        # NXdetector. Both cases are observed in the wild.
-        event_entries = self.by_nx_class()[NX_class.NXevent_data]
-        if len(event_entries) > 1:
-            raise NexusStructureError("No unique NXevent_data entry in NXdetector. "
-                                      f"Found {len(event_entries)}.")
-        elif len(event_entries) == 1:
-            if 'data' in self and not isinstance(self._get_child('data'), NXevent_data):
-                raise NexusStructureError("NXdetector contains data and event data.")
-            return True
-        return 'event_time_offset' in self
-
-    @property
     def _detector_number(self) -> Union[None, Field]:
         for key in self._detector_number_fields:
             if key in self:
@@ -149,7 +134,7 @@ class NXdetector(NXobject):
         return self._nxdata()._signal
 
     def _nxdata(self, use_event_signal=True) -> NXdata:
-        if use_event_signal and self._is_events:
+        if use_event_signal and self.events is not None:
             signal = _EventField(self.events, self._event_select, self._detector_number)
         else:
             signal = None
@@ -165,12 +150,20 @@ class NXdetector(NXobject):
     @property
     def events(self) -> Union[None, NXevent_data]:
         """Return the underlying NXevent_data group, None if not event data."""
-        if not self._is_events:
-            return None
+        # The standard is unclear on whether the 'data' field may be NXevent_data or
+        # whether the fields of NXevent_data should be stored directly within this
+        # NXdetector. Both cases are observed in the wild.
+        event_entries = self.by_nx_class()[NX_class.NXevent_data]
+        if len(event_entries) > 1:
+            raise NexusStructureError("No unique NXevent_data entry in NXdetector. "
+                                      f"Found {len(event_entries)}.")
+        if len(event_entries) == 1:
+            # If there is also a signal dataset (not events) it will be ignored
+            # (except for possibly using it to deduce shape and dims).
+            return next(iter(event_entries.values()))
         if 'event_time_offset' in self:
             return NXevent_data(self._group, self._loader)
-        event_entries = self.by_nx_class()[NX_class.NXevent_data]
-        return next(iter(event_entries.values()))
+        return None
 
     @property
     def select_events(self) -> EventSelector:
@@ -178,13 +171,13 @@ class NXdetector(NXobject):
         Return a proxy object for selecting a slice of the underlying NXevent_data
         group, while keeping wrapping the NXdetector.
         """
-        if not self._is_events:
+        if self.events is None:
             raise NexusStructureError(
                 "Cannot select events in NXdetector not containing NXevent_data.")
         return EventSelector(self)
 
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:
-        if self._is_events:
+        if self.events is not None:
             if name in self._nxevent_data_fields:
                 # Event field is direct child of this class
                 return self.events._get_field_dims(name)
