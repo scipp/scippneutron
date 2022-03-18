@@ -208,7 +208,7 @@ class LoadFromJson:
         return JSONGroup(group=child,
                          parent=group,
                          name=f'{name}/{child_name}',
-                         file={_nexus_children: [group]})
+                         file=self._root)
 
     def get_dataset_from_group(self, group: Dict, dataset_name: str) -> Optional[Dict]:
         """

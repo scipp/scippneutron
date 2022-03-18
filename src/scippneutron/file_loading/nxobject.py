@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
+from __future__ import annotations
 import scipp as sc
 from enum import Enum, auto
 import functools
@@ -100,6 +101,14 @@ class Field:
         return self._loader.get_path(self._dataset)
 
     @property
+    def file(self) -> NXroot:
+        return NXroot(self._dataset.file, self._loader)
+
+    @property
+    def parent(self) -> NXobject:
+        return _make(self._dataset.parent, self._loader)
+
+    @property
     def ndim(self) -> int:
         return len(self.shape)
 
@@ -118,31 +127,12 @@ class Field:
         return None
 
 
-class DependsOn:
-    def __init__(self, field: Field):
-        self._field = field
-
-    def __getitem__(self, select) -> sc.Variable:
-        index = to_plain_index([], select)
-        if index != tuple():
-            raise ValueError("Cannot select slice when loading 'depends_on'")
-        from .nxtransformations import get_full_transformation_matrix
-        return get_full_transformation_matrix(self._field._group, self._field._loader)
-
-
 class NXobject:
     """Base class for all NeXus groups.
     """
     def __init__(self, group: Group, loader: LoadFromNexus = LoadFromHdf5()):
         self._group = group
         self._loader = loader
-
-    def _make(self, group) -> '__class__':
-        try:
-            nx_class = self._loader.get_string_attribute(group, 'NX_class')
-            return _nx_class_registry().get(nx_class, NXobject)(group, self._loader)
-        except MissingAttribute:
-            return group  # Return underlying (h5py) group
 
     def _get_child(
             self,
@@ -156,15 +146,13 @@ class NXobject:
             if item is None:
                 raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
             if self._loader.is_group(item):
-                return self._make(item)
+                return _make(item, self._loader)
             else:
                 dims = self._get_field_dims(name) if use_field_dims else None
                 return Field(item, self._loader, dims=dims)
         da = self._getitem(name)
-        if (depends_on := self.depends_on) is not None:
-            obj = depends_on[()]
-            da.coords['depends_on'] = obj if isinstance(obj,
-                                                        sc.Variable) else sc.scalar(obj)
+        if (t := self.depends_on) is not None:
+            da.coords['depends_on'] = t if isinstance(t, sc.Variable) else sc.scalar(t)
         return da
 
     def __getitem__(self,
@@ -192,6 +180,14 @@ class NXobject:
     def name(self) -> str:
         return self._loader.get_path(self._group)
 
+    @property
+    def file(self) -> NXroot:
+        return NXroot(self._group.file, self._loader)
+
+    @property
+    def parent(self) -> NXobject:
+        return _make(self._group.parent, self._loader)
+
     def _ipython_key_completions_(self) -> List[str]:
         return list(self.keys())
 
@@ -213,7 +209,10 @@ class NXobject:
             names = [self._loader.get_name(group) for group in groups]
             if len(names) != len(set(names)):  # fall back to full path if duplicate
                 names = [group.name for group in groups]
-            out[NX_class[nx_class]] = {n: self._make(g) for n, g in zip(names, groups)}
+            out[NX_class[nx_class]] = {
+                n: _make(g, self._loader)
+                for n, g in zip(names, groups)
+            }
         return out
 
     @property
@@ -227,9 +226,11 @@ class NXobject:
         return NX_class[self.attrs['NX_class']]
 
     @property
-    def depends_on(self) -> DependsOn:
-        if 'depends_on' in self:
-            return DependsOn(self)
+    def depends_on(self) -> Union[sc.Variable, sc.DataArray, None]:
+        if (depends_on := self.get('depends_on')) is not None:
+            # Imported late to avoid cyclic import
+            from .nxtransformations import get_full_transformation
+            return get_full_transformation(depends_on)
         return None
 
     def __repr__(self) -> str:
@@ -248,6 +249,14 @@ class NXroot(NXobject):
 
 class NXentry(NXobject):
     pass
+
+
+def _make(group, loader) -> NXobject:
+    try:
+        nx_class = loader.get_string_attribute(group, 'NX_class')
+        return _nx_class_registry().get(nx_class, NXobject)(group, loader)
+    except MissingAttribute:
+        return group  # Return underlying (h5py) group
 
 
 @functools.lru_cache()
