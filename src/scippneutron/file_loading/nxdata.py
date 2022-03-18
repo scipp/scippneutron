@@ -18,7 +18,7 @@ class NXdata(NXobject):
             group: Group,
             loader: LoadFromNexus = LoadFromHdf5(),
             signal_name_default: str = None,
-            signal_override: Union[Field, EventField] = None,  # noqa: F821
+            signal_override: Union[Field, _EventField] = None,  # noqa: F821
             axes: List[str] = None,
             skip: List[str] = None):
         """
@@ -78,7 +78,7 @@ class NXdata(NXobject):
             return f'{self._signal_name_default}_errors'
 
     @property
-    def _signal(self) -> Union[Field, EventField]:  # noqa: F821
+    def _signal(self) -> Union[Field, _EventField]:  # noqa: F821
         if self._signal_override is not None:
             return self._signal_override
         return self[self._signal_name]

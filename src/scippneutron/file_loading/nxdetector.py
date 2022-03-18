@@ -23,7 +23,7 @@ class EventSelector:
         return det
 
 
-class EventField:
+class _EventField:
     """Field-like wrapper of NXevent_data binned into pixels.
 
     This has no equivalent in the NeXus format, but represents the conceptual
@@ -145,12 +145,12 @@ class NXdetector(NXobject):
         return None
 
     @property
-    def _signal(self) -> Union[Field, EventField]:
+    def _signal(self) -> Union[Field, _EventField]:
         return self._nxdata()._signal
 
     def _nxdata(self, use_event_signal=True) -> NXdata:
         if use_event_signal and self._is_events:
-            signal = EventField(self.events, self._event_select, self._detector_number)
+            signal = _EventField(self.events, self._event_select, self._detector_number)
         else:
             signal = None
         # NXdata uses the 'signal' attribute to define the field name of the signal.
