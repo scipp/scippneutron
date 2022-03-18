@@ -125,12 +125,8 @@ class LoadFromHdf5:
         return found_groups
 
     @staticmethod
-    def dataset_in_group(group: h5py.Group, dataset_name: str) -> Tuple[bool, str]:
-        if dataset_name not in group:
-            return False, (f"Unable to load data from NXevent_data "
-                           f"at '{group.name}' due to missing '{dataset_name}'"
-                           f" field\n")
-        return True, ""
+    def dataset_in_group(group: h5py.Group, dataset_name: str) -> bool:
+        return dataset_name in group
 
     def load_dataset_direct(self,
                             dataset: h5py.Dataset,
@@ -229,13 +225,6 @@ class LoadFromHdf5:
             return group[child_name]
         except KeyError:
             return None
-
-    def get_dataset_from_group(self, group: h5py.Group,
-                               dataset_name: str) -> Optional[h5py.Dataset]:
-        dataset = self.get_child_from_group(group, dataset_name)
-        if not self.is_group(dataset):
-            return dataset
-        return None
 
     @staticmethod
     def get_attr_encoding(group: h5py.Group, dataset_name: str) -> str:

@@ -168,7 +168,7 @@ class NXobject:
         return None
 
     def __contains__(self, name: str) -> bool:
-        return self._loader.dataset_in_group(self._group, name)[0]
+        return self._loader.dataset_in_group(self._group, name)
 
     def get(self, name: str, default=None) -> Union['__class__', Field, sc.DataArray]:
         return self[name] if name in self else default

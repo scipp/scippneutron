@@ -210,17 +210,9 @@ class LoadFromJson:
                          name=f'{name}/{child_name}',
                          file=self._root)
 
-    def get_dataset_from_group(self, group: Dict, dataset_name: str) -> Optional[Dict]:
-        """
-        Returns dictionary for dataset or None if not found
-        """
-        return self._get_child_from_group(group, dataset_name, (_nexus_dataset, ))
-
-    def dataset_in_group(self, group: Dict, dataset_name: str) -> Tuple[bool, str]:
-        if self.get_dataset_from_group(group, dataset_name) is not None:
-            return True, ""
-        return False, (f"Unable to load data from NXevent_data "
-                       f" due to missing '{dataset_name}' field\n")
+    def dataset_in_group(self, group: Dict, dataset_name: str) -> bool:
+        return self._get_child_from_group(group, dataset_name,
+                                          (_nexus_dataset, )) is not None
 
     @staticmethod
     def supported_int_type(dataset):
