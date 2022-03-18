@@ -291,12 +291,6 @@ class LoadFromJson:
             unit = None
         return unit
 
-    def load_scalar_string(self, group: Dict, dataset_name: str) -> sc.Variable:
-        dataset = self.get_dataset_from_group(group, dataset_name)
-        if dataset is None:
-            raise MissingDataset()
-        return dataset[_nexus_values]
-
     def get_object_by_path(self, group: Dict, path_str: str) -> Dict:
         for node in filter(None, path_str.split("/")):
             group = self._get_child_from_group(group, node)

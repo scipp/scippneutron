@@ -7,7 +7,7 @@ import scipp as sc
 
 from ..nexus import NXroot, NX_class
 
-from ._common import Group, MissingDataset, BadSource, SkipSource
+from ._common import Group, BadSource, SkipSource
 from ._common import add_position_and_transforms_to_data
 from ._hdf5_nexus import LoadFromHdf5
 from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
@@ -38,35 +38,25 @@ def _open_if_path(file_in: Union[str, h5py.File]):
 
 
 def _load_instrument_name(instrument_groups: List[Group], nexus: LoadFromNexus) -> Dict:
-    try:
-        if len(instrument_groups) > 1:
-            warn(f"More than one {nx_instrument} found in file, "
-                 f"loading name from {instrument_groups[0].name} only")
-        return {
-            "instrument_name":
-            sc.scalar(value=nexus.load_scalar_string(instrument_groups[0], "name"))
-        }
-    except MissingDataset:
-        return {}
+    if len(instrument_groups) > 1:
+        warn(f"More than one {nx_instrument} found in file, "
+             f"loading name from {instrument_groups[0].name} only")
+    if (name := nexus.get_dataset_from_group(instrument_groups[0], "name")) is not None:
+        return {"instrument_name": nexus.load_dataset_direct(name)}
+    return {}
 
 
 def _load_title(entry_group: Group, nexus: LoadFromNexus) -> Dict:
-    try:
-        return {
-            "experiment_title":
-            sc.scalar(value=nexus.load_scalar_string(entry_group, "title"))
-        }
-    except MissingDataset:
-        return {}
+    if (title := nexus.get_dataset_from_group(entry_group, "title")) is not None:
+        return {"experiment_title": nexus.load_dataset_direct(title)}
+    return {}
 
 
 def _load_start_and_end_time(entry_group: Group, nexus: LoadFromNexus) -> Dict:
     times = {}
     for time in ["start_time", "end_time"]:
-        try:
-            times[time] = sc.scalar(value=nexus.load_scalar_string(entry_group, time))
-        except MissingDataset:
-            pass
+        if (dataset := nexus.get_dataset_from_group(entry_group, time)) is not None:
+            times[time] = nexus.load_dataset_direct(dataset)
     return times
 
 

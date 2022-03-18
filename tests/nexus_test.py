@@ -262,9 +262,7 @@ def test_field_of_utf8_encoded_dataset_is_loaded_correctly(
     resource, loader = nexus_group
     builder = NexusBuilder()
     if isinstance(loader, LoadFromHdf5):
-        encoded1 = np.char.encode(string, 'utf-8')
-        encoded2 = np.char.encode(string + string, 'utf-8')
-        builder.add_title(np.array([encoded1, encoded2]))
+        builder.add_title(np.array([string, string + string], dtype=object))
     else:  # json encodes itself
         builder.add_title(np.array([string, string + string]))
     with resource(builder)() as f:

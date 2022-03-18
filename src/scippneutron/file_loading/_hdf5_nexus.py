@@ -38,6 +38,15 @@ def _get_attr_as_str(h5_object, attribute_name: str) -> str:
                        LoadFromHdf5.get_attr_encoding(h5_object, attribute_name))
 
 
+def _warn_latin1_decode(obj, decoded, error):
+    warnings.warn(f"Encoding for bytes '{obj}' declared as ascii, "
+                  f"but contains characters in extended ascii range. Assuming "
+                  f"extended ASCII (latin-1), but this behavior is not "
+                  f"specified by the HDF5 or nexus standards and may therefore "
+                  f"be incorrect. Decoded string using latin-1 is '{decoded}'. "
+                  f"Error was '{error}'.")
+
+
 def _ensure_str(str_or_bytes: Union[str, bytes], encoding: str) -> str:
     """
     See https://docs.h5py.org/en/stable/strings.html for justification about some of
@@ -60,12 +69,7 @@ def _ensure_str(str_or_bytes: Union[str, bytes], encoding: str) -> str:
             return str(str_or_bytes, encoding="ascii")
         except UnicodeDecodeError as e:
             decoded = str(str_or_bytes, encoding="latin-1")
-            warnings.warn(f"Encoding for bytes '{str_or_bytes}' declared as ascii, "
-                          f"but contains characters in extended ascii range. Assuming "
-                          f"extended ASCII (latin-1), but this behavior is not "
-                          f"specified by the HDF5 or nexus standards and may therefore "
-                          f"be incorrect. Decoded string using latin-1 is '{decoded}'. "
-                          f"Error was '{str(e)}'.")
+            _warn_latin1_decode(str_or_bytes, decoded, str(e))
             return decoded
     else:
         return str(str_or_bytes, encoding)
@@ -159,7 +163,12 @@ class LoadFromHdf5:
                             dtype=dtype,
                             unit=self.get_unit(dataset))
         if dtype == sc.DType.string:
-            variable.values = np.asarray(dataset[index]).flatten()
+            try:
+                strings = dataset.asstr()[index]
+            except UnicodeDecodeError as e:
+                strings = dataset.asstr(encoding='latin-1')[index]
+                _warn_latin1_decode(dataset, strings, str(e))
+            variable.values = np.asarray(strings).flatten()
         elif variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
             dataset.read_direct(variable.values, source_sel=index)
         else:
@@ -223,14 +232,6 @@ class LoadFromHdf5:
         if not self.is_group(dataset):
             return dataset
         return None
-
-    @staticmethod
-    def load_scalar_string(group: h5py.Group, dataset_name: str) -> str:
-        try:
-            val = group[dataset_name][...].item()
-        except KeyError:
-            raise MissingDataset
-        return _ensure_str(val, LoadFromHdf5.get_dataset_encoding(group, dataset_name))
 
     @staticmethod
     def get_dataset_encoding(group: h5py.Group, dataset_name: str) -> str:
