@@ -228,6 +228,7 @@ class NXobject:
     @property
     def depends_on(self) -> Union[sc.Variable, sc.DataArray, None]:
         if (depends_on := self.get('depends_on')) is not None:
+            # Imported late to avoid cyclic import
             from .nxtransformations import get_full_transformation
             return get_full_transformation(depends_on)
         return None
