@@ -17,12 +17,11 @@ class TransformationError(Exception):
 
 
 def make_transformation(obj, /, path):
-    if path is not None:
-        if path.startswith('/'):
-            return Transformation(obj.file[path])
-        elif path != '.':
-            return Transformation(obj.parent[path])
-    return None
+    if path.startswith('/'):
+        return Transformation(obj.file[path])
+    elif path != '.':
+        return Transformation(obj.parent[path])
+    return None  # end of chain
 
 
 class Transformation:
@@ -39,7 +38,9 @@ class Transformation:
 
     @property
     def depends_on(self):
-        return make_transformation(self._obj, self.attrs.get('depends_on'))
+        if (path := self.attrs.get('depends_on')) is not None:
+            return make_transformation(self._obj, path)
+        return None
 
     @property
     def offset(self):
@@ -92,13 +93,15 @@ def _interpolate_transform(transform, xnew):
     return transform
 
 
-def get_full_transformation(transformation: Transformation) -> sc.DataArray:
+def get_full_transformation(depends_on: Field) -> Union[None, sc.DataArray]:
     """
     Get the 4x4 transformation matrix for a component, resulting
     from the full chain of transformations linked by "depends_on"
     attributes
     """
-    transformations = _get_transformations(transformation)
+    if (t0 := make_transformation(depends_on, depends_on[()].value)) is None:
+        return None
+    transformations = _get_transformations(t0)
 
     total_transform = sc.spatial.affine_transform(value=np.identity(4), unit=sc.units.m)
 

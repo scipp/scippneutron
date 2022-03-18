@@ -229,10 +229,9 @@ class NXobject:
 
     @property
     def depends_on(self) -> Union[sc.Variable, sc.DataArray, None]:
-        if (path := self.get('depends_on')) is not None:
-            from .nxtransformations import get_full_transformation, make_transformation
-            if (t := make_transformation(path, path[()].value)) is not None:
-                return get_full_transformation(t)
+        if (depends_on := self.get('depends_on')) is not None:
+            from .nxtransformations import get_full_transformation
+            return get_full_transformation(depends_on)
         return None
 
     def __repr__(self) -> str:
