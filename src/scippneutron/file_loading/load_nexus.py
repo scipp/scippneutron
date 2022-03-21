@@ -43,13 +43,13 @@ def _load_instrument_name(instruments: Dict[str, NXobject]) -> Dict:
         warn(f"More than one {nx_instrument} found in file, "
              f"loading name from {instrument.name} only")
     if (name := instrument.get("name")) is not None:
-        return {"instrument_name": name[()]}
+        return {"instrument_name": name[()].squeeze()}
     return {}
 
 
 def _load_title(entry: NXobject) -> Dict:
     if (title := entry.get('title')) is not None:
-        return {"experiment_title": title[()]}
+        return {"experiment_title": title[()].squeeze()}
     return {}
 
 
@@ -57,7 +57,7 @@ def _load_start_and_end_time(entry: NXobject) -> Dict:
     times = {}
     for time in ["start_time", "end_time"]:
         if (dataset := entry.get(time)) is not None:
-            times[time] = dataset[()]
+            times[time] = dataset[()].squeeze()
     return times
 
 
