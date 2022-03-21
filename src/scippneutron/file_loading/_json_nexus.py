@@ -296,6 +296,10 @@ class JSONNode:
         self._file = parent.file if parent is not None else self
         self._parent = self if parent is None else parent
         self._node = node
+        if parent is None or parent.name == '/':
+            self._name = f'/{self._node.get(_nexus_name, "")}'
+        else:
+            self._name = f'{parent.name}/{self._node[_nexus_name]}'
         self._loader = loader
 
     @property
@@ -304,10 +308,7 @@ class JSONNode:
 
     @property
     def name(self) -> str:
-        if isinstance(self._node, JSONGroup):
-            return self._node.name
-        else:
-            return self._node.get(_nexus_path, '/')
+        return self._name
 
     @property
     def file(self):
@@ -358,20 +359,22 @@ class _JSONGroup(JSONNode):
         else:
             return JSONDataset(item, self._loader, parent=parent)
 
-    def get(self, name: str, default=None):
+    def __getitem__(self, name: str) -> Union[JSONDataset, _JSONGroup]:
         if name.startswith('/') and name.count('/') == 1:
             parent = self.file
         elif '/' in name:
             parent = self['/'.join(name.split('/')[:-1])]
         else:
             parent = self
-        if (item := self._loader.get_child_from_group(self._node, name)) is not None:
-            return self._as_group_or_dataset(item, parent)
-        return default
 
-    def __getitem__(self, name: str) -> Union[JSONDataset, _JSONGroup]:
-        if (item := self.get(name)) is not None:
-            return item
+        for child in parent._node[_nexus_children]:
+            if child.get(_nexus_name) != name.split('/')[-1]:
+                continue
+            if child.get('type') == _nexus_link:
+                return self[child["target"]]
+            if child.get('type') in (_nexus_dataset, _nexus_group):
+                return self._as_group_or_dataset(child, parent)
+
         raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
 
     def visititems(self, callable):
