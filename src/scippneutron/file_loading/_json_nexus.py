@@ -313,13 +313,18 @@ class JSONNode:
         else:
             return JSONDataset(item, self._loader)
 
+    def __getitem__(self, name: str) -> Union[JSONDataset, _JSONGroup]:
+        if (item := self._loader.get_child_from_group(self._node, name)) is not None:
+            return self._as_group_or_dataset(item)
+        raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
+
     @property
     def file(self):
-        return self._node.file  # TODO JSONDataset
+        return JSONDataset(self._loader._root, self._loader)
 
     @property
     def parent(self):
-        return self._node.parent  # TODO JSONDataset
+        return JSONDataset(self._node.parent, self._loader)
 
 
 class JSONDataset(JSONNode):
@@ -339,6 +344,8 @@ class JSONDataset(JSONNode):
         return np.asarray(self._node[_nexus_values]).shape
 
     def __getitem__(self, index):
+        if isinstance(index, str):
+            return super().__getitem__(index)
         return np.asarray(self._node[_nexus_values])[index]
 
     def read_direct(self, buf, source_sel):
@@ -351,11 +358,6 @@ class JSONDataset(JSONNode):
 class _JSONGroup(JSONNode):
     def __contains__(self, name: str) -> bool:
         return self._loader.dataset_in_group(self._node, name)
-
-    def __getitem__(self, name: str) -> Union[JSONDataset, _JSONGroup]:
-        if (item := self._loader.get_child_from_group(self._node, name)) is not None:
-            return self._as_group_or_dataset(item)
-        raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
 
     def keys(self) -> List[str]:
         return self._loader.keys(self._node)
