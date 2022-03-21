@@ -310,12 +310,6 @@ class JSONNode:
         else:
             return self._node.get(_nexus_path, '/')
 
-    def _as_group_or_dataset(self, item, parent):
-        if self._loader.is_group(item):
-            return _JSONGroup(item, self._loader, parent=parent)
-        else:
-            return JSONDataset(item, self._loader, parent=parent)
-
     @property
     def file(self):
         return self._file
@@ -356,7 +350,14 @@ class _JSONGroup(JSONNode):
         return self._loader.dataset_in_group(self._node, name)
 
     def keys(self) -> List[str]:
-        return self._loader.keys(self._node)
+        children = self._node[_nexus_children]
+        return [child[_nexus_name] for child in children if not contains_stream(child)]
+
+    def _as_group_or_dataset(self, item, parent):
+        if self._loader.is_group(item):
+            return _JSONGroup(item, self._loader, parent=parent)
+        else:
+            return JSONDataset(item, self._loader, parent=parent)
 
     def get(self, name: str, default=None):
         if name.startswith('/') and name.count('/') == 1:
