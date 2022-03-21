@@ -108,7 +108,7 @@ class NXdata(NXobject):
             dims = [lut[s] for s in shape]
         except KeyError:
             raise NexusStructureError(
-                "Could not determine axis indices for {self[name].name}")
+                f"Could not determine axis indices for {self[name].name}")
         return dims
 
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:
