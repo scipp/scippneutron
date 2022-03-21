@@ -69,9 +69,7 @@ class Field:
 
     In HDF5 fields are represented as dataset.
     """
-    def __init__(self,
-                 dataset: Dataset,
-                 dims=None):
+    def __init__(self, dataset: Dataset, dims=None):
         self._dataset = dataset
         if dims is not None:
             self._dims = dims
@@ -116,8 +114,8 @@ class Field:
     @property
     def dtype(self) -> str:
         dtype = self._dataset.dtype
-        if dtype == 'str' or (not isinstance(self._dataset, JSONDataset)
-                              and h5py.check_string_dtype(dtype)):
+        if str(dtype).startswith('str') or (not isinstance(self._dataset, JSONDataset)
+                                            and h5py.check_string_dtype(dtype)):
             dtype = sc.DType.string
         else:
             dtype = sc.DType(_ensure_supported_int_type(str(dtype)))
@@ -179,8 +177,6 @@ class NXobject:
             raise KeyError("None is not a valid index")
         if isinstance(name, str):
             item = self._group[name]
-            if item is None:
-                raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
             if hasattr(item, 'shape'):
                 dims = self._get_field_dims(name) if use_field_dims else None
                 return Field(item, dims=dims)
@@ -256,10 +252,7 @@ class NXobject:
             names = [group.name.split('/')[-1] for group in groups]
             if len(names) != len(set(names)):  # fall back to full path if duplicate
                 names = [group.name for group in groups]
-            out[NX_class[nx_class]] = {
-                n: _make(g)
-                for n, g in zip(names, groups)
-            }
+            out[NX_class[nx_class]] = {n: _make(g) for n, g in zip(names, groups)}
         return out
 
     @property

@@ -344,14 +344,18 @@ class JSONDataset(JSONNode):
     def read_direct(self, buf, source_sel):
         buf[...] = self[source_sel]
 
+    def asstr(self, **ignored):
+        return self
+
 
 class _JSONGroup(JSONNode):
     def __contains__(self, name: str) -> bool:
         return self._loader.dataset_in_group(self._node, name)
 
     def __getitem__(self, name: str) -> Union[JSONDataset, _JSONGroup]:
-        item = self._loader.get_child_from_group(self._node, name)
-        return self._as_group_or_dataset(item)
+        if (item := self._loader.get_child_from_group(self._node, name)) is not None:
+            return self._as_group_or_dataset(item)
+        raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
 
     def keys(self) -> List[str]:
         return self._loader.keys(self._node)

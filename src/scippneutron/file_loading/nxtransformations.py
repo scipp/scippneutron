@@ -131,6 +131,7 @@ def _transformation_is_nx_log_stream(t):
     if (not isinstance(t, (Field, NXobject))):
         return True
     transform = t._group if isinstance(t, NXobject) else t._dataset
+    return False
     nexus = t._loader
     # Stream objects are only in the dict loaded from json
     if isinstance(transform, dict):
