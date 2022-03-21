@@ -139,7 +139,7 @@ class LoadFromJson:
 
     def keys(self, group: Dict):
         children = group[_nexus_children]
-        return [child[_nexus_name] for child in children]
+        return [child[_nexus_name] for child in children if not contains_stream(child)]
 
     def values(self, group: Dict):
         return group[_nexus_children]
