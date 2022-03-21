@@ -6,11 +6,13 @@ import warnings
 from enum import Enum, auto
 import functools
 from typing import List, Union, NoReturn, Any, Dict, Tuple
+import numpy as np
 import scipp as sc
 import h5py
 
 from ._nexus import LoadFromNexus
 from ._hdf5_nexus import LoadFromHdf5, _cset_to_encoding, _ensure_str
+from ._hdf5_nexus import _ensure_supported_int_type, _warn_latin1_decode
 from ._json_nexus import JSONAttributeManager, JSONDataset
 from ._common import Group, Dataset, ScippIndex
 from ._common import to_plain_index
@@ -79,7 +81,7 @@ class Field:
         elif (axes := self.attrs.get('axes')) is not None:
             self._dims = axes.split(',')
         else:
-            self._dims = [f'dim_{i}' for i in range(self.ndim)]
+            self._dims = [f'dim_{i}' for i in range(self._dataset.ndim)]
 
     def _ds(self):
         return self._dataset._node if isinstance(self._dataset,
@@ -87,10 +89,29 @@ class Field:
 
     def __getitem__(self, select) -> sc.Variable:
         index = to_plain_index(self.dims, select)
-        return self._loader.load_dataset_direct(self._ds(),
-                                                dimensions=self.dims,
-                                                unit=self.unit,
-                                                index=index)
+        if isinstance(index, slice):
+            index = (index, )
+
+        shape = list(self.shape)
+        for i, ind in enumerate(index):
+            shape[i] = len(range(*ind.indices(shape[i])))
+
+        variable = sc.empty(dims=self.dims,
+                            shape=shape,
+                            dtype=self.dtype,
+                            unit=self.unit)
+        if self.dtype == sc.DType.string:
+            try:
+                strings = self._dataset.asstr()[index]
+            except UnicodeDecodeError as e:
+                strings = self._dataset.asstr(encoding='latin-1')[index]
+                _warn_latin1_decode(self._dataset, strings, str(e))
+            variable.values = np.asarray(strings).flatten()
+        elif variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
+            self._dataset.read_direct(variable.values, source_sel=index)
+        else:
+            variable.values = self._dataset[index]
+        return variable
 
     def __repr__(self) -> str:
         return f'<Nexus field "{self._dataset.name}">'
@@ -101,7 +122,13 @@ class Field:
 
     @property
     def dtype(self) -> str:
-        return self._dataset.dtype
+        dtype = self._dataset.dtype
+        if dtype == 'str' or (not isinstance(self._dataset, JSONDataset)
+                              and h5py.check_string_dtype(dtype)):
+            dtype = sc.DType.string
+        else:
+            dtype = sc.DType(_ensure_supported_int_type(str(dtype)))
+        return dtype
 
     @property
     def name(self) -> str:
@@ -121,7 +148,12 @@ class Field:
 
     @property
     def shape(self) -> List[int]:
-        return self._dataset.shape
+        shape = self._dataset.shape
+        if self.dims == [] and shape == [1]:
+            # NeXus treats [] and [1] interchangeably, in general this is ill-defined,
+            # but this is the best we can do.
+            return []
+        return shape
 
     @property
     def dims(self) -> List[str]:

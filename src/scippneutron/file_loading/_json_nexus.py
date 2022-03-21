@@ -331,8 +331,18 @@ class JSONDataset(JSONNode):
             return self._node[_nexus_dataset]["dtype"]
 
     @property
+    def ndim(self) -> int:
+        return len(self.shape)
+
+    @property
     def shape(self):
         return np.asarray(self._node[_nexus_values]).shape
+
+    def __getitem__(self, index):
+        return np.asarray(self._node[_nexus_values])[index]
+
+    def read_direct(self, buf, source_sel):
+        buf[...] = self[source_sel]
 
 
 class _JSONGroup(JSONNode):
