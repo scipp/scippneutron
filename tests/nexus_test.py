@@ -28,6 +28,7 @@ def open_json(builder: NexusBuilder):
                 yield _JSONGroup(f, LoadFromJson(''))
         finally:
             pass
+
     return func
 
 
