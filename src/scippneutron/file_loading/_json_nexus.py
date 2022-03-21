@@ -288,7 +288,7 @@ class JSONAttributeManager:
         return _get_attribute_value(self._node, name)
 
 
-class JSONDataset:
+class JSONNode:
     def __init__(self, node: dict, loader: LoadFromJson):
         self._node = node
         self._loader = loader
@@ -296,13 +296,6 @@ class JSONDataset:
     @property
     def attrs(self) -> JSONAttributeManager:
         return JSONAttributeManager(self._node)
-
-    @property
-    def dtype(self) -> str:
-        try:
-            return self._node[_nexus_dataset]["type"]
-        except KeyError:
-            return self._node[_nexus_dataset]["dtype"]
 
     @property
     def name(self) -> str:
@@ -315,9 +308,22 @@ class JSONDataset:
     def file(self):
         return self._node.file
 
+
+class JSONDataset(JSONNode):
+    @property
+    def dtype(self) -> str:
+        try:
+            return self._node[_nexus_dataset]["type"]
+        except KeyError:
+            return self._node[_nexus_dataset]["dtype"]
+
     @property
     def shape(self):
         return np.asarray(self._node[_nexus_values]).shape
+
+
+class _JSONGroup(JSONNode):
+    pass
 
 
 @dataclass
