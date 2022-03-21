@@ -191,4 +191,4 @@ class NXdetector(NXobject):
         return self._nxdata()._get_field_dims(name)
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
-        return self._nxdata()[select]
+        return self._nxdata()._getitem(select)

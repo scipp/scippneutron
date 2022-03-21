@@ -287,6 +287,9 @@ class JSONAttributeManager:
     def __getitem__(self, name):
         return _get_attribute_value(self._node, name)
 
+    def get(self, name: str, default=None):
+        return self[name] if name in self else default
+
 
 class JSONNode:
     def __init__(self, node: dict, loader: LoadFromJson):
@@ -342,6 +345,13 @@ class _JSONGroup(JSONNode):
 
     def keys(self) -> List[str]:
         return self._loader.keys(self._node)
+
+    def visititems(self, callable):
+        for key in self.keys():
+            item = self[key]
+            callable(key, item)
+            if isinstance(item, _JSONGroup):
+                item.visititems(callable)
 
 
 @dataclass

@@ -59,6 +59,9 @@ class Attrs:
     def get(self, name: str, default=None) -> Any:
         return self[name] if name in self else default
 
+    def keys(self):
+        return self._attrs.keys()
+
 
 class Field:
     """NeXus field.
@@ -211,8 +214,19 @@ class NXobject:
 
     @functools.lru_cache()
     def by_nx_class(self) -> Dict[NX_class, Dict[str, '__class__']]:
-        classes = self._loader.find_by_nx_class(tuple(_nx_class_registry()),
-                                                self._group)
+        classes = {name: [] for name in _nx_class_registry()}
+
+        # TODO implement visititems for NXobject and merge the the blocks
+        def _match_nx_class(_, node):
+            if not hasattr(node, 'shape'):
+                if (nx_class := node.attrs.get('NX_class')) is not None:
+                    if not isinstance(nx_class, str):
+                        nx_class = nx_class.decode('UTF-8')
+                    if nx_class in _nx_class_registry():
+                        classes[nx_class].append(node)
+
+        self._group.visititems(_match_nx_class)
+
         out = {}
         for nx_class, groups in classes.items():
             names = [group.name.split('/')[-1] for group in groups]
