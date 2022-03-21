@@ -363,7 +363,14 @@ class _JSONGroup(JSONNode):
         return self._loader.keys(self._node)
 
     def visititems(self, callable):
-        for key in self.keys():
+        def skip(node):
+            return node['type'] == _nexus_link or contains_stream(node)
+
+        children = [
+            child[_nexus_name] for child in self._node[_nexus_children]
+            if not skip(child)
+        ]
+        for key in children:
             item = self[key]
             callable(key, item)
             if isinstance(item, _JSONGroup):
