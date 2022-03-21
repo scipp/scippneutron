@@ -8,15 +8,12 @@ import scipp as sc
 import numpy as np
 from ._common import to_child_select, Group
 from .nxobject import Field, NXobject, ScippIndex, NexusStructureError
-from ._nexus import LoadFromNexus
-from ._hdf5_nexus import LoadFromHdf5
 
 
 class NXdata(NXobject):
     def __init__(
             self,
             group: Group,
-            loader: LoadFromNexus = LoadFromHdf5(),
             signal_name_default: str = None,
             signal_override: Union[Field, _EventField] = None,  # noqa: F821
             axes: List[str] = None,
@@ -30,7 +27,7 @@ class NXdata(NXobject):
         :param axes: Default axes used, if no `axes` attribute found in file.
         :param skip: Names of fields to skip when loading coords.
         """
-        super().__init__(group, loader)
+        super().__init__(group)
         self._signal_name_default = signal_name_default
         self._signal_override = signal_override
         self._axes_default = axes

@@ -30,11 +30,11 @@ class NXmonitor(NXobject):
     def _nxbase(self) -> Union[NXdata, NXevent_data]:
         """Branch between event-mode and histogram-mode monitor."""
         if self._is_events:
-            return NXevent_data(self._group, self._loader)
+            return NXevent_data(self._group)
         # NXdata uses the 'signal' attribute to define the field name of the signal.
         # NXmonitor uses a "hard-coded" signal name 'data', without specifying the
         # attribute in the file, so we pass this explicitly to NXdata.
-        return NXdata(self._group, self._loader, signal_name_default='data')
+        return NXdata(self._group, signal_name_default='data')
 
     def _get_field_dims(self, name: str) -> Union[None, List[str]]:
         if self._is_events:

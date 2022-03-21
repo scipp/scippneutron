@@ -10,8 +10,7 @@ import numpy as np
 import scipp as sc
 import h5py
 
-from ._nexus import LoadFromNexus
-from ._hdf5_nexus import LoadFromHdf5, _cset_to_encoding, _ensure_str
+from ._hdf5_nexus import _cset_to_encoding, _ensure_str
 from ._hdf5_nexus import _ensure_supported_int_type, _warn_latin1_decode
 from ._json_nexus import JSONAttributeManager, JSONDataset
 from ._common import Group, Dataset, ScippIndex
@@ -72,20 +71,14 @@ class Field:
     """
     def __init__(self,
                  dataset: Dataset,
-                 loader: LoadFromNexus = LoadFromHdf5(),
                  dims=None):
         self._dataset = dataset
-        self._loader = loader
         if dims is not None:
             self._dims = dims
         elif (axes := self.attrs.get('axes')) is not None:
             self._dims = axes.split(',')
         else:
             self._dims = [f'dim_{i}' for i in range(self._dataset.ndim)]
-
-    def _ds(self):
-        return self._dataset._node if isinstance(self._dataset,
-                                                 JSONDataset) else self._dataset
 
     def __getitem__(self, select) -> sc.Variable:
         index = to_plain_index(self.dims, select)
@@ -136,11 +129,11 @@ class Field:
 
     @property
     def file(self) -> NXroot:
-        return NXroot(self._dataset.file, self._loader)
+        return NXroot(self._dataset.file)
 
     @property
     def parent(self) -> NXobject:
-        return _make(self._ds().parent, self._loader)
+        return _make(self._dataset.parent)
 
     @property
     def ndim(self) -> int:
@@ -174,9 +167,8 @@ class Field:
 class NXobject:
     """Base class for all NeXus groups.
     """
-    def __init__(self, group: Group, loader: LoadFromNexus = LoadFromHdf5()):
+    def __init__(self, group: Group):
         self._group = group
-        self._loader = loader
 
     def _get_child(
             self,
@@ -191,9 +183,9 @@ class NXobject:
                 raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
             if hasattr(item, 'shape'):
                 dims = self._get_field_dims(name) if use_field_dims else None
-                return Field(item, self._loader, dims=dims)
+                return Field(item, dims=dims)
             else:
-                return _make(item, self._loader)
+                return _make(item)
         da = self._getitem(name)
         if (t := self.depends_on) is not None:
             da.coords['depends_on'] = t if isinstance(t, sc.Variable) else sc.scalar(t)
@@ -226,11 +218,11 @@ class NXobject:
 
     @property
     def file(self) -> NXroot:
-        return NXroot(self._group.file, self._loader)
+        return NXroot(self._group.file)
 
     @property
     def parent(self) -> NXobject:
-        return _make(self._group.parent, self._loader)
+        return _make(self._group.parent)
 
     def _ipython_key_completions_(self) -> List[str]:
         return list(self.keys())
@@ -265,7 +257,7 @@ class NXobject:
             if len(names) != len(set(names)):  # fall back to full path if duplicate
                 names = [group.name for group in groups]
             out[NX_class[nx_class]] = {
-                n: _make(g, self._loader)
+                n: _make(g)
                 for n, g in zip(names, groups)
             }
         return out
@@ -310,9 +302,9 @@ class NXinstrument(NXobject):
     pass
 
 
-def _make(group, loader) -> NXobject:
+def _make(group) -> NXobject:
     if (nx_class := Attrs(group.attrs).get('NX_class')) is not None:
-        return _nx_class_registry().get(nx_class, NXobject)(group, loader)
+        return _nx_class_registry().get(nx_class, NXobject)(group)
     return group  # Return underlying (h5py) group
 
 

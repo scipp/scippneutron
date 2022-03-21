@@ -41,7 +41,7 @@ def test_Transformation_with_single_value(nexus_group: Tuple[Callable, LoadFromN
     expected = sc.spatial.translations(dims=t.dims, values=t.values, unit=t.unit)
     expected = expected * sc.spatial.translation(value=[0.001, 0.002, 0.003], unit='m')
     with resource(builder)() as f:
-        root = nexus.NXroot(f, loader)
+        root = nexus.NXroot(f)
         detector = root['entry/detector_0']
         depends_on = detector['depends_on'][()].value
         t = nxtransformations.Transformation(root[depends_on])
@@ -73,7 +73,7 @@ def test_Transformation_with_multiple_values(nexus_group: Tuple[Callable,
     t.data = sc.spatial.translations(dims=t.dims, values=t.values, unit=t.unit)
     expected = t * offset
     with resource(builder)() as f:
-        root = nexus.NXroot(f, loader)
+        root = nexus.NXroot(f)
         detector = root['entry/detector_0']
         depends_on = detector['depends_on'][()].value
         t = nxtransformations.Transformation(root[depends_on])

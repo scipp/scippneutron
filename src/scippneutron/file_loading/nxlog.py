@@ -32,7 +32,7 @@ class NXlog(NXobject):
         # NXdata uses the 'signal' attribute to define the field name of the signal.
         # NXlog uses a "hard-coded" signal name 'value', without specifying the
         # attribute in the file, so we pass this explicitly to NXdata.
-        return NXdata(self._group, self._loader, signal_name_default='value', axes=axes)
+        return NXdata(self._group, signal_name_default='value', axes=axes)
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
         data = self._nxbase[select]
