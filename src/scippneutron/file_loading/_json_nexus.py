@@ -7,7 +7,6 @@ import scipp as sc
 import numpy as np
 from ._common import Group, JSONGroup, MissingDataset, MissingAttribute
 from dataclasses import dataclass
-from warnings import warn
 
 _nexus_class = "NX_class"
 _nexus_units = "units"
@@ -214,12 +213,9 @@ class LoadFromJson:
         return self._get_child_from_group(group, dataset_name,
                                           (_nexus_dataset, )) is not None
 
-    @staticmethod
-    def supported_int_type(dataset):
-        return _filewriter_to_supported_numpy_dtype[LoadFromJson.get_dtype(dataset)]
-
     def load_dataset_direct(self,
                             dataset: Dict,
+                            unit: Optional[sc.Unit] = None,
                             dimensions: Optional[List[str]] = [],
                             dtype: Optional[Any] = None,
                             index=tuple()) -> sc.Variable:
@@ -232,23 +228,13 @@ class LoadFromJson:
           otherwise retain dataset dtype
         """
         if dtype is None:
-            dtype = self.supported_int_type(dataset)
-
-        try:
-            units = _get_attribute_value(dataset, _nexus_units)
-            try:
-                units = sc.Unit(units)
-            except sc.UnitError:
-                warn(f"Unrecognized unit '{units}' for value dataset "
-                     f"in '{self.get_name(dataset)}'; setting unit as 'dimensionless'")
-                units = sc.units.dimensionless
-        except MissingAttribute:
-            units = None
+            dtype = _filewriter_to_supported_numpy_dtype[LoadFromJson.get_dtype(
+                dataset)]
 
         return sc.array(dims=dimensions,
                         values=np.asarray(dataset[_nexus_values])[index],
                         dtype=dtype,
-                        unit=units)
+                        unit=unit)
 
     @staticmethod
     def get_name(group: Dict) -> str:
@@ -268,35 +254,12 @@ class LoadFromJson:
         except KeyError:
             return dataset[_nexus_dataset]["dtype"]
 
-    @staticmethod
-    def get_shape(dataset: Dict) -> List:
-        """
-        The shape of the dataset
-        """
-        return np.asarray(dataset[_nexus_values]).shape
-
-    @staticmethod
-    def get_unit(dataset: Dict) -> str:
-        try:
-            unit = _get_attribute_value(dataset, _nexus_units)
-        except MissingAttribute:
-            unit = None
-        return unit
-
     def get_object_by_path(self, group: Dict, path_str: str) -> Dict:
         for node in filter(None, path_str.split("/")):
             group = self._get_child_from_group(group, node)
             if group is None:
                 raise MissingDataset()
         return group
-
-    @staticmethod
-    def get_attribute(node: Dict, attribute_name: str) -> Any:
-        return _get_attribute_value(node, attribute_name)
-
-    @staticmethod
-    def get_string_attribute(node: Dict, attribute_name: str) -> str:
-        return _get_attribute_value(node, attribute_name)
 
     @staticmethod
     def is_group(node: Any):
@@ -308,6 +271,53 @@ class LoadFromJson:
     @staticmethod
     def contains_stream(group: Dict):
         return contains_stream(group)
+
+
+class JSONAttributeManager:
+    def __init__(self, node: dict):
+        self._node = node
+
+    def __contains__(self, name):
+        try:
+            self[name]
+        except MissingAttribute:
+            return False
+        return True
+
+    def __getitem__(self, name):
+        return _get_attribute_value(self._node, name)
+
+
+class JSONDataset:
+    def __init__(self, node: dict, loader: LoadFromJson):
+        self._node = node
+        self._loader = loader
+
+    @property
+    def attrs(self) -> JSONAttributeManager:
+        return JSONAttributeManager(self._node)
+
+    @property
+    def dtype(self) -> str:
+        try:
+            return self._node[_nexus_dataset]["type"]
+        except KeyError:
+            return self._node[_nexus_dataset]["dtype"]
+
+    @property
+    def name(self) -> str:
+        if isinstance(self._node, JSONGroup):
+            return self._node.name
+        else:
+            return self._node.get(_nexus_path, '/')
+
+    @property
+    def file(self):
+        return self._node.file
+
+    @property
+    def shape(self):
+        return np.asarray(self._node[_nexus_values]).shape
 
 
 @dataclass

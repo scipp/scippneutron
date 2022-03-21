@@ -8,7 +8,7 @@ from typing import Union, Any, List, Optional, Tuple, Dict
 import h5py
 import numpy as np
 import scipp as sc
-from ._common import Group, MissingDataset, MissingAttribute
+from ._common import Group, MissingDataset
 
 
 def _cset_to_encoding(cset: int) -> str:
@@ -130,6 +130,7 @@ class LoadFromHdf5:
 
     def load_dataset_direct(self,
                             dataset: h5py.Dataset,
+                            unit: Optional[sc.Unit] = None,
                             dimensions: Optional[List[str]] = [],
                             dtype: Optional[Any] = None,
                             index=tuple()) -> sc.Variable:
@@ -158,10 +159,7 @@ class LoadFromHdf5:
         for i, ind in enumerate(index):
             shape[i] = len(range(*ind.indices(shape[i])))
 
-        variable = sc.empty(dims=dimensions,
-                            shape=shape,
-                            dtype=dtype,
-                            unit=self.get_unit(dataset))
+        variable = sc.empty(dims=dimensions, shape=shape, dtype=dtype, unit=unit)
         if dtype == sc.DType.string:
             try:
                 strings = dataset.asstr()[index]
@@ -190,35 +188,6 @@ class LoadFromHdf5:
         return group.name
 
     @staticmethod
-    def get_dtype(dataset: h5py.Dataset) -> str:
-        """
-        The dtype of the dataset
-        """
-        return dataset.dtype
-
-    @staticmethod
-    def get_shape(dataset: h5py.Dataset) -> List:
-        """
-        The shape of the dataset
-        """
-        return dataset.shape
-
-    @staticmethod
-    def get_unit(node: Union[h5py.Dataset, h5py.Group]) -> str:
-        try:
-            units = node.attrs["units"]
-        except (AttributeError, KeyError):
-            return None
-        units = _ensure_str(units, LoadFromHdf5.get_attr_encoding(node, "units"))
-        try:
-            sc.Unit(units)
-        except sc.UnitError:
-            warnings.warn(f"Unrecognized unit '{units}' for value dataset "
-                          f"in '{node.name}'; setting unit as 'dimensionless'")
-            return "dimensionless"
-        return units
-
-    @staticmethod
     def get_child_from_group(group: Dict,
                              child_name: str) -> Union[h5py.Dataset, h5py.Group, None]:
         try:
@@ -239,24 +208,6 @@ class LoadFromHdf5:
             return group[path]
         except KeyError:
             raise MissingDataset
-
-    @staticmethod
-    def get_attribute(node: Union[h5py.Group, h5py.Dataset],
-                      attribute_name: str) -> Any:
-        try:
-            return node.attrs[attribute_name]
-        except KeyError:
-            raise MissingAttribute
-
-    @staticmethod
-    def get_string_attribute(node: Union[h5py.Group, h5py.Dataset],
-                             attribute_name: str) -> str:
-        try:
-            val = node.attrs[attribute_name]
-        except KeyError:
-            raise MissingAttribute(f"Missing attribute named {attribute_name}")
-
-        return _ensure_str(val, LoadFromHdf5.get_attr_encoding(node, attribute_name))
 
     @staticmethod
     def is_group(node: Any):

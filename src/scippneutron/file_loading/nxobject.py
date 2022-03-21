@@ -2,14 +2,17 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 from __future__ import annotations
-import scipp as sc
+import warnings
 from enum import Enum, auto
 import functools
 from typing import List, Union, NoReturn, Any, Dict, Tuple
+import scipp as sc
+import h5py
 
 from ._nexus import LoadFromNexus
-from ._hdf5_nexus import LoadFromHdf5
-from ._common import Group, Dataset, MissingAttribute, ScippIndex
+from ._hdf5_nexus import LoadFromHdf5, _cset_to_encoding, _ensure_str
+from ._json_nexus import JSONAttributeManager, JSONDataset
+from ._common import Group, Dataset, ScippIndex
 from ._common import to_plain_index
 
 NXobjectIndex = Union[str, ScippIndex]
@@ -38,24 +41,19 @@ class NX_class(Enum):
 class Attrs:
     """HDF5 attributes.
     """
-    def __init__(self,
-                 node: Union[Dataset, Group],
-                 loader: LoadFromNexus = LoadFromHdf5()):
-        self._node = node
-        self._loader = loader
+    def __init__(self, attrs: Union[h5py.AttributeManager, JSONAttributeManager]):
+        self._attrs = attrs
 
     def __contains__(self, name: str) -> bool:
-        try:
-            _ = self[name]
-            return True
-        except MissingAttribute:
-            return False
+        return name in self._attrs
 
     def __getitem__(self, name: str) -> Any:
-        attr = self._loader.get_attribute(self._node, name)
+        attr = self._attrs[name]
         # Is this check for string attributes sufficient? Is there a better way?
-        if isinstance(attr, (str, bytes)):
-            return self._loader.get_string_attribute(self._node, name)
+        is_json = isinstance(self._attrs, JSONAttributeManager)
+        if isinstance(attr, (str, bytes)) and not is_json:
+            cset = self._attrs.get_id(name.encode("utf-8")).get_type().get_cset()
+            return _ensure_str(attr, _cset_to_encoding(cset))
         return attr
 
     def get(self, name: str, default=None) -> Any:
@@ -71,7 +69,8 @@ class Field:
                  dataset: Dataset,
                  loader: LoadFromNexus = LoadFromHdf5(),
                  dims=None):
-        self._dataset = dataset
+        self._dataset = dataset if isinstance(loader, LoadFromHdf5) else JSONDataset(
+            dataset, loader)
         self._loader = loader
         if dims is not None:
             self._dims = dims
@@ -80,10 +79,15 @@ class Field:
         else:
             self._dims = [f'dim_{i}' for i in range(self.ndim)]
 
+    def _ds(self):
+        return self._dataset._node if isinstance(self._dataset,
+                                                 JSONDataset) else self._dataset
+
     def __getitem__(self, select) -> sc.Variable:
         index = to_plain_index(self.dims, select)
-        return self._loader.load_dataset_direct(self._dataset,
+        return self._loader.load_dataset_direct(self._ds(),
                                                 dimensions=self.dims,
+                                                unit=self.unit,
                                                 index=index)
 
     def __repr__(self) -> str:
@@ -91,15 +95,15 @@ class Field:
 
     @property
     def attrs(self) -> Attrs:
-        return Attrs(self._dataset, self._loader)
+        return Attrs(self._dataset.attrs)
 
     @property
     def dtype(self) -> str:
-        return self._loader.get_dtype(self._dataset)
+        return self._dataset.dtype
 
     @property
     def name(self) -> str:
-        return self._loader.get_path(self._dataset)
+        return self._dataset.name
 
     @property
     def file(self) -> NXroot:
@@ -107,7 +111,7 @@ class Field:
 
     @property
     def parent(self) -> NXobject:
-        return _make(self._dataset.parent, self._loader)
+        return _make(self._ds().parent, self._loader)
 
     @property
     def ndim(self) -> int:
@@ -115,7 +119,7 @@ class Field:
 
     @property
     def shape(self) -> List[int]:
-        return self._loader.get_shape(self._dataset)
+        return self._dataset.shape
 
     @property
     def dims(self) -> List[str]:
@@ -123,8 +127,13 @@ class Field:
 
     @property
     def unit(self) -> Union[sc.Unit, None]:
-        if 'units' in self.attrs:
-            return sc.Unit(self._loader.get_unit(self._dataset))
+        if (unit := self.attrs.get('units')) is not None:
+            try:
+                return sc.Unit(unit)
+            except sc.UnitError:
+                warnings.warn(f"Unrecognized unit '{unit}' for value dataset "
+                              f"in '{self.name}'; setting unit as 'dimensionless'")
+                return sc.units.one
         return None
 
 
@@ -175,7 +184,8 @@ class NXobject:
 
     @property
     def attrs(self) -> Attrs:
-        return Attrs(self._group, self._loader)
+        return Attrs(self._group.attrs if isinstance(self._loader, LoadFromHdf5) else
+                     JSONAttributeManager(self._group))
 
     @property
     def name(self) -> str:
@@ -257,11 +267,10 @@ class NXinstrument(NXobject):
 
 
 def _make(group, loader) -> NXobject:
-    try:
-        nx_class = loader.get_string_attribute(group, 'NX_class')
+    if (nx_class := Attrs(group.attrs if isinstance(loader, LoadFromHdf5) else
+                          JSONAttributeManager(group)).get('NX_class')) is not None:
         return _nx_class_registry().get(nx_class, NXobject)(group, loader)
-    except MissingAttribute:
-        return group  # Return underlying (h5py) group
+    return group  # Return underlying (h5py) group
 
 
 @functools.lru_cache()
