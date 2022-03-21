@@ -316,17 +316,6 @@ class JSONNode:
         else:
             return JSONDataset(item, self._loader, parent=parent)
 
-    def __getitem__(self, name: str) -> Union[JSONDataset, _JSONGroup]:
-        if name.startswith('/') and name.count('/') == 1:
-            parent = self.file
-        elif '/' in name:
-            parent = self['/'.join(name.split('/')[:-1])]
-        else:
-            parent = self
-        if (item := self._loader.get_child_from_group(self._node, name)) is not None:
-            return self._as_group_or_dataset(item, parent)
-        raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
-
     @property
     def file(self):
         return self._file
@@ -353,8 +342,6 @@ class JSONDataset(JSONNode):
         return np.asarray(self._node[_nexus_values]).shape
 
     def __getitem__(self, index):
-        if isinstance(index, str):
-            return super().__getitem__(index)
         return np.asarray(self._node[_nexus_values])[index]
 
     def read_direct(self, buf, source_sel):
@@ -370,6 +357,22 @@ class _JSONGroup(JSONNode):
 
     def keys(self) -> List[str]:
         return self._loader.keys(self._node)
+
+    def get(self, name: str, default=None):
+        if name.startswith('/') and name.count('/') == 1:
+            parent = self.file
+        elif '/' in name:
+            parent = self['/'.join(name.split('/')[:-1])]
+        else:
+            parent = self
+        if (item := self._loader.get_child_from_group(self._node, name)) is not None:
+            return self._as_group_or_dataset(item, parent)
+        return default
+
+    def __getitem__(self, name: str) -> Union[JSONDataset, _JSONGroup]:
+        if (item := self.get(name)) is not None:
+            return item
+        raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
 
     def visititems(self, callable):
         def skip(node):
