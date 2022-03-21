@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
-
+from __future__ import annotations
 from typing import Tuple, Dict, List, Optional, Any, Union
 import scipp as sc
 import numpy as np
@@ -304,9 +304,19 @@ class JSONNode:
         else:
             return self._node.get(_nexus_path, '/')
 
+    def _as_group_or_dataset(self, item):
+        if self._loader.is_group(item):
+            return _JSONGroup(item, self._loader)
+        else:
+            return JSONDataset(item, self._loader)
+
     @property
     def file(self):
-        return self._node.file
+        return self._node.file  # TODO JSONDataset
+
+    @property
+    def parent(self):
+        return self._node.parent  # TODO JSONDataset
 
 
 class JSONDataset(JSONNode):
@@ -323,7 +333,15 @@ class JSONDataset(JSONNode):
 
 
 class _JSONGroup(JSONNode):
-    pass
+    def __contains__(self, name: str) -> bool:
+        return self._loader.dataset_in_group(self._node, name)
+
+    def __getitem__(self, name: str) -> Union[JSONDataset, _JSONGroup]:
+        item = self._loader.get_child_from_group(self._node, name)
+        return self._as_group_or_dataset(item)
+
+    def keys(self) -> List[str]:
+        return self._loader.keys(self._node)
 
 
 @dataclass

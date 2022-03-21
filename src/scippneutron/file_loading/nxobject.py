@@ -69,8 +69,7 @@ class Field:
                  dataset: Dataset,
                  loader: LoadFromNexus = LoadFromHdf5(),
                  dims=None):
-        self._dataset = dataset if isinstance(loader, LoadFromHdf5) else JSONDataset(
-            dataset, loader)
+        self._dataset = dataset
         self._loader = loader
         if dims is not None:
             self._dims = dims
@@ -152,14 +151,14 @@ class NXobject:
         if name is None:
             raise KeyError("None is not a valid index")
         if isinstance(name, str):
-            item = self._loader.get_child_from_group(self._group, name)
+            item = self._group[name]
             if item is None:
                 raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
-            if self._loader.is_group(item):
-                return _make(item, self._loader)
-            else:
+            if hasattr(item, 'shape'):
                 dims = self._get_field_dims(name) if use_field_dims else None
                 return Field(item, self._loader, dims=dims)
+            else:
+                return _make(item, self._loader)
         da = self._getitem(name)
         if (t := self.depends_on) is not None:
             da.coords['depends_on'] = t if isinstance(t, sc.Variable) else sc.scalar(t)
@@ -177,19 +176,18 @@ class NXobject:
         return None
 
     def __contains__(self, name: str) -> bool:
-        return self._loader.dataset_in_group(self._group, name)
+        return name in self._group
 
     def get(self, name: str, default=None) -> Union['__class__', Field, sc.DataArray]:
         return self[name] if name in self else default
 
     @property
     def attrs(self) -> Attrs:
-        return Attrs(self._group.attrs if isinstance(self._loader, LoadFromHdf5) else
-                     JSONAttributeManager(self._group))
+        return Attrs(self._group.attrs)
 
     @property
     def name(self) -> str:
-        return self._loader.get_path(self._group)
+        return self._group.name
 
     @property
     def file(self) -> NXroot:
@@ -203,7 +201,7 @@ class NXobject:
         return list(self.keys())
 
     def keys(self) -> List[str]:
-        return self._loader.keys(self._group)
+        return self._group.keys()
 
     def values(self) -> List[Union[Field, '__class__']]:
         return [self[name] for name in self.keys()]
@@ -217,7 +215,7 @@ class NXobject:
                                                 self._group)
         out = {}
         for nx_class, groups in classes.items():
-            names = [self._loader.get_name(group) for group in groups]
+            names = [group.name.split('/')[-1] for group in groups]
             if len(names) != len(set(names)):  # fall back to full path if duplicate
                 names = [group.name for group in groups]
             out[NX_class[nx_class]] = {
@@ -267,8 +265,7 @@ class NXinstrument(NXobject):
 
 
 def _make(group, loader) -> NXobject:
-    if (nx_class := Attrs(group.attrs if isinstance(loader, LoadFromHdf5) else
-                          JSONAttributeManager(group)).get('NX_class')) is not None:
+    if (nx_class := Attrs(group.attrs).get('NX_class')) is not None:
         return _nx_class_registry().get(nx_class, NXobject)(group, loader)
     return group  # Return underlying (h5py) group
 

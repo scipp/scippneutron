@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from .nexus_helpers import (
     NexusBuilder,
     EventData,
@@ -11,7 +12,7 @@ from typing import Callable, Tuple
 import scipp as sc
 from scippneutron.file_loading._nexus import LoadFromNexus
 from scippneutron.file_loading._hdf5_nexus import LoadFromHdf5
-from scippneutron.file_loading._json_nexus import LoadFromJson
+from scippneutron.file_loading._json_nexus import LoadFromJson, _JSONGroup
 from scippneutron import nexus
 
 
@@ -20,7 +21,14 @@ def open_nexus(builder: NexusBuilder):
 
 
 def open_json(builder: NexusBuilder):
-    return builder.json
+    @contextmanager
+    def func():
+        try:
+            with builder.json() as f:
+                yield _JSONGroup(f, LoadFromJson(''))
+        finally:
+            pass
+    return func
 
 
 @pytest.fixture(params=[(open_nexus, LoadFromHdf5()), (open_json, LoadFromJson(''))])
