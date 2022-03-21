@@ -292,9 +292,12 @@ class JSONAttributeManager:
 
 
 class JSONNode:
-    def __init__(self, node: dict, loader: LoadFromJson):
+    def __init__(self, node: dict, loader: LoadFromJson, *, parent=None):
+        self._file = parent.file if parent is not None else self
+        self._parent = self if parent is None else parent
         self._node = node
         self._loader = loader
+        print(self.name, parent is None, self._file.name, self._parent.name)
 
     @property
     def attrs(self) -> JSONAttributeManager:
@@ -307,24 +310,30 @@ class JSONNode:
         else:
             return self._node.get(_nexus_path, '/')
 
-    def _as_group_or_dataset(self, item):
+    def _as_group_or_dataset(self, item, parent):
         if self._loader.is_group(item):
-            return _JSONGroup(item, self._loader)
+            return _JSONGroup(item, self._loader, parent=parent)
         else:
-            return JSONDataset(item, self._loader)
+            return JSONDataset(item, self._loader, parent=parent)
 
     def __getitem__(self, name: str) -> Union[JSONDataset, _JSONGroup]:
+        if name.startswith('/') and name.count('/') == 1:
+            parent = self.file
+        elif '/' in name:
+            parent = self['/'.join(name.split('/')[:-1])]
+        else:
+            parent = self
         if (item := self._loader.get_child_from_group(self._node, name)) is not None:
-            return self._as_group_or_dataset(item)
+            return self._as_group_or_dataset(item, parent)
         raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
 
     @property
     def file(self):
-        return JSONDataset(self._loader._root, self._loader)
+        return self._file
 
     @property
     def parent(self):
-        return JSONDataset(self._node.parent, self._loader)
+        return self._parent
 
 
 class JSONDataset(JSONNode):
