@@ -297,7 +297,6 @@ class JSONNode:
         self._parent = self if parent is None else parent
         self._node = node
         self._loader = loader
-        print(self.name, parent is None, self._file.name, self._parent.name)
 
     @property
     def attrs(self) -> JSONAttributeManager:
