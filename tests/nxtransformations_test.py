@@ -2,16 +2,13 @@ from .nexus_test import open_nexus, open_json
 from .nexus_helpers import NexusBuilder, Detector, Transformation, TransformationType
 import numpy as np
 import pytest
-from typing import Callable, Tuple
+from typing import Callable
 import scipp as sc
-from scippneutron.file_loading._nexus import LoadFromNexus
-from scippneutron.file_loading._hdf5_nexus import LoadFromHdf5
-from scippneutron.file_loading._json_nexus import LoadFromJson
 from scippneutron import nexus
 from scippneutron.file_loading import nxtransformations
 
 
-@pytest.fixture(params=[(open_nexus, LoadFromHdf5()), (open_json, LoadFromJson(''))])
+@pytest.fixture(params=[open_nexus, open_json])
 def nexus_group(request):
     return request.param
 
@@ -25,8 +22,7 @@ def builder_with_detector(*, depends_on):
     return builder
 
 
-def test_Transformation_with_single_value(nexus_group: Tuple[Callable, LoadFromNexus]):
-    resource, loader = nexus_group
+def test_Transformation_with_single_value(nexus_group: Callable):
     offset = sc.spatial.translation(value=[1, 2, 3], unit='mm')
     vector = sc.vector(value=[0, 0, 1])
     value = sc.scalar(6.5, unit='mm')
@@ -40,7 +36,7 @@ def test_Transformation_with_single_value(nexus_group: Tuple[Callable, LoadFromN
     t = value.to(unit='m') * vector
     expected = sc.spatial.translations(dims=t.dims, values=t.values, unit=t.unit)
     expected = expected * sc.spatial.translation(value=[0.001, 0.002, 0.003], unit='m')
-    with resource(builder)() as f:
+    with nexus_group(builder)() as f:
         root = nexus.NXroot(f)
         detector = root['entry/detector_0']
         depends_on = detector['depends_on'][()].value
@@ -51,9 +47,7 @@ def test_Transformation_with_single_value(nexus_group: Tuple[Callable, LoadFromN
         assert sc.identical(t[()], expected)
 
 
-def test_Transformation_with_multiple_values(nexus_group: Tuple[Callable,
-                                                                LoadFromNexus]):
-    resource, loader = nexus_group
+def test_Transformation_with_multiple_values(nexus_group: Callable):
     offset = sc.spatial.translation(value=[1, 2, 3], unit='m')
     vector = sc.vector(value=[0, 0, 1])
     log = sc.DataArray(
@@ -72,7 +66,7 @@ def test_Transformation_with_multiple_values(nexus_group: Tuple[Callable,
     t = log * vector
     t.data = sc.spatial.translations(dims=t.dims, values=t.values, unit=t.unit)
     expected = t * offset
-    with resource(builder)() as f:
+    with nexus_group(builder)() as f:
         root = nexus.NXroot(f)
         detector = root['entry/detector_0']
         depends_on = detector['depends_on'][()].value

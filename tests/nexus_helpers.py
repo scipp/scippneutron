@@ -10,6 +10,7 @@ from enum import Enum
 from contextlib import contextmanager
 import json
 from scippneutron.file_loading._json_nexus import LoadFromJson, MissingDataset
+from scippneutron.file_loading._json_nexus import _JSONGroup
 
 h5root = Union[h5py.File, h5py.Group]
 
@@ -469,7 +470,7 @@ class NexusBuilder:
     @contextmanager
     def json(self):
         try:
-            yield json.loads(self.json_string)
+            yield _JSONGroup(json.loads(self.json_string))
         finally:
             pass
 
