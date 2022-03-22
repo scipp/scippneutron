@@ -3,12 +3,10 @@
 # @author Matthew Jones
 import warnings
 
-from typing import Union, Any, List, Optional, Tuple, Dict
+from typing import Union, Any
 
 import h5py
 import numpy as np
-import scipp as sc
-from ._common import Group, MissingDataset
 
 
 def _cset_to_encoding(cset: int) -> str:
@@ -33,9 +31,14 @@ def _cset_to_encoding(cset: int) -> str:
                          f"{h5py.h5t.CSET_UTF8=} but got '{cset}'. ")
 
 
+def _get_attr_encoding(group: h5py.Group, dataset_name: str) -> str:
+    cset = h5py.h5a.open(group.id, dataset_name.encode("utf-8")).get_type().get_cset()
+    return _cset_to_encoding(cset)
+
+
 def _get_attr_as_str(h5_object, attribute_name: str) -> str:
     return _ensure_str(h5_object.attrs[attribute_name],
-                       LoadFromHdf5.get_attr_encoding(h5_object, attribute_name))
+                       _get_attr_encoding(h5_object, attribute_name))
 
 
 def _warn_latin1_decode(obj, decoded, error):
@@ -87,136 +90,3 @@ _map_to_supported_type = {
 
 def _ensure_supported_int_type(dataset_type: Any):
     return _map_to_supported_type.get(dataset_type, dataset_type)
-
-
-class LoadFromHdf5:
-    def keys(self, group: h5py.Group):
-        return group.keys()
-
-    def values(self, group: h5py.Group):
-        return group.values()
-
-    @staticmethod
-    def find_by_nx_class(
-            nx_class_names: Tuple[str, ...],
-            root: Union[h5py.File, h5py.Group]) -> \
-            Dict[str, List[Group]]:
-        """
-        Finds groups with requested NX_class in the subtree of root
-
-        Returns a dictionary with NX_class name as the key and
-        list of matching groups as the value
-        """
-        found_groups: Dict[str, List[Group]] = {
-            class_name: []
-            for class_name in nx_class_names
-        }
-
-        def _match_nx_class(_, h5_object):
-            if LoadFromHdf5.is_group(h5_object):
-                try:
-                    nx_class = _get_attr_as_str(h5_object, "NX_class")
-                    if nx_class in nx_class_names:
-                        found_groups[nx_class].append(h5_object)
-                except KeyError:
-                    pass
-
-        root.visititems(_match_nx_class)
-        return found_groups
-
-    @staticmethod
-    def dataset_in_group(group: h5py.Group, dataset_name: str) -> bool:
-        return dataset_name in group
-
-    def load_dataset_direct(self,
-                            dataset: h5py.Dataset,
-                            unit: Optional[sc.Unit] = None,
-                            dimensions: Optional[List[str]] = [],
-                            dtype: Optional[Any] = None,
-                            index=tuple()) -> sc.Variable:
-        """
-        Load an HDF5 dataset into a Scipp Variable (array or scalar)
-        :param group: Group containing dataset to load
-        :param dataset_name: Name of the dataset to load
-        :param dimensions: Dimensions for the output Variable. Empty for reading scalars
-        :param dtype: Cast to this dtype during load,
-          otherwise retain dataset dtype
-        """
-        if dtype is None:
-            dtype = _ensure_supported_int_type(dataset.dtype.type)
-        if h5py.check_string_dtype(dataset.dtype):
-            dtype = sc.DType.string
-
-        shape = list(dataset.shape)
-        if dimensions == [] and shape == [1]:
-            # NeXus treats [] and [1] interchangeably, in general this is ill-defined,
-            # but this is the best we can do.
-            shape = []
-        if index is Ellipsis:
-            index = tuple()
-        if isinstance(index, slice):
-            index = (index, )
-        for i, ind in enumerate(index):
-            shape[i] = len(range(*ind.indices(shape[i])))
-
-        variable = sc.empty(dims=dimensions, shape=shape, dtype=dtype, unit=unit)
-        if dtype == sc.DType.string:
-            try:
-                strings = dataset.asstr()[index]
-            except UnicodeDecodeError as e:
-                strings = dataset.asstr(encoding='latin-1')[index]
-                _warn_latin1_decode(dataset, strings, str(e))
-            variable.values = np.asarray(strings).flatten()
-        elif variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
-            dataset.read_direct(variable.values, source_sel=index)
-        else:
-            variable.values = dataset[index]
-        return variable
-
-    @staticmethod
-    def get_name(group: Union[h5py.Group, h5py.Dataset]) -> str:
-        """
-        Just the name of this group, not the full path
-        """
-        return group.name.split("/")[-1]
-
-    @staticmethod
-    def get_path(group: Union[h5py.Group, h5py.Dataset]) -> str:
-        """
-        The full path
-        """
-        return group.name
-
-    @staticmethod
-    def get_child_from_group(group: Dict,
-                             child_name: str) -> Union[h5py.Dataset, h5py.Group, None]:
-        try:
-            return group[child_name]
-        except KeyError:
-            return None
-
-    @staticmethod
-    def get_attr_encoding(group: h5py.Group, dataset_name: str) -> str:
-        cset = h5py.h5a.open(group.id,
-                             dataset_name.encode("utf-8")).get_type().get_cset()
-        return _cset_to_encoding(cset)
-
-    @staticmethod
-    def get_object_by_path(group: Union[h5py.Group, h5py.File],
-                           path: str) -> h5py.Dataset:
-        try:
-            return group[path]
-        except KeyError:
-            raise MissingDataset
-
-    @staticmethod
-    def is_group(node: Any):
-        # Note: Not using isinstance(node, h5py.Group) so we can support other
-        # libraries that look like h5py but are not, in particular data
-        # adapted from `tiled`.
-        return hasattr(node, 'visititems')
-
-    @staticmethod
-    def contains_stream(_):
-        # HDF5 groups never contain streams.
-        return False
