@@ -2,10 +2,9 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
 from __future__ import annotations
-from typing import Tuple, Dict, List, Optional, Any, Union
-import scipp as sc
+from typing import Tuple, Dict, List, Any, Union
 import numpy as np
-from ._common import Group, JSONGroup, MissingDataset, MissingAttribute
+from ._common import Group, JSONGroup, MissingAttribute
 from dataclasses import dataclass
 
 _nexus_class = "NX_class"
@@ -133,146 +132,6 @@ def _find_by_type(type_name: str, root: Dict) -> List[Group]:
     _visit_nodes_for_type(root, type_name, objects_with_requested_type)
 
     return objects_with_requested_type
-
-
-class LoadFromJson:
-    def __init__(self, root: Dict):
-        self._root = root
-
-    def keys(self, group: Dict):
-        children = group[_nexus_children]
-        return [child[_nexus_name] for child in children if not contains_stream(child)]
-
-    def values(self, group: Dict):
-        return group[_nexus_children]
-
-    def _get_child_from_group(
-            self,
-            group: Dict,
-            name: str,
-            allowed_nexus_classes: Optional[Tuple[str]] = None) -> Optional[Dict]:
-        """
-        Returns dictionary for dataset or None if not found
-        """
-        if allowed_nexus_classes is None:
-            allowed_nexus_classes = (_nexus_dataset, _nexus_group, _nexus_stream)
-        for child in group[_nexus_children]:
-            try:
-                if child[_nexus_name] == name:
-                    path = self.get_path(group)
-                    if path == '/':
-                        path = ''
-                    child[_nexus_path] = f"{path}/{name}"
-                    if child["type"] == _nexus_link:
-                        child = self.get_object_by_path(self._root, child["target"])
-                    if child["type"] in allowed_nexus_classes:
-                        return child
-            except KeyError:
-                # if name or type are missing then it is
-                # not what we are looking for
-                pass
-
-    @staticmethod
-    def find_by_nx_class(nx_class_names: Tuple[str, ...],
-                         root: Dict) -> Dict[str, List[Group]]:
-        """
-        Finds groups with requested NX_class in the subtree of root
-
-        Returns a dictionary with NX_class name as the key and list of matching
-        groups as the value
-        """
-        groups_with_requested_nx_class: Dict[str, List[Group]] = {
-            class_name: []
-            for class_name in nx_class_names
-        }
-
-        path = []
-        try:
-            path.append(root[_nexus_name])
-        except KeyError:
-            pass
-        _visit_nodes(root, root, nx_class_names, groups_with_requested_nx_class, path)
-
-        return groups_with_requested_nx_class
-
-    def get_child_from_group(self, group: Dict, child_name: str) -> Optional[Dict]:
-        if '/' in child_name:
-            child, remainder = child_name.split('/', maxsplit=1)
-            if child == '':
-                return self.get_child_from_group(group, remainder)
-            return self.get_child_from_group(self.get_child_from_group(group, child),
-                                             remainder)
-        name = self.get_path(group).rstrip('/')
-        child = self._get_child_from_group(group, child_name)
-        if child is None:
-            return child
-        return JSONGroup(group=child,
-                         parent=group,
-                         name=f'{name}/{child_name}',
-                         file=self._root)
-
-    def dataset_in_group(self, group: Dict, dataset_name: str) -> bool:
-        return self._get_child_from_group(group, dataset_name,
-                                          (_nexus_dataset, )) is not None
-
-    def load_dataset_direct(self,
-                            dataset: Dict,
-                            unit: Optional[sc.Unit] = None,
-                            dimensions: Optional[List[str]] = [],
-                            dtype: Optional[Any] = None,
-                            index=tuple()) -> sc.Variable:
-        """
-        Load a dataset into a Scipp Variable (array or scalar)
-        :param group: Group containing dataset to load
-        :param dataset_name: Name of the dataset to load
-        :param dimensions: Dimensions for the output Variable. If empty, yields scalar.
-        :param dtype: Cast to this dtype during load,
-          otherwise retain dataset dtype
-        """
-        if dtype is None:
-            dtype = _filewriter_to_supported_numpy_dtype[LoadFromJson.get_dtype(
-                dataset)]
-
-        return sc.array(dims=dimensions,
-                        values=np.asarray(dataset[_nexus_values])[index],
-                        dtype=dtype,
-                        unit=unit)
-
-    @staticmethod
-    def get_name(group: Dict) -> str:
-        return group[_nexus_name]
-
-    @staticmethod
-    def get_path(group: Dict) -> str:
-        if isinstance(group, JSONGroup):
-            return group.name
-        else:
-            return group.get(_nexus_path, '/')
-
-    @staticmethod
-    def get_dtype(dataset: Dict) -> str:
-        try:
-            return dataset[_nexus_dataset]["type"]
-        except KeyError:
-            return dataset[_nexus_dataset]["dtype"]
-
-    def get_object_by_path(self, group: Dict, path_str: str) -> Dict:
-        for node in filter(None, path_str.split("/")):
-            group = self._get_child_from_group(group, node)
-            if group is None:
-                raise MissingDataset()
-        return group
-
-    @staticmethod
-    def is_group(node: Any):
-        try:
-            return node["type"] == _nexus_group
-        except KeyError:
-            return False
-
-    @staticmethod
-    def contains_stream(group: Dict):
-        return contains_stream(group)
 
 
 class JSONAttributeManager:
