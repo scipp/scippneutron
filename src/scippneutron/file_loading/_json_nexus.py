@@ -4,7 +4,7 @@
 from __future__ import annotations
 from typing import Tuple, Dict, List, Any, Union
 import numpy as np
-from ._common import Group, JSONGroup, MissingAttribute
+from ._common import Group, MissingAttribute
 from dataclasses import dataclass
 
 _nexus_class = "NX_class"
@@ -54,6 +54,14 @@ def _get_attribute_value(element: Dict,
     raise MissingAttribute
 
 
+class _Node(dict):
+    def __init__(self, parent: dict, name: str, file: dict, group: dict):
+        super().__init__(**group)
+        self.parent = parent
+        self.name = name
+        self.file = file
+
+
 def _visit_nodes(root: Dict, group: Dict, nx_class_names: Tuple[str, ...],
                  groups_with_requested_nx_class: Dict[str,
                                                       List[Group]], path: List[str]):
@@ -71,10 +79,8 @@ def _visit_nodes(root: Dict, group: Dict, nx_class_names: Tuple[str, ...],
                 nx_class = _get_attribute_value(child, _nexus_class)
                 if nx_class in nx_class_names:
                     groups_with_requested_nx_class[nx_class].append(
-                        JSONGroup(group=child,
-                                  parent=group,
-                                  name="/".join(path),
-                                  file=root))
+                        _Node(group=child, parent=group, name="/".join(path),
+                              file=root))
             except MissingAttribute:
                 # It may be a group but not an NX_class,
                 # that's fine, continue to its children
@@ -119,10 +125,10 @@ def _find_by_type(type_name: str, root: Dict) -> List[Group]:
             for child in obj[_nexus_children]:
                 if child["type"] == requested_type:
                     objects_found.append(
-                        JSONGroup(group=child,
-                                  parent=obj,
-                                  name="",
-                                  file={_nexus_children: [obj]}))
+                        _Node(group=child,
+                              parent=obj,
+                              name="",
+                              file={_nexus_children: [obj]}))
                 _visit_nodes_for_type(child, requested_type, objects_found)
         except KeyError:
             # If this object does not have "children" array then go to next
