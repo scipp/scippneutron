@@ -91,8 +91,10 @@ def contains_stream(group: Dict) -> bool:
     """
     Return True if the group contains a stream object
     """
+    if not isinstance(group, _JSONGroup):
+        return False
     try:
-        for child in group[_nexus_children]:
+        for child in group._node[_nexus_children]:
             try:
                 if child["type"] == _nexus_stream:
                     return True
@@ -382,7 +384,7 @@ class _JSONGroup(JSONNode):
 
     def visititems(self, callable):
         def skip(node):
-            return node['type'] == _nexus_link or contains_stream(node)
+            return node['type'] == _nexus_link or contains_stream(self)
 
         children = [
             child[_nexus_name] for child in self._node[_nexus_children]

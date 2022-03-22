@@ -9,9 +9,9 @@ from ..nexus import NXroot, NX_class
 
 from ._common import BadSource, SkipSource
 from ._common import add_position_and_transforms_to_data
-from ._hdf5_nexus import LoadFromHdf5
-from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo, _JSONGroup
-from ._nexus import LoadFromNexus, ScippData
+from ._json_nexus import get_streams_info, StreamInfo, _JSONGroup
+from ._json_nexus import contains_stream
+from ._nexus import ScippData
 import h5py
 from timeit import default_timer as timer
 from typing import Union, Optional, Dict, Tuple, Set
@@ -78,7 +78,7 @@ def load_nexus(data_file: Union[str, h5py.File],
     start_time = timer()
 
     with _open_if_path(data_file) as nexus_file:
-        loaded_data = _load_data(nexus_file, root, LoadFromHdf5(), quiet)
+        loaded_data = _load_data(nexus_file, root, quiet)
 
     if not quiet:
         print("Total time:", timer() - start_time)
@@ -131,7 +131,7 @@ def _zip_pixel_offset(da: sc.DataArray) -> sc.DataArray:
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
-               nexus: LoadFromNexus, quiet: bool) -> Optional[ScippData]:
+               quiet: bool) -> Optional[ScippData]:
     """
     Main implementation for loading data is extracted to this function so that
     in-memory data can be used for unit tests.
@@ -175,7 +175,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             loaded_detectors.append(det)
         except (BadSource, SkipSource, NexusStructureError, KeyError, sc.DTypeError,
                 ValueError) as e:
-            if not nexus.contains_stream(group._group):
+            if not contains_stream(group._group):
                 warn(f"Skipped loading {group.name} due to:\n{e}")
 
     no_event_data = True
@@ -203,7 +203,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                     events = sc.bin(events, groups=[det_id], erase=['pulse', 'bank'])
                 loaded_events.append(events)
             except (BadSource, SkipSource, NexusStructureError) as e:
-                if not nexus.contains_stream(group._group):
+                if not contains_stream(group._group):
                     warn(f"Skipped loading {group.name} due to:\n{e}")
         if len(loaded_events):
             no_event_data = False
@@ -246,7 +246,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                 loaded_groups.append(name)
             except (BadSource, SkipSource, TransformationError, sc.DimensionError,
                     sc.UnitError, KeyError) as e:
-                if not nexus.contains_stream(group._group):
+                if not contains_stream(group._group):
                     warn(f"Skipped loading {group.name} due to:\n{e}")
         add_metadata(items)
         return loaded_groups
@@ -290,9 +290,8 @@ def _load_nexus_json(
     streams = None
     if get_start_info:
         streams = get_streams_info(loaded_json)
-    loader = LoadFromJson(loaded_json)
     group = _JSONGroup(loaded_json)
-    return _load_data(group, None, loader, True), streams
+    return _load_data(group, None, True), streams
 
 
 def load_nexus_json(json_filename: str) -> Optional[ScippData]:
