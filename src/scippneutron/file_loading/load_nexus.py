@@ -291,7 +291,7 @@ def _load_nexus_json(
     if get_start_info:
         streams = get_streams_info(loaded_json)
     loader = LoadFromJson(loaded_json)
-    group = _JSONGroup(loaded_json, loader)
+    group = _JSONGroup(loaded_json)
     return _load_data(group, None, loader, True), streams
 
 

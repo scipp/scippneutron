@@ -292,7 +292,7 @@ class JSONAttributeManager:
 
 
 class JSONNode:
-    def __init__(self, node: dict, loader: LoadFromJson, *, parent=None):
+    def __init__(self, node: dict, *, parent=None):
         self._file = parent.file if parent is not None else self
         self._parent = self if parent is None else parent
         self._node = node
@@ -300,7 +300,6 @@ class JSONNode:
             self._name = f'/{self._node.get(_nexus_name, "")}'
         else:
             self._name = f'{parent.name}/{self._node[_nexus_name]}'
-        self._loader = loader
 
     @property
     def attrs(self) -> JSONAttributeManager:
@@ -347,17 +346,21 @@ class JSONDataset(JSONNode):
 
 class _JSONGroup(JSONNode):
     def __contains__(self, name: str) -> bool:
-        return self._loader.dataset_in_group(self._node, name)
+        try:
+            self[name]
+            return True
+        except KeyError:
+            return False
 
     def keys(self) -> List[str]:
         children = self._node[_nexus_children]
         return [child[_nexus_name] for child in children if not contains_stream(child)]
 
     def _as_group_or_dataset(self, item, parent):
-        if self._loader.is_group(item):
-            return _JSONGroup(item, self._loader, parent=parent)
+        if item['type'] == _nexus_group:
+            return _JSONGroup(item, parent=parent)
         else:
-            return JSONDataset(item, self._loader, parent=parent)
+            return JSONDataset(item, parent=parent)
 
     def __getitem__(self, name: str) -> Union[JSONDataset, _JSONGroup]:
         if name.startswith('/') and name.count('/') == 1:

@@ -25,7 +25,7 @@ def open_json(builder: NexusBuilder):
     def func():
         try:
             with builder.json() as f:
-                yield _JSONGroup(f, LoadFromJson(''))
+                yield _JSONGroup(f)
         finally:
             pass
 
