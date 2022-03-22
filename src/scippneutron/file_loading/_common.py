@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
-# @author Matthew Jones
-
-from typing import Union, Tuple, Dict, List
-import h5py
+# @author Simon Heybrock
+from typing import Union, Tuple, Dict, List, Protocol, Callable
 import scipp as sc
 import numpy as np
 
@@ -32,16 +30,17 @@ class MissingAttribute(Exception):
     pass
 
 
-class JSONGroup(dict):
-    def __init__(self, parent: dict, name: str, file: dict, group: dict):
-        super().__init__(**group)
-        self.parent = parent
-        self.name = name
-        self.file = file
+# TODO Define more required methods
+class Dataset(Protocol):
+    """h5py.Dataset-like"""
+    def shape(self) -> List[int]:
+        """Shape of a dataset"""
 
 
-Dataset = Union[h5py.Dataset, Dict]
-Group = Union[h5py.Group, JSONGroup]
+class Group(Protocol):
+    """h5py.Group-like"""
+    def visititems(self, func: Callable) -> None:
+        """"""
 
 
 def convert_time_to_datetime64(
