@@ -21,7 +21,7 @@ def test_raises_if_no_data_found(nexus_group: Tuple[Callable, LoadFromNexus]):
     builder = NexusBuilder()
     builder.add_detector(Detector(detector_numbers=np.array([1, 2, 3, 4])))
     with resource(builder)() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector = nexus.NXroot(f)['entry/detector_0']
         with pytest.raises(KeyError):
             detector[...]
 
@@ -42,7 +42,7 @@ def test_loads_events_when_data_and_events_found(nexus_group: Tuple[Callable,
                  data=da,
                  event_data=event_data))
     with resource(builder)() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector = nexus.NXroot(f)['entry/detector_0']
         assert detector[...].bins is not None
 
 
@@ -57,7 +57,7 @@ def test_loads_data_without_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
                                                   unit=None,
                                                   values=detector_numbers)
     with resource(builder)() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector = nexus.NXroot(f)['entry/detector_0']
         loaded = detector[...]
         assert sc.identical(loaded, expected)
 
@@ -74,7 +74,7 @@ def test_select_events_raises_if_detector_contains_data(
                                                   unit=None,
                                                   values=detector_numbers)
     with resource(builder)() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector = nexus.NXroot(f)['entry/detector_0']
         with pytest.raises(nexus.NexusStructureError):
             detector.select_events
 
@@ -92,7 +92,7 @@ def test_loads_data_with_coords(nexus_group: Tuple[Callable, LoadFromNexus]):
                                                   unit=None,
                                                   values=detector_numbers)
     with resource(builder)() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector = nexus.NXroot(f)['entry/detector_0']
         loaded = detector[...]
         assert sc.identical(loaded, expected)
 
@@ -111,7 +111,7 @@ def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
         Detector(detector_numbers=np.array([1, 2, 3, 4]), event_data=event_data))
     resource, loader = nexus_group
     with resource(builder)() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector = nexus.NXroot(f)['entry/detector_0']
         assert detector.dims == ['dim_0']
         assert detector.shape == (4, )
         loaded = detector[...]
@@ -136,7 +136,7 @@ def test_loads_event_data_with_2d_detector_numbers(nexus_group: Tuple[Callable,
         Detector(detector_numbers=np.array([[1, 2], [3, 4]]), event_data=event_data))
     resource, loader = nexus_group
     with resource(builder)() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector = nexus.NXroot(f)['entry/detector_0']
         assert detector.dims == ['dim_0', 'dim_1']
         assert detector.shape == (2, 2)
         loaded = detector[...]
@@ -162,7 +162,7 @@ def test_select_events_slices_underlying_event_data(nexus_group: Tuple[Callable,
         Detector(detector_numbers=np.array([[1, 2], [3, 4]]), event_data=event_data))
     resource, loader = nexus_group
     with resource(builder)() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector = nexus.NXroot(f)['entry/detector_0']
         assert sc.identical(
             detector.select_events['pulse', :2][...].bins.size().data,
             sc.array(dims=['dim_0', 'dim_1'],
@@ -203,7 +203,7 @@ def test_select_events_slice_does_not_affect_original_detector(
         Detector(detector_numbers=np.array([[1, 2], [3, 4]]), event_data=event_data))
     resource, loader = nexus_group
     with resource(builder)() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector = nexus.NXroot(f)['entry/detector_0']
         detector.select_events['pulse', 0][...]
         assert sc.identical(
             detector[...].bins.size().data,
@@ -230,7 +230,7 @@ def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in
         nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_and_no_detector_number())() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector = nexus.NXroot(f)['entry/detector_0']
         assert detector.dims == ['detector_number']
         with pytest.raises(nexus.NexusStructureError):
             detector.shape
@@ -247,7 +247,7 @@ def test_loading_event_data_with_selection_and_automatic_detector_numbers_raises
         nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_and_no_detector_number())() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector = nexus.NXroot(f)['entry/detector_0']
         assert detector.dims == ['detector_number']
         with pytest.raises(nexus.NexusStructureError):
             detector['detector_number', 0]
@@ -257,7 +257,7 @@ def test_loading_event_data_with_full_selection_and_automatic_detector_numbers_w
         nexus_group: Tuple[Callable, LoadFromNexus]):
     resource, loader = nexus_group
     with resource(builder_with_events_and_no_detector_number())() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector = nexus.NXroot(f)['entry/detector_0']
         assert detector.dims == ['detector_number']
         assert detector[...].shape == [4]
         assert detector[()].shape == [4]
@@ -302,7 +302,7 @@ def test_event_data_field_dims_labels(nexus_group: Tuple[Callable, LoadFromNexus
         Detector(detector_numbers=np.array([1, 2, 3, 4]), event_data=event_data))
     resource, loader = nexus_group
     with resource(builder)() as f:
-        detector = nexus.NXroot(f, loader)['entry/detector_0']
+        detector = nexus.NXroot(f)['entry/detector_0']
         assert detector['detector_number'].dims == ['dim_0']
 
 
@@ -324,7 +324,7 @@ def test_nxevent_data_selection_yields_correct_pulses(
     resource, loader = nexus_group
 
     with resource(builder)() as f:
-        events = nexus.NXroot(f, loader)['entry/events_0']
+        events = nexus.NXroot(f)['entry/events_0']
 
         class Load:
             def __getitem__(self, select=...):

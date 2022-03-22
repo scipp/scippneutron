@@ -8,7 +8,7 @@ from typing import Union
 import scipp as sc
 import scipp.spatial
 import scipp.interpolate
-from ._json_nexus import contains_stream
+from ._json_nexus import contains_stream, _JSONGroup
 from .nxobject import Field, NXobject, ScippIndex
 
 
@@ -128,21 +128,12 @@ def get_full_transformation(depends_on: Field) -> Union[None, sc.DataArray]:
 
 def _transformation_is_nx_log_stream(t):
     t = t._obj
-    if (not isinstance(t, (Field, NXobject))):
-        return True
-    transform = t._group if isinstance(t, NXobject) else t._dataset
-    nexus = t._loader
     # Stream objects are only in the dict loaded from json
-    if isinstance(transform, dict):
-        # If transform is a group and contains a stream but not a value dataset
-        # then assume it is a streamed NXlog transformation
-        try:
-            if nexus.is_group(transform):
-                found_value_dataset = nexus.dataset_in_group(transform, "value")
-                if not found_value_dataset and contains_stream(transform):
-                    return True
-        except KeyError:
-            pass
+    # If transform is a group and contains a stream but not a value dataset
+    # then assume it is a streamed NXlog transformation
+    if isinstance(t, _JSONGroup):
+        if 'value' not in t and contains_stream(t._node):
+            return True
     return False
 
 

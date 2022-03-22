@@ -10,7 +10,7 @@ from ..nexus import NXroot, NX_class
 from ._common import BadSource, SkipSource
 from ._common import add_position_and_transforms_to_data
 from ._hdf5_nexus import LoadFromHdf5
-from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo
+from ._json_nexus import LoadFromJson, get_streams_info, StreamInfo, _JSONGroup
 from ._nexus import LoadFromNexus, ScippData
 import h5py
 from timeit import default_timer as timer
@@ -136,7 +136,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     Main implementation for loading data is extracted to this function so that
     in-memory data can be used for unit tests.
     """
-    root = NXroot(nexus_file if root is None else nexus_file[root], nexus)
+    root = NXroot(nexus_file if root is None else nexus_file[root])
     classes = root.by_nx_class()
 
     if len(classes[NX_class.NXentry]) > 1:
@@ -290,7 +290,9 @@ def _load_nexus_json(
     streams = None
     if get_start_info:
         streams = get_streams_info(loaded_json)
-    return _load_data(loaded_json, None, LoadFromJson(loaded_json), True), streams
+    loader = LoadFromJson(loaded_json)
+    group = _JSONGroup(loaded_json, loader)
+    return _load_data(group, None, loader, True), streams
 
 
 def load_nexus_json(json_filename: str) -> Optional[ScippData]:

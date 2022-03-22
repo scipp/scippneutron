@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
-
+from __future__ import annotations
 from typing import Tuple, Dict, List, Optional, Any, Union
 import scipp as sc
 import numpy as np
@@ -139,7 +139,7 @@ class LoadFromJson:
 
     def keys(self, group: Dict):
         children = group[_nexus_children]
-        return [child[_nexus_name] for child in children]
+        return [child[_nexus_name] for child in children if not contains_stream(child)]
 
     def values(self, group: Dict):
         return group[_nexus_children]
@@ -287,22 +287,20 @@ class JSONAttributeManager:
     def __getitem__(self, name):
         return _get_attribute_value(self._node, name)
 
+    def get(self, name: str, default=None):
+        return self[name] if name in self else default
 
-class JSONDataset:
-    def __init__(self, node: dict, loader: LoadFromJson):
+
+class JSONNode:
+    def __init__(self, node: dict, loader: LoadFromJson, *, parent=None):
+        self._file = parent.file if parent is not None else self
+        self._parent = self if parent is None else parent
         self._node = node
         self._loader = loader
 
     @property
     def attrs(self) -> JSONAttributeManager:
         return JSONAttributeManager(self._node)
-
-    @property
-    def dtype(self) -> str:
-        try:
-            return self._node[_nexus_dataset]["type"]
-        except KeyError:
-            return self._node[_nexus_dataset]["dtype"]
 
     @property
     def name(self) -> str:
@@ -313,11 +311,82 @@ class JSONDataset:
 
     @property
     def file(self):
-        return self._node.file
+        return self._file
+
+    @property
+    def parent(self):
+        return self._parent
+
+
+class JSONDataset(JSONNode):
+    @property
+    def dtype(self) -> str:
+        try:
+            return self._node[_nexus_dataset]["type"]
+        except KeyError:
+            return self._node[_nexus_dataset]["dtype"]
+
+    @property
+    def ndim(self) -> int:
+        return len(self.shape)
 
     @property
     def shape(self):
         return np.asarray(self._node[_nexus_values]).shape
+
+    def __getitem__(self, index):
+        return np.asarray(self._node[_nexus_values])[index]
+
+    def read_direct(self, buf, source_sel):
+        buf[...] = self[source_sel]
+
+    def asstr(self, **ignored):
+        return self
+
+
+class _JSONGroup(JSONNode):
+    def __contains__(self, name: str) -> bool:
+        return self._loader.dataset_in_group(self._node, name)
+
+    def keys(self) -> List[str]:
+        children = self._node[_nexus_children]
+        return [child[_nexus_name] for child in children if not contains_stream(child)]
+
+    def _as_group_or_dataset(self, item, parent):
+        if self._loader.is_group(item):
+            return _JSONGroup(item, self._loader, parent=parent)
+        else:
+            return JSONDataset(item, self._loader, parent=parent)
+
+    def get(self, name: str, default=None):
+        if name.startswith('/') and name.count('/') == 1:
+            parent = self.file
+        elif '/' in name:
+            parent = self['/'.join(name.split('/')[:-1])]
+        else:
+            parent = self
+        if (item := self._loader.get_child_from_group(self._node, name)) is not None:
+            return self._as_group_or_dataset(item, parent)
+        return default
+
+    def __getitem__(self, name: str) -> Union[JSONDataset, _JSONGroup]:
+        if (item := self.get(name)) is not None:
+            return item
+        raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
+
+    def visititems(self, callable):
+        def skip(node):
+            return node['type'] == _nexus_link or contains_stream(node)
+
+        children = [
+            child[_nexus_name] for child in self._node[_nexus_children]
+            if not skip(child)
+        ]
+        for key in children:
+            item = self[key]
+            callable(key, item)
+            if isinstance(item, _JSONGroup):
+                item.visititems(callable)
 
 
 @dataclass

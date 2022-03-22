@@ -6,11 +6,12 @@ import warnings
 from enum import Enum, auto
 import functools
 from typing import List, Union, NoReturn, Any, Dict, Tuple
+import numpy as np
 import scipp as sc
 import h5py
 
-from ._nexus import LoadFromNexus
-from ._hdf5_nexus import LoadFromHdf5, _cset_to_encoding, _ensure_str
+from ._hdf5_nexus import _cset_to_encoding, _ensure_str
+from ._hdf5_nexus import _ensure_supported_int_type, _warn_latin1_decode
 from ._json_nexus import JSONAttributeManager, JSONDataset
 from ._common import Group, Dataset, ScippIndex
 from ._common import to_plain_index
@@ -59,36 +60,49 @@ class Attrs:
     def get(self, name: str, default=None) -> Any:
         return self[name] if name in self else default
 
+    def keys(self):
+        return self._attrs.keys()
+
 
 class Field:
     """NeXus field.
 
     In HDF5 fields are represented as dataset.
     """
-    def __init__(self,
-                 dataset: Dataset,
-                 loader: LoadFromNexus = LoadFromHdf5(),
-                 dims=None):
-        self._dataset = dataset if isinstance(loader, LoadFromHdf5) else JSONDataset(
-            dataset, loader)
-        self._loader = loader
+    def __init__(self, dataset: Dataset, dims=None):
+        self._dataset = dataset
         if dims is not None:
             self._dims = dims
         elif (axes := self.attrs.get('axes')) is not None:
             self._dims = axes.split(',')
         else:
-            self._dims = [f'dim_{i}' for i in range(self.ndim)]
-
-    def _ds(self):
-        return self._dataset._node if isinstance(self._dataset,
-                                                 JSONDataset) else self._dataset
+            self._dims = [f'dim_{i}' for i in range(self._dataset.ndim)]
 
     def __getitem__(self, select) -> sc.Variable:
         index = to_plain_index(self.dims, select)
-        return self._loader.load_dataset_direct(self._ds(),
-                                                dimensions=self.dims,
-                                                unit=self.unit,
-                                                index=index)
+        if isinstance(index, slice):
+            index = (index, )
+
+        shape = list(self.shape)
+        for i, ind in enumerate(index):
+            shape[i] = len(range(*ind.indices(shape[i])))
+
+        variable = sc.empty(dims=self.dims,
+                            shape=shape,
+                            dtype=self.dtype,
+                            unit=self.unit)
+        if self.dtype == sc.DType.string:
+            try:
+                strings = self._dataset.asstr()[index]
+            except UnicodeDecodeError as e:
+                strings = self._dataset.asstr(encoding='latin-1')[index]
+                _warn_latin1_decode(self._dataset, strings, str(e))
+            variable.values = np.asarray(strings).flatten()
+        elif variable.values.flags["C_CONTIGUOUS"] and variable.values.size > 0:
+            self._dataset.read_direct(variable.values, source_sel=index)
+        else:
+            variable.values = self._dataset[index]
+        return variable
 
     def __repr__(self) -> str:
         return f'<Nexus field "{self._dataset.name}">'
@@ -99,7 +113,13 @@ class Field:
 
     @property
     def dtype(self) -> str:
-        return self._dataset.dtype
+        dtype = self._dataset.dtype
+        if str(dtype).startswith('str') or (not isinstance(self._dataset, JSONDataset)
+                                            and h5py.check_string_dtype(dtype)):
+            dtype = sc.DType.string
+        else:
+            dtype = sc.DType(_ensure_supported_int_type(str(dtype)))
+        return dtype
 
     @property
     def name(self) -> str:
@@ -107,11 +127,11 @@ class Field:
 
     @property
     def file(self) -> NXroot:
-        return NXroot(self._dataset.file, self._loader)
+        return NXroot(self._dataset.file)
 
     @property
     def parent(self) -> NXobject:
-        return _make(self._ds().parent, self._loader)
+        return _make(self._dataset.parent)
 
     @property
     def ndim(self) -> int:
@@ -119,7 +139,12 @@ class Field:
 
     @property
     def shape(self) -> List[int]:
-        return self._dataset.shape
+        shape = self._dataset.shape
+        if self.dims == [] and shape == [1]:
+            # NeXus treats [] and [1] interchangeably, in general this is ill-defined,
+            # but this is the best we can do.
+            return []
+        return shape
 
     @property
     def dims(self) -> List[str]:
@@ -140,9 +165,8 @@ class Field:
 class NXobject:
     """Base class for all NeXus groups.
     """
-    def __init__(self, group: Group, loader: LoadFromNexus = LoadFromHdf5()):
+    def __init__(self, group: Group):
         self._group = group
-        self._loader = loader
 
     def _get_child(
             self,
@@ -152,14 +176,12 @@ class NXobject:
         if name is None:
             raise KeyError("None is not a valid index")
         if isinstance(name, str):
-            item = self._loader.get_child_from_group(self._group, name)
-            if item is None:
-                raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
-            if self._loader.is_group(item):
-                return _make(item, self._loader)
-            else:
+            item = self._group[name]
+            if hasattr(item, 'shape'):
                 dims = self._get_field_dims(name) if use_field_dims else None
-                return Field(item, self._loader, dims=dims)
+                return Field(item, dims=dims)
+            else:
+                return _make(item)
         da = self._getitem(name)
         if (t := self.depends_on) is not None:
             da.coords['depends_on'] = t if isinstance(t, sc.Variable) else sc.scalar(t)
@@ -177,33 +199,32 @@ class NXobject:
         return None
 
     def __contains__(self, name: str) -> bool:
-        return self._loader.dataset_in_group(self._group, name)
+        return name in self._group
 
     def get(self, name: str, default=None) -> Union['__class__', Field, sc.DataArray]:
         return self[name] if name in self else default
 
     @property
     def attrs(self) -> Attrs:
-        return Attrs(self._group.attrs if isinstance(self._loader, LoadFromHdf5) else
-                     JSONAttributeManager(self._group))
+        return Attrs(self._group.attrs)
 
     @property
     def name(self) -> str:
-        return self._loader.get_path(self._group)
+        return self._group.name
 
     @property
     def file(self) -> NXroot:
-        return NXroot(self._group.file, self._loader)
+        return NXroot(self._group.file)
 
     @property
     def parent(self) -> NXobject:
-        return _make(self._group.parent, self._loader)
+        return _make(self._group.parent)
 
     def _ipython_key_completions_(self) -> List[str]:
         return list(self.keys())
 
     def keys(self) -> List[str]:
-        return self._loader.keys(self._group)
+        return self._group.keys()
 
     def values(self) -> List[Union[Field, '__class__']]:
         return [self[name] for name in self.keys()]
@@ -213,17 +234,25 @@ class NXobject:
 
     @functools.lru_cache()
     def by_nx_class(self) -> Dict[NX_class, Dict[str, '__class__']]:
-        classes = self._loader.find_by_nx_class(tuple(_nx_class_registry()),
-                                                self._group)
+        classes = {name: [] for name in _nx_class_registry()}
+
+        # TODO implement visititems for NXobject and merge the the blocks
+        def _match_nx_class(_, node):
+            if not hasattr(node, 'shape'):
+                if (nx_class := node.attrs.get('NX_class')) is not None:
+                    if not isinstance(nx_class, str):
+                        nx_class = nx_class.decode('UTF-8')
+                    if nx_class in _nx_class_registry():
+                        classes[nx_class].append(node)
+
+        self._group.visititems(_match_nx_class)
+
         out = {}
         for nx_class, groups in classes.items():
-            names = [self._loader.get_name(group) for group in groups]
+            names = [group.name.split('/')[-1] for group in groups]
             if len(names) != len(set(names)):  # fall back to full path if duplicate
                 names = [group.name for group in groups]
-            out[NX_class[nx_class]] = {
-                n: _make(g, self._loader)
-                for n, g in zip(names, groups)
-            }
+            out[NX_class[nx_class]] = {n: _make(g) for n, g in zip(names, groups)}
         return out
 
     @property
@@ -266,10 +295,9 @@ class NXinstrument(NXobject):
     pass
 
 
-def _make(group, loader) -> NXobject:
-    if (nx_class := Attrs(group.attrs if isinstance(loader, LoadFromHdf5) else
-                          JSONAttributeManager(group)).get('NX_class')) is not None:
-        return _nx_class_registry().get(nx_class, NXobject)(group, loader)
+def _make(group) -> NXobject:
+    if (nx_class := Attrs(group.attrs).get('NX_class')) is not None:
+        return _nx_class_registry().get(nx_class, NXobject)(group)
     return group  # Return underlying (h5py) group
 
 

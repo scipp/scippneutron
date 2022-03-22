@@ -142,7 +142,6 @@ class NXdetector(NXobject):
         # NXdetector uses a "hard-coded" signal name 'data', without specifying the
         # attribute in the file, so we pass this explicitly to NXdata.
         return NXdata(self._group,
-                      self._loader,
                       signal_name_default='data' if 'data' in self else None,
                       signal_override=signal,
                       skip=self._nxevent_data_fields)
@@ -162,7 +161,7 @@ class NXdetector(NXobject):
             # (except for possibly using it to deduce shape and dims).
             return next(iter(event_entries.values()))
         if 'event_time_offset' in self:
-            return NXevent_data(self._group, self._loader)
+            return NXevent_data(self._group)
         return None
 
     @property
@@ -191,4 +190,4 @@ class NXdetector(NXobject):
         return self._nxdata()._get_field_dims(name)
 
     def _getitem(self, select: ScippIndex) -> sc.DataArray:
-        return self._nxdata()[select]
+        return self._nxdata()._getitem(select)

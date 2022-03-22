@@ -8,6 +8,7 @@ import scipp as sc
 from ._common import BadSource, SkipSource
 from ._common import to_plain_index, convert_time_to_datetime64
 from .nxobject import NXobject, ScippIndex, NexusStructureError
+from ._json_nexus import _JSONGroup, contains_stream
 
 _event_dimension = "event"
 _pulse_dimension = "pulse"
@@ -131,7 +132,7 @@ class NXevent_data(NXobject):
         return sc.DataArray(data=binned, coords={'event_time_zero': event_time_zero})
 
     def _check_for_missing_fields(self):
-        if self._loader.contains_stream(self._group):
+        if isinstance(self._group, _JSONGroup) and contains_stream(self._group._node):
             # Do not warn about missing datasets if the group contains
             # a stream, as this will provide the missing data
             raise SkipSource("Data source is missing datasets"

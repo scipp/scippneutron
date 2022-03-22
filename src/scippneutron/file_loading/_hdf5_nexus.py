@@ -76,12 +76,12 @@ def _ensure_str(str_or_bytes: Union[str, bytes], encoding: str) -> str:
 
 
 _map_to_supported_type = {
-    np.int8: np.int32,
-    np.int16: np.int32,
-    np.uint8: np.int32,
-    np.uint16: np.int32,
-    np.uint32: np.int32,
-    np.uint64: np.int64,
+    'int8': np.int32,
+    'int16': np.int32,
+    'uint8': np.int32,
+    'uint16': np.int32,
+    'uint32': np.int32,
+    'uint64': np.int64,
 }
 
 
