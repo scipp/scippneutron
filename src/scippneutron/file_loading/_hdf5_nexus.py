@@ -31,16 +31,6 @@ def _cset_to_encoding(cset: int) -> str:
                          f"{h5py.h5t.CSET_UTF8=} but got '{cset}'. ")
 
 
-def _get_attr_encoding(group: h5py.Group, dataset_name: str) -> str:
-    cset = h5py.h5a.open(group.id, dataset_name.encode("utf-8")).get_type().get_cset()
-    return _cset_to_encoding(cset)
-
-
-def _get_attr_as_str(h5_object, attribute_name: str) -> str:
-    return _ensure_str(h5_object.attrs[attribute_name],
-                       _get_attr_encoding(h5_object, attribute_name))
-
-
 def _warn_latin1_decode(obj, decoded, error):
     warnings.warn(f"Encoding for bytes '{obj}' declared as ascii, "
                   f"but contains characters in extended ascii range. Assuming "
