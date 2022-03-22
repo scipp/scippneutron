@@ -9,7 +9,6 @@ import numpy as np
 from enum import Enum
 from contextlib import contextmanager
 import json
-from scippneutron.file_loading._json_nexus import LoadFromJson, MissingDataset
 from scippneutron.file_loading._json_nexus import _JSONGroup
 
 h5root = Union[h5py.File, h5py.Group]
@@ -241,14 +240,31 @@ numpy_to_filewriter_type = {
 }
 
 
+def _get_child(obj, name):
+    children = obj["children"]
+    for child in children:
+        if child.get('name') == name:
+            return child
+    return None
+
+
+def _get_object_by_path(file_root, path):
+    if not path.startswith('/'):
+        return _get_child(file_root, path)
+    path = path.split('/')[1:]  # Trim leading slash
+    obj = file_root
+    for name in path:
+        obj = _get_child(obj, name)
+    return obj
+
+
 def _add_link_to_json(file_root: Dict, new_path: str, target_path: str):
     new_path_split = new_path.split("/")
     link_name = new_path_split[-1]
     parent_path = "/".join(new_path_split[:-1])
-    nexus = LoadFromJson(file_root)
-    parent_group = nexus.get_object_by_path(file_root, parent_path)
+    parent_group = _get_object_by_path(file_root, parent_path)
     link = {"type": "link", "name": link_name, "target": target_path}
-    existing_object = nexus.get_child_from_group(parent_group, link_name)
+    existing_object = _get_object_by_path(parent_group, link_name)
     if existing_object is not None:
         parent_group["children"].remove(existing_object)
     parent_group["children"].append(link)
@@ -257,9 +273,8 @@ def _add_link_to_json(file_root: Dict, new_path: str, target_path: str):
 def _parent_and_name_from_path(file_root: Dict, path: str) -> Tuple[Dict, str]:
     path_split = path.split("/")
     name = path_split[-1]
-    parent_path = "/".join(path_split[:-1])
-    nexus = LoadFromJson(file_root)
-    parent_group = nexus.get_object_by_path(file_root, parent_path)
+    parent_path = '/'.join(path_split[:-1])
+    parent_group = _get_object_by_path(file_root, parent_path)
     return parent_group, name
 
 
@@ -340,11 +355,7 @@ class JsonWriter:
                 "value_units": stream.value_units
             }
         }
-
-        nexus = LoadFromJson(file_root)
-        try:
-            group = nexus.get_object_by_path(file_root, stream.path)
-        except MissingDataset:
+        if (group := _get_object_by_path(file_root, stream.path)) is None:
             parent, name = _parent_and_name_from_path(file_root, stream.path)
             group = self.add_group(parent, name)
         group["children"].append(new_stream)
