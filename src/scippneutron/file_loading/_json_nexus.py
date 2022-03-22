@@ -96,7 +96,7 @@ def contains_stream(group: Dict) -> bool:
     """
     Return True if the group contains a stream object
     """
-    if not isinstance(group, _JSONGroup):
+    if not isinstance(group, JSONGroup):
         return False
     try:
         for child in group._node[_nexus_children]:
@@ -211,7 +211,7 @@ class JSONDataset(JSONNode):
         return self
 
 
-class _JSONGroup(JSONNode):
+class JSONGroup(JSONNode):
     def __contains__(self, name: str) -> bool:
         try:
             self[name]
@@ -225,11 +225,11 @@ class _JSONGroup(JSONNode):
 
     def _as_group_or_dataset(self, item, parent):
         if item['type'] == _nexus_group:
-            return _JSONGroup(item, parent=parent)
+            return JSONGroup(item, parent=parent)
         else:
             return JSONDataset(item, parent=parent)
 
-    def __getitem__(self, name: str) -> Union[JSONDataset, _JSONGroup]:
+    def __getitem__(self, name: str) -> Union[JSONDataset, JSONGroup]:
         if name.startswith('/') and name.count('/') == 1:
             parent = self.file
         elif '/' in name:
@@ -258,7 +258,7 @@ class _JSONGroup(JSONNode):
         for key in children:
             item = self[key]
             callable(key, item)
-            if isinstance(item, _JSONGroup):
+            if isinstance(item, JSONGroup):
                 item.visititems(callable)
 
 

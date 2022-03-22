@@ -8,7 +8,7 @@ from typing import Union
 import scipp as sc
 import scipp.spatial
 import scipp.interpolate
-from ._json_nexus import contains_stream, _JSONGroup
+from ._json_nexus import contains_stream, JSONGroup
 from .nxobject import Field, NXobject, ScippIndex
 
 
@@ -131,7 +131,7 @@ def _transformation_is_nx_log_stream(t):
     # Stream objects are only in the dict loaded from json
     # If transform is a group and contains a stream but not a value dataset
     # then assume it is a streamed NXlog transformation
-    if isinstance(t, _JSONGroup):
+    if isinstance(t, JSONGroup):
         if 'value' not in t and contains_stream(t):
             return True
     return False

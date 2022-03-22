@@ -9,7 +9,7 @@ from ..nexus import NXroot, NX_class
 
 from ._common import BadSource, SkipSource
 from ._common import add_position_and_transforms_to_data
-from ._json_nexus import get_streams_info, StreamInfo, _JSONGroup
+from ._json_nexus import get_streams_info, StreamInfo, JSONGroup
 from ._json_nexus import contains_stream
 from ._nexus import ScippData
 import h5py
@@ -290,7 +290,7 @@ def _load_nexus_json(
     streams = None
     if get_start_info:
         streams = get_streams_info(loaded_json)
-    group = _JSONGroup(loaded_json)
+    group = JSONGroup(loaded_json)
     return _load_data(group, None, True), streams
 
 
