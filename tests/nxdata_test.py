@@ -213,3 +213,22 @@ def test_create_field_from_variable(nexus_group: Callable):
         data.create_field('xx3', xx3)
         loaded = data[...]
         assert sc.identical(loaded, expected)
+
+
+def test_create_data(nexus_group: Callable):
+    builder = NexusBuilder()
+    da = sc.DataArray(
+        sc.array(dims=['xx', 'yy'], unit='m', values=[[1.1, 2.2], [3.3, 4.4]]))
+    da.coords['xx'] = sc.array(dims=['xx'], unit='s', values=[3, 4])
+    da.coords['yy'] = sc.array(dims=['yy'], unit='s', values=[5, 6])
+    builder.add_data(Data(name='data1', data=da))
+    with nexus_group(builder)() as f:
+        entry = nexus.NXroot(f)['entry']
+        data = entry.create_class('data2', nexus.NX_class.NXdata)
+        data.attrs['axes'] = da.dims
+        data.attrs['signal'] = 'signal'
+        data.create_field('signal', da.data)
+        data.create_field('xx', da.coords['xx'])
+        data.create_field('yy', da.coords['yy'])
+        loaded = data[...]
+        assert sc.identical(loaded, da)

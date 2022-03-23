@@ -77,6 +77,9 @@ class Attrs:
             return _ensure_str(attr, _cset_to_encoding(cset))
         return attr
 
+    def __setitem__(self, name: str, val: Any):
+        self._attrs[name] = val
+
     def get(self, name: str, default=None) -> Any:
         return self[name] if name in self else default
 
@@ -296,7 +299,7 @@ class NXobject:
     def __repr__(self) -> str:
         return f'<{type(self).__name__} "{self._group.name}">'
 
-    def create_field(self, name: str, data: DimensionedArray, **kwargs):
+    def create_field(self, name: str, data: DimensionedArray, **kwargs) -> Field:
         dataset = self._group.create_dataset(name, data=data.values, **kwargs)
         if data.unit is not None:
             dataset.attrs['units'] = str(data.unit)
@@ -306,6 +309,11 @@ class NXobject:
             indices = [self.dims.index(dim) for dim in data.dims]
             self._group.attrs[f'{name}_indices'] = indices
         return Field(dataset, data.dims)
+
+    def create_class(self, name: str, nx_class: NX_class) -> NXobject:
+        group = self._group.create_group(name)
+        group.attrs['NX_class'] = nx_class.name
+        return _make(group)
 
 
 class NXroot(NXobject):
