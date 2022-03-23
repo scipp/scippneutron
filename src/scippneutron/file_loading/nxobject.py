@@ -5,7 +5,7 @@ from __future__ import annotations
 import warnings
 from enum import Enum, auto
 import functools
-from typing import List, Union, NoReturn, Any, Dict, Tuple
+from typing import List, Union, NoReturn, Any, Dict, Tuple, Protocol
 import numpy as np
 import scipp as sc
 import h5py
@@ -17,6 +17,26 @@ from ._common import Group, Dataset, ScippIndex
 from ._common import to_plain_index
 
 NXobjectIndex = Union[str, ScippIndex]
+
+
+# TODO move into scipp
+class DimensionedArray(Protocol):
+    """
+    A multi-dimensional array with a unit and dimension labels.
+
+    Could be, e.g., a scipp.Variable or a dimple dataclass wrapping a numpy array.
+    """
+    @property
+    def values(self):
+        """Multi-dimensional array of values"""
+
+    @property
+    def unit(self):
+        """Physical unit of the values"""
+
+    @property
+    def dims(self) -> List[str]:
+        """Dimension labels for the values"""
 
 
 class NexusStructureError(Exception):
@@ -275,6 +295,17 @@ class NXobject:
 
     def __repr__(self) -> str:
         return f'<{type(self).__name__} "{self._group.name}">'
+
+    def create_field(self, name: str, data: DimensionedArray, **kwargs):
+        dataset = self._group.create_dataset(name, data=data.values, **kwargs)
+        if data.unit is not None:
+            dataset.attrs['units'] = str(data.unit)
+        if hasattr(self, 'dims'):
+            # Nexus provides no way of defining dim labels directly. Unless the
+            # group has dimensions this information will be lost.
+            indices = [self.dims.index(dim) for dim in data.dims]
+            self._group.attrs[f'{name}_indices'] = indices
+        return Field(dataset, data.dims)
 
 
 class NXroot(NXobject):

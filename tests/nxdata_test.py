@@ -195,3 +195,21 @@ def test_uses_default_field_dims_if_inference_fails(nexus_group: Callable):
         data = nexus.NXroot(f)['entry/data1']
         assert 'yy2' not in data[()].coords
         assert sc.identical(data['yy2'][()], da.coords['yy2'].rename(yy='dim_0'))
+
+
+def test_create_field_from_variable(nexus_group: Callable):
+    builder = NexusBuilder()
+    da = sc.DataArray(
+        sc.array(dims=['xx', 'yy'], unit='m', values=[[1.1, 2.2], [3.3, 4.4]]))
+    builder.add_data(Data(name='data1', data=da))
+    expected = da.copy()
+    xx2 = sc.array(dims=['xx'], unit='s', values=[3, 4])
+    xx3 = sc.array(dims=['xx'], unit=None, values=[3, 4])
+    expected.coords['xx2'] = xx2
+    expected.coords['xx3'] = xx3
+    with nexus_group(builder)() as f:
+        data = nexus.NXroot(f)['entry/data1']
+        data.create_field('xx2', xx2)
+        data.create_field('xx3', xx3)
+        loaded = data[...]
+        assert sc.identical(loaded, expected)
