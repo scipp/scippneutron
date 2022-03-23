@@ -9,7 +9,8 @@ import numpy as np
 from enum import Enum
 from contextlib import contextmanager
 import json
-from scippneutron.file_loading._json_nexus import JSONGroup
+from scippneutron.file_loading._json_nexus import (JSONGroup, make_json_attr,
+                                                   make_json_dataset)
 
 h5root = Union[h5py.File, h5py.Group]
 
@@ -225,21 +226,6 @@ class InMemoryNeXusWriter:
         file_root[new_path] = h5py.SoftLink(target_path)
 
 
-numpy_to_filewriter_type = {
-    np.float32: "float32",
-    np.float64: "float64",
-    np.int8: "int8",
-    np.int16: "int16",
-    np.int32: "int32",
-    np.int64: "int64",
-    np.uint8: "uint8",
-    np.uint16: "uint16",
-    np.uint32: "uint32",
-    np.uint64: "uint64",
-    np.str_: "string"
-}
-
-
 def _get_child(obj, name):
     children = obj["children"]
     for child in children:
@@ -289,46 +275,15 @@ class JsonWriter:
     @staticmethod
     def add_dataset(parent: Dict, name: str, data: Union[str, bytes,
                                                          np.ndarray]) -> Dict:
-        if isinstance(data, (str, bytes)):
-            dataset_info = {"string_size": len(data), "type": "string"}
-        elif isinstance(data, float):
-            dataset_info = {"size": 1, "type": "float64"}
-        elif isinstance(data, int):
-            dataset_info = {"size": 1, "type": "int32"}
-        else:
-            dataset_info = {
-                "size": data.shape,
-                "type": numpy_to_filewriter_type[data.dtype.type]
-            }
-
-        new_dataset = {
-            "type": "dataset",
-            "name": name,
-            "values": data,
-            "dataset": dataset_info,
-            "attributes": []
-        }
-        parent["children"].append(new_dataset)
-        return new_dataset
+        dataset = make_json_dataset(name, data)
+        parent["children"].append(dataset)
+        return dataset
 
     @staticmethod
     def add_attribute(parent: Dict, name: str, value: Union[str, bytes, list,
                                                             np.ndarray]):
-        if isinstance(value, (str, bytes)):
-            attr_info = {"string_size": len(value), "type": "string"}
-        elif isinstance(value, float):
-            attr_info = {"size": 1, "type": "float64"}
-        elif isinstance(value, int):
-            attr_info = {"size": 1, "type": "int64"}
-        elif isinstance(value, list):
-            attr_info = {"size": len(value), "type": "string"}
-        else:
-            attr_info = {
-                "size": value.shape,
-                "type": numpy_to_filewriter_type[value.dtype.type]
-            }
-        name_and_value = {"name": name, "values": value}
-        parent["attributes"].append({**attr_info, **name_and_value})
+        attr = make_json_attr(name, value)
+        parent["attributes"].append(attr)
 
     @staticmethod
     def add_group(parent: Dict, name: str) -> Dict:

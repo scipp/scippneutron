@@ -34,6 +34,60 @@ _filewriter_to_supported_numpy_dtype = {
     "string": np.str_
 }
 
+numpy_to_filewriter_type = {
+    np.float32: "float32",
+    np.float64: "float64",
+    np.int8: "int8",
+    np.int16: "int16",
+    np.int32: "int32",
+    np.int64: "int64",
+    np.uint8: "uint8",
+    np.uint16: "uint16",
+    np.uint32: "uint32",
+    np.uint64: "uint64",
+    np.str_: "string"
+}
+
+
+def make_json_attr(name: str, value) -> dict:
+    if isinstance(value, (str, bytes)):
+        attr_info = {"string_size": len(value), "type": "string"}
+    elif isinstance(value, float):
+        attr_info = {"size": 1, "type": "float64"}
+    elif isinstance(value, int):
+        attr_info = {"size": 1, "type": "int64"}
+    elif isinstance(value, list):
+        attr_info = {"size": len(value), "type": "string"}
+    else:
+        attr_info = {
+            "size": value.shape,
+            "type": numpy_to_filewriter_type[value.dtype.type]
+        }
+    name_and_value = {"name": name, "values": value}
+    return {**attr_info, **name_and_value}
+
+
+def make_json_dataset(name: str, data) -> dict:
+    if isinstance(data, (str, bytes)):
+        dataset_info = {"string_size": len(data), "type": "string"}
+    elif isinstance(data, float):
+        dataset_info = {"size": 1, "type": "float64"}
+    elif isinstance(data, int):
+        dataset_info = {"size": 1, "type": "int32"}
+    else:
+        dataset_info = {
+            "size": data.shape,
+            "type": numpy_to_filewriter_type[data.dtype.type]
+        }
+
+    return {
+        "type": "dataset",
+        "name": name,
+        "values": data,
+        "dataset": dataset_info,
+        "attributes": []
+    }
+
 
 def _get_attribute_value(element: Dict,
                          attribute_name: str) -> Union[str, float, int, List]:
@@ -154,6 +208,12 @@ class JSONAttributeManager:
     def __getitem__(self, name):
         return _get_attribute_value(self._node, name)
 
+    def __setitem__(self, name, value):
+        attr = make_json_attr(name, value)
+        # TODO Replace if exists
+        self._node['attributes'].append(attr)
+        return self[name]
+
     def get(self, name: str, default=None):
         return self[name] if name in self else default
 
@@ -260,6 +320,18 @@ class JSONGroup(JSONNode):
             callable(key, item)
             if isinstance(item, JSONGroup):
                 item.visititems(callable)
+
+    def create_dataset(self, name: str, data) -> JSONDataset:
+        dataset = make_json_dataset(name, data)
+        # TODO Replace if exists
+        self._node[_nexus_children].append(dataset)
+        return self[name]
+
+    def create_group(self, name: str) -> JSONGroup:
+        group = {"type": "group", "name": name, "children": [], "attributes": []}
+        self._node[_nexus_children].append(group)
+        # TODO Replace if exists
+        return self[name]
 
 
 @dataclass
