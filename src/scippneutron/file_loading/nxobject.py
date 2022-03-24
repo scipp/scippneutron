@@ -303,11 +303,6 @@ class NXobject:
         dataset = self._group.create_dataset(name, data=data.values, **kwargs)
         if data.unit is not None:
             dataset.attrs['units'] = str(data.unit)
-        if hasattr(self, 'dims'):
-            # Nexus provides no way of defining dim labels directly. Unless the
-            # group has dimensions this information will be lost.
-            indices = [self.dims.index(dim) for dim in data.dims]
-            self._group.attrs[f'{name}_indices'] = indices
         return Field(dataset, data.dims)
 
     def create_class(self, name: str, nx_class: NX_class) -> NXobject:

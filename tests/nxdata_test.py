@@ -3,6 +3,7 @@ from .nexus_helpers import NexusBuilder, Data
 from typing import Callable
 import scipp as sc
 from scippneutron import nexus
+from scippneutron.nexus import NX_class
 import pytest
 
 
@@ -13,13 +14,14 @@ def nexus_group(request):
 
 def test_without_coords(nexus_group: Callable):
     builder = NexusBuilder()
-    da = sc.DataArray(
-        sc.array(dims=['xx', 'yy'], unit='m', values=[[1.1, 2.2], [3.3, 4.4]]))
-    builder.add_data(Data(name='data1', data=da))
+    signal = sc.array(dims=['xx', 'yy'], unit='m', values=[[1.1, 2.2], [3.3, 4.4]])
     with nexus_group(builder)() as f:
-        data = nexus.NXroot(f)['entry/data1']
-        loaded = data[...]
-        assert sc.identical(loaded, da)
+        entry = nexus.NXroot(f)['entry']
+        data = entry.create_class('data1', NX_class.NXdata)
+        data.create_field('signal', signal)
+        data.attrs['axes'] = signal.dims
+        data.attrs['signal'] = 'signal'
+        assert sc.identical(data[...], sc.DataArray(signal))
 
 
 def test_with_coords_matching_axis_names(nexus_group: Callable):
@@ -211,6 +213,8 @@ def test_create_field_from_variable(nexus_group: Callable):
         data = nexus.NXroot(f)['entry/data1']
         data.create_field('xx2', xx2)
         data.create_field('xx3', xx3)
+        data.attrs['xx2_indices'] = [0]
+        data.attrs['xx3_indices'] = [0]
         loaded = data[...]
         assert sc.identical(loaded, expected)
 
