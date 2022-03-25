@@ -43,71 +43,67 @@ def test_loads_events_when_data_and_events_found(nexus_root):
     assert detector[...].bins is not None
 
 
+def detector_numbers_xx_yy_1234():
+    return sc.array(dims=['xx', 'yy'], unit=None, values=np.array([[1, 2], [3, 4]]))
+
+
 def test_loads_data_without_coords(nexus_root):
     da = sc.DataArray(sc.array(dims=['xx', 'yy'], values=[[1.1, 2.2], [3.3, 4.4]]))
-    da.coords['detector_numbers'] = sc.array(dims=['xx', 'yy'],
-                                             unit=None,
-                                             values=np.array([[1, 2], [3, 4]]))
+    da.coords['detector_numbers'] = detector_numbers_xx_yy_1234()
     detector = nexus_root.create_class('detector0', NX_class.NXdetector)
     detector.create_field('detector_numbers', da.coords['detector_numbers'])
     detector.create_field('data', da.data)
     assert sc.identical(detector[...], da.rename_dims({'xx': 'dim_0', 'yy': 'dim_1'}))
 
 
-def test_select_events_raises_if_detector_contains_data(nexus_group: Callable):
-    builder = NexusBuilder()
+def test_select_events_raises_if_detector_contains_data(nexus_root):
     da = sc.DataArray(sc.array(dims=['xx', 'yy'], values=[[1.1, 2.2], [3.3, 4.4]]))
-    detector_numbers = np.array([[1, 2], [3, 4]])
-    builder.add_detector(Detector(detector_numbers=detector_numbers, data=da))
-    expected = da.rename_dims({'xx': 'dim_0', 'yy': 'dim_1'})
-    expected.coords['detector_number'] = sc.array(dims=expected.dims,
-                                                  unit=None,
-                                                  values=detector_numbers)
-    with nexus_group(builder)() as f:
-        detector = nexus.NXroot(f)['entry/detector_0']
-        with pytest.raises(nexus.NexusStructureError):
-            detector.select_events
+    da.coords['detector_numbers'] = detector_numbers_xx_yy_1234()
+    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+    detector.create_field('detector_numbers', da.coords['detector_numbers'])
+    detector.create_field('data', da.data)
+    with pytest.raises(nexus.NexusStructureError):
+        detector.select_events
 
 
-def test_loads_data_with_coords(nexus_group: Callable):
-    builder = NexusBuilder()
+def test_loads_data_with_coords(nexus_root):
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='K', values=[[1.1, 2.2], [3.3, 4.4]]))
+    da.coords['detector_numbers'] = detector_numbers_xx_yy_1234()
     da.coords['xx'] = sc.array(dims=['xx'], unit='m', values=[0.1, 0.2])
-    detector_numbers = np.array([[1, 2], [3, 4]])
-    builder.add_detector(Detector(detector_numbers=detector_numbers, data=da))
-    expected = da.rename_dims({'yy': 'dim_1'})
-    expected.coords['detector_number'] = sc.array(dims=expected.dims,
-                                                  unit=None,
-                                                  values=detector_numbers)
-    with nexus_group(builder)() as f:
-        detector = nexus.NXroot(f)['entry/detector_0']
-        loaded = detector[...]
-        assert sc.identical(loaded, expected)
+    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+    detector.create_field('detector_numbers', da.coords['detector_numbers'])
+    detector.create_field('xx', da.coords['xx'])
+    detector.create_field('data', da.data)
+    detector.attrs['axes'] = ['xx', '.']
+    assert sc.identical(detector[...], da.rename_dims({'yy': 'dim_1'}))
+
+
+def create_event_data_ids_1234(group):
+    group.create_field('event_id',
+                       sc.array(dims=[''], unit=None, values=[1, 2, 4, 1, 2, 2]))
+    group.create_field('event_time_offset',
+                       sc.array(dims=[''], unit='s', values=[456, 7, 3, 345, 632, 23]))
+    group.create_field('event_time_zero',
+                       sc.array(dims=[''], unit='s', values=[1, 2, 3, 4]))
+    group.create_field('event_index',
+                       sc.array(dims=[''], unit='None', values=[0, 3, 3, 5]))
 
 
 def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
-        nexus_group: Callable):
-    event_time_offsets = np.array([456, 743, 347, 345, 632, 23])
-    event_data = EventData(
-        event_id=np.array([1, 2, 3, 1, 2, 2]),
-        event_time_offset=event_time_offsets,
-        event_time_zero=np.array([1, 2, 3, 4]),
-        event_index=np.array([0, 3, 3, 5]),
-    )
-    builder = NexusBuilder()
-    builder.add_detector(
-        Detector(detector_numbers=np.array([1, 2, 3, 4]), event_data=event_data))
-    with nexus_group(builder)() as f:
-        detector = nexus.NXroot(f)['entry/detector_0']
-        assert detector.dims == ['dim_0']
-        assert detector.shape == (4, )
-        loaded = detector[...]
-        assert sc.identical(
-            loaded.bins.size().data,
-            sc.array(dims=['dim_0'], unit=None, dtype='int64', values=[2, 3, 1, 0]))
-        assert 'event_time_offset' in loaded.bins.coords
-        assert 'event_time_zero' in loaded.bins.coords
+        nexus_root):
+    detector_numbers = sc.array(dims=[''], unit=None, values=np.array([1, 2, 3, 4]))
+    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+    detector.create_field('detector_number', detector_numbers)
+    create_event_data_ids_1234(detector.create_class('events', NX_class.NXevent_data))
+    assert detector.dims == ['dim_0']
+    assert detector.shape == (4, )
+    loaded = detector[...]
+    assert sc.identical(
+        loaded.bins.size().data,
+        sc.array(dims=['dim_0'], unit=None, dtype='int64', values=[2, 3, 0, 1]))
+    assert 'event_time_offset' in loaded.bins.coords
+    assert 'event_time_zero' in loaded.bins.coords
 
 
 def test_loads_event_data_with_2d_detector_numbers(nexus_group: Callable):
