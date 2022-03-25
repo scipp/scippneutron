@@ -209,8 +209,9 @@ class JSONAttributeManager:
         return _get_attribute_value(self._node, name)
 
     def __setitem__(self, name, value):
+        if name in self:
+            raise NotImplementedError("Replacing existing item not implemented yet.")
         attr = make_json_attr(name, value)
-        # TODO Replace if exists
         self._node['attributes'].append(attr)
         return self[name]
 
@@ -322,15 +323,17 @@ class JSONGroup(JSONNode):
                 item.visititems(callable)
 
     def create_dataset(self, name: str, data) -> JSONDataset:
+        if name in self:
+            raise NotImplementedError("Replacing existing item not implemented yet.")
         dataset = make_json_dataset(name, data)
-        # TODO Replace if exists
         self._node[_nexus_children].append(dataset)
         return self[name]
 
     def create_group(self, name: str) -> JSONGroup:
+        if name in self:
+            raise NotImplementedError("Replacing existing item not implemented yet.")
         group = {"type": "group", "name": name, "children": [], "attributes": []}
         self._node[_nexus_children].append(group)
-        # TODO Replace if exists
         return self[name]
 
 
