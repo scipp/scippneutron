@@ -9,28 +9,23 @@ from scippneutron.nexus import NX_class
 
 
 @pytest.fixture(params=[open_nexus, open_json])
-def nexus_root(request):
+def nxroot(request):
     with request.param(NexusBuilder())() as f:
         yield nexus.NXroot(f)
 
 
-@pytest.fixture(params=[open_nexus, open_json])
-def nexus_group(request):
-    return request.param
-
-
-def test_raises_if_no_data_found(nexus_root):
+def test_raises_if_no_data_found(nxroot):
     detector_numbers = sc.array(dims=[''], unit=None, values=np.array([1, 2, 3, 4]))
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     detector.create_field('detector_numbers', detector_numbers)
     with pytest.raises(KeyError):
         detector[...]
 
 
-def test_loads_events_when_data_and_events_found(nexus_root):
+def test_loads_events_when_data_and_events_found(nxroot):
     detector_numbers = sc.array(dims=[''], unit=None, values=np.array([1, 2]))
     data = sc.ones(dims=['xx'], shape=[2])
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     detector.create_field('detector_numbers', detector_numbers)
     detector.create_field('data', data)
     assert detector[...].bins is None
@@ -46,31 +41,31 @@ def detector_numbers_xx_yy_1234():
     return sc.array(dims=['xx', 'yy'], unit=None, values=np.array([[1, 2], [3, 4]]))
 
 
-def test_loads_data_without_coords(nexus_root):
+def test_loads_data_without_coords(nxroot):
     da = sc.DataArray(sc.array(dims=['xx', 'yy'], values=[[1.1, 2.2], [3.3, 4.4]]))
     da.coords['detector_numbers'] = detector_numbers_xx_yy_1234()
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     detector.create_field('detector_numbers', da.coords['detector_numbers'])
     detector.create_field('data', da.data)
     assert sc.identical(detector[...], da.rename_dims({'xx': 'dim_0', 'yy': 'dim_1'}))
 
 
-def test_select_events_raises_if_detector_contains_data(nexus_root):
+def test_select_events_raises_if_detector_contains_data(nxroot):
     da = sc.DataArray(sc.array(dims=['xx', 'yy'], values=[[1.1, 2.2], [3.3, 4.4]]))
     da.coords['detector_numbers'] = detector_numbers_xx_yy_1234()
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     detector.create_field('detector_numbers', da.coords['detector_numbers'])
     detector.create_field('data', da.data)
     with pytest.raises(nexus.NexusStructureError):
         detector.select_events
 
 
-def test_loads_data_with_coords(nexus_root):
+def test_loads_data_with_coords(nxroot):
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='K', values=[[1.1, 2.2], [3.3, 4.4]]))
     da.coords['detector_numbers'] = detector_numbers_xx_yy_1234()
     da.coords['xx'] = sc.array(dims=['xx'], unit='m', values=[0.1, 0.2])
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     detector.create_field('detector_numbers', da.coords['detector_numbers'])
     detector.create_field('xx', da.coords['xx'])
     detector.create_field('data', da.data)
@@ -89,10 +84,9 @@ def create_event_data_ids_1234(group):
                        sc.array(dims=[''], unit='None', values=[0, 3, 3, 5]))
 
 
-def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
-        nexus_root):
+def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(nxroot):
     detector_numbers = sc.array(dims=[''], unit=None, values=np.array([1, 2, 3, 4]))
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     detector.create_field('detector_number', detector_numbers)
     create_event_data_ids_1234(detector.create_class('events', NX_class.NXevent_data))
     assert detector.dims == ['dim_0']
@@ -105,8 +99,8 @@ def test_loads_event_data_mapped_to_detector_numbers_based_on_their_event_id(
     assert 'event_time_zero' in loaded.bins.coords
 
 
-def test_loads_event_data_with_2d_detector_numbers(nexus_root):
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+def test_loads_event_data_with_2d_detector_numbers(nxroot):
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     detector.create_field('detector_number', detector_numbers_xx_yy_1234())
     create_event_data_ids_1234(detector.create_class('events', NX_class.NXevent_data))
     assert detector.dims == ['dim_0', 'dim_1']
@@ -120,8 +114,8 @@ def test_loads_event_data_with_2d_detector_numbers(nexus_root):
                  values=[[2, 3], [0, 1]]))
 
 
-def test_select_events_slices_underlying_event_data(nexus_root):
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+def test_select_events_slices_underlying_event_data(nxroot):
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     detector.create_field('detector_number', detector_numbers_xx_yy_1234())
     create_event_data_ids_1234(detector.create_class('events', NX_class.NXevent_data))
     assert sc.identical(
@@ -150,8 +144,8 @@ def test_select_events_slices_underlying_event_data(nexus_root):
                  values=[[2, 3], [0, 1]]))
 
 
-def test_select_events_slice_does_not_affect_original_detector(nexus_root):
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+def test_select_events_slice_does_not_affect_original_detector(nxroot):
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     detector.create_field('detector_number', detector_numbers_xx_yy_1234())
     create_event_data_ids_1234(detector.create_class('events', NX_class.NXevent_data))
     detector.select_events['pulse', 0][...]
@@ -164,8 +158,8 @@ def test_select_events_slice_does_not_affect_original_detector(nexus_root):
 
 
 def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in_file(
-        nexus_root):
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+        nxroot):
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     create_event_data_ids_1234(detector.create_class('events', NX_class.NXevent_data))
     assert detector.dims == ['detector_number']
     with pytest.raises(nexus.NexusStructureError):
@@ -180,8 +174,8 @@ def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in
 
 
 def test_loading_event_data_with_selection_and_automatic_detector_numbers_raises(
-        nexus_root):
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+        nxroot):
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     create_event_data_ids_1234(detector.create_class('events', NX_class.NXevent_data))
     assert detector.dims == ['detector_number']
     with pytest.raises(nexus.NexusStructureError):
@@ -189,8 +183,8 @@ def test_loading_event_data_with_selection_and_automatic_detector_numbers_raises
 
 
 def test_loading_event_data_with_full_selection_and_automatic_detector_numbers_works(
-        nexus_root):
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+        nxroot):
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     create_event_data_ids_1234(detector.create_class('events', NX_class.NXevent_data))
     assert detector.dims == ['detector_number']
     assert detector[...].shape == [4]
@@ -223,16 +217,16 @@ def test_can_load_nxdetector_from_PG3():
         assert sc.identical(da.sum(), det.events[()].sum())  # no event lost in binning
 
 
-def test_event_data_field_dims_labels(nexus_root):
+def test_event_data_field_dims_labels(nxroot):
     detector_numbers = sc.array(dims=[''], unit=None, values=np.array([1, 2, 3, 4]))
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     detector.create_field('detector_number', detector_numbers)
     create_event_data_ids_1234(detector.create_class('events', NX_class.NXevent_data))
     assert detector['detector_number'].dims == ['dim_0']
 
 
-def test_nxevent_data_selection_yields_correct_pulses(nexus_root):
-    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+def test_nxevent_data_selection_yields_correct_pulses(nxroot):
+    detector = nxroot.create_class('detector0', NX_class.NXdetector)
     create_event_data_ids_1234(detector.create_class('events', NX_class.NXevent_data))
 
     class Load:

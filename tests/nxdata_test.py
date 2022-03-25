@@ -7,25 +7,25 @@ import pytest
 
 
 @pytest.fixture(params=[open_nexus, open_json])
-def nexus_root(request):
+def nxroot(request):
     with request.param(NexusBuilder())() as f:
         yield nexus.NXroot(f)
 
 
-def test_without_coords(nexus_root):
+def test_without_coords(nxroot):
     signal = sc.array(dims=['xx', 'yy'], unit='m', values=[[1.1, 2.2], [3.3, 4.4]])
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.create_field('signal', signal)
     data.attrs['axes'] = signal.dims
     data.attrs['signal'] = 'signal'
     assert sc.identical(data[...], sc.DataArray(signal))
 
 
-def test_with_coords_matching_axis_names(nexus_root):
+def test_with_coords_matching_axis_names(nxroot):
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
     da.coords['xx'] = da.data['yy', 0]
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.attrs['axes'] = da.dims
     data.attrs['signal'] = 'signal'
     data.create_field('signal', da.data)
@@ -33,11 +33,11 @@ def test_with_coords_matching_axis_names(nexus_root):
     assert sc.identical(data[...], da)
 
 
-def test_guessed_dim_for_coord_not_matching_axis_name(nexus_root):
+def test_guessed_dim_for_coord_not_matching_axis_name(nxroot):
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
     da.coords['xx2'] = da.data['yy', 1]
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.attrs['axes'] = da.dims
     data.attrs['signal'] = 'signal'
     data.create_field('signal', da.data)
@@ -45,13 +45,13 @@ def test_guessed_dim_for_coord_not_matching_axis_name(nexus_root):
     assert sc.identical(data[...], da)
 
 
-def test_multiple_coords(nexus_root):
+def test_multiple_coords(nxroot):
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
     da.coords['xx'] = da.data['yy', 0]
     da.coords['xx2'] = da.data['yy', 1]
     da.coords['yy'] = da.data['xx', 0]
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.attrs['axes'] = da.dims
     data.attrs['signal'] = 'signal'
     data.create_field('signal', da.data)
@@ -61,12 +61,12 @@ def test_multiple_coords(nexus_root):
     assert sc.identical(data[...], da)
 
 
-def test_slice_of_1d(nexus_root):
+def test_slice_of_1d(nxroot):
     da = sc.DataArray(sc.array(dims=['xx'], unit='m', values=[1, 2, 3]))
     da.coords['xx'] = da.data
     da.coords['xx2'] = da.data
     da.coords['scalar'] = sc.scalar(1.2)
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.attrs['axes'] = da.dims
     data.attrs['signal'] = 'signal'
     data.create_field('signal', da.data)
@@ -77,13 +77,13 @@ def test_slice_of_1d(nexus_root):
     assert sc.identical(data[:2], da['xx', :2])
 
 
-def test_slice_of_multiple_coords(nexus_root):
+def test_slice_of_multiple_coords(nxroot):
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
     da.coords['xx'] = da.data['yy', 0]
     da.coords['xx2'] = da.data['yy', 1]
     da.coords['yy'] = da.data['xx', 0]
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.attrs['axes'] = da.dims
     data.attrs['signal'] = 'signal'
     data.create_field('signal', da.data)
@@ -93,11 +93,11 @@ def test_slice_of_multiple_coords(nexus_root):
     assert sc.identical(data['xx', :2], da['xx', :2])
 
 
-def test_guessed_dim_for_2d_coord_not_matching_axis_name(nexus_root):
+def test_guessed_dim_for_2d_coord_not_matching_axis_name(nxroot):
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
     da.coords['xx2'] = da.data
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.attrs['axes'] = da.dims
     data.attrs['signal'] = 'signal'
     data.create_field('signal', da.data)
@@ -105,11 +105,11 @@ def test_guessed_dim_for_2d_coord_not_matching_axis_name(nexus_root):
     assert sc.identical(data[...], da)
 
 
-def test_skips_axis_if_dim_guessing_finds_ambiguous_shape(nexus_root):
+def test_skips_axis_if_dim_guessing_finds_ambiguous_shape(nxroot):
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
     da.coords['yy2'] = da.data['xx', 0]
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.attrs['axes'] = da.dims
     data.attrs['signal'] = 'signal'
     data.create_field('signal', da.data)
@@ -118,11 +118,11 @@ def test_skips_axis_if_dim_guessing_finds_ambiguous_shape(nexus_root):
     assert 'yy2' not in da.coords
 
 
-def test_guesses_transposed_dims_for_2d_coord(nexus_root):
+def test_guesses_transposed_dims_for_2d_coord(nxroot):
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
     da.coords['xx2'] = sc.transpose(da.data)
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.attrs['axes'] = da.dims
     data.attrs['signal'] = 'signal'
     data.create_field('signal', da.data)
@@ -131,10 +131,10 @@ def test_guesses_transposed_dims_for_2d_coord(nexus_root):
 
 
 @pytest.mark.parametrize("indices", [1, [1]], ids=['int', 'list-of-int'])
-def test_indices_attribute_for_coord(nexus_root, indices):
+def test_indices_attribute_for_coord(nxroot, indices):
     da = sc.DataArray(sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2], [4, 5]]))
     da.coords['yy2'] = da.data['xx', 0]
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.attrs['axes'] = da.dims
     data.attrs['signal'] = 'signal'
     data.attrs['yy2_indices'] = indices
@@ -143,10 +143,10 @@ def test_indices_attribute_for_coord(nexus_root, indices):
     assert sc.identical(data[...], da)
 
 
-def test_transpose_indices_attribute_for_coord(nexus_root):
+def test_transpose_indices_attribute_for_coord(nxroot):
     da = sc.DataArray(sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2], [4, 5]]))
     da.coords['xx2'] = sc.transpose(da.data)
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.attrs['axes'] = da.dims
     data.attrs['signal'] = 'signal'
     data.attrs['xx2_indices'] = [1, 0]
@@ -155,11 +155,11 @@ def test_transpose_indices_attribute_for_coord(nexus_root):
     assert sc.identical(data[...], da)
 
 
-def test_auxiliary_signal_is_not_loaded_as_coord(nexus_root):
+def test_auxiliary_signal_is_not_loaded_as_coord(nxroot):
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
     da.coords['xx'] = da.data['xx', 0]
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.attrs['axes'] = da.dims
     data.attrs['signal'] = 'signal'
     # We flag 'xx' as auxiliary_signal. It should thus not be loaded as a coord,
@@ -171,13 +171,13 @@ def test_auxiliary_signal_is_not_loaded_as_coord(nexus_root):
     assert sc.identical(data[...], da)
 
 
-def test_field_dims_match_NXdata_dims(nexus_root):
+def test_field_dims_match_NXdata_dims(nxroot):
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
     da.coords['xx'] = da.data['yy', 0]
     da.coords['xx2'] = da.data['yy', 1]
     da.coords['yy'] = da.data['xx', 0]
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.attrs['axes'] = da.dims
     data.attrs['signal'] = 'signal1'
     data.create_field('signal1', da.data)
@@ -190,11 +190,11 @@ def test_field_dims_match_NXdata_dims(nexus_root):
     assert sc.identical(data['xx', :2].coords['yy'], data['yy'][:])
 
 
-def test_uses_default_field_dims_if_inference_fails(nexus_root):
+def test_uses_default_field_dims_if_inference_fails(nxroot):
     da = sc.DataArray(
         sc.array(dims=['xx', 'yy'], unit='m', values=[[1, 2, 3], [4, 5, 6]]))
     da.coords['yy2'] = sc.arange('yy', 4)
-    data = nexus_root.create_class('data1', NX_class.NXdata)
+    data = nxroot.create_class('data1', NX_class.NXdata)
     data.attrs['axes'] = da.dims
     data.attrs['signal'] = 'signal'
     data.create_field('signal', da.data)
@@ -204,15 +204,15 @@ def test_uses_default_field_dims_if_inference_fails(nexus_root):
 
 
 @pytest.mark.parametrize("unit", ['m', 's', None])
-def test_create_field_from_variable(nexus_root, unit):
+def test_create_field_from_variable(nxroot, unit):
     var = sc.array(dims=['xx'], unit=unit, values=[3, 4])
-    nexus_root.create_field('field', var)
-    loaded = nexus_root['field'][...]
+    nxroot.create_field('field', var)
+    loaded = nxroot['field'][...]
     # Nexus does not support storing dim labels
     assert sc.identical(loaded, var.rename(xx=loaded.dim))
 
 
 @pytest.mark.parametrize("nx_class", [NX_class.NXdata, NX_class.NXlog])
-def test_create_class(nexus_root, nx_class):
-    group = nexus_root.create_class('group', nx_class)
+def test_create_class(nxroot, nx_class):
+    group = nxroot.create_class('group', nx_class)
     assert group.nx_class == nx_class
