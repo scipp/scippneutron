@@ -6,6 +6,13 @@ from typing import Callable
 import scipp as sc
 import scippneutron as scn
 from scippneutron import nexus
+from scippneutron.nexus import NX_class
+
+
+@pytest.fixture(params=[open_nexus, open_json])
+def nexus_root(request):
+    with request.param(NexusBuilder())() as f:
+        yield nexus.NXroot(f)
 
 
 @pytest.fixture(params=[open_nexus, open_json])
@@ -13,13 +20,12 @@ def nexus_group(request):
     return request.param
 
 
-def test_raises_if_no_data_found(nexus_group: Callable):
-    builder = NexusBuilder()
-    builder.add_detector(Detector(detector_numbers=np.array([1, 2, 3, 4])))
-    with nexus_group(builder)() as f:
-        detector = nexus.NXroot(f)['entry/detector_0']
-        with pytest.raises(KeyError):
-            detector[...]
+def test_raises_if_no_data_found(nexus_root):
+    detector_numbers = sc.array(dims=[''], unit=None, values=np.array([1, 2, 3, 4]))
+    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+    detector.create_field('detector_numbers', detector_numbers)
+    with pytest.raises(KeyError):
+        detector[...]
 
 
 def test_loads_events_when_data_and_events_found(nexus_group: Callable):
