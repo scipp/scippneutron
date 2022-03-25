@@ -43,19 +43,15 @@ def test_loads_events_when_data_and_events_found(nexus_root):
     assert detector[...].bins is not None
 
 
-def test_loads_data_without_coords(nexus_group: Callable):
-    builder = NexusBuilder()
+def test_loads_data_without_coords(nexus_root):
     da = sc.DataArray(sc.array(dims=['xx', 'yy'], values=[[1.1, 2.2], [3.3, 4.4]]))
-    detector_numbers = np.array([[1, 2], [3, 4]])
-    builder.add_detector(Detector(detector_numbers=detector_numbers, data=da))
-    expected = da.rename_dims({'xx': 'dim_0', 'yy': 'dim_1'})
-    expected.coords['detector_number'] = sc.array(dims=expected.dims,
-                                                  unit=None,
-                                                  values=detector_numbers)
-    with nexus_group(builder)() as f:
-        detector = nexus.NXroot(f)['entry/detector_0']
-        loaded = detector[...]
-        assert sc.identical(loaded, expected)
+    da.coords['detector_numbers'] = sc.array(dims=['xx', 'yy'],
+                                             unit=None,
+                                             values=np.array([[1, 2], [3, 4]]))
+    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+    detector.create_field('detector_numbers', da.coords['detector_numbers'])
+    detector.create_field('data', da.data)
+    assert sc.identical(detector[...], da.rename_dims({'xx': 'dim_0', 'yy': 'dim_1'}))
 
 
 def test_select_events_raises_if_detector_contains_data(nexus_group: Callable):
