@@ -28,22 +28,19 @@ def test_raises_if_no_data_found(nexus_root):
         detector[...]
 
 
-def test_loads_events_when_data_and_events_found(nexus_group: Callable):
-    da = sc.DataArray(sc.array(dims=['xx', 'yy'], values=[[1.1, 2.2], [3.3, 4.4]]))
-    event_data = EventData(
-        event_id=np.array([1, 2, 4, 1, 2, 2]),
-        event_time_offset=np.array([456, 743, 347, 345, 632, 23]),
-        event_time_zero=np.array([1, 2, 3, 4]),
-        event_index=np.array([0, 3, 3, 5]),
-    )
-    builder = NexusBuilder()
-    builder.add_detector(
-        Detector(detector_numbers=np.array([[1, 2], [3, 4]]),
-                 data=da,
-                 event_data=event_data))
-    with nexus_group(builder)() as f:
-        detector = nexus.NXroot(f)['entry/detector_0']
-        assert detector[...].bins is not None
+def test_loads_events_when_data_and_events_found(nexus_root):
+    detector_numbers = sc.array(dims=[''], unit=None, values=np.array([1, 2]))
+    data = sc.ones(dims=['xx'], shape=[2])
+    detector = nexus_root.create_class('detector0', NX_class.NXdetector)
+    detector.create_field('detector_numbers', detector_numbers)
+    detector.create_field('data', data)
+    assert detector[...].bins is None
+    detector.create_field('event_id', sc.array(dims=[''], unit=None, values=[1]))
+    detector.create_field('event_time_offset', sc.array(dims=[''], unit='s',
+                                                        values=[1]))
+    detector.create_field('event_time_zero', sc.array(dims=[''], unit='s', values=[1]))
+    detector.create_field('event_index', sc.array(dims=[''], unit='None', values=[0]))
+    assert detector[...].bins is not None
 
 
 def test_loads_data_without_coords(nexus_group: Callable):
