@@ -3,6 +3,27 @@
 Release Notes
 =============
 
+v0.5.2 (March 2022)
+-------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+* Some potentially breaking changes in :py:func`scippneutron.load_nexus`.
+
+Bugfixes
+~~~~~~~~
+
+* Fixed resource leak in data streaming `#298 <https://github.com/scipp/scippneutron/pull/298>`_.
+
+Contributors
+~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+Tom Willemsen :sup:`b, c`\ ,
+and Jan-Lukas Wynen :sup:`a`
+
 v0.5.0 (February 2022)
 ----------------------
 
