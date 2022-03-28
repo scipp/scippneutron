@@ -37,7 +37,6 @@ requirements:
     - appdirs
     - graphlib-backport  # for python < 3.9
     - h5py<3.2  # see https://github.com/h5py/h5py/issues/1880#issuecomment-823223154
-    - ipykernel=6.3.1  # issue with pythreejs 3d plotting, see https://github.com/ipython/ipykernel/issues/771
     - ipympl
     - ipywidgets
     - jinja2==3.0.3  # jupyter/nbconvert#1736
@@ -55,7 +54,6 @@ requirements:
     - sphinx-copybutton
   run:
     - h5py<3.2  # see https://github.com/h5py/h5py/issues/1880#issuecomment-823223154
-    - ipykernel=6.3.1  # see https://github.com/ipython/ipykernel/issues/771
     - pooch
     - python
     - scipp 0.12.*
