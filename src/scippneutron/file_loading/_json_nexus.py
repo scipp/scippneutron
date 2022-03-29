@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Tuple, Dict, List, Any, Union
 from dataclasses import dataclass
 import numpy as np
-from scippnexus._common import Group
+from scippnexus.typing import Group
 
 _nexus_class = "NX_class"
 _nexus_units = "units"

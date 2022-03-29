@@ -1,22 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
-from typing import Union, Tuple, Dict, List, Protocol, Callable
+from typing import Union, List
 import scipp as sc
 import numpy as np
-
-
-# TODO Define more required methods
-class Dataset(Protocol):
-    """h5py.Dataset-like"""
-    def shape(self) -> List[int]:
-        """Shape of a dataset"""
-
-
-class Group(Protocol):
-    """h5py.Group-like"""
-    def visititems(self, func: Callable) -> None:
-        """"""
+from .typing import ScippIndex
 
 
 def convert_time_to_datetime64(
@@ -71,12 +59,6 @@ def convert_time_to_datetime64(
         _scale = sc.scalar(value=scaling_factor)
         times = (raw_times_ns * _scale).astype(sc.DType.int64, copy=False)
     return _start_ts + times
-
-
-# Note that scipp does not support dicts yet, but this HDF5 code does, to
-# allow for loading blocks of 2d (or higher) data efficiently.
-ScippIndex = Union[type(Ellipsis), int, slice, Tuple[str, Union[int, slice]],
-                   Dict[str, Union[int, slice]]]
 
 
 def _to_canonical_select(dims: List[str], select: ScippIndex) -> ScippIndex:

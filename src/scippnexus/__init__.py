@@ -7,3 +7,4 @@
 from .nexus import File, NXroot
 from .nxobject import NX_class, Field
 from .nxobject import NexusStructureError
+from . import typing

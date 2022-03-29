@@ -12,7 +12,7 @@ import h5py
 
 from ._hdf5_nexus import _cset_to_encoding, _ensure_str
 from ._hdf5_nexus import _ensure_supported_int_type, _warn_latin1_decode
-from ._common import Group, Dataset, ScippIndex
+from .typing import Group, Dataset, ScippIndex
 from ._common import to_plain_index
 
 NXobjectIndex = Union[str, ScippIndex]

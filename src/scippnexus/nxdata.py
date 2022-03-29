@@ -6,7 +6,8 @@ from typing import List, Union
 from warnings import warn
 import scipp as sc
 import numpy as np
-from ._common import to_child_select, Group
+from ._common import to_child_select
+from .typing import Group
 from .nxobject import Field, NXobject, ScippIndex, NexusStructureError
 
 
