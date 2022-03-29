@@ -57,6 +57,7 @@ class NX_class(Enum):
     NXroot = auto()
     NXsample = auto()
     NXsource = auto()
+    NXtransformations = auto()
 
 
 class Attrs:
@@ -310,6 +311,15 @@ class NXobject:
         group.attrs['NX_class'] = nx_class.name
         return _make(group)
 
+    def __setitem__(self, name: str, value: Union[Field, NXobject, DimensionedArray]):
+        """Create a link or a new field."""
+        if isinstance(value, Field):
+            self._group[name] = value._dataset
+        elif isinstance(value, NXobject):
+            self._group[name] = value._group
+        else:
+            self.create_field(name, value)
+
 
 class NXroot(NXobject):
     @property
@@ -326,6 +336,10 @@ class NXentry(NXobject):
 
 
 class NXinstrument(NXobject):
+    pass
+
+
+class NXtransformations(NXobject):
     pass
 
 
@@ -349,6 +363,6 @@ def _nx_class_registry():
         cls.__name__: cls
         for cls in [
             NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector,
-            NXsample, NXsource, NXdisk_chopper, NXinstrument
+            NXsample, NXsource, NXdisk_chopper, NXinstrument, NXtransformations
         ]
     }
