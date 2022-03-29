@@ -5,10 +5,9 @@ from typing import List, Union
 import numpy as np
 import scipp as sc
 
-from ._common import BadSource, SkipSource
+from ._common import BadSource
 from ._common import to_plain_index, convert_time_to_datetime64
 from .nxobject import NXobject, ScippIndex, NexusStructureError
-from ._json_nexus import contains_stream
 
 _event_dimension = "event"
 _pulse_dimension = "pulse"
@@ -132,12 +131,6 @@ class NXevent_data(NXobject):
         return sc.DataArray(data=binned, coords={'event_time_zero': event_time_zero})
 
     def _check_for_missing_fields(self):
-        if contains_stream(self._group):
-            # Do not warn about missing datasets if the group contains
-            # a stream, as this will provide the missing data
-            raise SkipSource("Data source is missing datasets"
-                             "but contains a stream source for the data")
-
         for field in ("event_time_zero", "event_index", "event_time_offset"):
             if field not in self:
                 raise BadSource(f"Required field {field} not found in NXevent_data")

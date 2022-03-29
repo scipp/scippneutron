@@ -1,14 +1,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
-# @author Matthew Jones
-import warnings
-
+# @author Simon Heybrock
 import numpy as np
 from typing import Union
 import scipp as sc
 import scipp.spatial
 import scipp.interpolate
-from ._json_nexus import contains_stream, JSONGroup
 from .nxobject import Field, NXobject, ScippIndex
 
 
@@ -126,33 +123,13 @@ def get_full_transformation(depends_on: Field) -> Union[None, sc.DataArray]:
     return total_transform
 
 
-def _transformation_is_nx_log_stream(t):
-    t = t._obj
-    # Stream objects are only in the dict loaded from json
-    # If transform is a group and contains a stream but not a value dataset
-    # then assume it is a streamed NXlog transformation
-    if isinstance(t, JSONGroup):
-        if 'value' not in t and contains_stream(t):
-            return True
-    return False
-
-
 def _get_transformations(transform: Union[Field, NXobject]):
     """Get all transformations in the depends_on chain."""
     transformations = []
-    if _transformation_is_nx_log_stream(transform):
-        warnings.warn("Streamed NXlog found in transformation "
-                      "chain, getting its value from stream is "
-                      "not yet implemented and instead it will be "
-                      "treated as a 0-distance translation")
-        transformations.append(
-            sc.spatial.affine_transform(value=np.identity(4, dtype=float),
-                                        unit=sc.units.m))
-    else:
-        t = transform
-        while t is not None:
-            transformations.append(t[()])
-            t = t.depends_on
+    t = transform
+    while t is not None:
+        transformations.append(t[()])
+        t = t.depends_on
     # TODO: this list of transformation should probably be cached in the future
     # to deal with changing beamline components (e.g. pixel positions) during a
     # live data stream (see https://github.com/scipp/scippneutron/issues/76).

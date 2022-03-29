@@ -1,17 +1,18 @@
-from .nexus_test import open_nexus, open_json
-from .nexus_helpers import NexusBuilder
+import h5py
 import numpy as np
-import pytest
 import scipp as sc
-from scippneutron import nexus
-from scippneutron.nexus import NX_class
-from scippneutron.file_loading import nxtransformations
+from scippnexus import NXroot, NX_class
+from scippnexus import nxtransformations
+import pytest
 
 
-@pytest.fixture(params=[open_nexus, open_json])
+@pytest.fixture()
 def nxroot(request):
-    with request.param(NexusBuilder())() as f:
-        yield nexus.NXroot(f)
+    """Yield NXroot containing a single NXentry named 'entry'"""
+    with h5py.File('dummy.nxs', mode='w', driver="core", backing_store=False) as f:
+        root = NXroot(f)
+        root.create_class('entry', NX_class.NXentry)
+        yield root
 
 
 def create_detector(group):

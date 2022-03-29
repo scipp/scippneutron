@@ -1,30 +1,30 @@
-from .nexus_helpers import NexusBuilder
-from .test_load_nexus import UTF8_TEST_STRINGS
 import h5py
 import numpy as np
 import pytest
 import scipp as sc
-from scippneutron import nexus
-from scippneutron.nexus import NX_class
+from scippnexus import Field, NXroot, NX_class
 
 
-def open_nexus(builder: NexusBuilder):
-    return builder.file
+# representative sample of UTF-8 test strings from
+# https://www.w3.org/2001/06/utf-8-test/UTF-8-demo.html
+UTF8_TEST_STRINGS = (
+    "∮ E⋅da = Q,  n → ∞, ∑ f(i) = ∏ g(i), ∀x∈ℝ: ⌈x⌉ = −⌊−x⌋, α ∧ ¬β = ¬(¬α ∨ β)",
+    "2H₂ + O₂ ⇌ 2H₂O, R = 4.7 kΩ, ⌀ 200 mm",
+    "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
+)
 
 
-def open_json(builder: NexusBuilder):
-    return builder.json
-
-
-@pytest.fixture(params=[open_nexus, open_json])
+@pytest.fixture()
 def nxroot(request):
     """Yield NXroot containing a single NXentry named 'entry'"""
-    with request.param(NexusBuilder())() as f:
-        yield nexus.NXroot(f)
+    with h5py.File('dummy.nxs', mode='w', driver="core", backing_store=False) as f:
+        root = NXroot(f)
+        root.create_class('entry', NX_class.NXentry)
+        yield root
 
 
 def test_nxobject_root(nxroot):
-    assert nxroot.nx_class == nexus.NX_class.NXroot
+    assert nxroot.nx_class == NX_class.NXroot
     assert set(nxroot.keys()) == {'entry'}
 
 
@@ -42,15 +42,15 @@ def test_nxobject_items(nxroot):
     entry.create_class('log', NX_class.NXlog)
     for k, v in entry.items():
         if k == 'log':
-            assert v.nx_class == nexus.NX_class.NXlog
+            assert v.nx_class == NX_class.NXlog
         else:
             assert k == 'monitor'
-            assert v.nx_class == nexus.NX_class.NXmonitor
+            assert v.nx_class == NX_class.NXmonitor
 
 
 def test_nxobject_entry(nxroot):
     entry = nxroot['entry']
-    assert entry.nx_class == nexus.NX_class.NXentry
+    assert entry.nx_class == NX_class.NXentry
     entry.create_class('events_0', NX_class.NXevent_data)
     entry.create_class('events_1', NX_class.NXevent_data)
     entry.create_class('log', NX_class.NXlog)
@@ -59,7 +59,7 @@ def test_nxobject_entry(nxroot):
 
 def test_nxobject_monitor(nxroot):
     monitor = nxroot['entry'].create_class('monitor', NX_class.NXmonitor)
-    assert monitor.nx_class == nexus.NX_class.NXmonitor
+    assert monitor.nx_class == NX_class.NXmonitor
     da = sc.DataArray(
         sc.array(dims=['time_of_flight'], values=[1.0]),
         coords={'time_of_flight': sc.array(dims=['time_of_flight'], values=[1.0])})
@@ -80,13 +80,13 @@ def test_nxobject_log(nxroot):
     log = nxroot['entry'].create_class('log', NX_class.NXlog)
     log['value'] = da.data
     log['time'] = da.coords['time'] - sc.epoch(unit='ns')
-    assert log.nx_class == nexus.NX_class.NXlog
+    assert log.nx_class == NX_class.NXlog
     assert sc.identical(log[...], da)
 
 
 def test_nxobject_event_data(nxroot):
     event_data = nxroot['entry'].create_class('events_0', NX_class.NXevent_data)
-    assert event_data.nx_class == nexus.NX_class.NXevent_data
+    assert event_data.nx_class == NX_class.NXevent_data
 
 
 def test_nxobject_getting_item_that_does_not_exists_raises_KeyError(nxroot):
@@ -117,10 +117,10 @@ def test_nxobject_by_nx_class_of_root_contains_everything(nxroot):
     nxroot['entry'].create_class('events_0', NX_class.NXevent_data)
     nxroot['entry'].create_class('events_1', NX_class.NXevent_data)
     classes = nxroot.by_nx_class()
-    assert list(classes[nexus.NX_class.NXentry]) == ['entry']
-    assert list(classes[nexus.NX_class.NXmonitor]) == ['monitor']
-    assert list(classes[nexus.NX_class.NXlog]) == ['log']
-    assert set(classes[nexus.NX_class.NXevent_data]) == {'events_0', 'events_1'}
+    assert list(classes[NX_class.NXentry]) == ['entry']
+    assert list(classes[NX_class.NXmonitor]) == ['monitor']
+    assert list(classes[NX_class.NXlog]) == ['log']
+    assert set(classes[NX_class.NXevent_data]) == {'events_0', 'events_1'}
 
 
 def test_nxobject_by_nx_class_contains_only_children(nxroot):
@@ -129,17 +129,17 @@ def test_nxobject_by_nx_class_contains_only_children(nxroot):
     nxroot['entry'].create_class('events_0', NX_class.NXevent_data)
     nxroot['entry'].create_class('events_1', NX_class.NXevent_data)
     classes = nxroot['entry'].by_nx_class()
-    assert list(classes[nexus.NX_class.NXentry]) == []
-    assert list(classes[nexus.NX_class.NXmonitor]) == []
-    assert list(classes[nexus.NX_class.NXlog]) == ['log']
-    assert set(classes[nexus.NX_class.NXevent_data]) == set(['events_0', 'events_1'])
+    assert list(classes[NX_class.NXentry]) == []
+    assert list(classes[NX_class.NXmonitor]) == []
+    assert list(classes[NX_class.NXlog]) == ['log']
+    assert set(classes[NX_class.NXevent_data]) == set(['events_0', 'events_1'])
 
 
 def test_nxobject_dataset_items_are_returned_as_Field(nxroot):
     events = nxroot['entry'].create_class('events_0', NX_class.NXevent_data)
     events['event_time_offset'] = sc.arange('event', 5)
     field = nxroot['entry/events_0/event_time_offset']
-    assert isinstance(field, nexus.Field)
+    assert isinstance(field, Field)
 
 
 def test_field_properties(nxroot):
@@ -208,7 +208,7 @@ def test_field_of_extended_ascii_in_ascii_encoded_dataset_is_loaded_correctly():
     string = b"run at rot=90" + bytes([0xb0])
     with h5py.File('dummy.nxs', mode='w', driver="core", backing_store=False) as f:
         f['title'] = np.array([string, string + b'x'])
-        title = nexus.NXroot(f)['title']
+        title = NXroot(f)['title']
         assert sc.identical(
             title[...],
             sc.array(dims=['dim_0'], values=["run at rot=90°", "run at rot=90°x"]))

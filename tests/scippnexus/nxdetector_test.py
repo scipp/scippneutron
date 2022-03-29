@@ -1,17 +1,17 @@
-from .nexus_test import open_nexus, open_json
-from .nexus_helpers import NexusBuilder
+import h5py
 import numpy as np
-import pytest
 import scipp as sc
-import scippneutron as scn
-from scippneutron import nexus
-from scippneutron.nexus import NX_class
+from scippnexus import NXroot, NX_class, NexusStructureError, File
+import pytest
 
 
-@pytest.fixture(params=[open_nexus, open_json])
+@pytest.fixture()
 def nxroot(request):
-    with request.param(NexusBuilder())() as f:
-        yield nexus.NXroot(f)
+    """Yield NXroot containing a single NXentry named 'entry'"""
+    with h5py.File('dummy.nxs', mode='w', driver="core", backing_store=False) as f:
+        root = NXroot(f)
+        root.create_class('entry', NX_class.NXentry)
+        yield root
 
 
 def test_raises_if_no_data_found(nxroot):
@@ -56,7 +56,7 @@ def test_select_events_raises_if_detector_contains_data(nxroot):
     detector = nxroot.create_class('detector0', NX_class.NXdetector)
     detector.create_field('detector_numbers', da.coords['detector_numbers'])
     detector.create_field('data', da.data)
-    with pytest.raises(nexus.NexusStructureError):
+    with pytest.raises(NexusStructureError):
         detector.select_events
 
 
@@ -162,7 +162,7 @@ def test_loading_event_data_creates_automatic_detector_numbers_if_not_present_in
     detector = nxroot.create_class('detector0', NX_class.NXdetector)
     create_event_data_ids_1234(detector.create_class('events', NX_class.NXevent_data))
     assert detector.dims == ['detector_number']
-    with pytest.raises(nexus.NexusStructureError):
+    with pytest.raises(NexusStructureError):
         detector.shape
     loaded = detector[...]
     assert sc.identical(
@@ -178,7 +178,7 @@ def test_loading_event_data_with_selection_and_automatic_detector_numbers_raises
     detector = nxroot.create_class('detector0', NX_class.NXdetector)
     create_event_data_ids_1234(detector.create_class('events', NX_class.NXevent_data))
     assert detector.dims == ['detector_number']
-    with pytest.raises(nexus.NexusStructureError):
+    with pytest.raises(NexusStructureError):
         detector['detector_number', 0]
 
 
@@ -191,14 +191,18 @@ def test_loading_event_data_with_full_selection_and_automatic_detector_numbers_w
     assert detector[()].shape == [4]
 
 
+@pytest.mark.skip("TODO")
 def test_can_load_nxdetector_from_bigfake():
-    with nexus.File(scn.data.bigfake()) as f:
+    import scippneutron as scn
+    with File(scn.data.bigfake()) as f:
         da = f['entry/instrument/detector_1'][...]
         assert da.sizes == {'dim_0': 300, 'dim_1': 300}
 
 
+@pytest.mark.skip("TODO")
 def test_can_load_nxdetector_from_PG3():
-    with nexus.File(scn.data.get_path('PG3_4844_event.nxs')) as f:
+    import scippneutron as scn
+    with File(scn.data.get_path('PG3_4844_event.nxs')) as f:
         det = f['entry/instrument/bank24']
         da = det[...]
         assert da.sizes == {'x_pixel_offset': 154, 'y_pixel_offset': 7}
