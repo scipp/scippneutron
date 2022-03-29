@@ -76,9 +76,7 @@ class Attrs:
     def __getitem__(self, name: str) -> Any:
         attr = self._attrs[name]
         # Is this check for string attributes sufficient? Is there a better way?
-        # is_json = isinstance(self._attrs, JSONAttributeManager)
-        is_json = False  # TODO
-        if isinstance(attr, (str, bytes)) and not is_json:
+        if isinstance(attr, (str, bytes)):
             cset = self._attrs.get_id(name.encode("utf-8")).get_type().get_cset()
             return _ensure_str(attr, _cset_to_encoding(cset))
         return attr
@@ -143,10 +141,7 @@ class Field:
     @property
     def dtype(self) -> str:
         dtype = self._dataset.dtype
-        # is_json = isinstance(self._dataset, JSONDataset)
-        is_json = False  # TODO
-        if str(dtype).startswith('str') or (not is_json
-                                            and h5py.check_string_dtype(dtype)):
+        if str(dtype).startswith('str') or h5py.check_string_dtype(dtype):
             dtype = sc.DType.string
         else:
             dtype = sc.DType(_ensure_supported_int_type(str(dtype)))

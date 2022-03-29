@@ -5,10 +5,6 @@ import json
 import numpy as np
 import scipp as sc
 
-from ..nexus import NXroot, NX_class
-
-from ._common import BadSource, SkipSource
-from ._common import add_position_and_transforms_to_data
 from ._json_nexus import get_streams_info, StreamInfo, JSONGroup
 from ._json_nexus import contains_stream
 from ._nexus import ScippData
@@ -17,8 +13,11 @@ from timeit import default_timer as timer
 from typing import Union, Optional, Dict, Tuple, Set
 from contextlib import contextmanager
 from warnings import warn
-from .nxtransformations import TransformationError
-from .nxobject import NexusStructureError, NXobject
+from scippnexus.nxtransformations import TransformationError
+from scippnexus.nxobject import NexusStructureError, NXobject
+from scippnexus import NXroot, NX_class
+from scippnexus._common import BadSource, SkipSource
+from scippnexus._common import add_position_and_transforms_to_data
 
 nx_entry = "NXentry"
 nx_instrument = "NXinstrument"
