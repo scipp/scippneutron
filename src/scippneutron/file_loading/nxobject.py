@@ -301,7 +301,10 @@ class NXobject:
         return f'<{type(self).__name__} "{self._group.name}">'
 
     def create_field(self, name: str, data: DimensionedArray, **kwargs) -> Field:
-        dataset = self._group.create_dataset(name, data=data.values, **kwargs)
+        values = data.values
+        if data.dtype == sc.DType.string:
+            values = np.array(data.values, dtype=object)
+        dataset = self._group.create_dataset(name, data=values, **kwargs)
         if data.unit is not None:
             dataset.attrs['units'] = str(data.unit)
         return Field(dataset, data.dims)
