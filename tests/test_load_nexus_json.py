@@ -14,6 +14,7 @@ be streamed from Kafka during an experiment.
 """
 
 
+@pytest.mark.skip("TODO Stream handling with log not implemented")
 def test_stream_object_as_transformation_results_in_warning():
     builder = NexusBuilder()
     builder.add_component(Source("source"))
