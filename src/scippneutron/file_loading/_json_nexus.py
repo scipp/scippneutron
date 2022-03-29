@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Tuple, Dict, List, Any, Union
 from dataclasses import dataclass
 import numpy as np
-from scippnexus._common import Group, MissingAttribute
+from scippnexus._common import Group
 
 _nexus_class = "NX_class"
 _nexus_units = "units"
@@ -48,6 +48,10 @@ numpy_to_filewriter_type = {
     np.str_: "string",
     np.object_: "string"
 }
+
+
+class MissingAttribute(Exception):
+    pass
 
 
 def make_json_attr(name: str, value) -> dict:

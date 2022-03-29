@@ -16,11 +16,47 @@ from warnings import warn
 from scippnexus.nxtransformations import TransformationError
 from scippnexus.nxobject import NexusStructureError, NXobject
 from scippnexus import NXroot, NX_class
-from scippnexus._common import BadSource, SkipSource
-from scippnexus._common import add_position_and_transforms_to_data
 
-nx_entry = "NXentry"
-nx_instrument = "NXinstrument"
+
+class BadSource(Exception):
+    """
+    Raise if something is wrong with data source which
+    prevents it being used. Warn the user.
+    """
+    pass
+
+
+class SkipSource(Exception):
+    """
+    Raise to abort using the data source, do not
+    warn the user.
+    """
+    pass
+
+
+def add_position_and_transforms_to_data(data: Union[sc.DataArray,
+                                                    sc.Dataset], transform_name: str,
+                                        position_name: str, base_position_name: str,
+                                        transforms: sc.Variable,
+                                        positions: sc.Variable):
+    if isinstance(data, sc.DataArray):
+        coords = data.coords
+        attrs = data.attrs
+    else:
+        coords = data
+        attrs = data
+
+    if transforms is None:
+        coords[position_name] = positions
+        attrs[base_position_name] = positions
+    elif isinstance(transforms, sc.Variable):
+        # If transform is not time-dependent.
+        coords[position_name] = transforms * positions
+        attrs[base_position_name] = positions
+        attrs[transform_name] = sc.scalar(value=transforms)
+    else:
+        coords[base_position_name] = positions
+        coords[transform_name] = sc.scalar(value=transforms)
 
 
 @contextmanager
@@ -39,7 +75,7 @@ def _open_if_path(file_in: Union[str, h5py.File]):
 def _load_instrument_name(instruments: Dict[str, NXobject]) -> Dict:
     instrument = next(iter(instruments.values()))
     if len(instruments) > 1:
-        warn(f"More than one {nx_instrument} found in file, "
+        warn(f"More than one NXinstrument found in file, "
              f"loading name from {instrument.name} only")
     if (name := instrument.get("name")) is not None:
         return {"instrument_name": name[()].squeeze()}
@@ -173,7 +209,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                     transforms=det.coords.pop('depends_on', None))
             loaded_detectors.append(det)
         except (BadSource, SkipSource, NexusStructureError, KeyError, sc.DTypeError,
-                ValueError) as e:
+                ValueError, IndexError) as e:
             if not contains_stream(group._group):
                 warn(f"Skipped loading {group.name} due to:\n{e}")
 
@@ -201,7 +237,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                     det_id = sc.arange('detector_id', det_min, det_max + 1, unit=None)
                     events = sc.bin(events, groups=[det_id], erase=['pulse', 'bank'])
                 loaded_events.append(events)
-            except (BadSource, SkipSource, NexusStructureError) as e:
+            except (BadSource, SkipSource, NexusStructureError, IndexError) as e:
                 if not contains_stream(group._group):
                     warn(f"Skipped loading {group.name} due to:\n{e}")
         if len(loaded_events):
@@ -244,7 +280,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                 items[name] = sc.scalar(process(group[()]))
                 loaded_groups.append(name)
             except (BadSource, SkipSource, TransformationError, sc.DimensionError,
-                    sc.UnitError, KeyError) as e:
+                    sc.UnitError, KeyError, ValueError) as e:
                 if not contains_stream(group._group):
                     warn(f"Skipped loading {group.name} due to:\n{e}")
         add_metadata(items)

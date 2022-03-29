@@ -5,7 +5,6 @@ from typing import List, Union
 import numpy as np
 import scipp as sc
 
-from ._common import BadSource
 from ._common import to_plain_index, convert_time_to_datetime64
 from .nxobject import NXobject, ScippIndex, NexusStructureError
 
@@ -125,7 +124,7 @@ class NXevent_data(NXobject):
         try:
             binned = sc.bins(data=events, dim=_event_dimension, begin=begins, end=ends)
         except sc.SliceError as e:
-            raise BadSource(
+            raise IndexError(
                 f"Invalid index in NXevent_data at {self.name}/event_index:\n{e}.")
 
         return sc.DataArray(data=binned, coords={'event_time_zero': event_time_zero})
@@ -133,4 +132,5 @@ class NXevent_data(NXobject):
     def _check_for_missing_fields(self):
         for field in ("event_time_zero", "event_index", "event_time_offset"):
             if field not in self:
-                raise BadSource(f"Required field {field} not found in NXevent_data")
+                raise NexusStructureError(
+                    f"Required field {field} not found in NXevent_data")
