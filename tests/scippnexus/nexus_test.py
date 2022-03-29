@@ -4,7 +4,6 @@ import pytest
 import scipp as sc
 from scippnexus import Field, NXroot, NX_class
 
-
 # representative sample of UTF-8 test strings from
 # https://www.w3.org/2001/06/utf-8-test/UTF-8-demo.html
 UTF8_TEST_STRINGS = (
