@@ -12,7 +12,6 @@ import h5py
 
 from ._hdf5_nexus import _cset_to_encoding, _ensure_str
 from ._hdf5_nexus import _ensure_supported_int_type, _warn_latin1_decode
-from ._json_nexus import JSONAttributeManager, JSONDataset
 from ._common import Group, Dataset, ScippIndex
 from ._common import to_plain_index
 
@@ -39,6 +38,11 @@ class DimensionedArray(Protocol):
         """Dimension labels for the values"""
 
 
+class AttributeManager(Protocol):
+    def __getitem__(self, name: str):
+        """Get attribute"""
+
+
 class NexusStructureError(Exception):
     """Invalid or unsupported class and field structure in Nexus.
     """
@@ -63,7 +67,7 @@ class NX_class(Enum):
 class Attrs:
     """HDF5 attributes.
     """
-    def __init__(self, attrs: Union[h5py.AttributeManager, JSONAttributeManager]):
+    def __init__(self, attrs: AttributeManager):
         self._attrs = attrs
 
     def __contains__(self, name: str) -> bool:
@@ -72,7 +76,8 @@ class Attrs:
     def __getitem__(self, name: str) -> Any:
         attr = self._attrs[name]
         # Is this check for string attributes sufficient? Is there a better way?
-        is_json = isinstance(self._attrs, JSONAttributeManager)
+        # is_json = isinstance(self._attrs, JSONAttributeManager)
+        is_json = False  # TODO
         if isinstance(attr, (str, bytes)) and not is_json:
             cset = self._attrs.get_id(name.encode("utf-8")).get_type().get_cset()
             return _ensure_str(attr, _cset_to_encoding(cset))
@@ -138,7 +143,9 @@ class Field:
     @property
     def dtype(self) -> str:
         dtype = self._dataset.dtype
-        if str(dtype).startswith('str') or (not isinstance(self._dataset, JSONDataset)
+        # is_json = isinstance(self._dataset, JSONDataset)
+        is_json = False  # TODO
+        if str(dtype).startswith('str') or (not is_json
                                             and h5py.check_string_dtype(dtype)):
             dtype = sc.DType.string
         else:
