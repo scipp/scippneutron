@@ -4,7 +4,7 @@
 import scipp as sc
 from ..mantid import load
 
-_version = '3'
+_version = '4'
 
 __all__ = ['tutorial_dense_data', 'tutorial_event_data', 'get_path']
 
@@ -20,12 +20,12 @@ def _make_pooch():
         registry={
             'bigfake.nxs': 'md5:ebf73017ddd03cee2a14a887c439bf35',
             'iris26176_graphite002_sqw.nxs': 'md5:7ea63f9137602b7e9b604fe30f0c6ec2',
-            'loki-at-larmor.hdf5': 'md5:7fc48639bb2c409adb9a1dedd53d1c83',
-            'powder-event.h5': 'md5:b02a00ab9e7f86d50a13147a521c0d25',
+            'loki-at-larmor.hdf5': 'md5:9c93f36fa2e94a7b63f2b946705e74f3',
+            'powder-event.h5': 'md5:38f7285b9814d00b5c5b3e63d4455e55',
             'mcstas_sans.h5': 'md5:a608255dd757905490882eb35e209d12',
             'CNCS_51936_event.nxs': 'md5:5ba401e489260a44374b5be12b780911',
             'GEM40979.raw': 'md5:6df0f1c2fc472af200eec43762e9a874',
-            'PG3_4844_calibration.h5': 'md5:290f5108aa9ff0b1c5a2ac8dc2c1cb15',
+            'PG3_4844_calibration.h5': 'md5:a5f12041492a9193a89229bc027d617a',
             'PG3_4844_event.nxs': 'md5:d5ae38871d0a09a28ae01f85d969de1e',
             'PG3_4866_event.nxs': 'md5:3d543bc6a646e622b3f4542bc3435e7e',
             'PG3_4871_event.nxs': 'md5:a3d0edcb36ab8e9e3342cd8a4440b779',
