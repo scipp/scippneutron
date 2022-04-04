@@ -55,7 +55,7 @@ def convert_time_to_datetime64(
 
     The times are also relative to a given log start time, which might be
     different for each log. If this log start time is not available, the start of the
-    unix epoch (1970-01-01T00:00:00Z) is used instead.
+    unix epoch (1970-01-01T00:00:00) is used instead.
 
     See https://manual.nexusformat.org/classes/base_classes/NXlog.html
 
@@ -65,7 +65,7 @@ def convert_time_to_datetime64(
             Used to generate warnings if loading the log fails.
         start: Optional, the start time of the log in an ISO8601
             string. If not provided, defaults to the beginning of the
-            unix epoch (1970-01-01T00:00:00Z).
+            unix epoch (1970-01-01T00:00:00).
         scaling_factor: Optional, the scaling factor between the provided
             time series data and the unit of the raw_times Variable. If
             not provided, defaults to 1 (a no-op scaling factor).
@@ -79,7 +79,7 @@ def convert_time_to_datetime64(
                         f"loading group at '{group_path}'.")
 
     try:
-        _start_ts = sc.scalar(value=np.datetime64(start or "1970-01-01T00:00:00Z"),
+        _start_ts = sc.scalar(value=np.datetime64(start or "1970-01-01T00:00:00"),
                               unit=sc.units.ns,
                               dtype=sc.DType.datetime64)
     except ValueError:

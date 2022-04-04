@@ -57,6 +57,7 @@ class NX_class(Enum):
     NXroot = auto()
     NXsample = auto()
     NXsource = auto()
+    NXtransformations = auto()
 
 
 class Attrs:
@@ -300,7 +301,10 @@ class NXobject:
         return f'<{type(self).__name__} "{self._group.name}">'
 
     def create_field(self, name: str, data: DimensionedArray, **kwargs) -> Field:
-        dataset = self._group.create_dataset(name, data=data.values, **kwargs)
+        values = data.values
+        if data.dtype == sc.DType.string:
+            values = np.array(data.values, dtype=object)
+        dataset = self._group.create_dataset(name, data=values, **kwargs)
         if data.unit is not None:
             dataset.attrs['units'] = str(data.unit)
         return Field(dataset, data.dims)
@@ -309,6 +313,15 @@ class NXobject:
         group = self._group.create_group(name)
         group.attrs['NX_class'] = nx_class.name
         return _make(group)
+
+    def __setitem__(self, name: str, value: Union[Field, NXobject, DimensionedArray]):
+        """Create a link or a new field."""
+        if isinstance(value, Field):
+            self._group[name] = value._dataset
+        elif isinstance(value, NXobject):
+            self._group[name] = value._group
+        else:
+            self.create_field(name, value)
 
 
 class NXroot(NXobject):
@@ -326,6 +339,10 @@ class NXentry(NXobject):
 
 
 class NXinstrument(NXobject):
+    pass
+
+
+class NXtransformations(NXobject):
     pass
 
 
@@ -349,6 +366,6 @@ def _nx_class_registry():
         cls.__name__: cls
         for cls in [
             NXroot, NXentry, NXevent_data, NXlog, NXmonitor, NXdata, NXdetector,
-            NXsample, NXsource, NXdisk_chopper, NXinstrument
+            NXsample, NXsource, NXdisk_chopper, NXinstrument, NXtransformations
         ]
     }
