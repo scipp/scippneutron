@@ -3,9 +3,9 @@
 # @author Matthew Jones
 from __future__ import annotations
 from typing import Tuple, Dict, List, Any, Union
-import numpy as np
-from ._common import Group, MissingAttribute
 from dataclasses import dataclass
+import numpy as np
+from scippnexus.typing import Group
 
 _nexus_class = "NX_class"
 _nexus_units = "units"
@@ -48,6 +48,10 @@ numpy_to_filewriter_type = {
     np.str_: "string",
     np.object_: "string"
 }
+
+
+class MissingAttribute(Exception):
+    pass
 
 
 def make_json_attr(name: str, value) -> dict:
@@ -195,6 +199,20 @@ def _find_by_type(type_name: str, root: Dict) -> List[Group]:
     return objects_with_requested_type
 
 
+class JSONTypeStringID():
+    def get_cset(self):
+        import h5py
+        return h5py.h5t.CSET_UTF8
+
+
+class JSONAttrID:
+    def __init__(self):
+        pass
+
+    def get_type(self):
+        return JSONTypeStringID()
+
+
 class JSONAttributeManager:
     def __init__(self, node: dict):
         self._node = node
@@ -218,6 +236,11 @@ class JSONAttributeManager:
 
     def get(self, name: str, default=None):
         return self[name] if name in self else default
+
+    def get_id(self, name) -> JSONAttrID:
+        # TODO This is a hack that only works since this is used only for a single
+        # purpose by scippnexus.NXobject
+        return JSONAttrID()
 
 
 class JSONNode:
@@ -251,9 +274,12 @@ class JSONDataset(JSONNode):
     @property
     def dtype(self) -> str:
         try:
-            return self._node[_nexus_dataset]["type"]
+            dtype = self._node[_nexus_dataset]["type"]
         except KeyError:
-            return self._node[_nexus_dataset]["dtype"]
+            dtype = self._node[_nexus_dataset]["dtype"]
+        if dtype == 'string':
+            return np.dtype(str)
+        return np.dtype(dtype)
 
     @property
     def ndim(self) -> int:

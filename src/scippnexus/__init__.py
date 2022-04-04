@@ -4,6 +4,7 @@
 
 # flake8: noqa
 
-from .nexus import File, NXroot
-from ..file_loading.nxobject import NX_class, Field
-from ..file_loading.nxobject import NexusStructureError
+from .file import File
+from .nxobject import NX_class, Field, NXroot
+from .nxobject import NexusStructureError
+from . import typing

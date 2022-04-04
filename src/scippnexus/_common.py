@@ -1,46 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
-from typing import Union, Tuple, Dict, List, Protocol, Callable
+from typing import Union, List
 import scipp as sc
 import numpy as np
-
-
-class BadSource(Exception):
-    """
-    Raise if something is wrong with data source which
-    prevents it being used. Warn the user.
-    """
-    pass
-
-
-class SkipSource(Exception):
-    """
-    Raise to abort using the data source, do not
-    warn the user.
-    """
-    pass
-
-
-class MissingDataset(Exception):
-    pass
-
-
-class MissingAttribute(Exception):
-    pass
-
-
-# TODO Define more required methods
-class Dataset(Protocol):
-    """h5py.Dataset-like"""
-    def shape(self) -> List[int]:
-        """Shape of a dataset"""
-
-
-class Group(Protocol):
-    """h5py.Group-like"""
-    def visititems(self, func: Callable) -> None:
-        """"""
+from .typing import ScippIndex
 
 
 def convert_time_to_datetime64(
@@ -73,17 +37,18 @@ def convert_time_to_datetime64(
     try:
         raw_times_ns = sc.to_unit(raw_times, sc.units.ns, copy=False)
     except sc.UnitError:
-        raise BadSource(f"The units of time in the entry at "
-                        f"'{group_path}/time{{units}}' must be convertible to seconds, "
-                        f"but this cannot be done for '{raw_times.unit}'. Skipping "
-                        f"loading group at '{group_path}'.")
+        raise sc.UnitError(
+            f"The units of time in the entry at "
+            f"'{group_path}/time{{units}}' must be convertible to seconds, "
+            f"but this cannot be done for '{raw_times.unit}'. Skipping "
+            f"loading group at '{group_path}'.")
 
     try:
         _start_ts = sc.scalar(value=np.datetime64(start or "1970-01-01T00:00:00"),
                               unit=sc.units.ns,
                               dtype=sc.DType.datetime64)
     except ValueError:
-        raise BadSource(
+        raise ValueError(
             f"The date string '{start}' in the entry at "
             f"'{group_path}/time@start' failed to parse as an ISO8601 date. "
             f"Skipping loading group at '{group_path}'")
@@ -94,12 +59,6 @@ def convert_time_to_datetime64(
         _scale = sc.scalar(value=scaling_factor)
         times = (raw_times_ns * _scale).astype(sc.DType.int64, copy=False)
     return _start_ts + times
-
-
-# Note that scipp does not support dicts yet, but this HDF5 code does, to
-# allow for loading blocks of 2d (or higher) data efficiently.
-ScippIndex = Union[type(Ellipsis), int, slice, Tuple[str, Union[int, slice]],
-                   Dict[str, Union[int, slice]]]
 
 
 def _to_canonical_select(dims: List[str], select: ScippIndex) -> ScippIndex:
@@ -161,28 +120,3 @@ def to_child_select(dims: List[str], child_dims: List[str],
         if d not in child_dims and d in select:
             del select[d]
     return select
-
-
-def add_position_and_transforms_to_data(data: Union[sc.DataArray,
-                                                    sc.Dataset], transform_name: str,
-                                        position_name: str, base_position_name: str,
-                                        transforms: sc.Variable,
-                                        positions: sc.Variable):
-    if isinstance(data, sc.DataArray):
-        coords = data.coords
-        attrs = data.attrs
-    else:
-        coords = data
-        attrs = data
-
-    if transforms is None:
-        coords[position_name] = positions
-        attrs[base_position_name] = positions
-    elif isinstance(transforms, sc.Variable):
-        # If transform is not time-dependent.
-        coords[position_name] = transforms * positions
-        attrs[base_position_name] = positions
-        attrs[transform_name] = sc.scalar(value=transforms)
-    else:
-        coords[base_position_name] = positions
-        coords[transform_name] = sc.scalar(value=transforms)

@@ -12,8 +12,7 @@ import h5py
 
 from ._hdf5_nexus import _cset_to_encoding, _ensure_str
 from ._hdf5_nexus import _ensure_supported_int_type, _warn_latin1_decode
-from ._json_nexus import JSONAttributeManager, JSONDataset
-from ._common import Group, Dataset, ScippIndex
+from .typing import Group, Dataset, ScippIndex
 from ._common import to_plain_index
 
 NXobjectIndex = Union[str, ScippIndex]
@@ -37,6 +36,11 @@ class DimensionedArray(Protocol):
     @property
     def dims(self) -> List[str]:
         """Dimension labels for the values"""
+
+
+class AttributeManager(Protocol):
+    def __getitem__(self, name: str):
+        """Get attribute"""
 
 
 class NexusStructureError(Exception):
@@ -63,7 +67,7 @@ class NX_class(Enum):
 class Attrs:
     """HDF5 attributes.
     """
-    def __init__(self, attrs: Union[h5py.AttributeManager, JSONAttributeManager]):
+    def __init__(self, attrs: AttributeManager):
         self._attrs = attrs
 
     def __contains__(self, name: str) -> bool:
@@ -72,8 +76,7 @@ class Attrs:
     def __getitem__(self, name: str) -> Any:
         attr = self._attrs[name]
         # Is this check for string attributes sufficient? Is there a better way?
-        is_json = isinstance(self._attrs, JSONAttributeManager)
-        if isinstance(attr, (str, bytes)) and not is_json:
+        if isinstance(attr, (str, bytes)):
             cset = self._attrs.get_id(name.encode("utf-8")).get_type().get_cset()
             return _ensure_str(attr, _cset_to_encoding(cset))
         return attr
@@ -138,8 +141,7 @@ class Field:
     @property
     def dtype(self) -> str:
         dtype = self._dataset.dtype
-        if str(dtype).startswith('str') or (not isinstance(self._dataset, JSONDataset)
-                                            and h5py.check_string_dtype(dtype)):
+        if str(dtype).startswith('str') or h5py.check_string_dtype(dtype):
             dtype = sc.DType.string
         else:
             dtype = sc.DType(_ensure_supported_int_type(str(dtype)))
