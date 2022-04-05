@@ -61,4 +61,3 @@ enable_testing()
 add_subdirectory(lib)
 
 install(DIRECTORY "src/scippneutron/" DESTINATION ${PYTHONDIR})
-install(DIRECTORY "src/scippnexus/" DESTINATION ${PYTHONDIR}/../scippnexus)
