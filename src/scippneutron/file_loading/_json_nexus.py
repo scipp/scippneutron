@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Tuple, Dict, List, Any, Union
 from dataclasses import dataclass
 import numpy as np
-from scippnexus.typing import Group
+from scippnexus.typing import H5Group
 
 _nexus_class = "NX_class"
 _nexus_units = "units"
@@ -123,7 +123,7 @@ class _Node(dict):
 
 def _visit_nodes(root: Dict, group: Dict, nx_class_names: Tuple[str, ...],
                  groups_with_requested_nx_class: Dict[str,
-                                                      List[Group]], path: List[str]):
+                                                      List[H5Group]], path: List[str]):
     try:
         for child in group[_nexus_children]:
             try:
@@ -173,13 +173,13 @@ def contains_stream(group: Dict) -> bool:
     return False
 
 
-def _find_by_type(type_name: str, root: Dict) -> List[Group]:
+def _find_by_type(type_name: str, root: Dict) -> List[H5Group]:
     """
     Finds objects with the requested "type" value
     Returns a list of objects with requested type
     """
     def _visit_nodes_for_type(obj: Dict, requested_type: str,
-                              objects_found: List[Group]):
+                              objects_found: List[H5Group]):
         try:
             for child in obj[_nexus_children]:
                 if child["type"] == requested_type:
@@ -193,7 +193,7 @@ def _find_by_type(type_name: str, root: Dict) -> List[Group]:
             # If this object does not have "children" array then go to next
             pass
 
-    objects_with_requested_type: List[Group] = []
+    objects_with_requested_type: List[H5Group] = []
     _visit_nodes_for_type(root, type_name, objects_with_requested_type)
 
     return objects_with_requested_type
