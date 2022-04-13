@@ -434,8 +434,8 @@ def test_loads_multidimensional_log(load_function: Callable):
 
     log = loaded_data[name].data.value
     expected = sc.DataArray(sc.array(dims=['time', 'dim_1'], values=multidim_values))
-    expected.coords['time'] = sc.epoch(unit='ns') + sc.array(
-        dims=['time'], values=times, unit='s').to(unit='ns')
+    expected.coords['time'] = sc.epoch(unit='s') + sc.array(
+        dims=['time'], values=times, unit='s')
     assert sc.identical(log, expected)
 
 
@@ -462,7 +462,7 @@ def test_loads_log_with_empty_value_and_time_datasets(load_function: Callable):
     assert loaded_data[name].data.values.sizes == {'time': 0}
 
 
-def test_skips_log_with_mismatched_value_and_time(load_function: Callable):
+def test_warns_given_log_with_mismatched_value_and_time(load_function: Callable):
     values = np.array([1, 2, 3]).astype(np.int32)
     # Note that if times exceeds length by 1 it is loaded as bin edges. It is unclear
     # if this is considered valid Nexus.
@@ -474,7 +474,7 @@ def test_skips_log_with_mismatched_value_and_time(load_function: Callable):
     with pytest.warns(UserWarning):
         loaded_data = load_function(builder)
 
-    assert loaded_data is None
+    assert 'time' not in loaded_data['test_log'].value.coords
 
 
 def test_loads_data_from_non_timeseries_log(load_function: Callable):
@@ -929,11 +929,7 @@ def test_loads_component_position_with_multiple_multi_valued_log_transformations
     comp = loaded_data[component_name].value
     assert sc.identical(
         comp.coords['depends_on'].value.coords["time"],
-        sc.to_unit(
-            sc.Variable(dims=["time"],
-                        values=[0, 1],
-                        unit="s",
-                        dtype=sc.DType.datetime64), "ns"))
+        sc.Variable(dims=["time"], values=[0, 1], unit="s", dtype=sc.DType.datetime64))
 
 
 @pytest.mark.parametrize("component_class,component_name",
@@ -1523,32 +1519,23 @@ def test_adjust_log_times_with_different_time_units(units, load_function: Callab
     assert all(diffs <= np.array(1).astype("timedelta64[ns]"))
 
 
-def test_nexus_file_with_invalid_nxlog_time_units_warns_and_skips_log(
+def test_nexus_file_with_invalid_nxlog_time_units_loads_dataset_as_non_datetime(
         load_function: Callable):
     builder = NexusBuilder()
     builder.add_log(
         Log(
             name="test_log_1",
             value=np.zeros(shape=(1, )),
-            time=np.array([1]),
+            time=np.array([1.0]),
             time_units="m",  # Time in metres, should fail.
             start_time="1970-01-01T00:00:00Z"))
-    builder.add_log(
-        Log(name="test_log_2",
-            value=np.zeros(shape=(1, )),
-            time=np.array([1]),
-            time_units="s",
-            start_time="1970-01-01T00:00:00Z"))
 
-    with pytest.warns(UserWarning, match="The units of time in the entry at "):
-        loaded_data = load_function(builder)
-
-        assert "test_log_1" not in loaded_data
-        assert "test_log_2" in loaded_data
+    loaded_data = load_function(builder)
+    assert loaded_data['test_log_1'].value.coords['time'].dtype == sc.DType('float64')
+    assert loaded_data['test_log_1'].value.coords['time'].unit == 'm'
 
 
-def test_nexus_file_with_invalid_log_start_date_warns_and_skips_log(
-        load_function: Callable):
+def test_nexus_file_with_invalid_log_start_date_uses_epoch(load_function: Callable):
     builder = NexusBuilder()
     builder.add_log(
         Log(name="test_log_1",
@@ -1561,11 +1548,11 @@ def test_nexus_file_with_invalid_log_start_date_warns_and_skips_log(
             time=np.array([1]),
             start_time="1970-01-01T00:00:00Z"))
 
-    with pytest.warns(UserWarning, match="The date string "):
-        loaded_data = load_function(builder)
-
-        assert "test_log_1" not in loaded_data
-        assert "test_log_2" in loaded_data
+    loaded_data = load_function(builder)
+    assert sc.identical(
+        loaded_data['test_log_1'].value.coords['time'],
+        sc.epoch(unit='s') +
+        sc.array(dims=['time'], values=[1], unit='s', dtype='int64'))
 
 
 def test_extended_ascii_in_ascii_encoded_dataset(load_function: Callable):
