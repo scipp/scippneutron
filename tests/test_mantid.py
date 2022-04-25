@@ -75,7 +75,7 @@ class TestMantidConversion(unittest.TestCase):
         ws.getSpectrum(ws.getNumberHistograms() - 1).clear(removeDetIDs=True)
 
         da = scn.mantid.convert_EventWorkspace_to_data_array(ws, load_pulse_times=False)
-        assert da.bins.size()['spectrum', -1].value == 0
+        assert da.bins.size()['spectrum', -1]['tof', 0].value == 0
         da.bins.coords['tof'] = da.bins.coords['tof'].copy()
 
     def test_comparison(self):
