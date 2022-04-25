@@ -26,6 +26,7 @@ def memory_is_at_least_gb(required):
 @pytest.mark.skipif(not memory_is_at_least_gb(4), reason='Insufficient virtual memory')
 @pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 class TestMantidConversion(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         import mantid.simpleapi as mantid
@@ -68,6 +69,15 @@ class TestMantidConversion(unittest.TestCase):
         delta = sc.sum(binned_mantid - binned, 'spectrum')
         delta = sc.sum(delta, 'tof')
         self.assertLess(np.abs(delta.value), 1e-5)
+
+    def test_EventWorkspace_empty_event_list_consistent_bin_indices(self):
+        eventWS = self.base_event_ws
+        eventWS.getSpectrum(eventWS.getNumberHistograms()).clear()
+
+        da = scn.mantid.convert_EventWorkspace_to_data_array(eventWS,
+                                                             load_pulse_times=False)
+        assert da.bins.size()['spectrum', -1].value == 0
+        da.bins.coords['tof'] = da.bins.coords['tof'].copy()
 
     def test_comparison(self):
         a = scn.mantid.convert_EventWorkspace_to_data_array(self.base_event_ws,
@@ -966,6 +976,7 @@ def make_dynamic_algorithm_without_fileproperty(alg_name):
         return
 
     class Alg(PythonAlgorithm):
+
         def PyInit(self):
             self.declareProperty("Filename", "")
             self.declareProperty(
