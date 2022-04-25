@@ -70,11 +70,11 @@ class TestMantidConversion(unittest.TestCase):
         self.assertLess(np.abs(delta.value), 1e-5)
 
     def test_EventWorkspace_empty_event_list_consistent_bin_indices(self):
-        eventWS = self.base_event_ws
-        eventWS.getSpectrum(eventWS.getNumberHistograms() - 1).clear(removeDetIDs=True)
+        import mantid.simpleapi as mantid
+        ws = mantid.CloneWorkspace(self.base_event_ws)
+        ws.getSpectrum(ws.getNumberHistograms() - 1).clear(removeDetIDs=True)
 
-        da = scn.mantid.convert_EventWorkspace_to_data_array(eventWS,
-                                                             load_pulse_times=False)
+        da = scn.mantid.convert_EventWorkspace_to_data_array(ws, load_pulse_times=False)
         assert da.bins.size()['spectrum', -1].value == 0
         da.bins.coords['tof'] = da.bins.coords['tof'].copy()
 
