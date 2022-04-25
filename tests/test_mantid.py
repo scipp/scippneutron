@@ -71,7 +71,7 @@ class TestMantidConversion(unittest.TestCase):
 
     def test_EventWorkspace_empty_event_list_consistent_bin_indices(self):
         eventWS = self.base_event_ws
-        eventWS.getSpectrum(eventWS.getNumberHistograms() - 1).clear()
+        eventWS.getSpectrum(eventWS.getNumberHistograms() - 1).clear(removeDetIDs=True)
 
         da = scn.mantid.convert_EventWorkspace_to_data_array(eventWS,
                                                              load_pulse_times=False)
