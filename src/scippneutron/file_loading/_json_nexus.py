@@ -234,6 +234,14 @@ class JSONAttributeManager:
         self._node['attributes'].append(attr)
         return self[name]
 
+    def __iter__(self):
+        if (attrs := self._node.get('attributes')) is not None:
+            if isinstance(attrs, dict):
+                yield from attrs
+            else:
+                for item in attrs:
+                    yield item[_nexus_name]
+
     def get(self, name: str, default=None):
         return self[name] if name in self else default
 
