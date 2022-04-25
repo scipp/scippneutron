@@ -197,8 +197,10 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             det.bins.coords['pulse_time'] = det.bins.coords.pop('event_time_zero')
             if 'detector_number' in det.coords:
                 det.coords['detector_id'] = det.coords.pop('detector_number')
-            else:
+            elif 'pixel_id' in det.coords:
                 det.coords['detector_id'] = det.coords.pop('pixel_id')
+            else:
+                det.coords['detector_id'] = det.coords.pop('spectrum_index')
             if 'pixel_offset' in det.coords:
                 add_position_and_transforms_to_data(
                     data=det,
