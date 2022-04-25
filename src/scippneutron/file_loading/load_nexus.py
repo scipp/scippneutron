@@ -199,8 +199,11 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                 det.coords['detector_id'] = det.coords.pop('detector_number')
             elif 'pixel_id' in det.coords:
                 det.coords['detector_id'] = det.coords.pop('pixel_id')
-            else:
+            elif 'spectrum_index' in det.coords:
                 det.coords['detector_id'] = det.coords.pop('spectrum_index')
+            else:
+                raise KeyError(
+                    "Found neither of detector_number, pixel_id, or spectrum_index.")
             if 'pixel_offset' in det.coords:
                 add_position_and_transforms_to_data(
                     data=det,
