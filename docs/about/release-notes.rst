@@ -3,6 +3,36 @@
 Release Notes
 =============
 
+v0.6.0 (unreleased)
+-------------------
+
+Features
+~~~~~~~~
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+* Remove accidental dependency on Mantid. Users now have to install Mantid themselves if they need it `332 <https://github.com/scipp/scipp/pull/332>`_.
+
+Bugfixes
+~~~~~~~~
+
+Documentation
+~~~~~~~~~~~~~
+
+Deprecations
+~~~~~~~~~~~~
+
+Stability, Maintainability, and Testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Contributors
+~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+and Jan-Lukas Wynen :sup:`a`
+
 v0.5.2 (March 2022)
 -------------------
 
