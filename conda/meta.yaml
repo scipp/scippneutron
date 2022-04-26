@@ -38,7 +38,7 @@ requirements:
     - appdirs
     - graphlib-backport  # for python < 3.9
     - h5py<3.2  # see https://github.com/h5py/h5py/issues/1880#issuecomment-823223154
-    - ipympl
+    - ipympl!=0.9.0  # see https://github.com/matplotlib/ipympl/issues/462
     - ipywidgets
     - jinja2==3.0.3  # jupyter/nbconvert#1736
     - mantid [py==38]
@@ -51,7 +51,7 @@ requirements:
     - pyyaml
     - scipy>=1.7.0
     - sphinx
-    - sphinx-book-theme
+    - sphinx-book-theme=0.2  # 0.3 breaks custom launchbuttons
     - sphinx-copybutton
   run:
     - h5py<3.2  # see https://github.com/h5py/h5py/issues/1880#issuecomment-823223154
@@ -69,7 +69,7 @@ test:
     - conan>=1.45.0
     - markupsafe>=1.1.1,<2.1.0  # see https://github.com/pallets/markupsafe/issues/284
     - gxx_linux-64 11.1.* [linux64]
-    - ipympl
+    - ipympl!=0.9.0  # see https://github.com/matplotlib/ipympl/issues/462
     - ipywidgets
     - matplotlib-base
     - psutil
@@ -80,12 +80,6 @@ test:
     - tbb-devel
     - python-confluent-kafka [linux64]
     - ess-streaming-data-types [linux64]
-    - requests
-    - pandoc
-    - sphinx
-    - sphinx-book-theme
-    - nbsphinx
-    - python-graphviz
   files:
     - cmake-package-test/
   source_files:
