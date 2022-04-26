@@ -32,7 +32,7 @@ requirements:
     - ninja
     - python
     - scipp 0.13.*
-    - scippnexus>=0.0.8
+    - scippnexus>=0.0.9
     - tbb-devel
     # doc build requirements
     - appdirs
@@ -58,7 +58,7 @@ requirements:
     - pooch
     - python
     - scipp 0.13.*
-    - scippnexus>=0.0.8
+    - scippnexus>=0.0.9
     - scipy
 
 test:
