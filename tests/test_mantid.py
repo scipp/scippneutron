@@ -69,6 +69,15 @@ class TestMantidConversion(unittest.TestCase):
         delta = sc.sum(delta, 'tof')
         self.assertLess(np.abs(delta.value), 1e-5)
 
+    def test_EventWorkspace_empty_event_list_consistent_bin_indices(self):
+        import mantid.simpleapi as mantid
+        ws = mantid.CloneWorkspace(self.base_event_ws)
+        ws.getSpectrum(ws.getNumberHistograms() - 1).clear(removeDetIDs=True)
+
+        da = scn.mantid.convert_EventWorkspace_to_data_array(ws, load_pulse_times=False)
+        assert da.bins.size()['spectrum', -1]['tof', 0].value == 0
+        da.bins.coords['tof'] = da.bins.coords['tof'].copy()
+
     def test_comparison(self):
         a = scn.mantid.convert_EventWorkspace_to_data_array(self.base_event_ws,
                                                             load_pulse_times=False)

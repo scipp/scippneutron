@@ -632,6 +632,8 @@ def convert_EventWorkspace_to_data_array(ws,
         for i in range(nHist):
             sp = ws.getSpectrum(i)
             size = sp.getNumberEvents()
+            begins.values[i] = current
+            ends.values[i] = current + size
             if size == 0:  # Skip expensive getters
                 continue
             coord['event', current:current + size].values = sp.getTofs()
@@ -642,8 +644,6 @@ def convert_EventWorkspace_to_data_array(ws,
                 weights['event', current:current + size].values = sp.getWeights()
                 weights['event',
                         current:current + size].variances = sp.getWeightErrors()
-            begins.values[i] = current
-            ends.values[i] = current + size
             current += size
 
     proto_events = {'data': weights, 'coords': {dim: coord}}
