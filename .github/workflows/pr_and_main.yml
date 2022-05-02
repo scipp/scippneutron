@@ -63,7 +63,7 @@ jobs:
 
       - name: ccache
         if: ${{ !contains(matrix.os, 'windows') }}
-        uses: hendrikmuhs/ccache-action@6552c3ce1b3b6bb5ec76cd93d4a4007a8ab16b2e
+        uses: hendrikmuhs/ccache-action@ed038da2f2f09b0c8387c00e1498290a4808da2e
         with:
           key: ${{ matrix.os }}
 
