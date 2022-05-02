@@ -9,10 +9,17 @@
 Neutron scattering toolkit built using [scipp](https://github.com/scipp/scipp) for Data Reduction.
 See the [documentation](https://scipp.github.io/scippneutron/) for details.
 
-This serves facility and instrument specific functionality such as that available in [ess](https://github.com/scipp/ess)
+This serves as a foundation for facility and instrument specific functionality such as that available in [ess](https://github.com/scipp/ess).
 
-## Branch organisation
+## Development
 
-Developments `release` are pinned to the latest [stable release](https://github.com/scipp/scipp/tags) of scipp.
-Other ongoing feature developments should be merged into `main`.
+If you are interested in developing Scipp, please see the [developer getting started guide](https://scipp.github.io/scippneutron/developer/getting-started.html).
 
+## Contributing Organizations
+
+The following organizations have made major contributions to the development of scippneutron and other developments in the [scipp ecosystem](../../../):
+
+* [European Spallation Source ERIC](https://europeanspallationsource.se/), Sweden
+* [Science and Technology Funding Council](https://stfc.ukri.org/councils/stfc), UK
+
+See individual [release notes](https://scipp.github.io/scippneutron/about/release-notes.html) for the individual contributors to each release.
