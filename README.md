@@ -1,4 +1,6 @@
-[![Build Status](https://dev.azure.com/scipp/scippneutron/_apis/build/status/Main?branchName=main)](https://dev.azure.com/scipp/scippneutron/_build/latest?definitionId=44&branchName=main)
+[![Anaconda-Server Badge](https://anaconda.org/scipp/scipp/badges/installer/conda.svg)](https://conda.anaconda.org/scipp/label/main)
+[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](LICENSE)
+[![Release build](https://github.com/scipp/scipp/actions/workflows/release.yml/badge.svg)](https://github.com/scipp/scippneutron/actions/workflows/release.yml)
 
 # scippneutron
 
