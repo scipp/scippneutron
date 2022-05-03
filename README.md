@@ -13,7 +13,7 @@ This serves as a foundation for facility and instrument specific functionality s
 
 ## Development
 
-If you are interested in developing Scipp, please see the [developer getting started guide](https://scipp.github.io/scippneutron/developer/getting-started.html).
+If you are interested in developing Scippneutron, please see the [developer getting started guide](https://scipp.github.io/scippneutron/developer/getting-started.html).
 
 ## Contributing Organizations
 
