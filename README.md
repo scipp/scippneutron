@@ -1,4 +1,6 @@
-[![Build Status](https://dev.azure.com/scipp/scippneutron/_apis/build/status/Main?branchName=main)](https://dev.azure.com/scipp/scippneutron/_build/latest?definitionId=44&branchName=main)
+[![Anaconda-Server Badge](https://anaconda.org/scipp/scipp/badges/installer/conda.svg)](https://conda.anaconda.org/scipp/label/main)
+[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](LICENSE)
+[![Release build](https://github.com/scipp/scipp/actions/workflows/release.yml/badge.svg)](https://github.com/scipp/scippneutron/actions/workflows/release.yml)
 
 # scippneutron
 
@@ -7,10 +9,17 @@
 Neutron scattering toolkit built using [scipp](https://github.com/scipp/scipp) for Data Reduction.
 See the [documentation](https://scipp.github.io/scippneutron/) for details.
 
-This serves facility and instrument specific functionality such as that available in [ess](https://github.com/scipp/ess)
+This serves as a foundation for facility and instrument specific functionality such as that available in [ess](https://github.com/scipp/ess).
 
-## Branch organisation
+## Development
 
-Developments `release` are pinned to the latest [stable release](https://github.com/scipp/scipp/tags) of scipp.
-Other ongoing feature developments should be merged into `main`.
+If you are interested in developing Scippneutron, please see the [developer getting started guide](https://scipp.github.io/scippneutron/developer/getting-started.html).
 
+## Contributing Organizations
+
+The following organizations have made major contributions to the development of scippneutron and other developments in the [scipp ecosystem](../../../):
+
+* [European Spallation Source ERIC](https://europeanspallationsource.se/), Sweden
+* [Science and Technology Facilities Council](https://www.ukri.org/councils/stfc/), UK
+
+See individual [release notes](https://scipp.github.io/scippneutron/about/release-notes.html) for the individual contributors to each release.
