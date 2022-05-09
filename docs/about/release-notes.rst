@@ -3,28 +3,19 @@
 Release Notes
 =============
 
-v0.6.0 (unreleased)
--------------------
-
-Features
-~~~~~~~~
+v0.5.3 (May 2022)
+-----------------
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
 * Remove accidental dependency on Mantid. Users now have to install Mantid themselves if they need it `332 <https://github.com/scipp/scipp/pull/332>`_.
+* Removed module ``scippneutron.nexus`` in favor of `scippnexus <https://scipp.github.io/scippnexus/>`_ to implement :func:`scippneutron.load_nexus`.
 
 Bugfixes
 ~~~~~~~~
 
-Documentation
-~~~~~~~~~~~~~
-
-Deprecations
-~~~~~~~~~~~~
-
-Stability, Maintainability, and Testing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Fixed loading event data for monitors that is stored in a separate NeXus group.
 
 Contributors
 ~~~~~~~~~~~~
