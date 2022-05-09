@@ -3,7 +3,7 @@
 Release Notes
 =============
 
-v0.5.3 (May 2022)
+v0.6.0 (May 2022)
 -----------------
 
 Breaking changes
