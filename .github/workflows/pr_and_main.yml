@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: 3.8
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install -r requirements/ci.txt
+      - run: python -m pip install -r requirements/static.txt
       - run: tox -e static
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
@@ -82,12 +82,15 @@ jobs:
       - run: cmake --build --preset build
       - run: ctest --preset test
 
-      - run: tox -e test
+      - run: python -m pytest -n auto -v tests
 
-      - run: tox -e docs
+      - run: |
+          python -m sphinx -j2 -v -b html -d doctrees docs html
+          python -m sphinx -j2 -v -b doctest -d doctrees docs html
+          find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
         if: ${{ contains(matrix.variant.os, 'ubuntu') }}
 
-      - run: tox -e linkcheck
+      - run: python -m sphinx -j4 -v -b linkcheck -d doctrees docs html
         # Linkcheck can be flaky. Avoid randomly breaking PR builds by running only on `main`
         if: ${{ contains(matrix.os, 'ubuntu') && github.ref == 'refs/heads/main' }}
 

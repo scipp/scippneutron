@@ -1,0 +1,25 @@
+name: ubuntu-latest
+channels:
+  - conda-forge
+  - mantid
+  - scipp
+dependencies:
+  - cmake
+  - conan>=1.45.0
+  - cppcheck
+  - gxx_linux-64 11.1.*
+  - mantid 6.3.*
+  - ninja
+  - pandoc
+  - scipp 0.14.*
+  - pooch
+  - pytest
+  - pytest-asyncio
+  - pytest-xdist
+  - python-graphviz
+  - pythreejs
+  - scipp=0.14.*
+  - scippnexus
+  - tbb=2020.2.*
+  - tbb-devel=2020.2.*
+  - tox

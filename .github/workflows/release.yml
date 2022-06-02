@@ -62,7 +62,10 @@ jobs:
         with:
           name: conda-package-ubuntu-20.04-py3.8
       - run: conda install linux-64/scippneutron-*.tar.bz2
-      - run: tox --sitepackages -e docs
+      - run: |
+          python -m sphinx -j2 -v -b html -d doctrees docs html
+          python -m sphinx -j2 -v -b doctest -d doctrees docs html
+          find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
       - uses: actions/upload-artifact@v2
         with:
           name: html
