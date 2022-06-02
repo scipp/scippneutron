@@ -26,7 +26,6 @@ def memory_is_at_least_gb(required):
 @pytest.mark.skipif(not memory_is_at_least_gb(4), reason='Insufficient virtual memory')
 @pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 class TestMantidConversion(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         import mantid.simpleapi as mantid
@@ -976,7 +975,6 @@ def make_dynamic_algorithm_without_fileproperty(alg_name):
         return
 
     class Alg(PythonAlgorithm):
-
         def PyInit(self):
             self.declareProperty("Filename", "")
             self.declareProperty(
