@@ -1,0 +1,106 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash -l {0}  # required for conda env
+
+jobs:
+  build_conda:
+    name: Conda package build (${{ matrix.variant.target }}, py${{ matrix.python-version }})
+    runs-on: ${{ matrix.variant.os }}
+    strategy:
+      matrix:
+        variant:
+          - {os: ubuntu-20.04, target: linux_64}
+          - {os: macos-11, target: osx_64}
+          - {os: macos-11, target: osx_arm64}
+          - {os: windows-2019, target: win_64}
+        python-version: ["3.8", "3.9"]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+          fetch-depth: 0  # history required so cmake can determine version
+
+      - name: Setup Mambaforge
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          micromamba-version: 0.24.0
+          environment-file: false
+          environment-name: release
+          channels: conda-forge
+          extra-specs: |
+            python=${{ matrix.python-version }}
+            conda-build
+      - run: conda build --channel conda-forge --channel scipp --channel ess-dmsc --channel mantid --variant-config-files=conda/variants/${{ matrix.variant.target }}.yaml --python=${{ matrix.python-version }} --no-anaconda-upload --override-channels --output-folder conda/package conda
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: conda-package-${{ matrix.variant.os }}-py${{ matrix.python-version }}
+          path: conda/package/*/scippneutron*.tar.bz2
+
+  docs:
+    name: Build documentation
+    needs: build_conda
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Mambaforge and dev env
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          micromamba-version: 0.24.0
+          environment-file: .buildconfig/ci-linux.yml
+          cache-env: true
+          extra-specs: python=3.8
+      - uses: actions/download-artifact@v2
+        with:
+          name: conda-package-ubuntu-20.04-py3.8
+      - run: conda install linux-64/scippneutron-*.tar.bz2
+      - run: tox --sitepackages -e docs
+      - uses: actions/upload-artifact@v2
+        with:
+          name: html
+          path: html/
+
+  upload_packages:
+    name: Deploy packages
+    needs: [docs]
+    runs-on: ubuntu-20.04
+    if: github.event_name == 'release' && github.event.action == 'published'
+
+    steps:
+      - uses: actions/download-artifact@v2
+      - name: Setup Mambaforge
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          micromamba-version: 0.24.0
+      - run: conda install -c conda-forge --yes anaconda-client
+      - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package-*/*/*.tar.bz2)
+
+  upload_docs:
+    name: Deploy docs
+    needs: [upload_packages]
+    runs-on: ubuntu-20.04
+    if: github.event_name == 'release' && github.event.action == 'published'
+    strategy:
+      max-parallel: 1  # Avoid potential race condition when pushing to github pages repo
+      matrix:
+        docs-folder: ['latest', 'release']
+
+    steps:
+      - uses: actions/checkout@v3  # Need to checkout repo so github-pages-deploy-action works
+      - uses: actions/download-artifact@v2
+      - name: Deploy to release docs
+        uses: JamesIves/github-pages-deploy-action@v4.3.3
+        with:
+          branch: gh-pages
+          folder: html
+          target-folder: ${{ matrix.docs-folder == 'latest' && format('release/{0}', github.ref_name) || '' }}
+          single-commit: true
+          clean-exclude: release
