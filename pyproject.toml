@@ -12,5 +12,7 @@ filterwarnings = [
   'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
   'ignore:Keyword `trait` is deprecated in traitlets 5.0, use `value_trait` instead:DeprecationWarning',
   'ignore:Keyword `traits` is deprecated in traitlets 5.0, use `per_key_traits` instead:DeprecationWarning',
+  # TODO Plotting warnings that need to be adressed
+  'ignore:Support for mapping types has been deprecated and will be dropped in a future release:DeprecationWarning',
 ]
 testpaths = "tests"
