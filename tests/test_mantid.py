@@ -855,7 +855,7 @@ def test_from_mask_workspace():
     mask = LoadMask('HYS', path.join(dir_path, 'HYS_mask.xml'))
     da = scn.from_mantid(mask)
     assert da.data.dtype == sc.DType.bool
-    assert da.dims == ['spectrum']
+    assert da.dims == ('spectrum', )
     assert da.variances is None
 
 
