@@ -31,7 +31,7 @@ requirements:
     - git
     - ninja
     - python
-    - scipp 0.13.*
+    - scipp 0.14.*
     - scippnexus>=0.0.9
     - tbb-devel
     # doc build requirements
@@ -57,7 +57,7 @@ requirements:
     - h5py<3.2  # see https://github.com/h5py/h5py/issues/1880#issuecomment-823223154
     - pooch
     - python
-    - scipp 0.13.*
+    - scipp 0.14.*
     - scippnexus>=0.0.9
     - scipy
 
