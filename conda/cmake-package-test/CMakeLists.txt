@@ -31,17 +31,10 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
 
 conan_cmake_autodetect(conan_settings)
-conan_add_remote(
-  NAME scipp URL https://artifactoryconan.esss.dk/artifactory/api/conan/scipp
-)
 conan_cmake_install(
   PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR} SETTINGS ${conan_settings} BUILD
   outdated
 )
-
-find_package(Boost 1.67 REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package(LLNL-Units REQUIRED)
 
 set(PKG_VERSION
     "undefined"
