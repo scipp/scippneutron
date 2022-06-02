@@ -24,60 +24,50 @@ source:
 
 requirements:
   build:
+    - {{ compiler('cxx') }}
+    - cross-python_{{ target_platform }}  # [build_platform != target_platform]
     - cmake
     - conan>=1.45.0
-    - markupsafe>=1.1.1,<2.1.0  # see https://github.com/pallets/markupsafe/issues/284
-    - gxx_linux-64 11.1.* [linux64]
+    - cppcheck [linux64]
     - git
+    - markupsafe>=1.1.1,<2.1.0  # see https://github.com/pallets/markupsafe/issues/284
     - ninja
     - python
-    - scipp 0.14.*
-    - scippnexus>=0.0.9
-    - tbb-devel
-    # doc build requirements
-    - appdirs
-    - graphlib-backport  # for python < 3.9
-    - h5py<3.2  # see https://github.com/h5py/h5py/issues/1880#issuecomment-823223154
-    - ipympl!=0.9.0  # see https://github.com/matplotlib/ipympl/issues/462
-    - ipywidgets
-    - jinja2==3.0.3  # jupyter/nbconvert#1736
-    - mantid [py==38]
-    - matplotlib-base
-    - nbsphinx
-    - pooch
-    - python-configuration
-    - python-graphviz
-    - pythreejs
-    - pyyaml
-    - scipy>=1.7.0
-    - sphinx
-    - sphinx-book-theme=0.2  # 0.3 breaks custom launchbuttons
-    - sphinx-copybutton
+  host:
+    - python
+    - scipp {{ scipp }}
+    - scippnexus>=0.1
+    - tbb-devel=2020.2.*
   run:
     - h5py<3.2  # see https://github.com/h5py/h5py/issues/1880#issuecomment-823223154
+    - numpy {{ numpy }}
     - pooch
     - python
-    - scipp 0.14.*
-    - scippnexus>=0.0.9
-    - scipy
+    - scipp {{ scipp }}
+    - scippnexus>=0.1
+    - scipy>=1.7.0
 
+# Only the cmake-package-test works when cross compiling.
+# But it is not very important at the moment and
+# leaving out the entire test section speeds up conda build
+{% if build_platform == target_platform %}
 test:
   imports:
     - scippneutron
   requires:
+    - {{ compiler('cxx') }}
     - cmake
     - conan>=1.45.0
-    - markupsafe>=1.1.1,<2.1.0  # see https://github.com/pallets/markupsafe/issues/284
-    - gxx_linux-64 11.1.* [linux64]
-    - ipympl!=0.9.0  # see https://github.com/matplotlib/ipympl/issues/462
+    - ipympl
     - ipywidgets
+    - markupsafe>=1.1.1,<2.1.0  # see https://github.com/pallets/markupsafe/issues/284
     - matplotlib-base
     - psutil
     - pytest
     - pytest-asyncio
     - pythreejs
     - mantid [py==38]
-    - tbb-devel
+    - tbb-devel=2020.2.*
     - python-confluent-kafka [linux64]
     - ess-streaming-data-types [linux64]
   files:
@@ -87,22 +77,18 @@ test:
   commands:
     - python -m pytest -v tests
     - python cmake-package-test/build.py
+{% endif %}
 
 build:
   ignore_run_exports:
     - mantid [py==38]
   # Build number is number of Git commits since last tag, if that fails use 0
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
-  script_env:
-    - DOCS_HTML_DIR # [linux]
   script:
-    - cmake --preset package-linux [linux]
-    - cmake --preset package-macos [osx]
-    - cmake --preset package-windows [win]
+    # Passing Python_EXECUTABLE ensures that cmake sees the host interpreter instead of build.
+    - cmake --preset package-{{ target_platform }} -DPython_EXECUTABLE=$PYTHON
     - cmake --build --preset build
-    - cmake --build --preset package-docs [linux and py==38]
-    - cp -r build/html $DOCS_HTML_DIR [linux and py==38]
-    - ctest --preset test
+    - ctest --preset test  # [build_platform == target_platform]
 
 
 about:
