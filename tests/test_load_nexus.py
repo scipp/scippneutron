@@ -1627,7 +1627,7 @@ def test_load_nexus_adds_single_tof_bin(load_function: Callable):
     loaded_data = load_function(builder)
 
     # Size 2 for each of the two bin edges around a single bin
-    assert loaded_data.coords["tof"].shape == (2,)
+    assert loaded_data.coords["tof"].shape == (2, )
 
     # Assert bin edges correspond to smallest and largest+1 time-of-flights
     # in data.
