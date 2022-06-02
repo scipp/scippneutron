@@ -127,7 +127,7 @@ def check_tof_conversion_metadata(converted, target, coord_unit):
     # Due to conversion, the coordinate now also depends on 'spectrum'.
     assert coord.sizes == {'spectrum': 2, target: 4}
     # The target dimension is always placed as the inner dim.
-    assert coord.dims == ['spectrum', target]
+    assert coord.dims == ('spectrum', target)
     assert coord.unit == coord_unit
 
 

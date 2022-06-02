@@ -21,4 +21,4 @@ def test_neutron_beamline():
     two_theta = scn.two_theta(d)
     assert sc.identical(scn.L1(d) + scn.L2(d), scn.Ltotal(d, scatter=True))
     assert two_theta.unit == sc.units.rad
-    assert two_theta.dims == ['position']
+    assert two_theta.dims == ('position',)
