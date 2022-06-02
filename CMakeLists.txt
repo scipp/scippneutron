@@ -4,7 +4,7 @@
 # ~~~
 cmake_minimum_required(VERSION 3.16)
 execute_process(
-  COMMAND git describe --tag --abbrev=0
+  COMMAND git describe --tags --abbrev=0
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
   OUTPUT_VARIABLE SCIPPNEUTRON_VERSION
   OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -23,7 +23,7 @@ if(NOT CMAKE_BUILD_TYPE)
         "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel."
         FORCE
   )
-endif(NOT CMAKE_BUILD_TYPE)
+endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
