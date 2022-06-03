@@ -37,12 +37,25 @@ html_show_sourcelink = True
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.intersphinx',
-    'sphinx.ext.mathjax', 'sphinx.ext.doctest', 'IPython.sphinxext.ipython_directive',
-    'IPython.sphinxext.ipython_console_highlighting', 'nbsphinx'
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.napoleon',
+    'sphinx_autodoc_typehints',
+    'sphinx_copybutton',
+    'IPython.sphinxext.ipython_directive',
+    'IPython.sphinxext.ipython_console_highlighting',
+    'nbsphinx'
 ]
 
-autodoc_typehints = 'description'
+autodoc_type_aliases = {
+    'DTypeLike': 'DTypeLike',
+    'VariableLike': 'VariableLike',
+    'MetaDataMap': 'MetaDataMap',
+    'array_like': 'array_like',
+}
 
 rst_epilog = f"""
 .. |SCIPPNEUTRON_RELEASE_MONTH| replace:: {os.popen("git show -s --format=%cd --date=format:'%B %Y'").read()}
@@ -61,6 +74,22 @@ intersphinx_mapping = {
 # looks more suitable in the long run when the API grows.
 # For a nice example see how xarray handles its API documentation.
 autosummary_generate = True
+
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+napoleon_use_param = True
+napoleon_use_rtype = False
+napoleon_preprocess_types = True
+napoleon_type_aliases = {
+    # objects without namespace: scipp
+    "DataArray": "~scipp.DataArray",
+    "Dataset": "~scipp.Dataset",
+    "Variable": "~scipp.Variable",
+    # objects without namespace: numpy
+    "ndarray": "~numpy.ndarray",
+}
+typehints_defaults = 'comma'
+typehints_use_rtype = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -207,4 +236,6 @@ linkcheck_ignore = [
     r'https?://github\.com/.*?/blob/[a-f0-9]+/.+?#',
     # Anchors in README's on GitHub cannot be found by linkcheck.
     r'https?://github\.com/[^/]+/[^/]+\#',
+    # Many links for PRs from our release notes. Slow and unlikely to cause issues.
+    'https://github.com/scipp/scipp/pull/[0-9]+',
 ]
