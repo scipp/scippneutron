@@ -1,9 +1,11 @@
 import scippneutron as scn
 from mantid.kernel import ConfigService
+
 ConfigService.setLogLevel(1)
 
 
 class TransformCoords:
+
     def setup(self):
         da = scn.load(scn.data.get_path('PG3_4844_event.nxs'))
         self.var_tof = da

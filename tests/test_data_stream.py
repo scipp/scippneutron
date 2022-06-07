@@ -37,6 +37,7 @@ except ImportError:
 
 
 class FakeKafkaError:
+
     def __init__(self, kafka_error_code: int):
         self._error_code = kafka_error_code
 
@@ -48,6 +49,7 @@ class FakeKafkaError:
 
 
 class FakeMessage:
+
     def __init__(self,
                  payload: bytes,
                  error_code: Optional[int] = None,
@@ -69,6 +71,7 @@ class FakeMessage:
 
 
 class FakeQueryConsumer:
+
     def __init__(self,
                  instrument_name: str = "",
                  low_and_high_offset: Tuple[int, int] = (2, 10),

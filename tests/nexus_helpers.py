@@ -184,6 +184,7 @@ class Monitor:
 
 
 class InMemoryNeXusWriter:
+
     def add_dataset_at_path(self, file_root: h5py.File, path: str, data: np.ndarray,
                             attributes: Dict):
         path_split = path.split("/")
@@ -265,6 +266,7 @@ def _parent_and_name_from_path(file_root: Dict, path: str) -> Tuple[Dict, str]:
 
 
 class JsonWriter:
+
     def add_dataset_at_path(self, file_root: Dict, path: str, data: np.ndarray,
                             attributes: Dict):
         parent_group, dataset_name = _parent_and_name_from_path(file_root, path)
@@ -317,6 +319,7 @@ class JsonWriter:
 
 
 class NumpyEncoder(json.JSONEncoder):
+
     def default(self, obj):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
@@ -327,6 +330,7 @@ class NexusBuilder:
     """
     Allows building an in-memory NeXus file for use in tests
     """
+
     def __init__(self):
         self._event_data: List[EventData] = []
         self._detectors: List[Detector] = []

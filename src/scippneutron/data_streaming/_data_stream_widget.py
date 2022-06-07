@@ -10,6 +10,7 @@ def _unix_ms_to_datetime(unix_ms: int) -> datetime:
 
 
 class DataStreamWidget:
+
     def __init__(self,
                  start_time_ms: Optional[int] = None,
                  stop_time_ms: Optional[int] = None,

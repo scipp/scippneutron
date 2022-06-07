@@ -48,6 +48,7 @@ def to_tof():
     at detectors are sufficiently large such that a common lambda_min definition is
     applicable.
     """
+
     def _tof_min(*, Ltotal, lambda_min):
         return _tof_from_wavelength(Ltotal=Ltotal, wavelength=lambda_min)
 

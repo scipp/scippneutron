@@ -501,7 +501,8 @@ def test_loads_data_from_multiple_logs_with_same_name(load_function: Callable):
     builder.add_detector(Detector(log=Log(name, values_2)))
 
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message='Skipped loading',
+        warnings.filterwarnings("ignore",
+                                message='Skipped loading',
                                 category=UserWarning)
         loaded_data = load_function(builder)
 
@@ -845,7 +846,8 @@ def test_raises_if_offset_but_not_offset_units_found(
                                     offset_unit=None)
     builder.add_component(component_class(component_name, depends_on=transformation))
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message='Skipped loading',
+        warnings.filterwarnings("ignore",
+                                message='Skipped loading',
                                 category=UserWarning)
         loaded_data = load_function(builder)
     assert loaded_data is None
@@ -1429,9 +1431,9 @@ def test_start_and_end_times_appear_in_dataset_if_set(load_function: Callable):
                         sc.DataArray(sc.scalar("2002-02-02T00:00:00")))
 
 
-@pytest.mark.parametrize("log_start,scaling_factor", (("2000-01-01T01:00:00", 1000),
-                                                      ("2000-01-01T00:00:00", 0.001),
-                                                      ("2010-01-01T00:00:00", None)))
+@pytest.mark.parametrize("log_start,scaling_factor",
+                         (("2000-01-01T01:00:00", 1000), ("2000-01-01T00:00:00", 0.001),
+                          ("2010-01-01T00:00:00", None)))
 def test_load_log_times(log_start: str, scaling_factor: float, load_function: Callable):
 
     times = np.array([0., 10., 20., 30., 40., 50.], dtype="float64")

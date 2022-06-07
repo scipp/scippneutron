@@ -61,6 +61,7 @@ class _SlowMetadataBuffer:
     Typically the data sources are EPICS PVs with updates published to
     Kafka via the Forwarder (https://github.com/ess-dmsc/forwarder/).
     """
+
     def __init__(self, stream_info: StreamInfo, buffer_size: int):
         self._buffer_mutex = threading.Lock()
         self._buffer_size = buffer_size
@@ -101,6 +102,7 @@ class _FastMetadataBuffer:
     rapidly values which, for efficiency, publish updates directly to Kafka
     rather than via EPICS and the Forwarder.
     """
+
     def __init__(self, stream_info: StreamInfo, buffer_size: int, data_queue: mp.Queue):
         self._buffer_mutex = threading.Lock()
         self._buffer_size = buffer_size
@@ -185,6 +187,7 @@ class _ChopperMetadataBuffer:
     Buffer for chopper top-dead-centre timestamps from Kafka messages
     serialised according to the flatbuffer schema with id CHOPPER_FB_ID.
     """
+
     def __init__(self, stream_info: StreamInfo, buffer_size: int, data_queue: mp.Queue):
         self._buffer_mutex = threading.Lock()
         self._buffer_size = buffer_size
@@ -245,6 +248,7 @@ class StreamedDataBuffer:
     TODO: This also owns the metadata buffers. Maybe this should be moved to a
     separate place in the future?
     """
+
     def __init__(self, queue: mp.Queue, event_buffer_size: int,
                  slow_metadata_buffer_size: int, fast_metadata_buffer_size: int,
                  chopper_buffer_size: int, interval_s: float, run_id: str):

@@ -2,6 +2,7 @@ import scippneutron as scn
 
 
 class LoadNexus:
+
     def setup(self):
         self.file_path = scn.data.get_path('PG3_4844_event.nxs')
 

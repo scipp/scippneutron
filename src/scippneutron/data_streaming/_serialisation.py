@@ -33,6 +33,7 @@ def convert_to_pickleable_dict(data: sc.DataArray) -> Dict:
 
 
 def convert_from_pickleable_dict(data_dict: Dict) -> sc.DataArray:
+
     def convert_from_str_unit_and_dtype(d):
         delete_dtype = False
         for k, v in d.items():
