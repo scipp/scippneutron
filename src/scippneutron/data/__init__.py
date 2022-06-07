@@ -4,7 +4,7 @@
 import scipp as sc
 from ..mantid import load
 
-_version = '4'
+_version = '5'
 
 __all__ = ['tutorial_dense_data', 'tutorial_event_data', 'get_path']
 
@@ -25,7 +25,7 @@ def _make_pooch():
             'mcstas_sans.h5': 'md5:a608255dd757905490882eb35e209d12',
             'CNCS_51936_event.nxs': 'md5:5ba401e489260a44374b5be12b780911',
             'GEM40979.raw': 'md5:6df0f1c2fc472af200eec43762e9a874',
-            'PG3_4844_calibration.h5': 'md5:a5f12041492a9193a89229bc027d617a',
+            'PG3_4844_calibration.h5': 'md5:39005d7b4befcafa173f00645549e2b4',
             'PG3_4844_event.nxs': 'md5:d5ae38871d0a09a28ae01f85d969de1e',
             'PG3_4866_event.nxs': 'md5:3d543bc6a646e622b3f4542bc3435e7e',
             'PG3_4871_event.nxs': 'md5:a3d0edcb36ab8e9e3342cd8a4440b779',

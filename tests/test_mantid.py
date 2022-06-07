@@ -333,7 +333,7 @@ class TestMantidConversion(unittest.TestCase):
         for monitor_name in expected_monitor_attrs:
             monitor = ds.attrs[monitor_name].value
             assert isinstance(monitor, sc.DataArray)
-            assert monitor.shape == [4471]
+            assert monitor.shape == (4471, )
             self.check_monitor_metadata(monitor)
 
     def test_Workspace2D_with_include_monitors(self):
@@ -354,7 +354,7 @@ class TestMantidConversion(unittest.TestCase):
         for monitor_name in expected_monitor_attrs:
             monitor = ds.attrs[monitor_name].value
             assert isinstance(monitor, sc.DataArray)
-            assert monitor.shape == [4471]
+            assert monitor.shape == (4471, )
             self.check_monitor_metadata(monitor)
 
     def test_EventWorkspace_with_monitors(self):
@@ -372,7 +372,7 @@ class TestMantidConversion(unittest.TestCase):
         for monitor_name in expected_monitor_attrs:
             monitor = ds.attrs[monitor_name].value
             assert isinstance(monitor, sc.DataArray)
-            assert monitor.shape == [200001]
+            assert monitor.shape == (200001, )
             self.check_monitor_metadata(monitor)
 
     def test_mdhisto_workspace_q(self):
@@ -395,9 +395,9 @@ class TestMantidConversion(unittest.TestCase):
 
         histo_data_array = scn.mantid.convert_MDHistoWorkspace_to_data_array(md_histo)
 
-        self.assertEqual(histo_data_array.coords['Q_x'].values.shape, (4, ))
-        self.assertEqual(histo_data_array.coords['Q_y'].values.shape, (3, ))
-        self.assertEqual(histo_data_array.coords['Q_z'].values.shape, (5, ))
+        self.assertEqual(histo_data_array.coords['Q_x'].shape, (4, ))
+        self.assertEqual(histo_data_array.coords['Q_y'].shape, (3, ))
+        self.assertEqual(histo_data_array.coords['Q_z'].shape, (5, ))
         self.assertEqual(histo_data_array.coords['Q_x'].unit,
                          sc.units.dimensionless / sc.units.angstrom)
         self.assertEqual(histo_data_array.coords['Q_y'].unit,
@@ -405,7 +405,7 @@ class TestMantidConversion(unittest.TestCase):
         self.assertEqual(histo_data_array.coords['Q_z'].unit,
                          sc.units.dimensionless / sc.units.angstrom)
 
-        self.assertEquals(histo_data_array.values.shape, (3, 4, 5))
+        self.assertEquals(histo_data_array.shape, (3, 4, 5))
 
         # Sum over 2 dimensions to simplify finding max.
         max_1d = sc.sum(sc.sum(histo_data_array, dim='Q_y'), dim='Q_x').values
@@ -821,8 +821,8 @@ def test_attrs_with_dims():
     assert isinstance(ds.attrs['attr1'].value, int)
     # Variable (single value) wrapped Variable
     assert isinstance(ds.attrs['attr2'].value, sc.Variable)
-    assert ds.attrs['attr2'].shape == []  # outer wrapper
-    assert ds.attrs['attr2'].value.shape == [10]  # inner held
+    assert ds.attrs['attr2'].shape == ()  # outer wrapper
+    assert ds.attrs['attr2'].value.shape == (10, )  # inner held
 
 
 @pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
@@ -855,7 +855,7 @@ def test_from_mask_workspace():
     mask = LoadMask('HYS', path.join(dir_path, 'HYS_mask.xml'))
     da = scn.from_mantid(mask)
     assert da.data.dtype == sc.DType.bool
-    assert da.dims == ['spectrum']
+    assert da.dims == ('spectrum', )
     assert da.variances is None
 
 

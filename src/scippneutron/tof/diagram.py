@@ -81,16 +81,24 @@ class TimeDistanceDiagram:
         to be emitted from a single point, i.e., no resolution effects are taken into
         account.
 
-        :param Lmin Distance where neutrons are "emitted", such as the source pulse or
+        Parameters
+        ----------
+        Lmin:
+            Distance where neutrons are "emitted", such as the source pulse or
             a chopper. The default is at 0.0, i.e., the source position.
-        :param Lmax Distance where propagation of neutrons stops. This is typically set
+        Lmax:
+            Distance where propagation of neutrons stops. This is typically set
             to the last detector (or after), but could be set to a chopper distance if
             a chopper extracts a smaller wavelength band.
-        :param lambda_min Minimum wavelength, defining fastest neutrons.
-        :param lambda_max Maximum wavelength, defining slowest neutrons. If lambda_max
+        lambda_min:
+            Minimum wavelength, defining fastest neutrons.
+        lambda_max:
+            Maximum wavelength, defining slowest neutrons. If lambda_max
             is None (the default) it is set such that there is no frame overlap at Lmax.
-        :param time_offset Offset time at which neutrons are emitted.
-        :param frames The number of frames that should be drawn.
+        time_offset:
+            Offset time at which neutrons are emitted.
+        frames:
+            The number of frames that should be drawn.
         """
         tof_min = self.to_time(
             _tof_from_wavelength(wavelength=lambda_min, Ltotal=Lmax - Lmin))
