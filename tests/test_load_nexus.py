@@ -154,10 +154,10 @@ def test_loads_pulse_times_from_single_event_with_different_units(
 
 
 @pytest.mark.parametrize("time_zero_offset,time_zero,time_zero_unit,expected_time", (
-    ("1980-01-01T00:00:00.0Z", 30, "s", "1980-01-01T00:00:30.0Z"),
-    ("1990-01-01T00:00:00.0Z", 5000, "ms", "1990-01-01T00:00:05.0Z"),
-    ("2000-01-01T00:00:00.0Z", 3 * 10**6, "us", "2000-01-01T00:00:03.0Z"),
-    ("2010-01-01T00:00:00.0Z", 12, "hour", "2010-01-01T12:00:00.0Z"),
+    ("1980-01-01T00:00:00.0", 30, "s", "1980-01-01T00:00:30.0"),
+    ("1990-01-01T00:00:00.0", 5000, "ms", "1990-01-01T00:00:05.0"),
+    ("2000-01-01T00:00:00.0", 3 * 10**6, "us", "2000-01-01T00:00:03.0"),
+    ("2010-01-01T00:00:00.0", 12, "hour", "2010-01-01T12:00:00.0"),
 ))
 def test_loads_pulse_times_with_combinations_of_offset_and_units(
         load_function: Callable, time_zero_offset: str, time_zero: float,
@@ -1411,20 +1411,20 @@ def test_warning_but_no_error_for_unrecognised_log_unit(load_function: Callable)
 
 def test_start_and_end_times_appear_in_dataset_if_set(load_function: Callable):
     builder = NexusBuilder()
-    builder.add_run_start_time("2001-01-01T00:00:00Z")
-    builder.add_run_end_time("2002-02-02T00:00:00Z")
+    builder.add_run_start_time("2001-01-01T00:00:00")
+    builder.add_run_end_time("2002-02-02T00:00:00")
 
     loaded_data = load_function(builder)
 
     assert sc.identical(loaded_data["start_time"],
-                        sc.DataArray(sc.scalar("2001-01-01T00:00:00Z")))
+                        sc.DataArray(sc.scalar("2001-01-01T00:00:00")))
     assert sc.identical(loaded_data["end_time"],
-                        sc.DataArray(sc.scalar("2002-02-02T00:00:00Z")))
+                        sc.DataArray(sc.scalar("2002-02-02T00:00:00")))
 
 
-@pytest.mark.parametrize("log_start,scaling_factor", (("2000-01-01T01:00:00Z", 1000),
-                                                      ("2000-01-01T00:00:00Z", 0.001),
-                                                      ("2010-01-01T00:00:00Z", None)))
+@pytest.mark.parametrize("log_start,scaling_factor", (("2000-01-01T01:00:00", 1000),
+                                                      ("2000-01-01T00:00:00", 0.001),
+                                                      ("2010-01-01T00:00:00", None)))
 def test_load_log_times(log_start: str, scaling_factor: float, load_function: Callable):
 
     times = np.array([0., 10., 20., 30., 40., 50.], dtype="float64")
@@ -1476,7 +1476,7 @@ def test_load_log_times_when_logs_do_not_have_start_time(load_function: Callable
         sc.array(dims=["time"], values=times, unit=sc.units.s, dtype=sc.DType.float64),
         sc.units.ns).astype(sc.DType.int64)
 
-    expected = sc.scalar(value=np.datetime64("1970-01-01T00:00:00Z"),
+    expected = sc.scalar(value=np.datetime64("1970-01-01T00:00:00"),
                          unit=sc.units.ns,
                          dtype=sc.DType.datetime64) + times_ns
 
@@ -1499,7 +1499,7 @@ def test_adjust_log_times_with_different_time_units(units, load_function: Callab
             value=np.zeros(shape=(len(times), )),
             time=np.array(times, dtype="float64"),
             time_units=units,
-            start_time="2000-01-01T00:00:00Z"), )
+            start_time="2000-01-01T00:00:00"), )
 
     loaded_data = load_function(builder)
 
@@ -1507,7 +1507,7 @@ def test_adjust_log_times_with_different_time_units(units, load_function: Callab
         sc.array(dims=["time"], values=times, unit=units, dtype=sc.DType.int64),
         sc.units.ns)
 
-    expected = sc.scalar(value=np.datetime64("2000-01-01T00:00:00Z"),
+    expected = sc.scalar(value=np.datetime64("2000-01-01T00:00:00"),
                          unit=sc.units.ns,
                          dtype=sc.DType.datetime64) + times_ns
 
@@ -1528,7 +1528,7 @@ def test_nexus_file_with_invalid_nxlog_time_units_loads_dataset_as_non_datetime(
             value=np.zeros(shape=(1, )),
             time=np.array([1.0]),
             time_units="m",  # Time in metres, should fail.
-            start_time="1970-01-01T00:00:00Z"))
+            start_time="1970-01-01T00:00:00"))
 
     loaded_data = load_function(builder)
     assert loaded_data['test_log_1'].value.coords['time'].dtype == sc.DType('float64')
@@ -1546,7 +1546,7 @@ def test_nexus_file_with_invalid_log_start_date_uses_epoch(load_function: Callab
         Log(name="test_log_2",
             value=np.zeros(shape=(1, )),
             time=np.array([1]),
-            start_time="1970-01-01T00:00:00Z"))
+            start_time="1970-01-01T00:00:00"))
 
     loaded_data = load_function(builder)
     assert sc.identical(
