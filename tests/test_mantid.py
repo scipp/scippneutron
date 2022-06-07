@@ -545,6 +545,7 @@ class TestMantidConversion(unittest.TestCase):
         target = mantid.CloneWorkspace(self.base_event_ws)
         target.getRun()['LambdaRequest'].units = 'abcde'
         with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
             scn.mantid.convert_EventWorkspace_to_data_array(target, False)
             assert len(
                 caught_warnings

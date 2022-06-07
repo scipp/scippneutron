@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
+import warnings
 
 from .nexus_helpers import (
     NexusBuilder,
@@ -499,7 +500,10 @@ def test_loads_data_from_multiple_logs_with_same_name(load_function: Callable):
     builder.add_log(Log(name, values_1))
     builder.add_detector(Detector(log=Log(name, values_2)))
 
-    loaded_data = load_function(builder)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message='Skipped loading',
+                                category=UserWarning)
+        loaded_data = load_function(builder)
 
     assert len(loaded_data) == 2
     for key, da in loaded_data.items():
@@ -840,7 +844,10 @@ def test_raises_if_offset_but_not_offset_units_found(
                                     offset=[1, 2, 3],
                                     offset_unit=None)
     builder.add_component(component_class(component_name, depends_on=transformation))
-    loaded_data = load_function(builder)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message='Skipped loading',
+                                category=UserWarning)
+        loaded_data = load_function(builder)
     assert loaded_data is None
 
 
@@ -1757,8 +1764,10 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
                     event_index=np.array([0, 5], dtype="int64"),
                 )))
 
-    mon_1_events = load_function(builder)["monitor1"].data.values
-    mon_2_events = load_function(builder)["monitor2"].data.values
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message='Skipped load', category=UserWarning)
+        mon_1_events = load_function(builder)["monitor1"].data.values
+        mon_2_events = load_function(builder)["monitor2"].data.values
 
     assert sc.identical(
         mon_1_events.values[0].coords["tof"],

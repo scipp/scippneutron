@@ -891,7 +891,8 @@ async def test_no_warning_for_missing_datasets_if_group_contains_stream(queues):
     run_info_topic = "fake_topic"
     reached_assert = False
 
-    with pytest.warns(None) as record_warnings:
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
         async for _ in _data_stream(data_queue,
                                     worker_instruction_queue,
                                     run_info_topic=run_info_topic,
@@ -903,12 +904,12 @@ async def test_no_warning_for_missing_datasets_if_group_contains_stream(queues):
                                     test_message_queue=test_message_queue):
             reached_assert = True
             break
-    assert reached_assert
-    assert len(
-        record_warnings
-    ) == 0, "Expect no 'missing datasets' warning from the NXlog or " \
-            "NXevent_data because they each contain a stream which " \
-            "will provide the missing data"
+        assert reached_assert
+        assert len(
+            caught_warnings
+        ) == 0, "Expect no 'missing datasets' warning from the NXlog or " \
+                "NXevent_data because they each contain a stream which " \
+                "will provide the missing data"
 
 
 @pytest.mark.asyncio
