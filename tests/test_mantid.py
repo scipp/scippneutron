@@ -405,7 +405,7 @@ class TestMantidConversion(unittest.TestCase):
         self.assertEqual(histo_data_array.coords['Q_z'].unit,
                          sc.units.dimensionless / sc.units.angstrom)
 
-        self.assertEquals(histo_data_array.shape, (3, 4, 5))
+        self.assertEqual(histo_data_array.shape, (3, 4, 5))
 
         # Sum over 2 dimensions to simplify finding max.
         max_1d = sc.sum(sc.sum(histo_data_array, dim='Q_y'), dim='Q_x').values
