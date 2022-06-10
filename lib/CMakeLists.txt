@@ -3,7 +3,7 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # ~~~
 if(NOT DEFINED CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 20)
+  set(CMAKE_CXX_STANDARD 17)
 endif(NOT DEFINED CMAKE_CXX_STANDARD)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -152,7 +152,7 @@ if(CMAKE_CXX_CPPCHECK)
   list(
     APPEND
     CMAKE_CXX_CPPCHECK
-    "--std=c++20"
+    "--std=c++17"
     "--quiet"
     "--enable=style"
     "--inline-suppr"
