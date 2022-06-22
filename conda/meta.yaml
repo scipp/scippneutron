@@ -33,6 +33,7 @@ requirements:
     - markupsafe>=1.1.1,<2.1.0  # see https://github.com/pallets/markupsafe/issues/284
     - ninja
     - python
+    - scipp {{ scipp }}
   host:
     - python
     - scipp {{ scipp }}
