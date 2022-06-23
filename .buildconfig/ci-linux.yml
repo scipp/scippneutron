@@ -12,7 +12,7 @@ dependencies:
   - ipykernel
   - ipympl
   - ipywidgets
-  - mantid=6.3.*
+  - mantid=6.4.*
   - matplotlib
   - nbsphinx
   - ninja
