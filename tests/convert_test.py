@@ -216,6 +216,7 @@ def test_convert_coords_vs_attributes():
 
 @pytest.mark.parametrize('target', ('incident_beam', 'scattered_beam'))
 def test_convert_beams(target):
+
     def check_positions(data):
         assert 'sample_position' not in data.coords
         assert ('source_position' in data.coords) == (target == 'scattered_beam')

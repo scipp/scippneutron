@@ -39,6 +39,7 @@ class FakeConsumer:
     Use in place of confluent_kafka.Consumer
     to avoid network io in unit tests
     """
+
     def __init__(self, input_queue: Optional[mp.Queue]):
         if input_queue is None:
             raise RuntimeError("A multiprocessing queue for test messages "
@@ -63,6 +64,7 @@ class FakeConsumer:
 
 
 class KafkaConsumer:
+
     def __init__(self,
                  topic_partition: TopicPartition,
                  consumer: Union[Consumer, FakeConsumer],
@@ -96,6 +98,7 @@ class KafkaConsumer:
         self._consume_data.start()
 
     def _consume_loop(self):
+
         def time_now_ms() -> int:
             return time_ns() // 1_000_000
 
@@ -169,6 +172,7 @@ class KafkaQueryConsumer:
     It is a thin wrapper but allows a fake to be used
     in unit tests.
     """
+
     def __init__(self, broker: str):
         # Set "enable.auto.commit" to False, as we do not need to report to the
         # kafka broker where we got to (it usually does this in case of a

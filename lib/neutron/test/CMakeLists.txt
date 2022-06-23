@@ -20,7 +20,7 @@ if(WIN32)
   # manually escape the path first.
   string(REPLACE ";" "\\;" PATH_STRING "$ENV{PATH}")
   set_tests_properties(
-    scippneutron-test
+    ${TARGET_NAME}
     PROPERTIES
       ENVIRONMENT
       "PATH=${PATH_STRING}\;$ENV{CONDA_PREFIX}\\Lib\\site-packages\\scipp"

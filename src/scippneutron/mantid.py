@@ -221,7 +221,7 @@ def md_unit(frame):
 def validate_and_get_unit(unit, allow_empty=False):
     if hasattr(unit, 'unitID'):
         if unit.unitID() == 'Label':
-            unit = unit.name()
+            unit = unit.caption()
         else:
             unit = unit.unitID()
     known_units = {

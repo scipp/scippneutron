@@ -114,6 +114,7 @@ def _get_attribute_value(element: Dict,
 
 
 class _Node(dict):
+
     def __init__(self, parent: dict, name: str, file: dict, group: dict):
         super().__init__(**group)
         self.parent = parent
@@ -178,6 +179,7 @@ def _find_by_type(type_name: str, root: Dict) -> List[H5Group]:
     Finds objects with the requested "type" value
     Returns a list of objects with requested type
     """
+
     def _visit_nodes_for_type(obj: Dict, requested_type: str,
                               objects_found: List[H5Group]):
         try:
@@ -200,12 +202,14 @@ def _find_by_type(type_name: str, root: Dict) -> List[H5Group]:
 
 
 class JSONTypeStringID():
+
     def get_cset(self):
         import h5py
         return h5py.h5t.CSET_UTF8
 
 
 class JSONAttrID:
+
     def __init__(self):
         pass
 
@@ -214,6 +218,7 @@ class JSONAttrID:
 
 
 class JSONAttributeManager:
+
     def __init__(self, node: dict):
         self._node = node
 
@@ -252,6 +257,7 @@ class JSONAttributeManager:
 
 
 class JSONNode:
+
     def __init__(self, node: dict, *, parent=None):
         self._file = parent.file if parent is not None else self
         self._parent = self if parent is None else parent
@@ -279,6 +285,7 @@ class JSONNode:
 
 
 class JSONDataset(JSONNode):
+
     @property
     def dtype(self) -> str:
         try:
@@ -308,6 +315,7 @@ class JSONDataset(JSONNode):
 
 
 class JSONGroup(JSONNode):
+
     def __contains__(self, name: str) -> bool:
         try:
             self[name]
@@ -344,6 +352,7 @@ class JSONGroup(JSONNode):
         raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
 
     def visititems(self, callable):
+
         def skip(node):
             return node['type'] == _nexus_link or contains_stream(self)
 

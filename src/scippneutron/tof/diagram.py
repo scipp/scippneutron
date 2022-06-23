@@ -7,6 +7,7 @@ from scippneutron.tof.frames import _tof_from_wavelength
 
 
 class TimeDistanceDiagram:
+
     def __init__(self, ax, *, tmax, frame_rate=14.0 * sc.Unit('Hz')):
         self._ax = ax
         self._time_unit = sc.Unit('ms')
@@ -27,6 +28,7 @@ class TimeDistanceDiagram:
         return distance.to(unit=self._distance_unit)
 
     def annotate(self, text, *, xy, xytext, **kwargs):
+
         def to_mpl(point):
             x, y = point
             return self.to_time(x).value, self.to_distance(y).value

@@ -26,6 +26,7 @@ def memory_is_at_least_gb(required):
 @pytest.mark.skipif(not memory_is_at_least_gb(4), reason='Insufficient virtual memory')
 @pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 class TestMantidConversion(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         import mantid.simpleapi as mantid
@@ -405,7 +406,7 @@ class TestMantidConversion(unittest.TestCase):
         self.assertEqual(histo_data_array.coords['Q_z'].unit,
                          sc.units.dimensionless / sc.units.angstrom)
 
-        self.assertEquals(histo_data_array.shape, (3, 4, 5))
+        self.assertEqual(histo_data_array.shape, (3, 4, 5))
 
         # Sum over 2 dimensions to simplify finding max.
         max_1d = sc.sum(sc.sum(histo_data_array, dim='Q_y'), dim='Q_x').values
@@ -545,6 +546,7 @@ class TestMantidConversion(unittest.TestCase):
         target = mantid.CloneWorkspace(self.base_event_ws)
         target.getRun()['LambdaRequest'].units = 'abcde'
         with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
             scn.mantid.convert_EventWorkspace_to_data_array(target, False)
             assert len(
                 caught_warnings
@@ -975,6 +977,7 @@ def make_dynamic_algorithm_without_fileproperty(alg_name):
         return
 
     class Alg(PythonAlgorithm):
+
         def PyInit(self):
             self.declareProperty("Filename", "")
             self.declareProperty(

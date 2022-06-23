@@ -3,37 +3,12 @@
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # ~~~
 if(NOT DEFINED CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 20)
+  set(CMAKE_CXX_STANDARD 17)
 endif(NOT DEFINED CMAKE_CXX_STANDARD)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_program(CCACHE_FOUND ccache)
-if(CCACHE_FOUND)
-  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
-endif(CCACHE_FOUND)
-if(MSVC)
-  set(CLCACHE_PATH
-      ""
-      CACHE PATH "Path to installed clcache executable directory"
-  )
-  if(EXISTS ${CLCACHE_PATH})
-    set(CMAKE_VS_GLOBALS "CLToolExe=clcache.exe" "CLToolPath=${CLCACHE_PATH}"
-                         "TrackFileAccess=false"
-    )
-    message(STATUS "Will attempt to use clcache")
-  else(EXISTS ${CLCACHE_PATH})
-    message(STATUS "CLCACHE_PATH not specified. Not enabled.")
-    unset(CMAKE_VS_GLOBALS) # Clear all vs globals
-  endif(EXISTS ${CLCACHE_PATH})
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /constexpr:steps2000000")
-endif(MSVC)
-
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
 
 execute_process(
   COMMAND conan export .
@@ -49,10 +24,10 @@ if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake")
   )
   file(
     DOWNLOAD
-    "https://raw.githubusercontent.com/conan-io/cmake-conan/0.17.0/conan.cmake"
+    "https://raw.githubusercontent.com/conan-io/cmake-conan/0.18.1/conan.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake"
     EXPECTED_HASH
-      SHA256=3bef79da16c2e031dc429e1dac87a08b9226418b300ce004cc125a82687baeef
+      SHA256=5cdb3042632da3efff558924eecefd580a0e786863a857ca097c3d1d43df5dcd
     TLS_VERIFY ON
   )
 endif()
@@ -61,9 +36,34 @@ include(${CMAKE_CURRENT_BINARY_DIR}/conan.cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_BINARY_DIR})
 
+conan_cmake_configure(
+  REQUIRES
+  boost/1.76.0
+  eigen/3.3.9
+  gtest/1.11.0
+  LLNL-Units/0.5.0.1
+  pybind11/2.6.2
+  OPTIONS
+  boost:header_only=True
+  gtest:shared=False
+  LLNL-Units:shared=False
+  LLNL-Units:fPIC=True
+  LLNL-Units:base_type=uint64_t
+  LLNL-Units:namespace=llnl::units
+  GENERATORS
+  cmake_find_package_multi
+  ${CONAN_DEPLOY}
+)
+
 conan_cmake_autodetect(conan_settings)
+if(DEFINED CMAKE_OSX_ARCHITECTURES)
+  if("${CMAKE_OSX_ARCHITECTURES}" STREQUAL "arm64")
+    # For Apple M1
+    set(conan_settings "${conan_settings};arch=armv8")
+  endif()
+endif()
 conan_cmake_install(
-  PATH_OR_REFERENCE ${CMAKE_CURRENT_SOURCE_DIR} SETTINGS ${conan_settings}
+  PATH_OR_REFERENCE ${CMAKE_CURRENT_BINARY_DIR} SETTINGS ${conan_settings}
   BUILD outdated
 )
 
@@ -72,23 +72,29 @@ find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development)
 find_package(pybind11 CONFIG REQUIRED)
 find_package(scipp 0.14 REQUIRED)
 
+find_program(CCACHE ccache)
+if(CCACHE)
+  set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
+endif()
+message(STATUS "Tried to find ccache, found:")
+message(STATUS ${CCACHE})
+
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+
 # MP : Parallel compile, add before any targets so all use it
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:-MP>)
 
 include(GoogleTest)
 include(GenerateExportHeader)
 include(IPO)
-include(scipp-install)
-include(scipp-test)
 
 option(
   CTEST_DISCOVER_TESTS
-  "Enable discoverage of *individual* tests by ctest. Test execution is slower, but ctest integration better. If OFF (default) each submodule test runner is registered as a *single* test."
+  "Enable discovery of *individual* tests by ctest. Test execution is slower, but ctest integration better. If OFF (default) each submodule test runner is registered as a *single* test."
   OFF
 )
-option(DYNAMIC_LIB "Build shared libraries" ON)
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
 option(DYNAMIC_LIB "Build shared libraries" ON)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
@@ -123,19 +129,41 @@ if(NOT WIN32)
     -Wold-style-cast
     -Wcast-qual
     -Wcast-align
+    -Wno-unknown-warning-option # Avoiding clang warnings about unknown warning
+    -Werror=attributes
+    -Werror=maybe-uninitialized
+    -Werror=uninitialized
+    -Werror=return-type
   )
   add_compile_options(
     $<$<COMPILE_LANGUAGE:CXX>:-Woverloaded-virtual>
     $<$<COMPILE_LANGUAGE:CXX>:-fno-operator-names>
   )
 endif(NOT WIN32)
-# This is currently causing to many warnings, reenable when appropriate.
+# TODO This is currently causing too many warnings, reenable when appropriate.
 # add_compile_options ( -Wconversion )
+
+option(CPPCHECK "Enable running cppcheck during compilation if found." OFF)
+if(CPPCHECK)
+  find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck REQUIRED)
+endif()
+if(CMAKE_CXX_CPPCHECK)
+  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/cppcheck)
+  list(
+    APPEND
+    CMAKE_CXX_CPPCHECK
+    "--std=c++17"
+    "--quiet"
+    "--enable=style"
+    "--inline-suppr"
+    "--suppressions-list=${CMAKE_SOURCE_DIR}/cppcheck-suppressions.txt"
+    "--cppcheck-build-dir=${CMAKE_BINARY_DIR}/cppcheck"
+    "--error-exitcode=2"
+  )
+endif()
 
 # permissive- : Std compliant parsing, warnings (W3) set by CMake defaults
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:-permissive->)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
 # Custom target for building tests. all excludes tests by default
 add_custom_target(all-tests)
@@ -199,6 +227,9 @@ if(DYNAMIC_LIB)
           DESTINATION lib/cmake/${PROJECT_NAME}
   )
 endif(DYNAMIC_LIB)
+
+include(scipp-install)
+include(scipp-test)
 
 option(FULL_BUILD
        "Enable full build where the 'all' target includes tests and benchmarks."

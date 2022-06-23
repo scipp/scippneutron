@@ -1,0 +1,18 @@
+[tool.pytest.ini_options]
+addopts = "-ra -v"
+filterwarnings = [
+  'error',
+  'ignore:You are running a "Debug" build of scipp:',
+  # Comes from pytest_asyncio and is not our fault.
+  "ignore:The 'asyncio_mode' default value will change to 'strict' in future:DeprecationWarning",
+  'ignore::scipy.optimize._optimize.OptimizeWarning',
+  # From flatbuffers
+  'ignore:the imp module is deprecated in favour of importlib:DeprecationWarning',
+  # Plotting related warnings.
+  'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
+  'ignore:Keyword `trait` is deprecated in traitlets 5.0, use `value_trait` instead:DeprecationWarning',
+  'ignore:Keyword `traits` is deprecated in traitlets 5.0, use `per_key_traits` instead:DeprecationWarning',
+  # TODO Plotting warnings that need to be adressed
+  'ignore:Support for mapping types has been deprecated and will be dropped in a future release:DeprecationWarning',
+]
+testpaths = "tests"

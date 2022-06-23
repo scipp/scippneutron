@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(cmake-package-test)
 if(NOT DEFINED CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 20)
+  set(CMAKE_CXX_STANDARD 17)
 endif(NOT DEFINED CMAKE_CXX_STANDARD)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -31,17 +31,10 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
 
 conan_cmake_autodetect(conan_settings)
-conan_add_remote(
-  NAME scipp URL https://artifactoryconan.esss.dk/artifactory/api/conan/scipp
-)
 conan_cmake_install(
   PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR} SETTINGS ${conan_settings} BUILD
   outdated
 )
-
-find_package(Boost 1.67 REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package(LLNL-Units REQUIRED)
 
 set(PKG_VERSION
     "undefined"
