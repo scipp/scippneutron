@@ -7,11 +7,16 @@ dependencies:
   - cmake
   - conan>=1.45.0
   - cppcheck
-  - gxx_linux-64 11.1.*
-  - mantid 6.3.*
+  - gxx_linux-64=11.1.*
+  - h5py
+  - ipykernel
+  - ipympl
+  - ipywidgets
+  - mantid=6.3.*
+  - matplotlib
+  - nbsphinx
   - ninja
   - pandoc
-  - scipp 0.14.*
   - pooch
   - pytest
   - pytest-asyncio
@@ -20,6 +25,11 @@ dependencies:
   - pythreejs
   - scipp=0.14.*
   - scippnexus
+  - scipy>=1.7.0
+  - sphinx
+  - sphinx-autodoc-typehints>=1.17.0
+  - sphinx-book-theme==0.2  # 0.3 breaks custom launchbuttons
+  - sphinx-copybutton
   - tbb=2020.2.*
   - tbb-devel=2020.2.*
   - tox
