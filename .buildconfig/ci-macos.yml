@@ -13,7 +13,6 @@ dependencies:
   - pooch
   - pytest
   - pytest-asyncio
-  - pytest-xdist
   - pythreejs
   - scipp=0.14.*
   - scippnexus

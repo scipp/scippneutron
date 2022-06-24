@@ -82,7 +82,7 @@ jobs:
       - run: cmake --build --preset build
       - run: ctest --preset test
 
-      - run: python -m pytest -n auto -v tests
+      - run: python -m pytest -v tests
 
       - run: |
           python -m sphinx -j2 -v -b html -d doctrees docs html
