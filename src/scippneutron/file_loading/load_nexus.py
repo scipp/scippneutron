@@ -61,7 +61,7 @@ def add_position_and_transforms_to_data(data: Union[sc.DataArray,
 
 
 @contextmanager
-def _open_if_path(file_in: Union[str, h5py.File]):
+def _open_if_path(file_in: Union[str, Path, h5py.File]):
     """
     Open if file path is provided,
     otherwise yield the existing h5py.File object
@@ -97,7 +97,7 @@ def _load_start_and_end_time(entry: NXobject) -> Dict:
     return times
 
 
-def load_nexus(data_file: Union[str, h5py.File],
+def load_nexus(data_file: Union[str, Path, h5py.File],
                root: str = "/",
                quiet=True) -> Optional[ScippData]:
     """

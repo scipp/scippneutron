@@ -5,12 +5,14 @@
 import re
 from copy import deepcopy
 from contextlib import contextmanager
+from pathlib import Path
+import os
+from typing import Union
 import uuid
 import warnings
+
 import numpy as np
 import scipp as sc
-import scipp.spatial
-import os
 
 
 @contextmanager
@@ -817,7 +819,7 @@ def from_mantid(workspace, **kwargs):
     return scipp_obj
 
 
-def load(filename="",
+def load(filename: Union[str, Path] = "",
          load_pulse_times=True,
          instrument_filename=None,
          error_connection=None,
