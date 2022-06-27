@@ -693,21 +693,19 @@ def convert_MDHistoWorkspace_to_data_array(md_histo, **ignored):
 
 def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
     """
-    Converts from a Mantid TableWorkspace to a scipp dataset. It is possible
-    to assign a column as the error for another column, in which case a
-    the data from the two columns will be represented by a single scipp
+    Converts from a Mantid TableWorkspace to a scipp dataset.
+
+    It is possible to assign a column as the error for another column,
+    in which case data from the two columns will be represented by a single scipp
     variable with variance. This is done using the error_connection Keyword
     argument. The error is transformed to variance in this converter.
 
     Parameters
     ----------
-        ws : Mantid TableWorkspace
-            Mantid TableWorkspace to be converted into scipp dataset
-
-    Keyword arguments
-    -----------------
-        error_connection : Dict
-            Dict with data column names as keys to names of their error column
+    ws:
+        Mantid TableWorkspace to be converted into scipp dataset.
+    error_connection:
+        Dict with data column names as keys to names of their error column.
     """
 
     # Extract information from workspace
@@ -825,50 +823,59 @@ def load(filename: Union[str, Path] = "",
          error_connection=None,
          mantid_alg='Load',
          mantid_args=None,
-         advanced_geometry=False):
-    """
-    Wrapper function to provide a load method for a Nexus file, hiding mantid
-    specific code from the scipp interface. All other keyword arguments not
-    specified in the parameters below are passed on to the mantid.Load
-    function.
+         advanced_geometry=False) -> sc.Dataset:
+    """Load a file using Mantid.
 
-    Example of use:
-
-    .. highlight:: python
-    .. code-block:: python
-
-        from scipp.neutron import load
-        d = sc.Dataset()
-        d["sample"] = load(filename='PG3_4844_event.nxs',
-                           load_pulse_times=False,
-                           mantid_args={'BankName': 'bank184',
-                                        'LoadMonitors': True})
+    Wraps Mantid's loaders and converts the result to a scipp dataset.
 
     See also the neutron-data tutorial.
 
     Note that this function requires mantid to be installed and available in
     the same Python environment as scipp.
 
-    :param str filename: The name of the Nexus/HDF file to be loaded.
-    :param bool load_pulse_times: Read the pulse times if True.
-    :param str instrument_filename: If specified, over-write the instrument
-                                    definition in the final Dataset with the
-                                    geometry contained in the file.
-    :param str mantid_alg: Mantid algorithm to use for loading. Default is
-                           `Load`.
-    :param dict mantid_args: Dict of keyword arguments to forward to Mantid.
-    :param bool advanced_geometry: If True, load the full detector geometry
-                                   including shapes and rotations. The
-                                   positions of grouped detectors are
-                                   spherically averaged. If False,
-                                   load only the detector position, and return
-                                   the cartesian average of the grouped
-                                   detector positions.
-    :raises: If the Mantid workspace type returned by the Mantid loader is not
-             either EventWorkspace or Workspace2D.
-    :return: A Dataset containing the neutron event/histogram data and the
-             instrument geometry.
-    :rtype: Dataset
+    Parameters
+    ----------
+    filename:
+        The name of the Nexus/HDF file to be loaded.
+    load_pulse_times:
+        Read the pulse times if True.
+    instrument_filename:
+        If specified, over-write the instrument definition
+        in the final dataset with the geometry contained in the file.
+    error_connection:
+        Dict with data column names as keys to names of their error column.
+        Only used when the loaded workspace is a TableWorkspace.
+        See scippneutron.mantid.convert_TableWorkspace_to_dataset
+    mantid_alg:
+        Mantid algorithm to use for loading. Default is `Load`.
+    mantid_args:
+        Dict of keyword arguments to forward to Mantid.
+    advanced_geometry:
+        If True, load the full detector geometry including shapes and rotations.
+        The positions of grouped detectors are spherically averaged.
+        If False, load only the detector position, and return
+        the cartesian average of the grouped detector positions.
+
+    Returns
+    -------
+    :
+        A Dataset containing the neutron event/histogram data and the
+        instrument geometry.
+
+    Raises
+    ------
+    RuntimeError
+        If the Mantid workspace type returned by the Mantid loader is not
+        either EventWorkspace or Workspace2D.
+
+    Examples
+    --------
+    >>> from scippneutron import load
+    >>> d = sc.Dataset()
+    >>> d["sample"] = load(filename='PG3_4844_event.nxs',
+    ...                    load_pulse_times=False,
+    ...                    mantid_args={'BankName': 'bank184',
+    ...                                 'LoadMonitors': True})
     """
 
     if mantid_args is None:
