@@ -3,6 +3,7 @@
 # @author Matthew Jones
 import json
 import numpy as np
+from pathlib import Path
 import scipp as sc
 
 from ._json_nexus import get_streams_info, StreamInfo, JSONGroup
@@ -65,7 +66,7 @@ def _open_if_path(file_in: Union[str, h5py.File]):
     Open if file path is provided,
     otherwise yield the existing h5py.File object
     """
-    if isinstance(file_in, str):
+    if isinstance(file_in, (str, Path)):
         with h5py.File(file_in, "r", libver='latest', swmr=True) as nexus_file:
             yield nexus_file
     else:
