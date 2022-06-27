@@ -83,7 +83,10 @@ jobs:
         uses: mamba-org/provision-with-micromamba@main
         with:
           micromamba-version: 0.24.0
-      - run: conda install -c conda-forge --yes anaconda-client
+          environment-file: false
+          environment-name: deploy
+          channels: conda-forge
+          extra-specs: anaconda-client
       - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package-*/*/*.tar.bz2)
 
   upload_docs:
