@@ -3,6 +3,26 @@
 Release Notes
 =============
 
+v0.7.0 (June 2022)
+------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+* Switched to scipp 0.14.
+
+Features
+~~~~~~~~
+
+* Started releasing for Apple arm64 architecture.
+
+Contributors
+~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+and Jan-Lukas Wynen :sup:`a`
+
 v0.6.0 (May 2022)
 -----------------
 
