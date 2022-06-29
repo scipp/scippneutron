@@ -875,7 +875,7 @@ def load(filename: Union[str, Path] = "",
     >>> d["sample"] = load(filename='PG3_4844_event.nxs',
     ...                    load_pulse_times=False,
     ...                    mantid_args={'BankName': 'bank184',
-    ...                                 'LoadMonitors': True})
+    ...                                 'LoadMonitors': True})  # doctest: +SKIP
     """
 
     if mantid_args is None:
