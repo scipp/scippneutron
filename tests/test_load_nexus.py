@@ -77,9 +77,7 @@ def load_function(request) -> Callable:
 @pytest.mark.parametrize('path_type', (str, pathlib.Path))
 def test_loads_from_file(path_type):
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore",
-                                message='Skipped load',
-                                category=UserWarning)
+        warnings.filterwarnings("ignore", message='Skipped load', category=UserWarning)
         da = scippneutron.load_nexus(path_type(scippneutron.data.bigfake()))
     assert da.sizes == {'detector_id': 90000, 'tof': 1}
     assert 'tof' in da.coords
