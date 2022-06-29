@@ -1,7 +1,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
+import pathlib
+from typing import List, Type, Union, Callable
 import warnings
 
+from dateutil.parser import parse as parse_date
+import numpy as np
+import pytest
+import scipp as sc
+
+import scippneutron
+from scippneutron.file_loading.load_nexus import _load_nexus_json
 from .nexus_helpers import (
     NexusBuilder,
     EventData,
@@ -16,14 +25,6 @@ from .nexus_helpers import (
     Chopper,
     in_memory_hdf5_file_with_two_nxentry,
 )
-import numpy as np
-import pytest
-import scippneutron
-import scipp as sc
-import scipp.spatial
-from typing import List, Type, Union, Callable
-from scippneutron.file_loading.load_nexus import _load_nexus_json
-from dateutil.parser import parse as parse_date
 
 # representative sample of UTF-8 test strings from
 # https://www.w3.org/2001/06/utf-8-test/UTF-8-demo.html
@@ -71,6 +72,18 @@ def load_function(request) -> Callable:
     loading in-memory NeXus output from the NexusBuilder
     """
     return request.param
+
+
+@pytest.mark.parametrize('path_type', (str, pathlib.Path))
+def test_loads_from_file(path_type):
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore",
+                                message='Skipped load',
+                                category=UserWarning)
+        da = scippneutron.load_nexus(path_type(scippneutron.data.bigfake()))
+    assert da.sizes == {'detector_id': 90000, 'tof': 1}
+    assert 'tof' in da.coords
+    assert 'position' in da.coords
 
 
 def test_no_exception_if_single_nxentry_in_file(load_function: Callable):
