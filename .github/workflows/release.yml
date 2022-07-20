@@ -28,16 +28,13 @@ jobs:
           submodules: true
           fetch-depth: 0  # history required so cmake can determine version
 
-      - name: Setup Mambaforge
-        uses: mamba-org/provision-with-micromamba@main
+      - uses: conda-incubator/setup-miniconda@v2
         with:
-          micromamba-version: 0.24.0
-          environment-file: false
-          environment-name: release
+          activate-environment: release
+          python-version: ${{ matrix.python-version }}
+          auto-activate-base: false
           channels: conda-forge
-          extra-specs: |
-            python=${{ matrix.python-version }}
-            conda-build
+      - run: conda install conda-build
       - run: conda build --channel conda-forge --channel scipp --channel ess-dmsc --channel mantid --variant-config-files=conda/variants/${{ matrix.variant.target }}.yaml --python=${{ matrix.python-version }} --no-anaconda-upload --override-channels --output-folder conda/package conda
 
       - uses: actions/upload-artifact@v2
@@ -51,13 +48,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Mambaforge and dev env
-        uses: mamba-org/provision-with-micromamba@main
+      - uses: conda-incubator/setup-miniconda@v2
         with:
-          micromamba-version: 0.24.0
+          activate-environment: ubuntu-latest
           environment-file: .buildconfig/ci-linux.yml
-          cache-env: true
-          extra-specs: python=3.8
+          python-version: 3.8
+          auto-activate-base: false
       - uses: actions/download-artifact@v2
         with:
           name: conda-package-ubuntu-20.04-py3.8
@@ -79,14 +75,12 @@ jobs:
 
     steps:
       - uses: actions/download-artifact@v2
-      - name: Setup Mambaforge
-        uses: mamba-org/provision-with-micromamba@main
+      - uses: conda-incubator/setup-miniconda@v2
         with:
-          micromamba-version: 0.24.0
-          environment-file: false
-          environment-name: deploy
-          channels: conda-forge
-          extra-specs: anaconda-client
+          activate-environment: deploy
+          auto-activate-base: false
+          channels: conda-foge
+      - run: conda install anaconda-client
       - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package-*/*/*.tar.bz2)
 
   upload_docs:
