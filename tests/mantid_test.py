@@ -64,9 +64,9 @@ class TestMantidConversion(unittest.TestCase):
         target_tof = binned_mantid.coords['tof']
         d = scn.mantid.convert_EventWorkspace_to_data_array(eventWS,
                                                             load_pulse_times=False)
-        binned = sc.histogram(d, bins=target_tof)
+        histogrammed = d.hist(tof=target_tof)
 
-        delta = sc.sum(binned_mantid - binned, 'spectrum')
+        delta = sc.sum(binned_mantid - histogrammed, 'spectrum')
         delta = sc.sum(delta, 'tof')
         self.assertLess(np.abs(delta.value), 1e-5)
 
@@ -163,7 +163,7 @@ class TestMantidConversion(unittest.TestCase):
 
         da = scn.mantid.convert_EventWorkspace_to_data_array(eventWS,
                                                              load_pulse_times=False)
-        da = sc.histogram(da, bins=target_tof)
+        da = da.hist(tof=target_tof)
         d = sc.Dataset(data={da.name: da})
         converted = scn.convert(d, 'tof', 'wavelength', scatter=True)
 

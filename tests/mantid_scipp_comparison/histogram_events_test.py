@@ -34,10 +34,7 @@ def test_histogram_events(in_ws, in_da):
                         StoreInADS=False)
     out_mantid = scn.mantid.from_mantid(out_ws)
 
-    out_scipp = sc.histogram(x=in_da,
-                             bins=sc.Variable(dims=['tof'],
-                                              values=np.linspace(0, 1000, num=101),
-                                              dtype='float64',
-                                              unit='us'))
+    out_scipp = in_da.hist(tof=sc.Variable(
+        dims=['tof'], values=np.linspace(0, 1000, num=101), dtype='float64', unit='us'))
 
     assert sc.utils.comparison.isnear(out_scipp, out_mantid, rtol=1e-15 * sc.units.one)

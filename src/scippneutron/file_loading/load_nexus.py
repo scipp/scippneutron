@@ -4,6 +4,7 @@
 import json
 import numpy as np
 from pathlib import Path
+from scipp.binning import make_binned
 import scipp as sc
 
 from ._json_nexus import get_streams_info, StreamInfo, JSONGroup
@@ -241,7 +242,9 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                 if len(events.bins.constituents['data']) != 0:
                     # See scipp/scipp#2490
                     det_id = sc.arange('detector_id', det_min, det_max + 1, unit=None)
-                    events = sc.bin(events, groups=[det_id], erase=['pulse', 'bank'])
+                    events = make_binned(events,
+                                         groups=[det_id],
+                                         erase=['pulse', 'bank'])
                 loaded_events.append(events)
             except (BadSource, SkipSource, NexusStructureError, IndexError) as e:
                 if not contains_stream(group._group):
