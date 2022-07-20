@@ -57,7 +57,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: ubuntu-latest
-          environment-file: .buildconfig/ci-linux.yml
+          environment-file: .buildconfig/${{ matrix.variant.cmake-preset }}.yml
           python-version: ${{ matrix.python-version }}
           auto-activate-base: false
 
