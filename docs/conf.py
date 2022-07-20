@@ -54,7 +54,11 @@ def add_buttons(
         entries = releases[1:]
     lines = [{"type": "link", "text": latest, "url": f"{base}/{project}"}]
     for r in entries:
-        lines.append({"type": "link", "text": f"{r}", "url": f"{base}/{project}/release/{r}"})
+        lines.append({
+            "type": "link",
+            "text": f"{r}",
+            "url": f"{base}/{project}/release/{r}"
+        })
     header_buttons.append({
         "type": "group",
         "buttons": lines,
