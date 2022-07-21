@@ -79,7 +79,7 @@ jobs:
         with:
           activate-environment: deploy
           auto-activate-base: false
-          channels: conda-foge
+          channels: conda-forge
       - run: conda install anaconda-client
       - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package-*/*/*.tar.bz2)
 
