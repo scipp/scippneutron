@@ -3,6 +3,21 @@
 Release Notes
 =============
 
+v0.8.0 (July 2022)
+------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+* Switched to scipp 0.15.
+
+Contributors
+~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+and Jan-Lukas Wynen :sup:`a`
+
 v0.7.0 (June 2022)
 ------------------
 
