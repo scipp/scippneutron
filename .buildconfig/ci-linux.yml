@@ -22,7 +22,7 @@ dependencies:
   - pytest-asyncio
   - python-graphviz
   - pythreejs
-  - scipp=0.14.*
+  - scipp=0.15.1
   - scippnexus
   - scipy>=1.7.0
   - sphinx
