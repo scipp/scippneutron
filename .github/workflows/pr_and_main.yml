@@ -54,12 +54,13 @@ jobs:
 
       - uses: ilammy/msvc-dev-cmd@v1  # Required to set up MSVC dev environment for Ninja builds.
 
-      - uses: conda-incubator/setup-miniconda@v2
+      - name: Setup conda environment
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          activate-environment: ci
+          micromamba-version: 0.25.0
           environment-file: .buildconfig/${{ matrix.variant.cmake-preset }}.yml
-          python-version: ${{ matrix.python-version }}
-          auto-activate-base: false
+          cache-env: true
+          extra-specs: python=${{ matrix.python-version }}
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
