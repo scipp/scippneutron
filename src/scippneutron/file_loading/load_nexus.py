@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
+from dataclasses import dataclass
 import json
 import numpy as np
 from pathlib import Path
@@ -20,20 +21,12 @@ from scippnexus.nxobject import NexusStructureError, NXobject
 from scippnexus import NXroot, NX_class
 
 
-class BadSource(Exception):
-    """
-    Raise if something is wrong with data source which
-    prevents it being used. Warn the user.
-    """
-    pass
-
-
-class SkipSource(Exception):
-    """
-    Raise to abort using the data source, do not
-    warn the user.
-    """
-    pass
+@dataclass
+class Entry:
+    detectors: Optional[dict] = None
+    monitors: Optional[dict] = None
+    logs: Optional[dict] = None
+    disk_choppers: Optional[dict] = None
 
 
 def add_position_and_transforms_to_data(data: Union[sc.DataArray,
@@ -167,6 +160,38 @@ def _zip_pixel_offset(da: sc.DataArray) -> sc.DataArray:
     return da
 
 
+def _load_entry(group):
+    classes = group.by_nx_class()
+
+    if len(classes[NX_class.NXentry]) > 1:
+        # We can't sensibly load from multiple NXentry, for example each
+        # could could contain a description of the same detector bank
+        # and lead to problems with clashing detector ids etc
+        raise RuntimeError(f"More than one NXentry group in file, use 'root' argument "
+                           "to specify which to load data from, for example"
+                           f"{__name__}('my_file.nxs', '/entry_2')")
+
+    def load_groups(groups, process=lambda x: x):
+        items = {}
+        for name, group in groups.items():
+            try:
+                items[name] = process(group[()])
+            except (NexusStructureError, TransformationError, sc.DTypeError,
+                    sc.DimensionError, sc.UnitError, KeyError, ValueError,
+                    IndexError) as e:
+                if not contains_stream(group._group):
+                    warn(f"Skipped loading {group.name} due to:\n{e}")
+        return items if items else None
+
+    loaded = Entry()
+    loaded.detectors = load_groups(classes.get(NX_class.NXdetector, {}))
+    loaded.monitors = load_groups(classes.get(NX_class.NXmonitor, {}))
+    loaded.logs = load_groups(classes.get(NX_class.NXlog, {}))
+    loaded.disk_choppers = load_groups(classes.get(NX_class.NXdisk_chopper, {}))
+    # TODO source sample instrument name
+    return loaded
+
+
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                quiet: bool) -> Optional[ScippData]:
     """
@@ -215,8 +240,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                     positions=det.coords.pop('pixel_offset'),
                     transforms=det.coords.pop('depends_on', None))
             loaded_detectors.append(det)
-        except (BadSource, SkipSource, NexusStructureError, KeyError, sc.DTypeError,
-                ValueError, IndexError) as e:
+        except (NexusStructureError, KeyError, sc.DTypeError, ValueError,
+                IndexError) as e:
             if not contains_stream(group._group):
                 warn(f"Skipped loading {group.name} due to:\n{e}")
 
@@ -246,7 +271,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                                          groups=[det_id],
                                          erase=['pulse', 'bank'])
                 loaded_events.append(events)
-            except (BadSource, SkipSource, NexusStructureError, IndexError) as e:
+            except (NexusStructureError, IndexError) as e:
                 if not contains_stream(group._group):
                     warn(f"Skipped loading {group.name} due to:\n{e}")
         if len(loaded_events):
@@ -288,8 +313,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             try:
                 items[name] = sc.scalar(process(group[()]))
                 loaded_groups.append(name)
-            except (BadSource, SkipSource, TransformationError, sc.DimensionError,
-                    sc.UnitError, KeyError, ValueError) as e:
+            except (TransformationError, sc.DimensionError, sc.UnitError, KeyError,
+                    ValueError) as e:
                 if not contains_stream(group._group):
                     warn(f"Skipped loading {group.name} due to:\n{e}")
         add_metadata(items)
