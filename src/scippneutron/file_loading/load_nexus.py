@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 import json
 import numpy as np
 from pathlib import Path
@@ -27,6 +27,34 @@ class Entry:
     monitors: Optional[dict] = None
     logs: Optional[dict] = None
     disk_choppers: Optional[dict] = None
+
+    def _load_section(self, groups, preprocess, postprocess):
+        items = {}
+        for name, group in groups.items():
+            try:
+                if (pre := preprocess(group)) is not None:
+                    if (post := postprocess(pre[()])) is not None:
+                        items[name] = post
+            except (NexusStructureError, TransformationError, sc.DTypeError,
+                    sc.DimensionError, sc.UnitError, KeyError, ValueError,
+                    IndexError) as e:
+                if not contains_stream(group._group):
+                    warn(f"Skipped loading {group.name} due to:\n{e}")
+        return items if items else None
+
+    def load(self, preprocess=None, postprocess=None):
+        preprocess = {} if preprocess is None else preprocess
+        postprocess = {} if postprocess is None else postprocess
+        sections = {}
+        for field in fields(self.__class__):
+            section = getattr(self, field.name)
+            pre = preprocess.get(field.name, lambda x: x)
+            post = postprocess.get(field.name, lambda x: x)
+            if section is not None:
+                sections[field.name] = self._load_section(section,
+                                                          preprocess=pre,
+                                                          postprocess=post)
+        return Entry(**sections)
 
 
 def add_position_and_transforms_to_data(data: Union[sc.DataArray,
@@ -171,17 +199,8 @@ def _load_entry(group):
                            "to specify which to load data from, for example"
                            f"{__name__}('my_file.nxs', '/entry_2')")
 
-    def load_groups(groups, process=lambda x: x):
-        items = {}
-        for name, group in groups.items():
-            try:
-                items[name] = process(group[()])
-            except (NexusStructureError, TransformationError, sc.DTypeError,
-                    sc.DimensionError, sc.UnitError, KeyError, ValueError,
-                    IndexError) as e:
-                if not contains_stream(group._group):
-                    warn(f"Skipped loading {group.name} due to:\n{e}")
-        return items if items else None
+    def load_groups(groups):
+        return groups if groups else None
 
     loaded = Entry()
     loaded.detectors = load_groups(classes.get(NX_class.NXdetector, {}))
