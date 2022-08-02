@@ -206,6 +206,31 @@ def _zip_pixel_offset(da: sc.DataArray) -> sc.DataArray:
     return da
 
 
+def _detector_to_canonical(detector):
+    det = _zip_pixel_offset(detector)
+    det = det.flatten(to='detector_id')
+    det.bins.coords['tof'] = det.bins.coords.pop('event_time_offset')
+    det.bins.coords['pulse_time'] = det.bins.coords.pop('event_time_zero')
+    if 'detector_number' in det.coords:
+        det.coords['detector_id'] = det.coords.pop('detector_number')
+    elif 'pixel_id' in det.coords:
+        det.coords['detector_id'] = det.coords.pop('pixel_id')
+    elif 'spectrum_index' in det.coords:
+        det.coords['detector_id'] = det.coords.pop('spectrum_index')
+    else:
+        raise KeyError(
+            "Found neither of detector_number, pixel_id, or spectrum_index.")
+    if 'pixel_offset' in det.coords:
+        add_position_and_transforms_to_data(
+            data=det,
+            transform_name="position_transformations",
+            position_name="position",
+            base_position_name="base_position",
+            positions=det.coords.pop('pixel_offset'),
+            transforms=det.coords.pop('depends_on', None))
+    return det
+
+
 def open_entry(group):
     classes = group.by_nx_class()
 
@@ -240,34 +265,10 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     root = NXroot(nexus_file if root is None else nexus_file[root])
     classes = root.by_nx_class()
 
-    def postprocess_detector(detector):
-        det = _zip_pixel_offset(detector)
-        det = det.flatten(to='detector_id')
-        det.bins.coords['tof'] = det.bins.coords.pop('event_time_offset')
-        det.bins.coords['pulse_time'] = det.bins.coords.pop('event_time_zero')
-        if 'detector_number' in det.coords:
-            det.coords['detector_id'] = det.coords.pop('detector_number')
-        elif 'pixel_id' in det.coords:
-            det.coords['detector_id'] = det.coords.pop('pixel_id')
-        elif 'spectrum_index' in det.coords:
-            det.coords['detector_id'] = det.coords.pop('spectrum_index')
-        else:
-            raise KeyError(
-                "Found neither of detector_number, pixel_id, or spectrum_index.")
-        if 'pixel_offset' in det.coords:
-            add_position_and_transforms_to_data(
-                data=det,
-                transform_name="position_transformations",
-                position_name="position",
-                base_position_name="base_position",
-                positions=det.coords.pop('pixel_offset'),
-                transforms=det.coords.pop('depends_on', None))
-        return det
-
     data = open_entry(root)
     data = data.load(
         postprocess={
-            'detectors': postprocess_detector,
+            'detectors': _detector_to_canonical,
             'monitors': lambda x: sc.scalar(_monitor_to_canonical(x)),
             'logs': lambda x: sc.scalar(x),
             'disk_choppers': lambda x: sc.scalar(x),
