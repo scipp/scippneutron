@@ -234,58 +234,53 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     root = NXroot(nexus_file if root is None else nexus_file[root])
     classes = root.by_nx_class()
 
-    if len(classes[NX_class.NXentry]) > 1:
-        # We can't sensibly load from multiple NXentry, for example each
-        # could could contain a description of the same detector bank
-        # and lead to problems with clashing detector ids etc
-        raise RuntimeError(f"More than one NXentry group in file, use 'root' argument "
-                           "to specify which to load data from, for example"
-                           f"{__name__}('my_file.nxs', '/entry_2')")
+    def postprocess_detector(detector):
+        det = _zip_pixel_offset(detector)
+        det = det.flatten(to='detector_id')
+        det.bins.coords['tof'] = det.bins.coords.pop('event_time_offset')
+        det.bins.coords['pulse_time'] = det.bins.coords.pop('event_time_zero')
+        if 'detector_number' in det.coords:
+            det.coords['detector_id'] = det.coords.pop('detector_number')
+        elif 'pixel_id' in det.coords:
+            det.coords['detector_id'] = det.coords.pop('pixel_id')
+        elif 'spectrum_index' in det.coords:
+            det.coords['detector_id'] = det.coords.pop('spectrum_index')
+        else:
+            raise KeyError(
+                "Found neither of detector_number, pixel_id, or spectrum_index.")
+        if 'pixel_offset' in det.coords:
+            add_position_and_transforms_to_data(
+                data=det,
+                transform_name="position_transformations",
+                position_name="position",
+                base_position_name="base_position",
+                positions=det.coords.pop('pixel_offset'),
+                transforms=det.coords.pop('depends_on', None))
+        return det
+
+    data = open_entry(root)
+    data = data.load(
+        postprocess={
+            'detectors': postprocess_detector,
+            'monitors': lambda x: sc.scalar(_monitor_to_canonical(x)),
+            'logs': lambda x: sc.scalar(x),
+            'disk_choppers': lambda x: sc.scalar(x),
+        })
 
     # In the following, we map the file structure onto a partially flattened in-memory
     # structure. This behavior is quite error prone and cumbersome and will probably
     # disappear in this form. We therefore keep this length code directly in this
     # function to provide an overview and facility future refactoring steps.
     detectors = classes.get(NX_class.NXdetector, {})
-    loaded_detectors = []
-    for name, group in detectors.items():
-        try:
-            det = group[()]
-            det = _zip_pixel_offset(det)
-            det = det.flatten(to='detector_id')
-            det.bins.coords['tof'] = det.bins.coords.pop('event_time_offset')
-            det.bins.coords['pulse_time'] = det.bins.coords.pop('event_time_zero')
-            if 'detector_number' in det.coords:
-                det.coords['detector_id'] = det.coords.pop('detector_number')
-            elif 'pixel_id' in det.coords:
-                det.coords['detector_id'] = det.coords.pop('pixel_id')
-            elif 'spectrum_index' in det.coords:
-                det.coords['detector_id'] = det.coords.pop('spectrum_index')
-            else:
-                raise KeyError(
-                    "Found neither of detector_number, pixel_id, or spectrum_index.")
-            if 'pixel_offset' in det.coords:
-                add_position_and_transforms_to_data(
-                    data=det,
-                    transform_name="position_transformations",
-                    position_name="position",
-                    base_position_name="base_position",
-                    positions=det.coords.pop('pixel_offset'),
-                    transforms=det.coords.pop('depends_on', None))
-            loaded_detectors.append(det)
-        except (NexusStructureError, KeyError, sc.DTypeError, ValueError,
-                IndexError) as e:
-            if not contains_stream(group._group):
-                warn(f"Skipped loading {group.name} due to:\n{e}")
 
     no_event_data = True
     loaded_data = sc.Dataset()
 
     # If no event data are found, make a Dataset and add the metadata as
     # Dataset entries. Otherwise, make a DataArray.
-    if len(loaded_detectors):
+    if data.detectors:
         no_event_data = False
-        loaded_data = sc.concat(loaded_detectors, 'detector_id')
+        loaded_data = sc.concat(list(data.detectors.values()), 'detector_id')
     elif len(detectors) == 0:
         # If there are no NXdetector groups, load NXevent_data directly
         loaded_events = []
@@ -325,7 +320,9 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         tof_max.value = np.nextafter(tof_max.value, float("inf"))
         loaded_data.coords['tof'] = sc.concat([tof_min, tof_max], 'tof')
 
-    def add_metadata(metadata: Dict[str, sc.Variable]):
+    def add_metadata(metadata: Optional[Dict[str, sc.Variable]]):
+        if metadata is None:
+            return
         for key, value in metadata.items():
             if isinstance(loaded_data, sc.DataArray):
                 loaded_data.attrs[key] = value
@@ -353,9 +350,9 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         add_metadata(items)
         return loaded_groups
 
-    load_and_add_metadata(classes.get(NX_class.NXdisk_chopper, {}))
-    load_and_add_metadata(classes.get(NX_class.NXlog, {}))
-    load_and_add_metadata(classes.get(NX_class.NXmonitor, {}), _monitor_to_canonical)
+    add_metadata(data.disk_choppers)
+    add_metadata(data.logs)
+    add_metadata(data.monitors)
     for name, tag in {'sample': NX_class.NXsample, 'source': NX_class.NXsource}.items():
         comps = classes.get(tag, {})
         comps = load_and_add_metadata(comps)
