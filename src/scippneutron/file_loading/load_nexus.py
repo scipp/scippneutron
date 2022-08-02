@@ -32,7 +32,7 @@ class NeutronData:
 
 
 @dataclass
-class NeutronDataBuilder:
+class NeutronDataLoader:
     detectors: Optional[Dict[str, NXobject]] = None
     monitors: Optional[Dict[str, NXobject]] = None
     logs: Optional[Dict[str, NXobject]] = None
@@ -56,7 +56,7 @@ class NeutronDataBuilder:
                     items[name] = post
         return items if items else None
 
-    def load(self, preprocess=None, postprocess=None):
+    def load(self, preprocess=None, postprocess=None) -> NeutronData:
         """
         Callables in ``preprocess`` or ``postprocess`` may return None. This will drop
         the entry, before or after loading, respectively.
@@ -245,15 +245,15 @@ def open_entry(group):
     def load_groups(groups):
         return groups if groups else None
 
-    builder = NeutronDataBuilder()
-    builder.detectors = load_groups(classes.get(NX_class.NXdetector, {}))
-    builder.monitors = load_groups(classes.get(NX_class.NXmonitor, {}))
-    builder.logs = load_groups(classes.get(NX_class.NXlog, {}))
-    builder.disk_choppers = load_groups(classes.get(NX_class.NXdisk_chopper, {}))
-    builder.sources = load_groups(classes.get(NX_class.NXsource, {}))
-    builder.samples = load_groups(classes.get(NX_class.NXsample, {}))
+    loader = NeutronDataLoader()
+    loader.detectors = load_groups(classes.get(NX_class.NXdetector, {}))
+    loader.monitors = load_groups(classes.get(NX_class.NXmonitor, {}))
+    loader.logs = load_groups(classes.get(NX_class.NXlog, {}))
+    loader.disk_choppers = load_groups(classes.get(NX_class.NXdisk_chopper, {}))
+    loader.sources = load_groups(classes.get(NX_class.NXsource, {}))
+    loader.samples = load_groups(classes.get(NX_class.NXsample, {}))
     # TODO instrument name
-    return builder
+    return loader
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
