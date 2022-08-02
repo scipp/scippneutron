@@ -27,6 +27,8 @@ class NeutronData:
     monitors: Optional[Dict[str, sc.DataArray]] = None
     logs: Optional[Dict[str, sc.DataArray]] = None
     disk_choppers: Optional[Dict[str, sc.DataArray]] = None
+    sources: Optional[Dict[str, sc.DataArray]] = None
+    samples: Optional[Dict[str, sc.DataArray]] = None
 
 
 @dataclass
@@ -35,6 +37,8 @@ class NeutronDataBuilder:
     monitors: Optional[Dict[str, NXobject]] = None
     logs: Optional[Dict[str, NXobject]] = None
     disk_choppers: Optional[Dict[str, NXobject]] = None
+    sources: Optional[Dict[str, NXobject]] = None
+    samples: Optional[Dict[str, NXobject]] = None
 
     def _load_section(self, groups, preprocess, postprocess):
         items = {}
@@ -221,7 +225,9 @@ def open_entry(group):
     builder.monitors = load_groups(classes.get(NX_class.NXmonitor, {}))
     builder.logs = load_groups(classes.get(NX_class.NXlog, {}))
     builder.disk_choppers = load_groups(classes.get(NX_class.NXdisk_chopper, {}))
-    # TODO source sample instrument name
+    builder.sources = load_groups(classes.get(NX_class.NXsource, {}))
+    builder.samples = load_groups(classes.get(NX_class.NXsample, {}))
+    # TODO instrument name
     return builder
 
 
