@@ -242,16 +242,13 @@ def open_entry(group):
                            "to specify which to load data from, for example"
                            f"{__name__}('my_file.nxs', '/entry_2')")
 
-    def load_groups(groups):
-        return groups if groups else None
-
     loader = NeutronDataLoader()
-    loader.detectors = load_groups(classes.get(NX_class.NXdetector, {}))
-    loader.monitors = load_groups(classes.get(NX_class.NXmonitor, {}))
-    loader.logs = load_groups(classes.get(NX_class.NXlog, {}))
-    loader.disk_choppers = load_groups(classes.get(NX_class.NXdisk_chopper, {}))
-    loader.sources = load_groups(classes.get(NX_class.NXsource, {}))
-    loader.samples = load_groups(classes.get(NX_class.NXsample, {}))
+    loader.detectors = classes.get(NX_class.NXdetector)
+    loader.monitors = classes.get(NX_class.NXmonitor)
+    loader.logs = classes.get(NX_class.NXlog)
+    loader.disk_choppers = classes.get(NX_class.NXdisk_chopper)
+    loader.sources = classes.get(NX_class.NXsource)
+    loader.samples = classes.get(NX_class.NXsample)
     # TODO instrument name
     return loader
 
