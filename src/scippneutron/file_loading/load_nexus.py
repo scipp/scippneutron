@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from warnings import warn
 from scippnexus.nxtransformations import TransformationError
 from scippnexus.nxobject import NexusStructureError, NXobject
-from scippnexus import NXroot, NX_class
+from scippnexus import NXroot, NX_class, File
 
 
 @dataclass
@@ -218,20 +218,19 @@ def _detector_to_canonical(detector):
     elif 'spectrum_index' in det.coords:
         det.coords['detector_id'] = det.coords.pop('spectrum_index')
     else:
-        raise KeyError(
-            "Found neither of detector_number, pixel_id, or spectrum_index.")
+        raise KeyError("Found neither of detector_number, pixel_id, or spectrum_index.")
     if 'pixel_offset' in det.coords:
-        add_position_and_transforms_to_data(
-            data=det,
-            transform_name="position_transformations",
-            position_name="position",
-            base_position_name="base_position",
-            positions=det.coords.pop('pixel_offset'),
-            transforms=det.coords.pop('depends_on', None))
+        add_position_and_transforms_to_data(data=det,
+                                            transform_name="position_transformations",
+                                            position_name="position",
+                                            base_position_name="base_position",
+                                            positions=det.coords.pop('pixel_offset'),
+                                            transforms=det.coords.pop(
+                                                'depends_on', None))
     return det
 
 
-def open_entry(group):
+def _make_loader(group) -> NeutronDataLoader:
     classes = group.by_nx_class()
 
     if len(classes[NX_class.NXentry]) > 1:
@@ -253,6 +252,15 @@ def open_entry(group):
     return loader
 
 
+@contextmanager
+def open_entry(group_or_path: Union[str, Path, h5py.Group], /):
+    if isinstance(group_or_path, (str, Path)):
+        with File(group_or_path) as group:
+            yield _make_loader(group)
+    else:
+        yield _make_loader(group_or_path)
+
+
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                quiet: bool) -> Optional[ScippData]:
     """
@@ -262,16 +270,16 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     root = NXroot(nexus_file if root is None else nexus_file[root])
     classes = root.by_nx_class()
 
-    data = open_entry(root)
-    data = data.load(
-        postprocess={
-            'detectors': _detector_to_canonical,
-            'monitors': lambda x: sc.scalar(_monitor_to_canonical(x)),
-            'logs': lambda x: sc.scalar(x),
-            'disk_choppers': lambda x: sc.scalar(x),
-            'sources': lambda x: sc.scalar(x),
-            'samples': lambda x: sc.scalar(x),
-        })
+    with open_entry(root) as loader:
+        data = loader.load(
+            postprocess={
+                'detectors': _detector_to_canonical,
+                'monitors': lambda x: sc.scalar(_monitor_to_canonical(x)),
+                'logs': lambda x: sc.scalar(x),
+                'disk_choppers': lambda x: sc.scalar(x),
+                'sources': lambda x: sc.scalar(x),
+                'samples': lambda x: sc.scalar(x),
+            })
 
     # In the following, we map the file structure onto a partially flattened in-memory
     # structure. This behavior is quite error prone and cumbersome and will probably
