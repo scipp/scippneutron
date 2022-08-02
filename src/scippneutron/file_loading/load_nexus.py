@@ -22,11 +22,19 @@ from scippnexus import NXroot, NX_class
 
 
 @dataclass
-class Entry:
-    detectors: Optional[dict] = None
-    monitors: Optional[dict] = None
-    logs: Optional[dict] = None
-    disk_choppers: Optional[dict] = None
+class NeutronData:
+    detectors: Optional[Dict[str, sc.DataArray]] = None
+    monitors: Optional[Dict[str, sc.DataArray]] = None
+    logs: Optional[Dict[str, sc.DataArray]] = None
+    disk_choppers: Optional[Dict[str, sc.DataArray]] = None
+
+
+@dataclass
+class NeutronDataBuilder:
+    detectors: Optional[Dict[str, NXobject]] = None
+    monitors: Optional[Dict[str, NXobject]] = None
+    logs: Optional[Dict[str, NXobject]] = None
+    disk_choppers: Optional[Dict[str, NXobject]] = None
 
     def _load_section(self, groups, preprocess, postprocess):
         items = {}
@@ -54,7 +62,7 @@ class Entry:
                 sections[field.name] = self._load_section(section,
                                                           preprocess=pre,
                                                           postprocess=post)
-        return Entry(**sections)
+        return NeutronData(**sections)
 
 
 def add_position_and_transforms_to_data(data: Union[sc.DataArray,
@@ -188,7 +196,7 @@ def _zip_pixel_offset(da: sc.DataArray) -> sc.DataArray:
     return da
 
 
-def _load_entry(group):
+def open_entry(group):
     classes = group.by_nx_class()
 
     if len(classes[NX_class.NXentry]) > 1:
@@ -202,13 +210,13 @@ def _load_entry(group):
     def load_groups(groups):
         return groups if groups else None
 
-    loaded = Entry()
-    loaded.detectors = load_groups(classes.get(NX_class.NXdetector, {}))
-    loaded.monitors = load_groups(classes.get(NX_class.NXmonitor, {}))
-    loaded.logs = load_groups(classes.get(NX_class.NXlog, {}))
-    loaded.disk_choppers = load_groups(classes.get(NX_class.NXdisk_chopper, {}))
+    builder = NeutronDataBuilder()
+    builder.detectors = load_groups(classes.get(NX_class.NXdetector, {}))
+    builder.monitors = load_groups(classes.get(NX_class.NXmonitor, {}))
+    builder.logs = load_groups(classes.get(NX_class.NXlog, {}))
+    builder.disk_choppers = load_groups(classes.get(NX_class.NXdisk_chopper, {}))
     # TODO source sample instrument name
-    return loaded
+    return builder
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
