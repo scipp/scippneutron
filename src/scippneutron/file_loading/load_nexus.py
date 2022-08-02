@@ -39,18 +39,24 @@ class NeutronDataBuilder:
     def _load_section(self, groups, preprocess, postprocess):
         items = {}
         for name, group in groups.items():
-            try:
-                if (pre := preprocess(group)) is not None:
-                    if (post := postprocess(pre[()])) is not None:
-                        items[name] = post
-            except (NexusStructureError, TransformationError, sc.DTypeError,
-                    sc.DimensionError, sc.UnitError, KeyError, ValueError,
-                    IndexError) as e:
-                if not contains_stream(group._group):
-                    warn(f"Skipped loading {group.name} due to:\n{e}")
+            if (pre := preprocess(group)) is not None:
+                try:
+                    loaded = pre[()]
+                except (NexusStructureError, TransformationError, sc.DTypeError,
+                        sc.DimensionError, sc.UnitError, KeyError, ValueError,
+                        IndexError) as e:
+                    if not contains_stream(group._group):
+                        warn(f"Skipped loading {group.name} due to:\n{e}")
+                    continue
+                if (post := postprocess(loaded)) is not None:
+                    items[name] = post
         return items if items else None
 
     def load(self, preprocess=None, postprocess=None):
+        """
+        Callables in ``preprocess`` or ``postprocess`` may return None. This will drop
+        the entry, before or after loading, respectively.
+        """
         preprocess = {} if preprocess is None else preprocess
         postprocess = {} if postprocess is None else postprocess
         sections = {}
