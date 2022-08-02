@@ -271,6 +271,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             'monitors': lambda x: sc.scalar(_monitor_to_canonical(x)),
             'logs': lambda x: sc.scalar(x),
             'disk_choppers': lambda x: sc.scalar(x),
+            'sources': lambda x: sc.scalar(x),
+            'samples': lambda x: sc.scalar(x),
         })
 
     # In the following, we map the file structure onto a partially flattened in-memory
@@ -342,26 +344,15 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     if (instruments := classes[NX_class.NXinstrument]):
         add_metadata(_load_instrument_name(instruments))
 
-    def load_and_add_metadata(groups, process=lambda x: x):
-        items = {}
-        loaded_groups = []
-        for name, group in groups.items():
-            try:
-                items[name] = sc.scalar(process(group[()]))
-                loaded_groups.append(name)
-            except (TransformationError, sc.DimensionError, sc.UnitError, KeyError,
-                    ValueError) as e:
-                if not contains_stream(group._group):
-                    warn(f"Skipped loading {group.name} due to:\n{e}")
-        add_metadata(items)
-        return loaded_groups
-
     add_metadata(data.disk_choppers)
     add_metadata(data.logs)
     add_metadata(data.monitors)
-    for name, tag in {'sample': NX_class.NXsample, 'source': NX_class.NXsource}.items():
-        comps = classes.get(tag, {})
-        comps = load_and_add_metadata(comps)
+    add_metadata(data.sources)
+    add_metadata(data.samples)
+
+    for name, comps in [('sample', data.samples), ('source', data.sources)]:
+        if comps is None:
+            continue
         attrs = loaded_data if isinstance(loaded_data,
                                           sc.Dataset) else loaded_data.attrs
         coords = loaded_data if isinstance(loaded_data,
