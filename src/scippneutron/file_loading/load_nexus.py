@@ -75,6 +75,37 @@ class NeutronDataLoader:
         return NeutronData(**sections)
 
 
+def _make_loader(group) -> NeutronDataLoader:
+    classes = group.by_nx_class()
+
+    if len(classes[NX_class.NXentry]) > 1:
+        # We can't sensibly load from multiple NXentry, for example each
+        # could could contain a description of the same detector bank
+        # and lead to problems with clashing detector ids etc
+        raise RuntimeError(f"More than one NXentry group in file, use 'root' argument "
+                           "to specify which to load data from, for example"
+                           f"{__name__}('my_file.nxs', '/entry_2')")
+
+    loader = NeutronDataLoader()
+    loader.detectors = classes.get(NX_class.NXdetector)
+    loader.monitors = classes.get(NX_class.NXmonitor)
+    loader.logs = classes.get(NX_class.NXlog)
+    loader.disk_choppers = classes.get(NX_class.NXdisk_chopper)
+    loader.sources = classes.get(NX_class.NXsource)
+    loader.samples = classes.get(NX_class.NXsample)
+    # TODO instrument name
+    return loader
+
+
+@contextmanager
+def open_entry(group_or_path: Union[str, Path, h5py.Group], /):
+    if isinstance(group_or_path, (str, Path)):
+        with File(group_or_path) as group:
+            yield _make_loader(group)
+    else:
+        yield _make_loader(group_or_path)
+
+
 def add_position_and_transforms_to_data(data: Union[sc.DataArray,
                                                     sc.Dataset], transform_name: str,
                                         position_name: str, base_position_name: str,
@@ -228,37 +259,6 @@ def _detector_to_canonical(detector):
                                             transforms=det.coords.pop(
                                                 'depends_on', None))
     return det
-
-
-def _make_loader(group) -> NeutronDataLoader:
-    classes = group.by_nx_class()
-
-    if len(classes[NX_class.NXentry]) > 1:
-        # We can't sensibly load from multiple NXentry, for example each
-        # could could contain a description of the same detector bank
-        # and lead to problems with clashing detector ids etc
-        raise RuntimeError(f"More than one NXentry group in file, use 'root' argument "
-                           "to specify which to load data from, for example"
-                           f"{__name__}('my_file.nxs', '/entry_2')")
-
-    loader = NeutronDataLoader()
-    loader.detectors = classes.get(NX_class.NXdetector)
-    loader.monitors = classes.get(NX_class.NXmonitor)
-    loader.logs = classes.get(NX_class.NXlog)
-    loader.disk_choppers = classes.get(NX_class.NXdisk_chopper)
-    loader.sources = classes.get(NX_class.NXsource)
-    loader.samples = classes.get(NX_class.NXsample)
-    # TODO instrument name
-    return loader
-
-
-@contextmanager
-def open_entry(group_or_path: Union[str, Path, h5py.Group], /):
-    if isinstance(group_or_path, (str, Path)):
-        with File(group_or_path) as group:
-            yield _make_loader(group)
-    else:
-        yield _make_loader(group_or_path)
 
 
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
