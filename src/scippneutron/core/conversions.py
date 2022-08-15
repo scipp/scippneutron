@@ -8,6 +8,8 @@ import numpy as np
 import scipp as sc
 import scipp.constants as const
 
+from ..conversions import beamline
+
 
 def _elem_unit(var):
     if var.bins is not None:
@@ -30,36 +32,6 @@ def _float_dtype(var):
 
 def _as_float_type(var, ref):
     return var.astype(_float_dtype(ref), copy=False)
-
-
-def _total_beam_length_no_scatter(source_position, position):
-    return sc.norm(position - source_position)
-
-
-def _incident_beam(source_position, sample_position):
-    return sample_position - source_position
-
-
-def _scattered_beam(position, sample_position):
-    return position - sample_position
-
-
-def _L1(incident_beam):
-    return sc.norm(incident_beam)
-
-
-def _L2(scattered_beam):
-    return sc.norm(scattered_beam)
-
-
-def _two_theta(incident_beam, scattered_beam):
-    return sc.acos(
-        sc.dot(incident_beam / _L1(incident_beam),
-               scattered_beam / _L2(scattered_beam)))
-
-
-def _total_beam_length_scatter(L1, L2):
-    return L1 + L2
 
 
 def _wavelength_from_tof(tof, Ltotal):
@@ -171,7 +143,7 @@ def _dspacing_from_energy(energy, two_theta):
 
 
 _NO_SCATTER_GRAPH_KINEMATICS = {
-    'Ltotal': _total_beam_length_no_scatter,
+    'Ltotal': beamline.total_straight_beam_length_no_scatter,
 }
 
 _NO_SCATTER_GRAPH = {
@@ -181,12 +153,12 @@ _NO_SCATTER_GRAPH = {
 }
 
 _SCATTER_GRAPH_KINEMATICS = {
-    'incident_beam': _incident_beam,
-    'scattered_beam': _scattered_beam,
-    'L1': _L1,
-    'L2': _L2,
-    'two_theta': _two_theta,
-    'Ltotal': _total_beam_length_scatter,
+    'incident_beam': beamline.straight_incident_beam,
+    'scattered_beam': beamline.straight_scattered_beam,
+    'L1': beamline.L1,
+    'L2': beamline.L2,
+    'two_theta': beamline.two_theta,
+    'Ltotal': beamline.total_beam_length,
 }
 
 _SCATTER_GRAPH_DYNAMICS_BY_ORIGIN = {

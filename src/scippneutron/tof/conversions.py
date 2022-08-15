@@ -14,21 +14,22 @@ from ..core.conversions import _SCATTER_GRAPH_KINEMATICS, \
         _NO_SCATTER_GRAPH_KINEMATICS, \
         _SCATTER_GRAPH_DYNAMICS_BY_ORIGIN, _energy_transfer_direct_from_tof, \
         _energy_transfer_indirect_from_tof, _wavelength_from_tof, \
-        _energy_from_tof, _incident_beam, _scattered_beam
+        _energy_from_tof
+from ..conversions.beamline import straight_incident_beam, straight_scattered_beam
 
 
 def incident_beam():
     """
     Graph for computing 'incident_beam'.
     """
-    return {'incident_beam': _incident_beam}
+    return {'incident_beam': straight_incident_beam}
 
 
 def scattered_beam():
     """
     Graph for computing 'scattered_beam'.
     """
-    return {'scattered_beam': _scattered_beam}
+    return {'scattered_beam': straight_scattered_beam}
 
 
 def two_theta():
