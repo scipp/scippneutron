@@ -5,3 +5,4 @@
 # flake8: noqa[F401]
 
 from . import beamline
+from . import tof

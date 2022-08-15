@@ -7,12 +7,12 @@ Frame transformations for time-of-flight neutron scattering data.
 import scipp as sc
 from scipp.constants import h, m_n
 from .conversions import Ltotal
-from ..core.conversions import _as_float_type, _elem_unit
+from ..utils import as_float_type, elem_unit
 
 
 def _tof_from_wavelength(*, wavelength, Ltotal):
-    scale = (m_n / h).to(unit=sc.units.us / _elem_unit(Ltotal) / _elem_unit(wavelength))
-    return _as_float_type(Ltotal * scale, wavelength) * wavelength
+    scale = (m_n / h).to(unit=sc.units.us / elem_unit(Ltotal) / elem_unit(wavelength))
+    return as_float_type(Ltotal * scale, wavelength) * wavelength
 
 
 def _tof_to_time_offset(*, tof, frame_length, frame_offset):
@@ -24,9 +24,9 @@ def _tof_to_time_offset(*, tof, frame_length, frame_offset):
 
 
 def _time_offset_to_tof(*, time_offset, time_offset_pivot, tof_min, frame_length):
-    frame_length = frame_length.to(unit=_elem_unit(time_offset))
-    time_offset_pivot = time_offset_pivot.to(unit=_elem_unit(time_offset))
-    tof_min = tof_min.to(unit=_elem_unit(time_offset))
+    frame_length = frame_length.to(unit=elem_unit(time_offset))
+    time_offset_pivot = time_offset_pivot.to(unit=elem_unit(time_offset))
+    tof_min = tof_min.to(unit=elem_unit(time_offset))
     shift = tof_min - time_offset_pivot
     tof = sc.where(time_offset >= time_offset_pivot, shift, shift + frame_length)
     tof += time_offset

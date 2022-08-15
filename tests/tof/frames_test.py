@@ -117,7 +117,7 @@ def tof_to_time_offset(tof, *, frame_length, frame_offset):
 @pytest.mark.parametrize(
     "frame_offset", [0.0 * sc.Unit('ms'), 11.0 * sc.Unit('ms'), 9999.0 * sc.Unit('us')])
 def test_make_frames_reproduces_true_pulses(tof_min, frame_offset):
-    from scippneutron.core.conversions import _wavelength_from_tof
+    from scippneutron.conversions.tof import wavelength_from_tof
     frame_length = 71.0 * sc.Unit('ms')
     # Setup data with known 'tof' coord, which will serve as a reference
     da = tof_array(frame_length=frame_length, tof_min=tof_min)
@@ -126,7 +126,7 @@ def test_make_frames_reproduces_true_pulses(tof_min, frame_offset):
     da.bins.coords['event_time_offset'] = tof_to_time_offset(da.bins.coords.pop('tof'),
                                                              frame_length=frame_length,
                                                              frame_offset=frame_offset)
-    lambda_min = _wavelength_from_tof(tof_min, Ltotal=da.coords['L1'] + da.coords['L2'])
+    lambda_min = wavelength_from_tof(tof_min, Ltotal=da.coords['L1'] + da.coords['L2'])
 
     da = frames.make_frames(da,
                             frame_length=frame_length,

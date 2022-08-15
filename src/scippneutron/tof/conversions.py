@@ -11,11 +11,12 @@ Typically, multiple graphs need to be combined for a full transformation, e.g., 
 """
 
 from ..core.conversions import _SCATTER_GRAPH_KINEMATICS, \
-        _NO_SCATTER_GRAPH_KINEMATICS, \
-        _SCATTER_GRAPH_DYNAMICS_BY_ORIGIN, _energy_transfer_direct_from_tof, \
-        _energy_transfer_indirect_from_tof, _wavelength_from_tof, \
-        _energy_from_tof
+    _NO_SCATTER_GRAPH_KINEMATICS, \
+    _SCATTER_GRAPH_DYNAMICS_BY_ORIGIN
 from ..conversions.beamline import straight_incident_beam, straight_scattered_beam
+from ..conversions.tof import energy_transfer_direct_from_tof, \
+    energy_transfer_indirect_from_tof, wavelength_from_tof, \
+    energy_from_tof
 
 
 def incident_beam():
@@ -97,8 +98,8 @@ def kinematic(start: str):
     """
     return {
         'tof': {
-            'wavelength': _wavelength_from_tof,
-            'energy': _energy_from_tof
+            'wavelength': wavelength_from_tof,
+            'energy': energy_from_tof
         }
     }[start]
 
@@ -113,7 +114,7 @@ def elastic(start: str):
     return dict(_SCATTER_GRAPH_DYNAMICS_BY_ORIGIN[start])
 
 
-def _strip_elastic(start: str, keep: dict):
+def _strip_elastic(start: str, keep: list):
     graph = elastic(start)
     for node in ['dspacing', 'energy', 'Q', 'wavelength']:
         if node not in keep and node in graph:
@@ -163,7 +164,7 @@ def direct_inelastic(start: str):
 
     :param start: Input coordinate. Currently only 'tof' is supported.
     """
-    return {'tof': {'energy_transfer': _energy_transfer_direct_from_tof}}[start]
+    return {'tof': {'energy_transfer': energy_transfer_direct_from_tof}}[start]
 
 
 def indirect_inelastic(start: str):
@@ -172,4 +173,4 @@ def indirect_inelastic(start: str):
 
     :param start: Input coordinate. Currently only 'tof' is supported.
     """
-    return {'tof': {'energy_transfer': _energy_transfer_indirect_from_tof}}[start]
+    return {'tof': {'energy_transfer': energy_transfer_indirect_from_tof}}[start]
