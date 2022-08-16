@@ -169,6 +169,7 @@ def energy_transfer_direct_from_tof(*, tof: VariableLike, L1: VariableLike,
     -------
     :
         Energy transfer :math:`\\Delta E`.
+        Has the same unit as incident_energy.
 
     See Also
     --------
@@ -220,6 +221,7 @@ def energy_transfer_indirect_from_tof(*, tof: VariableLike, L1: VariableLike,
     -------
     :
         Energy transfer :math:`\\Delta E`.
+        Has the same unit as final_energy.
 
     See Also
     --------
@@ -400,7 +402,7 @@ def dspacing_from_energy(*, energy: VariableLike,
 
     .. math::
 
-        d = \\frac{h^2}{\\sqrt{8 m_n E} \\sin \\theta}
+        d = \\frac{h}{\\sqrt{8 m_n E} \\sin \\theta}
 
     Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
 
