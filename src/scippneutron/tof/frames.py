@@ -7,7 +7,7 @@ Frame transformations for time-of-flight neutron scattering data.
 import scipp as sc
 from scipp.constants import h, m_n
 from .conversions import Ltotal
-from ..utils import as_float_type, elem_unit
+from .._utils import as_float_type, elem_unit
 
 
 def _tof_from_wavelength(*, wavelength, Ltotal):

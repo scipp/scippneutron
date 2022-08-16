@@ -13,7 +13,7 @@ import scipp.constants as const
 from scipp.typing import VariableLike
 import scipp as sc
 
-from ..utils import as_float_type, elem_dtype, elem_unit
+from .._utils import as_float_type, elem_dtype, elem_unit
 
 
 def _common_dtype(a, b):
