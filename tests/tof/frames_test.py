@@ -126,7 +126,8 @@ def test_make_frames_reproduces_true_pulses(tof_min, frame_offset):
     da.bins.coords['event_time_offset'] = tof_to_time_offset(da.bins.coords.pop('tof'),
                                                              frame_length=frame_length,
                                                              frame_offset=frame_offset)
-    lambda_min = wavelength_from_tof(tof_min, Ltotal=da.coords['L1'] + da.coords['L2'])
+    lambda_min = wavelength_from_tof(tof=tof_min,
+                                     Ltotal=da.coords['L1'] + da.coords['L2'])
 
     da = frames.make_frames(da,
                             frame_length=frame_length,
