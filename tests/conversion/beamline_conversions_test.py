@@ -5,7 +5,7 @@
 import numpy as np
 import scipp as sc
 
-from scippneutron.conversions import beamline
+from scippneutron.conversion import beamline
 
 
 def test_straight_incident_beam():

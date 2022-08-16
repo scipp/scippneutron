@@ -10,7 +10,7 @@ import scipp.constants as const
 from scipp.testing import strategies as scst
 import scipp as sc
 
-from scippneutron.conversions import tof as tof_conv
+from scippneutron.conversion import tof as tof_conv
 
 global_settings = {
     'max_examples': 20,

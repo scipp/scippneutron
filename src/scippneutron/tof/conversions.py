@@ -5,7 +5,7 @@
 Coordinate transformation graphs for time-of-flight neutron scattering data.
 
 Each graph is a :py:class:`dict` and intended for use with
-:py:func:`sc.transform_coords`.
+:py:func:`scipp.transform_coords`.
 Typically, multiple graphs need to be combined for a full transformation, e.g., a
 "beamline" graph with an "elastic" graph.
 """
@@ -13,8 +13,8 @@ Typically, multiple graphs need to be combined for a full transformation, e.g., 
 from ..core.conversions import _SCATTER_GRAPH_KINEMATICS, \
     _NO_SCATTER_GRAPH_KINEMATICS, \
     _SCATTER_GRAPH_DYNAMICS_BY_ORIGIN
-from ..conversions.beamline import straight_incident_beam, straight_scattered_beam
-from ..conversions.tof import energy_transfer_direct_from_tof, \
+from ..conversion.beamline import straight_incident_beam, straight_scattered_beam
+from ..conversion.tof import energy_transfer_direct_from_tof, \
     energy_transfer_indirect_from_tof, wavelength_from_tof, \
     energy_from_tof
 

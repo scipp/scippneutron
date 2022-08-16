@@ -6,7 +6,7 @@ from typing import Callable, Dict, Tuple, Union
 
 import scipp as sc
 
-from ..conversions import beamline, tof
+from ..conversion import beamline, tof
 
 
 _NO_SCATTER_GRAPH_KINEMATICS = {
