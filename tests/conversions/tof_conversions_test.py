@@ -5,18 +5,12 @@
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 import numpy as np
+import pytest
 import scipp.constants as const
 from scipp.testing import strategies as scst
 import scipp as sc
 
 from scippneutron.conversions import tof as tof_conv
-
-# TODO test that precision is preserved
-
-
-def time_unit():
-    return st.sampled_from(('s', 'ms', 'us'))
-
 
 global_settings = {
     'max_examples': 20,
@@ -94,6 +88,21 @@ def test_wavelength_from_tof(tof, Ltotal):
                        sc.to_unit(const.h * tof / const.m_n / Ltotal, unit='angstrom'))
 
 
+@pytest.mark.parametrize('tof_dtype', ('float64', 'int64', 'int32'))
+@pytest.mark.parametrize('Ltotal_dtype', ('float64', 'float32', 'int64', 'int32'))
+def test_wavelength_from_tof_double_precision(tof_dtype, Ltotal_dtype):
+    tof = sc.scalar(1.2, unit='s', dtype=tof_dtype)
+    Ltotal = sc.scalar(10.1, unit='m', dtype=Ltotal_dtype)
+    assert tof_conv.wavelength_from_tof(tof=tof, Ltotal=Ltotal).dtype == 'float64'
+
+
+@pytest.mark.parametrize('Ltotal_dtype', ('float64', 'float32', 'int64', 'int32'))
+def test_wavelength_from_tof_single_precision(Ltotal_dtype):
+    tof = sc.scalar(1.2, unit='s', dtype='float32')
+    Ltotal = sc.scalar(10.1, unit='m', dtype=Ltotal_dtype)
+    assert tof_conv.wavelength_from_tof(tof=tof, Ltotal=Ltotal).dtype == 'float32'
+
+
 @given(tof=time_variables(),
        Ltotal_and_two_theta=n_space_variables(2),
        two_theta_unit=st.sampled_from(('deg', 'rad')))
@@ -108,12 +117,48 @@ def test_dspacing_from_tof(tof, Ltotal_and_two_theta, two_theta_unit):
                    unit='angstrom'))
 
 
+@pytest.mark.parametrize('tof_dtype', ('float64', 'int64', 'int32'))
+@pytest.mark.parametrize('Ltotal_dtype', ('float64', 'float32', 'int64', 'int32'))
+@pytest.mark.parametrize('two_theta_dtype', ('float64', 'float32', 'int64', 'int32'))
+def test_dspacing_from_tof_double_precision(tof_dtype, Ltotal_dtype, two_theta_dtype):
+    tof = sc.scalar(52.0, unit='s', dtype=tof_dtype)
+    Ltotal = sc.scalar(0.341, unit='m', dtype=Ltotal_dtype)
+    two_theta = sc.scalar(1.68, unit='rad', dtype=two_theta_dtype)
+    assert tof_conv.dspacing_from_tof(tof=tof, Ltotal=Ltotal,
+                                      two_theta=two_theta).dtype == 'float64'
+
+
+@pytest.mark.parametrize('Ltotal_dtype', ('float64', 'float32', 'int64', 'int32'))
+@pytest.mark.parametrize('two_theta_dtype', ('float64', 'float32', 'int64', 'int32'))
+def test_dspacing_from_tof_single_precision(Ltotal_dtype, two_theta_dtype):
+    tof = sc.scalar(52.0, unit='s', dtype='float32')
+    Ltotal = sc.scalar(0.341, unit='m', dtype=Ltotal_dtype)
+    two_theta = sc.scalar(1.68, unit='rad', dtype=two_theta_dtype)
+    assert tof_conv.dspacing_from_tof(tof=tof, Ltotal=Ltotal,
+                                      two_theta=two_theta).dtype == 'float32'
+
+
 @given(tof=time_variables(), Ltotal=space_variables())
 @settings(**global_settings)
 def test_energy_from_tof(tof, Ltotal):
     energy = tof_conv.energy_from_tof(tof=tof, Ltotal=Ltotal)
     assert sc.allclose(energy, sc.to_unit(const.m_n * Ltotal**2 / 2 / tof**2,
                                           unit='meV'))
+
+
+@pytest.mark.parametrize('tof_dtype', ('float64', 'int64'))
+@pytest.mark.parametrize('Ltotal_dtype', ('float64', 'float32', 'int64'))
+def test_energy_from_tof_double_precision(tof_dtype, Ltotal_dtype):
+    tof = sc.scalar(478.9, unit='s', dtype=tof_dtype)
+    Ltotal = sc.scalar(1.256, unit='m', dtype=Ltotal_dtype)
+    assert tof_conv.energy_from_tof(tof=tof, Ltotal=Ltotal).dtype == 'float64'
+
+
+@pytest.mark.parametrize('Ltotal_dtype', ('float64', 'float32', 'int64'))
+def test_energy_from_tof_single_precision(Ltotal_dtype):
+    tof = sc.scalar(478.9, unit='s', dtype='float32')
+    Ltotal = sc.scalar(1.256, unit='m', dtype=Ltotal_dtype)
+    assert tof_conv.energy_from_tof(tof=tof, Ltotal=Ltotal).dtype == 'float32'
 
 
 @given(tof=time_variables(),
@@ -167,6 +212,17 @@ def test_energy_from_wavelength(wavelength):
         energy, sc.to_unit(const.h**2 / 2 / const.m_n / wavelength**2, unit='meV'))
 
 
+@pytest.mark.parametrize('wavelength_dtype', ('float64', 'int64'))
+def test_energy_from_wavelength_double_precision(wavelength_dtype):
+    wavelength = sc.scalar(60.5, unit='m', dtype=wavelength_dtype)
+    assert tof_conv.energy_from_wavelength(wavelength=wavelength).dtype == 'float64'
+
+
+def test_energy_from_wavelength_single_precision():
+    wavelength = sc.scalar(60.5, unit='m', dtype='float32')
+    assert tof_conv.energy_from_wavelength(wavelength=wavelength).dtype == 'float32'
+
+
 @given(energy=energy_variables())
 @settings(**global_settings)
 def test_wavelength_from_energy(energy):
@@ -176,11 +232,39 @@ def test_wavelength_from_energy(energy):
         sc.to_unit(const.h / sc.sqrt(2 * const.m_n * energy), unit='angstrom'))
 
 
+@pytest.mark.parametrize('energy_dtype', ('float64', 'int64'))
+def test_wavelength_from_energy_double_precision(energy_dtype):
+    energy = sc.scalar(61.0, unit='meV', dtype=energy_dtype)
+    assert tof_conv.wavelength_from_energy(energy=energy).dtype == 'float64'
+
+
+def test_wavelength_from_energy_single_precision():
+    energy = sc.scalar(61.0, unit='meV', dtype='float32')
+    assert tof_conv.wavelength_from_energy(energy=energy).dtype == 'float32'
+
+
 @given(wavelength=space_variables(), two_theta=angle_variables())
 @settings(**global_settings)
 def test_Q_from_wavelength(wavelength, two_theta):
     Q = tof_conv.Q_from_wavelength(wavelength=wavelength, two_theta=two_theta)
     assert sc.allclose(Q, 4 * np.pi * sc.sin(two_theta / 2) / wavelength)
+
+
+@pytest.mark.parametrize('wavelength_dtype', ('float64', 'int64'))
+@pytest.mark.parametrize('two_theta_dtype', ('float64', 'float32', 'int64'))
+def test_Q_from_wavelength_double_precision(wavelength_dtype, two_theta_dtype):
+    wavelength = sc.scalar(3.51, unit='s', dtype=wavelength_dtype)
+    two_theta = sc.scalar(0.041, unit='deg', dtype=two_theta_dtype)
+    assert tof_conv.Q_from_wavelength(wavelength=wavelength,
+                                      two_theta=two_theta).dtype == 'float64'
+
+
+@pytest.mark.parametrize('two_theta_dtype', ('float64', 'float32', 'int64'))
+def test_Q_from_wavelength_single_precision(two_theta_dtype):
+    wavelength = sc.scalar(3.51, unit='s', dtype='float32')
+    two_theta = sc.scalar(0.041, unit='deg', dtype=two_theta_dtype)
+    assert tof_conv.Q_from_wavelength(wavelength=wavelength,
+                                      two_theta=two_theta).dtype == 'float32'
 
 
 @given(Q=space_variables(), two_theta=angle_variables())
@@ -192,6 +276,21 @@ def test_wavelength_from_Q(Q, two_theta):
         wavelength, sc.to_unit(4 * np.pi * sc.sin(two_theta / 2) / Q, unit='angstrom'))
 
 
+@pytest.mark.parametrize('Q_dtype', ('float64', 'int64'))
+@pytest.mark.parametrize('two_theta_dtype', ('float64', 'float32', 'int64'))
+def test_wavelength_from_Q_double_precision(Q_dtype, two_theta_dtype):
+    Q = sc.scalar(4.151, unit='1/nm', dtype=Q_dtype)
+    two_theta = sc.scalar(5.71, unit='deg', dtype=two_theta_dtype)
+    assert tof_conv.wavelength_from_Q(Q=Q, two_theta=two_theta).dtype == 'float64'
+
+
+@pytest.mark.parametrize('two_theta_dtype', ('float64', 'float32', 'int64'))
+def test_wavelength_from_Q_single_precision(two_theta_dtype):
+    Q = sc.scalar(4.151, unit='1/nm', dtype='float32')
+    two_theta = sc.scalar(5.71, unit='deg', dtype=two_theta_dtype)
+    assert tof_conv.wavelength_from_Q(Q=Q, two_theta=two_theta).dtype == 'float32'
+
+
 @given(wavelength=space_variables(), two_theta=angle_variables())
 @settings(**global_settings)
 def test_dspacing_from_wavelength(wavelength, two_theta):
@@ -199,6 +298,23 @@ def test_dspacing_from_wavelength(wavelength, two_theta):
                                                  two_theta=two_theta)
     assert sc.allclose(
         dspacing, sc.to_unit(wavelength / 2 / sc.sin(two_theta / 2), unit='angstrom'))
+
+
+@pytest.mark.parametrize('wavelength_dtype', ('float64', 'int64'))
+@pytest.mark.parametrize('two_theta_dtype', ('float64', 'float32', 'int64'))
+def test_dspacing_from_wavelength_double_precision(wavelength_dtype, two_theta_dtype):
+    wavelength = sc.scalar(41.4, unit='m', dtype=wavelength_dtype)
+    two_theta = sc.scalar(8.4, unit='rad', dtype=two_theta_dtype)
+    assert tof_conv.dspacing_from_wavelength(wavelength=wavelength,
+                                             two_theta=two_theta).dtype == 'float64'
+
+
+@pytest.mark.parametrize('two_theta_dtype', ('float64', 'float32', 'int64'))
+def test_dspacing_from_wavelength_single_precision(two_theta_dtype):
+    wavelength = sc.scalar(41.4, unit='m', dtype='float32')
+    two_theta = sc.scalar(8.4, unit='rad', dtype=two_theta_dtype)
+    assert tof_conv.dspacing_from_wavelength(wavelength=wavelength,
+                                             two_theta=two_theta).dtype == 'float32'
 
 
 @given(energy=energy_variables(), two_theta=angle_variables())
@@ -209,3 +325,20 @@ def test_dspacing_from_energy(energy, two_theta):
         dspacing,
         sc.to_unit(const.h / sc.sqrt(8 * const.m_n * energy) / sc.sin(two_theta / 2),
                    unit='angstrom'))
+
+
+@pytest.mark.parametrize('energy_dtype', ('float64', 'int64'))
+@pytest.mark.parametrize('two_theta_dtype', ('float64', 'float32', 'int64'))
+def test_dspacing_from_energy_double_precision(energy_dtype, two_theta_dtype):
+    energy = sc.scalar(26.90, unit='J', dtype=energy_dtype)
+    two_theta = sc.scalar(1.985, unit='rad', dtype=two_theta_dtype)
+    assert tof_conv.dspacing_from_energy(energy=energy,
+                                         two_theta=two_theta).dtype == 'float64'
+
+
+@pytest.mark.parametrize('two_theta_dtype', ('float64', 'float32', 'int64'))
+def test_dspacing_from_energy_single_precision(two_theta_dtype):
+    energy = sc.scalar(26.90, unit='J', dtype='float32')
+    two_theta = sc.scalar(1.985, unit='rad', dtype=two_theta_dtype)
+    assert tof_conv.dspacing_from_energy(energy=energy,
+                                         two_theta=two_theta).dtype == 'float32'
