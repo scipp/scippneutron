@@ -1,4 +1,3 @@
-.. _scipp-neutron:
 .. currentmodule:: scippneutron
 
 Free functions
@@ -48,14 +47,3 @@ Loading Nexus files
 
    load
    load_nexus
-
-Modules
-=======
-
-.. autosummary::
-   :toctree: ../generated/modules
-   :template: scipp-module-template.rst
-   :recursive:
-
-   conversions
-   tof
