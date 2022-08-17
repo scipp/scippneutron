@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2022 Scipp contributors (https://github.com/scipp)
 # @author Jan-Lukas Wynen
+
+# flake8: noqa[F401]
+
 """Graphs for coordinate transformations.
 
 All graphs are defined in terms of the functions in the parent module
@@ -17,3 +20,6 @@ For example:
 The `user guide <../../user-guide/coordinate-transformations.rst>`_ gives
 more examples.
 """
+
+from . import beamline
+from . import tof

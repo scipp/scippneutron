@@ -6,28 +6,16 @@ from typing import Callable, Dict, Tuple, Union
 
 import scipp as sc
 
-from ..conversion import beamline, tof
-
-from ..conversion.graph.beamline import _NO_SCATTER_GRAPH_KINEMATICS, _SCATTER_GRAPH_KINEMATICS
-from ..conversion.graph.tof import _GRAPH_DYNAMICS_BY_ORIGIN
-
-_NO_SCATTER_GRAPH = {
-    **_NO_SCATTER_GRAPH_KINEMATICS,
-    'wavelength': tof.wavelength_from_tof,
-    'energy': tof.energy_from_tof,
-}
+from ..conversion import graph as _graphs
 
 
 def _inelastic_scatter_graph(energy_mode):
-    inelastic_step = {
-        'direct_inelastic': {
-            'energy_transfer': tof.energy_transfer_direct_from_tof
-        },
-        'indirect_inelastic': {
-            'energy_transfer': tof.energy_transfer_indirect_from_tof
-        }
-    }[energy_mode]
-    return {**_SCATTER_GRAPH_KINEMATICS, **inelastic_step}
+    inelastic_graph_factory = {
+        'direct_inelastic': _graphs.tof.direct_inelastic,
+        'indirect_inelastic': _graphs.tof.indirect_inelastic,
+    }
+    return {**_graphs.beamline.beamline(scatter=True),
+            **inelastic_graph_factory[energy_mode](start='tof')}
 
 
 def _reachable_by(target, graph):
@@ -36,9 +24,10 @@ def _reachable_by(target, graph):
 
 
 def _elastic_scatter_graph(origin, target):
-    if _reachable_by(target, _SCATTER_GRAPH_KINEMATICS):
-        return dict(_SCATTER_GRAPH_KINEMATICS)
-    return {**_SCATTER_GRAPH_KINEMATICS, **_GRAPH_DYNAMICS_BY_ORIGIN[origin]}
+    scatter_graph_kinematics = _graphs.beamline.beamline(scatter=True)
+    if _reachable_by(target, scatter_graph_kinematics):
+        return dict(scatter_graph_kinematics)
+    return {**scatter_graph_kinematics, **_graphs.tof.elastic(origin)}
 
 
 def _scatter_graph(origin, target, energy_mode):
@@ -68,7 +57,10 @@ def conversion_graph(origin: str, target: str, scatter: bool,
     if scatter:
         return dict(_scatter_graph(origin, target, energy_mode))
     else:
-        return dict(_NO_SCATTER_GRAPH)
+        return {
+            **_graphs.beamline.beamline(scatter=False),
+            **_graphs.tof.kinematic(start='tof')
+        }
 
 
 def _find_inelastic_inputs(data):
@@ -123,7 +115,7 @@ def convert(data: Union[sc.DataArray, sc.Dataset], origin: str, target: str,
             scatter: bool) -> Union[sc.DataArray, sc.Dataset]:
     """
     Perform a unit conversion from the given origin unit to target.
-    See the the documentation page on "Coordinate Transformations"
+    See the documentation page on "Coordinate Transformations"
     (https://scipp.github.io/scippneutron/user-guide/coordinate-transformations.html)
     for more details.
 

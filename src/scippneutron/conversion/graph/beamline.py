@@ -93,11 +93,11 @@ def Ltotal(scatter: bool) -> Graph:
     return graph
 
 
-_NO_SCATTER_GRAPH_KINEMATICS = {
+_NO_SCATTER_GRAPH_BEAMLINE = {
     'Ltotal': _kernels.total_straight_beam_length_no_scatter,
 }
 
-_SCATTER_GRAPH_KINEMATICS = {
+_SCATTER_GRAPH_BEAMLINE = {
     'incident_beam': _kernels.straight_incident_beam,
     'scattered_beam': _kernels.straight_scattered_beam,
     'L1': _kernels.L1,
@@ -125,6 +125,6 @@ def beamline(scatter: bool) -> Graph:
         A dict defining a coordinate transformation graph.
     """
     if scatter:
-        return dict(_SCATTER_GRAPH_KINEMATICS)
+        return dict(_SCATTER_GRAPH_BEAMLINE)
     else:
-        return dict(_NO_SCATTER_GRAPH_KINEMATICS)
+        return dict(_NO_SCATTER_GRAPH_BEAMLINE)
