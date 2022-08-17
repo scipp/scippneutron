@@ -3,6 +3,26 @@
 Release Notes
 =============
 
+v0.9.0 (Unreleased)
+-------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+* `scippneutron.tof.conversions` has been split into `scippneutron.conversion.graph.beamline` and `scippneutron.conversion.graph.tof` `361 <https://github.com/scipp/scipp/pull/361>`_.
+
+Features
+~~~~~~~~
+
+* Kernels for cordinate transformations are now public in `scippneutron.conversion` `361 <https://github.com/scipp/scipp/pull/361>`_.
+
+Contributors
+~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+and Jan-Lukas Wynen :sup:`a`
+
 v0.8.0 (July 2022)
 ------------------
 
