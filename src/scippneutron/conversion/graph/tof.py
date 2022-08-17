@@ -45,12 +45,12 @@ _GRAPH_DYNAMICS_BY_ORIGIN = {
 }
 
 
-def _strip_elastic(start: str, keep: list)->Graph:
+def _strip_elastic(start: str, keep: list) -> Graph:
     full_graph = elastic(start)
     return {key: full_graph[key] for key in keep if key != start}
 
 
-def elastic(start: str)->Graph:
+def elastic(start: str) -> Graph:
     """Graph for elastic scattering transformations.
 
     Parameters
@@ -67,7 +67,7 @@ def elastic(start: str)->Graph:
     return dict(_GRAPH_DYNAMICS_BY_ORIGIN[start])
 
 
-def kinematic(start: str)->Graph:
+def kinematic(start: str) -> Graph:
     """Graph with pure kinematics.
 
     The returned graph can be used to compute scattering-independent quantities.
@@ -85,7 +85,7 @@ def kinematic(start: str)->Graph:
     return _strip_elastic(start, keep=['wavelength', 'energy'])
 
 
-def elastic_dspacing(start: str)->Graph:
+def elastic_dspacing(start: str) -> Graph:
     """
     Graph for elastic scattering transformation to dspacing.
 
@@ -102,7 +102,7 @@ def elastic_dspacing(start: str)->Graph:
     return _strip_elastic(start, keep=['dspacing'])
 
 
-def elastic_energy(start: str)->Graph:
+def elastic_energy(start: str) -> Graph:
     """
     Graph for elastic scattering transformation to energy.
 
@@ -119,7 +119,7 @@ def elastic_energy(start: str)->Graph:
     return _strip_elastic(start, keep=['energy'])
 
 
-def elastic_Q(start: str)->Graph:
+def elastic_Q(start: str) -> Graph:
     """
     Graph for elastic scattering transformation to Q.
 
@@ -136,7 +136,7 @@ def elastic_Q(start: str)->Graph:
     return _strip_elastic(start, keep=['Q', 'wavelength'])
 
 
-def elastic_wavelength(start: str)->Graph:
+def elastic_wavelength(start: str) -> Graph:
     """
     Graph for elastic scattering transformation to wavelength.
 
@@ -153,7 +153,7 @@ def elastic_wavelength(start: str)->Graph:
     return _strip_elastic(start, keep=['wavelength'])
 
 
-def direct_inelastic(start: str)->Graph:
+def direct_inelastic(start: str) -> Graph:
     """
     Graph for direct-inelastic scattering transformations.
 
@@ -170,7 +170,7 @@ def direct_inelastic(start: str)->Graph:
     return {'tof': {'energy_transfer': _kernels.energy_transfer_direct_from_tof}}[start]
 
 
-def indirect_inelastic(start: str)->Graph:
+def indirect_inelastic(start: str) -> Graph:
     """
     Graph for indirect-inelastic scattering transformations.
 
@@ -184,4 +184,8 @@ def indirect_inelastic(start: str)->Graph:
     :
         A dict defining a coordinate transformation graph.
     """
-    return {'tof': {'energy_transfer': _kernels.energy_transfer_indirect_from_tof}}[start]
+    return {
+        'tof': {
+            'energy_transfer': _kernels.energy_transfer_indirect_from_tof
+        }
+    }[start]

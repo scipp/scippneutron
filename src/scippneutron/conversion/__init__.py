@@ -3,7 +3,6 @@
 # @author Jan-Lukas Wynen
 
 # flake8: noqa[F401]
-
 """Components for coordinate transformations.
 
 The submodules are mainly intended for constructing graphs for

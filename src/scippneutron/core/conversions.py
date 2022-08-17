@@ -14,8 +14,10 @@ def _inelastic_scatter_graph(energy_mode):
         'direct_inelastic': _graphs.tof.direct_inelastic,
         'indirect_inelastic': _graphs.tof.indirect_inelastic,
     }
-    return {**_graphs.beamline.beamline(scatter=True),
-            **inelastic_graph_factory[energy_mode](start='tof')}
+    return {
+        **_graphs.beamline.beamline(scatter=True),
+        **inelastic_graph_factory[energy_mode](start='tof')
+    }
 
 
 def _reachable_by(target, graph):
