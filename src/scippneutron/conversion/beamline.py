@@ -13,6 +13,10 @@ All quantities are defined as in the image below:
    :alt: Scattering angle in Bragg reflection.
    :align: center
 
+The 'source position' defines the point where :math:`t=0` (or vice versa).
+Neutrons are scattered at the 'sample position' and detected
+at 'position' at :math:`t=\\mathsf{tof}`.
+
 In addition, ``total_straight_beam_length_no_scatter`` can be used if the beam
 does not scatter off of a sample.
 This is useful for instance for monitors.
