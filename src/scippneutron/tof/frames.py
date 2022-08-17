@@ -6,7 +6,7 @@ Frame transformations for time-of-flight neutron scattering data.
 """
 import scipp as sc
 from scipp.constants import h, m_n
-from .conversions import Ltotal
+from ..conversion.graph.beamline import Ltotal
 from .._utils import as_float_type, elem_unit
 
 

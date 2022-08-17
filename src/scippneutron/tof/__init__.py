@@ -7,5 +7,4 @@ r"""
 Specifics for time-of-flight neutron-scattering data reduction, including coordinate transformations.
 """
 
-from . import conversions
 from .diagram import TimeDistanceDiagram

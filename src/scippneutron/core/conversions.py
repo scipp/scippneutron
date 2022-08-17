@@ -8,45 +8,13 @@ import scipp as sc
 
 from ..conversion import beamline, tof
 
-
-_NO_SCATTER_GRAPH_KINEMATICS = {
-    'Ltotal': beamline.total_straight_beam_length_no_scatter,
-}
+from ..conversion.graph.beamline import _NO_SCATTER_GRAPH_KINEMATICS, _SCATTER_GRAPH_KINEMATICS
+from ..conversion.graph.tof import _GRAPH_DYNAMICS_BY_ORIGIN
 
 _NO_SCATTER_GRAPH = {
     **_NO_SCATTER_GRAPH_KINEMATICS,
     'wavelength': tof.wavelength_from_tof,
     'energy': tof.energy_from_tof,
-}
-
-_SCATTER_GRAPH_KINEMATICS = {
-    'incident_beam': beamline.straight_incident_beam,
-    'scattered_beam': beamline.straight_scattered_beam,
-    'L1': beamline.L1,
-    'L2': beamline.L2,
-    'two_theta': beamline.two_theta,
-    'Ltotal': beamline.total_beam_length,
-}
-
-_SCATTER_GRAPH_DYNAMICS_BY_ORIGIN = {
-    'energy': {
-        'dspacing': tof.dspacing_from_energy,
-        'wavelength': tof.wavelength_from_energy,
-    },
-    'tof': {
-        'dspacing': tof.dspacing_from_tof,
-        'energy': tof.energy_from_tof,
-        'Q': tof.Q_from_wavelength,
-        'wavelength': tof.wavelength_from_tof,
-    },
-    'Q': {
-        'wavelength': tof.wavelength_from_Q,
-    },
-    'wavelength': {
-        'dspacing': tof.dspacing_from_wavelength,
-        'energy': tof.energy_from_wavelength,
-        'Q': tof.Q_from_wavelength,
-    },
 }
 
 
@@ -70,7 +38,7 @@ def _reachable_by(target, graph):
 def _elastic_scatter_graph(origin, target):
     if _reachable_by(target, _SCATTER_GRAPH_KINEMATICS):
         return dict(_SCATTER_GRAPH_KINEMATICS)
-    return {**_SCATTER_GRAPH_KINEMATICS, **_SCATTER_GRAPH_DYNAMICS_BY_ORIGIN[origin]}
+    return {**_SCATTER_GRAPH_KINEMATICS, **_GRAPH_DYNAMICS_BY_ORIGIN[origin]}
 
 
 def _scatter_graph(origin, target, energy_mode):

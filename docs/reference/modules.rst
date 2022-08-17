@@ -8,5 +8,5 @@ Modules
    :template: scipp-module-template.rst
    :recursive:
 
-   conversions
+   conversion
    tof

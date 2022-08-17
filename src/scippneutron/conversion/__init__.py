@@ -6,8 +6,11 @@
 
 """Components for coordinate transformations.
 
-The submodules can be used to construct graphs for ``scipp.transform_coords``.
-Or they can be used independently.
+The submodules are mainly intended for constructing graphs for
+:func:`scipp.transform_coords` but can also be used independently.
+
+``beamline`` and ``tof`` contain individual transformation kernels.
+``graph`` contains concrete graphs that can be passed to ``transform_coords``.
 
 See also the user guide on
 `Coordinate Transformations <../../user-guide/coordinate-transformations.rst>`_.
