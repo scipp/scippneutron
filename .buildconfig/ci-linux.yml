@@ -9,6 +9,7 @@ dependencies:
   - cppcheck
   - gxx_linux-64=11.1.*
   - h5py
+  - hypothesis
   - ipykernel
   - ipympl
   - ipywidgets

@@ -49,7 +49,8 @@ Documentation
    :caption: Reference
    :maxdepth: 3
 
-   reference/api
+   reference/free-functions
+   reference/modules
    reference/frame-unwrapping
 
 .. toctree::
