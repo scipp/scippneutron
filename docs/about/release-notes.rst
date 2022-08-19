@@ -3,18 +3,56 @@
 Release Notes
 =============
 
+
+.. Template, copy this to create a new section after a release:
+
+   v0.xy.0 (Unreleased)
+   --------------------
+
+   Features
+   ~~~~~~~~
+
+   Breaking changes
+   ~~~~~~~~~~~~~~~~
+
+   Bugfixes
+   ~~~~~~~~
+
+   Documentation
+   ~~~~~~~~~~~~~
+
+   Deprecations
+   ~~~~~~~~~~~~
+
+   Stability, Maintainability, and Testing
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Contributors
+   ~~~~~~~~~~~~
+
+   Simon Heybrock :sup:`a`\ ,
+   Neil Vaytet :sup:`a`\ ,
+   and Jan-Lukas Wynen :sup:`a`
+
+
 v0.9.0 (Unreleased)
 -------------------
-
-Breaking changes
-~~~~~~~~~~~~~~~~
-
-* `scippneutron.tof.conversions` has been split into `scippneutron.conversion.graph.beamline` and `scippneutron.conversion.graph.tof` `361 <https://github.com/scipp/scipp/pull/361>`_.
 
 Features
 ~~~~~~~~
 
-* Kernels for cordinate transformations are now public in `scippneutron.conversion` `361 <https://github.com/scipp/scipp/pull/361>`_.
+* Kernels for coordinate transformations are now public in :mod:`scippneutron.conversion` `#361 <https://github.com/scipp/scipp/pull/361>`_.
+
+Bugfixes
+~~~~~~~~
+
+* Fixed ``dspacing_from_wavelength``, results used to be wrong by a factor of ``10**10`` `#361 <https://github.com/scipp/scipp/pull/361>`_.
+* ``two_theta`` as used by coordinate transformations now uses a numerically more stable implementation, the old one had an error of up to ``10**-6`` for small angles `#361 <https://github.com/scipp/scipp/pull/361>`_.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+* ``scippneutron.tof.conversions`` has been split into :mod:`scippneutron.conversion.graph.beamline` and :mod:`scippneutron.conversion.graph.tof` `#361 <https://github.com/scipp/scipp/pull/361>`_.
 
 Contributors
 ~~~~~~~~~~~~
@@ -64,7 +102,7 @@ v0.6.0 (May 2022)
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
-* Remove accidental dependency on Mantid. Users now have to install Mantid themselves if they need it `332 <https://github.com/scipp/scipp/pull/332>`_.
+* Remove accidental dependency on Mantid. Users now have to install Mantid themselves if they need it `#332 <https://github.com/scipp/scipp/pull/332>`_.
 * Removed module ``scippneutron.nexus`` in favor of `scippnexus <https://scipp.github.io/scippnexus/>`_ to implement :func:`scippneutron.load_nexus`.
 
 Bugfixes
