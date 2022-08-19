@@ -21,10 +21,6 @@ In addition, ``total_straight_beam_length_no_scatter`` can be used if the beam
 does not scatter off of a sample.
 This is useful for instance for monitors.
 In this case, ``Ltotal`` is the distance from source to detector.
-
-In experiments with curved guides or additional reflections in the beam,
-it is often possible to use virtual positions in the input, such that a straight
-beamline with those positions is equivalent to a curved geometry with real positions.
 """
 
 from scipp.typing import VariableLike
