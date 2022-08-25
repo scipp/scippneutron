@@ -53,6 +53,7 @@ Breaking changes
 ~~~~~~~~~~~~~~~~
 
 * ``scippneutron.tof.conversions`` has been split into :mod:`scippneutron.conversion.graph.beamline` and :mod:`scippneutron.conversion.graph.tof` `#361 <https://github.com/scipp/scipp/pull/361>`_.
+* Switched to scipp 0.16.1
 
 Contributors
 ~~~~~~~~~~~~
