@@ -10,67 +10,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-execute_process(
-  COMMAND conan export .
-  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.conan-recipes/llnl-units"
-                    COMMAND_ECHO STDOUT
-)
-
-# Conan dependencies
-if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake")
-  message(
-    STATUS
-      "Downloading conan.cmake from https://github.com/conan-io/cmake-conan"
-  )
-  file(
-    DOWNLOAD
-    "https://raw.githubusercontent.com/conan-io/cmake-conan/0.18.1/conan.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake"
-    EXPECTED_HASH
-      SHA256=5cdb3042632da3efff558924eecefd580a0e786863a857ca097c3d1d43df5dcd
-    TLS_VERIFY ON
-  )
-endif()
-
-include(${CMAKE_CURRENT_BINARY_DIR}/conan.cmake)
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_BINARY_DIR})
-
-conan_cmake_configure(
-  REQUIRES
-  boost/1.76.0
-  eigen/3.3.9
-  gtest/1.11.0
-  LLNL-Units/0.6.0
-  pybind11/2.6.2
-  OPTIONS
-  boost:header_only=True
-  gtest:shared=False
-  LLNL-Units:shared=False
-  LLNL-Units:fPIC=True
-  LLNL-Units:base_type=uint64_t
-  LLNL-Units:namespace=llnl::units
-  GENERATORS
-  cmake_find_package_multi
-  ${CONAN_DEPLOY}
-)
-
-conan_cmake_autodetect(conan_settings)
-if(DEFINED CMAKE_OSX_ARCHITECTURES)
-  if("${CMAKE_OSX_ARCHITECTURES}" STREQUAL "arm64")
-    # For Apple M1
-    set(conan_settings "${conan_settings};arch=armv8")
-  endif()
-endif()
-conan_cmake_install(
-  PATH_OR_REFERENCE ${CMAKE_CURRENT_BINARY_DIR} SETTINGS ${conan_settings}
-  BUILD outdated
-)
-
-find_package(GTest CONFIG REQUIRED)
 find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development)
+find_package(scipp 0.16.3 REQUIRED COMPONENTS conan-config)
+find_package(GTest CONFIG REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
-find_package(scipp 0.16.2 REQUIRED)
+find_package(scipp 0.16.3 REQUIRED)
 
 find_program(CCACHE ccache)
 if(CCACHE)
