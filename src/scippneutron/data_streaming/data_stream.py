@@ -142,8 +142,8 @@ async def _data_stream(
         end_at: StopTime = StopTime.NEVER,
         query_consumer: Optional["KafkaQueryConsumer"] = None,  # noqa: F821
         consumer_type: ConsumerType = ConsumerType.REAL,
-        halt_after_n_data_chunks: int = np.iinfo(np.int32).max,  # for tests
-        halt_after_n_warnings: int = np.iinfo(np.int32).max,  # for tests
+        halt_after_n_data_chunks: int = np.iinfo(np.int32).max,  # noqa: B008
+        halt_after_n_warnings: int = np.iinfo(np.int32).max,  # noqa: B008
         test_message_queue: Optional[mp.Queue] = None,  # for tests
         timeout: Optional[sc.Variable] = None,  # for tests
 ) -> Generator[sc.DataArray, None, None]:

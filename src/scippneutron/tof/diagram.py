@@ -8,10 +8,11 @@ from scippneutron.tof.frames import _tof_from_wavelength
 
 class TimeDistanceDiagram:
 
-    def __init__(self, ax, *, tmax, frame_rate=14.0 * sc.Unit('Hz')):
+    def __init__(self, ax, *, tmax, frame_rate=None):
         self._ax = ax
         self._time_unit = sc.Unit('ms')
         self._distance_unit = sc.Unit('m')
+        frame_rate = 14.0 * sc.Unit('Hz') if frame_rate is None else frame_rate
         self._frame_length = (1.0 / frame_rate).to(unit=self._time_unit)
         self._tmax = tmax.to(unit=self._time_unit)
         self._ax.set_xlabel(f"time [{self._time_unit}]")
@@ -35,7 +36,8 @@ class TimeDistanceDiagram:
 
         self._ax.annotate(text, xy=to_mpl(xy), xytext=to_mpl(xytext), **kwargs)
 
-    def add_source_pulse(self, pulse_length=3.0 * sc.Unit('ms'), ls='dotted'):
+    def add_source_pulse(self, pulse_length=None, ls='dotted'):
+        pulse_length = 3.0 * sc.Unit('ms') if pulse_length is None else pulse_length
         t0 = 0.0
         t1 = self.to_time(pulse_length).value
         self._ax.text(t0,
@@ -115,7 +117,7 @@ class TimeDistanceDiagram:
         tmax = t0 + tof_max
         t = sc.concat([t0, t0, tmax, tmin], 't')
         L = sc.concat([Lmin, Lmin, Lmax, Lmax], 'L')
-        for i in range(frames):
+        for _ in range(frames):
             self._ax.fill(t.values, L.values, alpha=0.3)
             t += stride * self._frame_length
 

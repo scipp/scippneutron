@@ -10,9 +10,9 @@ from scippneutron.tof import frames
 def make_array(*,
                npixel=3,
                nevent=1000,
-               frame_length=71.0 * sc.Unit('ms'),
+               frame_length=None,
                time_offset=None):
-    frame_length = frame_length.to(unit='us')
+    frame_length = 71.0e3 * sc.Unit('us') if frame_length is None else frame_length.to(unit='us')
     if time_offset is None:
         time_offset = sc.array(dims=['event'],
                                values=np.random.rand(nevent) * frame_length.value,
@@ -95,8 +95,10 @@ def test_make_frames_time_offset_pivot_and_min_define_frames():
 def tof_array(*,
               npixel=3,
               nevent=1000,
-              frame_length=71.0 * sc.Unit('ms'),
-              tof_min=234.0 * sc.Unit('ms')):
+              frame_length=None,
+              tof_min=None):
+    frame_length = 71.0 * sc.Unit('ms') if frame_length is None else frame_length
+    tof_min = 234.0 * sc.Unit('ms') if tof_min is None else tof_min
     tof = sc.array(dims=['event'], values=np.random.rand(nevent)) * frame_length.to(
         unit=tof_min.unit) + tof_min
     pixel = sc.arange(dim='event', start=0, stop=nevent) % npixel
