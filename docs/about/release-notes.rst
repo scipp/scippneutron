@@ -35,6 +35,21 @@ Release Notes
    and Jan-Lukas Wynen :sup:`a`
 
 
+v0.9.2 (August 2022)
+--------------------
+
+Features
+~~~~~~~~
+
+* Made compatible with scippnexus v0.2 `#369 <https://github.com/scipp/scipp/pull/369>`_.
+
+Contributors
+~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+and Jan-Lukas Wynen :sup:`a`
+
 v0.9.1 (August 2022)
 --------------------
 
@@ -49,7 +64,6 @@ Contributors
 Simon Heybrock :sup:`a`\ ,
 Neil Vaytet :sup:`a`\ ,
 and Jan-Lukas Wynen :sup:`a`
-
 
 v0.9.0 (August 2022)
 --------------------
