@@ -242,7 +242,6 @@ def instrument_view(scipp_obj=None,
     if not p3:
         raise _pythreejs_import_error
 
-    from scipp.plotting import plot
     from scipp.plotting.objects import PlotDict
 
     positions_var = scipp_obj.meta[positions]
@@ -251,11 +250,11 @@ def instrument_view(scipp_obj=None,
         if len(pos_array) > 1:
             pixel_size = np.linalg.norm(pos_array[1] - pos_array[0])
 
-    plt = plot(scipp_obj,
-               projection="3d",
-               positions=positions,
-               pixel_size=pixel_size,
-               **kwargs)
+    plt = sc.plot(scipp_obj,
+                  projection="3d",
+                  positions=positions,
+                  pixel_size=pixel_size,
+                  **kwargs)
 
     # Add additional components from the beamline
     if components and not isinstance(plt, PlotDict):
