@@ -17,7 +17,7 @@ from contextlib import contextmanager
 from warnings import warn
 from scippnexus.nxtransformations import TransformationError
 from scippnexus.nxobject import NexusStructureError, NXobject
-from scippnexus import NXroot, NX_class
+from scippnexus import NXroot
 
 
 class BadSource(Exception):
@@ -167,6 +167,29 @@ def _zip_pixel_offset(da: sc.DataArray) -> sc.DataArray:
     return da
 
 
+def _by_nx_class(group) -> Dict[str, Dict[str, 'NXobject']]:
+    from scippnexus.nxobject import _nx_class_registry, _make
+    classes = {name: [] for name in _nx_class_registry()}
+
+    def _match_nx_class(_, node):
+        if not hasattr(node, 'shape'):
+            if (nx_class := node.attrs.get('NX_class')) is not None:
+                if not isinstance(nx_class, str):
+                    nx_class = nx_class.decode('UTF-8')
+                if nx_class in _nx_class_registry():
+                    classes[nx_class].append(node)
+
+    group._group.visititems(_match_nx_class)
+
+    out = {}
+    for nx_class, groups in classes.items():
+        names = [group.name.split('/')[-1] for group in groups]
+        if len(names) != len(set(names)):  # fall back to full path if duplicate
+            names = [group.name for group in groups]
+        out[nx_class] = {n: _make(g) for n, g in zip(names, groups)}
+    return out
+
+
 def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                quiet: bool) -> Optional[ScippData]:
     """
@@ -174,9 +197,9 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     in-memory data can be used for unit tests.
     """
     root = NXroot(nexus_file if root is None else nexus_file[root])
-    classes = root.by_nx_class()
+    classes = _by_nx_class(root)
 
-    if len(classes[NX_class.NXentry]) > 1:
+    if len(classes['NXentry']) > 1:
         # We can't sensibly load from multiple NXentry, for example each
         # could could contain a description of the same detector bank
         # and lead to problems with clashing detector ids etc
@@ -188,7 +211,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     # structure. This behavior is quite error prone and cumbersome and will probably
     # disappear in this form. We therefore keep this length code directly in this
     # function to provide an overview and facility future refactoring steps.
-    detectors = classes.get(NX_class.NXdetector, {})
+    detectors = classes.get('NXdetector', {})
     loaded_detectors = []
     for name, group in detectors.items():
         try:
@@ -231,7 +254,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     elif len(detectors) == 0:
         # If there are no NXdetector groups, load NXevent_data directly
         loaded_events = []
-        for name, group in classes.get(NX_class.NXevent_data, {}).items():
+        for name, group in classes.get('NXevent_data', {}).items():
             try:
                 events = group[()]
                 events.coords['pulse_time'] = events.coords.pop('event_time_zero')
@@ -274,11 +297,11 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             else:
                 loaded_data[key] = value
 
-    if (entries := classes[NX_class.NXentry]):
+    if (entries := classes['NXentry']):
         entry = next(iter(entries.values()))
         add_metadata(_load_title(entry))
         add_metadata(_load_start_and_end_time(entry))
-    if (instruments := classes[NX_class.NXinstrument]):
+    if (instruments := classes['NXinstrument']):
         add_metadata(_load_instrument_name(instruments))
 
     def load_and_add_metadata(groups, process=lambda x: x):
@@ -295,10 +318,10 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         add_metadata(items)
         return loaded_groups
 
-    load_and_add_metadata(classes.get(NX_class.NXdisk_chopper, {}))
-    load_and_add_metadata(classes.get(NX_class.NXlog, {}))
-    load_and_add_metadata(classes.get(NX_class.NXmonitor, {}), _monitor_to_canonical)
-    for name, tag in {'sample': NX_class.NXsample, 'source': NX_class.NXsource}.items():
+    load_and_add_metadata(classes.get('NXdisk_chopper', {}))
+    load_and_add_metadata(classes.get('NXlog', {}))
+    load_and_add_metadata(classes.get('NXmonitor', {}), _monitor_to_canonical)
+    for name, tag in {'sample': 'NXsample', 'source': 'NXsource'}.items():
         comps = classes.get(tag, {})
         comps = load_and_add_metadata(comps)
         attrs = loaded_data if isinstance(loaded_data,
