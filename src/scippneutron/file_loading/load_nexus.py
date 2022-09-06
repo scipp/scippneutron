@@ -126,9 +126,9 @@ def _origin(unit) -> sc.Variable:
     return sc.vector(value=[0, 0, 0], unit=unit)
 
 
-def _depends_on_to_position(da) -> Union[None, sc.Variable]:
-    if (transform := da.coords.get('depends_on')) is not None:
-        if transform.dtype == sc.DType.DataArray:
+def _depends_on_to_position(obj) -> Union[None, sc.Variable]:
+    if (transform := obj.get('depends_on')) is not None:
+        if isinstance(transform, sc.DataArray) or transform.dtype == sc.DType.DataArray:
             return None  # cannot compute position if time-dependent
         else:
             return transform * _origin(transform.unit)
@@ -144,7 +144,7 @@ def _monitor_to_canonical(monitor):
             sc.broadcast(monitor.data.bins.concat('pulse'), dims=['tof'], shape=[1]))
     else:
         da = monitor.copy(deep=False)
-    if (position := _depends_on_to_position(monitor)) is not None:
+    if (position := _depends_on_to_position(monitor.coords)) is not None:
         da.coords['position'] = position
     return da
 
