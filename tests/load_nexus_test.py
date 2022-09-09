@@ -913,7 +913,7 @@ def test_loads_component_position_with_multi_value_log_transformation(
     builder.add_component(component_class(component_name, depends_on=transformation))
     loaded_data = load_function(builder)
     assert sc.identical(
-        loaded_data[component_name].value.coords['depends_on'].value.coords["time"],
+        loaded_data[component_name].value['depends_on'].coords["time"],
         sc.Variable(dims=["time"],
                     values=[1300000000, 6400000000],
                     unit="ns",
@@ -948,7 +948,7 @@ def test_loads_component_position_with_multiple_multi_valued_log_transformations
     loaded_data = load_function(builder)
     comp = loaded_data[component_name].value
     assert sc.identical(
-        comp.coords['depends_on'].value.coords["time"],
+        comp['depends_on'].coords["time"],
         sc.Variable(dims=["time"], values=[0, 1], unit="s", dtype=sc.DType.datetime64))
 
 
@@ -979,7 +979,7 @@ def test_multi_valued_log_transformations_time_axis_interpolated_and_trimmed(
     # t1 starts)
     comp = loaded_data[component_name].value
     assert sc.identical(
-        comp.coords['depends_on'].value.coords["time"],
+        comp['depends_on'].coords["time"],
         sc.array(dims=["time"],
                  values=[100, 1000, 1100],
                  unit="ms",
@@ -1381,7 +1381,7 @@ def test_loads_sample_ub_matrix(load_function: Callable):
     loaded_data = load_function(builder)
     sample = loaded_data['sample'].value
     assert sc.identical(
-        sample['ub_matrix'].data,
+        sample['ub_matrix'],
         sc.spatial.linear_transform(value=np.ones(shape=[3, 3]),
                                     unit=sc.units.angstrom**-1))
     assert "orientation_matrix" not in sample
@@ -1393,7 +1393,7 @@ def test_loads_sample_orientation_matrix(load_function: Callable):
     loaded_data = load_function(builder)
     sample = loaded_data['sample'].value
     assert sc.identical(
-        sample["orientation_matrix"].data,
+        sample["orientation_matrix"],
         sc.spatial.linear_transform(value=np.ones(shape=[3, 3]), unit=sc.units.one))
     assert "ub_matrix" not in sample
 
@@ -1405,11 +1405,11 @@ def test_loads_multiple_sample_ub_matrix(load_function: Callable):
     builder.add_component(Sample("sample3"))  # No ub specified
     loaded_data = load_function(builder)
     assert sc.identical(
-        loaded_data["sample1"].value["ub_matrix"].data,
+        loaded_data["sample1"].value["ub_matrix"],
         sc.spatial.linear_transform(value=np.ones(shape=[3, 3]),
                                     unit=sc.units.angstrom**-1))
     assert sc.identical(
-        loaded_data["sample2"].value["ub_matrix"].data,
+        loaded_data["sample2"].value["ub_matrix"],
         sc.spatial.linear_transform(value=np.identity(3), unit=sc.units.angstrom**-1))
     assert "ub_matrix" not in loaded_data['sample3'].value
 
@@ -1670,8 +1670,8 @@ def test_nexus_file_with_choppers(load_function: Callable):
                 distance_units="m"))
     loaded_data = load_function(builder)
     chopper = loaded_data['chopper_1'].value
-    assert sc.identical(chopper["rotation_speed"].data, 60.0 * sc.Unit("Hz"))
-    assert sc.identical(chopper["distance"].data, 10.0 * sc.Unit("m"))
+    assert sc.identical(chopper["rotation_speed"], 60.0 * sc.Unit("Hz"))
+    assert sc.identical(chopper["distance"], 10.0 * sc.Unit("m"))
 
 
 def test_nexus_file_with_two_choppers(load_function: Callable):
@@ -1692,10 +1692,10 @@ def test_nexus_file_with_two_choppers(load_function: Callable):
     loaded_data = load_function(builder)
     chopper1 = loaded_data['chopper_1'].value
     chopper2 = loaded_data['chopper_2'].value
-    assert sc.identical(chopper1["rotation_speed"].data, (65.0 / 1000) * sc.Unit("MHz"))
-    assert sc.identical(chopper1["distance"].data, (11.0 * 1000) * sc.Unit("mm"))
-    assert sc.identical(chopper2["rotation_speed"].data, 60.0 * sc.Unit("Hz"))
-    assert sc.identical(chopper2["distance"].data, 10.0 * sc.Unit("m"))
+    assert sc.identical(chopper1["rotation_speed"], (65.0 / 1000) * sc.Unit("MHz"))
+    assert sc.identical(chopper1["distance"], (11.0 * 1000) * sc.Unit("mm"))
+    assert sc.identical(chopper2["rotation_speed"], 60.0 * sc.Unit("Hz"))
+    assert sc.identical(chopper2["distance"], 10.0 * sc.Unit("m"))
 
 
 def test_load_monitors(load_function: Callable):

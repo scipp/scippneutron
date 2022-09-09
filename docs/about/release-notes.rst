@@ -35,6 +35,15 @@ Release Notes
    and Jan-Lukas Wynen :sup:`a`
 
 
+v0.9.3 (September 2022)
+-----------------------
+
+Features
+~~~~~~~~
+
+* Update for compatibility with scippnexus v0.3 `#370 <https://github.com/scipp/scipp/pull/370>`_.
+
+
 v0.9.2 (August 2022)
 --------------------
 

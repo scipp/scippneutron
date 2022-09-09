@@ -80,13 +80,13 @@ def _load_instrument_name(instruments: Dict[str, NXobject]) -> Dict:
         warn(f"More than one NXinstrument found in file, "
              f"loading name from {instrument.name} only")
     if (name := instrument.get("name")) is not None:
-        return {"instrument_name": name[()].squeeze()}
+        return {"instrument_name": sc.scalar(name[()])}
     return {}
 
 
 def _load_title(entry: NXobject) -> Dict:
     if (title := entry.get('title')) is not None:
-        return {"experiment_title": title[()].squeeze()}
+        return {"experiment_title": sc.scalar(title[()])}
     return {}
 
 
@@ -94,7 +94,7 @@ def _load_start_and_end_time(entry: NXobject) -> Dict:
     times = {}
     for time in ["start_time", "end_time"]:
         if (dataset := entry.get(time)) is not None:
-            times[time] = dataset[()].squeeze()
+            times[time] = sc.scalar(dataset[()])
     return times
 
 
@@ -126,9 +126,9 @@ def _origin(unit) -> sc.Variable:
     return sc.vector(value=[0, 0, 0], unit=unit)
 
 
-def _depends_on_to_position(da) -> Union[None, sc.Variable]:
-    if (transform := da.coords.get('depends_on')) is not None:
-        if transform.dtype == sc.DType.DataArray:
+def _depends_on_to_position(obj) -> Union[None, sc.Variable]:
+    if (transform := obj.get('depends_on')) is not None:
+        if isinstance(transform, sc.DataArray) or transform.dtype == sc.DType.DataArray:
             return None  # cannot compute position if time-dependent
         else:
             return transform * _origin(transform.unit)
@@ -144,7 +144,7 @@ def _monitor_to_canonical(monitor):
             sc.broadcast(monitor.data.bins.concat('pulse'), dims=['tof'], shape=[1]))
     else:
         da = monitor.copy(deep=False)
-    if (position := _depends_on_to_position(monitor)) is not None:
+    if (position := _depends_on_to_position(monitor.coords)) is not None:
         da.coords['position'] = position
     return da
 
@@ -333,6 +333,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             if (position := _depends_on_to_position(comp)) is not None:
                 coords[f'{comp_name}_position'] = position
             elif (distance := comp.get('distance')) is not None:
+                if not isinstance(distance, sc.Variable):
+                    distance = sc.scalar(distance, unit=None)
                 coords[f'{comp_name}_position'] = sc.vector(
                     value=[0, 0, distance.value], unit=distance.unit)
             elif name == 'sample':

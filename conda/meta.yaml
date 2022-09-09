@@ -37,7 +37,7 @@ requirements:
   host:
     - python
     - scipp {{ scipp }}
-    - scippnexus>=0.1
+    - scippnexus>=0.3.2
     - tbb-devel=2020.2.*
   run:
     - h5py<3.2  # see https://github.com/h5py/h5py/issues/1880#issuecomment-823223154
@@ -45,7 +45,7 @@ requirements:
     - pooch
     - python
     - scipp {{ scipp }}
-    - scippnexus>=0.1
+    - scippnexus>=0.3.2
     - scipy>=1.7.0
 
 # Only the cmake-package-test works when cross compiling.
