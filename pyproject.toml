@@ -14,5 +14,6 @@ filterwarnings = [
   'ignore:Keyword `traits` is deprecated in traitlets 5.0, use `per_key_traits` instead:DeprecationWarning',
   # TODO Plotting warnings that need to be adressed
   'ignore:Support for mapping types has been deprecated and will be dropped in a future release:DeprecationWarning',
+  'ignore:The get_cmap function will be deprecated in a future version:PendingDeprecationWarning',
 ]
 testpaths = "tests"
