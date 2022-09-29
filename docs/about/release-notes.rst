@@ -34,6 +34,20 @@ Release Notes
    Neil Vaytet :sup:`a`\ ,
    and Jan-Lukas Wynen :sup:`a`
 
+v0.9.1 (September 2022)
+-----------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+* Switched to scipp 0.16.4
+
+Contributors
+~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+and Jan-Lukas Wynen :sup:`a`
 
 v0.9.3 (September 2022)
 -----------------------
