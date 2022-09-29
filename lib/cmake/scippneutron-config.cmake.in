@@ -9,5 +9,5 @@ include("${CMAKE_CURRENT_LIST_DIR}/scippneutron-targets.cmake")
 check_required_components(scippneutron-targets)
 
 include(CMakeFindDependencyMacro)
-find_dependency(scipp 0.16.3 COMPONENTS conan-config)
-find_dependency(scipp 0.16.3)
+find_dependency(scipp 0.16.4 COMPONENTS conan-config)
+find_dependency(scipp 0.16.4)
