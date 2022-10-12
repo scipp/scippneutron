@@ -6,9 +6,10 @@ import matplotlib.pyplot as plt
 from scippneutron.tof import TimeDistanceDiagram
 
 
-def default_frame_diagram(tmax=300 * sc.Unit('ms')):
+def default_frame_diagram(tmax=None):
     fig, ax = plt.subplots(1, 1)
-    diagram = TimeDistanceDiagram(ax, tmax=tmax)
+    diagram = TimeDistanceDiagram(ax,
+                                  tmax=300 * sc.Unit('ms') if tmax is None else tmax)
     det1 = 32.0 * sc.Unit('m')
     det2 = 40.0 * sc.Unit('m')
     lambda_min = 16.0 * sc.units.angstrom
@@ -60,9 +61,10 @@ def default_frame_diagram(tmax=300 * sc.Unit('ms')):
     return fig
 
 
-def frame_skipping_diagram(tmax=500 * sc.Unit('ms')):
+def frame_skipping_diagram(tmax=None):
     fig, ax = plt.subplots(1, 1)
-    diagram = TimeDistanceDiagram(ax, tmax=tmax)
+    diagram = TimeDistanceDiagram(ax,
+                                  tmax=500 * sc.Unit('ms') if tmax is None else tmax)
     det1 = 32.0 * sc.Unit('m')
     det2 = 40.0 * sc.Unit('m')
     lambda_min = 16.0 * sc.units.angstrom
