@@ -254,7 +254,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     elif len(detectors) == 0:
         # If there are no NXdetector groups, load NXevent_data directly
         loaded_events = []
-        for group in classes.get(NX_class.NXevent_data, {}).values():
+        for group in classes.get('NXevent_data', {}).values():
             try:
                 events = group[()]
                 events.coords['pulse_time'] = events.coords.pop('event_time_zero')
