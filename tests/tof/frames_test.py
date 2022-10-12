@@ -7,12 +7,9 @@ import scipp as sc
 from scippneutron.tof import frames
 
 
-def make_array(*,
-               npixel=3,
-               nevent=1000,
-               frame_length=None,
-               time_offset=None):
-    frame_length = 71.0e3 * sc.Unit('us') if frame_length is None else frame_length.to(unit='us')
+def make_array(*, npixel=3, nevent=1000, frame_length=None, time_offset=None):
+    frame_length = 71.0e3 * sc.Unit('us') if frame_length is None else frame_length.to(
+        unit='us')
     if time_offset is None:
         time_offset = sc.array(dims=['event'],
                                values=np.random.rand(nevent) * frame_length.value,
@@ -92,11 +89,7 @@ def test_make_frames_time_offset_pivot_and_min_define_frames():
     assert sc.identical(tof, sc.array(dims=['event'], unit='ms', values=tof_values))
 
 
-def tof_array(*,
-              npixel=3,
-              nevent=1000,
-              frame_length=None,
-              tof_min=None):
+def tof_array(*, npixel=3, nevent=1000, frame_length=None, tof_min=None):
     frame_length = 71.0 * sc.Unit('ms') if frame_length is None else frame_length
     tof_min = 234.0 * sc.Unit('ms') if tof_min is None else tof_min
     tof = sc.array(dims=['event'], values=np.random.rand(nevent)) * frame_length.to(
