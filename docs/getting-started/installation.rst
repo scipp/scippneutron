@@ -16,7 +16,6 @@ With the provided environment file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Download :download:`scippneutron.yml <../environments/scippneutron.yml>` for the stable release version of scipp.
-   Use :download:`scippneutron-latest.yml <../environments/scippneutron-latest.yml>` for the latest development version.
 2. In a terminal run:
 
    .. code-block:: sh
