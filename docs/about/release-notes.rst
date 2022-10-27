@@ -34,7 +34,22 @@ Release Notes
    Neil Vaytet :sup:`a`\ ,
    and Jan-Lukas Wynen :sup:`a`
 
-v0.9.1 (September 2022)
+v0.10.0 (September 2022)
+------------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+* Switched to scipp 0.17 and remove pin on patch version
+
+Contributors
+~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+and Jan-Lukas Wynen :sup:`a`
+
+v0.9.4 (September 2022)
 -----------------------
 
 Breaking changes
