@@ -5,7 +5,7 @@ channels:
   - scipp
 dependencies:
   - cmake
-  - conan=1.51.3
+  - conan=1.53.0
   - h5py
   - hypothesis
   - mantid=6.4.*
