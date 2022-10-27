@@ -21,7 +21,7 @@ dependencies:
   - pytest-asyncio
   - python-graphviz
   - pythreejs
-  - scipp=0.16.4
+  - scipp=0.17.0
   - scippnexus>=0.3.2
   - scipy>=1.7.0
   - tbb=2020.2.*
