@@ -112,7 +112,7 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
     # event_time_offset dataset
     # May be reordered due to binning (hence np.sort)
     assert sc.identical(
-        sc.sort(loaded_data.bins.concatenate('detector_id').values[0].coords['tof'],
+        sc.sort(loaded_data.bins.concat('detector_id').values[0].coords['tof'],
                 key="event"),
         sc.sort(sc.array(dims=["event"], values=event_time_offsets, unit=sc.units.ns),
                 key="event"))
@@ -286,8 +286,7 @@ def test_loads_data_from_multiple_event_data_groups(load_function: Callable):
     # event_time_offset datasets
     # May be reordered due to binning (hence np.sort)
     assert np.array_equal(
-        np.sort(
-            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
+        np.sort(loaded_data.bins.concat('detector_id').values[0].coords['tof'].values),
         np.sort(np.concatenate((event_time_offsets_1, event_time_offsets_2))))
 
     counts_on_detectors = loaded_data.bins.sum()
@@ -572,8 +571,7 @@ def test_loads_event_and_log_data_from_single_file(load_function: Callable):
     # event_time_offset dataset
     # May be reordered due to binning (hence np.sort)
     assert np.allclose(
-        np.sort(
-            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
+        np.sort(loaded_data.bins.concat('detector_id').values[0].coords['tof'].values),
         np.sort(event_time_offsets))
 
     counts_on_detectors = loaded_data.bins.sum()
@@ -1275,8 +1273,7 @@ def test_links_to_event_data_group_are_ignored(load_function: Callable):
     # event_time_offset dataset
     # May be reordered due to binning (hence np.sort)
     assert np.array_equal(
-        np.sort(
-            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
+        np.sort(loaded_data.bins.concat('detector_id').values[0].coords['tof'].values),
         np.sort(event_time_offsets))
 
     counts_on_detectors = loaded_data.bins.sum()
@@ -1363,8 +1360,7 @@ def test_linked_datasets_are_found(load_function: Callable):
     loaded_data = load_function(builder)
 
     assert np.array_equal(
-        np.sort(
-            loaded_data.bins.concatenate('detector_id').values[0].coords['tof'].values),
+        np.sort(loaded_data.bins.concat('detector_id').values[0].coords['tof'].values),
         np.sort(replaced_tofs))
 
     counts_on_detectors = loaded_data.bins.sum()
