@@ -4,6 +4,7 @@
 
 import numpy as np
 import scipp as sc
+from scipp.plotting.objects import PlotDict
 from scipy.spatial.transform import Rotation as Rot
 try:
     import pythreejs as p3
@@ -192,7 +193,7 @@ def _get_camera(scene):
     return None
 
 
-def instrument_view(scipp_obj=None,
+def instrument_view(scipp_obj,
                     positions="position",
                     pixel_size=None,
                     components=None,
@@ -242,7 +243,10 @@ def instrument_view(scipp_obj=None,
     if not p3:
         raise _pythreejs_import_error
 
-    from scipp.plotting.objects import PlotDict
+    try:
+        import plopp as pp
+    except ImportError:
+        pp = None
 
     positions_var = scipp_obj.meta[positions]
     if pixel_size is None:
@@ -250,15 +254,19 @@ def instrument_view(scipp_obj=None,
         if len(pos_array) > 1:
             pixel_size = np.linalg.norm(pos_array[1] - pos_array[0])
 
-    plt = sc.plot(scipp_obj,
-                  projection="3d",
-                  positions=positions,
-                  pixel_size=pixel_size,
-                  **kwargs)
+    if (pp is not None) and (sc.plot is pp.plot):
+        fig = pp.scatter3d(scipp_obj, pos=positions, pixel_size=pixel_size, **kwargs)
+        scene = fig.children[0].canvas.scene
+    else:
+        fig = sc.plot(scipp_obj,
+                      projection="3d",
+                      positions=positions,
+                      pixel_size=pixel_size,
+                      **kwargs)
+        scene = fig.view.figure.scene
 
     # Add additional components from the beamline
-    if components and not isinstance(plt, PlotDict):
-        scene = plt.view.figure.scene
+    if components and not isinstance(fig, PlotDict):
         _plot_components(scipp_obj, components, positions_var, scene)
 
-    return plt
+    return fig
