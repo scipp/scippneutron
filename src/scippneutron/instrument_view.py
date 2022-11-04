@@ -4,7 +4,6 @@
 
 import numpy as np
 import scipp as sc
-from scipp.plotting.objects import PlotDict
 from scipy.spatial.transform import Rotation as Rot
 try:
     import pythreejs as p3
@@ -266,7 +265,7 @@ def instrument_view(scipp_obj,
         scene = fig.view.figure.scene
 
     # Add additional components from the beamline
-    if components and not isinstance(fig, PlotDict):
+    if components:
         _plot_components(scipp_obj, components, positions_var, scene)
 
     return fig
