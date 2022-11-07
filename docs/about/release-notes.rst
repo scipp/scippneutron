@@ -34,6 +34,38 @@ Release Notes
    Neil Vaytet :sup:`a`\ ,
    and Jan-Lukas Wynen :sup:`a`
 
+v0.11.0 (Unreleased)
+--------------------
+
+Features
+~~~~~~~~
+
+* The instrument view will now use ``plopp`` if it is the current default for plotting `#378 <https://github.com/scipp/scipp/pull/378>`_.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+* Instrument view no longer accepts a dataset as input. Only data arrays are supported `#378 <https://github.com/scipp/scipp/pull/378>`_.
+
+Bugfixes
+~~~~~~~~
+
+Documentation
+~~~~~~~~~~~~~
+
+Deprecations
+~~~~~~~~~~~~
+
+Stability, Maintainability, and Testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Contributors
+~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+and Jan-Lukas Wynen :sup:`a`
+
 v0.10.0 (September 2022)
 ------------------------
 
