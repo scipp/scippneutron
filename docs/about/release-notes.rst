@@ -45,7 +45,7 @@ Features
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
-* Instrument view no longer accepts a dataset as input. Only data arrays are supported `#378 <https://github.com/scipp/scipp/pull/378>`_.
+* The instrument view no longer accepts a dataset as input, only data arrays are supported `#378 <https://github.com/scipp/scipp/pull/378>`_.
 
 Bugfixes
 ~~~~~~~~
