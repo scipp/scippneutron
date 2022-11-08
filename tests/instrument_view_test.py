@@ -14,12 +14,6 @@ def test_neutron_instrument_view_3d():
     scn.instrument_view(d["a"])
 
 
-def test_neutron_instrument_view_with_dataset():
-    d = make_dataset_with_beamline()
-    d['b'] = sc.Variable(dims=['position', 'tof'], values=np.arange(36.).reshape(4, 9))
-    scn.instrument_view(d)
-
-
 def test_neutron_instrument_view_with_masks():
     d = make_dataset_with_beamline()
     x = np.transpose(d.coords['position'].values)[0, :]
