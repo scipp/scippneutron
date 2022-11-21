@@ -34,8 +34,8 @@ Release Notes
    Neil Vaytet :sup:`a`\ ,
    and Jan-Lukas Wynen :sup:`a`
 
-v0.11.0 (Unreleased)
---------------------
+v0.11.0 (November 2022)
+-----------------------
 
 Features
 ~~~~~~~~
@@ -50,14 +50,7 @@ Breaking changes
 Bugfixes
 ~~~~~~~~
 
-Documentation
-~~~~~~~~~~~~~
-
-Deprecations
-~~~~~~~~~~~~
-
-Stability, Maintainability, and Testing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* :func:`scippneutron.load_nexus` now works with scippnexus 0.4.1 `#380 <https://github.com/scipp/scipp/pull/380>`_.
 
 Contributors
 ~~~~~~~~~~~~
