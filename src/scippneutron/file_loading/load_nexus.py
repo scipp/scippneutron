@@ -168,7 +168,7 @@ def _zip_pixel_offset(da: sc.DataArray) -> sc.DataArray:
 
 
 def _by_nx_class(group) -> Dict[str, Dict[str, 'NXobject']]:
-    from scippnexus.nxobject import _nx_class_registry, _make
+    from scippnexus.nxobject import _nx_class_registry
     classes = {name: [] for name in _nx_class_registry()}
 
     def _match_nx_class(_, node):
@@ -186,7 +186,7 @@ def _by_nx_class(group) -> Dict[str, Dict[str, 'NXobject']]:
         names = [group.name.split('/')[-1] for group in groups]
         if len(names) != len(set(names)):  # fall back to full path if duplicate
             names = [group.name for group in groups]
-        out[nx_class] = {n: _make(g) for n, g in zip(names, groups)}
+        out[nx_class] = {n: group._make(g) for n, g in zip(names, groups)}
     return out
 
 

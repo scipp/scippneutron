@@ -351,6 +351,9 @@ class JSONGroup(JSONNode):
 
         raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
 
+    def __iter__(self):
+        yield from self.keys()
+
     def visititems(self, callable):
 
         def skip(node):
