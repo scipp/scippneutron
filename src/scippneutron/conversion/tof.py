@@ -179,6 +179,28 @@ def energy_transfer_direct_from_tof(*, tof: VariableLike, L1: VariableLike,
     c = _energy_constant(elem_unit(incident_energy), tof, L2)
     dtype = _common_dtype(incident_energy, tof)
     scale = (c * L2**2).astype(dtype, copy=False)
+
+    import numba
+    sig = numba.double(numba.double, numba.double, numba.double, numba.double)
+
+    # This is a way to avoid repeating the part that is needed for the unit computation,
+    # but unfortunately we need to manually use numba.cfunc for the nested call.
+    # I cannot think of a way to do this in sc.elemwise_func automatically.
+    @numba.cfunc(sig)
+    def dE(tof, t0, scale, incident_energy):
+        return incident_energy - scale / (tof - t0)**2
+
+    def dE_or_nan(tof, t0, scale, incident_energy):
+        delta_tof = tof - t0
+        return np.NAN if delta_tof <= 0.0 else dE(tof, t0, scale, incident_energy)
+
+    # Converting everything to float64...
+    # could make a different branch for float32?
+    func = sc.elemwise_func(dE_or_nan, unit_func=dE, auto_convert_dtypes=True)
+    return func(tof, t0, scale, incident_energy)
+
+    # Should we keep this to continue support if the user does not have numba?
+    # Or should numba become a mandatory dependency of scippneutron?
     delta_tof = tof - t0
     return sc.where(delta_tof <= sc.scalar(0, unit=elem_unit(delta_tof)),
                     sc.scalar(np.nan, dtype=dtype, unit=elem_unit(incident_energy)),
