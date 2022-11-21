@@ -15,5 +15,6 @@ filterwarnings = [
   # TODO Plotting warnings that need to be adressed
   'ignore:Support for mapping types has been deprecated and will be dropped in a future release:DeprecationWarning',
   'ignore:The get_cmap function will be deprecated in a future version:PendingDeprecationWarning',
+  'ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning',
 ]
 testpaths = "tests"
