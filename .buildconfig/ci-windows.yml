@@ -11,11 +11,12 @@ dependencies:
   - mantid=6.4.*
   - matplotlib
   - ninja
+  - plopp
   - pooch
   - pytest
   - pytest-asyncio
   - pythreejs
-  - scipp=0.17.0
+  - scipp=22.11.0
   - scippnexus>=0.4.1
   - scipy>=1.7.0
   - tbb=2020.2.*
