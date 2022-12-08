@@ -38,7 +38,7 @@ jobs:
           extra-specs: |
             python=${{ matrix.python-version }}
             conda-build
-      - run: conda build --channel conda-forge --channel scipp --channel ess-dmsc --channel mantid --variant-config-files=conda/variants/${{ matrix.variant.target }}.yaml --python=${{ matrix.python-version }} --no-anaconda-upload --override-channels --output-folder conda/package conda
+      - run: conda build --channel conda-forge --channel scipp --channel ess-dmsc --channel mantid --python=${{ matrix.python-version }} --no-anaconda-upload --override-channels --output-folder conda/package conda
 
       - uses: actions/upload-artifact@v2
         with:

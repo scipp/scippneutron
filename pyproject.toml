@@ -1,5 +1,15 @@
+[build-system]
+requires = [
+  "setuptools>=42",
+  "setuptools_scm[toml]>=6.2",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
 [tool.pytest.ini_options]
 addopts = "-ra -v"
+testpaths = "tests"
 filterwarnings = [
   'error',
   'ignore:You are running a "Debug" build of scipp:',
@@ -16,5 +26,8 @@ filterwarnings = [
   'ignore:Support for mapping types has been deprecated and will be dropped in a future release:DeprecationWarning',
   'ignore:The get_cmap function will be deprecated in a future version:PendingDeprecationWarning',
   'ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning',
+  'ignore:Widget._active_widgets is deprecated:DeprecationWarning',
+  'ignore:Widget._widget_types is deprecated:DeprecationWarning',
+  'ignore:Widget.widget_types is deprecated:DeprecationWarning',
+  'ignore:Widget.widgets is deprecated:DeprecationWarning',
 ]
-testpaths = "tests"

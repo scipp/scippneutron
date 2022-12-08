@@ -6,5 +6,4 @@
 
 import os
 
-from .._scippneutron import __version__
 from .conversions import convert, conversion_graph, deduce_conversion_graph
