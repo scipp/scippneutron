@@ -7,5 +7,4 @@
 import os
 
 from .._scippneutron import __version__
-from .._scippneutron import position, source_position, sample_position, incident_beam, scattered_beam, Ltotal, L1, L2, two_theta
 from .conversions import convert, conversion_graph, deduce_conversion_graph
