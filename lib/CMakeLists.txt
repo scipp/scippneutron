@@ -11,10 +11,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development)
-find_package(scipp 0.17 REQUIRED COMPONENTS conan-config)
+find_package(scipp 22.11 REQUIRED COMPONENTS conan-config)
 find_package(GTest CONFIG REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
-find_package(scipp 0.17 REQUIRED)
+find_package(scipp 22.11 REQUIRED)
 
 find_program(CCACHE ccache)
 if(CCACHE)
