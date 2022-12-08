@@ -201,6 +201,9 @@ def energy_transfer_direct_from_tof(*, tof: VariableLike, L1: VariableLike,
 
     if (energy_transfer_direct_from_tof_numba_float64 is not None) and (tof.dtype
                                                                         == 'float64'):
+        # We could use this even of tof.dtype is not float64, but then there would be
+        # an allocation of significant size for the dtype conversion, so using the
+        # Numba branch is probably not with it.
         return energy_transfer_direct_from_tof_numba_float64(tof, t0, scale,
                                                              incident_energy)
 
