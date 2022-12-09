@@ -133,6 +133,25 @@ def _energy_transfer_t0(energy, tof, length):
     return length.astype(dtype, copy=False) * sc.sqrt(c / energy)
 
 
+try:
+    import numba
+except ImportError:
+    energy_transfer_direct_from_tof_numba_float64 = None
+else:
+    sig = numba.double(numba.double, numba.double, numba.double, numba.double)
+
+    @numba.cfunc(sig)
+    def dE(tof, t0, scale, incident_energy):
+        return incident_energy - scale / (tof - t0)**2
+
+    def dE_or_nan(tof, t0, scale, incident_energy):
+        delta_tof = tof - t0
+        return np.NAN if delta_tof <= 0.0 else dE(tof, t0, scale, incident_energy)
+
+    energy_transfer_direct_from_tof_numba_float64 = sc.elemwise_func(
+        dE_or_nan, unit_func=dE, auto_convert_dtypes=True)
+
+
 def energy_transfer_direct_from_tof(*, tof: VariableLike, L1: VariableLike,
                                     L2: VariableLike,
                                     incident_energy: VariableLike) -> VariableLike:
@@ -179,6 +198,15 @@ def energy_transfer_direct_from_tof(*, tof: VariableLike, L1: VariableLike,
     c = _energy_constant(elem_unit(incident_energy), tof, L2)
     dtype = _common_dtype(incident_energy, tof)
     scale = (c * L2**2).astype(dtype, copy=False)
+
+    if (energy_transfer_direct_from_tof_numba_float64 is not None) and (tof.dtype
+                                                                        == 'float64'):
+        # We could use this even of tof.dtype is not float64, but then there would be
+        # an allocation of significant size for the dtype conversion, so using the
+        # Numba branch is probably not with it.
+        return energy_transfer_direct_from_tof_numba_float64(tof, t0, scale,
+                                                             incident_energy)
+
     delta_tof = tof - t0
     return sc.where(delta_tof <= sc.scalar(0, unit=elem_unit(delta_tof)),
                     sc.scalar(np.nan, dtype=dtype, unit=elem_unit(incident_energy)),
