@@ -70,7 +70,6 @@ Documentation
    developer/coding-conventions
    developer/data-stream
    developer/file-loading
-   developer/deployment
 
 .. toctree::
    :caption: About
