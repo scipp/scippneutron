@@ -4,16 +4,12 @@ channels:
   - mantid
   - scipp
 dependencies:
-  - cmake
-  - conan=1.53.0
-  - cppcheck
-  - gxx_linux-64=11.1.*
   - h5py
   - hypothesis
   - ipykernel
   - ipympl
   - ipywidgets
-  - mantid=6.4.*
+  - mantid=6.5.*
   - matplotlib
   - ninja
   - plopp >= 22.12.1
@@ -25,8 +21,6 @@ dependencies:
   - scipp=22.11.0
   - scippnexus>=0.4.1
   - scipy>=1.7.0
-  - tbb=2020.2.*
-  - tbb-devel=2020.2.*
   - tox
 
   # docs
