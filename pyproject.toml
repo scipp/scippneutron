@@ -57,6 +57,8 @@ filterwarnings = [
   'ignore::scipy.optimize._optimize.OptimizeWarning',
   # From flatbuffers
   'ignore:the imp module is deprecated in favour of importlib:DeprecationWarning',
+  # from Mantid
+  'ignore:distutils Version classes are deprecated. Use packaging.version instead:DeprecationWarning',
   # Plotting related warnings.
   'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
   'ignore:Keyword `trait` is deprecated in traitlets 5.0, use `value_trait` instead:DeprecationWarning',
