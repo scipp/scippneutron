@@ -11,7 +11,7 @@ dependencies:
   - mantid=6.4.*
   - matplotlib
   - ninja
-  - plopp
+  - plopp >= 22.12.1
   - pooch
   - pytest
   - pytest-asyncio

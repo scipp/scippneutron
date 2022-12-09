@@ -44,7 +44,7 @@ test:
     - ipywidgets
     - markupsafe>=1.1.1,<2.1.0  # see https://github.com/pallets/markupsafe/issues/284
     - matplotlib-base
-    - plopp
+    - plopp >= 22.12.1
     - psutil
     - pytest
     - pytest-asyncio
