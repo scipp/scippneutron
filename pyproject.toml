@@ -7,9 +7,48 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 
+[project]
+name = "scippneutron"
+description = " Neutron scattering tools for Data Reduction"
+license = { "file" = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.8"
+dynamic = ["version"]
+dependencies = [
+    "h5py",
+    "numpy>=1.20",
+    "pooch",
+    "scipp[interactive]>=22.11",
+    "scippnexus>=0.4.1",
+    "scipy>=1.7.0",
+]
+
+[project.urls]
+    "Documentation" = "https://scipp.github.io/scippneutron"
+    "Bug Tracker" = "https://github.com/scipp/scippneutron/issues"
+    "Source" = "https://github.com/scipp/scippneutron"
+
 [tool.pytest.ini_options]
-addopts = "-ra -v"
+minversion = "7.0"
 testpaths = "tests"
+addopts = """
+--strict-config
+--strict-markers
+-ra
+-v
+"""
 filterwarnings = [
   'error',
   'ignore:You are running a "Debug" build of scipp:',
