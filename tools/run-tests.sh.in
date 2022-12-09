@@ -1,6 +1,0 @@
-#!/bin/sh
-
-cd "$1"
-./scippneutron-test
-cd "$2"
-pytest .
