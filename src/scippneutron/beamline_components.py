@@ -8,7 +8,9 @@ import scipp as sc
 from .conversion import graph
 
 
-def _derived_coord(da: Union[sc.DataArray, sc.Dataset], name: str, scatter:bool=True) -> sc.Variable:
+def _derived_coord(da: Union[sc.DataArray, sc.Dataset],
+                   name: str,
+                   scatter: bool = True) -> sc.Variable:
     tmp = da.transform_coords(
         name,
         graph=graph.beamline.beamline(scatter=scatter),
@@ -70,7 +72,7 @@ def sample_position(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
 
 def incident_beam(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
     """Extract the incident beam vector from a data array or dataset.
-    
+
     This is the direction and length of the primary flight path,
     i.e. from source to sample.
 
@@ -89,7 +91,7 @@ def incident_beam(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
 
 def scattered_beam(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
     """Extract the scattered beam vector from a data array or dataset.
-    
+
     This is the direction and length of the secondary flight path,
     i.e. from sample to detector.
 
