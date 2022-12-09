@@ -1,0 +1,4 @@
+-r base.in
+hypothesis
+pytest
+pytest-xdist
