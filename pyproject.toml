@@ -1,5 +1,54 @@
+[build-system]
+requires = [
+  "setuptools>=42",
+  "setuptools_scm[toml]>=6.2",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
+[project]
+name = "scippneutron"
+description = " Neutron scattering tools for Data Reduction"
+license = { "file" = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.8"
+dynamic = ["version"]
+dependencies = [
+    "h5py",
+    "numpy>=1.20",
+    "pooch",
+    "scipp[interactive]>=22.11",
+    "scippnexus>=0.4.1",
+    "scipy>=1.7.0",
+]
+
+[project.urls]
+    "Documentation" = "https://scipp.github.io/scippneutron"
+    "Bug Tracker" = "https://github.com/scipp/scippneutron/issues"
+    "Source" = "https://github.com/scipp/scippneutron"
+
 [tool.pytest.ini_options]
-addopts = "-ra -v"
+minversion = "7.0"
+testpaths = "tests"
+addopts = """
+--strict-config
+--strict-markers
+-ra
+-v
+"""
 filterwarnings = [
   'error',
   'ignore:You are running a "Debug" build of scipp:',
@@ -8,6 +57,8 @@ filterwarnings = [
   'ignore::scipy.optimize._optimize.OptimizeWarning',
   # From flatbuffers
   'ignore:the imp module is deprecated in favour of importlib:DeprecationWarning',
+  # from Mantid
+  'ignore:distutils Version classes are deprecated. Use packaging.version instead:DeprecationWarning',
   # Plotting related warnings.
   'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
   'ignore:Keyword `trait` is deprecated in traitlets 5.0, use `value_trait` instead:DeprecationWarning',
@@ -16,5 +67,8 @@ filterwarnings = [
   'ignore:Support for mapping types has been deprecated and will be dropped in a future release:DeprecationWarning',
   'ignore:The get_cmap function will be deprecated in a future version:PendingDeprecationWarning',
   'ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning',
+  'ignore:Widget._active_widgets is deprecated:DeprecationWarning',
+  'ignore:Widget._widget_types is deprecated:DeprecationWarning',
+  'ignore:Widget.widget_types is deprecated:DeprecationWarning',
+  'ignore:Widget.widgets is deprecated:DeprecationWarning',
 ]
-testpaths = "tests"

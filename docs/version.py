@@ -1,6 +1,6 @@
 import sys
-from typing import List
-from packaging.version import parse, Version, LegacyVersion
+from typing import List, Union
+from packaging.version import parse, Version, InvalidVersion
 import requests
 import argparse
 
@@ -21,17 +21,18 @@ class VersionInfo:
 
     def _to_version(self, version) -> Version:
         if isinstance(version, str):
-            version = parse(version)
-            # When not building for a tagged release we may get, e.g., 'main'.
-            # Pretend this means the current latest release.
-            if isinstance(version, LegacyVersion):
+            try:
+                return parse(version)
+            except InvalidVersion:
+                # When not building for a tagged release we may get, e.g., 'main'.
+                # Pretend this means the current latest release.
                 return self._releases[0]
         return version
 
     def minor_releases(self, first: str = '0.1') -> List[str]:
         """Return set of minor releases in the form '1.2'.
 
-        `first` gives the first release to be included. By default '0.0' releases are
+        `first` gives the first release to be included. By default, '0.0' releases are
         not included.
         """
         first = parse(first)
@@ -39,7 +40,7 @@ class VersionInfo:
         releases = sorted(set((r.major, r.minor) for r in releases), reverse=True)
         return [f'{major}.{minor}' for major, minor in releases]
 
-    def is_latest(self, version: str) -> bool:
+    def is_latest(self, version: Union[str, Version]) -> bool:
         """Return True if `version` has the same or larger major and minor as the
         latest release.
         """
@@ -54,14 +55,14 @@ class VersionInfo:
         latest = releases[0]
         return (latest.major, latest.minor) < (version.major, version.minor)
 
-    def target(self, version: str) -> str:
+    def target(self, version: Union[str, Version]) -> str:
         version = self._to_version(version)
         if self.is_latest(version):
             return ''
         else:
             return f'release/{version.major}.{version.minor}'
 
-    def replaced(self, version: str) -> str:
+    def replaced(self, version: str) -> Version:
         version = self._to_version(version)
         # If we release 1.2 we want to find 1.1
         for release in self._releases:

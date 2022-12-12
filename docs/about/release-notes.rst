@@ -34,6 +34,31 @@ Release Notes
    Neil Vaytet :sup:`a`\ ,
    and Jan-Lukas Wynen :sup:`a`
 
+v22.12.0 (December 2022)
+------------------------
+
+Features
+~~~~~~~~
+
+* ScippNeutron is now available on PyPI `#384 <https://github.com/scipp/scipp/pull/384>`_.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+* Removed C++ components and CMake package configuration. This only affects users that linked against the C++ part of ScippNeutron `#384 <https://github.com/scipp/scipp/pull/384>`_.
+
+Stability, Maintainability, and Testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* ScippNeutron no longer depends on a specific version of Scipp`#384 <https://github.com/scipp/scipp/pull/384>`_.
+
+Contributors
+~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+and Jan-Lukas Wynen :sup:`a`
+
 v0.11.0 (November 2022)
 -----------------------
 

@@ -24,75 +24,45 @@ source:
 
 requirements:
   build:
-    - {{ compiler('cxx') }}
-    - cross-python_{{ target_platform }}  # [build_platform != target_platform]
-    - cmake
-    - conan>=1.51.3
-    - cppcheck [linux64]
-    - git
-    - markupsafe>=1.1.1,<2.1.0  # see https://github.com/pallets/markupsafe/issues/284
-    - ninja
-    - python
-    - scipp {{ scipp }}
-  host:
-    - python
-    - scipp {{ scipp }}
-    - scippnexus>=0.4.1
-    - tbb-devel=2020.2.*
+    - setuptools
+    - setuptools_scm
   run:
     - h5py<3.2  # see https://github.com/h5py/h5py/issues/1880#issuecomment-823223154
-    - numpy {{ numpy }}
+    - numpy>=1.20.0
     - pooch
     - python
-    - scipp {{ scipp }}
+    - scipp>=22.11.0
     - scippnexus>=0.4.1
     - scipy>=1.7.0
 
-# Only the cmake-package-test works when cross compiling.
-# But it is not very important at the moment and
-# leaving out the entire test section speeds up conda build
-{% if build_platform == target_platform %}
 test:
   imports:
     - scippneutron
   requires:
-    - {{ compiler('cxx') }}
-    - cmake
-    - conan>=1.51.3
     - hypothesis
     - ipympl
     - ipywidgets
     - markupsafe>=1.1.1,<2.1.0  # see https://github.com/pallets/markupsafe/issues/284
     - matplotlib-base
-    - plopp
+    - plopp >= 22.12.1
     - psutil
     - pytest
     - pytest-asyncio
     - pythreejs
-    - mantid==6.4.* [py==38]
-    - tbb-devel=2020.2.*
+    - mantid==6.5.* [py==38]
     - python-confluent-kafka [linux64]
     - ess-streaming-data-types [linux64]
-  files:
-    - cmake-package-test/
   source_files:
     - tests/
   commands:
-    - python -m pytest -v tests
-    - python cmake-package-test/build.py
-{% endif %}
+    - python -m pytest
 
 build:
   ignore_run_exports:
     - mantid [py==38]
-  # Build number is number of Git commits since last tag, if that fails use 0
-  number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
+  noarch: python
   script:
-    # Passing Python_EXECUTABLE ensures that cmake sees the host interpreter instead of build.
-    - cmake --preset package-{{ target_platform }} -DPython_EXECUTABLE=$PYTHON
-    - cmake --build --preset build
-    - ctest --preset test --verbose  # [build_platform == target_platform]
-
+    - python -m pip install .
 
 about:
   home: https://github.com/scipp/scippneutron
