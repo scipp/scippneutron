@@ -45,7 +45,7 @@ Features
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
-* Removed C++ components and CMake package configuration. This only affects users that linked against the C++ part of ScippNeutron`#384 <https://github.com/scipp/scipp/pull/384>`_.
+* Removed C++ components and CMake package configuration. This only affects users that linked against the C++ part of ScippNeutron `#384 <https://github.com/scipp/scipp/pull/384>`_.
 
 Stability, Maintainability, and Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
