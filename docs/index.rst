@@ -11,7 +11,6 @@ News
   Check out the `What's new <about/whats-new.rst>`_ notebook for an overview of recent highlights and major changes.
 - [December 2022] ScippNeutron is now also available on PyPI.
   See the updated ``pip`` `installation instructions <getting-started/installation.rst#Pip>`_.
-- Just like Scipp, ScippNeutron has switched from GPLv3 to the more permissive BSD-3 license which fits better into the Python eco system.
 
 Where can I get help?
 ---------------------
