@@ -1,4 +1,4 @@
-scippneutron - Neutron scattering data processing based on scipp
+ScippNeutron - Neutron scattering data processing based on Scipp
 ================================================================
 
 Toolkit for neutron scattering data reduction powered by `scipp <https://scipp.github.io/>`_.
@@ -9,8 +9,8 @@ News
 
 - [|SCIPPNEUTRON_RELEASE_MONTH|] scippneutron-|SCIPPNEUTRON_VERSION| `has been released <about/release-notes.rst>`_.
   Check out the `What's new <about/whats-new.rst>`_ notebook for an overview of recent highlights and major changes.
-- [January 2022] `scipp-0.11 <https://scipp.github.io/about/release-notes.html#v0-11-0-january-2022>`_ has been released.
-- Just like scipp, scippneutron has switched from GPLv3 to the more permissive BSD-3 license which fits better into the Python eco system.
+- [December 2022] ScippNeutron is now also available on PyPI.
+  See the updated ``pip`` `installation instructions <getting-started/installation.rst#Pip>`_.
 
 Where can I get help?
 ---------------------
