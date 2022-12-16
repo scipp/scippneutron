@@ -133,7 +133,7 @@ jobs:
 
   upload_docs:
     name: Deploy docs
-    needs: [upload_conda, upload_pypi]
+    needs: [upload_conda, upload_pypi, docs]
     runs-on: ubuntu-20.04
     if: github.event_name == 'release' && github.event.action == 'published'
     strategy:
