@@ -103,7 +103,7 @@ jobs:
           find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
       - uses: actions/upload-artifact@v3
         with:
-          name: docs_html
+          name: html
           path: html/
 
   upload_pypi:
@@ -149,7 +149,7 @@ jobs:
       - uses: actions/checkout@v3  # Need to check out repo so github-pages-deploy-action works
       - uses: actions/download-artifact@v3
         with:
-          name: docs_html
+          name: html
       - name: Deploy to release docs
         uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
