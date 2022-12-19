@@ -45,14 +45,20 @@ class VersionInfo:
         latest release.
         """
         version = self._to_version(version)
-        latest = self._releases[0]
+        try:
+            latest = self._releases[0]
+        except IndexError:
+            return True
         return (latest.major, latest.minor) <= (version.major, version.minor)
 
     def is_new(self, version: str) -> bool:
         """Return True if `version` is a new major or minor release."""
         version = self._to_version(version)
         releases = [r for r in self._releases if r != version]
-        latest = releases[0]
+        try:
+            latest = releases[0]
+        except IndexError:
+            return True
         return (latest.major, latest.minor) < (version.major, version.minor)
 
     def target(self, version: Union[str, Version]) -> str:
