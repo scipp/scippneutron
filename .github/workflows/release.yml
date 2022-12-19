@@ -96,8 +96,7 @@ jobs:
         with:
           name: conda-package-noarch
           path: conda-package-noarch
-      - run: conda install conda-package*/*/*.tar.bz2
-      # - run: conda install conda-package-*/*/*.tar.bz2
+      - run: conda install conda-package-*/*/*.tar.bz2
       - run: |
           python -m sphinx -j2 -v -b html -d doctrees docs html
           python -m sphinx -j2 -v -b doctest -d doctrees docs html
