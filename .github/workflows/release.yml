@@ -150,6 +150,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: html
+          path: html
       - name: Deploy to release docs
         uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
