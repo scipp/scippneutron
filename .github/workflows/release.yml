@@ -32,7 +32,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: conda-package-${{ matrix.variant.os }}-py${{ matrix.python-version }}
+          name: conda-package
           path: conda/package/noarch/scippneutron*.tar.bz2
 
   build_sdist:
@@ -94,7 +94,7 @@ jobs:
           extra-specs: python=3.8
       - uses: actions/download-artifact@v2
         with:
-          name: conda-package-ubuntu-20.04-py3.8
+          name: conda-package
       - run: conda install noarch/scippneutron-*.tar.bz2
       - run: |
           python -m sphinx -j2 -v -b html -d doctrees docs html
@@ -102,7 +102,7 @@ jobs:
           find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
       - uses: actions/upload-artifact@v2
         with:
-          name: html
+          name: docs_html
           path: html/
 
   upload_pypi:
@@ -127,6 +127,8 @@ jobs:
 
     steps:
       - uses: actions/download-artifact@v2
+        with:
+          name: conda-package
       - uses: conda-incubator/setup-miniconda@v2
       - run: conda install -c conda-forge --yes anaconda-client
       - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package-*/*/*.tar.bz2)
@@ -144,6 +146,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3  # Need to check out repo so github-pages-deploy-action works
       - uses: actions/download-artifact@v2
+        with:
+          name: docs_html
       - name: Deploy to release docs
         uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
