@@ -95,7 +95,7 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: conda-package
-      - run: conda install noarch/scippneutron-*.tar.bz2
+      - run: conda install noarch/scippneutron*.tar.bz2
       - run: |
           python -m sphinx -j2 -v -b html -d doctrees docs html
           python -m sphinx -j2 -v -b doctest -d doctrees docs html
@@ -105,19 +105,19 @@ jobs:
           name: docs_html
           path: html/
 
-  upload_pypi:
-    name: Deploy PyPI
-    needs: [build_wheels, build_sdist, build_conda]
-    runs-on: ubuntu-20.04
-    if: github.event_name == 'release' && github.event.action == 'published'
-
-    steps:
-      - uses: actions/download-artifact@v2
-      - uses: actions/setup-python@v3
-      - uses: pypa/gh-action-pypi-publish@v1.6.4
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
+  # upload_pypi:
+  #   name: Deploy PyPI
+  #   needs: [build_wheels, build_sdist, build_conda]
+  #   runs-on: ubuntu-20.04
+  #   if: github.event_name == 'release' && github.event.action == 'published'
+  #
+  #   steps:
+  #     - uses: actions/download-artifact@v2
+  #     - uses: actions/setup-python@v3
+  #     - uses: pypa/gh-action-pypi-publish@v1.6.4
+  #       with:
+  #         user: __token__
+  #         password: ${{ secrets.PYPI_TOKEN }}
 
   upload_conda:
     name: Deploy Conda Forge
@@ -131,7 +131,7 @@ jobs:
           name: conda-package
       - uses: conda-incubator/setup-miniconda@v2
       - run: conda install -c conda-forge --yes anaconda-client
-      - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package/*/*.tar.bz2)
+      - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package/*.tar.bz2)
 
   upload_docs:
     name: Deploy docs
