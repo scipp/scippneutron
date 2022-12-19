@@ -15,3 +15,7 @@ updates:
     allow:
       - dependency-name: "scipp"
         dependency-type: "direct"
+      - dependency-name: "scippnexus"
+        dependency-type: "direct"
+      - dependency-name: "plopp"
+        dependency-type: "direct"
