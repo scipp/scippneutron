@@ -32,8 +32,8 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: conda-package
-          path: conda/package/noarch/scippneutron*.tar.bz2
+          name: conda-package-noarch
+          path: conda/package/*/scippneutron*.tar.bz2
 
   build_sdist:
     name: Build SDist
@@ -131,7 +131,7 @@ jobs:
           name: conda-package
       - uses: conda-incubator/setup-miniconda@v2
       - run: conda install -c conda-forge --yes anaconda-client
-      - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package/*.tar.bz2)
+      - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package-*/*/*.tar.bz2)
 
   upload_docs:
     name: Deploy docs
