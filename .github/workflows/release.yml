@@ -30,10 +30,10 @@ jobs:
             conda-build
       - run: conda build --channel conda-forge --channel scipp --channel ess-dmsc --channel mantid --python=3.8 --no-anaconda-upload --override-channels --output-folder conda/package conda
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
-          name: conda-package
-          path: conda/package/noarch/scippneutron*.tar.bz2
+          name: conda-package-noarch
+          path: conda/package/*/scippneutron*.tar.bz2
 
   build_sdist:
     name: Build SDist
@@ -49,7 +49,7 @@ jobs:
     - name: Check metadata
       run: pipx run twine check dist/*
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: dist
         path: dist/*.tar.gz
@@ -74,7 +74,7 @@ jobs:
         run: python -m build
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: dist
           path: dist
@@ -92,15 +92,17 @@ jobs:
           environment-file: .buildconfig/ci-linux.yml
           cache-env: true
           extra-specs: python=3.8
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
-          name: conda-package
-      - run: conda install noarch/scippneutron*.tar.bz2
+          name: conda-package-noarch
+          path: conda-package-noarch
+      - run: conda install conda-package*/*/*.tar.bz2
+      # - run: conda install conda-package-*/*/*.tar.bz2
       - run: |
           python -m sphinx -j2 -v -b html -d doctrees docs html
           python -m sphinx -j2 -v -b doctest -d doctrees docs html
           find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: docs_html
           path: html/
@@ -126,12 +128,13 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
-          name: conda-package
+          name: conda-package-noarch
+          path: conda-package-noarch
       - uses: conda-incubator/setup-miniconda@v2
       - run: conda install -c conda-forge --yes anaconda-client
-      - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package/*.tar.bz2)
+      - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package-*/*/*.tar.bz2)
 
   upload_docs:
     name: Deploy docs
@@ -145,7 +148,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3  # Need to check out repo so github-pages-deploy-action works
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: docs_html
       - name: Deploy to release docs
