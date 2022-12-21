@@ -242,14 +242,19 @@ def instrument_view(scipp_obj,
     if not p3:
         raise _pythreejs_import_error
 
+    try:
+        import plopp as pp
+    except ImportError:
+        pp = None
+
     positions_var = scipp_obj.meta[positions]
     if pixel_size is None:
         pos_array = positions_var.values
         if len(pos_array) > 1:
             pixel_size = np.linalg.norm(pos_array[1] - pos_array[0])
 
-    if sc.config['plot'].get('use_plopp'):
-        import plopp as pp
+    if (pp is not None) and ((sc.plot is pp.plot)
+                             or sc.config['plot'].get('use_plopp')):
         fig = pp.scatter3d(scipp_obj, pos=positions, pixel_size=pixel_size, **kwargs)
         scene = fig.children[0].canvas.scene
     else:
