@@ -34,6 +34,14 @@ Release Notes
    Neil Vaytet :sup:`a`\ ,
    and Jan-Lukas Wynen :sup:`a`
 
+v22.12.4 (December 2022)
+------------------------
+
+Bugfixes
+~~~~~~~~
+
+* :func:`scippneutron.instrument_view` now works again when ``plopp`` is enabled for Scipp plotting.
+
 v22.12.0 (December 2022)
 ------------------------
 
