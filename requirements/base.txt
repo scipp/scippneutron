@@ -64,19 +64,13 @@ graphlib-backport==1.0.3
     # via scipp
 h5py==3.7.0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   scippnexus
 idna==3.4
     # via
     #   anyio
     #   jsonschema
     #   requests
-importlib-metadata==5.1.0
-    # via
-    #   jupyterlab-server
-    #   nbconvert
-importlib-resources==5.10.1
-    # via jsonschema
 ipydatawidgets==4.3.2
     # via pythreejs
 ipykernel==6.19.2
@@ -220,7 +214,7 @@ notebook-shim==0.2.2
     # via nbclassic
 numpy==1.23.5
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   contourpy
     #   h5py
     #   ipydatawidgets
@@ -252,16 +246,14 @@ pillow==9.3.0
     # via
     #   ipympl
     #   matplotlib
-pkgutil-resolve-name==1.3.10
-    # via jsonschema
 platformdirs==2.6.0
     # via jupyter-core
 plopp==22.12.1
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   scipp
 pooch==1.6.0
-    # via -r requirements/base.in
+    # via -r base.in
 prometheus-client==0.15.0
     # via
     #   jupyter-server
@@ -320,13 +312,13 @@ rfc3986-validator==0.1.1
     # via jsonschema
 scipp[interactive]==22.11.0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   scippnexus
-scippnexus==22.12.2
-    # via -r requirements/base.in
+scippnexus==22.12.3
+    # via -r base.in
 scipy==1.9.3
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   scippnexus
 send2trash==1.8.0
     # via
@@ -405,10 +397,6 @@ websocket-client==1.4.2
     # via jupyter-server
 widgetsnbextension==4.0.4
     # via ipywidgets
-zipp==3.11.0
-    # via
-    #   importlib-metadata
-    #   importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
