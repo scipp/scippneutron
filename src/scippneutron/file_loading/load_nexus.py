@@ -312,7 +312,7 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                 items[name] = sc.scalar(process(group[()]))
                 loaded_groups.append(name)
             except (BadSource, SkipSource, TransformationError, sc.DimensionError,
-                    sc.UnitError, KeyError, ValueError) as e:
+                    sc.UnitError, NexusStructureError, KeyError, ValueError) as e:
                 if not contains_stream(group._group):
                     warn(f"Skipped loading {group.name} due to:\n{e}")
         add_metadata(items)
