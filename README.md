@@ -2,6 +2,7 @@
 [![Anaconda-Server Badge](https://anaconda.org/scipp/scippneutron/badges/version.svg)](https://anaconda.org/scipp/scippneutron)
 [![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](LICENSE)
 [![Release](https://github.com/scipp/scippneutron/actions/workflows/release.yml/badge.svg)](https://github.com/scipp/scippneutron/actions/workflows/release.yml)
+[![DOI](https://zenodo.org/badge/305999676.svg)](https://zenodo.org/badge/latestdoi/305999676)
 
 # scippneutron
 
