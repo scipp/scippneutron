@@ -13,6 +13,14 @@ See the [documentation](https://scipp.github.io/scippneutron/) for details.
 
 This serves as a foundation for facility and instrument specific functionality such as that available in [ess](https://github.com/scipp/ess).
 
+## Citing ScippNeutron
+
+Please cite the following:
+
+[![DOI](https://zenodo.org/badge/305999676.svg)](https://zenodo.org/badge/latestdoi/305999676)
+
+To cite a specific version of ScippNeutron, select the desired version on Zenodo to get the corresponding DOI.
+
 ## Development
 
 If you are interested in developing Scippneutron, please see the [developer getting started guide](https://scipp.github.io/scippneutron/developer/getting-started.html).
