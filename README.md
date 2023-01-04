@@ -2,6 +2,7 @@
 [![Anaconda-Server Badge](https://anaconda.org/scipp/scippneutron/badges/version.svg)](https://anaconda.org/scipp/scippneutron)
 [![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](LICENSE)
 [![Release](https://github.com/scipp/scippneutron/actions/workflows/release.yml/badge.svg)](https://github.com/scipp/scippneutron/actions/workflows/release.yml)
+[![DOI](https://zenodo.org/badge/305999676.svg)](https://zenodo.org/badge/latestdoi/305999676)
 
 # scippneutron
 
@@ -11,6 +12,14 @@ Neutron scattering toolkit built using [scipp](https://github.com/scipp/scipp) f
 See the [documentation](https://scipp.github.io/scippneutron/) for details.
 
 This serves as a foundation for facility and instrument specific functionality such as that available in [ess](https://github.com/scipp/ess).
+
+## Citing ScippNeutron
+
+Please cite the following:
+
+[![DOI](https://zenodo.org/badge/305999676.svg)](https://zenodo.org/badge/latestdoi/305999676)
+
+To cite a specific version of ScippNeutron, select the desired version on Zenodo to get the corresponding DOI.
 
 ## Development
 
