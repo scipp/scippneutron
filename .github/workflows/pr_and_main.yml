@@ -68,10 +68,10 @@ jobs:
 
       - run: python -m sphinx -j4 -v -b linkcheck -d doctrees docs html
         # Linkcheck can be flaky. Avoid randomly breaking PR builds by running only on `main`
-        if: ${{ contains(matrix.os, 'ubuntu') && matrix.python-version == '3.8' && github.ref == 'refs/heads/main' }}
+        if: ${{ contains(matrix.variant.os, 'ubuntu') && matrix.python-version == '3.8' && github.ref == 'refs/heads/main' }}
 
       - uses: actions/upload-artifact@v2
-        if: ${{ contains(matrix.os, 'ubuntu') && matrix.python-version == '3.8' }}
+        if: ${{ contains(matrix.variant.os, 'ubuntu') && matrix.python-version == '3.8' }}
         with:
           name: DocumentationHTML
           path: html/
