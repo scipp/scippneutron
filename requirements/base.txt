@@ -248,7 +248,7 @@ pillow==9.3.0
     #   matplotlib
 platformdirs==2.6.0
     # via jupyter-core
-plopp==22.12.1
+plopp==23.1.0
     # via
     #   -r base.in
     #   scipp
