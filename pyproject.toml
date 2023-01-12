@@ -35,6 +35,10 @@ dependencies = [
     "scipy>=1.7.0",
 ]
 
+[project.optional-dependencies]
+interactive = ["scipp[interactive]"]
+all = ['scipp[all]']
+
 [project.urls]
     "Documentation" = "https://scipp.github.io/scippneutron"
     "Bug Tracker" = "https://github.com/scipp/scippneutron/issues"
