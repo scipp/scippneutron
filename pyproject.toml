@@ -30,10 +30,14 @@ dependencies = [
     "h5py",
     "numpy>=1.20",
     "pooch",
-    "scipp[interactive]>=22.11",
+    "scipp>=22.11",
     "scippnexus>=0.4.1",
     "scipy>=1.7.0",
 ]
+
+[project.optional-dependencies]
+interactive = ["scipp[interactive]"]
+all = ['scipp[all]']
 
 [project.urls]
     "Documentation" = "https://scipp.github.io/scippneutron"
