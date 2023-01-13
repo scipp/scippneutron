@@ -1,6 +1,1 @@
-flake8
-flake8-bugbear
-nbstripout
-toml
-tox
-yapf
+pre-commit
