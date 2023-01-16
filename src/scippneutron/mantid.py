@@ -993,8 +993,8 @@ def to_mantid(data, dim, instrument_file=None):
     y = data.values
     e = data.variances
 
-    assert (len(y.shape) == 2 or len(y.shape) == 1), \
-        "Currently can only handle 2D data."
+    if len(y.shape) not in (1, 2):
+        raise ValueError("Currently can only handle 2D data.")
 
     e = np.sqrt(e) if e is not None else np.sqrt(y)
 
