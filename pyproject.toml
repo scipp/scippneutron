@@ -81,7 +81,7 @@ filterwarnings = [
   'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
   'ignore:Keyword `trait` is deprecated in traitlets 5.0, use `value_trait` instead:DeprecationWarning',
   'ignore:Keyword `traits` is deprecated in traitlets 5.0, use `per_key_traits` instead:DeprecationWarning',
-  # TODO Plotting warnings that need to be adressed
+  # TODO Plotting warnings that need to be addressed
   'ignore:Support for mapping types has been deprecated and will be dropped in a future release:DeprecationWarning',
   'ignore:The get_cmap function will be deprecated in a future version:PendingDeprecationWarning',
   'ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning',

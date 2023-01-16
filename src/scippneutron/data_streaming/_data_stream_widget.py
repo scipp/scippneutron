@@ -28,7 +28,7 @@ class DataStreamWidget:
         if start_time_ms is not None:
             self.set_start_time(start_time_ms)
         if stop_time_ms is not None and stop_time_ms != 0:
-            # 0 is the default in the run start messsage flatbuffer
+            # 0 is the default in the run start message flatbuffer
             # if stop time field is not populated
             self.set_stop_time(stop_time_ms)
 

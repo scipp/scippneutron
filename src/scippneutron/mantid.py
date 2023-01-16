@@ -727,7 +727,7 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
         if error_connection is None:
             dataset[data_name] = sc.Variable(dims=['row'], values=ws.column(i))
         elif data_name in error_connection:
-            # This data has error availble
+            # This data has error available
             error_name = error_connection[data_name]
             error_index = columnNames.index(error_name)
 
