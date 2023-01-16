@@ -1,17 +1,17 @@
 # Tests in this file work only with a working Mantid installation available in
 # PYTHONPATH.
+import importlib
+import os
+import sys
+import tempfile
 import unittest
 import warnings
 
 import numpy as np
 import pytest
-import os
-import sys
-import tempfile
-import importlib
-
 import scipp as sc
 import scipp.spatial
+
 import scippneutron as scn
 
 from .mantid_helper import mantid_is_available
@@ -30,6 +30,7 @@ class TestMantidConversion(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import mantid.simpleapi as mantid
+
         # This is from the Mantid system-test data
         filename = "CNCS_51936_event.nxs"
         # This needs OutputWorkspace specified, as it doesn't
@@ -95,6 +96,7 @@ class TestMantidConversion(unittest.TestCase):
 
     def test_advanced_geometry_with_absent_shape(self):
         import mantid.simpleapi as mantid
+
         # single bank 3 by 3
         ws = mantid.CreateSampleWorkspace(NumBanks=1,
                                           BankPixelWidth=3,
@@ -377,7 +379,7 @@ class TestMantidConversion(unittest.TestCase):
             self.check_monitor_metadata(monitor)
 
     def test_mdhisto_workspace_q(self):
-        from mantid.simpleapi import (CreateMDWorkspace, FakeMDEventData, BinMD)
+        from mantid.simpleapi import BinMD, CreateMDWorkspace, FakeMDEventData
 
         md_event = CreateMDWorkspace(Dimensions=3,
                                      Extents=[-10, 10, -10, 10, -10, 10],
@@ -419,7 +421,7 @@ class TestMantidConversion(unittest.TestCase):
         self.assertTrue('nevents' in histo_data_array.attrs)
 
     def test_mdhisto_workspace_many_dims(self):
-        from mantid.simpleapi import (CreateMDWorkspace, FakeMDEventData, BinMD)
+        from mantid.simpleapi import BinMD, CreateMDWorkspace, FakeMDEventData
 
         md_event = CreateMDWorkspace(Dimensions=4,
                                      Extents=[-10, 10, -10, 10, -10, 10, -10, 10],
@@ -668,7 +670,7 @@ class TestMantidConversion(unittest.TestCase):
                 scn.mantid.validate_dim_and_get_mantid_string(i)
 
     def test_WorkspaceGroup_parsed_correctly(self):
-        from mantid.simpleapi import (mtd, CreateSampleWorkspace, GroupWorkspaces)
+        from mantid.simpleapi import CreateSampleWorkspace, GroupWorkspaces, mtd
         CreateSampleWorkspace(OutputWorkspace="ws1")
         CreateSampleWorkspace(OutputWorkspace="ws2")
         CreateSampleWorkspace(OutputWorkspace="ws3")
@@ -801,8 +803,8 @@ def test_to_workspace_2d_handles_single_x_array():
 
 @pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_attrs_with_dims():
-    from mantid.kernel import FloatArrayProperty
     import mantid.simpleapi as sapi
+    from mantid.kernel import FloatArrayProperty
     dataX = [1, 2, 3]
     dataY = [1, 2, 3]
     ws = sapi.CreateWorkspace(DataX=dataX, DataY=dataY, NSpec=1, UnitX="Wavelength")
@@ -851,8 +853,9 @@ def test_time_series_log_extraction():
 
 @pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_from_mask_workspace():
-    from mantid.simpleapi import LoadMask
     from os import path
+
+    from mantid.simpleapi import LoadMask
     dir_path = path.dirname(path.realpath(__file__))
     mask = LoadMask('HYS', path.join(dir_path, 'HYS_mask.xml'))
     da = scn.from_mantid(mask)
@@ -863,6 +866,7 @@ def test_from_mask_workspace():
 
 def _all_indirect(blacklist):
     from mantid.simpleapi import config
+
     # Any indirect instrument considered
     for f in config.getFacilities():
         for i in f.instruments():
@@ -873,8 +877,9 @@ def _all_indirect(blacklist):
 
 
 def _load_indirect_instrument(instr, parameters):
-    from mantid.simpleapi import LoadEmptyInstrument, \
-        LoadParameterFile, AddSampleLog, config
+    from mantid.simpleapi import AddSampleLog, LoadEmptyInstrument, LoadParameterFile, \
+        config
+
     # Create a workspace from an indirect instrument
     out = LoadEmptyInstrument(InstrumentName=instr)
     if instr in parameters:
@@ -908,8 +913,8 @@ def test_extract_energy_final():
 
 @pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_extract_energy_final_when_not_present():
-    from mantid.simpleapi import CreateSampleWorkspace
     from mantid.kernel import DeltaEModeType
+    from mantid.simpleapi import CreateSampleWorkspace
     ws = CreateSampleWorkspace(StoreInADS=False)
     assert ws.getEMode() == DeltaEModeType.Elastic
     ds = scn.from_mantid(ws)
@@ -928,8 +933,8 @@ def test_extract_energy_initial():
 
 @pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_extract_energy_inital_when_not_present():
-    from mantid.simpleapi import CreateSampleWorkspace
     from mantid.kernel import DeltaEModeType
+    from mantid.simpleapi import CreateSampleWorkspace
     ws = CreateSampleWorkspace(StoreInADS=False)
     assert ws.getEMode() == DeltaEModeType.Elastic
     ds = scn.from_mantid(ws)
@@ -969,9 +974,10 @@ def test_load_error_when_file_not_found_via_fuzzy_match():
 
 
 def make_dynamic_algorithm_without_fileproperty(alg_name):
-    from mantid.api import PythonAlgorithm, AlgorithmFactory,\
-        WorkspaceProperty, WorkspaceFactory
+    from mantid.api import AlgorithmFactory, PythonAlgorithm, WorkspaceFactory, \
+        WorkspaceProperty
     from mantid.kernel import Direction
+
     # Loader without FileProperty
     if AlgorithmFactory.exists(alg_name):
         return

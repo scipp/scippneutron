@@ -1,15 +1,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
-from dataclasses import dataclass
-from ..file_loading.load_nexus import StreamInfo
-from typing import Optional, List
-from enum import Enum
 import multiprocessing as mp
-from ._consumer_type import ConsumerType
-from ._consumer import (start_consumers, stop_consumers, create_consumers,
-                        all_consumers_stopped)
-from ._data_buffer import StreamedDataBuffer
+from dataclasses import dataclass
+from enum import Enum
 from queue import Empty as QueueEmpty
+from typing import List, Optional
+
+from ..file_loading.load_nexus import StreamInfo
+from ._consumer import all_consumers_stopped, create_consumers, start_consumers, \
+    stop_consumers
+from ._consumer_type import ConsumerType
+from ._data_buffer import StreamedDataBuffer
 
 
 class InstructionType(Enum):

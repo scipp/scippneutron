@@ -1,17 +1,18 @@
 import doctest
 import os
 import sys
-
-import scippneutron
-
 from typing import Any, Dict, Optional
+
+import sphinx_book_theme
 from docutils.nodes import document
 from sphinx.application import Sphinx
-import sphinx_book_theme
+
+import scippneutron
 
 sys.path.insert(0, os.path.abspath('.'))
 
 from version import VersionInfo  # noqa: E402
+
 # General information about the project.
 project = u'scippneutron'
 copyright = u'2022 Scipp contributors'

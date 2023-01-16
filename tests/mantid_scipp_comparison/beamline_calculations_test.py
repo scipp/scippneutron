@@ -3,12 +3,13 @@
 # @author Jan-Lukas Wynen
 
 import pytest
-import scippneutron as scn
 import scipp as sc
 
+import scippneutron as scn
+
 try:
-    import mantid.simpleapi as sapi
     import mantid.kernel as kernel
+    import mantid.simpleapi as sapi
 except ImportError:
     pytestmark = pytest.mark.skip('Mantid framework is unavailable')
     sapi = None

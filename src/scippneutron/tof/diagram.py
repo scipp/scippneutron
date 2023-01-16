@@ -3,6 +3,7 @@
 # @author Simon Heybrock
 import scipp as sc
 from matplotlib.patches import Rectangle
+
 from scippneutron.tof.frames import _tof_from_wavelength
 
 

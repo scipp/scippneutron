@@ -23,8 +23,8 @@ This is useful for instance for monitors.
 In this case, ``Ltotal`` is the distance from source to detector.
 """
 
-from scipp.typing import VariableLike
 import scipp as sc
+from scipp.typing import VariableLike
 
 
 def L1(*, incident_beam: VariableLike) -> VariableLike:

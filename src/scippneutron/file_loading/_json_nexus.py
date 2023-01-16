@@ -2,8 +2,10 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
 from __future__ import annotations
-from typing import Tuple, Dict, List, Any, Union
+
 from dataclasses import dataclass
+from typing import Any, Dict, List, Tuple, Union
+
 import numpy as np
 from scippnexus.typing import H5Group
 

@@ -44,6 +44,20 @@ all = ['scipp[all]']
     "Bug Tracker" = "https://github.com/scipp/scippneutron/issues"
     "Source" = "https://github.com/scipp/scippneutron"
 
+[tool.bandit]
+# Excluding tests because bandit doesn't like `assert`.
+exclude_dirs = ["docs/conf.py", "tests", "install", "tools", "setup.py"]
+
+[tool.codespell]
+ignore-words-list = "elemt"
+skip = "./.git,./install,./build,./cmake-build*,./.tox,*/*_cache,*/.virtual_documents,*/.ipynb_checkpoints,*.pdf,*.svg"
+
+[tool.isort]
+skip_gitignore = true
+line_length = 88
+multi_line_output = 2  # for compatibility with yapf
+skip_glob = ["src/scippneutron/__init__.py"]
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 testpaths = "tests"
@@ -67,7 +81,7 @@ filterwarnings = [
   'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
   'ignore:Keyword `trait` is deprecated in traitlets 5.0, use `value_trait` instead:DeprecationWarning',
   'ignore:Keyword `traits` is deprecated in traitlets 5.0, use `per_key_traits` instead:DeprecationWarning',
-  # TODO Plotting warnings that need to be adressed
+  # TODO Plotting warnings that need to be addressed
   'ignore:Support for mapping types has been deprecated and will be dropped in a future release:DeprecationWarning',
   'ignore:The get_cmap function will be deprecated in a future version:PendingDeprecationWarning',
   'ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning',

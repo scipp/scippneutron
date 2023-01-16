@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
-import scipp as sc
 import matplotlib.pyplot as plt
+import scipp as sc
+
 from scippneutron.tof import TimeDistanceDiagram
 
 

@@ -1,5 +1,5 @@
-import scipp as sc
 import numpy as np
+import scipp as sc
 
 
 def make_dataset_with_beamline():

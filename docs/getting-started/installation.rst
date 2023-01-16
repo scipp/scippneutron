@@ -51,7 +51,7 @@ To create a new conda environment with scippneutron:
    $ conda create -n env_with_scipp -c conda-forge -c scipp -c ess-dmsc scippneutron
 
 .. note::
-   Instaling ``scippneutron`` on Windows requires ``Microsoft Visual Studio 2019 C++ Runtime`` (and versions above) installed.
+   Installing ``scippneutron`` on Windows requires ``Microsoft Visual Studio 2019 C++ Runtime`` (and versions above) installed.
    Visit https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads for the up to date version of the library.
 
 After installation the modules ``scipp`` and ``scippneutron`` can be imported in Python.
@@ -81,7 +81,7 @@ This is due to some dependencies being too old to work in the same environment a
       mantid-framework
 
 .. note::
-   Instaling `scippneutron`` with Mantid on Windows is possible but requires ``Windows Subsystem for Linux 1`` (WSL 1) installed and is limited to Windows 10.
+   Installing ``scippneutron`` with Mantid on Windows is possible but requires ``Windows Subsystem for Linux 1`` (WSL 1) installed and is limited to Windows 10.
    Please follow the steps on the `Windows Subsystem for Linux Installation Guide page <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_
    to enable Linux support.
    Once ``WSL 1`` is installed, setting up Scipp with Mantid follows the Linux specific directions described above.

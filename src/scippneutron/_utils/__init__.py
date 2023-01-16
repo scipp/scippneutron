@@ -5,8 +5,8 @@
 Internal utilities; do not use outside scippneutron!
 """
 
-from scipp.typing import VariableLike
 import scipp as sc
+from scipp.typing import VariableLike
 
 
 def elem_unit(var: VariableLike) -> sc.Unit:

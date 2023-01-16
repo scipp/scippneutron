@@ -376,7 +376,7 @@ Bugfixes
 
 * When converting from data from `Mantid <https://www.mantidproject.org/Main_Page>`_ with its `instrument <https://docs.mantidproject.org/nightly/concepts/InstrumentDefinitionFile.html>`_ format;
   Duplicate named detectors (including monitors) will have unique names created by concatenating the name with the spectrum number for that detector.
-  This fixes a bug with monitors where previously, duplicate entries encoutered after the first were rejected from the output metadata.
+  This fixes a bug with monitors where previously, duplicate entries encountered after the first were rejected from the output metadata.
   In the case of instruments such as POLARIS, all monitors will now be translated.
 * ``load_nexus`` will no longer fail to load nexus files containing strings with non-ascii characters, for example a log with units of '°'.
 
@@ -398,7 +398,7 @@ Features
 * Functionality from ``scipp.neutron`` (as previously known as part of the scipp package) is now available in this package.
   This includes in particular the instrument view and "unit conversions" for time-of-flight neutron sources.
 * Convert supports a greatly enhanced way of obtaining required parameters of the beamline.
-  Instead of requiring raw component positions it can now work directly with, e.g., `two_theta`.
+  Instead of requiring raw component positions it can now work directly with, e.g., ``two_theta``.
 * Add scipp ``datetime64`` support in mantid-scipp converters `#39 <https://github.com/scipp/scipp/pull/39>`_.
 
 Breaking changes
@@ -406,7 +406,7 @@ Breaking changes
 
 * ``scipp.neutron.diffraction`` is NOT available in ``scippneutron`` since its original content is facility-specific and does not comply with the inclusion guidelines in this librarary.
 * Naming convention for (in particular) coords and attrs used by unit conversion has changed.
-  Generally what previously used hyphens `-` now uses underscore `_`.
+  Generally what previously used hyphens ``-`` now uses underscore ``_``.
 
   * ``pulse-time`` is now ``pulse_time``
   * ``sample-position`` is now ``sample_position``

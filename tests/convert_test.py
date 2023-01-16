@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 import scipp as sc
 from scipp.constants import m_n
+
 import scippneutron as scn
 
 
