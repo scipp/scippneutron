@@ -81,7 +81,7 @@ This is due to some dependencies being too old to work in the same environment a
       mantid-framework
 
 .. note::
-   Installing `scippneutron`` with Mantid on Windows is possible but requires ``Windows Subsystem for Linux 1`` (WSL 1) installed and is limited to Windows 10.
+   Installing ``scippneutron`` with Mantid on Windows is possible but requires ``Windows Subsystem for Linux 1`` (WSL 1) installed and is limited to Windows 10.
    Please follow the steps on the `Windows Subsystem for Linux Installation Guide page <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_
    to enable Linux support.
    Once ``WSL 1`` is installed, setting up Scipp with Mantid follows the Linux specific directions described above.

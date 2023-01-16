@@ -398,7 +398,7 @@ Features
 * Functionality from ``scipp.neutron`` (as previously known as part of the scipp package) is now available in this package.
   This includes in particular the instrument view and "unit conversions" for time-of-flight neutron sources.
 * Convert supports a greatly enhanced way of obtaining required parameters of the beamline.
-  Instead of requiring raw component positions it can now work directly with, e.g., `two_theta`.
+  Instead of requiring raw component positions it can now work directly with, e.g., ``two_theta``.
 * Add scipp ``datetime64`` support in mantid-scipp converters `#39 <https://github.com/scipp/scipp/pull/39>`_.
 
 Breaking changes
@@ -406,7 +406,7 @@ Breaking changes
 
 * ``scipp.neutron.diffraction`` is NOT available in ``scippneutron`` since its original content is facility-specific and does not comply with the inclusion guidelines in this librarary.
 * Naming convention for (in particular) coords and attrs used by unit conversion has changed.
-  Generally what previously used hyphens `-` now uses underscore `_`.
+  Generally what previously used hyphens ``-`` now uses underscore ``_``.
 
   * ``pulse-time`` is now ``pulse_time``
   * ``sample-position`` is now ``sample_position``

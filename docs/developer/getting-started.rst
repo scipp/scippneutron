@@ -57,7 +57,7 @@ Tutorial and Test Data
 ~~~~~~~~~~~~~~~~~~~~~~
 
 There are a number of data files which can be downloaded automatically by scippneutron.
-The functions in `scippneutron.data` download and cache these files if and when they are used.
+The functions in ``scippneutron.data`` download and cache these files if and when they are used.
 By default, the files are stored in the OS's cache directory.
 The location can be customized by setting the environment variable ``SCIPPNEUTRON_DATA_DIR``
 to the desired path.
