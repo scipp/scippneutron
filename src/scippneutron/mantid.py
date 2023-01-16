@@ -2,14 +2,14 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock, Neil Vaytet
 
-import re
-from copy import deepcopy
-from contextlib import contextmanager
-from pathlib import Path
 import os
-from typing import Union
+import re
 import uuid
 import warnings
+from contextlib import contextmanager
+from copy import deepcopy
+from pathlib import Path
+from typing import Union
 
 import numpy as np
 import scipp as sc
@@ -918,7 +918,7 @@ def _is_mantid_loadable(filename):
 
 
 def _check_file_path(filename, mantid_alg):
-    from mantid.api import AlgorithmManager, FrameworkManager, FileProperty
+    from mantid.api import AlgorithmManager, FileProperty, FrameworkManager
     FrameworkManager.Instance()
     alg = AlgorithmManager.createUnmanaged(mantid_alg)
     filename_property = [

@@ -9,9 +9,9 @@ Their values are taken from :mod:`scipp.constants`.
 """
 
 import numpy as np
+import scipp as sc
 import scipp.constants as const
 from scipp.typing import VariableLike
-import scipp as sc
 
 from .._utils import as_float_type, elem_dtype, elem_unit
 

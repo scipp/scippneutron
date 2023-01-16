@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
-import pytest
 import numpy as np
+import pytest
 import scipp as sc
+
 from scippneutron.tof import frames
 
 

@@ -1,24 +1,21 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
-import numpy as np
-import time
-from typing import List, Generator, Optional
 import asyncio
-import scipp as sc
-from ..file_loading.load_nexus import _load_nexus_json
 import multiprocessing as mp
-from queue import Empty as QueueEmpty
+import time
 from enum import Enum
+from queue import Empty as QueueEmpty
+from typing import Generator, List, Optional
+from warnings import warn
+
+import numpy as np
+import scipp as sc
+
+from ..file_loading.load_nexus import _load_nexus_json
 from ._consumer_type import ConsumerType
+from ._data_stream_widget import DataStreamWidget
 from ._serialisation import convert_from_pickleable_dict
 from ._stop_time import StopTimeUpdate
-from warnings import warn
-from ._data_stream_widget import DataStreamWidget
-"""
-Some type names are included as strings as imports are done in
-function scope to avoid optional dependencies being imported
-by the top level __init__.py
-"""
 
 
 class StartTime(Enum):
@@ -154,9 +151,9 @@ async def _data_stream(
 
     # Search backwards to find the last run_start message
     try:
-        from ._consumer import (get_run_start_message, KafkaQueryConsumer)
-        from ._data_consumption_manager import (data_consumption_manager,
-                                                ManagerInstruction, InstructionType)
+        from ._consumer import KafkaQueryConsumer, get_run_start_message
+        from ._data_consumption_manager import InstructionType, ManagerInstruction, \
+            data_consumption_manager
     except ImportError:
         raise ImportError(_missing_dependency_message)
 

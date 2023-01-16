@@ -20,5 +20,4 @@ The `user guide <../../user-guide/coordinate-transformations.rst>`_ gives
 more examples.
 """
 
-from . import beamline
-from . import tof
+from . import beamline, tof

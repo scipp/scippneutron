@@ -2,6 +2,7 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 import scipp as sc
+
 from ..mantid import load
 
 _version = '5'

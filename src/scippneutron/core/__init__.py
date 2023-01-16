@@ -6,4 +6,4 @@
 
 import os
 
-from .conversions import convert, conversion_graph, deduce_conversion_graph
+from .conversions import conversion_graph, convert, deduce_conversion_graph

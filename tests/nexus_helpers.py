@@ -1,16 +1,18 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
-import scipp as sc
+import json
+from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import List, Union, Iterator, Optional, Dict, Any, Tuple
+from enum import Enum
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+
 import h5py
 import numpy as np
-from enum import Enum
-from contextlib import contextmanager
-import json
-from scippneutron.file_loading._json_nexus import (JSONGroup, make_json_attr,
-                                                   make_json_dataset)
+import scipp as sc
+
+from scippneutron.file_loading._json_nexus import JSONGroup, make_json_attr, \
+    make_json_dataset
 
 h5root = Union[h5py.File, h5py.Group]
 

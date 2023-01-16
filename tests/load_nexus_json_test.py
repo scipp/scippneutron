@@ -1,17 +1,18 @@
-import scipp as sc
 import numpy as np
-from .nexus_helpers import NexusBuilder, Source, Stream
 import pytest
+import scipp as sc
+
 from scippneutron.file_loading.load_nexus import _load_nexus_json
-"""
-Many tests for load_nexus_json() are in test_load_nexus
-as they are parameterised to run the same checks against
-load_nexus() and load_nexus_json().
-Tests in this module are for features specific to the json
-representation, for example the "stream" objects which link
-the data in the json template to data available to
-be streamed from Kafka during an experiment.
-"""
+
+from .nexus_helpers import NexusBuilder, Source, Stream
+
+# Many tests for load_nexus_json() are in test_load_nexus
+# as they are parameterised to run the same checks against
+# load_nexus() and load_nexus_json().
+# Tests in this module are for features specific to the json
+# representation, for example the "stream" objects which link
+# the data in the json template to data available to
+# be streamed from Kafka during an experiment.
 
 
 @pytest.mark.skip("TODO Stream handling with log not implemented")

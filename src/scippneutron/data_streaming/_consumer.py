@@ -1,16 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
-from confluent_kafka import Consumer, TopicPartition, KafkaError
-from typing import Callable, List, Union, Optional, Tuple
-from warnings import warn
-import threading
-from streaming_data_types.run_start_pl72 import deserialise_pl72, RunStartInfo
-from streaming_data_types.exceptions import WrongSchemaException
-from ._consumer_type import ConsumerType
-import multiprocessing as mp
-from queue import Empty as QueueEmpty
-import numpy as np
-from time import time_ns
 """
 This module uses the confluent-kafka-python implementation of the
 Kafka Client API to communicate with Kafka servers (brokers)
@@ -28,6 +17,20 @@ The following Kafka terminology is used extensively in the code:
   Kafka broker. Old messages are deleted from the partition, so the
   first available message may not be at offset 0.
 """
+
+import multiprocessing as mp
+import threading
+from queue import Empty as QueueEmpty
+from time import time_ns
+from typing import Callable, List, Optional, Tuple, Union
+from warnings import warn
+
+import numpy as np
+from confluent_kafka import Consumer, KafkaError, TopicPartition
+from streaming_data_types.exceptions import WrongSchemaException
+from streaming_data_types.run_start_pl72 import RunStartInfo, deserialise_pl72
+
+from ._consumer_type import ConsumerType
 
 
 class RunStartError(Exception):

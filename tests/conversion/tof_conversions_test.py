@@ -2,13 +2,13 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Jan-Lukas Wynen
 
-from hypothesis import HealthCheck, given, settings
-from hypothesis import strategies as st
 import numpy as np
 import pytest
-import scipp.constants as const
-from scipp.testing import strategies as scst
 import scipp as sc
+import scipp.constants as const
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
+from scipp.testing import strategies as scst
 
 from scippneutron.conversion import tof as tof_conv
 

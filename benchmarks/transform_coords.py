@@ -1,5 +1,6 @@
-import scippneutron as scn
 from mantid.kernel import ConfigService
+
+import scippneutron as scn
 
 ConfigService.setLogLevel(1)
 

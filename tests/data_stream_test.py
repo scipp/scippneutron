@@ -1,18 +1,21 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 import datetime
-import pytest
-import scipp as sc
+import multiprocessing as mp
 import platform
 import warnings
-from typing import List, Tuple, Optional, Union
-import numpy as np
-from .nexus_helpers import NexusBuilder, Stream, Log, EventData
-import multiprocessing as mp
-from scippneutron.data_streaming._consumer_type import ConsumerType
-from scippneutron.data_streaming._warnings import (UnknownFlatbufferIdWarning,
-                                                   BufferSizeWarning)
 from cmath import isclose
+from typing import List, Optional, Tuple, Union
+
+import numpy as np
+import pytest
+import scipp as sc
+
+from scippneutron.data_streaming._consumer_type import ConsumerType
+from scippneutron.data_streaming._warnings import BufferSizeWarning, \
+    UnknownFlatbufferIdWarning
+
+from .nexus_helpers import EventData, Log, NexusBuilder, Stream
 
 if platform.system() == "Darwin":
     pytest.skip(
@@ -22,15 +25,15 @@ if platform.system() == "Darwin":
 
 try:
     import streaming_data_types  # noqa: F401
-    from confluent_kafka import TopicPartition, KafkaError  # noqa: F401
-    from scippneutron.data_streaming.data_stream import _data_stream  # noqa: E402
+    from confluent_kafka import KafkaError, TopicPartition  # noqa: F401
     from streaming_data_types.eventdata_ev42 import serialise_ev42  # noqa: E402
-    from streaming_data_types.run_start_pl72 import serialise_pl72
     from streaming_data_types.logdata_f142 import serialise_f142
+    from streaming_data_types.run_start_pl72 import serialise_pl72
+    from streaming_data_types.sample_environment_senv import Location, serialise_senv
     from streaming_data_types.timestamps_tdct import serialise_tdct
-    from streaming_data_types.sample_environment_senv import serialise_senv
-    from streaming_data_types.sample_environment_senv import Location
+
     from scippneutron.data_streaming._consumer import RunStartError
+    from scippneutron.data_streaming.data_stream import _data_stream  # noqa: E402
     from scippneutron.data_streaming.data_stream import StopTime
 except ImportError:
     pytest.skip("Kafka or Serialisation module is unavailable", allow_module_level=True)

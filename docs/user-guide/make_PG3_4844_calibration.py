@@ -1,4 +1,5 @@
 from mantid.simpleapi import Load, LoadDiffCal
+
 import scippneutron as scn
 
 ws = Load('PG3_4844_event.nxs')

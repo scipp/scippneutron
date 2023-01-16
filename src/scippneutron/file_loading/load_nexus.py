@@ -2,22 +2,22 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Matthew Jones
 import json
-import numpy as np
-from pathlib import Path
-from scipp.binning import make_binned
-import scipp as sc
-
-from ._json_nexus import get_streams_info, StreamInfo, JSONGroup
-from ._json_nexus import contains_stream
-from ._nexus import ScippData
-import h5py
-from timeit import default_timer as timer
-from typing import Union, Optional, Dict, Tuple, Set
 from contextlib import contextmanager
+from pathlib import Path
+from timeit import default_timer as timer
+from typing import Dict, Optional, Set, Tuple, Union
 from warnings import warn
-from scippnexus.nxtransformations import TransformationError
-from scippnexus.nxobject import NexusStructureError, NXobject
+
+import h5py
+import numpy as np
+import scipp as sc
+from scipp.binning import make_binned
 from scippnexus import NXroot
+from scippnexus.nxobject import NexusStructureError, NXobject
+from scippnexus.nxtransformations import TransformationError
+
+from ._json_nexus import JSONGroup, StreamInfo, contains_stream, get_streams_info
+from ._nexus import ScippData
 
 
 class BadSource(Exception):

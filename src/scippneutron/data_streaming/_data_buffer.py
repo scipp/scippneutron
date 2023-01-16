@@ -1,36 +1,38 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
-import scipp as sc
-import numpy as np
-import threading
 import multiprocessing as mp
-from streaming_data_types.eventdata_ev42 import deserialise_ev42
-from streaming_data_types.logdata_f142 import deserialise_f142, LogDataInfo
-from streaming_data_types.sample_environment_senv import deserialise_senv
-from streaming_data_types.sample_environment_senv import (Response as FastSampleEnvData)
-from streaming_data_types.sample_environment_senv import (Location as TimestampLocation)
-from streaming_data_types.timestamps_tdct import deserialise_tdct, Timestamps
-from streaming_data_types.run_stop_6s4t import deserialise_6s4t
-from streaming_data_types.exceptions import WrongSchemaException
-from typing import Optional, Dict, List, Any, Union, Callable, Tuple
-from ..file_loading._json_nexus import StreamInfo
-from ._stop_time import StopTimeUpdate
+import threading
 from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
+import numpy as np
+import scipp as sc
+from streaming_data_types.eventdata_ev42 import deserialise_ev42
+from streaming_data_types.exceptions import WrongSchemaException
+from streaming_data_types.logdata_f142 import LogDataInfo, deserialise_f142
+from streaming_data_types.run_stop_6s4t import deserialise_6s4t
+from streaming_data_types.sample_environment_senv import Location as TimestampLocation
+from streaming_data_types.sample_environment_senv import Response as FastSampleEnvData
+from streaming_data_types.sample_environment_senv import deserialise_senv
+from streaming_data_types.timestamps_tdct import Timestamps, deserialise_tdct
+
+from ..file_loading._json_nexus import StreamInfo
 from ._serialisation import convert_to_pickleable_dict
-from ._warnings import UnknownFlatbufferIdWarning, BufferSizeWarning
-"""
-The ESS data streaming system uses Google FlatBuffers to serialise
-data to transmit in the Kafka message payload. FlatBuffers uses schemas
-to define the data structure to serialise:
-https://github.com/ess-dmsc/streaming-data-types/
-The ess-streaming-data-types library provides convenience "serialise"
-and "deserialise" functions for each schema:
-https://github.com/ess-dmsc/python-streaming-data-types/
-Each schema is identified by a 4 character string which is included in:
-- the filename of the schema,
-- the serialised buffer as the first 4 bytes,
-- the module name in ess-streaming-data-types.
-"""
+from ._stop_time import StopTimeUpdate
+from ._warnings import BufferSizeWarning, UnknownFlatbufferIdWarning
+
+# The ESS data streaming system uses Google FlatBuffers to serialise
+# data to transmit in the Kafka message payload. FlatBuffers uses schemas
+# to define the data structure to serialise:
+# https://github.com/ess-dmsc/streaming-data-types/
+# The ess-streaming-data-types library provides convenience "serialise"
+# and "deserialise" functions for each schema:
+# https://github.com/ess-dmsc/python-streaming-data-types/
+# Each schema is identified by a 4 character string which is included in:
+# - the filename of the schema,
+# - the serialised buffer as the first 4 bytes,
+# - the module name in ess-streaming-data-types.
+#
 # FlatBuffer schema ids.
 # These will change in the future if a breaking change needs to be
 # made to the schema.
@@ -58,7 +60,7 @@ class _SlowMetadataBuffer:
     """
     Buffer for "slowly" changing metadata from Kafka messages serialised
     according to the flatbuffer schema with id SLOW_FB_ID.
-    Typically the data sources are EPICS PVs with updates published to
+    Typically, the data sources are EPICS PVs with updates published to
     Kafka via the Forwarder (https://github.com/ess-dmsc/forwarder/).
     """
 

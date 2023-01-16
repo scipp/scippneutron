@@ -5,6 +5,7 @@
 import numpy as np
 import scipp as sc
 from scipy.spatial.transform import Rotation as Rot
+
 try:
     import pythreejs as p3
 except ImportError as ex:

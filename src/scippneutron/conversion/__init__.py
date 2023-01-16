@@ -15,5 +15,4 @@ See also the user guide on
 `Coordinate Transformations <../../user-guide/coordinate-transformations.rst>`_.
 """
 
-from . import beamline
-from . import tof
+from . import beamline, tof

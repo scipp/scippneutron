@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
-from typing import Dict
-import numpy as np
-import scipp as sc
-from typing import Any
 """
 Convert a Scipp DataArray to a picklable dictionary and back.
 Can be used to move DataArrays between multiprocessing.Process.
 """
+
+from typing import Any, Dict
+
+import numpy as np
+import scipp as sc
 
 _scipp_containers = ("DataArray", "DataSet", "Variable")
 

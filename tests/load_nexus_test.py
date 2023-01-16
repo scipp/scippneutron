@@ -1,30 +1,20 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 import pathlib
-from typing import List, Type, Union, Callable
 import warnings
+from typing import Callable, List, Type, Union
 
-from dateutil.parser import parse as parse_date
 import numpy as np
 import pytest
 import scipp as sc
+from dateutil.parser import parse as parse_date
 
 import scippneutron
 from scippneutron.file_loading.load_nexus import _load_nexus_json
-from .nexus_helpers import (
-    NexusBuilder,
-    EventData,
-    Detector,
-    Log,
-    Sample,
-    Source,
-    Transformation,
-    TransformationType,
-    Link,
-    Monitor,
-    Chopper,
-    in_memory_hdf5_file_with_two_nxentry,
-)
+
+from .nexus_helpers import Chopper, Detector, EventData, Link, Log, Monitor, \
+    NexusBuilder, Sample, Source, Transformation, TransformationType, \
+    in_memory_hdf5_file_with_two_nxentry
 
 # representative sample of UTF-8 test strings from
 # https://www.w3.org/2001/06/utf-8-test/UTF-8-demo.html
