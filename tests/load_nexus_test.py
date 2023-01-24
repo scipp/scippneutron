@@ -347,7 +347,7 @@ def test_skips_data_with_event_id_and_detector_number_type_unequal(
         ]),
         event_index=np.array([0, 3, 3, 5]),
     )
-    detector_numbers = np.array([0, 1, 2, 3], dtype=np.int32)
+    detector_numbers = np.array([0, 1, 2, 3], dtype=np.float32)
 
     builder = NexusBuilder()
     builder.add_detector(Detector(detector_numbers, event_data))
