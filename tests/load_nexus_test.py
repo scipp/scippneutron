@@ -64,6 +64,8 @@ def load_function(request) -> Callable:
     return request.param
 
 
+@pytest.mark.skip(reason="The 'bigfake' file is partially broken and contains "
+                  "HDF5 groups without NX_class attribute.")
 @pytest.mark.parametrize('path_type', (str, pathlib.Path))
 def test_loads_from_file(path_type):
     with warnings.catch_warnings():
@@ -475,7 +477,7 @@ def test_warns_given_log_with_mismatched_value_and_time(load_function: Callable)
     with pytest.warns(UserWarning):
         loaded_data = load_function(builder)
 
-    assert 'time' not in loaded_data['test_log'].value.coords
+    assert set(loaded_data['test_log'].value.keys()) == {'time', 'value'}
 
 
 def test_loads_data_from_non_timeseries_log(load_function: Callable):
@@ -501,6 +503,9 @@ def test_loads_data_from_multiple_logs_with_same_name(load_function: Callable):
     builder.add_detector(Detector(log=Log(name, values_2)))
 
     with warnings.catch_warnings():
+        warnings.filterwarnings("ignore",
+                                message='Failed to load',
+                                category=UserWarning)
         warnings.filterwarnings("ignore",
                                 message='Skipped loading',
                                 category=UserWarning)
@@ -1764,12 +1769,17 @@ def test_load_monitors_with_event_mode_data(load_function: Callable):
                 )))
 
     with warnings.catch_warnings():
+        warnings.filterwarnings("ignore",
+                                message='Failed to load',
+                                category=UserWarning)
         warnings.filterwarnings("ignore", message='Skipped load', category=UserWarning)
         mon_1_events = load_function(builder)["monitor1"].data.values
         mon_2_events = load_function(builder)["monitor2"].data.values
 
+    # Monitor 1 is too ambiguous for scippnexus to handle it
+    assert isinstance(mon_1_events, sc.DataGroup)
     assert sc.identical(
-        mon_1_events.values[0].coords["tof"],
+        mon_1_events["event_time_offset"],
         sc.array(dims=["event"],
                  values=[1, 2, 3, 4, 5],
                  unit=sc.units.ns,
