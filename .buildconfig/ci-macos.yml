@@ -14,6 +14,6 @@ dependencies:
   - pytest
   - pytest-asyncio
   - pythreejs
-  - scipp=22.11.0
+  - scipp=23.01.1
   - scippnexus>=0.4.1
   - scipy>=1.7.0

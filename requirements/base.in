@@ -2,6 +2,6 @@ h5py
 numpy >= 1.20
 plopp >= 22.12.1
 pooch
-scipp[interactive] >= 22.11
+scipp[interactive] >= 23.01.1
 scippnexus >= 0.4.1
 scipy >= 1.7.0
