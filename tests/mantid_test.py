@@ -819,12 +819,12 @@ def test_attrs_with_dims():
 
     ds = scn.from_mantid(ws)
     # Variable (single value) wrapped DataArray
-    assert isinstance(ds.attrs['attr0'].value, sc.DataArray)
+    assert ds.attrs['attr0'].dtype == sc.DType.DataArray
     assert 'time' in ds.attrs['attr0'].value.coords
     # Variable (single value)
-    assert isinstance(ds.attrs['attr1'].value, int)
+    assert ds.attrs['attr1'].dtype == int
     # Variable (single value) wrapped Variable
-    assert isinstance(ds.attrs['attr2'].value, sc.Variable)
+    assert ds.attrs['attr2'].dtype == sc.DType.Variable
     assert ds.attrs['attr2'].shape == ()  # outer wrapper
     assert ds.attrs['attr2'].value.shape == (10, )  # inner held
 
