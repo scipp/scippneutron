@@ -264,3 +264,7 @@ linkcheck_ignore = [
     # Many links for PRs from our release notes. Slow and unlikely to cause issues.
     'https://github.com/scipp/scipp/pull/[0-9]+',
 ]
+
+# Set env variable to enable plopp
+docs_dir = pathlib.Path(__file__).parent.absolute()
+os.environ["SCIPPDIR"] = os.path.join(docs_dir, 'buildconfig')
