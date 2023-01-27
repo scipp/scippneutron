@@ -822,7 +822,7 @@ def test_attrs_with_dims():
     assert ds.attrs['attr0'].dtype == sc.DType.DataArray
     assert 'time' in ds.attrs['attr0'].value.coords
     # Variable (single value)
-    assert ds.attrs['attr1'].dtype == int
+    assert ds.attrs['attr1'].dtype == sc.DType.int64
     # Variable (single value) wrapped Variable
     assert ds.attrs['attr2'].dtype == sc.DType.Variable
     assert ds.attrs['attr2'].shape == ()  # outer wrapper
