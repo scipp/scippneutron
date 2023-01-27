@@ -111,7 +111,7 @@ def test_mantid_convert_tof_to_energy():
 
 
 def test_mantid_convert_tof_to_direct_energy_transfer():
-    efixed = 1000 * sc.Unit('meV')
+    efixed = 1000.0 * sc.Unit('meV')
     in_ws = make_workspace('tof', emode='Direct', efixed=efixed)
     out_mantid = mantid_convert_units(in_ws,
                                       'energy_transfer',
