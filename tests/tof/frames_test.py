@@ -6,6 +6,7 @@ import pytest
 import scipp as sc
 
 from scippneutron.tof import frames
+from scippneutron.tof.frames import time_zero_to_detection_frame_index
 
 
 def make_array(*, npixel=3, nevent=1000, frame_length=None, time_offset=None):
@@ -135,18 +136,6 @@ def test_make_frames_reproduces_true_pulses(tof_min, frame_offset):
                        reference,
                        atol=sc.scalar(1e-12, unit=reference.bins.unit),
                        rtol=sc.scalar(1e-12))
-
-
-def time_zero_to_detection_frame_index(*, frame_offset, tof_min, frame_length,
-                                       frame_stride, time_zero):
-    """
-    Return 0-based source frame index of detection frame.
-
-    The source frames containing the time marked by tof_min receive index 0.
-    The frame after that index 1, and so on, until frame_stride-1.
-    """
-    shift = frame_length * ((frame_offset + tof_min) // frame_length)
-    return ((time_zero + shift) // (frame_length)).value % frame_stride
 
 
 class Test_time_zero_to_detection_frame_index:

@@ -85,3 +85,15 @@ def make_frames(da, *, frame_length, frame_offset=None, lambda_min=None):
         raise ValueError("Coordinate 'tof' already defined in input data array. "
                          "Expected input with 'event_time_offset' coordinate.")
     return da.transform_coords('tof', graph=graph)
+
+
+def time_zero_to_detection_frame_index(*, frame_offset, tof_min, frame_length,
+                                       frame_stride, time_zero):
+    """
+    Return 0-based source frame index of detection frame.
+
+    The source frames containing the time marked by tof_min receive index 0.
+    The frame after that index 1, and so on, until frame_stride-1.
+    """
+    shift = frame_length * ((frame_offset + tof_min) // frame_length)
+    return ((time_zero + shift) // (frame_length)).value % frame_stride
