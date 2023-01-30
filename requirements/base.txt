@@ -326,7 +326,7 @@ scipp[interactive]==23.1.1
     # via
     #   -r requirements/base.in
     #   scippnexus
-scippnexus==22.12.3
+scippnexus==23.1.1
     # via -r requirements/base.in
 scipy==1.10.0
     # via
