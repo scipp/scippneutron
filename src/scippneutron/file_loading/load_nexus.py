@@ -128,8 +128,9 @@ def _origin(unit) -> sc.Variable:
 
 def _depends_on_to_position(obj) -> Union[None, sc.Variable]:
     if (transform := obj.get('depends_on')) is not None:
-        if isinstance(transform, sc.DataArray) or transform.dtype == sc.DType.DataArray:
-            return None  # cannot compute position if time-dependent
+        if isinstance(transform,
+                      (str, sc.DataArray)) or transform.dtype == sc.DType.DataArray:
+            return None  # cannot compute position if bad transform or time-dependent
         else:
             return transform * _origin(transform.unit)
 

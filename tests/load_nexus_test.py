@@ -850,10 +850,10 @@ def test_raises_if_offset_but_not_offset_units_found(
     builder.add_component(component_class(component_name, depends_on=transformation))
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore",
-                                message='Skipped loading',
+                                message='Failed to load',
                                 category=UserWarning)
         loaded_data = load_function(builder)
-    assert loaded_data is None
+    assert isinstance(loaded_data[component_name].value['depends_on'], str)
 
 
 @pytest.mark.parametrize("component_class,component_name",
