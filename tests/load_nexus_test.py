@@ -119,8 +119,7 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
         sc.array(dims=['detector_id', 'tof'],
                  unit='counts',
                  dtype='float32',
-                 values=expected_counts,
-                 variances=expected_counts))
+                 values=expected_counts))
     expected_detector_ids = np.array([1, 2, 3])
     assert np.array_equal(loaded_data.coords['detector_id'].values,
                           expected_detector_ids)
