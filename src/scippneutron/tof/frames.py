@@ -73,7 +73,7 @@ def to_tof(*, pulse_skipping: bool = False):
     - event_time_zero and event_time_offset as read from an NXevent_data group.
     - lambda_min, used as a proxy for defining where to split and unwrap frames.
     - pulse_period
-    - frame_length and frame_offset defining the frame structure.
+    - pulse_period and frame_offset defining the frame structure.
 
     This assumes elastic scattering, or at least that the gaps between frames arriving
     at detectors are sufficiently large such that a common lambda_min definition is
@@ -111,19 +111,20 @@ def to_tof(*, pulse_skipping: bool = False):
 
 def make_frames(da: sc.DataArray,
                 *,
-                frame_length,
+                pulse_period,
                 frame_offset=None,
                 lambda_min=None,
                 pulse_stride: int = 1) -> sc.DataArray:
     da = da.copy(deep=False)
     # TODO Should check if any of these exist, raise if they do
-    da.attrs['pulse_period'] = frame_length
+    da.attrs['pulse_period'] = pulse_period
+    da.attrs['pulse_stride'] = sc.scalar(pulse_stride)
     if frame_offset is not None:
         da.attrs['frame_offset'] = frame_offset
     if lambda_min is not None:
         da.attrs['lambda_min'] = lambda_min
     graph = Ltotal(scatter=True)
-    graph.update(to_tof(pulse_skipping = pulse_stride != 1))
+    graph.update(to_tof(pulse_skipping=pulse_stride != 1))
     if 'tof' in da.bins.meta or 'tof' in da.meta:
         raise ValueError("Coordinate 'tof' already defined in input data array. "
                          "Expected input with 'event_time_offset' coordinate.")
