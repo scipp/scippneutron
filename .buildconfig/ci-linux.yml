@@ -1,9 +1,11 @@
 name: ubuntu-latest
 channels:
   - conda-forge
+  - ess-dmsc
   - mantid
   - scipp
 dependencies:
+  - ess-streaming-data-types
   - h5py
   - hypothesis
   - ipykernel
@@ -16,6 +18,7 @@ dependencies:
   - pooch
   - pytest
   - pytest-asyncio
+  - python-confluent-kafka
   - python-graphviz
   - pythreejs
   - scipp=23.01.1
