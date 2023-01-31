@@ -34,38 +34,29 @@ def _time_offset_to_tof(*, time_offset, time_offset_pivot, tof_min, frame_period
     return tof
 
 
-def time_zero_to_detection_frame_index(*, frame_offset, tof_min, pulse_period,
-                                       pulse_stride, event_time_zero, first_pulse_time):
+def time_zero_to_pulse_offset(*, pulse_period, pulse_stride, event_time_zero,
+                              first_pulse_time):
     """
     Return 0-based source frame index of detection frame.
 
     The source frames containing the time marked by tof_min receive index 0.
     The frame after that index 1, and so on, until frame_stride-1.
+
+    Example
+    -------
+    event_time_zero = 12:05:00
+    first_pulse_time = 12:00:00  # time of first (or any) pulse that passes through
+                                   choppers
     """
-    # NO! this is all wrong! Later step does tof_min dependence, here we should just
-    # do offset for every other pulse!?
-    # TODO update name and docstring
-    # second term is similar to t_pivot, but using floordiv instead of modulo
-    return pulse_period * (((event_time_zero - first_pulse_time) // pulse_period -
-                            (frame_offset + tof_min) // pulse_period) % pulse_stride)
-    shift = frame_period * ((frame_offset + tof_min) // frame_period)
-    # TODO shouldn't this be a minus?
-    # TODO should also subtract datetime of first pulse
-    # TODO not // pulse_period?
-    # should be
-    # ((event_time_zero - first_pulse_time) // pulse_period
-    # - (frame_offset + tof_min) // pulse_period) % pulse_stride
-    #
-    # Example
-    # -------
-    # event_time_zero = 12:05:00
-    # first_pulse_time = 12:00:00  # time of first (or any) pulse that passes through choppers
-    return ((event_time_zero - shift) // (frame_period)).value % pulse_stride
+    # This is roughly equivalent to
+    #   (event_time_zero - first_pulse_time) % frame_period
+    # but should avoid some issues with precision and drift
+    pulse_index = (event_time_zero - first_pulse_time) // pulse_period
+    return pulse_period * (pulse_index % pulse_stride)
 
 
 def update_time_offset_for_pulse_skipping(event_time_offset, pulse_offset):
     return event_time_offset + pulse_offset
-    #return event_time_offset + pulse_index * pulse_period
 
 
 def pulse_to_frame(pulse_period: sc.Variable, pulse_stride: int) -> sc.Variable:
@@ -107,7 +98,7 @@ def to_tof(*, pulse_skipping: bool = False):
     if pulse_skipping:
         graph['frame_period'] = pulse_to_frame
         graph['time_offset'] = update_time_offset_for_pulse_skipping
-        graph['pulse_offset'] = time_zero_to_detection_frame_index
+        graph['pulse_offset'] = time_zero_to_pulse_offset
     else:
         graph['frame_period'] = 'pulse_period'
         graph['time_offset'] = 'event_time_offset'
