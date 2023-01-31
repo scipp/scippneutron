@@ -109,16 +109,21 @@ def to_tof(*, pulse_skipping: bool = False):
     return graph
 
 
-def make_frames(da, *, frame_length, frame_offset=None, lambda_min=None):
+def make_frames(da: sc.DataArray,
+                *,
+                frame_length,
+                frame_offset=None,
+                lambda_min=None,
+                pulse_stride: int = 1) -> sc.DataArray:
     da = da.copy(deep=False)
     # TODO Should check if any of these exist, raise if they do
-    da.attrs['frame_length'] = frame_length
+    da.attrs['pulse_period'] = frame_length
     if frame_offset is not None:
         da.attrs['frame_offset'] = frame_offset
     if lambda_min is not None:
         da.attrs['lambda_min'] = lambda_min
     graph = Ltotal(scatter=True)
-    graph.update(to_tof())
+    graph.update(to_tof(pulse_skipping = pulse_stride != 1))
     if 'tof' in da.bins.meta or 'tof' in da.meta:
         raise ValueError("Coordinate 'tof' already defined in input data array. "
                          "Expected input with 'event_time_offset' coordinate.")

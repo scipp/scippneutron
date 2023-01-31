@@ -6,7 +6,7 @@ import pytest
 import scipp as sc
 
 from scippneutron.tof import frames
-from scippneutron.tof.frames import time_zero_to_detection_frame_index
+from scippneutron.tof.frames import time_zero_to_pulse_offset
 
 
 def make_array(*, npixel=3, nevent=1000, frame_length=None, time_offset=None):
