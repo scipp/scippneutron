@@ -7,7 +7,7 @@ Mantid Compatibility
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
-   :toctree: ../generated
+   :toctree: ../generated/functions
 
    from_mantid
    to_mantid
@@ -17,7 +17,7 @@ Coordinate transformations (Unit conversion)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
-   :toctree: ../generated
+   :toctree: ../generated/functions
 
    convert
 
@@ -27,7 +27,7 @@ Beamline geometry
 Note that ``theta`` or ``scattering_angle`` are deliberately not supported, due to some ambiguity on how the terms are used in the community, and possible confusion of ``theta`` (from Bagg's law) with ``theta`` in spherical coordinates.
 
 .. autosummary::
-   :toctree: ../generated
+   :toctree: ../generated/functions
 
    position
    source_position
@@ -43,7 +43,7 @@ Loading Nexus files
 ~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
-   :toctree: ../generated
+   :toctree: ../generated/functions
 
    load
    load_nexus
