@@ -197,27 +197,34 @@ class Test_time_zero_to_detection_frame_index:
 
     def test_frame_stride_2_with_frame_offset_and_tof_min_yields_index_with_offset(
             self):
-        frame_length = 100.0 * sc.Unit('ms')
+        frame_period = 100.0 * sc.Unit('ms')
         # Given frame_offset, fastest neutrons from source frame 0 arriving in fourth
         # frame...
         frame_offset = 110.0 * sc.Unit('ms')  # offset is 1 frame
         tof_min = 317 * sc.Unit('ms')  # offset is 3 frames
-        params = dict(frame_length=frame_length,
-                      frame_stride=2,
+        params = dict(frame_period=frame_period,
+                      pulse_stride=2,
                       frame_offset=frame_offset,
                       tof_min=tof_min)
         # ... should yield index 0 for time_zero=4*frame_length.
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=0.0 * sc.Unit('ms')) == 0
+                                                  event_time_zero=0.0 *
+                                                  sc.Unit('ms')) == 0
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=100.0 * sc.Unit('ms')) == 1
+                                                  event_time_zero=100.0 *
+                                                  sc.Unit('ms')) == 1
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=200.0 * sc.Unit('ms')) == 0
+                                                  event_time_zero=200.0 *
+                                                  sc.Unit('ms')) == 0
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=299.0 * sc.Unit('ms')) == 0
+                                                  event_time_zero=299.0 *
+                                                  sc.Unit('ms')) == 0
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=300.0 * sc.Unit('ms')) == 1
+                                                  event_time_zero=300.0 *
+                                                  sc.Unit('ms')) == 1
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=301.0 * sc.Unit('ms')) == 1
+                                                  event_time_zero=301.0 *
+                                                  sc.Unit('ms')) == 1
         assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=400.0 * sc.Unit('ms')) == 0
+                                                  event_time_zero=400.0 *
+                                                  sc.Unit('ms')) == 0
