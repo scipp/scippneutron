@@ -34,6 +34,15 @@ Release Notes
    Neil Vaytet :sup:`a`\ ,
    and Jan-Lukas Wynen :sup:`a`
 
+v23.01.0 (January 2023)
+-----------------------
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+* Requires Scipp v23.1.1 and ScippNexus v23.1.1
+* :func:`scippneutron.load_nexus` may now return ``scipp.DataGroup`` objects if parts of the file cannot be read `401 <https://github.com/scipp/scipp/pull/401>`_.
+
 v22.12.4 (December 2022)
 ------------------------
 
