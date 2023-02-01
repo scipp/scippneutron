@@ -51,11 +51,8 @@ def time_zero_to_pulse_offset(*, pulse_period, pulse_stride, event_time_zero,
     # This is roughly equivalent to
     #   (event_time_zero - first_pulse_time) % frame_period
     # but should avoid some issues with precision and drift
-    #epsilon = sc.scalar(1000000, unit='ns', dtype='int64')
-
-    epsilon =(0.5*pulse_period).to(unit='ns', dtype='int64')
-    pulse_index = (event_time_zero - first_pulse_time) // pulse_period.to(unit=elem_unit(event_time_zero))
-    print(f'{pulse_index.bins.constituents["data"].values=}')
+    pulse_index = (event_time_zero -
+                   first_pulse_time) // pulse_period.to(unit=elem_unit(event_time_zero))
     return pulse_period * (pulse_index % pulse_stride)
 
 
