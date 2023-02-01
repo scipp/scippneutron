@@ -21,7 +21,7 @@ def _tof_from_wavelength(*, wavelength: sc.Variable,
 
 def _tof_to_time_offset(*, tof: sc.Variable, frame_period: sc.Variable,
                         frame_offset: sc.Variable) -> sc.Variable:
-    unit = tof.unit
+    unit = elem_unit(tof)
     frame_period = frame_period.to(unit=unit)
     arrival_time_offset = frame_offset.to(unit=unit) + tof
     time_offset = arrival_time_offset % frame_period
@@ -125,6 +125,52 @@ def make_frames(da: sc.DataArray,
                 frame_offset: Optional[sc.Variable] = None,
                 lambda_min: Optional[sc.Variable] = None,
                 first_pulse_time: Optional[sc.Variable] = None) -> sc.DataArray:
+    """
+    Unwrap raw timestamps from ``NXevent_data`` into time-of-flight.
+
+    The input data must provide the following coordinates:
+
+    - ``event_time_offset``, as read from ``NXevent_data``
+    - ``event_time_zero``, as read from ``NXevent_data``
+      (only for ``pulse_stride > 1``)
+    - ``Ltotal`` or coordinates that allow for computation of thereof. By default
+      ``Ltotal`` may be defined including the full distance between source and sample.
+      If resolution choppers are used to shape the raw pulse then this should be
+      redefined to set the position of this chopper as the source, and the opening
+      time offset of this chopper as the ``frame_offset``. This can be achieved, e.g.,
+      by setting ``L1``, which will then be used to compute ``Ltotal``.
+
+
+    Parameters
+    ----------
+    da:
+        Input data without 'tof' coordinate.
+    pulse_period:
+        Pulse period, i.e., time between consecutive pulse starts. This corresponds
+        to the pulses as given by ``event_time_zero`` from ``NXevent_data``.
+    pulse_stride:
+        Stride of used pulses. Usually 1, but may be a small integer when choppers are
+        used to skip pulses.
+    frame_offset:
+        Offset of the frame, i.e., time the neutron are considered to be emitted,
+        w.r.t., the corresponding ``event_time_zero``. This may be a small offset,
+        e.g., to reference the neutron pulse shortly after the proton pulse. When a
+        resolution chopper is used, the frame offset can be defined as the opening of
+        that chopper, if L1 is redefined accordingly. The chopper will then act as a
+        "virtual" source.
+    lambda_min:
+        Minimal wavelength that can pass through the chopper cascade. This is used as
+        a reference point for determining where to "cut" data when assigning to frames.
+    first_pulse_time:
+        Time of the "first" pulse. This is required only when pulse-skipping is
+        performed, i.e., with ``pulse_stride`` unequal 1. This determines which pulse
+        is the first one that passes through the choppers.
+
+    Returns
+    -------
+    :
+        Data with 'tof' coordinate.
+    """
     da = da.copy(deep=False)
     # TODO Should check if any of these exist, raise if they do
     da.attrs['pulse_period'] = pulse_period
