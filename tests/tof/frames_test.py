@@ -6,7 +6,6 @@ import pytest
 import scipp as sc
 
 from scippneutron.tof import frames
-from scippneutron.tof.frames import time_zero_to_pulse_offset
 
 
 def make_array(*, npixel=3, nevent=1000, pulse_period=None, time_offset=None):
@@ -143,98 +142,6 @@ def test_make_frames_reproduces_true_pulses(tof_min, frame_offset):
                        rtol=sc.scalar(1e-12))
 
 
-class Test_time_zero_to_detection_frame_index:
-    tof_min = [234.0 * sc.Unit('ms'), 37.0 * sc.Unit('ms'), 337.0 * sc.Unit('ms')]
-    frame_offset = [0.0 * sc.Unit('ms'), 11.0 * sc.Unit('ms'), 9.999 * sc.Unit('ms')]
-    pulse_period = [71.0 * sc.Unit('ms')]
-    time_zero = [
-        t0 * sc.Unit('ms') for t0 in [0.0, 11.0, 70.0, 71.0, 71.1, 300.0, 345.6]
-    ]
-
-    @pytest.mark.parametrize("tof_min", tof_min)
-    @pytest.mark.parametrize("frame_offset", frame_offset)
-    @pytest.mark.parametrize("pulse_period", pulse_period)
-    @pytest.mark.parametrize("time_zero", time_zero)
-    def test_frame_stride_1_yields_index_0(self, pulse_period, frame_offset, tof_min,
-                                           time_zero):
-        assert time_zero_to_detection_frame_index(pulse_period=pulse_period,
-                                                  frame_stride=1,
-                                                  frame_offset=frame_offset,
-                                                  tof_min=tof_min,
-                                                  time_zero=time_zero) == 0
-
-    def test_frame_stride_2_with_zero_params_yields_source_frame_index(self):
-        pulse_period = 71.0 * sc.Unit('ms')
-        frame_offset = 0.0 * sc.Unit('ms')
-        tof_min = 0.0 * sc.Unit('ms')
-        params = dict(pulse_period=pulse_period,
-                      frame_stride=2,
-                      frame_offset=frame_offset,
-                      tof_min=tof_min)
-        assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=0.0 * sc.Unit('ms')) == 0
-        assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=71.0 * sc.Unit('ms')) == 1
-        assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=142.0 * sc.Unit('ms')) == 0
-        assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=213.0 * sc.Unit('ms')) == 1
-
-    def test_frame_stride_2_with_tof_min_yields_index_with_offset(self):
-        pulse_period = 100.0 * sc.Unit('ms')
-        frame_offset = 0.0 * sc.Unit('ms')
-        # Given fastest neutrons from source frame 0 arriving in third frame...
-        tof_min = 317 * sc.Unit('ms')
-        params = dict(pulse_period=pulse_period,
-                      frame_stride=2,
-                      frame_offset=frame_offset,
-                      tof_min=tof_min)
-        # ... should yield index 0 for time_zero=3*pulse_period.
-        # TODO What about rounding issues? Can we end up with whole frames offset by 1?
-        assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=0.0 * sc.Unit('ms')) == 1
-        assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=100.0 * sc.Unit('ms')) == 0
-        assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=200.0 * sc.Unit('ms')) == 1
-        assert time_zero_to_detection_frame_index(**params,
-                                                  time_zero=300.0 * sc.Unit('ms')) == 0
-
-    def test_frame_stride_2_with_frame_offset_and_tof_min_yields_index_with_offset(
-            self):
-        frame_period = 100.0 * sc.Unit('ms')
-        # Given frame_offset, fastest neutrons from source frame 0 arriving in fourth
-        # frame...
-        frame_offset = 110.0 * sc.Unit('ms')  # offset is 1 frame
-        tof_min = 317 * sc.Unit('ms')  # offset is 3 frames
-        params = dict(frame_period=frame_period,
-                      pulse_stride=2,
-                      frame_offset=frame_offset,
-                      tof_min=tof_min)
-        # ... should yield index 0 for time_zero=4*pulse_period.
-        assert time_zero_to_detection_frame_index(**params,
-                                                  event_time_zero=0.0 *
-                                                  sc.Unit('ms')) == 0
-        assert time_zero_to_detection_frame_index(**params,
-                                                  event_time_zero=100.0 *
-                                                  sc.Unit('ms')) == 1
-        assert time_zero_to_detection_frame_index(**params,
-                                                  event_time_zero=200.0 *
-                                                  sc.Unit('ms')) == 0
-        assert time_zero_to_detection_frame_index(**params,
-                                                  event_time_zero=299.0 *
-                                                  sc.Unit('ms')) == 0
-        assert time_zero_to_detection_frame_index(**params,
-                                                  event_time_zero=300.0 *
-                                                  sc.Unit('ms')) == 1
-        assert time_zero_to_detection_frame_index(**params,
-                                                  event_time_zero=301.0 *
-                                                  sc.Unit('ms')) == 1
-        assert time_zero_to_detection_frame_index(**params,
-                                                  event_time_zero=400.0 *
-                                                  sc.Unit('ms')) == 0
-
-
 def tof_pulse_skipping_array(*,
                              npixel=3,
                              nevent=1000,
@@ -244,11 +151,9 @@ def tof_pulse_skipping_array(*,
     pulse_period = 71.0 * sc.Unit('ms') if pulse_period is None else pulse_period
     tof_min = 234.0 * sc.Unit('ms') if tof_min is None else tof_min
     frame_period = (pulse_period * pulse_stride).to(unit=tof_min.unit)
-    np.random.seed(0)
     tof = sc.array(dims=['event'],
                    values=np.random.rand(nevent)) * frame_period + tof_min
     nframe = 1237
-    npulse = nframe * pulse_stride
     start = sc.datetime('now', unit='ns')
     time_zero = start + (frame_period * sc.linspace(
         'event', 0, nframe, num=nevent, dtype='int64')).to(unit='ns', dtype='int64')
@@ -287,7 +192,7 @@ def test_make_frames_with_pulse_stride_reproduces_true_pulses(
                                      frame_offset=frame_offset)
     event_time_offset = time_offset % pulse_period.to(unit=time_offset.bins.unit)
     da.bins.coords['event_time_offset'] = event_time_offset
-    da.coords['first_pulse_time'] = start  #da.bins.coords['time_zero'].min()
+    da.coords['first_pulse_time'] = start
     da.bins.coords['event_time_zero'] = da.bins.coords.pop('time_zero') + (
         time_offset - event_time_offset).to(unit='ns', dtype='int64')
     lambda_min = wavelength_from_tof(tof=tof_min,
