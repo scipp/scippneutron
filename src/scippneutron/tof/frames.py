@@ -13,12 +13,14 @@ from .._utils import as_float_type, elem_unit
 from ..conversion.graph.beamline import Ltotal
 
 
-def _tof_from_wavelength(*, wavelength, Ltotal):
+def _tof_from_wavelength(*, wavelength: sc.Variable,
+                         Ltotal: sc.Variable) -> sc.Variable:
     scale = (m_n / h).to(unit=sc.units.us / elem_unit(Ltotal) / elem_unit(wavelength))
     return as_float_type(Ltotal * scale, wavelength) * wavelength
 
 
-def _tof_to_time_offset(*, tof, frame_period, frame_offset):
+def _tof_to_time_offset(*, tof: sc.Variable, frame_period: sc.Variable,
+                        frame_offset: sc.Variable) -> sc.Variable:
     unit = tof.unit
     frame_period = frame_period.to(unit=unit)
     arrival_time_offset = frame_offset.to(unit=unit) + tof
@@ -26,7 +28,8 @@ def _tof_to_time_offset(*, tof, frame_period, frame_offset):
     return time_offset
 
 
-def _time_offset_to_tof(*, time_offset, time_offset_pivot, tof_min, frame_period):
+def _time_offset_to_tof(*, time_offset: sc.Variable, time_offset_pivot: sc.Variable,
+                        tof_min: sc.Variable, frame_period: sc.Variable) -> sc.Variable:
     frame_period = frame_period.to(unit=elem_unit(time_offset))
     time_offset_pivot = time_offset_pivot.to(unit=elem_unit(time_offset))
     tof_min = tof_min.to(unit=elem_unit(time_offset))
@@ -36,8 +39,9 @@ def _time_offset_to_tof(*, time_offset, time_offset_pivot, tof_min, frame_period
     return tof
 
 
-def time_zero_to_pulse_offset(*, pulse_period, pulse_stride, event_time_zero,
-                              first_pulse_time):
+def time_zero_to_pulse_offset(*, pulse_period: sc.Variable, pulse_stride: sc.Variable,
+                              event_time_zero: sc.Variable,
+                              first_pulse_time: sc.Variable) -> sc.Variable:
     """
     Return 0-based source frame index of detection frame.
 
@@ -58,15 +62,17 @@ def time_zero_to_pulse_offset(*, pulse_period, pulse_stride, event_time_zero,
     return pulse_period * (pulse_index % pulse_stride)
 
 
-def update_time_offset_for_pulse_skipping(event_time_offset, pulse_offset):
+def update_time_offset_for_pulse_skipping(*, event_time_offset: sc.Variable,
+                                          pulse_offset: sc.Variable) -> sc.Variable:
     return event_time_offset + pulse_offset.to(unit=elem_unit(event_time_offset))
 
 
-def pulse_to_frame(pulse_period: sc.Variable, pulse_stride: int) -> sc.Variable:
+def pulse_to_frame(*, pulse_period: sc.Variable,
+                   pulse_stride: sc.Variable) -> sc.Variable:
     return pulse_period * pulse_stride
 
 
-def to_tof(*, pulse_skipping: bool = False):
+def to_tof(*, pulse_skipping: Optional[bool] = False) -> dict:
     """
     Return a graph suitable for :py:func:`scipp.transform_coords` to convert frames
     to time-of-flight.
@@ -114,10 +120,10 @@ def to_tof(*, pulse_skipping: bool = False):
 
 def make_frames(da: sc.DataArray,
                 *,
-                pulse_period,
-                frame_offset=None,
-                lambda_min=None,
+                pulse_period: sc.Variable,
                 pulse_stride: int = 1,
+                frame_offset: Optional[sc.Variable] = None,
+                lambda_min: Optional[sc.Variable] = None,
                 first_pulse_time: Optional[sc.Variable] = None) -> sc.DataArray:
     da = da.copy(deep=False)
     # TODO Should check if any of these exist, raise if they do
