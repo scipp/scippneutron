@@ -51,12 +51,16 @@ def time_zero_to_pulse_offset(*, pulse_period, pulse_stride, event_time_zero,
     # This is roughly equivalent to
     #   (event_time_zero - first_pulse_time) % frame_period
     # but should avoid some issues with precision and drift
-    pulse_index = (event_time_zero - first_pulse_time) // pulse_period
+    #epsilon = sc.scalar(1000000, unit='ns', dtype='int64')
+
+    epsilon =(0.5*pulse_period).to(unit='ns', dtype='int64')
+    pulse_index = (event_time_zero - first_pulse_time) // pulse_period.to(unit=elem_unit(event_time_zero))
+    print(f'{pulse_index.bins.constituents["data"].values=}')
     return pulse_period * (pulse_index % pulse_stride)
 
 
 def update_time_offset_for_pulse_skipping(event_time_offset, pulse_offset):
-    return event_time_offset + pulse_offset
+    return event_time_offset + pulse_offset.to(unit=elem_unit(event_time_offset))
 
 
 def pulse_to_frame(pulse_period: sc.Variable, pulse_stride: int) -> sc.Variable:
