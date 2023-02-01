@@ -171,6 +171,9 @@ def make_frames(da: sc.DataArray,
     :
         Data with 'tof' coordinate.
     """
+    if 'tof' in da.bins.meta or 'tof' in da.meta:
+        raise ValueError("Coordinate 'tof' already defined in input data array. "
+                         "Expected input with 'event_time_offset' coordinate.")
     da = da.copy(deep=False)
     # TODO Should check if any of these exist, raise if they do
     da.attrs['pulse_period'] = pulse_period
@@ -183,7 +186,4 @@ def make_frames(da: sc.DataArray,
         da.attrs['lambda_min'] = lambda_min
     graph = Ltotal(scatter=True)
     graph.update(to_tof(pulse_skipping=pulse_stride != 1))
-    if 'tof' in da.bins.meta or 'tof' in da.meta:
-        raise ValueError("Coordinate 'tof' already defined in input data array. "
-                         "Expected input with 'event_time_offset' coordinate.")
     return da.transform_coords('tof', graph=graph)
