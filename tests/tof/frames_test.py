@@ -37,6 +37,7 @@ def test_make_frames_given_tof_bins_meta_data_raises_ValueError():
     da.coords['tof'] = sc.scalar(1.0, unit='ms')
     with pytest.raises(ValueError):
         frames.make_frames(da,
+                           scatter=True,
                            pulse_period=71.0 * sc.Unit('ms'),
                            frame_offset=30.1 * sc.Unit('ms'),
                            lambda_min=2.5 * sc.Unit('Angstrom'))
@@ -47,6 +48,7 @@ def test_make_frames_given_tof_event_meta_data_raises_ValueError():
     da.bins.coords['tof'] = da.bins.coords['event_time_offset']
     with pytest.raises(ValueError):
         frames.make_frames(da,
+                           scatter=True,
                            pulse_period=71.0 * sc.Unit('ms'),
                            frame_offset=30.1 * sc.Unit('ms'),
                            lambda_min=2.5 * sc.Unit('Angstrom'))
@@ -55,6 +57,7 @@ def test_make_frames_given_tof_event_meta_data_raises_ValueError():
 def test_make_frames_no_shift_and_infinite_energy_yields_tof_equal_time_offset():
     da = make_array(pulse_period=71.0 * sc.Unit('ms'))
     da = frames.make_frames(da,
+                            scatter=True,
                             pulse_period=71.0 * sc.Unit('ms'),
                             frame_offset=0.0 * sc.Unit('ms'),
                             lambda_min=0.0 * sc.Unit('Angstrom'))
@@ -67,6 +70,7 @@ def test_make_frames_no_shift_and_no_events_below_lambda_min_yields_tof_equal_ti
     da.bins.coords['event_time_offset'] += sc.to_unit(
         10.0 * sc.Unit('ms'), da.bins.coords['event_time_offset'].bins.unit)
     da = frames.make_frames(da,
+                            scatter=True,
                             pulse_period=81.0 * sc.Unit('ms'),
                             frame_offset=0.0 * sc.Unit('ms'),
                             lambda_min=0.2 * sc.Unit('Angstrom'))
@@ -84,7 +88,8 @@ def test_make_frames_time_offset_pivot_and_min_define_frames():
                        da.bins.coords['event_time_offset'].bins.unit)
     da.coords['time_offset_pivot'] = pivot
     da.coords['tof_min'] = 200.0 * sc.Unit('ms')
-    da = frames.make_frames(da, pulse_period=71.0 * sc.Unit('ms'))
+    da.coords['pulse_period'] = 71.0 * sc.Unit('ms')
+    da = da.transform_coords('tof', graph=frames.to_tof())
     tof = da.bins.coords['tof'].values[0]
     tof_values = [
         71.0 - 10.0 + 5.0 + 200.0,
@@ -131,6 +136,7 @@ def test_make_frames_reproduces_true_pulses(tof_min, frame_offset):
                                      Ltotal=da.coords['L1'] + da.coords['L2'])
 
     da = frames.make_frames(da,
+                            scatter=True,
                             pulse_period=pulse_period,
                             frame_offset=frame_offset,
                             lambda_min=lambda_min)
@@ -198,6 +204,7 @@ def test_make_frames_with_pulse_stride_reproduces_true_pulses(
                                      Ltotal=da.coords['L1'] + da.coords['L2'])
 
     da = frames.make_frames(da,
+                            scatter=True,
                             pulse_period=pulse_period,
                             pulse_stride=pulse_stride,
                             first_pulse_time=start,

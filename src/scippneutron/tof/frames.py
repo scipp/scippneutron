@@ -120,10 +120,11 @@ def to_tof(*, pulse_skipping: Optional[bool] = False) -> dict:
 
 def make_frames(da: sc.DataArray,
                 *,
+                scatter: Optional[bool] = None,
                 pulse_period: sc.Variable,
                 pulse_stride: int = 1,
-                frame_offset: Optional[sc.Variable] = None,
-                lambda_min: Optional[sc.Variable] = None,
+                frame_offset: sc.Variable,
+                lambda_min: sc.Variable,
                 first_pulse_time: Optional[sc.Variable] = None) -> sc.DataArray:
     """
     Unwrap raw timestamps from ``NXevent_data`` into time-of-flight.
@@ -145,6 +146,12 @@ def make_frames(da: sc.DataArray,
     ----------
     da:
         Input data without 'tof' coordinate.
+    scatter:
+        This influences how ``Ltotal`` is computed. Set to ``True`` when converting
+        time stamps for neutrons scattered off a sample. Set to ``False`` when
+        converting time stamps for unscattered neutrons, e.g., for neutron monitors
+        or imaging data. If ``None`` then ``Ltotal`` must be a coordinate of the input
+        data.
     pulse_period:
         Pulse period, i.e., time between consecutive pulse starts. This corresponds
         to the pulses as given by ``event_time_zero`` from ``NXevent_data``.
@@ -175,15 +182,19 @@ def make_frames(da: sc.DataArray,
         raise ValueError("Coordinate 'tof' already defined in input data array. "
                          "Expected input with 'event_time_offset' coordinate.")
     da = da.copy(deep=False)
-    # TODO Should check if any of these exist, raise if they do
+    coords = [
+        'pulse_period', 'pulse_stride', 'first_pulse_time', 'frame_offset', 'lambda_min'
+    ]
+    for x in coords:
+        if x in da.meta:
+            raise ValueError(f"Input data has '{x}' coord or attr, but values should "
+                             "be given only as a function parameter.")
     da.attrs['pulse_period'] = pulse_period
+    da.attrs['frame_offset'] = frame_offset
+    da.attrs['lambda_min'] = lambda_min
     if pulse_stride != 1:
         da.attrs['pulse_stride'] = sc.scalar(pulse_stride)
         da.attrs['first_pulse_time'] = first_pulse_time
-    if frame_offset is not None:
-        da.attrs['frame_offset'] = frame_offset
-    if lambda_min is not None:
-        da.attrs['lambda_min'] = lambda_min
-    graph = Ltotal(scatter=True)
+    graph = {} if scatter is None else Ltotal(scatter=scatter)
     graph.update(to_tof(pulse_skipping=pulse_stride != 1))
     return da.transform_coords('tof', graph=graph)
