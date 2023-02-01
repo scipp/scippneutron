@@ -4,6 +4,8 @@
 """
 Frame transformations for time-of-flight neutron scattering data.
 """
+from typing import Optional
+
 import scipp as sc
 from scipp.constants import h, m_n
 
@@ -115,11 +117,14 @@ def make_frames(da: sc.DataArray,
                 pulse_period,
                 frame_offset=None,
                 lambda_min=None,
-                pulse_stride: int = 1) -> sc.DataArray:
+                pulse_stride: int = 1,
+                first_pulse_time: Optional[sc.Variable] = None) -> sc.DataArray:
     da = da.copy(deep=False)
     # TODO Should check if any of these exist, raise if they do
     da.attrs['pulse_period'] = pulse_period
-    da.attrs['pulse_stride'] = sc.scalar(pulse_stride)
+    if pulse_stride != 1:
+        da.attrs['pulse_stride'] = sc.scalar(pulse_stride)
+        da.attrs['first_pulse_time'] = first_pulse_time
     if frame_offset is not None:
         da.attrs['frame_offset'] = frame_offset
     if lambda_min is not None:

@@ -192,7 +192,6 @@ def test_make_frames_with_pulse_stride_reproduces_true_pulses(
                                      frame_offset=frame_offset)
     event_time_offset = time_offset % pulse_period.to(unit=time_offset.bins.unit)
     da.bins.coords['event_time_offset'] = event_time_offset
-    da.coords['first_pulse_time'] = start
     da.bins.coords['event_time_zero'] = da.bins.coords.pop('time_zero') + (
         time_offset - event_time_offset).to(unit='ns', dtype='int64')
     lambda_min = wavelength_from_tof(tof=tof_min,
@@ -201,6 +200,7 @@ def test_make_frames_with_pulse_stride_reproduces_true_pulses(
     da = frames.make_frames(da,
                             pulse_period=pulse_period,
                             pulse_stride=pulse_stride,
+                            first_pulse_time=start,
                             frame_offset=frame_offset,
                             lambda_min=lambda_min)
 
