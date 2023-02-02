@@ -51,7 +51,7 @@ def time_zero_to_pulse_offset(*, pulse_period: sc.Variable, pulse_stride: sc.Var
     Example
     -------
     .. code-block::
-    
+
         event_time_zero = 12:05:00
         first_pulse_time = 12:00:00  # time of first (or any) pulse
                                        that passes through choppers
