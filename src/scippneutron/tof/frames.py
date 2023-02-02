@@ -19,8 +19,8 @@ def _tof_from_wavelength(*, wavelength: sc.Variable,
     return as_float_type(Ltotal * scale, wavelength) * wavelength
 
 
-def _tof_to_time_offset(*, tof: sc.Variable, frame_period: sc.Variable,
-                        frame_offset: sc.Variable) -> sc.Variable:
+def _time_offset_from_tof(*, tof: sc.Variable, frame_period: sc.Variable,
+                          frame_offset: sc.Variable) -> sc.Variable:
     unit = elem_unit(tof)
     frame_period = frame_period.to(unit=unit)
     arrival_time_offset = frame_offset.to(unit=unit) + tof
@@ -28,8 +28,9 @@ def _tof_to_time_offset(*, tof: sc.Variable, frame_period: sc.Variable,
     return time_offset
 
 
-def _time_offset_to_tof(*, time_offset: sc.Variable, time_offset_pivot: sc.Variable,
-                        tof_min: sc.Variable, frame_period: sc.Variable) -> sc.Variable:
+def _tof_from_time_offset(*, time_offset: sc.Variable, time_offset_pivot: sc.Variable,
+                          tof_min: sc.Variable,
+                          frame_period: sc.Variable) -> sc.Variable:
     frame_period = frame_period.to(unit=elem_unit(time_offset))
     time_offset_pivot = time_offset_pivot.to(unit=elem_unit(time_offset))
     tof_min = tof_min.to(unit=elem_unit(time_offset))
@@ -39,9 +40,9 @@ def _time_offset_to_tof(*, time_offset: sc.Variable, time_offset_pivot: sc.Varia
     return tof
 
 
-def time_zero_to_pulse_offset(*, pulse_period: sc.Variable, pulse_stride: sc.Variable,
-                              event_time_zero: sc.Variable,
-                              first_pulse_time: sc.Variable) -> sc.Variable:
+def pulse_offset_from_time_zero(*, pulse_period: sc.Variable, pulse_stride: sc.Variable,
+                                event_time_zero: sc.Variable,
+                                first_pulse_time: sc.Variable) -> sc.Variable:
     """
     Return 0-based source frame index of detection frame.
 
@@ -69,8 +70,8 @@ def update_time_offset_for_pulse_skipping(*, event_time_offset: sc.Variable,
     return event_time_offset + pulse_offset.to(unit=elem_unit(event_time_offset))
 
 
-def pulse_to_frame(*, pulse_period: sc.Variable,
-                   pulse_stride: sc.Variable) -> sc.Variable:
+def frame_period_from_pulse_period(*, pulse_period: sc.Variable,
+                                   pulse_stride: sc.Variable) -> sc.Variable:
     return pulse_period * pulse_stride
 
 
@@ -95,28 +96,22 @@ def to_tof(*, pulse_skipping: Optional[bool] = False) -> dict:
         return _tof_from_wavelength(Ltotal=Ltotal, wavelength=lambda_min)
 
     def _time_offset_pivot(*, tof_min, frame_period, frame_offset):
-        return _tof_to_time_offset(tof=tof_min,
-                                   frame_period=frame_period,
-                                   frame_offset=frame_offset)
-
-    def _tof(*, event_time_offset, time_offset_pivot, tof_min, frame_period):
-        return _time_offset_to_tof(time_offset=event_time_offset,
-                                   time_offset_pivot=time_offset_pivot,
-                                   tof_min=tof_min,
-                                   frame_period=frame_period)
+        return _time_offset_from_tof(tof=tof_min,
+                                     frame_period=frame_period,
+                                     frame_offset=frame_offset)
 
     graph = {}
     if pulse_skipping:
-        graph['frame_period'] = pulse_to_frame
+        graph['frame_period'] = frame_period_from_pulse_period
         graph['time_offset'] = update_time_offset_for_pulse_skipping
-        graph['pulse_offset'] = time_zero_to_pulse_offset
+        graph['pulse_offset'] = pulse_offset_from_time_zero
     else:
         graph['frame_period'] = 'pulse_period'
         graph['time_offset'] = 'event_time_offset'
 
     graph['tof_min'] = _tof_min
     graph['time_offset_pivot'] = _time_offset_pivot
-    graph['tof'] = _time_offset_to_tof
+    graph['tof'] = _tof_from_time_offset
     return graph
 
 
