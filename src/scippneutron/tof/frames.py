@@ -50,9 +50,11 @@ def time_zero_to_pulse_offset(*, pulse_period: sc.Variable, pulse_stride: sc.Var
 
     Example
     -------
-    event_time_zero = 12:05:00
-    first_pulse_time = 12:00:00  # time of first (or any) pulse that passes through
-                                   choppers
+    .. code-block::
+    
+        event_time_zero = 12:05:00
+        first_pulse_time = 12:00:00  # time of first (or any) pulse
+                                       that passes through choppers
     """
     # This is roughly equivalent to
     #   (event_time_zero - first_pulse_time) % frame_period
@@ -134,7 +136,7 @@ def make_frames(da: sc.DataArray,
     - ``event_time_offset``, as read from ``NXevent_data``
     - ``event_time_zero``, as read from ``NXevent_data``
       (only for ``pulse_stride > 1``)
-    - ``Ltotal`` or coordinates that allow for computation of thereof. By default
+    - ``Ltotal`` or coordinates that allow for computation thereof. By default,
       ``Ltotal`` may be defined including the full distance between source and sample.
       If resolution choppers are used to shape the raw pulse then this should be
       redefined to set the position of this chopper as the source, and the opening
@@ -159,7 +161,7 @@ def make_frames(da: sc.DataArray,
         Stride of used pulses. Usually 1, but may be a small integer when choppers are
         used to skip pulses.
     frame_offset:
-        Offset of the frame, i.e., time the neutron are considered to be emitted,
+        Offset of the frame, i.e., time the neutrons are considered to be emitted,
         w.r.t., the corresponding ``event_time_zero``. This may be a small offset,
         e.g., to reference the neutron pulse shortly after the proton pulse. When a
         resolution chopper is used, the frame offset can be defined as the opening of
