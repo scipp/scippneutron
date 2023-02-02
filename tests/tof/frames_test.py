@@ -4,6 +4,8 @@
 import numpy as np
 import pytest
 import scipp as sc
+from hypothesis import given
+from hypothesis import strategies as st
 
 from scippneutron.tof import frames
 
@@ -150,16 +152,14 @@ def test_make_frames_reproduces_true_pulses(tof_min, frame_offset):
 
 def tof_pulse_skipping_array(*,
                              npixel=3,
-                             nevent=1000,
-                             pulse_period=None,
+                             nevent,
+                             nframe,
+                             pulse_period,
                              pulse_stride: int = 2,
-                             tof_min=None):
-    pulse_period = 71.0 * sc.Unit('ms') if pulse_period is None else pulse_period
-    tof_min = 234.0 * sc.Unit('ms') if tof_min is None else tof_min
+                             tof_min):
     frame_period = (pulse_period * pulse_stride).to(unit=tof_min.unit)
     tof = sc.array(dims=['event'],
                    values=np.random.rand(nevent)) * frame_period + tof_min
-    nframe = 1237
     start = sc.datetime('now', unit='ns')
     time_zero = start + (frame_period * sc.linspace(
         'event', 0, nframe, num=nevent, dtype='int64')).to(unit='ns', dtype='int64')
@@ -173,23 +173,23 @@ def tof_pulse_skipping_array(*,
     return da, start
 
 
-@pytest.mark.parametrize("tof_min", [
-    234.0 * sc.Unit('ms'), 37000.0 * sc.Unit('us'), 337.0 * sc.Unit('ms'),
-    1347.0 * sc.Unit('ms')
-])
-@pytest.mark.parametrize(
-    "frame_offset", [0.0 * sc.Unit('ms'), 11.0 * sc.Unit('ms'), 9999.0 * sc.Unit('us')])
+@given(nevent=st.integers(min_value=0, max_value=1000),
+       nframe=st.integers(min_value=1, max_value=10000),
+       frame_offset=st.floats(min_value=0.0, max_value=10000.0),
+       tof_min=st.floats(min_value=0.1, max_value=100000.0))
 @pytest.mark.parametrize("pulse_stride", [1, 2, 3, 4, 5])
 def test_make_frames_with_pulse_stride_reproduces_true_pulses(
-        tof_min, frame_offset, pulse_stride):
+        nevent, nframe, tof_min, frame_offset, pulse_stride):
     from scippneutron.conversion.tof import wavelength_from_tof
+    frame_offset = frame_offset * sc.Unit('ms')
+    tof_min = tof_min * sc.Unit('us')
     pulse_period = 71.0 * sc.Unit('ms')
     frame_period = (pulse_period * pulse_stride).to(unit=tof_min.unit)
-    nevent = 4251
     # Setup data with known 'tof' coord, which will serve as a reference
     da, start = tof_pulse_skipping_array(pulse_period=pulse_period,
                                          pulse_stride=pulse_stride,
                                          nevent=nevent,
+                                         nframe=nframe,
                                          tof_min=tof_min)
     reference = da.bins.coords['tof'].copy()
     # Compute backwards to "raw" input with 'event_time_offset'. 'tof' coord is removed
@@ -214,5 +214,5 @@ def test_make_frames_with_pulse_stride_reproduces_true_pulses(
     # Should reproduce reference 'tof' within rounding errors
     assert sc.allclose(da.bins.coords['tof'],
                        reference,
-                       atol=sc.scalar(1e-12, unit=reference.bins.unit),
-                       rtol=sc.scalar(1e-12))
+                       atol=sc.scalar(1e-10, unit=reference.bins.unit),
+                       rtol=sc.scalar(1e-10))
