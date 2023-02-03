@@ -115,14 +115,14 @@ def to_tof(*, pulse_skipping: Optional[bool] = False) -> dict:
     return graph
 
 
-def make_frames(da: sc.DataArray,
-                *,
-                scatter: Optional[bool] = None,
-                pulse_period: sc.Variable,
-                pulse_stride: int = 1,
-                frame_offset: sc.Variable,
-                lambda_min: sc.Variable,
-                first_pulse_time: Optional[sc.Variable] = None) -> sc.DataArray:
+def unwrap_frames(da: sc.DataArray,
+                  *,
+                  scatter: Optional[bool] = None,
+                  pulse_period: sc.Variable,
+                  pulse_stride: int = 1,
+                  frame_offset: sc.Variable,
+                  lambda_min: sc.Variable,
+                  first_pulse_time: Optional[sc.Variable] = None) -> sc.DataArray:
     """
     Unwrap raw timestamps from ``NXevent_data`` into time-of-flight.
 

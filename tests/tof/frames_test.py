@@ -7,7 +7,7 @@ import scipp as sc
 from hypothesis import given
 from hypothesis import strategies as st
 
-from scippneutron.tof import frames
+from scippneutron.tof import frames, unwrap_frames
 
 
 def make_array(*, npixel=3, nevent=1000, pulse_period=None, time_offset=None):
@@ -34,52 +34,52 @@ def make_array(*, npixel=3, nevent=1000, pulse_period=None, time_offset=None):
     return da
 
 
-def test_make_frames_given_tof_bins_meta_data_raises_ValueError():
+def test_unwrap_frames_given_tof_bins_meta_data_raises_ValueError():
     da = make_array()
     da.coords['tof'] = sc.scalar(1.0, unit='ms')
     with pytest.raises(ValueError):
-        frames.make_frames(da,
-                           scatter=True,
-                           pulse_period=71.0 * sc.Unit('ms'),
-                           frame_offset=30.1 * sc.Unit('ms'),
-                           lambda_min=2.5 * sc.Unit('Angstrom'))
+        unwrap_frames(da,
+                      scatter=True,
+                      pulse_period=71.0 * sc.Unit('ms'),
+                      frame_offset=30.1 * sc.Unit('ms'),
+                      lambda_min=2.5 * sc.Unit('Angstrom'))
 
 
-def test_make_frames_given_tof_event_meta_data_raises_ValueError():
+def test_unwrap_frames_given_tof_event_meta_data_raises_ValueError():
     da = make_array()
     da.bins.coords['tof'] = da.bins.coords['event_time_offset']
     with pytest.raises(ValueError):
-        frames.make_frames(da,
-                           scatter=True,
-                           pulse_period=71.0 * sc.Unit('ms'),
-                           frame_offset=30.1 * sc.Unit('ms'),
-                           lambda_min=2.5 * sc.Unit('Angstrom'))
+        unwrap_frames(da,
+                      scatter=True,
+                      pulse_period=71.0 * sc.Unit('ms'),
+                      frame_offset=30.1 * sc.Unit('ms'),
+                      lambda_min=2.5 * sc.Unit('Angstrom'))
 
 
-def test_make_frames_no_shift_and_infinite_energy_yields_tof_equal_time_offset():
+def test_unwrap_frames_no_shift_and_infinite_energy_yields_tof_equal_time_offset():
     da = make_array(pulse_period=71.0 * sc.Unit('ms'))
-    da = frames.make_frames(da,
-                            scatter=True,
-                            pulse_period=71.0 * sc.Unit('ms'),
-                            frame_offset=0.0 * sc.Unit('ms'),
-                            lambda_min=0.0 * sc.Unit('Angstrom'))
+    da = unwrap_frames(da,
+                       scatter=True,
+                       pulse_period=71.0 * sc.Unit('ms'),
+                       frame_offset=0.0 * sc.Unit('ms'),
+                       lambda_min=0.0 * sc.Unit('Angstrom'))
     assert sc.identical(da.bins.coords['tof'], da.bins.attrs['event_time_offset'])
 
 
-def test_make_frames_no_shift_and_no_events_below_lambda_min_yields_tof_equal_time_offset(  # noqa #501
+def test_unwrap_frames_no_shift_and_no_events_below_lambda_min_yields_tof_equal_time_offset(  # noqa #501
 ):
     da = make_array(pulse_period=71.0 * sc.Unit('ms'))
     da.bins.coords['event_time_offset'] += sc.to_unit(
         10.0 * sc.Unit('ms'), da.bins.coords['event_time_offset'].bins.unit)
-    da = frames.make_frames(da,
-                            scatter=True,
-                            pulse_period=81.0 * sc.Unit('ms'),
-                            frame_offset=0.0 * sc.Unit('ms'),
-                            lambda_min=0.2 * sc.Unit('Angstrom'))
+    da = unwrap_frames(da,
+                       scatter=True,
+                       pulse_period=81.0 * sc.Unit('ms'),
+                       frame_offset=0.0 * sc.Unit('ms'),
+                       lambda_min=0.2 * sc.Unit('Angstrom'))
     assert sc.identical(da.bins.coords['tof'], da.bins.attrs['event_time_offset'])
 
 
-def test_make_frames_time_offset_pivot_and_min_define_frames():
+def test_unwrap_frames_time_offset_pivot_and_min_define_frames():
     # events [before, after, after, before] pivot point
     time_offset = sc.array(dims=['event'], values=[5.0, 70.0, 21.0, 6.0], unit='ms')
     da = make_array(pulse_period=71.0 * sc.Unit('ms'),
@@ -124,7 +124,7 @@ def tof_to_time_offset(tof, *, pulse_period, frame_offset):
     "tof_min", [234.0 * sc.Unit('ms'), 37000.0 * sc.Unit('us'), 337.0 * sc.Unit('ms')])
 @pytest.mark.parametrize(
     "frame_offset", [0.0 * sc.Unit('ms'), 11.0 * sc.Unit('ms'), 9999.0 * sc.Unit('us')])
-def test_make_frames_reproduces_true_pulses(tof_min, frame_offset):
+def test_unwrap_frames_reproduces_true_pulses(tof_min, frame_offset):
     from scippneutron.conversion.tof import wavelength_from_tof
     pulse_period = 71.0 * sc.Unit('ms')
     # Setup data with known 'tof' coord, which will serve as a reference
@@ -137,11 +137,11 @@ def test_make_frames_reproduces_true_pulses(tof_min, frame_offset):
     lambda_min = wavelength_from_tof(tof=tof_min,
                                      Ltotal=da.coords['L1'] + da.coords['L2'])
 
-    da = frames.make_frames(da,
-                            scatter=True,
-                            pulse_period=pulse_period,
-                            frame_offset=frame_offset,
-                            lambda_min=lambda_min)
+    da = unwrap_frames(da,
+                       scatter=True,
+                       pulse_period=pulse_period,
+                       frame_offset=frame_offset,
+                       lambda_min=lambda_min)
 
     # Should reproduce reference 'tof' within rounding errors
     assert sc.allclose(da.bins.coords['tof'],
@@ -194,7 +194,7 @@ def fake_pulse_skipping_data(*,
        frame_offset=st.floats(min_value=0.0, max_value=10000.0),
        tof_min=st.floats(min_value=0.1, max_value=100000.0))
 @pytest.mark.parametrize("pulse_stride", [1, 2, 3, 4, 5])
-def test_make_frames_with_pulse_stride_reproduces_true_pulses(
+def test_unwrap_frames_with_pulse_stride_reproduces_true_pulses(
         nevent, nframe, tof_min, frame_offset, pulse_stride):
     frame_offset = frame_offset * sc.Unit('ms')
     tof_min = tof_min * sc.Unit('us')
@@ -208,13 +208,13 @@ def test_make_frames_with_pulse_stride_reproduces_true_pulses(
         nframe=nframe,
         tof_min=tof_min)
 
-    da = frames.make_frames(da,
-                            scatter=True,
-                            pulse_period=pulse_period,
-                            pulse_stride=pulse_stride,
-                            first_pulse_time=first_pulse_time,
-                            frame_offset=frame_offset,
-                            lambda_min=lambda_min)
+    da = unwrap_frames(da,
+                       scatter=True,
+                       pulse_period=pulse_period,
+                       pulse_stride=pulse_stride,
+                       first_pulse_time=first_pulse_time,
+                       frame_offset=frame_offset,
+                       lambda_min=lambda_min)
 
     # Should reproduce reference 'tof' within rounding errors
     expected = reference.bins.coords['tof']
