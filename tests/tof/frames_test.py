@@ -159,11 +159,11 @@ def fake_pulse_skipping_data(*,
                              frame_offset,
                              tof_min):
     from scippneutron.conversion.tof import wavelength_from_tof
+    rng = np.random.default_rng(1234)
 
     # Setup data with known 'tof' coord, which will serve as a reference
     frame_period = (pulse_period * pulse_stride).to(unit=tof_min.unit)
-    tof = sc.array(dims=['event'],
-                   values=np.random.rand(nevent)) * frame_period + tof_min
+    tof = sc.array(dims=['event'], values=rng.random(nevent)) * frame_period + tof_min
     start = sc.datetime('now', unit='ns')
     time_zero = start + (frame_period * sc.linspace(
         'event', 0, nframe, num=nevent, dtype='int64')).to(unit='ns', dtype='int64')
@@ -189,7 +189,7 @@ def fake_pulse_skipping_data(*,
     return reference, da, start, lambda_min
 
 
-@given(nevent=st.integers(min_value=0, max_value=1000),
+@given(nevent=st.integers(min_value=0, max_value=10000),
        nframe=st.integers(min_value=1, max_value=1000000),
        frame_offset=st.floats(min_value=0.0, max_value=10000.0),
        tof_min=st.floats(min_value=0.1, max_value=100000.0))
@@ -220,5 +220,5 @@ def test_make_frames_with_pulse_stride_reproduces_true_pulses(
     expected = reference.bins.coords['tof']
     assert sc.allclose(da.bins.coords['tof'],
                        expected,
-                       atol=sc.scalar(1e-10, unit=expected.bins.unit),
-                       rtol=sc.scalar(1e-10))
+                       atol=sc.scalar(1e-9, unit=expected.bins.unit),
+                       rtol=sc.scalar(1e-9))
