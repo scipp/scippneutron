@@ -449,7 +449,7 @@ def test_skips_log_with_no_value_dataset(load_function: Callable):
     with pytest.warns(UserWarning):
         loaded_data = load_function(builder)
 
-    assert loaded_data is None
+    assert isinstance(loaded_data['test_log'].value, sc.DataGroup)
 
 
 def test_loads_log_with_empty_value_and_time_datasets(load_function: Callable):
