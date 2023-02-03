@@ -150,13 +150,17 @@ def test_make_frames_reproduces_true_pulses(tof_min, frame_offset):
                        rtol=sc.scalar(1e-12))
 
 
-def tof_pulse_skipping_array(*,
+def fake_pulse_skipping_data(*,
                              npixel=3,
                              nevent,
                              nframe,
                              pulse_period,
                              pulse_stride: int = 2,
+                             frame_offset,
                              tof_min):
+    from scippneutron.conversion.tof import wavelength_from_tof
+
+    # Setup data with known 'tof' coord, which will serve as a reference
     frame_period = (pulse_period * pulse_stride).to(unit=tof_min.unit)
     tof = sc.array(dims=['event'],
                    values=np.random.rand(nevent)) * frame_period + tof_min
@@ -170,28 +174,8 @@ def tof_pulse_skipping_array(*,
     da = events.group(sc.arange(dim='pixel', start=0, stop=npixel, dtype=pixel.dtype))
     da.coords['L1'] = sc.scalar(value=160.0, unit='m')
     da.coords['L2'] = sc.array(dims=['pixel'], values=np.arange(npixel), unit='m')
-    return da, start
+    reference = da.copy()
 
-
-@given(nevent=st.integers(min_value=0, max_value=1000),
-       nframe=st.integers(min_value=1, max_value=10000),
-       frame_offset=st.floats(min_value=0.0, max_value=10000.0),
-       tof_min=st.floats(min_value=0.1, max_value=100000.0))
-@pytest.mark.parametrize("pulse_stride", [1, 2, 3, 4, 5])
-def test_make_frames_with_pulse_stride_reproduces_true_pulses(
-        nevent, nframe, tof_min, frame_offset, pulse_stride):
-    from scippneutron.conversion.tof import wavelength_from_tof
-    frame_offset = frame_offset * sc.Unit('ms')
-    tof_min = tof_min * sc.Unit('us')
-    pulse_period = 71.0 * sc.Unit('ms')
-    frame_period = (pulse_period * pulse_stride).to(unit=tof_min.unit)
-    # Setup data with known 'tof' coord, which will serve as a reference
-    da, start = tof_pulse_skipping_array(pulse_period=pulse_period,
-                                         pulse_stride=pulse_stride,
-                                         nevent=nevent,
-                                         nframe=nframe,
-                                         tof_min=tof_min)
-    reference = da.bins.coords['tof'].copy()
     # Compute backwards to "raw" input with 'event_time_offset'. 'tof' coord is removed
     time_offset = tof_to_time_offset(da.bins.coords.pop('tof'),
                                      pulse_period=frame_period,
@@ -202,17 +186,39 @@ def test_make_frames_with_pulse_stride_reproduces_true_pulses(
         time_offset - event_time_offset).to(unit='ns', dtype='int64')
     lambda_min = wavelength_from_tof(tof=tof_min,
                                      Ltotal=da.coords['L1'] + da.coords['L2'])
+    return reference, da, start, lambda_min
+
+
+@given(nevent=st.integers(min_value=0, max_value=1000),
+       nframe=st.integers(min_value=1, max_value=10000),
+       frame_offset=st.floats(min_value=0.0, max_value=10000.0),
+       tof_min=st.floats(min_value=0.1, max_value=100000.0))
+@pytest.mark.parametrize("pulse_stride", [1, 2, 3, 4, 5])
+def test_make_frames_with_pulse_stride_reproduces_true_pulses(
+        nevent, nframe, tof_min, frame_offset, pulse_stride):
+    frame_offset = frame_offset * sc.Unit('ms')
+    tof_min = tof_min * sc.Unit('us')
+    pulse_period = 71.0 * sc.Unit('ms')
+    # Setup data with known 'tof' coord, which will serve as a reference
+    reference, da, first_pulse_time, lambda_min = fake_pulse_skipping_data(
+        pulse_period=pulse_period,
+        pulse_stride=pulse_stride,
+        frame_offset=frame_offset,
+        nevent=nevent,
+        nframe=nframe,
+        tof_min=tof_min)
 
     da = frames.make_frames(da,
                             scatter=True,
                             pulse_period=pulse_period,
                             pulse_stride=pulse_stride,
-                            first_pulse_time=start,
+                            first_pulse_time=first_pulse_time,
                             frame_offset=frame_offset,
                             lambda_min=lambda_min)
 
     # Should reproduce reference 'tof' within rounding errors
+    expected = reference.bins.coords['tof']
     assert sc.allclose(da.bins.coords['tof'],
-                       reference,
-                       atol=sc.scalar(1e-10, unit=reference.bins.unit),
+                       expected,
+                       atol=sc.scalar(1e-10, unit=expected.bins.unit),
                        rtol=sc.scalar(1e-10))
