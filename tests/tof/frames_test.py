@@ -190,7 +190,7 @@ def fake_pulse_skipping_data(*,
 
 
 @given(nevent=st.integers(min_value=0, max_value=1000),
-       nframe=st.integers(min_value=1, max_value=10000),
+       nframe=st.integers(min_value=1, max_value=1000000),
        frame_offset=st.floats(min_value=0.0, max_value=10000.0),
        tof_min=st.floats(min_value=0.1, max_value=100000.0))
 @pytest.mark.parametrize("pulse_stride", [1, 2, 3, 4, 5])
