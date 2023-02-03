@@ -175,7 +175,7 @@ def make_frames(da: sc.DataArray,
     :
         Data with 'tof' coordinate.
     """
-    if 'tof' in da.bins.meta or 'tof' in da.meta:
+    if 'tof' in da.meta or (da.bins is not None and 'tof' in da.bins.meta):
         raise ValueError("Coordinate 'tof' already defined in input data array. "
                          "Expected input with 'event_time_offset' coordinate.")
     da = da.copy(deep=False)
