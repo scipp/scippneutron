@@ -32,6 +32,7 @@ _GRAPH_DYNAMICS_BY_ORIGIN = {
         'dspacing': _kernels.dspacing_from_tof,
         'energy': _kernels.energy_from_tof,
         'Q': _kernels.Q_from_wavelength,
+        'Q_vec': _kernels.Q_vec_from_wavelength,
         'wavelength': _kernels.wavelength_from_tof,
     },
     'Q': {
@@ -41,6 +42,7 @@ _GRAPH_DYNAMICS_BY_ORIGIN = {
         'dspacing': _kernels.dspacing_from_wavelength,
         'energy': _kernels.energy_from_wavelength,
         'Q': _kernels.Q_from_wavelength,
+        'Q_vec': _kernels.Q_vec_from_wavelength,
     },
 }
 
@@ -134,6 +136,23 @@ def elastic_Q(start: str) -> Graph:
         A dict defining a coordinate transformation graph.
     """
     return _strip_elastic(start, keep=['Q', 'wavelength'])
+
+
+def elastic_Q_vec(start: str) -> Graph:
+    """
+    Graph for elastic scattering transformation to Q vector.
+
+    Parameters
+    ----------
+    start:
+        Input coordinate. One of 'tof' or 'wavelength'.
+
+    Returns
+    -------
+    :
+        A dict defining a coordinate transformation graph.
+    """
+    return _strip_elastic(start, keep=['Q_vec', 'wavelength'])
 
 
 def elastic_wavelength(start: str) -> Graph:
