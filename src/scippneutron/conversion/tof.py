@@ -301,7 +301,7 @@ def _wavelength_Q_conversions(x: VariableLike, two_theta: VariableLike) -> Varia
 
 def Q_from_wavelength(*, wavelength: VariableLike,
                       two_theta: VariableLike) -> VariableLike:
-    """Compute the momentum transfer from wavelength.
+    """Compute the absolute value of the momentum transfer from wavelength.
 
     The result is
 
@@ -359,6 +359,47 @@ def wavelength_from_Q(*, Q: VariableLike, two_theta: VariableLike) -> VariableLi
     return sc.to_unit(_wavelength_Q_conversions(Q, two_theta),
                       unit='angstrom',
                       copy=False)
+
+
+def Q_vec_from_wavelength(*, wavelength: VariableLike, incident_beam: VariableLike,
+                          scattered_beam: VariableLike) -> VariableLike:
+    """Compute them momentum transfer vector from wavelength.
+
+    The result is
+
+    .. math::
+
+        \\vec{Q} = \\vec{k}_i - \\vec{k}_f
+                 = \\frac{2\\pi}{\\lambda} \\left(\\hat{e}_i - \\hat{e}_f\\right),
+
+    where the unit vectors for incident momentum and final momentum
+
+    .. math::
+
+        \\hat{e}_i &= \\vec{k_i} / | \\vec{k_i} | \\\\
+        \\hat{e}_f &= \\vec{k_f} / | \\vec{k_f} |
+
+    are defined as the directions of ``incident_beam`` and ``scattered_beam``,
+    respectively.
+
+    Parameters
+    ----------
+    wavelength:
+        De Broglie wavelength :math:`\\lambda`.
+    incident_beam:
+        Beam from source to sample. Expects ``dtype=vector3``.
+    scattered_beam:
+        Beam from sample to detector. Expects ``dtype=vector3``.
+
+    Returns
+    -------
+    :
+        The momentum transfer vector :math:`\\vec{Q}`.
+        Has the inverse unit of ``wavelength``.
+    """
+    e_i = incident_beam / sc.norm(incident_beam)
+    e_f = scattered_beam / sc.norm(scattered_beam)
+    return 2 * np.pi / wavelength * (e_i - e_f)
 
 
 def dspacing_from_wavelength(*, wavelength: VariableLike,
