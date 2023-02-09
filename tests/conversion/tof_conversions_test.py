@@ -11,6 +11,7 @@ from hypothesis import strategies as st
 from hypothesis.extra import numpy as npst
 from scipp.testing import strategies as scst
 
+from scippneutron.conversion import beamline as beamline_conv
 from scippneutron.conversion import tof as tof_conv
 
 global_settings = {
@@ -320,6 +321,23 @@ def test_Q_vec_from_wavelength_equal_beams(incident_beam, wavelength):
                                            incident_beam=incident_beam,
                                            scattered_beam=scattered_beam)
     assert sc.allclose(Q_vec, sc.vector([0, 0, 0], unit=wavelength.unit**-1))
+
+
+@given(incident_beam=vector_variables(),
+       scattered_beam=vectors_variables(),
+       wavelength=space_variables())
+@settings(**global_settings)
+def test_Q_vec_from_wavelength_consistent_with_Q(incident_beam, scattered_beam,
+                                                 wavelength):
+    wavelength = wavelength.rename({wavelength.dim: 'wavelength'})
+    Q_vec = tof_conv.Q_vec_from_wavelength(wavelength=wavelength,
+                                           incident_beam=incident_beam,
+                                           scattered_beam=scattered_beam)
+    Q = tof_conv.Q_from_wavelength(wavelength=wavelength,
+                                   two_theta=beamline_conv.two_theta(
+                                       incident_beam=incident_beam,
+                                       scattered_beam=scattered_beam))
+    assert sc.allclose(sc.norm(Q_vec), Q)
 
 
 def test_Q_vec_from_wavelength():
