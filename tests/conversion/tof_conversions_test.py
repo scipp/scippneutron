@@ -315,24 +315,29 @@ def test_wavelength_from_Q_single_precision(two_theta_dtype):
 
 @given(incident_beam=vector_variables(), wavelength=space_variables())
 @settings(**global_settings)
-def test_Q_vec_from_wavelength_equal_beams(incident_beam, wavelength):
+def test_Q_elements_from_wavelength_equal_beams(incident_beam, wavelength):
     scattered_beam = incident_beam.copy()
-    Q_vec = tof_conv.Q_vec_from_wavelength(wavelength=wavelength,
-                                           incident_beam=incident_beam,
-                                           scattered_beam=scattered_beam)
-    assert sc.allclose(Q_vec, sc.vector([0, 0, 0], unit=wavelength.unit**-1))
+    (Qx, Qy, Qz) = tof_conv.Q_elements_from_wavelength(wavelength=wavelength,
+                                                       incident_beam=incident_beam,
+                                                       scattered_beam=scattered_beam)
+    assert sc.allclose(Qx, 0.0 / wavelength.unit)
+    assert sc.allclose(Qy, 0.0 / wavelength.unit)
+    assert sc.allclose(Qz, 0.0 / wavelength.unit)
 
 
 @given(incident_beam=vector_variables(),
        scattered_beam=vectors_variables(),
        wavelength=space_variables())
 @settings(**global_settings)
-def test_Q_vec_from_wavelength_consistent_with_Q(incident_beam, scattered_beam,
-                                                 wavelength):
+def test_Q_elements_from_wavelength_consistent_with_Q(incident_beam, scattered_beam,
+                                                      wavelength):
     wavelength = wavelength.rename({wavelength.dim: 'wavelength'})
-    Q_vec = tof_conv.Q_vec_from_wavelength(wavelength=wavelength,
-                                           incident_beam=incident_beam,
-                                           scattered_beam=scattered_beam)
+    (Qx, Qy, Qz) = tof_conv.Q_elements_from_wavelength(wavelength=wavelength,
+                                                       incident_beam=incident_beam,
+                                                       scattered_beam=scattered_beam)
+    Q_vec = sc.vectors(dims=Qx.dims,
+                       values=np.dstack((Qx.values, Qy.values, Qz.values)),
+                       unit=Qx.unit)
     Q = tof_conv.Q_from_wavelength(wavelength=wavelength,
                                    two_theta=beamline_conv.two_theta(
                                        incident_beam=incident_beam,
@@ -340,16 +345,19 @@ def test_Q_vec_from_wavelength_consistent_with_Q(incident_beam, scattered_beam,
     assert sc.allclose(sc.norm(Q_vec), Q)
 
 
-def test_Q_vec_from_wavelength():
+def test_Q_elements_from_wavelength():
     incident_beam = sc.vector([0.0, 0.0, 10.0], unit='m')
     scattered_beam = sc.vectors(dims=['pos'],
                                 values=[[1.0, 0.0, 0.0], [0.0, 1.0, 0.0],
                                         [0.0, 1.0, 2.0]],
                                 unit='cm')
     wavelength = sc.array(dims=['wavelength'], values=[0.3, 2.0], unit='angstrom')
-    Q_vec = tof_conv.Q_vec_from_wavelength(wavelength=wavelength,
-                                           incident_beam=incident_beam,
-                                           scattered_beam=scattered_beam)
+    (Qx, Qy, Qz) = tof_conv.Q_elements_from_wavelength(wavelength=wavelength,
+                                                       incident_beam=incident_beam,
+                                                       scattered_beam=scattered_beam)
+    Q_vec = sc.vectors(dims=Qx.dims,
+                       values=np.dstack((Qx.values, Qy.values, Qz.values)),
+                       unit=Qx.unit)
     assert sc.identical(Q_vec['pos', 0],
                         2 * np.pi / wavelength * sc.vector([-1.0, 0.0, 1.0]))
     assert sc.identical(Q_vec['pos', 1],

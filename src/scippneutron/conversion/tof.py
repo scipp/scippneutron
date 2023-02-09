@@ -8,6 +8,8 @@ and Planck constant :math:`h`.
 Their values are taken from :mod:`scipp.constants`.
 """
 
+from typing import Tuple
+
 import numpy as np
 import scipp as sc
 import scipp.constants as const
@@ -361,15 +363,19 @@ def wavelength_from_Q(*, Q: VariableLike, two_theta: VariableLike) -> VariableLi
                       copy=False)
 
 
-def Q_vec_from_wavelength(*, wavelength: VariableLike, incident_beam: VariableLike,
-                          scattered_beam: VariableLike) -> VariableLike:
+def Q_elements_from_wavelength(
+        *, wavelength: VariableLike, incident_beam: VariableLike,
+        scattered_beam: VariableLike
+) -> Tuple[VariableLike, VariableLike, VariableLike]:
     """Compute them momentum transfer vector from wavelength.
 
-    The result is
+    Computes the three components of the Q-vector  :math:`Q_x, Q_y, Q_z`
+    separately using
 
     .. math::
 
-        \\vec{Q} = \\vec{k}_i - \\vec{k}_f
+        \\vec{Q} &= (Q_x, Q_y, Q_z) \\\\
+        \\vec{Q} &= \\vec{k}_i - \\vec{k}_f
                  = \\frac{2\\pi}{\\lambda} \\left(\\hat{e}_i - \\hat{e}_f\\right),
 
     where the unit vectors for incident momentum and final momentum
@@ -393,13 +399,18 @@ def Q_vec_from_wavelength(*, wavelength: VariableLike, incident_beam: VariableLi
 
     Returns
     -------
-    :
-        The momentum transfer vector :math:`\\vec{Q}`.
-        Has the inverse unit of ``wavelength``.
+    Qx: scipp.VariableLike
+        x-component of the momentum transfer :math:`\\vec{Q}`.
+    Qy: scipp.VariableLike
+        y-component of the momentum transfer :math:`\\vec{Q}`.
+    Qz: scipp.VariableLike
+        z-component of the momentum transfer :math:`\\vec{Q}`.
     """
     e_i = incident_beam / sc.norm(incident_beam)
     e_f = scattered_beam / sc.norm(scattered_beam)
-    return 2 * np.pi / wavelength * (e_i - e_f)
+    e = e_i - e_f
+    k = 2 * np.pi / wavelength
+    return k * e.fields.x, k * e.fields.y, k * e.fields.z
 
 
 def dspacing_from_wavelength(*, wavelength: VariableLike,
