@@ -9,9 +9,13 @@ from scippneutron.conversion.graph import tof
 
 def test_elastic():
     assert set(tof.elastic('energy').keys()) == {'dspacing', 'wavelength'}
-    assert set(tof.elastic('tof').keys()) == {'dspacing', 'energy', 'Q', 'wavelength'}
+    assert set(tof.elastic('tof').keys()) == {
+        'dspacing', 'energy', 'Q', 'wavelength', ('Qx', 'Qy', 'Qz')
+    }
     assert set(tof.elastic('Q').keys()) == {'wavelength'}
-    assert set(tof.elastic('wavelength').keys()) == {'dspacing', 'energy', 'Q'}
+    assert set(tof.elastic('wavelength').keys()) == {
+        'dspacing', 'energy', 'Q', ('Qx', 'Qy', 'Qz')
+    }
 
 
 @pytest.mark.parametrize('start', ('dspacing', ))

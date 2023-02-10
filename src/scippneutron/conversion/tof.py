@@ -8,6 +8,8 @@ and Planck constant :math:`h`.
 Their values are taken from :mod:`scipp.constants`.
 """
 
+from typing import Tuple
+
 import numpy as np
 import scipp as sc
 import scipp.constants as const
@@ -301,7 +303,7 @@ def _wavelength_Q_conversions(x: VariableLike, two_theta: VariableLike) -> Varia
 
 def Q_from_wavelength(*, wavelength: VariableLike,
                       two_theta: VariableLike) -> VariableLike:
-    """Compute the momentum transfer from wavelength.
+    """Compute the absolute value of the momentum transfer from wavelength.
 
     The result is
 
@@ -359,6 +361,56 @@ def wavelength_from_Q(*, Q: VariableLike, two_theta: VariableLike) -> VariableLi
     return sc.to_unit(_wavelength_Q_conversions(Q, two_theta),
                       unit='angstrom',
                       copy=False)
+
+
+def Q_elements_from_wavelength(
+        *, wavelength: VariableLike, incident_beam: VariableLike,
+        scattered_beam: VariableLike
+) -> Tuple[VariableLike, VariableLike, VariableLike]:
+    """Compute them momentum transfer vector from wavelength.
+
+    Computes the three components of the Q-vector  :math:`Q_x, Q_y, Q_z`
+    separately using
+
+    .. math::
+
+        \\vec{Q} &= (Q_x, Q_y, Q_z) \\\\
+        \\vec{Q} &= \\vec{k}_i - \\vec{k}_f
+                 = \\frac{2\\pi}{\\lambda} \\left(\\hat{e}_i - \\hat{e}_f\\right),
+
+    where the unit vectors for incident momentum and final momentum
+
+    .. math::
+
+        \\hat{e}_i &= \\vec{k_i} / | \\vec{k_i} | \\\\
+        \\hat{e}_f &= \\vec{k_f} / | \\vec{k_f} |
+
+    are defined as the directions of ``incident_beam`` and ``scattered_beam``,
+    respectively.
+
+    Parameters
+    ----------
+    wavelength:
+        De Broglie wavelength :math:`\\lambda`.
+    incident_beam:
+        Beam from source to sample. Expects ``dtype=vector3``.
+    scattered_beam:
+        Beam from sample to detector. Expects ``dtype=vector3``.
+
+    Returns
+    -------
+    Qx: scipp.VariableLike
+        x-component of the momentum transfer :math:`\\vec{Q}`.
+    Qy: scipp.VariableLike
+        y-component of the momentum transfer :math:`\\vec{Q}`.
+    Qz: scipp.VariableLike
+        z-component of the momentum transfer :math:`\\vec{Q}`.
+    """
+    e_i = incident_beam / sc.norm(incident_beam)
+    e_f = scattered_beam / sc.norm(scattered_beam)
+    e = e_i - e_f
+    k = 2 * np.pi / wavelength
+    return k * e.fields.x, k * e.fields.y, k * e.fields.z
 
 
 def dspacing_from_wavelength(*, wavelength: VariableLike,
