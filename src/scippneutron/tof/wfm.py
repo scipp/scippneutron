@@ -43,11 +43,11 @@ def cut_and_offset_subframes(da: sc.DataArray, subframe_bounds: sc.Variable,
     return binned[dim, ::2].bins.concat(dim)
 
 
-def stitch(da: sc.DataArray, wavelength_min: sc.Variable, wavelength_max: sc.Variable,
-           subframe_source_position: sc.Variable,
-           subframe_offset: sc.Variable) -> sc.DataArray:
+def stitch_elastic(da: sc.DataArray, wavelength_min: sc.Variable,
+                   wavelength_max: sc.Variable, subframe_source_position: sc.Variable,
+                   subframe_offset: sc.Variable) -> sc.DataArray:
     """
-    Stitch WFM subframes of unstitched event data.
+    Stitch WFM subframes of unstitched event data from elastic scattering.
 
     We refer to the stitched components as "subframes", as opposed to the "frames" that
     originate from different pulses.
