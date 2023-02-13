@@ -16,29 +16,30 @@ from .frames import _tof_from_wavelength
 def subframe_time_bounds_from_wavelengths(wavelength_min: sc.Variable,
                                           wavelength_max: sc.Variable,
                                           sample_position: sc.Variable, L2: sc.Variable,
-                                          subframe_offset,
-                                          subframe_source_position) -> sc.Variable:
-    dim = subframe_offset.dim
-    dummy = uuid.uuid4().hex
+                                          subframe_offset: sc.Variable,
+                                          subframe_source_position: sc.Variable) -> sc.Variable:
     L1 = sc.norm(sample_position - subframe_source_position)
     Ltotal = L1 + L2
-    wavelength = sc.concat([wavelength_min, wavelength_max], dummy)
+    dummy = uuid.uuid4().hex
+    dims = [subframe_offset.dim, dummy]
+    wavelength = sc.concat([wavelength_min, wavelength_max], dummy).transpose(dims)
     time_bounds = subframe_offset + _tof_from_wavelength(wavelength=wavelength,
                                                          Ltotal=Ltotal)
-    return time_bounds.transpose([dim, dummy]).flatten(to='tof')
+    print(time_bounds)
+    return time_bounds.flatten(dims=dims, to='tof')
 
 
-def stitch(da: sc.DataArray, subframe_start: sc.Variable, subframe_stop: sc.Variable,
+def stitch(da: sc.DataArray, subframe_bounds: sc.Variable,
            subframe_offset: sc.Variable) -> sc.DataArray:
     dim = 'tof'
     # subframe_start and subframe_stop are pixel-dependent in general
-    edges = sc.concat([subframe_start, subframe_stop], 'frame')
-    edges['frame', ::2] = subframe_start
-    edges['frame', 1::2] = subframe_stop
-    edges = edges.rename(frame=dim)
-    print(edges)
-    binned = da.bin({dim: edges})
-    binned.bins.coords[dim][dim, ::2] -= subframe_offset.rename(frame=dim)
+    #edges = sc.concat([subframe_start, subframe_stop], 'frame')
+    #edges['frame', ::2] = subframe_start
+    #edges['frame', 1::2] = subframe_stop
+    #edges = edges.rename(frame=dim)
+    #print(edges)
+    binned = da.bin({dim: subframe_bounds})
+    binned.bins.coords[dim][dim, ::2] -= subframe_offset.rename(subframe=dim)
     del binned.coords[dim]
     return binned[dim, ::2].bins.concat(dim)
 
