@@ -47,7 +47,7 @@ def stitch(da: sc.DataArray, wavelength_min: sc.Variable, wavelength_max: sc.Var
            subframe_source_position: sc.Variable,
            subframe_offset: sc.Variable) -> sc.DataArray:
     """
-    Stitch WFM subframes of unstitched input data.
+    Stitch WFM subframes of unstitched event data.
 
     We refer to the stitched components as "subframes", as opposed to the "frames" that
     originate from different pulses.
@@ -55,7 +55,7 @@ def stitch(da: sc.DataArray, wavelength_min: sc.Variable, wavelength_max: sc.Var
     Parameters
     ----------
     da:
-        Input data with raw 'tof'.
+        Input event data with raw 'tof'.
     wavelength_min:
         Minimum wavelengths for each subframe.
     wavelength_max:
