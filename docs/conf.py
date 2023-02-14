@@ -1,5 +1,6 @@
 import doctest
 import os
+import pathlib
 import sys
 from typing import Any, Dict, Optional
 
