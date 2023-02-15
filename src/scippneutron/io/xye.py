@@ -11,7 +11,8 @@ import scipp as sc
 def save_xye(fname: Union[str, Path, io.TextIOBase],
              da: sc.DataArray,
              *,
-             coord: Optional[str] = None) -> None:
+             coord: Optional[str] = None,
+             header: str = '') -> None:
     if da.variances is None:
         raise sc.VariancesError(
             'Cannot save data to XYE file because it has no variances.')
@@ -28,7 +29,7 @@ def save_xye(fname: Union[str, Path, io.TextIOBase],
                 f'than one: {list(da.coords.keys())}')
         coord = next(iter(da.coords))
     to_save = np.c_[da.coords[coord].values, da.values, np.sqrt(da.variances)]
-    np.savetxt(fname, to_save, delimiter=' ')
+    np.savetxt(fname, to_save, delimiter=' ', header=header)
 
 
 def load_xye(fname: Union[str, Path, io.TextIOBase],

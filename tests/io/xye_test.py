@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
+import string
 from io import StringIO
 from typing import Optional
 
@@ -31,15 +32,21 @@ def one_dim_data_arrays(draw: st.DrawFn,
     return sc.DataArray(data, coords=coords)
 
 
-def save_to_buffer(da: sc.DataArray, coord: Optional[str] = None) -> StringIO:
+def headers() -> st.SearchStrategy[str]:
+    # Using only ASCII characters and excluding \r because Numpy and/or splitlines
+    # do something funny with some other characters.
+    return st.text(string.ascii_letters + string.digits + string.punctuation + ' \t\n')
+
+
+def save_to_buffer(da: sc.DataArray, coord: Optional[str] = None, **kwargs) -> StringIO:
     buffer = StringIO()
-    scn.save_xye(buffer, da, coord=coord)
+    scn.save_xye(buffer, da, coord=coord, **kwargs)
     buffer.seek(0)
     return buffer
 
 
-def roundtrip(da: sc.DataArray, coord: Optional[str] = None) -> sc.DataArray:
-    buffer = save_to_buffer(da, coord)
+def roundtrip(da: sc.DataArray, coord: Optional[str] = None, **kwargs) -> sc.DataArray:
+    buffer = save_to_buffer(da, coord, **kwargs)
     return scn.io.xye.load_xye(
         buffer,
         dim=da.dim,
@@ -48,10 +55,10 @@ def roundtrip(da: sc.DataArray, coord: Optional[str] = None) -> sc.DataArray:
         coord_unit=da.coords[coord].unit if coord is not None else None)
 
 
-@given(initial=one_dim_data_arrays(), data=st.data())
-def test_roundtrip(initial, data):
+@given(initial=one_dim_data_arrays(), header=headers(), data=st.data())
+def test_roundtrip(initial, header, data):
     coord_name = data.draw(st.sampled_from(list(initial.coords.keys())))
-    loaded = roundtrip(initial, coord=coord_name)
+    loaded = roundtrip(initial, coord=coord_name, header=header)
     assert set(loaded.coords.keys()) == {coord_name}
     # Using allclose instead of identical because the format might lose some precision.
     # Especially in the variances -> stddevs conversion.
@@ -103,6 +110,14 @@ def test_input_must_have_variances(da, data):
     coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
     with pytest.raises(sc.VariancesError):
         save_to_buffer(da, coord=coord_name)
+
+
+@given(da=one_dim_data_arrays(), header=headers())
+def test_can_set_header(da, header):
+    buffer = save_to_buffer(da, coord=next(iter(da.coords)), header=header)
+    commented_header = '\n'.join(f'# {line}'
+                                 for line in header.splitlines()) if header else ''
+    assert buffer.getvalue().startswith(commented_header)
 
 
 @given(da=scst.dataarrays(
