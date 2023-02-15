@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
+"""File writer and reader for XYE files."""
+
 import io
 from pathlib import Path
 from typing import Optional, Union
@@ -9,7 +11,9 @@ import scipp as sc
 
 
 class GenerateHeaderType:
-    pass
+
+    def __repr__(self) -> str:
+        return 'GenerateHeader'
 
 
 GenerateHeader = GenerateHeaderType()
@@ -20,6 +24,42 @@ def save_xye(fname: Union[str, Path, io.TextIOBase],
              *,
              coord: Optional[str] = None,
              header: Union[str, GenerateHeaderType] = GenerateHeader) -> None:
+    """Write a data array to an XYE file.
+
+    The input must be 1-dimensional, have variances, and at least one coordinate.
+    It is possible to select which coordinate gets written with the ``coord`` argument.
+
+    The data are written as an ASCII table with columns X, Y, E, where
+
+    - X: coordinate of the data array,
+    - Y: data values of the data array,
+    - E: standard deviations corresponding to Y.
+
+    This format is lossy, coordinates other than X, attributes,
+    and masks are not written and the coordinate name, dimension name, and
+    units of the input are lost.
+    To improve the situation slightly, ``save_xye`` writes a basic header by default.
+    All lines in the header are prefixed with ``#``.
+
+    Parameters
+    ----------
+    fname:
+        Name or file handle of the output file.
+    da:
+        1-dimensional data to write.
+    coord:
+        Coordinate name of ``da`` to write.
+        Can be omitted if ``da`` has only one coordinate.
+    header:
+        String to write at the beginning of the file.
+        A simple table header gets generated automatically by default.
+        Set ``header=''`` to prevent this.
+
+    See Also
+    --------
+    scippneutron.io.xye.load_xye:
+        Function to load XYE files.
+    """
     if da.variances is None:
         raise sc.VariancesError(
             'Cannot save data to XYE file because it has no variances.')
@@ -50,6 +90,37 @@ def load_xye(fname: Union[str, Path, io.TextIOBase],
              coord: Optional[str] = None,
              unit: Optional[sc.Unit] = None,
              coord_unit: Optional[sc.Unit] = None) -> sc.DataArray:
+    """Read a data array from an XYE file.
+
+    See :func:`scippneutron.io.xye.save_xye` for a description of the file format.
+
+    Since XYE files are lossy, some metadata must be provided manually when calling
+    this function.
+
+    Parameters
+    ----------
+    fname:
+        Name or file handle of the input file.
+    dim:
+        Dimension of the returned data.
+    coord:
+        Coordinate name of the returned data.
+        Defaults to the value of ``dim``.
+    unit:
+        Unit of the returned data array.
+    coord_unit:
+        Unit of the coordinate of the returned data array.
+
+    Returns
+    -------
+    da:
+        Data array read from the file.
+
+    See Also
+    --------
+    scippneutron.io.xye.save_xye:
+        Function to write XYE files.
+    """
     coord = dim if coord is None else coord
     loaded = np.loadtxt(fname, delimiter=' ', unpack=True)
     if loaded.ndim == 1:
