@@ -1,0 +1,118 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
+
+from io import StringIO
+from typing import Optional
+
+import numpy as np
+import pytest
+import scipp as sc
+from hypothesis import given
+from hypothesis import strategies as st
+from scipp.testing import strategies as scst
+
+import scippneutron as scn
+
+
+@st.composite
+def one_dim_data_arrays(draw: st.DrawFn,
+                        min_n_coords: int = 1,
+                        max_n_coords: int = 5) -> sc.DataArray:
+    data = draw(scst.variables(ndim=1, dtype='float64', with_variances=True))
+    # See https://github.com/scipp/scipp/issues/3052
+    data.variances = abs(data.variances)
+    coords = draw(
+        st.dictionaries(keys=st.text(),
+                        values=scst.variables(sizes=data.sizes,
+                                              dtype='float64',
+                                              with_variances=False),
+                        min_size=min_n_coords,
+                        max_size=max_n_coords))
+    return sc.DataArray(data, coords=coords)
+
+
+def save_to_buffer(da: sc.DataArray, coord: Optional[str] = None) -> StringIO:
+    buffer = StringIO()
+    scn.save_xye(buffer, da, coord=coord)
+    buffer.seek(0)
+    return buffer
+
+
+def roundtrip(da: sc.DataArray, coord: Optional[str] = None) -> sc.DataArray:
+    buffer = save_to_buffer(da, coord)
+    return scn.io.xye.load_xye(
+        buffer,
+        dim=da.dim,
+        coord=coord,
+        unit=da.unit,
+        coord_unit=da.coords[coord].unit if coord is not None else None)
+
+
+@given(initial=one_dim_data_arrays(), data=st.data())
+def test_roundtrip(initial, data):
+    coord_name = data.draw(st.sampled_from(list(initial.coords.keys())))
+    loaded = roundtrip(initial, coord=coord_name)
+    assert set(loaded.coords.keys()) == {coord_name}
+    # Using allclose instead of identical because the format might lose some precision.
+    # Especially in the variances -> stddevs conversion.
+    assert sc.allclose(loaded.coords[coord_name],
+                       initial.coords[coord_name],
+                       equal_nan=True)
+    assert sc.allclose(loaded.data, initial.data, equal_nan=True)
+
+
+@given(da=one_dim_data_arrays(), data=st.data())
+def test_saved_file_contains_data_table(da, data):
+    coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
+    file_contents = save_to_buffer(da, coord=coord_name).getvalue()
+    for i, line in enumerate(file_contents.splitlines()):
+        x, y, e = map(float, line.split(' '))
+        np.testing.assert_allclose(x, da.coords[coord_name][i].value)
+        np.testing.assert_allclose(y, da[i].value)
+        np.testing.assert_allclose(e, np.sqrt(da[i].variance))
+
+
+@given(initial=one_dim_data_arrays(max_n_coords=1))
+def test_save_can_deduce_coord_of(initial):
+    coord_name = next(iter(initial.coords.keys()))
+    loaded = roundtrip(initial)
+    loaded = loaded.rename_dims({loaded.dim: initial.dim})
+    # roundtrip cannot deduce coord name and unit in this case.
+    loaded_coord = next(iter(loaded.coords.values()))
+    loaded_coord.unit = initial.coords[coord_name].unit
+    assert sc.allclose(loaded_coord, initial.coords[coord_name], equal_nan=True)
+
+
+@given(da=one_dim_data_arrays(min_n_coords=2))
+def test_save_cannot_deduce_coord_if_there_are_multiple(da):
+    with pytest.raises(ValueError):
+        save_to_buffer(da)
+
+
+@given(da=one_dim_data_arrays(max_n_coords=1))
+def test_input_must_have_at_least_one_coord(da):
+    for c in list(da.coords.keys()):
+        del da.coords[c]
+    with pytest.raises(ValueError):
+        save_to_buffer(da)
+
+
+@given(da=one_dim_data_arrays(), data=st.data())
+def test_input_must_have_variances(da, data):
+    da.variances = None
+    coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
+    with pytest.raises(sc.VariancesError):
+        save_to_buffer(da, coord=coord_name)
+
+
+@given(da=scst.dataarrays(
+    data_args={
+        'ndim': st.integers(min_value=2, max_value=4),
+        'dtype': 'float64',
+        'with_variances': True
+    }),
+       data=st.data())
+def test_input_must_be_one_dimensional(da, data):
+    coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
+    with pytest.raises(sc.DimensionError):
+        save_to_buffer(da, coord=coord_name)
