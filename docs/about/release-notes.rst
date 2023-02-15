@@ -41,6 +41,7 @@ Features
 ~~~~~~~~
 
 * Coordinate transformation kernel for :math:`\vec{Q}` `412 <https://github.com/scipp/scipp/pull/412>`_.
+* Added :func:`scippneutron.io.xye.save_xye` and :func:`scippneutron.io.xye.load_xye` `417 <https://github.com/scipp/scipp/pull/417>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
