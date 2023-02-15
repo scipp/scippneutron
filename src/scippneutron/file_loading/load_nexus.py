@@ -128,13 +128,16 @@ def _origin(unit) -> sc.Variable:
 
 def _depends_on_to_position(obj) -> Union[None, sc.Variable]:
     if (transform := obj.get('depends_on')) is not None:
-        if isinstance(transform, sc.DataArray) or transform.dtype == sc.DType.DataArray:
-            return None  # cannot compute position if time-dependent
+        if isinstance(transform,
+                      (str, sc.DataArray)) or transform.dtype == sc.DType.DataArray:
+            return None  # cannot compute position if bad transform or time-dependent
         else:
             return transform * _origin(transform.unit)
 
 
 def _monitor_to_canonical(monitor):
+    if isinstance(monitor, sc.DataGroup):
+        return monitor
     if monitor.bins is not None:
         monitor.bins.coords['tof'] = monitor.bins.coords.pop('event_time_offset')
         monitor.bins.coords['detector_id'] = monitor.bins.coords.pop('event_id')
@@ -216,6 +219,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     for group in detectors.values():
         try:
             det = group[()]
+            if isinstance(det, sc.DataGroup):
+                raise NexusStructureError(f"Failed to load NXdetector {group.name}")
             det = _zip_pixel_offset(det)
             det = det.flatten(to='detector_id')
             det.bins.coords['tof'] = det.bins.coords.pop('event_time_offset')
@@ -257,6 +262,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         for group in classes.get('NXevent_data', {}).values():
             try:
                 events = group[()]
+                if isinstance(events, sc.DataGroup):
+                    raise NexusStructureError(f"Failed to load NXdetector {group.name}")
                 events.coords['pulse_time'] = events.coords.pop('event_time_zero')
                 events.bins.coords['tof'] = events.bins.coords.pop('event_time_offset')
                 events.bins.coords['detector_id'] = events.bins.coords.pop('event_id')

@@ -326,6 +326,8 @@ class JSONGroup(JSONNode):
             return False
 
     def keys(self) -> List[str]:
+        if contains_stream(self):
+            return []
         children = self._node[_nexus_children]
         return [child[_nexus_name] for child in children if not contains_stream(child)]
 

@@ -34,6 +34,45 @@ Release Notes
    Neil Vaytet :sup:`a`\ ,
    and Jan-Lukas Wynen :sup:`a`
 
+v0.xy.0 (Unreleased)
+--------------------
+
+Features
+~~~~~~~~
+
+* Coordinate transformation kernel for :math:`\vec{Q}` `412 <https://github.com/scipp/scipp/pull/412>`_.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+Bugfixes
+~~~~~~~~
+
+Documentation
+~~~~~~~~~~~~~
+
+Deprecations
+~~~~~~~~~~~~
+
+Stability, Maintainability, and Testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Contributors
+~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+and Jan-Lukas Wynen :sup:`a`
+
+v23.01.0 (January 2023)
+-----------------------
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+* Requires Scipp v23.1.1 and ScippNexus v23.1.1
+* :func:`scippneutron.load_nexus` may now return ``scipp.DataGroup`` objects if parts of the file cannot be read `401 <https://github.com/scipp/scipp/pull/401>`_.
+
 v22.12.4 (December 2022)
 ------------------------
 

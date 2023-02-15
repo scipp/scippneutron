@@ -8,8 +8,10 @@ import scipp as sc
 import scipp.constants as const
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
+from hypothesis.extra import numpy as npst
 from scipp.testing import strategies as scst
 
+from scippneutron.conversion import beamline as beamline_conv
 from scippneutron.conversion import tof as tof_conv
 
 global_settings = {
@@ -78,6 +80,26 @@ def angle_variables():
 def energy_variables():
     return simple_variables(dims=st.sampled_from(('energy', 'E', 'energy_transfer')),
                             unit=st.sampled_from(('meV', 'J')))
+
+
+def vectors_variables():
+    return st.fixed_dictionaries({
+        'size':
+        st.integers(min_value=1, max_value=4),
+        'dim':
+        st.sampled_from(('position', 'detector', 'pixel')),
+        'unit':
+        st.sampled_from(('m', 'cm'))
+    }).flatmap(
+        lambda args: npst.arrays(float, (args['size'], 3), elements=element_args()).map(
+            lambda values: sc.vectors(
+                dims=[args['dim']], values=values, unit=args['unit'])))
+
+
+def vector_variables():
+    return st.sampled_from(
+        ('m', 'cm')).flatmap(lambda unit: npst.arrays(float, 3, elements=element_args())
+                             .map(lambda values: sc.vector(values, unit=unit)))
 
 
 @given(tof=time_variables(), Ltotal=space_variables())
@@ -289,6 +311,56 @@ def test_wavelength_from_Q_single_precision(two_theta_dtype):
     Q = sc.scalar(4.151, unit='1/nm', dtype='float32')
     two_theta = sc.scalar(5.71, unit='deg', dtype=two_theta_dtype)
     assert tof_conv.wavelength_from_Q(Q=Q, two_theta=two_theta).dtype == 'float32'
+
+
+@given(incident_beam=vector_variables(), wavelength=space_variables())
+@settings(**global_settings)
+def test_Q_elements_from_wavelength_equal_beams(incident_beam, wavelength):
+    scattered_beam = incident_beam.copy()
+    (Qx, Qy, Qz) = tof_conv.Q_elements_from_wavelength(wavelength=wavelength,
+                                                       incident_beam=incident_beam,
+                                                       scattered_beam=scattered_beam)
+    assert sc.allclose(Qx, 0.0 / wavelength.unit)
+    assert sc.allclose(Qy, 0.0 / wavelength.unit)
+    assert sc.allclose(Qz, 0.0 / wavelength.unit)
+
+
+@given(incident_beam=vector_variables(),
+       scattered_beam=vectors_variables(),
+       wavelength=space_variables())
+@settings(**global_settings)
+def test_Q_elements_from_wavelength_consistent_with_Q(incident_beam, scattered_beam,
+                                                      wavelength):
+    wavelength = wavelength.rename({wavelength.dim: 'wavelength'})
+    (Qx, Qy, Qz) = tof_conv.Q_elements_from_wavelength(wavelength=wavelength,
+                                                       incident_beam=incident_beam,
+                                                       scattered_beam=scattered_beam)
+    Q_vec = sc.geometry.position(Qx, Qy, Qz)
+    Q = tof_conv.Q_from_wavelength(wavelength=wavelength,
+                                   two_theta=beamline_conv.two_theta(
+                                       incident_beam=incident_beam,
+                                       scattered_beam=scattered_beam))
+    assert sc.allclose(sc.norm(Q_vec), Q)
+
+
+def test_Q_elements_from_wavelength():
+    incident_beam = sc.vector([0.0, 0.0, 10.0], unit='m')
+    scattered_beam = sc.vectors(dims=['pos'],
+                                values=[[1.0, 0.0, 0.0], [0.0, 1.0, 0.0],
+                                        [0.0, 1.0, 2.0]],
+                                unit='cm')
+    wavelength = sc.array(dims=['wavelength'], values=[0.3, 2.0], unit='angstrom')
+    (Qx, Qy, Qz) = tof_conv.Q_elements_from_wavelength(wavelength=wavelength,
+                                                       incident_beam=incident_beam,
+                                                       scattered_beam=scattered_beam)
+    Q_vec = sc.geometry.position(Qx, Qy, Qz)
+    assert sc.identical(Q_vec['pos', 0],
+                        2 * np.pi / wavelength * sc.vector([-1.0, 0.0, 1.0]))
+    assert sc.identical(Q_vec['pos', 1],
+                        2 * np.pi / wavelength * sc.vector([0.0, -1.0, 1.0]))
+    assert sc.allclose(
+        Q_vec['pos', 2], 2 * np.pi / wavelength *
+        sc.vector([0.0, -0.4472135954999579, 0.1055728090000841]))
 
 
 @given(wavelength=space_variables(), two_theta=angle_variables())
