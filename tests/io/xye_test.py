@@ -116,3 +116,33 @@ def test_input_must_be_one_dimensional(da, data):
     coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
     with pytest.raises(sc.DimensionError):
         save_to_buffer(da, coord=coord_name)
+
+
+def test_loads_correct_values():
+    file_contents = """1 2 3
+1.003 32.1 5
+0.1111 0 2.1e-3
+"""
+    buffer = StringIO(file_contents)
+    loaded = scn.io.load_xye(buffer, dim='my-dim')
+    expected = sc.DataArray(sc.array(dims=['my-dim'],
+                                     values=[2, 32.1, 0],
+                                     variances=np.power([3, 5, 2.1e-3], 2),
+                                     unit=None),
+                            coords={
+                                'my-dim':
+                                sc.array(dims=['my-dim'],
+                                         values=[1, 1.003, 0.1111],
+                                         unit=None)
+                            })
+    assert sc.identical(loaded, expected)
+
+
+def test_load_uses_dummy_dim():
+    file_contents = """1 2 3
+1.003 32.1 5
+0.1111 0 2.1e-3
+"""
+    buffer = StringIO(file_contents)
+    loaded = scn.io.load_xye(buffer)
+    assert loaded.dims == ('dim_0', )

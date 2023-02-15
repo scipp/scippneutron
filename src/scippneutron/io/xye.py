@@ -33,7 +33,7 @@ def save_xye(fname: Union[str, Path, io.TextIOBase],
 
 def load_xye(fname: Union[str, Path, io.TextIOBase],
              *,
-             dim: str,
+             dim: str = 'dim_0',
              coord: Optional[str] = None,
              unit: Optional[sc.Unit] = None,
              coord_unit: Optional[sc.Unit] = None) -> sc.DataArray:
