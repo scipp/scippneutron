@@ -120,6 +120,17 @@ def test_can_set_header(da, header):
     assert buffer.getvalue().startswith(commented_header)
 
 
+@given(da=one_dim_data_arrays())
+def test_generated_header_includes_coord_name_and_units(da):
+    coord_name = next(iter(da.coords))
+    buffer = save_to_buffer(da, coord=coord_name)
+    assert coord_name in buffer.getvalue()
+    if da.coords[coord_name].unit is not None:
+        assert str(da.coords[coord_name].unit) in buffer.getvalue()
+    if da.unit is not None:
+        assert str(da.unit) in buffer.getvalue()
+
+
 @given(da=scst.dataarrays(
     data_args={
         'ndim': st.integers(min_value=2, max_value=4),
@@ -134,10 +145,10 @@ def test_input_must_be_one_dimensional(da, data):
 
 
 def test_loads_correct_values():
-    file_contents = """1 2 3
+    file_contents = '''1 2 3
 1.003 32.1 5
 0.1111 0 2.1e-3
-"""
+'''
     buffer = StringIO(file_contents)
     loaded = scn.io.load_xye(buffer, dim='my-dim')
     expected = sc.DataArray(sc.array(dims=['my-dim'],
@@ -154,10 +165,10 @@ def test_loads_correct_values():
 
 
 def test_load_uses_dummy_dim():
-    file_contents = """1 2 3
+    file_contents = '''1 2 3
 1.003 32.1 5
 0.1111 0 2.1e-3
-"""
+'''
     buffer = StringIO(file_contents)
     loaded = scn.io.load_xye(buffer)
     assert loaded.dims == ('dim_0', )

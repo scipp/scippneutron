@@ -8,11 +8,18 @@ import numpy as np
 import scipp as sc
 
 
+class GenerateHeaderType:
+    pass
+
+
+GenerateHeader = GenerateHeaderType()
+
+
 def save_xye(fname: Union[str, Path, io.TextIOBase],
              da: sc.DataArray,
              *,
              coord: Optional[str] = None,
-             header: str = '') -> None:
+             header: Union[str, GenerateHeaderType] = GenerateHeader) -> None:
     if da.variances is None:
         raise sc.VariancesError(
             'Cannot save data to XYE file because it has no variances.')
@@ -29,6 +36,8 @@ def save_xye(fname: Union[str, Path, io.TextIOBase],
                 f'than one: {list(da.coords.keys())}')
         coord = next(iter(da.coords))
     to_save = np.c_[da.coords[coord].values, da.values, np.sqrt(da.variances)]
+    if header is GenerateHeader:
+        header = _generate_xye_header(da, coord)
     np.savetxt(fname, to_save, delimiter=' ', header=header)
 
 
@@ -45,3 +54,15 @@ def load_xye(fname: Union[str, Path, io.TextIOBase],
     return sc.DataArray(
         sc.array(dims=[dim], values=loaded[1], variances=loaded[2]**2, unit=unit),
         coords={coord: sc.array(dims=[dim], values=loaded[0], unit=coord_unit)})
+
+
+def _generate_xye_header(da: sc.DataArray, coord: str) -> str:
+
+    def format_unit(unit):
+        return f'[{unit}]' if unit is not None else ''
+
+    c = f'{coord} {format_unit(da.coords[coord].unit)}'
+    y = f'Y {format_unit(da.unit)}'
+    e = f'E {format_unit(da.unit)}'
+    # Widths are for the default format of `0.0`
+    return f'{c:22} {y:24} {e:24}'
