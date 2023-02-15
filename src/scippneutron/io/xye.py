@@ -35,6 +35,9 @@ def save_xye(fname: Union[str, Path, io.TextIOBase],
                 'Cannot deduce which coordinate to save because the data has more '
                 f'than one: {list(da.coords.keys())}')
         coord = next(iter(da.coords))
+    if da.coords.is_edges(coord):
+        raise sc.CoordError('Cannot save data with bin-edges to XYE file.'
+                            'Compute bin-centers before calling save_xye.')
     to_save = np.c_[da.coords[coord].values, da.values, np.sqrt(da.variances)]
     if header is GenerateHeader:
         header = _generate_xye_header(da, coord)

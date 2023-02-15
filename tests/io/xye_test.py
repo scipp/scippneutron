@@ -112,6 +112,17 @@ def test_input_must_have_variances(da, data):
         save_to_buffer(da, coord=coord_name)
 
 
+@given(da=one_dim_data_arrays(), data=st.data())
+def test_cannot_save_data_with_bin_edges(da, data):
+    coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
+    da.coords[coord_name] = sc.concat(
+        [da.coords[coord_name],
+         sc.scalar(0.0, unit=da.coords[coord_name].unit)],
+        dim=da.dim)
+    with pytest.raises(sc.CoordError):
+        save_to_buffer(da, coord=coord_name)
+
+
 @given(da=one_dim_data_arrays(), header=headers())
 def test_can_set_header(da, header):
     buffer = save_to_buffer(da, coord=next(iter(da.coords)), header=header)
