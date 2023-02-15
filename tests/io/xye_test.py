@@ -72,7 +72,8 @@ def test_roundtrip(initial, header, data):
 def test_saved_file_contains_data_table(da, data):
     coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
     file_contents = save_to_buffer(da, coord=coord_name).getvalue()
-    for i, line in enumerate(file_contents.splitlines()):
+    for i, line in enumerate(
+            filter(lambda l: l and not l.startswith('#'), file_contents.split('\n'))):
         x, y, e = map(float, line.split(' '))
         np.testing.assert_allclose(x, da.coords[coord_name][i].value)
         np.testing.assert_allclose(y, da[i].value)
