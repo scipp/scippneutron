@@ -14,6 +14,6 @@ from .beamline_components import position, source_position, sample_position, inc
 from .core import convert
 from .mantid import from_mantid, to_mantid, load, fit
 from .instrument_view import instrument_view
-from .file_loading.load_nexus import load_nexus, load_nexus_json
+from .io.nexus.load_nexus import load_nexus, load_nexus_json
 from .data_streaming.data_stream import data_stream
 from . import data
