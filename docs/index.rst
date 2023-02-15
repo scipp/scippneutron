@@ -76,6 +76,5 @@ Documentation
    :maxdepth: 3
 
    about/about
-   about/whats-new
    about/contributing
    about/release-notes
