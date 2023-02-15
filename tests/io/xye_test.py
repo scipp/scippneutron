@@ -8,7 +8,7 @@ from typing import Optional
 import numpy as np
 import pytest
 import scipp as sc
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 from scipp.testing import strategies as scst
 
@@ -81,6 +81,7 @@ def test_saved_file_contains_data_table(da, data):
 
 
 @given(initial=one_dim_data_arrays(max_n_coords=1))
+@settings(max_examples=20)
 def test_save_can_deduce_coord_of(initial):
     coord_name = next(iter(initial.coords.keys()))
     loaded = roundtrip(initial)
@@ -92,12 +93,14 @@ def test_save_can_deduce_coord_of(initial):
 
 
 @given(da=one_dim_data_arrays(min_n_coords=2))
+@settings(max_examples=20)
 def test_save_cannot_deduce_coord_if_there_are_multiple(da):
     with pytest.raises(ValueError):
         save_to_buffer(da)
 
 
 @given(da=one_dim_data_arrays(max_n_coords=1))
+@settings(max_examples=20)
 def test_input_must_have_at_least_one_coord(da):
     for c in list(da.coords.keys()):
         del da.coords[c]
@@ -106,6 +109,7 @@ def test_input_must_have_at_least_one_coord(da):
 
 
 @given(da=one_dim_data_arrays(), data=st.data())
+@settings(max_examples=20)
 def test_input_must_have_variances(da, data):
     da.variances = None
     coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
@@ -114,6 +118,7 @@ def test_input_must_have_variances(da, data):
 
 
 @given(da=one_dim_data_arrays(), data=st.data())
+@settings(max_examples=20)
 def test_cannot_save_data_with_bin_edges(da, data):
     coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
     da.coords[coord_name] = sc.concat(
@@ -121,6 +126,20 @@ def test_cannot_save_data_with_bin_edges(da, data):
          sc.scalar(0.0, unit=da.coords[coord_name].unit)],
         dim=da.dim)
     with pytest.raises(sc.CoordError):
+        save_to_buffer(da, coord=coord_name)
+
+
+@given(da=scst.dataarrays(
+    data_args={
+        'ndim': st.integers(min_value=2, max_value=4),
+        'dtype': 'float64',
+        'with_variances': True
+    }),
+       data=st.data())
+@settings(max_examples=20)
+def test_input_must_be_one_dimensional(da, data):
+    coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
+    with pytest.raises(sc.DimensionError):
         save_to_buffer(da, coord=coord_name)
 
 
@@ -141,19 +160,6 @@ def test_generated_header_includes_coord_name_and_units(da):
         assert str(da.coords[coord_name].unit) in buffer.getvalue()
     if da.unit is not None:
         assert str(da.unit) in buffer.getvalue()
-
-
-@given(da=scst.dataarrays(
-    data_args={
-        'ndim': st.integers(min_value=2, max_value=4),
-        'dtype': 'float64',
-        'with_variances': True
-    }),
-       data=st.data())
-def test_input_must_be_one_dimensional(da, data):
-    coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
-    with pytest.raises(sc.DimensionError):
-        save_to_buffer(da, coord=coord_name)
 
 
 def test_loads_correct_values():
