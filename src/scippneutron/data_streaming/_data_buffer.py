@@ -16,7 +16,7 @@ from streaming_data_types.sample_environment_senv import Response as FastSampleE
 from streaming_data_types.sample_environment_senv import deserialise_senv
 from streaming_data_types.timestamps_tdct import Timestamps, deserialise_tdct
 
-from ..file_loading._json_nexus import StreamInfo
+from ..io.nexus._json_nexus import StreamInfo
 from ._serialisation import convert_to_pickleable_dict
 from ._stop_time import StopTimeUpdate
 from ._warnings import BufferSizeWarning, UnknownFlatbufferIdWarning

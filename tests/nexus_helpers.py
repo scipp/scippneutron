@@ -11,7 +11,7 @@ import h5py
 import numpy as np
 import scipp as sc
 
-from scippneutron.file_loading._json_nexus import JSONGroup, make_json_attr, \
+from scippneutron.io.nexus._json_nexus import JSONGroup, make_json_attr, \
     make_json_dataset
 
 h5root = Union[h5py.File, h5py.Group]

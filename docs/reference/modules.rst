@@ -9,4 +9,6 @@ Modules
    :recursive:
 
    conversion
+   io
+   logging
    tof

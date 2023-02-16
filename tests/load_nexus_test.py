@@ -10,7 +10,7 @@ import scipp as sc
 from dateutil.parser import parse as parse_date
 
 import scippneutron
-from scippneutron.file_loading.load_nexus import _load_nexus_json
+from scippneutron.io.nexus.load_nexus import _load_nexus_json
 
 from .nexus_helpers import Chopper, Detector, EventData, Link, Log, Monitor, \
     NexusBuilder, Sample, Source, Transformation, TransformationType, \

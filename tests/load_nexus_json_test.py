@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import scipp as sc
 
-from scippneutron.file_loading.load_nexus import _load_nexus_json
+from scippneutron.io.nexus.load_nexus import _load_nexus_json
 
 from .nexus_helpers import NexusBuilder, Source, Stream
 
