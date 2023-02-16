@@ -40,7 +40,7 @@ def headers() -> st.SearchStrategy[str]:
 
 def save_to_buffer(da: sc.DataArray, coord: Optional[str] = None, **kwargs) -> StringIO:
     buffer = StringIO()
-    scn.save_xye(buffer, da, coord=coord, **kwargs)
+    scn.io.save_xye(buffer, da, coord=coord, **kwargs)
     buffer.seek(0)
     return buffer
 
@@ -168,25 +168,15 @@ def test_loads_correct_values():
 0.1111 0 2.1e-3
 '''
     buffer = StringIO(file_contents)
-    loaded = scn.io.load_xye(buffer, dim='my-dim')
+    loaded = scn.io.load_xye(buffer, dim='my-dim', unit='one', coord_unit='us')
     expected = sc.DataArray(sc.array(dims=['my-dim'],
                                      values=[2, 32.1, 0],
                                      variances=np.power([3, 5, 2.1e-3], 2),
-                                     unit=None),
+                                     unit='one'),
                             coords={
                                 'my-dim':
                                 sc.array(dims=['my-dim'],
                                          values=[1, 1.003, 0.1111],
-                                         unit=None)
+                                         unit='us')
                             })
     assert sc.identical(loaded, expected)
-
-
-def test_load_uses_dummy_dim():
-    file_contents = '''1 2 3
-1.003 32.1 5
-0.1111 0 2.1e-3
-'''
-    buffer = StringIO(file_contents)
-    loaded = scn.io.load_xye(buffer)
-    assert loaded.dims == ('dim_0', )

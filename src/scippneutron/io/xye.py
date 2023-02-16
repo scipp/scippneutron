@@ -85,12 +85,14 @@ def save_xye(fname: Union[str, Path, io.TextIOBase],
     np.savetxt(fname, to_save, delimiter=' ', header=header)
 
 
-def load_xye(fname: Union[str, Path, io.TextIOBase],
-             *,
-             dim: str = 'dim_0',
-             coord: Optional[str] = None,
-             unit: Optional[sc.Unit] = None,
-             coord_unit: Optional[sc.Unit] = None) -> sc.DataArray:
+def load_xye(
+    fname: Union[str, Path, io.TextIOBase],
+    *,
+    dim: str,
+    unit: Optional[Union[sc.Unit, str]],
+    coord_unit: Optional[Union[sc.Unit, str]],
+    coord: Optional[str] = None,
+) -> sc.DataArray:
     """Read a data array from an XYE file.
 
     See :func:`scippneutron.io.xye.save_xye` for a description of the file format.
@@ -104,13 +106,13 @@ def load_xye(fname: Union[str, Path, io.TextIOBase],
         Name or file handle of the input file.
     dim:
         Dimension of the returned data.
-    coord:
-        Coordinate name of the returned data.
-        Defaults to the value of ``dim``.
     unit:
         Unit of the returned data array.
     coord_unit:
         Unit of the coordinate of the returned data array.
+    coord:
+        Coordinate name of the returned data.
+        Defaults to the value of ``dim``.
 
     Returns
     -------
