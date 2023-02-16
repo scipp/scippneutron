@@ -178,14 +178,16 @@ def test_can_set_header(da, header):
     assert buffer.getvalue().startswith(commented_header)
 
 
-@given(da=one_dim_data_arrays())
-def test_generated_header_includes_coord_name_and_units(da):
-    coord_name = next(iter(da.coords))
-    buffer = save_to_buffer(da, coord=coord_name)
+@given(da=one_dim_data_arrays(),
+       coord_name=st.text(string.ascii_letters + string.digits))
+def test_generated_header_includes_coord_name_and_units(da, coord_name):
+    # Detecting the coord name in the file can be tricky if it can contain arbitrary
+    # characters (like '\n' or '#') because lines in the header start with '# '.
+    initial_name = next(iter(da.coords))
+    da.coords[coord_name] = da.coords.pop(initial_name)
 
-    # If coord_name contains line breaks, the writer adds '# ' before every line.
-    # Remove those here as a simple fix so avoid having to parse comments properly.
-    assert coord_name in buffer.getvalue().replace('# ', '')
+    buffer = save_to_buffer(da, coord=coord_name)
+    assert coord_name in buffer.getvalue()
     if da.coords[coord_name].unit is not None:
         assert str(da.coords[coord_name].unit) in buffer.getvalue()
     if da.unit is not None:
