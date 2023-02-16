@@ -15,6 +15,5 @@ from .core import convert
 from .mantid import from_mantid, to_mantid, load, fit
 from .instrument_view import instrument_view
 from .io.nexus.load_nexus import load_nexus, load_nexus_json
-from .io.xye import save_xye
 from .data_streaming.data_stream import data_stream
 from . import data
