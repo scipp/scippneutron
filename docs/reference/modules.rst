@@ -10,4 +10,5 @@ Modules
 
    conversion
    io
+   logging
    tof
