@@ -9,6 +9,8 @@ from typing import Optional, Union
 import numpy as np
 import scipp as sc
 
+from ..logging import get_logger
+
 
 class GenerateHeaderType:
 
@@ -80,6 +82,9 @@ def save_xye(fname: Union[str, Path, io.TextIOBase],
     to_save = np.c_[da.coords[coord].values, da.values, np.sqrt(da.variances)]
     if header is GenerateHeader:
         header = _generate_xye_header(da, coord)
+
+    get_logger().info("Saving data with unit %s and coordinate '%s' to XYE file %s",
+                      da.unit, coord, fname)
     np.savetxt(fname, to_save, delimiter=' ', header=header)
 
 
