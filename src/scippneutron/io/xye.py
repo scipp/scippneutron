@@ -49,7 +49,10 @@ def save_xye(fname: Union[str, Path, io.TextIOBase],
         1-dimensional data to write.
     coord:
         Coordinate name of ``da`` to write.
-        Can be omitted if ``da`` has only one coordinate.
+        If omitted and ``da`` has only one coordinate, that coordinate is used.
+        If omitted and ``da`` has multiple coordinates, attempts to use a coordinate
+        with the same name as ``da.dim``.
+        If that does not exist, raise an error.
     header:
         String to write at the beginning of the file.
         A simple table header gets generated automatically by default.
@@ -69,12 +72,7 @@ def save_xye(fname: Union[str, Path, io.TextIOBase],
             f'It has dimensions {da.dims}')
     if len(da.coords) == 0:
         raise ValueError('Cannot save data to XYE file because it has no coordinates.')
-    if coord is None:
-        if len(da.coords) > 1:
-            raise ValueError(
-                'Cannot deduce which coordinate to save because the data has more '
-                f'than one: {list(da.coords.keys())}')
-        coord = next(iter(da.coords))
+    coord = _deduce_coord(da) if coord is None else coord
     if da.coords.is_edges(coord):
         raise sc.CoordError('Cannot save data with bin-edges to XYE file. '
                             'Compute bin-centers before calling save_xye. '
@@ -143,3 +141,14 @@ def _generate_xye_header(da: sc.DataArray, coord: str) -> str:
     e = f'E {format_unit(da.unit)}'
     # Widths are for the default format of `0.0`
     return f'{c:22} {y:24} {e:24}'
+
+
+def _deduce_coord(da: sc.DataArray) -> str:
+    if len(da.coords) == 1:
+        return next(iter(da.coords))
+    if len(da.coords) > 1 and da.dim not in da.coords:
+        raise ValueError(
+            'Cannot deduce which coordinate to save because the data has more '
+            f'than one and no dimension-coordinate (dim={da.dim}): '
+            f'{list(da.coords.keys())}')
+    return da.dim

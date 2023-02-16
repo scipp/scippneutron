@@ -8,7 +8,7 @@ from typing import Optional
 import numpy as np
 import pytest
 import scipp as sc
-from hypothesis import given, settings
+from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 from scipp.testing import strategies as scst
 
@@ -82,7 +82,7 @@ def test_saved_file_contains_data_table(da, data):
 
 @given(initial=one_dim_data_arrays(max_n_coords=1))
 @settings(max_examples=20)
-def test_save_can_deduce_coord_of(initial):
+def test_save_deduce_coord_data_with_one_coord(initial):
     coord_name = next(iter(initial.coords.keys()))
     loaded = roundtrip(initial)
     loaded = loaded.rename_dims({loaded.dim: initial.dim})
@@ -92,9 +92,27 @@ def test_save_can_deduce_coord_of(initial):
     assert sc.allclose(loaded_coord, initial.coords[coord_name], equal_nan=True)
 
 
+@given(initial=one_dim_data_arrays(), data=st.data())
+@settings(max_examples=20)
+def test_save_deduce_coord_dim_coord(initial, data):
+    dim = initial.dim
+    initial_coord = data.draw(
+        scst.variables(sizes=initial.sizes, dtype='float64', with_variances=False))
+    initial.coords[dim] = initial_coord.rename({initial_coord.dim: dim})
+
+    loaded = roundtrip(initial)
+    # roundtrip cannot deduce coord name and unit in this case.
+    # loaded_coord = next(iter(loaded.coords.values()))
+    loaded_coord = loaded.coords[dim]
+    loaded_coord.unit = initial.coords[dim].unit
+    assert sc.allclose(loaded_coord, initial.coords[dim], equal_nan=True)
+
+
 @given(da=one_dim_data_arrays(min_n_coords=2))
 @settings(max_examples=20)
-def test_save_cannot_deduce_coord_if_there_are_multiple(da):
+def test_save_cannot_deduce_coord_if_multiple_non_dim_coords(da):
+    # It can deduce if there is a dim-coord, exclude that.
+    assume(da.dim not in da.coords)
     with pytest.raises(ValueError):
         save_to_buffer(da)
 
