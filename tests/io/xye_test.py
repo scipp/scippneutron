@@ -147,6 +147,15 @@ def test_cannot_save_data_with_bin_edges(da, data):
         save_to_buffer(da, coord=coord_name)
 
 
+@given(da=one_dim_data_arrays(), data=st.data())
+@settings(max_examples=20)
+def test_cannot_save_data_with_masks(da, data):
+    mask = data.draw(scst.variables(sizes=da.sizes, dtype=bool))
+    da.masks[data.draw(st.text())] = mask
+    with pytest.raises(ValueError):
+        save_to_buffer(da, coord=next(iter(da.coords)))
+
+
 @given(da=scst.dataarrays(
     data_args={
         'ndim': st.integers(min_value=2, max_value=4),

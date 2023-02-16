@@ -72,6 +72,9 @@ def save_xye(fname: Union[str, Path, io.TextIOBase],
         raise sc.DimensionError(
             'Cannot save data to XYE file because it is not one-dimensional. '
             f'It has dimensions {da.dims}')
+    if da.masks:
+        raise ValueError('Cannot save data to XYE file because it has masks: '
+                         f'{list(da.masks.keys())}')
     if len(da.coords) == 0:
         raise ValueError('Cannot save data to XYE file because it has no coordinates.')
     coord = _deduce_coord(da) if coord is None else coord
