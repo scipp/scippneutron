@@ -50,7 +50,7 @@ def make_frame_data(*, source_position: sc.Variable, wav_min: sc.Variable,
     g['tof'] = _tof_from_wavelength
     frame1 = frame1.transform_coords('tof', graph=g)
     frame2 = frame2.transform_coords('tof', graph=g)
-    tof_edges = sc.linspace('tof', 0.0, 100000.0, num=1000, unit='us')
+    tof_edges = sc.linspace('tof', 0.0, 100000.0, num=1001, unit='us')
     expected_wav = frame1.bins.concatenate(frame2)
     wav_edges = sc.linspace('wavelength',
                             wav_min.min().value,
@@ -73,7 +73,7 @@ def make_frame_data(*, source_position: sc.Variable, wav_min: sc.Variable,
     return da, expected_wav
 
 
-def test_stitched_data_yields_correct_wavelength_histogram():
+def test_single_chopper_stitched_data_yields_correct_wavelength_histogram():
     source_position = sc.vector([1.0, 2.0, -70.0], unit='m')
     # note the overlap
     wav_min = sc.array(dims=['subframe'], values=[1.0, 2.9], unit='angstrom')
@@ -83,12 +83,15 @@ def test_stitched_data_yields_correct_wavelength_histogram():
                                    wav_min=wav_min,
                                    wav_max=wav_max,
                                    subframe_offset=subframe_offset)
+    # No subframe overlap (for given wavelength), i.e., a single WFM chopper, same
+    # subframe begin and end.
     stitched = wfm.stitch_elastic(da,
                                   wavelength_min=wav_min,
                                   wavelength_max=wav_max,
-                                  subframe_source_position=source_position,
+                                  subframe_begin_source_position=source_position,
+                                  subframe_end_source_position=source_position,
                                   subframe_offset=subframe_offset)
-    # The stitched result is does not contain wavelength, but coords are setup to
+    # The stitched result does not contain wavelength, but coords are setup to
     # yield correct result.
     stitched_wavelength = stitched.transform_coords('wavelength',
                                                     graph=graph.tof.kinematic("tof"))
@@ -109,7 +112,8 @@ def test_stitch_incorrect_given_bad_subframe_source_position():
     stitched = wfm.stitch_elastic(da,
                                   wavelength_min=wav_min,
                                   wavelength_max=wav_max,
-                                  subframe_source_position=1.1 * source_position,
+                                  subframe_begin_source_position=1.1 * source_position,
+                                  subframe_end_source_position=1.1 * source_position,
                                   subframe_offset=subframe_offset)
     stitched_wavelength = stitched.transform_coords('wavelength',
                                                     graph=graph.tof.kinematic("tof"))
@@ -130,7 +134,8 @@ def test_stitch_incorrect_given_bad_subframe_offset():
     stitched = wfm.stitch_elastic(da,
                                   wavelength_min=wav_min,
                                   wavelength_max=wav_max,
-                                  subframe_source_position=source_position,
+                                  subframe_begin_source_position=source_position,
+                                  subframe_end_source_position=source_position,
                                   subframe_offset=1.05 * subframe_offset)
     stitched_wavelength = stitched.transform_coords('wavelength',
                                                     graph=graph.tof.kinematic("tof"))
@@ -152,7 +157,8 @@ def test_stitch_incorrect_given_bad_positions():
     stitched = wfm.stitch_elastic(da,
                                   wavelength_min=wav_min,
                                   wavelength_max=wav_max,
-                                  subframe_source_position=source_position,
+                                  subframe_begin_source_position=source_position,
+                                  subframe_end_source_position=source_position,
                                   subframe_offset=subframe_offset)
     stitched_wavelength = stitched.transform_coords('wavelength',
                                                     graph=graph.tof.kinematic("tof"))
@@ -174,7 +180,8 @@ def test_stitch_incorrect_given_bad_wavelength_bounds():
     stitched = wfm.stitch_elastic(da,
                                   wavelength_min=wav_min,
                                   wavelength_max=wav_max,
-                                  subframe_source_position=source_position,
+                                  subframe_begin_source_position=source_position,
+                                  subframe_end_source_position=source_position,
                                   subframe_offset=subframe_offset)
     stitched_wavelength = stitched.transform_coords('wavelength',
                                                     graph=graph.tof.kinematic("tof"))
