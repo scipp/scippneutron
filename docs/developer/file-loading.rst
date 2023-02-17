@@ -19,7 +19,7 @@ This is the method that allows Scippneutron users to load many different
 file formats from a multitude of existing facilities.
 
 For more details, see
-`scippneutron.load <https://scipp.github.io/scippneutron/generated/scippneutron.load.html#scippneutron.load>`_.
+`scippneutron.load <../generated/functions/scippneutron.load.rst#scippneutron.load>`_.
 
 
 ``scippneutron.load_nexus``
