@@ -57,8 +57,8 @@ def cut_and_offset_subframes(da: sc.DataArray, subframe_bounds: sc.Variable,
 
 def stitch_elastic(da: sc.DataArray, *, wavelength_min: sc.Variable,
                    wavelength_max: sc.Variable,
-                   subframe_open_source_position: sc.Variable,
-                   subframe_close_source_position: sc.Variable,
+                   subframe_begin_source_position: sc.Variable,
+                   subframe_end_source_position: sc.Variable,
                    subframe_offset: sc.Variable) -> sc.DataArray:
     """
     Stitch WFM subframes of unstitched event data from elastic scattering.
@@ -74,10 +74,18 @@ def stitch_elastic(da: sc.DataArray, *, wavelength_min: sc.Variable,
         Minimum wavelengths for each subframe.
     wavelength_max:
         Maximum wavelengths for each subframe.
-    subframe_source_position:
-        Position of the subframe source. Typically the position of the WFM chopper, or
-        the center point if there are two WFM choppers. Precise location depends on the
-        concrete design of the chopper cascade.
+    subframe_begin_source_position:
+        Position of the subframe "bin" source. Typically the position of a WFM chopper,
+        often the second one. Precise location depends on the concrete design of the
+        chopper cascade. This is the position of the "virtual source" at which the
+        *first* neutrons with ``wavelength_min`` would originate after stitching the
+        frames.
+    subframe_end_source_position:
+        Position of the subframe "bin" source. Typically the position of a WFM chopper,
+        often the first one. Precise location depends on the concrete design of the
+        chopper cascade. This is the position of the "virtual source" at which the
+        *last* neutrons with ``wavelength_max`` would originate after stitching the
+        frames.
     subframe_offset:
         Time offset for each subframe. This is the time difference between the base time
         of the input's 'tof' coordinate and the base time for each subframe. This is
@@ -91,8 +99,8 @@ def stitch_elastic(da: sc.DataArray, *, wavelength_min: sc.Variable,
         calculations of flight-path-length-dependent quantities will be correct
         when using the standard conversion graphs.
     """
-    Lopen = _Ltotal(da, subframe_open_source_position)
-    Lclose = _Ltotal(da, subframe_close_source_position)
+    Lopen = _Ltotal(da, subframe_begin_source_position)
+    Lclose = _Ltotal(da, subframe_end_source_position)
     da = da.copy(deep=False)
     da.coords['Ltotal'] = 0.5 * (Lopen + Lclose)
 
