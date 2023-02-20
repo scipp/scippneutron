@@ -1161,10 +1161,7 @@ def test_loads_pixel_positions_with_transformations(load_function: Callable):
     assert np.allclose(loaded_data.meta['base_position'].values,
                        expected_pixel_positions)
 
-    expected_transform = sc.spatial.affine_transform(unit=sc.units.m,
-                                                     value=[[1, 0, 0, 0], [0, 1, 0, 0],
-                                                            [0, 0, 1, 0.57],
-                                                            [0, 0, 0, 1]])
+    expected_transform = sc.spatial.translation(unit=sc.units.m, value=[0, 0, 0.57])
 
     assert np.allclose(loaded_data.meta['position_transformations'].value.values,
                        expected_transform.values)
