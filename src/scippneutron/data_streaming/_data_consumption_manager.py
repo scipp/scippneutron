@@ -6,7 +6,7 @@ from enum import Enum
 from queue import Empty as QueueEmpty
 from typing import List, Optional
 
-from ..file_loading.load_nexus import StreamInfo
+from ..io.nexus.load_nexus import StreamInfo
 from ._consumer import all_consumers_stopped, create_consumers, start_consumers, \
     stop_consumers
 from ._consumer_type import ConsumerType

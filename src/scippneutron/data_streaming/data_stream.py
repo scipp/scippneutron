@@ -11,7 +11,7 @@ from warnings import warn
 import numpy as np
 import scipp as sc
 
-from ..file_loading.load_nexus import _load_nexus_json
+from ..io.nexus.load_nexus import _load_nexus_json
 from ._consumer_type import ConsumerType
 from ._data_stream_widget import DataStreamWidget
 from ._serialisation import convert_from_pickleable_dict

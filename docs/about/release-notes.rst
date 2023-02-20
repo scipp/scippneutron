@@ -41,7 +41,8 @@ Features
 ~~~~~~~~
 
 * Coordinate transformation kernel for :math:`\vec{Q}` `412 <https://github.com/scipp/scipp/pull/412>`_.
-* Added :py:func:`scippneutron.tof.wfm.stitch_elastic` for stitching event data from WFM beamlines with elastic scattering `#415 <https://github.com/scipp/scipp/pull/415>`_.
+* Added :func:`scippneutron.tof.wfm.stitch_elastic` for stitching event data from WFM beamlines with elastic scattering `#415 <https://github.com/scipp/scipp/pull/415>`_.
+* Added :func:`scippneutron.io.xye.save_xye` and :func:`scippneutron.io.xye.load_xye` `417 <https://github.com/scipp/scipp/pull/417>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~

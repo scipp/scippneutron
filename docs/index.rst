@@ -8,7 +8,6 @@ News
 ----
 
 - [|SCIPPNEUTRON_RELEASE_MONTH|] scippneutron-|SCIPPNEUTRON_VERSION| `has been released <about/release-notes.rst>`_.
-  Check out the `What's new <about/whats-new.rst>`_ notebook for an overview of recent highlights and major changes.
 - [December 2022] ScippNeutron is now also available on PyPI.
   See the updated ``pip`` `installation instructions <getting-started/installation.rst#Pip>`_.
 
@@ -76,6 +75,5 @@ Documentation
    :maxdepth: 3
 
    about/about
-   about/whats-new
    about/contributing
    about/release-notes
