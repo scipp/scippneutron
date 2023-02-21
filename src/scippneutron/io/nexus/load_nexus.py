@@ -132,7 +132,7 @@ def _depends_on_to_position(obj) -> Union[None, sc.Variable]:
                       (str, sc.DataArray)) or transform.dtype == sc.DType.DataArray:
             return None  # cannot compute position if bad transform or time-dependent
         else:
-            if transform.dtype in (sc.DType.rotation3, sc.DType.linear_transform3):
+            if transform.dtype == sc.DType.rotation3:
                 return transform * _origin('m')
             else:
                 return transform.to(unit='m') * _origin('m')
