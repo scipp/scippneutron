@@ -44,7 +44,7 @@ def add_button_group(context: Dict[str, Any], buttons: List[Dict[str, str]], *,
 
 
 def add_related_project_buttons(context: Dict[str, Any]) -> None:
-    base = "https://scipp.github.io"
+    base = "https://scipp.github.io/"
     buttons = [
         {
             "type": "link",
@@ -79,7 +79,7 @@ def add_related_project_buttons(context: Dict[str, Any]) -> None:
 
 
 def add_version_buttons(context: Dict[str, Any]) -> None:
-    base = "https://scipp.github.io"
+    base = "https://scipp.github.io/scippneutron"
     releases = version_info.minor_releases(first='0.8')
     if outdated:
         current = f"{long_version} (outdated)"
