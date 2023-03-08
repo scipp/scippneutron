@@ -31,7 +31,7 @@ dependencies = [
     "numpy>=1.20",
     "pooch",
     "scipp>=23.01.1",
-    "scippnexus>=32.3.0",
+    "scippnexus>=23.3.0",
     "scipy>=1.7.0",
 ]
 
