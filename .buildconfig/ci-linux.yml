@@ -33,5 +33,5 @@ dependencies:
   - requests
   - sphinx
   - sphinx-autodoc-typehints>=1.17.0
-  - sphinx-book-theme>=0.3
+  - sphinx-book-theme==0.3.3
   - sphinx-copybutton
