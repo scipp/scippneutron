@@ -331,6 +331,9 @@ class JSONGroup(JSONNode):
         children = self._node[_nexus_children]
         return [child[_nexus_name] for child in children if not contains_stream(child)]
 
+    def items(self) -> List[Tuple[str, JSONNode]]:
+        return [(key, self[key]) for key in self.keys()]
+
     def _as_group_or_dataset(self, item, parent):
         if item['type'] == _nexus_group:
             return JSONGroup(item, parent=parent)

@@ -32,7 +32,7 @@ requirements:
     - pooch
     - python
     - scipp>=23.01.1
-    - scippnexus>=23.01.1
+    - scippnexus>=23.03.0
     - scipy>=1.7.0
 
 test:
