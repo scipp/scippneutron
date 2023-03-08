@@ -34,36 +34,19 @@ Release Notes
    Neil Vaytet :sup:`a`\ ,
    and Jan-Lukas Wynen :sup:`a`
 
-v0.xy.0 (Unreleased)
---------------------
+v23.03.0
+--------
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+* Requires ScippNexus v23.03.0
 
 Features
 ~~~~~~~~
 
 * Coordinate transformation kernel for :math:`\vec{Q}` `412 <https://github.com/scipp/scipp/pull/412>`_.
 * Added :func:`scippneutron.io.xye.save_xye` and :func:`scippneutron.io.xye.load_xye` `417 <https://github.com/scipp/scipp/pull/417>`_.
-
-Breaking changes
-~~~~~~~~~~~~~~~~
-
-Bugfixes
-~~~~~~~~
-
-Documentation
-~~~~~~~~~~~~~
-
-Deprecations
-~~~~~~~~~~~~
-
-Stability, Maintainability, and Testing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Contributors
-~~~~~~~~~~~~
-
-Simon Heybrock :sup:`a`\ ,
-Neil Vaytet :sup:`a`\ ,
-and Jan-Lukas Wynen :sup:`a`
 
 v23.01.0 (January 2023)
 -----------------------
