@@ -564,7 +564,7 @@ def convert_Workspace2D_to_data_array(ws,
     _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
     if ws.id() == 'MaskWorkspace':
         coords_labs_data["data"] = sc.Variable(dims=[spec_dim],
-                                               unit=data_unit,
+                                               unit=None,
                                                values=ws.extractY().flatten(),
                                                dtype=sc.DType.bool)
     else:
