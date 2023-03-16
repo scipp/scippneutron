@@ -34,6 +34,14 @@ Release Notes
    Neil Vaytet :sup:`a`\ ,
    and Jan-Lukas Wynen :sup:`a`
 
+v23.03.1 (March 2022)
+---------------------
+
+Bugfixes
+~~~~~~~~
+
+* Conversion from ``mantid.MaskWorkspace`` now correctly sets ``unit=None`` instead of using dimensionless `424 <https://github.com/scipp/scipp/pull/424>`_.
+
 v23.03.0
 --------
 
