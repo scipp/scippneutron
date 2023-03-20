@@ -525,7 +525,8 @@ def hkl_vec_from_Q_vec(*, Q_vec: Variable, u_matrix: Variable, b_matrix: Variabl
 
     where :math:`U` :math:`B` transform from sample space to the lab frame.
     :math:`R` encodes the sample rotation, e.g., as given by a goniometer.
-    See, e.g., Refs. :cite:`mantid-lattice:2023,savici:2011` for a definition.
+    See, e.g., Refs. :cite:`busing:1967,mantid-lattice:2023,savici:2011`
+    for a definition.
 
     This function computes the elements of :math:`\vec{Q}`, :math:`h, k, l` by inverting
     the above equation.
