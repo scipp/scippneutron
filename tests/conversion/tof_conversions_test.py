@@ -426,17 +426,17 @@ def test_q_vec_from_q_elements():
 
 
 def test_q_vec_from_q_elements_raises_for_shape_mismatch():
-    Qx = sc.array(dims=['q'], values=[2, 3])
+    Qx = sc.array(dims=['q'], values=[2.0, 3.0])
     Qy = Qx.copy()
-    Qz = sc.array(dims=['q'], values=[2, 3, 4])
+    Qz = sc.array(dims=['q'], values=[2.0, 3.0, 4.0])
     with pytest.raises(sc.DimensionError):
         tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
 
 
 def test_q_vec_from_q_elements_raises_for_dim_mismatch():
-    Qx = sc.array(dims=['q'], values=[2, 3])
+    Qx = sc.array(dims=['q'], values=[2.0, 3.0])
     Qy = Qx.copy()
-    Qz = sc.array(dims=['Q'], values=[2, 3])
+    Qz = sc.array(dims=['Q'], values=[2.0, 3.0])
     with pytest.raises(sc.DimensionError):
         tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
 
@@ -472,7 +472,7 @@ def make_b_matrix() -> sc.Variable:
 
 @given(inv_q=n_space_variables(3))
 def test_hkl_vec_from_Q_vec(inv_q):
-    Qx, Qy, Qz = map(sc.reciprocal, inv_q)
+    Qx, Qy, Qz = (sc.reciprocal(x.to(dtype='float64')) for x in inv_q)
     Q_vec = tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
 
     b_matrix = make_b_matrix()
