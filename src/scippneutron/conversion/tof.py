@@ -29,13 +29,13 @@ def _common_dtype(a, b):
 
 
 def wavelength_from_tof(*, tof: VariableLike, Ltotal: VariableLike) -> VariableLike:
-    """Compute the wavelength from time-of-flight.
+    r"""Compute the wavelength from time-of-flight.
 
     The result is the de Broglie wavelength
 
     .. math::
 
-        \\lambda = \\frac{h t}{m_n L_\\mathsf{total}}
+        \lambda = \frac{h t}{m_n L_\mathsf{total}}
 
     Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
 
@@ -49,7 +49,7 @@ def wavelength_from_tof(*, tof: VariableLike, Ltotal: VariableLike) -> VariableL
     Returns
     -------
     :
-        Wavelength :math:`\\lambda`.
+        Wavelength :math:`\lambda`.
         Has unit ångström.
     """
     c = sc.to_unit(const.h / const.m_n,
@@ -60,13 +60,13 @@ def wavelength_from_tof(*, tof: VariableLike, Ltotal: VariableLike) -> VariableL
 
 def dspacing_from_tof(*, tof: VariableLike, Ltotal: VariableLike,
                       two_theta: VariableLike) -> VariableLike:
-    """Compute the d-spacing from time-of-flight.
+    r"""Compute the d-spacing from time-of-flight.
 
     The result is the inter-planar lattice spacing
 
     .. math::
 
-        d = \\frac{h t}{m_n L_\\mathsf{total}\\; 2 \\sin \\theta}
+        d = \frac{h t}{m_n L_\mathsf{total}\; 2 \sin \theta}
 
     Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
 
@@ -77,7 +77,7 @@ def dspacing_from_tof(*, tof: VariableLike, Ltotal: VariableLike,
     Ltotal:
         Total beam length.
     two_theta:
-        Scattering angle :math:`2 \\theta`.
+        Scattering angle :math:`2 \theta`.
 
     Returns
     -------
@@ -103,13 +103,13 @@ def _energy_constant(energy_unit: sc.Unit, tof: VariableLike, length: VariableLi
 
 
 def energy_from_tof(*, tof: VariableLike, Ltotal: VariableLike) -> VariableLike:
-    """Compute the neutron energy from time-of-flight.
+    r"""Compute the neutron energy from time-of-flight.
 
     The result is
 
     .. math::
 
-        E = \\frac{m_n L_\\mathsf{total}^2}{2 t^2}
+        E = \frac{m_n L_\mathsf{total}^2}{2 t^2}
 
     Where :math:`m_n` is the neutron mass.
 
@@ -138,19 +138,19 @@ def _energy_transfer_t0(energy, tof, length):
 def energy_transfer_direct_from_tof(*, tof: VariableLike, L1: VariableLike,
                                     L2: VariableLike,
                                     incident_energy: VariableLike) -> VariableLike:
-    """Compute the energy transfer in direct inelastic scattering.
+    r"""Compute the energy transfer in direct inelastic scattering.
 
     The result is
 
     .. math::
 
-        \\Delta E = E_i - \\frac{m_n L_2^2}{2 {(t - t_0)}^2}
+        \Delta E = E_i - \frac{m_n L_2^2}{2 {(t - t_0)}^2}
 
     With
 
     .. math::
 
-        t_0 = \\sqrt{m_n L_1^2 / (2 E_i)}
+        t_0 = \sqrt{m_n L_1^2 / (2 E_i)}
 
     and :math:`m_n` the neutron mass.
 
@@ -170,7 +170,7 @@ def energy_transfer_direct_from_tof(*, tof: VariableLike, L1: VariableLike,
     Returns
     -------
     :
-        Energy transfer :math:`\\Delta E`.
+        Energy transfer :math:`\Delta E`.
         Has the same unit as incident_energy.
 
     See Also
@@ -190,19 +190,19 @@ def energy_transfer_direct_from_tof(*, tof: VariableLike, L1: VariableLike,
 def energy_transfer_indirect_from_tof(*, tof: VariableLike, L1: VariableLike,
                                       L2: VariableLike,
                                       final_energy: VariableLike) -> VariableLike:
-    """Compute the energy transfer in indirect inelastic scattering.
+    r"""Compute the energy transfer in indirect inelastic scattering.
 
     The result is
 
     .. math::
 
-        \\Delta E = \\frac{m_n L_1^2}{2 {(t - t_0)}^2} - E_f
+        \Delta E = \frac{m_n L_1^2}{2 {(t - t_0)}^2} - E_f
 
     With
 
     .. math::
 
-        t_0 = \\sqrt{m_n L_2^2 / (2 E_f)}
+        t_0 = \sqrt{m_n L_2^2 / (2 E_f)}
 
     and :math:`m_n` the neutron mass.
 
@@ -222,7 +222,7 @@ def energy_transfer_indirect_from_tof(*, tof: VariableLike, L1: VariableLike,
     Returns
     -------
     :
-        Energy transfer :math:`\\Delta E`.
+        Energy transfer :math:`\Delta E`.
         Has the same unit as final_energy.
 
     See Also
@@ -240,20 +240,20 @@ def energy_transfer_indirect_from_tof(*, tof: VariableLike, L1: VariableLike,
 
 
 def energy_from_wavelength(*, wavelength: VariableLike) -> VariableLike:
-    """Compute the neutron energy from wavelength.
+    r"""Compute the neutron energy from wavelength.
 
     The result is
 
     .. math::
 
-        E = \\frac{h^2}{2 m_n \\lambda^2}
+        E = \frac{h^2}{2 m_n \lambda^2}
 
     Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
 
     Parameters
     ----------
     wavelength:
-        De Broglie wavelength :math:`\\lambda`.
+        De Broglie wavelength :math:`\lambda`.
         Has unit meV.
 
     Returns
@@ -268,13 +268,13 @@ def energy_from_wavelength(*, wavelength: VariableLike) -> VariableLike:
 
 
 def wavelength_from_energy(*, energy: VariableLike) -> VariableLike:
-    """Compute the wavelength from the neutron energy.
+    r"""Compute the wavelength from the neutron energy.
 
     The result is the de Broglie wavelength
 
     .. math::
 
-        \\lambda = \\frac{h}{\\sqrt{2 m_n E}}
+        \lambda = \frac{h}{\sqrt{2 m_n E}}
 
     Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
 
@@ -286,7 +286,7 @@ def wavelength_from_energy(*, energy: VariableLike) -> VariableLike:
     Returns
     -------
     :
-        Wavelength :math:`\\lambda`.
+        Wavelength :math:`\lambda`.
         Has unit ångström.
     """
     c = as_float_type(
@@ -303,20 +303,20 @@ def _wavelength_Q_conversions(x: VariableLike, two_theta: VariableLike) -> Varia
 
 def Q_from_wavelength(*, wavelength: VariableLike,
                       two_theta: VariableLike) -> VariableLike:
-    """Compute the absolute value of the momentum transfer from wavelength.
+    r"""Compute the absolute value of the momentum transfer from wavelength.
 
     The result is
 
     .. math::
 
-        Q = \\frac{4 \\pi \\sin \\theta}{\\lambda}
+        Q = \frac{4 \pi \sin \theta}{\lambda}
 
     Parameters
     ----------
     wavelength:
-        De Broglie wavelength :math:`\\lambda`.
+        De Broglie wavelength :math:`\lambda`.
     two_theta:
-        Scattering angle :math:`2 \\theta`.
+        Scattering angle :math:`2 \theta`.
 
     Returns
     -------
@@ -332,25 +332,25 @@ def Q_from_wavelength(*, wavelength: VariableLike,
 
 
 def wavelength_from_Q(*, Q: VariableLike, two_theta: VariableLike) -> VariableLike:
-    """Compute the wavelength from momentum transfer.
+    r"""Compute the wavelength from momentum transfer.
 
     The result is the de Broglie wavelength
 
     .. math::
 
-        \\lambda = \\frac{4 \\pi \\sin \\theta}{Q}
+        \lambda = \frac{4 \pi \sin \theta}{Q}
 
     Parameters
     ----------
     Q:
         Momentum transfer.
     two_theta:
-        Scattering angle :math:`2 \\theta`.
+        Scattering angle :math:`2 \theta`.
 
     Returns
     -------
     :
-        Wavelength :math:`\\lambda`
+        Wavelength :math:`\lambda`
         Has unit ångström.
 
     See Also
@@ -367,23 +367,23 @@ def Q_elements_from_wavelength(
         *, wavelength: VariableLike, incident_beam: VariableLike,
         scattered_beam: VariableLike
 ) -> Tuple[VariableLike, VariableLike, VariableLike]:
-    """Compute them momentum transfer vector from wavelength.
+    r"""Compute them momentum transfer vector from wavelength.
 
-    Computes the three components of the Q-vector  :math:`Q_x, Q_y, Q_z`
+    Computes the three components of the Q-vector :math:`Q_x, Q_y, Q_z`
     separately using
 
     .. math::
 
-        \\vec{Q} &= (Q_x, Q_y, Q_z) \\\\
-        \\vec{Q} &= \\vec{k}_i - \\vec{k}_f
-                 = \\frac{2\\pi}{\\lambda} \\left(\\hat{e}_i - \\hat{e}_f\\right),
+        \vec{Q} &= (Q_x, Q_y, Q_z) \\
+        \vec{Q} &= \vec{k}_i - \vec{k}_f
+                 = \frac{2\pi}{\lambda} \left(\hat{e}_i - \hat{e}_f\right),
 
     where the unit vectors for incident momentum and final momentum
 
     .. math::
 
-        \\hat{e}_i &= \\vec{k_i} / | \\vec{k_i} | \\\\
-        \\hat{e}_f &= \\vec{k_f} / | \\vec{k_f} |
+        \hat{e}_i &= \vec{k_i} / | \vec{k_i} | \\
+        \hat{e}_f &= \vec{k_f} / | \vec{k_f} |
 
     are defined as the directions of ``incident_beam`` and ``scattered_beam``,
     respectively.
@@ -391,7 +391,7 @@ def Q_elements_from_wavelength(
     Parameters
     ----------
     wavelength:
-        De Broglie wavelength :math:`\\lambda`.
+        De Broglie wavelength :math:`\lambda`.
     incident_beam:
         Beam from source to sample. Expects ``dtype=vector3``.
     scattered_beam:
@@ -400,11 +400,11 @@ def Q_elements_from_wavelength(
     Returns
     -------
     Qx: scipp.VariableLike
-        x-component of the momentum transfer :math:`\\vec{Q}`.
+        x-component of the momentum transfer :math:`\vec{Q}`.
     Qy: scipp.VariableLike
-        y-component of the momentum transfer :math:`\\vec{Q}`.
+        y-component of the momentum transfer :math:`\vec{Q}`.
     Qz: scipp.VariableLike
-        z-component of the momentum transfer :math:`\\vec{Q}`.
+        z-component of the momentum transfer :math:`\vec{Q}`.
     """
     e_i = incident_beam / sc.norm(incident_beam)
     e_f = scattered_beam / sc.norm(scattered_beam)
@@ -415,20 +415,20 @@ def Q_elements_from_wavelength(
 
 def dspacing_from_wavelength(*, wavelength: VariableLike,
                              two_theta: VariableLike) -> VariableLike:
-    """Compute the d-spacing from wavelength.
+    r"""Compute the d-spacing from wavelength.
 
     The result is the inter-planar lattice spacing
 
     .. math::
 
-        d = \\frac{\\lambda}{2 \\sin \\theta}
+        d = \frac{\lambda}{2 \sin \theta}
 
     Parameters
     ----------
     wavelength:
-        De Broglie wavelength :math:`\\lambda`.
+        De Broglie wavelength :math:`\lambda`.
     two_theta:
-        Scattering angle :math:`2 \\theta`.
+        Scattering angle :math:`2 \theta`.
 
     Returns
     -------
@@ -448,13 +448,13 @@ def dspacing_from_wavelength(*, wavelength: VariableLike,
 
 def dspacing_from_energy(*, energy: VariableLike,
                          two_theta: VariableLike) -> VariableLike:
-    """Compute the d-spacing from the neutron energy.
+    r"""Compute the d-spacing from the neutron energy.
 
     The result is the inter-planar lattice spacing
 
     .. math::
 
-        d = \\frac{h}{\\sqrt{8 m_n E} \\sin \\theta}
+        d = \frac{h}{\sqrt{8 m_n E} \sin \theta}
 
     Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
 
@@ -463,7 +463,7 @@ def dspacing_from_energy(*, energy: VariableLike,
     energy:
         Neutron energy :math:`E`.
     two_theta:
-        Scattering angle :math:`2 \\theta`.
+        Scattering angle :math:`2 \theta`.
 
     Returns
     -------
