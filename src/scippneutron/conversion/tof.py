@@ -476,8 +476,7 @@ def dspacing_from_energy(*, energy: Variable, two_theta: Variable) -> Variable:
     return sc.sqrt(c / energy) / sc.sin(as_float_type(two_theta, energy) / 2)
 
 
-def Q_vec_from_Q_elements(*, Qx: sc.Variable, Qy: sc.Variable,
-                          Qz: sc.Variable) -> sc.Variable:
+def Q_vec_from_Q_elements(*, Qx: Variable, Qy: Variable, Qz: Variable) -> Variable:
     """Combine elements of Q into a single vector variable.
 
     Parameters
@@ -495,3 +494,72 @@ def Q_vec_from_Q_elements(*, Qx: sc.Variable, Qy: sc.Variable,
         ``Qx``, ``Qy``, ``Qz`` combined into a single variable of dtype ``vector3``.
     """
     return sc.geometry.position(Qx, Qy, Qz)
+
+
+def hkl_vec_from_Q_vec(*, Q_vec: Variable, u_matrix: Variable, b_matrix: Variable,
+                       sample_rotation: Variable) -> Variable:
+    r"""Compute hkl indices from momentum transfer.
+
+    The hkl indices define the components of the momentum transfer in the
+    sample coordinate system
+
+    .. math::
+
+        \vec{Q} = \begin{pmatrix} h \\ k \\ l \end{pmatrix}.
+
+    In the lab frame, the momentum transfer as computed by
+    :func:`scippneutron.conversion.tof.Q_elements_from_wavelength`
+    is defined as
+
+    .. math::
+
+        \vec{Q}_l = \vec{k}_i - \vec{k}_f .
+
+    This quantity is called :math:`Q` elsewhere in ScippNeutron.
+
+    Those two :math:`Q`'s are related by via
+
+    .. math::
+
+        \vec{Q}_l = 2 \pi R U B \vec{Q},
+
+    where :math:`U` :math:`B` transform from sample space to the lab frame.
+    :math:`R` encodes the sample rotation, e.g., as given by a goniometer.
+    See, e.g., Refs. :cite:`mantid-lattice:2023,savici:2011` for a definition.
+
+    This function computes the elements of :math:`\vec{Q}`, :math:`h, k, l` by inverting
+    the above equation.
+
+    Parameters
+    ----------
+    Q_vec:
+        Momentum transfer :math:`\vec{Q}_l` as a vector variable.
+    u_matrix:
+        Matrix :math:`U`.
+    b_matrix:
+        Matrix :math:`B`.
+    sample_rotation:
+        Sample rotation matrix :math:`R`.
+
+    Returns
+    -------
+    :
+        :math:`h, k, l` as a vector variable.
+
+    See also
+    --------
+    scippneutron.conversion.tof.Q_elements_from_wavelength:
+        Computes ``Q_l``.
+    scippneutron.conversion.tof.Q_vec_from_Q_elements:
+        Packs elements ``Qx``, ``Qy``, ``Qz`` into a single vector.
+    """
+    # There is a performance / accuracy tradeoff here.
+    # Repeated matrix-vector products are usually numerically more stable than
+    # matrix-matrix products followed by multiplying the resulting matrix with a vector.
+    # However, since the matrices here are typically scalars and Q_vec can be a long
+    # array, matrix-matrix products can be more performant.
+    # Since we have no performance measurements, this implementation uses the
+    # (potentially) more stable approach.
+    return sc.spatial.inv(b_matrix) * (sc.spatial.inv(u_matrix) *
+                                       (sc.spatial.inv(sample_rotation) * Q_vec)) / (
+                                           2 * np.pi)
