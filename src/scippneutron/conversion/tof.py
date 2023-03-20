@@ -553,13 +553,28 @@ def hkl_vec_from_Q_vec(*, Q_vec: Variable, u_matrix: Variable, b_matrix: Variabl
     scippneutron.conversion.tof.Q_vec_from_Q_elements:
         Packs elements ``Qx``, ``Qy``, ``Qz`` into a single vector.
     """
-    # There is a performance / accuracy tradeoff here.
-    # Repeated matrix-vector products are usually numerically more stable than
-    # matrix-matrix products followed by multiplying the resulting matrix with a vector.
-    # However, since the matrices here are typically scalars and Q_vec can be a long
-    # array, matrix-matrix products can be more performant.
-    # Since we have no performance measurements, this implementation uses the
-    # (potentially) more stable approach.
-    return sc.spatial.inv(b_matrix) * (sc.spatial.inv(u_matrix) *
-                                       (sc.spatial.inv(sample_rotation) * Q_vec)) / (
-                                           2 * np.pi)
+    # There are different ways to implement this with different performance and
+    # accuracy characteristics.
+    # Matrix-matrix products typically have worse accuracy than matrix-vector
+    # products due to repeated floating point cutoffs.
+    # Matrix inversions are often unstable; however, all matrices used here are small.
+    # Potential implementations are
+    #
+    # (sc.spatial.inv(B) * (sc.spatial.inv(U) * (sc.spatial.inv(R) * Q))) / (2*np.pi)
+    #
+    # (((sc.spatial.inv(B) * sc.spatial.inv(U)) * sc.spatial.inv(R)) * Q) / (2*np.pi)
+    #
+    # (sc.spatial.inv((R * U) * B) * Q) / (2 np.pi)
+    #
+    # All 3 were tested with random matrices and vectors and the first was found
+    # to have the best overall accuracy, being an order of magnitude better than the
+    # others in particularly bad cases and equal in the majority of cases.
+    #
+    # Concerning performance, R, U, B are scalar variables or short array variables
+    # in typical use cases while Q is typically a long, potentially multi-dim array.
+    # So implementation 3 will likely perform the best.
+    # Since we don't have performance measurements or requirements at this point,
+    # the most accurate implementation was chosen.
+    return (sc.spatial.inv(b_matrix) * (sc.spatial.inv(u_matrix) *
+                                        (sc.spatial.inv(sample_rotation) * Q_vec)) /
+            (2 * np.pi))
