@@ -414,3 +414,36 @@ def test_dspacing_from_energy_single_precision(two_theta_dtype):
     two_theta = sc.scalar(1.985, unit='rad', dtype=two_theta_dtype)
     assert tof_conv.dspacing_from_energy(energy=energy,
                                          two_theta=two_theta).dtype == 'float32'
+
+
+def test_q_vec_from_q_elements():
+    Qx, Qy, Qz = (sc.array(dims=['Q'], values=[2.1 * i, i / 3], unit='1/angstrom')
+                  for i in range(3))
+    q_vec = tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+    sc.testing.assert_identical(q_vec.fields.x, Qx)
+    sc.testing.assert_identical(q_vec.fields.y, Qy)
+    sc.testing.assert_identical(q_vec.fields.z, Qz)
+
+
+def test_q_vec_from_q_elements_raises_for_shape_mismatch():
+    Qx = sc.array(dims=['q'], values=[2, 3])
+    Qy = Qx.copy()
+    Qz = sc.array(dims=['q'], values=[2, 3, 4])
+    with pytest.raises(sc.DimensionError):
+        tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+
+
+def test_q_vec_from_q_elements_raises_for_dim_mismatch():
+    Qx = sc.array(dims=['q'], values=[2, 3])
+    Qy = Qx.copy()
+    Qz = sc.array(dims=['Q'], values=[2, 3])
+    with pytest.raises(sc.DimensionError):
+        tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+
+
+def test_q_vec_from_q_elements_raises_for_unit_mismatch():
+    Qx, Qy, Qz = (sc.array(dims=['Q'], values=[2.1 * i, i / 3], unit='1/angstrom')
+                  for i in range(3))
+    Qy.unit = '1/m'
+    with pytest.raises(sc.UnitError):
+        tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)

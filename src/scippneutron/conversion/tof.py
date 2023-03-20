@@ -13,7 +13,7 @@ from typing import Tuple
 import numpy as np
 import scipp as sc
 import scipp.constants as const
-from scipp.typing import VariableLike
+from scipp.typing import Variable
 
 from .._utils import as_float_type, elem_dtype, elem_unit
 
@@ -28,7 +28,7 @@ def _common_dtype(a, b):
     return sc.DType.float64
 
 
-def wavelength_from_tof(*, tof: VariableLike, Ltotal: VariableLike) -> VariableLike:
+def wavelength_from_tof(*, tof: Variable, Ltotal: Variable) -> Variable:
     r"""Compute the wavelength from time-of-flight.
 
     The result is the de Broglie wavelength
@@ -58,8 +58,8 @@ def wavelength_from_tof(*, tof: VariableLike, Ltotal: VariableLike) -> VariableL
     return as_float_type(c / Ltotal, tof) * tof
 
 
-def dspacing_from_tof(*, tof: VariableLike, Ltotal: VariableLike,
-                      two_theta: VariableLike) -> VariableLike:
+def dspacing_from_tof(*, tof: Variable, Ltotal: Variable,
+                      two_theta: Variable) -> Variable:
     r"""Compute the d-spacing from time-of-flight.
 
     The result is the inter-planar lattice spacing
@@ -96,13 +96,13 @@ def dspacing_from_tof(*, tof: VariableLike, Ltotal: VariableLike,
     return 1 / as_float_type(c * Ltotal * sc.sin(two_theta / 2), tof) * tof
 
 
-def _energy_constant(energy_unit: sc.Unit, tof: VariableLike, length: VariableLike):
+def _energy_constant(energy_unit: sc.Unit, tof: Variable, length: Variable):
     return sc.to_unit(const.m_n / 2,
                       energy_unit * (elem_unit(tof) / elem_unit(length))**2,
                       copy=False)
 
 
-def energy_from_tof(*, tof: VariableLike, Ltotal: VariableLike) -> VariableLike:
+def energy_from_tof(*, tof: Variable, Ltotal: Variable) -> Variable:
     r"""Compute the neutron energy from time-of-flight.
 
     The result is
@@ -135,9 +135,8 @@ def _energy_transfer_t0(energy, tof, length):
     return length.astype(dtype, copy=False) * sc.sqrt(c / energy)
 
 
-def energy_transfer_direct_from_tof(*, tof: VariableLike, L1: VariableLike,
-                                    L2: VariableLike,
-                                    incident_energy: VariableLike) -> VariableLike:
+def energy_transfer_direct_from_tof(*, tof: Variable, L1: Variable, L2: Variable,
+                                    incident_energy: Variable) -> Variable:
     r"""Compute the energy transfer in direct inelastic scattering.
 
     The result is
@@ -187,9 +186,8 @@ def energy_transfer_direct_from_tof(*, tof: VariableLike, L1: VariableLike,
                     incident_energy - scale / delta_tof**2)
 
 
-def energy_transfer_indirect_from_tof(*, tof: VariableLike, L1: VariableLike,
-                                      L2: VariableLike,
-                                      final_energy: VariableLike) -> VariableLike:
+def energy_transfer_indirect_from_tof(*, tof: Variable, L1: Variable, L2: Variable,
+                                      final_energy: Variable) -> Variable:
     r"""Compute the energy transfer in indirect inelastic scattering.
 
     The result is
@@ -239,7 +237,7 @@ def energy_transfer_indirect_from_tof(*, tof: VariableLike, L1: VariableLike,
                     scale / delta_tof**2 - final_energy)
 
 
-def energy_from_wavelength(*, wavelength: VariableLike) -> VariableLike:
+def energy_from_wavelength(*, wavelength: Variable) -> Variable:
     r"""Compute the neutron energy from wavelength.
 
     The result is
@@ -267,7 +265,7 @@ def energy_from_wavelength(*, wavelength: VariableLike) -> VariableLike:
     return c / wavelength**2
 
 
-def wavelength_from_energy(*, energy: VariableLike) -> VariableLike:
+def wavelength_from_energy(*, energy: Variable) -> Variable:
     r"""Compute the wavelength from the neutron energy.
 
     The result is the de Broglie wavelength
@@ -295,14 +293,13 @@ def wavelength_from_energy(*, energy: VariableLike) -> VariableLike:
     return sc.sqrt(c / energy)
 
 
-def _wavelength_Q_conversions(x: VariableLike, two_theta: VariableLike) -> VariableLike:
+def _wavelength_Q_conversions(x: Variable, two_theta: Variable) -> Variable:
     """Convert either from Q to wavelength or vice-versa."""
     c = as_float_type(4 * const.pi, x)
     return c * sc.sin(as_float_type(two_theta, x) / 2) / x
 
 
-def Q_from_wavelength(*, wavelength: VariableLike,
-                      two_theta: VariableLike) -> VariableLike:
+def Q_from_wavelength(*, wavelength: Variable, two_theta: Variable) -> Variable:
     r"""Compute the absolute value of the momentum transfer from wavelength.
 
     The result is
@@ -331,7 +328,7 @@ def Q_from_wavelength(*, wavelength: VariableLike,
     return _wavelength_Q_conversions(wavelength, two_theta)
 
 
-def wavelength_from_Q(*, Q: VariableLike, two_theta: VariableLike) -> VariableLike:
+def wavelength_from_Q(*, Q: Variable, two_theta: Variable) -> Variable:
     r"""Compute the wavelength from momentum transfer.
 
     The result is the de Broglie wavelength
@@ -364,9 +361,8 @@ def wavelength_from_Q(*, Q: VariableLike, two_theta: VariableLike) -> VariableLi
 
 
 def Q_elements_from_wavelength(
-        *, wavelength: VariableLike, incident_beam: VariableLike,
-        scattered_beam: VariableLike
-) -> Tuple[VariableLike, VariableLike, VariableLike]:
+        *, wavelength: Variable, incident_beam: Variable,
+        scattered_beam: Variable) -> Tuple[Variable, Variable, Variable]:
     r"""Compute them momentum transfer vector from wavelength.
 
     Computes the three components of the Q-vector :math:`Q_x, Q_y, Q_z`
@@ -399,11 +395,11 @@ def Q_elements_from_wavelength(
 
     Returns
     -------
-    Qx: scipp.VariableLike
+    Qx: scipp.Variable
         x-component of the momentum transfer :math:`\vec{Q}`.
-    Qy: scipp.VariableLike
+    Qy: scipp.Variable
         y-component of the momentum transfer :math:`\vec{Q}`.
-    Qz: scipp.VariableLike
+    Qz: scipp.Variable
         z-component of the momentum transfer :math:`\vec{Q}`.
     """
     e_i = incident_beam / sc.norm(incident_beam)
@@ -413,8 +409,7 @@ def Q_elements_from_wavelength(
     return k * e.fields.x, k * e.fields.y, k * e.fields.z
 
 
-def dspacing_from_wavelength(*, wavelength: VariableLike,
-                             two_theta: VariableLike) -> VariableLike:
+def dspacing_from_wavelength(*, wavelength: Variable, two_theta: Variable) -> Variable:
     r"""Compute the d-spacing from wavelength.
 
     The result is the inter-planar lattice spacing
@@ -446,8 +441,7 @@ def dspacing_from_wavelength(*, wavelength: VariableLike,
     return c * wavelength / sc.sin(as_float_type(two_theta, wavelength) / 2)
 
 
-def dspacing_from_energy(*, energy: VariableLike,
-                         two_theta: VariableLike) -> VariableLike:
+def dspacing_from_energy(*, energy: Variable, two_theta: Variable) -> Variable:
     r"""Compute the d-spacing from the neutron energy.
 
     The result is the inter-planar lattice spacing
@@ -480,3 +474,24 @@ def dspacing_from_energy(*, energy: VariableLike,
         sc.to_unit(const.h**2 / 8 / const.m_n,
                    sc.units.angstrom**2 * elem_unit(energy)), energy)
     return sc.sqrt(c / energy) / sc.sin(as_float_type(two_theta, energy) / 2)
+
+
+def Q_vec_from_Q_elements(*, Qx: sc.Variable, Qy: sc.Variable,
+                          Qz: sc.Variable) -> sc.Variable:
+    """Combine elements of Q into a single vector variable.
+
+    Parameters
+    ----------
+    Qx:
+        x-elements of the momentum transfer.
+    Qy:
+        y-elements of the momentum transfer.
+    Qz:
+        z-elements of the momentum transfer.
+
+    Returns
+    -------
+    :
+        ``Qx``, ``Qy``, ``Qz`` combined into a single variable of dtype ``vector3``.
+    """
+    return sc.geometry.position(Qx, Qy, Qz)
