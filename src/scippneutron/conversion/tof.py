@@ -493,6 +493,9 @@ def Q_vec_from_Q_elements(*, Qx: Variable, Qy: Variable, Qz: Variable) -> Variab
     :
         ``Qx``, ``Qy``, ``Qz`` combined into a single variable of dtype ``vector3``.
     """
+    if Qx.sizes != Qy.sizes or Qx.sizes != Qz.sizes:
+        raise sc.DimensionError("Qx, Qy, Qz must have the same sizes. "
+                                f"Got {Qx.sizes=}, {Qy.sizes=}, {Qz.sizes=}.")
     return sc.geometry.position(Qx, Qy, Qz)
 
 
