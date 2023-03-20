@@ -77,3 +77,4 @@ Documentation
    about/about
    about/contributing
    about/release-notes
+   bibliography
