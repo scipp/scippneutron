@@ -471,23 +471,32 @@ def make_b_matrix() -> sc.Variable:
         unit='1/angstrom')
 
 
+def test_ub_matrix_from_u_and_b():
+    b_matrix = make_b_matrix()
+    u_coeffs = np.array([0.5, 0.1, -0.4, 0.9])
+    u_matrix = sc.spatial.rotation(value=u_coeffs / np.linalg.norm(u_coeffs))
+    expected = u_matrix * b_matrix
+
+    assert sc.allclose(
+        tof_conv.ub_matrix_from_u_and_b(u_matrix=u_matrix, b_matrix=b_matrix), expected)
+
+
 @given(inv_q=n_space_variables(3))
 def test_hkl_vec_from_Q_vec(inv_q):
     Qx, Qy, Qz = (sc.reciprocal(x.to(dtype='float64')) for x in inv_q)
     Q_vec = tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
 
     b_matrix = make_b_matrix()
-
     u_coeffs = np.array([0.5, 0.1, -0.4, 0.9])
     u_matrix = sc.spatial.rotation(value=u_coeffs / np.linalg.norm(u_coeffs))
+    ub_matrix = u_matrix * b_matrix
 
     sample_rotation_coeffs = np.array([1.2, 0.8, -1.2, -0.1])
     sample_rotation_matrix = sc.spatial.rotation(value=sample_rotation_coeffs /
                                                  np.linalg.norm(sample_rotation_coeffs))
 
     hkl_vec = tof_conv.hkl_vec_from_Q_vec(Q_vec=Q_vec,
-                                          u_matrix=u_matrix,
-                                          b_matrix=b_matrix,
+                                          ub_matrix=ub_matrix,
                                           sample_rotation=sample_rotation_matrix)
 
     # hkl is dimensionless but may have a multiplier.

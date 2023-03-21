@@ -499,7 +499,32 @@ def Q_vec_from_Q_elements(*, Qx: Variable, Qy: Variable, Qz: Variable) -> Variab
     return sc.geometry.position(Qx, Qy, Qz)
 
 
-def hkl_vec_from_Q_vec(*, Q_vec: Variable, u_matrix: Variable, b_matrix: Variable,
+def ub_matrix_from_u_and_b(*, u_matrix: Variable, b_matrix: Variable) -> Variable:
+    r"""Compute the UB matrix from U and B matrices.
+
+    .. math::
+
+        \mathsf{UB} = U \cdot B
+
+    where :math:`U` and :math:`B` are defined as in
+    :cite:`busing:1967,mantid-lattice:2023`.
+
+    Parameters
+    ----------
+    u_matrix:
+        :math:`U`.
+    b_matrix:
+        :math:`B`.
+
+    Returns
+    -------
+    :
+        :math:`\mathsf{UB}`.
+    """
+    return u_matrix * b_matrix
+
+
+def hkl_vec_from_Q_vec(*, Q_vec: Variable, ub_matrix: Variable,
                        sample_rotation: Variable) -> Variable:
     r"""Compute hkl indices from momentum transfer.
 
@@ -526,7 +551,7 @@ def hkl_vec_from_Q_vec(*, Q_vec: Variable, u_matrix: Variable, b_matrix: Variabl
 
         \vec{Q}_l = 2 \pi R U B \vec{Q},
 
-    where :math:`U` :math:`B` transform from sample space to the lab frame.
+    where :math:`U` and :math:`B` transform from sample space to the lab frame.
     :math:`R` encodes the sample rotation, e.g., as given by a goniometer.
     See, e.g., Refs. :cite:`busing:1967,mantid-lattice:2023,savici:2011`
     for a definition.
@@ -538,10 +563,8 @@ def hkl_vec_from_Q_vec(*, Q_vec: Variable, u_matrix: Variable, b_matrix: Variabl
     ----------
     Q_vec:
         Momentum transfer :math:`\vec{Q}_l` as a vector variable.
-    u_matrix:
-        Matrix :math:`U`.
-    b_matrix:
-        Matrix :math:`B`.
+    ub_matrix:
+        Matrix :math:`\mathsf{UB}`.
     sample_rotation:
         Sample rotation matrix :math:`R`.
 
@@ -556,6 +579,8 @@ def hkl_vec_from_Q_vec(*, Q_vec: Variable, u_matrix: Variable, b_matrix: Variabl
         Computes ``Q_l``.
     scippneutron.conversion.tof.Q_vec_from_Q_elements:
         Packs elements ``Qx``, ``Qy``, ``Qz`` into a single vector.
+    scippneutron.conversions.tof.ub_matrix_from_u_and_b:
+        Compute :math:`\mathsf{UB}` from :math:`B` and :math:`B` matrices.
     """
     # There are different ways to implement this with different performance and
     # accuracy characteristics.
@@ -568,7 +593,7 @@ def hkl_vec_from_Q_vec(*, Q_vec: Variable, u_matrix: Variable, b_matrix: Variabl
     #
     # (((sc.spatial.inv(B) * sc.spatial.inv(U)) * sc.spatial.inv(R)) * Q) / (2*np.pi)
     #
-    # (sc.spatial.inv((R * U) * B) * Q) / (2 np.pi)
+    # (sc.spatial.inv((R * U) * B) * Q) / (2*np.pi)
     #
     # All 3 were tested with random matrices and vectors and the first was found
     # to have the best overall accuracy, being an order of magnitude better than the
@@ -577,8 +602,7 @@ def hkl_vec_from_Q_vec(*, Q_vec: Variable, u_matrix: Variable, b_matrix: Variabl
     # Concerning performance, R, U, B are scalar variables or short array variables
     # in typical use cases while Q is typically a long, potentially multi-dim array.
     # So implementation 3 will likely perform the best.
-    # Since we don't have performance measurements or requirements at this point,
-    # the most accurate implementation was chosen.
-    return (sc.spatial.inv(b_matrix) * (sc.spatial.inv(u_matrix) *
-                                        (sc.spatial.inv(sample_rotation) * Q_vec)) /
-            (2 * np.pi))
+    #
+    # This function uses implementation 3 as the performance gain
+    # is expected to be significant over 1 and 2.
+    return (sc.spatial.inv(sample_rotation * ub_matrix) * Q_vec) / (2 * np.pi)
