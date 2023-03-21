@@ -466,8 +466,9 @@ def make_b_matrix() -> sc.Variable:
 
     return sc.spatial.linear_transform(
         value=[[a, b * np.cos(gamma), c * np.cos(beta)],
-               [0, b * np.sin(gamma), -c * np.sin(beta) * np.cos(alpha)], [0, 0, 1 /
-                                                                           c]])
+               [0, b * np.sin(gamma), -c * np.sin(beta) * np.cos(alpha)], [0, 0,
+                                                                           1 / c]],
+        unit='1/angstrom')
 
 
 @given(inv_q=n_space_variables(3))
@@ -489,7 +490,9 @@ def test_hkl_vec_from_Q_vec(inv_q):
                                           b_matrix=b_matrix,
                                           sample_rotation=sample_rotation_matrix)
 
-    assert hkl_vec.unit == Q_vec.unit
+    # hkl is dimensionless but may have a multiplier.
+    assert 'powers' not in hkl_vec.unit.to_dict()
+
     assert hkl_vec.sizes == Q_vec.sizes
     assert hkl_vec.dtype == sc.DType.vector3
 
