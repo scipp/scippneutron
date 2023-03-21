@@ -508,3 +508,11 @@ def test_hkl_vec_from_Q_vec(inv_q):
     reconstructed_Q = 2 * np.pi * (sample_rotation_matrix * u_matrix * b_matrix *
                                    hkl_vec)
     assert sc.allclose(reconstructed_Q, Q_vec)
+
+
+def test_hkl_elements_from_hkl_vec():
+    hkl_vec = sc.vector([3.1, 4.5, 6.9])
+    h, k, l = tof_conv.hkl_elements_from_hkl_vec(hkl_vec=hkl_vec)
+    sc.testing.assert_identical(h, hkl_vec.fields.x)
+    sc.testing.assert_identical(k, hkl_vec.fields.y)
+    sc.testing.assert_identical(l, hkl_vec.fields.z)

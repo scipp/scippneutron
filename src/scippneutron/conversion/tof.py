@@ -579,8 +579,10 @@ def hkl_vec_from_Q_vec(*, Q_vec: Variable, ub_matrix: Variable,
         Computes ``Q_l``.
     scippneutron.conversion.tof.Q_vec_from_Q_elements:
         Packs elements ``Qx``, ``Qy``, ``Qz`` into a single vector.
-    scippneutron.conversions.tof.ub_matrix_from_u_and_b:
+    scippneutron.conversion.tof.ub_matrix_from_u_and_b:
         Compute :math:`\mathsf{UB}` from :math:`B` and :math:`B` matrices.
+    scippneutron.conversion.tof.hkl_elements_from_hkl_vec:
+        Unpack the returned hkl vector.
     """
     # There are different ways to implement this with different performance and
     # accuracy characteristics.
@@ -606,3 +608,24 @@ def hkl_vec_from_Q_vec(*, Q_vec: Variable, ub_matrix: Variable,
     # This function uses implementation 3 as the performance gain
     # is expected to be significant over 1 and 2.
     return (sc.spatial.inv(sample_rotation * ub_matrix) * Q_vec) / (2 * np.pi)
+
+
+def hkl_elements_from_hkl_vec(*,
+                              hkl_vec: Variable) -> Tuple[Variable, Variable, Variable]:
+    """Unpack vector of hkl indices into separate variables.
+
+    Parameters
+    ----------
+    hkl_vec:
+        Vector of hkl indices.
+
+    Returns
+    -------
+    h: scipp.Variable
+        1st component of the hkl vector.
+    k: scipp.Variable
+        2nd component of the hkl vector.
+    l: scipp.Variable
+        3rd component of the hkl vector.
+    """
+    return hkl_vec.fields.x, hkl_vec.fields.y, hkl_vec.fields.z
