@@ -31,7 +31,11 @@ _GRAPH_DYNAMICS_BY_ORIGIN = {
     'tof': {
         'dspacing': _kernels.dspacing_from_tof,
         'energy': _kernels.energy_from_tof,
+        'hkl_vec': _kernels.hkl_vec_from_Q_vec,
+        ('h', 'k', 'l'): _kernels.hkl_elements_from_hkl_vec,
+        'ub_matrix': _kernels.ub_matrix_from_u_and_b,
         'Q': _kernels.Q_from_wavelength,
+        'Q_vec': _kernels.Q_vec_from_Q_elements,
         ('Qx', 'Qy', 'Qz'): _kernels.Q_elements_from_wavelength,
         'wavelength': _kernels.wavelength_from_tof,
     },
@@ -41,7 +45,11 @@ _GRAPH_DYNAMICS_BY_ORIGIN = {
     'wavelength': {
         'dspacing': _kernels.dspacing_from_wavelength,
         'energy': _kernels.energy_from_wavelength,
+        'hkl_vec': _kernels.hkl_vec_from_Q_vec,
+        ('h', 'k', 'l'): _kernels.hkl_elements_from_hkl_vec,
+        'ub_matrix': _kernels.ub_matrix_from_u_and_b,
         'Q': _kernels.Q_from_wavelength,
+        'Q_vec': _kernels.Q_vec_from_Q_elements,
         ('Qx', 'Qy', 'Qz'): _kernels.Q_elements_from_wavelength,
     },
 }
@@ -138,7 +146,7 @@ def elastic_Q(start: str) -> Graph:
     return _strip_elastic(start, keep=['Q', 'wavelength'])
 
 
-def elastic_Q_elements(start: str) -> Graph:
+def elastic_Q_vec(start: str) -> Graph:
     """
     Graph for elastic scattering transformation to Q vector.
 
@@ -152,7 +160,26 @@ def elastic_Q_elements(start: str) -> Graph:
     :
         A dict defining a coordinate transformation graph.
     """
-    return _strip_elastic(start, keep=['Qx', 'Qy', 'Qz', 'wavelength'])
+    return _strip_elastic(start, keep=[('Qx', 'Qy', 'Qz'), 'Q_vec', 'wavelength'])
+
+
+def elastic_hkl(start: str) -> Graph:
+    """
+    Graph for elastic scattering transformation to Q vector.
+
+    Parameters
+    ----------
+    start:
+        Input coordinate. One of 'tof' or 'wavelength'.
+
+    Returns
+    -------
+    :
+        A dict defining a coordinate transformation graph.
+    """
+    return _strip_elastic(start,
+                          keep=[('Qx', 'Qy', 'Qz'), 'Q_vec', ('h', 'k', 'l'), 'hkl_vec',
+                                'ub_matrix', 'wavelength'])
 
 
 def elastic_wavelength(start: str) -> Graph:
