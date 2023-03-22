@@ -4,6 +4,7 @@ channels:
   - mantid
   - scipp
 dependencies:
+  - comm=0.1.3  # earlier versions break tests with ipywidgets with latest ipykernel
   - h5py
   - hypothesis
   - mantid=6.5.*
