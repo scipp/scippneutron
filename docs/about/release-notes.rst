@@ -34,6 +34,36 @@ Release Notes
    Neil Vaytet :sup:`a`\ ,
    and Jan-Lukas Wynen :sup:`a`
 
+v0.xy.0 (Unreleased)
+--------------------
+
+Features
+~~~~~~~~
+
+* Added :func:`scippneutron.conversion.tof.hkl_vec_from_Q_vec` `427 <https://github.com/scipp/scipp/pull/427>`_.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+Bugfixes
+~~~~~~~~
+
+Documentation
+~~~~~~~~~~~~~
+
+Deprecations
+~~~~~~~~~~~~
+
+Stability, Maintainability, and Testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Contributors
+~~~~~~~~~~~~
+
+Simon Heybrock :sup:`a`\ ,
+Neil Vaytet :sup:`a`\ ,
+and Jan-Lukas Wynen :sup:`a`
+
 v23.03.1 (March 2022)
 ---------------------
 

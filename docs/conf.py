@@ -84,7 +84,7 @@ html_show_sourcelink = True
 extensions = [
     'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.doctest',
     'sphinx.ext.intersphinx', 'sphinx.ext.mathjax', 'sphinx.ext.napoleon',
-    'sphinx_autodoc_typehints', 'sphinx_copybutton',
+    'sphinx_autodoc_typehints', 'sphinx_copybutton', 'sphinxcontrib.bibtex',
     'IPython.sphinxext.ipython_directive',
     'IPython.sphinxext.ipython_console_highlighting', 'nbsphinx'
 ]
@@ -269,3 +269,7 @@ linkcheck_ignore = [
 # Set env variable to enable plopp
 docs_dir = pathlib.Path(__file__).parent.absolute()
 os.environ["SCIPPDIR"] = os.path.join(docs_dir, 'buildconfig')
+
+# -- Options for bibtex ---------------------------------------------------
+bibtex_bibfiles = ["bibliography.bib"]
+bibtex_reference_style = "label"

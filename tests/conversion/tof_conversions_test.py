@@ -414,3 +414,105 @@ def test_dspacing_from_energy_single_precision(two_theta_dtype):
     two_theta = sc.scalar(1.985, unit='rad', dtype=two_theta_dtype)
     assert tof_conv.dspacing_from_energy(energy=energy,
                                          two_theta=two_theta).dtype == 'float32'
+
+
+def test_q_vec_from_q_elements():
+    Qx, Qy, Qz = (sc.array(dims=['Q'], values=[2.1 * i, i / 3], unit='1/angstrom')
+                  for i in range(3))
+    q_vec = tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+    sc.testing.assert_identical(q_vec.fields.x, Qx)
+    sc.testing.assert_identical(q_vec.fields.y, Qy)
+    sc.testing.assert_identical(q_vec.fields.z, Qz)
+
+
+def test_q_vec_from_q_elements_raises_for_shape_mismatch():
+    Qx = sc.array(dims=['q'], values=[2.0, 3.0])
+    Qy = Qx.copy()
+    Qz = sc.array(dims=['q'], values=[2.0, 3.0, 4.0])
+    with pytest.raises(sc.DimensionError):
+        tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+
+
+def test_q_vec_from_q_elements_raises_for_dim_mismatch():
+    Qx = sc.array(dims=['q'], values=[2.0, 3.0])
+    Qy = Qx.copy()
+    Qz = sc.array(dims=['Q'], values=[2.0, 3.0])
+    with pytest.raises(sc.DimensionError):
+        tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+
+
+def test_q_vec_from_q_elements_raises_for_unit_mismatch():
+    Qx, Qy, Qz = (sc.array(dims=['Q'], values=[2.1 * i, i / 3], unit='1/angstrom')
+                  for i in range(3))
+    Qy.unit = '1/m'
+    with pytest.raises(sc.UnitError):
+        tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+
+
+def make_b_matrix() -> sc.Variable:
+    """Return a B matrix.
+
+    Uses and Levi convention
+      W. R. Busing and H. A. Levy
+      Angle calculations for 3- and 4-circle X-ray and neutron diffractometers
+      Acta Cryst. (1967). 22, 457-464)
+    """
+    a = 3.1
+    b = 0.3
+    c = 1.1
+    alpha = 0.7
+    beta = 4.6
+    gamma = 1.4
+
+    return sc.spatial.linear_transform(
+        value=[[a, b * np.cos(gamma), c * np.cos(beta)],
+               [0, b * np.sin(gamma), -c * np.sin(beta) * np.cos(alpha)], [0, 0,
+                                                                           1 / c]],
+        unit='1/angstrom')
+
+
+def test_ub_matrix_from_u_and_b():
+    b_matrix = make_b_matrix()
+    u_coeffs = np.array([0.5, 0.1, -0.4, 0.9])
+    u_matrix = sc.spatial.rotation(value=u_coeffs / np.linalg.norm(u_coeffs))
+    expected = u_matrix * b_matrix
+
+    assert sc.allclose(
+        tof_conv.ub_matrix_from_u_and_b(u_matrix=u_matrix, b_matrix=b_matrix), expected)
+
+
+@given(inv_q=n_space_variables(3))
+def test_hkl_vec_from_Q_vec(inv_q):
+    Qx, Qy, Qz = (sc.reciprocal(x.to(dtype='float64')) for x in inv_q)
+    Q_vec = tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+
+    b_matrix = make_b_matrix()
+    u_coeffs = np.array([0.5, 0.1, -0.4, 0.9])
+    u_matrix = sc.spatial.rotation(value=u_coeffs / np.linalg.norm(u_coeffs))
+    ub_matrix = u_matrix * b_matrix
+
+    sample_rotation_coeffs = np.array([1.2, 0.8, -1.2, -0.1])
+    sample_rotation_matrix = sc.spatial.rotation(value=sample_rotation_coeffs /
+                                                 np.linalg.norm(sample_rotation_coeffs))
+
+    hkl_vec = tof_conv.hkl_vec_from_Q_vec(Q_vec=Q_vec,
+                                          ub_matrix=ub_matrix,
+                                          sample_rotation=sample_rotation_matrix)
+
+    # hkl is dimensionless but may have a multiplier.
+    assert 'powers' not in hkl_vec.unit.to_dict()
+
+    assert hkl_vec.sizes == Q_vec.sizes
+    assert hkl_vec.dtype == sc.DType.vector3
+
+    reconstructed_Q = 2 * np.pi * (sample_rotation_matrix * u_matrix * b_matrix *
+                                   hkl_vec)
+    assert sc.allclose(reconstructed_Q, Q_vec)
+
+
+def test_hkl_elements_from_hkl_vec():
+    hkl_vec = sc.vector([3.1, 4.5, 6.9])
+    h, k, l = tof_conv.hkl_elements_from_hkl_vec(hkl_vec=hkl_vec)
+    sc.testing.assert_identical(h, hkl_vec.fields.x)
+    sc.testing.assert_identical(k, hkl_vec.fields.y)
+    sc.testing.assert_identical(l, hkl_vec.fields.z)

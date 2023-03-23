@@ -4,6 +4,7 @@ channels:
   - mantid
   - scipp
 dependencies:
+  - comm=0.1.3  # earlier versions break tests with ipywidgets with latest ipykernel
   - h5py
   - hypothesis
   - mantid=6.5.*
@@ -14,6 +15,6 @@ dependencies:
   - pytest
   - pytest-asyncio
   - pythreejs
-  - scipp=23.01.1
+  - scipp=23.03.0
   - scippnexus>=23.01.1
   - scipy>=1.7.0
