@@ -262,9 +262,8 @@ def _rot_from_vectors(vec1, vec2):
     b = sc.vector(value=vec2.value / np.linalg.norm(vec2.value))
     c = sc.vector(value=np.cross(a.value, b.value))
     angle = sc.acos(sc.dot(a, b)).value
-    return sc.spatial.linear_transform(
-        value=sc.geometry.rotation_matrix_from_quaternion_coeffs(
-            list(c.value * np.sin(angle / 2)) + [np.cos(angle / 2)]))
+    return sc.spatial.rotation(value=list(c.value * np.sin(angle / 2)) +
+                               [np.cos(angle / 2)])
 
 
 def get_detector_pos(ws, spectrum_dim):
@@ -294,7 +293,7 @@ def get_detector_properties(ws,
     det_info = ws.detectorInfo()
     comp_info = ws.componentInfo()
     nspec = len(spec_info)
-    det_rot = np.zeros([nspec, 3, 3])
+    det_rot_quaternions = np.zeros([nspec, 4])
     det_bbox = np.zeros([nspec, 3])
 
     if sample_pos is not None and source_pos is not None:
@@ -339,8 +338,7 @@ def get_detector_properties(ws,
                     if comp_info.hasValidShape(det_idx):
                         s = comp_info.shape(det_idx)
                         bboxes.append(s.getBoundingBox().width())
-                det_rot[i, :] = sc.geometry.rotation_matrix_from_quaternion_coeffs(
-                    np.mean(quats, axis=0))
+                det_rot_quaternions[i] = np.mean(quats, axis=0)
                 det_bbox[i, :] = np.sum(bboxes, axis=0)
 
         rot_pos = rot * sc.geometry.position(pos_d["x"].data, pos_d["y"].data,
@@ -368,7 +366,7 @@ def get_detector_properties(ws,
                                    averaged["z"].data)
 
         return (inv_rot * pos,
-                sc.spatial.linear_transforms(dims=[spectrum_dim], values=det_rot),
+                sc.spatial.rotations(dims=[spectrum_dim], values=det_rot_quaternions),
                 sc.vectors(dims=[spectrum_dim], values=det_bbox, unit=sc.units.m))
     else:
         pos = np.zeros([nspec, 3])
@@ -390,15 +388,14 @@ def get_detector_properties(ws,
                         s = comp_info.shape(det_idx)
                         bboxes.append(s.getBoundingBox().width())
                 pos[i, :] = np.mean(vec3s, axis=0)
-                det_rot[i, :] = sc.geometry.rotation_matrix_from_quaternion_coeffs(
-                    np.mean(quats, axis=0))
+                det_rot_quaternions[i] = np.mean(quats, axis=0)
                 det_bbox[i, :] = np.sum(bboxes, axis=0)
             else:
                 pos[i, :] = [np.nan, np.nan, np.nan]
-                det_rot[i, :] = [np.nan, np.nan, np.nan, np.nan]
+                det_rot_quaternions[i] = [np.nan, np.nan, np.nan, np.nan]
                 det_bbox[i, :] = [np.nan, np.nan, np.nan]
         return (sc.vectors(dims=[spectrum_dim], values=pos, unit=sc.units.m),
-                sc.spatial.linear_transforms(dims=[spectrum_dim], values=det_rot),
+                sc.spatial.rotations(dims=[spectrum_dim], values=det_rot_quaternions),
                 sc.vectors(
                     dims=[spectrum_dim],
                     values=det_bbox,
