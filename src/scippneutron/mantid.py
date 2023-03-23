@@ -262,7 +262,8 @@ def _rot_from_vectors(vec1, vec2):
     b = sc.vector(value=vec2.value / np.linalg.norm(vec2.value))
     c = sc.vector(value=np.cross(a.value, b.value))
     angle = sc.acos(sc.dot(a, b)).value
-    return sc.spatial.rotation(value=list(c.value * np.sin(angle / 2)) + [np.cos(angle / 2)])
+    return sc.spatial.rotation(value=list(c.value * np.sin(angle / 2)) +
+                               [np.cos(angle / 2)])
 
 
 def get_detector_pos(ws, spectrum_dim):
@@ -391,7 +392,7 @@ def get_detector_properties(ws,
                 det_bbox[i, :] = np.sum(bboxes, axis=0)
             else:
                 pos[i, :] = [np.nan, np.nan, np.nan]
-                det_rot_quaternions[i] = [np.nan,np.nan,np.nan,np.nan]
+                det_rot_quaternions[i] = [np.nan, np.nan, np.nan, np.nan]
                 det_bbox[i, :] = [np.nan, np.nan, np.nan]
         return (sc.vectors(dims=[spectrum_dim], values=pos, unit=sc.units.m),
                 sc.spatial.rotations(dims=[spectrum_dim], values=det_rot_quaternions),
