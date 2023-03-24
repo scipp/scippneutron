@@ -57,7 +57,7 @@ Deprecations
 Stability, Maintainability, and Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Switched to black for Python code formatting `#429 <https://github.com/scipp/scipp/pull/429>`_.
+* Switched to black for Python code formatting `#429 <https://github.com/scipp/scippneutron/pull/429>`_.
 
 Contributors
 ~~~~~~~~~~~~
@@ -72,7 +72,7 @@ v23.03.1 (March 2022)
 Bugfixes
 ~~~~~~~~
 
-* Conversion from ``mantid.MaskWorkspace`` now correctly sets ``unit=None`` instead of using dimensionless `424 <https://github.com/scipp/scipp/pull/424>`_.
+* Conversion from ``mantid.MaskWorkspace`` now correctly sets ``unit=None`` instead of using dimensionless `424 <https://github.com/scipp/scippneutron/pull/424>`_.
 
 v23.03.0
 --------
@@ -85,8 +85,8 @@ Breaking Changes
 Features
 ~~~~~~~~
 
-* Coordinate transformation kernel for :math:`\vec{Q}` `412 <https://github.com/scipp/scipp/pull/412>`_.
-* Added :func:`scippneutron.io.xye.save_xye` and :func:`scippneutron.io.xye.load_xye` `417 <https://github.com/scipp/scipp/pull/417>`_.
+* Coordinate transformation kernel for :math:`\vec{Q}` `412 <https://github.com/scipp/scippneutron/pull/412>`_.
+* Added :func:`scippneutron.io.xye.save_xye` and :func:`scippneutron.io.xye.load_xye` `417 <https://github.com/scipp/scippneutron/pull/417>`_.
 
 v23.01.0 (January 2023)
 -----------------------
@@ -95,7 +95,7 @@ Breaking Changes
 ~~~~~~~~~~~~~~~~
 
 * Requires Scipp v23.1.1 and ScippNexus v23.1.1
-* :func:`scippneutron.load_nexus` may now return ``scipp.DataGroup`` objects if parts of the file cannot be read `401 <https://github.com/scipp/scipp/pull/401>`_.
+* :func:`scippneutron.load_nexus` may now return ``scipp.DataGroup`` objects if parts of the file cannot be read `401 <https://github.com/scipp/scippneutron/pull/401>`_.
 
 v22.12.4 (December 2022)
 ------------------------
@@ -112,17 +112,17 @@ v22.12.0 (December 2022)
 Features
 ~~~~~~~~
 
-* ScippNeutron is now available on PyPI `#384 <https://github.com/scipp/scipp/pull/384>`_.
+* ScippNeutron is now available on PyPI `#384 <https://github.com/scipp/scippneutron/pull/384>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
-* Removed C++ components and CMake package configuration. This only affects users that linked against the C++ part of ScippNeutron `#384 <https://github.com/scipp/scipp/pull/384>`_.
+* Removed C++ components and CMake package configuration. This only affects users that linked against the C++ part of ScippNeutron `#384 <https://github.com/scipp/scippneutron/pull/384>`_.
 
 Stability, Maintainability, and Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* ScippNeutron no longer depends on a specific version of Scipp`#384 <https://github.com/scipp/scipp/pull/384>`_.
+* ScippNeutron no longer depends on a specific version of Scipp`#384 <https://github.com/scipp/scippneutron/pull/384>`_.
 
 Contributors
 ~~~~~~~~~~~~
@@ -137,17 +137,17 @@ v0.11.0 (November 2022)
 Features
 ~~~~~~~~
 
-* The instrument view will now use ``plopp`` if it is the current default for plotting `#378 <https://github.com/scipp/scipp/pull/378>`_.
+* The instrument view will now use ``plopp`` if it is the current default for plotting `#378 <https://github.com/scipp/scippneutron/pull/378>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
-* The instrument view no longer accepts a dataset as input, only data arrays are supported `#378 <https://github.com/scipp/scipp/pull/378>`_.
+* The instrument view no longer accepts a dataset as input, only data arrays are supported `#378 <https://github.com/scipp/scippneutron/pull/378>`_.
 
 Bugfixes
 ~~~~~~~~
 
-* :func:`scippneutron.load_nexus` now works with scippnexus 0.4.1 `#380 <https://github.com/scipp/scipp/pull/380>`_.
+* :func:`scippneutron.load_nexus` now works with scippnexus 0.4.1 `#380 <https://github.com/scipp/scippneutron/pull/380>`_.
 
 Contributors
 ~~~~~~~~~~~~
@@ -192,7 +192,7 @@ v0.9.3 (September 2022)
 Features
 ~~~~~~~~
 
-* Update for compatibility with scippnexus v0.3 `#370 <https://github.com/scipp/scipp/pull/370>`_.
+* Update for compatibility with scippnexus v0.3 `#370 <https://github.com/scipp/scippneutron/pull/370>`_.
 
 
 v0.9.2 (August 2022)
@@ -201,7 +201,7 @@ v0.9.2 (August 2022)
 Features
 ~~~~~~~~
 
-* Made compatible with scippnexus v0.2 `#369 <https://github.com/scipp/scipp/pull/369>`_.
+* Made compatible with scippnexus v0.2 `#369 <https://github.com/scipp/scippneutron/pull/369>`_.
 
 Contributors
 ~~~~~~~~~~~~
@@ -231,18 +231,18 @@ v0.9.0 (August 2022)
 Features
 ~~~~~~~~
 
-* Kernels for coordinate transformations are now public in :mod:`scippneutron.conversion` `#361 <https://github.com/scipp/scipp/pull/361>`_.
+* Kernels for coordinate transformations are now public in :mod:`scippneutron.conversion` `#361 <https://github.com/scipp/scippneutron/pull/361>`_.
 
 Bugfixes
 ~~~~~~~~
 
-* Fixed ``dspacing_from_wavelength``, results used to be wrong by a factor of ``10**10`` `#361 <https://github.com/scipp/scipp/pull/361>`_.
-* ``two_theta`` as used by coordinate transformations now uses a numerically more stable implementation, the old one had an error of up to ``10**-6`` for small angles `#361 <https://github.com/scipp/scipp/pull/361>`_.
+* Fixed ``dspacing_from_wavelength``, results used to be wrong by a factor of ``10**10`` `#361 <https://github.com/scipp/scippneutron/pull/361>`_.
+* ``two_theta`` as used by coordinate transformations now uses a numerically more stable implementation, the old one had an error of up to ``10**-6`` for small angles `#361 <https://github.com/scipp/scippneutron/pull/361>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
-* ``scippneutron.tof.conversions`` has been split into :mod:`scippneutron.conversion.graph.beamline` and :mod:`scippneutron.conversion.graph.tof` `#361 <https://github.com/scipp/scipp/pull/361>`_.
+* ``scippneutron.tof.conversions`` has been split into :mod:`scippneutron.conversion.graph.beamline` and :mod:`scippneutron.conversion.graph.tof` `#361 <https://github.com/scipp/scippneutron/pull/361>`_.
 * Switched to scipp 0.16.1
 
 Contributors
@@ -293,7 +293,7 @@ v0.6.0 (May 2022)
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
-* Remove accidental dependency on Mantid. Users now have to install Mantid themselves if they need it `#332 <https://github.com/scipp/scipp/pull/332>`_.
+* Remove accidental dependency on Mantid. Users now have to install Mantid themselves if they need it `#332 <https://github.com/scipp/scippneutron/pull/332>`_.
 * Removed module ``scippneutron.nexus`` in favor of `scippnexus <https://scipp.github.io/scippnexus/>`_ to implement :func:`scippneutron.load_nexus`.
 
 Bugfixes
@@ -375,12 +375,12 @@ v0.4.0 (October 2021)
 Features
 ~~~~~~~~
 
-* Add ``tof.conversions`` module with building blocks for custom coordinate transformation graphs `#187 <https://github.com/scipp/scipp/pull/187>`_.
+* Add ``tof.conversions`` module with building blocks for custom coordinate transformation graphs `#187 <https://github.com/scipp/scippneutron/pull/187>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
-* Changed behavior of ``convert`` `#162 <https://github.com/scipp/scipp/pull/162>`_.
+* Changed behavior of ``convert`` `#162 <https://github.com/scipp/scippneutron/pull/162>`_.
 
   * It is no longer possible to convert *to* time-of-flight.
   * To compensate, it is now possible to convert between wavelength, energy, and d-spacing directly.
@@ -462,7 +462,7 @@ Features
   This includes in particular the instrument view and "unit conversions" for time-of-flight neutron sources.
 * Convert supports a greatly enhanced way of obtaining required parameters of the beamline.
   Instead of requiring raw component positions it can now work directly with, e.g., ``two_theta``.
-* Add scipp ``datetime64`` support in mantid-scipp converters `#39 <https://github.com/scipp/scipp/pull/39>`_.
+* Add scipp ``datetime64`` support in mantid-scipp converters `#39 <https://github.com/scipp/scippneutron/pull/39>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
