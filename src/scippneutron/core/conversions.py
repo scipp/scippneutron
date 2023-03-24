@@ -16,13 +16,15 @@ def _inelastic_scatter_graph(energy_mode):
     }
     return {
         **_graphs.beamline.beamline(scatter=True),
-        **inelastic_graph_factory[energy_mode](start='tof')
+        **inelastic_graph_factory[energy_mode](start='tof'),
     }
 
 
 def _reachable_by(target, graph):
-    return any(target == targets if isinstance(targets, str) else target in targets
-               for targets in graph.keys())
+    return any(
+        target == targets if isinstance(targets, str) else target in targets
+        for targets in graph.keys()
+    )
 
 
 def _elastic_scatter_graph(origin, target):
@@ -33,13 +35,17 @@ def _elastic_scatter_graph(origin, target):
 
 
 def _scatter_graph(origin, target, energy_mode):
-    graph = (_elastic_scatter_graph(origin, target)
-             if energy_mode == 'elastic' else _inelastic_scatter_graph(energy_mode))
+    graph = (
+        _elastic_scatter_graph(origin, target)
+        if energy_mode == 'elastic'
+        else _inelastic_scatter_graph(energy_mode)
+    )
     return graph
 
 
-def conversion_graph(origin: str, target: str, scatter: bool,
-                     energy_mode: str) -> Dict[Union[str, Tuple[str]], Callable]:
+def conversion_graph(
+    origin: str, target: str, scatter: bool, energy_mode: str
+) -> Dict[Union[str, Tuple[str]], Callable]:
     """
     Get a conversion graph for given parameters.
 
@@ -61,7 +67,7 @@ def conversion_graph(origin: str, target: str, scatter: bool,
     else:
         return {
             **_graphs.beamline.beamline(scatter=False),
-            **_graphs.tof.kinematic(start='tof')
+            **_graphs.tof.kinematic(start='tof'),
         }
 
 
@@ -75,15 +81,17 @@ def _deduce_energy_mode(data, origin, target):
         if len(inelastic_inputs) > 1:
             raise RuntimeError(
                 "Data contains coords for incident *and* final energy, cannot have "
-                "both for inelastic scattering.")
+                "both for inelastic scattering."
+            )
         if len(inelastic_inputs) == 0:
             raise RuntimeError(
                 "Data contains neither coords for incident nor for final energy, this "
                 "does not appear to be inelastic-scattering data, cannot convert to "
-                "energy transfer.")
+                "energy transfer."
+            )
         return {
             'incident_energy': 'direct_inelastic',
-            'final_energy': 'indirect_inelastic'
+            'final_energy': 'indirect_inelastic',
         }[inelastic_inputs[0]]
 
     if 'energy' in (origin, target):
@@ -91,13 +99,14 @@ def _deduce_energy_mode(data, origin, target):
             raise RuntimeError(
                 f"Data contains coords for inelastic scattering "
                 f"({inelastic_inputs}) but conversion with elastic energy requested. "
-                f"This is not implemented.")
+                f"This is not implemented."
+            )
     return 'elastic'
 
 
-def deduce_conversion_graph(data: Union[sc.DataArray,
-                                        sc.Dataset], origin: str, target: str,
-                            scatter: bool) -> Dict[Union[str, Tuple[str]], Callable]:
+def deduce_conversion_graph(
+    data: Union[sc.DataArray, sc.Dataset], origin: str, target: str, scatter: bool
+) -> Dict[Union[str, Tuple[str]], Callable]:
     """
     Get the conversion graph used by :py:func:`scippneutron.convert`
     when called with identical arguments.
@@ -109,12 +118,14 @@ def deduce_conversion_graph(data: Union[sc.DataArray,
     :return: Conversion graph.
     :seealso: :py:func:`scippneutron.convert`, :py:func:`scippneutron.conversion_graph`.
     """
-    return conversion_graph(origin, target, scatter,
-                            _deduce_energy_mode(data, origin, target))
+    return conversion_graph(
+        origin, target, scatter, _deduce_energy_mode(data, origin, target)
+    )
 
 
-def convert(data: Union[sc.DataArray, sc.Dataset], origin: str, target: str,
-            scatter: bool) -> Union[sc.DataArray, sc.Dataset]:
+def convert(
+    data: Union[sc.DataArray, sc.Dataset], origin: str, target: str, scatter: bool
+) -> Union[sc.DataArray, sc.Dataset]:
     """
     Perform a unit conversion from the given origin unit to target.
     See the documentation page on "Coordinate Transformations"
@@ -137,9 +148,13 @@ def convert(data: Union[sc.DataArray, sc.Dataset], origin: str, target: str,
         converted = data.transform_coords(target, graph=graph)
     except KeyError as err:
         if err.args[0] == target:
-            raise RuntimeError(f"No viable conversion from '{origin}' to '{target}' "
-                               f"with scatter={scatter}.")
-        raise RuntimeError(f"Missing coordinate '{err.args[0]}' for conversion "
-                           f"from '{origin}' to '{target}'") from None
+            raise RuntimeError(
+                f"No viable conversion from '{origin}' to '{target}' "
+                f"with scatter={scatter}."
+            )
+        raise RuntimeError(
+            f"Missing coordinate '{err.args[0]}' for conversion "
+            f"from '{origin}' to '{target}'"
+        ) from None
 
     return converted

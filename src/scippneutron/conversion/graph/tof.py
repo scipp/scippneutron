@@ -177,9 +177,17 @@ def elastic_hkl(start: str) -> Graph:
     :
         A dict defining a coordinate transformation graph.
     """
-    return _strip_elastic(start,
-                          keep=[('Qx', 'Qy', 'Qz'), 'Q_vec', ('h', 'k', 'l'), 'hkl_vec',
-                                'ub_matrix', 'wavelength'])
+    return _strip_elastic(
+        start,
+        keep=[
+            ('Qx', 'Qy', 'Qz'),
+            'Q_vec',
+            ('h', 'k', 'l'),
+            'hkl_vec',
+            'ub_matrix',
+            'wavelength',
+        ],
+    )
 
 
 def elastic_wavelength(start: str) -> Graph:
@@ -230,8 +238,6 @@ def indirect_inelastic(start: str) -> Graph:
     :
         A dict defining a coordinate transformation graph.
     """
-    return {
-        'tof': {
-            'energy_transfer': _kernels.energy_transfer_indirect_from_tof
-        }
-    }[start]
+    return {'tof': {'energy_transfer': _kernels.energy_transfer_indirect_from_tof}}[
+        start
+    ]

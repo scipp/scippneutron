@@ -4,6 +4,7 @@ import scippnexus as snx
 
 def test_can_load_nxdetector_from_PG3():
     import scippneutron as scn
+
     with snx.File(scn.data.get_path('PG3_4844_event.nxs')) as f:
         det = f['entry/instrument/bank24']
         da = det[...]

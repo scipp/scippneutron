@@ -52,14 +52,17 @@ def wavelength_from_tof(*, tof: Variable, Ltotal: Variable) -> Variable:
         Wavelength :math:`\lambda`.
         Has unit ångström.
     """
-    c = sc.to_unit(const.h / const.m_n,
-                   sc.units.angstrom * elem_unit(Ltotal) / elem_unit(tof),
-                   copy=False)
+    c = sc.to_unit(
+        const.h / const.m_n,
+        sc.units.angstrom * elem_unit(Ltotal) / elem_unit(tof),
+        copy=False,
+    )
     return as_float_type(c / Ltotal, tof) * tof
 
 
-def dspacing_from_tof(*, tof: Variable, Ltotal: Variable,
-                      two_theta: Variable) -> Variable:
+def dspacing_from_tof(
+    *, tof: Variable, Ltotal: Variable, two_theta: Variable
+) -> Variable:
     r"""Compute the d-spacing from time-of-flight.
 
     The result is the inter-planar lattice spacing
@@ -90,16 +93,20 @@ def dspacing_from_tof(*, tof: Variable, Ltotal: Variable,
     scippneutron.conversions.beamline:
         Definitions of ``two_theta`` and ``Ltotal``.
     """
-    c = sc.to_unit(2 * const.m_n / const.h,
-                   elem_unit(tof) / sc.units.angstrom / elem_unit(Ltotal),
-                   copy=False)
+    c = sc.to_unit(
+        2 * const.m_n / const.h,
+        elem_unit(tof) / sc.units.angstrom / elem_unit(Ltotal),
+        copy=False,
+    )
     return 1 / as_float_type(c * Ltotal * sc.sin(two_theta / 2), tof) * tof
 
 
 def _energy_constant(energy_unit: sc.Unit, tof: Variable, length: Variable):
-    return sc.to_unit(const.m_n / 2,
-                      energy_unit * (elem_unit(tof) / elem_unit(length))**2,
-                      copy=False)
+    return sc.to_unit(
+        const.m_n / 2,
+        energy_unit * (elem_unit(tof) / elem_unit(length)) ** 2,
+        copy=False,
+    )
 
 
 def energy_from_tof(*, tof: Variable, Ltotal: Variable) -> Variable:
@@ -126,7 +133,9 @@ def energy_from_tof(*, tof: Variable, Ltotal: Variable) -> Variable:
         Has unit meV.
     """
     c = _energy_constant(sc.units.meV, tof, Ltotal)
-    return as_float_type(c * Ltotal**2, tof) / tof**sc.scalar(2, dtype=elem_dtype(tof))
+    return as_float_type(c * Ltotal**2, tof) / tof ** sc.scalar(
+        2, dtype=elem_dtype(tof)
+    )
 
 
 def _energy_transfer_t0(energy, tof, length):
@@ -135,8 +144,9 @@ def _energy_transfer_t0(energy, tof, length):
     return length.astype(dtype, copy=False) * sc.sqrt(c / energy)
 
 
-def energy_transfer_direct_from_tof(*, tof: Variable, L1: Variable, L2: Variable,
-                                    incident_energy: Variable) -> Variable:
+def energy_transfer_direct_from_tof(
+    *, tof: Variable, L1: Variable, L2: Variable, incident_energy: Variable
+) -> Variable:
     r"""Compute the energy transfer in direct inelastic scattering.
 
     The result is
@@ -181,13 +191,16 @@ def energy_transfer_direct_from_tof(*, tof: Variable, L1: Variable, L2: Variable
     dtype = _common_dtype(incident_energy, tof)
     scale = (c * L2**2).astype(dtype, copy=False)
     delta_tof = tof - t0
-    return sc.where(delta_tof <= sc.scalar(0, unit=elem_unit(delta_tof)),
-                    sc.scalar(np.nan, dtype=dtype, unit=elem_unit(incident_energy)),
-                    incident_energy - scale / delta_tof**2)
+    return sc.where(
+        delta_tof <= sc.scalar(0, unit=elem_unit(delta_tof)),
+        sc.scalar(np.nan, dtype=dtype, unit=elem_unit(incident_energy)),
+        incident_energy - scale / delta_tof**2,
+    )
 
 
-def energy_transfer_indirect_from_tof(*, tof: Variable, L1: Variable, L2: Variable,
-                                      final_energy: Variable) -> Variable:
+def energy_transfer_indirect_from_tof(
+    *, tof: Variable, L1: Variable, L2: Variable, final_energy: Variable
+) -> Variable:
     r"""Compute the energy transfer in indirect inelastic scattering.
 
     The result is
@@ -232,9 +245,11 @@ def energy_transfer_indirect_from_tof(*, tof: Variable, L1: Variable, L2: Variab
     dtype = _common_dtype(final_energy, tof)
     scale = (c * L1**2).astype(dtype, copy=False)
     delta_tof = -t0 + tof  # Order chosen such that output.dims = ['spectrum', 'tof']
-    return sc.where(delta_tof <= sc.scalar(0, unit=elem_unit(delta_tof)),
-                    sc.scalar(np.nan, dtype=dtype, unit=elem_unit(final_energy)),
-                    scale / delta_tof**2 - final_energy)
+    return sc.where(
+        delta_tof <= sc.scalar(0, unit=elem_unit(delta_tof)),
+        sc.scalar(np.nan, dtype=dtype, unit=elem_unit(final_energy)),
+        scale / delta_tof**2 - final_energy,
+    )
 
 
 def energy_from_wavelength(*, wavelength: Variable) -> Variable:
@@ -260,8 +275,11 @@ def energy_from_wavelength(*, wavelength: Variable) -> Variable:
         Neutron energy :math:`E`.
     """
     c = as_float_type(
-        sc.to_unit(const.h**2 / 2 / const.m_n,
-                   sc.units.meV * elem_unit(wavelength)**2), wavelength)
+        sc.to_unit(
+            const.h**2 / 2 / const.m_n, sc.units.meV * elem_unit(wavelength) ** 2
+        ),
+        wavelength,
+    )
     return c / wavelength**2
 
 
@@ -288,8 +306,11 @@ def wavelength_from_energy(*, energy: Variable) -> Variable:
         Has unit ångström.
     """
     c = as_float_type(
-        sc.to_unit(const.h**2 / 2 / const.m_n,
-                   sc.units.angstrom**2 * elem_unit(energy)), energy)
+        sc.to_unit(
+            const.h**2 / 2 / const.m_n, sc.units.angstrom**2 * elem_unit(energy)
+        ),
+        energy,
+    )
     return sc.sqrt(c / energy)
 
 
@@ -355,14 +376,14 @@ def wavelength_from_Q(*, Q: Variable, two_theta: Variable) -> Variable:
     scippneutron.conversions.beamline:
         Definition of ``two_theta``.
     """
-    return sc.to_unit(_wavelength_Q_conversions(Q, two_theta),
-                      unit='angstrom',
-                      copy=False)
+    return sc.to_unit(
+        _wavelength_Q_conversions(Q, two_theta), unit='angstrom', copy=False
+    )
 
 
 def Q_elements_from_wavelength(
-        *, wavelength: Variable, incident_beam: Variable,
-        scattered_beam: Variable) -> Tuple[Variable, Variable, Variable]:
+    *, wavelength: Variable, incident_beam: Variable, scattered_beam: Variable
+) -> Tuple[Variable, Variable, Variable]:
     r"""Compute them momentum transfer vector from wavelength.
 
     Computes the three components of the Q-vector :math:`Q_x, Q_y, Q_z`
@@ -437,7 +458,8 @@ def dspacing_from_wavelength(*, wavelength: Variable, two_theta: Variable) -> Va
         Definition of ``two_theta``.
     """
     c = as_float_type(
-        sc.scalar(0.5).to(unit=sc.units.angstrom / elem_unit(wavelength)), wavelength)
+        sc.scalar(0.5).to(unit=sc.units.angstrom / elem_unit(wavelength)), wavelength
+    )
     return c * wavelength / sc.sin(as_float_type(two_theta, wavelength) / 2)
 
 
@@ -471,8 +493,11 @@ def dspacing_from_energy(*, energy: Variable, two_theta: Variable) -> Variable:
         Definition of ``two_theta``.
     """
     c = as_float_type(
-        sc.to_unit(const.h**2 / 8 / const.m_n,
-                   sc.units.angstrom**2 * elem_unit(energy)), energy)
+        sc.to_unit(
+            const.h**2 / 8 / const.m_n, sc.units.angstrom**2 * elem_unit(energy)
+        ),
+        energy,
+    )
     return sc.sqrt(c / energy) / sc.sin(as_float_type(two_theta, energy) / 2)
 
 
@@ -494,8 +519,10 @@ def Q_vec_from_Q_elements(*, Qx: Variable, Qy: Variable, Qz: Variable) -> Variab
         ``Qx``, ``Qy``, ``Qz`` combined into a single variable of dtype ``vector3``.
     """
     if Qx.sizes != Qy.sizes or Qx.sizes != Qz.sizes:
-        raise sc.DimensionError("Qx, Qy, Qz must have the same sizes. "
-                                f"Got {Qx.sizes=}, {Qy.sizes=}, {Qz.sizes=}.")
+        raise sc.DimensionError(
+            "Qx, Qy, Qz must have the same sizes. "
+            f"Got {Qx.sizes=}, {Qy.sizes=}, {Qz.sizes=}."
+        )
     return sc.geometry.position(Qx, Qy, Qz)
 
 
@@ -524,8 +551,9 @@ def ub_matrix_from_u_and_b(*, u_matrix: Variable, b_matrix: Variable) -> Variabl
     return u_matrix * b_matrix
 
 
-def hkl_vec_from_Q_vec(*, Q_vec: Variable, ub_matrix: Variable,
-                       sample_rotation: Variable) -> Variable:
+def hkl_vec_from_Q_vec(
+    *, Q_vec: Variable, ub_matrix: Variable, sample_rotation: Variable
+) -> Variable:
     r"""Compute hkl indices from momentum transfer.
 
     The hkl indices define the components of the momentum transfer in the
@@ -610,8 +638,9 @@ def hkl_vec_from_Q_vec(*, Q_vec: Variable, ub_matrix: Variable,
     return (sc.spatial.inv(sample_rotation * ub_matrix) * Q_vec) / (2 * np.pi)
 
 
-def hkl_elements_from_hkl_vec(*,
-                              hkl_vec: Variable) -> Tuple[Variable, Variable, Variable]:
+def hkl_elements_from_hkl_vec(
+    *, hkl_vec: Variable
+) -> Tuple[Variable, Variable, Variable]:
     """Unpack vector of hkl indices into separate variables.
 
     Parameters

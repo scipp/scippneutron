@@ -79,8 +79,9 @@ def L2(*, scattered_beam: VariableLike) -> VariableLike:
     return sc.norm(scattered_beam)
 
 
-def straight_incident_beam(*, source_position: VariableLike,
-                           sample_position: VariableLike) -> VariableLike:
+def straight_incident_beam(
+    *, source_position: VariableLike, sample_position: VariableLike
+) -> VariableLike:
     """Compute the length of the beam from source to sample.
 
     Assumes a straight beam.
@@ -106,8 +107,9 @@ def straight_incident_beam(*, source_position: VariableLike,
     return sample_position - source_position
 
 
-def straight_scattered_beam(*, position: VariableLike,
-                            sample_position: VariableLike) -> VariableLike:
+def straight_scattered_beam(
+    *, position: VariableLike, sample_position: VariableLike
+) -> VariableLike:
     """Compute the length of the beam from sample to detector.
 
     Assumes a straight beam.
@@ -156,8 +158,9 @@ def total_beam_length(*, L1: VariableLike, L2: VariableLike) -> VariableLike:
     return L1 + L2
 
 
-def total_straight_beam_length_no_scatter(*, source_position: VariableLike,
-                                          position: VariableLike) -> VariableLike:
+def total_straight_beam_length_no_scatter(
+    *, source_position: VariableLike, position: VariableLike
+) -> VariableLike:
     """Compute the length of the beam from source to given position.
 
     Assumes a straight beam.
@@ -182,8 +185,9 @@ def total_straight_beam_length_no_scatter(*, source_position: VariableLike,
     return sc.norm(position - source_position)
 
 
-def two_theta(*, incident_beam: VariableLike,
-              scattered_beam: VariableLike) -> VariableLike:
+def two_theta(
+    *, incident_beam: VariableLike, scattered_beam: VariableLike
+) -> VariableLike:
     """Compute the scattering angle between scattered and transmitted beams.
 
     See :mod:`scippneutron.conversions.beamline` for the definition of the angle.
