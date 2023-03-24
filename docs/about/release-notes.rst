@@ -40,7 +40,7 @@ v0.xy.0 (Unreleased)
 Features
 ~~~~~~~~
 
-* Added :func:`scippneutron.conversion.tof.hkl_vec_from_Q_vec` `427 <https://github.com/scipp/scipp/pull/427>`_.
+* Added :func:`scippneutron.conversion.tof.hkl_vec_from_Q_vec` `427 <https://github.com/scipp/scippneutron/pull/427>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -56,6 +56,8 @@ Deprecations
 
 Stability, Maintainability, and Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Switched to black for Python code formatting `#429 <https://github.com/scipp/scipp/pull/429>`_.
 
 Contributors
 ~~~~~~~~~~~~
