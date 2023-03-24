@@ -40,7 +40,7 @@ v0.xy.0 (Unreleased)
 Features
 ~~~~~~~~
 
-* Added :func:`scippneutron.conversion.tof.hkl_vec_from_Q_vec` `427 <https://github.com/scipp/scippneutron/pull/427>`_.
+* Added :func:`scippneutron.conversion.tof.hkl_vec_from_Q_vec` `#427 <https://github.com/scipp/scippneutron/pull/427>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -72,7 +72,7 @@ v23.03.1 (March 2022)
 Bugfixes
 ~~~~~~~~
 
-* Conversion from ``mantid.MaskWorkspace`` now correctly sets ``unit=None`` instead of using dimensionless `424 <https://github.com/scipp/scippneutron/pull/424>`_.
+* Conversion from ``mantid.MaskWorkspace`` now correctly sets ``unit=None`` instead of using dimensionless `#424 <https://github.com/scipp/scippneutron/pull/424>`_.
 
 v23.03.0
 --------
@@ -85,8 +85,8 @@ Breaking Changes
 Features
 ~~~~~~~~
 
-* Coordinate transformation kernel for :math:`\vec{Q}` `412 <https://github.com/scipp/scippneutron/pull/412>`_.
-* Added :func:`scippneutron.io.xye.save_xye` and :func:`scippneutron.io.xye.load_xye` `417 <https://github.com/scipp/scippneutron/pull/417>`_.
+* Coordinate transformation kernel for :math:`\vec{Q}` `#412 <https://github.com/scipp/scippneutron/pull/412>`_.
+* Added :func:`scippneutron.io.xye.save_xye` and :func:`scippneutron.io.xye.load_xye` `#417 <https://github.com/scipp/scippneutron/pull/417>`_.
 
 v23.01.0 (January 2023)
 -----------------------
@@ -95,7 +95,7 @@ Breaking Changes
 ~~~~~~~~~~~~~~~~
 
 * Requires Scipp v23.1.1 and ScippNexus v23.1.1
-* :func:`scippneutron.load_nexus` may now return ``scipp.DataGroup`` objects if parts of the file cannot be read `401 <https://github.com/scipp/scippneutron/pull/401>`_.
+* :func:`scippneutron.load_nexus` may now return ``scipp.DataGroup`` objects if parts of the file cannot be read `#401 <https://github.com/scipp/scippneutron/pull/401>`_.
 
 v22.12.4 (December 2022)
 ------------------------
