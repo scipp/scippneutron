@@ -8,9 +8,9 @@ import scipp as sc
 from .conversion import graph
 
 
-def _derived_coord(da: Union[sc.DataArray, sc.Dataset],
-                   name: str,
-                   scatter: bool = True) -> sc.Variable:
+def _derived_coord(
+    da: Union[sc.DataArray, sc.Dataset], name: str, scatter: bool = True
+) -> sc.Variable:
     tmp = da.transform_coords(
         name,
         graph=graph.beamline.beamline(scatter=scatter),
