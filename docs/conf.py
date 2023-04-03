@@ -284,6 +284,8 @@ linkcheck_ignore = [
     r'https?://github\.com/[^/]+/[^/]+\#',
     # Many links for PRs from our release notes. Slow and unlikely to cause issues.
     'https://github.com/scipp/scipp/pull/[0-9]+',
+    # This returns '403 Forbidden' but the link works in a browser.
+    'https://opensource.org/licenses/BSD-3-Clause',
 ]
 
 # Set env variable to enable plopp
