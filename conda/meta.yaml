@@ -31,7 +31,7 @@ requirements:
     - numpy>=1.20.0
     - pooch
     - python
-    - scipp>=23.03.0
+    - scipp>=23.03.2
     - scippnexus>=23.03.0
     - scipy>=1.7.0
 
@@ -44,7 +44,7 @@ test:
     - ipywidgets
     - markupsafe>=1.1.1,<2.1.0  # see https://github.com/pallets/markupsafe/issues/284
     - matplotlib-base
-    - plopp>=22.12.1
+    - plopp
     - psutil
     - pytest
     - pytest-asyncio

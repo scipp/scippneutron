@@ -15,14 +15,14 @@ dependencies:
   - mantid=6.6.*
   - matplotlib
   - ninja
-  - plopp>=22.12.1
+  - plopp
   - pooch
   - pytest
   - pytest-asyncio
   - python-confluent-kafka
   - python-graphviz
   - pythreejs
-  - scipp=23.03.0
+  - scipp=23.03.2
   - scippnexus>=23.01.1
   - scipy>=1.7.0
   - tox
