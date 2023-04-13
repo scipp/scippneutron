@@ -39,19 +39,19 @@ test:
   imports:
     - scippneutron
   requires:
-    - hypothesis
-    - ipympl
-    - ipywidgets
+    - hypothesis==6.71.0
+    - ipympl==0.9.3
+    - ipywidgets==8.0.6
     - markupsafe>=1.1.1,<2.1.0  # see https://github.com/pallets/markupsafe/issues/284
-    - matplotlib-base
-    - plopp
-    - psutil
-    - pytest
-    - pytest-asyncio
-    - pythreejs
-    - mantid==6.6.* [py==38]
-    - python-confluent-kafka [linux64]
-    - ess-streaming-data-types [linux64]
+    - matplotlib-base==3.7.1
+    - plopp==23.04.0
+    - psutil==5.9.4
+    - pytest==7.3.0
+    - pytest-asyncio==0.21.0
+    - pythreejs==2.4.2
+    - mantid==6.6.0 [py==38]
+    - python-confluent-kafka==1.9.2 [linux64]
+    - ess-streaming-data-types==v0.14.0 [linux64]
   source_files:
     - tests/
   commands:
