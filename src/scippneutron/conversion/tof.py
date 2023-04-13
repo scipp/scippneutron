@@ -523,7 +523,7 @@ def Q_vec_from_Q_elements(*, Qx: Variable, Qy: Variable, Qz: Variable) -> Variab
             "Qx, Qy, Qz must have the same sizes. "
             f"Got {Qx.sizes=}, {Qy.sizes=}, {Qz.sizes=}."
         )
-    return sc.geometry.position(Qx, Qy, Qz)
+    return sc.spatial.as_vectors(Qx, Qy, Qz)
 
 
 def ub_matrix_from_u_and_b(*, u_matrix: Variable, b_matrix: Variable) -> Variable:

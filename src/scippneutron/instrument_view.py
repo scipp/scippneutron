@@ -160,7 +160,7 @@ def _as_vector(var):
     if var.dtype == sc.DType.vector3:
         return var
     else:
-        return sc.geometry.position(x=var, y=var, z=var)
+        return sc.spatial.as_vectors(x=var, y=var, z=var)
 
 
 def _plot_components(scipp_obj, components, positions_var, scene):

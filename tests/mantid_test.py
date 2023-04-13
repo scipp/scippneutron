@@ -700,7 +700,7 @@ class TestMantidConversion(unittest.TestCase):
         in_out['x'] = sc.scalar(x, unit=sc.units.m)
         in_out['y'] = sc.scalar(y, unit=sc.units.m)
         in_out['z'] = sc.scalar(z, unit=sc.units.m)
-        point = sc.geometry.position(
+        point = sc.spatial.as_vectors(
             in_out['x'].data, in_out['y'].data, in_out['z'].data
         )
         scn.mantid._to_spherical(point, in_out)

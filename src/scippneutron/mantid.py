@@ -354,7 +354,7 @@ def get_detector_properties(
                 det_rot_quaternions[i] = np.mean(quats, axis=0)
                 det_bbox[i, :] = np.sum(bboxes, axis=0)
 
-        rot_pos = rot * sc.geometry.position(
+        rot_pos = rot * sc.spatial.as_vectors(
             pos_d["x"].data, pos_d["y"].data, pos_d["z"].data
         )
 
@@ -378,7 +378,7 @@ def get_detector_properties(
         )
         averaged["z"] = averaged["r"].data * sc.cos(averaged["t"].data)
 
-        pos = sc.geometry.position(
+        pos = sc.spatial.as_vectors(
             averaged["x"].data, averaged["y"].data, averaged["z"].data
         )
 

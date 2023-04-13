@@ -70,7 +70,7 @@ jobs:
         # Linkcheck can be flaky. Avoid randomly breaking PR builds by running only on `main`
         if: ${{ contains(matrix.variant.os, 'ubuntu') && matrix.python-version == '3.8' && github.ref == 'refs/heads/main' }}
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: ${{ contains(matrix.variant.os, 'ubuntu') && matrix.python-version == '3.8' }}
         with:
           name: DocumentationHTML

@@ -390,7 +390,7 @@ def test_Q_elements_from_wavelength_consistent_with_Q(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
     )
-    Q_vec = sc.geometry.position(Qx, Qy, Qz)
+    Q_vec = sc.spatial.as_vectors(Qx, Qy, Qz)
     Q = tof_conv.Q_from_wavelength(
         wavelength=wavelength,
         two_theta=beamline_conv.two_theta(
@@ -413,7 +413,7 @@ def test_Q_elements_from_wavelength():
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
     )
-    Q_vec = sc.geometry.position(Qx, Qy, Qz)
+    Q_vec = sc.spatial.as_vectors(Qx, Qy, Qz)
     assert sc.identical(
         Q_vec['pos', 0], 2 * np.pi / wavelength * sc.vector([-1.0, 0.0, 1.0])
     )
