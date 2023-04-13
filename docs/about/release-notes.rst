@@ -41,10 +41,12 @@ Features
 ~~~~~~~~
 
 * Added :func:`scippneutron.conversion.tof.hkl_vec_from_Q_vec` `#427 <https://github.com/scipp/scippneutron/pull/427>`_.
-* Bump versions: Scipp=23.03.2, Mantid=6.6.0 `#424 <https://github.com/scipp/scippneutron/pull/434>`_.
+* Compatible with Mantid=6.6.0 `#424 <https://github.com/scipp/scippneutron/pull/434>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
+
+* Requires Scipp v23.03.2 `#424 <https://github.com/scipp/scippneutron/pull/434>`_.
 
 Bugfixes
 ~~~~~~~~
