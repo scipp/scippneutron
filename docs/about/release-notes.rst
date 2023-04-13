@@ -34,19 +34,24 @@ Release Notes
    Neil Vaytet :sup:`a`\ ,
    and Jan-Lukas Wynen :sup:`a`
 
-v0.xy.0 (Unreleased)
---------------------
+v23.04.0 (April 2023)
+---------------------
 
 Features
 ~~~~~~~~
 
 * Added :func:`scippneutron.conversion.tof.hkl_vec_from_Q_vec` `#427 <https://github.com/scipp/scippneutron/pull/427>`_.
+* Compatible with Mantid=6.6.0 `#424 <https://github.com/scipp/scippneutron/pull/434>`_.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
+* Requires Scipp v23.03.2 `#424 <https://github.com/scipp/scippneutron/pull/434>`_.
+
 Bugfixes
 ~~~~~~~~
+
+* Conversion from ``mantid.MaskWorkspace`` now correctly sets ``unit=None`` instead of using dimensionless `#424 <https://github.com/scipp/scippneutron/pull/424>`_.
 
 Documentation
 ~~~~~~~~~~~~~
@@ -66,16 +71,8 @@ Simon Heybrock :sup:`a`\ ,
 Neil Vaytet :sup:`a`\ ,
 and Jan-Lukas Wynen :sup:`a`
 
-v23.03.1 (March 2022)
+v23.03.0 (March 2023)
 ---------------------
-
-Bugfixes
-~~~~~~~~
-
-* Conversion from ``mantid.MaskWorkspace`` now correctly sets ``unit=None`` instead of using dimensionless `#424 <https://github.com/scipp/scippneutron/pull/424>`_.
-
-v23.03.0
---------
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
