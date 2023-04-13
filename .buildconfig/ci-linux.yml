@@ -4,6 +4,7 @@ channels:
   - ess-dmsc
   - mantid
   - scipp
+  - nodefaults
 dependencies:
   - comm=0.1.3  # earlier versions break tests with ipywidgets with latest ipykernel
   - ess-streaming-data-types
