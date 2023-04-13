@@ -12,10 +12,10 @@ dependencies:
   - ipykernel
   - ipympl
   - ipywidgets
-  - mantid=6.5.*
+  - mantid=6.6.*
   - matplotlib
   - ninja
-  - plopp >= 22.12.1
+  - plopp>=22.12.1
   - pooch
   - pytest
   - pytest-asyncio
