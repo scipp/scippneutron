@@ -859,7 +859,7 @@ def from_mantid(workspace, **kwargs):
     return scipp_obj
 
 
-def load(
+def load_with_mantid(
     filename: Union[str, Path] = "",
     load_pulse_times=True,
     instrument_filename=None,
@@ -914,9 +914,9 @@ def load(
 
     Examples
     --------
-    >>> from scippneutron import load
+    >>> from scippneutron import load_with_mantid
     >>> d = sc.Dataset()
-    >>> d["sample"] = load(filename='PG3_4844_event.nxs',
+    >>> d["sample"] = load_with_mantid(filename='PG3_4844_event.nxs',
     ...                    load_pulse_times=False,
     ...                    mantid_args={'BankName': 'bank184',
     ...                                 'LoadMonitors': True})  # doctest: +SKIP

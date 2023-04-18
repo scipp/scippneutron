@@ -7,7 +7,7 @@ ConfigService.setLogLevel(1)
 
 class TransformCoords:
     def setup(self):
-        da = scn.load(scn.data.get_path('PG3_4844_event.nxs'))
+        da = scn.load_with_mantid(scn.data.get_path('PG3_4844_event.nxs'))
         self.var_tof = da
         self.var_wavelength = scn.convert(self.var_tof, "tof", "wavelength", False)
         self.var_energy = scn.convert(self.var_tof, "tof", "energy", False)
