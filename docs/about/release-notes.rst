@@ -27,6 +27,29 @@ Release Notes
    Stability, Maintainability, and Testing
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+v0.xy.0 (Unreleased)
+--------------------
+
+Features
+~~~~~~~~
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+Bugfixes
+~~~~~~~~
+
+Documentation
+~~~~~~~~~~~~~
+
+Deprecations
+~~~~~~~~~~~~
+
+* Renamed ``scipneutron.load`` to :func:`scippneutron.load_with_mantid` for clarity. The old name is deprecated `#436 <https://github.com/scipp/scippneutron/pull/436>`_.
+
+Stability, Maintainability, and Testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 v23.04.0 (April 2023)
 ---------------------
 
