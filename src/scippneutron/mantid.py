@@ -1014,6 +1014,9 @@ def load(
     ...                    load_pulse_times=False,
     ...                    mantid_args={'BankName': 'bank184',
     ...                                 'LoadMonitors': True})  # doctest: +SKIP
+
+    .. deprecated:: 23.05.0
+       Renamed to load_with_mantid.
     """
     import warnings
 
