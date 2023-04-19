@@ -10,7 +10,6 @@ import warnings
 import numpy as np
 import pytest
 import scipp as sc
-import scipp.spatial
 
 import scippneutron as scn
 
@@ -348,7 +347,7 @@ class TestMantidConversion(unittest.TestCase):
 
         mtd.clear()
         # This test would use 20 GB of memory if "SpectrumMax" was not set
-        ds = scn.load(
+        ds = scn.load_with_mantid(
             scn.data.get_path("WISH00016748.raw"),
             mantid_args={"LoadMonitors": "Separate", "SpectrumMax": 10000},
         )
@@ -374,7 +373,7 @@ class TestMantidConversion(unittest.TestCase):
 
         mtd.clear()
         # This test would use 20 GB of memory if "SpectrumMax" was not set
-        ds = scn.load(
+        ds = scn.load_with_mantid(
             scn.data.get_path("WISH00016748.raw"),
             mantid_args={"LoadMonitors": "Include", "SpectrumMax": 100},
         )
@@ -398,7 +397,7 @@ class TestMantidConversion(unittest.TestCase):
         from mantid.simpleapi import mtd
 
         mtd.clear()
-        ds = scn.load(
+        ds = scn.load_with_mantid(
             scn.data.get_path("CNCS_51936_event.nxs"),
             mantid_args={"LoadMonitors": True, "SpectrumMax": 1},
         )
@@ -539,7 +538,7 @@ class TestMantidConversion(unittest.TestCase):
 
         mtd.clear()
 
-        data = scn.load(scn.data.get_path("iris26176_graphite002_sqw.nxs"))
+        data = scn.load_with_mantid(scn.data.get_path("iris26176_graphite002_sqw.nxs"))
 
         params, diff = scn.fit(
             data['Q', 0],
@@ -1043,7 +1042,7 @@ def test_extract_energy_initial():
     from mantid.simpleapi import mtd
 
     mtd.clear()
-    ds = scn.load(
+    ds = scn.load_with_mantid(
         scn.data.get_path("CNCS_51936_event.nxs"), mantid_args={"SpectrumMax": 1}
     )
     assert sc.identical(
@@ -1097,7 +1096,7 @@ def test_duplicate_monitor_names():
 @pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_load_error_when_file_not_found_via_fuzzy_match():
     with pytest.raises(ValueError):
-        scn.load("fictional.nxs")
+        scn.load_with_mantid("fictional.nxs")
 
 
 def make_dynamic_algorithm_without_fileproperty(alg_name):
@@ -1136,7 +1135,7 @@ def test_load_error_when_file_not_found_via_exact_match():
     with pytest.raises(ValueError):
         # DummyLoader has no FileProperty and forces
         # load to evaluate the path given as an absolute path
-        scn.load("fictional.nxs", mantid_alg="DummyLoader")
+        scn.load_with_mantid("fictional.nxs", mantid_alg="DummyLoader")
 
 
 @pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
@@ -1145,7 +1144,7 @@ def test_load_via_exact_match():
     # scn.load will need to check file exists
     # DummyLoader simply returns a TableWorkspace
     with tempfile.NamedTemporaryFile() as fp:
-        scn.load(fp.name, mantid_alg="DummyLoader")
+        scn.load_with_mantid(fp.name, mantid_alg="DummyLoader")
         # Sanity check corrupt full path will fail
         with pytest.raises(ValueError):
-            scn.load("fictional_" + fp.name, mantid_alg="DummyLoader")
+            scn.load_with_mantid("fictional_" + fp.name, mantid_alg="DummyLoader")

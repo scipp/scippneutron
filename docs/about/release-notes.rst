@@ -27,12 +27,28 @@ Release Notes
    Stability, Maintainability, and Testing
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   Contributors
-   ~~~~~~~~~~~~
+v0.xy.0 (Unreleased)
+--------------------
 
-   Simon Heybrock :sup:`a`\ ,
-   Neil Vaytet :sup:`a`\ ,
-   and Jan-Lukas Wynen :sup:`a`
+Features
+~~~~~~~~
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+Bugfixes
+~~~~~~~~
+
+Documentation
+~~~~~~~~~~~~~
+
+Deprecations
+~~~~~~~~~~~~
+
+* Renamed ``scipneutron.load`` to :func:`scippneutron.load_with_mantid` for clarity. The old name is deprecated `#436 <https://github.com/scipp/scippneutron/pull/436>`_.
+
+Stability, Maintainability, and Testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 v23.04.0 (April 2023)
 ---------------------
@@ -53,23 +69,10 @@ Bugfixes
 
 * Conversion from ``mantid.MaskWorkspace`` now correctly sets ``unit=None`` instead of using dimensionless `#424 <https://github.com/scipp/scippneutron/pull/424>`_.
 
-Documentation
-~~~~~~~~~~~~~
-
-Deprecations
-~~~~~~~~~~~~
-
 Stability, Maintainability, and Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Switched to black for Python code formatting `#429 <https://github.com/scipp/scippneutron/pull/429>`_.
-
-Contributors
-~~~~~~~~~~~~
-
-Simon Heybrock :sup:`a`\ ,
-Neil Vaytet :sup:`a`\ ,
-and Jan-Lukas Wynen :sup:`a`
 
 v23.03.0 (March 2023)
 ---------------------

@@ -3,7 +3,7 @@
 # @author Simon Heybrock
 import scipp as sc
 
-from ..mantid import load
+from ..mantid import load_with_mantid
 
 _version = '5'
 
@@ -52,7 +52,7 @@ def tutorial_event_data():
 
 
 def powder_sample():
-    return load(_pooch.fetch('PG3_4844_event.nxs'))
+    return load_with_mantid(_pooch.fetch('PG3_4844_event.nxs'))
 
 
 def powder_calibration():
