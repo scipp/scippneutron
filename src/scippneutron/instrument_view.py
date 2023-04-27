@@ -19,16 +19,17 @@ def _create_text_sprite(position, bounding_box, display_text):
     text = p3.TextTexture(string=display_text, color='black', size=300)
     text_material = p3.SpriteMaterial(map=text, transparent=True)
     size = 1.0
-    return p3.Sprite(material=text_material,
-                     position=text_position,
-                     scale=[size, size, size])
+    return p3.Sprite(
+        material=text_material, position=text_position, scale=[size, size, size]
+    )
 
 
 def _create_mesh(geometry, color, wireframe, position):
     if wireframe:
         edges = p3.EdgesGeometry(geometry)
-        mesh = p3.LineSegments(geometry=edges,
-                               material=p3.LineBasicMaterial(color=color))
+        mesh = p3.LineSegments(
+            geometry=edges, material=p3.LineBasicMaterial(color=color)
+        )
 
     else:
         material = p3.MeshBasicMaterial(color=color)
@@ -38,20 +39,21 @@ def _create_mesh(geometry, color, wireframe, position):
 
 
 def _box(position, display_text, bounding_box, color, wireframe, **kwargs):
-    geometry = p3.BoxGeometry(width=bounding_box[0],
-                              height=bounding_box[1],
-                              depth=bounding_box[2],
-                              widthSegments=2,
-                              heightSegments=2,
-                              depthSegments=2)
+    geometry = p3.BoxGeometry(
+        width=bounding_box[0],
+        height=bounding_box[1],
+        depth=bounding_box[2],
+        widthSegments=2,
+        heightSegments=2,
+        depthSegments=2,
+    )
 
-    mesh = _create_mesh(geometry=geometry,
-                        color=color,
-                        wireframe=wireframe,
-                        position=position)
-    text_mesh = _create_text_sprite(position=position,
-                                    bounding_box=bounding_box,
-                                    display_text=display_text)
+    mesh = _create_mesh(
+        geometry=geometry, color=color, wireframe=wireframe, position=position
+    )
+    text_mesh = _create_text_sprite(
+        position=position, bounding_box=bounding_box, display_text=display_text
+    )
     return mesh, text_mesh
 
 
@@ -72,46 +74,48 @@ def _alignment_matrix(to_align, target):
 
 
 def _disk_chopper(position, display_text, bounding_box, color, wireframe, **kwargs):
-    geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
-                                   radiusBottom=bounding_box[0] / 2,
-                                   height=bounding_box[0] / 100,
-                                   radialSegments=24,
-                                   heightSegments=12,
-                                   openEnded=False,
-                                   thetaStart=np.pi / 8,
-                                   thetaLength=2 * np.pi - (np.pi / 8))
+    geometry = p3.CylinderGeometry(
+        radiusTop=bounding_box[0] / 2,
+        radiusBottom=bounding_box[0] / 2,
+        height=bounding_box[0] / 100,
+        radialSegments=24,
+        heightSegments=12,
+        openEnded=False,
+        thetaStart=np.pi / 8,
+        thetaLength=2 * np.pi - (np.pi / 8),
+    )
 
-    mesh = _create_mesh(geometry=geometry,
-                        color=color,
-                        wireframe=wireframe,
-                        position=position)
+    mesh = _create_mesh(
+        geometry=geometry, color=color, wireframe=wireframe, position=position
+    )
     beam = _find_beam(det_com=kwargs['det_center'], pos=position)
     disk_axis = np.array([0, 1, 0])  # Disk created with this axis
     rotation = _alignment_matrix(to_align=disk_axis, target=beam)
     mesh.setRotationFromMatrix(rotation.flatten())
-    text_mesh = _create_text_sprite(position=position,
-                                    bounding_box=bounding_box,
-                                    display_text=display_text)
+    text_mesh = _create_text_sprite(
+        position=position, bounding_box=bounding_box, display_text=display_text
+    )
     return mesh, text_mesh
 
 
 def _cylinder(position, display_text, bounding_box, color, wireframe, **kwargs):
-    geometry = p3.CylinderGeometry(radiusTop=bounding_box[0] / 2,
-                                   radiusBottom=bounding_box[0] / 2,
-                                   height=bounding_box[1],
-                                   radialSegments=12,
-                                   heightSegments=12,
-                                   openEnded=False,
-                                   thetaStart=0,
-                                   thetaLength=2.0 * np.pi)
-    mesh = _create_mesh(geometry=geometry,
-                        color=color,
-                        wireframe=wireframe,
-                        position=position)
+    geometry = p3.CylinderGeometry(
+        radiusTop=bounding_box[0] / 2,
+        radiusBottom=bounding_box[0] / 2,
+        height=bounding_box[1],
+        radialSegments=12,
+        heightSegments=12,
+        openEnded=False,
+        thetaStart=0,
+        thetaLength=2.0 * np.pi,
+    )
+    mesh = _create_mesh(
+        geometry=geometry, color=color, wireframe=wireframe, position=position
+    )
     # Position label above cylinder
-    text_mesh = _create_text_sprite(position=position,
-                                    bounding_box=bounding_box,
-                                    display_text=display_text)
+    text_mesh = _create_text_sprite(
+        position=position, bounding_box=bounding_box, display_text=display_text
+    )
     return mesh, text_mesh
 
 
@@ -123,16 +127,20 @@ def _unpack_to_scene(scene, items):
         scene.add(items)
 
 
-def _add_to_scene(position, scene, shape, display_text, bounding_box, color, wireframe,
-                  **kwargs):
+def _add_to_scene(
+    position, scene, shape, display_text, bounding_box, color, wireframe, **kwargs
+):
     _unpack_to_scene(
         scene,
-        shape(position,
-              display_text=display_text,
-              bounding_box=bounding_box,
-              color=color,
-              wireframe=wireframe,
-              **kwargs))
+        shape(
+            position,
+            display_text=display_text,
+            bounding_box=bounding_box,
+            color=color,
+            wireframe=wireframe,
+            **kwargs,
+        ),
+    )
 
 
 def _furthest_component(det_center, scipp_obj, additional):
@@ -152,7 +160,7 @@ def _as_vector(var):
     if var.dtype == sc.DType.vector3:
         return var
     else:
-        return sc.geometry.position(x=var, y=var, z=var)
+        return sc.spatial.as_vectors(x=var, y=var, z=var)
 
 
 def _plot_components(scipp_obj, components, positions_var, scene):
@@ -167,18 +175,22 @@ def _plot_components(scipp_obj, components, positions_var, scene):
         wireframe = settings.get("wireframe", False)
         if type not in shapes:
             supported_shapes = ", ".join(shapes.keys())
-            raise ValueError(f"Unknown shape: {type} requested for {name}. "
-                             f"Allowed values are: {supported_shapes}")
+            raise ValueError(
+                f"Unknown shape: {type} requested for {name}. "
+                f"Allowed values are: {supported_shapes}"
+            )
         component_position = sc.to_unit(component_position, positions_var.unit)
         size = sc.to_unit(size, positions_var.unit)
-        _add_to_scene(position=component_position,
-                      scene=scene,
-                      shape=shapes[type],
-                      display_text=name,
-                      bounding_box=tuple(size.values),
-                      color=color,
-                      wireframe=wireframe,
-                      det_center=det_center)
+        _add_to_scene(
+            position=component_position,
+            scene=scene,
+            shape=shapes[type],
+            display_text=name,
+            bounding_box=tuple(size.values),
+            color=color,
+            wireframe=wireframe,
+            det_center=det_center,
+        )
     # Reset camera
     camera = _get_camera(scene)
     if camera:
@@ -193,11 +205,9 @@ def _get_camera(scene):
     return None
 
 
-def instrument_view(scipp_obj,
-                    positions="position",
-                    pixel_size=None,
-                    components=None,
-                    **kwargs):
+def instrument_view(
+    scipp_obj, positions="position", pixel_size=None, components=None, **kwargs
+):
     """
     :param scipp_obj: scipp object holding geometries
     :param positions: Key for coord/attr holding positions to use for pixels
@@ -254,16 +264,19 @@ def instrument_view(scipp_obj,
         if len(pos_array) > 1:
             pixel_size = np.linalg.norm(pos_array[1] - pos_array[0])
 
-    if (pp is not None) and ((sc.plot is pp.plot)
-                             or sc.config['plot'].get('use_plopp')):
+    if (pp is not None) and (
+        (sc.plot is pp.plot) or sc.config['plot'].get('use_plopp')
+    ):
         fig = pp.scatter3d(scipp_obj, pos=positions, pixel_size=pixel_size, **kwargs)
         scene = fig.children[0].canvas.scene
     else:
-        fig = sc.plot(scipp_obj,
-                      projection="3d",
-                      positions=positions,
-                      pixel_size=pixel_size,
-                      **kwargs)
+        fig = sc.plot(
+            scipp_obj,
+            projection="3d",
+            positions=positions,
+            pixel_size=pixel_size,
+            **kwargs,
+        )
         scene = fig.view.figure.scene
 
     # Add additional components from the beamline

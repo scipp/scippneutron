@@ -30,8 +30,8 @@ dependencies = [
     "h5py",
     "numpy>=1.20",
     "pooch",
-    "scipp>=23.01.1",
-    "scippnexus>=0.4.1",
+    "scipp>=23.03.0",
+    "scippnexus>=23.3.0",
     "scipy>=1.7.0",
 ]
 
@@ -52,10 +52,12 @@ exclude_dirs = ["docs/conf.py", "tests", "install", "tools", "setup.py"]
 ignore-words-list = "elemt"
 skip = "./.git,./install,./build,./cmake-build*,./.tox,*/*_cache,*/.virtual_documents,*/.ipynb_checkpoints,*.pdf,*.svg"
 
+[tool.black]
+skip-string-normalization = true
+
 [tool.isort]
 skip_gitignore = true
-line_length = 88
-multi_line_output = 2  # for compatibility with yapf
+profile = "black"
 skip_glob = ["src/scippneutron/__init__.py"]
 
 [tool.pytest.ini_options]
@@ -77,6 +79,8 @@ filterwarnings = [
   'ignore:the imp module is deprecated in favour of importlib:DeprecationWarning',
   # from Mantid
   'ignore:distutils Version classes are deprecated. Use packaging.version instead:DeprecationWarning',
+  # from ipywidgets; they are migrating away from ipykernel, this warning should go away
+  'ignore:The `ipykernel.comm.Comm` class has been deprecated.:DeprecationWarning',
   # Plotting related warnings.
   'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
   'ignore:Keyword `trait` is deprecated in traitlets 5.0, use `value_trait` instead:DeprecationWarning',

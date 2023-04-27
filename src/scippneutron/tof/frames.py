@@ -13,14 +13,16 @@ from .._utils import as_float_type, elem_unit
 from ..conversion.graph.beamline import Ltotal
 
 
-def _tof_from_wavelength(*, wavelength: sc.Variable,
-                         Ltotal: sc.Variable) -> sc.Variable:
+def _tof_from_wavelength(
+    *, wavelength: sc.Variable, Ltotal: sc.Variable
+) -> sc.Variable:
     scale = (m_n / h).to(unit=sc.units.us / elem_unit(Ltotal) / elem_unit(wavelength))
     return as_float_type(Ltotal * scale, wavelength) * wavelength
 
 
-def _time_offset_from_tof(*, tof: sc.Variable, frame_period: sc.Variable,
-                          frame_offset: sc.Variable) -> sc.Variable:
+def _time_offset_from_tof(
+    *, tof: sc.Variable, frame_period: sc.Variable, frame_offset: sc.Variable
+) -> sc.Variable:
     unit = elem_unit(tof)
     frame_period = frame_period.to(unit=unit)
     arrival_time_offset = frame_offset.to(unit=unit) + tof
@@ -28,9 +30,13 @@ def _time_offset_from_tof(*, tof: sc.Variable, frame_period: sc.Variable,
     return time_offset
 
 
-def _tof_from_time_offset(*, time_offset: sc.Variable, time_offset_pivot: sc.Variable,
-                          tof_min: sc.Variable,
-                          frame_period: sc.Variable) -> sc.Variable:
+def _tof_from_time_offset(
+    *,
+    time_offset: sc.Variable,
+    time_offset_pivot: sc.Variable,
+    tof_min: sc.Variable,
+    frame_period: sc.Variable,
+) -> sc.Variable:
     frame_period = frame_period.to(unit=elem_unit(time_offset))
     time_offset_pivot = time_offset_pivot.to(unit=elem_unit(time_offset))
     tof_min = tof_min.to(unit=elem_unit(time_offset))
@@ -40,9 +46,13 @@ def _tof_from_time_offset(*, time_offset: sc.Variable, time_offset_pivot: sc.Var
     return tof
 
 
-def pulse_offset_from_time_zero(*, pulse_period: sc.Variable, pulse_stride: sc.Variable,
-                                event_time_zero: sc.Variable,
-                                first_pulse_time: sc.Variable) -> sc.Variable:
+def pulse_offset_from_time_zero(
+    *,
+    pulse_period: sc.Variable,
+    pulse_stride: sc.Variable,
+    event_time_zero: sc.Variable,
+    first_pulse_time: sc.Variable,
+) -> sc.Variable:
     """
     Return 0-based source frame index of detection frame.
 
@@ -60,18 +70,21 @@ def pulse_offset_from_time_zero(*, pulse_period: sc.Variable, pulse_stride: sc.V
     # This is roughly equivalent to
     #   (event_time_zero - first_pulse_time) % frame_period
     # but should avoid some issues with precision and drift
-    pulse_index = (event_time_zero -
-                   first_pulse_time) // pulse_period.to(unit=elem_unit(event_time_zero))
+    pulse_index = (event_time_zero - first_pulse_time) // pulse_period.to(
+        unit=elem_unit(event_time_zero)
+    )
     return pulse_period * (pulse_index % pulse_stride)
 
 
-def update_time_offset_for_pulse_skipping(*, event_time_offset: sc.Variable,
-                                          pulse_offset: sc.Variable) -> sc.Variable:
+def update_time_offset_for_pulse_skipping(
+    *, event_time_offset: sc.Variable, pulse_offset: sc.Variable
+) -> sc.Variable:
     return event_time_offset + pulse_offset.to(unit=elem_unit(event_time_offset))
 
 
-def frame_period_from_pulse_period(*, pulse_period: sc.Variable,
-                                   pulse_stride: sc.Variable) -> sc.Variable:
+def frame_period_from_pulse_period(
+    *, pulse_period: sc.Variable, pulse_stride: sc.Variable
+) -> sc.Variable:
     return pulse_period * pulse_stride
 
 
@@ -96,9 +109,9 @@ def to_tof(*, pulse_skipping: Optional[bool] = False) -> dict:
         return _tof_from_wavelength(Ltotal=Ltotal, wavelength=lambda_min)
 
     def _time_offset_pivot(*, tof_min, frame_period, frame_offset):
-        return _time_offset_from_tof(tof=tof_min,
-                                     frame_period=frame_period,
-                                     frame_offset=frame_offset)
+        return _time_offset_from_tof(
+            tof=tof_min, frame_period=frame_period, frame_offset=frame_offset
+        )
 
     graph = {}
     if pulse_skipping:
@@ -115,14 +128,16 @@ def to_tof(*, pulse_skipping: Optional[bool] = False) -> dict:
     return graph
 
 
-def unwrap_frames(da: sc.DataArray,
-                  *,
-                  scatter: Optional[bool] = None,
-                  pulse_period: sc.Variable,
-                  pulse_stride: int = 1,
-                  frame_offset: sc.Variable,
-                  lambda_min: sc.Variable,
-                  first_pulse_time: Optional[sc.Variable] = None) -> sc.DataArray:
+def unwrap_frames(
+    da: sc.DataArray,
+    *,
+    scatter: Optional[bool] = None,
+    pulse_period: sc.Variable,
+    pulse_stride: int = 1,
+    frame_offset: sc.Variable,
+    lambda_min: sc.Variable,
+    first_pulse_time: Optional[sc.Variable] = None,
+) -> sc.DataArray:
     """
     Unwrap raw timestamps from ``NXevent_data`` into time-of-flight.
 
@@ -176,16 +191,24 @@ def unwrap_frames(da: sc.DataArray,
         Data with 'tof' coordinate.
     """
     if 'tof' in da.meta or (da.bins is not None and 'tof' in da.bins.meta):
-        raise ValueError("Coordinate 'tof' already defined in input data array. "
-                         "Expected input with 'event_time_offset' coordinate.")
+        raise ValueError(
+            "Coordinate 'tof' already defined in input data array. "
+            "Expected input with 'event_time_offset' coordinate."
+        )
     da = da.copy(deep=False)
     coords = [
-        'pulse_period', 'pulse_stride', 'first_pulse_time', 'frame_offset', 'lambda_min'
+        'pulse_period',
+        'pulse_stride',
+        'first_pulse_time',
+        'frame_offset',
+        'lambda_min',
     ]
     for x in coords:
         if x in da.meta:
-            raise ValueError(f"Input data has '{x}' coord or attr, but values should "
-                             "be given only as a function parameter.")
+            raise ValueError(
+                f"Input data has '{x}' coord or attr, but values should "
+                "be given only as a function parameter."
+            )
     da.attrs['pulse_period'] = pulse_period
     da.attrs['frame_offset'] = frame_offset
     da.attrs['lambda_min'] = lambda_min

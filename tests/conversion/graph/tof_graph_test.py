@@ -10,15 +10,30 @@ from scippneutron.conversion.graph import tof
 def test_elastic():
     assert set(tof.elastic('energy').keys()) == {'dspacing', 'wavelength'}
     assert set(tof.elastic('tof').keys()) == {
-        'dspacing', 'energy', 'Q', 'wavelength', ('Qx', 'Qy', 'Qz')
+        'dspacing',
+        'energy',
+        'Q',
+        'wavelength',
+        ('Qx', 'Qy', 'Qz'),
+        'Q_vec',
+        'hkl_vec',
+        ('h', 'k', 'l'),
+        'ub_matrix',
     }
     assert set(tof.elastic('Q').keys()) == {'wavelength'}
     assert set(tof.elastic('wavelength').keys()) == {
-        'dspacing', 'energy', 'Q', ('Qx', 'Qy', 'Qz')
+        'dspacing',
+        'energy',
+        'Q',
+        ('Qx', 'Qy', 'Qz'),
+        'Q_vec',
+        'hkl_vec',
+        ('h', 'k', 'l'),
+        'ub_matrix',
     }
 
 
-@pytest.mark.parametrize('start', ('dspacing', ))
+@pytest.mark.parametrize('start', ('dspacing',))
 def test_elastic_unsupported_starts(start):
     with pytest.raises(KeyError):
         tof.elastic(start)
@@ -42,7 +57,7 @@ def test_elastic_dspacing():
     assert set(tof.elastic_dspacing('wavelength').keys()) == {'dspacing'}
 
 
-@pytest.mark.parametrize('start', ('Q', ))
+@pytest.mark.parametrize('start', ('Q',))
 def test_elastic_dspacing_unsupported_starts(start):
     with pytest.raises(KeyError):
         tof.elastic_dspacing(start)
@@ -76,7 +91,7 @@ def test_elastic_wavelength():
     assert set(tof.elastic_wavelength('Q').keys()) == {'wavelength'}
 
 
-@pytest.mark.parametrize('start', ('dspacing', ))
+@pytest.mark.parametrize('start', ('dspacing',))
 def test_elastic_wavelength_unsupported_starts(start):
     with pytest.raises(KeyError):
         tof.elastic_wavelength(start)
@@ -102,16 +117,19 @@ def test_indirect_inelastic_unsupported_starts(start):
         tof.indirect_inelastic(start)
 
 
-@pytest.mark.parametrize('arg', (
-    (tof.elastic, ('energy', 'tof', 'Q', 'wavelength')),
-    (tof.kinematic, ('tof', 'wavelength', 'energy')),
-    (tof.elastic_dspacing, ('tof', 'wavelength', 'energy')),
-    (tof.elastic_energy, ('tof', 'wavelength')),
-    (tof.elastic_Q, ('tof', 'wavelength')),
-    (tof.elastic_wavelength, ('tof', 'energy', 'Q')),
-    (tof.direct_inelastic, ('tof', )),
-    (tof.indirect_inelastic, ('tof', )),
-))
+@pytest.mark.parametrize(
+    'arg',
+    (
+        (tof.elastic, ('energy', 'tof', 'Q', 'wavelength')),
+        (tof.kinematic, ('tof', 'wavelength', 'energy')),
+        (tof.elastic_dspacing, ('tof', 'wavelength', 'energy')),
+        (tof.elastic_energy, ('tof', 'wavelength')),
+        (tof.elastic_Q, ('tof', 'wavelength')),
+        (tof.elastic_wavelength, ('tof', 'energy', 'Q')),
+        (tof.direct_inelastic, ('tof',)),
+        (tof.indirect_inelastic, ('tof',)),
+    ),
+)
 def test_returns_new_graph(arg):
     fn, starts = arg
     for start in starts:

@@ -5,17 +5,20 @@ from nbconvert.exporters import NotebookExporter
 from traitlets.config import Config
 
 c = Config()
-c.TagRemovePreprocessor.remove_cell_tags = ("solution", )
+c.TagRemovePreprocessor.remove_cell_tags = ("solution",)
 c.TagRemovePreprocessor.enabled = True
 c.NotebookExporter.preprocessors = ["nbconvert.preprocessors.TagRemovePreprocessor"]
 
 parser = argparse.ArgumentParser(
-    description='Strip cells tagged with "solution" from notebooks.')
-parser.add_argument('names',
-                    metavar='input_path',
-                    type=str,
-                    nargs='+',
-                    help='Paths of notebooks to convert.')
+    description='Strip cells tagged with "solution" from notebooks.'
+)
+parser.add_argument(
+    'names',
+    metavar='input_path',
+    type=str,
+    nargs='+',
+    help='Paths of notebooks to convert.',
+)
 parser.add_argument('--output-dir', dest='path', help='Output folder')
 
 args = parser.parse_args()

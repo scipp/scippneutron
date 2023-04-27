@@ -16,19 +16,22 @@ import scippneutron as scn
 
 
 @st.composite
-def one_dim_data_arrays(draw: st.DrawFn,
-                        min_n_coords: int = 1,
-                        max_n_coords: int = 5) -> sc.DataArray:
+def one_dim_data_arrays(
+    draw: st.DrawFn, min_n_coords: int = 1, max_n_coords: int = 5
+) -> sc.DataArray:
     data = draw(scst.variables(ndim=1, dtype='float64', with_variances=True))
     # See https://github.com/scipp/scipp/issues/3052
     data.variances = abs(data.variances)
     coords = draw(
-        st.dictionaries(keys=st.text(),
-                        values=scst.variables(sizes=data.sizes,
-                                              dtype='float64',
-                                              with_variances=False),
-                        min_size=min_n_coords,
-                        max_size=max_n_coords))
+        st.dictionaries(
+            keys=st.text(),
+            values=scst.variables(
+                sizes=data.sizes, dtype='float64', with_variances=False
+            ),
+            min_size=min_n_coords,
+            max_size=max_n_coords,
+        )
+    )
     return sc.DataArray(data, coords=coords)
 
 
@@ -52,7 +55,8 @@ def roundtrip(da: sc.DataArray, coord: Optional[str] = None, **kwargs) -> sc.Dat
         dim=da.dim,
         coord=coord,
         unit=da.unit,
-        coord_unit=da.coords[coord].unit if coord is not None else None)
+        coord_unit=da.coords[coord].unit if coord is not None else None,
+    )
 
 
 @given(initial=one_dim_data_arrays(), header=headers(), data=st.data())
@@ -62,9 +66,9 @@ def test_roundtrip(initial, header, data):
     assert set(loaded.coords.keys()) == {coord_name}
     # Using allclose instead of identical because the format might lose some precision.
     # Especially in the variances -> stddevs conversion.
-    assert sc.allclose(loaded.coords[coord_name],
-                       initial.coords[coord_name],
-                       equal_nan=True)
+    assert sc.allclose(
+        loaded.coords[coord_name], initial.coords[coord_name], equal_nan=True
+    )
     assert sc.allclose(loaded.data, initial.data, equal_nan=True)
 
 
@@ -73,7 +77,8 @@ def test_saved_file_contains_data_table(da, data):
     coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
     file_contents = save_to_buffer(da, coord=coord_name).getvalue()
     for i, line in enumerate(
-            filter(lambda l: l and not l.startswith('#'), file_contents.split('\n'))):
+        filter(lambda l: l and not l.startswith('#'), file_contents.split('\n'))
+    ):
         x, y, e = map(float, line.split(' '))
         np.testing.assert_allclose(x, da.coords[coord_name][i].value)
         np.testing.assert_allclose(y, da[i].value)
@@ -97,7 +102,8 @@ def test_save_deduce_coord_data_with_one_coord(initial):
 def test_save_deduce_coord_dim_coord(initial, data):
     dim = initial.dim
     initial_coord = data.draw(
-        scst.variables(sizes=initial.sizes, dtype='float64', with_variances=False))
+        scst.variables(sizes=initial.sizes, dtype='float64', with_variances=False)
+    )
     initial.coords[dim] = initial_coord.rename({initial_coord.dim: dim})
 
     loaded = roundtrip(initial)
@@ -140,9 +146,9 @@ def test_input_must_have_variances(da, data):
 def test_cannot_save_data_with_bin_edges(da, data):
     coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
     da.coords[coord_name] = sc.concat(
-        [da.coords[coord_name],
-         sc.scalar(0.0, unit=da.coords[coord_name].unit)],
-        dim=da.dim)
+        [da.coords[coord_name], sc.scalar(0.0, unit=da.coords[coord_name].unit)],
+        dim=da.dim,
+    )
     with pytest.raises(sc.CoordError):
         save_to_buffer(da, coord=coord_name)
 
@@ -156,13 +162,16 @@ def test_cannot_save_data_with_masks(da, data):
         save_to_buffer(da, coord=next(iter(da.coords)))
 
 
-@given(da=scst.dataarrays(
-    data_args={
-        'ndim': st.integers(min_value=2, max_value=4),
-        'dtype': 'float64',
-        'with_variances': True
-    }),
-       data=st.data())
+@given(
+    da=scst.dataarrays(
+        data_args={
+            'ndim': st.integers(min_value=2, max_value=4),
+            'dtype': 'float64',
+            'with_variances': True,
+        }
+    ),
+    data=st.data(),
+)
 @settings(max_examples=20)
 def test_input_must_be_one_dimensional(da, data):
     coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
@@ -173,13 +182,15 @@ def test_input_must_be_one_dimensional(da, data):
 @given(da=one_dim_data_arrays(), header=headers())
 def test_can_set_header(da, header):
     buffer = save_to_buffer(da, coord=next(iter(da.coords)), header=header)
-    commented_header = '\n'.join(f'# {line}'
-                                 for line in header.splitlines()) if header else ''
+    commented_header = (
+        '\n'.join(f'# {line}' for line in header.splitlines()) if header else ''
+    )
     assert buffer.getvalue().startswith(commented_header)
 
 
-@given(da=one_dim_data_arrays(),
-       coord_name=st.text(string.ascii_letters + string.digits))
+@given(
+    da=one_dim_data_arrays(), coord_name=st.text(string.ascii_letters + string.digits)
+)
 def test_generated_header_includes_coord_name_and_units(da, coord_name):
     # Detecting the coord name in the file can be tricky if it can contain arbitrary
     # characters (like '\n' or '#') because lines in the header start with '# '.
@@ -201,14 +212,15 @@ def test_loads_correct_values():
 '''
     buffer = StringIO(file_contents)
     loaded = scn.io.load_xye(buffer, dim='my-dim', unit='one', coord_unit='us')
-    expected = sc.DataArray(sc.array(dims=['my-dim'],
-                                     values=[2, 32.1, 0],
-                                     variances=np.power([3, 5, 2.1e-3], 2),
-                                     unit='one'),
-                            coords={
-                                'my-dim':
-                                sc.array(dims=['my-dim'],
-                                         values=[1, 1.003, 0.1111],
-                                         unit='us')
-                            })
+    expected = sc.DataArray(
+        sc.array(
+            dims=['my-dim'],
+            values=[2, 32.1, 0],
+            variances=np.power([3, 5, 2.1e-3], 2),
+            unit='one',
+        ),
+        coords={
+            'my-dim': sc.array(dims=['my-dim'], values=[1, 1.003, 0.1111], unit='us')
+        },
+    )
     assert sc.identical(loaded, expected)

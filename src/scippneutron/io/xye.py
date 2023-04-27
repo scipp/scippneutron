@@ -13,7 +13,6 @@ from ..logging import get_logger
 
 
 class GenerateHeaderType:
-
     def __repr__(self) -> str:
         return 'GenerateHeader'
 
@@ -21,11 +20,13 @@ class GenerateHeaderType:
 GenerateHeader = GenerateHeaderType()
 
 
-def save_xye(fname: Union[str, Path, io.TextIOBase],
-             da: sc.DataArray,
-             *,
-             coord: Optional[str] = None,
-             header: Union[str, GenerateHeaderType] = GenerateHeader) -> None:
+def save_xye(
+    fname: Union[str, Path, io.TextIOBase],
+    da: sc.DataArray,
+    *,
+    coord: Optional[str] = None,
+    header: Union[str, GenerateHeaderType] = GenerateHeader,
+) -> None:
     """Write a data array to an XYE file.
 
     The input must be 1-dimensional, have variances, and at least one coordinate.
@@ -67,27 +68,37 @@ def save_xye(fname: Union[str, Path, io.TextIOBase],
     """
     if da.variances is None:
         raise sc.VariancesError(
-            'Cannot save data to XYE file because it has no variances.')
+            'Cannot save data to XYE file because it has no variances.'
+        )
     if da.ndim != 1:
         raise sc.DimensionError(
             'Cannot save data to XYE file because it is not one-dimensional. '
-            f'It has dimensions {da.dims}')
+            f'It has dimensions {da.dims}'
+        )
     if da.masks:
-        raise ValueError('Cannot save data to XYE file because it has masks: '
-                         f'{list(da.masks.keys())}')
+        raise ValueError(
+            'Cannot save data to XYE file because it has masks: '
+            f'{list(da.masks.keys())}'
+        )
     if len(da.coords) == 0:
         raise ValueError('Cannot save data to XYE file because it has no coordinates.')
     coord = _deduce_coord(da) if coord is None else coord
     if da.coords.is_edges(coord):
-        raise sc.CoordError('Cannot save data with bin-edges to XYE file. '
-                            'Compute bin-centers before calling save_xye. '
-                            'Use, e.g., scipp.midpoints for linearly spaced bins.')
+        raise sc.CoordError(
+            'Cannot save data with bin-edges to XYE file. '
+            'Compute bin-centers before calling save_xye. '
+            'Use, e.g., scipp.midpoints for linearly spaced bins.'
+        )
     to_save = np.c_[da.coords[coord].values, da.values, np.sqrt(da.variances)]
     if header is GenerateHeader:
         header = _generate_xye_header(da, coord)
 
-    get_logger().info("Saving data with unit %s and coordinate '%s' to XYE file %s",
-                      da.unit, coord, fname)
+    get_logger().info(
+        "Saving data with unit %s and coordinate '%s' to XYE file %s",
+        da.unit,
+        coord,
+        fname,
+    )
     np.savetxt(fname, to_save, delimiter=' ', header=header)
 
 
@@ -135,12 +146,12 @@ def load_xye(
     if loaded.ndim == 1:
         loaded = loaded[:, np.newaxis]
     return sc.DataArray(
-        sc.array(dims=[dim], values=loaded[1], variances=loaded[2]**2, unit=unit),
-        coords={coord: sc.array(dims=[dim], values=loaded[0], unit=coord_unit)})
+        sc.array(dims=[dim], values=loaded[1], variances=loaded[2] ** 2, unit=unit),
+        coords={coord: sc.array(dims=[dim], values=loaded[0], unit=coord_unit)},
+    )
 
 
 def _generate_xye_header(da: sc.DataArray, coord: str) -> str:
-
     def format_unit(unit):
         return f'[{unit}]' if unit is not None else ''
 
@@ -158,5 +169,6 @@ def _deduce_coord(da: sc.DataArray) -> str:
         raise ValueError(
             'Cannot deduce which coordinate to save because the data has more '
             f'than one and no dimension-coordinate (dim={da.dim}): '
-            f'{list(da.coords.keys())}')
+            f'{list(da.coords.keys())}'
+        )
     return da.dim

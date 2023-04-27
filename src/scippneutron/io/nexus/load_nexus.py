@@ -25,6 +25,7 @@ class BadSource(Exception):
     Raise if something is wrong with data source which
     prevents it being used. Warn the user.
     """
+
     pass
 
 
@@ -33,14 +34,18 @@ class SkipSource(Exception):
     Raise to abort using the data source, do not
     warn the user.
     """
+
     pass
 
 
-def add_position_and_transforms_to_data(data: Union[sc.DataArray,
-                                                    sc.Dataset], transform_name: str,
-                                        position_name: str, base_position_name: str,
-                                        transforms: sc.Variable,
-                                        positions: sc.Variable):
+def add_position_and_transforms_to_data(
+    data: Union[sc.DataArray, sc.Dataset],
+    transform_name: str,
+    position_name: str,
+    base_position_name: str,
+    transforms: sc.Variable,
+    positions: sc.Variable,
+):
     if isinstance(data, sc.DataArray):
         coords = data.coords
         attrs = data.attrs
@@ -77,8 +82,10 @@ def _open_if_path(file_in: Union[str, Path, h5py.File]):
 def _load_instrument_name(instruments: Dict[str, NXobject]) -> Dict:
     instrument = next(iter(instruments.values()))
     if len(instruments) > 1:
-        warn(f"More than one NXinstrument found in file, "
-             f"loading name from {instrument.name} only")
+        warn(
+            f"More than one NXinstrument found in file, "
+            f"loading name from {instrument.name} only"
+        )
     if (name := instrument.get("name")) is not None:
         return {"instrument_name": sc.scalar(name[()])}
     return {}
@@ -98,9 +105,9 @@ def _load_start_and_end_time(entry: NXobject) -> Dict:
     return times
 
 
-def load_nexus(data_file: Union[str, Path, h5py.File],
-               root: str = "/",
-               quiet=True) -> Optional[ScippData]:
+def load_nexus(
+    data_file: Union[str, Path, h5py.File], root: str = "/", quiet=True
+) -> Optional[ScippData]:
     """
     Load a NeXus file and return required information.
 
@@ -128,11 +135,16 @@ def _origin(unit) -> sc.Variable:
 
 def _depends_on_to_position(obj) -> Union[None, sc.Variable]:
     if (transform := obj.get('depends_on')) is not None:
-        if isinstance(transform,
-                      (str, sc.DataArray)) or transform.dtype == sc.DType.DataArray:
+        if (
+            isinstance(transform, (str, sc.DataArray))
+            or transform.dtype == sc.DType.DataArray
+        ):
             return None  # cannot compute position if bad transform or time-dependent
         else:
-            return transform * _origin(transform.unit)
+            if transform.dtype == sc.DType.rotation3:
+                return transform * _origin('m')
+            else:
+                return transform.to(unit='m') * _origin('m')
 
 
 def _monitor_to_canonical(monitor):
@@ -142,9 +154,11 @@ def _monitor_to_canonical(monitor):
         monitor.bins.coords['tof'] = monitor.bins.coords.pop('event_time_offset')
         monitor.bins.coords['detector_id'] = monitor.bins.coords.pop('event_id')
         monitor.bins.coords['pulse_time'] = sc.bins_like(
-            monitor, fill_value=monitor.coords.pop('event_time_zero'))
+            monitor, fill_value=monitor.coords.pop('event_time_zero')
+        )
         da = sc.DataArray(
-            sc.broadcast(monitor.data.bins.concat('pulse'), dims=['tof'], shape=[1]))
+            sc.broadcast(monitor.data.bins.concat('pulse'), dims=['tof'], shape=[1])
+        )
     else:
         da = monitor.copy(deep=False)
     if (position := _depends_on_to_position(monitor.coords)) is not None:
@@ -172,6 +186,7 @@ def _zip_pixel_offset(da: sc.DataArray) -> sc.DataArray:
 
 def _by_nx_class(group) -> Dict[str, Dict[str, 'NXobject']]:
     from scippnexus.nxobject import _nx_class_registry
+
     classes = {name: [] for name in _nx_class_registry()}
 
     def _match_nx_class(_, node):
@@ -193,8 +208,9 @@ def _by_nx_class(group) -> Dict[str, Dict[str, 'NXobject']]:
     return out
 
 
-def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
-               quiet: bool) -> Optional[ScippData]:
+def _load_data(
+    nexus_file: Union[h5py.File, Dict], root: Optional[str], quiet: bool
+) -> Optional[ScippData]:
     """
     Main implementation for loading data is extracted to this function so that
     in-memory data can be used for unit tests.
@@ -206,9 +222,11 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
         # We can't sensibly load from multiple NXentry, for example each
         # could could contain a description of the same detector bank
         # and lead to problems with clashing detector ids etc
-        raise RuntimeError(f"More than one NXentry group in file, use 'root' argument "
-                           "to specify which to load data from, for example"
-                           f"{__name__}('my_file.nxs', '/entry_2')")
+        raise RuntimeError(
+            f"More than one NXentry group in file, use 'root' argument "
+            "to specify which to load data from, for example"
+            f"{__name__}('my_file.nxs', '/entry_2')"
+        )
 
     # In the following, we map the file structure onto a partially flattened in-memory
     # structure. This behavior is quite error prone and cumbersome and will probably
@@ -233,7 +251,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                 det.coords['detector_id'] = det.coords.pop('spectrum_index')
             else:
                 raise KeyError(
-                    "Found neither of detector_number, pixel_id, or spectrum_index.")
+                    "Found neither of detector_number, pixel_id, or spectrum_index."
+                )
             if 'pixel_offset' in det.coords:
                 add_position_and_transforms_to_data(
                     data=det,
@@ -241,10 +260,18 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                     position_name="position",
                     base_position_name="base_position",
                     positions=det.coords.pop('pixel_offset'),
-                    transforms=det.coords.pop('depends_on', None))
+                    transforms=det.coords.pop('depends_on', None),
+                )
             loaded_detectors.append(det)
-        except (BadSource, SkipSource, NexusStructureError, KeyError, sc.DTypeError,
-                ValueError, IndexError) as e:
+        except (
+            BadSource,
+            SkipSource,
+            NexusStructureError,
+            KeyError,
+            sc.DTypeError,
+            ValueError,
+            IndexError,
+        ) as e:
             if not contains_stream(group._group):
                 warn(f"Skipped loading {group.name} due to:\n{e}")
 
@@ -272,9 +299,9 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                 if len(events.bins.constituents['data']) != 0:
                     # See scipp/scipp#2490
                     det_id = sc.arange('detector_id', det_min, det_max + 1, unit=None)
-                    events = make_binned(events,
-                                         groups=[det_id],
-                                         erase=['pulse', 'bank'])
+                    events = make_binned(
+                        events, groups=[det_id], erase=['pulse', 'bank']
+                    )
                 loaded_events.append(events)
             except (BadSource, SkipSource, NexusStructureError, IndexError) as e:
                 if not contains_stream(group._group):
@@ -285,13 +312,13 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
 
     if not no_event_data:
         # Add single tof bin
-        loaded_data = sc.DataArray(loaded_data.data.fold(dim='detector_id',
-                                                         sizes={
-                                                             'detector_id': -1,
-                                                             'tof': 1
-                                                         }),
-                                   coords=dict(loaded_data.coords.items()),
-                                   attrs=dict(loaded_data.attrs.items()))
+        loaded_data = sc.DataArray(
+            loaded_data.data.fold(
+                dim='detector_id', sizes={'detector_id': -1, 'tof': 1}
+            ),
+            coords=dict(loaded_data.coords.items()),
+            attrs=dict(loaded_data.attrs.items()),
+        )
         tof_min = loaded_data.bins.coords['tof'].min().to(dtype='float64')
         tof_max = loaded_data.bins.coords['tof'].max().to(dtype='float64')
         tof_max.value = np.nextafter(tof_max.value, float("inf"))
@@ -304,11 +331,11 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             else:
                 loaded_data[key] = value
 
-    if (entries := classes['NXentry']):
+    if entries := classes['NXentry']:
         entry = next(iter(entries.values()))
         add_metadata(_load_title(entry))
         add_metadata(_load_start_and_end_time(entry))
-    if (instruments := classes['NXinstrument']):
+    if instruments := classes['NXinstrument']:
         add_metadata(_load_instrument_name(instruments))
 
     def load_and_add_metadata(groups, process=lambda x: x):
@@ -318,8 +345,16 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
             try:
                 items[name] = sc.scalar(process(group[()]))
                 loaded_groups.append(name)
-            except (BadSource, SkipSource, TransformationError, sc.DimensionError,
-                    sc.UnitError, NexusStructureError, KeyError, ValueError) as e:
+            except (
+                BadSource,
+                SkipSource,
+                TransformationError,
+                sc.DimensionError,
+                sc.UnitError,
+                NexusStructureError,
+                KeyError,
+                ValueError,
+            ) as e:
                 if not contains_stream(group._group):
                     warn(f"Skipped loading {group.name} due to:\n{e}")
         add_metadata(items)
@@ -331,10 +366,12 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
     for name, tag in {'sample': 'NXsample', 'source': 'NXsource'}.items():
         comps = classes.get(tag, {})
         comps = load_and_add_metadata(comps)
-        attrs = loaded_data if isinstance(loaded_data,
-                                          sc.Dataset) else loaded_data.attrs
-        coords = loaded_data if isinstance(loaded_data,
-                                           sc.Dataset) else loaded_data.coords
+        attrs = (
+            loaded_data if isinstance(loaded_data, sc.Dataset) else loaded_data.attrs
+        )
+        coords = (
+            loaded_data if isinstance(loaded_data, sc.Dataset) else loaded_data.coords
+        )
         for comp_name in comps:
             comp = attrs[comp_name].value
             if (position := _depends_on_to_position(comp)) is not None:
@@ -343,7 +380,8 @@ def _load_data(nexus_file: Union[h5py.File, Dict], root: Optional[str],
                 if not isinstance(distance, sc.Variable):
                     distance = sc.scalar(distance, unit=None)
                 coords[f'{comp_name}_position'] = sc.vector(
-                    value=[0, 0, distance.value], unit=distance.unit)
+                    value=[0, 0, distance.value], unit=distance.unit
+                )
             elif name == 'sample':
                 coords[f'{comp_name}_position'] = _origin('m')
 

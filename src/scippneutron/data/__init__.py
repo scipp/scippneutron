@@ -3,7 +3,7 @@
 # @author Simon Heybrock
 import scipp as sc
 
-from ..mantid import load
+from ..mantid import load_with_mantid
 
 _version = '5'
 
@@ -12,6 +12,7 @@ __all__ = ['tutorial_dense_data', 'tutorial_event_data', 'get_path']
 
 def _make_pooch():
     import pooch
+
     return pooch.create(
         path=pooch.os_cache('scippneutron'),
         env='SCIPPNEUTRON_DATA_DIR',
@@ -31,7 +32,8 @@ def _make_pooch():
             'PG3_4866_event.nxs': 'md5:3d543bc6a646e622b3f4542bc3435e7e',
             'PG3_4871_event.nxs': 'md5:a3d0edcb36ab8e9e3342cd8a4440b779',
             'WISH00016748.raw': 'md5:37ecc6f99662b57e405ed967bdc068af',
-        })
+        },
+    )
 
 
 _pooch = _make_pooch()
@@ -50,7 +52,7 @@ def tutorial_event_data():
 
 
 def powder_sample():
-    return load(_pooch.fetch('PG3_4844_event.nxs'))
+    return load_with_mantid(_pooch.fetch('PG3_4844_event.nxs'))
 
 
 def powder_calibration():

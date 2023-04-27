@@ -33,7 +33,7 @@ _filewriter_to_supported_numpy_dtype = {
     "uint16": np.int32,
     "uint32": np.int32,
     "uint64": np.int64,
-    "string": np.str_
+    "string": np.str_,
 }
 
 numpy_to_filewriter_type = {
@@ -48,7 +48,7 @@ numpy_to_filewriter_type = {
     np.uint32: "uint32",
     np.uint64: "uint64",
     np.str_: "string",
-    np.object_: "string"
+    np.object_: "string",
 }
 
 
@@ -68,7 +68,7 @@ def make_json_attr(name: str, value) -> dict:
     else:
         attr_info = {
             "size": value.shape,
-            "type": numpy_to_filewriter_type[value.dtype.type]
+            "type": numpy_to_filewriter_type[value.dtype.type],
         }
     name_and_value = {"name": name, "values": value}
     return {**attr_info, **name_and_value}
@@ -84,7 +84,7 @@ def make_json_dataset(name: str, data) -> dict:
     else:
         dataset_info = {
             "size": data.shape,
-            "type": numpy_to_filewriter_type[data.dtype.type]
+            "type": numpy_to_filewriter_type[data.dtype.type],
         }
 
     return {
@@ -92,12 +92,13 @@ def make_json_dataset(name: str, data) -> dict:
         "name": name,
         "values": data,
         "dataset": dataset_info,
-        "attributes": []
+        "attributes": [],
     }
 
 
-def _get_attribute_value(element: Dict,
-                         attribute_name: str) -> Union[str, float, int, List]:
+def _get_attribute_value(
+    element: Dict, attribute_name: str
+) -> Union[str, float, int, List]:
     """
     attributes can be a dictionary of key-value pairs, or an array
     of dictionaries with key, value, type, etc
@@ -116,7 +117,6 @@ def _get_attribute_value(element: Dict,
 
 
 class _Node(dict):
-
     def __init__(self, parent: dict, name: str, file: dict, group: dict):
         super().__init__(**group)
         self.parent = parent
@@ -124,9 +124,13 @@ class _Node(dict):
         self.file = file
 
 
-def _visit_nodes(root: Dict, group: Dict, nx_class_names: Tuple[str, ...],
-                 groups_with_requested_nx_class: Dict[str,
-                                                      List[H5Group]], path: List[str]):
+def _visit_nodes(
+    root: Dict,
+    group: Dict,
+    nx_class_names: Tuple[str, ...],
+    groups_with_requested_nx_class: Dict[str, List[H5Group]],
+    path: List[str],
+):
     try:
         for child in group[_nexus_children]:
             try:
@@ -141,14 +145,15 @@ def _visit_nodes(root: Dict, group: Dict, nx_class_names: Tuple[str, ...],
                 nx_class = _get_attribute_value(child, _nexus_class)
                 if nx_class in nx_class_names:
                     groups_with_requested_nx_class[nx_class].append(
-                        _Node(group=child, parent=group, name="/".join(path),
-                              file=root))
+                        _Node(group=child, parent=group, name="/".join(path), file=root)
+                    )
             except MissingAttribute:
                 # It may be a group but not an NX_class,
                 # that's fine, continue to its children
                 pass
-            _visit_nodes(root, child, nx_class_names, groups_with_requested_nx_class,
-                         path)
+            _visit_nodes(
+                root, child, nx_class_names, groups_with_requested_nx_class, path
+            )
             path.pop(-1)
     except KeyError:
         pass
@@ -182,16 +187,20 @@ def _find_by_type(type_name: str, root: Dict) -> List[H5Group]:
     Returns a list of objects with requested type
     """
 
-    def _visit_nodes_for_type(obj: Dict, requested_type: str,
-                              objects_found: List[H5Group]):
+    def _visit_nodes_for_type(
+        obj: Dict, requested_type: str, objects_found: List[H5Group]
+    ):
         try:
             for child in obj[_nexus_children]:
                 if child["type"] == requested_type:
                     objects_found.append(
-                        _Node(group=child,
-                              parent=obj,
-                              name="",
-                              file={_nexus_children: [obj]}))
+                        _Node(
+                            group=child,
+                            parent=obj,
+                            name="",
+                            file={_nexus_children: [obj]},
+                        )
+                    )
                 _visit_nodes_for_type(child, requested_type, objects_found)
         except KeyError:
             # If this object does not have "children" array then go to next
@@ -203,15 +212,14 @@ def _find_by_type(type_name: str, root: Dict) -> List[H5Group]:
     return objects_with_requested_type
 
 
-class JSONTypeStringID():
-
+class JSONTypeStringID:
     def get_cset(self):
         import h5py
+
         return h5py.h5t.CSET_UTF8
 
 
 class JSONAttrID:
-
     def __init__(self):
         pass
 
@@ -220,7 +228,6 @@ class JSONAttrID:
 
 
 class JSONAttributeManager:
-
     def __init__(self, node: dict):
         self._node = node
 
@@ -259,7 +266,6 @@ class JSONAttributeManager:
 
 
 class JSONNode:
-
     def __init__(self, node: dict, *, parent=None):
         self._file = parent.file if parent is not None else self
         self._parent = self if parent is None else parent
@@ -287,7 +293,6 @@ class JSONNode:
 
 
 class JSONDataset(JSONNode):
-
     @property
     def dtype(self) -> str:
         try:
@@ -317,7 +322,6 @@ class JSONDataset(JSONNode):
 
 
 class JSONGroup(JSONNode):
-
     def __contains__(self, name: str) -> bool:
         try:
             self[name]
@@ -330,6 +334,9 @@ class JSONGroup(JSONNode):
             return []
         children = self._node[_nexus_children]
         return [child[_nexus_name] for child in children if not contains_stream(child)]
+
+    def items(self) -> List[Tuple[str, JSONNode]]:
+        return [(key, self[key]) for key in self.keys()]
 
     def _as_group_or_dataset(self, item, parent):
         if item['type'] == _nexus_group:
@@ -359,12 +366,12 @@ class JSONGroup(JSONNode):
         yield from self.keys()
 
     def visititems(self, callable):
-
         def skip(node):
             return node['type'] == _nexus_link or contains_stream(self)
 
         children = [
-            child[_nexus_name] for child in self._node[_nexus_children]
+            child[_nexus_name]
+            for child in self._node[_nexus_children]
             if not skip(child)
         ]
         for key in children:
@@ -416,6 +423,12 @@ def get_streams_info(root: Dict) -> List[StreamInfo]:
             pass
 
         streams.append(
-            StreamInfo(stream["stream"]["topic"], stream["stream"]["writer_module"],
-                       stream["stream"]["source"], dtype, units))
+            StreamInfo(
+                stream["stream"]["topic"],
+                stream["stream"]["writer_module"],
+                stream["stream"]["source"],
+                dtype,
+                units,
+            )
+        )
     return streams

@@ -1,18 +1,11 @@
 import scipp as sc
-import scippnexus as nexus
-
-import scippneutron as scn
-
-
-def test_can_load_nxdetector_from_bigfake():
-    with nexus.File(scn.data.bigfake()) as f:
-        da = f['entry/instrument/detector_1'][...]
-        assert da.sizes == {'dim_0': 300, 'dim_1': 300}
+import scippnexus as snx
 
 
 def test_can_load_nxdetector_from_PG3():
     import scippneutron as scn
-    with nexus.File(scn.data.get_path('PG3_4844_event.nxs')) as f:
+
+    with snx.File(scn.data.get_path('PG3_4844_event.nxs')) as f:
         det = f['entry/instrument/bank24']
         da = det[...]
         assert da.sizes == {'x_pixel_offset': 154, 'y_pixel_offset': 7}

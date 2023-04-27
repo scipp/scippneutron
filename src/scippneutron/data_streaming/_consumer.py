@@ -45,8 +45,10 @@ class FakeConsumer:
 
     def __init__(self, input_queue: Optional[mp.Queue]):
         if input_queue is None:
-            raise RuntimeError("A multiprocessing queue for test messages "
-                               "must be provided when using FakeConsumer")
+            raise RuntimeError(
+                "A multiprocessing queue for test messages "
+                "must be provided when using FakeConsumer"
+            )
         # This queue is used to provide the consumer with
         # messages in unit tests, instead of it getting messages
         # from the Kafka broker
@@ -67,12 +69,13 @@ class FakeConsumer:
 
 
 class KafkaConsumer:
-
-    def __init__(self,
-                 topic_partition: TopicPartition,
-                 consumer: Union[Consumer, FakeConsumer],
-                 callback: Callable,
-                 stop_time_ms: Optional[int] = None):
+    def __init__(
+        self,
+        topic_partition: TopicPartition,
+        consumer: Union[Consumer, FakeConsumer],
+        callback: Callable,
+        stop_time_ms: Optional[int] = None,
+    ):
         self._consumer = consumer
         # To consume messages the consumer must "subscribe" to one
         # or more topics or "assign" specific topic partitions, the
@@ -101,7 +104,6 @@ class KafkaConsumer:
         self._consume_data.start()
 
     def _consume_loop(self):
-
         def time_now_ms() -> int:
             return time_ns() // 1_000_000
 
@@ -159,7 +161,7 @@ class KafkaConsumer:
     def stop(self):
         self.cancelled = True
         if self._consume_data is not None and self._consume_data.is_alive():
-            self._consume_data.join(5.)
+            self._consume_data.join(5.0)
         self._consumer.close()
         self.stopped = True
 
@@ -191,7 +193,7 @@ class KafkaQueryConsumer:
             "group.id": "consumer_group_name",
             "auto.offset.reset": "latest",
             "enable.auto.commit": False,
-            "queued.min.messages": 1
+            "queued.min.messages": 1,
         }
         self._consumer = Consumer(**conf)
 
@@ -208,7 +210,7 @@ class KafkaQueryConsumer:
         """
         self._consumer.seek(partition)
 
-    def poll(self, timeout=2.):
+    def poll(self, timeout=2.0):
         """
         Poll for a message from Kafka
         """
@@ -229,13 +231,14 @@ class KafkaQueryConsumer:
 
 
 def create_consumers(
-        start_time_ms: int,
-        stop_time_ms: Optional[int],
-        topics: List[str],
-        kafka_broker: str,
-        consumer_type_enum: ConsumerType,  # so we can inject fake consumer
-        callback: Callable,
-        test_message_queue: Optional[mp.Queue]) -> List[KafkaConsumer]:
+    start_time_ms: int,
+    stop_time_ms: Optional[int],
+    topics: List[str],
+    kafka_broker: str,
+    consumer_type_enum: ConsumerType,  # so we can inject fake consumer
+    callback: Callable,
+    test_message_queue: Optional[mp.Queue],
+) -> List[KafkaConsumer]:
     """
     Creates one consumer per TopicPartition that start consuming
     at specified timestamp in the data stream
@@ -249,7 +252,8 @@ def create_consumers(
         query_consumer = KafkaQueryConsumer(kafka_broker)
         for topic in topics:
             topic_partitions.extend(
-                query_consumer.get_topic_partitions(topic, offset=start_time_ms))
+                query_consumer.get_topic_partitions(topic, offset=start_time_ms)
+            )
         topic_partitions = query_consumer.offsets_for_times(topic_partitions)
 
     # Run start messages are typically much larger than the
@@ -276,8 +280,12 @@ def create_consumers(
         ]
     else:
         consumers = [
-            KafkaConsumer(TopicPartition(""), FakeConsumer(test_message_queue),
-                          callback, stop_time_ms)
+            KafkaConsumer(
+                TopicPartition(""),
+                FakeConsumer(test_message_queue),
+                callback,
+                stop_time_ms,
+            )
         ]
 
     return consumers
@@ -305,8 +313,9 @@ def all_consumers_stopped(consumers: List[KafkaConsumer]) -> bool:
     return True
 
 
-def get_run_start_message(topic: str,
-                          query_consumer: KafkaQueryConsumer) -> RunStartInfo:
+def get_run_start_message(
+    topic: str, query_consumer: KafkaQueryConsumer
+) -> RunStartInfo:
     """
     Get the last run start message on the given topic.
 
@@ -319,10 +328,12 @@ def get_run_start_message(topic: str,
     if n_partitions != 1:
         raise RuntimeError(
             f"Expected run start topic to contain exactly one partition, "
-            f"the specified topic '{topic}' has {n_partitions} partitions.")
+            f"the specified topic '{topic}' has {n_partitions} partitions."
+        )
     partition = topic_partitions[0]
-    low_watermark_offset, current_offset = \
-        query_consumer.get_watermark_offsets(partition)
+    low_watermark_offset, current_offset = query_consumer.get_watermark_offsets(
+        partition
+    )
     partition.offset = current_offset
     query_consumer.assign([partition])
 
@@ -333,12 +344,13 @@ def get_run_start_message(topic: str,
         current_offset -= 1
         partition.offset = current_offset
         query_consumer.seek(partition)
-        message = query_consumer.poll(timeout=2.)
+        message = query_consumer.poll(timeout=2.0)
         if message is None:
             raise RunStartError("Timed out when trying to retrieve run start message")
         elif message.error():
-            raise RunStartError(f"Error encountered consuming run start "
-                                f"message: {message.error()}")
+            raise RunStartError(
+                f"Error encountered consuming run start " f"message: {message.error()}"
+            )
         try:
             return deserialise_pl72(message.value())
         except WrongSchemaException:
