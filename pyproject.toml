@@ -93,4 +93,5 @@ filterwarnings = [
   'ignore:Widget._widget_types is deprecated:DeprecationWarning',
   'ignore:Widget.widget_types is deprecated:DeprecationWarning',
   'ignore:Widget.widgets is deprecated:DeprecationWarning',
+  'ignore:`load_nexus` is deprecated:UserWarning',
 ]

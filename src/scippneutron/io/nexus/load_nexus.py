@@ -12,6 +12,7 @@ import h5py
 import numpy as np
 import scipp as sc
 from scipp.binning import make_binned
+from scipp.core.util import VisibleDeprecationWarning
 from scippnexus import NXroot
 from scippnexus.nxobject import NexusStructureError, NXobject
 from scippnexus.nxtransformations import TransformationError
@@ -119,6 +120,10 @@ def load_nexus(
     Usage example:
       data = sc.neutron.load_nexus('PG3_4844_event.nxs')
     """
+    warn(
+        "`load_nexus` is deprecated, please switch to using ScippNexus.",
+        VisibleDeprecationWarning,
+    )
     start_time = timer()
 
     with _open_if_path(data_file) as nexus_file:
