@@ -133,7 +133,7 @@ jobs:
           path: conda-package-noarch
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: '3.10'
+          python-version: '3.8'
       - run: conda install -c conda-forge --yes anaconda-client
       - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package-*/*/*.tar.bz2)
 
