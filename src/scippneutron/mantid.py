@@ -552,6 +552,43 @@ def convert_monitors_ws(ws, converter, **ignored):
         ) as monitor_ws:
             # Run logs are already loaded in the data workspace
             single_monitor = converter(monitor_ws, load_run_logs=False)
+        # Storing sample_position as an aligned coord of monitors means that monitor
+        # data cannot be combined with scattered data even after conversion
+        # to wavelength, d-spacing, etc. because conversions of monitors do
+        # not use the sample position.
+        single_monitor['data'].coords.set_aligned('sample_position', False)
+        # Remove redundant information that is duplicated from workspace
+        # We get this extra information from the generic converter reuse
+        single_monitor['data'].coords.pop('detector_info', None)
+        del single_monitor['sample']
+        name = comp_info.name(det_index)
+        if not comp_info.uniqueName(name):
+            name = f'{name}_{number}'
+        monitors.append((name, single_monitor))
+    return monitors
+
+
+def convert_monitors_ws_arrays(ws, converter, **ignored):
+    spec_dim, spec_coord = init_spec_axis(ws)
+    spec_info = ws.spectrumInfo()
+    comp_info = ws.componentInfo()
+    monitors = []
+    spec_indices = (
+        (ws.getIndexFromSpectrumNumber(int(i)), i) for i in spec_coord.values
+    )
+    for index, number in spec_indices:
+        definition = spec_info.getSpectrumDefinition(index)
+        if not definition.size() == 1:
+            raise RuntimeError("Cannot deal with grouped monitor detectors")
+        det_index = definition[0][0]  # Ignore time index
+        # We only ExtractSpectra for compatibility with
+        # existing convert_Workspace2D_to_dataarray. This could instead be
+        # refactored if found to be slow
+        with run_mantid_alg(
+            'ExtractSpectra', InputWorkspace=ws, WorkspaceIndexList=[index]
+        ) as monitor_ws:
+            # Run logs are already loaded in the data workspace
+            single_monitor = converter(monitor_ws, load_run_logs=False)
         # Storing sample_position as a coord of monitors means that monitor
         # data cannot be combined with scattered data even after conversion
         # to wavelength, d-spacing, etc. because conversions of monitors do
@@ -699,8 +736,8 @@ def convert_EventWorkspace_to_data_array(
     ws, load_pulse_times=True, advanced_geometry=False, load_run_logs=True, **ignored
 ):
     warnings.warn(
-        'convert_Workspace2D_to_data_array is deprecated in favor of '
-        'convert_Workspace2D_to_data_group.',
+        'convert_EventWorkspace_to_data_array is deprecated in favor of '
+        'convert_EventWorkspace_to_data_group.',
         VisibleDeprecationWarning,
     )
 
@@ -853,7 +890,39 @@ def convert_EventWorkspace_to_data_group(
     )
 
 
+def convert_MDHistoWorkspace_to_data_group(md_histo, **ignored) -> sc.DataGroup:
+    ndims = md_histo.getNumDims()
+    coords = dict()
+    dims_used = []
+    for i in range(ndims):
+        dim = md_histo.getDimension(i)
+        frame = dim.getMDFrame()
+        sc_dim = md_dimension(dim, i)
+        coords[sc_dim] = sc.array(
+            dims=[sc_dim],
+            values=np.linspace(dim.getMinimum(), dim.getMaximum(), dim.getNBins()),
+            unit=md_unit(frame),
+        )
+        dims_used.append(sc_dim)
+    data = sc.array(
+        dims=dims_used,
+        values=md_histo.getSignalArray(),
+        variances=md_histo.getErrorSquaredArray(),
+        unit=sc.units.counts,
+    )
+    nevents = sc.array(dims=dims_used, values=md_histo.getNumEventsArray())
+    return sc.DataGroup(
+        {'data': sc.DataArray(coords=coords, data=data), 'nevents': nevents}
+    )
+
+
 def convert_MDHistoWorkspace_to_data_array(md_histo, **ignored):
+    warnings.warn(
+        'convert_MDHistoWorkspace_to_data_array is deprecated in favor of '
+        'convert_MDHistoWorkspace_to_data_group.',
+        VisibleDeprecationWarning,
+    )
+
     ndims = md_histo.getNumDims()
     coords = dict()
     dims_used = []
@@ -953,11 +1022,19 @@ def convert_WorkspaceGroup_to_dataarray_dict(group_workspace, **kwargs):
 
 
 def from_mantid(workspace, **kwargs) -> sc.DataGroup:
-    """Convert Mantid workspace to a scipp data array or dataset.
-    :param workspace: Mantid workspace to convert.
+    """Convert Mantid workspace to a scipp data group.
+
+    Parameters
+    ----------
+    workspace:
+        Mantid workspace to convert.
+    kwargs:
+        Forwarded to the workspace-specific converter.
+
+    Returns
+    -------
+        A data group representing ``workspace``.
     """
-    raise NotImplementedError("from_mantid")
-    scipp_obj = None  # This is either a Dataset or DataArray
     monitor_ws = None
     workspaces_to_delete = []
     w_id = workspace.id()
@@ -976,15 +1053,14 @@ def from_mantid(workspace, **kwargs) -> sc.DataGroup:
             workspaces_to_delete.append(monitor_ws)
         scipp_obj = convert_Workspace2D_to_data_group(workspace, **kwargs)
     elif w_id == 'EventWorkspace':
-        scipp_obj = convert_EventWorkspace_to_data_array(workspace, **kwargs)
+        scipp_obj = convert_EventWorkspace_to_data_group(workspace, **kwargs)
     elif w_id == 'TableWorkspace':
-        scipp_obj = convert_TableWorkspace_to_dataset(workspace, **kwargs)
+        scipp_obj = convert_TableWorkspace_to_data_group(workspace, **kwargs)
     elif w_id == 'MDHistoWorkspace':
-        scipp_obj = convert_MDHistoWorkspace_to_data_array(workspace, **kwargs)
+        scipp_obj = convert_MDHistoWorkspace_to_data_group(workspace, **kwargs)
     elif w_id == 'WorkspaceGroup':
-        scipp_obj = convert_WorkspaceGroup_to_dataarray_dict(workspace, **kwargs)
-
-    if scipp_obj is None:
+        scipp_obj = convert_WorkspaceGroup_to_data_group(workspace, **kwargs)
+    else:
         raise RuntimeError('Unsupported workspace type {}'.format(w_id))
 
     # TODO Is there ever a case where a Workspace2D has a separate monitor
@@ -999,13 +1075,13 @@ def from_mantid(workspace, **kwargs) -> sc.DataGroup:
 
     if monitor_ws is not None:
         if monitor_ws.id() == 'MaskWorkspace' or monitor_ws.id() == 'Workspace2D':
-            converter = convert_Workspace2D_to_data_array
+            converter = convert_Workspace2D_to_data_group
         elif monitor_ws.id() == 'EventWorkspace':
-            converter = convert_EventWorkspace_to_data_array
+            converter = convert_EventWorkspace_to_data_group
 
         monitors = convert_monitors_ws(monitor_ws, converter, **kwargs)
         for name, monitor in monitors:
-            scipp_obj.attrs[name] = sc.scalar(monitor)
+            scipp_obj[name] = monitor
     for ws in workspaces_to_delete:
         mantid.DeleteWorkspace(ws)
 
@@ -1073,7 +1149,7 @@ def array_from_mantid(workspace, **kwargs) -> Union[sc.DataArray, sc.Dataset]:
         elif monitor_ws.id() == 'EventWorkspace':
             converter = convert_EventWorkspace_to_data_array
 
-        monitors = convert_monitors_ws(monitor_ws, converter, **kwargs)
+        monitors = convert_monitors_ws_arrays(monitor_ws, converter, **kwargs)
         for name, monitor in monitors:
             scipp_obj.attrs[name] = sc.scalar(monitor)
     for ws in workspaces_to_delete:
@@ -1246,15 +1322,35 @@ def load(
         "scippneutron v24.01.0. Use the new scippneutron.load_with_mantid instead.",
         VisibleDeprecationWarning,
     )
-    return load_with_mantid(
-        filename,
-        load_pulse_times,
-        instrument_filename,
-        error_connection,
-        mantid_alg,
-        mantid_args,
-        advanced_geometry,
-    )
+
+    if mantid_args is None:
+        mantid_args = {}
+
+    _check_file_path(str(filename), mantid_alg)
+
+    with run_mantid_alg(mantid_alg, str(filename), **mantid_args) as loaded:
+        # Determine what Load has provided us
+        from mantid.api import Workspace
+
+        if isinstance(loaded, Workspace):
+            # A single workspace
+            data_ws = loaded
+        else:
+            # Separate data and monitor workspaces
+            data_ws = loaded.OutputWorkspace
+
+        if instrument_filename is not None:
+            import mantid.simpleapi as mantid
+
+            mantid.LoadInstrument(
+                data_ws, FileName=instrument_filename, RewriteSpectraMap=True
+            )
+        return array_from_mantid(
+            data_ws,
+            load_pulse_times=load_pulse_times,
+            error_connection=error_connection,
+            advanced_geometry=advanced_geometry,
+        )
 
 
 def _is_mantid_loadable(filename):
