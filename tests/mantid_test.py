@@ -15,6 +15,10 @@ import scippneutron as scn
 
 from .mantid_helper import mantid_is_available
 
+pytestmark = pytest.mark.skipif(
+    not mantid_is_available(), reason='Mantid framework is unavailable'
+)
+
 
 def memory_is_at_least_gb(required):
     import psutil
@@ -24,7 +28,6 @@ def memory_is_at_least_gb(required):
 
 
 @pytest.mark.skipif(not memory_is_at_least_gb(4), reason='Insufficient virtual memory')
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 class TestMantidConversion(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -775,7 +778,6 @@ class TestMantidConversion(unittest.TestCase):
 
 
 @pytest.mark.skipif(not memory_is_at_least_gb(8), reason='Insufficient virtual memory')
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_load_mcstas_data():
     import mantid.simpleapi as mantid
 
@@ -811,7 +813,6 @@ def test_to_rot_from_vectors():
 
 
 @pytest.mark.skipif(not memory_is_at_least_gb(8), reason='Insufficient virtual memory')
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 @pytest.mark.parametrize(
     "param_dim",
     ('tof', 'wavelength', 'energy', 'dspacing', 'Q', 'Q^2', 'energy_transfer'),
@@ -852,7 +853,6 @@ def test_to_workspace_2d(param_dim):
         np.testing.assert_array_equal(ws.readE(i), np.sqrt(y['spectrum', i].variances))
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_to_workspace_2d_handles_single_spectra():
     from mantid.simpleapi import mtd
 
@@ -875,7 +875,6 @@ def test_to_workspace_2d_handles_single_spectra():
     assert np.equal(ws.readE(0), np.sqrt(expected_e)).all()
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_to_workspace_2d_handles_single_x_array():
     from mantid.simpleapi import mtd
 
@@ -904,7 +903,6 @@ def test_to_workspace_2d_handles_single_x_array():
         assert np.equal(ws.readE(i), np.sqrt(e_vals)).all()
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_attrs_with_dims():
     import mantid.simpleapi as sapi
     from mantid.kernel import FloatArrayProperty
@@ -933,7 +931,6 @@ def test_attrs_with_dims():
     assert ds.attrs['attr2'].value.shape == (10,)  # inner held
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_time_series_log_extraction():
     import mantid.simpleapi as sapi
 
@@ -959,7 +956,6 @@ def test_time_series_log_extraction():
     sapi.DeleteWorkspace(ws)
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_from_mask_workspace():
     from os import path
 
@@ -1008,7 +1004,6 @@ def _load_indirect_instrument(instr, parameters):
     return out
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_extract_energy_final():
     # Efinal is often stored in a non-default parameter file
     parameters = {
@@ -1026,7 +1021,6 @@ def test_extract_energy_final():
         assert efs.unit == sc.Unit("meV")
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_extract_energy_final_when_not_present():
     from mantid.kernel import DeltaEModeType
     from mantid.simpleapi import CreateSampleWorkspace
@@ -1037,7 +1031,6 @@ def test_extract_energy_final_when_not_present():
     assert "final_energy" not in ds.coords
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_extract_energy_initial():
     from mantid.simpleapi import mtd
 
@@ -1050,7 +1043,6 @@ def test_extract_energy_initial():
     )
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_extract_energy_inital_when_not_present():
     from mantid.kernel import DeltaEModeType
     from mantid.simpleapi import CreateSampleWorkspace
@@ -1061,7 +1053,6 @@ def test_extract_energy_inital_when_not_present():
     assert "incident_energy" not in ds.coords
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_EventWorkspace_with_pulse_times():
     import mantid.simpleapi as sapi
 
@@ -1080,7 +1071,6 @@ def test_EventWorkspace_with_pulse_times():
     )
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_duplicate_monitor_names():
     from mantid.simpleapi import LoadEmptyInstrument
 
@@ -1093,7 +1083,6 @@ def test_duplicate_monitor_names():
     assert da.attrs['monitor_14'].value.attrs['spectrum'].value == 14
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_load_error_when_file_not_found_via_fuzzy_match():
     with pytest.raises(ValueError):
         scn.load_with_mantid("fictional.nxs")
@@ -1129,7 +1118,6 @@ def make_dynamic_algorithm_without_fileproperty(alg_name):
     importlib.reload(sys.modules["mantid.simpleapi"])
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_load_error_when_file_not_found_via_exact_match():
     make_dynamic_algorithm_without_fileproperty("DummyLoader")
     with pytest.raises(ValueError):
@@ -1138,10 +1126,9 @@ def test_load_error_when_file_not_found_via_exact_match():
         scn.load_with_mantid("fictional.nxs", mantid_alg="DummyLoader")
 
 
-@pytest.mark.skipif(not mantid_is_available(), reason='Mantid framework is unavailable')
 def test_load_via_exact_match():
     make_dynamic_algorithm_without_fileproperty("DummyLoader")
-    # scn.load will need to check file exists
+    # scn.load_with_mantid will need to check file exists
     # DummyLoader simply returns a TableWorkspace
     with tempfile.NamedTemporaryFile() as fp:
         scn.load_with_mantid(fp.name, mantid_alg="DummyLoader")
