@@ -44,7 +44,8 @@ class TestMantidConversion(unittest.TestCase):
             StoreInADS=False,
         )
 
-    def test_Workspace2D(self):
+    @pytest.mark.filterwarnings("ignore:convert_Workspace2D_to_data_array")
+    def test_Workspace2D_data_array(self):
         import mantid.simpleapi as mantid
 
         eventWS = self.base_event_ws
@@ -58,6 +59,21 @@ class TestMantidConversion(unittest.TestCase):
         assert d.coords['spectrum'].dtype == sc.DType.int32
         assert d.coords['spectrum'].unit is None
         assert d.coords['tof'].dtype == sc.DType.float64
+
+    def test_Workspace2D_data_group(self):
+        import mantid.simpleapi as mantid
+
+        eventWS = self.base_event_ws
+        ws = mantid.Rebin(eventWS, 10000, PreserveEvents=False)
+        d = scn.mantid.convert_Workspace2D_to_data_group(ws)
+        assert d["run_start"].value == "2012-05-21T15:14:56.279289666"
+        assert d["data"].unit == sc.units.counts
+        for i in range(ws.getNumberHistograms()):
+            assert np.all(np.equal(d["data"].values[i], ws.readY(i)))
+            assert np.all(np.equal(d["data"].variances[i], ws.readE(i) * ws.readE(i)))
+        assert d["data"].coords['spectrum'].dtype == sc.DType.int32
+        assert d["data"].coords['spectrum'].unit is None
+        assert d["data"].coords['tof'].dtype == sc.DType.float64
 
     def test_EventWorkspace(self):
         import mantid.simpleapi as mantid

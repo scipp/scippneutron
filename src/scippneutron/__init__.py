@@ -23,7 +23,14 @@ from .beamline_components import (
     two_theta,
 )
 from .core import convert
-from .mantid import from_mantid, to_mantid, load_with_mantid, load, fit
+from .mantid import (
+    from_mantid,
+    array_from_mantid,
+    to_mantid,
+    load_with_mantid,
+    load,
+    fit,
+)
 from .instrument_view import instrument_view
 from .io.nexus.load_nexus import load_nexus, load_nexus_json
 from .data_streaming.data_stream import data_stream

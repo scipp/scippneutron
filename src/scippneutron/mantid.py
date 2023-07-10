@@ -65,7 +65,7 @@ additional_unit_mapping = {
 }
 
 
-def make_variables_from_run_logs(ws):
+def process_run_logs(ws):
     for property_name in ws.run().keys():
         units_string = ws.run()[property_name].units
         try:
@@ -96,24 +96,17 @@ def make_variables_from_run_logs(ws):
         if np.isscalar(values):
             property_data = sc.scalar(values, unit=unit)
         else:
-            property_data = sc.Variable(
-                values=values, unit=unit, dims=[dimension_label]
-            )
+            property_data = sc.array(values=values, unit=unit, dims=[dimension_label])
 
         if is_time_series:
             # If property has timestamps, create a DataArray
             data_array = sc.DataArray(
                 data=property_data,
                 coords={
-                    dimension_label: sc.Variable(dims=[dimension_label], values=times)
+                    dimension_label: sc.array(dims=[dimension_label], values=times)
                 },
             )
-            yield property_name, sc.scalar(data_array)
-        elif not np.isscalar(values):
-            # If property is multi-valued, create a wrapper single
-            # value variable. This prevents interference with
-            # global dimensions for for output Dataset.
-            yield property_name, sc.scalar(property_data)
+            yield property_name, data_array
         else:
             yield property_name, property_data
 
@@ -182,7 +175,7 @@ def make_detector_info(ws, spectrum_dim):
     # May want to include more information here, such as detector positions,
     # but for now this is not necessary.
 
-    return sc.scalar(sc.Dataset(coords={'detector': detector, spectrum_dim: spectrum}))
+    return sc.Dataset(coords={'detector': detector, spectrum_dim: spectrum})
 
 
 def md_dimension(mantid_dim, index):
@@ -455,7 +448,7 @@ def init_spec_axis(ws):
     dim, unit = validate_and_get_unit(axis.getUnit())
     values = axis.extractValues()
     dtype = _get_dtype_from_values(values, dim == 'spectrum')
-    return dim, sc.Variable(dims=[dim], values=values, unit=unit, dtype=dtype)
+    return dim, sc.array(dims=[dim], values=values, unit=unit, dtype=dtype)
 
 
 def set_bin_masks(bin_masks, dim, index, masked_bins):
@@ -489,15 +482,13 @@ def _convert_MatrixWorkspace_info(ws, advanced_geometry=False, load_run_logs=Tru
         "masks": {},
         "attrs": {
             "sample": make_mantid_sample(ws),
-            "instrument_name": sc.scalar(
-                ws.componentInfo().name(ws.componentInfo().root())
-            ),
+            "instrument_name": ws.componentInfo().name(ws.componentInfo().root()),
         },
     }
 
     if load_run_logs:
-        for run_log_name, run_log_variable in make_variables_from_run_logs(ws):
-            info["attrs"][run_log_name] = run_log_variable
+        for run_log_name, run_log in process_run_logs(ws):
+            info["attrs"][run_log_name] = run_log
 
     if advanced_geometry:
         info["coords"]["detector_info"] = make_detector_info(ws, spec_dim)
@@ -577,12 +568,22 @@ def convert_monitors_ws(ws, converter, **ignored):
 def convert_Workspace2D_to_data_array(
     ws, load_run_logs=True, advanced_geometry=False, **ignored
 ):
+    warnings.warn(
+        'convert_Workspace2D_to_data_array is deprecated in favor of '
+        'convert_Workspace2D_to_data_group.',
+        VisibleDeprecationWarning,
+    )
+
     dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
     spec_dim, spec_coord = init_spec_axis(ws)
 
     coords_labs_data = _convert_MatrixWorkspace_info(
         ws, advanced_geometry=advanced_geometry, load_run_logs=load_run_logs
     )
+    coords_labs_data["attrs"] = {
+        key: val if isinstance(val, sc.Variable) else sc.scalar(val)
+        for key, val in coords_labs_data["attrs"].items()
+    }
     _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
     if ws.id() == 'MaskWorkspace':
         coords_labs_data["data"] = sc.Variable(
@@ -622,6 +623,65 @@ def convert_Workspace2D_to_data_array(
             array.coords['position'] = array.coords['position'][spec_dim, 0]
         array = array[spec_dim, 0].copy()
     return array
+
+
+def convert_Workspace2D_to_data_group(
+    ws, load_run_logs=True, advanced_geometry=False, **ignored
+) -> sc.DataGroup:
+    dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
+    spec_dim, spec_coord = init_spec_axis(ws)
+
+    coords_labs_data = _convert_MatrixWorkspace_info(
+        ws, advanced_geometry=advanced_geometry, load_run_logs=load_run_logs
+    )
+    _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
+    if ws.id() == 'MaskWorkspace':
+        data = sc.array(
+            dims=[spec_dim],
+            unit=None,
+            values=ws.extractY().flatten(),
+            dtype=sc.DType.bool,
+        )
+    else:
+        stddev2 = ws.extractE()
+        np.multiply(stddev2, stddev2, out=stddev2)  # much faster than np.power
+        data = sc.array(
+            dims=[spec_dim, dim],
+            unit=data_unit,
+            values=ws.extractY(),
+            variances=stddev2,
+        )
+    res = sc.DataGroup(
+        {
+            "data": sc.DataArray(
+                data,
+                coords=coords_labs_data["coords"],
+                masks=coords_labs_data["masks"],
+            ),
+            **coords_labs_data["attrs"],
+        }
+    )
+
+    if ws.hasAnyMaskedBins():
+        bin_mask = sc.zeros(dims=data.dims, shape=data.shape, dtype=sc.DType.bool)
+        for i in range(ws.getNumberHistograms()):
+            # maskedBinsIndices throws instead of returning empty list
+            if ws.hasMaskedBins(i):
+                set_bin_masks(bin_mask, dim, i, ws.maskedBinsIndices(i))
+        common_mask = sc.all(bin_mask, spec_dim)
+        if sc.identical(common_mask, sc.any(bin_mask, spec_dim)):
+            res["data"].masks["bin"] = common_mask
+        else:
+            res["data"].masks["bin"] = bin_mask
+
+    # Avoid creating dimensions that are not required since this mostly an
+    # artifact of inflexible data structures and gets in the way when working
+    # with scipp.
+    if len(spec_coord.values) == 1:
+        if 'position' in res["data"].coords:
+            res["data"].coords['position'] = res["data"].coords['position'][spec_dim, 0]
+        res["data"] = res["data"][spec_dim, 0].copy()
+    return res
 
 
 def _contains_weighted_events(spectrum) -> bool:
@@ -801,10 +861,81 @@ def convert_WorkspaceGroup_to_dataarray_dict(group_workspace, **kwargs):
     return workspace_dict
 
 
-def from_mantid(workspace, **kwargs):
+def from_mantid(workspace, **kwargs) -> sc.DataGroup:
     """Convert Mantid workspace to a scipp data array or dataset.
     :param workspace: Mantid workspace to convert.
     """
+    raise NotImplementedError("from_mantid")
+    scipp_obj = None  # This is either a Dataset or DataArray
+    monitor_ws = None
+    workspaces_to_delete = []
+    w_id = workspace.id()
+    if w_id == 'Workspace2D' or w_id == 'RebinnedOutput' or w_id == 'MaskWorkspace':
+        n_monitor = 0
+        spec_info = workspace.spectrumInfo()
+        for i in range(len(spec_info)):
+            if spec_info.hasDetectors(i) and spec_info.isMonitor(i):
+                n_monitor += 1
+        # If there are *only* monitors we do not move them to an attribute
+        if n_monitor > 0 and n_monitor < len(spec_info):
+            import mantid.simpleapi as mantid
+
+            workspace, monitor_ws = mantid.ExtractMonitors(workspace)
+            workspaces_to_delete.append(workspace)
+            workspaces_to_delete.append(monitor_ws)
+        scipp_obj = convert_Workspace2D_to_data_group(workspace, **kwargs)
+    elif w_id == 'EventWorkspace':
+        scipp_obj = convert_EventWorkspace_to_data_array(workspace, **kwargs)
+    elif w_id == 'TableWorkspace':
+        scipp_obj = convert_TableWorkspace_to_dataset(workspace, **kwargs)
+    elif w_id == 'MDHistoWorkspace':
+        scipp_obj = convert_MDHistoWorkspace_to_data_array(workspace, **kwargs)
+    elif w_id == 'WorkspaceGroup':
+        scipp_obj = convert_WorkspaceGroup_to_dataarray_dict(workspace, **kwargs)
+
+    if scipp_obj is None:
+        raise RuntimeError('Unsupported workspace type {}'.format(w_id))
+
+    # TODO Is there ever a case where a Workspace2D has a separate monitor
+    # workspace? This is not handled by ExtractMonitors above, I think.
+    if monitor_ws is None:
+        if hasattr(workspace, 'getMonitorWorkspace'):
+            try:
+                monitor_ws = workspace.getMonitorWorkspace()
+            except RuntimeError:
+                # Have to try/fail here. No inspect method on Mantid for this.
+                pass
+
+    if monitor_ws is not None:
+        if monitor_ws.id() == 'MaskWorkspace' or monitor_ws.id() == 'Workspace2D':
+            converter = convert_Workspace2D_to_data_array
+        elif monitor_ws.id() == 'EventWorkspace':
+            converter = convert_EventWorkspace_to_data_array
+
+        monitors = convert_monitors_ws(monitor_ws, converter, **kwargs)
+        for name, monitor in monitors:
+            scipp_obj.attrs[name] = sc.scalar(monitor)
+    for ws in workspaces_to_delete:
+        mantid.DeleteWorkspace(ws)
+
+    return scipp_obj
+
+
+def array_from_mantid(workspace, **kwargs) -> Union[sc.DataArray, sc.Dataset]:
+    """Convert Mantid workspace to a scipp data array or dataset.
+    :param workspace: Mantid workspace to convert.
+
+    .. deprecated:: 23.07.0
+       The old ``from_mantid`` was renamed to ``array_from_mantid`` and is deprecated
+       in favor of the new ``from_mantid`` which return a data group.
+    """
+    warnings.warn(
+        "scippneutron.array_from_mantid has been deprecated and is scheduled for "
+        "removal in scippneutron v24.01.0. "
+        "Use the new scippneutron.from_mantid instead.",
+        VisibleDeprecationWarning,
+    )
+
     scipp_obj = None  # This is either a Dataset or DataArray
     monitor_ws = None
     workspaces_to_delete = []
