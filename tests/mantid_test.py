@@ -60,7 +60,7 @@ class TestMantidConversion(unittest.TestCase):
         assert d.coords['spectrum'].unit is None
         assert d.coords['tof'].dtype == sc.DType.float64
 
-    def test_Workspace2D_data_group(self):
+    def test_Workspace2D(self):
         import mantid.simpleapi as mantid
 
         eventWS = self.base_event_ws
@@ -94,7 +94,7 @@ class TestMantidConversion(unittest.TestCase):
         delta = sc.sum(delta, 'tof')
         self.assertLess(np.abs(delta.value), 1e-5)
 
-    def test_EventWorkspace_data_group(self):
+    def test_EventWorkspace(self):
         import mantid.simpleapi as mantid
 
         eventWS = self.base_event_ws
@@ -119,12 +119,13 @@ class TestMantidConversion(unittest.TestCase):
         ws = mantid.CloneWorkspace(self.base_event_ws)
         ws.getSpectrum(ws.getNumberHistograms() - 1).clear(removeDetIDs=True)
 
-        da = scn.mantid.convert_EventWorkspace_to_data_array(ws, load_pulse_times=False)
+        dg = scn.mantid.convert_EventWorkspace_to_data_group(ws, load_pulse_times=False)
+        assert dg["run_start"].value == "2012-05-21T15:14:56.279289666"
+        da = dg["data"]
         assert da.bins.size()['spectrum', -1]['tof', 0].value == 0
-        da.bins.coords['tof'] = da.bins.coords['tof'].copy()
 
     def test_comparison(self):
-        a = scn.mantid.convert_EventWorkspace_to_data_array(
+        a = scn.mantid.convert_EventWorkspace_to_data_group(
             self.base_event_ws, load_pulse_times=False
         )
         b = a.copy()
@@ -135,9 +136,7 @@ class TestMantidConversion(unittest.TestCase):
         # CNCS given advanced and basic geometry calculation routes
         x = scn.from_mantid(self.base_event_ws, advanced_geometry=False)
         y = scn.from_mantid(self.base_event_ws, advanced_geometry=True)
-        assert np.all(
-            np.isclose(x.coords['position'].values, y.coords['position'].values)
-        )
+        assert sc.allclose(x["data"].coords['position'], y["data"].coords['position'])
 
     def test_advanced_geometry_with_absent_shape(self):
         import mantid.simpleapi as mantid
