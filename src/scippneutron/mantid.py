@@ -13,6 +13,7 @@ from typing import Union
 
 import numpy as np
 import scipp as sc
+from scipp.core.util import VisibleDeprecationWarning
 
 
 @contextmanager
@@ -1015,16 +1016,12 @@ def load(
     ...                    mantid_args={'BankName': 'bank184',
     ...                                 'LoadMonitors': True})  # doctest: +SKIP
 
-    .. deprecated:: 23.05.0
+    .. deprecated:: 23.07.0
        Use load_with_mantid instead.
     """
-    import warnings
-
-    from scipp.core.util import VisibleDeprecationWarning
-
     warnings.warn(
         "scippneutron.load has been deprecated and is scheduled for removal in "
-        "scippneutron v23.10.0. Use the new scippneutron.load_with_mantid instead.",
+        "scippneutron v24.01.0. Use the new scippneutron.load_with_mantid instead.",
         VisibleDeprecationWarning,
     )
     return load_with_mantid(
