@@ -75,7 +75,8 @@ class TestMantidConversion(unittest.TestCase):
         assert d["data"].coords['spectrum'].unit is None
         assert d["data"].coords['tof'].dtype == sc.DType.float64
 
-    def test_EventWorkspace(self):
+    @pytest.mark.filterwarnings("ignore:convert_Workspace2D_to_data_array")
+    def test_EventWorkspace_data_array(self):
         import mantid.simpleapi as mantid
 
         eventWS = self.base_event_ws
@@ -92,6 +93,25 @@ class TestMantidConversion(unittest.TestCase):
         delta = sc.sum(binned_mantid - histogrammed, 'spectrum')
         delta = sc.sum(delta, 'tof')
         self.assertLess(np.abs(delta.value), 1e-5)
+
+    def test_EventWorkspace_data_group(self):
+        import mantid.simpleapi as mantid
+
+        eventWS = self.base_event_ws
+        ws = mantid.Rebin(eventWS, 10000)
+
+        binned_mantid = scn.mantid.convert_Workspace2D_to_data_group(ws)["data"]
+
+        target_tof = binned_mantid.coords['tof']
+        d = scn.mantid.convert_EventWorkspace_to_data_group(
+            eventWS, load_pulse_times=False
+        )
+        assert d["run_start"].value == "2012-05-21T15:14:56.279289666"
+
+        histogrammed = d["data"].hist(tof=target_tof)
+        delta = sc.sum(binned_mantid - histogrammed, 'spectrum')
+        delta = sc.sum(delta, 'tof')
+        assert np.abs(delta.value) < 1e-5
 
     def test_EventWorkspace_empty_event_list_consistent_bin_indices(self):
         import mantid.simpleapi as mantid

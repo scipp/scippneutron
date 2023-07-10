@@ -693,6 +693,88 @@ def _contains_weighted_events(spectrum) -> bool:
 def convert_EventWorkspace_to_data_array(
     ws, load_pulse_times=True, advanced_geometry=False, load_run_logs=True, **ignored
 ):
+    warnings.warn(
+        'convert_Workspace2D_to_data_array is deprecated in favor of '
+        'convert_Workspace2D_to_data_group.',
+        VisibleDeprecationWarning,
+    )
+
+    dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
+    spec_dim, spec_coord = init_spec_axis(ws)
+    nHist = ws.getNumberHistograms()
+    _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
+
+    n_event = ws.getNumberEvents()
+    coord = sc.empty(dims=['event'], shape=[n_event], unit=unit, dtype=sc.DType.float64)
+    weights = sc.ones(
+        dims=['event'],
+        shape=[n_event],
+        unit=data_unit,
+        dtype=sc.DType.float32,
+        with_variances=True,
+    )
+    pulse_times = (
+        sc.empty(
+            dims=['event'], shape=[n_event], dtype=sc.DType.datetime64, unit=sc.units.ns
+        )
+        if load_pulse_times
+        else None
+    )
+
+    begins = sc.zeros(
+        dims=[spec_dim, dim], shape=[nHist, 1], dtype=sc.DType.int64, unit=None
+    )
+    ends = begins.copy()
+    if n_event > 0:  # Skip expensive loop if there are no events
+        current = 0
+        for i in range(nHist):
+            sp = ws.getSpectrum(i)
+            size = sp.getNumberEvents()
+            begins.values[i] = current
+            ends.values[i] = current + size
+            if size == 0:  # Skip expensive getters
+                continue
+            coord['event', current : current + size].values = sp.getTofs()
+            if load_pulse_times:
+                pulse_times[
+                    'event', current : current + size
+                ].values = sp.getPulseTimesAsNumpy()
+            if _contains_weighted_events(sp):
+                weights['event', current : current + size].values = sp.getWeights()
+                weights[
+                    'event', current : current + size
+                ].variances = sp.getWeightErrors()
+            current += size
+
+    proto_events = {'data': weights, 'coords': {dim: coord}}
+    if load_pulse_times:
+        proto_events["coords"]["pulse_time"] = pulse_times
+    events = sc.DataArray(**proto_events)
+
+    coords_labs_data = _convert_MatrixWorkspace_info(
+        ws, advanced_geometry=advanced_geometry, load_run_logs=load_run_logs
+    )
+    coords_labs_data["attrs"] = {
+        key: val if isinstance(val, sc.Variable) else sc.scalar(val)
+        for key, val in coords_labs_data["attrs"].items()
+    }
+    # For now we ignore potential finer bin edges to avoid creating too many
+    # bins. Use just a single bin along dim and use extents given by workspace
+    # edges.
+    # TODO If there are events outside edges this might create bins with
+    # events that are not within bin bounds. Consider using `bin` instead
+    # of `bins`?
+    edges = coords_labs_data['coords'][dim]
+    # Using range slice of thickness 1 to avoid transposing 2-D coords
+    coords_labs_data['coords'][dim] = sc.concat([edges[dim, :1], edges[dim, -1:]], dim)
+
+    coords_labs_data["data"] = sc.bins(begin=begins, end=ends, dim='event', data=events)
+    return sc.DataArray(**coords_labs_data)
+
+
+def convert_EventWorkspace_to_data_group(
+    ws, load_pulse_times=True, advanced_geometry=False, load_run_logs=True, **ignored
+):
     dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
     spec_dim, spec_coord = init_spec_axis(ws)
     nHist = ws.getNumberHistograms()
@@ -758,8 +840,13 @@ def convert_EventWorkspace_to_data_array(
     # Using range slice of thickness 1 to avoid transposing 2-D coords
     coords_labs_data['coords'][dim] = sc.concat([edges[dim, :1], edges[dim, -1:]], dim)
 
-    coords_labs_data["data"] = sc.bins(begin=begins, end=ends, dim='event', data=events)
-    return sc.DataArray(**coords_labs_data)
+    data = sc.bins(begin=begins, end=ends, dim='event', data=events)
+    return sc.DataGroup(
+        {
+            "data": sc.DataArray(data, coords=coords_labs_data["coords"]),
+            **coords_labs_data["attrs"],
+        }
+    )
 
 
 def convert_MDHistoWorkspace_to_data_array(md_histo, **ignored):
