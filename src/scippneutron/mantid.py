@@ -1016,16 +1016,15 @@ def load(
     ...                                 'LoadMonitors': True})  # doctest: +SKIP
 
     .. deprecated:: 23.05.0
-       Renamed to load_with_mantid.
+       Use load_with_mantid instead.
     """
     import warnings
 
     from scipp.core.util import VisibleDeprecationWarning
 
     warnings.warn(
-        "scippneutron.load has been renamed to scippneutron.load_with_mantid. "
-        "The old function is deprecated and is scheduled for removal in "
-        "scippneutron v23.10.0",
+        "scippneutron.load has been deprecated and is scheduled for removal in "
+        "scippneutron v23.10.0. Use the new scippneutron.load_with_mantid instead.",
         VisibleDeprecationWarning,
     )
     return load_with_mantid(
@@ -1206,7 +1205,9 @@ def _fit_workspace(ws, mantid_args):
         parameters = _table_to_data_array(
             parameters, key='Name', value='Value', stddev='Error'
         )
-        out = convert_Workspace2D_to_data_array(fit.OutputWorkspace)
+        out = convert_Workspace2D_to_data_array(fit.OutputWorkspace).drop_coords(
+            'empty'
+        )
         data = sc.Dataset()
         data['data'] = out['empty', 0]
         data['calculated'] = out['empty', 1]

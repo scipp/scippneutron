@@ -354,7 +354,7 @@ class TestMantidConversion(unittest.TestCase):
             scn.data.get_path("WISH00016748.raw"),
             mantid_args={"LoadMonitors": "Separate", "SpectrumMax": 10000},
         )
-        self.assertEqual(len(mtd), 0, mtd.getObjectNames())
+        assert len(mtd) == 0, mtd.getObjectNames()
         attrs = [str(key) for key in ds.attrs.keys()]
         expected_monitor_attrs = {
             "monitor1",
@@ -1078,9 +1078,9 @@ def test_duplicate_monitor_names():
         InstrumentName='POLARIS', StoreInADS=False
     )  # Has many monitors named 'monitor'
     da = scn.mantid.from_mantid(ws)
-    assert da.attrs['monitor_1'].value.attrs['spectrum'].value == 1
-    assert da.attrs['monitor_13'].value.attrs['spectrum'].value == 13
-    assert da.attrs['monitor_14'].value.attrs['spectrum'].value == 14
+    assert da.attrs['monitor_1'].value.coords['spectrum'].value == 1
+    assert da.attrs['monitor_13'].value.coords['spectrum'].value == 13
+    assert da.attrs['monitor_14'].value.coords['spectrum'].value == 14
 
 
 def test_load_error_when_file_not_found_via_fuzzy_match():
