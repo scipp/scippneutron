@@ -39,7 +39,7 @@ Breaking changes
 ~~~~~~~~~~~~~~~~
 
 * Updated Scipp dependency to 23.07.0 which includes a switch from attributes to coordinates with alignment flags `#443 <https://github.com/scipp/scippneutron/pull/443>`_.
-* :func:`scippneutron.from_mantid` not returns a data group.
+* :func:`scippneutron.from_mantid` now returns a data group.
   The workspace properties that used to be returned as attributes are now returned as items in the data group.
   The old function is still available as ``scippneutron.array_from_mantid`` but has been deprecated `#444 <https://github.com/scipp/scippneutron/pull/444>`_.
 
