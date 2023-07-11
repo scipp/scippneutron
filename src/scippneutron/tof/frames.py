@@ -209,12 +209,12 @@ def unwrap_frames(
                 f"Input data has '{x}' coord or attr, but values should "
                 "be given only as a function parameter."
             )
-    da.attrs['pulse_period'] = pulse_period
-    da.attrs['frame_offset'] = frame_offset
-    da.attrs['lambda_min'] = lambda_min
+    da.coords['pulse_period'] = pulse_period
+    da.coords['frame_offset'] = frame_offset
+    da.coords['lambda_min'] = lambda_min
     if pulse_stride != 1:
-        da.attrs['pulse_stride'] = sc.scalar(pulse_stride)
-        da.attrs['first_pulse_time'] = first_pulse_time
+        da.coords['pulse_stride'] = sc.scalar(pulse_stride)
+        da.coords['first_pulse_time'] = first_pulse_time
     graph = {} if scatter is None else Ltotal(scatter=scatter)
     graph.update(to_tof(pulse_skipping=pulse_stride != 1))
     return da.transform_coords('tof', graph=graph)
