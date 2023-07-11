@@ -112,8 +112,8 @@ def make_count_density_variable(unit):
 
 
 def check_tof_conversion_metadata(converted, target, coord_unit):
-    assert 'tof' not in converted.coords
-    assert target in converted.coords
+    assert 'tof' not in converted.coords or not converted.coords['tof'].aligned
+    assert converted.coords[target].aligned
     assert 'counts' in converted
     assert converted['counts'].sizes == {'spectrum': 2, target: 3}
     assert converted['counts'].unit == sc.units.counts
@@ -203,26 +203,12 @@ def test_convert_scattering_conversion_fails_with_noscatter_mode():
         scn.convert(wavelength, origin='wavelength', target='Q', scatter=False)
 
 
-def test_convert_coords_vs_attributes():
-    with_coords = make_test_data(coords=('tof', 'Ltotal'), dataset=True)
-    with_attrs = with_coords.copy()
-    with_attrs['counts'].attrs['Ltotal'] = with_attrs.coords.pop('Ltotal')
-
-    from_coords = scn.convert(
-        with_coords, origin='tof', target='wavelength', scatter=True
-    )
-    from_attrs = scn.convert(
-        with_attrs, origin='tof', target='wavelength', scatter=True
-    )
-    assert sc.identical(from_coords, from_attrs)
-
-
 @pytest.mark.parametrize('target', ('incident_beam', 'scattered_beam'))
 def test_convert_beams(target):
     def check_positions(data):
-        assert 'sample_position' not in data.coords
-        assert ('source_position' in data.coords) == (target == 'scattered_beam')
-        assert ('position' in data.coords) == (target == 'incident_beam')
+        assert not data.coords['sample_position'].aligned
+        assert data.coords['source_position'].aligned == (target == 'scattered_beam')
+        assert data.coords['position'].aligned == (target == 'incident_beam')
 
     # A single sample position.
     original = make_test_data(coords=('position', 'sample_position', 'source_position'))
@@ -386,7 +372,7 @@ def test_convert_tof_to_Q():
 def test_convert_Q_to_wavelength():
     tof = make_test_data(coords=('tof', 'Ltotal', 'two_theta'))
     Q = scn.convert(tof, origin='tof', target='Q', scatter=True)
-    del Q.attrs['wavelength']
+    del Q.coords['wavelength']
     wavelength_from_Q = scn.convert(Q, origin='Q', target='wavelength', scatter=True)
     wavelength_from_tof = scn.convert(
         tof, origin='tof', target='wavelength', scatter=True
@@ -567,7 +553,7 @@ def test_convert_non_tof(origin, target, target_unit, keep_tof):
     tof = make_test_data(coords=('tof', 'Ltotal', 'two_theta'), dataset=True)
     original = scn.convert(tof, origin='tof', target=origin, scatter=True)
     if not keep_tof:
-        del original['counts'].attrs['tof']
+        del original.coords['tof']
     converted = scn.convert(original, origin=origin, target=target, scatter=True)
     check_tof_conversion_metadata(converted, target, target_unit)
     converted_from_tof = scn.convert(tof, origin='tof', target=target, scatter=True)
