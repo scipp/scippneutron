@@ -124,7 +124,7 @@ def test_neutron_instrument_view_components_with_invalid_size_unit():
         components={'sample': _make_component_settings(data=d, size_unit=sc.units.mm)},
     )
     # cannot scale us to meters. This should throw
-    with pytest.raises(sc.core.UnitError):
+    with pytest.raises(sc.UnitError):
         scn.instrument_view(
             d["a"],
             components={
