@@ -75,7 +75,7 @@ def test_unwrap_frames_no_shift_and_infinite_energy_yields_tof_equal_time_offset
         frame_offset=0.0 * sc.Unit('ms'),
         lambda_min=0.0 * sc.Unit('Angstrom'),
     )
-    assert sc.identical(da.bins.coords['tof'], da.bins.attrs['event_time_offset'])
+    assert sc.identical(da.bins.coords['tof'], da.bins.coords['event_time_offset'])
 
 
 def test_unwrap_frames_no_shift_and_no_events_below_lambda_min_yields_tof_equal_time_offset():  # noqa #501
@@ -90,7 +90,7 @@ def test_unwrap_frames_no_shift_and_no_events_below_lambda_min_yields_tof_equal_
         frame_offset=0.0 * sc.Unit('ms'),
         lambda_min=0.2 * sc.Unit('Angstrom'),
     )
-    assert sc.identical(da.bins.coords['tof'], da.bins.attrs['event_time_offset'])
+    assert sc.identical(da.bins.coords['tof'], da.bins.coords['event_time_offset'])
 
 
 def test_unwrap_frames_time_offset_pivot_and_min_define_frames():
