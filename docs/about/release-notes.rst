@@ -33,10 +33,15 @@ v0.xy.0 (Unreleased)
 Features
 ~~~~~~~~
 
+* Added :func:`scippneutron.load_with_mantid` which returns a data group instead of a data array that the old ``scippneutron.load`` returned `#444 <https://github.com/scipp/scippneutron/pull/444>`_.
+
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
 * Updated Scipp dependency to 23.07.0 which includes a switch from attributes to coordinates with alignment flags `#443 <https://github.com/scipp/scippneutron/pull/443>`_.
+* :func:`scippneutron.from_mantid` not returns a data group.
+  The workspace properties that used to be returned as attributes are now returned as items in the data group.
+  The old function is still available as ``scippneutron.array_from_mantid`` but has been deprecated `#444 <https://github.com/scipp/scippneutron/pull/444>`_.
 
 Bugfixes
 ~~~~~~~~
@@ -47,7 +52,7 @@ Documentation
 Deprecations
 ~~~~~~~~~~~~
 
-* Renamed ``scipneutron.load`` to :func:`scippneutron.load_with_mantid` for clarity. The old name is deprecated `#436 <https://github.com/scipp/scippneutron/pull/436>`_.
+* Deprecated ``scipneutron.load`` in favor of :func:`scippneutron.load_with_mantid` `#436 <https://github.com/scipp/scippneutron/pull/436>`_.
 
 Stability, Maintainability, and Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
