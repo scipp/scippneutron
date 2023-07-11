@@ -409,10 +409,9 @@ class TestMantidConversion(unittest.TestCase):
             "monitor4",
             "monitor5",
         }
-        assert expected_monitor_names.issubset(dg.keys())
+        assert dg["monitors"].keys() == expected_monitor_names
 
-        for monitor_name in expected_monitor_names:
-            monitor = dg[monitor_name]
+        for monitor in dg["monitors"].values():
             assert isinstance(monitor, sc.DataGroup)
             assert monitor.shape == (4471,)
             self.check_monitor_metadata(monitor['data'])
@@ -460,9 +459,8 @@ class TestMantidConversion(unittest.TestCase):
             "monitor4",
             "monitor5",
         }
-        assert expected_monitor_names.issubset(dg.keys())
-        for monitor_name in expected_monitor_names:
-            monitor = dg[monitor_name]
+        assert dg["monitors"].keys() == expected_monitor_names
+        for monitor in dg["monitors"].values():
             assert isinstance(monitor, sc.DataGroup)
             assert monitor.shape == (4471,)
             self.check_monitor_metadata(monitor['data'])
@@ -502,9 +500,8 @@ class TestMantidConversion(unittest.TestCase):
         )
         assert len(mtd) == 0, mtd.getObjectNames()
         expected_monitor_attrs = {"monitor2", "monitor3"}
-        assert expected_monitor_attrs.issubset(dg.keys())
-        for monitor_name in expected_monitor_attrs:
-            monitor = dg[monitor_name]
+        assert dg["monitors"].keys() == expected_monitor_attrs
+        for monitor in dg["monitors"].values():
             assert isinstance(monitor, sc.DataGroup)
             assert monitor.shape == (200001,)
             self.check_monitor_metadata(monitor['data'])
@@ -1285,10 +1282,10 @@ def test_duplicate_monitor_names():
     ws = LoadEmptyInstrument(
         InstrumentName='POLARIS', StoreInADS=False
     )  # Has many monitors named 'monitor'
-    dg = scn.mantid.from_mantid(ws)
-    assert dg['monitor_1']['data'].coords['spectrum'].value == 1
-    assert dg['monitor_13']['data'].coords['spectrum'].value == 13
-    assert dg['monitor_14']['data'].coords['spectrum'].value == 14
+    monitors = scn.mantid.from_mantid(ws)["monitors"]
+    assert monitors['monitor_1']['data'].coords['spectrum'].value == 1
+    assert monitors['monitor_13']['data'].coords['spectrum'].value == 13
+    assert monitors['monitor_14']['data'].coords['spectrum'].value == 14
 
 
 def test_load_error_when_file_not_found_via_fuzzy_match():

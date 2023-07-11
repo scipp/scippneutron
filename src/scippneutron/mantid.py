@@ -1096,10 +1096,9 @@ def from_mantid(workspace, **kwargs) -> sc.DataGroup:
             converter = convert_Workspace2D_to_data_group
         elif monitor_ws.id() == 'EventWorkspace':
             converter = convert_EventWorkspace_to_data_group
-
-        monitors = convert_monitors_ws(monitor_ws, converter, **kwargs)
-        for name, monitor in monitors:
-            scipp_obj[name] = monitor
+        scipp_obj["monitors"] = sc.DataGroup(
+            convert_monitors_ws(monitor_ws, converter, **kwargs)
+        )
     for ws in workspaces_to_delete:
         mantid.DeleteWorkspace(ws)
 
@@ -1184,10 +1183,10 @@ def load_with_mantid(
     mantid_alg='Load',
     mantid_args=None,
     advanced_geometry=False,
-) -> sc.Dataset:
+) -> sc.DataGroup:
     """Load a file using Mantid.
 
-    Wraps Mantid's loaders and converts the result to a scipp dataset.
+    Wraps Mantid's loaders and converts the result to a scipp data group.
 
     See also the neutron-data tutorial.
 
@@ -1220,7 +1219,7 @@ def load_with_mantid(
     Returns
     -------
     :
-        A Dataset containing the neutron event/histogram data and the
+        A Data group containing the neutron event/histogram data and the
         instrument geometry.
 
     Raises
@@ -1232,12 +1231,11 @@ def load_with_mantid(
     Examples
     --------
     >>> from scippneutron import load_with_mantid
-    >>> d = sc.Dataset()
-    >>> d["sample"] = load_with_mantid(filename='PG3_4844_event.nxs',
-    ...                                load_pulse_times=False,
-    ...                                mantid_args={
-    ...                                     'BankName': 'bank184',
-    ...                                     'LoadMonitors': True})  # doctest: +SKIP
+    >>> load_with_mantid(filename='PG3_4844_event.nxs',
+    ...                  load_pulse_times=False,
+    ...                  mantid_args={
+    ...                      'BankName': 'bank184',
+    ...                      'LoadMonitors': True})  # doctest: +SKIP
     """
 
     if mantid_args is None:
