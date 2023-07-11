@@ -24,18 +24,20 @@ def in_ws():
 
 @pytest.fixture
 def in_da(in_ws):
-    return scn.mantid.from_mantid(in_ws).astype('float64')
+    return scn.mantid.from_mantid(in_ws)['data'].astype('float64')
 
 
 def test_histogram_events(in_ws, in_da):
+    from scipp.utils.comparison import isnear
+
     out_ws = sapi.Rebin(
         InputWorkspace=in_ws,
         Params=[0, 10, 1000],
         PreserveEvents=False,
         StoreInADS=False,
     )
-    out_mantid = scn.mantid.from_mantid(out_ws)
+    out_mantid = scn.mantid.from_mantid(out_ws)['data']
     out_scipp = in_da.hist(
         tof=sc.linspace('tof', 0, 1000, num=101, dtype='float64', unit='us')
     )
-    assert sc.utils.comparison.isnear(out_scipp, out_mantid, rtol=1e-15 * sc.units.one)
+    assert isnear(out_scipp, out_mantid, rtol=1e-15 * sc.units.one)
