@@ -1009,7 +1009,25 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
     return dataset
 
 
+def convert_WorkspaceGroup_to_data_group(group_workspace, **kwargs):
+    workspace_dict = sc.DataGroup()
+    for i in range(group_workspace.getNumberOfEntries()):
+        workspace = group_workspace.getItem(i)
+        workspace_name = (
+            workspace.name().replace(f'{group_workspace.name()}', '').strip('_')
+        )
+        workspace_dict[workspace_name] = from_mantid(workspace, **kwargs)
+
+    return workspace_dict
+
+
 def convert_WorkspaceGroup_to_dataarray_dict(group_workspace, **kwargs):
+    warnings.warn(
+        'convert_WorkspaceGroup_to_dataarray_dict is deprecated in favor of '
+        'convert_WorkspaceGroup_to_data_group.',
+        VisibleDeprecationWarning,
+    )
+
     workspace_dict = {}
     for i in range(group_workspace.getNumberOfEntries()):
         workspace = group_workspace.getItem(i)
@@ -1055,7 +1073,7 @@ def from_mantid(workspace, **kwargs) -> sc.DataGroup:
     elif w_id == 'EventWorkspace':
         scipp_obj = convert_EventWorkspace_to_data_group(workspace, **kwargs)
     elif w_id == 'TableWorkspace':
-        scipp_obj = convert_TableWorkspace_to_data_group(workspace, **kwargs)
+        scipp_obj = convert_TableWorkspace_to_dataset(workspace, **kwargs)
     elif w_id == 'MDHistoWorkspace':
         scipp_obj = convert_MDHistoWorkspace_to_data_group(workspace, **kwargs)
     elif w_id == 'WorkspaceGroup':
