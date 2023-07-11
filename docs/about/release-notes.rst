@@ -36,6 +36,8 @@ Features
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
+* Updated Scipp dependency to 23.07.0 which includes a switch from attributes to coordinates with alignment flags `#443 <https://github.com/scipp/scippneutron/pull/443>`_.
+
 Bugfixes
 ~~~~~~~~
 
