@@ -9,10 +9,11 @@ import warnings
 from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
-from typing import Union
+from typing import Any, Dict, Union
 
 import numpy as np
 import scipp as sc
+from scipp.core.util import VisibleDeprecationWarning
 
 
 @contextmanager
@@ -64,7 +65,7 @@ additional_unit_mapping = {
 }
 
 
-def make_variables_from_run_logs(ws):
+def process_run_logs(ws):
     for property_name in ws.run().keys():
         units_string = ws.run()[property_name].units
         try:
@@ -95,24 +96,17 @@ def make_variables_from_run_logs(ws):
         if np.isscalar(values):
             property_data = sc.scalar(values, unit=unit)
         else:
-            property_data = sc.Variable(
-                values=values, unit=unit, dims=[dimension_label]
-            )
+            property_data = sc.array(values=values, unit=unit, dims=[dimension_label])
 
         if is_time_series:
             # If property has timestamps, create a DataArray
             data_array = sc.DataArray(
                 data=property_data,
                 coords={
-                    dimension_label: sc.Variable(dims=[dimension_label], values=times)
+                    dimension_label: sc.array(dims=[dimension_label], values=times)
                 },
             )
-            yield property_name, sc.scalar(data_array)
-        elif not np.isscalar(values):
-            # If property is multi-valued, create a wrapper single
-            # value variable. This prevents interference with
-            # global dimensions for for output Dataset.
-            yield property_name, sc.scalar(property_data)
+            yield property_name, data_array
         else:
             yield property_name, property_data
 
@@ -181,7 +175,7 @@ def make_detector_info(ws, spectrum_dim):
     # May want to include more information here, such as detector positions,
     # but for now this is not necessary.
 
-    return sc.scalar(sc.Dataset(coords={'detector': detector, spectrum_dim: spectrum}))
+    return sc.Dataset(coords={'detector': detector, spectrum_dim: spectrum})
 
 
 def md_dimension(mantid_dim, index):
@@ -454,12 +448,19 @@ def init_spec_axis(ws):
     dim, unit = validate_and_get_unit(axis.getUnit())
     values = axis.extractValues()
     dtype = _get_dtype_from_values(values, dim == 'spectrum')
-    return dim, sc.Variable(dims=[dim], values=values, unit=unit, dtype=dtype)
+    return dim, sc.array(dims=[dim], values=values, unit=unit, dtype=dtype)
 
 
 def set_bin_masks(bin_masks, dim, index, masked_bins):
     for masked_bin in masked_bins:
         bin_masks['spectrum', index][dim, masked_bin].value = True
+
+
+def _as_dict_of_variables(d: Dict[str, Any]) -> Dict[str, sc.Variable]:
+    return {
+        key: val if isinstance(val, sc.Variable) else sc.scalar(val)
+        for key, val in d.items()
+    }
 
 
 def _convert_MatrixWorkspace_info(ws, advanced_geometry=False, load_run_logs=True):
@@ -488,15 +489,13 @@ def _convert_MatrixWorkspace_info(ws, advanced_geometry=False, load_run_logs=Tru
         "masks": {},
         "attrs": {
             "sample": make_mantid_sample(ws),
-            "instrument_name": sc.scalar(
-                ws.componentInfo().name(ws.componentInfo().root())
-            ),
+            "instrument_name": ws.componentInfo().name(ws.componentInfo().root()),
         },
     }
 
     if load_run_logs:
-        for run_log_name, run_log_variable in make_variables_from_run_logs(ws):
-            info["attrs"][run_log_name] = run_log_variable
+        for run_log_name, run_log in process_run_logs(ws):
+            info["attrs"][run_log_name] = run_log
 
     if advanced_geometry:
         info["coords"]["detector_info"] = make_detector_info(ws, spec_dim)
@@ -553,6 +552,43 @@ def convert_monitors_ws(ws, converter, **ignored):
         ) as monitor_ws:
             # Run logs are already loaded in the data workspace
             single_monitor = converter(monitor_ws, load_run_logs=False)
+        # Storing sample_position as an aligned coord of monitors means that monitor
+        # data cannot be combined with scattered data even after conversion
+        # to wavelength, d-spacing, etc. because conversions of monitors do
+        # not use the sample position.
+        single_monitor['data'].coords.set_aligned('sample_position', False)
+        # Remove redundant information that is duplicated from workspace
+        # We get this extra information from the generic converter reuse
+        single_monitor['data'].coords.pop('detector_info', None)
+        del single_monitor['sample']
+        name = comp_info.name(det_index)
+        if not comp_info.uniqueName(name):
+            name = f'{name}_{number}'
+        monitors.append((name, single_monitor))
+    return monitors
+
+
+def convert_monitors_ws_arrays(ws, converter, **ignored):
+    spec_dim, spec_coord = init_spec_axis(ws)
+    spec_info = ws.spectrumInfo()
+    comp_info = ws.componentInfo()
+    monitors = []
+    spec_indices = (
+        (ws.getIndexFromSpectrumNumber(int(i)), i) for i in spec_coord.values
+    )
+    for index, number in spec_indices:
+        definition = spec_info.getSpectrumDefinition(index)
+        if not definition.size() == 1:
+            raise RuntimeError("Cannot deal with grouped monitor detectors")
+        det_index = definition[0][0]  # Ignore time index
+        # We only ExtractSpectra for compatibility with
+        # existing convert_Workspace2D_to_dataarray. This could instead be
+        # refactored if found to be slow
+        with run_mantid_alg(
+            'ExtractSpectra', InputWorkspace=ws, WorkspaceIndexList=[index]
+        ) as monitor_ws:
+            # Run logs are already loaded in the data workspace
+            single_monitor = converter(monitor_ws, load_run_logs=False)
         # Storing sample_position as a coord of monitors means that monitor
         # data cannot be combined with scattered data even after conversion
         # to wavelength, d-spacing, etc. because conversions of monitors do
@@ -576,12 +612,20 @@ def convert_monitors_ws(ws, converter, **ignored):
 def convert_Workspace2D_to_data_array(
     ws, load_run_logs=True, advanced_geometry=False, **ignored
 ):
+    warnings.warn(
+        'convert_Workspace2D_to_data_array is deprecated in favor of '
+        'convert_Workspace2D_to_data_group.',
+        VisibleDeprecationWarning,
+    )
+
     dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
     spec_dim, spec_coord = init_spec_axis(ws)
 
     coords_labs_data = _convert_MatrixWorkspace_info(
         ws, advanced_geometry=advanced_geometry, load_run_logs=load_run_logs
     )
+    coords_labs_data["coords"] = _as_dict_of_variables(coords_labs_data["coords"])
+    coords_labs_data["attrs"] = _as_dict_of_variables(coords_labs_data["attrs"])
     _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
     if ws.id() == 'MaskWorkspace':
         coords_labs_data["data"] = sc.Variable(
@@ -623,6 +667,65 @@ def convert_Workspace2D_to_data_array(
     return array
 
 
+def convert_Workspace2D_to_data_group(
+    ws, load_run_logs=True, advanced_geometry=False, **ignored
+) -> sc.DataGroup:
+    dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
+    spec_dim, spec_coord = init_spec_axis(ws)
+
+    coords_labs_data = _convert_MatrixWorkspace_info(
+        ws, advanced_geometry=advanced_geometry, load_run_logs=load_run_logs
+    )
+    _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
+    if ws.id() == 'MaskWorkspace':
+        data = sc.array(
+            dims=[spec_dim],
+            unit=None,
+            values=ws.extractY().flatten(),
+            dtype=sc.DType.bool,
+        )
+    else:
+        stddev2 = ws.extractE()
+        np.multiply(stddev2, stddev2, out=stddev2)  # much faster than np.power
+        data = sc.array(
+            dims=[spec_dim, dim],
+            unit=data_unit,
+            values=ws.extractY(),
+            variances=stddev2,
+        )
+    res = sc.DataGroup(
+        {
+            "data": sc.DataArray(
+                data,
+                coords=_as_dict_of_variables(coords_labs_data["coords"]),
+                masks=coords_labs_data["masks"],
+            ),
+            **coords_labs_data["attrs"],
+        }
+    )
+
+    if ws.hasAnyMaskedBins():
+        bin_mask = sc.zeros(dims=data.dims, shape=data.shape, dtype=sc.DType.bool)
+        for i in range(ws.getNumberHistograms()):
+            # maskedBinsIndices throws instead of returning empty list
+            if ws.hasMaskedBins(i):
+                set_bin_masks(bin_mask, dim, i, ws.maskedBinsIndices(i))
+        common_mask = sc.all(bin_mask, spec_dim)
+        if sc.identical(common_mask, sc.any(bin_mask, spec_dim)):
+            res["data"].masks["bin"] = common_mask
+        else:
+            res["data"].masks["bin"] = bin_mask
+
+    # Avoid creating dimensions that are not required since this mostly an
+    # artifact of inflexible data structures and gets in the way when working
+    # with scipp.
+    if len(spec_coord.values) == 1:
+        if 'position' in res["data"].coords:
+            res["data"].coords['position'] = res["data"].coords['position'][spec_dim, 0]
+        res["data"] = res["data"][spec_dim, 0].copy()
+    return res
+
+
 def _contains_weighted_events(spectrum) -> bool:
     from mantid.api import EventType
 
@@ -630,6 +733,85 @@ def _contains_weighted_events(spectrum) -> bool:
 
 
 def convert_EventWorkspace_to_data_array(
+    ws, load_pulse_times=True, advanced_geometry=False, load_run_logs=True, **ignored
+):
+    warnings.warn(
+        'convert_EventWorkspace_to_data_array is deprecated in favor of '
+        'convert_EventWorkspace_to_data_group.',
+        VisibleDeprecationWarning,
+    )
+
+    dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
+    spec_dim, spec_coord = init_spec_axis(ws)
+    nHist = ws.getNumberHistograms()
+    _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
+
+    n_event = ws.getNumberEvents()
+    coord = sc.empty(dims=['event'], shape=[n_event], unit=unit, dtype=sc.DType.float64)
+    weights = sc.ones(
+        dims=['event'],
+        shape=[n_event],
+        unit=data_unit,
+        dtype=sc.DType.float32,
+        with_variances=True,
+    )
+    pulse_times = (
+        sc.empty(
+            dims=['event'], shape=[n_event], dtype=sc.DType.datetime64, unit=sc.units.ns
+        )
+        if load_pulse_times
+        else None
+    )
+
+    begins = sc.zeros(
+        dims=[spec_dim, dim], shape=[nHist, 1], dtype=sc.DType.int64, unit=None
+    )
+    ends = begins.copy()
+    if n_event > 0:  # Skip expensive loop if there are no events
+        current = 0
+        for i in range(nHist):
+            sp = ws.getSpectrum(i)
+            size = sp.getNumberEvents()
+            begins.values[i] = current
+            ends.values[i] = current + size
+            if size == 0:  # Skip expensive getters
+                continue
+            coord['event', current : current + size].values = sp.getTofs()
+            if load_pulse_times:
+                pulse_times[
+                    'event', current : current + size
+                ].values = sp.getPulseTimesAsNumpy()
+            if _contains_weighted_events(sp):
+                weights['event', current : current + size].values = sp.getWeights()
+                weights[
+                    'event', current : current + size
+                ].variances = sp.getWeightErrors()
+            current += size
+
+    proto_events = {'data': weights, 'coords': {dim: coord}}
+    if load_pulse_times:
+        proto_events["coords"]["pulse_time"] = pulse_times
+    events = sc.DataArray(**proto_events)
+
+    coords_labs_data = _convert_MatrixWorkspace_info(
+        ws, advanced_geometry=advanced_geometry, load_run_logs=load_run_logs
+    )
+    coords_labs_data["coords"] = _as_dict_of_variables(coords_labs_data["coords"])
+    coords_labs_data["attrs"] = _as_dict_of_variables(coords_labs_data["attrs"])
+    # For now we ignore potential finer bin edges to avoid creating too many
+    # bins. Use just a single bin along dim and use extents given by workspace
+    # edges.
+    # TODO If there are events outside edges this might create bins with
+    # events that are not within bin bounds. Consider using `bin` instead
+    # of `bins`?
+    edges = coords_labs_data['coords'][dim]
+    # Using range slice of thickness 1 to avoid transposing 2-D coords
+    coords_labs_data['coords'][dim] = sc.concat([edges[dim, :1], edges[dim, -1:]], dim)
+    coords_labs_data["data"] = sc.bins(begin=begins, end=ends, dim='event', data=events)
+    return sc.DataArray(**coords_labs_data)
+
+
+def convert_EventWorkspace_to_data_group(
     ws, load_pulse_times=True, advanced_geometry=False, load_run_logs=True, **ignored
 ):
     dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
@@ -697,11 +879,50 @@ def convert_EventWorkspace_to_data_array(
     # Using range slice of thickness 1 to avoid transposing 2-D coords
     coords_labs_data['coords'][dim] = sc.concat([edges[dim, :1], edges[dim, -1:]], dim)
 
-    coords_labs_data["data"] = sc.bins(begin=begins, end=ends, dim='event', data=events)
-    return sc.DataArray(**coords_labs_data)
+    data = sc.bins(begin=begins, end=ends, dim='event', data=events)
+    return sc.DataGroup(
+        {
+            "data": sc.DataArray(
+                data, coords=_as_dict_of_variables(coords_labs_data["coords"])
+            ),
+            **coords_labs_data["attrs"],
+        }
+    )
+
+
+def convert_MDHistoWorkspace_to_data_group(md_histo, **ignored) -> sc.DataGroup:
+    ndims = md_histo.getNumDims()
+    coords = dict()
+    dims_used = []
+    for i in range(ndims):
+        dim = md_histo.getDimension(i)
+        frame = dim.getMDFrame()
+        sc_dim = md_dimension(dim, i)
+        coords[sc_dim] = sc.array(
+            dims=[sc_dim],
+            values=np.linspace(dim.getMinimum(), dim.getMaximum(), dim.getNBins()),
+            unit=md_unit(frame),
+        )
+        dims_used.append(sc_dim)
+    data = sc.array(
+        dims=dims_used,
+        values=md_histo.getSignalArray(),
+        variances=md_histo.getErrorSquaredArray(),
+        unit=sc.units.counts,
+    )
+    nevents = sc.array(dims=dims_used, values=md_histo.getNumEventsArray())
+    return sc.DataGroup(
+        {'data': sc.DataArray(coords=coords, data=data), 'nevents': nevents}
+    )
 
 
 def convert_MDHistoWorkspace_to_data_array(md_histo, **ignored):
+    warnings.warn(
+        'convert_MDHistoWorkspace_to_data_array is deprecated in favor of '
+        'convert_MDHistoWorkspace_to_data_group.',
+        VisibleDeprecationWarning,
+    )
+
     ndims = md_histo.getNumDims()
     coords = dict()
     dims_used = []
@@ -788,7 +1009,25 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
     return dataset
 
 
+def convert_WorkspaceGroup_to_data_group(group_workspace, **kwargs):
+    workspace_dict = sc.DataGroup()
+    for i in range(group_workspace.getNumberOfEntries()):
+        workspace = group_workspace.getItem(i)
+        workspace_name = (
+            workspace.name().replace(f'{group_workspace.name()}', '').strip('_')
+        )
+        workspace_dict[workspace_name] = from_mantid(workspace, **kwargs)
+
+    return workspace_dict
+
+
 def convert_WorkspaceGroup_to_dataarray_dict(group_workspace, **kwargs):
+    warnings.warn(
+        'convert_WorkspaceGroup_to_dataarray_dict is deprecated in favor of '
+        'convert_WorkspaceGroup_to_data_group.',
+        VisibleDeprecationWarning,
+    )
+
     workspace_dict = {}
     for i in range(group_workspace.getNumberOfEntries()):
         workspace = group_workspace.getItem(i)
@@ -800,10 +1039,87 @@ def convert_WorkspaceGroup_to_dataarray_dict(group_workspace, **kwargs):
     return workspace_dict
 
 
-def from_mantid(workspace, **kwargs):
+def from_mantid(workspace, **kwargs) -> sc.DataGroup:
+    """Convert Mantid workspace to a scipp data group.
+
+    Parameters
+    ----------
+    workspace:
+        Mantid workspace to convert.
+    kwargs:
+        Forwarded to the workspace-specific converter.
+
+    Returns
+    -------
+        A data group representing ``workspace``.
+    """
+    monitor_ws = None
+    workspaces_to_delete = []
+    w_id = workspace.id()
+    if w_id == 'Workspace2D' or w_id == 'RebinnedOutput' or w_id == 'MaskWorkspace':
+        n_monitor = 0
+        spec_info = workspace.spectrumInfo()
+        for i in range(len(spec_info)):
+            if spec_info.hasDetectors(i) and spec_info.isMonitor(i):
+                n_monitor += 1
+        # If there are *only* monitors we do not move them to an attribute
+        if n_monitor > 0 and n_monitor < len(spec_info):
+            import mantid.simpleapi as mantid
+
+            workspace, monitor_ws = mantid.ExtractMonitors(workspace)
+            workspaces_to_delete.append(workspace)
+            workspaces_to_delete.append(monitor_ws)
+        scipp_obj = convert_Workspace2D_to_data_group(workspace, **kwargs)
+    elif w_id == 'EventWorkspace':
+        scipp_obj = convert_EventWorkspace_to_data_group(workspace, **kwargs)
+    elif w_id == 'TableWorkspace':
+        scipp_obj = convert_TableWorkspace_to_dataset(workspace, **kwargs)
+    elif w_id == 'MDHistoWorkspace':
+        scipp_obj = convert_MDHistoWorkspace_to_data_group(workspace, **kwargs)
+    elif w_id == 'WorkspaceGroup':
+        scipp_obj = convert_WorkspaceGroup_to_data_group(workspace, **kwargs)
+    else:
+        raise RuntimeError('Unsupported workspace type {}'.format(w_id))
+
+    # TODO Is there ever a case where a Workspace2D has a separate monitor
+    # workspace? This is not handled by ExtractMonitors above, I think.
+    if monitor_ws is None:
+        if hasattr(workspace, 'getMonitorWorkspace'):
+            try:
+                monitor_ws = workspace.getMonitorWorkspace()
+            except RuntimeError:
+                # Have to try/fail here. No inspect method on Mantid for this.
+                pass
+
+    if monitor_ws is not None:
+        if monitor_ws.id() == 'MaskWorkspace' or monitor_ws.id() == 'Workspace2D':
+            converter = convert_Workspace2D_to_data_group
+        elif monitor_ws.id() == 'EventWorkspace':
+            converter = convert_EventWorkspace_to_data_group
+        scipp_obj["monitors"] = sc.DataGroup(
+            convert_monitors_ws(monitor_ws, converter, **kwargs)
+        )
+    for ws in workspaces_to_delete:
+        mantid.DeleteWorkspace(ws)
+
+    return scipp_obj
+
+
+def array_from_mantid(workspace, **kwargs) -> Union[sc.DataArray, sc.Dataset]:
     """Convert Mantid workspace to a scipp data array or dataset.
     :param workspace: Mantid workspace to convert.
+
+    .. deprecated:: 23.07.0
+       The old ``from_mantid`` was renamed to ``array_from_mantid`` and is deprecated
+       in favor of the new ``from_mantid`` which return a data group.
     """
+    warnings.warn(
+        "scippneutron.array_from_mantid has been deprecated and is scheduled for "
+        "removal in scippneutron v24.01.0. "
+        "Use the new scippneutron.from_mantid instead.",
+        VisibleDeprecationWarning,
+    )
+
     scipp_obj = None  # This is either a Dataset or DataArray
     monitor_ws = None
     workspaces_to_delete = []
@@ -850,7 +1166,7 @@ def from_mantid(workspace, **kwargs):
         elif monitor_ws.id() == 'EventWorkspace':
             converter = convert_EventWorkspace_to_data_array
 
-        monitors = convert_monitors_ws(monitor_ws, converter, **kwargs)
+        monitors = convert_monitors_ws_arrays(monitor_ws, converter, **kwargs)
         for name, monitor in monitors:
             scipp_obj.attrs[name] = sc.scalar(monitor)
     for ws in workspaces_to_delete:
@@ -867,10 +1183,10 @@ def load_with_mantid(
     mantid_alg='Load',
     mantid_args=None,
     advanced_geometry=False,
-) -> sc.Dataset:
+) -> sc.DataGroup:
     """Load a file using Mantid.
 
-    Wraps Mantid's loaders and converts the result to a scipp dataset.
+    Wraps Mantid's loaders and converts the result to a scipp data group.
 
     See also the neutron-data tutorial.
 
@@ -903,7 +1219,7 @@ def load_with_mantid(
     Returns
     -------
     :
-        A Dataset containing the neutron event/histogram data and the
+        A Data group containing the neutron event/histogram data and the
         instrument geometry.
 
     Raises
@@ -915,12 +1231,11 @@ def load_with_mantid(
     Examples
     --------
     >>> from scippneutron import load_with_mantid
-    >>> d = sc.Dataset()
-    >>> d["sample"] = load_with_mantid(filename='PG3_4844_event.nxs',
-    ...                                load_pulse_times=False,
-    ...                                mantid_args={
-    ...                                     'BankName': 'bank184',
-    ...                                     'LoadMonitors': True})  # doctest: +SKIP
+    >>> load_with_mantid(filename='PG3_4844_event.nxs',
+    ...                  load_pulse_times=False,
+    ...                  mantid_args={
+    ...                      'BankName': 'bank184',
+    ...                      'LoadMonitors': True})  # doctest: +SKIP
     """
 
     if mantid_args is None:
@@ -1015,28 +1330,43 @@ def load(
     ...                    mantid_args={'BankName': 'bank184',
     ...                                 'LoadMonitors': True})  # doctest: +SKIP
 
-    .. deprecated:: 23.05.0
-       Renamed to load_with_mantid.
+    .. deprecated:: 23.07.0
+       Use load_with_mantid instead.
     """
-    import warnings
-
-    from scipp.core.util import VisibleDeprecationWarning
-
     warnings.warn(
-        "scippneutron.load has been renamed to scippneutron.load_with_mantid. "
-        "The old function is deprecated and is scheduled for removal in "
-        "scippneutron v23.10.0",
+        "scippneutron.load has been deprecated and is scheduled for removal in "
+        "scippneutron v24.01.0. Use the new scippneutron.load_with_mantid instead.",
         VisibleDeprecationWarning,
     )
-    return load_with_mantid(
-        filename,
-        load_pulse_times,
-        instrument_filename,
-        error_connection,
-        mantid_alg,
-        mantid_args,
-        advanced_geometry,
-    )
+
+    if mantid_args is None:
+        mantid_args = {}
+
+    _check_file_path(str(filename), mantid_alg)
+
+    with run_mantid_alg(mantid_alg, str(filename), **mantid_args) as loaded:
+        # Determine what Load has provided us
+        from mantid.api import Workspace
+
+        if isinstance(loaded, Workspace):
+            # A single workspace
+            data_ws = loaded
+        else:
+            # Separate data and monitor workspaces
+            data_ws = loaded.OutputWorkspace
+
+        if instrument_filename is not None:
+            import mantid.simpleapi as mantid
+
+            mantid.LoadInstrument(
+                data_ws, FileName=instrument_filename, RewriteSpectraMap=True
+            )
+        return array_from_mantid(
+            data_ws,
+            load_pulse_times=load_pulse_times,
+            error_connection=error_connection,
+            advanced_geometry=advanced_geometry,
+        )
 
 
 def _is_mantid_loadable(filename):
@@ -1206,7 +1536,9 @@ def _fit_workspace(ws, mantid_args):
         parameters = _table_to_data_array(
             parameters, key='Name', value='Value', stddev='Error'
         )
-        out = convert_Workspace2D_to_data_array(fit.OutputWorkspace)
+        out = convert_Workspace2D_to_data_array(fit.OutputWorkspace).drop_coords(
+            'empty'
+        )
         data = sc.Dataset()
         data['data'] = out['empty', 0]
         data['calculated'] = out['empty', 1]

@@ -44,11 +44,11 @@ def bigfake():
 
 
 def tutorial_dense_data():
-    return sc.io.open_hdf5(_pooch.fetch('loki-at-larmor.hdf5'))
+    return sc.io.load_hdf5(_pooch.fetch('loki-at-larmor.hdf5'))
 
 
 def tutorial_event_data():
-    return sc.io.open_hdf5(_pooch.fetch('powder-event.h5'))
+    return sc.io.load_hdf5(_pooch.fetch('powder-event.h5'))
 
 
 def powder_sample():
@@ -56,7 +56,7 @@ def powder_sample():
 
 
 def powder_calibration():
-    return sc.io.open_hdf5(_pooch.fetch('PG3_4844_calibration.h5'))
+    return sc.io.load_hdf5(_pooch.fetch('PG3_4844_calibration.h5'))
 
 
 def get_path(name: str) -> str:
