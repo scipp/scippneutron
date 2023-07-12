@@ -456,7 +456,7 @@ def set_bin_masks(bin_masks, dim, index, masked_bins):
         bin_masks['spectrum', index][dim, masked_bin].value = True
 
 
-def _wrap_dict_in_variable(d: Dict[str, Any]) -> Dict[str, sc.Variable]:
+def _as_dict_of_variables(d: Dict[str, Any]) -> Dict[str, sc.Variable]:
     return {
         key: val if isinstance(val, sc.Variable) else sc.scalar(val)
         for key, val in d.items()
@@ -624,8 +624,8 @@ def convert_Workspace2D_to_data_array(
     coords_labs_data = _convert_MatrixWorkspace_info(
         ws, advanced_geometry=advanced_geometry, load_run_logs=load_run_logs
     )
-    coords_labs_data["coords"] = _wrap_dict_in_variable(coords_labs_data["coords"])
-    coords_labs_data["attrs"] = _wrap_dict_in_variable(coords_labs_data["attrs"])
+    coords_labs_data["coords"] = _as_dict_of_variables(coords_labs_data["coords"])
+    coords_labs_data["attrs"] = _as_dict_of_variables(coords_labs_data["attrs"])
     _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
     if ws.id() == 'MaskWorkspace':
         coords_labs_data["data"] = sc.Variable(
@@ -697,7 +697,7 @@ def convert_Workspace2D_to_data_group(
         {
             "data": sc.DataArray(
                 data,
-                coords=_wrap_dict_in_variable(coords_labs_data["coords"]),
+                coords=_as_dict_of_variables(coords_labs_data["coords"]),
                 masks=coords_labs_data["masks"],
             ),
             **coords_labs_data["attrs"],
@@ -796,8 +796,8 @@ def convert_EventWorkspace_to_data_array(
     coords_labs_data = _convert_MatrixWorkspace_info(
         ws, advanced_geometry=advanced_geometry, load_run_logs=load_run_logs
     )
-    coords_labs_data["coords"] = _wrap_dict_in_variable(coords_labs_data["coords"])
-    coords_labs_data["attrs"] = _wrap_dict_in_variable(coords_labs_data["attrs"])
+    coords_labs_data["coords"] = _as_dict_of_variables(coords_labs_data["coords"])
+    coords_labs_data["attrs"] = _as_dict_of_variables(coords_labs_data["attrs"])
     # For now we ignore potential finer bin edges to avoid creating too many
     # bins. Use just a single bin along dim and use extents given by workspace
     # edges.
@@ -883,7 +883,7 @@ def convert_EventWorkspace_to_data_group(
     return sc.DataGroup(
         {
             "data": sc.DataArray(
-                data, coords=_wrap_dict_in_variable(coords_labs_data["coords"])
+                data, coords=_as_dict_of_variables(coords_labs_data["coords"])
             ),
             **coords_labs_data["attrs"],
         }
