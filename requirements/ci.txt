@@ -25,7 +25,7 @@ idna==3.4
     # via requests
 packaging==23.1
     # via
-    #   -r requirements/ci.in
+    #   -r ci.in
     #   pyproject-api
     #   tox
 platformdirs==3.8.1
@@ -37,13 +37,13 @@ pluggy==1.2.0
 pyproject-api==1.5.3
     # via tox
 requests==2.31.0
-    # via -r requirements/ci.in
+    # via -r ci.in
 tomli==2.0.1
     # via
     #   pyproject-api
     #   tox
 tox==4.6.4
-    # via -r requirements/ci.in
+    # via -r ci.in
 urllib3==2.0.3
     # via requests
 virtualenv==20.23.1
