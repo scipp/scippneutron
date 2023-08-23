@@ -13,9 +13,9 @@ import numpy as np
 import scipp as sc
 from scipp.binning import make_binned
 from scipp.core.util import VisibleDeprecationWarning
-from scippnexus import NXroot
-from scippnexus.nxobject import NexusStructureError, NXobject
-from scippnexus.nxtransformations import TransformationError
+from scippnexus.v1 import NXroot
+from scippnexus.v1.nxobject import NexusStructureError, NXobject
+from scippnexus.v1.nxtransformations import TransformationError
 
 from ._json_nexus import JSONGroup, StreamInfo, contains_stream, get_streams_info
 from ._nexus import ScippData
@@ -121,7 +121,8 @@ def load_nexus(
       data = sc.neutron.load_nexus('PG3_4844_event.nxs')
     """
     warn(
-        "`load_nexus` is deprecated, please switch to using ScippNexus.",
+        "`load_nexus` is deprecated and will be removed in version 24.03, "
+        "please switch to using ScippNexus.",
         VisibleDeprecationWarning,
     )
     start_time = timer()
@@ -190,7 +191,7 @@ def _zip_pixel_offset(da: sc.DataArray) -> sc.DataArray:
 
 
 def _by_nx_class(group) -> Dict[str, Dict[str, 'NXobject']]:
-    from scippnexus.nxobject import _nx_class_registry
+    from scippnexus.v1.nxobject import _nx_class_registry
 
     classes = {name: [] for name in _nx_class_registry()}
 
