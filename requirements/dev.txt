@@ -15,15 +15,15 @@ click==8.1.4
     #   pip-compile-multi
     #   pip-tools
 pip-compile-multi==2.6.3
-    # via -r requirements/dev.in
+    # via -r dev.in
 pip-tools==6.14.0
     # via pip-compile-multi
 toposort==1.10
     # via pip-compile-multi
 types-docutils==0.20.0.1
-    # via -r requirements/dev.in
+    # via -r dev.in
 types-requests==2.31.0.1
-    # via -r requirements/dev.in
+    # via -r dev.in
 types-urllib3==1.26.25.13
     # via types-requests
 wheel==0.40.0

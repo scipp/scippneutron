@@ -27,8 +27,8 @@ Release Notes
    Stability, Maintainability, and Testing
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-v0.xy.0 (Unreleased)
---------------------
+v23.08.0 (August 2023)
+----------------------
 
 Features
 ~~~~~~~~
@@ -46,13 +46,13 @@ Breaking changes
 Bugfixes
 ~~~~~~~~
 
-Documentation
-~~~~~~~~~~~~~
+* Fix compatibility with ScippNexus 23.08 `#438 <https://github.com/scipp/scippneutron/pull/438>`_.
 
 Deprecations
 ~~~~~~~~~~~~
 
 * Deprecated ``scipneutron.load`` in favor of :func:`scippneutron.load_with_mantid` `#436 <https://github.com/scipp/scippneutron/pull/436>`_.
+* Deprecated ``scipneutron.load_nexus`` in favor of ScippNexus `#438 <https://github.com/scipp/scippneutron/pull/438>`_.
 
 Stability, Maintainability, and Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
