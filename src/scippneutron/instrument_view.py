@@ -253,10 +253,7 @@ def instrument_view(
     if not p3:
         raise _pythreejs_import_error
 
-    try:
-        import plopp as pp
-    except ImportError:
-        pp = None
+    import plopp as pp
 
     positions_var = scipp_obj.meta[positions]
     if pixel_size is None:
@@ -264,20 +261,8 @@ def instrument_view(
         if len(pos_array) > 1:
             pixel_size = np.linalg.norm(pos_array[1] - pos_array[0])
 
-    if (pp is not None) and (
-        (sc.plot is pp.plot) or sc.config['plot'].get('use_plopp')
-    ):
-        fig = pp.scatter3d(scipp_obj, pos=positions, pixel_size=pixel_size, **kwargs)
-        scene = fig.children[0].canvas.scene
-    else:
-        fig = sc.plot(
-            scipp_obj,
-            projection="3d",
-            positions=positions,
-            pixel_size=pixel_size,
-            **kwargs,
-        )
-        scene = fig.view.figure.scene
+    fig = pp.scatter3d(scipp_obj, pos=positions, pixel_size=pixel_size, **kwargs)
+    scene = fig.children[0].canvas.scene
 
     # Add additional components from the beamline
     if components:
