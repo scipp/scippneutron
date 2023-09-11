@@ -27,6 +27,14 @@ Release Notes
    Stability, Maintainability, and Testing
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+v23.09.0 (September 2023)
+-------------------------
+
+Bugfixes
+~~~~~~~~
+
+* ScippNeutron now works with Scipp version 23.08.0 `#456 <https://github.com/scipp/scippneutron/pull/456>`_.
+
 v23.08.0 (August 2023)
 ----------------------
 
