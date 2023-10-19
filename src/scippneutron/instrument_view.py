@@ -245,7 +245,7 @@ def instrument_view(
     ----------
     scipp_obj:
         Scipp object holding geometries.
-    ositions:
+    positions:
         Key for coord/attr holding positions to use for pixels.
     pixel_size:
         Custom pixel size to use for detector pixels.
@@ -265,7 +265,10 @@ def instrument_view(
 
     import plopp as pp
 
-    positions_var = scipp_obj.meta[positions]
+    try:
+        positions_var = scipp_obj.deprecated_meta[positions]
+    except AttributeError:
+        positions_var = scipp_obj.coords[positions]
     if pixel_size is None:
         pos_array = positions_var.values
         if len(pos_array) > 1:

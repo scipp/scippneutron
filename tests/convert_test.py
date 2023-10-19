@@ -260,7 +260,7 @@ def test_convert_beams(target):
 def test_convert_beam_length_and_angle(target, make_ref):
     original = make_test_data(coords=('incident_beam', 'scattered_beam'))
     converted = scn.convert(original, origin='position', target=target, scatter=True)
-    assert sc.allclose(converted.meta[target], make_ref(), rtol=sc.scalar(1e-12))
+    assert sc.allclose(converted.coords[target], make_ref(), rtol=sc.scalar(1e-12))
 
 
 def test_convert_beam_length_no_scatter():
@@ -627,8 +627,7 @@ def test_convert_integer_input_inelastic(input_energy, input_dtypes):
 @pytest.mark.parametrize('target', TOF_TARGET_DIMS)
 def test_convert_binned_events_converted(target):
     tof = make_test_data(coords=('Ltotal', 'two_theta'), dataset=True)
-    del tof['counts']
-    tof['events'] = make_tof_binned_events()
+    tof = sc.Dataset({'events': make_tof_binned_events()}, coords=tof.coords)
 
     # Construct events with all coords.
     binned_tof = tof['events'].copy()
@@ -637,7 +636,6 @@ def test_convert_binned_events_converted(target):
     dense_tof = binned_tof.bins.constituents['data']
     expected = scn.convert(dense_tof, origin='tof', target=target, scatter=True)
     for intermediate in ('Ltotal', 'two_theta'):
-        expected.attrs.pop(intermediate, None)
         expected.coords.pop(intermediate, None)
     expected = sc.bins(**{**binned_tof.bins.constituents, 'data': expected})
 

@@ -190,7 +190,7 @@ def unwrap_frames(
     :
         Data with 'tof' coordinate.
     """
-    if 'tof' in da.meta or (da.bins is not None and 'tof' in da.bins.meta):
+    if 'tof' in da.deprecated_meta or (da.bins is not None and 'tof' in da.bins.deprecated_meta):
         raise ValueError(
             "Coordinate 'tof' already defined in input data array. "
             "Expected input with 'event_time_offset' coordinate."
@@ -204,9 +204,9 @@ def unwrap_frames(
         'lambda_min',
     ]
     for x in coords:
-        if x in da.meta:
+        if x in da.deprecated_meta:
             raise ValueError(
-                f"Input data has '{x}' coord or attr, but values should "
+                f"Input data has '{x}' coord, but values should "
                 "be given only as a function parameter."
             )
     da.coords['pulse_period'] = pulse_period
