@@ -208,18 +208,9 @@ def _get_camera(scene):
 def instrument_view(
     scipp_obj, positions="position", pixel_size=None, components=None, **kwargs
 ):
-    """
-    :param scipp_obj: scipp object holding geometries
-    :param positions: Key for coord/attr holding positions to use for pixels
-    :param pixel_size: Custom pixel size to use for detector pixels
-    :param components: Dictionary containing display names and corresponding
-    settings (also a Dictionary) for additional components to display
-     items with known positions to be shown
-    :param kwargs: Additional keyword arguments to pass to scipp.plotting.plot
-    :return: The 3D plot object
-
-    Plot a 3D view of the instrument, using the `position` coordinate as the
+    """Plot a 3D view of the instrument, using the `position` coordinate as the
     detector vector positions.
+
     Use the `positions` argument to change the vectors used as pixel positions.
     Sliders are added to navigate extra dimensions.
     Spatial slicing and pixel opacity control is available using the controls
@@ -249,6 +240,25 @@ def instrument_view(
     * `wireframe` - wireframe is a bool that defaults to False. If set to True,
     the returned geometrical shape is a wireframe instead of a shape with
     opaque faces
+
+    Parameters
+    ----------
+    scipp_obj:
+        Scipp object holding geometries.
+    ositions:
+        Key for coord/attr holding positions to use for pixels.
+    pixel_size:
+        Custom pixel size to use for detector pixels.
+    components:
+        Dictionary containing display names and corresponding settings
+        (also a Dictionary) for additional components to display.
+    kwargs:
+        Additional keyword arguments to pass to :func:`plopp.scatter3d`.
+
+    Returns
+    -------
+    :
+        The 3D plot object
     """
     if not p3:
         raise _pythreejs_import_error
