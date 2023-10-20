@@ -190,7 +190,9 @@ def unwrap_frames(
     :
         Data with 'tof' coordinate.
     """
-    if 'tof' in da.deprecated_meta or (da.bins is not None and 'tof' in da.bins.deprecated_meta):
+    if 'tof' in da.deprecated_meta or (
+        da.bins is not None and 'tof' in da.bins.deprecated_meta
+    ):
         raise ValueError(
             "Coordinate 'tof' already defined in input data array. "
             "Expected input with 'event_time_offset' coordinate."

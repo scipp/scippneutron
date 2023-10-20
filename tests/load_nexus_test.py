@@ -667,8 +667,12 @@ def test_loads_event_and_log_data_from_single_file(load_function: Callable):
     )
 
     # Logs should have been added to the DataArray as attributes
-    assert np.allclose(loaded_data.deprecated_attrs[log_1.name].values.values, log_1.value)
-    assert np.allclose(loaded_data.deprecated_attrs[log_2.name].values.values, log_2.value)
+    assert np.allclose(
+        loaded_data.deprecated_attrs[log_1.name].values.values, log_1.value
+    )
+    assert np.allclose(
+        loaded_data.deprecated_attrs[log_2.name].values.values, log_2.value
+    )
 
 
 def test_loads_pixel_positions_with_event_data(load_function: Callable):
@@ -1505,14 +1509,18 @@ def test_loads_pixel_positions_with_multiple_transformations(load_function: Call
 
     assert np.allclose(
         (
-            loaded_data.deprecated_meta["position_transformations"]["detector_id", 0].value
+            loaded_data.deprecated_meta["position_transformations"][
+                "detector_id", 0
+            ].value
             * loaded_data.deprecated_meta["base_position"]["detector_id", 0]
         ).values,
         [0.1, 0.1, 0.1 + 0.12],
     )
     assert np.allclose(
         (
-            loaded_data.deprecated_meta["position_transformations"]["detector_id", 1].value
+            loaded_data.deprecated_meta["position_transformations"][
+                "detector_id", 1
+            ].value
             * loaded_data.deprecated_meta["base_position"]["detector_id", 1]
         ).values,
         [0.6, 0.6, 0.6 + 0.34],
@@ -2230,4 +2238,6 @@ def test_load_nexus_file_containing_empty_arrays(load_function: Callable):
     # Empty datasets should not stop other data (e.g. metadata) from being loaded.
     loaded_data = load_function(builder)
     assert "test_log" in loaded_data.deprecated_attrs
-    assert all(loaded_data.deprecated_attrs["test_log"].value.values == np.array([0, 1, 2]))
+    assert all(
+        loaded_data.deprecated_attrs["test_log"].value.values == np.array([0, 1, 2])
+    )

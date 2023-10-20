@@ -373,11 +373,11 @@ def _load_data(
         comps = classes.get(tag, {})
         comps = load_and_add_metadata(comps)
         attrs = (
-            loaded_data if isinstance(loaded_data, dict) else loaded_data.deprecated_attrs
+            loaded_data
+            if isinstance(loaded_data, dict)
+            else loaded_data.deprecated_attrs
         )
-        coords = (
-            loaded_data if isinstance(loaded_data, dict) else loaded_data.coords
-        )
+        coords = loaded_data if isinstance(loaded_data, dict) else loaded_data.coords
         for comp_name in comps:
             comp = attrs[comp_name].value
             if (position := _depends_on_to_position(comp)) is not None:
