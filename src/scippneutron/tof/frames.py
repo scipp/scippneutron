@@ -88,6 +88,14 @@ def frame_period_from_pulse_period(
     return pulse_period * pulse_stride
 
 
+def _meta_or_fallback(x):
+    # This can be removed when attrs have been removed in the minimum scipp version.
+    try:
+        return x.deprectaed_meta
+    except AttributeError:
+        return x.coords
+
+
 def to_tof(*, pulse_skipping: Optional[bool] = False) -> dict:
     """
     Return a graph suitable for :py:func:`scipp.transform_coords` to convert frames
@@ -190,8 +198,8 @@ def unwrap_frames(
     :
         Data with 'tof' coordinate.
     """
-    if 'tof' in da.deprecated_meta or (
-        da.bins is not None and 'tof' in da.bins.deprecated_meta
+    if 'tof' in _meta_or_fallback(da) or (
+        da.bins is not None and 'tof' in _meta_or_fallback(da.bins)
     ):
         raise ValueError(
             "Coordinate 'tof' already defined in input data array. "
@@ -206,7 +214,7 @@ def unwrap_frames(
         'lambda_min',
     ]
     for x in coords:
-        if x in da.deprecated_meta:
+        if x in _meta_or_fallback(da):
             raise ValueError(
                 f"Input data has '{x}' coord, but values should "
                 "be given only as a function parameter."
