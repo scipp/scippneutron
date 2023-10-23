@@ -91,7 +91,7 @@ def frame_period_from_pulse_period(
 def _meta_or_fallback(x):
     # This can be removed when attrs have been removed in the minimum scipp version.
     try:
-        return x.deprectaed_meta
+        return x.deprecated_meta
     except AttributeError:
         return x.coords
 
