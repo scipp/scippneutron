@@ -1005,7 +1005,7 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
             # This data is not an error for another dataset, and has no error
             result[data_name] = sc.Variable(dims=['row'], values=ws.column(i))
 
-    return sc.Dataset(result)
+    return sc.Dataset(result) if result else sc.Dataset({})
 
 
 def convert_WorkspaceGroup_to_data_group(group_workspace, **kwargs):

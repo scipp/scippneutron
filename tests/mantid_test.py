@@ -483,9 +483,9 @@ class TestMantidConversion(unittest.TestCase):
             "monitor4",
             "monitor5",
         }
-        assert expected_monitor_names.issubset(da.attrs.keys())
+        assert expected_monitor_names.issubset(da.deprecated_attrs.keys())
         for monitor_name in expected_monitor_names:
-            monitor = da.attrs[monitor_name].value
+            monitor = da.deprecated_attrs[monitor_name].value
             assert isinstance(monitor, sc.DataArray)
             assert monitor.shape == (4471,)
             self.check_monitor_metadata_old(monitor)
