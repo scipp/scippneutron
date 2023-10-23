@@ -308,10 +308,9 @@ def get_detector_properties(
         rot = _rot_from_vectors(act_beam, sc.vector(value=[0, 0, 1]))
         inv_rot = _rot_from_vectors(sc.vector(value=[0, 0, 1]), act_beam)
 
-        pos_d = sc.Dataset()
         # Create empty to hold position info for all spectra detectors
-        pos_d["x"] = sc.zeros(
-            dims=["detector"], shape=[total_detectors], unit=sc.units.m
+        pos_d = sc.Dataset(
+            {"x": sc.zeros(dims=["detector"], shape=[total_detectors], unit=sc.units.m)}
         )
         pos_d["y"] = sc.zeros_like(pos_d["x"])
         pos_d["z"] = sc.zeros_like(pos_d["x"])
@@ -594,14 +593,14 @@ def convert_monitors_ws_arrays(ws, converter, **ignored):
         # to wavelength, d-spacing, etc. because conversions of monitors do
         # not use the sample position.
         # But keep it as an attr in case a user needs it.
-        single_monitor.attrs['sample_position'] = single_monitor.coords.pop(
+        single_monitor.deprecated_attrs['sample_position'] = single_monitor.coords.pop(
             'sample_position'
         )
         # Remove redundant information that is duplicated from workspace
         # We get this extra information from the generic converter reuse
         if 'detector_info' in single_monitor.coords:
             del single_monitor.coords['detector_info']
-        del single_monitor.attrs['sample']
+        del single_monitor.deprecated_attrs['sample']
         name = comp_info.name(det_index)
         if not comp_info.uniqueName(name):
             name = f'{name}_{number}'
@@ -973,14 +972,14 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
     # Types for which the transformation from error to variance will fail
     blacklist_variance_types = ["str"]
 
-    dataset = sc.Dataset()
+    result = {}
     for i in range(n_columns):
         if columnTypes[i] in blacklist_types:
             continue  # skips loading data of this type
 
         data_name = columnNames[i]
         if error_connection is None:
-            dataset[data_name] = sc.Variable(dims=['row'], values=ws.column(i))
+            result[data_name] = sc.Variable(dims=['row'], values=ws.column(i))
         elif data_name in error_connection:
             # This data has error available
             error_name = error_connection[data_name]
@@ -999,14 +998,14 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
                 )
 
             variance = np.array(ws.column(error_name)) ** 2
-            dataset[data_name] = sc.Variable(
+            result[data_name] = sc.Variable(
                 dims=['row'], values=np.array(ws.column(i)), variances=variance
             )
         elif data_name not in error_connection.values():
             # This data is not an error for another dataset, and has no error
-            dataset[data_name] = sc.Variable(dims=['row'], values=ws.column(i))
+            result[data_name] = sc.Variable(dims=['row'], values=ws.column(i))
 
-    return dataset
+    return sc.Dataset(result)
 
 
 def convert_WorkspaceGroup_to_data_group(group_workspace, **kwargs):
@@ -1168,7 +1167,7 @@ def array_from_mantid(workspace, **kwargs) -> Union[sc.DataArray, sc.Dataset]:
 
         monitors = convert_monitors_ws_arrays(monitor_ws, converter, **kwargs)
         for name, monitor in monitors:
-            scipp_obj.attrs[name] = sc.scalar(monitor)
+            scipp_obj.deprecated_attrs[name] = sc.scalar(monitor)
     for ws in workspaces_to_delete:
         mantid.DeleteWorkspace(ws)
 
@@ -1539,7 +1538,7 @@ def _fit_workspace(ws, mantid_args):
         out = convert_Workspace2D_to_data_array(fit.OutputWorkspace).drop_coords(
             'empty'
         )
-        data = sc.Dataset()
+        data = {}
         data['data'] = out['empty', 0]
         data['calculated'] = out['empty', 1]
         data['diff'] = out['empty', 2]
@@ -1547,7 +1546,7 @@ def _fit_workspace(ws, mantid_args):
         parameters.coords['chi^2/d.o.f.'] = sc.scalar(fit.OutputChi2overDoF)
         parameters.coords['function'] = sc.scalar(str(fit.Function))
         parameters.coords['cost_function'] = sc.scalar(fit.CostFunction)
-        return parameters, data
+        return parameters, sc.Dataset(data)
 
 
 def fit(data, mantid_args):
