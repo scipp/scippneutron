@@ -23,6 +23,7 @@ def _make_pooch():
             'bigfake.nxs': 'md5:ebf73017ddd03cee2a14a887c439bf35',
             'iris26176_graphite002_sqw.nxs': 'md5:7ea63f9137602b7e9b604fe30f0c6ec2',
             'loki-at-larmor.hdf5': 'md5:9c93f36fa2e94a7b63f2b946705e74f3',
+            'loki-at-larmor-filtered.hdf5': 'md5:2789d0384339d1e130b86a44f22d11c6',
             'powder-event.h5': 'md5:38f7285b9814d00b5c5b3e63d4455e55',
             'mcstas_sans.h5': 'md5:a608255dd757905490882eb35e209d12',
             'CNCS_51936_event.nxs': 'md5:5ba401e489260a44374b5be12b780911',
@@ -44,7 +45,9 @@ def bigfake():
 
 
 def tutorial_dense_data():
-    return sc.io.load_hdf5(_pooch.fetch('loki-at-larmor.hdf5'))
+    # This file was produced from loki-at-larmor.hdf5 by converting the data into a
+    # data group. But not all attributes were copied.
+    return sc.io.load_hdf5(_pooch.fetch('loki-at-larmor-filtered.hdf5'))
 
 
 def tutorial_event_data():
