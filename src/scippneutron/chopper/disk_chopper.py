@@ -41,6 +41,8 @@ class DiskChopper:
         rotation_speed: sc.Variable,
         name: str = '',
     ) -> None:
+        _require_frequency('rotation_speed', rotation_speed)
+
         self._typ = _parse_typ(typ)
         self._position = position
         self._rotation_speed = rotation_speed
@@ -84,3 +86,10 @@ def _parse_typ(typ: Union[DiskChopperType, str]) -> DiskChopperType:
     if typ == "single":
         return DiskChopperType.single
     return DiskChopperType(typ)
+
+
+def _require_frequency(name: str, x: sc.Variable) -> None:
+    try:
+        sc.scalar(0.0, unit=x.unit).to(unit='Hz')
+    except sc.UnitError:
+        raise sc.UnitError(f"'{name}' must be a frequency, got unit {x.unit}")
