@@ -39,6 +39,15 @@ def test_bad_chopper_type_init():
         )
 
 
+def test_rotation_speed_must_be_frequency():
+    with pytest.raises(sc.UnitError):
+        DiskChopper(
+            typ="single",
+            rotation_speed=sc.scalar(1.0, unit='m/s'),
+            position=sc.vector([0, 0, 0], unit='m'),
+        )
+
+
 def test_eq():
     ch1 = DiskChopper(
         typ='single',
