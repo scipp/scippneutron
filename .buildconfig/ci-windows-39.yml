@@ -1,0 +1,20 @@
+name: windows-latest-py39
+channels:
+  - conda-forge
+  - mantid
+  - scipp
+  - nodefaults
+dependencies:
+  - comm=0.1.4  # earlier versions break tests with ipywidgets with latest ipykernel
+  - h5py==3.8.0
+  - hypothesis==6.88.1
+  - matplotlib==3.8.0
+  - ninja==1.11.1
+  - plopp==23.10.1
+  - pooch==1.7.0
+  - pytest==7.4.2
+  - pytest-asyncio==0.21.1
+  - pythreejs==2.4.2
+  - scipp==23.07.0
+  - scippnexus==23.08.0
+  - scipy==1.11.3
