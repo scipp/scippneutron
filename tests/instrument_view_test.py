@@ -1,6 +1,5 @@
 import matplotlib
 import numpy as np
-import plopp as pp
 import pytest
 import scipp as sc
 
@@ -9,7 +8,6 @@ import scippneutron as scn
 from .common import make_dataset_with_beamline
 
 matplotlib.use('Agg')
-pp.patch_scipp()
 
 
 def test_neutron_instrument_view_3d():

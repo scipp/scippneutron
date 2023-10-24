@@ -1,4 +1,4 @@
-name: ubuntu-latest
+name: ubuntu-latest-py39
 channels:
   - conda-forge
   - ess-dmsc
@@ -13,7 +13,6 @@ dependencies:
   - ipykernel==6.25.2
   - ipympl==0.9.3
   - ipywidgets==8.1.1
-  - mantid==6.8.0
   - matplotlib==3.8.0
   - ninja==1.11.1
   - plopp==23.10.1
