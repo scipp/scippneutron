@@ -81,6 +81,8 @@ filterwarnings = [
   'ignore:the load_module\(\) method is deprecated:DeprecationWarning',
   # from ipywidgets; they are migrating away from ipykernel, this warning should go away
   'ignore:The `ipykernel.comm.Comm` class has been deprecated.:DeprecationWarning',
+  # from h5py
+  'ignore:`product` is deprecated as of NumPy 1.25.0:DeprecationWarning',
   # Plotting related warnings.
   'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
   'ignore:Keyword `trait` is deprecated in traitlets 5.0, use `value_trait` instead:DeprecationWarning',
