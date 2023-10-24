@@ -40,7 +40,7 @@ jobs:
         - {os: ubuntu-20.04, build-config: ci-linux}
         - {os: macos-11, build-config: ci-macos}
         - {os: windows-2019, build-config: ci-windows}
-        python-version: ["3.10"]
+        python-version: ["3.9", "3.10"]
 
     steps:
       - uses: actions/checkout@v3
