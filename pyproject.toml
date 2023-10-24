@@ -78,7 +78,7 @@ filterwarnings = [
   # From flatbuffers
   'ignore:the imp module is deprecated in favour of importlib:DeprecationWarning',
   # from Mantid
-  'ignore:distutils Version classes are deprecated. Use packaging.version instead:DeprecationWarning',
+  'ignore:the load_module\(\) method is deprecated:DeprecationWarning',
   # from ipywidgets; they are migrating away from ipykernel, this warning should go away
   'ignore:The `ipykernel.comm.Comm` class has been deprecated.:DeprecationWarning',
   # Plotting related warnings.
