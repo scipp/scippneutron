@@ -71,6 +71,9 @@ def test_eq():
         ('rotation_speed', sc.scalar(13.0, unit='Hz')),
         ('position', sc.vector([1, 0, 0], unit='m')),
         ('name', 'ch2'),
+        ('radius', sc.scalar(0.5, unit='m')),
+        ('slits', 5),
+        ('slit_height', sc.scalar(0.14, unit='cm')),
     ),
 )
 def test_neq(replacement):

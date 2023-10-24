@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import scipp as sc
 
@@ -34,6 +34,19 @@ except ImportError:
 
 
 class DiskChopper:
+    """A disk chopper.
+
+    Attribute names correspond closely to the names use by NeXus' ``NXdisk_chopper``.
+    See https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html
+    for an overview.
+
+    This class can transparently compute some quantities from others.
+    So not all attributes need to be given to construct a chopper instance.
+    However, it does **not** perform any consistency checks.
+    If a quantity is given, it is used directly instead of computing it from related
+    quantities.
+    """
+
     def __init__(
         self,
         *,
@@ -107,15 +120,29 @@ class DiskChopper:
             f"position={self.position})"
         )
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, DiskChopper):
             return NotImplemented
-        return (
-            self.typ == other.typ
-            and sc.identical(self.position, other.position)
-            and sc.identical(self.rotation_speed, other.rotation_speed)
-            and self.name == other.name
-        )
+
+        def eq(a: Any, b: Any) -> bool:
+            try:
+                return sc.identical(a, b)
+            except TypeError:
+                return a == b
+
+        def computed_eq(key: str) -> bool:
+            a, b = getattr(self, '_' + key), getattr(other, '_' + key)
+            if (a is None) ^ (b is None):
+                return eq(getattr(self, key), getattr(other, key))
+            # Avoid computing it if not needed.
+            return eq(a, b)
+
+        # TODO add missing fields
+        regular = ('typ', 'name', 'position', 'rotation_speed')
+        computed = ('slits', 'slit_edges', 'slit_height', 'radius')
+        return all(
+            eq(getattr(self, key), getattr(other, key)) for key in regular
+        ) and all(computed_eq(key) for key in computed)
 
 
 def _parse_typ(typ: Union[DiskChopperType, str]) -> DiskChopperType:
