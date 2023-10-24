@@ -10,6 +10,20 @@ from .disk_chopper import DiskChopper
 
 
 class NXDiskChopper(snx.NXdisk_chopper):
+    """NeXus definition to load a DiskChopper using ScippNeXus.
+
+    Examples
+    --------
+    Use as
+
+        >>> defs = {
+        ...    **snx.base_definitions(),
+        ...    'NXdisk_chopper': NXDiskChopper,
+        ... }
+        >>> with snx.File(path, definitions=defs) as f:
+        ...     ...
+    """
+
     def assemble(self, dg: sc.DataGroup) -> DiskChopper:
         # TODO needs depends_on which is not in the old file we have
         position = sc.vector([0, 0, 0], unit='m')
