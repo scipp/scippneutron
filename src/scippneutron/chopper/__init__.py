@@ -2,5 +2,6 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
 from .disk_chopper import DiskChopper, DiskChopperType
+from .nexus_chopper import NXDiskChopper
 
-__all__ = ['DiskChopper', 'DiskChopperType']
+__all__ = ['DiskChopper', 'DiskChopperType', 'NXDiskChopper']
