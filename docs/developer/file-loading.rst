@@ -5,8 +5,8 @@ Scippneutron is able to load Nexus files from ESS experimental runs,
 as well as data files from other neutron facilities.
 There are currently two different implementations of file loading.
 
-``scippneutron.load``
-~~~~~~~~~~~~~~~~~~~~~
+``scippneutron.load_with_mantid``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This classic (or legacy) file loading method wraps
 the `Load <https://docs.mantidproject.org/nightly/algorithms/Load-v1.html>`_
@@ -19,11 +19,13 @@ This is the method that allows Scippneutron users to load many different
 file formats from a multitude of existing facilities.
 
 For more details, see
-`scippneutron.load <../generated/functions/scippneutron.load.rst#scippneutron.load>`_.
+`scippneutron.load_with_mantid <../generated/functions/scippneutron.load_with_mantid.rst>`_.
 
 
 ``scippneutron.load_nexus``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Deprecated!**
 
 This was added to Scippneutron to load ESS Nexus files (or any file that
 complies with the Nexus standard) without having to rely on Mantid.
