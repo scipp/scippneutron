@@ -25,7 +25,7 @@ For more details, see
 ``scippneutron.load_nexus``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Deprecated!**
+**Deprecated!** Use `ScippNexus <https://scipp.github.io/scippnexus/>`_ instead.
 
 This was added to Scippneutron to load ESS Nexus files (or any file that
 complies with the Nexus standard) without having to rely on Mantid.
