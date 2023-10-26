@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import Any, Optional, Union
 
 import scipp as sc
+import scipp.constants
 
 try:
     # Python 3.11+
@@ -55,6 +56,7 @@ class DiskChopper:
         rotation_speed: Union[sc.Variable, sc.DataArray],
         name: str = '',
         delay: Optional[Union[sc.Variable, sc.DataArray]] = None,
+        phase: Optional[sc.Variable] = None,
         radius: Optional[sc.Variable] = None,
         slits: Optional[int] = None,
         slit_height: Optional[sc.Variable] = None,
@@ -68,10 +70,11 @@ class DiskChopper:
         self._name = name
 
         self._delay = delay
+        self._phase = phase
         self._radius = radius
         self._slits = slits
         self._slit_height = slit_height
-        self._slit_edges = slit_edges
+        self._slit_edges = _parse_slit_edges(slit_edges)
 
     @property
     def typ(self) -> DiskChopperType:
@@ -94,16 +97,20 @@ class DiskChopper:
         return self._delay
 
     @property
+    def phase(self) -> Optional[sc.Variable]:
+        return self._phase
+
+    @property
     def radius(self) -> Optional[sc.Variable]:
         return self._radius
 
     @property
     def slits(self) -> Optional[int]:
         if self._slits is None:
-            if self._slit_height is not None:
-                self._slits = _len_or_1(self._slit_height)
+            if self.slit_height is not None:
+                self._slits = _len_or_1(self.slit_height)
             elif self.slit_edges is not None:
-                self._slits = len(self._slit_edges) // 2
+                self._slits = self.slit_edges.shape[0]
         return self._slits
 
     @property
@@ -112,7 +119,97 @@ class DiskChopper:
 
     @property
     def slit_edges(self) -> Optional[sc.Variable]:
+        """The beginning and end edges of each slit.
+
+        Returns
+        -------
+        :
+            Variable of shape ``[slit, edge]`` where ``slit`` indexes the chopper slits
+            and ``edge`` is of length 2 where ``edge=0`` is the beginning edge and
+            ``edge=1`` the end edge of the slit.
+            The dim names depend on the input.
+        """
         return self._slit_edges
+
+    @property
+    def slit_begin(self) -> Optional[sc.Variable]:
+        if self.slit_edges is None:
+            return None
+        return self.slit_edges[self.slit_edges.dims[1], 0]
+
+    @property
+    def slit_end(self) -> Optional[sc.Variable]:
+        if self.slit_edges is None:
+            return None
+        return self.slit_edges[self.slit_edges.dims[1], 1]
+
+    @property
+    def angular_frequency(self) -> sc.Variable:
+        return sc.scalar(2.0, unit="rad") * sc.constants.pi * self.rotation_speed
+
+    def time_open(self) -> sc.Variable:
+        """Return the times when chopper windows open.
+
+        These are time offsets of when the slit start edges pass by the
+        top dead center relative to the start of a cycle.
+
+        Returns
+        -------
+        :
+            Variable of opening times.
+
+        Raises
+        ------
+        RuntimeError
+            If no slits have been defined.
+        """
+        if self.slit_edges is None:
+            raise RuntimeError("No slits have been defined")
+        return self._time_open_close(self.slit_begin)
+
+    def time_close(self) -> sc.Variable:
+        """Return the times when chopper windows close.
+
+        These are time offsets of when the slit end edges pass by the
+        top dead center relative to the start of a cycle.
+
+        Returns
+        -------
+        :
+            Variable of opening times.
+
+        Raises
+        ------
+        RuntimeError
+            If no slits have been defined.
+        """
+        if self.slit_edges is None:
+            raise RuntimeError("No slits have been defined")
+        return self._time_open_close(self.slit_end)
+
+    def _time_open_close(self, edge: sc.Variable) -> sc.Variable:
+        if self.phase is not None:
+            edge = edge + self.phase.to(unit=edge.unit, copy=False)
+        return sc.to_unit(
+            edge / self.angular_frequency,
+            sc.reciprocal(self.rotation_speed.unit),
+            copy=False,
+        )
+
+    def open_duration(self) -> sc.Variable:
+        """Return the lengths of the open windows of the chopper.
+
+        Returns
+        -------
+        :
+            Variable of opening durations.
+
+        Raises
+        ------
+        RuntimeError
+            If no slits have been defined.
+        """
+        return self.time_close() - self.time_open()
 
     def __repr__(self) -> str:
         return (
@@ -138,8 +235,17 @@ class DiskChopper:
             return eq(a, b)
 
         # TODO add missing fields
-        regular = ('typ', 'name', 'position', 'rotation_speed')
-        computed = ('slits', 'slit_edges', 'slit_height', 'radius')
+        regular = (
+            'typ',
+            'name',
+            'position',
+            'rotation_speed',
+            'phase',
+            'slit_edges',
+            'slit_height',
+            'radius',
+        )
+        computed = ('slits',)
         return all(
             eq(getattr(self, key), getattr(other, key)) for key in regular
         ) and all(computed_eq(key) for key in computed)
@@ -150,6 +256,15 @@ def _parse_typ(typ: Union[DiskChopperType, str]) -> DiskChopperType:
     if typ == "single":
         return DiskChopperType.single
     return DiskChopperType(typ)
+
+
+def _parse_slit_edges(edges: Optional[sc.Variable]) -> Optional[sc.Variable]:
+    if edges is None:
+        return None
+    if edges.ndim == 1:
+        edge_dim = 'edge' if edges.dim != 'edge' else 'edge_dim'
+        return edges.fold(edges.dim, sizes={edges.dim: -1, edge_dim: 2})
+    raise sc.DimensionError("The slit edges must be 1-dimensional")
 
 
 def _require_frequency(name: str, x: sc.Variable) -> None:

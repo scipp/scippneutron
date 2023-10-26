@@ -30,6 +30,7 @@ def test_from_nexus():
     assert ch.slits == 1
     assert sc.identical(ch.slit_height, sc.scalar(0.1, unit='m'))
     assert sc.identical(
-        ch.slit_edges, sc.array(dims=['dim_0'], values=[0.0, 161.0], unit='deg')
+        ch.slit_edges,
+        sc.array(dims=['dim_0', 'edge'], values=[[0.0, 161.0]], unit='deg'),
     )
     # TODO position
