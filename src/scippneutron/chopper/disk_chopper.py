@@ -107,9 +107,7 @@ class DiskChopper:
     @property
     def slits(self) -> Optional[int]:
         if self._slits is None:
-            if self.slit_height is not None:
-                self._slits = _len_or_1(self.slit_height)
-            elif self.slit_edges is not None:
+            if self.slit_edges is not None:
                 self._slits = self.slit_edges.shape[0]
         return self._slits
 
