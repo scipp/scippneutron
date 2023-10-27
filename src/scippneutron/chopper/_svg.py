@@ -23,19 +23,24 @@ ${elements}
 '''
 )
 _DISK_TEMPLATE = Template(
-    '<path d="${path}" fill="gray" ' 'stroke="#c00000" stroke-width="2"/>'
+    '<path d="${path}" fill="#e0e0e0" ' 'stroke="#a0a0a0" stroke-width="2"/>'
 )
 _EDGE_MARK_TEMPLATE = Template(
-    '<path d="${path}" stroke="black" stroke-width="2" ' 'stroke-dasharray="5,5"/>'
+    '<path d="${path}" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>'
 )
 _EDGE_LABEL_TEMPLATE = Template(
     '<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="sans-serif" '
-    'dominant-baseline="ideographic">'
+    'dominant-baseline="ideographic" fill="#707070">'
     '${label}</text>'
 )
 _TDC_MARK_TEMPLATE = Template(
-    '''<polygon points="${points}"/>
-<path d="${path}" stroke="blue" stroke-width="2" stroke-dasharray="5,5"/>'''
+    '''<polygon fill="#0065ac" points="${points}"/>
+<path d="${path}" stroke="#0065ac" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="${text_x}" y="${text_y}" text-anchor="${anchor}" dominant-baseline="middle" font-family="sans-serif" fill="#0065ac">TDC</text>'''
+)
+_BEAM_POSITION_TEMPLATE = Template(
+    '''<path d="${path}" stroke="#cc5e14" stroke-width="2"/>
+<text x="${text_x}" y="${text_y}" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" fill="#cc5e14">Beam Pos</text>'''
 )
 
 
@@ -44,9 +49,9 @@ def _rotation_arrow(*, image_size: int, clockwise: bool) -> str:
     s = image_size / 400
     flip, shift = (-1, image_size) if clockwise else (1, 0)
     return f'''<g id="rotation-arrow" transform="matrix({flip*s},0,0,{s},{shift},0)">
-<path fill="#ff6600"
+<path fill="#606060"
  d="m 190.46289,4.140625 c -19.2285,0.9736749 -38.20846,4.7790001 -56.32617,11.292969 l 0.89453,2.490234 C 152.90409,11.497902 171.62709,7.7437179 190.5957,6.7832031 Z"/>
-<path fill="#ff6600" stroke-linecap="round"
+<path fill="#606060" stroke-linecap="round"
  d="m 138.29883,5.5019531 a 1.322835,1.322835 0 0 0 -0.75,0.6816406 l -5.34766,11.3515623 11.35156,5.347656 A 1.322835,1.322835 0 0 0 145.3125,22.25 1.322835,1.322835 0 0 0 144.67969,20.488281 l -8.95703,-4.21875 4.21875,-8.9589841 a 1.322835,1.322835 0 0 0 -0.63282,-1.7597657 1.322835,1.322835 0 0 0 -1.00976,-0.048828 z"/>
 </g>'''
 
@@ -79,13 +84,16 @@ def _slit_edges_for_drawing(
         return begin, end, False
 
 
-def _tdc_marker(image_size: int) -> str:
+def _tdc_marker(*, image_size: int, chopper: DiskChopper) -> str:
     bottom = image_size // 2, 11
     left = image_size // 2 - 5, 1
     right = image_size // 2 + 5, 1
     return _TDC_MARK_TEMPLATE.substitute(
         points=f'{bottom[0]},{bottom[1]} {left[0]},{left[1]} {right[0]},{right[1]}',
         path=f'M{image_size // 2} {image_size // 2} L{bottom[0]} {bottom[1]}',
+        text_x=image_size // 2 + 7 * (-1 if _is_clockwise(chopper) else 1),
+        text_y=11,
+        anchor='end' if _is_clockwise(chopper) else 'start',
     )
 
 
@@ -170,6 +178,14 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
         }
         return line, text
 
+    def beam_pos(beam_position: sc.Variable) -> str:
+        x, y = polar_to_svg_coords(r=chopper.radius * radius_scale, a=beam_position)
+        return _BEAM_POSITION_TEMPLATE.substitute(
+            path=f'M{image_size // 2} {image_size // 2} L{x} {y}',
+            text_x=x,
+            text_y=y,
+        )
+
     disk_path = [move_to(r=chopper.radius * radius_scale, a=sc.scalar(0.0, unit='rad'))]
     edge_marks = []
     for slit in _combine_slits(chopper):
@@ -190,9 +206,12 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
             + _EDGE_LABEL_TEMPLATE.substitute(**label)
             for path, label in edge_marks
         ),
-        _tdc_marker(image_size),
+        _tdc_marker(image_size=image_size, chopper=chopper),
         _rotation_arrow(image_size=image_size, clockwise=_is_clockwise(chopper)),
     ]
+    if (beam_position := chopper.beam_position) is not None:
+        elements.append(beam_pos(beam_position))
+    elements.append(f'<circle cx="{image_size/2}" cy="{image_size/2}" r="5"/>')
     return _CHOPPER_TEMPLATE.substitute(
         image_size=image_size, elements='\n'.join(elements)
     )
