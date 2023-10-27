@@ -71,19 +71,6 @@ def _is_clockwise(chopper: DiskChopper) -> bool:
     return bool(chopper.rotation_speed < sc.scalar(0, unit=chopper.rotation_speed.unit))
 
 
-def _slit_edges_for_drawing(
-    chopper: DiskChopper, edge: sc.Variable
-) -> Tuple[sc.Variable, sc.Variable, bool]:
-    # begin and end are in the order encountered when tracing a circle from TDC
-    # in counter-clockwise direction.
-    if _is_clockwise(chopper):
-        begin, end = edge
-        return begin, end, True
-    else:
-        end, begin = edge
-        return begin, end, False
-
-
 def _tdc_marker(*, image_size: int, chopper: DiskChopper) -> str:
     bottom = image_size // 2, 11
     left = image_size // 2 - 5, 1
@@ -192,7 +179,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
     disk_path = []
     edge_marks = []
     for slit in _combine_slits(chopper):
-        begin, end, open_first = _slit_edges_for_drawing(chopper, slit.coords['edge'])
+        begin, end = slit.coords['edge']
 
         if start_angle is None:
             start_angle = begin.to(unit='rad')
@@ -200,10 +187,10 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
         else:
             disk_path.append(trace_arc(begin))
         disk_path.append(trace_edge(slit.coords['height']))
-        edge_marks.append(edge_mark(is_open=open_first, idx=slit.value))
+        edge_marks.append(edge_mark(is_open=True, idx=slit.value))
         disk_path.append(trace_arc(end))
         disk_path.append(trace_edge(slit.coords['height']))
-        edge_marks.append(edge_mark(is_open=not open_first, idx=slit.value))
+        edge_marks.append(edge_mark(is_open=False, idx=slit.value))
 
     if start_angle < angle:
         disk_path.append(trace_arc(sc.scalar(2 * math.pi, unit='rad') + start_angle))
