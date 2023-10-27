@@ -35,7 +35,7 @@ _EDGE_LABEL_TEMPLATE = Template(
 )
 _TDC_MARK_TEMPLATE = Template(
     '''<polygon fill="#0065ac" points="${points}"/>
-<path d="${path}" stroke="#0065ac" stroke-width="2" stroke-dasharray="5,5"/>
+<path d="${path}" stroke="#0065ac" stroke-width="2" stroke-dasharray="10,3"/>
 <text x="${text_x}" y="${text_y}" text-anchor="${anchor}" dominant-baseline="middle" font-family="sans-serif" fill="#0065ac">TDC</text>'''
 )
 _BEAM_POSITION_TEMPLATE = Template(
@@ -141,6 +141,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
 
     def move_to(*, r: sc.Variable, a: sc.Variable) -> str:
         nonlocal radius, angle
+        a = a.to(unit='rad')
         radius = r
         angle = a
         x, y = polar_to_svg_coords(r=r, a=a)
@@ -151,7 +152,8 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
         a = a.to(unit='rad')
         x, y = polar_to_svg_coords(r=radius, a=a)
         r = to_svg_length(radius)
-        large = 1 if (a - angle) > sc.scalar(math.pi, unit='rad') else 0
+        pi = sc.scalar(math.pi, unit='rad')
+        large = 1 if (a - angle) > pi else 0
         angle = a
         return f'A{r:.3f} {r:.3f} 0 {large} 0 {x:.3f} {y:.3f}'
 
@@ -186,17 +188,27 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
             text_y=y,
         )
 
-    disk_path = [move_to(r=chopper.radius * radius_scale, a=sc.scalar(0.0, unit='rad'))]
+    start_angle = None
+    disk_path = []
     edge_marks = []
     for slit in _combine_slits(chopper):
         begin, end, open_first = _slit_edges_for_drawing(chopper, slit.coords['edge'])
-        disk_path.append(trace_arc(begin))
+
+        if start_angle is None:
+            start_angle = begin.to(unit='rad')
+            disk_path.append(move_to(r=chopper.radius * radius_scale, a=start_angle))
+        else:
+            disk_path.append(trace_arc(begin))
         disk_path.append(trace_edge(slit.coords['height']))
         edge_marks.append(edge_mark(is_open=open_first, idx=slit.value))
         disk_path.append(trace_arc(end))
         disk_path.append(trace_edge(slit.coords['height']))
         edge_marks.append(edge_mark(is_open=not open_first, idx=slit.value))
-    disk_path.append(trace_arc(sc.scalar(2 * math.pi, unit='rad')))
+
+    if start_angle < angle:
+        disk_path.append(trace_arc(sc.scalar(2 * math.pi, unit='rad') + start_angle))
+    else:
+        disk_path.append(trace_arc(start_angle))
 
     elements = [
         _DISK_TEMPLATE.substitute(path=' '.join(disk_path)),
