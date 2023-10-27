@@ -283,10 +283,16 @@ def _parse_typ(typ: Union[DiskChopperType, str]) -> DiskChopperType:
 def _parse_slit_edges(edges: Optional[sc.Variable]) -> Optional[sc.Variable]:
     if edges is None:
         return None
-    if edges.ndim == 1:
-        edge_dim = 'edge' if edges.dim != 'edge' else 'edge_dim'
-        return edges.fold(edges.dim, sizes={edges.dim: -1, edge_dim: 2})
-    raise sc.DimensionError("The slit edges must be 1-dimensional")
+    if edges.ndim != 1:
+        raise sc.DimensionError("The slit edges must be 1-dimensional")
+    edge_dim = 'edge' if edges.dim != 'edge' else 'edge_dim'
+    folded = edges.fold(edges.dim, sizes={edges.dim: -1, edge_dim: 2})
+    if sc.any(folded[edge_dim, 0] > folded[edge_dim, 1]):
+        raise ValueError(
+            "Invalid slit edges, must be given as "
+            "[begin_0, end_0, begin_1, end_1, ...] where begin_n < end_n"
+        )
+    return folded
 
 
 def _require_frequency(name: str, x: sc.Variable) -> None:
