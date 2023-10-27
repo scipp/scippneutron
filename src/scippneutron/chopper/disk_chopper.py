@@ -248,6 +248,11 @@ class DiskChopper:
             eq(getattr(self, key), getattr(other, key)) for key in regular
         ) and all(computed_eq(key) for key in computed)
 
+    def to_svg(self, image_size: int = 300) -> str:
+        from .svg import draw_disk_chopper
+
+        return draw_disk_chopper(self, image_size=image_size)
+
 
 def _parse_typ(typ: Union[DiskChopperType, str]) -> DiskChopperType:
     # Special shorthand for convenience
