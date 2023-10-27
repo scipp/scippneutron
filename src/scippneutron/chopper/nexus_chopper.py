@@ -6,7 +6,7 @@ from typing import Optional, Union
 import scipp as sc
 import scippnexus as snx
 
-from .disk_chopper import DiskChopper
+from .disk_chopper import DiskChopper, DiskChopperType
 
 
 class NXDiskChopper(snx.NXdisk_chopper):
@@ -29,7 +29,7 @@ class NXDiskChopper(snx.NXdisk_chopper):
         position = sc.vector([0, 0, 0], unit='m')
 
         return DiskChopper(
-            typ=dg.get('type', 'single'),
+            typ=dg.get('type', DiskChopperType.single),
             position=position,
             rotation_speed=_parse_rotation_speed(dg['rotation_speed']),
             delay=_parse_maybe_log(dg.get('delay')),
