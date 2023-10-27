@@ -3,7 +3,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional, Union
+import dataclasses
+from typing import Optional, Union
 
 import scipp as sc
 import scipp.constants
@@ -34,6 +35,7 @@ except ImportError:
     del Enum
 
 
+@dataclasses.dataclass(frozen=True)
 class DiskChopper:
     """A disk chopper.
 
@@ -48,107 +50,74 @@ class DiskChopper:
     quantities.
     """
 
-    def __init__(
-        self,
-        *,
-        typ: Union[DiskChopperType, str],
-        position: sc.Variable,
-        rotation_speed: Union[sc.Variable, sc.DataArray],
-        name: str = '',
-        delay: Optional[Union[sc.Variable, sc.DataArray]] = None,
-        phase: Optional[sc.Variable] = None,
-        radius: Optional[sc.Variable] = None,
-        slits: Optional[int] = None,
-        slit_height: Optional[sc.Variable] = None,
-        slit_edges: Optional[sc.Variable] = None,
-        beam_position: Optional[sc.Variable] = None,
-    ) -> None:
-        _require_frequency('rotation_speed', rotation_speed)
+    position: sc.Variable
+    rotation_speed: Union[sc.Variable, sc.DataArray]
+    delay: Optional[Union[sc.Variable, sc.DataArray]] = None
+    phase: Optional[sc.Variable] = None
+    radius: Optional[sc.Variable] = None
+    slits: Optional[int] = None
+    slit_height: Optional[sc.Variable] = None
 
-        self._typ = _parse_typ(typ)
-        self._position = position
-        self._rotation_speed = rotation_speed
-        self._name = name
+    slit_edges: Optional[sc.Variable] = None
+    """Edges of the slits as angles measured anticlockwise from top-dead-center.
 
-        self._delay = delay
-        self._phase = phase
-        self._radius = radius
-        self._slits = slits
-        self._slit_height = slit_height
-        self._slit_edges = _parse_slit_edges(slit_edges)
-        self._beam_position = beam_position
+    On init, a 1d array of the form ``[begin_0, end_0, begin_1, end_1, ...]`` with
+    ``begin_n < end_n``.
 
-    @property
-    def typ(self) -> DiskChopperType:
-        return self._typ
+    After init, a 2d array of shape ``[slit, edge]`` where ``slit`` indexes the chopper
+    slits and ``edge`` is of length 2 where ``edge=0`` is the beginning edge and
+    ``edge=1`` the ending edge of the slit.
+    The dim names depend on the input.
 
-    @property
-    def position(self) -> sc.Variable:
-        return self._position
+    Here, the 'beginning' edge is the edge of a slit with the smaller angle and the
+    'ending' edge is the other.
+    That is, walking around the chopper disk from top-dead-center in anticlockwise
+    direction, one encounters the beginning edge before the closing edge.
+    This differs from the 'opening' and 'closing' times which depend on the
+    direction of rotation.
+    """
 
-    @property
-    def rotation_speed(self) -> Union[sc.Variable, sc.DataArray]:
-        return self._rotation_speed
+    beam_position: Optional[sc.Variable] = None
+    name: str = ''
+    typ: DiskChopperType = DiskChopperType.single
+    _clockwise: bool = dataclasses.field(init=False, repr=False, compare=False)
 
-    @property
-    def name(self) -> str:
-        return self._name
+    def __post_init__(self) -> None:
+        object.__setattr__(self, 'typ', DiskChopperType(self.typ))
+        if self.typ != DiskChopperType.single:
+            raise NotImplementedError(
+                "Only single disk choppers are supported, got " f"typ={self.typ}"
+            )
 
-    @property
-    def delay(self) -> Optional[Union[sc.Variable, sc.DataArray]]:
-        return self._delay
-
-    @property
-    def phase(self) -> Optional[sc.Variable]:
-        return self._phase
-
-    @property
-    def radius(self) -> Optional[sc.Variable]:
-        return self._radius
-
-    @property
-    def beam_position(self) -> Optional[sc.Variable]:
-        return self._beam_position
-
-    @property
-    def slits(self) -> Optional[int]:
-        if self._slits is None:
-            if self.slit_edges is not None:
-                self._slits = self.slit_edges.shape[0]
-        return self._slits
-
-    @property
-    def slit_height(self) -> Optional[sc.Variable]:
-        return self._slit_height
-
-    @property
-    def slit_edges(self) -> Optional[sc.Variable]:
-        """The beginning and end edges of each slit.
-
-        Returns
-        -------
-        :
-            Variable of shape ``[slit, edge]`` where ``slit`` indexes the chopper slits
-            and ``edge`` is of length 2 where ``edge=0`` is the beginning edge and
-            ``edge=1`` the end edge of the slit.
-            The dim names depend on the input.
-        """
-        return self._slit_edges
+        _require_frequency('rotation_speed', self.rotation_speed)
+        object.__setattr__(self, 'slit_edges', _parse_slit_edges(self.slit_edges))
+        if self.slits is None and self.slit_edges is not None:
+            object.__setattr__(self, 'slits', self.slit_edges.shape[0])
+        object.__setattr__(
+            self,
+            '_clockwise',
+            sc.all(
+                self.rotation_speed < sc.scalar(0.0, unit=self.rotation_speed.unit)
+            ).value,
+        )
 
     @property
     def slit_begin(self) -> Optional[sc.Variable]:
+        """Beginning edges of the slits."""
         if self.slit_edges is None:
             return None
         return self.slit_edges[self.slit_edges.dims[1], 0]
 
     @property
     def slit_end(self) -> Optional[sc.Variable]:
+        """Ending edges of the slits."""
         if self.slit_edges is None:
             return None
         return self.slit_edges[self.slit_edges.dims[1], 1]
 
     @property
     def angular_frequency(self) -> sc.Variable:
+        """Rotation speed as an angular frequency in ``rad * rotation_speed.unit``."""
         return sc.scalar(2.0, unit="rad") * sc.constants.pi * self.rotation_speed
 
     def time_open(self) -> sc.Variable:
@@ -214,46 +183,6 @@ class DiskChopper:
             If no slits have been defined.
         """
         return self.time_close() - self.time_open()
-
-    def __repr__(self) -> str:
-        return (
-            f"DiskChopper(typ={self.typ}, name={self.name}, "
-            f"position={self.position})"
-        )
-
-    def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, DiskChopper):
-            return NotImplemented
-
-        def eq(a: Any, b: Any) -> bool:
-            try:
-                return sc.identical(a, b)
-            except TypeError:
-                return a == b
-
-        def computed_eq(key: str) -> bool:
-            a, b = getattr(self, '_' + key), getattr(other, '_' + key)
-            if (a is None) ^ (b is None):
-                return eq(getattr(self, key), getattr(other, key))
-            # Avoid computing it if not needed.
-            return eq(a, b)
-
-        # TODO add missing fields
-        regular = (
-            'typ',
-            'name',
-            'position',
-            'rotation_speed',
-            'phase',
-            'slit_edges',
-            'slit_height',
-            'radius',
-            'beam_position',
-        )
-        computed = ('slits',)
-        return all(
-            eq(getattr(self, key), getattr(other, key)) for key in regular
-        ) and all(computed_eq(key) for key in computed)
 
     def to_svg(self, image_size: int = 400) -> str:
         """Generate an SVG image for this chopper.

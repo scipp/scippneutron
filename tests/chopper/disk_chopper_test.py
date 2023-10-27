@@ -9,32 +9,18 @@ from scippneutron.chopper import DiskChopper, DiskChopperType
 
 
 @pytest.mark.parametrize(
-    't',
+    'typ',
     (
-        ('Chopper type single', DiskChopperType.single),
-        ('single', DiskChopperType.single),
-        ('contra_rotating_pair', DiskChopperType.contra_rotating_pair),
-        ('synchro_pair', DiskChopperType.synchro_pair),
-        (DiskChopperType.single, DiskChopperType.single),
-        (DiskChopperType.contra_rotating_pair, DiskChopperType.contra_rotating_pair),
-        (DiskChopperType.synchro_pair, DiskChopperType.synchro_pair),
+        'contra_rotating_pair',
+        'synchro_pair',
+        DiskChopperType.contra_rotating_pair,
+        DiskChopperType.synchro_pair,
     ),
 )
-def test_chopper_type_init(t):
-    arg, expected = t
-    ch = DiskChopper(
-        typ=arg,
-        rotation_speed=sc.scalar(1.0, unit='Hz'),
-        position=sc.vector([0, 0, 0], unit='m'),
-    )
-    assert isinstance(ch.typ, DiskChopperType)
-    assert ch.typ == expected
-
-
-def test_bad_chopper_type_init():
-    with pytest.raises(ValueError):
+def test_chopper_supports_only_single(typ):
+    with pytest.raises(NotImplementedError):
         DiskChopper(
-            typ="contra",
+            typ=typ,
             rotation_speed=sc.scalar(1.0, unit='Hz'),
             position=sc.vector([0, 0, 0], unit='m'),
         )
@@ -43,7 +29,6 @@ def test_bad_chopper_type_init():
 def test_rotation_speed_must_be_frequency():
     with pytest.raises(sc.UnitError):
         DiskChopper(
-            typ="single",
             rotation_speed=sc.scalar(1.0, unit='m/s'),
             position=sc.vector([0, 0, 0], unit='m'),
         )
@@ -93,7 +78,6 @@ def test_neq(replacement):
 
 def test_slit_begin_end_no_slit():
     ch = DiskChopper(
-        typ='single',
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(5.12, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[], unit='deg'),
@@ -104,7 +88,6 @@ def test_slit_begin_end_no_slit():
 
 def test_slit_begin_end_one_slit():
     ch = DiskChopper(
-        typ='single',
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(5.12, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[13, 43], unit='deg'),
@@ -115,7 +98,6 @@ def test_slit_begin_end_one_slit():
 
 def test_slit_begin_end_two_slits():
     ch = DiskChopper(
-        typ='single',
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(5.12, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[0, 60, 124, 126], unit='deg'),
@@ -130,7 +112,6 @@ def test_slit_begin_end_two_slits():
 
 def test_slit_begin_end_across_0():
     ch = DiskChopper(
-        typ='single',
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(5.12, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[340.0, 382.0], unit='deg'),
@@ -146,7 +127,6 @@ def test_slit_begin_end_across_0():
 # TODO negative rotation speed
 def test_time_open_close_no_slit():
     ch = DiskChopper(
-        typ='single',
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(5.12, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[], unit='deg'),
@@ -160,7 +140,6 @@ def test_time_open_close_no_slit():
 
 def test_time_open_close_only_slit():
     ch = DiskChopper(
-        typ='single',
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(5.12, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[0.0, 360.0], unit='deg'),
@@ -182,7 +161,6 @@ def test_time_open_close_only_slit():
 
 def test_time_open_close_two_slits():
     ch = DiskChopper(
-        typ='single',
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(3.29, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[0.5, 0.8, 2.4, 2.5], unit='rad'),
@@ -204,7 +182,6 @@ def test_time_open_close_two_slits():
 
 def test_time_open_close_slit_across_0():
     ch = DiskChopper(
-        typ='single',
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(1.2, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[355.0, 372.0], unit='deg'),
@@ -230,7 +207,6 @@ def test_time_open_close_slit_across_0():
 
 def test_time_open_close_no_slit_with_phase():
     ch = DiskChopper(
-        typ='single',
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(5.12, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[], unit='deg'),
@@ -248,7 +224,6 @@ def test_time_open_close_no_slit_with_phase():
 @pytest.mark.parametrize('phase_unit', ('deg', 'rad'))
 def test_time_open_close_only_slit_with_phase(phase, phase_unit):
     ch = DiskChopper(
-        typ='single',
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(5.12, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[0.0, 360.0], unit='deg'),
@@ -278,7 +253,6 @@ def test_time_open_close_only_slit_with_phase(phase, phase_unit):
 @pytest.mark.parametrize('phase_unit', ('deg', 'rad'))
 def test_open_duration_does_not_depend_on_phase(phase, phase_unit):
     ch = DiskChopper(
-        typ='single',
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(14.1, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[0.1, 0.6, 1.9, 2.3], unit='rad'),
