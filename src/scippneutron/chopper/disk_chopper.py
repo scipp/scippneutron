@@ -61,6 +61,7 @@ class DiskChopper:
         slits: Optional[int] = None,
         slit_height: Optional[sc.Variable] = None,
         slit_edges: Optional[sc.Variable] = None,
+        beam_position: Optional[sc.Variable] = None,
     ) -> None:
         _require_frequency('rotation_speed', rotation_speed)
 
@@ -75,6 +76,7 @@ class DiskChopper:
         self._slits = slits
         self._slit_height = slit_height
         self._slit_edges = _parse_slit_edges(slit_edges)
+        self._beam_position = beam_position
 
     @property
     def typ(self) -> DiskChopperType:
@@ -103,6 +105,10 @@ class DiskChopper:
     @property
     def radius(self) -> Optional[sc.Variable]:
         return self._radius
+
+    @property
+    def beam_position(self) -> Optional[sc.Variable]:
+        return self._beam_position
 
     @property
     def slits(self) -> Optional[int]:
@@ -242,6 +248,7 @@ class DiskChopper:
             'slit_edges',
             'slit_height',
             'radius',
+            'beam_position',
         )
         computed = ('slits',)
         return all(
