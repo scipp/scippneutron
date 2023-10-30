@@ -37,17 +37,66 @@ except ImportError:
 
 @dataclasses.dataclass(frozen=True, eq=False)
 class DiskChopper:
-    """A disk chopper.
+    r"""A disk chopper.
+
+    Definitions
+    -----------
 
     Attribute names correspond closely to the names use by NeXus' ``NXdisk_chopper``.
     See https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html
     for an overview.
 
-    This class can transparently compute some quantities from others.
-    So not all attributes need to be given to construct a chopper instance.
-    However, it does **not** perform any consistency checks.
-    If a quantity is given, it is used directly instead of computing it from related
-    quantities.
+    Here is how those attributes are interpreted in ScippNeutron:
+    The image below shows a disk chopper with a single slit (a.k.a. window)
+    as seen from neutron source looking towards the sample.
+    Note that all definitions are independent of the rotation direction.
+
+    - *TDC* (top-dead-center sensor) corresponds to a sensor that
+      tracks the rotation of the chopper.
+      It serves as a reference point for defining angles.
+    - *beam_position* is the angle :math:`\tilde{\theta}` under which
+      the beam hits the chopper.
+      We do not care about the radial position and assume that it can
+      pass through all chopper slits.
+    - The slit is defined in terms of *begin* (:math:`\theta`) and *end* angles.
+
+    .. image:: /_static/chopper-coordinates.svg
+       :width: 400
+       :align: center
+
+    - The chopper rotates with a frequency of ``rotation_speed`` :math:`f` which is
+      also available as ``angular_frequency`` :math:`\omega = 2\pi / f`.
+      A positive frequency means anticlockwise rotation and a negative frequency
+      clockwise rotation.
+    - The ``DiskChopper.top_dead_center`` attribute stores timestamps of when the
+      TDC sensor registers a full rotation.
+      This serves as a reference time for the chopper.
+    - The chopper time :math:`t` relates to the global time of the facility
+      :math:`\hat{t}` via :math:`\hat{t} = t + \delta t`, where :math:`\delta t`
+      is ``DiskChopper.delay``.
+    - There is also a ``phase`` parameter that encodes the phase of the chopper
+      relative to the neutron source.
+      It is unused in time calculations as the above attributes have
+      all required information.
+
+    Slit openings
+    -------------
+
+    The terminology here differentiates slit 'begin' and 'end' from 'open' and 'close'.
+    The former refer to the angles relative to TDC as shown in the image above.
+    The latter refer to the opening and closing times of the slit.
+
+    It is possible to have ``end > 360 deg`` (clockwise) or ``begin < 0 deg``
+    (anticlockwise) if a slit spans TDC.
+
+    For a given slit, we require ``begin < end``.
+    In order to also get ``open < close`` for both directions of rotation,
+    we have the following correspondence:
+
+    - clockwise rotation: ``begin`` <-> ``open`` and ``end`` <-> ``close``
+    - anticlockwise rotation: ``begin`` <-> ``close`` and ``end`` <-> ``open``
+
+    TODO equations for open/close times
     """
 
     position: sc.Variable

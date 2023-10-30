@@ -8,6 +8,7 @@ Modules
    :template: scipp-module-template.rst
    :recursive:
 
+   chopper
    conversion
    io
    logging
