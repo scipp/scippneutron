@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import scipp as sc
 import scipp.constants
@@ -35,7 +35,7 @@ except ImportError:
     del Enum
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, eq=False)
 class DiskChopper:
     """A disk chopper.
 
@@ -200,6 +200,23 @@ class DiskChopper:
         from ._svg import draw_disk_chopper
 
         return draw_disk_chopper(self, image_size=image_size)
+
+    def __eq__(self, other: Any) -> Union[bool, NotImplemented]:
+        if not isinstance(other, DiskChopper):
+            return NotImplemented
+        return all(
+            _field_eq(getattr(self, field.name), getattr(other, field.name))
+            for field in dataclasses.fields(self)
+        )
+
+
+def _field_eq(a: Any, b: Any) -> bool:
+    if isinstance(a, (sc.Variable, sc.DataArray)):
+        try:
+            return sc.identical(a, b)
+        except TypeError:
+            return False  # if identical does not support b
+    return a == b
 
 
 def _parse_typ(typ: Union[DiskChopperType, str]) -> DiskChopperType:
