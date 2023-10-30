@@ -36,14 +36,18 @@ def test_rotation_speed_must_be_frequency():
 
 def test_eq():
     ch1 = DiskChopper(
-        typ='single',
-        rotation_speed=sc.scalar(14.0, unit='Hz'),
+        rotation_speed=sc.DataArray(
+            sc.array(dims=['time'], values=[1, 2], unit='Hz'),
+            coords={'time': sc.arange('time', 2, unit='ms')},
+        ),
         position=sc.vector([0, 0, 0], unit='m'),
         name="ch",
     )
     ch2 = DiskChopper(
-        typ='single',
-        rotation_speed=sc.scalar(14.0, unit='Hz'),
+        rotation_speed=sc.DataArray(
+            sc.array(dims=['time'], values=[1, 2], unit='Hz'),
+            coords={'time': sc.arange('time', 2, unit='ms')},
+        ),
         position=sc.vector([0, 0, 0], unit='m'),
         name="ch",
     )
@@ -53,7 +57,6 @@ def test_eq():
 @pytest.mark.parametrize(
     'replacement',
     (
-        ('typ', 'contra_rotating_pair'),
         ('rotation_speed', sc.scalar(13.0, unit='Hz')),
         ('position', sc.vector([1, 0, 0], unit='m')),
         ('name', 'ch2'),
@@ -66,7 +69,6 @@ def test_eq():
 )
 def test_neq(replacement):
     args = dict(
-        typ='single',
         rotation_speed=sc.scalar(14.0, unit='Hz'),
         position=sc.vector([0, 0, 0], unit='m'),
         name="ch",
