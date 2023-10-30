@@ -78,6 +78,7 @@ class DiskChopper:
     """
 
     beam_position: Optional[sc.Variable] = None
+    top_dead_center: Optional[sc.Variable] = None
     name: str = ''
     typ: DiskChopperType = DiskChopperType.single
     _clockwise: bool = dataclasses.field(init=False, repr=False, compare=False)
@@ -120,31 +121,16 @@ class DiskChopper:
         """Rotation speed as an angular frequency in ``rad * rotation_speed.unit``."""
         return sc.scalar(2.0, unit="rad") * sc.constants.pi * self.rotation_speed
 
-    def time_open(self) -> sc.Variable:
-        """Return the times when chopper windows open.
+    def relative_time_open(self) -> sc.Variable:
+        """Return the opening times of the chopper windows.
 
-        These are time offsets of when the slit start edges pass by the
-        top dead center relative to the start of a cycle.
+        The times are offsets of when the slit ``begin_edge``s pass by the
+        beam position relative to the chopper's top-dead-center timestamps.
 
-        Returns
-        -------
-        :
-            Variable of opening times.
+        If the ``beam_position`` is not set, it is assumed to be 0.
 
-        Raises
-        ------
-        RuntimeError
-            If no slits have been defined.
-        """
-        if self.slit_edges is None:
-            raise RuntimeError("No slits have been defined")
-        return self._time_open_close(self.slit_begin)
-
-    def time_close(self) -> sc.Variable:
-        """Return the times when chopper windows close.
-
-        These are time offsets of when the slit end edges pass by the
-        top dead center relative to the start of a cycle.
+        One time can be negative for anticlockwise-rotating choppers with a slit
+        across top-dead-center.
 
         Returns
         -------
@@ -155,19 +141,49 @@ class DiskChopper:
         ------
         RuntimeError
             If no slits have been defined.
+
+        See Also
+        --------
+        DiskChopper.time_open:
+            Computes the absolute opening time in the global timing system.
         """
         if self.slit_edges is None:
             raise RuntimeError("No slits have been defined")
-        return self._time_open_close(self.slit_end)
+        if self._clockwise:
+            return self.relative_time_angle_at_beam(self.slit_begin)
+        return self.relative_time_angle_at_beam(self.slit_end)
 
-    def _time_open_close(self, edge: sc.Variable) -> sc.Variable:
-        if self.phase is not None:
-            edge = edge + self.phase.to(unit=edge.unit, copy=False)
-        return sc.to_unit(
-            edge / self.angular_frequency,
-            sc.reciprocal(self.rotation_speed.unit),
-            copy=False,
-        )
+    def relative_time_close(self) -> sc.Variable:
+        """Return the closing times of the chopper windows.
+
+        The times are offsets of when the slit ``end_edge``s pass by the
+        beam position relative to the chopper's top-dead-center timestamps.
+
+        If the ``beam_position`` is not set, it is assumed to be 0.
+
+        One time can be ``> 360 deg`` for clockwise-rotating choppers with a slit
+        across top-dead-center.
+
+        Returns
+        -------
+        :
+            Variable of closing times.
+
+        Raises
+        ------
+        RuntimeError
+            If no slits have been defined.
+
+        See Also
+        --------
+        DiskChopper.time_close:
+            Computes the absolute closing time in the global timing system.
+        """
+        if self.slit_edges is None:
+            raise RuntimeError("No slits have been defined")
+        if self._clockwise:
+            return self.relative_time_angle_at_beam(self.slit_end)
+        return self.relative_time_angle_at_beam(self.slit_begin)
 
     def open_duration(self) -> sc.Variable:
         """Return the lengths of the open windows of the chopper.
@@ -182,7 +198,127 @@ class DiskChopper:
         RuntimeError
             If no slits have been defined.
         """
-        return self.time_close() - self.time_open()
+        return self.relative_time_close() - self.relative_time_open()
+
+    def relative_time_angle_at_beam(self, angle: sc.Variable) -> sc.Variable:
+        """Return the time when a position of the chopper is at the beam.
+
+        The times are offsets of when the given angle passes by the
+        beam position relative to the chopper's top-dead-center timestamps.
+
+        If the ``beam_position`` is not set, it is assumed to be 0.
+
+        Returns
+        -------
+        :
+            Angles to compute times for.
+            Defined anticlockwise with respect to top-dead-center.
+
+        Raises
+        ------
+        RuntimeError
+            If no slits have been defined.
+
+        See Also
+        --------
+        DiskChopper.time_angle_at_beam:
+            Computes absolute times in the global timing system.
+        """
+        # Ensure the correct output unit.
+        angle = angle.to(unit='rad')
+
+        if self.beam_position is not None:
+            angle -= self.beam_position.to(unit=angle.unit, copy=False)
+        if not self._clockwise:
+            angle = sc.scalar(2.0, unit='rad') * sc.constants.pi - angle
+        return angle / abs(self.angular_frequency)
+
+    def time_open(self) -> sc.Variable:
+        """Return the absolute opening times of the chopper windows.
+
+        The times are absolute (date-)times in the global timing system as defined
+        through ``top_dead_center`` and ``delay``.
+
+        If the ``beam_position`` is not set, it is assumed to be 0.
+
+        Returns
+        -------
+        :
+            Variable of opening times with ``dtype=datetime``.
+
+        Raises
+        ------
+        RuntimeError
+            If ``slits`` or ``top_dead_center`` have been defined.
+
+        See Also
+        --------
+        DiskChopper.relative_time_open:
+            Computes the opening time relative to the chopper's top-dead-center.
+        """
+        return self._relative_to_absolute_time(self.relative_time_open())
+
+    def time_close(self) -> sc.Variable:
+        """Return the absolute closing times of the chopper windows.
+
+        The times are absolute (date-)times in the global timing system as defined
+        through ``top_dead_center`` and ``delay``.
+
+        If the ``beam_position`` is not set, it is assumed to be 0.
+
+        Returns
+        -------
+        :
+            Variable of opening times with ``dtype=datetime``.
+
+        Raises
+        ------
+        RuntimeError
+            If ``slits`` or ``top_dead_center`` have been defined.
+
+        See Also
+        --------
+        DiskChopper.relative_time_close:
+            Computes the closing time relative to the chopper's top-dead-center.
+        """
+        return self._relative_to_absolute_time(self.relative_time_close())
+
+    def time_angle_at_beam(self, angle: sc.Variable) -> sc.Variable:
+        """Return the absolute time when a position of the chopper is at the beam.
+
+        The times are absolute (date-)times in the global timing system as defined
+        through ``top_dead_center`` and ``delay``.
+
+        If the ``beam_position`` is not set, it is assumed to be 0.
+
+        Returns
+        -------
+        :
+            Angles to compute times for.
+            Defined anticlockwise with respect to top-dead-center.
+
+        Raises
+        ------
+        RuntimeError
+            If ``slits`` or ``top_dead_center`` have been defined.
+
+        See Also
+        --------
+        DiskChopper.relative_time_angle_at_beam:
+            Computes times relative to the chopper's top-dead-center.
+        """
+        return self._relative_to_absolute_time(self.relative_time_angle_at_beam(angle))
+
+    def _relative_to_absolute_time(self, relative_time: sc.Variable) -> sc.Variable:
+        if self.top_dead_center is None:
+            raise RuntimeError("No top dead center has been defined")
+        res = (
+            relative_time.to(unit=self.top_dead_center.unit, dtype=int, copy=False)
+            + self.top_dead_center
+        )
+        if self.delay is not None:
+            res += self.delay.to(unit=res.unit, copy=False)
+        return res
 
     def to_svg(self, image_size: int = 400) -> str:
         """Generate an SVG image for this chopper.
