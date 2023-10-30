@@ -65,6 +65,7 @@ def test_eq():
         ('slits', 5),
         ('slit_height', sc.scalar(0.14, unit='cm')),
         ('slit_edges', sc.array(dims=['edge'], values=[0.1, 0.3], unit='rad')),
+        ('top_dead_center', sc.datetimes(dims=['time'], values=[2, 5, 8], unit='ns')),
     ),
 )
 def test_neq(replacement):
@@ -76,6 +77,22 @@ def test_neq(replacement):
     ch1 = DiskChopper(**args)
     ch2 = DiskChopper(**{**args, replacement[0]: replacement[1]})
     assert ch1 != ch2
+
+
+@pytest.mark.parametrize('rotation_speed', (1.0, -1.0))
+def slit_edges_must_be_ascending_per_slit(rotation_speed):
+    with pytest.raises(ValueError):
+        DiskChopper(
+            rotation_speed=sc.scalar(rotation_speed, unit='Hz'),
+            position=sc.vector([0, 0, 0], unit='m'),
+            slit_edges=sc.array(dims=['edge'], values=[0.5, 0.3], unit='rad'),
+        )
+    with pytest.raises(ValueError):
+        DiskChopper(
+            rotation_speed=sc.scalar(rotation_speed, unit='Hz'),
+            position=sc.vector([0, 0, 0], unit='m'),
+            slit_edges=sc.array(dims=['edge'], values=[0.8, 0.6, 2.5, 2.8], unit='rad'),
+        )
 
 
 def test_slit_begin_end_no_slit():
@@ -112,6 +129,21 @@ def test_slit_begin_end_two_slits():
     )
 
 
+@pytest.mark.parametrize('rotation_speed', (1.0, -1.0))
+def test_slit_begin_end_two_slits_unordered(rotation_speed):
+    ch = DiskChopper(
+        rotation_speed=sc.scalar(rotation_speed, unit='Hz'),
+        position=sc.vector([0, 0, 0], unit='m'),
+        slit_edges=sc.array(dims=['slit'], values=[2.5, 2.8, 0.8, 1.3], unit='rad'),
+    )
+    assert sc.identical(
+        ch.slit_begin, sc.array(dims=['slit'], values=[2.5, 0.8], unit='rad')
+    )
+    assert sc.identical(
+        ch.slit_end, sc.array(dims=['slit'], values=[2.8, 1.3], unit='rad')
+    )
+
+
 def test_slit_begin_end_across_0():
     ch = DiskChopper(
         position=sc.vector([0, 0, 0], unit='m'),
@@ -126,146 +158,428 @@ def test_slit_begin_end_across_0():
     )
 
 
-# TODO negative rotation speed
-def test_time_open_close_no_slit():
+@pytest.mark.parametrize('rotation_speed', (5.12, -3.6))
+def test_relative_time_open_close_no_slit(rotation_speed):
     ch = DiskChopper(
         position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(5.12, unit='Hz'),
+        rotation_speed=sc.scalar(rotation_speed, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[], unit='deg'),
     )
-    assert sc.identical(ch.time_open(), sc.array(dims=['slit'], values=[], unit='s'))
-    assert sc.identical(ch.time_close(), sc.array(dims=['slit'], values=[], unit='s'))
+    assert sc.identical(
+        ch.relative_time_open(), sc.array(dims=['slit'], values=[], unit='s')
+    )
+    assert sc.identical(
+        ch.relative_time_close(), sc.array(dims=['slit'], values=[], unit='s')
+    )
     assert sc.identical(
         ch.open_duration(), sc.array(dims=['slit'], values=[], unit='s')
     )
 
 
-def test_time_open_close_only_slit():
+@pytest.mark.parametrize('rotation_speed', (5.12, -3.6))
+def test_relative_time_open_close_only_slit(rotation_speed):
     ch = DiskChopper(
         position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(5.12, unit='Hz'),
+        rotation_speed=sc.scalar(rotation_speed, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[0.0, 360.0], unit='deg'),
     )
     factor = (
         sc.constants.pi.value
         / 180  # to rad
         / (2 * sc.constants.pi.value)  # to angular frequency
-        / 5.12
+        / abs(rotation_speed)
     )  # to time based on rotation speed
-    assert sc.identical(ch.time_open(), sc.array(dims=['slit'], values=[0.0], unit='s'))
     assert sc.allclose(
-        ch.time_close(), sc.array(dims=['slit'], values=[360.0 * factor], unit='s')
+        ch.relative_time_open(), sc.array(dims=['slit'], values=[0.0], unit='s')
     )
     assert sc.allclose(
-        ch.open_duration(), sc.array(dims=['slit'], values=[1 / 5.12], unit='s')
-    )
-
-
-def test_time_open_close_two_slits():
-    ch = DiskChopper(
-        position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(3.29, unit='Hz'),
-        slit_edges=sc.array(dims=['slit'], values=[0.5, 0.8, 2.4, 2.5], unit='rad'),
-    )
-    factor = 1 / 3.29 / (2 * sc.constants.pi.value)
-    assert sc.allclose(
-        ch.time_open(),
-        sc.array(dims=['slit'], values=[0.5 * factor, 2.4 * factor], unit='s'),
-    )
-    assert sc.allclose(
-        ch.time_close(),
-        sc.array(dims=['slit'], values=[0.8 * factor, 2.5 * factor], unit='s'),
+        ch.relative_time_close(),
+        sc.array(dims=['slit'], values=[360.0 * factor], unit='s'),
     )
     assert sc.allclose(
         ch.open_duration(),
-        sc.array(dims=['slit'], values=[0.3 * factor, 0.1 * factor], unit='s'),
+        sc.array(dims=['slit'], values=[1 / abs(rotation_speed)], unit='s'),
     )
 
 
-def test_time_open_close_slit_across_0():
+@pytest.mark.parametrize(
+    'phase',
+    (
+        sc.scalar(0.0, unit='rad'),
+        sc.scalar(1.2, unit='rad'),
+        sc.scalar(-50.0, unit='deg'),
+    ),
+)
+def test_relative_time_open_close_single_slit_clockwise(phase):
     ch = DiskChopper(
         position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(1.2, unit='Hz'),
-        slit_edges=sc.array(dims=['slit'], values=[355.0, 372.0], unit='deg'),
+        rotation_speed=sc.scalar(-7.21, unit='Hz'),
+        slit_edges=sc.array(dims=['slit'], values=[90.0, 180.0], unit='deg'),
+        phase=phase,
     )
     factor = (
         sc.constants.pi.value
         / 180  # to rad
         / (2 * sc.constants.pi.value)  # to angular frequency
-        / 1.2
+        / abs(-7.21)
     )  # to time based on rotation speed
     assert sc.allclose(
-        ch.time_open(), sc.array(dims=['slit'], values=[355.0 * factor], unit='s')
-    )
-    # Like the edge, the time does not wrap around and the
-    # closing time is > rotation period.
-    assert sc.allclose(
-        ch.time_close(), sc.array(dims=['slit'], values=[372.0 * factor], unit='s')
+        ch.relative_time_open(), sc.array(dims=['slit'], values=[90 * factor], unit='s')
     )
     assert sc.allclose(
-        ch.open_duration(), sc.array(dims=['slit'], values=[17.0 * factor], unit='s')
+        ch.relative_time_close(),
+        sc.array(dims=['slit'], values=[180 * factor], unit='s'),
+    )
+    assert sc.allclose(
+        ch.open_duration(), sc.array(dims=['slit'], values=[90 * factor], unit='s')
     )
 
 
-def test_time_open_close_no_slit_with_phase():
+@pytest.mark.parametrize(
+    'phase',
+    (
+        sc.scalar(0.0, unit='rad'),
+        sc.scalar(1.2, unit='rad'),
+        sc.scalar(-50.0, unit='deg'),
+    ),
+)
+def test_relative_time_open_close_single_slit_anticlockwise(phase):
     ch = DiskChopper(
         position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(5.12, unit='Hz'),
-        slit_edges=sc.array(dims=['slit'], values=[], unit='deg'),
-        phase=sc.scalar(3.51, unit='rad'),
+        rotation_speed=sc.scalar(7.21, unit='Hz'),
+        slit_edges=sc.array(dims=['slit'], values=[90.0, 180.0], unit='deg'),
+        phase=phase,
     )
-    assert sc.identical(ch.time_open(), sc.array(dims=['slit'], values=[], unit='s'))
-    assert sc.identical(ch.time_close(), sc.array(dims=['slit'], values=[], unit='s'))
+    factor = (
+        sc.constants.pi.value
+        / 180  # to rad
+        / (2 * sc.constants.pi.value)  # to angular frequency
+        / abs(7.21)
+    )  # to time based on rotation speed
+    assert sc.allclose(
+        ch.relative_time_open(),
+        sc.array(dims=['slit'], values=[180 * factor], unit='s'),
+    )
+    assert sc.allclose(
+        ch.relative_time_close(),
+        sc.array(dims=['slit'], values=[270 * factor], unit='s'),
+    )
+    assert sc.allclose(
+        ch.open_duration(), sc.array(dims=['slit'], values=[90 * factor], unit='s')
+    )
+
+
+def test_relative_time_open_close_single_slit_clockwise_with_beam_position():
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.scalar(-7.21, unit='Hz'),
+        slit_edges=sc.array(dims=['slit'], values=[90.0, 180.0], unit='deg'),
+        beam_position=sc.scalar(-20.0, unit='deg'),
+    )
+    factor = (
+        sc.constants.pi.value
+        / 180  # to rad
+        / (2 * sc.constants.pi.value)  # to angular frequency
+        / abs(-7.21)
+    )  # to time based on rotation speed
+    assert sc.allclose(
+        ch.relative_time_open(),
+        sc.array(dims=['slit'], values=[110 * factor], unit='s'),
+    )
+    assert sc.allclose(
+        ch.relative_time_close(),
+        sc.array(dims=['slit'], values=[200 * factor], unit='s'),
+    )
+    assert sc.allclose(
+        ch.open_duration(), sc.array(dims=['slit'], values=[90 * factor], unit='s')
+    )
+
+
+def test_relative_time_open_close_single_slit_anticlockwise_with_beam_position():
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.scalar(7.21, unit='Hz'),
+        slit_edges=sc.array(dims=['slit'], values=[90.0, 180.0], unit='deg'),
+        beam_position=sc.scalar(-20.0, unit='deg'),
+    )
+    factor = (
+        sc.constants.pi.value
+        / 180  # to rad
+        / (2 * sc.constants.pi.value)  # to angular frequency
+        / abs(7.21)
+    )  # to time based on rotation speed
+    assert sc.allclose(
+        ch.relative_time_open(),
+        sc.array(dims=['slit'], values=[160 * factor], unit='s'),
+    )
+    assert sc.allclose(
+        ch.relative_time_close(),
+        sc.array(dims=['slit'], values=[250 * factor], unit='s'),
+    )
+    assert sc.allclose(
+        ch.open_duration(), sc.array(dims=['slit'], values=[90 * factor], unit='s')
+    )
+
+
+def test_relative_time_open_close_single_slit_across_tdc_clockwise():
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.scalar(-7.21, unit='Hz'),
+        slit_edges=sc.array(dims=['slit'], values=[330.0, 380.0], unit='deg'),
+    )
+    factor = (
+        sc.constants.pi.value
+        / 180  # to rad
+        / (2 * sc.constants.pi.value)  # to angular frequency
+        / abs(-7.21)
+    )  # to time based on rotation speed
+    assert sc.allclose(
+        ch.relative_time_open(),
+        sc.array(dims=['slit'], values=[330 * factor], unit='s'),
+    )
+    assert sc.allclose(
+        ch.relative_time_close(),
+        sc.array(dims=['slit'], values=[380 * factor], unit='s'),
+    )
+    assert sc.allclose(
+        ch.open_duration(), sc.array(dims=['slit'], values=[50 * factor], unit='s')
+    )
+
+
+def test_relative_time_open_close_single_slit_across_tdc_anticlockwise():
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.scalar(7.21, unit='Hz'),
+        slit_edges=sc.array(dims=['slit'], values=[330.0, 380.0], unit='deg'),
+    )
+    factor = (
+        sc.constants.pi.value
+        / 180  # to rad
+        / (2 * sc.constants.pi.value)  # to angular frequency
+        / abs(7.21)
+    )  # to time based on rotation speed
+    assert sc.allclose(
+        ch.relative_time_open(),
+        sc.array(dims=['slit'], values=[-20 * factor], unit='s'),
+    )
+    assert sc.allclose(
+        ch.relative_time_close(),
+        sc.array(dims=['slit'], values=[30 * factor], unit='s'),
+    )
+    assert sc.allclose(
+        ch.open_duration(), sc.array(dims=['slit'], values=[50 * factor], unit='s')
+    )
+
+
+def test_absolute_time_needs_tdc():
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.scalar(7.21, unit='Hz'),
+        slit_edges=sc.array(dims=['slit'], values=[90.0, 180.0], unit='deg'),
+    )
+    with pytest.raises(RuntimeError):
+        ch.time_open()
+    with pytest.raises(RuntimeError):
+        ch.time_close()
+
+
+@pytest.mark.parametrize(
+    'phase',
+    (
+        sc.scalar(0.0, unit='rad'),
+        sc.scalar(1.2, unit='rad'),
+        sc.scalar(-50.0, unit='deg'),
+    ),
+)
+def test_absolute_time_open_close_single_slit_clockwise(phase):
+    tdc = sc.datetimes(dims=['time'], values=[100, 200, 300], unit='ms')
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.scalar(-7.21, unit='Hz'),
+        slit_edges=sc.array(dims=['slit'], values=[90.0, 180.0], unit='deg'),
+        phase=phase,
+        top_dead_center=tdc,
+    )
+    factor = (
+        sc.constants.pi.value
+        / 180  # to rad
+        / (2 * sc.constants.pi.value)  # to angular frequency
+        / abs(-7.21)
+    )  # to time based on rotation speed
     assert sc.identical(
-        ch.open_duration(), sc.array(dims=['slit'], values=[], unit='s')
+        ch.time_open(),
+        sc.array(dims=['slit'], values=[1000 * 90 * factor], unit='ms', dtype=int)
+        + tdc,
+    )
+    assert sc.identical(
+        ch.time_close(),
+        sc.array(dims=['slit'], values=[1000 * 180 * factor], unit='ms', dtype=int)
+        + tdc,
     )
 
 
-# TODO negative rotation speed
-@pytest.mark.parametrize('phase', (0.0, 5.2, -1.4))
-@pytest.mark.parametrize('phase_unit', ('deg', 'rad'))
-def test_time_open_close_only_slit_with_phase(phase, phase_unit):
+@pytest.mark.parametrize(
+    'phase',
+    (
+        sc.scalar(0.0, unit='rad'),
+        sc.scalar(1.2, unit='rad'),
+        sc.scalar(-50.0, unit='deg'),
+    ),
+)
+def test_absolute_time_open_close_single_slit_anticlockwise(phase):
+    tdc = sc.datetimes(dims=['time'], values=[100, 200, 300], unit='ms')
     ch = DiskChopper(
         position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(5.12, unit='Hz'),
-        slit_edges=sc.array(dims=['slit'], values=[0.0, 360.0], unit='deg'),
-        phase=sc.scalar(phase, unit=phase_unit),
+        rotation_speed=sc.scalar(7.21, unit='Hz'),
+        slit_edges=sc.array(dims=['slit'], values=[90.0, 180.0], unit='deg'),
+        phase=phase,
+        top_dead_center=tdc,
     )
-    phase_deg = sc.scalar(phase, unit=phase_unit).to(unit='deg').value
     factor = (
         sc.constants.pi.value
         / 180  # to rad
         / (2 * sc.constants.pi.value)  # to angular frequency
-        / 5.12
+        / abs(7.21)
     )  # to time based on rotation speed
-    assert sc.allclose(
+    assert sc.identical(
         ch.time_open(),
-        sc.array(dims=['slit'], values=[(0.0 + phase_deg) * factor], unit='s'),
+        sc.array(dims=['slit'], values=[1000 * 180 * factor], unit='ms', dtype=int)
+        + tdc,
     )
-    assert sc.allclose(
+    assert sc.identical(
         ch.time_close(),
-        sc.array(dims=['slit'], values=[(360.0 + phase_deg) * factor], unit='s'),
-    )
-    assert sc.allclose(
-        ch.open_duration(), sc.array(dims=['slit'], values=[1 / 5.12], unit='s')
+        sc.array(dims=['slit'], values=[1000 * 270 * factor], unit='ms', dtype=int)
+        + tdc,
     )
 
 
-@pytest.mark.parametrize('phase', (0.0, 1.3, 5.4, -2.2))
-@pytest.mark.parametrize('phase_unit', ('deg', 'rad'))
-def test_open_duration_does_not_depend_on_phase(phase, phase_unit):
+def test_absolute_time_open_close_single_slit_clockwise_with_delay():
+    tdc = sc.datetimes(dims=['time'], values=[100, 200, 300], unit='ms')
+    delay = sc.scalar(41002, unit='us')
     ch = DiskChopper(
         position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(14.1, unit='Hz'),
-        slit_edges=sc.array(dims=['slit'], values=[0.1, 0.6, 1.9, 2.3], unit='rad'),
-        phase=sc.scalar(phase, unit=phase_unit),
+        rotation_speed=sc.scalar(-7.21, unit='Hz'),
+        slit_edges=sc.array(dims=['slit'], values=[90.0, 180.0], unit='deg'),
+        top_dead_center=tdc,
+        delay=delay,
     )
-    factor = 1 / 14.1 / (2 * sc.constants.pi.value)
-    assert sc.allclose(
-        ch.open_duration(),
-        sc.array(dims=['slit'], values=[0.5 * factor, 0.4 * factor], unit='s'),
+    factor = (
+        sc.constants.pi.value
+        / 180  # to rad
+        / (2 * sc.constants.pi.value)  # to angular frequency
+        / abs(-7.21)
+    )  # to time based on rotation speed
+    assert sc.identical(
+        ch.time_open(),
+        sc.array(dims=['slit'], values=[1000 * 90 * factor], unit='ms', dtype=int)
+        + tdc
+        + delay.to(unit='ms'),
+    )
+    assert sc.identical(
+        ch.time_close(),
+        sc.array(dims=['slit'], values=[1000 * 180 * factor], unit='ms', dtype=int)
+        + tdc
+        + delay.to(unit='ms'),
     )
 
 
-# TODO negative rotation_speed
-# TODO check rotation direction for times
+def test_absolute_time_open_close_single_slit_anticlockwise_with_delay():
+    tdc = sc.datetimes(dims=['time'], values=[100, 200, 300], unit='ms')
+    delay = sc.scalar(41002, unit='us')
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.scalar(7.21, unit='Hz'),
+        slit_edges=sc.array(dims=['slit'], values=[90.0, 180.0], unit='deg'),
+        top_dead_center=tdc,
+        delay=delay,
+    )
+    factor = (
+        sc.constants.pi.value
+        / 180  # to rad
+        / (2 * sc.constants.pi.value)  # to angular frequency
+        / abs(7.21)
+    )  # to time based on rotation speed
+    assert sc.identical(
+        ch.time_open(),
+        sc.array(dims=['slit'], values=[1000 * 180 * factor], unit='ms', dtype=int)
+        + tdc
+        + delay.to(unit='ms'),
+    )
+    assert sc.identical(
+        ch.time_close(),
+        sc.array(dims=['slit'], values=[1000 * 270 * factor], unit='ms', dtype=int)
+        + tdc
+        + delay.to(unit='ms'),
+    )
+
+
+def test_absolute_time_open_close_two_slits_clockwise():
+    tdc = sc.datetime(642, unit='s')
+    delay = sc.scalar(4215, unit='ms')
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.scalar(9.31, unit='Hz'),
+        slit_edges=sc.array(
+            dims=['slit'], values=[30.0, 50.0, 170.0, 210.0], unit='deg'
+        ),
+        top_dead_center=tdc,
+        delay=delay,
+    )
+    factor = (
+        sc.constants.pi.value
+        / 180  # to rad
+        / (2 * sc.constants.pi.value)  # to angular frequency
+        / abs(9.31)
+    )  # to time based on rotation speed
+    assert sc.identical(
+        ch.time_open(),
+        sc.datetimes(
+            dims=['slit'],
+            values=[int(30 * factor) + 642 + 4, int(170 * factor) + 642 + 4],
+            unit='s',
+        ),
+    )
+    assert sc.identical(
+        ch.time_close(),
+        sc.datetimes(
+            dims=['slit'],
+            values=[int(50 * factor) + 642 + 4, int(210 * factor) + 642 + 4],
+            unit='s',
+        ),
+    )
+
+
+def test_absolute_time_open_close_two_slits_anticlockwise():
+    tdc = sc.datetime(642, unit='s')
+    delay = sc.scalar(4215, unit='ms')
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.scalar(-9.31, unit='Hz'),
+        slit_edges=sc.array(
+            dims=['slit'], values=[30.0, 50.0, 170.0, 210.0], unit='deg'
+        ),
+        top_dead_center=tdc,
+        delay=delay,
+    )
+    factor = (
+        sc.constants.pi.value
+        / 180  # to rad
+        / (2 * sc.constants.pi.value)  # to angular frequency
+        / abs(-9.31)
+    )  # to time based on rotation speed
+    assert sc.identical(
+        ch.time_open(),
+        sc.datetimes(
+            dims=['slit'],
+            values=[int(310 * factor) + 642 + 4, int(150 * factor) + 642 + 4],
+            unit='s',
+        ),
+    )
+    assert sc.identical(
+        ch.time_close(),
+        sc.datetimes(
+            dims=['slit'],
+            values=[int(330 * factor) + 642 + 4, int(190 * factor) + 642 + 4],
+            unit='s',
+        ),
+    )
