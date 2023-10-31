@@ -8,6 +8,14 @@ import scipp.constants
 from scippneutron.chopper import DiskChopper, DiskChopperType
 
 
+def deg_angle_to_time_factor(rotation_speed: float) -> float:
+    # Multiply by the returned value to convert an angle in degrees
+    # to the time when the point at the angle reaches tdc.
+    to_rad = sc.constants.pi.value / 180
+    angular_frequency = abs(rotation_speed) * (2 * sc.constants.pi.value)
+    return to_rad / angular_frequency
+
+
 @pytest.mark.parametrize(
     'typ',
     (
@@ -237,12 +245,7 @@ def test_relative_time_open_close_only_slit(rotation_speed):
         rotation_speed=sc.scalar(rotation_speed, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[0.0, 360.0], unit='deg'),
     )
-    factor = (
-        sc.constants.pi.value
-        / 180  # to rad
-        / (2 * sc.constants.pi.value)  # to angular frequency
-        / abs(rotation_speed)
-    )  # to time based on rotation speed
+    factor = deg_angle_to_time_factor(rotation_speed)
     assert sc.allclose(
         ch.relative_time_open(), sc.array(dims=['slit'], values=[0.0], unit='s')
     )
@@ -271,12 +274,7 @@ def test_relative_time_open_close_single_slit_clockwise(phase):
         slit_edges=sc.array(dims=['slit'], values=[90.0, 180.0], unit='deg'),
         phase=phase,
     )
-    factor = (
-        sc.constants.pi.value
-        / 180  # to rad
-        / (2 * sc.constants.pi.value)  # to angular frequency
-        / abs(-7.21)
-    )  # to time based on rotation speed
+    factor = deg_angle_to_time_factor(-7.21)
     assert sc.allclose(
         ch.relative_time_open(), sc.array(dims=['slit'], values=[90 * factor], unit='s')
     )
@@ -304,12 +302,7 @@ def test_relative_time_open_close_single_slit_anticlockwise(phase):
         slit_edges=sc.array(dims=['slit'], values=[90.0, 180.0], unit='deg'),
         phase=phase,
     )
-    factor = (
-        sc.constants.pi.value
-        / 180  # to rad
-        / (2 * sc.constants.pi.value)  # to angular frequency
-        / abs(7.21)
-    )  # to time based on rotation speed
+    factor = deg_angle_to_time_factor(7.21)
     assert sc.allclose(
         ch.relative_time_open(),
         sc.array(dims=['slit'], values=[180 * factor], unit='s'),
@@ -330,12 +323,7 @@ def test_relative_time_open_close_single_slit_clockwise_with_beam_position():
         slit_edges=sc.array(dims=['slit'], values=[90.0, 180.0], unit='deg'),
         beam_position=sc.scalar(-20.0, unit='deg'),
     )
-    factor = (
-        sc.constants.pi.value
-        / 180  # to rad
-        / (2 * sc.constants.pi.value)  # to angular frequency
-        / abs(-7.21)
-    )  # to time based on rotation speed
+    factor = deg_angle_to_time_factor(-7.21)
     assert sc.allclose(
         ch.relative_time_open(),
         sc.array(dims=['slit'], values=[110 * factor], unit='s'),
@@ -356,12 +344,7 @@ def test_relative_time_open_close_single_slit_anticlockwise_with_beam_position()
         slit_edges=sc.array(dims=['slit'], values=[90.0, 180.0], unit='deg'),
         beam_position=sc.scalar(-20.0, unit='deg'),
     )
-    factor = (
-        sc.constants.pi.value
-        / 180  # to rad
-        / (2 * sc.constants.pi.value)  # to angular frequency
-        / abs(7.21)
-    )  # to time based on rotation speed
+    factor = deg_angle_to_time_factor(7.21)
     assert sc.allclose(
         ch.relative_time_open(),
         sc.array(dims=['slit'], values=[160 * factor], unit='s'),
@@ -381,12 +364,7 @@ def test_relative_time_open_close_single_slit_across_tdc_clockwise():
         rotation_speed=sc.scalar(-7.21, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[330.0, 380.0], unit='deg'),
     )
-    factor = (
-        sc.constants.pi.value
-        / 180  # to rad
-        / (2 * sc.constants.pi.value)  # to angular frequency
-        / abs(-7.21)
-    )  # to time based on rotation speed
+    factor = deg_angle_to_time_factor(-7.21)
     assert sc.allclose(
         ch.relative_time_open(),
         sc.array(dims=['slit'], values=[330 * factor], unit='s'),
@@ -406,12 +384,7 @@ def test_relative_time_open_close_single_slit_across_tdc_anticlockwise():
         rotation_speed=sc.scalar(7.21, unit='Hz'),
         slit_edges=sc.array(dims=['slit'], values=[330.0, 380.0], unit='deg'),
     )
-    factor = (
-        sc.constants.pi.value
-        / 180  # to rad
-        / (2 * sc.constants.pi.value)  # to angular frequency
-        / abs(7.21)
-    )  # to time based on rotation speed
+    factor = deg_angle_to_time_factor(7.21)
     assert sc.allclose(
         ch.relative_time_open(),
         sc.array(dims=['slit'], values=[-20 * factor], unit='s'),
@@ -454,12 +427,7 @@ def test_absolute_time_open_close_single_slit_clockwise(phase):
         phase=phase,
         top_dead_center=tdc,
     )
-    factor = (
-        sc.constants.pi.value
-        / 180  # to rad
-        / (2 * sc.constants.pi.value)  # to angular frequency
-        / abs(-7.21)
-    )  # to time based on rotation speed
+    factor = deg_angle_to_time_factor(-7.21)
     assert sc.identical(
         ch.time_open(),
         sc.array(dims=['slit'], values=[1000 * 90 * factor], unit='ms', dtype=int)
@@ -489,12 +457,7 @@ def test_absolute_time_open_close_single_slit_anticlockwise(phase):
         phase=phase,
         top_dead_center=tdc,
     )
-    factor = (
-        sc.constants.pi.value
-        / 180  # to rad
-        / (2 * sc.constants.pi.value)  # to angular frequency
-        / abs(7.21)
-    )  # to time based on rotation speed
+    factor = deg_angle_to_time_factor(7.21)
     assert sc.identical(
         ch.time_open(),
         sc.array(dims=['slit'], values=[1000 * 180 * factor], unit='ms', dtype=int)
@@ -517,12 +480,7 @@ def test_absolute_time_open_close_single_slit_clockwise_with_delay():
         top_dead_center=tdc,
         delay=delay,
     )
-    factor = (
-        sc.constants.pi.value
-        / 180  # to rad
-        / (2 * sc.constants.pi.value)  # to angular frequency
-        / abs(-7.21)
-    )  # to time based on rotation speed
+    factor = deg_angle_to_time_factor(-7.21)
     assert sc.identical(
         ch.time_open(),
         sc.array(dims=['slit'], values=[1000 * 90 * factor], unit='ms', dtype=int)
@@ -547,12 +505,7 @@ def test_absolute_time_open_close_single_slit_anticlockwise_with_delay():
         top_dead_center=tdc,
         delay=delay,
     )
-    factor = (
-        sc.constants.pi.value
-        / 180  # to rad
-        / (2 * sc.constants.pi.value)  # to angular frequency
-        / abs(7.21)
-    )  # to time based on rotation speed
+    factor = deg_angle_to_time_factor(7.21)
     assert sc.identical(
         ch.time_open(),
         sc.array(dims=['slit'], values=[1000 * 180 * factor], unit='ms', dtype=int)
@@ -579,12 +532,7 @@ def test_absolute_time_open_close_two_slits_clockwise():
         top_dead_center=tdc,
         delay=delay,
     )
-    factor = (
-        sc.constants.pi.value
-        / 180  # to rad
-        / (2 * sc.constants.pi.value)  # to angular frequency
-        / abs(9.31)
-    )  # to time based on rotation speed
+    factor = deg_angle_to_time_factor(9.31)
     assert sc.identical(
         ch.time_open(),
         sc.datetimes(
@@ -615,12 +563,7 @@ def test_absolute_time_open_close_two_slits_anticlockwise():
         top_dead_center=tdc,
         delay=delay,
     )
-    factor = (
-        sc.constants.pi.value
-        / 180  # to rad
-        / (2 * sc.constants.pi.value)  # to angular frequency
-        / abs(-9.31)
-    )  # to time based on rotation speed
+    factor = deg_angle_to_time_factor(-9.31)
     assert sc.identical(
         ch.time_open(),
         sc.datetimes(
