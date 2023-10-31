@@ -202,6 +202,11 @@ class DiskChopper:
         """Rotation speed as an angular frequency in ``rad * rotation_speed.unit``."""
         return sc.scalar(2.0, unit="rad") * sc.constants.pi * self.rotation_speed
 
+    @property
+    def is_clockwise(self) -> bool:
+        """Return True if the chopper rotates clockwise."""
+        return self._clockwise
+
     def relative_time_open(self) -> sc.Variable:
         """Return the opening times of the chopper slits.
 
