@@ -145,13 +145,12 @@ class DiskChopper:
     slit_edges: Optional[sc.Variable] = None
     """Edges of the slits as angles measured anticlockwise from top-dead-center.
 
-    On init, a 1d array of the form ``[begin_0, end_0, begin_1, end_1, ...]``
+    On init, either a 1d array of the form ``[begin_0, end_0, begin_1, end_1, ...]``
     with ``begin_i < end_i``.
+    Or a 2d array of the form ``[[begin_0, end_0], [begin_1, end_1], ...]``.
     The order of slits is arbitrary.
 
-    After init, a 2d array of shape ``[slit, edge]`` where ``slit`` indexes the chopper
-    slits and ``edge`` is of length 2 where ``edge=0`` is the beginning edge and
-    ``edge=1`` the ending edge of the slit.
+    After init, a 2d array like the second option described above.
     The dim names depend on the input.
     """
     slit_height: Optional[sc.Variable] = None
@@ -451,16 +450,23 @@ def _parse_typ(typ: Union[DiskChopperType, str]) -> DiskChopperType:
 def _parse_slit_edges(edges: Optional[sc.Variable]) -> Optional[sc.Variable]:
     if edges is None:
         return None
-    if edges.ndim != 1:
-        raise sc.DimensionError("The slit edges must be 1-dimensional")
-    edge_dim = 'edge' if edges.dim != 'edge' else 'edge_dim'
-    folded = edges.fold(edges.dim, sizes={edges.dim: -1, edge_dim: 2})
-    if sc.any(folded[edge_dim, 0] > folded[edge_dim, 1]):
-        raise ValueError(
-            "Invalid slit edges, must be given as "
-            "[begin_0, end_0, begin_1, end_1, ...] where begin_n < end_n"
-        )
-    return folded
+    if edges.ndim == 1:
+        edge_dim = 'edge' if edges.dim != 'edge' else 'edge_dim'
+        folded = edges.fold(edges.dim, sizes={edges.dim: -1, edge_dim: 2})
+        if sc.any(folded[edge_dim, 0] > folded[edge_dim, 1]):
+            raise ValueError(
+                "Invalid slit edges, must be given as "
+                "[begin_0, end_0, begin_1, end_1, ...] where begin_n < end_n"
+            )
+        return folded
+    if edges.ndim == 2:
+        if edges.shape[1] != 2:
+            raise sc.DimensionError(
+                "The second dim of the slit edges must be length 2."
+            )
+        return edges
+    else:
+        raise sc.DimensionError("The slit edges must be 1- or 2-dimensional")
 
 
 def _require_frequency(name: str, x: sc.Variable) -> None:
