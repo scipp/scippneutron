@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
+import pytest
 import scipp as sc
 import scippnexus as snx
 
@@ -9,6 +10,7 @@ from scippneutron.chopper import DiskChopper, DiskChopperType, NXDiskChopper
 from ..externalfile import get_scippnexus_path
 
 
+@pytest.mark.externalfile
 def test_from_nexus():
     path = get_scippnexus_path('2023/BIFROST_873855_00000015.hdf')
     with snx.File(path, 'r') as f:
