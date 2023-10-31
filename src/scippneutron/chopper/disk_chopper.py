@@ -405,6 +405,14 @@ class DiskChopper:
             res += self.delay.to(unit=res.unit, copy=False)
         return res
 
+    def __eq__(self, other: Any) -> Union[bool, NotImplemented]:
+        if not isinstance(other, DiskChopper):
+            return NotImplemented
+        return all(
+            _field_eq(getattr(self, field.name), getattr(other, field.name))
+            for field in dataclasses.fields(self)
+        )
+
     def to_svg(self, image_size: int = 400) -> str:
         """Generate an SVG image for this chopper.
 
@@ -422,13 +430,10 @@ class DiskChopper:
 
         return draw_disk_chopper(self, image_size=image_size)
 
-    def __eq__(self, other: Any) -> Union[bool, NotImplemented]:
-        if not isinstance(other, DiskChopper):
-            return NotImplemented
-        return all(
-            _field_eq(getattr(self, field.name), getattr(other, field.name))
-            for field in dataclasses.fields(self)
-        )
+    def _repr_html_(self) -> str:
+        from .._html_repr import disk_chopper_html_repr
+
+        return disk_chopper_html_repr(self)
 
 
 def _field_eq(a: Any, b: Any) -> bool:

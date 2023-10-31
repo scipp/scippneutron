@@ -3,7 +3,7 @@
 # flake8: noqa: E501
 
 """SVG rendering for choppers."""
-
+import dataclasses
 import math
 from string import Template
 from typing import Dict, Tuple
@@ -68,10 +68,6 @@ def _combine_slits(chopper: DiskChopper) -> sc.DataArray:
     return sc.sort(slits, key=slits.coords['edge']['edge', 0])
 
 
-def _is_clockwise(chopper: DiskChopper) -> bool:
-    return bool(chopper.rotation_speed < sc.scalar(0, unit=chopper.rotation_speed.unit))
-
-
 def _tdc_marker(*, image_size: int, chopper: DiskChopper) -> str:
     bottom = image_size // 2, 11
     left = image_size // 2 - 5, 1
@@ -79,10 +75,16 @@ def _tdc_marker(*, image_size: int, chopper: DiskChopper) -> str:
     return _TDC_MARK_TEMPLATE.substitute(
         points=f'{bottom[0]},{bottom[1]} {left[0]},{left[1]} {right[0]},{right[1]}',
         path=f'M{image_size // 2} {image_size // 2} L{bottom[0]} {bottom[1]}',
-        text_x=image_size // 2 + 7 * (-1 if _is_clockwise(chopper) else 1),
+        text_x=image_size // 2 + 7 * (-1 if chopper.is_clockwise else 1),
         text_y=11,
-        anchor='end' if _is_clockwise(chopper) else 'start',
+        anchor='end' if chopper.is_clockwise else 'start',
     )
+
+
+def _preprocess(chopper: DiskChopper) -> DiskChopper:
+    radius = sc.scalar(1.0, unit='m') if chopper.radius is None else chopper.radius
+    slit_height = radius / 2 if chopper.slit_height is None else chopper.slit_height
+    return dataclasses.replace(chopper, radius=radius, slit_height=slit_height)
 
 
 def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
@@ -107,6 +109,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
     # ``polar_to_svg_coords`` maps polar coordinates to cartesian SVG coordinates.
     # It applies a pi/2 counterclockwise rotation in order to position angle=0
     # at the top as chopper angles are defined in terms of the top dead center sensor.
+    chopper = _preprocess(chopper)
 
     scale = image_size / 2 / chopper.radius * 0.99
     radius_scale = 0.8
@@ -207,7 +210,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
             for path, label in edge_marks
         ),
         _tdc_marker(image_size=image_size, chopper=chopper),
-        _rotation_arrow(image_size=image_size, clockwise=_is_clockwise(chopper)),
+        _rotation_arrow(image_size=image_size, clockwise=chopper.is_clockwise),
     ]
     if (beam_position := chopper.beam_position) is not None:
         elements.append(beam_pos(beam_position))
