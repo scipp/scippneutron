@@ -130,7 +130,7 @@ class DiskChopper:
     delay: Optional[Union[sc.Variable, sc.DataArray]] = None
     """Difference between global facility time and chopper time."""
     pair_separation: Optional[sc.Variable] = None
-    """Disk spacing in direction of beam."""
+    """Disk spacing in direction of beam (for double choppers only)."""
     phase: Optional[sc.Variable] = None
     """Phase of the chopper rotation relative to the source pulses."""
     radius: Optional[sc.Variable] = None
@@ -153,7 +153,7 @@ class DiskChopper:
     The dim names depend on the input.
     """
     slit_height: Optional[sc.Variable] = None
-    """Radial length of the slits."""
+    """Distance from chopper outer edge to bottom of slits."""
     top_dead_center: Optional[sc.Variable] = None
     """Timestamps of the top-dead-center sensor."""
     typ: DiskChopperType = DiskChopperType.single
@@ -208,9 +208,6 @@ class DiskChopper:
     def relative_time_open(self) -> sc.Variable:
         """Return the opening times of the chopper slits.
 
-        The times are offsets of when the slit ``begin_edge`` passes by the
-        beam position relative to the chopper's top-dead-center timestamps.
-
         If the ``beam_position`` is not set, it is assumed to be 0.
 
         One time can be negative for anticlockwise-rotating choppers with a slit
@@ -219,7 +216,7 @@ class DiskChopper:
         Returns
         -------
         :
-            Variable of opening times.
+            Variable of opening times as offsets from the top-dead-center timestamps.
 
         Raises
         ------
@@ -240,9 +237,6 @@ class DiskChopper:
     def relative_time_close(self) -> sc.Variable:
         """Return the closing times of the chopper slits.
 
-        The times are offsets of when the slit ``end_edge`` passes by the
-        beam position relative to the chopper's top-dead-center timestamps.
-
         If the ``beam_position`` is not set, it is assumed to be 0.
 
         One time can be ``> 360 deg`` for clockwise-rotating choppers with a slit
@@ -251,7 +245,7 @@ class DiskChopper:
         Returns
         -------
         :
-            Variable of closing times.
+            Variable of closing times as offsets from the top-dead-center timestamps.
 
         Raises
         ------
