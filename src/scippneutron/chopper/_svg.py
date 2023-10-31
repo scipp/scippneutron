@@ -35,13 +35,12 @@ _EDGE_LABEL_TEMPLATE = Template(
     '${label}</text>'
 )
 _TDC_MARK_TEMPLATE = Template(
-    '''<polygon fill="#0065ac" points="${points}"/>
-<path d="${path}" stroke="#0065ac" stroke-width="2" stroke-dasharray="10,3"/>
-<text x="${text_x}" y="${text_y}" text-anchor="${anchor}" dominant-baseline="middle" font-family="sans-serif" fill="#0065ac">TDC</text>'''
+    '''<path d="${path}" stroke="#0065ac" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="${text_x}" y="${text_y}" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" fill="#0065ac">TDC</text>'''
 )
 _BEAM_POSITION_TEMPLATE = Template(
-    '''<path d="${path}" stroke="#cc5e14" stroke-width="2"/>
-<text x="${text_x}" y="${text_y}" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" fill="#cc5e14">Beam Pos</text>'''
+    '''<path d="${path}" stroke="#c83737" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="${text_x}" y="${text_y}" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" fill="#c83737">beam position</text>'''
 )
 
 
@@ -49,7 +48,7 @@ def _rotation_arrow(*, image_size: int, clockwise: bool) -> str:
     # The arrow was drawn with Inkscape at an image size of 400.
     s = image_size / 400
     flip, shift = (-1, image_size) if clockwise else (1, 0)
-    return f'''<g id="rotation-arrow" transform="matrix({flip*s},0,0,{s},{shift},0)">
+    return f'''<g id="rotation-arrow" transform="matrix({flip*s},0,0,{s},{shift},20)">
 <path fill="#606060"
  d="m 190.46289,4.140625 c -19.2285,0.9736749 -38.20846,4.7790001 -56.32617,11.292969 l 0.89453,2.490234 C 152.90409,11.497902 171.62709,7.7437179 190.5957,6.7832031 Z"/>
 <path fill="#606060" stroke-linecap="round"
@@ -66,19 +65,6 @@ def _combine_slits(chopper: DiskChopper) -> sc.DataArray:
         },
     )
     return sc.sort(slits, key=slits.coords['edge']['edge', 0])
-
-
-def _tdc_marker(*, image_size: int, chopper: DiskChopper) -> str:
-    bottom = image_size // 2, 11
-    left = image_size // 2 - 5, 1
-    right = image_size // 2 + 5, 1
-    return _TDC_MARK_TEMPLATE.substitute(
-        points=f'{bottom[0]},{bottom[1]} {left[0]},{left[1]} {right[0]},{right[1]}',
-        path=f'M{image_size // 2} {image_size // 2} L{bottom[0]} {bottom[1]}',
-        text_x=image_size // 2 + 7 * (-1 if chopper.is_clockwise else 1),
-        text_y=11,
-        anchor='end' if chopper.is_clockwise else 'start',
-    )
 
 
 def _preprocess(chopper: DiskChopper) -> DiskChopper:
@@ -112,7 +98,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
     chopper = _preprocess(chopper)
 
     scale = image_size / 2 / chopper.radius * 0.99
-    radius_scale = 0.8
+    radius_scale = 0.75
 
     def to_svg_coord(x: sc.Variable) -> float:
         return float(x * scale) + image_size // 2
@@ -160,9 +146,13 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
         return f'L{x:.3f} {y:.3f}'
 
     def edge_mark(is_open: bool, idx: int) -> Tuple[str, Dict[str, str]]:
-        x, y = polar_to_svg_coords(r=chopper.radius, a=angle)
+        x, y = polar_to_svg_coords(
+            r=(chopper.radius - chopper.slit_height) * radius_scale, a=angle
+        )
         line = f'M{image_size // 2} {image_size // 2} L{x:.3f} {y:.3f}'
-        anchor = 'end' if x > 3 * image_size // 4 else 'start'
+
+        x, y = polar_to_svg_coords(r=chopper.radius * radius_scale, a=angle)
+        anchor = 'start' if x > image_size // 2 else 'end'
         text = {
             'x': x,
             'y': y,
@@ -170,6 +160,16 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
             'label': ('open' if is_open else 'close') + str(idx),
         }
         return line, text
+
+    def tdc_marker() -> str:
+        x, y = polar_to_svg_coords(
+            r=chopper.radius * radius_scale, a=sc.scalar(0.0, unit='rad')
+        )
+        return _TDC_MARK_TEMPLATE.substitute(
+            path=f'M{image_size // 2} {image_size // 2} L{x} {y}',
+            text_x=x,
+            text_y=y - 11,
+        )
 
     def beam_pos(beam_position: sc.Variable) -> str:
         x, y = polar_to_svg_coords(r=chopper.radius * radius_scale, a=beam_position)
@@ -209,7 +209,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
             + _EDGE_LABEL_TEMPLATE.substitute(**label)
             for path, label in edge_marks
         ),
-        _tdc_marker(image_size=image_size, chopper=chopper),
+        tdc_marker(),
         _rotation_arrow(image_size=image_size, clockwise=chopper.is_clockwise),
     ]
     if (beam_position := chopper.beam_position) is not None:
