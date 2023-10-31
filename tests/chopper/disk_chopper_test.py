@@ -126,7 +126,7 @@ def test_2d_slit_edges_must_have_length_2():
             position=sc.vector([0, 0, 0], unit='m'),
             rotation_speed=sc.scalar(5.12, unit='Hz'),
             slit_edges=sc.array(
-                dims=['time', 'slit', 'edge'],
+                dims=['slit', 'edge'],
                 values=[[0, 60, 90], [124, 126, 270]],
                 unit='deg',
             ),
