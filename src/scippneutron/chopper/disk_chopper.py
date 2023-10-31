@@ -130,12 +130,18 @@ class DiskChopper:
     """Angle where the beam crosses the chopper."""
     delay: Optional[Union[sc.Variable, sc.DataArray]] = None
     """Difference between global facility time and chopper time."""
+    pair_separation: Optional[sc.Variable] = None
+    """Disk spacing in direction of beam."""
     phase: Optional[sc.Variable] = None
     """Phase of the chopper rotation relative to the source pulses."""
     radius: Optional[sc.Variable] = None
     """Radius of the chopper."""
+    ratio: Optional[sc.Variable] = None
+    """Pulse reduction factor in relation to other choppers/fastest pulse."""
     slits: Optional[int] = None
     """Number of slits."""
+    slit_angle: Optional[sc.Variable] = None
+    """Angular opening of slits."""
     slit_edges: Optional[sc.Variable] = None
     """Edges of the slits as angles measured anticlockwise from top-dead-center.
 
@@ -154,6 +160,8 @@ class DiskChopper:
     """Timestamps of the top-dead-center sensor."""
     typ: DiskChopperType = DiskChopperType.single
     """Chopper type; currently, only :attr:`DiskChopperType.single` is supported."""
+    wavelength_range: Optional[sc.Variable] = None
+    """Low and high values of wavelength range transmitted."""
     _clockwise: bool = dataclasses.field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
