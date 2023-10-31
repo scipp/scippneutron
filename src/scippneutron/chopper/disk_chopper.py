@@ -90,8 +90,7 @@ class DiskChopper:
     The former refer to the angles relative to TDC as shown in the image above.
     The latter refer to the opening and closing times of the slit.
 
-    It is possible to have ``end > 360 deg`` (clockwise) or ``begin < 0 deg``
-    (anticlockwise) if a slit spans TDC.
+    It is possible to have ``end > 360 deg`` if a slit spans TDC.
 
     For a given slit, we require ``begin < end``.
     To also have ``open < close`` for both directions of rotation,
