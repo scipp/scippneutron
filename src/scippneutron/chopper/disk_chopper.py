@@ -47,35 +47,39 @@ class DiskChopper:
     for an overview.
 
     Here is how those attributes are interpreted in ScippNeutron:
-    The image below shows a disk chopper with a single slit (a.k.a. window)
-    as seen from neutron source looking towards the sample.
+    The image below shows a disk chopper with a single slit
+    as seen from the neutron source looking towards the sample.
     Note that all definitions are independent of the rotation direction.
 
     - *TDC* (top-dead-center sensor) corresponds to a sensor that
       tracks the rotation of the chopper.
       It serves as a reference point for defining angles.
-    - *beam_position* is the angle :math:`\tilde{\theta}` under which
+    - :attr:`DiskChopper.beam_position` is the angle :math:`\tilde{\theta}` under which
       the beam hits the chopper.
       We do not care about the radial position and assume that it can
       pass through all chopper slits.
-    - The slit is defined in terms of *begin* (:math:`\theta`) and *end* angles.
+    - The slit is defined in terms of *begin* (:attr:`DiskChopper.slit_begin`,
+      :math:`\theta` in the image) and *end* (:attr:`DiskChopper.slit_end`) angles.
 
     .. image:: /_static/chopper-coordinates.svg
        :width: 400
        :align: center
 
-    - The chopper rotates with a frequency of ``rotation_speed`` :math:`f` which is
-      also available as ``angular_frequency`` :math:`\omega = 2\pi / f`.
+    Quantities relating to time are defined as:
+
+    - The chopper rotates with a frequency of :attr:`DiskChopper.rotation_speed`
+      :math:`f` which is also available as :attr:`DiskChopper.angular_frequency`
+      :math:`\omega = 2\pi / f`.
       A positive frequency means anticlockwise rotation and a negative frequency
       clockwise rotation.
-    - The ``DiskChopper.top_dead_center`` attribute stores timestamps of when the
+    - :attr:`DiskChopper.top_dead_center` stores timestamps of when the
       TDC sensor registers a full rotation.
       This serves as a reference time for the chopper.
     - The chopper time :math:`t` relates to the global time of the facility
-      :math:`\hat{t}` via :math:`\hat{t} = t + \delta t`, where :math:`\delta t`
-      is ``DiskChopper.delay``.
-    - There is also a ``phase`` parameter that encodes the phase of the chopper
-      relative to the neutron source.
+      :math:`t_g` via :math:`t_g = t + \delta t`, where :math:`\delta t`
+      is :attr:`DiskChopper.delay`.
+    - There is also a :attr:`DiskChopper.phase` parameter that encodes the phase
+      of the chopper relative to the neutron source.
       It is unused in time calculations as the above attributes have
       all required information.
 
@@ -90,46 +94,66 @@ class DiskChopper:
     (anticlockwise) if a slit spans TDC.
 
     For a given slit, we require ``begin < end``.
-    In order to also get ``open < close`` for both directions of rotation,
+    To also have ``open < close`` for both directions of rotation,
     we have the following correspondence:
 
     - clockwise rotation: ``begin`` <-> ``open`` and ``end`` <-> ``close``
     - anticlockwise rotation: ``begin`` <-> ``close`` and ``end`` <-> ``open``
 
-    TODO equations for open/close times
+    Time calculations
+    -----------------
+
+    Given the definitions above, the time in the global timing system when a point
+    at angle :math:`\theta` is at the beam position is
+
+    .. math::
+
+        t_g(\theta) = t_0 + \delta t + \begin{cases}
+        \frac{\theta-\tilde{\theta}}{\omega}, & \textsf{clockwise}\\
+        \frac{2\pi - (\theta-\tilde{\theta})}{\omega}, & \textsf{anticlockwise}
+        \end{cases}
+
+    This is implemented by :meth:`DiskChopper.time_angle_at_beam` and specifically for
+    the slit edges by :meth:`DiskChopper.time_open` and
+    :meth:`DiskChopper.time_close`.
     """
 
     position: sc.Variable
-    rotation_speed: Union[sc.Variable, sc.DataArray]
-    delay: Optional[Union[sc.Variable, sc.DataArray]] = None
-    phase: Optional[sc.Variable] = None
-    radius: Optional[sc.Variable] = None
-    slits: Optional[int] = None
-    slit_height: Optional[sc.Variable] = None
+    """Position of the chopper.
 
+    This is the center point of the chopper's axle in the face towards the source.
+    See https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html
+    """
+    rotation_speed: Union[sc.Variable, sc.DataArray]
+    """Rotation frequency of the chopper."""
+    beam_position: Optional[sc.Variable] = None
+    """Angle where the beam crosses the chopper."""
+    delay: Optional[Union[sc.Variable, sc.DataArray]] = None
+    """Difference between global facility time and chopper time."""
+    phase: Optional[sc.Variable] = None
+    """Phase of the chopper rotation relative to the source pulses."""
+    radius: Optional[sc.Variable] = None
+    """Radius of the chopper."""
+    slits: Optional[int] = None
+    """Number of slits."""
     slit_edges: Optional[sc.Variable] = None
     """Edges of the slits as angles measured anticlockwise from top-dead-center.
 
-    On init, a 1d array of the form ``[begin_0, end_0, begin_1, end_1, ...]`` with
-    ``begin_n < end_n``.
+    On init, a 1d array of the form ``[begin_0, end_0, begin_1, end_1, ...]``
+    with ``begin_i < end_i``.
+    The order of slits is arbitrary.
 
     After init, a 2d array of shape ``[slit, edge]`` where ``slit`` indexes the chopper
     slits and ``edge`` is of length 2 where ``edge=0`` is the beginning edge and
     ``edge=1`` the ending edge of the slit.
     The dim names depend on the input.
-
-    Here, the 'beginning' edge is the edge of a slit with the smaller angle and the
-    'ending' edge is the other.
-    That is, walking around the chopper disk from top-dead-center in anticlockwise
-    direction, one encounters the beginning edge before the closing edge.
-    This differs from the 'opening' and 'closing' times which depend on the
-    direction of rotation.
     """
-
-    beam_position: Optional[sc.Variable] = None
+    slit_height: Optional[sc.Variable] = None
+    """Radial length of the slits."""
     top_dead_center: Optional[sc.Variable] = None
-    name: str = ''
+    """Timestamps of the top-dead-center sensor."""
     typ: DiskChopperType = DiskChopperType.single
+    """Chopper type; currently, only :attr:`DiskChopperType.single` is supported."""
     _clockwise: bool = dataclasses.field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
@@ -171,9 +195,9 @@ class DiskChopper:
         return sc.scalar(2.0, unit="rad") * sc.constants.pi * self.rotation_speed
 
     def relative_time_open(self) -> sc.Variable:
-        """Return the opening times of the chopper windows.
+        """Return the opening times of the chopper slits.
 
-        The times are offsets of when the slit ``begin_edge``s pass by the
+        The times are offsets of when the slit ``begin_edge`` passes by the
         beam position relative to the chopper's top-dead-center timestamps.
 
         If the ``beam_position`` is not set, it is assumed to be 0.
@@ -203,9 +227,9 @@ class DiskChopper:
         return self.relative_time_angle_at_beam(self.slit_end)
 
     def relative_time_close(self) -> sc.Variable:
-        """Return the closing times of the chopper windows.
+        """Return the closing times of the chopper slits.
 
-        The times are offsets of when the slit ``end_edge``s pass by the
+        The times are offsets of when the slit ``end_edge`` passes by the
         beam position relative to the chopper's top-dead-center timestamps.
 
         If the ``beam_position`` is not set, it is assumed to be 0.
@@ -235,7 +259,7 @@ class DiskChopper:
         return self.relative_time_angle_at_beam(self.slit_begin)
 
     def open_duration(self) -> sc.Variable:
-        """Return the lengths of the open windows of the chopper.
+        """Return how long the chopper is open for.
 
         Returns
         -------
@@ -277,13 +301,13 @@ class DiskChopper:
         angle = angle.to(unit='rad')
 
         if self.beam_position is not None:
-            angle -= self.beam_position.to(unit=angle.unit, copy=False)
+            angle = angle - self.beam_position.to(unit=angle.unit, copy=False)
         if not self._clockwise:
             angle = sc.scalar(2.0, unit='rad') * sc.constants.pi - angle
         return angle / abs(self.angular_frequency)
 
     def time_open(self) -> sc.Variable:
-        """Return the absolute opening times of the chopper windows.
+        """Return the absolute opening times of the chopper slits.
 
         The times are absolute (date-)times in the global timing system as defined
         through ``top_dead_center`` and ``delay``.
@@ -308,7 +332,7 @@ class DiskChopper:
         return self._relative_to_absolute_time(self.relative_time_open())
 
     def time_close(self) -> sc.Variable:
-        """Return the absolute closing times of the chopper windows.
+        """Return the absolute closing times of the chopper slits.
 
         The times are absolute (date-)times in the global timing system as defined
         through ``top_dead_center`` and ``delay``.

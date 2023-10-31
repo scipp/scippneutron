@@ -41,7 +41,6 @@ def test_eq():
             coords={'time': sc.arange('time', 2, unit='ms')},
         ),
         position=sc.vector([0, 0, 0], unit='m'),
-        name="ch",
     )
     ch2 = DiskChopper(
         rotation_speed=sc.DataArray(
@@ -49,7 +48,6 @@ def test_eq():
             coords={'time': sc.arange('time', 2, unit='ms')},
         ),
         position=sc.vector([0, 0, 0], unit='m'),
-        name="ch",
     )
     assert ch1 == ch2
 
@@ -59,7 +57,6 @@ def test_eq():
     (
         ('rotation_speed', sc.scalar(13.0, unit='Hz')),
         ('position', sc.vector([1, 0, 0], unit='m')),
-        ('name', 'ch2'),
         ('radius', sc.scalar(0.5, unit='m')),
         ('phase', sc.scalar(15, unit='deg')),
         ('slits', 5),
@@ -72,7 +69,6 @@ def test_neq(replacement):
     args = dict(
         rotation_speed=sc.scalar(14.0, unit='Hz'),
         position=sc.vector([0, 0, 0], unit='m'),
-        name="ch",
     )
     ch1 = DiskChopper(**args)
     ch2 = DiskChopper(**{**args, replacement[0]: replacement[1]})
