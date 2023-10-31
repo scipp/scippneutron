@@ -131,7 +131,7 @@ napoleon_type_aliases = {
     # objects without namespace: numpy
     "ndarray": "~numpy.ndarray",
 }
-napoleon_custom_sections = ["Definitions", "Slit openings"]
+napoleon_custom_sections = ["Definitions", "Slit openings", "Time calculations"]
 typehints_defaults = 'comma'
 typehints_use_rtype = False
 
