@@ -75,6 +75,64 @@ def test_neq(replacement):
     assert ch1 != ch2
 
 
+def test_slit_edges_converted_from_1d():
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.scalar(5.12, unit='Hz'),
+        slit_edges=sc.array(dims=['slit'], values=[0, 60, 124, 126], unit='deg'),
+    )
+    assert sc.identical(
+        ch.slit_edges,
+        sc.array(dims=['slit', 'edge'], values=[[0, 60], [124, 126]], unit='deg'),
+    )
+
+
+def test_slit_edges_can_be_2d():
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.scalar(5.12, unit='Hz'),
+        slit_edges=sc.array(
+            dims=['slit', 'edge'], values=[[0, 60], [124, 126]], unit='deg'
+        ),
+    )
+    assert sc.identical(
+        ch.slit_edges,
+        sc.array(dims=['slit', 'edge'], values=[[0, 60], [124, 126]], unit='deg'),
+    )
+
+
+def test_slit_edges_disallowed_ndim():
+    with pytest.raises(sc.DimensionError):
+        DiskChopper(
+            position=sc.vector([0, 0, 0], unit='m'),
+            rotation_speed=sc.scalar(5.12, unit='Hz'),
+            slit_edges=sc.scalar(30.0, unit='deg'),
+        )
+    with pytest.raises(sc.DimensionError):
+        DiskChopper(
+            position=sc.vector([0, 0, 0], unit='m'),
+            rotation_speed=sc.scalar(5.12, unit='Hz'),
+            slit_edges=sc.array(
+                dims=['time', 'slit', 'edge'],
+                values=[[[0, 60], [124, 126]]],
+                unit='deg',
+            ),
+        )
+
+
+def test_2d_slit_edges_must_have_length_2():
+    with pytest.raises(sc.DimensionError):
+        DiskChopper(
+            position=sc.vector([0, 0, 0], unit='m'),
+            rotation_speed=sc.scalar(5.12, unit='Hz'),
+            slit_edges=sc.array(
+                dims=['time', 'slit', 'edge'],
+                values=[[0, 60, 90], [124, 126, 270]],
+                unit='deg',
+            ),
+        )
+
+
 @pytest.mark.parametrize('rotation_speed', (1.0, -1.0))
 def slit_edges_must_be_ascending_per_slit(rotation_speed):
     with pytest.raises(ValueError):
