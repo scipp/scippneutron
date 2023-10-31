@@ -17,6 +17,7 @@ _CHOPPER_TEMPLATE = Template(
     version="1.1"
     width="${image_size}"
     height="${image_size}"
+    viewBox="0 0 ${image_size} ${image_size}"
     xmlns="http://www.w3.org/2000/svg">
 ${elements}
 </svg>
