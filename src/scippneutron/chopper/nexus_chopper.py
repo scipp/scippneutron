@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
+import dataclasses
 from typing import Optional, Union
 
 import scipp as sc
@@ -16,15 +17,23 @@ class NXDiskChopper(snx.NXdisk_chopper):
     --------
     Use as
 
-        >>> defs = {
-        ...    **snx.base_definitions(),
-        ...    'NXdisk_chopper': NXDiskChopper,
-        ... }
-        >>> with snx.File(path, definitions=defs) as f:
-        ...     ...
+    .. code-block:: python
+
+        defs = {
+           **snx.base_definitions(),
+           'NXdisk_chopper': NXDiskChopper,
+        }
+        with snx.File(path, definitions=defs) as f:
+            ...
     """
 
+    _SPECIAL_FIELDS = {'typ', 'position', 'rotation_speed', '_clockwise'}
+
     def assemble(self, dg: sc.DataGroup) -> DiskChopper:
+        field_names = {
+            field.name for field in dataclasses.fields(DiskChopper)
+        } - self._SPECIAL_FIELDS
+
         # TODO needs depends_on which is not in the old file we have
         position = sc.vector([0, 0, 0], unit='m')
 
@@ -32,8 +41,7 @@ class NXDiskChopper(snx.NXdisk_chopper):
             typ=dg.get('type', DiskChopperType.single),
             position=position,
             rotation_speed=_parse_rotation_speed(dg['rotation_speed']),
-            delay=_parse_maybe_log(dg.get('delay')),
-            **{key: dg.get(key) for key in ('radius', 'slit_height', 'slit_edges')},
+            **{name: _parse_maybe_log(dg.get(name)) for name in field_names},
         )
 
 
