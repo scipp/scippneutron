@@ -41,8 +41,12 @@ def disk_chopper_html_repr(chopper: DiskChopper) -> str:
         type_name="DiskChopper",
         max_length_before_fold=16,
     )
+    try:
+        image = chopper.make_svg()
+    except RuntimeError:
+        image = ""
     return disk_chopper_repr_template().substitute(
-        style_sheet=disk_chopper_style(), fields=field_repr, image=chopper.to_svg()
+        style_sheet=disk_chopper_style(), fields=field_repr, image=image
     )
 
 
