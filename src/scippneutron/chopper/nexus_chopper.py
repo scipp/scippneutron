@@ -27,7 +27,13 @@ class NXDiskChopper(snx.NXdisk_chopper):
             ...
     """
 
-    _SPECIAL_FIELDS = {'typ', 'position', 'rotation_speed', '_clockwise'}
+    _SPECIAL_FIELDS = {
+        'typ',
+        'position',
+        'rotation_speed',
+        'top_dead_center',
+        '_clockwise',
+    }
 
     def assemble(self, dg: sc.DataGroup) -> DiskChopper:
         field_names = {
@@ -41,6 +47,7 @@ class NXDiskChopper(snx.NXdisk_chopper):
             typ=dg.get('type', DiskChopperType.single),
             position=position,
             rotation_speed=_parse_rotation_speed(dg['rotation_speed']),
+            top_dead_center=_parse_tdc(dg.get('top_dead_center')),
             **{name: _parse_maybe_log(dg.get(name)) for name in field_names},
         )
 
@@ -52,11 +59,21 @@ def _parse_rotation_speed(x: Union[sc.DataArray, sc.DataGroup]) -> sc.DataArray:
     return x
 
 
+def _parse_tdc(
+    x: Optional[Union[sc.Variable, sc.DataArray, sc.DataGroup]]
+) -> Optional[Union[sc.Variable, sc.DataArray]]:
+    if x is None:
+        return x
+    if isinstance(x, sc.DataGroup):
+        return x['time']
+    return x
+
+
 def _parse_maybe_log(
     x: Optional[Union[sc.DataArray, sc.DataGroup]]
 ) -> Optional[sc.DataArray]:
     if x is None:
         return x
     if isinstance(x, sc.DataGroup):
-        return x['value']
+        return x['value'].squeeze()
     return x
