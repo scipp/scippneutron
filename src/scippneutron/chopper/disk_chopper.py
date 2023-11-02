@@ -393,7 +393,7 @@ class DiskChopper:
             + self.top_dead_center
         )
         if self.delay is not None:
-            res += self.delay.to(unit=res.unit, copy=False)
+            res += self.delay
         return res
 
     def __eq__(self, other: Any) -> Union[bool, NotImplemented]:

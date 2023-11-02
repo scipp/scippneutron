@@ -472,7 +472,7 @@ def test_absolute_time_open_close_single_slit_anticlockwise(phase):
 
 def test_absolute_time_open_close_single_slit_clockwise_with_delay():
     tdc = sc.datetimes(dims=['time'], values=[100, 200, 300], unit='ms')
-    delay = sc.scalar(41002, unit='us')
+    delay = sc.scalar(41, unit='ms')
     ch = DiskChopper(
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(-7.21, unit='Hz'),
@@ -497,7 +497,7 @@ def test_absolute_time_open_close_single_slit_clockwise_with_delay():
 
 def test_absolute_time_open_close_single_slit_anticlockwise_with_delay():
     tdc = sc.datetimes(dims=['time'], values=[100, 200, 300], unit='ms')
-    delay = sc.scalar(41002, unit='us')
+    delay = sc.scalar(41, unit='ms')
     ch = DiskChopper(
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(7.21, unit='Hz'),
@@ -522,7 +522,7 @@ def test_absolute_time_open_close_single_slit_anticlockwise_with_delay():
 
 def test_absolute_time_open_close_two_slits_clockwise():
     tdc = sc.datetime(642, unit='s')
-    delay = sc.scalar(4215, unit='ms')
+    delay = sc.scalar(4, unit='s')
     ch = DiskChopper(
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(9.31, unit='Hz'),
@@ -553,7 +553,7 @@ def test_absolute_time_open_close_two_slits_clockwise():
 
 def test_absolute_time_open_close_two_slits_anticlockwise():
     tdc = sc.datetime(642, unit='s')
-    delay = sc.scalar(4215, unit='ms')
+    delay = sc.scalar(4, unit='s')
     ch = DiskChopper(
         position=sc.vector([0, 0, 0], unit='m'),
         rotation_speed=sc.scalar(-9.31, unit='Hz'),
@@ -580,6 +580,24 @@ def test_absolute_time_open_close_two_slits_anticlockwise():
             unit='s',
         ),
     )
+
+
+def test_absolute_time_open_close_delay_must_have_same_unit_as_tdc():
+    tdc = sc.datetime(642, unit='s')
+    delay = sc.scalar(40, unit='ms')
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.scalar(-9.31, unit='Hz'),
+        slit_edges=sc.array(
+            dims=['slit'], values=[30.0, 50.0, 170.0, 210.0], unit='deg'
+        ),
+        top_dead_center=tdc,
+        delay=delay,
+    )
+    with pytest.raises(sc.UnitError):
+        ch.time_open()
+    with pytest.raises(sc.UnitError):
+        ch.time_close()
 
 
 def test_disk_chopper_svg_minimal_fields():
