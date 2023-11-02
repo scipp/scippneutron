@@ -128,8 +128,6 @@ class DiskChopper:
     beam_position: Optional[sc.Variable] = None
     """Angle where the beam crosses the chopper."""
     delay: Optional[Union[sc.Variable, sc.DataArray]] = None
-    """Difference between global facility time and chopper time."""
-    pair_separation: Optional[sc.Variable] = None
     """Disk spacing in direction of beam (for double choppers only)."""
     phase: Optional[sc.Variable] = None
     """Phase of the chopper rotation relative to the source pulses."""
