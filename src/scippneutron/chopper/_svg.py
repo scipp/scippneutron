@@ -6,7 +6,7 @@
 import dataclasses
 import math
 from string import Template
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import scipp as sc
 
@@ -57,11 +57,18 @@ def _rotation_arrow(*, image_size: int, clockwise: bool) -> str:
 
 
 def _combine_slits(chopper: DiskChopper) -> sc.DataArray:
+    if chopper.slits is None:
+        edges = sc.empty(sizes={'slit': 0, 'edge': 2}, unit='deg')
+        height = sc.scalar(0.0, unit='m')
+    else:
+        edges = chopper.slit_edges
+        edges = edges.rename_dims({edges.dims[0]: 'slit', edges.dims[1]: 'edge'})
+        height = chopper.slit_height
     slits = sc.DataArray(
-        sc.arange('slit', chopper.slits, unit=None),
+        sc.arange('slit', edges.shape[0], unit=None),
         coords={
-            'edge': chopper.slit_edges,
-            'height': chopper.slit_height,
+            'edge': edges,
+            'height': height,
         },
     )
     return sc.sort(slits, key=slits.coords['edge']['edge', 0])
@@ -179,27 +186,36 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
             text_y=y,
         )
 
-    start_angle = None
-    disk_path = []
-    edge_marks = []
-    for slit in _combine_slits(chopper):
-        begin, end = slit.coords['edge']
+    def trace_disk() -> Tuple[List[str], List[Tuple[str, Dict[str, str]]]]:
+        slits = _combine_slits(chopper)
+        if len(slits) == 0:
+            return [], []
 
-        if start_angle is None:
-            start_angle = begin.to(unit='rad')
-            disk_path.append(move_to(r=chopper.radius * radius_scale, a=start_angle))
+        start_angle = None
+        path = []
+        marks = []
+        for slit in slits:
+            begin, end = slit.coords['edge']
+
+            if start_angle is None:
+                start_angle = begin.to(unit='rad')
+                path.append(move_to(r=chopper.radius * radius_scale, a=start_angle))
+            else:
+                path.append(trace_arc(begin))
+            path.append(trace_edge(slit.coords['height']))
+            marks.append(edge_mark(is_open=True, idx=slit.value))
+            path.append(trace_arc(end))
+            path.append(trace_edge(slit.coords['height']))
+            marks.append(edge_mark(is_open=False, idx=slit.value))
+
+        if start_angle < angle:
+            path.append(trace_arc(sc.scalar(2 * math.pi, unit='rad') + start_angle))
         else:
-            disk_path.append(trace_arc(begin))
-        disk_path.append(trace_edge(slit.coords['height']))
-        edge_marks.append(edge_mark(is_open=True, idx=slit.value))
-        disk_path.append(trace_arc(end))
-        disk_path.append(trace_edge(slit.coords['height']))
-        edge_marks.append(edge_mark(is_open=False, idx=slit.value))
+            path.append(trace_arc(start_angle))
 
-    if start_angle < angle:
-        disk_path.append(trace_arc(sc.scalar(2 * math.pi, unit='rad') + start_angle))
-    else:
-        disk_path.append(trace_arc(start_angle))
+        return path, marks
+
+    disk_path, edge_marks = trace_disk()
 
     elements = [
         _DISK_TEMPLATE.substitute(path=' '.join(disk_path)),
