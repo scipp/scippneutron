@@ -406,7 +406,7 @@ class DiskChopper:
             for field in dataclasses.fields(self)
         )
 
-    def to_svg(self, image_size: int = 400) -> str:
+    def make_svg(self, image_size: int = 400) -> str:
         """Generate an SVG image for this chopper.
 
         Parameters
@@ -422,6 +422,9 @@ class DiskChopper:
         from ._svg import draw_disk_chopper
 
         return draw_disk_chopper(self, image_size=image_size)
+
+    def _repr_svg_(self) -> str:
+        return self.make_svg()
 
     def _repr_html_(self) -> str:
         from .._html_repr import disk_chopper_html_repr
