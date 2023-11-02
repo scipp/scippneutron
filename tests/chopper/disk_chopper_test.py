@@ -580,3 +580,36 @@ def test_absolute_time_open_close_two_slits_anticlockwise():
             unit='s',
         ),
     )
+
+
+def test_disk_chopper_svg_minimal_fields():
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.scalar(7.21, unit='Hz'),
+    )
+    assert ch.make_svg()
+
+
+def test_disk_chopper_svg():
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.DataArray(
+            sc.arange('time', 10, unit='Hz'),
+            coords={'time': sc.arange('time', 10, unit='s') * 0.1},
+        ),
+        slit_edges=sc.array(
+            dims=['slit'], values=[40.0, 70.0, 180.0, 220.0], unit='deg'
+        ),
+        beam_position=sc.scalar(-40.0, unit='deg'),
+    )
+    assert ch.make_svg()
+
+
+def test_disk_chopper_svg_custom_dim_names():
+    ch = DiskChopper(
+        position=sc.vector([0, 0, 0], unit='m'),
+        rotation_speed=sc.arange('t', 10, unit='Hz'),
+        slit_edges=sc.array(dims=['dim_0'], values=[40.0, 70.0], unit='deg'),
+        beam_position=sc.scalar(40.0, unit='deg'),
+    )
+    assert ch.make_svg()
