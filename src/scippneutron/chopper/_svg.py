@@ -152,7 +152,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
         x, y = polar_to_svg_coords(r=radius, a=angle)
         return f'L{x:.3f} {y:.3f}'
 
-    def edge_mark(is_open: bool, idx: int) -> Tuple[str, Dict[str, str]]:
+    def edge_mark(is_begin: bool, idx: int) -> Tuple[str, Dict[str, str]]:
         x, y = polar_to_svg_coords(
             r=(chopper.radius - chopper.slit_height) * radius_scale, a=angle
         )
@@ -164,7 +164,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
             'x': x,
             'y': y,
             'anchor': anchor,
-            'label': ('open' if is_open else 'close') + str(idx),
+            'label': ('begin' if is_begin else 'end') + str(idx),
         }
         return line, text
 
@@ -203,10 +203,10 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
             else:
                 path.append(trace_arc(begin))
             path.append(trace_edge(slit.coords['height']))
-            marks.append(edge_mark(is_open=True, idx=slit.value))
+            marks.append(edge_mark(is_begin=True, idx=slit.value))
             path.append(trace_arc(end))
             path.append(trace_edge(slit.coords['height']))
-            marks.append(edge_mark(is_open=False, idx=slit.value))
+            marks.append(edge_mark(is_begin=False, idx=slit.value))
 
         if start_angle < angle:
             path.append(trace_arc(sc.scalar(2 * math.pi, unit='rad') + start_angle))
