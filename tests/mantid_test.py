@@ -12,6 +12,7 @@ import pytest
 import scipp as sc
 
 import scippneutron as scn
+from scippneutron._utils import get_attrs
 
 from .mantid_helper import mantid_is_available
 
@@ -54,7 +55,7 @@ class TestMantidConversion(unittest.TestCase):
         eventWS = self.base_event_ws
         ws = mantid.Rebin(eventWS, 10000, PreserveEvents=False)
         d = scn.mantid.convert_Workspace2D_to_data_array(ws)
-        assert d.deprecated_attrs["run_start"].value == "2012-05-21T15:14:56.279289666"
+        assert get_attrs(d)["run_start"].value == "2012-05-21T15:14:56.279289666"
         assert d.data.unit == sc.units.counts
         for i in range(ws.getNumberHistograms()):
             assert np.all(np.equal(d.values[i], ws.readY(i)))
@@ -383,7 +384,7 @@ class TestMantidConversion(unittest.TestCase):
         assert 'position' in monitor.coords
         assert 'source_position' in monitor.coords
         assert 'sample_position' not in monitor.coords
-        assert 'sample_position' in monitor.deprecated_attrs
+        assert 'sample_position' in get_attrs(monitor)
         # Absence of the following is not crucial, but currently there is
         # no need for these, and it avoids duplication:
         assert 'detector_info' not in monitor.coords
@@ -434,10 +435,10 @@ class TestMantidConversion(unittest.TestCase):
             "monitor4",
             "monitor5",
         }
-        assert expected_monitor_names.issubset(da.deprecated_attrs.keys())
+        assert expected_monitor_names.issubset(get_attrs(da).keys())
 
         for monitor_name in expected_monitor_names:
-            monitor = da.deprecated_attrs[monitor_name].value
+            monitor = get_attrs(da)[monitor_name].value
             assert isinstance(monitor, sc.DataArray)
             assert monitor.shape == (4471,)
             self.check_monitor_metadata_old(monitor)
@@ -483,9 +484,9 @@ class TestMantidConversion(unittest.TestCase):
             "monitor4",
             "monitor5",
         }
-        assert expected_monitor_names.issubset(da.deprecated_attrs.keys())
+        assert expected_monitor_names.issubset(get_attrs(da).keys())
         for monitor_name in expected_monitor_names:
-            monitor = da.deprecated_attrs[monitor_name].value
+            monitor = get_attrs(da)[monitor_name].value
             assert isinstance(monitor, sc.DataArray)
             assert monitor.shape == (4471,)
             self.check_monitor_metadata_old(monitor)
@@ -516,11 +517,11 @@ class TestMantidConversion(unittest.TestCase):
             mantid_args={"LoadMonitors": True, "SpectrumMax": 1},
         )
         self.assertEqual(len(mtd), 0, mtd.getObjectNames())
-        attrs = [str(key) for key in da.deprecated_attrs.keys()]
+        attrs = [str(key) for key in get_attrs(da).keys()]
         expected_monitor_attrs = {"monitor2", "monitor3"}
         assert expected_monitor_attrs.issubset(attrs)
         for monitor_name in expected_monitor_attrs:
-            monitor = da.deprecated_attrs[monitor_name].value
+            monitor = get_attrs(da)[monitor_name].value
             assert isinstance(monitor, sc.DataArray)
             assert monitor.shape == (200001,)
             self.check_monitor_metadata_old(monitor)
@@ -627,7 +628,7 @@ class TestMantidConversion(unittest.TestCase):
         # All events in central 'peak'
         self.assertEqual(100000, max_1d[max_index])
 
-        self.assertTrue('nevents' in histo_data_array.deprecated_attrs)
+        self.assertTrue('nevents' in get_attrs(histo_data_array))
 
     def test_mdhisto_workspace_many_dims(self):
         from mantid.simpleapi import BinMD, CreateMDWorkspace, FakeMDEventData
@@ -770,16 +771,16 @@ class TestMantidConversion(unittest.TestCase):
         self.assertTrue(
             np.allclose(
                 target.run()[log_name].value,
-                d.deprecated_attrs[log_name].values.data.values,
+                get_attrs(d)[log_name].values.data.values,
             ),
             "Expected values in the unaligned coord to match "
             "the original run log from the Mantid workspace",
         )
-        self.assertEqual(d.deprecated_attrs[log_name].values.unit, sc.units.K)
+        self.assertEqual(get_attrs(d)[log_name].values.unit, sc.units.K)
         self.assertTrue(
             np.array_equal(
                 target.run()[log_name].times.astype('datetime64[ns]'),
-                d.deprecated_attrs[log_name].values.coords["time"].values,
+                get_attrs(d)[log_name].values.coords["time"].values,
             ),
             "Expected times in the unaligned coord to match "
             "the original run log from the Mantid workspace",
@@ -802,7 +803,7 @@ class TestMantidConversion(unittest.TestCase):
         # Then the data array contains the run log as an unaligned coord
         self.assertEqual(
             target.run()[log_name].value,
-            d.deprecated_attrs[log_name].value,
+            get_attrs(d)[log_name].value,
             "Expected value of the unaligned coord to match "
             "the original run log from the Mantid workspace",
         )
@@ -853,10 +854,10 @@ class TestMantidConversion(unittest.TestCase):
 
         target = mantid.CloneWorkspace(self.base_event_ws)
         d = scn.mantid.convert_EventWorkspace_to_data_array(target, False)
-        d.deprecated_attrs["sample"].value.setThickness(3)
+        get_attrs(d)["sample"].value.setThickness(3)
         # before
         self.assertNotEqual(3, target.sample().getThickness())
-        target.setSample(d.deprecated_attrs["sample"].value)
+        target.setSample(get_attrs(d)["sample"].value)
         # after
         self.assertEqual(3, target.sample().getThickness())
 

@@ -15,6 +15,8 @@ import numpy as np
 import scipp as sc
 from scipp.core.util import VisibleDeprecationWarning
 
+from ._utils import get_attrs
+
 
 @contextmanager
 def run_mantid_alg(alg, *args, **kwargs):
@@ -593,14 +595,14 @@ def convert_monitors_ws_arrays(ws, converter, **ignored):
         # to wavelength, d-spacing, etc. because conversions of monitors do
         # not use the sample position.
         # But keep it as an attr in case a user needs it.
-        single_monitor.deprecated_attrs['sample_position'] = single_monitor.coords.pop(
+        get_attrs(single_monitor)['sample_position'] = single_monitor.coords.pop(
             'sample_position'
         )
         # Remove redundant information that is duplicated from workspace
         # We get this extra information from the generic converter reuse
         if 'detector_info' in single_monitor.coords:
             del single_monitor.coords['detector_info']
-        del single_monitor.deprecated_attrs['sample']
+        del get_attrs(single_monitor)['sample']
         name = comp_info.name(det_index)
         if not comp_info.uniqueName(name):
             name = f'{name}_{number}'
@@ -1167,7 +1169,7 @@ def array_from_mantid(workspace, **kwargs) -> Union[sc.DataArray, sc.Dataset]:
 
         monitors = convert_monitors_ws_arrays(monitor_ws, converter, **kwargs)
         for name, monitor in monitors:
-            scipp_obj.deprecated_attrs[name] = sc.scalar(monitor)
+            get_attrs(scipp_obj)[name] = sc.scalar(monitor)
     for ws in workspaces_to_delete:
         mantid.DeleteWorkspace(ws)
 

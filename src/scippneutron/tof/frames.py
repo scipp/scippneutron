@@ -9,7 +9,7 @@ from typing import Optional
 import scipp as sc
 from scipp.constants import h, m_n
 
-from .._utils import as_float_type, elem_unit
+from .._utils import as_float_type, elem_unit, get_meta
 from ..conversion.graph.beamline import Ltotal
 
 
@@ -86,14 +86,6 @@ def frame_period_from_pulse_period(
     *, pulse_period: sc.Variable, pulse_stride: sc.Variable
 ) -> sc.Variable:
     return pulse_period * pulse_stride
-
-
-def _meta_or_fallback(x):
-    # This can be removed when attrs have been removed in the minimum scipp version.
-    try:
-        return x.deprecated_meta
-    except AttributeError:
-        return x.coords
 
 
 def to_tof(*, pulse_skipping: Optional[bool] = False) -> dict:
@@ -198,9 +190,7 @@ def unwrap_frames(
     :
         Data with 'tof' coordinate.
     """
-    if 'tof' in _meta_or_fallback(da) or (
-        da.bins is not None and 'tof' in _meta_or_fallback(da.bins)
-    ):
+    if 'tof' in get_meta(da) or (da.bins is not None and 'tof' in get_meta(da.bins)):
         raise ValueError(
             "Coordinate 'tof' already defined in input data array. "
             "Expected input with 'event_time_offset' coordinate."
@@ -214,7 +204,7 @@ def unwrap_frames(
         'lambda_min',
     ]
     for x in coords:
-        if x in _meta_or_fallback(da):
+        if x in get_meta(da):
             raise ValueError(
                 f"Input data has '{x}' coord, but values should "
                 "be given only as a function parameter."

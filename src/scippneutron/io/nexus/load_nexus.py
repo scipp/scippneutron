@@ -17,6 +17,7 @@ from scippnexus.v1 import NXroot
 from scippnexus.v1.nxobject import NexusStructureError, NXobject
 from scippnexus.v1.nxtransformations import TransformationError
 
+from ..._utils import get_attrs
 from ._json_nexus import JSONGroup, StreamInfo, contains_stream, get_streams_info
 from ._nexus import ScippData
 
@@ -49,7 +50,7 @@ def add_position_and_transforms_to_data(
 ):
     if isinstance(data, sc.DataArray):
         coords = data.coords
-        attrs = data.deprecated_attrs
+        attrs = get_attrs(data)
     else:
         coords = data
         attrs = data
@@ -323,7 +324,7 @@ def _load_data(
                 dim='detector_id', sizes={'detector_id': -1, 'tof': 1}
             ),
             coords=dict(loaded_data.coords.items()),
-            attrs=dict(loaded_data.deprecated_attrs.items()),
+            attrs=dict(get_attrs(loaded_data).items()),
         )
         tof_min = loaded_data.bins.coords['tof'].min().to(dtype='float64')
         tof_max = loaded_data.bins.coords['tof'].max().to(dtype='float64')
@@ -333,7 +334,7 @@ def _load_data(
     def add_metadata(metadata: Dict[str, sc.Variable]):
         for key, value in metadata.items():
             if isinstance(loaded_data, sc.DataArray):
-                loaded_data.deprecated_attrs[key] = value
+                get_attrs(loaded_data)[key] = value
             else:
                 loaded_data[key] = value
 
@@ -372,11 +373,7 @@ def _load_data(
     for name, tag in {'sample': 'NXsample', 'source': 'NXsource'}.items():
         comps = classes.get(tag, {})
         comps = load_and_add_metadata(comps)
-        attrs = (
-            loaded_data
-            if isinstance(loaded_data, dict)
-            else loaded_data.deprecated_attrs
-        )
+        attrs = loaded_data if isinstance(loaded_data, dict) else get_attrs(loaded_data)
         coords = loaded_data if isinstance(loaded_data, dict) else loaded_data.coords
         for comp_name in comps:
             comp = attrs[comp_name].value
