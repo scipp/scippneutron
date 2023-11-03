@@ -37,10 +37,11 @@ jobs:
       fail-fast: false
       matrix:
         variant:
-        - {os: ubuntu-20.04, build-config: ci-linux}
-        - {os: macos-11, build-config: ci-macos}
-        - {os: windows-2019, build-config: ci-windows}
-        python-version: ["3.8"]
+        - {os: ubuntu-20.04, build-config: ci-linux, py: "3.10"}
+        - {os: macos-11, build-config: ci-macos, py: "3.10"}
+        - {os: windows-2019, build-config: ci-windows, py: "3.10"}
+        # This one is for testing with the latest Scipp.
+        - {os: ubuntu-20.04, build-config: ci-linux-no-mantid, py: "3.8"}
 
     steps:
       - uses: actions/checkout@v3
@@ -54,7 +55,7 @@ jobs:
           environment-file: .buildconfig/${{ matrix.variant.build-config }}.yml
           cache-env: true
           extra-specs: |
-            python=${{ matrix.python-version }}
+            python=${{ matrix.variant.py }}
             conda-build
 
       - run: conda develop src
@@ -64,14 +65,14 @@ jobs:
           python -m sphinx -j2 -v -b html -d doctrees docs html
           python -m sphinx -j2 -v -b doctest -d doctrees docs html
           find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
-        if: ${{ contains(matrix.variant.os, 'ubuntu') && matrix.python-version == '3.8' }}
+        if: ${{ contains(matrix.variant.os, 'ubuntu') && matrix.variant.py == '3.10' }}
 
       - run: python -m sphinx -j4 -v -b linkcheck -d doctrees docs html
         # Linkcheck can be flaky. Avoid randomly breaking PR builds by running only on `main`
-        if: ${{ contains(matrix.variant.os, 'ubuntu') && matrix.python-version == '3.8' && github.ref == 'refs/heads/main' }}
+        if: ${{ contains(matrix.variant.os, 'ubuntu') && matrix.variant.py == '3.10' && github.ref == 'refs/heads/main' }}
 
       - uses: actions/upload-artifact@v3
-        if: ${{ contains(matrix.variant.os, 'ubuntu') && matrix.python-version == '3.8' }}
+        if: ${{ contains(matrix.variant.os, 'ubuntu') && matrix.variant.py == '3.10' }}
         with:
           name: DocumentationHTML
           path: html/
