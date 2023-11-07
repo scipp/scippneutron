@@ -11,6 +11,7 @@ import numpy as np
 import pytest
 import scipp as sc
 
+from scippneutron._utils import get_attrs
 from scippneutron.data_streaming._consumer_type import ConsumerType
 from scippneutron.data_streaming._warnings import (
     BufferSizeWarning,
@@ -488,12 +489,14 @@ async def test_data_stream_returns_metadata(queues):
 
         n_chunks += 1
 
-    assert isclose(data_from_stream.attrs[f142_source_name].value.values[0], f142_value)
-    assert data_from_stream.attrs[f142_source_name].value.coords['time'].values[
+    assert isclose(
+        get_attrs(data_from_stream)[f142_source_name].value.values[0], f142_value
+    )
+    assert get_attrs(data_from_stream)[f142_source_name].value.coords['time'].values[
         0
     ] == np.array(f142_timestamp, dtype=np.dtype('datetime64[ns]'))
     assert np.array_equal(
-        data_from_stream.attrs[senv_source_name].value.values, senv_values
+        get_attrs(data_from_stream)[senv_source_name].value.values, senv_values
     )
     senv_expected_timestamps = np.array(
         [
@@ -504,11 +507,12 @@ async def test_data_stream_returns_metadata(queues):
         dtype=np.dtype('datetime64[ns]'),
     )
     assert np.array_equal(
-        data_from_stream.attrs[senv_source_name].value.coords['time'].values,
+        get_attrs(data_from_stream)[senv_source_name].value.coords['time'].values,
         senv_expected_timestamps,
     )
     assert np.array_equal(
-        data_from_stream.attrs[tdct_source_name].value.values, tdct_timestamps
+        get_attrs(data_from_stream)[tdct_source_name].value.values,
+        tdct_timestamps,
     )
 
 
@@ -568,11 +572,11 @@ async def test_data_stream_returns_data_from_multiple_slow_metadata_messages(que
         n_chunks += 1
 
     assert np.allclose(
-        data_from_stream.attrs[f142_source_name].value.values,
+        get_attrs(data_from_stream)[f142_source_name].value.values,
         np.array([f142_value_1, f142_value_2]),
     )
     assert np.array_equal(
-        data_from_stream.attrs[f142_source_name].value.coords['time'].values,
+        get_attrs(data_from_stream)[f142_source_name].value.coords['time'].values,
         np.array(
             [f142_timestamp_1, f142_timestamp_2], dtype=np.dtype('datetime64[ns]')
         ),
@@ -654,7 +658,7 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages(que
         n_chunks += 1
 
     assert np.array_equal(
-        data_from_stream.attrs[senv_source_name].value.values,
+        get_attrs(data_from_stream)[senv_source_name].value.values,
         np.concatenate((senv_values_1, senv_values_2)),
     )
     senv_expected_timestamps_1 = np.array(
@@ -674,7 +678,7 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages(que
         dtype=np.dtype('datetime64[ns]'),
     )
     assert np.array_equal(
-        data_from_stream.attrs[senv_source_name].value.coords['time'].values,
+        get_attrs(data_from_stream)[senv_source_name].value.coords['time'].values,
         np.concatenate((senv_expected_timestamps_1, senv_expected_timestamps_2)),
     )
 
@@ -722,7 +726,7 @@ async def test_data_stream_returns_data_from_multiple_chopper_messages(queues):
         n_chunks += 1
 
     assert np.array_equal(
-        data_from_stream.attrs[tdct_source_name].value.values,
+        get_attrs(data_from_stream)[tdct_source_name].value.values,
         np.concatenate((tdct_timestamps_1, tdct_timestamps_2)),
     )
 
@@ -876,12 +880,14 @@ async def test_data_returned_if_multiple_slow_metadata_msgs_exceed_buffer(queues
         elif n_chunks == 1:
             # Contains data from first message
             assert isclose(
-                data.attrs[f142_source_name].value.values[0], first_f142_value
+                get_attrs(data)[f142_source_name].value.values[0],
+                first_f142_value,
             )
         elif n_chunks == 2:
             # Contains data from second message
             assert isclose(
-                data.attrs[f142_source_name].value.values[0], second_f142_value
+                get_attrs(data)[f142_source_name].value.values[0],
+                second_f142_value,
             )
             reached_asserts = True
         n_chunks += 1
@@ -959,12 +965,12 @@ async def test_data_returned_if_multiple_fast_metadata_msgs_exceed_buffer(queues
         elif n_chunks == 1:
             # Contains data from first message
             assert np.array_equal(
-                data.attrs[senv_source_name].value.values, first_senv_values
+                get_attrs(data)[senv_source_name].value.values, first_senv_values
             )
         elif n_chunks == 2:
             # Contains data from second message
             assert np.array_equal(
-                data.attrs[senv_source_name].value.values, second_senv_values
+                get_attrs(data)[senv_source_name].value.values, second_senv_values
             )
             reached_asserts = True
         n_chunks += 1
@@ -1014,12 +1020,12 @@ async def test_data_returned_if_multiple_chopper_msgs_exceed_buffer(queues):
         elif n_chunks == 1:
             # Contains data from first message
             assert np.array_equal(
-                data.attrs[tdct_source_name].value.values, tdct_timestamps_1
+                get_attrs(data)[tdct_source_name].value.values, tdct_timestamps_1
             )
         elif n_chunks == 2:
             # Contains data from second message
             assert np.array_equal(
-                data.attrs[tdct_source_name].value.values, tdct_timestamps_2
+                get_attrs(data)[tdct_source_name].value.values, tdct_timestamps_2
             )
             reached_asserts = True
         n_chunks += 1
@@ -1186,10 +1192,11 @@ async def test_stream_loop_exits_if_stop_time_reached_and_later_message_seen(que
         elif n_chunks == 1:
             # The data from the first message will be returned
             assert np.allclose(
-                data.attrs[f142_source_name].value.values, np.array([f142_value_1])
+                get_attrs(data)[f142_source_name].value.values,
+                np.array([f142_value_1]),
             )
             assert np.array_equal(
-                data.attrs[f142_source_name].value.coords['time'].values,
+                get_attrs(data)[f142_source_name].value.coords['time'].values,
                 np.array([timestamp_before_stop_ns], dtype=np.dtype('datetime64[ns]')),
             )
 

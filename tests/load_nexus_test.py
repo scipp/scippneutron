@@ -10,6 +10,7 @@ import scipp as sc
 from dateutil.parser import parse as parse_date
 
 import scippneutron
+from scippneutron._utils import get_attrs, get_meta
 from scippneutron.io.nexus.load_nexus import _load_nexus_json
 
 from .nexus_helpers import (
@@ -661,14 +662,14 @@ def test_loads_event_and_log_data_from_single_file(load_function: Callable):
     assert np.allclose(counts_on_detectors.data.values, expected_counts)
     expected_detector_ids = np.array([1, 2, 3])
     assert np.allclose(loaded_data.coords['detector_id'].values, expected_detector_ids)
-    assert "position" not in loaded_data.meta.keys(), (
+    assert "position" not in get_meta(loaded_data).keys(), (
         "The NXdetectors had no pixel position datasets so we "
         "should not find 'position' coord"
     )
 
     # Logs should have been added to the DataArray as attributes
-    assert np.allclose(loaded_data.attrs[log_1.name].values.values, log_1.value)
-    assert np.allclose(loaded_data.attrs[log_2.name].values.values, log_2.value)
+    assert np.allclose(get_attrs(loaded_data)[log_1.name].values.values, log_1.value)
+    assert np.allclose(get_attrs(loaded_data)[log_2.name].values.values, log_2.value)
 
 
 def test_loads_pixel_positions_with_event_data(load_function: Callable):
@@ -739,7 +740,7 @@ def test_loads_pixel_positions_with_event_data(load_function: Callable):
         ]
     ).T
     assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
-    assert loaded_data.meta['position'].unit == 'mm'
+    assert get_meta(loaded_data)['position'].unit == 'mm'
 
 
 @pytest.mark.skip(
@@ -796,7 +797,7 @@ def test_loads_pixel_positions_without_event_data(load_function: Callable):
     )  # Divide by 1000 for mm to metres
     assert np.allclose(loaded_data.coords['position'].values, expected_pixel_positions)
     assert (
-        loaded_data.meta['base_position'].unit == sc.units.m
+        get_meta(loaded_data)['base_position'].unit == sc.units.m
     ), "Expected positions to be converted to metres"
 
 
@@ -1412,20 +1413,20 @@ def test_loads_pixel_positions_with_transformations(load_function: Callable):
         [x_pixel_offset_1, y_pixel_offset_1, z_pixel_offset_1]
     ).T
     assert np.allclose(
-        loaded_data.meta['base_position'].values, expected_pixel_positions
+        get_meta(loaded_data)['base_position'].values, expected_pixel_positions
     )
 
     expected_transform = sc.spatial.translation(unit=sc.units.m, value=[0, 0, 0.57])
 
     assert np.allclose(
-        loaded_data.meta['position_transformations'].value.values,
+        get_meta(loaded_data)['position_transformations'].value.values,
         expected_transform.values,
     )
 
     assert np.allclose(
         (
-            loaded_data.meta["position_transformations"].value
-            * loaded_data.meta["base_position"]["detector_id", 0]
+            get_meta(loaded_data)["position_transformations"].value
+            * get_meta(loaded_data)["base_position"]["detector_id", 0]
         ).values,
         [0.1, 0.1, 0.67],
     )
@@ -1505,15 +1506,15 @@ def test_loads_pixel_positions_with_multiple_transformations(load_function: Call
 
     assert np.allclose(
         (
-            loaded_data.meta["position_transformations"]["detector_id", 0].value
-            * loaded_data.meta["base_position"]["detector_id", 0]
+            get_meta(loaded_data)["position_transformations"]["detector_id", 0].value
+            * get_meta(loaded_data)["base_position"]["detector_id", 0]
         ).values,
         [0.1, 0.1, 0.1 + 0.12],
     )
     assert np.allclose(
         (
-            loaded_data.meta["position_transformations"]["detector_id", 1].value
-            * loaded_data.meta["base_position"]["detector_id", 1]
+            get_meta(loaded_data)["position_transformations"]["detector_id", 1].value
+            * get_meta(loaded_data)["base_position"]["detector_id", 1]
         ).values,
         [0.6, 0.6, 0.6 + 0.34],
     )
@@ -2229,5 +2230,5 @@ def test_load_nexus_file_containing_empty_arrays(load_function: Callable):
 
     # Empty datasets should not stop other data (e.g. metadata) from being loaded.
     loaded_data = load_function(builder)
-    assert "test_log" in loaded_data.attrs
-    assert all(loaded_data.attrs["test_log"].value.values == np.array([0, 1, 2]))
+    assert "test_log" in get_attrs(loaded_data)
+    assert all(get_attrs(loaded_data)["test_log"].value.values == np.array([0, 1, 2]))

@@ -28,7 +28,7 @@ jobs:
           extra-specs: |
             python=3.8
             conda-build
-      - run: conda build --channel conda-forge --channel scipp --channel ess-dmsc --channel mantid --python=3.8 --no-anaconda-upload --override-channels --output-folder conda/package conda
+      - run: conda build --channel conda-forge --channel scipp --channel ess-dmsc --channel mantid --python=3.10 --no-anaconda-upload --override-channels --output-folder conda/package conda
 
       - uses: actions/upload-artifact@v3
         with:
@@ -91,7 +91,7 @@ jobs:
           micromamba-version: 1.0.0
           environment-file: .buildconfig/ci-linux.yml
           cache-env: true
-          extra-specs: python=3.8
+          extra-specs: python=3.10
       - uses: actions/download-artifact@v3
         with:
           name: conda-package-noarch

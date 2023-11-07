@@ -7,9 +7,9 @@ channels:
 dependencies:
   - comm=0.1.4  # earlier versions break tests with ipywidgets with latest ipykernel
   - h5py==3.8.0
-  - hypothesis==6.88.1
+  - hypothesis==6.71.0
   - mantid==6.8.0
-  - matplotlib==3.8.0
+  - matplotlib==3.7.1
   - ninja==1.11.1
   - plopp==23.10.1
   - pooch==1.7.0
