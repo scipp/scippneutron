@@ -218,3 +218,51 @@ def unwrap_frames(
     graph = {} if scatter is None else Ltotal(scatter=scatter)
     graph.update(to_tof(pulse_skipping=pulse_stride != 1))
     return da.transform_coords('tof', graph=graph)
+
+
+def handle_pulse_shaping_choppers() -> None:
+    """
+    Handle pulse shaping choppers.
+
+    Approach:
+    - Define first chopper as source. This gives a start and end time based on chopper
+      opening and closing.
+    - Compute velocity of fastest neutrons than can pass through later choppers. This
+      is given by the 'end' time of the first chopper, and the 'start' time of the
+      second chopper (the frame-overlap-chopper).
+    - Given the velocity, we can compute the earliest neutron arrival time at every
+      pixel.
+    - Based on this, we can call `unwrap_frames`:
+      - `frame_offset` is the 'end' time of the first chopper.
+      - `lambda_min` is the wavelength corresponding to the velocity.
+      - `Ltotal` is the distance from the first chopper to the pixels
+      - We should probably change the function to directly take `tof_min` as input,
+        to avoid having to compute `lambda_min` from `Ltotal`, `tof_min`, which is
+        then reversed in `unwrap_frames`.
+    - When there is no pulse-shaping chopper, use the source pulse start and end. There
+      may be need for calibration, so this has to remain configurable.
+
+    Summary:
+    - Take 2 choppers as input, a pulse-shaping-chopper and a frame-overlap-chopper.
+      If there is no pulse-shaping-chopper, use the source pulse start and end to make
+      a fake.
+    - Compute tof_min.
+    - Call unwrap_frames.
+
+    Question:
+    - Do we additionally need to consider the end of the source pulse to define an
+      absolute upper bound on the velocity? Maybe ignore this for now? It could be
+      that no beamline has such a chopper cascade design?
+
+    What about WFM?
+    - First handle frame unwrapping.
+    - Use same approach a second time for subframes. Now use the second WFM chopper
+      as subframe-overlap chopper?
+      - What if there is only a single WFM chopper? Do we need to use start and end
+        of source pulse?
+    - I don't think this is right, we always need source pulse, even if there are 2?
+      - Instruments may "choose" to overlap leading and trailing edges of pulses, so
+        cutting only based on WFM choppers would not work?
+      - For optically blind choppers, we would get infinite max velocity if we only
+        consider WFM choppers, we *must* include source start/end.
+    """
