@@ -36,16 +36,15 @@ class NXDiskChopper(snx.NXdisk_chopper):
     }
 
     def assemble(self, dg: sc.DataGroup) -> DiskChopper:
+        dg = snx.compute_positions(dg)
+
         field_names = {
             field.name for field in dataclasses.fields(DiskChopper)
         } - self._SPECIAL_FIELDS
 
-        # TODO needs depends_on which is not in the old file we have
-        position = sc.vector([0, 0, 0], unit='m')
-
         return DiskChopper(
             typ=dg.get('type', DiskChopperType.single),
-            position=position,
+            position=dg['position'],
             rotation_speed=_parse_rotation_speed(dg['rotation_speed']),
             top_dead_center=_parse_tdc(dg.get('top_dead_center')),
             **{name: _parse_maybe_log(dg.get(name)) for name in field_names},
