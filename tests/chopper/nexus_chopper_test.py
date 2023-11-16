@@ -8,7 +8,7 @@ import pytest
 import scipp as sc
 import scippnexus as snx
 
-from scippneutron.chopper import DiskChopper, DiskChopperType, NXDiskChopper
+from scippneutron.chopper import DiskChopper, DiskChopperType, NXdisk_chopper
 
 
 @pytest.fixture
@@ -66,7 +66,7 @@ def test_from_nexus(chopper_nexus_file):
     with snx.File(
         chopper_nexus_file,
         'r',
-        definitions={**snx.base_definitions(), 'NXdisk_chopper': NXDiskChopper},
+        definitions={**snx.base_definitions(), 'NXdisk_chopper': NXdisk_chopper},
     ) as f:
         chopper_group = f['entry']['instrument']['chopper']
         ch = chopper_group[()]

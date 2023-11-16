@@ -10,7 +10,7 @@ import scippnexus as snx
 from .disk_chopper import DiskChopper, DiskChopperType
 
 
-class NXDiskChopper(snx.NXdisk_chopper):
+class NXdisk_chopper(snx.NXdisk_chopper):
     """NeXus definition to load a DiskChopper using ScippNeXus.
 
     Examples
