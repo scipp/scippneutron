@@ -326,7 +326,7 @@ scipp[interactive]==23.8.0
     # via
     #   -r base.in
     #   scippnexus
-scippnexus==23.8.0
+scippnexus==23.11.0
     # via -r base.in
 scipy==1.10.1
     # via
