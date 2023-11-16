@@ -53,20 +53,13 @@ all = ['scipp[all]']
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-# The custom `externalfile` marker runs tests that require passwordless
-# SSH access to login.esss.dk. We do not run it by default. Make sure to
-# setup keys in your SSH agent before running `pytest -m externalfile`.
+testpaths = "tests"
 addopts = """
 --strict-config
 --strict-markers
--m 'not externalfile'
---import-mode=importlib
 -ra
 -v
 """
-markers = [
-    "externalfile",
-]
 testpaths = "tests"
 filterwarnings = [
   "error",

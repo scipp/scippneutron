@@ -36,7 +36,6 @@ def chopper_nexus_file() -> io.BytesIO:
     return buffer
 
 
-@pytest.mark.externalfile
 def test_from_nexus(chopper_nexus_file):
     with snx.File(chopper_nexus_file, 'r') as f:
         reference = f['entry']['instrument']['chopper'][()]
