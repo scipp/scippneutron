@@ -9,7 +9,9 @@ Mantid Compatibility
 .. autosummary::
    :toctree: ../generated/functions
 
+   array_from_mantid
    from_mantid
+   load_with_mantid
    to_mantid
    fit
 
@@ -45,5 +47,4 @@ Loading Nexus files
 .. autosummary::
    :toctree: ../generated/functions
 
-   load
    load_nexus
