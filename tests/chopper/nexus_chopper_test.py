@@ -2,12 +2,14 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
 import io
+
+import numpy as np
 import pytest
 import scipp as sc
 import scippnexus as snx
-import numpy as np
 
 from scippneutron.chopper import DiskChopper, DiskChopperType, NXDiskChopper
+
 
 @pytest.fixture
 def chopper_nexus_file() -> io.BytesIO:
@@ -21,17 +23,39 @@ def chopper_nexus_file() -> io.BytesIO:
 
         chopper.create_field('radius', sc.scalar(0.35, unit='m'))
         chopper.create_field('slits', sc.index(2))
-        chopper.create_field('slit_height', sc.array(dims=['dim'], values=[0.1, 0.12], unit='m'))
-        chopper.create_field('slit_edges', sc.array(dims=['dim'], values=[10.0, 160.0, 210.0, 280.0], unit='deg'))
+        chopper.create_field(
+            'slit_height', sc.array(dims=['dim'], values=[0.1, 0.12], unit='m')
+        )
+        chopper.create_field(
+            'slit_edges',
+            sc.array(dims=['dim'], values=[10.0, 160.0, 210.0, 280.0], unit='deg'),
+        )
+        chopper.create_field('depends_on', sc.scalar('transformations/t1'))
 
         rotation_speed = chopper.create_class('rotation_speed', 'NXlog')
-        time = sc.arange('t', sc.datetime('2020-06-09T13:14:09'), sc.datetime('2020-06-09T13:16:24'), unit='s').to(unit='us')
-        rotation_speed.create_field('value', sc.array(dims=['t'], values=rng.uniform(13.5, 14.5, len(time)), unit='Hz'))
+        time = sc.arange(
+            't',
+            sc.datetime('2020-06-09T13:14:09'),
+            sc.datetime('2020-06-09T13:16:24'),
+            unit='s',
+        ).to(unit='us')
+        rotation_speed.create_field(
+            'value',
+            sc.array(dims=['t'], values=rng.uniform(13.5, 14.5, len(time)), unit='Hz'),
+        )
         rotation_speed.create_field('time', time)
 
         delay = chopper.create_class('delay', 'NXlog')
         delay.create_field('value', sc.array(dims=['t'], values=[0.04], unit='s'))
-        delay.create_field('time', sc.datetimes(dims=['t'], values=['2020-06-09T13:16:09'], unit='us'))
+        delay.create_field(
+            'time', sc.datetimes(dims=['t'], values=['2020-06-09T13:16:09'], unit='us')
+        )
+
+        transformations = chopper.create_class('transformations', 'NXtransformations')
+        t1 = transformations.create_field('t1', sc.scalar(11.4, unit='m'))
+        t1.attrs['depends_on'] = '.'
+        t1.attrs['transformation_type'] = 'translation'
+        t1.attrs['vector'] = np.array([0.0, 0.0, 1.0])
 
     return buffer
 
@@ -53,9 +77,13 @@ def test_from_nexus(chopper_nexus_file):
     assert sc.identical(ch.delay, reference['delay'])
     assert sc.identical(ch.radius, sc.scalar(0.35, unit='m'))
     assert ch.slits == 2
-    assert sc.identical(ch.slit_height, sc.array(dims=['dim_0'], values=[0.1, 0.12], unit='m'))
+    assert sc.identical(
+        ch.slit_height, sc.array(dims=['dim_0'], values=[0.1, 0.12], unit='m')
+    )
     assert sc.identical(
         ch.slit_edges,
-        sc.array(dims=['dim_0', 'edge'], values=[[10.0, 160.0], [210.0, 280.0]], unit='deg'),
+        sc.array(
+            dims=['dim_0', 'edge'], values=[[10.0, 160.0], [210.0, 280.0]], unit='deg'
+        ),
     )
-    # TODO position
+    assert sc.identical(ch.position, sc.vector([0, 0, 11.4], unit='m'))
