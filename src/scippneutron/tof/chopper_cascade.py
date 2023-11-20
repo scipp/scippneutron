@@ -6,7 +6,7 @@ Compute result of applying a chopper cascade to a neutron pulse at a time-of-fli
 neutron source.
 """
 from dataclasses import dataclass
-from typing import Callable, List, Optional
+from typing import List, Optional
 
 import numpy as np
 import scipp as sc
@@ -15,7 +15,7 @@ import scipp as sc
 @dataclass
 class Subframe:
     """
-    Neutron pulse at a time-of-flight neutron source, described as the corners of a
+    Neutron "subframe" at a time-of-flight neutron source, described as the corners of a
     polygon (initially a rectangle) in time and inverse velocity.
     """
 
@@ -25,6 +25,11 @@ class Subframe:
 
 @dataclass
 class Frame:
+    """
+    A frame of neutrons, created from a single neutron pulse, potentially chopped into
+    subframes by choppers.
+    """
+
     distance: sc.Variable
     subframes: List[Subframe]
 
@@ -85,9 +90,14 @@ def propagate(frame: Frame, distance: sc.Variable) -> Frame:
     Parameters
     ----------
     frame:
-        Input neutron pulse.
+        Input frame.
     distance:
         New distance.
+
+    Returns
+    -------
+    :
+        Propagated frame.
     """
     delta = distance - frame.distance
     if delta.value < 0:
@@ -118,6 +128,11 @@ def chop(frame: Frame, chopper: Chopper) -> Frame:
         Input neutron pulse.
     chopper:
         Chopper to apply.
+
+    Returns
+    -------
+    :
+        Chopped frame.
     """
     frame = propagate(frame, chopper.distance)
 
@@ -126,16 +141,18 @@ def chop(frame: Frame, chopper: Chopper) -> Frame:
     chopped = Frame(distance=frame.distance, subframes=[])
     for subframe in frame.subframes:
         for open, close in zip(chopper.time_open, chopper.time_close):
-            tmp = _chop(subframe, open, lambda time, open=open: time >= open)
-            if not tmp:
-                continue
-            tmp = _chop(tmp, close, lambda time, close=close: time <= close)
-            if tmp:
-                chopped.subframes.append(tmp)
+            if (tmp := _chop(subframe, open, close_to_open=True)) is not None:
+                if (tmp := _chop(tmp, close, close_to_open=False)) is not None:
+                    chopped.subframes.append(tmp)
     return chopped
 
 
-def _chop(frame: Subframe, time: sc.Variable, inside: Callable) -> Optional[Subframe]:
+def _chop(
+    frame: Subframe, time: sc.Variable, close_to_open: bool
+) -> Optional[Subframe]:
+    def inside(t):
+        return t >= time if close_to_open else t <= time
+
     output = []
     for i in range(len(frame.time)):
         j = (i + 1) % len(frame.time)
