@@ -13,15 +13,14 @@ import scipp as sc
 
 
 @dataclass
-class Frame:
+class Subframe:
     """
     Neutron pulse at a time-of-flight neutron source, described as the corners of a
     polygon (initially a rectangle) in time and inverse velocity.
     """
 
-    distance: sc.Variable
-    time: np.ndarray
-    inverse_velocity: np.ndarray
+    time: sc.Variable
+    inverse_velocity: sc.Variable
 
     def _repr_html_(self) -> str:
         """
@@ -51,6 +50,12 @@ class Frame:
         """
 
 
+@dataclass
+class Frame:
+    distance: sc.Variable
+    subframes: List[Subframe]
+
+
 def draw_matplotlib(frames: List[Frame]) -> None:
     """Draw frames using matplotlib"""
     import matplotlib.patches as patches
@@ -68,24 +73,34 @@ def draw_matplotlib(frames: List[Frame]) -> None:
         'brown',
         'pink',
     ]
+    max_time = 0
+    max_iv = 0
     for frame, color in zip(frames, colors):
-        polygon = patches.Polygon(
-            np.stack((frame.time.values, frame.inverse_velocity.values), axis=1),
-            closed=True,
-            fill=True,
-            color=color,
-        )
-        ax.add_patch(polygon)
-    ax.set_xlabel(frames[0].time.unit)
-    ax.set_ylabel(frames[0].inverse_velocity.unit)
-    max_time = max(frame.time.max().value for frame in frames)
-    max_iv = max(frame.inverse_velocity.max().value for frame in frames)
+        # All subframes have same color
+        for subframe in frame.subframes:
+            time_unit = subframe.time.unit
+            iv_unit = subframe.inverse_velocity.unit
+            max_time = max(max_time, subframe.time.max().value)
+            max_iv = max(max_iv, subframe.inverse_velocity.max().value)
+            polygon = patches.Polygon(
+                np.stack(
+                    (subframe.time.values, subframe.inverse_velocity.values), axis=1
+                ),
+                closed=True,
+                fill=True,
+                color=color,
+            )
+            ax.add_patch(polygon)
+    ax.set_xlabel(time_unit)
+    ax.set_ylabel(iv_unit)
     ax.set_xlim(0, max_time)
     ax.set_ylim(0, max_iv)
     return plt
 
 
-def to_svg(frames: List[Frame], tmax: sc.Variable, ivmax: sc.Variable, scale=1) -> str:
+def to_svg(
+    frames: List[Subframe], tmax: sc.Variable, ivmax: sc.Variable, scale=1
+) -> str:
     from IPython.display import HTML, display
 
     colors = [
@@ -137,11 +152,14 @@ def propagate(frame: Frame, distance: sc.Variable) -> Frame:
     delta = distance - frame.distance
     if delta.value < 0:
         raise ValueError(f'Cannot propagate backwards: {delta}')
-    return Frame(
-        distance=distance,
-        time=frame.time + delta * frame.inverse_velocity,
-        inverse_velocity=frame.inverse_velocity,
-    )
+    subframes = [
+        Subframe(
+            time=subframe.time + delta * subframe.inverse_velocity,
+            inverse_velocity=subframe.inverse_velocity,
+        )
+        for subframe in frame.subframes
+    ]
+    return Frame(distance=distance, subframes=subframes)
 
 
 def chop(frame: Frame, chopper: Chopper) -> Frame:
@@ -163,16 +181,21 @@ def chop(frame: Frame, chopper: Chopper) -> Frame:
     """
     frame = propagate(frame, chopper.distance)
 
-    # The chopper's time_open and time_close define lines that intersect the polygon.
-    # We find the intersections and keep the points that are inside the chopper.
-    def inside(time: sc.Variable) -> sc.Variable:
-        return time >= chopper.time_open
+    # A chopper can have multiple openings, call _chop for each of them. The result
+    # is the union of the resulting subframes.
+    chopped = Frame(distance=frame.distance, subframes=[])
+    for subframe in frame.subframes:
+        for open, close in zip(chopper.time_open, chopper.time_close):
+            tmp = _chop(subframe, open, lambda time, open=open: time >= open)
+            if not tmp:
+                continue
+            tmp = _chop(tmp, close, lambda time, close=close: time <= close)
+            if tmp:
+                chopped.subframes.append(tmp)
+    return chopped
 
-    frame = _chop(frame, chopper.time_open, lambda time: time >= chopper.time_open)
-    return _chop(frame, chopper.time_close, lambda time: time <= chopper.time_close)
 
-
-def _chop(frame: Frame, time: sc.Variable, inside: Callable) -> Frame:
+def _chop(frame: Subframe, time: sc.Variable, inside: Callable) -> Optional[Subframe]:
     output = []
     for i in range(len(frame.time)):
         j = (i + 1) % len(frame.time)
@@ -185,6 +208,8 @@ def _chop(frame: Frame, time: sc.Variable, inside: Callable) -> Frame:
             output.append((time, v))
         if inside_j:
             output.append((frame.time[j], frame.inverse_velocity[j]))
+    if not output:
+        return None
     time = sc.concat([t for t, _ in output], dim=frame.time.dim)
     inverse_velocity = sc.concat([v for _, v in output], dim=frame.inverse_velocity.dim)
-    return Frame(distance=frame.distance, time=time, inverse_velocity=inverse_velocity)
+    return Subframe(time=time, inverse_velocity=inverse_velocity)
