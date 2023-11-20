@@ -19,6 +19,7 @@ class Frame:
     polygon (initially a rectangle) in time and inverse velocity.
     """
 
+    distance: sc.Variable
     time: np.ndarray
     inverse_velocity: np.ndarray
 
@@ -117,23 +118,28 @@ def to_svg(frames: List[Frame], tmax: sc.Variable, ivmax: sc.Variable, scale=1) 
 
 @dataclass
 class Chopper:
-    time_open: float
-    time_close: float
+    distance: sc.Variable
+    time_open: sc.Variable
+    time_close: sc.Variable
 
 
-def propagate(frame: Frame, distance: float) -> Frame:
+def propagate(frame: Frame, distance: sc.Variable) -> Frame:
     """
-    Propagate a neutron pulse through a distance.
+    Propagate a neutron pulse to a new distance.
 
     Parameters
     ----------
     frame:
         Input neutron pulse.
     distance:
-        Distance to propagate, in meter.
+        New distance.
     """
+    delta = distance - frame.distance
+    if delta.value < 0:
+        raise ValueError(f'Cannot propagate backwards: {delta}')
     return Frame(
-        time=frame.time + distance * frame.inverse_velocity,
+        distance=distance,
+        time=frame.time + delta * frame.inverse_velocity,
         inverse_velocity=frame.inverse_velocity,
     )
 
@@ -155,6 +161,7 @@ def chop(frame: Frame, chopper: Chopper) -> Frame:
     chopper:
         Chopper to apply.
     """
+    frame = propagate(frame, chopper.distance)
 
     # The chopper's time_open and time_close define lines that intersect the polygon.
     # We find the intersections and keep the points that are inside the chopper.
@@ -180,4 +187,4 @@ def _chop(frame: Frame, time: sc.Variable, inside: Callable) -> Frame:
             output.append((frame.time[j], frame.inverse_velocity[j]))
     time = sc.concat([t for t, _ in output], dim=frame.time.dim)
     inverse_velocity = sc.concat([v for _, v in output], dim=frame.inverse_velocity.dim)
-    return Frame(time=time, inverse_velocity=inverse_velocity)
+    return Frame(distance=frame.distance, time=time, inverse_velocity=inverse_velocity)
