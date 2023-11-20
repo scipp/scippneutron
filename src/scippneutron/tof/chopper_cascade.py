@@ -20,6 +20,30 @@ def wavelength_to_inverse_velocity(wavelength):
     return (wavelength * m_n / h).to(unit='s/m')
 
 
+def propagate_times(
+    time: sc.Variable, wavelength: sc.Variable, distance: sc.Variable
+) -> sc.Variable:
+    """
+    Propagate a neutron frame by a distance.
+
+    Parameters
+    ----------
+    time:
+        Time of the neutron frame.
+    wavelength:
+        Wavelength of the neutron frame.
+    distance:
+        Distance to propagate. Can be a range of distances.
+
+    Returns
+    -------
+    :
+        Propagated time.
+    """
+    inverse_velocity = wavelength_to_inverse_velocity(wavelength)
+    return time + distance * inverse_velocity
+
+
 @dataclass
 class Subframe:
     """
@@ -40,7 +64,7 @@ class Subframe:
 
     def propagate(self, distance: sc.Variable) -> Subframe:
         """
-        Propagate a neutron pulse by a new distance.
+        Propagate subframe by a distance.
 
         Parameters
         ----------
@@ -52,11 +76,30 @@ class Subframe:
         :
             Propagated subframe.
         """
-        inverse_velocity = wavelength_to_inverse_velocity(self.wavelength)
         return Subframe(
-            time=self.time + distance * inverse_velocity,
+            time=propagate_times(self.time, self.wavelength, distance),
             wavelength=self.wavelength,
         )
+
+    @property
+    def start_time(self) -> sc.Variable:
+        """The start time of the subframe."""
+        return self.time.min()
+
+    @property
+    def end_time(self) -> sc.Variable:
+        """The end time of the subframe."""
+        return self.time.max()
+
+    @property
+    def start_wavelength(self) -> sc.Variable:
+        """The start wavelength of the subframe."""
+        return self.wavelength.min()
+
+    @property
+    def end_wavelength(self) -> sc.Variable:
+        """The end wavelength of the subframe."""
+        return self.wavelength.max()
 
 
 @dataclass
@@ -69,27 +112,82 @@ class Frame:
     distance: sc.Variable
     subframes: List[Subframe]
 
+    def frame_bounds(self) -> sc.Dataset:
+        """The bounds of the frame, i.e., the global min and max time and wavelength."""
+        start = sc.reduce([sub.start_time for sub in self.subframes]).min()
+        end = sc.reduce([sub.end_time for sub in self.subframes]).max()
+        wav_start = sc.reduce([sub.start_wavelength for sub in self.subframes]).min()
+        wav_end = sc.reduce([sub.end_wavelength for sub in self.subframes]).max()
+        return sc.Dataset(
+            {
+                'time': sc.concat([start, end], dim='bound'),
+                'wavelength': sc.concat([wav_start, wav_end], dim='bound'),
+            }
+        )
+
+    def subframe_bounds(self) -> sc.Dataset:
+        """
+        The bounds of the subframes, defined as the union over subframes.
+
+        This is not the same as the bounds of the individual subframes, but defined as
+        the union of all subframes. Subframes that overlap in time are "merged" into a
+        single subframe.
+        """
+        starts = [subframe.start_time for subframe in self.subframes]
+        ends = [subframe.end_time for subframe in self.subframes]
+        # Given how time-propagation and chopping works, the min wavelength is always
+        # given by the same vertex as the min time, and the max wavelength by the same
+        # vertex as the max time.
+        wav_starts = [subframe.start_wavelength for subframe in self.subframes]
+        wav_ends = [subframe.end_wavelength for subframe in self.subframes]
+        # sort by start
+        starts, ends, wav_starts, wav_ends = zip(
+            *sorted(zip(starts, ends, wav_starts, wav_ends), key=lambda x: x[0])
+        )
+        bounds = []
+        current = (starts[0], ends[0], wav_starts[0], wav_ends[0])
+        for start, end, wav_start, wav_end in zip(
+            starts[1:], ends[1:], wav_starts[1:], wav_ends[1:]
+        ):
+            # If start is before current end, merge
+            if start <= current[1]:
+                current = (
+                    current[0],
+                    max(current[1], end),
+                    current[2],
+                    max(current[3], wav_end),
+                )
+            else:
+                bounds.append(current)
+                current = (start, end, wav_start, wav_end)
+        bounds.append(current)
+        time_bounds = [
+            sc.concat([start, end], dim='bound') for start, end, _, _ in bounds
+        ]
+        times = sc.concat(time_bounds, dim='subframe')
+        wav_bounds = [
+            sc.concat([wav_start, wav_end], dim='bound')
+            for _, _, wav_start, wav_end in bounds
+        ]
+        wavs = sc.concat(wav_bounds, dim='subframe')
+        return sc.Dataset({'time': times, 'wavelength': wavs})
+
 
 def draw_matplotlib(frames: List[Frame]) -> None:
     """Draw frames using matplotlib"""
+    import matplotlib.colors as mcolors
     import matplotlib.patches as patches
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots()
-    colors = [
-        'red',
-        'green',
-        'blue',
-        'cyan',
-        'magenta',
-        'orange',
-        'purple',
-        'brown',
-        'pink',
-    ]
+    colors = list(mcolors.TABLEAU_COLORS.values())
+    colors += colors
+    colors += colors
     max_time = 0
     max_wav = 0
     for frame, color in zip(frames, colors):
+        # Add label to legend
+        ax.plot([], [], color=color, label=f'{frame.distance.value:.2f} m')
         # All subframes have same color
         for subframe in frame.subframes:
             time_unit = subframe.time.unit
@@ -107,6 +205,7 @@ def draw_matplotlib(frames: List[Frame]) -> None:
     ax.set_ylabel(wav_unit)
     ax.set_xlim(0, max_time)
     ax.set_ylim(0, max_wav)
+    ax.legend(loc='best')
     return fig, ax
 
 
@@ -150,10 +249,13 @@ def chop(frame: Frame, chopper: Chopper) -> Frame:
     computes a new polygon that is the intersection of the frame and the chopper
     opening.
 
+    In practice a chopper may have multiple openings, so a frame may be chopped into a
+    number of subframes.
+
     Parameters
     ----------
     frame:
-        Input neutron pulse.
+        Input frame of neutrons.
     chopper:
         Chopper to apply.
 
@@ -178,14 +280,13 @@ def chop(frame: Frame, chopper: Chopper) -> Frame:
 def _chop(
     frame: Subframe, time: sc.Variable, close_to_open: bool
 ) -> Optional[Subframe]:
-    def inside(t):
-        return t >= time if close_to_open else t <= time
-
+    inside = frame.time >= time if close_to_open else frame.time <= time
     output = []
     for i in range(len(frame.time)):
+        # Note how j wraps around to 0
         j = (i + 1) % len(frame.time)
-        inside_i = inside(frame.time[i])
-        inside_j = inside(frame.time[j])
+        inside_i = inside[i]
+        inside_j = inside[j]
         if inside_i != inside_j:
             # Intersection
             t = (time - frame.time[i]) / (frame.time[j] - frame.time[i])
