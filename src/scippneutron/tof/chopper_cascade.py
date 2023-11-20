@@ -22,33 +22,6 @@ class Subframe:
     time: sc.Variable
     inverse_velocity: sc.Variable
 
-    def _repr_html_(self) -> str:
-        """
-        SVG representation of the frame, as a polygon.
-        """
-        min_time = self.time.min().value
-        max_time = self.time.max().value
-        min_inverse_velocity = self.inverse_velocity.min().value
-        max_inverse_velocity = self.inverse_velocity.max().value
-        dt = max_time - min_time
-        div = max_inverse_velocity - min_inverse_velocity
-        dt = 0.021
-        div = 0.01
-        return f"""
-        <svg viewBox="{0} {0} {div} {dt}" xmlns="http://www.w3.org/2000/svg">
-        {self.draw_polygon()}
-        </svg>
-        """
-
-    def draw_polygon(self, color: Optional[str] = None) -> str:
-        color = color or 'black'
-        points = ','.join(
-            f'{y},{x}' for x, y in zip(self.time.values, self.inverse_velocity.values)
-        )
-        return f"""
-            <polygon points="{points}" fill="{color}""/>
-        """
-
 
 @dataclass
 class Frame:
@@ -95,40 +68,7 @@ def draw_matplotlib(frames: List[Frame]) -> None:
     ax.set_ylabel(iv_unit)
     ax.set_xlim(0, max_time)
     ax.set_ylim(0, max_iv)
-    return plt
-
-
-def to_svg(
-    frames: List[Subframe], tmax: sc.Variable, ivmax: sc.Variable, scale=1
-) -> str:
-    from IPython.display import HTML, display
-
-    colors = [
-        'red',
-        'green',
-        'blue',
-        'yellow',
-        'cyan',
-        'magenta',
-        'orange',
-        'purple',
-        'brown',
-        'pink',
-    ]
-    svg = f"""
-    <svg viewBox="0 0 {tmax.value} {ivmax.value}" xmlns="http://www.w3.org/2000/svg">
-    {''.join(frame.draw_polygon(color) for frame, color in zip(frames, colors))}
-    </svg>
-    """
-    return display(
-        HTML(
-            f"""
-        <div style="width: {scale*100}%; overflow-x: auto; overflow-y: hidden;">
-            {svg}
-        </div>
-        """
-        )
-    )
+    return fig, ax
 
 
 @dataclass
