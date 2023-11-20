@@ -5,6 +5,8 @@
 Compute result of applying a chopper cascade to a neutron pulse at a time-of-flight
 neutron source.
 """
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -12,15 +14,49 @@ import numpy as np
 import scipp as sc
 
 
+def wavelength_to_inverse_velocity(wavelength):
+    h = sc.constants.h
+    m_n = sc.constants.m_n
+    return (wavelength * m_n / h).to(unit='s/m')
+
+
 @dataclass
 class Subframe:
     """
     Neutron "subframe" at a time-of-flight neutron source, described as the corners of a
-    polygon (initially a rectangle) in time and inverse velocity.
+    polygon (initially a rectangle) in time and wavelength.
     """
 
     time: sc.Variable
-    inverse_velocity: sc.Variable
+    wavelength: sc.Variable
+
+    def __init__(self, time: sc.Variable, wavelength: sc.Variable):
+        if time.sizes != wavelength.sizes:
+            raise ValueError(
+                f'Inconsistent dims or shape: {time.sizes} vs {wavelength.sizes}'
+            )
+        self.time = time.to(unit='s', copy=False)
+        self.wavelength = wavelength.to(unit='angstrom', copy=False)
+
+    def propagate(self, distance: sc.Variable) -> Subframe:
+        """
+        Propagate a neutron pulse by a new distance.
+
+        Parameters
+        ----------
+        distance:
+            Distance to propagate.
+
+        Returns
+        -------
+        :
+            Propagated subframe.
+        """
+        inverse_velocity = wavelength_to_inverse_velocity(self.wavelength)
+        return Subframe(
+            time=self.time + distance * inverse_velocity,
+            wavelength=self.wavelength,
+        )
 
 
 @dataclass
@@ -52,27 +88,25 @@ def draw_matplotlib(frames: List[Frame]) -> None:
         'pink',
     ]
     max_time = 0
-    max_iv = 0
+    max_wav = 0
     for frame, color in zip(frames, colors):
         # All subframes have same color
         for subframe in frame.subframes:
             time_unit = subframe.time.unit
-            iv_unit = subframe.inverse_velocity.unit
+            wav_unit = subframe.wavelength.unit
             max_time = max(max_time, subframe.time.max().value)
-            max_iv = max(max_iv, subframe.inverse_velocity.max().value)
+            max_wav = max(max_wav, subframe.wavelength.max().value)
             polygon = patches.Polygon(
-                np.stack(
-                    (subframe.time.values, subframe.inverse_velocity.values), axis=1
-                ),
+                np.stack((subframe.time.values, subframe.wavelength.values), axis=1),
                 closed=True,
                 fill=True,
                 color=color,
             )
             ax.add_patch(polygon)
     ax.set_xlabel(time_unit)
-    ax.set_ylabel(iv_unit)
+    ax.set_ylabel(wav_unit)
     ax.set_xlim(0, max_time)
-    ax.set_ylim(0, max_iv)
+    ax.set_ylim(0, max_wav)
     return fig, ax
 
 
@@ -102,13 +136,7 @@ def propagate(frame: Frame, distance: sc.Variable) -> Frame:
     delta = distance - frame.distance
     if delta.value < 0:
         raise ValueError(f'Cannot propagate backwards: {delta}')
-    subframes = [
-        Subframe(
-            time=subframe.time + delta * subframe.inverse_velocity,
-            inverse_velocity=subframe.inverse_velocity,
-        )
-        for subframe in frame.subframes
-    ]
+    subframes = [subframe.propagate(delta) for subframe in frame.subframes]
     return Frame(distance=distance, subframes=subframes)
 
 
@@ -161,12 +189,12 @@ def _chop(
         if inside_i != inside_j:
             # Intersection
             t = (time - frame.time[i]) / (frame.time[j] - frame.time[i])
-            v = (1 - t) * frame.inverse_velocity[i] + t * frame.inverse_velocity[j]
+            v = (1 - t) * frame.wavelength[i] + t * frame.wavelength[j]
             output.append((time, v))
         if inside_j:
-            output.append((frame.time[j], frame.inverse_velocity[j]))
+            output.append((frame.time[j], frame.wavelength[j]))
     if not output:
         return None
     time = sc.concat([t for t, _ in output], dim=frame.time.dim)
-    inverse_velocity = sc.concat([v for _, v in output], dim=frame.inverse_velocity.dim)
-    return Subframe(time=time, inverse_velocity=inverse_velocity)
+    wavelength = sc.concat([v for _, v in output], dim=frame.wavelength.dim)
+    return Subframe(time=time, wavelength=wavelength)
