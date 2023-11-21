@@ -324,6 +324,26 @@ def test_frame_chop_with_multi_slit_chopper_blind_slit() -> None:
     assert chopped == expected
 
 
+def test_frame_bounds_gives_global_min_and_max() -> None:
+    time = sc.array(dims=['vertex'], values=[0.0, 2.0, 4.0, 2.0], unit='s')
+    wavelength = sc.array(
+        dims=['vertex'], values=[10.0, 10.0, 20.0, 20.0], unit='angstrom'
+    )
+    subframe1 = chopper_cascade.Subframe(time=time, wavelength=wavelength)
+    subframe2 = chopper_cascade.Subframe(time=time * 2.0, wavelength=wavelength * 3.0)
+    frame = chopper_cascade.Frame(
+        distance=sc.scalar(1.0, unit='m'), subframes=[subframe1, subframe2]
+    )
+    bounds = frame.bounds()
+    assert_identical(
+        bounds['time'], sc.array(dims=['bound'], values=[0.0, 8.0], unit='s')
+    )
+    assert_identical(
+        bounds['wavelength'],
+        sc.array(dims=['bound'], values=[10.0, 60.0], unit='angstrom'),
+    )
+
+
 def test_frame_sequence_sets_up_rectangular_subframe() -> None:
     frames = chopper_cascade.FrameSequence(
         time_min=sc.scalar(0.0, unit='s'),

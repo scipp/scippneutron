@@ -189,20 +189,18 @@ class Frame:
                         chopped.subframes.append(tmp)
         return chopped
 
-    def frame_bounds(self) -> sc.Dataset:
+    def bounds(self) -> sc.DataGroup:
         """The bounds of the frame, i.e., the global min and max time and wavelength."""
         start = sc.reduce([sub.start_time for sub in self.subframes]).min()
         end = sc.reduce([sub.end_time for sub in self.subframes]).max()
         wav_start = sc.reduce([sub.start_wavelength for sub in self.subframes]).min()
         wav_end = sc.reduce([sub.end_wavelength for sub in self.subframes]).max()
-        return sc.Dataset(
-            {
-                'time': sc.concat([start, end], dim='bound'),
-                'wavelength': sc.concat([wav_start, wav_end], dim='bound'),
-            }
+        return sc.DataGroup(
+            time=sc.concat([start, end], dim='bound'),
+            wavelength=sc.concat([wav_start, wav_end], dim='bound'),
         )
 
-    def subframe_bounds(self) -> sc.Dataset:
+    def subbounds(self) -> sc.DataGroup:
         """
         The bounds of the subframes, defined as the union over subframes.
 
@@ -247,13 +245,14 @@ class Frame:
         time_bounds = [
             sc.concat([start, end], dim='bound') for start, end, _, _ in bounds
         ]
-        times = sc.concat(time_bounds, dim='subframe')
         wav_bounds = [
             sc.concat([wav_start, wav_end], dim='bound')
             for _, _, wav_start, wav_end in bounds
         ]
-        wavs = sc.concat(wav_bounds, dim='subframe')
-        return sc.Dataset({'time': times, 'wavelength': wavs})
+        return sc.DataGroup(
+            time=sc.concat(time_bounds, dim='subframe'),
+            wavelength=sc.concat(wav_bounds, dim='subframe'),
+        )
 
 
 class FrameSequence:
