@@ -207,7 +207,7 @@ class Frame:
         This function is to some extent experimental: It is not clear if taking the
         union of overlapping subframes has any utility in practice, since this may
         simply indicate a problem with the chopper cascade. Attempts to handle this
-        automatically may be misleading.
+        automatically may be misguided.
         """
         starts = [subframe.start_time for subframe in self.subframes]
         ends = [subframe.end_time for subframe in self.subframes]
