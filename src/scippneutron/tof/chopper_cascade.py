@@ -44,15 +44,11 @@ def propagate_times(
     return time + distance * inverse_velocity
 
 
-@dataclass
 class Subframe:
     """
     Neutron "subframe" at a time-of-flight neutron source, described as the corners of a
     polygon (initially a rectangle) in time and wavelength.
     """
-
-    time: sc.Variable
-    wavelength: sc.Variable
 
     def __init__(self, time: sc.Variable, wavelength: sc.Variable):
         if time.sizes != wavelength.sizes:
