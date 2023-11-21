@@ -62,6 +62,13 @@ class Subframe:
         self.time = time.to(unit='s', copy=False)
         self.wavelength = wavelength.to(unit='angstrom', copy=False)
 
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Subframe):
+            return NotImplemented
+        return sc.identical(self.time, other.time) and sc.identical(
+            self.wavelength, other.wavelength
+        )
+
     def is_regular(self) -> bool:
         """
         Return True if the subframe is regular, i.e., if the vertex with the minimum
@@ -358,13 +365,13 @@ def _chop(
         j = (i + 1) % len(frame.time)
         inside_i = inside[i]
         inside_j = inside[j]
+        if inside_i:
+            output.append((frame.time[i], frame.wavelength[i]))
         if inside_i != inside_j:
             # Intersection
             t = (time - frame.time[i]) / (frame.time[j] - frame.time[i])
             v = (1 - t) * frame.wavelength[i] + t * frame.wavelength[j]
             output.append((time, v))
-        if inside_j:
-            output.append((frame.time[j], frame.wavelength[j]))
     if not output:
         return None
     time = sc.concat([t for t, _ in output], dim=frame.time.dim)

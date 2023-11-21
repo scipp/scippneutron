@@ -100,3 +100,115 @@ def test_subframe_start_end_properties() -> None:
     assert_identical(subframe.end_time, sc.scalar(0.003, unit='s'))
     assert_identical(subframe.start_wavelength, sc.scalar(10.0, unit='angstrom'))
     assert_identical(subframe.end_wavelength, sc.scalar(21.0, unit='angstrom'))
+
+
+@pytest.fixture
+def frame() -> chopper_cascade.Frame:
+    time = sc.array(dims=['vertex'], values=[0.0, 1.0, 3.0, 2.0], unit='ms')
+    wavelength = sc.array(dims=['vertex'], values=[1.0, 1.1, 2.1, 2.0], unit='nm')
+    subframe1 = chopper_cascade.Subframe(time=time, wavelength=wavelength)
+    subframe2 = chopper_cascade.Subframe(time=time * 2.0, wavelength=wavelength * 3.0)
+    return chopper_cascade.Frame(
+        distance=sc.scalar(1.0, unit='m'), subframes=[subframe1, subframe2]
+    )
+
+
+def test_frame_propagate_to(frame: chopper_cascade.Frame) -> None:
+    # Propagate to same distance as frame distance, i.e., no propagation
+    distance = sc.scalar(1.0, unit='m')
+    propagated = frame.propagate_to(distance)
+    assert propagated.distance == distance
+    assert propagated == frame
+    distance = sc.scalar(2.0, unit='m')
+    propagated = frame.propagate_to(distance)
+    assert propagated.distance == distance
+    assert (propagated.subframes[0].time > frame.subframes[0].time).all()
+    assert (propagated.subframes[1].time > frame.subframes[1].time).all()
+    # Wavelengths are unaffected by propagation
+    assert_identical(propagated.subframes[0].wavelength, frame.subframes[0].wavelength)
+    assert_identical(propagated.subframes[1].wavelength, frame.subframes[1].wavelength)
+
+
+def test_frame_propagate_to_works_with_empty_frame() -> None:
+    frame = chopper_cascade.Frame(distance=sc.scalar(1.0, unit='m'), subframes=[])
+    distance = sc.scalar(2.0, unit='m')
+    propagated = frame.propagate_to(distance)
+    assert_identical(propagated.distance, distance)
+    assert propagated.subframes == []
+
+
+def test_frame_chop_with_no_effect(frame: chopper_cascade.Frame) -> None:
+    # Chopper is open for a long time, it should have no effect
+    chopper = chopper_cascade.Chopper(
+        distance=frame.distance,
+        time_open=sc.array(dims=['slit'], values=[0.0], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[1.0], unit='s'),
+    )
+    assert frame.chop(chopper) == frame
+
+
+def test_frame_chop_works_with_empty_frame() -> None:
+    frame = chopper_cascade.Frame(distance=sc.scalar(1.0, unit='m'), subframes=[])
+    chopper = chopper_cascade.Chopper(
+        distance=frame.distance * 1.5,
+        time_open=sc.array(dims=['slit'], values=[0.0], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[1.0], unit='s'),
+    )
+    chopped = frame.chop(chopper)
+    assert_identical(chopped.distance, chopper.distance)
+    assert chopped.subframes == []
+
+
+def test_frame_chop_returns_frame_with_distance_set_to_chopper_distance(
+    frame: chopper_cascade.Frame,
+) -> None:
+    chopper = chopper_cascade.Chopper(
+        distance=sc.scalar(2.0, unit='m'),
+        time_open=sc.array(dims=['slit'], values=[0.0], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[1.0], unit='s'),
+    )
+    chopped = frame.chop(chopper)
+    assert_identical(chopped.distance, chopper.distance)
+
+
+def test_frame_chop_raises_if_chopper_distance_is_less_than_frame_distance(
+    frame: chopper_cascade.Frame,
+) -> None:
+    chopper = chopper_cascade.Chopper(
+        distance=sc.scalar(0.9, unit='m'),
+        time_open=sc.array(dims=['slit'], values=[0.0], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[1.0], unit='s'),
+    )
+    with pytest.raises(ValueError):
+        frame.chop(chopper)
+
+
+def test_frame_chop_trims_subframes() -> None:
+    time = sc.array(dims=['vertex'], values=[0.0, 2.0, 4.0, 2.0], unit='s')
+    wavelength = sc.array(
+        dims=['vertex'], values=[10.0, 10.0, 20.0, 20.0], unit='angstrom'
+    )
+    subframe = chopper_cascade.Subframe(time=time, wavelength=wavelength)
+    frame = chopper_cascade.Frame(
+        distance=sc.scalar(1.0, unit='m'), subframes=[subframe, subframe]
+    )
+    chopper = chopper_cascade.Chopper(
+        distance=frame.distance,
+        time_open=sc.array(dims=['slit'], values=[1.0], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[6.0], unit='s'),
+    )
+    chopped = frame.chop(chopper)
+    expected_time = sc.array(
+        dims=['vertex'], values=[1.0, 2.0, 4.0, 2.0, 1.0], unit='s'
+    )
+    # The 15 is from the cut of the line from (2, 20) to (0, 10) in at t=1
+    expected_wavelength = sc.array(
+        dims=['vertex'], values=[10.0, 10.0, 20.0, 20.0, 15.0], unit='angstrom'
+    )
+    expected_subframe = chopper_cascade.Subframe(
+        time=expected_time, wavelength=expected_wavelength
+    )
+    expected = chopper_cascade.Frame(
+        distance=frame.distance, subframes=[expected_subframe, expected_subframe]
+    )
+    assert chopped == expected
