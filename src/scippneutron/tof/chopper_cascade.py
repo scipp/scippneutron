@@ -56,7 +56,7 @@ class Subframe:
 
     def __init__(self, time: sc.Variable, wavelength: sc.Variable):
         if time.sizes != wavelength.sizes:
-            raise ValueError(
+            raise sc.DimensionError(
                 f'Inconsistent dims or shape: {time.sizes} vs {wavelength.sizes}'
             )
         self.time = time.to(unit='s', copy=False)
