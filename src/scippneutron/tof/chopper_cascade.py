@@ -62,6 +62,20 @@ class Subframe:
         self.time = time.to(unit='s', copy=False)
         self.wavelength = wavelength.to(unit='angstrom', copy=False)
 
+    def is_regular(self) -> bool:
+        """
+        Return True if the subframe is regular, i.e., if the vertex with the minimum
+        wavelength also has the minimum time, and the vertex with the maximum wavelength
+        also has the maximum time.
+        """
+        min_time = self.time == self.time.min()
+        min_wavelength = self.wavelength == self.wavelength.min()
+        max_time = self.time == self.time.max()
+        max_wavelength = self.wavelength == self.wavelength.max()
+        coinciding_min = min_time & min_wavelength
+        coinciding_max = max_time & max_wavelength
+        return coinciding_min.any() and coinciding_max.any()
+
     def propagate_by(self, distance: sc.Variable) -> Subframe:
         """
         Propagate subframe by a distance.
@@ -193,7 +207,13 @@ class Frame:
         ends = [subframe.end_time for subframe in self.subframes]
         # Given how time-propagation and chopping works, the min wavelength is always
         # given by the same vertex as the min time, and the max wavelength by the same
-        # vertex as the max time.
+        # vertex as the max time. Thus, this check should generally always pass.
+        # Exceptions may be subframes that have been created manually.
+        if not all(subframe.is_regular() for subframe in self.subframes):
+            raise NotImplementedError(
+                'Subframes must be regular, i.e., min/max time and wavelength must '
+                'coincide.'
+            )
         wav_starts = [subframe.start_wavelength for subframe in self.subframes]
         wav_ends = [subframe.end_wavelength for subframe in self.subframes]
         # sort by start
