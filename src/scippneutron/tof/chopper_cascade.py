@@ -256,6 +256,10 @@ class FrameSequence:
             )
         ]
 
+    def __getitem__(self, item: int) -> Frame:
+        """Get a frame by index."""
+        return self._frames[item]
+
     def propagate_to(self, distance: sc.Variable) -> None:
         """
         Propagate the frame sequence to a distance, adding a new frame.
