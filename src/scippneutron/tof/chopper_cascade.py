@@ -112,6 +112,61 @@ class Frame:
     distance: sc.Variable
     subframes: List[Subframe]
 
+    def propagate(self, distance: sc.Variable) -> Frame:
+        """
+        Compute new frame by propagating by a distance.
+
+        Parameters
+        ----------
+        distance:
+            New distance.
+
+        Returns
+        -------
+        :
+            Propagated frame.
+        """
+        delta = distance - self.distance
+        if delta.value < 0:
+            raise ValueError(f'Cannot propagate backwards: {delta}')
+        subframes = [subframe.propagate(delta) for subframe in self.subframes]
+        return Frame(distance=distance, subframes=subframes)
+
+    def chop(self, chopper: Chopper) -> Frame:
+        """
+        Compute a new frame by applying a chopper.
+
+        A frame is a polygon in time and wavelength. Its initial shape is distorted
+        by propagation to the chopper. The chopper then cuts off the parts of the frame
+        that is outside of the chopper opening. Here we apply and algorithm that
+        computes a new polygon that is the intersection of the frame and the chopper
+        opening.
+
+        In practice a chopper may have multiple openings, so a frame may be chopped into
+        a number of subframes.
+
+        Parameters
+        ----------
+        chopper:
+            Chopper to apply.
+
+        Returns
+        -------
+        :
+            Chopped frame.
+        """
+        frame = self.propagate(chopper.distance)
+
+        # A chopper can have multiple openings, call _chop for each of them. The result
+        # is the union of the resulting subframes.
+        chopped = Frame(distance=frame.distance, subframes=[])
+        for subframe in frame.subframes:
+            for open, close in zip(chopper.time_open, chopper.time_close):
+                if (tmp := _chop(subframe, open, close_to_open=True)) is not None:
+                    if (tmp := _chop(tmp, close, close_to_open=False)) is not None:
+                        chopped.subframes.append(tmp)
+        return chopped
+
     def frame_bounds(self) -> sc.Dataset:
         """The bounds of the frame, i.e., the global min and max time and wavelength."""
         start = sc.reduce([sub.start_time for sub in self.subframes]).min()
@@ -173,6 +228,55 @@ class Frame:
         return sc.Dataset({'time': times, 'wavelength': wavs})
 
 
+class FrameSequence:
+    def __init__(
+        self,
+        time_min: sc.Variable,
+        time_max: sc.Variable,
+        wavelength_min: sc.Variable,
+        wavelength_max: sc.Variable,
+    ):
+        """
+        Initialize a frame sequence from min/max time and wavelength of a pulse.
+
+        The distance is set to 0 m.
+        """
+        time = sc.concat([time_min, time_max, time_max, time_min], dim='vertex')
+        wavelength = sc.concat(
+            [wavelength_min, wavelength_min, wavelength_max, wavelength_max],
+            dim='vertex',
+        )
+        self._frames = [
+            Frame(
+                distance=sc.scalar(0, 'm'),
+                subframes=[Subframe(time=time, wavelength=wavelength)],
+            )
+        ]
+
+    def propagate(self, distance: sc.Variable) -> None:
+        """
+        Propagate the frame sequence by a distance, adding a new frame.
+
+        Parameters
+        ----------
+        distance:
+            Distance to propagate.
+        """
+        self._frames.append(self._frames[-1].propagate(distance))
+
+    def chop(self, choppers: List[Chopper]) -> None:
+        """
+        Chop the frame sequence by a list of choppers.
+
+        Parameters
+        ----------
+        choppers:
+            List of choppers.
+        """
+        for chopper in choppers:
+            self._frames.append(self._frames[-1].chop(chopper))
+
+
 def draw_matplotlib(frames: List[Frame]) -> None:
     """Draw frames using matplotlib"""
     import matplotlib.colors as mcolors
@@ -214,67 +318,6 @@ class Chopper:
     distance: sc.Variable
     time_open: sc.Variable
     time_close: sc.Variable
-
-
-def propagate(frame: Frame, distance: sc.Variable) -> Frame:
-    """
-    Propagate a neutron pulse to a new distance.
-
-    Parameters
-    ----------
-    frame:
-        Input frame.
-    distance:
-        New distance.
-
-    Returns
-    -------
-    :
-        Propagated frame.
-    """
-    delta = distance - frame.distance
-    if delta.value < 0:
-        raise ValueError(f'Cannot propagate backwards: {delta}')
-    subframes = [subframe.propagate(delta) for subframe in frame.subframes]
-    return Frame(distance=distance, subframes=subframes)
-
-
-def chop(frame: Frame, chopper: Chopper) -> Frame:
-    """
-    Apply a chopper to a neutron frame.
-
-    A frame is a polygon in time and inverse velocity. Its initial shape is distorted
-    by propagation to the chopper. The chopper then cuts off the parts of the frame
-    that is outside of the chopper opening. Here we apply and algorithm that
-    computes a new polygon that is the intersection of the frame and the chopper
-    opening.
-
-    In practice a chopper may have multiple openings, so a frame may be chopped into a
-    number of subframes.
-
-    Parameters
-    ----------
-    frame:
-        Input frame of neutrons.
-    chopper:
-        Chopper to apply.
-
-    Returns
-    -------
-    :
-        Chopped frame.
-    """
-    frame = propagate(frame, chopper.distance)
-
-    # A chopper can have multiple openings, call _chop for each of them. The result
-    # is the union of the resulting subframes.
-    chopped = Frame(distance=frame.distance, subframes=[])
-    for subframe in frame.subframes:
-        for open, close in zip(chopper.time_open, chopper.time_close):
-            if (tmp := _chop(subframe, open, close_to_open=True)) is not None:
-                if (tmp := _chop(tmp, close, close_to_open=False)) is not None:
-                    chopped.subframes.append(tmp)
-    return chopped
 
 
 def _chop(
