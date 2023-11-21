@@ -147,6 +147,20 @@ def test_frame_chop_with_no_effect(frame: chopper_cascade.Frame) -> None:
     assert frame.chop(chopper) == frame
 
 
+def test_frame_chop_returns_empty_frame_if_chopper_is_closed(
+    frame: chopper_cascade.Frame,
+) -> None:
+    # Chopper is closed during entire arrival time of neutrons
+    chopper = chopper_cascade.Chopper(
+        distance=frame.distance * 1.0,
+        time_open=sc.array(dims=['slit'], values=[1.0], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[2.0], unit='s'),
+    )
+    chopped = frame.chop(chopper)
+    assert chopped.distance == chopper.distance
+    assert len(chopped.subframes) == 0
+
+
 def test_frame_chop_works_with_empty_frame() -> None:
     frame = chopper_cascade.Frame(distance=sc.scalar(1.0, unit='m'), subframes=[])
     chopper = chopper_cascade.Chopper(
@@ -183,7 +197,7 @@ def test_frame_chop_raises_if_chopper_distance_is_less_than_frame_distance(
         frame.chop(chopper)
 
 
-def test_frame_chop_trims_subframes() -> None:
+def test_frame_chop_trims_subframes_using_chopper_open() -> None:
     time = sc.array(dims=['vertex'], values=[0.0, 2.0, 4.0, 2.0], unit='s')
     wavelength = sc.array(
         dims=['vertex'], values=[10.0, 10.0, 20.0, 20.0], unit='angstrom'
@@ -212,3 +226,166 @@ def test_frame_chop_trims_subframes() -> None:
         distance=frame.distance, subframes=[expected_subframe, expected_subframe]
     )
     assert chopped == expected
+
+
+def test_frame_chop_trims_subframes_using_chopper_close() -> None:
+    time = sc.array(dims=['vertex'], values=[0.0, 2.0, 4.0, 2.0], unit='s')
+    wavelength = sc.array(
+        dims=['vertex'], values=[10.0, 10.0, 20.0, 20.0], unit='angstrom'
+    )
+    subframe = chopper_cascade.Subframe(time=time, wavelength=wavelength)
+    frame = chopper_cascade.Frame(
+        distance=sc.scalar(1.0, unit='m'), subframes=[subframe, subframe]
+    )
+    chopper = chopper_cascade.Chopper(
+        distance=frame.distance,
+        time_open=sc.array(dims=['slit'], values=[0.0], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[3.0], unit='s'),
+    )
+    chopped = frame.chop(chopper)
+    expected_time = sc.array(
+        dims=['vertex'], values=[0.0, 2.0, 3.0, 3.0, 2.0], unit='s'
+    )
+    # The 15 is from the cut of the line from (2, 10) to (4, 20) in at t=1
+    expected_wavelength = sc.array(
+        dims=['vertex'], values=[10.0, 10.0, 15.0, 20.0, 20.0], unit='angstrom'
+    )
+    expected_subframe = chopper_cascade.Subframe(
+        time=expected_time, wavelength=expected_wavelength
+    )
+    expected = chopper_cascade.Frame(
+        distance=frame.distance, subframes=[expected_subframe, expected_subframe]
+    )
+    assert chopped == expected
+
+
+def test_frame_chop_with_multi_slit_chopper_splits_subframes() -> None:
+    time = sc.array(dims=['vertex'], values=[0.0, 2.0, 4.0, 2.0], unit='s')
+    wavelength = sc.array(
+        dims=['vertex'], values=[10.0, 10.0, 20.0, 20.0], unit='angstrom'
+    )
+    subframe = chopper_cascade.Subframe(time=time, wavelength=wavelength)
+    frame = chopper_cascade.Frame(
+        distance=sc.scalar(1.0, unit='m'), subframes=[subframe, subframe]
+    )
+    chopper = chopper_cascade.Chopper(
+        distance=frame.distance,
+        time_open=sc.array(dims=['slit'], values=[0.0, 3.0], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[1.0, 4.0], unit='s'),
+    )
+    time_left = sc.array(dims=['vertex'], values=[0.0, 1.0, 1.0], unit='s')
+    time_right = sc.array(dims=['vertex'], values=[3.0, 4.0, 3.0], unit='s')
+    wavelength_left = sc.array(
+        dims=['vertex'], values=[10.0, 10.0, 15.0], unit='angstrom'
+    )
+    wavelength_right = sc.array(
+        dims=['vertex'], values=[15.0, 20.0, 20.0], unit='angstrom'
+    )
+    expected_subframe_left = chopper_cascade.Subframe(
+        time=time_left, wavelength=wavelength_left
+    )
+    expected_subframe_right = chopper_cascade.Subframe(
+        time=time_right, wavelength=wavelength_right
+    )
+    expected = chopper_cascade.Frame(
+        distance=frame.distance,
+        subframes=[
+            expected_subframe_left,
+            expected_subframe_right,
+            expected_subframe_left,
+            expected_subframe_right,
+        ],
+    )
+    assert frame.chop(chopper) == expected
+
+
+def test_frame_chop_with_multi_slit_chopper_blind_slit() -> None:
+    time = sc.array(dims=['vertex'], values=[0.0, 2.0, 4.0, 2.0], unit='s')
+    wavelength = sc.array(
+        dims=['vertex'], values=[10.0, 10.0, 20.0, 20.0], unit='angstrom'
+    )
+    subframe = chopper_cascade.Subframe(time=time, wavelength=wavelength)
+    frame = chopper_cascade.Frame(
+        distance=sc.scalar(1.0, unit='m'), subframes=[subframe, subframe]
+    )
+    # The second slit opens after all neutrons have passed, it will have no effect.
+    chopper = chopper_cascade.Chopper(
+        distance=frame.distance,
+        time_open=sc.array(dims=['slit'], values=[0.0, 5.0], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[3.0, 6.0], unit='s'),
+    )
+    chopped = frame.chop(chopper)
+    equivalent_single_slit_chopper = chopper_cascade.Chopper(
+        distance=frame.distance,
+        time_open=sc.array(dims=['slit'], values=[0.0], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[3.0], unit='s'),
+    )
+    expected = frame.chop(equivalent_single_slit_chopper)
+    assert chopped == expected
+
+
+def test_frame_sequence_sets_up_rectangular_subframe() -> None:
+    frames = chopper_cascade.FrameSequence(
+        time_min=sc.scalar(0.0, unit='s'),
+        time_max=sc.scalar(1.0, unit='s'),
+        wavelength_min=sc.scalar(1.0, unit='angstrom'),
+        wavelength_max=sc.scalar(2.0, unit='angstrom'),
+    )
+    expected = chopper_cascade.Frame(
+        distance=sc.scalar(0.0, unit='m'),
+        subframes=[
+            chopper_cascade.Subframe(
+                time=sc.array(dims=['vertex'], values=[0.0, 1.0, 1.0, 0.0], unit='s'),
+                wavelength=sc.array(
+                    dims=['vertex'], values=[1.0, 1.0, 2.0, 2.0], unit='angstrom'
+                ),
+            )
+        ],
+    )
+    assert len(frames) == 1
+    assert frames[0] == expected
+
+
+@pytest.fixture
+def source_frame_sequence() -> chopper_cascade.FrameSequence:
+    return chopper_cascade.FrameSequence(
+        time_min=sc.scalar(0.0, unit='ms'),
+        time_max=sc.scalar(1.0, unit='ms'),
+        wavelength_min=sc.scalar(1.0, unit='angstrom'),
+        wavelength_max=sc.scalar(10.0, unit='angstrom'),
+    )
+
+
+def test_frame_sequence_propagate_to_adds_propagated_frame(
+    source_frame_sequence: chopper_cascade.FrameSequence,
+) -> None:
+    frames = source_frame_sequence
+    distance = sc.scalar(1.5, unit='m')
+    frames.propagate_to(distance)
+    assert len(frames) == 2
+    assert frames[1] == frames[0].propagate_to(distance)
+    frames.propagate_to(distance * 2)
+    assert len(frames) == 3
+    assert frames[2] == frames[0].propagate_to(distance * 2)
+    assert frames[2] == frames[1].propagate_to(distance * 2)
+
+
+def test_frame_sequence_chop_adds_chopped_frames(
+    source_frame_sequence: chopper_cascade.FrameSequence,
+) -> None:
+    frames = source_frame_sequence
+    chopper1 = chopper_cascade.Chopper(
+        distance=sc.scalar(1.5, unit='m'),
+        time_open=sc.array(dims=['slit'], values=[0.0], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[0.001], unit='s'),
+    )
+    chopper2 = chopper_cascade.Chopper(
+        distance=sc.scalar(2.5, unit='m'),
+        time_open=sc.array(dims=['slit'], values=[0.001], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[0.003], unit='s'),
+    )
+    frames.chop([chopper1, chopper2])
+    assert len(frames) == 3  # source + 2 choppers
+    assert len(frames[2].subframes) == 1  # something makes it through
+    assert frames[0].chop(chopper1) == frames[1]
+    assert frames[1].chop(chopper2) == frames[2]

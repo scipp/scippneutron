@@ -283,6 +283,10 @@ class FrameSequence:
             )
         ]
 
+    def __len__(self) -> int:
+        """Number of frames."""
+        return len(self._frames)
+
     def __getitem__(self, item: int) -> Frame:
         """Get a frame by index."""
         return self._frames[item]
