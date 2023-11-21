@@ -48,8 +48,13 @@ def _write_loop(f, name: str, da: Union[sc.Dataset, sc.DataArray]) -> None:
 def _format_value(value: Any) -> str:
     if isinstance(value, sc.Variable):
         without_unit = sc.scalar(value.value, variance=value.variance)
-        return f'{without_unit:c}'
-    return str(value)
+        s = f'{without_unit:c}'
+    else:
+        s = str(value)
+
+    if ' ' in s:
+        return f'"{s}"'
+    return s
 
 
 def _write_key_value_pairs(f, name: str, pairs: Mapping[str, Any]) -> None:

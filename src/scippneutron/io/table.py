@@ -14,8 +14,8 @@ def serialize_to_table(
 ) -> Generator[Tuple[str, ...], None, None]:
     headers, columns = _select_columns(data, units=units)
     yield headers
-    # Objects without ndim are scalar (e.g. str)
-    if getattr(columns[0], 'ndim', 0) == 0:
+
+    if data.ndim == 0:
         yield tuple(map(_scalar_to_str, columns))
     else:
         for row in zip(*columns):

@@ -6,6 +6,7 @@ import scipp as sc
 from scippneutron.io.table import serialize_to_table
 
 
+# TODO
 def test_asd():
     da = sc.DataArray(-sc.arange('x', 5), coords={'x': sc.arange('x', 5, unit='m')})
     print(list(serialize_to_table(da, units=False)))
