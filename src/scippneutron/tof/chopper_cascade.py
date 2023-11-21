@@ -8,7 +8,7 @@ neutron source.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
 import scipp as sc
@@ -62,14 +62,15 @@ class Subframe:
         self.time = time.to(unit='s', copy=False)
         self.wavelength = wavelength.to(unit='angstrom', copy=False)
 
-    def propagate(self, distance: sc.Variable) -> Subframe:
+    def propagate_by(self, distance: sc.Variable) -> Subframe:
         """
         Propagate subframe by a distance.
 
         Parameters
         ----------
         distance:
-            Distance to propagate.
+            Distance to propagate. Note that this is a difference, not an absolute
+            value, in contrast to the distance in :py:meth:`Frame.propagate_to`.
 
         Returns
         -------
@@ -112,9 +113,9 @@ class Frame:
     distance: sc.Variable
     subframes: List[Subframe]
 
-    def propagate(self, distance: sc.Variable) -> Frame:
+    def propagate_to(self, distance: sc.Variable) -> Frame:
         """
-        Compute new frame by propagating by a distance.
+        Compute new frame by propagating to a distance.
 
         Parameters
         ----------
@@ -129,7 +130,7 @@ class Frame:
         delta = distance - self.distance
         if delta.value < 0:
             raise ValueError(f'Cannot propagate backwards: {delta}')
-        subframes = [subframe.propagate(delta) for subframe in self.subframes]
+        subframes = [subframe.propagate_by(delta) for subframe in self.subframes]
         return Frame(distance=distance, subframes=subframes)
 
     def chop(self, chopper: Chopper) -> Frame:
@@ -155,7 +156,7 @@ class Frame:
         :
             Chopped frame.
         """
-        frame = self.propagate(chopper.distance)
+        frame = self.propagate_to(chopper.distance)
 
         # A chopper can have multiple openings, call _chop for each of them. The result
         # is the union of the resulting subframes.
@@ -241,28 +242,30 @@ class FrameSequence:
 
         The distance is set to 0 m.
         """
-        time = sc.concat([time_min, time_max, time_max, time_min], dim='vertex')
+        time = sc.concat([time_min, time_max, time_max, time_min], dim='vertex').to(
+            unit='s'
+        )
         wavelength = sc.concat(
             [wavelength_min, wavelength_min, wavelength_max, wavelength_max],
             dim='vertex',
-        )
+        ).to(unit='angstrom')
         self._frames = [
             Frame(
-                distance=sc.scalar(0, 'm'),
+                distance=sc.scalar(0, unit='m'),
                 subframes=[Subframe(time=time, wavelength=wavelength)],
             )
         ]
 
-    def propagate(self, distance: sc.Variable) -> None:
+    def propagate_to(self, distance: sc.Variable) -> None:
         """
-        Propagate the frame sequence by a distance, adding a new frame.
+        Propagate the frame sequence to a distance, adding a new frame.
 
         Parameters
         ----------
         distance:
             Distance to propagate.
         """
-        self._frames.append(self._frames[-1].propagate(distance))
+        self._frames.append(self._frames[-1].propagate_to(distance))
 
     def chop(self, choppers: List[Chopper]) -> None:
         """
@@ -276,41 +279,42 @@ class FrameSequence:
         for chopper in choppers:
             self._frames.append(self._frames[-1].chop(chopper))
 
+    def draw(self) -> Any:
+        """Draw frames using matplotlib"""
+        import matplotlib.colors as mcolors
+        import matplotlib.patches as patches
+        import matplotlib.pyplot as plt
 
-def draw_matplotlib(frames: List[Frame]) -> None:
-    """Draw frames using matplotlib"""
-    import matplotlib.colors as mcolors
-    import matplotlib.patches as patches
-    import matplotlib.pyplot as plt
-
-    fig, ax = plt.subplots()
-    colors = list(mcolors.TABLEAU_COLORS.values())
-    colors += colors
-    colors += colors
-    max_time = 0
-    max_wav = 0
-    for frame, color in zip(frames, colors):
-        # Add label to legend
-        ax.plot([], [], color=color, label=f'{frame.distance.value:.2f} m')
-        # All subframes have same color
-        for subframe in frame.subframes:
-            time_unit = subframe.time.unit
-            wav_unit = subframe.wavelength.unit
-            max_time = max(max_time, subframe.time.max().value)
-            max_wav = max(max_wav, subframe.wavelength.max().value)
-            polygon = patches.Polygon(
-                np.stack((subframe.time.values, subframe.wavelength.values), axis=1),
-                closed=True,
-                fill=True,
-                color=color,
-            )
-            ax.add_patch(polygon)
-    ax.set_xlabel(time_unit)
-    ax.set_ylabel(wav_unit)
-    ax.set_xlim(0, max_time)
-    ax.set_ylim(0, max_wav)
-    ax.legend(loc='best')
-    return fig, ax
+        fig, ax = plt.subplots()
+        colors = list(mcolors.TABLEAU_COLORS.values())
+        colors += colors
+        colors += colors
+        max_time = 0
+        max_wav = 0
+        for frame, color in zip(self._frames, colors):
+            # Add label to legend
+            ax.plot([], [], color=color, label=f'{frame.distance.value:.2f} m')
+            # All subframes have same color
+            for subframe in frame.subframes:
+                time_unit = subframe.time.unit
+                wav_unit = subframe.wavelength.unit
+                max_time = max(max_time, subframe.time.max().value)
+                max_wav = max(max_wav, subframe.wavelength.max().value)
+                polygon = patches.Polygon(
+                    np.stack(
+                        (subframe.time.values, subframe.wavelength.values), axis=1
+                    ),
+                    closed=True,
+                    fill=True,
+                    color=color,
+                )
+                ax.add_patch(polygon)
+        ax.set_xlabel(time_unit)
+        ax.set_ylabel(wav_unit)
+        ax.set_xlim(0, max_time)
+        ax.set_ylim(0, max_wav)
+        ax.legend(loc='best')
+        return fig, ax
 
 
 @dataclass
