@@ -328,10 +328,35 @@ class FrameSequence:
         self,
         linewidth: Union[int, float] = 0,
         fill: bool = True,
-        alpha: float = 0.9,
+        alpha: Optional[float] = None,
         transpose: bool = False,
+        colors: Optional[List[str]] = None,
+        grid: bool = True,
+        time_unit: str = 'ms',
+        wavelength_unit: str = 'angstrom',
     ) -> Any:
-        """Draw frames using matplotlib"""
+        """
+        Draw frames using matplotlib.
+
+        Parameters
+        ----------
+        linewidth:
+            Line width of frame edges.
+        fill:
+            Fill frame with color.
+        alpha:
+            Transparency of frame.
+        transpose:
+            Transpose axes.
+        colors:
+            List of colors to use for frames. If None, use default matplotlib colors.
+        grid:
+            Show grid.
+        time_unit:
+            Unit for time axis. Default is ms.
+        wavelength_unit:
+            Unit for wavelength axis. Default is angstrom.
+        """
         import matplotlib.colors as mcolors
         import matplotlib.patches as patches
         import matplotlib.pyplot as plt
@@ -340,12 +365,12 @@ class FrameSequence:
         x_max = 0
         y_max = 0
         for i, frame in enumerate(self._frames):
-            color = f'C{i}'
+            color = colors[i] if colors else f'C{i}'
             # Add label to legend
             ax.plot([], [], color=color, label=f'{frame.distance:c}')
             # All subframes have same color
             for subframe in frame.subframes:
-                x = subframe.time
+                x = subframe.time.to(unit=time_unit, copy=False)
                 y = subframe.wavelength
                 if transpose:
                     x, y = y, x
@@ -353,12 +378,13 @@ class FrameSequence:
                 y_unit = y.unit
                 x_max = max(x_max, x.max().value)
                 y_max = max(y_max, y.max().value)
-                transparent_color = mcolors.to_rgba(color, alpha=alpha)
+                if alpha:
+                    color = mcolors.to_rgba(color, alpha=alpha)
                 polygon = patches.Polygon(
                     np.stack((x.values, y.values), axis=1),
                     closed=True,
                     fill=fill,
-                    color=transparent_color,
+                    color=color,
                     linewidth=linewidth,
                 )
                 ax.add_patch(polygon)
@@ -366,6 +392,10 @@ class FrameSequence:
         ax.set_ylabel(y_unit)
         ax.set_xlim(0, x_max)
         ax.set_ylim(0, y_max)
+        ax.minorticks_on()
+        if grid:
+            ax.grid(True, linestyle='-', linewidth='0.5', color='gray')
+            ax.grid(which='minor', linestyle=':', linewidth='0.5', color='gray')
         ax.legend(loc='best')
         return fig, ax
 
