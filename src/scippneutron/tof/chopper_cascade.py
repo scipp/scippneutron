@@ -145,8 +145,6 @@ class Frame:
             Propagated frame.
         """
         delta = distance - self.distance
-        if delta.value < 0:
-            raise ValueError(f'Cannot propagate backwards: {delta}')
         subframes = [subframe.propagate_by(delta) for subframe in self.subframes]
         return Frame(distance=distance, subframes=subframes)
 
@@ -173,6 +171,11 @@ class Frame:
         :
             Chopped frame.
         """
+        if chopper.distance < self.distance:
+            raise ValueError(
+                f'Chopper distance {chopper.distance} is smaller than frame distance '
+                f'{self.distance}'
+            )
         frame = self.propagate_to(chopper.distance)
 
         # A chopper can have multiple openings, call _chop for each of them. The result
@@ -222,33 +225,40 @@ class Frame:
             )
         wav_starts = [subframe.start_wavelength for subframe in self.subframes]
         wav_ends = [subframe.end_wavelength for subframe in self.subframes]
-        # sort by start
-        starts, ends, wav_starts, wav_ends = zip(
-            *sorted(zip(starts, ends, wav_starts, wav_ends), key=lambda x: x[0])
-        )
-        bounds = []
-        current = (starts[0], ends[0], wav_starts[0], wav_ends[0])
-        for start, end, wav_start, wav_end in zip(
-            starts[1:], ends[1:], wav_starts[1:], wav_ends[1:]
-        ):
+
+        @dataclass
+        class Bound:
+            start: sc.Variable
+            end: sc.Variable
+            wav_start: sc.Variable
+            wav_end: sc.Variable
+
+        bounds = [
+            Bound(start, end, wav_start, wav_end)
+            for start, end, wav_start, wav_end in zip(
+                starts, ends, wav_starts, wav_ends
+            )
+        ]
+        bounds = sorted(bounds, key=lambda x: x.start)
+        current = bounds[0]
+        for bound in bounds[1:]:
             # If start is before current end, merge
-            if start <= current[1]:
-                current = (
-                    current[0],
-                    max(current[1], end),
-                    current[2],
-                    max(current[3], wav_end),
+            if bound.start <= current.end:
+                current = Bound(
+                    current.start,
+                    max(current.end, bound.end),
+                    current.wav_start,
+                    max(current.wav_end, bound.wav_end),
                 )
             else:
                 bounds.append(current)
-                current = (start, end, wav_start, wav_end)
+                current = bound
         bounds.append(current)
         time_bounds = [
-            sc.concat([start, end], dim='bound') for start, end, _, _ in bounds
+            sc.concat([bound.start, bound.end], dim='bound') for bound in bounds
         ]
         wav_bounds = [
-            sc.concat([wav_start, wav_end], dim='bound')
-            for _, _, wav_start, wav_end in bounds
+            sc.concat([bound.wav_start, bound.wav_end], dim='bound') for bound in bounds
         ]
         return sc.DataGroup(
             time=sc.concat(time_bounds, dim='subframe'),
