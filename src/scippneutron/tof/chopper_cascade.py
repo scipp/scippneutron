@@ -8,7 +8,7 @@ neutron source.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 import numpy as np
 import scipp as sc
@@ -324,40 +324,48 @@ class FrameSequence:
         for chopper in choppers:
             self._frames.append(self._frames[-1].chop(chopper))
 
-    def draw(self) -> Any:
+    def draw(
+        self,
+        linewidth: Union[int, float] = 0,
+        fill: bool = True,
+        alpha: float = 0.9,
+        transpose: bool = False,
+    ) -> Any:
         """Draw frames using matplotlib"""
         import matplotlib.colors as mcolors
         import matplotlib.patches as patches
         import matplotlib.pyplot as plt
 
         fig, ax = plt.subplots()
-        colors = list(mcolors.TABLEAU_COLORS.values())
-        colors += colors
-        colors += colors
-        max_time = 0
-        max_wav = 0
-        for frame, color in zip(self._frames, colors):
+        x_max = 0
+        y_max = 0
+        for i, frame in enumerate(self._frames):
+            color = f'C{i}'
             # Add label to legend
-            ax.plot([], [], color=color, label=f'{frame.distance.value:.2f} m')
+            ax.plot([], [], color=color, label=f'{frame.distance:c}')
             # All subframes have same color
             for subframe in frame.subframes:
-                time_unit = subframe.time.unit
-                wav_unit = subframe.wavelength.unit
-                max_time = max(max_time, subframe.time.max().value)
-                max_wav = max(max_wav, subframe.wavelength.max().value)
+                x = subframe.time
+                y = subframe.wavelength
+                if transpose:
+                    x, y = y, x
+                x_unit = x.unit
+                y_unit = y.unit
+                x_max = max(x_max, x.max().value)
+                y_max = max(y_max, y.max().value)
+                transparent_color = mcolors.to_rgba(color, alpha=alpha)
                 polygon = patches.Polygon(
-                    np.stack(
-                        (subframe.time.values, subframe.wavelength.values), axis=1
-                    ),
+                    np.stack((x.values, y.values), axis=1),
                     closed=True,
-                    fill=True,
-                    color=color,
+                    fill=fill,
+                    color=transparent_color,
+                    linewidth=linewidth,
                 )
                 ax.add_patch(polygon)
-        ax.set_xlabel(time_unit)
-        ax.set_ylabel(wav_unit)
-        ax.set_xlim(0, max_time)
-        ax.set_ylim(0, max_wav)
+        ax.set_xlabel(x_unit)
+        ax.set_ylabel(y_unit)
+        ax.set_xlim(0, x_max)
+        ax.set_ylim(0, y_max)
         ax.legend(loc='best')
         return fig, ax
 
