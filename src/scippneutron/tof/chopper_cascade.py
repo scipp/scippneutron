@@ -4,6 +4,8 @@
 """
 Compute result of applying a chopper cascade to a neutron pulse at a time-of-flight
 neutron source.
+
+See :py:class:`FrameSequence` for the main entry point.
 """
 from __future__ import annotations
 
@@ -268,6 +270,15 @@ class Frame:
 
 @dataclass
 class FrameSequence:
+    """
+    A sequence of frames, created from a single neutron pulse, potentially chopped into
+    subframes by choppers.
+
+    It is recommended to use the :py:meth:`from_source_pulse` constructor to create a
+    frame sequence from a source pulse. Then, a chopper cascade can be applied using
+    :py:meth:`chop`.
+    """
+
     frames: List[Frame]
 
     @staticmethod
@@ -308,6 +319,8 @@ class FrameSequence:
     def propagate_to(self, distance: sc.Variable) -> FrameSequence:
         """
         Propagate the frame sequence to a distance, adding a new frame.
+
+        Use this, e.g., to propagate to the sample position after applying choppers.
 
         Parameters
         ----------
