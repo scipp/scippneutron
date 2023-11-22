@@ -351,6 +351,7 @@ class FrameSequence:
         transpose: bool = False,
         colors: Optional[List[str]] = None,
         grid: bool = True,
+        title: str = 'Frame propagation through chopper cascade',
         time_unit: str = 'ms',
         wavelength_unit: str = 'angstrom',
     ) -> Any:
@@ -383,14 +384,14 @@ class FrameSequence:
         fig, ax = plt.subplots()
         x_max = 0
         y_max = 0
-        for i, frame in enumerate(self._frames):
-            color = colors[i] if colors else f'C{i}'
+        for i, frame in enumerate(self.frames):
+            color = colors[i] if colors is not None else f'C{i}'
             # Add label to legend
             ax.plot([], [], color=color, label=f'{frame.distance:c}')
             # All subframes have same color
             for subframe in frame.subframes:
                 x = subframe.time.to(unit=time_unit, copy=False)
-                y = subframe.wavelength
+                y = subframe.wavelength.to(unit=wavelength_unit, copy=False)
                 if transpose:
                     x, y = y, x
                 x_unit = x.unit
@@ -416,6 +417,46 @@ class FrameSequence:
             ax.grid(True, linestyle='-', linewidth='0.5', color='gray')
             ax.grid(which='minor', linestyle=':', linewidth='0.5', color='gray')
         ax.legend(loc='best')
+        ax.set_title(title)
+        fig.tight_layout()
+        return fig, ax
+
+    def acceptance_diagram(self):
+        """
+        Draw a chopper acceptance diagram.
+
+        See, e.g., J.R.D. Copley, An acceptance diagram analysis of the contaminant
+        pulse removal problem with direct geometry neutron chopper spectrometers,
+        https://doi.org/10.1016/S0168-9002(03)01731-5 for more background.
+        """
+        import matplotlib.pyplot as plt
+
+        source_distance = self.frames[0].distance
+        frames = FrameSequence(
+            [frame.propagate_to(source_distance) for frame in self.frames]
+        )
+        # Reset frame distance for plotting labels. This is a bit of a hack.
+        # We should use chopper names if available.
+        for i, frame in enumerate(frames.frames):
+            frame.distance = self.frames[i].distance
+        blue = np.linspace(0.1, 1, len(frames.frames))
+        colors = plt.cm.Blues(blue)
+        fig, ax = frames.draw(
+            fill=True,
+            linewidth=0.5,
+            transpose=True,
+            colors=colors,
+            title='Chopper acceptance diagram',
+        )
+        # Put legend outside of plot
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        ax.legend(
+            loc='center left',
+            bbox_to_anchor=(1, 0.5),
+            title='Distance [m]',
+            frameon=False,
+        )
         return fig, ax
 
 
