@@ -479,6 +479,13 @@ class Chopper:
     time_open: sc.Variable
     time_close: sc.Variable
 
+    def __post_init__(self):
+        if self.time_open.sizes != self.time_close.sizes:
+            raise sc.DimensionError(
+                f'Inconsistent dims or shape: {self.time_open.sizes} vs '
+                f'{self.time_close.sizes}'
+            )
+
 
 def _chop(
     frame: Subframe, time: sc.Variable, close_to_open: bool
