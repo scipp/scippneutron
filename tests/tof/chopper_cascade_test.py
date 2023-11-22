@@ -345,7 +345,7 @@ def test_frame_bounds_gives_global_min_and_max() -> None:
 
 
 def test_frame_sequence_sets_up_rectangular_subframe() -> None:
-    frames = chopper_cascade.FrameSequence(
+    frames = chopper_cascade.FrameSequence.from_source_pulse(
         time_min=sc.scalar(0.0, unit='s'),
         time_max=sc.scalar(1.0, unit='s'),
         wavelength_min=sc.scalar(1.0, unit='angstrom'),
@@ -368,7 +368,7 @@ def test_frame_sequence_sets_up_rectangular_subframe() -> None:
 
 @pytest.fixture
 def source_frame_sequence() -> chopper_cascade.FrameSequence:
-    return chopper_cascade.FrameSequence(
+    return chopper_cascade.FrameSequence.from_source_pulse(
         time_min=sc.scalar(0.0, unit='ms'),
         time_max=sc.scalar(1.0, unit='ms'),
         wavelength_min=sc.scalar(1.0, unit='angstrom'),
@@ -376,21 +376,22 @@ def source_frame_sequence() -> chopper_cascade.FrameSequence:
     )
 
 
-def test_frame_sequence_propagate_to_adds_propagated_frame(
+def test_frame_sequence_propagate_to_returns_new_sequence_with_added_propagated_frame(
     source_frame_sequence: chopper_cascade.FrameSequence,
 ) -> None:
     frames = source_frame_sequence
     distance = sc.scalar(1.5, unit='m')
-    frames.propagate_to(distance)
-    assert len(frames) == 2
-    assert frames[1] == frames[0].propagate_to(distance)
-    frames.propagate_to(distance * 2)
-    assert len(frames) == 3
-    assert frames[2] == frames[0].propagate_to(distance * 2)
-    assert frames[2] == frames[1].propagate_to(distance * 2)
+    result = frames.propagate_to(distance)
+    assert len(frames) == 1
+    assert len(result) == 2
+    assert result[1] == frames[0].propagate_to(distance)
+    result2 = result.propagate_to(distance * 2)
+    assert len(result2) == 3
+    assert result2[2] == frames[0].propagate_to(distance * 2)
+    assert result2[2] == result[1].propagate_to(distance * 2)
 
 
-def test_frame_sequence_chop_adds_chopped_frames(
+def test_frame_sequence_chop_returns_new_sequence_with_added_chopped_frames(
     source_frame_sequence: chopper_cascade.FrameSequence,
 ) -> None:
     frames = source_frame_sequence
@@ -404,8 +405,30 @@ def test_frame_sequence_chop_adds_chopped_frames(
         time_open=sc.array(dims=['slit'], values=[0.001], unit='s'),
         time_close=sc.array(dims=['slit'], values=[0.003], unit='s'),
     )
-    frames.chop([chopper1, chopper2])
-    assert len(frames) == 3  # source + 2 choppers
-    assert len(frames[2].subframes) == 1  # something makes it through
-    assert frames[0].chop(chopper1) == frames[1]
-    assert frames[1].chop(chopper2) == frames[2]
+    result = frames.chop([chopper1, chopper2])
+    assert len(frames) == 1
+    assert len(result) == 3  # source + 2 choppers
+    assert len(result[2].subframes) == 1  # something makes it through
+    assert result[0] == frames[0]
+    assert result[0].chop(chopper1) == result[1]
+    assert result[1].chop(chopper2) == result[2]
+
+
+def test_frame_sequence_chop_applies_choppers_ordered_by_distance(
+    source_frame_sequence: chopper_cascade.FrameSequence,
+) -> None:
+    frames = source_frame_sequence
+    chopper1 = chopper_cascade.Chopper(
+        distance=sc.scalar(1.5, unit='m'),
+        time_open=sc.array(dims=['slit'], values=[0.0], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[0.001], unit='s'),
+    )
+    chopper2 = chopper_cascade.Chopper(
+        distance=sc.scalar(2.5, unit='m'),
+        time_open=sc.array(dims=['slit'], values=[0.001], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[0.003], unit='s'),
+    )
+    result12 = frames.chop([chopper1, chopper2])
+    result21 = frames.chop([chopper2, chopper1])
+    assert result12 == result21
+    assert result12[2] == result21[2]

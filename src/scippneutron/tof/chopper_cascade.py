@@ -266,9 +266,12 @@ class Frame:
         )
 
 
+@dataclass
 class FrameSequence:
-    def __init__(
-        self,
+    frames: List[Frame]
+
+    @staticmethod
+    def from_source_pulse(
         time_min: sc.Variable,
         time_max: sc.Variable,
         wavelength_min: sc.Variable,
@@ -286,22 +289,23 @@ class FrameSequence:
             [wavelength_min, wavelength_min, wavelength_max, wavelength_max],
             dim='vertex',
         ).to(unit='angstrom')
-        self._frames = [
+        frames = [
             Frame(
                 distance=sc.scalar(0, unit='m'),
                 subframes=[Subframe(time=time, wavelength=wavelength)],
             )
         ]
+        return FrameSequence(frames)
 
     def __len__(self) -> int:
         """Number of frames."""
-        return len(self._frames)
+        return len(self.frames)
 
     def __getitem__(self, item: int) -> Frame:
         """Get a frame by index."""
-        return self._frames[item]
+        return self.frames[item]
 
-    def propagate_to(self, distance: sc.Variable) -> None:
+    def propagate_to(self, distance: sc.Variable) -> FrameSequence:
         """
         Propagate the frame sequence to a distance, adding a new frame.
 
@@ -309,20 +313,35 @@ class FrameSequence:
         ----------
         distance:
             Distance to propagate.
-        """
-        self._frames.append(self._frames[-1].propagate_to(distance))
 
-    def chop(self, choppers: List[Chopper]) -> None:
+        Returns
+        -------
+        :
+            New frame sequence.
+        """
+        return FrameSequence(self.frames + [self.frames[-1].propagate_to(distance)])
+
+    def chop(self, choppers: List[Chopper]) -> FrameSequence:
         """
         Chop the frame sequence by a list of choppers.
+
+        The choppers will be sorted by their distance, and applied in order.
 
         Parameters
         ----------
         choppers:
             List of choppers.
+
+        Returns
+        -------
+        :
+            New frame sequence.
         """
+        choppers = sorted(choppers, key=lambda x: x.distance)
+        frames = list(self.frames)
         for chopper in choppers:
-            self._frames.append(self._frames[-1].chop(chopper))
+            frames.append(frames[-1].chop(chopper))
+        return FrameSequence(frames)
 
     def draw(
         self,
