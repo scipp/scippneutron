@@ -454,7 +454,7 @@ class FrameSequence:
         ax.legend(
             loc='center left',
             bbox_to_anchor=(1, 0.5),
-            title='Distance [m]',
+            title='Distance',
             frameon=False,
         )
         return fig, ax
