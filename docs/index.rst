@@ -50,6 +50,7 @@ Documentation
 
    reference/free-functions
    reference/modules
+   reference/chopper-cascade
    reference/frame-unwrapping
 
 .. toctree::
