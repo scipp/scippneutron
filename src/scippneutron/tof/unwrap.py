@@ -214,39 +214,38 @@ def tof_data(da: RawData, tof: TimeOfFlight) -> TofData:
     return TofData(da)
 
 
-providers_normal_mode = [
-    pulse_wrapped_time_offset,
-    frame_wrapped_time_offset,
-    frame_period,
-    time_offset,
-    time_of_flight,
+_common_providers = [
     frame_at_sample,
     frame_bounds,
+    frame_period,
+    pulse_wrapped_time_offset,
     source_chopper,
+    time_offset,
     tof_data,
 ]
-providers_pulse_skipping_mode = [
-    pulse_wrapped_time_offset,
+
+_non_skipping = [frame_wrapped_time_offset]
+_skipping = [
     frame_wrapped_time_offset_pulse_skipping,
-    frame_period,
     pulse_offset,
-    time_offset,
-    time_of_flight,
-    frame_at_sample,
-    frame_bounds,
-    source_chopper,
-    tof_data,
     time_zero,
 ]
-providers_wfm = [
-    pulse_wrapped_time_offset,
-    frame_wrapped_time_offset,
-    frame_period,
-    time_offset,
-    time_of_flight_wfm,
-    frame_at_sample,
-    frame_bounds,
-    source_chopper,
-    tof_data,
-    subframe_bounds,
-]
+
+_wfm = [subframe_bounds, time_of_flight_wfm]
+_non_wfm = [time_of_flight]
+
+
+def providers(pulse_skipping: bool = False, wfm: bool = False):
+    """
+    Return the list of providers for unwrapping frames.
+
+    Parameters
+    ----------
+    pulse_skipping :
+        If True, the pulse-skipping mode is assumed.
+    wfm :
+        If True, the data is assumed to be from a WFM instrument.
+    """
+    skipping = _skipping if pulse_skipping else _non_skipping
+    wfm = _wfm if wfm else _non_wfm
+    return _common_providers + skipping + wfm
