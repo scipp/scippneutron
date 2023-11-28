@@ -1,5 +1,8 @@
 # About
 
+ScippNeutron builds on top of Scipp and provides features specific to handling and reducing data generated in neutron scattering facilities.
+A key example is "unit conversion", e.g., from time-of-flight to energy transfer in an inelastic neutron scattering experiment at a spallation-based neutron source.
+
 ## Development
 
 ScippNeutron is an open source project by the [European Spallation Source ERIC](https://europeanspallationsource.se/) (ESS).
@@ -25,3 +28,11 @@ Simply download the archive, unzip and view locally in a web browser.
 ## Source code and development
 
 ScippNeutron is hosted and developed [on GitHub](https://github.com/scipp/scippneutron).
+
+```{toctree}
+---
+hidden:
+---
+
+../../CONTRIBUTING.md
+```
