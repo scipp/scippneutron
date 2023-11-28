@@ -3,7 +3,7 @@ _commit: ff7f76b
 _src_path: gh:scipp/copier_template
 description: Neutron scattering tools for Data Reduction
 max_python: '3.11'
-min_python: '3.8'
+min_python: '3.9'
 namespace_package: ''
 nightly_deps: scipp,scippnexus,plopp
 orgname: scipp
