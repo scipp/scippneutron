@@ -55,7 +55,7 @@ jobs:
             conda-build
       - run: conda develop src
         if: ${{ inputs.version == '' }}
-      - run: conda install -c scipp scippneutron
+      - run: conda install -c scipp 'scippneutron==${{ inputs.version }}'
         if: ${{ inputs.version != '' }}
       - run: |
           python -m sphinx -j2 -v -b html -d doctrees docs html
