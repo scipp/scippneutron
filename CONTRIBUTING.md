@@ -18,3 +18,15 @@ Check out the subsections of the [Developer documentation](https://scipp.github.
 
 This project is a community effort, and everyone is welcome to contribute.
 Everyone within the community is expected to abide by our [code of conduct](https://github.com/scipp/scippneutron/blob/main/CODE_OF_CONDUCT.md).
+
+## Scope
+
+ScippNeutron shall contain only generic neutron-specific functionality.
+Facility-specific or instrument-specific functionality must not be added.
+Examples of generic functionality that is permitted are
+
+* Unit conversions, which could be generic for all time-of-flight neutron sources.
+* Published research such as absorption corrections.
+
+Examples of functionality that shall not be added to ScippNeutron are handling of facility-specific file types or data layouts, or instrument-specific correction algorithms.
+The `ess` suite of packages (e.g., [Esssans](https://scipp.github.io/esssans/)) is an example codebase providing facility-specific algorithms
