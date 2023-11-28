@@ -25,6 +25,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 requires-python = ">=3.9"
+dynamic = ["version"]
 
 # IMPORTANT:
 # Run 'tox -e deps' after making changes here. This will update requirement files.
@@ -41,8 +42,6 @@ dependencies = [
 [project.optional-dependencies]
 interactive = ["scipp[interactive]"]
 all = ['scipp[all]']
-
-dynamic = ["version"]
 
 [project.urls]
 "Bug Tracker" = "https://github.com/scipp/scippneutron/issues"
