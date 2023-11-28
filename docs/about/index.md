@@ -34,5 +34,5 @@ ScippNeutron is hosted and developed [on GitHub](https://github.com/scipp/scippn
 hidden:
 ---
 
-../../CONTRIBUTING.md
+bibliography
 ```
