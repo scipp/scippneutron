@@ -48,7 +48,7 @@ jobs:
           fetch-depth: 0  # history required so cmake can determine version
       - uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: .buildconfig/${{ matrix.variant.build-config }}.yml
+          environment-file: .buildconfig/ci-linux.yml
           cache-environment: true
           create-args: >-
             python=3.8
