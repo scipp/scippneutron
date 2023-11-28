@@ -74,7 +74,13 @@ and possible confusion of `theta` (from Bagg's law) with `theta` in spherical co
    tof
 ```
 
+## Frame handling
+
 ```{toctree}
-   chopper-cascade
-   frame-unwrapping
+---
+maxdepth: 1
+---
+
+chopper-cascade
+frame-unwrapping
 ```

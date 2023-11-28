@@ -23,7 +23,6 @@ a new 'question' issue.
 hidden:
 ---
 
-getting-started/index
 user-guide/index
 api-reference/index
 tutorials/index
