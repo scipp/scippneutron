@@ -2,7 +2,7 @@
 
 ## Top-level functions
 
-### Mantid Compatability
+### Mantid Compatikbility
 
 ```{eval-rst}
 .. currentmodule:: scippneutron
@@ -10,7 +10,7 @@
 .. autosummary::
    :toctree: ../generated/functions
    :recursive:
-   
+
    array_from_mantid
    from_mantid
    load_with_mantid
@@ -24,7 +24,7 @@
 .. autosummary::
    :toctree: ../generated/functions
    :recursive:
-   
+
    convert
 ```
 
@@ -38,7 +38,7 @@ and possible confusion of `theta` (from Bagg's law) with `theta` in spherical co
 .. autosummary::
    :toctree: ../generated/functions
    :recursive:
-   
+
    position
    source_position
    sample_position
@@ -56,7 +56,7 @@ and possible confusion of `theta` (from Bagg's law) with `theta` in spherical co
 .. autosummary::
    :toctree: ../generated/functions
    :recursive:
-   
+
    load_nexus
 ```
 
@@ -67,7 +67,7 @@ and possible confusion of `theta` (from Bagg's law) with `theta` in spherical co
    :toctree: ../generated/modules
    :template: module-template.rst
    :recursive:
-   
+
    conversion
    io
    logging

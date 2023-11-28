@@ -198,7 +198,7 @@ def md_dimension(mantid_dim, index):
         if re.search(pattern, mantid_dim.name, re.IGNORECASE):
             return result
 
-    # Look for common spacial dimensions
+    # Look for common spatial dimensions
     patterns = ["^{0}$".format(coord) for coord in ['x', 'y', 'z']]
     dims = ['x', 'y', 'z']
     pattern_result = zip(patterns, dims)
