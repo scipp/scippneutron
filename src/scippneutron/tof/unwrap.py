@@ -3,23 +3,42 @@
 # @author Simon Heybrock
 """
 """
-from typing import NewType
+from typing import Dict, NewType, Optional, Tuple
 
 import scipp as sc
 
-# SourceChopper = NewType('SourceChopper', chopper_cascade.Chopper)
-#
-# SourcePulse = NewType('SourcePulse', sc.Variable)
-#
-# FrameBounds = NewType('FrameBounds', sc.DataGroup)
-# SubframeBounds = NewType('SubframeBounds', sc.DataGroup)
-# FramePeriod = NewType('FramePeriod', sc.Variable)
-WrappedTimeOffset = NewType('WrappedTimeOffset', sc.Variable)
+from . import chopper_cascade, frames
+
+Choppers = NewType('Choppers', Dict[str, chopper_cascade.Chopper])
+FirstPulseTime = NewType('FirstPulseTime', sc.Variable)
+FrameAtSample = NewType('FrameAtSample', chopper_cascade.Frame)
+FrameBounds = NewType('FrameBounds', sc.Variable)
+FramePeriod = NewType('FramePeriod', sc.Variable)
+FrameWrappedTimeOffset = NewType('FrameWrappedTimeOffset', sc.Variable)
+L1 = NewType('L1', sc.Variable)
+L2 = NewType('L2', sc.Variable)
+PulseOffset = NewType('PulseOffset', sc.Variable)
+PulsePeriod = NewType('PulsePeriod', sc.Variable)
+PulseStride = NewType('PulseStride', int)
+PulseWrappedTimeOffset = NewType('PulseWrappedTimeOffset', sc.Variable)
+RawData = NewType('RawData', sc.DataArray)
+RawSubframeData = NewType('RawSubframeData', sc.DataArray)
+SourceChopperName = NewType('SourceChopperName', str)
+SourceChopper = NewType('SourceChopper', chopper_cascade.Chopper)
+SourceTimeRange = NewType('SourceTimeRange', Tuple[sc.Variable, sc.Variable])
+SourceWavelengthRange = NewType(
+    'SourceWavelengthRange', Tuple[sc.Variable, sc.Variable]
+)
+SubframeBounds = NewType('SubframeBounds', sc.Variable)
+TimeOfFlight = NewType('TimeOfFlight', sc.Variable)
 TimeOffset = NewType('TimeOffset', sc.Variable)
+TimeZero = NewType('TimeZero', sc.Variable)
+TofData = NewType('TofData', sc.DataArray)
+UnwrappedData = NewType('UnwrappedData', sc.DataArray)
 
 
 # Should this be a helper, or a provider?
-def time_offset(
+def _time_offset(
     *,
     wrapped_time_offset: sc.Variable,
     time_offset_min: sc.Variable,
@@ -48,11 +67,7 @@ def time_offset(
     return offset_frames + wrapped_time_offset
 
 
-# Don't use chopper, just open and close times
-# We can handle WFM by adding an intermediate binning step that cuts into subframes,
-# then use a subframe-dependent time_open and time_close here.
-# - set source_position to chopper's position
-def time_of_flight(
+def _time_of_flight(
     *,
     time_offset: sc.Variable,
     source_time_open: sc.Variable,
@@ -88,17 +103,177 @@ def time_of_flight(
     return time_offset - time_zero
 
 
-def compute_time_of_flight(da: sc.DataArray, choppers) -> sc.DataArray:
-    # Outline:
-    # 1. Use chopper_cascade module to compute time_offset_min
-    # 2. Compute time_offset
-    # 3. Compute time_of_flight, based on "source chopper" openings
-    #
-    # In case of WFM:
-    # 1. Use chopper_cascade module to compute time_offset_min and subframe_time_bounds
-    # 2. Compute time_offset
-    # 3. Use scipp.bin to bin into subframes
-    # 4. Compute time_of_flight
-    # 5. Concat subframes, based on "source chopper" openings. The source chopper is
-    #    the WFM chopper, or a combination of WFM choppers.
-    raise NotImplementedError
+def frame_period(
+    pulse_period: PulsePeriod, pulse_stride: Optional[PulseStride]
+) -> FramePeriod:
+    if pulse_stride is None:
+        return pulse_period
+    return FramePeriod(pulse_period * pulse_stride)
+
+
+def frame_at_sample(
+    source_wavelength_range: SourceWavelengthRange,
+    source_time_range: SourceTimeRange,
+    choppers: Choppers,
+    l1: L1,
+) -> FrameAtSample:
+    frames = chopper_cascade.FrameSequence.from_source_pulse(
+        time_min=source_time_range[0],
+        time_max=source_time_range[1],
+        wavelength_min=source_wavelength_range[0],
+        wavelength_max=source_wavelength_range[1],
+    )
+    frames.chop(choppers.values())
+    return frames[-1].propagate_to(l1)
+
+
+def frame_bounds(frame_at_sample: FrameAtSample, l2: L2) -> FrameBounds:
+    bounds = frame_at_sample.bounds()
+    return chopper_cascade.propagate_times(**bounds, distance=l2)
+
+
+def subframe_bounds(frame_at_sample: FrameAtSample, l2: L2) -> SubframeBounds:
+    """Used for WFM."""
+    bounds = frame_at_sample.subbounds()
+    return chopper_cascade.propagate_times(**bounds, distance=l2)
+
+
+def frame_wrapped_time_offset(offset: PulseWrappedTimeOffset) -> FrameWrappedTimeOffset:
+    """Without pulse-skipping, this is an identity function."""
+    return FrameWrappedTimeOffset(offset)
+
+
+def pulse_offset(
+    pulse_period: PulsePeriod,
+    pulse_stride: PulseStride,
+    event_time_zero: TimeZero,
+    first_pulse_time: FirstPulseTime,
+) -> PulseOffset:
+    return frames.pulse_offset_from_time_zero(
+        pulse_period=pulse_period,
+        pulse_stride=pulse_stride,
+        event_time_zero=event_time_zero,
+        first_pulse_time=first_pulse_time,
+    )
+
+
+def frame_wrapped_time_offset_pulse_skipping(
+    offset: PulseWrappedTimeOffset, pulse_offset: PulseOffset
+) -> FrameWrappedTimeOffset:
+    """"""
+    return frames.update_time_offset_for_pulse_skipping(
+        event_time_offset=offset,
+        pulse_offset=pulse_offset,
+    )
+
+
+def pulse_wrapped_time_offset(da: RawData) -> PulseWrappedTimeOffset:
+    """
+    In NXevent_data, event_time_offset is the time offset since event_time_zero,
+    which is the start of the most recent pulse. This is not the same as the start
+    of the pulse that emitted the neutron, so event_time_offset is "wrapped" around
+    at the pulse period.
+    """
+    return da.bins.coords['event_time_offset']
+
+
+def time_zero(da: RawData) -> TimeZero:
+    """
+    In NXevent_data, event_time_zero is the start of the most recent pulse.
+    """
+    return da.bins.coords['event_time_zero']
+
+
+def time_offset(
+    wrapped_time_offset: FrameWrappedTimeOffset,
+    frame_bounds: FrameBounds,
+    frame_period: FramePeriod,
+) -> TimeOffset:
+    """
+    Note that this takes the frame-period, which can be a multiple of a pulse-period.
+    The input time stamps must be relative the the start of the frame, i.e., in
+    pulse-skipping mode a pulse offset must have been applied before calling this
+    function.
+    """
+    return _time_offset(
+        wrapped_time_offset=wrapped_time_offset,
+        time_offset_min=frame_bounds['bound', 0],
+        frame_period=frame_period,
+    )
+
+
+def source_chopper(
+    choppers: Choppers, source_chopper_name: SourceChopperName
+) -> SourceChopper:
+    return choppers[source_chopper_name]
+
+
+def time_of_flight(
+    time_offset: TimeOffset,
+    source_chopper: SourceChopper,
+) -> TimeOfFlight:
+    return _time_of_flight(
+        time_offset=time_offset,
+        source_time_open=source_chopper.time_open,
+        source_time_close=source_chopper.time_close,
+    )
+
+
+def time_of_flight_wfm(
+    time_offset: TimeOffset,
+    source_chopper: SourceChopper,
+    subframe_bounds: SubframeBounds,
+) -> TimeOfFlight:
+    # time_zero will have multiple subframes
+    times = subframe_bounds.flatten(dims=['subframe', 'bound'], to='subframe')
+    neg_shift = sc.zeros(dims=['subframe'], shape=[len(times) - 1], unit='s')
+    neg_shift[::2] -= 0.5 * (source_chopper.time_open + source_chopper.time_close)
+    lut = sc.DataArray(neg_shift, coords={'subframe': times})
+    # Will raise if subframes overlap, since coord for lookup table must be sorted
+    out = sc.lookup(lut, dim='subframe')[time_offset]
+    out += time_offset
+    return out
+
+
+def tof_data(da: RawData, tof: TimeOfFlight) -> TofData:
+    da = da.copy(deep=False)  # todo copy bins
+    da.bins.coords['tof'] = tof
+    return TofData(da)
+
+
+providers_normal_mode = [
+    pulse_wrapped_time_offset,
+    frame_wrapped_time_offset,
+    frame_period,
+    time_offset,
+    time_of_flight,
+    frame_at_sample,
+    frame_bounds,
+    source_chopper,
+    tof_data,
+]
+providers_pulse_skipping_mode = [
+    pulse_wrapped_time_offset,
+    frame_wrapped_time_offset_pulse_skipping,
+    frame_period,
+    pulse_offset,
+    time_offset,
+    time_of_flight,
+    frame_at_sample,
+    frame_bounds,
+    source_chopper,
+    tof_data,
+    time_zero,
+]
+providers_wfm = [
+    pulse_wrapped_time_offset,
+    frame_wrapped_time_offset,
+    frame_period,
+    time_offset,
+    time_of_flight_wfm,
+    frame_at_sample,
+    frame_bounds,
+    source_chopper,
+    tof_data,
+    subframe_bounds,
+]
