@@ -1,0 +1,75 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
+
+name: Docs
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        default: false
+        type: boolean
+      version:
+        default: ''
+        required: false
+        type: string
+      branch:
+        description: 'Branch/tag with documentation source. If not set, the current branch will be used.'
+        default: ''
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      publish:
+        default: false
+        type: boolean
+      version:
+        default: ''
+        required: false
+        type: string
+      branch:
+        description: 'Branch/tag with documentation source. If not set, the current branch will be used.'
+        default: ''
+        required: false
+        type: string
+
+env:
+  VERSION: ${{ inputs.version }}
+
+jobs:
+  docs:
+    name: Build documentation
+    runs-on: 'ubuntu-22.04'
+    steps:
+      - run: sudo apt install --yes graphviz pandoc
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.branch == '' && github.ref_name || inputs.branch }}
+          fetch-depth: 0  # history required so cmake can determine version
+      - uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: .buildconfig/${{ matrix.variant.build-config }}.yml
+          cache-environment: true
+          create-args: >-
+            python=3.8
+            conda-build
+      - run: conda develop src
+        if: ${{ inputs.version == '' }}
+      - run: conda install -c scipp scippneutron
+        if: ${{ inputs.version != '' }}
+      - run: |
+          python -m sphinx -j2 -v -b html -d doctrees docs html
+          python -m sphinx -j2 -v -b doctest -d doctrees docs html
+          find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
+      - uses: actions/upload-artifact@v3
+        with:
+          name: docs_html
+          path: html/
+
+      - uses: JamesIves/github-pages-deploy-action@v4.4.3
+        if: ${{ inputs.publish }}
+        with:
+          branch: gh-pages
+          folder: html
+          single-commit: true
+          ssh-key: ${{ secrets.GH_PAGES_DEPLOY_KEY }}

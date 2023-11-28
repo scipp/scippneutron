@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
+
 name: Release
 
 on:
@@ -11,61 +14,40 @@ defaults:
 
 jobs:
   build_conda:
-    name: Conda package build
-    runs-on: ubuntu-20.04
+    name: Conda build
+    runs-on: 'ubuntu-22.04'
+
     steps:
       - uses: actions/checkout@v3
         with:
+          submodules: true
           fetch-depth: 0  # history required so setuptools_scm can determine version
 
-      - name: Setup conda environment
-        uses: mamba-org/provision-with-micromamba@main
+      - uses: mamba-org/setup-micromamba@v1
         with:
-          micromamba-version: 1.0.0
-          environment-file: false
-          environment-name: build-release
-          channels: conda-forge
-          extra-specs: |
-            python=3.8
+          environment-name: build-env
+          create-args: >-
             conda-build
-      - run: conda build --channel conda-forge --channel scipp --channel ess-dmsc --channel mantid --python=3.10 --no-anaconda-upload --override-channels --output-folder conda/package conda
+            boa
+      - run: conda mambabuild --channel conda-forge --channel scipp --no-anaconda-upload --override-channels --output-folder conda/package conda
 
       - uses: actions/upload-artifact@v3
         with:
           name: conda-package-noarch
-          path: conda/package/*/scippneutron*.tar.bz2
-
-  build_sdist:
-    name: Build SDist
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0  # history required so setuptools_scm can determine version
-
-    - name: Build SDist
-      run: pipx run build --sdist
-
-    - name: Check metadata
-      run: pipx run twine check dist/*
-
-    - uses: actions/upload-artifact@v3
-      with:
-        name: dist
-        path: dist/*.tar.gz
+          path: conda/package/noarch/*.tar.bz2
 
   build_wheels:
     name: Wheels
-    runs-on: ubuntu-20.04
+    runs-on: 'ubuntu-22.04'
 
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0  # history required so setuptools_scm can determine version
 
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version-file: '.github/workflows/python-version-ci'
 
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -r requirements/wheels.txt
@@ -79,85 +61,56 @@ jobs:
           name: dist
           path: dist
 
-  docs:
-    name: Build documentation
-    needs: build_conda
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup conda environment
-        uses: mamba-org/provision-with-micromamba@main
-        with:
-          micromamba-version: 1.0.0
-          environment-file: .buildconfig/ci-linux.yml
-          cache-env: true
-          extra-specs: python=3.10
-      - uses: actions/download-artifact@v3
-        with:
-          name: conda-package-noarch
-          path: conda-package-noarch
-      - run: conda install conda-package-*/*/*.tar.bz2
-      - run: |
-          python -m sphinx -j2 -v -b html -d doctrees docs html
-          python -m sphinx -j2 -v -b doctest -d doctrees docs html
-          find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
-      - uses: actions/upload-artifact@v3
-        with:
-          name: html
-          path: html/
-
   upload_pypi:
     name: Deploy PyPI
-    needs: [build_wheels, build_sdist, build_conda]
-    runs-on: ubuntu-20.04
+    needs: [build_wheels, build_conda]
+    runs-on: 'ubuntu-22.04'
+    environment: release
+    permissions:
+      id-token: write
     if: github.event_name == 'release' && github.event.action == 'published'
-
     steps:
       - uses: actions/download-artifact@v3
-      - uses: actions/setup-python@v3
       - uses: pypa/gh-action-pypi-publish@v1.8.10
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
 
   upload_conda:
-    name: Deploy Conda Forge
-    needs: [build_wheels, build_sdist, build_conda]
-    runs-on: ubuntu-20.04
+    name: Deploy Conda
+    needs: [build_wheels, build_conda]
+    runs-on: 'ubuntu-22.04'
     if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
       - uses: actions/download-artifact@v3
+      - uses: mamba-org/setup-micromamba@v1
         with:
-          name: conda-package-noarch
-          path: conda-package-noarch
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          python-version: '3.8'
-      - run: conda install -c conda-forge --yes anaconda-client
-      - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package-*/*/*.tar.bz2)
+          environment-name: upload-env
+          # frozen python due to breaking removal of 'imp' in 3.12
+          create-args: >-
+            anaconda-client
+            python=3.11
+      - run: anaconda --token ${{ secrets.ANACONDATOKEN }} upload --user scipp --label main $(ls conda-package-noarch/*.tar.bz2)
 
-  upload_docs:
-    name: Deploy docs
-    needs: [upload_conda, upload_pypi, docs]
-    runs-on: ubuntu-20.04
-    if: github.event_name == 'release' && github.event.action == 'published'
-    strategy:
-      max-parallel: 1  # Avoid potential race condition when pushing to GitHub pages repo
-      matrix:
-        docs-folder: ['latest', 'release']
+  docs:
+    needs: [upload_conda, upload_pypi]
+    uses: ./.github/workflows/docs.yml
+    with:
+      publish: ${{ github.event_name == 'release' && github.event.action == 'published' }}
+    secrets: inherit
 
+  assets:
+    name: Upload docs
+    needs: docs
+    runs-on: 'ubuntu-22.04'
+    permissions:
+      contents: write  # This is needed so that the action can upload the asset
     steps:
-      - uses: actions/checkout@v3  # Need to check out repo so github-pages-deploy-action works
-      - uses: actions/download-artifact@v3
-        with:
-          name: html
-          path: html
-      - name: Deploy to release docs
-        uses: JamesIves/github-pages-deploy-action@v4.4.3
-        with:
-          branch: gh-pages
-          folder: html
-          target-folder: ${{ matrix.docs-folder == 'latest' && format('release/{0}', github.ref_name) || '' }}
-          single-commit: true
-          clean-exclude: release
+    - uses: actions/download-artifact@v3
+    - name: Zip documentation
+      run: |
+        mv docs_html documentation-${{ github.ref_name }}
+        zip -r documentation-${{ github.ref_name }}.zip documentation-${{ github.ref_name }}
+    - name: Upload release assets
+      uses: svenstaro/upload-release-action@v2
+      with:
+        file: ./documentation-${{ github.ref_name }}.zip
+        overwrite: false

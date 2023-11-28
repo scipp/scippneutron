@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
-# @author Simon Heybrock
 
 # flake8: noqa
-
 import importlib.metadata
 
 try:
@@ -35,3 +33,5 @@ from .instrument_view import instrument_view
 from .io.nexus.load_nexus import load_nexus, load_nexus_json
 from .data_streaming.data_stream import data_stream
 from . import data
+
+del importlib
