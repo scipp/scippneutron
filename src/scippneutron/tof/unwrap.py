@@ -10,31 +10,138 @@ import scipp as sc
 from . import chopper_cascade, frames
 
 Choppers = NewType('Choppers', Dict[str, chopper_cascade.Chopper])
+"""
+Choppers used to define the frame parameters.
+"""
+
 FirstPulseTime = NewType('FirstPulseTime', sc.Variable)
+"""
+In pulse-skipping mode this defines the (or a) first pulse.
+
+This identifies which pulses are used and which are skipped.
+"""
+
 FrameAtSample = NewType('FrameAtSample', chopper_cascade.Frame)
+"""
+Result of passing the source pulse through the chopper cascade.
+
+After propagating the frame to the detector distances this will then be used to
+compute the frame bounds.
+"""
+
 FrameBounds = NewType('FrameBounds', sc.Variable)
+"""
+The computed frame boundaries, used to unwrap the raw timestamps.
+"""
+
 FramePeriod = NewType('FramePeriod', sc.Variable)
+"""
+The period of a frame, a (small) integer multiple of the source period.
+"""
+
 FrameWrappedTimeOffset = NewType('FrameWrappedTimeOffset', sc.Variable)
+"""
+Time offsets wrapped around at the frame period.
+
+In normal mode, this is identical to the NXevent_data/event_time_offset recorded by
+the data acquisition system, i.e., the same as :py:class:`PulseWrappedTimeOffset`.
+
+In pulse-skipping mode, this is the time offset since the start of the frame.
+"""
+
 L1 = NewType('L1', sc.Variable)
+"""
+Distance between the source and the sample.
+
+This is used to propagate the frame to the sample position.
+"""
+
 L2 = NewType('L2', sc.Variable)
+"""
+Distance(s) between the source and the detector(s).
+
+This is used to propagate the frame to the detector position. This will then yield
+detector-dependent frame bounds.
+"""
+
 PulseOffset = NewType('PulseOffset', sc.Variable)
+"""
+Offset from the start of the frame in pulse-skipping mode, multiple of pulse period.
+"""
+
 PulsePeriod = NewType('PulsePeriod', sc.Variable)
+"""
+Period of the source pulses, i.e., time between consecutive pulse starts.
+"""
+
 PulseStride = NewType('PulseStride', int)
+"""
+Stride of used pulses. Usually 1, but may be a small integer when pulse-skipping.
+"""
+
 PulseWrappedTimeOffset = NewType('PulseWrappedTimeOffset', sc.Variable)
+"""
+Time offsets wrapped at the pulse period, typically NXevent_data/event_time_offset.
+"""
+
 RawData = NewType('RawData', sc.DataArray)
-RawSubframeData = NewType('RawSubframeData', sc.DataArray)
+"""
+Raw detector data loaded from a NeXus file, e.g., NXdetector containing NXevent_data.
+"""
+
 SourceChopperName = NewType('SourceChopperName', str)
+"""
+Name of the chopper defining the source location and time-of-flight time origin.
+"""
+
 SourceChopper = NewType('SourceChopper', chopper_cascade.Chopper)
+"""
+Chopper defining the source location and time-of-flight time origin.
+
+If there is no pulse-shaping chopper, a fake chopper with time_open and time_close
+set to the source pulse begin and end time should be used.
+"""
+
 SourceTimeRange = NewType('SourceTimeRange', Tuple[sc.Variable, sc.Variable])
+"""
+Time range of the source pulse, used for computing frame bounds.
+"""
+
 SourceWavelengthRange = NewType(
     'SourceWavelengthRange', Tuple[sc.Variable, sc.Variable]
 )
+"""
+Wavelength range of the source pulse, used for computing frame bounds.
+"""
+
 SubframeBounds = NewType('SubframeBounds', sc.Variable)
+"""
+The computed subframe boundaries, used to offset the raw timestamps for WFM.
+"""
+
 TimeOfFlight = NewType('TimeOfFlight', sc.Variable)
+"""
+Time-of-flight of neutrons, e.g., time from the center of a pulse or a pulse-shaping
+chopper slit, to the detector.
+"""
+
 TimeOffset = NewType('TimeOffset', sc.Variable)
+"""
+Time offset from the start of the frame emitting the neutron.
+
+This is not identical to the time-of-flight, since the time-of-flight is measured,
+e.g., from the center of the pulse or the center of a pulse-shaping chopper slit.
+"""
+
 TimeZero = NewType('TimeZero', sc.Variable)
+"""
+Time of the start of the most recent pulse, typically NXevent_data/event_time_zero.
+"""
+
 TofData = NewType('TofData', sc.DataArray)
-UnwrappedData = NewType('UnwrappedData', sc.DataArray)
+"""
+Detector data with resulting 'tof' coordinate.
+"""
 
 
 def frame_period(
