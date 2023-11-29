@@ -144,6 +144,10 @@ Detector data with resulting 'tof' coordinate.
 """
 
 
+OffsetFromTimeOfFlight = NewType('OffsetFromTimeOfFlight', sc.Variable)
+OffsetFromWrapped = NewType('OffsetFromWrapped', sc.Variable)
+
+
 def frame_period(
     pulse_period: PulsePeriod, pulse_stride: Optional[PulseStride]
 ) -> FramePeriod:
@@ -229,7 +233,8 @@ def time_offset(
     wrapped_time_offset: FrameWrappedTimeOffset,
     frame_bounds: FrameBounds,
     frame_period: FramePeriod,
-) -> TimeOffset:
+) -> OffsetFromWrapped:
+    # ) -> TimeOffset:
     """
     Time offset from the start of the frame emitting the neutron.
 
@@ -252,11 +257,13 @@ def time_offset(
         Time between the start of two consecutive frames, i.e., the period of the
         time-zero used by the data acquisition system.
     """
+    # TODO Check performance here, is using sc.lookup.__getitem__ faster?
     time_offset_min = frame_bounds['bound', 0]
     wrapped_time_min = time_offset_min % frame_period
     delta = frame_period if wrapped_time_offset < wrapped_time_min else 0
     offset_frames = time_offset_min - wrapped_time_min + delta
-    return offset_frames + wrapped_time_offset
+    return OffsetFromWrapped(offset_frames)
+    # return offset_frames + wrapped_time_offset
 
 
 def source_chopper(
@@ -266,9 +273,10 @@ def source_chopper(
 
 
 def time_of_flight(
-    time_offset: TimeOffset,
+    time_offset: OffsetFromWrapped,
     source_chopper: SourceChopper,
-) -> TimeOfFlight:
+) -> OffsetFromTimeOfFlight:
+    # ) -> TimeOfFlight:
     """
     Time-of-flight of neutrons passing through a chopper cascade.
 
@@ -296,7 +304,7 @@ def time_of_flight(
     source_time_close = source_chopper.time_close
     # TODO Need to handle choppers with multiple openings, where we need to select one
     time_zero = 0.5 * (source_time_open + source_time_close)
-    return time_offset - time_zero
+    return OffsetFromTimeOfFlight(time_offset - time_zero)
 
 
 def time_of_flight_wfm(
@@ -315,9 +323,11 @@ def time_of_flight_wfm(
     return out
 
 
-def tof_data(da: RawData, tof: TimeOfFlight) -> TofData:
+def tof_data(da: RawData, offset: OffsetFromTimeOfFlight) -> TofData:
     da = da.copy(deep=False)  # todo copy bins
-    da.bins.coords['tof'] = tof
+    # TODO Inplace?
+    da.bins.coords['tof'] = da.bins.coords['event_time_offset'] + offset
+    da.bins.coords['time_zero'] = da.bins.coords['event_time_zero'] - offset
     return TofData(da)
 
 
