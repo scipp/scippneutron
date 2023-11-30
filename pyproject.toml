@@ -1,16 +1,15 @@
 [build-system]
 requires = [
-  "setuptools>=42",
-  "setuptools_scm[toml]>=6.2",
+  "setuptools>=68",
+  "setuptools_scm[toml]>=8.0",
 ]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools_scm]
-
 [project]
 name = "scippneutron"
-description = " Neutron scattering tools for Data Reduction"
-license = { "file" = "LICENSE" }
+description = "Neutron scattering tools for Data Reduction"
+authors = [{ name = "Scipp contributors" }]
+license = { file = "LICENSE" }
 readme = "README.md"
 classifiers = [
     "Intended Audience :: Science/Research",
@@ -19,18 +18,23 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dynamic = ["version"]
+
+# IMPORTANT:
+# Run 'tox -e deps' after making changes here. This will update requirement files.
+# Make sure to list one dependency per line.
 dependencies = [
     "h5py",
     "numpy>=1.20",
     "pooch",
-    "scipp>23.08.0",
+    "scipp>=23.07.0",
     "scippnexus>=23.8.0",
     "scipy>=1.7.0",
 ]
@@ -40,37 +44,23 @@ interactive = ["scipp[interactive]"]
 all = ['scipp[all]']
 
 [project.urls]
-    "Documentation" = "https://scipp.github.io/scippneutron"
-    "Bug Tracker" = "https://github.com/scipp/scippneutron/issues"
-    "Source" = "https://github.com/scipp/scippneutron"
+"Bug Tracker" = "https://github.com/scipp/scippneutron/issues"
+"Documentation" = "https://scipp.github.io/scippneutron"
+"Source" = "https://github.com/scipp/scippneutron"
 
-[tool.bandit]
-# Excluding tests because bandit doesn't like `assert`.
-exclude_dirs = ["docs/conf.py", "tests", "install", "tools", "setup.py"]
-
-[tool.codespell]
-ignore-words-list = "elemt"
-skip = "./.git,./install,./build,./cmake-build*,./.tox,*/*_cache,*/.virtual_documents,*/.ipynb_checkpoints,*.pdf,*.svg"
-
-[tool.black]
-skip-string-normalization = true
-
-[tool.isort]
-skip_gitignore = true
-profile = "black"
-skip_glob = ["src/scippneutron/__init__.py"]
+[tool.setuptools_scm]
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-testpaths = "tests"
 addopts = """
 --strict-config
 --strict-markers
 -ra
 -v
 """
+testpaths = "tests"
 filterwarnings = [
-  'error',
+  "error",
   'ignore:You are running a "Debug" build of scipp:',
   # Comes from pytest_asyncio and is not our fault.
   "ignore:The 'asyncio_mode' default value will change to 'strict' in future:DeprecationWarning",
@@ -97,3 +87,31 @@ filterwarnings = [
   'ignore:Widget.widgets is deprecated:DeprecationWarning',
   'ignore:`load_nexus` is deprecated:UserWarning',
 ]
+
+[tool.bandit]
+# Excluding tests because bandit doesn't like `assert`.
+exclude_dirs = ["docs/conf.py", "tests", "tools"]
+
+[tool.codespell]
+ignore-words-list = "elemt"
+skip = "./.git,./.tox,*/.virtual_documents,*/.ipynb_checkpoints,*.pdf,*.svg"
+
+[tool.black]
+skip-string-normalization = true
+
+[tool.isort]
+skip_gitignore = true
+profile = "black"
+known_first_party = ["scippneutron"]
+skip_glob = ["src/scippneutron/__init__.py"]
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+enable_error_code = [
+    "ignore-without-code",
+    "redundant-expr",
+    "truthy-bool",
+]
+show_error_codes = true
+warn_unreachable = true

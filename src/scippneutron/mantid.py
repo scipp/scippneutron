@@ -81,7 +81,8 @@ def process_run_logs(ws):
         if units_string and unit is None:
             warnings.warn(
                 f"Workspace run log '{property_name}' "
-                f"has unrecognised units: '{units_string}'"
+                f"has unrecognised units: '{units_string}'",
+                stacklevel=4,
             )
         if unit is None:
             unit = sc.units.one
@@ -198,7 +199,7 @@ def md_dimension(mantid_dim, index):
         if re.search(pattern, mantid_dim.name, re.IGNORECASE):
             return result
 
-    # Look for common spacial dimensions
+    # Look for common spatial dimensions
     patterns = ["^{0}$".format(coord) for coord in ['x', 'y', 'z']]
     dims = ['x', 'y', 'z']
     pattern_result = zip(patterns, dims)
@@ -617,6 +618,7 @@ def convert_Workspace2D_to_data_array(
         'convert_Workspace2D_to_data_array is deprecated in favor of '
         'convert_Workspace2D_to_data_group.',
         VisibleDeprecationWarning,
+        stacklevel=4,
     )
 
     dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
@@ -740,6 +742,7 @@ def convert_EventWorkspace_to_data_array(
         'convert_EventWorkspace_to_data_array is deprecated in favor of '
         'convert_EventWorkspace_to_data_group.',
         VisibleDeprecationWarning,
+        stacklevel=4,
     )
 
     dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
@@ -922,6 +925,7 @@ def convert_MDHistoWorkspace_to_data_array(md_histo, **ignored):
         'convert_MDHistoWorkspace_to_data_array is deprecated in favor of '
         'convert_MDHistoWorkspace_to_data_group.',
         VisibleDeprecationWarning,
+        stacklevel=4,
     )
 
     ndims = md_histo.getNumDims()
@@ -1027,6 +1031,7 @@ def convert_WorkspaceGroup_to_dataarray_dict(group_workspace, **kwargs):
         'convert_WorkspaceGroup_to_dataarray_dict is deprecated in favor of '
         'convert_WorkspaceGroup_to_data_group.',
         VisibleDeprecationWarning,
+        stacklevel=4,
     )
 
     workspace_dict = {}
@@ -1119,6 +1124,7 @@ def array_from_mantid(workspace, **kwargs) -> Union[sc.DataArray, sc.Dataset]:
         "removal in scippneutron v24.01.0. "
         "Use the new scippneutron.from_mantid instead.",
         VisibleDeprecationWarning,
+        stacklevel=4,
     )
 
     scipp_obj = None  # This is either a Dataset or DataArray
@@ -1338,6 +1344,7 @@ def load(
         "scippneutron.load has been deprecated and is scheduled for removal in "
         "scippneutron v24.01.0. Use the new scippneutron.load_with_mantid instead.",
         VisibleDeprecationWarning,
+        stacklevel=2,
     )
 
     if mantid_args is None:
