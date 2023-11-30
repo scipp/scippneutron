@@ -119,20 +119,6 @@ SubframeBounds = NewType('SubframeBounds', sc.Variable)
 The computed subframe boundaries, used to offset the raw timestamps for WFM.
 """
 
-TimeOfFlight = NewType('TimeOfFlight', sc.Variable)
-"""
-Time-of-flight of neutrons, e.g., time from the center of a pulse or a pulse-shaping
-chopper slit, to the detector.
-"""
-
-TimeOffset = NewType('TimeOffset', sc.Variable)
-"""
-Time offset from the start of the frame emitting the neutron.
-
-This is not identical to the time-of-flight, since the time-of-flight is measured,
-e.g., from the center of the pulse or the center of a pulse-shaping chopper slit.
-"""
-
 TimeZero = NewType('TimeZero', sc.Variable)
 """
 Time of the start of the most recent pulse, typically NXevent_data/event_time_zero.
@@ -229,17 +215,22 @@ def time_zero(da: RawData) -> TimeZero:
     return da.bins.coords['event_time_zero']
 
 
-def time_offset(
+def offset_from_wrapped(
     wrapped_time_offset: FrameWrappedTimeOffset,
     frame_bounds: FrameBounds,
     frame_period: FramePeriod,
 ) -> OffsetFromWrapped:
-    # ) -> TimeOffset:
     """
-    Time offset from the start of the frame emitting the neutron.
+    Offset of the input time offsets from the start of the frame emitting the neutron.
 
-    This is not identical to the time-of-flight, since the time-of-flight is measured,
-    e.g., from the center of the pulse, to the center of a pulse-shaping chopper slit.
+    In other words, this is the part that is "lost" by the conceptual wrapping of the
+    time offsets at the frame period. This is the offset that needs to be added to the
+    NXevent_data/event_time_offset to obtain the offset from the start of the emitting
+    frame.
+
+    This is not identical to the offset to time-of-flight, since the time-of-flight is
+    measured, e.g., from the center of the pulse, to the center of a pulse-shaping
+    chopper slit.
 
     Note that this takes the frame-period, which can be a multiple of a pulse-period.
     The input time stamps must be relative the the start of the frame, i.e., in
@@ -257,13 +248,19 @@ def time_offset(
         Time between the start of two consecutive frames, i.e., the period of the
         time-zero used by the data acquisition system.
     """
-    # TODO Check performance here, is using sc.lookup.__getitem__ faster?
     time_offset_min = frame_bounds['bound', 0]
     wrapped_time_min = time_offset_min % frame_period
-    delta = frame_period if wrapped_time_offset < wrapped_time_min else 0
-    offset_frames = time_offset_min - wrapped_time_min + delta
-    return OffsetFromWrapped(offset_frames)
-    # return offset_frames + wrapped_time_offset
+    begin = sc.zeros_like(wrapped_time_min)
+    end = sc.ones_like(wrapped_time_min)
+    dim = 'section'
+    time = sc.concat([begin, wrapped_time_min, end], dim).transpose().copy()
+    offset = sc.DataArray(
+        time_offset_min
+        - wrapped_time_min
+        + sc.concat([frame_period, sc.zeros_like(frame_period)], dim),
+        coords={dim: time},
+    )
+    return OffsetFromWrapped(sc.lookup(offset, dim=dim)[wrapped_time_offset])
 
 
 def source_chopper(
@@ -272,13 +269,12 @@ def source_chopper(
     return choppers[source_chopper_name]
 
 
-def time_of_flight(
+def offset_to_time_of_flight(
     time_offset: OffsetFromWrapped,
     source_chopper: SourceChopper,
 ) -> OffsetFromTimeOfFlight:
-    # ) -> TimeOfFlight:
     """
-    Time-of-flight of neutrons passing through a chopper cascade.
+    Offset from the time-of-flight of neutrons passing through a chopper cascade.
 
     A chopper is used to define (1) the "source" location and (2) the time-of-flight
     time origin. The time-of-flight is then the time difference between the time of
@@ -307,25 +303,28 @@ def time_of_flight(
     return OffsetFromTimeOfFlight(time_offset - time_zero)
 
 
-def time_of_flight_wfm(
-    time_offset: TimeOffset,
+def offset_to_time_of_flight_wfm(
+    time_offset: OffsetFromWrapped,
     source_chopper: SourceChopper,
     subframe_bounds: SubframeBounds,
-) -> TimeOfFlight:
-    # time_zero will have multiple subframes
+) -> OffsetFromTimeOfFlight:
     times = subframe_bounds.flatten(dims=['subframe', 'bound'], to='subframe')
     neg_shift = sc.zeros(dims=['subframe'], shape=[len(times) - 1], unit='s')
+    # TODO How should we handle inter-subframe events? Unless we want to use sc.bin
+    # we will not be removing them. We could at a large offset to move them away from
+    # the valid events.
     neg_shift[::2] -= 0.5 * (source_chopper.time_open + source_chopper.time_close)
     lut = sc.DataArray(neg_shift, coords={'subframe': times})
     # Will raise if subframes overlap, since coord for lookup table must be sorted
     out = sc.lookup(lut, dim='subframe')[time_offset]
     out += time_offset
-    return out
+    return OffsetFromTimeOfFlight(out)
 
 
 def tof_data(da: RawData, offset: OffsetFromTimeOfFlight) -> TofData:
-    da = da.copy(deep=False)  # todo copy bins
-    # TODO Inplace?
+    da = da.copy(deep=False)  # TODO copy bins
+    # TODO We may want to do this inplace, maybe outside the graph, just use Sciline
+    # to compute the offset and apply manually?
     da.bins.coords['tof'] = da.bins.coords['event_time_offset'] + offset
     da.bins.coords['time_zero'] = da.bins.coords['event_time_zero'] - offset
     return TofData(da)
@@ -337,7 +336,7 @@ _common_providers = [
     frame_period,
     pulse_wrapped_time_offset,
     source_chopper,
-    time_offset,
+    offset_from_wrapped,
     tof_data,
 ]
 
@@ -348,8 +347,8 @@ _skipping = [
     time_zero,
 ]
 
-_wfm = [subframe_bounds, time_of_flight_wfm]
-_non_wfm = [time_of_flight]
+_wfm = [subframe_bounds, offset_to_time_of_flight_wfm]
+_non_wfm = [offset_to_time_of_flight]
 
 
 def providers(pulse_skipping: bool = False, wfm: bool = False):
