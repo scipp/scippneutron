@@ -2,7 +2,7 @@
 
 ## Top-level functions
 
-### Mantid Compatikbility
+### Mantid Compatibility
 
 ```{eval-rst}
 .. currentmodule:: scippneutron
