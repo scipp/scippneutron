@@ -4,7 +4,7 @@
 import io
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Mapping, Union
+from typing import Any, Iterable, Mapping, Optional, Union
 
 import scipp as sc
 
@@ -45,16 +45,33 @@ def _write_loop(f, name: str, da: Union[sc.Dataset, sc.DataArray]) -> None:
         f.write('\n')
 
 
-def _format_value(value: Any) -> str:
-    if isinstance(value, sc.Variable):
-        without_unit = sc.scalar(value.value, variance=value.variance)
-        s = f'{without_unit:c}'
-    else:
-        s = str(value)
+def _quotes_for_string_value(value: str) -> Optional[str]:
+    if '\n' in value:
+        return ';'
+    if "'" in value:
+        if '"' in value:
+            return ';'
+        return '"'
+    if '"' in value:
+        return "'"
+    if ' ' in value:
+        return "'"
+    return None
 
-    if ' ' in s:
-        return f'"{s}"'
-    return s
+
+def _format_value(value: Any) -> str:
+    # if isinstance(value, sc.Variable):
+    #     without_unit = sc.scalar(value.value, variance=value.variance)
+    #     s = f'{without_unit:c}'
+    # else:
+    #     s = str(value)
+    s = str(value)
+
+    if (quotes := _quotes_for_string_value(s)) == ';':
+        return f'\n; {s}\n;'
+    elif quotes is not None:
+        return ' ' + quotes + s + quotes
+    return ' ' + s
 
 
 def _write_key_value_pairs(f, name: str, pairs: Mapping[str, Any]) -> None:
@@ -68,3 +85,64 @@ def _write_item(f, name: str, value: Any) -> None:
         _write_loop(f, name, value)
     else:
         _write_key_value_pairs(f, name, value)
+
+
+class _Chunk:
+    def __init__(
+        self,
+        pairs: Union[Mapping[str, Any], Iterable[tuple[str, Any]], None],
+        /,
+        comment: str = '',
+    ) -> None:
+        self._pairs = dict(pairs) if pairs is not None else {}
+        self.comment = comment
+
+    def write(self, f: io.TextIOBase) -> None:
+        if self.comment:
+            f.write('\n# ' + '\n# '.join(self.comment.splitlines()))
+        f.write('\n')
+        for key, val in self._pairs.items():
+            f.write(f'_{key}{_format_value(val)}\n')
+
+
+class Loop:
+    def __init__(
+        self,
+        columns: Union[
+            Mapping[str, sc.Variable], Iterable[tuple[str, sc.Variable]], None
+        ],
+    ) -> None:
+        self._columns = dict(columns) if columns is not None else {}
+
+
+class Block:
+    def __init__(
+        self,
+        name: str,
+        content: Optional[Iterable[Union[Mapping[str, Any], Loop, _Chunk]]] = None,
+    ) -> None:
+        self.name = name
+        self._content = _convert_input_content(content) if content is not None else []
+
+    def add(
+        self,
+        content: Union[Mapping[str, Any], Iterable[tuple[str, Any]], _Chunk],
+        /,
+        comment: str = '',
+    ) -> None:
+        if not isinstance(content, _Chunk):
+            content = _Chunk(content, comment=comment)
+        self._content.append(content)
+
+    def write(self, f: io.TextIOBase) -> None:
+        f.write(f'data_{self.name}\n')
+        for item in self._content:
+            item.write(f)
+
+
+def _convert_input_content(
+    content: Iterable[Union[Mapping[str, Any], Loop, _Chunk]]
+) -> list[Union[Loop, _Chunk]]:
+    return [
+        item if isinstance(item, (Loop, _Chunk)) else _Chunk(item) for item in content
+    ]
