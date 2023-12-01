@@ -281,6 +281,31 @@ sulfur
     )
 
 
+def test_write_block_single_loop_one_column_comment():
+    env = sc.array(dims=['x'], values=['water', 'sulfur'])
+    block = cif.Block(
+        'looped',
+        [
+            cif.Loop(
+                {'diffrn.ambient_environment': env},
+                comment='This data is completely made up!',
+            )
+        ],
+    )
+    res = write_to_str(block)
+    assert (
+        res
+        == '''data_looped
+
+# This data is completely made up!
+loop_
+_diffrn.ambient_environment
+water
+sulfur
+'''
+    )
+
+
 def test_write_block_single_loop_two_columns():
     env = sc.array(dims=['x'], values=['water', 'sulfur'])
     id_ = sc.array(dims=['x'], values=['123', 'x6a'])

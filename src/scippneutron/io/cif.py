@@ -89,6 +89,11 @@ def _write_item(f, name: str, value: Any) -> None:
         _write_key_value_pairs(f, name, value)
 
 
+def _write_comment(f: io.TextIOBase, comment: str) -> None:
+    if comment:
+        f.write('\n# ' + '\n# '.join(comment.splitlines()))
+
+
 class _Chunk:
     def __init__(
         self,
@@ -100,8 +105,7 @@ class _Chunk:
         self.comment = comment
 
     def write(self, f: io.TextIOBase) -> None:
-        if self.comment:
-            f.write('\n# ' + '\n# '.join(self.comment.splitlines()))
+        _write_comment(f, self.comment)
         f.write('\n')
         for key, val in self._pairs.items():
             v = _format_value(val)
@@ -117,10 +121,13 @@ class Loop:
         columns: Union[
             Mapping[str, sc.Variable], Iterable[tuple[str, sc.Variable]], None
         ],
+        comment: str = '',
     ) -> None:
         self._columns = dict(columns) if columns is not None else {}
+        self.comment = comment
 
     def write(self, f: io.TextIOBase) -> None:
+        _write_comment(f, self.comment)
         f.write('\nloop_\n')
         for key in self._columns:
             f.write(f'_{key}\n')
