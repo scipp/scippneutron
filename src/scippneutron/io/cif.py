@@ -60,18 +60,20 @@ def _quotes_for_string_value(value: str) -> Optional[str]:
 
 
 def _format_value(value: Any) -> str:
-    # if isinstance(value, sc.Variable):
-    #     without_unit = sc.scalar(value.value, variance=value.variance)
-    #     s = f'{without_unit:c}'
-    # else:
-    #     s = str(value)
-    s = str(value)
+    if isinstance(value, sc.Variable):
+        if value.variance is not None:
+            without_unit = sc.scalar(value.value, variance=value.variance)
+            s = f'{without_unit:c}'
+        else:
+            s = str(value.value)
+    else:
+        s = str(value)
 
     if (quotes := _quotes_for_string_value(s)) == ';':
-        return f'\n; {s}\n;'
+        return f'; {s}\n;'
     elif quotes is not None:
-        return ' ' + quotes + s + quotes
-    return ' ' + s
+        return quotes + s + quotes
+    return s
 
 
 def _write_key_value_pairs(f, name: str, pairs: Mapping[str, Any]) -> None:
@@ -102,7 +104,11 @@ class _Chunk:
             f.write('\n# ' + '\n# '.join(self.comment.splitlines()))
         f.write('\n')
         for key, val in self._pairs.items():
-            f.write(f'_{key}{_format_value(val)}\n')
+            v = _format_value(val)
+            if v.startswith(';'):
+                f.write(f'_{key}\n{_format_value(val)}\n')
+            else:
+                f.write(f'_{key} {_format_value(val)}\n')
 
 
 class Loop:
@@ -113,6 +119,22 @@ class Loop:
         ],
     ) -> None:
         self._columns = dict(columns) if columns is not None else {}
+
+    def write(self, f: io.TextIOBase) -> None:
+        f.write('\nloop_\n')
+        for key in self._columns:
+            f.write(f'_{key}\n')
+        formatted_values = [
+            tuple(map(_format_value, row)) for row in zip(*self._columns.values())
+        ]
+        sep = (
+            '\n'
+            if any(';' in item for row in formatted_values for item in row)
+            else ' '
+        )
+        for row in formatted_values:
+            f.write(sep.join(row))
+            f.write('\n')
 
 
 class Block:
