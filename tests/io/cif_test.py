@@ -2,6 +2,7 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
 import io
+from datetime import datetime, timezone
 
 import pytest
 import scipp as sc
@@ -84,6 +85,48 @@ def test_write_block_single_pair_number_error(unit):
         == '''data_number
 
 _cell.angle_alpha 93(2)
+'''
+    )
+
+
+def test_write_block_single_pair_datetime():
+    dt = datetime(
+        year=2023, month=12, day=1, hour=15, minute=9, second=45, tzinfo=timezone.utc
+    )
+    block = cif.Block(
+        'datetime',
+        [
+            {
+                'audit.creation_date': dt,
+            }
+        ],
+    )
+    res = write_to_str(block)
+    assert (
+        res
+        == '''data_datetime
+
+_audit.creation_date 2023-12-01T15:09:45+00:00
+'''
+    )
+
+
+def test_write_block_single_pair_datetime_variable():
+    block = cif.Block(
+        'datetime',
+        [
+            {
+                'audit.creation_date': sc.datetime('2023-12-01T15:12:33'),
+            }
+        ],
+    )
+    res = write_to_str(block)
+    # No timezone info in the output!
+    assert (
+        res
+        == '''data_datetime
+
+_audit.creation_date 2023-12-01T15:12:33
 '''
     )
 

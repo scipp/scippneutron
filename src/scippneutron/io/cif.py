@@ -3,6 +3,7 @@
 
 import io
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Optional, Union
 
@@ -45,6 +46,8 @@ def _format_value(value: Any) -> str:
             s = f'{without_unit:c}'
         else:
             s = str(value.value)
+    elif isinstance(value, datetime):
+        s = value.isoformat()
     else:
         s = str(value)
 
