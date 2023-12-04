@@ -3,6 +3,7 @@
 
 import io
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pytest
 import scipp as sc
@@ -638,3 +639,21 @@ water
 sulfur
 '''
     )
+
+
+@pytest.mark.parametrize('path_type', (str, Path))
+def test_save_cif_one_block_file(tmpdir, path_type):
+    path = path_type(Path(tmpdir) / "test_save_cif_one_block.cif")
+    block1 = cif.Block(
+        'block-1', [{'audit.creation_method': 'written by scippneutron'}]
+    )
+
+    cif.save_cif(path, block1)
+    with open(path, 'r') as f:
+        assert (
+            f.read()
+            == '''data_block-1
+
+_audit.creation_method 'written by scippneutron'
+'''
+        )
