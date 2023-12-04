@@ -46,7 +46,7 @@ build:
     - mantid [py==310]
   noarch: python
   script:
-    - pip install .
+    - python -m pip install .
 
 about:
   home: https://github.com/scipp/scippneutron

@@ -1,0 +1,8 @@
+# Dependencies that are only used by tests.
+# Do not make an environment from this file, use test.txt instead!
+
+hypothesis
+psutil
+pytest
+pytest-xdist
+pythreejs
