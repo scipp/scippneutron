@@ -25,14 +25,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx_autodoc_typehints',
     'sphinx_copybutton',
-<<<<<<< before updating
     'sphinx_design',
     'sphinxcontrib.bibtex',
-||||||| last update
-    "sphinx_design",
-=======
-    'sphinx_design',
->>>>>>> after updating
     'nbsphinx',
     'myst_parser',
 ]
@@ -214,10 +208,7 @@ nbsphinx_execute_arguments = [
 # So we simply disable plots in doctests.
 doctest_global_setup = '''
 import numpy as np
-<<<<<<< before updating
 import scipp as sc
-||||||| last update
-=======
 
 try:
     import scipp as sc
@@ -233,7 +224,6 @@ try:
 except ImportError:
     # Scipp is not needed by docs if it is not installed.
     pass
->>>>>>> after updating
 '''
 
 # Using normalize whitespace because many __str__ functions in scipp produce
