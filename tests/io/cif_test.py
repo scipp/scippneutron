@@ -20,7 +20,20 @@ def write_to_str(block: cif.Block) -> str:
 def test_write_block_empty():
     block = cif.Block('a block-name')
     res = write_to_str(block)
-    assert res == 'data_a block-name\n'
+    assert res == 'data_a block-name\n\n'
+
+
+def test_write_block_comment():
+    block = cif.Block('a block-name', comment='some comment\n to describe the block')
+    res = write_to_str(block)
+    assert (
+        res
+        == '''# some comment
+#  to describe the block
+data_a block-name
+
+'''
+    )
 
 
 def test_write_block_single_pair_string():
