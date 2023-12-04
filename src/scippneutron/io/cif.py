@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
+from __future__ import annotations
 
 import io
 from contextlib import contextmanager
@@ -11,9 +12,17 @@ import scipp as sc
 
 
 def save_cif(
-    fname: Union[str, Path, io.TextIOBase], blocks: Mapping[str, Mapping[str, Any]]
+    fname: Union[str, Path, io.TextIOBase], blocks: Union[Block, Iterable[Block]]
 ) -> None:
-    raise NotImplementedError()
+    if isinstance(blocks, Block):
+        blocks = (blocks,)
+    with _open(fname) as f:
+        first = True
+        for block in blocks:
+            if not first:
+                f.write('\n')
+            first = False
+            block.write(f)
 
 
 @contextmanager

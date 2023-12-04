@@ -576,3 +576,52 @@ _audit_author.email
 Librarian lib@uu.am
 '''
     )
+
+
+def test_save_cif_one_block_buffer():
+    block1 = cif.Block(
+        'block-1', [{'audit.creation_method': 'written by scippneutron'}]
+    )
+    buffer = io.StringIO()
+    cif.save_cif(buffer, block1)
+    buffer.seek(0)
+    assert (
+        buffer.read()
+        == '''data_block-1
+
+_audit.creation_method 'written by scippneutron'
+'''
+    )
+
+
+def test_save_cif_two_blocks_buffer():
+    env = sc.array(dims=['env'], values=['water', 'sulfur'])
+    block1 = cif.Block(
+        'block-1', [{'audit.creation_method': 'written by scippneutron'}]
+    )
+    block2 = cif.Block(
+        'block 2',
+        [
+            {'diffrn_radiation.probe': 'neutron'},
+            cif.Loop({'diffrn.ambient_environment': env}),
+        ],
+    )
+    buffer = io.StringIO()
+    cif.save_cif(buffer, [block1, block2])
+    buffer.seek(0)
+    assert (
+        buffer.read()
+        == '''data_block-1
+
+_audit.creation_method 'written by scippneutron'
+
+data_block 2
+
+_diffrn_radiation.probe neutron
+
+loop_
+_diffrn.ambient_environment
+water
+sulfur
+'''
+    )
