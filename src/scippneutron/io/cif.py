@@ -20,11 +20,12 @@ def save_cif(
         _write_multi(f, blocks)
 
 
-class _Chunk:
+class Chunk:
     def __init__(
         self,
         pairs: Union[Mapping[str, Any], Iterable[tuple[str, Any]], None],
         /,
+        *,
         comment: str = '',
     ) -> None:
         self._pairs = dict(pairs) if pairs is not None else {}
@@ -46,6 +47,7 @@ class Loop:
         columns: Union[
             Mapping[str, sc.Variable], Iterable[tuple[str, sc.Variable]], None
         ],
+        *,
         comment: str = '',
     ) -> None:
         self._columns = dict(columns) if columns is not None else {}
@@ -73,9 +75,9 @@ class Block:
     def __init__(
         self,
         name: str,
-        content: Optional[Iterable[Union[Mapping[str, Any], Loop, _Chunk]]] = None,
+        content: Optional[Iterable[Union[Mapping[str, Any], Loop, Chunk]]] = None,
         *,
-        comment: Optional[str] = None,
+        comment: str = '',
     ) -> None:
         self.name = name
         self._content = _convert_input_content(content) if content is not None else []
@@ -83,12 +85,12 @@ class Block:
 
     def add(
         self,
-        content: Union[Mapping[str, Any], Iterable[tuple[str, Any]], _Chunk],
+        content: Union[Mapping[str, Any], Iterable[tuple[str, Any]], Chunk],
         /,
         comment: str = '',
     ) -> None:
-        if not isinstance(content, _Chunk):
-            content = _Chunk(content, comment=comment)
+        if not isinstance(content, Chunk):
+            content = Chunk(content, comment=comment)
         self._content.append(content)
 
     def write(self, f: io.TextIOBase) -> None:
@@ -98,10 +100,10 @@ class Block:
 
 
 def _convert_input_content(
-    content: Iterable[Union[Mapping[str, Any], Loop, _Chunk]]
-) -> list[Union[Loop, _Chunk]]:
+    content: Iterable[Union[Mapping[str, Any], Loop, Chunk]]
+) -> list[Union[Loop, Chunk]]:
     return [
-        item if isinstance(item, (Loop, _Chunk)) else _Chunk(item) for item in content
+        item if isinstance(item, (Loop, Chunk)) else Chunk(item) for item in content
     ]
 
 
