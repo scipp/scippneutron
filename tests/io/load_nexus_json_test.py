@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import scipp as sc
 
-from scippneutron.io.nexus.load_nexus import _load_nexus_json
+from scippneutron.io.nexus.load_nexus import load_nexus_json_str
 
 from .nexus_helpers import NexusBuilder, Source, Stream
 
@@ -24,7 +24,7 @@ def test_stream_object_as_transformation_results_in_warning():
     builder.add_dataset_at_path("/entry/source/depends_on", stream_path, {})
 
     with pytest.warns(UserWarning):
-        loaded_data, _ = _load_nexus_json(builder.json_string)
+        loaded_data, _ = load_nexus_json_str(builder.json_string)
 
     # A 0 distance translation is used in place of the streamed transformation
     default = [0, 0, 0]

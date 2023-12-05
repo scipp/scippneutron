@@ -396,7 +396,7 @@ def _load_data(
     return sc.Dataset(loaded_data)
 
 
-def _load_nexus_json(
+def load_nexus_json_str(
     json_template: str,
     get_start_info: bool = False,
 ) -> Tuple[Optional[ScippData], Optional[sc.Variable], Optional[Set[StreamInfo]]]:
@@ -416,5 +416,5 @@ def _load_nexus_json(
 def load_nexus_json(json_filename: str) -> Optional[ScippData]:
     with open(json_filename, 'r') as json_file:
         json_string = json_file.read()
-    loaded_data, _ = _load_nexus_json(json_string)
+    loaded_data, _ = load_nexus_json_str(json_string)
     return loaded_data
