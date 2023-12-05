@@ -422,8 +422,24 @@ def load_nexus_json(json_filename: str) -> Optional[ScippData]:
 
 
 def json_nexus_group(
-    json_dict: dict[str, Any], definitions: Optional[Dict[str, type]] = None
+    json_dict: dict[str, Any], *, definitions: Optional[Dict[str, type]] = None
 ) -> snx.Group:
+    """Parse a JSON dictionary into a NeXus group.
+
+    Parameters
+    ----------
+    json_dict:
+        ``dict`` containing a NeXus structure as JSON.
+    definitions:
+        ScippNexus application definitions.
+        When not given, the default definitions are used.
+
+    Returns
+    -------
+    :
+        A NeXus group that can be used for loading data as if it were
+        loaded from a file with :class:`scippnexus.File`.
+    """
     return snx.Group(
         JSONGroup(json_dict),
         definitions=definitions if definitions is not None else snx.base_definitions(),
