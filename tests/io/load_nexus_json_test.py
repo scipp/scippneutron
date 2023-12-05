@@ -110,3 +110,91 @@ def test_nexus_json_load_event_data(examples):
         loaded.bins.concatenate(-expected).bins.sum().data
         == sc.scalar(0, unit='counts')
     )
+
+
+def test_nexus_json_load_detector_with_event_data(examples):
+    detector = examples.detector
+    detector['children'].append(examples.event_data)
+    entry = examples.entry
+    entry['children'].append(detector)
+    group = make_group(entry)
+    loaded = group[()]['entry']['detector_0']
+
+    expected_events = sc.DataArray(
+        sc.ones(sizes={'event': 5}, unit='counts', dtype='float32'),
+        coords={
+            'event_id': sc.array(dims=['event'], values=[1, 2, 3, 1, 3], unit=None),
+            'event_time_zero': sc.datetimes(
+                dims=['event'],
+                values=[
+                    1600766730000000000,
+                    1600766730000000000,
+                    1600766730000000000,
+                    1600766732000000000,
+                    1600766732000000000,
+                ],
+                unit='ns',
+            ),
+            'event_time_offset': sc.array(
+                dims=['event'], values=[456, 743, 347, 345, 632], unit='ns'
+            ),
+        },
+    )
+    detector_number = sc.array(dims=['detector_number'], values=[1, 2, 3, 4], unit=None)
+    expected = expected_events.group(
+        sc.array(dims=['event_id'], values=[1, 2, 3, 4], unit=None)
+    )
+    expected = expected.rename({'event_id': 'detector_number'}).assign_coords(
+        detector_number=detector_number
+    )
+
+    assert loaded.keys() == {'events_0'}
+    sc.testing.assert_identical(
+        loaded['events_0'].coords['detector_number'], detector_number
+    )
+    # Using `loaded == expected` could fail if the order of events in the
+    # bins is different.
+    # Since the order is arbitrary, check that the bins have equal weights instead.
+    assert sc.all(
+        loaded['events_0'].bins.concatenate(-expected).bins.sum().data
+        == sc.scalar(0, unit='counts')
+    )
+
+
+def test_nexus_json_load_log(examples):
+    entry = examples.entry
+    entry['children'].append(examples.log)
+    group = make_group(entry)
+    loaded = group[()]['entry']['test_log']
+
+    expected = sc.DataArray(
+        sc.array(dims=['time'], values=[1.1, 2.2, 3.3], unit='m'),
+        coords={
+            'time': sc.datetimes(dims=['time'], values=[13, 24, 35], unit='s').to(
+                unit='ns'
+            )
+        },
+    )
+    sc.testing.assert_identical(loaded, expected)
+
+
+def test_nexus_json_load_log_utf8_unit(examples):
+    log = examples.log
+    assert log['children'][0]['name'] == 'value', 'is the expected child'
+    assert log['children'][0]['attributes'][0]['name'] == 'units'
+    log['children'][0]['attributes'][0]['values'] = '\u00b0'  # '°', i.e., degrees
+
+    entry = examples.entry
+    entry['children'].append(log)
+    group = make_group(entry)
+    loaded = group[()]['entry']['test_log']
+
+    expected = sc.DataArray(
+        sc.array(dims=['time'], values=[1.1, 2.2, 3.3], unit='deg'),
+        coords={
+            'time': sc.datetimes(dims=['time'], values=[13, 24, 35], unit='s').to(
+                unit='ns'
+            )
+        },
+    )
+    sc.testing.assert_identical(loaded, expected)

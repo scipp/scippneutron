@@ -1,0 +1,66 @@
+{
+  "type": "group",
+  "name": "test_log",
+  "children": [
+    {
+      "type": "dataset",
+      "name": "value",
+      "values": [
+        1.1,
+        2.2,
+        3.3
+      ],
+      "dataset": {
+        "size": [
+          3
+        ],
+        "type": "float64"
+      },
+      "attributes": [
+        {
+          "string_size": 1,
+          "type": "string",
+          "name": "units",
+          "values": "m"
+        }
+      ]
+    },
+    {
+      "type": "dataset",
+      "name": "time",
+      "values": [
+        13,
+        24,
+        35
+      ],
+      "dataset": {
+        "size": [
+          3
+        ],
+        "type": "float64"
+      },
+      "attributes": [
+        {
+          "string_size": 1,
+          "type": "string",
+          "name": "units",
+          "values": "s"
+        },
+        {
+          "string_size": 20,
+          "type": "string",
+          "name": "start",
+          "values": "1970-01-01T00:00:00Z"
+        }
+      ]
+    }
+  ],
+  "attributes": [
+    {
+      "string_size": 5,
+      "type": "string",
+      "name": "NX_class",
+      "values": "NXlog"
+    }
+  ]
+}
