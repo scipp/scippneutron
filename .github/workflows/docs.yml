@@ -32,6 +32,11 @@ on:
         default: ''
         required: false
         type: string
+      linkcheck:
+        description: 'Run the link checker. If not set the link checker will not be run.'
+        default: false
+        required: false
+        type: boolean
 
 env:
   VERSION: ${{ inputs.version }}
@@ -64,6 +69,8 @@ jobs:
           python -m sphinx -j2 -v -b html -d doctrees docs html
           python -m sphinx -j2 -v -b doctest -d doctrees docs html
           find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
+      - run: tox -e linkcheck
+        if: ${{ inputs.linkcheck }}
       - uses: actions/upload-artifact@v3
         with:
           name: docs_html
@@ -75,4 +82,3 @@ jobs:
           branch: gh-pages
           folder: html
           single-commit: true
-          ssh-key: ${{ secrets.GH_PAGES_DEPLOY_KEY }}
