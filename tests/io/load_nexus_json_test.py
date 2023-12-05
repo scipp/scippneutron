@@ -78,9 +78,14 @@ def test_nexus_json_load_event_data(examples):
     expected_events = sc.DataArray(
         sc.ones(sizes={'event': 5}, unit='counts', dtype='float32'),
         coords={
-            'event_id': sc.array(dims=['event'], values=[1, 2, 3, 1, 3], unit=None),
+            'event_id': sc.array(
+                dims=['event'], values=[1, 2, 3, 1, 3], unit=None, dtype='int64'
+            ),
             'event_time_offset': sc.array(
-                dims=['event'], values=[456, 743, 347, 345, 632], unit='ns'
+                dims=['event'],
+                values=[456, 743, 347, 345, 632],
+                unit='ns',
+                dtype='int64',
             ),
         },
     )
@@ -94,8 +99,8 @@ def test_nexus_json_load_event_data(examples):
         ],
         unit='ns',
     )
-    begin = sc.array(dims=['event'], values=[0, 3, 3, 5], unit=None)
-    end = sc.array(dims=['event'], values=[3, 3, 5, 5], unit=None)
+    begin = sc.array(dims=['event'], values=[0, 3, 3, 5], unit=None, dtype='int64')
+    end = sc.array(dims=['event'], values=[3, 3, 5, 5], unit=None, dtype='int64')
     binned = sc.bins(data=expected_events, dim='event', begin=begin, end=end)
     expected = sc.DataArray(
         binned.rename_dims({'event': 'event_time_zero'}),
@@ -123,7 +128,9 @@ def test_nexus_json_load_detector_with_event_data(examples):
     expected_events = sc.DataArray(
         sc.ones(sizes={'event': 5}, unit='counts', dtype='float32'),
         coords={
-            'event_id': sc.array(dims=['event'], values=[1, 2, 3, 1, 3], unit=None),
+            'event_id': sc.array(
+                dims=['event'], values=[1, 2, 3, 1, 3], unit=None, dtype='int64'
+            ),
             'event_time_zero': sc.datetimes(
                 dims=['event'],
                 values=[
@@ -136,13 +143,18 @@ def test_nexus_json_load_detector_with_event_data(examples):
                 unit='ns',
             ),
             'event_time_offset': sc.array(
-                dims=['event'], values=[456, 743, 347, 345, 632], unit='ns'
+                dims=['event'],
+                values=[456, 743, 347, 345, 632],
+                unit='ns',
+                dtype='int64',
             ),
         },
     )
-    detector_number = sc.array(dims=['detector_number'], values=[1, 2, 3, 4], unit=None)
+    detector_number = sc.array(
+        dims=['detector_number'], values=[1, 2, 3, 4], unit=None, dtype='int64'
+    )
     expected = expected_events.group(
-        sc.array(dims=['event_id'], values=[1, 2, 3, 4], unit=None)
+        sc.array(dims=['event_id'], values=[1, 2, 3, 4], unit=None, dtype='int64')
     )
     expected = expected.rename({'event_id': 'detector_number'}).assign_coords(
         detector_number=detector_number
