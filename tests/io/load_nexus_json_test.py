@@ -182,8 +182,10 @@ def test_nexus_json_load_log(examples):
     expected = sc.DataArray(
         sc.array(dims=['time'], values=[1.1, 2.2, 3.3], unit='m'),
         coords={
-            'time': sc.datetimes(dims=['time'], values=[13, 24, 35], unit='s').to(
-                unit='ns'
+            'time': sc.datetimes(
+                dims=['time'],
+                values=[1354291220000000000, 1354291231000000000, 1354291242000000000],
+                unit='ns',
             )
         },
     )
@@ -204,8 +206,10 @@ def test_nexus_json_load_log_utf8_unit(examples):
     expected = sc.DataArray(
         sc.array(dims=['time'], values=[1.1, 2.2, 3.3], unit='deg'),
         coords={
-            'time': sc.datetimes(dims=['time'], values=[13, 24, 35], unit='s').to(
-                unit='ns'
+            'time': sc.datetimes(
+                dims=['time'],
+                values=[1354291220000000000, 1354291231000000000, 1354291242000000000],
+                unit='ns',
             )
         },
     )
