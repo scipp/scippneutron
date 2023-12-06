@@ -98,6 +98,12 @@ class Block:
         f.write(f'data_{self.name}\n\n')
         _write_multi(f, self._content)
 
+    def save(
+        self,
+        fname: Union[str, Path, io.TextIOBase],
+    ) -> None:
+        save_cif(fname, self)
+
 
 def _convert_input_content(
     content: Iterable[Union[Mapping[str, Any], Loop, Chunk]]
