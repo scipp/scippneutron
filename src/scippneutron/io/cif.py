@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import warnings
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -96,7 +97,8 @@ class Block:
         *,
         comment: str = '',
     ) -> None:
-        self._name = _encode_non_ascii(name)
+        self._name = ''
+        self.name = name
         self._content = _convert_input_content(content) if content is not None else []
         self._comment = _encode_non_ascii(comment)
 
@@ -107,6 +109,12 @@ class Block:
     @name.setter
     def name(self, name: str) -> None:
         self._name = _encode_non_ascii(name)
+        if len(self._name) > 75:
+            warnings.warn(
+                "cif.Block name should not be longer than 75 characters, got "
+                f"{len(self._name)} characters ('{self._name}')",
+                UserWarning,
+            )
 
     @property
     def comment(self) -> str:
