@@ -17,6 +17,7 @@ def save_cif(
     if isinstance(blocks, Block):
         blocks = (blocks,)
     with _open(fname) as f:
+        _write_file_heading(f)
         _write_multi(f, blocks)
 
 
@@ -169,3 +170,7 @@ def _write_multi(f: io.TextIOBase, to_write: Iterable[Any]) -> None:
             f.write('\n')
         first = False
         item.write(f)
+
+
+def _write_file_heading(f: io.TextIOBase) -> None:
+    f.write('#\\#CIF_1.1\n')

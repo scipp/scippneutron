@@ -601,7 +601,8 @@ def test_save_cif_one_block_buffer():
     buffer.seek(0)
     assert (
         buffer.read()
-        == '''data_block-1
+        == r'''#\#CIF_1.1
+data_block-1
 
 _audit.creation_method 'written by scippneutron'
 '''
@@ -617,7 +618,8 @@ def test_save_method_one_block_buffer():
     buffer.seek(0)
     assert (
         buffer.read()
-        == '''data_block-1
+        == r'''#\#CIF_1.1
+data_block-1
 
 _audit.creation_method 'written by scippneutron'
 '''
@@ -641,7 +643,8 @@ def test_save_cif_two_blocks_buffer():
     buffer.seek(0)
     assert (
         buffer.read()
-        == '''data_block-1
+        == r'''#\#CIF_1.1
+data_block-1
 
 _audit.creation_method 'written by scippneutron'
 
@@ -668,7 +671,8 @@ def test_save_cif_one_block_file(tmpdir, path_type):
     with open(path, 'r') as f:
         assert (
             f.read()
-            == '''data_block-1
+            == r'''#\#CIF_1.1
+data_block-1
 
 _audit.creation_method 'written by scippneutron'
 '''
