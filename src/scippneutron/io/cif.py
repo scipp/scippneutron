@@ -15,6 +15,23 @@ import scipp as sc
 def save_cif(
     fname: Union[str, Path, io.TextIOBase], blocks: Union[Block, Iterable[Block]]
 ) -> None:
+    """Save data blocks to a CIF file.
+
+    Create :class:`cif.Block` objects to first collect and structure the data
+    for the file, then use this function to write the file.
+
+    Parameters
+    ----------
+    fname:
+        Path or file handle for the output file.
+    blocks:
+        One or more CIF data blocks to write to the file.
+
+    See also
+    --------
+    cif.Block.save:
+        Method for saving a single block.
+    """
     if isinstance(blocks, Block):
         blocks = (blocks,)
     with _open(fname) as f:
@@ -52,6 +69,14 @@ class Chunk:
 
 
 class Loop:
+    """A CIF loop.
+
+    Contains a mapping from strings to Scipp variables.
+    The strings are arbitrary and ``Loop`` can merge items from different categories
+    into a single loop.
+    All variables must have the same length.
+    """
+
     def __init__(
         self,
         columns: Union[
@@ -60,6 +85,16 @@ class Loop:
         *,
         comment: str = '',
     ) -> None:
+        """Create a new CIF loop.
+
+        Parameters
+        ----------
+        columns:
+            Defines a mapping from column names (including their category)
+            to column values as Scipp variables.
+        comment:
+            Optional comment that can be written above the loop in the file.
+        """
         self._columns = dict(columns) if columns is not None else {}
         self._comment = _encode_non_ascii(comment)
 
@@ -77,7 +112,8 @@ class Loop:
         for key in self._columns:
             f.write(f'_{key}\n')
         formatted_values = [
-            tuple(map(_format_value, row)) for row in zip(*self._columns.values())
+            tuple(map(_format_value, row))
+            for row in _strict_zip(*self._columns.values())
         ]
         sep = (
             '\n'
@@ -90,6 +126,13 @@ class Loop:
 
 
 class Block:
+    """A CIF data block.
+
+    A block contains an ordered sequence of loops
+    and chunks (groups of key-value-pairs).
+    The contents are written to file in the order specified in the block.
+    """
+
     def __init__(
         self,
         name: str,
@@ -97,6 +140,20 @@ class Block:
         *,
         comment: str = '',
     ) -> None:
+        """Create a new CIF data block.
+
+        Parameters
+        ----------
+        name:
+            Name of the block.
+            Can contain any non-linebreak characters.
+            Can be at most 75 characters long.
+        content:
+            Initial loops and chunks.
+            ``dicts`` are converted to :class:`cif.Chunk`s.
+        comment:
+            Optional comment that can be written above the block in the file.
+        """
         self._name = ''
         self.name = name
         self._content = _convert_input_content(content) if content is not None else []
@@ -114,6 +171,7 @@ class Block:
                 "cif.Block name should not be longer than 75 characters, got "
                 f"{len(self._name)} characters ('{self._name}')",
                 UserWarning,
+                stacklevel=2,
             )
 
     @property
@@ -143,6 +201,20 @@ class Block:
         self,
         fname: Union[str, Path, io.TextIOBase],
     ) -> None:
+        """Save this block to a CIF file.
+
+        Equivalent to ``cif.save_cif(fname, self)``.
+
+        Parameters
+        ----------
+        fname:
+            Path or file handle for the output file.
+
+        See also
+        --------
+        cif.save_cif:
+            Free function for saving one or more blocks.
+        """
         save_cif(fname, self)
 
 
@@ -220,3 +292,11 @@ def _write_multi(f: io.TextIOBase, to_write: Iterable[Any]) -> None:
 
 def _write_file_heading(f: io.TextIOBase) -> None:
     f.write('#\\#CIF_1.1\n')
+
+
+def _strict_zip(*args: Iterable[Any]) -> Iterable[Any]:
+    try:
+        return zip(*args, strict=True)
+    except TypeError:
+        pass
+    return zip(*args)
