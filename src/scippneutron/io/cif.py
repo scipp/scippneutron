@@ -30,16 +30,24 @@ class Chunk:
         comment: str = '',
     ) -> None:
         self._pairs = dict(pairs) if pairs is not None else {}
-        self.comment = comment
+        self._comment = _encode_non_ascii(comment)
+
+    @property
+    def comment(self) -> str:
+        return self._comment
+
+    @comment.setter
+    def comment(self, comment: str) -> None:
+        self._comment = _encode_non_ascii(comment)
 
     def write(self, f: io.TextIOBase) -> None:
         _write_comment(f, self.comment)
         for key, val in self._pairs.items():
             v = _format_value(val)
             if v.startswith(';'):
-                f.write(f'_{key}\n{_format_value(val)}\n')
+                f.write(f'_{key}\n{v}\n')
             else:
-                f.write(f'_{key} {_format_value(val)}\n')
+                f.write(f'_{key} {v}\n')
 
 
 class Loop:
@@ -52,7 +60,15 @@ class Loop:
         comment: str = '',
     ) -> None:
         self._columns = dict(columns) if columns is not None else {}
-        self.comment = comment
+        self._comment = _encode_non_ascii(comment)
+
+    @property
+    def comment(self) -> str:
+        return self._comment
+
+    @comment.setter
+    def comment(self, comment: str) -> None:
+        self._comment = _encode_non_ascii(comment)
 
     def write(self, f: io.TextIOBase) -> None:
         _write_comment(f, self.comment)
@@ -80,9 +96,25 @@ class Block:
         *,
         comment: str = '',
     ) -> None:
-        self.name = name
+        self._name = _encode_non_ascii(name)
         self._content = _convert_input_content(content) if content is not None else []
-        self.comment = comment
+        self._comment = _encode_non_ascii(comment)
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, name: str) -> None:
+        self._name = _encode_non_ascii(name)
+
+    @property
+    def comment(self) -> str:
+        return self._comment
+
+    @comment.setter
+    def comment(self, comment: str) -> None:
+        self._comment = _encode_non_ascii(comment)
 
     def add(
         self,
@@ -137,6 +169,10 @@ def _quotes_for_string_value(value: str) -> Optional[str]:
     return None
 
 
+def _encode_non_ascii(s: str) -> str:
+    return s.encode('ascii', 'backslashreplace').decode('ascii')
+
+
 def _format_value(value: Any) -> str:
     if isinstance(value, sc.Variable):
         if value.variance is not None:
@@ -148,6 +184,8 @@ def _format_value(value: Any) -> str:
         s = value.isoformat()
     else:
         s = str(value)
+
+    s = _encode_non_ascii(s)
 
     if (quotes := _quotes_for_string_value(s)) == ';':
         return f'; {s}\n;'

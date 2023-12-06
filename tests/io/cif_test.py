@@ -219,6 +219,18 @@ _audit.creation_method
     )
 
 
+def test_write_block_single_pair_utf8():
+    block = cif.Block('utf-8', [{'audit.creation_method': 'Unicode: \xb5\xc5'}])
+    res = write_to_str(block)
+    assert (
+        res
+        == r'''data_utf-8
+
+_audit.creation_method 'Unicode: \xb5\xc5'
+'''
+    )
+
+
 def test_write_block_single_pair_single_line_comment():
     block = cif.Block('comment')
     block.add({'diffrn_radiation.probe': 'neutron'}, comment='a comment')
@@ -247,6 +259,20 @@ def test_write_block_single_pair_multi_line_comment():
 # Guessing that
 # this is the
 #   correct probe
+_diffrn_radiation.probe neutron
+'''
+    )
+
+
+def test_write_block_single_pair_single_line_comment_utf8():
+    block = cif.Block('comment')
+    block.add({'diffrn_radiation.probe': 'neutron'}, comment='unicode: \xc5')
+    res = write_to_str(block)
+    assert (
+        res
+        == r'''data_comment
+
+# unicode: \xc5
 _diffrn_radiation.probe neutron
 '''
     )
