@@ -3,6 +3,7 @@
 # @author Simon Heybrock
 """
 """
+import math
 from typing import Dict, NewType, Optional, Tuple
 
 import scipp as sc
@@ -323,11 +324,10 @@ def offset_to_time_of_flight_wfm(
     subframe_bounds: SubframeBounds,
 ) -> OffsetFromTimeOfFlight:
     times = subframe_bounds.flatten(dims=['subframe', 'bound'], to='subframe')
-    neg_shift = sc.zeros(dims=['subframe'], shape=[len(times) - 1], unit='s')
-    # TODO How should we handle inter-subframe events? Unless we want to use sc.bin
-    # we will not be removing them. We could at a large offset to move them away from
-    # the valid events.
-    neg_shift[::2] -= 0.5 * (source_chopper.time_open + source_chopper.time_close)
+    neg_shift = sc.zeros(dims=['subframe'], shape=[len(times) + 2], unit='s')
+    neg_shift[1::2] -= 0.5 * (source_chopper.time_open + source_chopper.time_close)
+    # Set offsets before, between, and after subframes to NaN
+    neg_shift[::2] = sc.scalar(math.nan, unit='s')
     lut = sc.DataArray(neg_shift, coords={'subframe': times})
     # Will raise if subframes overlap, since coord for lookup table must be sorted
     out = sc.lookup(lut, dim='subframe')[time_offset]
