@@ -336,9 +336,22 @@ def offset_to_time_of_flight_wfm(
 
 
 def tof_data(da: RawData, offset: OffsetFromTimeOfFlight) -> TofData:
-    da = da.copy(deep=False)  # TODO copy bins
-    # TODO We may want to do this inplace, maybe outside the graph, just use Sciline
-    # to compute the offset and apply manually?
+    """
+    Return the input data with 'tof' and 'time_zero' coordinates.
+
+    The 'tof' coordinate is the time-of-flight of the neutron, i.e., the time
+    difference between the time of arrival of the neutron at the detector, and the
+    time of the neutron at the source or source-chopper. The 'time_zero' coordinate is
+    the time of the neutron at the source or source-chopper.
+
+    It is critical to compute the 'time_zero' coordinate precisely by applying the
+    reverse of the offset to time-of-flight, since this may be used to compute a
+    precise time at the sample position. This is important for sample environments
+    with highly time-dependent properties, since precise event-filtering based on
+    sample environment data may be required.
+    """
+    da = da.copy(deep=False)
+    da.data = sc.bins(**da.bins.constituents)
     da.bins.coords['tof'] = da.bins.coords['event_time_offset'] + offset
     da.bins.coords['time_zero'] = da.bins.coords['event_time_zero'] - offset
     return TofData(da)
