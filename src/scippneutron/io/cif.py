@@ -1,5 +1,62 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
+"""CIF file writer.
+
+This module contains tools for writing `CIF <https://www.iucr.org/resources/cif>`_
+files with diffraction data.
+It does not support reading CIF files.
+
+Examples
+--------
+Make mockup powder diffraction data:
+
+  >>> import scipp as sc
+  >>> tof = sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')
+  >>> intensity = sc.array(
+  ...     dims=['tof'],
+  ...     values=[13.6, 26.0, 9.7],
+  ...     variances=[0.7, 1.1, 0.5],
+  ... )
+
+Wrap the data in a ``Loop`` to write them together as columns:
+
+  >>> from scippneutron.io import cif
+  >>> tof_loop = cif.Loop({
+  ...     'pd_meas.time_of_flight': tof,
+  ...     'pd_meas.intensity_total': sc.values(intensity),
+  ...     'pd_meas.intensity_total_su': sc.stddevs(intensity),
+  ... })
+
+Write the data to file along with some metadata:
+
+  >>> block = cif.Block('example', [
+  ...     {
+  ...         'diffrn_radiation.probe': 'neutron',
+  ...         'diffrn_source.beamline': 'some-beamline',
+  ...     },
+  ...     tof_loop,
+  ... ])
+  >>> cif.save_cif('example.cif', block)
+
+This results in a file containing
+
+.. code-block::
+
+  #\\#CIF_1.1
+  data_example
+
+  _diffrn_radiation.probe neutron
+  _diffrn_source.beamline some-beamline
+
+  loop_
+  _pd_meas.time_of_flight
+  _pd_meas.intensity_total
+  _pd_meas.intensity_total_su
+  1.2 13.6 0.8366600265340756
+  1.4 26.0 1.0488088481701516
+  2.3 9.7 0.7071067811865476
+"""
+
 from __future__ import annotations
 
 import io
@@ -17,8 +74,8 @@ def save_cif(
 ) -> None:
     """Save data blocks to a CIF file.
 
-    Create :class:`cif.Block` objects to first collect and structure the data
-    for the file, then use this function to write the file.
+    To use, first create :class:`scippneutron.io.cif.Block` objects to collect and
+    structure data for the file, then use this function to write the file.
 
     Parameters
     ----------
@@ -29,7 +86,7 @@ def save_cif(
 
     See also
     --------
-    cif.Block.save:
+    scippneutron.io.cif.Block.save:
         Method for saving a single block.
     """
     if isinstance(blocks, Block):
@@ -40,6 +97,17 @@ def save_cif(
 
 
 class Chunk:
+    """A group of CIF key-value pairs.
+
+    Chunks contain one or more key-value pairs where values are scalars,
+    i.e., not arrays.
+    Chunks are represented in files as a group of pairs separated from
+    other chunks and loops by empty lines.
+
+    Note that CIF has no concept of chunks; they are only used for organizing
+    data in ScippNeutron.
+    """
+
     def __init__(
         self,
         pairs: Union[Mapping[str, Any], Iterable[tuple[str, Any]], None],
@@ -47,11 +115,21 @@ class Chunk:
         *,
         comment: str = '',
     ) -> None:
+        """Create a new CIF chunk.
+
+        Parameters
+        ----------
+        pairs:
+            Defines a mapping from keys (a.k.a. tags) to values.
+        comment:
+            Optional comment that can be written above the chunk in the file.
+        """
         self._pairs = dict(pairs) if pairs is not None else {}
         self._comment = _encode_non_ascii(comment)
 
     @property
     def comment(self) -> str:
+        """Optional comment that can be written above the chunk in the file."""
         return self._comment
 
     @comment.setter
@@ -59,6 +137,16 @@ class Chunk:
         self._comment = _encode_non_ascii(comment)
 
     def write(self, f: io.TextIOBase) -> None:
+        """Write this chunk to a file.
+
+        Used mainly internally, use :func:`scippneutron.io.cif.save_cif`
+        or :meth:`scippneutron.io.cif.Block.save` instead.
+
+        Parameters
+        ----------
+        f:
+            File handle.
+        """
         _write_comment(f, self.comment)
         for key, val in self._pairs.items():
             v = _format_value(val)
@@ -100,6 +188,7 @@ class Loop:
 
     @property
     def comment(self) -> str:
+        """Optional comment that can be written above the loop in the file."""
         return self._comment
 
     @comment.setter
@@ -107,6 +196,16 @@ class Loop:
         self._comment = _encode_non_ascii(comment)
 
     def write(self, f: io.TextIOBase) -> None:
+        """Write this loop to a file.
+
+        Used mainly internally, use :func:`scippneutron.io.cif.save_cif`
+        or :meth:`scippneutron.io.cif.Block.save` instead.
+
+        Parameters
+        ----------
+        f:
+            File handle.
+        """
         _write_comment(f, self.comment)
         f.write('loop_\n')
         for key in self._columns:
@@ -146,11 +245,11 @@ class Block:
         ----------
         name:
             Name of the block.
-            Can contain any non-linebreak characters.
+            Can contain any non-whitespace characters.
             Can be at most 75 characters long.
         content:
             Initial loops and chunks.
-            ``dicts`` are converted to :class:`cif.Chunk`s.
+            ``dicts`` are converted to :class:`scippneutron.io.cif.Chunk`.
         comment:
             Optional comment that can be written above the block in the file.
         """
@@ -161,6 +260,7 @@ class Block:
 
     @property
     def name(self) -> str:
+        """Name of the block."""
         return self._name
 
     @name.setter
@@ -181,6 +281,7 @@ class Block:
 
     @property
     def comment(self) -> str:
+        """Optional comment that can be written above the block in the file."""
         return self._comment
 
     @comment.setter
@@ -193,11 +294,31 @@ class Block:
         /,
         comment: str = '',
     ) -> None:
+        """Add a chunk or loop to the end of the block.
+
+        Parameters
+        ----------
+        content:
+            A loop, chunk, or mapping to add.
+            Mappings get converted to chunks.
+        comment:
+            Optional comment that can be written above the chunk or loop in the file.
+        """
         if not isinstance(content, Chunk):
             content = Chunk(content, comment=comment)
         self._content.append(content)
 
     def write(self, f: io.TextIOBase) -> None:
+        """Write this block to a file.
+
+        Used mainly internally, use :func:`scippneutron.io.cif.save_cif`
+        or :meth:`scippneutron.io.cif.Block.save` instead.
+
+        Parameters
+        ----------
+        f:
+            File handle.
+        """
         _write_comment(f, self.comment)
         f.write(f'data_{self.name}\n\n')
         _write_multi(f, self._content)
@@ -217,7 +338,7 @@ class Block:
 
         See also
         --------
-        cif.save_cif:
+        scippneutron.io.cif.save_cif:
             Free function for saving one or more blocks.
         """
         save_cif(fname, self)
