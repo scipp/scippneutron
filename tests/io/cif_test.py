@@ -19,19 +19,24 @@ def write_to_str(block: cif.Block) -> str:
 
 
 def test_write_block_empty():
-    block = cif.Block('a block-name')
+    block = cif.Block('a-block-name')
     res = write_to_str(block)
-    assert res == 'data_a block-name\n\n'
+    assert res == 'data_a-block-name\n\n'
+
+
+def test_write_block_name_with_space():
+    with pytest.raises(ValueError):
+        cif.Block('a block-name with space')
 
 
 def test_write_block_comment():
-    block = cif.Block('a block-name', comment='some comment\n to describe the block')
+    block = cif.Block('a-block-name', comment='some comment\n to describe the block')
     res = write_to_str(block)
     assert (
         res
         == '''# some comment
 #  to describe the block
-data_a block-name
+data_a-block-name
 
 '''
     )
@@ -658,7 +663,7 @@ def test_save_cif_two_blocks_buffer():
         'block-1', [{'audit.creation_method': 'written by scippneutron'}]
     )
     block2 = cif.Block(
-        'block 2',
+        'block-2',
         [
             {'diffrn_radiation.probe': 'neutron'},
             cif.Loop({'diffrn.ambient_environment': env}),
@@ -674,7 +679,7 @@ data_block-1
 
 _audit.creation_method 'written by scippneutron'
 
-data_block 2
+data_block-2
 
 _diffrn_radiation.probe neutron
 

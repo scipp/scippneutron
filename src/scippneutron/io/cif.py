@@ -166,6 +166,11 @@ class Block:
     @name.setter
     def name(self, name: str) -> None:
         self._name = _encode_non_ascii(name)
+        if ' ' in self._name or '\t' in self._name or '\n' in self._name:
+            raise ValueError(
+                "Block name must not contain spaces or line breaks, "
+                f"got: '{self._name}'"
+            )
         if len(self._name) > 75:
             warnings.warn(
                 "cif.Block name should not be longer than 75 characters, got "
