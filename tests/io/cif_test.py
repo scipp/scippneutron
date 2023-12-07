@@ -596,7 +596,7 @@ _audit.creation_date 2023-12-01T13:52:00Z
 def test_write_block_two_loops():
     env = sc.array(dims=['env'], values=['water', 'sulfur'])
     author = sc.array(dims=['author'], values=['Ridcully, M.', 'Librarian'])
-    email = sc.array(dims=['email'], values=['m.ridcully@uu.am', 'lib@uu.am'])
+    email = sc.array(dims=['author'], values=['m.ridcully@uu.am', 'lib@uu.am'])
     block = cif.Block(
         'looped',
         [
@@ -646,7 +646,7 @@ _audit.creation_method 'written by scippneutron'
 
 def test_write_block_core_schema_from_loop():
     author = sc.array(dims=['author'], values=['Ridcully, M.', 'Librarian'])
-    email = sc.array(dims=['email'], values=['m.ridcully@uu.am', 'lib@uu.am'])
+    email = sc.array(dims=['author'], values=['m.ridcully@uu.am', 'lib@uu.am'])
     loop = cif.Loop(
         {'audit_author.name': author, 'audit_author.email': email},
         schema=cif.CORE_SCHEMA,
@@ -880,3 +880,15 @@ def test_block_with_reduced_powder_data_bad_coord_unit():
     block = cif.Block('reduced', [])
     with pytest.raises(sc.UnitError):
         block.add_reduced_powder_data(da)
+
+
+def test_loop_requires_1d():
+    with pytest.raises(sc.DimensionError):
+        cif.Loop({'fake': sc.zeros(sizes={'x': 4, 'y': 3})})
+
+
+def test_loop_requires_matching_dims():
+    with pytest.raises(sc.DimensionError):
+        cif.Loop({'a': sc.zeros(sizes={'x': 4}), 'b': sc.zeros(sizes={'x': 3})})
+    with pytest.raises(sc.DimensionError):
+        cif.Loop({'a': sc.zeros(sizes={'x': 4}), 'b': sc.zeros(sizes={'y': 4})})

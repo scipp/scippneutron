@@ -219,7 +219,9 @@ class Loop:
             Content is not checked against the schema, but the schema is written
             to the file.
         """
-        self._columns = dict(columns) if columns is not None else {}
+        self._columns = {}
+        for key, column in columns.items():
+            self[key] = column
         self._comment = _encode_non_ascii(comment)
         self._schema = _preprocess_schema(schema)
 
@@ -238,6 +240,18 @@ class Loop:
         return self._schema
 
     def __setitem__(self, name: str, value: sc.Variable) -> None:
+        if value.ndim != 1:
+            raise sc.DimensionError(
+                "CIF loops can only contain 1d variables, got " f"{value.ndim} dims"
+            )
+        if self._columns:
+            existing = next(iter(self._columns.values())).sizes
+            if existing != value.sizes:
+                raise sc.DimensionError(
+                    f"Inconsistent dims in CIF loop: {value.sizes} "
+                    f"loop dims: {existing}"
+                )
+
         self._columns[name] = value
 
     def write(self, f: io.TextIOBase) -> None:
@@ -256,8 +270,7 @@ class Loop:
         for key in self._columns:
             f.write(f'_{key}\n')
         formatted_values = [
-            tuple(map(_format_value, row))
-            for row in _strict_zip(*self._columns.values())
+            tuple(map(_format_value, row)) for row in zip(*self._columns.values())
         ]
         sep = (
             '\n'
@@ -515,15 +528,6 @@ def _write_multi(f: io.TextIOBase, to_write: Iterable[Any]) -> None:
 
 def _write_file_heading(f: io.TextIOBase) -> None:
     f.write('#\\#CIF_1.1\n')
-
-
-def _strict_zip(*args: Iterable[Any]) -> Iterable[Any]:
-    # TODO check sizes in loop instead of this here
-    try:
-        return zip(*args, strict=True)
-    except TypeError:
-        pass
-    return zip(*args)
 
 
 def _reduced_powder_coord(data) -> tuple[str, sc.Variable]:
