@@ -264,9 +264,23 @@ def offset_from_wrapped(
 
 
 def source_chopper(
-    choppers: Choppers, source_chopper_name: SourceChopperName
+    choppers: Choppers,
+    source_time_range: SourceTimeRange,
+    source_chopper_name: Optional[SourceChopperName],
 ) -> SourceChopper:
-    return choppers[source_chopper_name]
+    """
+    Return the chopper defining the source location and time-of-flight time origin.
+
+    If there is no pulse-shaping chopper, then the source-pulse begin and end time
+    are used to define a fake chopper.
+    """
+    if source_chopper_name is not None:
+        return choppers[source_chopper_name]
+    return chopper_cascade.Chopper(
+        distance=sc.scalar(0.0, 'm'),
+        time_open=source_time_range[0],
+        time_close=source_time_range[1],
+    )
 
 
 def offset_to_time_of_flight(
