@@ -623,6 +623,80 @@ Librarian lib@uu.am
     )
 
 
+def test_write_block_core_schema_from_chunk():
+    chunk = cif.Chunk(
+        {'audit.creation_method': 'written by scippneutron'}, schema=cif.CORE_SCHEMA
+    )
+    block = cif.Block('block-with-schema', [chunk])
+    res = write_to_str(block)
+    assert (
+        res
+        == '''data_block-with-schema
+
+loop_
+_audit_conform.dict_name
+_audit_conform.dict_version
+_audit_conform.dict_location
+coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
+
+_audit.creation_method 'written by scippneutron'
+'''  # noqa: E501
+    )
+
+
+def test_write_block_core_schema_from_loop():
+    author = sc.array(dims=['author'], values=['Ridcully, M.', 'Librarian'])
+    email = sc.array(dims=['email'], values=['m.ridcully@uu.am', 'lib@uu.am'])
+    loop = cif.Loop(
+        {'audit_author.name': author, 'audit_author.email': email},
+        schema=cif.CORE_SCHEMA,
+    )
+    block = cif.Block('block-with-schema', [loop])
+    res = write_to_str(block)
+    assert (
+        res
+        == '''data_block-with-schema
+
+loop_
+_audit_conform.dict_name
+_audit_conform.dict_version
+_audit_conform.dict_location
+coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
+
+loop_
+_audit_author.name
+_audit_author.email
+'Ridcully, M.' m.ridcully@uu.am
+Librarian lib@uu.am
+'''  # noqa: E501
+    )
+
+
+def test_write_block_pd_schema_from_chunk():
+    chunk = cif.Chunk(
+        {'pd_meas.units_of_intensity': '1/(micro ampere)'}, schema=cif.PD_SCHEMA
+    )
+    block = cif.Block('block-with-schema', [chunk])
+    res = write_to_str(block)
+    # The order of schemas is arbitrary, so we cannot easily check the whole string.
+    assert 'pdCIF' in res
+    assert 'coreCIF' in res
+
+
+def test_write_block_multi_schema_schema():
+    core_chunk = cif.Chunk(
+        {'audit.creation_method': 'written by scippneutron'}, schema=cif.CORE_SCHEMA
+    )
+    pd_chunk = cif.Chunk(
+        {'pd_meas.units_of_intensity': '1/(micro ampere)'}, schema=cif.PD_SCHEMA
+    )
+    block = cif.Block('block-with-schema', [core_chunk, pd_chunk])
+    res = write_to_str(block)
+    # The order of schemas is arbitrary, so we cannot easily check the whole string.
+    assert 'pdCIF' in res
+    assert 'coreCIF' in res
+
+
 def test_save_cif_one_block_buffer():
     block1 = cif.Block(
         'block-1', [{'audit.creation_method': 'written by scippneutron'}]

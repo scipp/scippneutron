@@ -62,11 +62,31 @@ from __future__ import annotations
 import io
 import warnings
 from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Optional, Union
 
 import scipp as sc
+
+
+@dataclass(frozen=True)
+class CIFSchema:
+    name: str
+    version: str
+    location: str
+
+
+CORE_SCHEMA = CIFSchema(
+    name='coreCIF',
+    version='3.3.0',
+    location='https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic',  # noqa: E501
+)
+PD_SCHEMA = CIFSchema(
+    name='pdCIF',
+    version='2.5.0',
+    location='https://github.com/COMCIFS/Powder_Dictionary/blob/7608b92165f58f968f054344e67662e01d4b401a/cif_pow.dic',  # noqa: E501
+)
 
 
 def save_cif(
@@ -114,6 +134,7 @@ class Chunk:
         /,
         *,
         comment: str = '',
+        schema: Optional[Union[CIFSchema, Iterable[CIFSchema]]] = None,
     ) -> None:
         """Create a new CIF chunk.
 
@@ -123,9 +144,14 @@ class Chunk:
             Defines a mapping from keys (a.k.a. tags) to values.
         comment:
             Optional comment that can be written above the chunk in the file.
+        schema:
+            CIF Schema used for the chunk.
+            Content is not checked against the schema, but the schema is written
+            to the file.
         """
         self._pairs = dict(pairs) if pairs is not None else {}
         self._comment = _encode_non_ascii(comment)
+        self._schema = _preprocess_schema(schema)
 
     @property
     def comment(self) -> str:
@@ -135,6 +161,11 @@ class Chunk:
     @comment.setter
     def comment(self, comment: str) -> None:
         self._comment = _encode_non_ascii(comment)
+
+    @property
+    def schema(self) -> set[CIFSchema]:
+        """CIF Schema used for the chunk."""
+        return self._schema
 
     def write(self, f: io.TextIOBase) -> None:
         """Write this chunk to a file.
@@ -172,6 +203,7 @@ class Loop:
         ],
         *,
         comment: str = '',
+        schema: Optional[Union[CIFSchema, Iterable[CIFSchema]]] = None,
     ) -> None:
         """Create a new CIF loop.
 
@@ -182,9 +214,14 @@ class Loop:
             to column values as Scipp variables.
         comment:
             Optional comment that can be written above the loop in the file.
+        schema:
+            CIF Schema used for the loop.
+            Content is not checked against the schema, but the schema is written
+            to the file.
         """
         self._columns = dict(columns) if columns is not None else {}
         self._comment = _encode_non_ascii(comment)
+        self._schema = _preprocess_schema(schema)
 
     @property
     def comment(self) -> str:
@@ -194,6 +231,11 @@ class Loop:
     @comment.setter
     def comment(self, comment: str) -> None:
         self._comment = _encode_non_ascii(comment)
+
+    @property
+    def schema(self) -> set[CIFSchema]:
+        """CIF Schema used for the loop."""
+        return self._schema
 
     def write(self, f: io.TextIOBase) -> None:
         """Write this loop to a file.
@@ -238,6 +280,7 @@ class Block:
         content: Optional[Iterable[Union[Mapping[str, Any], Loop, Chunk]]] = None,
         *,
         comment: str = '',
+        schema: Optional[Union[CIFSchema, Iterable[CIFSchema]]] = None,
     ) -> None:
         """Create a new CIF data block.
 
@@ -252,11 +295,16 @@ class Block:
             ``dicts`` are converted to :class:`scippneutron.io.cif.Chunk`.
         comment:
             Optional comment that can be written above the block in the file.
+        schema:
+            CIF Schema used for the block.
+            Content is not checked against the schema, but the schema is written
+            to the file.
         """
         self._name = ''
         self.name = name
         self._content = _convert_input_content(content) if content is not None else []
         self._comment = _encode_non_ascii(comment)
+        self._schema = _preprocess_schema(schema)
 
     @property
     def name(self) -> str:
@@ -287,6 +335,14 @@ class Block:
     @comment.setter
     def comment(self, comment: str) -> None:
         self._comment = _encode_non_ascii(comment)
+
+    @property
+    def schema(self) -> set[CIFSchema]:
+        """CIF Schema used for the block."""
+        merged = set(self._schema)
+        for item in self._content:
+            merged.update(item.schema)
+        return merged
 
     def add(
         self,
@@ -319,8 +375,13 @@ class Block:
         f:
             File handle.
         """
+        schema_loop = _make_schema_loop(self.schema)
+
         _write_comment(f, self.comment)
         f.write(f'data_{self.name}\n\n')
+        if schema_loop is not None:
+            schema_loop.write(f)
+            f.write('\n')
         _write_multi(f, self._content)
 
     def save(
@@ -359,6 +420,36 @@ def _open(fname: Union[str, Path, io.TextIOBase]):
     else:
         with open(fname, 'w') as f:
             yield f
+
+
+def _preprocess_schema(
+    schema: Optional[Union[CIFSchema, Iterable[CIFSchema]]]
+) -> set[CIFSchema]:
+    if schema is None:
+        return set()
+    if isinstance(schema, CIFSchema):
+        res = {schema}
+    else:
+        res = set(schema)
+    res.add(CORE_SCHEMA)  # needed to encode schema itself
+    return res
+
+
+def _make_schema_loop(schema: set[CIFSchema]) -> Optional[Loop]:
+    if not schema:
+        return None
+    columns = {
+        'audit_conform.dict_name': [],
+        'audit_conform.dict_version': [],
+        'audit_conform.dict_location': [],
+    }
+    for s in schema:
+        columns['audit_conform.dict_name'].append(s.name)
+        columns['audit_conform.dict_version'].append(s.version)
+        columns['audit_conform.dict_location'].append(s.location)
+    return Loop(
+        {key: sc.array(dims=['schema'], values=val) for key, val in columns.items()}
+    )
 
 
 def _quotes_for_string_value(value: str) -> Optional[str]:
