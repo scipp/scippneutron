@@ -213,6 +213,9 @@ def pulse_wrapped_time_offset(da: RawData) -> PulseWrappedTimeOffset:
     of the pulse that emitted the neutron, so event_time_offset is "wrapped" around
     at the pulse period.
     """
+    if da.bins is None:
+        # Canonical name in NXmonitor
+        return PulseWrappedTimeOffset(da.coords['time_of_flight'])
     return da.bins.coords['event_time_offset']
 
 
@@ -220,6 +223,9 @@ def time_zero(da: RawData) -> TimeZero:
     """
     In NXevent_data, event_time_zero is the start of the most recent pulse.
     """
+    # This is not available for histogram-mode monitors. We probably need to look it
+    # up elsewhere in the file, e.g., NXsource. Should we have a separate provider for
+    # monitors?
     return da.bins.coords['event_time_zero']
 
 
@@ -358,9 +364,15 @@ def tof_data(da: RawData, offset: OffsetFromTimeOfFlight) -> TofData:
     sample environment data may be required.
     """
     da = da.copy(deep=False)
-    da.data = sc.bins(**da.bins.constituents)
-    da.bins.coords['tof'] = da.bins.coords['event_time_offset'] + offset
-    da.bins.coords['time_zero'] = da.bins.coords['event_time_zero'] - offset
+    if da.bins is not None:
+        da.data = sc.bins(**da.bins.constituents)
+        da.bins.coords['tof'] = da.bins.coords['event_time_offset'] + offset
+        da.bins.coords['time_zero'] = da.bins.coords['event_time_zero'] - offset
+    else:
+        # 'time_of_flight' is the name in, e.g., Nxmonitor
+        da.coords['tof'] = da.coords['time_of_flight'] + offset
+        # Generally the coord is now not ordered, might want to cut and concat, but it
+        # is unclear what to do with the split bin in the middle.
     return TofData(da)
 
 
