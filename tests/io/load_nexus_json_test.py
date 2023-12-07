@@ -107,14 +107,7 @@ def test_nexus_json_load_event_data(examples):
         coords={'event_time_zero': event_time_zero},
     )
 
-    sc.testing.assert_identical(loaded.coords['event_time_zero'], event_time_zero)
-    # Using `loaded == expected` could fail if the order of events in the
-    # bins is different.
-    # Since the order is arbitrary, check that the bins have equal weights instead.
-    assert sc.all(
-        loaded.bins.concatenate(-expected).bins.sum().data
-        == sc.scalar(0, unit='counts')
-    )
+    sc.testing.assert_identical(loaded, expected)
 
 
 def test_nexus_json_load_detector_with_event_data(examples):
@@ -161,16 +154,7 @@ def test_nexus_json_load_detector_with_event_data(examples):
     )
 
     assert loaded.keys() == {'events_0'}
-    sc.testing.assert_identical(
-        loaded['events_0'].coords['detector_number'], detector_number
-    )
-    # Using `loaded == expected` could fail if the order of events in the
-    # bins is different.
-    # Since the order is arbitrary, check that the bins have equal weights instead.
-    assert sc.all(
-        loaded['events_0'].bins.concatenate(-expected).bins.sum().data
-        == sc.scalar(0, unit='counts')
-    )
+    sc.testing.assert_identical(loaded['events_0'], expected)
 
 
 def test_nexus_json_load_log(examples):
