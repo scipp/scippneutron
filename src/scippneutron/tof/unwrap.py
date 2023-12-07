@@ -30,6 +30,14 @@ After propagating the frame to the detector distances this will then be used to
 compute the frame bounds.
 """
 
+FrameAtDetector = NewType('FrameAtDetector', chopper_cascade.Frame)
+"""
+Result of passing the source pulse through the chopper cascade to the detector.
+
+The detector may be a monitor or a detector after scattering off the sample. The frame
+bounds are then computed from this.
+"""
+
 FrameBounds = NewType('FrameBounds', sc.Variable)
 """
 The computed frame boundaries, used to unwrap the raw timestamps.
@@ -50,19 +58,13 @@ the data acquisition system, i.e., the same as :py:class:`PulseWrappedTimeOffset
 In pulse-skipping mode, this is the time offset since the start of the frame.
 """
 
-L1 = NewType('L1', sc.Variable)
+Ltotal = NewType('Ltotal', sc.Variable)
 """
-Distance between the source and the sample.
-
-This is used to propagate the frame to the sample position.
-"""
-
-L2 = NewType('L2', sc.Variable)
-"""
-Distance(s) between the source and the detector(s).
+Total distance between the source and the detector(s).
 
 This is used to propagate the frame to the detector position. This will then yield
-detector-dependent frame bounds.
+detector-dependent frame bounds. This is typically the sum of L1 and L2, except for
+monitors.
 """
 
 PulseOffset = NewType('PulseOffset', sc.Variable)
@@ -143,12 +145,12 @@ def frame_period(
     return FramePeriod(pulse_period * pulse_stride)
 
 
-def frame_at_sample(
+def frame_at_detector(
     source_wavelength_range: SourceWavelengthRange,
     source_time_range: SourceTimeRange,
     choppers: Choppers,
-    l1: L1,
-) -> FrameAtSample:
+    ltotal: Ltotal,
+) -> FrameAtDetector:
     frames = chopper_cascade.FrameSequence.from_source_pulse(
         time_min=source_time_range[0],
         time_max=source_time_range[1],
@@ -156,18 +158,23 @@ def frame_at_sample(
         wavelength_max=source_wavelength_range[1],
     )
     frames.chop(choppers.values())
-    return frames[-1].propagate_to(l1)
+    # Find last frame before ltotal
+    frame_before_detector = None
+    for frame in frames:
+        if frame.distance > ltotal:
+            break
+        frame_before_detector = frame
+
+    return FrameAtDetector(frame_before_detector.propagate_to(ltotal))
 
 
-def frame_bounds(frame_at_sample: FrameAtSample, l2: L2) -> FrameBounds:
-    bounds = frame_at_sample.bounds()
-    return chopper_cascade.propagate_times(**bounds, distance=l2)
+def frame_bounds(frame: FrameAtDetector) -> FrameBounds:
+    return FrameBounds(frame.bounds())
 
 
-def subframe_bounds(frame_at_sample: FrameAtSample, l2: L2) -> SubframeBounds:
+def subframe_bounds(frame: FrameAtDetector) -> SubframeBounds:
     """Used for WFM."""
-    bounds = frame_at_sample.subbounds()
-    return chopper_cascade.propagate_times(**bounds, distance=l2)
+    return SubframeBounds(frame.subbounds())
 
 
 def frame_wrapped_time_offset(offset: PulseWrappedTimeOffset) -> FrameWrappedTimeOffset:
@@ -358,7 +365,7 @@ def tof_data(da: RawData, offset: OffsetFromTimeOfFlight) -> TofData:
 
 
 _common_providers = [
-    frame_at_sample,
+    frame_at_detector,
     frame_bounds,
     frame_period,
     pulse_wrapped_time_offset,
