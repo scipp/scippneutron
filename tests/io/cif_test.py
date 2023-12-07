@@ -782,3 +782,101 @@ data_block-1
 _audit.creation_method 'written by scippneutron'
 '''
         )
+
+
+def test_block_with_reduced_powder_data():
+    da = sc.DataArray(
+        sc.array(
+            dims=['tof'],
+            values=[13.6, 26.0, 9.7],
+            variances=[0.81, 1, 0.36],
+        ),
+        coords={'tof': sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')},
+    )
+
+    block = cif.Block('reduced', [])
+    block.add_reduced_powder_data(da)
+    res = write_to_str(block)
+
+    assert 'pdCIF' in res
+    assert 'coreCIF' in res
+
+    _, _, tof_loop = res.split('\n\n')
+    assert (
+        tof_loop
+        == '''loop_
+_pd_meas.time_of_flight
+_pd_proc.intensity_net
+_pd_proc.intensity_net_su
+1.2 13.6 0.9
+1.4 26.0 1.0
+2.3 9.7 0.6
+'''
+    )
+
+
+def test_block_with_reduced_powder_data_custom_unit():
+    da = sc.DataArray(
+        sc.array(dims=['tof'], values=[13.6, 26.0, 9.7], unit='counts'),
+        coords={'tof': sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')},
+    )
+
+    block = cif.Block('reduced', [])
+    block.add_reduced_powder_data(da)
+    res = write_to_str(block)
+
+    assert 'pdCIF' in res
+    assert 'coreCIF' in res
+
+    _, _, tof_loop = res.split('\n\n')
+    assert (
+        tof_loop
+        == '''# Unit of intensity: [counts]
+loop_
+_pd_meas.time_of_flight
+_pd_proc.intensity_net
+1.2 13.6
+1.4 26.0
+2.3 9.7
+'''
+    )
+
+
+def test_block_with_reduced_powder_data_bad_dim():
+    da = sc.DataArray(
+        sc.array(
+            dims=['time'],
+            values=[13.6, 26.0, 9.7],
+        ),
+        coords={'time': sc.array(dims=['time'], values=[1.2, 1.4, 2.3], unit='us')},
+    )
+
+    block = cif.Block('reduced', [])
+    with pytest.raises(sc.CoordError):
+        block.add_reduced_powder_data(da)
+
+
+def test_block_with_reduced_powder_data_bad_name():
+    da = sc.DataArray(
+        sc.array(
+            dims=['tof'],
+            values=[13.6, 26.0, 9.7],
+        ),
+        coords={'tof': sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')},
+        name='bad',
+    )
+
+    block = cif.Block('reduced', [])
+    with pytest.raises(ValueError):
+        block.add_reduced_powder_data(da)
+
+
+def test_block_with_reduced_powder_data_bad_coord_unit():
+    da = sc.DataArray(
+        sc.array(dims=['tof'], values=[13.6, 26.0, 9.7]),
+        coords={'tof': sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='ns')},
+    )
+
+    block = cif.Block('reduced', [])
+    with pytest.raises(sc.UnitError):
+        block.add_reduced_powder_data(da)

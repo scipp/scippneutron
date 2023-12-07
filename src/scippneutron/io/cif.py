@@ -237,6 +237,9 @@ class Loop:
         """CIF Schema used for the loop."""
         return self._schema
 
+    def __setitem__(self, name: str, value: sc.Variable) -> None:
+        self._columns[name] = value
+
     def write(self, f: io.TextIOBase) -> None:
         """Write this loop to a file.
 
@@ -346,7 +349,7 @@ class Block:
 
     def add(
         self,
-        content: Union[Mapping[str, Any], Iterable[tuple[str, Any]], Chunk],
+        content: Union[Mapping[str, Any], Iterable[tuple[str, Any]], Chunk, Loop],
         /,
         comment: str = '',
     ) -> None:
@@ -360,9 +363,12 @@ class Block:
         comment:
             Optional comment that can be written above the chunk or loop in the file.
         """
-        if not isinstance(content, Chunk):
+        if not isinstance(content, (Chunk, Loop)):
             content = Chunk(content, comment=comment)
         self._content.append(content)
+
+    def add_reduced_powder_data(self, data: sc.DataArray) -> None:
+        self.add(_make_reduced_powder_loop(data))
 
     def write(self, f: io.TextIOBase) -> None:
         """Write this block to a file.
@@ -512,8 +518,55 @@ def _write_file_heading(f: io.TextIOBase) -> None:
 
 
 def _strict_zip(*args: Iterable[Any]) -> Iterable[Any]:
+    # TODO check sizes in loop instead of this here
     try:
         return zip(*args, strict=True)
     except TypeError:
         pass
     return zip(*args)
+
+
+def _reduced_powder_coord(data) -> tuple[str, sc.Variable]:
+    if data.ndim != 1:
+        raise sc.DimensionError(f'Can only save 1d powder data, got {data.ndim} dims.')
+    known_coords = {
+        'tof': ('pd_meas.time_of_flight', 'us'),
+        'dspacing': ('pd_proc.d_spacing', 'Å'),
+    }
+    try:
+        name, unit = known_coords[data.dim]
+    except KeyError:
+        raise sc.CoordError(
+            f'Unrecognized dim: {data.dim}. Must be one of {list(known_coords)}'
+        ) from None
+
+    coord = data.coords[data.dim]
+    if coord.unit != unit:
+        raise sc.UnitError(
+            f'Incorrect unit for powder coordinate {name}: {coord.unit} '
+            f'expected {unit}'
+        )
+    return name, coord
+
+
+def _normalize_reduced_powder_name(name: str) -> str:
+    if name not in ('intensity_net', 'intensity_norm', 'intensity_total'):
+        raise ValueError(f'Unrecognized name for reduced powder data: {name}')
+    return f'pd_proc.{name}'
+
+
+def _make_reduced_powder_loop(data: sc.DataArray) -> Loop:
+    coord_name, coord = _reduced_powder_coord(data)
+    data_name = _normalize_reduced_powder_name(data.name or 'intensity_net')
+
+    res = Loop({coord_name: sc.values(coord)}, schema=PD_SCHEMA)
+    if coord.variances is not None:
+        res[coord_name + '_su'] = sc.stddevs(coord)
+    res[data_name] = sc.values(data.data)
+    if data.variances is not None:
+        res[data_name + '_su'] = sc.stddevs(data.data)
+
+    if data.unit != 'one':
+        res.comment = f'Unit of intensity: [{data.unit}]'
+
+    return res
