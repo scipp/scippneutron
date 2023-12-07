@@ -11,7 +11,7 @@ from dateutil.parser import parse as parse_date
 
 import scippneutron
 from scippneutron._utils import get_attrs, get_meta
-from scippneutron.io.nexus.load_nexus import _load_nexus_json
+from scippneutron.io.nexus.load_nexus import load_nexus_json_str
 
 from .nexus_helpers import (
     Chopper,
@@ -64,7 +64,7 @@ def load_from_nexus(
 def load_from_json(
     builder: NexusBuilder, *args, **kwargs
 ) -> Union[sc.Dataset, sc.DataArray, None]:
-    loaded_data, _ = _load_nexus_json(builder.json_string, *args, **kwargs)
+    loaded_data, _ = load_nexus_json_str(builder.json_string, *args, **kwargs)
     return loaded_data
 
 

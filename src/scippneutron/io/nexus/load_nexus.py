@@ -5,12 +5,13 @@ import json
 from contextlib import contextmanager
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import Dict, Optional, Set, Tuple, Union
+from typing import Any, Dict, Optional, Set, Tuple, Union
 from warnings import warn
 
 import h5py
 import numpy as np
 import scipp as sc
+import scippnexus as snx
 from scipp.binning import make_binned
 from scipp.core.util import VisibleDeprecationWarning
 from scippnexus.v1 import NXroot
@@ -396,7 +397,7 @@ def _load_data(
     return sc.Dataset(loaded_data)
 
 
-def _load_nexus_json(
+def load_nexus_json_str(
     json_template: str,
     get_start_info: bool = False,
 ) -> Tuple[Optional[ScippData], Optional[sc.Variable], Optional[Set[StreamInfo]]]:
@@ -416,5 +417,30 @@ def _load_nexus_json(
 def load_nexus_json(json_filename: str) -> Optional[ScippData]:
     with open(json_filename, 'r') as json_file:
         json_string = json_file.read()
-    loaded_data, _ = _load_nexus_json(json_string)
+    loaded_data, _ = load_nexus_json_str(json_string)
     return loaded_data
+
+
+def json_nexus_group(
+    json_dict: dict[str, Any], *, definitions: Optional[Dict[str, type]] = None
+) -> snx.Group:
+    """Parse a JSON dictionary into a NeXus group.
+
+    Parameters
+    ----------
+    json_dict:
+        ``dict`` containing a NeXus structure as JSON.
+    definitions:
+        ScippNexus application definitions.
+        When not given, the default definitions are used.
+
+    Returns
+    -------
+    :
+        A NeXus group that can be used for loading data as if it were
+        loaded from a file with :class:`scippnexus.File`.
+    """
+    return snx.Group(
+        JSONGroup(json_dict),
+        definitions=definitions if definitions is not None else snx.base_definitions(),
+    )

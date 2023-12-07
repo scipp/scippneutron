@@ -18,7 +18,7 @@ from scippneutron.data_streaming._warnings import (
     UnknownFlatbufferIdWarning,
 )
 
-from .nexus_helpers import EventData, Log, NexusBuilder, Stream
+from .io.nexus_helpers import EventData, Log, NexusBuilder, Stream
 
 if platform.system() == "Darwin":
     pytest.skip(
