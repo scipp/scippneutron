@@ -18,7 +18,9 @@ Make mockup powder diffraction data:
   ...     variances=[0.7, 1.1, 0.5],
   ... )
 
-Wrap the data in a ``Loop`` to write them together as columns:
+Wrap the data in a ``Loop`` to write them together as columns.
+(Note that this particular example could more easily be done with
+:math:`scippneutron.io.cif.Block.add_reduced_powder_data`.)
 
   >>> from scippneutron.io import cif
   >>> tof_loop = cif.Loop({
@@ -380,8 +382,85 @@ class Block:
             content = Chunk(content, comment=comment)
         self._content.append(content)
 
-    def add_reduced_powder_data(self, data: sc.DataArray) -> None:
-        self.add(_make_reduced_powder_loop(data))
+    def add_reduced_powder_data(self, data: sc.DataArray, *, comment: str = '') -> None:
+        """Add a loop with reduced powder data.
+
+        The input must be 1-dimensional with a dimension name in
+        ``('tof', 'dspacing')``.
+        The data array may also have a name in
+        ``('intensity_net', 'intensity_norm', 'intensity_total')``.
+        If the name is not set, it defaults to ``'intensity_net'``.
+
+        The data gets written as intensity along a single coord whose
+        name matches the dimension name.
+        Standard uncertainties are also written if present.
+
+        The unit of the coordinate must match the requirement of pdCIF.
+
+        Parameters
+        ----------
+        data:
+            1-dimensional data array with a recognized dimension name
+        comment:
+            Optional comment that can be written above the data in the file.
+
+        Examples
+        --------
+        Make mockup powder diffraction data:
+
+          >>> import scipp as sc
+          >>> tof = sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')
+          >>> intensity = sc.array(
+          ...     dims=['tof'],
+          ...     values=[13.6, 26.0, 9.7],
+          ...     variances=[0.7, 1.1, 0.5],
+          ... )
+
+        Add to a block:
+
+          >>> from scippneutron.io import cif
+          >>> block = cif.Block('reduced-data')
+          >>> da = sc.DataArray(intensity, coords={'tof': tof})
+          >>> block.add_reduced_powder_data(da)
+        """
+        self.add(_make_reduced_powder_loop(data, comment=comment))
+
+    def add_powder_calibration(self, cal: sc.DataArray, *, comment: str = '') -> None:
+        r"""Add a powder calibration table.
+
+        The calibration data encode the following transformation from
+        d-spacing to time-of-flight:
+
+        .. math::
+
+            t = \sum_{i=0}^N\, c_i d^{p_i}
+
+        where :math:`c_i` is the i-th element of ``cal`` and :math:`p^{p_i}`
+        is the i-th element of ``cal.coords['power']``.
+
+        Parameters
+        ----------
+        cal:
+            The data are the calibration coefficients (possibly with variances).
+            Must have a coordinate called ``'power'`` defining :math:`p` in the
+            equation above.
+        comment:
+            Optional comment that can be written above the data in the file.
+
+        Examples
+        --------
+        Add a mockup calibration table:
+
+          >>> import scipp as sc
+          >>> from scippneutron.io import cif
+          >>> cal = sc.DataArray(
+          ...     sc.array(dims=['cal'], values=[3.4, 0.2]),
+          ...     coords={'power': sc.array(dims=['cal'], values=[0, 1])},
+          ... )
+          >>> block = cif.Block('powder-calibration')
+          >>> block.add_powder_calibration(cal)
+        """
+        self.add(_make_powder_calibration_loop(cal, comment=comment))
 
     def write(self, f: io.TextIOBase) -> None:
         """Write this block to a file.
@@ -559,11 +638,11 @@ def _normalize_reduced_powder_name(name: str) -> str:
     return f'pd_proc.{name}'
 
 
-def _make_reduced_powder_loop(data: sc.DataArray) -> Loop:
+def _make_reduced_powder_loop(data: sc.DataArray, comment: str) -> Loop:
     coord_name, coord = _reduced_powder_coord(data)
     data_name = _normalize_reduced_powder_name(data.name or 'intensity_net')
 
-    res = Loop({coord_name: sc.values(coord)}, schema=PD_SCHEMA)
+    res = Loop({coord_name: sc.values(coord)}, comment=comment, schema=PD_SCHEMA)
     if coord.variances is not None:
         res[coord_name + '_su'] = sc.stddevs(coord)
     res[data_name] = sc.values(data.data)
@@ -573,4 +652,26 @@ def _make_reduced_powder_loop(data: sc.DataArray) -> Loop:
     if data.unit != 'one':
         res.comment = f'Unit of intensity: [{data.unit}]'
 
+    return res
+
+
+def _make_powder_calibration_loop(data: sc.DataArray, comment: str) -> Loop:
+    id_by_power = {0: 'tzero', 1: 'DIFC', 2: 'DIFA', -1: 'DIFB'}
+    ids = sc.array(
+        dims=[data.dim],
+        values=[
+            id_by_power.get(power, 'n.a.') for power in data.coords['power'].values
+        ],
+    )
+    res = Loop(
+        {
+            'pd_calib_d_to_tof.id': ids,
+            'pd_calib_d_to_tof.power': data.coords['power'],
+            'pd_calib_d_to_tof.coeff': sc.values(data.data),
+        },
+        comment=comment,
+        schema=PD_SCHEMA,
+    )
+    if data.variances is not None:
+        res['pd_calib_d_to_tof.coeff_su'] = sc.stddevs(data.data)
     return res

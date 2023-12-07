@@ -784,6 +784,18 @@ _audit.creation_method 'written by scippneutron'
         )
 
 
+def test_loop_requires_1d():
+    with pytest.raises(sc.DimensionError):
+        cif.Loop({'fake': sc.zeros(sizes={'x': 4, 'y': 3})})
+
+
+def test_loop_requires_matching_dims():
+    with pytest.raises(sc.DimensionError):
+        cif.Loop({'a': sc.zeros(sizes={'x': 4}), 'b': sc.zeros(sizes={'x': 3})})
+    with pytest.raises(sc.DimensionError):
+        cif.Loop({'a': sc.zeros(sizes={'x': 4}), 'b': sc.zeros(sizes={'y': 4})})
+
+
 def test_block_with_reduced_powder_data():
     da = sc.DataArray(
         sc.array(
@@ -882,13 +894,27 @@ def test_block_with_reduced_powder_data_bad_coord_unit():
         block.add_reduced_powder_data(da)
 
 
-def test_loop_requires_1d():
-    with pytest.raises(sc.DimensionError):
-        cif.Loop({'fake': sc.zeros(sizes={'x': 4, 'y': 3})})
+def test_block_powder_calibration():
+    da = sc.DataArray(
+        sc.array(dims=['cal'], values=[1.2, 4.5, 6.7]),
+        coords={'power': sc.array(dims=['cal'], values=[0, 1, -1])},
+    )
+    block = cif.Block('cal', [])
+    block.add_powder_calibration(da)
+    res = write_to_str(block)
 
+    assert 'pdCIF' in res
+    assert 'coreCIF' in res
 
-def test_loop_requires_matching_dims():
-    with pytest.raises(sc.DimensionError):
-        cif.Loop({'a': sc.zeros(sizes={'x': 4}), 'b': sc.zeros(sizes={'x': 3})})
-    with pytest.raises(sc.DimensionError):
-        cif.Loop({'a': sc.zeros(sizes={'x': 4}), 'b': sc.zeros(sizes={'y': 4})})
+    _, _, cal_loop = res.split('\n\n')
+    assert (
+        cal_loop
+        == '''loop_
+_pd_calib_d_to_tof.id
+_pd_calib_d_to_tof.power
+_pd_calib_d_to_tof.coeff
+tzero 0 1.2
+DIFC 1 4.5
+DIFB -1 6.7
+'''
+    )
