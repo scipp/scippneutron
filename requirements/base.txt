@@ -34,8 +34,6 @@ h5py==3.10.0
     #   scippnexus
 idna==3.6
     # via requests
-importlib-resources==6.1.1
-    # via matplotlib
 ipython==8.9.0
     # via -r base.in
 jedi==0.19.1
@@ -98,7 +96,7 @@ scipp[all]==23.11.0
     # via
     #   -r base.in
     #   scippnexus
-scippnexus==23.11.1
+scippnexus==23.12.0
     # via -r base.in
 scipy==1.11.4
     # via
@@ -119,5 +117,3 @@ urllib3==2.1.0
     # via requests
 wcwidth==0.2.12
     # via prompt-toolkit
-zipp==3.17.0
-    # via importlib-resources
