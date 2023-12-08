@@ -5,18 +5,20 @@ import json
 from contextlib import contextmanager
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import Dict, Optional, Set, Tuple, Union
+from typing import Any, Dict, Optional, Set, Tuple, Union
 from warnings import warn
 
 import h5py
 import numpy as np
 import scipp as sc
+import scippnexus as snx
 from scipp.binning import make_binned
 from scipp.core.util import VisibleDeprecationWarning
 from scippnexus.v1 import NXroot
 from scippnexus.v1.nxobject import NexusStructureError, NXobject
 from scippnexus.v1.nxtransformations import TransformationError
 
+from ..._utils import get_attrs
 from ._json_nexus import JSONGroup, StreamInfo, contains_stream, get_streams_info
 from ._nexus import ScippData
 
@@ -49,7 +51,7 @@ def add_position_and_transforms_to_data(
 ):
     if isinstance(data, sc.DataArray):
         coords = data.coords
-        attrs = data.attrs
+        attrs = get_attrs(data)
     else:
         coords = data
         attrs = data
@@ -282,7 +284,7 @@ def _load_data(
                 warn(f"Skipped loading {group.name} due to:\n{e}")
 
     no_event_data = True
-    loaded_data = sc.Dataset()
+    loaded_data = {}
 
     # If no event data are found, make a Dataset and add the metadata as
     # Dataset entries. Otherwise, make a DataArray.
@@ -323,7 +325,7 @@ def _load_data(
                 dim='detector_id', sizes={'detector_id': -1, 'tof': 1}
             ),
             coords=dict(loaded_data.coords.items()),
-            attrs=dict(loaded_data.attrs.items()),
+            attrs=dict(get_attrs(loaded_data).items()),
         )
         tof_min = loaded_data.bins.coords['tof'].min().to(dtype='float64')
         tof_max = loaded_data.bins.coords['tof'].max().to(dtype='float64')
@@ -333,7 +335,7 @@ def _load_data(
     def add_metadata(metadata: Dict[str, sc.Variable]):
         for key, value in metadata.items():
             if isinstance(loaded_data, sc.DataArray):
-                loaded_data.attrs[key] = value
+                get_attrs(loaded_data)[key] = value
             else:
                 loaded_data[key] = value
 
@@ -372,12 +374,8 @@ def _load_data(
     for name, tag in {'sample': 'NXsample', 'source': 'NXsource'}.items():
         comps = classes.get(tag, {})
         comps = load_and_add_metadata(comps)
-        attrs = (
-            loaded_data if isinstance(loaded_data, sc.Dataset) else loaded_data.attrs
-        )
-        coords = (
-            loaded_data if isinstance(loaded_data, sc.Dataset) else loaded_data.coords
-        )
+        attrs = loaded_data if isinstance(loaded_data, dict) else get_attrs(loaded_data)
+        coords = loaded_data if isinstance(loaded_data, dict) else loaded_data.coords
         for comp_name in comps:
             comp = attrs[comp_name].value
             if (position := _depends_on_to_position(comp)) is not None:
@@ -393,11 +391,13 @@ def _load_data(
 
     # Return None if we have an empty dataset at this point
     if no_event_data and not loaded_data.keys():
-        loaded_data = None
-    return loaded_data
+        return None
+    elif isinstance(loaded_data, sc.DataArray):
+        return loaded_data
+    return sc.Dataset(loaded_data)
 
 
-def _load_nexus_json(
+def load_nexus_json_str(
     json_template: str,
     get_start_info: bool = False,
 ) -> Tuple[Optional[ScippData], Optional[sc.Variable], Optional[Set[StreamInfo]]]:
@@ -417,5 +417,30 @@ def _load_nexus_json(
 def load_nexus_json(json_filename: str) -> Optional[ScippData]:
     with open(json_filename, 'r') as json_file:
         json_string = json_file.read()
-    loaded_data, _ = _load_nexus_json(json_string)
+    loaded_data, _ = load_nexus_json_str(json_string)
     return loaded_data
+
+
+def json_nexus_group(
+    json_dict: dict[str, Any], *, definitions: Optional[Dict[str, type]] = None
+) -> snx.Group:
+    """Parse a JSON dictionary into a NeXus group.
+
+    Parameters
+    ----------
+    json_dict:
+        ``dict`` containing a NeXus structure as JSON.
+    definitions:
+        ScippNexus application definitions.
+        When not given, the default definitions are used.
+
+    Returns
+    -------
+    :
+        A NeXus group that can be used for loading data as if it were
+        loaded from a file with :class:`scippnexus.File`.
+    """
+    return snx.Group(
+        JSONGroup(json_dict),
+        definitions=definitions if definitions is not None else snx.base_definitions(),
+    )

@@ -7,5 +7,6 @@ r"""
 Specifics for time-of-flight neutron-scattering data reduction, including coordinate transformations.
 """
 
+from . import chopper_cascade
 from .diagram import TimeDistanceDiagram
 from .frames import unwrap_frames

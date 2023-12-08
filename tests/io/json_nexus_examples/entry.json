@@ -1,0 +1,24 @@
+{
+  "type": "group",
+  "name": "entry",
+  "children": [
+    {
+      "type": "dataset",
+      "name": "title",
+      "values": "my experiment",
+      "dataset": {
+        "string_size": 13,
+        "type": "string"
+      },
+      "attributes": []
+    }
+  ],
+  "attributes": [
+    {
+      "string_size": 7,
+      "type": "string",
+      "name": "NX_class",
+      "values": "NXentry"
+    }
+  ]
+}

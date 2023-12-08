@@ -1,4 +1,4 @@
+# Add test dependencies in basetest.in
+
 -r base.in
-hypothesis
-pytest
-pytest-xdist
+-r basetest.in

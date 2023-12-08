@@ -15,6 +15,8 @@ import numpy as np
 import scipp as sc
 from scipp.core.util import VisibleDeprecationWarning
 
+from ._utils import get_attrs
+
 
 @contextmanager
 def run_mantid_alg(alg, *args, **kwargs):
@@ -79,7 +81,8 @@ def process_run_logs(ws):
         if units_string and unit is None:
             warnings.warn(
                 f"Workspace run log '{property_name}' "
-                f"has unrecognised units: '{units_string}'"
+                f"has unrecognised units: '{units_string}'",
+                stacklevel=4,
             )
         if unit is None:
             unit = sc.units.one
@@ -196,7 +199,7 @@ def md_dimension(mantid_dim, index):
         if re.search(pattern, mantid_dim.name, re.IGNORECASE):
             return result
 
-    # Look for common spacial dimensions
+    # Look for common spatial dimensions
     patterns = ["^{0}$".format(coord) for coord in ['x', 'y', 'z']]
     dims = ['x', 'y', 'z']
     pattern_result = zip(patterns, dims)
@@ -308,10 +311,9 @@ def get_detector_properties(
         rot = _rot_from_vectors(act_beam, sc.vector(value=[0, 0, 1]))
         inv_rot = _rot_from_vectors(sc.vector(value=[0, 0, 1]), act_beam)
 
-        pos_d = sc.Dataset()
         # Create empty to hold position info for all spectra detectors
-        pos_d["x"] = sc.zeros(
-            dims=["detector"], shape=[total_detectors], unit=sc.units.m
+        pos_d = sc.Dataset(
+            {"x": sc.zeros(dims=["detector"], shape=[total_detectors], unit=sc.units.m)}
         )
         pos_d["y"] = sc.zeros_like(pos_d["x"])
         pos_d["z"] = sc.zeros_like(pos_d["x"])
@@ -594,14 +596,14 @@ def convert_monitors_ws_arrays(ws, converter, **ignored):
         # to wavelength, d-spacing, etc. because conversions of monitors do
         # not use the sample position.
         # But keep it as an attr in case a user needs it.
-        single_monitor.attrs['sample_position'] = single_monitor.coords.pop(
+        get_attrs(single_monitor)['sample_position'] = single_monitor.coords.pop(
             'sample_position'
         )
         # Remove redundant information that is duplicated from workspace
         # We get this extra information from the generic converter reuse
         if 'detector_info' in single_monitor.coords:
             del single_monitor.coords['detector_info']
-        del single_monitor.attrs['sample']
+        del get_attrs(single_monitor)['sample']
         name = comp_info.name(det_index)
         if not comp_info.uniqueName(name):
             name = f'{name}_{number}'
@@ -616,6 +618,7 @@ def convert_Workspace2D_to_data_array(
         'convert_Workspace2D_to_data_array is deprecated in favor of '
         'convert_Workspace2D_to_data_group.',
         VisibleDeprecationWarning,
+        stacklevel=4,
     )
 
     dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
@@ -739,6 +742,7 @@ def convert_EventWorkspace_to_data_array(
         'convert_EventWorkspace_to_data_array is deprecated in favor of '
         'convert_EventWorkspace_to_data_group.',
         VisibleDeprecationWarning,
+        stacklevel=4,
     )
 
     dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
@@ -921,6 +925,7 @@ def convert_MDHistoWorkspace_to_data_array(md_histo, **ignored):
         'convert_MDHistoWorkspace_to_data_array is deprecated in favor of '
         'convert_MDHistoWorkspace_to_data_group.',
         VisibleDeprecationWarning,
+        stacklevel=4,
     )
 
     ndims = md_histo.getNumDims()
@@ -973,14 +978,14 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
     # Types for which the transformation from error to variance will fail
     blacklist_variance_types = ["str"]
 
-    dataset = sc.Dataset()
+    result = {}
     for i in range(n_columns):
         if columnTypes[i] in blacklist_types:
             continue  # skips loading data of this type
 
         data_name = columnNames[i]
         if error_connection is None:
-            dataset[data_name] = sc.Variable(dims=['row'], values=ws.column(i))
+            result[data_name] = sc.Variable(dims=['row'], values=ws.column(i))
         elif data_name in error_connection:
             # This data has error available
             error_name = error_connection[data_name]
@@ -999,14 +1004,14 @@ def convert_TableWorkspace_to_dataset(ws, error_connection=None, **ignored):
                 )
 
             variance = np.array(ws.column(error_name)) ** 2
-            dataset[data_name] = sc.Variable(
+            result[data_name] = sc.Variable(
                 dims=['row'], values=np.array(ws.column(i)), variances=variance
             )
         elif data_name not in error_connection.values():
             # This data is not an error for another dataset, and has no error
-            dataset[data_name] = sc.Variable(dims=['row'], values=ws.column(i))
+            result[data_name] = sc.Variable(dims=['row'], values=ws.column(i))
 
-    return dataset
+    return sc.Dataset(result) if result else sc.Dataset({})
 
 
 def convert_WorkspaceGroup_to_data_group(group_workspace, **kwargs):
@@ -1026,6 +1031,7 @@ def convert_WorkspaceGroup_to_dataarray_dict(group_workspace, **kwargs):
         'convert_WorkspaceGroup_to_dataarray_dict is deprecated in favor of '
         'convert_WorkspaceGroup_to_data_group.',
         VisibleDeprecationWarning,
+        stacklevel=4,
     )
 
     workspace_dict = {}
@@ -1118,6 +1124,7 @@ def array_from_mantid(workspace, **kwargs) -> Union[sc.DataArray, sc.Dataset]:
         "removal in scippneutron v24.01.0. "
         "Use the new scippneutron.from_mantid instead.",
         VisibleDeprecationWarning,
+        stacklevel=4,
     )
 
     scipp_obj = None  # This is either a Dataset or DataArray
@@ -1168,7 +1175,7 @@ def array_from_mantid(workspace, **kwargs) -> Union[sc.DataArray, sc.Dataset]:
 
         monitors = convert_monitors_ws_arrays(monitor_ws, converter, **kwargs)
         for name, monitor in monitors:
-            scipp_obj.attrs[name] = sc.scalar(monitor)
+            get_attrs(scipp_obj)[name] = sc.scalar(monitor)
     for ws in workspaces_to_delete:
         mantid.DeleteWorkspace(ws)
 
@@ -1337,6 +1344,7 @@ def load(
         "scippneutron.load has been deprecated and is scheduled for removal in "
         "scippneutron v24.01.0. Use the new scippneutron.load_with_mantid instead.",
         VisibleDeprecationWarning,
+        stacklevel=2,
     )
 
     if mantid_args is None:
@@ -1539,7 +1547,7 @@ def _fit_workspace(ws, mantid_args):
         out = convert_Workspace2D_to_data_array(fit.OutputWorkspace).drop_coords(
             'empty'
         )
-        data = sc.Dataset()
+        data = {}
         data['data'] = out['empty', 0]
         data['calculated'] = out['empty', 1]
         data['diff'] = out['empty', 2]
@@ -1547,7 +1555,7 @@ def _fit_workspace(ws, mantid_args):
         parameters.coords['chi^2/d.o.f.'] = sc.scalar(fit.OutputChi2overDoF)
         parameters.coords['function'] = sc.scalar(str(fit.Function))
         parameters.coords['cost_function'] = sc.scalar(fit.CostFunction)
-        return parameters, data
+        return parameters, sc.Dataset(data)
 
 
 def fit(data, mantid_args):

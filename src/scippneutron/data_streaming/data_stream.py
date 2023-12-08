@@ -11,7 +11,7 @@ from warnings import warn
 import numpy as np
 import scipp as sc
 
-from ..io.nexus.load_nexus import _load_nexus_json
+from ..io.nexus.load_nexus import load_nexus_json_str
 from ._consumer_type import ConsumerType
 from ._data_stream_widget import DataStreamWidget
 from ._serialisation import convert_from_pickleable_dict
@@ -215,12 +215,12 @@ async def _data_stream(
         if end_at == StopTime.END_OF_RUN and run_start_info.stop_time != 0:
             stop_time_ms = run_start_info.stop_time
         if topics is None:
-            loaded_data, stream_info = _load_nexus_json(
+            loaded_data, stream_info = load_nexus_json_str(
                 run_start_info.nexus_structure, get_start_info=True
             )
             topics = [stream.topic for stream in stream_info]
         else:
-            loaded_data, _ = _load_nexus_json(
+            loaded_data, _ = load_nexus_json_str(
                 run_start_info.nexus_structure, get_start_info=False
             )
         topics.append(run_info_topic)  # listen for stop run message
