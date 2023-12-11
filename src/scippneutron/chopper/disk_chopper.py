@@ -42,7 +42,7 @@ class DiskChopper:
     Definitions
     -----------
 
-    Attribute names correspond closely to the names use by NeXus' ``NXdisk_chopper``.
+    Attribute names correspond closely to the names used by NeXus' ``NXdisk_chopper``.
     See https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html
     for an overview.
 
@@ -69,12 +69,12 @@ class DiskChopper:
 
     - The chopper rotates with a frequency of :attr:`DiskChopper.rotation_speed`
       :math:`f` which is also available as :attr:`DiskChopper.angular_frequency`
-      :math:`\omega = 2\pi / f`.
+      :math:`\omega = 2 \pi f`.
       A positive frequency means anticlockwise rotation and a negative frequency
       clockwise rotation.
     - :attr:`DiskChopper.top_dead_center` stores timestamps of when the
       TDC sensor registers a full rotation.
-      This serves as a reference time for the chopper.
+      This serves as a reference time for the chopper :math:`t_0`.
     - The chopper time :math:`t` relates to the global time of the facility
       :math:`t_g` via :math:`t_g = t + \delta t`, where :math:`\delta t`
       is :attr:`DiskChopper.delay`.
@@ -88,7 +88,7 @@ class DiskChopper:
 
     The terminology here differentiates slit 'begin' and 'end' from 'open' and 'close'.
     The former refer to the angles relative to TDC as shown in the image above.
-    The latter refer to the opening and closing times of the slit.
+    The latter refer to the times when a slit opens and closes for the beam.
 
     It is possible to have ``end > 360 deg`` if a slit spans TDC.
 
