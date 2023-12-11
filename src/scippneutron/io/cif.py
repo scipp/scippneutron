@@ -663,7 +663,7 @@ def _make_powder_calibration_loop(data: sc.DataArray, comment: str) -> Loop:
     ids = sc.array(
         dims=[data.dim],
         values=[
-            id_by_power.get(power, 'n.a.') for power in data.coords['power'].values
+            id_by_power.get(power, str(power)) for power in data.coords['power'].values
         ],
     )
     res = Loop(
