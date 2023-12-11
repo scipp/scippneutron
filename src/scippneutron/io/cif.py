@@ -105,11 +105,6 @@ def save_cif(
         Path or file handle for the output file.
     blocks:
         One or more CIF data blocks to write to the file.
-
-    See also
-    --------
-    scippneutron.io.cif.Block.save:
-        Method for saving a single block.
     """
     if isinstance(blocks, Block):
         blocks = (blocks,)
@@ -173,8 +168,7 @@ class Chunk:
     def write(self, f: io.TextIOBase) -> None:
         """Write this chunk to a file.
 
-        Used mainly internally, use :func:`scippneutron.io.cif.save_cif`
-        or :meth:`scippneutron.io.cif.Block.save` instead.
+        Used mainly internally, use :func:`scippneutron.io.cif.save_cif` instead.
 
         Parameters
         ----------
@@ -261,8 +255,7 @@ class Loop:
     def write(self, f: io.TextIOBase) -> None:
         """Write this loop to a file.
 
-        Used mainly internally, use :func:`scippneutron.io.cif.save_cif`
-        or :meth:`scippneutron.io.cif.Block.save` instead.
+        Used mainly internally, use :func:`scippneutron.io.cif.save_cif` instead.
 
         Parameters
         ----------
@@ -470,8 +463,7 @@ class Block:
     def write(self, f: io.TextIOBase) -> None:
         """Write this block to a file.
 
-        Used mainly internally, use :func:`scippneutron.io.cif.save_cif`
-        or :meth:`scippneutron.io.cif.Block.save` instead.
+        Used mainly internally, use :func:`scippneutron.io.cif.save_cif` instead.
 
         Parameters
         ----------
@@ -486,26 +478,6 @@ class Block:
             schema_loop.write(f)
             f.write('\n')
         _write_multi(f, self._content)
-
-    def save(
-        self,
-        fname: Union[str, Path, io.TextIOBase],
-    ) -> None:
-        """Save this block to a CIF file.
-
-        Equivalent to ``cif.save_cif(fname, self)``.
-
-        Parameters
-        ----------
-        fname:
-            Path or file handle for the output file.
-
-        See also
-        --------
-        scippneutron.io.cif.save_cif:
-            Free function for saving one or more blocks.
-        """
-        save_cif(fname, self)
 
 
 def _convert_input_content(

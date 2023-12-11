@@ -714,23 +714,6 @@ _audit.creation_method 'written by scippneutron'
     )
 
 
-def test_save_method_one_block_buffer():
-    block1 = cif.Block(
-        'block-1', [{'audit.creation_method': 'written by scippneutron'}]
-    )
-    buffer = io.StringIO()
-    block1.save(buffer)
-    buffer.seek(0)
-    assert (
-        buffer.read()
-        == r'''#\#CIF_1.1
-data_block-1
-
-_audit.creation_method 'written by scippneutron'
-'''
-    )
-
-
 def test_save_cif_two_blocks_buffer():
     env = sc.array(dims=['env'], values=['water', 'sulfur'])
     block1 = cif.Block(
