@@ -152,7 +152,8 @@ class Chunk:
             to the file.
         """
         self._pairs = dict(pairs) if pairs is not None else {}
-        self._comment = _encode_non_ascii(comment)
+        self._comment = ''
+        self.comment = comment
         self._schema = _preprocess_schema(schema)
 
     @property
@@ -224,7 +225,8 @@ class Loop:
         self._columns = {}
         for key, column in columns.items():
             self[key] = column
-        self._comment = _encode_non_ascii(comment)
+        self._comment = ''
+        self.comment = comment
         self._schema = _preprocess_schema(schema)
 
     @property
@@ -321,7 +323,8 @@ class Block:
         self._name = ''
         self.name = name
         self._content = _convert_input_content(content) if content is not None else []
-        self._comment = _encode_non_ascii(comment)
+        self._comment = ''
+        self.comment = comment
         self._schema = _preprocess_schema(schema)
 
     @property
