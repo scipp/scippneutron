@@ -276,6 +276,8 @@ class Loop:
         formatted_values = [
             tuple(map(_format_value, row)) for row in zip(*self._columns.values())
         ]
+        # If any value is a multi-line string, lay out elements as a flat vertical
+        # list, otherwise use a 2d table.
         sep = (
             '\n'
             if any(';' in item for row in formatted_values for item in row)
