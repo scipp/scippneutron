@@ -243,6 +243,7 @@ class Frame:
         ]
         bounds = sorted(bounds, key=lambda x: x.start)
         current = bounds[0]
+        merged_bounds = []
         for bound in bounds[1:]:
             # If start is before current end, merge
             if bound.start <= current.end:
@@ -253,14 +254,15 @@ class Frame:
                     max(current.wav_end, bound.wav_end),
                 )
             else:
-                bounds.append(current)
+                merged_bounds.append(current)
                 current = bound
-        bounds.append(current)
+        merged_bounds.append(current)
         time_bounds = [
-            sc.concat([bound.start, bound.end], dim='bound') for bound in bounds
+            sc.concat([bound.start, bound.end], dim='bound') for bound in merged_bounds
         ]
         wav_bounds = [
-            sc.concat([bound.wav_start, bound.wav_end], dim='bound') for bound in bounds
+            sc.concat([bound.wav_start, bound.wav_end], dim='bound')
+            for bound in merged_bounds
         ]
         return sc.DataGroup(
             time=sc.concat(time_bounds, dim='subframe'),
