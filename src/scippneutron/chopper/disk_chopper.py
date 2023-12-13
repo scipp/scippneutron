@@ -1,43 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
-from __future__ import annotations
-
-import dataclasses
-from typing import Any, Optional, Union
-
-import scipp as sc
-import scipp.constants
-
-try:
-    # Python 3.11+
-    from enum import StrEnum
-
-    class DiskChopperType(StrEnum):
-        """Type of disk chopper."""
-
-        single = 'Chopper type single'
-        contra_rotating_pair = 'contra_rotating_pair'
-        synchro_pair = 'synchro_pair'
-
-    del StrEnum
-
-except ImportError:
-    from enum import Enum
-
-    class DiskChopperType(str, Enum):  # type: ignore[no-redef]
-        """Type of disk chopper."""
-
-        single = 'Chopper type single'
-        contra_rotating_pair = 'contra_rotating_pair'
-        synchro_pair = 'synchro_pair'
-
-    del Enum
-
-
-@dataclasses.dataclass(frozen=True, eq=False)
-class DiskChopper:
-    r"""A disk chopper.
+# TODO update to module docs
+r"""A disk chopper.
 
     Definitions
     -----------
@@ -109,7 +74,7 @@ class DiskChopper:
 
         t_g(\theta) = t_0 + \delta t + \begin{cases}
         \frac{\theta-\tilde{\theta}}{\omega}, & \textsf{clockwise}\\
-        \frac{2\pi - (\theta-\tilde{\theta})}{\omega}, & \textsf{anticlockwise}
+        \frac{2\pi - (\theta-\tilde{\theta})}{|\omega|}, & \textsf{anticlockwise}
         \end{cases}
 
     This is implemented by :meth:`DiskChopper.time_angle_at_beam` and specifically for
@@ -117,29 +82,58 @@ class DiskChopper:
     :meth:`DiskChopper.time_close`.
     """
 
+from __future__ import annotations
+
+import dataclasses
+from collections.abc import Mapping
+from typing import Any, Optional, Union
+
+import scipp as sc
+import scipp.constants
+
+try:
+    # Python 3.11+
+    from enum import StrEnum
+
+    class DiskChopperType(StrEnum):
+        """Type of disk chopper."""
+
+        single = 'Chopper type single'
+        contra_rotating_pair = 'contra_rotating_pair'
+        synchro_pair = 'synchro_pair'
+
+    del StrEnum
+
+except ImportError:
+    from enum import Enum
+
+    class DiskChopperType(str, Enum):  # type: ignore[no-redef]
+        """Type of disk chopper."""
+
+        single = 'Chopper type single'
+        contra_rotating_pair = 'contra_rotating_pair'
+        synchro_pair = 'synchro_pair'
+
+    del Enum
+
+# TODO sign of omega in equations?! -> need abs(omega) in anticlockwise
+
+
+@dataclasses.dataclass(frozen=True, eq=False)
+class DiskChopper:
     position: sc.Variable
     """Position of the chopper.
 
     This is the center point of the chopper's axle in the face towards the source.
     See https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html
     """
-    rotation_speed: Union[sc.Variable, sc.DataArray]
+    rotation_speed: sc.Variable
     """Rotation frequency of the chopper."""
-    beam_position: Optional[sc.Variable] = None
+    beam_position: sc.Variable
     """Angle where the beam crosses the chopper."""
-    delay: Optional[Union[sc.Variable, sc.DataArray]] = None
-    """Disk spacing in direction of beam (for double choppers only)."""
-    phase: Optional[sc.Variable] = None
+    phase: sc.Variable
     """Phase of the chopper rotation relative to the source pulses."""
-    radius: Optional[sc.Variable] = None
-    """Radius of the chopper."""
-    ratio: Optional[sc.Variable] = None
-    """Pulse reduction factor in relation to other choppers/fastest pulse."""
-    slits: Optional[int] = None
-    """Number of slits."""
-    slit_angle: Optional[sc.Variable] = None
-    """Angular opening of slits."""
-    slit_edges: Optional[sc.Variable] = None
+    slit_edges: sc.Variable
     """Edges of the slits as angles measured anticlockwise from top-dead-center.
 
     On init, either a 1d array of the form ``[begin_0, end_0, begin_1, end_1, ...]``
@@ -152,45 +146,41 @@ class DiskChopper:
     """
     slit_height: Optional[sc.Variable] = None
     """Distance from chopper outer edge to bottom of slits."""
-    top_dead_center: Optional[sc.Variable] = None
-    """Timestamps of the top-dead-center sensor."""
-    typ: DiskChopperType = DiskChopperType.single
-    """Chopper type; currently, only :attr:`DiskChopperType.single` is supported."""
-    wavelength_range: Optional[sc.Variable] = None
-    """Low and high values of wavelength range transmitted."""
-    _clockwise: bool = dataclasses.field(init=False, repr=False, compare=False)
+    radius: Optional[sc.Variable] = None
+    """Radius of the chopper."""
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, 'typ', DiskChopperType(self.typ))
-        if self.typ != DiskChopperType.single:
-            raise NotImplementedError(
-                "Only single disk choppers are supported, got " f"typ={self.typ}"
-            )
-
+        # Check for frequency because not all NeXus files store a unit
+        # and the name can be confusing.
         _require_frequency('rotation_speed', self.rotation_speed)
-        object.__setattr__(self, 'slit_edges', _parse_slit_edges(self.slit_edges))
-        if self.slits is None and self.slit_edges is not None:
-            object.__setattr__(self, 'slits', self.slit_edges.shape[0])
-        object.__setattr__(
-            self,
-            '_clockwise',
-            sc.all(
-                self.rotation_speed < sc.scalar(0.0, unit=self.rotation_speed.unit)
-            ).value,
+
+    @classmethod
+    def from_nexus(
+        cls, dg: Mapping[str, Optional[sc.Variable, sc.DataArray]]
+    ) -> DiskChopper:
+        if (typ := dg.get('type', DiskChopperType.single)) != DiskChopperType.single:
+            raise NotImplementedError(
+                'Class DiskChopper only supports single choppers,'
+                f'got chopper type {typ}'
+            )
+        return DiskChopper(
+            position=dg['position'],
+            rotation_speed=_get_1d_variable(dg, 'rotation_speed'),
+            beam_position=_get_1d_variable(dg, 'beam_position'),
+            phase=_get_1d_variable(dg, 'phase'),
+            slit_edges=dg['slit_edges'],
+            slit_height=dg.get('slit_height'),
+            radius=dg.get('radius'),
         )
 
     @property
-    def slit_begin(self) -> Optional[sc.Variable]:
+    def slit_begin(self) -> sc.Variable:
         """Beginning edges of the slits."""
-        if self.slit_edges is None:
-            return None
         return self.slit_edges[self.slit_edges.dims[1], 0]
 
     @property
-    def slit_end(self) -> Optional[sc.Variable]:
+    def slit_end(self) -> sc.Variable:
         """Ending edges of the slits."""
-        if self.slit_edges is None:
-            return None
         return self.slit_edges[self.slit_edges.dims[1], 1]
 
     @property
@@ -201,8 +191,9 @@ class DiskChopper:
     @property
     def is_clockwise(self) -> bool:
         """Return True if the chopper rotates clockwise."""
-        return self._clockwise
+        return (self.rotation_speed < 0.0 * self.rotation_speed.unit).value
 
+    # TODO update all time functions
     def relative_time_open(self) -> sc.Variable:
         """Return the opening times of the chopper slits.
 
@@ -439,43 +430,33 @@ def _field_eq(a: Any, b: Any) -> bool:
     return a == b
 
 
-def _parse_typ(typ: Union[DiskChopperType, str]) -> DiskChopperType:
-    # Special shorthand for convenience
-    if typ == "single":
-        return DiskChopperType.single
-    return DiskChopperType(typ)
-
-
-def _parse_slit_edges(edges: Optional[sc.Variable]) -> Optional[sc.Variable]:
-    if edges is None:
-        return None
-    if edges.ndim == 1:
-        edge_dim = 'edge' if edges.dim != 'edge' else 'edge_dim'
-        folded = edges.fold(edges.dim, sizes={edges.dim: -1, edge_dim: 2})
-        if sc.any(folded[edge_dim, 0] > folded[edge_dim, 1]):
-            raise ValueError(
-                "Invalid slit edges, must be given as "
-                "[begin_0, end_0, begin_1, end_1, ...] where begin_n < end_n"
-            )
-        return folded
-    if edges.ndim == 2:
-        if edges.shape[1] != 2:
-            raise sc.DimensionError(
-                "The second dim of the slit edges must be length 2."
-            )
-        return edges
-    else:
-        raise sc.DimensionError("The slit edges must be 1- or 2-dimensional")
-
-
 def _require_frequency(name: str, x: sc.Variable) -> None:
     try:
         sc.scalar(0.0, unit=x.unit).to(unit='Hz')
     except sc.UnitError:
-        raise sc.UnitError(f"'{name}' must be a frequency, got unit {x.unit}")
+        raise sc.UnitError(f"'{name}' must be a frequency, got unit {x.unit}") from None
 
 
 def _len_or_1(x: sc.Variable) -> int:
     if x.ndim == 0:
         return 1
     return len(x)
+
+
+def _get_1d_variable(
+    dg: Mapping[str, Optional[sc.Variable, sc.DataArray]], name: str
+) -> sc.Variable:
+    if (val := dg.get(name)) is None:
+        raise ValueError(f"Chopper field '{name}' is missing")
+
+    msg = (
+        "Chopper field '{name}' must be a scalar variable, {got}. " "Use "
+    )  # TODO insert use
+
+    if not isinstance(val, sc.Variable):
+        raise TypeError(msg.format(name=name, got=f'got a {type(val)}'))
+    if val.ndim != 0:
+        raise sc.DimensionError(
+            msg.format(name=name, got=f'got a {val.ndim}d variable')
+        )
+    return val
