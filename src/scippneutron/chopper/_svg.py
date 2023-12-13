@@ -57,13 +57,9 @@ def _rotation_arrow(*, image_size: int, clockwise: bool) -> str:
 
 
 def _combine_slits(chopper: DiskChopper) -> sc.DataArray:
-    if chopper.slits is None:
-        edges = sc.empty(sizes={'slit': 0, 'edge': 2}, unit='deg')
-        height = sc.scalar(0.0, unit='m')
-    else:
-        edges = chopper.slit_edges
-        edges = edges.rename_dims({edges.dims[0]: 'slit', edges.dims[1]: 'edge'})
-        height = chopper.slit_height
+    edges = chopper.slit_edges
+    edges = edges.rename_dims({edges.dims[0]: 'slit', edges.dims[1]: 'edge'})
+    height = chopper.slit_height
     slits = sc.DataArray(
         sc.arange('slit', edges.shape[0], unit=None),
         coords={

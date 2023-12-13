@@ -16,6 +16,24 @@ def deg_angle_to_time_factor(rotation_speed: float) -> float:
     return to_rad / angular_frequency
 
 
+@pytest.fixture
+def nexus_chopper():
+    return sc.DataGroup(
+        {
+            'type': DiskChopperType.single,
+            'position': sc.vector([0.0, 0.0, 2.0], unit='m'),
+            'rotation_speed': sc.scalar(12.0, unit='Hz'),
+            'beam_position': sc.scalar(45.0, unit='deg'),
+            'phase': sc.scalar(-20.0, unit='deg'),
+            'slit_edges': sc.array(
+                dims=['slit', 'edge'], values=[[0.0, 60.0], [124.0, 126.0]], unit='deg'
+            ),
+            'slit_height': sc.array(dims=['slit'], values=[0.4, 0.3], unit='m'),
+            'radius': sc.scalar(0.5, unit='m'),
+        }
+    )
+
+
 @pytest.mark.parametrize(
     'typ',
     (
@@ -25,38 +43,21 @@ def deg_angle_to_time_factor(rotation_speed: float) -> float:
         DiskChopperType.synchro_pair,
     ),
 )
-def test_chopper_supports_only_single(typ):
+def test_chopper_supports_only_single(nexus_chopper, typ):
+    nexus_chopper['type'] = typ
     with pytest.raises(NotImplementedError):
-        DiskChopper(
-            typ=typ,
-            rotation_speed=sc.scalar(1.0, unit='Hz'),
-            position=sc.vector([0, 0, 0], unit='m'),
-        )
+        DiskChopper.from_nexus(nexus_chopper)
 
 
-def test_rotation_speed_must_be_frequency():
+def test_rotation_speed_must_be_frequency(nexus_chopper):
+    nexus_chopper['rotation_speed'] = sc.scalar(1.0, unit='m/s')
     with pytest.raises(sc.UnitError):
-        DiskChopper(
-            rotation_speed=sc.scalar(1.0, unit='m/s'),
-            position=sc.vector([0, 0, 0], unit='m'),
-        )
+        DiskChopper.from_nexus(nexus_chopper)
 
 
-def test_eq():
-    ch1 = DiskChopper(
-        rotation_speed=sc.DataArray(
-            sc.array(dims=['time'], values=[1, 2], unit='Hz'),
-            coords={'time': sc.arange('time', 2, unit='ms')},
-        ),
-        position=sc.vector([0, 0, 0], unit='m'),
-    )
-    ch2 = DiskChopper(
-        rotation_speed=sc.DataArray(
-            sc.array(dims=['time'], values=[1, 2], unit='Hz'),
-            coords={'time': sc.arange('time', 2, unit='ms')},
-        ),
-        position=sc.vector([0, 0, 0], unit='m'),
-    )
+def test_eq(nexus_chopper):
+    ch1 = DiskChopper.from_nexus(nexus_chopper)
+    ch2 = DiskChopper.from_nexus(nexus_chopper)
     assert ch1 == ch2
 
 
@@ -65,123 +66,50 @@ def test_eq():
     (
         ('rotation_speed', sc.scalar(13.0, unit='Hz')),
         ('position', sc.vector([1, 0, 0], unit='m')),
-        ('radius', sc.scalar(0.5, unit='m')),
+        ('radius', sc.scalar(1.0, unit='m')),
         ('phase', sc.scalar(15, unit='deg')),
-        ('slits', 5),
         ('slit_height', sc.scalar(0.14, unit='cm')),
         ('slit_edges', sc.array(dims=['edge'], values=[0.1, 0.3], unit='rad')),
-        ('top_dead_center', sc.datetimes(dims=['time'], values=[2, 5, 8], unit='ns')),
     ),
 )
-def test_neq(replacement):
-    args = dict(
-        rotation_speed=sc.scalar(14.0, unit='Hz'),
-        position=sc.vector([0, 0, 0], unit='m'),
-    )
-    ch1 = DiskChopper(**args)
-    ch2 = DiskChopper(**{**args, replacement[0]: replacement[1]})
+def test_neq(nexus_chopper, replacement):
+    ch1 = DiskChopper.from_nexus(nexus_chopper)
+    ch2 = DiskChopper.from_nexus({**nexus_chopper, replacement[0]: replacement[1]})
     assert ch1 != ch2
 
 
-def test_slit_edges_converted_from_1d():
-    ch = DiskChopper(
-        position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(5.12, unit='Hz'),
-        slit_edges=sc.array(dims=['slit'], values=[0, 60, 124, 126], unit='deg'),
-    )
-    assert sc.identical(
-        ch.slit_edges,
-        sc.array(dims=['slit', 'edge'], values=[[0, 60], [124, 126]], unit='deg'),
-    )
-
-
-def test_slit_edges_can_be_2d():
-    ch = DiskChopper(
-        position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(5.12, unit='Hz'),
-        slit_edges=sc.array(
-            dims=['slit', 'edge'], values=[[0, 60], [124, 126]], unit='deg'
-        ),
-    )
-    assert sc.identical(
-        ch.slit_edges,
-        sc.array(dims=['slit', 'edge'], values=[[0, 60], [124, 126]], unit='deg'),
-    )
-
-
-def test_slit_edges_disallowed_ndim():
-    with pytest.raises(sc.DimensionError):
-        DiskChopper(
-            position=sc.vector([0, 0, 0], unit='m'),
-            rotation_speed=sc.scalar(5.12, unit='Hz'),
-            slit_edges=sc.scalar(30.0, unit='deg'),
-        )
-    with pytest.raises(sc.DimensionError):
-        DiskChopper(
-            position=sc.vector([0, 0, 0], unit='m'),
-            rotation_speed=sc.scalar(5.12, unit='Hz'),
-            slit_edges=sc.array(
-                dims=['time', 'slit', 'edge'],
-                values=[[[0, 60], [124, 126]]],
-                unit='deg',
-            ),
-        )
-
-
-def test_2d_slit_edges_must_have_length_2():
-    with pytest.raises(sc.DimensionError):
-        DiskChopper(
-            position=sc.vector([0, 0, 0], unit='m'),
-            rotation_speed=sc.scalar(5.12, unit='Hz'),
-            slit_edges=sc.array(
-                dims=['slit', 'edge'],
-                values=[[0, 60, 90], [124, 126, 270]],
-                unit='deg',
-            ),
-        )
-
-
-@pytest.mark.parametrize('rotation_speed', (1.0, -1.0))
-def slit_edges_must_be_ascending_per_slit(rotation_speed):
-    with pytest.raises(ValueError):
-        DiskChopper(
-            rotation_speed=sc.scalar(rotation_speed, unit='Hz'),
-            position=sc.vector([0, 0, 0], unit='m'),
-            slit_edges=sc.array(dims=['edge'], values=[0.5, 0.3], unit='rad'),
-        )
-    with pytest.raises(ValueError):
-        DiskChopper(
-            rotation_speed=sc.scalar(rotation_speed, unit='Hz'),
-            position=sc.vector([0, 0, 0], unit='m'),
-            slit_edges=sc.array(dims=['edge'], values=[0.8, 0.6, 2.5, 2.8], unit='rad'),
-        )
-
-
-def test_slit_begin_end_no_slit():
-    ch = DiskChopper(
-        position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(5.12, unit='Hz'),
-        slit_edges=sc.array(dims=['slit'], values=[], unit='deg'),
+def test_slit_begin_end_no_slit(nexus_chopper):
+    ch = DiskChopper.from_nexus(
+        {
+            **nexus_chopper,
+            'slit_edges': sc.zeros(sizes={'slit': 0, 'edge': 2}, unit='deg'),
+        }
     )
     assert sc.identical(ch.slit_begin, sc.array(dims=['slit'], values=[], unit='deg'))
     assert sc.identical(ch.slit_end, sc.array(dims=['slit'], values=[], unit='deg'))
 
 
-def test_slit_begin_end_one_slit():
-    ch = DiskChopper(
-        position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(5.12, unit='Hz'),
-        slit_edges=sc.array(dims=['slit'], values=[13, 43], unit='deg'),
+def test_slit_begin_end_one_slit(nexus_chopper):
+    ch = DiskChopper.from_nexus(
+        {
+            **nexus_chopper,
+            'slit_edges': sc.array(
+                dims=['slit', 'edge'], values=[[13, 43]], unit='deg'
+            ),
+        }
     )
     assert sc.identical(ch.slit_begin, sc.array(dims=['slit'], values=[13], unit='deg'))
     assert sc.identical(ch.slit_end, sc.array(dims=['slit'], values=[43], unit='deg'))
 
 
-def test_slit_begin_end_two_slits():
-    ch = DiskChopper(
-        position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(5.12, unit='Hz'),
-        slit_edges=sc.array(dims=['slit'], values=[0, 60, 124, 126], unit='deg'),
+def test_slit_begin_end_two_slits(nexus_chopper):
+    ch = DiskChopper.from_nexus(
+        {
+            **nexus_chopper,
+            'slit_edges': sc.array(
+                dims=['slit', 'edge'], values=[[0, 60], [124, 126]], unit='deg'
+            ),
+        }
     )
     assert sc.identical(
         ch.slit_begin, sc.array(dims=['slit'], values=[0, 124], unit='deg')
@@ -192,11 +120,14 @@ def test_slit_begin_end_two_slits():
 
 
 @pytest.mark.parametrize('rotation_speed', (1.0, -1.0))
-def test_slit_begin_end_two_slits_unordered(rotation_speed):
-    ch = DiskChopper(
-        rotation_speed=sc.scalar(rotation_speed, unit='Hz'),
-        position=sc.vector([0, 0, 0], unit='m'),
-        slit_edges=sc.array(dims=['slit'], values=[2.5, 2.8, 0.8, 1.3], unit='rad'),
+def test_slit_begin_end_two_slits_unordered(nexus_chopper, rotation_speed):
+    ch = DiskChopper.from_nexus(
+        {
+            **nexus_chopper,
+            'slit_edges': sc.array(
+                dims=['slit', 'edge'], values=[[2.5, 2.8], [0.8, 1.3]], unit='rad'
+            ),
+        }
     )
     assert sc.identical(
         ch.slit_begin, sc.array(dims=['slit'], values=[2.5, 0.8], unit='rad')
@@ -206,11 +137,14 @@ def test_slit_begin_end_two_slits_unordered(rotation_speed):
     )
 
 
-def test_slit_begin_end_across_0():
-    ch = DiskChopper(
-        position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(5.12, unit='Hz'),
-        slit_edges=sc.array(dims=['slit'], values=[340.0, 382.0], unit='deg'),
+def test_slit_begin_end_across_0(nexus_chopper):
+    ch = DiskChopper.from_nexus(
+        {
+            **nexus_chopper,
+            'slit_edges': sc.array(
+                dims=['slit', 'edge'], values=[[340.0, 382.0]], unit='deg'
+            ),
+        }
     )
     assert sc.identical(
         ch.slit_begin, sc.array(dims=['slit'], values=[340.0], unit='deg')
@@ -600,34 +534,12 @@ def test_absolute_time_open_close_delay_must_have_same_unit_as_tdc():
         ch.time_close()
 
 
-def test_disk_chopper_svg_minimal_fields():
-    ch = DiskChopper(
-        position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.scalar(7.21, unit='Hz'),
-    )
+def test_disk_chopper_svg(nexus_chopper):
+    ch = DiskChopper.from_nexus(nexus_chopper)
     assert ch.make_svg()
 
 
-def test_disk_chopper_svg():
-    ch = DiskChopper(
-        position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.DataArray(
-            sc.arange('time', 10, unit='Hz'),
-            coords={'time': sc.arange('time', 10, unit='s') * 0.1},
-        ),
-        slit_edges=sc.array(
-            dims=['slit'], values=[40.0, 70.0, 180.0, 220.0], unit='deg'
-        ),
-        beam_position=sc.scalar(-40.0, unit='deg'),
-    )
-    assert ch.make_svg()
-
-
-def test_disk_chopper_svg_custom_dim_names():
-    ch = DiskChopper(
-        position=sc.vector([0, 0, 0], unit='m'),
-        rotation_speed=sc.arange('t', 10, unit='Hz'),
-        slit_edges=sc.array(dims=['dim_0'], values=[40.0, 70.0], unit='deg'),
-        beam_position=sc.scalar(40.0, unit='deg'),
-    )
+def test_disk_chopper_svg_custom_dim_names(nexus_chopper):
+    nexus_chopper['slit_edges'] = nexus_chopper['slit_edges'].rename_dims(slit='dim_0')
+    ch = DiskChopper.from_nexus(nexus_chopper)
     assert ch.make_svg()
