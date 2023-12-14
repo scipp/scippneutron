@@ -256,199 +256,97 @@ class DiskChopper:
         """Return True if the chopper rotates clockwise."""
         return (self.rotation_speed < 0.0 * self.rotation_speed.unit).value
 
-    # TODO update all time functions
-    def relative_time_open(self) -> sc.Variable:
-        """Return the opening times of the chopper slits.
+    # TODO doc: number of times
+    def time_offset_open(self, *, pulse_frequency: sc.Variable) -> sc.Variable:
+        r"""Return the opening time offsets of the chopper slits.
 
-        If the ``beam_position`` is not set, it is assumed to be 0.
+        Computes :math:`\Delta t_g(\theta)` as defined in
+        :mod:`scippneutron.chopper.disk_chopper` with :math:`\theta` = ``slit_begin``
+        for clockwise rotation and :math:`\theta` = ``slit_end`` otherwise.
 
-        One time can be negative for anticlockwise-rotating choppers with a slit
-        across top-dead-center.
-
-        Returns
-        -------
-        :
-            Variable of opening times as offsets from the top-dead-center timestamps.
-
-        Raises
-        ------
-        RuntimeError
-            If no slits have been defined.
-
-        See Also
-        --------
-        DiskChopper.time_open:
-            Computes the absolute opening time in the global timing system.
-        """
-        if self.slit_edges is None:
-            raise RuntimeError("No slits have been defined")
-        if self._clockwise:
-            return self.relative_time_angle_at_beam(self.slit_begin)
-        return self.relative_time_angle_at_beam(self.slit_end)
-
-    def relative_time_close(self) -> sc.Variable:
-        """Return the closing times of the chopper slits.
-
-        If the ``beam_position`` is not set, it is assumed to be 0.
-
-        One time can be ``> 360 deg`` for clockwise-rotating choppers with a slit
-        across top-dead-center.
+        Parameters
+        ----------
+        pulse_frequency;
+            Frequency of the neutron source.
 
         Returns
         -------
         :
-            Variable of closing times as offsets from the top-dead-center timestamps.
-
-        Raises
-        ------
-        RuntimeError
-            If no slits have been defined.
-
-        See Also
-        --------
-        DiskChopper.time_close:
-            Computes the absolute closing time in the global timing system.
+            Variable of opening times as offsets from the pulse time.
         """
-        if self.slit_edges is None:
-            raise RuntimeError("No slits have been defined")
-        if self._clockwise:
-            return self.relative_time_angle_at_beam(self.slit_end)
-        return self.relative_time_angle_at_beam(self.slit_begin)
+        if self.is_clockwise:
+            return self.time_offset_angle_at_beam(angle=self.slit_begin)
+        return self.time_offset_angle_at_beam(angle=self.slit_end)
 
-    def open_duration(self) -> sc.Variable:
+    def time_offset_close(self, *, pulse_frequency: sc.Variable) -> sc.Variable:
+        r"""Return the opening time offsets of the chopper slits.
+
+        Computes :math:`\Delta t_g(\theta)` as defined in
+        :mod:`scippneutron.chopper.disk_chopper` with :math:`\theta` = ``slit_end``
+        for clockwise rotation and :math:`\theta` = ``slit_start`` otherwise.
+
+        Parameters
+        ----------
+        pulse_frequency;
+            Frequency of the neutron source.
+
+        Returns
+        -------
+        :
+            Variable of opening times as offsets from the pulse time.
+        """
+        if self.is_clockwise:
+            return self.time_offset_angle_at_beam(angle=self.slit_end)
+        return self.time_offset_angle_at_beam(angle=self.slit_begin)
+
+    def time_offset_angle_at_beam(self, *, angle: sc.Variable) -> sc.Variable:
+        r"""Return the time offset when a position of the chopper is at the beam.
+
+        The time is an offset from the given pulse time.
+        They encode the time when the given angle passes by the beam position.
+
+        Computes :math:`\Delta t_g(\theta)` as defined in
+        :mod:`scippneutron.chopper.disk_chopper`.
+
+        Parameters
+        ----------
+        angle:
+            Angle to compute time for.
+            Defined anticlockwise with respect to top-dead-center.
+
+        Returns
+        -------
+        :
+            Computed time offset.
+        """
+        angle = (
+            self.beam_position.to(unit='rad')
+            + self.phase.to(unit='rad')
+            - angle.to(unit='rad')
+        )
+        if not self.is_clockwise:
+            angle = sc.scalar(2.0, unit='rad') * sc.constants.pi + angle
+        angular_frequency = (
+            -self.angular_frequency if self.is_clockwise else self.angular_frequency
+        )
+        return angle / angular_frequency
+
+    def open_duration(self, *, pulse_frequency: sc.Variable) -> sc.Variable:
         """Return how long the chopper is open for.
+
+        Parameters
+        ----------
+        pulse_frequency;
+            Frequency of the neutron source.
 
         Returns
         -------
         :
             Variable of opening durations.
-
-        Raises
-        ------
-        RuntimeError
-            If no slits have been defined.
         """
-        return self.relative_time_close() - self.relative_time_open()
-
-    def relative_time_angle_at_beam(self, angle: sc.Variable) -> sc.Variable:
-        """Return the time when a position of the chopper is at the beam.
-
-        The times are offsets of when the given angle passes by the
-        beam position relative to the chopper's top-dead-center timestamps.
-
-        If the ``beam_position`` is not set, it is assumed to be 0.
-
-        Returns
-        -------
-        :
-            Angles to compute times for.
-            Defined anticlockwise with respect to top-dead-center.
-
-        Raises
-        ------
-        RuntimeError
-            If no slits have been defined.
-
-        See Also
-        --------
-        DiskChopper.time_angle_at_beam:
-            Computes absolute times in the global timing system.
-        """
-        # Ensure the correct output unit.
-        angle = angle.to(unit='rad')
-
-        if self.beam_position is not None:
-            angle = angle - self.beam_position.to(unit=angle.unit, copy=False)
-        if not self._clockwise:
-            angle = sc.scalar(2.0, unit='rad') * sc.constants.pi - angle
-        return angle / abs(self.angular_frequency)
-
-    def time_open(self) -> sc.Variable:
-        """Return the absolute opening times of the chopper slits.
-
-        The times are absolute (date-)times in the global timing system as defined
-        through ``top_dead_center`` and ``delay``.
-
-        If the ``beam_position`` is not set, it is assumed to be 0.
-
-        Returns
-        -------
-        :
-            Variable of opening times with ``dtype=datetime``.
-
-        Raises
-        ------
-        RuntimeError
-            If ``slits`` or ``top_dead_center`` have been defined.
-
-        See Also
-        --------
-        DiskChopper.relative_time_open:
-            Computes the opening time relative to the chopper's top-dead-center.
-        """
-        return self._relative_to_absolute_time(self.relative_time_open())
-
-    def time_close(self) -> sc.Variable:
-        """Return the absolute closing times of the chopper slits.
-
-        The times are absolute (date-)times in the global timing system as defined
-        through ``top_dead_center`` and ``delay``.
-
-        If the ``beam_position`` is not set, it is assumed to be 0.
-
-        Returns
-        -------
-        :
-            Variable of opening times with ``dtype=datetime``.
-
-        Raises
-        ------
-        RuntimeError
-            If ``slits`` or ``top_dead_center`` have been defined.
-
-        See Also
-        --------
-        DiskChopper.relative_time_close:
-            Computes the closing time relative to the chopper's top-dead-center.
-        """
-        return self._relative_to_absolute_time(self.relative_time_close())
-
-    def time_angle_at_beam(self, angle: sc.Variable) -> sc.Variable:
-        """Return the absolute time when a position of the chopper is at the beam.
-
-        The times are absolute (date-)times in the global timing system as defined
-        through ``top_dead_center`` and ``delay``.
-
-        If the ``beam_position`` is not set, it is assumed to be 0.
-
-        Returns
-        -------
-        :
-            Angles to compute times for.
-            Defined anticlockwise with respect to top-dead-center.
-
-        Raises
-        ------
-        RuntimeError
-            If ``slits`` or ``top_dead_center`` have been defined.
-
-        See Also
-        --------
-        DiskChopper.relative_time_angle_at_beam:
-            Computes times relative to the chopper's top-dead-center.
-        """
-        return self._relative_to_absolute_time(self.relative_time_angle_at_beam(angle))
-
-    def _relative_to_absolute_time(self, relative_time: sc.Variable) -> sc.Variable:
-        if self.top_dead_center is None:
-            raise RuntimeError("No top dead center has been defined")
-        res = (
-            relative_time.to(unit=self.top_dead_center.unit, dtype=int, copy=False)
-            + self.top_dead_center
-        )
-        if self.delay is not None:
-            res += self.delay
-        return res
+        return self.time_offset_open(
+            pulse_frequency=pulse_frequency
+        ) - self.time_offset_close(pulse_frequency=pulse_frequency)
 
     def __eq__(self, other: Any) -> Union[bool, NotImplemented]:
         if not isinstance(other, DiskChopper):
