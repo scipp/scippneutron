@@ -4,6 +4,5 @@
 """Chopper utilities."""
 
 from .disk_chopper import DiskChopper, DiskChopperType
-from .nexus_chopper import NXdisk_chopper
 
-__all__ = ['DiskChopper', 'DiskChopperType', 'NXdisk_chopper']
+__all__ = ['DiskChopper', 'DiskChopperType']
