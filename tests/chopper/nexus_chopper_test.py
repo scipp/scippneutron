@@ -1,89 +1,89 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
-import io
-
-import numpy as np
 import pytest
 import scipp as sc
-import scippnexus as snx
 
-from scippneutron.chopper import DiskChopper, DiskChopperType, NXdisk_chopper
+from scippneutron.chopper import post_process_disk_chopper
 
 
 @pytest.fixture
-def chopper_nexus_file() -> io.BytesIO:
-    rng = np.random.default_rng(81471)
-
-    buffer = io.BytesIO()
-    with snx.File(buffer, 'w') as f:
-        entry = f.create_class('entry', 'NXentry')
-        instrument = entry.create_class('instrument', 'NXinstrument')
-        chopper = instrument.create_class('chopper', 'NXdisk_chopper')
-
-        chopper.create_field('radius', sc.scalar(0.35, unit='m'))
-        chopper.create_field('slits', sc.index(2))
-        chopper.create_field(
-            'slit_height', sc.array(dims=['dim'], values=[0.1, 0.12], unit='m')
-        )
-        chopper.create_field(
-            'slit_edges',
-            sc.array(dims=['dim'], values=[10.0, 160.0, 210.0, 280.0], unit='deg'),
-        )
-        chopper.create_field('depends_on', sc.scalar('transformations/t1'))
-
-        rotation_speed = chopper.create_class('rotation_speed', 'NXlog')
-        time = sc.arange(
-            't',
-            sc.datetime('2020-06-09T13:14:09'),
-            sc.datetime('2020-06-09T13:16:24'),
-            unit='s',
-        ).to(unit='us')
-        rotation_speed.create_field(
-            'value',
-            sc.array(dims=['t'], values=rng.uniform(13.5, 14.5, len(time)), unit='Hz'),
-        )
-        rotation_speed.create_field('time', time)
-
-        delay = chopper.create_class('delay', 'NXlog')
-        delay.create_field('value', sc.array(dims=['t'], values=[0.04], unit='s'))
-        delay.create_field(
-            'time', sc.datetimes(dims=['t'], values=['2020-06-09T13:16:09'], unit='us')
-        )
-
-        transformations = chopper.create_class('transformations', 'NXtransformations')
-        t1 = transformations.create_field('t1', sc.scalar(11.4, unit='m'))
-        t1.attrs['depends_on'] = '.'
-        t1.attrs['transformation_type'] = 'translation'
-        t1.attrs['vector'] = np.array([0.0, 0.0, 1.0])
-
-    return buffer
-
-
-def test_from_nexus(chopper_nexus_file):
-    with snx.File(chopper_nexus_file, 'r') as f:
-        reference = f['entry']['instrument']['chopper'][()]
-    with snx.File(
-        chopper_nexus_file,
-        'r',
-        definitions={**snx.base_definitions(), 'NXdisk_chopper': NXdisk_chopper},
-    ) as f:
-        chopper_group = f['entry']['instrument']['chopper']
-        ch = chopper_group[()]
-
-    assert isinstance(ch, DiskChopper)
-    assert ch.typ == DiskChopperType.single
-    assert sc.identical(ch.rotation_speed, reference['rotation_speed'])
-    assert sc.identical(ch.delay, reference['delay'])
-    assert sc.identical(ch.radius, sc.scalar(0.35, unit='m'))
-    assert ch.slits == 2
-    assert sc.identical(
-        ch.slit_height, sc.array(dims=['dim_0'], values=[0.1, 0.12], unit='m')
+def raw_nexus_chopper():
+    return sc.DataGroup(
+        {
+            'type': 'Chopper type single',
+            'position': sc.vector([0.0, 0.0, 2.0], unit='m'),
+            'rotation_speed': sc.scalar(12.0, unit='Hz'),
+            'beam_position': sc.scalar(45.0, unit='deg'),
+            'phase': sc.scalar(-20.0, unit='deg'),
+            'slit_edges': sc.array(
+                dims=['dim_0'], values=[0.0, 60.0, 124.0, 126.0], unit='deg'
+            ),
+            'slit_height': sc.array(dims=['slit'], values=[0.4, 0.3], unit='m'),
+            'radius': sc.scalar(0.5, unit='m'),
+            'top_dead_center': sc.datetimes(
+                dims=['time'], values=[12, 56, 78], unit='ms'
+            ),
+        }
     )
+
+
+def test_slit_edges_converted_from_1d(raw_nexus_chopper):
+    processed = post_process_disk_chopper(raw_nexus_chopper)
     assert sc.identical(
-        ch.slit_edges,
+        processed['slit_edges'],
         sc.array(
-            dims=['dim_0', 'edge'], values=[[10.0, 160.0], [210.0, 280.0]], unit='deg'
+            dims=['dim_0', 'edge'], values=[[0.0, 60.0], [124.0, 126.0]], unit='deg'
         ),
     )
-    assert sc.identical(ch.position, sc.vector([0, 0, 11.4], unit='m'))
+
+
+def test_slit_edges_can_be_2d(raw_nexus_chopper):
+    raw_nexus_chopper['slit_edges'] = sc.array(
+        dims=['slit', 'edge'], values=[[0.0, 60.0], [124.0, 126.0]], unit='deg'
+    )
+    processed = post_process_disk_chopper(raw_nexus_chopper)
+    assert sc.identical(
+        processed['slit_edges'],
+        sc.array(
+            dims=['slit', 'edge'], values=[[0.0, 60.0], [124.0, 126.0]], unit='deg'
+        ),
+    )
+
+
+def test_slit_edges_disallowed_ndim(raw_nexus_chopper):
+    raw_nexus_chopper['slit_edges'] = sc.scalar(30.0, unit='deg')
+    with pytest.raises(sc.DimensionError):
+        post_process_disk_chopper(raw_nexus_chopper)
+
+    raw_nexus_chopper['slit_edges'] = sc.array(
+        dims=['time', 'slit', 'edge'],
+        values=[[[0, 60], [124, 126]]],
+        unit='deg',
+    )
+    with pytest.raises(sc.DimensionError):
+        post_process_disk_chopper(raw_nexus_chopper)
+
+
+def test_2d_slit_edges_must_have_length_2(raw_nexus_chopper):
+    raw_nexus_chopper['slit_edges'] = sc.array(
+        dims=['slit', 'edge'],
+        values=[[0, 60, 90], [124, 126, 270]],
+        unit='deg',
+    )
+    with pytest.raises(sc.DimensionError):
+        post_process_disk_chopper(raw_nexus_chopper)
+
+
+def slit_edges_must_be_ascending_per_slit(raw_nexus_chopper):
+    raw_nexus_chopper['slit_edges'] = sc.array(
+        dims=['dim_0'], values=[60.0, 0.0, 124.0, 126.0], unit='deg'
+    )
+    with pytest.raises(ValueError):
+        post_process_disk_chopper(raw_nexus_chopper)
+
+    raw_nexus_chopper['slit_edges'] = sc.array(
+        dims=['slit', 'edge'], values=[[0.0, 0.0], [126.0, 124.0]], unit='deg'
+    )
+    with pytest.raises(ValueError):
+        post_process_disk_chopper(raw_nexus_chopper)
