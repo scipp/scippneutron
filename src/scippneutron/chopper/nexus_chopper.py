@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
-from typing import Optional, Union
+from typing import Mapping, Optional, Union
 
 import scipp as sc
 
 from .disk_chopper import DiskChopperType
 
-CHOPPER_FIELD_NAMES = (
+_CHOPPER_FIELD_NAMES = (
     'beam_position',
     'delay',
     'phase',
@@ -18,20 +18,27 @@ CHOPPER_FIELD_NAMES = (
 )
 
 
-def post_process_disk_chopper(dg: sc.DataGroup) -> sc.DataGroup:
+def post_process_disk_chopper(
+    chopper: Mapping[str, Union[sc.Variable, sc.DataArray, sc.DataGroup]]
+) -> sc.DataGroup:
     return sc.DataGroup(
         {
-            'type': DiskChopperType(dg.get('type', DiskChopperType.single)),
-            'rotation_speed': _parse_rotation_speed(dg['rotation_speed']),
-            'slit_edges': _parse_slit_edges(dg['slit_edges']),
-            'top_dead_center': _parse_tdc(dg['top_dead_center']),
-            **{name: _parse_maybe_log(dg.get(name)) for name in CHOPPER_FIELD_NAMES},
+            'type': DiskChopperType(chopper.get('type', DiskChopperType.single)),
+            'rotation_speed': _parse_rotation_speed(chopper['rotation_speed']),
+            'slit_edges': _parse_slit_edges(chopper['slit_edges']),
+            'top_dead_center': _parse_tdc(chopper['top_dead_center']),
+            **{
+                name: _parse_maybe_log(chopper.get(name))
+                for name in _CHOPPER_FIELD_NAMES
+            },
         }
     )
 
 
-def _parse_rotation_speed(x: Union[sc.DataArray, sc.DataGroup]) -> sc.DataArray:
-    return _parse_maybe_log(x)
+def _parse_rotation_speed(
+    rotation_speed: Union[sc.DataArray, sc.DataGroup]
+) -> sc.DataArray:
+    return _parse_maybe_log(rotation_speed)
 
 
 def _parse_slit_edges(edges: Optional[sc.Variable]) -> Optional[sc.Variable]:
@@ -57,19 +64,19 @@ def _parse_slit_edges(edges: Optional[sc.Variable]) -> Optional[sc.Variable]:
 
 
 def _parse_tdc(
-    x: Optional[Union[sc.Variable, sc.DataArray, sc.DataGroup]]
+    tdc: Optional[Union[sc.Variable, sc.DataArray, sc.DataGroup]]
 ) -> Optional[Union[sc.Variable, sc.DataArray]]:
-    if x is None:
-        return x
-    if isinstance(x, sc.DataGroup):
+    if tdc is None:
+        return tdc
+    if isinstance(tdc, sc.DataGroup):
         # An NXlog
-        return x['time']
-    return x
+        return tdc['time']
+    return tdc
 
 
 def _parse_maybe_log(
-    x: Optional[Union[sc.DataArray, sc.DataGroup]]
-) -> Optional[sc.DataArray]:
+    x: Optional[Union[sc.Variable, sc.DataArray, sc.DataGroup]]
+) -> Optional[Union[sc.Variable, sc.DataArray]]:
     if x is None:
         return x
     if isinstance(x, sc.DataGroup):
