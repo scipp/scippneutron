@@ -1,86 +1,137 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
-# TODO update to module docs
-r"""A disk chopper.
+r"""Tools for disk choppers.
 
-    Definitions
-    -----------
+Definitions
+-----------
 
-    Attribute names correspond closely to the names used by NeXus' ``NXdisk_chopper``.
-    See https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html
-    for an overview.
+The names used here correspond closely to the names used by NeXus' ``NXdisk_chopper``.
+See https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html
+for an overview.
 
-    Here is how those attributes are interpreted in ScippNeutron:
-    The image below shows a disk chopper with a single slit
-    as seen from the neutron source looking towards the sample.
-    Note that all definitions are independent of the rotation direction.
+Here is how those attributes are interpreted in ScippNeutron:
+The image below shows a disk chopper with a single slit
+as seen from the neutron source looking towards the sample.
+Note that all definitions are independent of the rotation direction.
 
-    - *TDC* (top-dead-center sensor) corresponds to a sensor that
-      tracks the rotation of the chopper.
-      It serves as a reference point for defining angles.
-    - :attr:`DiskChopper.beam_position` is the angle :math:`\tilde{\theta}` under which
-      the beam hits the chopper.
-      We do not care about the radial position and assume that it can
-      pass through all chopper slits.
-    - The slit is defined in terms of *begin* (:attr:`DiskChopper.slit_begin`,
-      :math:`\theta` in the image) and *end* (:attr:`DiskChopper.slit_end`) angles.
+.. list-table::
+    :widths: auto
+    :header-rows: 1
 
-    .. image:: /_static/chopper-coordinates.svg
-       :width: 400
-       :align: center
+    * - Name
+      - Symbol
+      - Definition
+    * - ``top_dead_center``
+      - :math:`t_0`
+      - TDC corresponds to a sensor that tracks the rotation of the chopper.
+        Its position serves as a reference point for defining angles.
 
-    Quantities relating to time are defined as:
+        The ``top_dead_center`` field of a NeXus chopper stores timestamps of the
+        TDC sensor registering a full rotation.
+        This serves as a reference time for the chopper :math:`t_0`.
+        In :class:`DiskChopper`, the TDC is encoded as a component of
+        :attr:`DiskChopper.phase`.
+    * - ``beam_position``
+      - :math:`\tilde{\theta}`
+      - The angle under which the beam hits the chopper
+        (:attr:`DiskChopper.beam_position`).
+        We do not care about the radial position and assume that the beam can
+        pass through all chopper slits.
+    * - ``slit_edges``
+      -
+      - Slits are defined in terms of *begin* (:attr:`DiskChopper.slit_begin`,
+        :math:`\theta` in the image) and *end* (:attr:`DiskChopper.slit_end`) angles
+        that are stored together as :attr:`DiskChopper.slit_edges`.
+        See also :func:`scippneutron.chopper.nexus_chopper.post_process_disk_chopper`
+        for how to convert from NeXus encoding.
+    * - ``rotation_speed``
+      - :math:`f`
+      - The rotation frequency of the chopper.
+        Stored in :attr:`DiskChopper.rotation_speed`.
+        A positive frequency means anticlockwise rotation and a negative frequency
+        clockwise rotation (as seen from the source).
+    * - ``angular_frequency``
+      - :math:`\omega`
+      - :math:`\omega = 2 \pi f`, :attr:`DiskChopper.angular_frequency`.
+    * - ``delay``
+      - :math:`\delta t`
+      - Delay of the chopper timing system relative to global facility time with
+        :math:`t_g = t + \delta t`, where :math:`t_g` is a global time and :math:`t`
+        a chopper time.
+    * - ``phase``
+      - :math:`\phi`
+      - The phase of the chopper relative to the pulse time.
+        Defined as :math:`\phi = \omega (t_0 + \delta t - T_0)`, see below for
+        the explanation.
+        (:attr:`DiskChopper.phase`).
+    * - ``pulse_time``
+      - :math:`T_0`
+      - Timestamp of a neutron pulse in global facility time.
 
-    - The chopper rotates with a frequency of :attr:`DiskChopper.rotation_speed`
-      :math:`f` which is also available as :attr:`DiskChopper.angular_frequency`
-      :math:`\omega = 2 \pi f`.
-      A positive frequency means anticlockwise rotation and a negative frequency
-      clockwise rotation.
-    - :attr:`DiskChopper.top_dead_center` stores timestamps of when the
-      TDC sensor registers a full rotation.
-      This serves as a reference time for the chopper :math:`t_0`.
-    - The chopper time :math:`t` relates to the global time of the facility
-      :math:`t_g` via :math:`t_g = t + \delta t`, where :math:`\delta t`
-      is :attr:`DiskChopper.delay`.
-    - There is also a :attr:`DiskChopper.phase` parameter that encodes the phase
-      of the chopper relative to the neutron source.
-      It is unused in time calculations as the above attributes have
-      all required information.
+.. image:: /_static/chopper-coordinates.svg
+   :width: 400
+   :align: center
 
-    Slit openings
-    -------------
+Slit openings
+-------------
 
-    The terminology here differentiates slit 'begin' and 'end' from 'open' and 'close'.
-    The former refer to the angles relative to TDC as shown in the image above.
-    The latter refer to the times when a slit opens and closes for the beam.
+The terminology here differentiates slit 'begin' and 'end' from 'open' and 'close'.
+The former refer to the angles relative to TDC as shown in the image above.
+The latter refer to the times when a slit opens and closes for the beam.
 
-    It is possible to have ``end > 360 deg`` if a slit spans TDC.
+It is possible to have ``end > 360 deg`` if a slit spans TDC.
 
-    For a given slit, we require ``begin < end``.
-    To also have ``open < close`` for both directions of rotation,
-    we have the following correspondence:
+For a given slit, we require ``begin < end``.
+To also have ``open < close`` for both directions of rotation,
+we have the following correspondence:
 
-    - clockwise rotation: ``begin`` <-> ``open`` and ``end`` <-> ``close``
-    - anticlockwise rotation: ``begin`` <-> ``close`` and ``end`` <-> ``open``
+- clockwise rotation: ``begin`` <-> ``open`` and ``end`` <-> ``close``
+- anticlockwise rotation: ``begin`` <-> ``close`` and ``end`` <-> ``open``
 
-    Time calculations
-    -----------------
+Time calculations
+-----------------
 
-    Given the definitions above, the time in the global timing system when a point
-    at angle :math:`\theta` is at the beam position is
+Given the definitions above, the time in the global timing system when a point
+at angle :math:`\theta` is at the beam position is
 
-    .. math::
+.. math::
 
-        t_g(\theta) = t_0 + \delta t + \begin{cases}
-        \frac{\theta-\tilde{\theta}}{\omega}, & \textsf{clockwise}\\
-        \frac{2\pi - (\theta-\tilde{\theta})}{|\omega|}, & \textsf{anticlockwise}
-        \end{cases}
+    t_g(\theta) &= t_0 + \delta t + \begin{cases}
+    \frac{\theta-\tilde{\theta}}{|\omega|}, & \textsf{clockwise}\\
+    \frac{2\pi - (\theta-\tilde{\theta})}{|\omega|}, & \textsf{anticlockwise}
+    \end{cases}\\
+    &= t_0 + \delta t + - \frac{\theta - \tilde{\theta}}{\omega} + \begin{cases}
+    0, & \textsf{clockwise}\\
+    \frac{2\pi}{\omega}, & \textsf{anticlockwise}
+    \end{cases}
 
-    This is implemented by :meth:`DiskChopper.time_angle_at_beam` and specifically for
-    the slit edges by :meth:`DiskChopper.time_open` and
-    :meth:`DiskChopper.time_close`.
-    """
+where the second line uses that, for clockwise rotation, :math:`|\omega| = -\omega`
+and for anticlockwise, :math:`|\omega| = \omega`.
+This can be converted to a time offset from a pulse time :math:`T_0` using
+
+.. math::
+
+    \Delta t_g(\theta) = t_g(\theta) - T_0 = - \frac{\theta - \tilde{\theta}
+       - \phi}{\omega}
+       + \begin{cases}
+         0, & \textsf{clockwise}\\
+         \frac{2\pi}{\omega}, & \textsf{anticlockwise}
+         \end{cases}
+
+where :math:`\phi = \omega (t_0 + \delta t - T_0)` is the ``phase``.
+
+:class:`DiskChopper` expects the chopper to be in phase with the source.
+It thus requires a constant rotation speed.
+And that speed must be an integer multiple of the source frequency or vice versa.
+The phase should be computed as defined about from the difference of a pulse time
+and a corresponding TDC timestamp.
+The user is responsible for determining the correct times.
+
+This calculation is implemented by :meth:`DiskChopper.time_offset_angle_at_beam`
+and specifically for slits by :meth:`DiskChopper.time_offset_open`
+and :meth:`DiskChopper.time_offset_close`.
+"""
 
 from __future__ import annotations
 
@@ -116,11 +167,23 @@ except ImportError:
 
     del Enum
 
-# TODO sign of omega in equations?! -> need abs(omega) in anticlockwise
-
 
 @dataclasses.dataclass(frozen=True, eq=False)
 class DiskChopper:
+    """A disk chopper.
+
+    Encode parameters of a single disk chopper and provides methods for computing
+    slit opening times.
+    This class requires that the chopper be in phase with the neutron source and that
+    the rotation frequency be constant.
+
+    See Also
+    --------
+    scippneutron.chopper.disk_chopper:
+        For detailed documentation of the definitions and calculations used
+        by ``DiskChopper``.
+    """
+
     position: sc.Variable
     """Position of the chopper.
 
@@ -132,17 +195,17 @@ class DiskChopper:
     beam_position: sc.Variable
     """Angle where the beam crosses the chopper."""
     phase: sc.Variable
-    """Phase of the chopper rotation relative to the source pulses."""
+    r"""Phase of the chopper rotation relative to the source pulses.
+
+    Defined as :math:`\phi = \omega (t_0 + \delta t - T_0)`, where :math:`t_0` is a
+    TDC timestamp, :math:`\delta t` is the chopper delay, and  :math:`T_0`
+    is the pulse time.
+    """
     slit_edges: sc.Variable
     """Edges of the slits as angles measured anticlockwise from top-dead-center.
 
-    On init, either a 1d array of the form ``[begin_0, end_0, begin_1, end_1, ...]``
-    with ``begin_i < end_i``.
-    Or a 2d array of the form ``[[begin_0, end_0], [begin_1, end_1], ...]``.
+    A 2d array of the form ``[[begin_0, end_0], [begin_1, end_1], ...]``.
     The order of slits is arbitrary.
-
-    After init, a 2d array like the second option described above.
-    The dim names depend on the input.
     """
     slit_height: Optional[sc.Variable] = None
     """Distance from chopper outer edge to bottom of slits."""
