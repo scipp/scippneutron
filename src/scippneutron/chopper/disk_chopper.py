@@ -318,10 +318,10 @@ class DiskChopper:
         return self.time_offset_angle_at_beam(angle=self.slit_begin)
 
     def time_offset_angle_at_beam(self, *, angle: sc.Variable) -> sc.Variable:
-        r"""Return the time offset when a position of the chopper is at the beam.
+        r"""Return the time offset when an angle on the chopper is at the beam.
 
         The time is an offset from the given pulse time.
-        They encode the time when the given angle passes by the beam position.
+        It encodes the time when the given angle passes by the beam position.
 
         Computes :math:`\Delta t_g(\theta)` as defined in
         :mod:`scippneutron.chopper.disk_chopper`.
@@ -340,14 +340,11 @@ class DiskChopper:
         angle = (
             self.beam_position.to(unit='rad')
             + self.phase.to(unit='rad')
-            - angle.to(unit='rad')
+            - angle.to(unit='rad', copy=False)
         )
         if not self.is_clockwise:
             angle = sc.scalar(2.0, unit='rad') * sc.constants.pi + angle
-        angular_frequency = (
-            -self.angular_frequency if self.is_clockwise else self.angular_frequency
-        )
-        return angle / angular_frequency
+        return angle / self.angular_frequency
 
     def open_duration(self, *, pulse_frequency: sc.Variable) -> sc.Variable:
         """Return how long the chopper is open for.
@@ -362,9 +359,10 @@ class DiskChopper:
         :
             Variable of opening durations.
         """
-        return self.time_offset_open(
-            pulse_frequency=pulse_frequency
-        ) - self.time_offset_close(pulse_frequency=pulse_frequency)
+        return abs(
+            self.time_offset_open(pulse_frequency=pulse_frequency)
+            - self.time_offset_close(pulse_frequency=pulse_frequency)
+        )
 
     def __eq__(self, other: Any) -> Union[bool, NotImplemented]:
         if not isinstance(other, DiskChopper):
