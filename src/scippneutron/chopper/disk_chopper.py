@@ -73,6 +73,13 @@ Note that all definitions are independent of the rotation direction.
    :width: 400
    :align: center
 
+:class:`DiskChopper` expects the chopper to be in phase with the source.
+It thus requires a constant rotation speed.
+And that speed must be an integer multiple of the source frequency or vice versa.
+The phase should be computed as defined about from the difference of a pulse time
+and a corresponding TDC timestamp.
+The user is responsible for determining the correct times.
+
 Slit openings
 -------------
 
@@ -121,16 +128,27 @@ This can be converted to a time offset from a pulse time :math:`T_0` using
 
 where :math:`\phi = \omega (t_0 + \delta t - T_0)` is the ``phase``.
 
-:class:`DiskChopper` expects the chopper to be in phase with the source.
-It thus requires a constant rotation speed.
-And that speed must be an integer multiple of the source frequency or vice versa.
-The phase should be computed as defined about from the difference of a pulse time
-and a corresponding TDC timestamp.
-The user is responsible for determining the correct times.
+:meth:`DiskChopper.time_offset_angle_at_beam` can calculate :math:`\Delta t_g(\theta)`
+and :meth:`DiskChopper.time_offset_open` :meth:`DiskChopper.time_offset_close` calculate
+:math:`\Delta t_g` for slit open and close times.
 
-This calculation is implemented by :meth:`DiskChopper.time_offset_angle_at_beam`
-and specifically for slits by :meth:`DiskChopper.time_offset_open`
-and :meth:`DiskChopper.time_offset_close`.
+The definitions used here can lead to surprising results, especially when
+:math:`\tilde{\theta} \neq 0` or :math:`\phi \neq 0`.
+The plots below show the computed times for an angle :math:`\theta` for
+:math:`\tilde{\theta} \neq 0` and :math:`\phi = 0` (blue lines).
+Note in particular the time ranges for :math:`\theta \in [0, 2\pi)` (gray rectangles).
+The other lines show :math:`\Delta t_g \,\mathsf{mod}\, 1/f` which is an option
+for restricting the times onto :math:`[0, \frac{2\pi}{|\omega|}) = [0, \frac1{f})`.
+
+.. image:: /_static/chopper/disk-chopper-time-curve.svg
+   :class: only-light
+   :width: 700
+   :align: center
+
+.. image:: /_static/chopper/disk-chopper-time-curve-dark.svg
+   :class: only-dark
+   :width: 700
+   :align: center
 """
 
 from __future__ import annotations
