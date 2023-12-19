@@ -150,7 +150,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
 
     def edge_mark(is_begin: bool, idx: int) -> Tuple[str, Dict[str, str]]:
         x, y = polar_to_svg_coords(
-            r=(chopper.radius - chopper.slit_height) * radius_scale, a=angle
+            r=(chopper.radius - chopper.slit_height[idx]) * radius_scale, a=angle
         )
         line = f'M{image_size // 2} {image_size // 2} L{x:.3f} {y:.3f}'
 
