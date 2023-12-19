@@ -629,6 +629,16 @@ def test_time_offset_open_close_one_slit_across_tdc_anticlockwise(
     )
 
 
+def test_time_offset_open_close_source_frequency_not_multiple_of_chopper(nexus_chopper):
+    ch = DiskChopper.from_nexus(
+        {**nexus_chopper, 'rotation_speed': sc.scalar(4.52, unit='Hz')}
+    )
+    with pytest.raises(ValueError):
+        ch.time_offset_open(pulse_frequency=sc.scalar(4.3, unit='Hz'))
+    with pytest.raises(ValueError):
+        ch.time_offset_close(pulse_frequency=sc.scalar(5.1, unit='Hz'))
+
+
 def test_disk_chopper_svg(nexus_chopper):
     ch = DiskChopper.from_nexus(nexus_chopper)
     assert ch.make_svg()

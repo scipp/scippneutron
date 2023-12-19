@@ -274,7 +274,20 @@ class DiskChopper:
         """Return True if the chopper rotates clockwise."""
         return (self.rotation_speed < 0.0 * self.rotation_speed.unit).value
 
-    # TODO doc: number of times
+    def _expect_in_phase(self, pulse_frequency: sc.Variable) -> None:
+        if not sc.all(
+            _is_approximate_multiple(
+                pulse_frequency, ref=self.rotation_speed, rtol=sc.scalar(1e-8)
+            )
+        ):
+            raise ValueError(
+                'The chopper is out of phase with the source. '
+                'The rotation speed must be an integer multiple of the '
+                'pulse frequency or vice versa.\n'
+                f'pulse_frequency:\n  {pulse_frequency}\n'
+                f'rotation_speed:\n  {self.rotation_speed}'
+            )
+
     def time_offset_open(self, *, pulse_frequency: sc.Variable) -> sc.Variable:
         r"""Return the opening time offsets of the chopper slits.
 
@@ -292,6 +305,7 @@ class DiskChopper:
         :
             Variable of opening times as offsets from the pulse time.
         """
+        self._expect_in_phase(pulse_frequency)
         if self.is_clockwise:
             return self.time_offset_angle_at_beam(angle=self.slit_begin)
         return self.time_offset_angle_at_beam(angle=self.slit_end)
@@ -313,6 +327,7 @@ class DiskChopper:
         :
             Variable of opening times as offsets from the pulse time.
         """
+        self._expect_in_phase(pulse_frequency)
         if self.is_clockwise:
             return self.time_offset_angle_at_beam(angle=self.slit_end)
         return self.time_offset_angle_at_beam(angle=self.slit_begin)
@@ -437,3 +452,15 @@ def _get_1d_variable(
             msg.format(name=name, got=f'got a {val.ndim}d variable')
         )
     return val
+
+
+def _is_approximate_multiple(
+    x: sc.Variable, *, ref: sc.Variable, rtol: sc.Variable
+) -> sc.Variable:
+    # If x = n * ref
+    quot = x / ref
+    a = abs(sc.round(quot) - quot) < rtol
+    # If x = ref / n
+    quot = sc.reciprocal(quot)
+    b = abs(sc.round(quot) - quot) < rtol
+    return a | b
