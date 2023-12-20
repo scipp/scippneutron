@@ -149,6 +149,34 @@ for restricting the times onto :math:`[0, \frac{2\pi}{|\omega|}) = [0, \frac1{f}
    :class: only-dark
    :width: 700
    :align: center
+
+|
+
+:meth:`DiskChopper.time_offset_open` and :meth:`DiskChopper.time_offset_close`
+compute :math:`\Delta t_g` for the slit edges.
+The resulting times are shown below for a chopper with two slits, a short one (blue)
+and a long one (orange/yellow) with
+:math:`\theta_\mathsf{short} < \theta_\mathsf{long}`.
+Source pulses are indicated in gray.
+The shown frequency ratio is ``rotation_speed / pulse_frequency``.
+
+Times were computed for a pulse at :math:`T_0` with length :math:`\Delta T` but spill
+into neighboring pulses because of a nonzero beam position and phase.
+If those were zero, the :math:`\mathsf{frequency\ ratio} \geq 1` openings would lie
+within :math:`[T_0,\, T_0 + \Delta T)` and the :math:`\mathsf{frequency\ ratio} = 0.5`
+openings would lie within :math:`[T_0,\, T_0 + 2\Delta T)`.
+Note how, for choppers that spin at a multiple of the pulse frequency, there are
+multiple openings per slit.
+
+.. image:: /_static/chopper/disk-chopper-openings.svg
+   :class: only-light
+   :width: 700
+   :align: center
+
+.. image:: /_static/chopper/disk-chopper-openings-dark.svg
+   :class: only-dark
+   :width: 700
+   :align: center
 """
 
 from __future__ import annotations
