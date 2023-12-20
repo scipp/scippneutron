@@ -69,7 +69,7 @@ Note that all definitions are independent of the rotation direction.
       - :math:`T_0`
       - Timestamp of a neutron pulse in global facility time.
 
-.. image:: /_static/chopper-coordinates.svg
+.. image:: /_static/chopper/chopper-coordinates.svg
    :width: 400
    :align: center
 
