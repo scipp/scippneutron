@@ -156,7 +156,9 @@ from __future__ import annotations
 import dataclasses
 from collections.abc import Mapping
 from typing import Any, Optional, Union
+from uuid import uuid4
 
+import numpy as np
 import scipp as sc
 import scipp.constants
 
@@ -265,6 +267,11 @@ class DiskChopper:
         return self.slit_edges[self.slit_edges.dims[1], 1]
 
     @property
+    def n_slits(self) -> int:
+        """Number of slits."""
+        return self.slit_edges.shape[0]
+
+    @property
     def angular_frequency(self) -> sc.Variable:
         """Rotation speed as an angular frequency in ``rad * rotation_speed.unit``."""
         return sc.scalar(2.0, unit="rad") * sc.constants.pi * self.rotation_speed
@@ -274,26 +281,20 @@ class DiskChopper:
         """Return True if the chopper rotates clockwise."""
         return (self.rotation_speed < 0.0 * self.rotation_speed.unit).value
 
-    def _expect_in_phase(self, pulse_frequency: sc.Variable) -> None:
-        if not sc.all(
-            _is_approximate_multiple(
-                pulse_frequency, ref=self.rotation_speed, rtol=sc.scalar(1e-8)
-            )
-        ):
-            raise ValueError(
-                'The chopper is out of phase with the source. '
-                'The rotation speed must be an integer multiple of the '
-                'pulse frequency or vice versa.\n'
-                f'pulse_frequency:\n  {pulse_frequency}\n'
-                f'rotation_speed:\n  {self.rotation_speed}'
-            )
-
     def time_offset_open(self, *, pulse_frequency: sc.Variable) -> sc.Variable:
         r"""Return the opening time offsets of the chopper slits.
 
         Computes :math:`\Delta t_g(\theta)` as defined in
         :mod:`scippneutron.chopper.disk_chopper` with :math:`\theta` = ``slit_begin``
         for clockwise rotation and :math:`\theta` = ``slit_end`` otherwise.
+
+        If the chopper spins at a multiple of the pulse frequency, each slit shows up
+        multiple times in the result such that the array covers an entire pulse
+        length.
+        If the chopper spins slower than the pulse frequency, only one time per slit
+        is returned, but the result covers more than one pulse in time.
+        See the module documentation :mod:`scippneutron.chopper.disk_chopper`
+        for details.
 
         Parameters
         ----------
@@ -305,10 +306,10 @@ class DiskChopper:
         :
             Variable of opening times as offsets from the pulse time.
         """
-        self._expect_in_phase(pulse_frequency)
-        if self.is_clockwise:
-            return self.time_offset_angle_at_beam(angle=self.slit_begin)
-        return self.time_offset_angle_at_beam(angle=self.slit_end)
+        slit_edges = self.slit_begin if self.is_clockwise else self.slit_end
+        return self.time_offset_angle_at_beam(
+            angle=slit_edges, n_repetitions=self._source_phase_factor(pulse_frequency)
+        )
 
     def time_offset_close(self, *, pulse_frequency: sc.Variable) -> sc.Variable:
         r"""Return the opening time offsets of the chopper slits.
@@ -317,6 +318,14 @@ class DiskChopper:
         :mod:`scippneutron.chopper.disk_chopper` with :math:`\theta` = ``slit_end``
         for clockwise rotation and :math:`\theta` = ``slit_start`` otherwise.
 
+        If the chopper spins at a multiple of the pulse frequency, each slit shows up
+        multiple times in the result such that the array covers an entire pulse
+        length.
+        If the chopper spins slower than the pulse frequency, only one time per slit
+        is returned, but the result covers more than one pulse in time.
+        See the module documentation :mod:`scippneutron.chopper.disk_chopper`
+        for details.
+
         Parameters
         ----------
         pulse_frequency;
@@ -327,12 +336,14 @@ class DiskChopper:
         :
             Variable of opening times as offsets from the pulse time.
         """
-        self._expect_in_phase(pulse_frequency)
-        if self.is_clockwise:
-            return self.time_offset_angle_at_beam(angle=self.slit_end)
-        return self.time_offset_angle_at_beam(angle=self.slit_begin)
+        slit_edges = self.slit_end if self.is_clockwise else self.slit_begin
+        return self.time_offset_angle_at_beam(
+            angle=slit_edges, n_repetitions=self._source_phase_factor(pulse_frequency)
+        )
 
-    def time_offset_angle_at_beam(self, *, angle: sc.Variable) -> sc.Variable:
+    def time_offset_angle_at_beam(
+        self, *, angle: sc.Variable, n_repetitions: int = 1
+    ) -> sc.Variable:
         r"""Return the time offset when an angle on the chopper is at the beam.
 
         The time is an offset from the given pulse time.
@@ -346,12 +357,16 @@ class DiskChopper:
         angle:
             Angle to compute time for.
             Defined anticlockwise with respect to top-dead-center.
+        n_repetitions:
+            Return this many times for each angle corresponding to multiple rotations
+            of the chopper.
 
         Returns
         -------
         :
             Computed time offset.
         """
+        angle = self._apply_angle_repetitions(angle=angle, n_repetitions=n_repetitions)
         angle = (
             self.beam_position.to(unit='rad')
             + self.phase.to(unit='rad')
@@ -412,6 +427,64 @@ class DiskChopper:
 
         return disk_chopper_html_repr(self)
 
+    def _apply_angle_repetitions(
+        self, *, angle: sc.Variable, n_repetitions: int
+    ) -> sc.Variable:
+        dim = str(uuid4())
+        if n_repetitions == 1:
+            repetition_offsets = sc.scalar(0, unit=angle.unit)
+        else:
+            # -1 in the end value to exclude the end value from the array.
+            repetition_offsets = sc.arange(
+                dim, 0.0, n_repetitions * 2 * np.pi - 1, 2 * np.pi, unit='rad'
+            )
+        if self.is_clockwise:
+            repeated = angle + repetition_offsets.to(unit=angle.unit)
+        else:
+            # Make sure the repeated angles are later in time.
+            repeated = angle - repetition_offsets.to(unit=angle.unit)
+
+        if n_repetitions == 1:
+            # Do not add a new dimension to the output.
+            return repeated
+        if angle.ndim == 0:
+            return repeated.flatten(to='slit')
+        # Remove aux dimension.
+        return repeated.transpose([*angle.dims[:-1], dim, angle.dims[-1]]).flatten(
+            dims=[dim, angle.dims[-1]], to=angle.dims[-1]
+        )
+
+    def _source_phase_factor(self, pulse_frequency: sc.Variable) -> int:
+        if self.rotation_speed.ndim != 0:
+            raise sc.DimensionError(
+                'The chopper rotation speed must be a scalar, '
+                f'got dims {self.rotation_speed.sizes}.'
+            )
+        if pulse_frequency.ndim != 0:
+            raise sc.DimensionError(
+                'The pulse frequency must be a scalar, '
+                f'got dims {pulse_frequency.sizes}.'
+            )
+        if pulse_frequency.value <= 0:
+            raise ValueError(
+                f'The pulse frequency must be > 0, got {pulse_frequency:c}.'
+            )
+
+        rotation_speed = abs(self.rotation_speed)
+        pulse_frequency = pulse_frequency.to(unit=rotation_speed.unit)
+        quot = rotation_speed / pulse_frequency
+        if not _is_int_or_inverse_int(quot, rtol=sc.scalar(1e-8)):
+            raise ValueError(
+                'The chopper is out of phase with the source. '
+                'The rotation speed must be an integer multiple of the '
+                'pulse frequency or vice versa.\n'
+                f'pulse_frequency:\n  {pulse_frequency}\n'
+                f'rotation_speed:\n  {self.rotation_speed}'
+            )
+        # If pulse_frequency > rotation_speed, quot < 0 but we want 1 repetition
+        # of the slits, so use `max` here:
+        return round(max(quot.value, 1))
+
 
 def _field_eq(a: Any, b: Any) -> bool:
     if isinstance(a, (sc.Variable, sc.DataArray)):
@@ -454,13 +527,8 @@ def _get_1d_variable(
     return val
 
 
-def _is_approximate_multiple(
-    x: sc.Variable, *, ref: sc.Variable, rtol: sc.Variable
-) -> sc.Variable:
-    # If x = n * ref
-    quot = x / ref
-    a = abs(sc.round(quot) - quot) < rtol
-    # If x = ref / n
-    quot = sc.reciprocal(quot)
-    b = abs(sc.round(quot) - quot) < rtol
-    return a | b
+def _is_int_or_inverse_int(x: sc.Variable, *, rtol: sc.Variable) -> bool:
+    a = sc.all(abs(sc.round(x) - x) < rtol)
+    y = sc.reciprocal(x)
+    b = sc.all(abs(sc.round(y) - y) < rtol)
+    return bool(a | b)
