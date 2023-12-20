@@ -1,6 +1,7 @@
 """Make plots of the computed times for disk choppers."""
 
 from dataclasses import replace
+from itertools import cycle
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -68,7 +69,7 @@ def plot_axes_lines(ax, x_ticks, y_ticks):
         ax.axhline(y=y, color='C2' if y == 0 else 'C3', ls=':')
 
 
-def plot_anticlockwise(ax, ch):
+def plot_t_vs_angle_anticlockwise(ax, ch):
     theta_tilde = ch.beam_position.value
     omega = ch.angular_frequency.value
 
@@ -101,7 +102,7 @@ def plot_anticlockwise(ax, ch):
     ax.set_yticks(y_ticks, y_tick_labels)
 
 
-def plot_clockwise(ax, ch):
+def plot_t_vs_angle_clockwise(ax, ch):
     theta_tilde = ch.beam_position.value
     omega = abs(ch.angular_frequency.value)
 
@@ -133,21 +134,88 @@ def plot_clockwise(ax, ch):
     plot_axes_lines(ax, x_ticks, y_ticks)
     ax.plot(theta.values[[0, -1]], time.values[[0, -1]], linewidth=2)
     ax.plot(theta.values, time_wrapped.values, linewidth=2)
-    ax.set_xlabel(fr'$\theta$ [{theta.unit}]')
-    ax.set_ylabel(fr'$\Delta t_g(\theta)$ [{time.unit}]')
+    ax.set_xlabel(r'$\theta$ [rad]')
+    ax.set_ylabel(r'$\Delta t_g(\theta)$')
     ax.set_xticks(x_ticks, x_tick_labels)
     ax.set_yticks(y_ticks, y_tick_labels)
 
 
-def plot(ch, name):
-    fig, axs = plt.subplots(1, 2, layout="constrained", figsize=(11, 5))
+def plot_t_vs_angle(ch, name):
+    fig, axs = plt.subplots(1, 2, layout='constrained', figsize=(11, 5))
 
     axs[0].set_title('Clockwise')
-    plot_clockwise(axs[0], replace(ch, rotation_speed=-ch.rotation_speed))
+    plot_t_vs_angle_clockwise(axs[0], replace(ch, rotation_speed=-ch.rotation_speed))
 
     axs[1].set_title('Anticlockwise')
     assert not ch.is_clockwise  # nosec: B101
-    plot_anticlockwise(axs[1], ch)
+    plot_t_vs_angle_anticlockwise(axs[1], ch)
+
+    fig.savefig(OUT_DIR.joinpath(name).with_suffix('.svg'))
+
+
+def plot_openings_for_multiple(ax, y, ch, pulse_frequency, n, clockwise):
+    ch = replace(ch, rotation_speed=n * pulse_frequency * (-1 if clockwise else 1))
+    open_times = ch.time_offset_open(pulse_frequency=pulse_frequency).to(unit='s')
+    close_times = ch.time_offset_close(pulse_frequency=pulse_frequency).to(unit='s')
+    for i, o, c in zip(cycle((0, 1)), open_times, close_times):
+        ax.plot([o.value, c.value], [y, y], lw=10, c=f'C{i}', solid_capstyle='butt')
+
+
+def plot_pulses(ax, period, clockwise):
+    if clockwise:
+        x = [-period, 0, period, 2 * period]
+        ax.plot([-period, 0], [0, 0], lw=10, c='C3', solid_capstyle='butt')
+        ax.plot([0, period], [0, 0], lw=10, c='C2', solid_capstyle='butt')
+        ax.plot([period, period * 2], [0, 0], lw=10, c='C3', solid_capstyle='butt')
+        ax.set_xticks(
+            x, [r'$T_0 - \Delta T$', '$T_0$', r'$T_0 + \Delta T$', r'$T_0 + 2\Delta T$']
+        )
+    else:
+        x = [0, period, 2 * period, 3 * period]
+        ax.plot([0, period], [0, 0], lw=10, c='C2', solid_capstyle='butt')
+        ax.plot(
+            [period, period * 2, period * 3],
+            [0, 0, 0],
+            lw=10,
+            c='C3',
+            solid_capstyle='butt',
+        )
+        ax.set_xticks(
+            x,
+            ['$T_0$', r'$T_0 + \Delta T$', r'$T_0 + 2\Delta T$', r'$T_0 + 3\Delta T$'],
+        )
+    ax.plot(x, [0] * len(x), ls='', markersize=20, marker='|', c='C2')
+
+
+def plot_openings_clockwise(ax, ch, pulse_frequency, clockwise):
+    pulse_frequency = pulse_frequency.to(unit='Hz')
+    period = sc.reciprocal(pulse_frequency).value
+    plot_pulses(ax, period, clockwise)
+
+    ns = [0.5, 1, 2]
+    ys = []
+    for i, n in enumerate(ns, 1):
+        ys.append(0.1 * i)
+        plot_openings_for_multiple(ax, ys[-1], ch, pulse_frequency, n, clockwise)
+    ax.set_yticks(ys, list(map(str, ns)))
+
+    ax.set_xlabel('$t_g$')
+    ax.set_ylabel('frequency ratio')
+    ax.set_ylim((-0.04, 0.34))
+
+
+def plot_openings(ch, name, pulse_frequency):
+    ch = replace(
+        ch, beam_position=sc.scalar(5, unit='deg'), phase=sc.scalar(50, unit='deg')
+    )
+
+    fig, axs = plt.subplots(1, 2, layout='constrained', figsize=(11, 2.5))
+
+    axs[0].set_title('Clockwise')
+    plot_openings_clockwise(axs[0], ch, pulse_frequency, True)
+
+    axs[1].set_title('Anticlockwise')
+    plot_openings_clockwise(axs[1], ch, pulse_frequency, False)
 
     fig.savefig(OUT_DIR.joinpath(name).with_suffix('.svg'))
 
@@ -159,13 +227,18 @@ def main() -> None:
         rotation_speed=sc.scalar(2.3, unit='Hz'),
         beam_position=sc.scalar(2.5, unit='rad'),
         phase=sc.scalar(0.0, unit='rad'),
-        slit_edges=sc.empty(sizes={'slit': 0, 'edge': 2}, unit='rad'),
+        slit_edges=sc.array(
+            dims=['slit', 'edge'], values=[[10.0, 70.0], [150.0, 280.0]], unit='deg'
+        ),
     )
+    pulse_frequency = sc.scalar(10.0, unit='Hz')
 
     set_light_style()
-    plot(ch, 'disk-chopper-time-curve')
+    plot_t_vs_angle(ch, 'disk-chopper-time-curve')
+    plot_openings(ch, 'disk-chopper-openings', pulse_frequency)
     set_dark_style()
-    plot(ch, 'disk-chopper-time-curve-dark')
+    plot_t_vs_angle(ch, 'disk-chopper-time-curve-dark')
+    plot_openings(ch, 'disk-chopper-openings-dark', pulse_frequency)
 
 
 if __name__ == "__main__":
