@@ -420,10 +420,9 @@ class DiskChopper:
         :
             Variable of opening durations.
         """
-        return abs(
-            self.time_offset_open(pulse_frequency=pulse_frequency)
-            - self.time_offset_close(pulse_frequency=pulse_frequency)
-        )
+        return self.time_offset_close(
+            pulse_frequency=pulse_frequency
+        ) - self.time_offset_open(pulse_frequency=pulse_frequency)
 
     def __eq__(self, other: Any) -> Union[bool, NotImplemented]:
         if not isinstance(other, DiskChopper):
