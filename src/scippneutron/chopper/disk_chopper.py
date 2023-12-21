@@ -463,9 +463,8 @@ class DiskChopper:
         if n_repetitions == 1:
             repetition_offsets = sc.scalar(0, unit=angle.unit)
         else:
-            # -1 in the end value to exclude the end value from the array.
-            repetition_offsets = sc.arange(
-                dim, 0.0, n_repetitions * 2 * np.pi - 1, 2 * np.pi, unit='rad'
+            repetition_offsets = sc.arange(dim, 0, n_repetitions, unit='rad') * (
+                2 * np.pi
             )
         if self.is_clockwise:
             repeated = angle + repetition_offsets.to(unit=angle.unit)
