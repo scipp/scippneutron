@@ -74,8 +74,8 @@ Note that all definitions are independent of the rotation direction.
    :align: center
 
 :class:`DiskChopper` expects the chopper to be in phase with the source.
-It thus requires a constant rotation speed.
-And that speed must be an integer multiple of the source frequency or vice versa.
+It thus requires a constant rotation speed which must be an integer
+multiple of the source frequency or vice versa.
 The phase should be computed as defined about from the difference of a pulse time
 and a corresponding TDC timestamp.
 The user is responsible for determining the correct times.
