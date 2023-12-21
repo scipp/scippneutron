@@ -111,7 +111,7 @@ at angle :math:`\theta` is at the beam position is
     \frac{\theta-\tilde{\theta}}{|\omega|}, & \textsf{clockwise}\\
     \frac{2\pi - (\theta-\tilde{\theta})}{|\omega|}, & \textsf{anticlockwise}
     \end{cases}\\
-    &= t_0 + \delta t + - \frac{\theta - \tilde{\theta}}{\omega} + \begin{cases}
+    &= t_0 + \delta t - \frac{\theta - \tilde{\theta}}{\omega} + \begin{cases}
     0, & \textsf{clockwise}\\
     \frac{2\pi}{\omega}, & \textsf{anticlockwise}
     \end{cases}
