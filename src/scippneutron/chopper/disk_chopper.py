@@ -135,8 +135,7 @@ where :math:`\phi = \omega (t_0 + \delta t - T_0)` is the ``phase``.
 and :meth:`DiskChopper.time_offset_open` :meth:`DiskChopper.time_offset_close` calculate
 :math:`\Delta t_g` for slit open and close times.
 
-The definitions used here can lead to surprising results, especially when
-:math:`\tilde{\theta} \neq 0` or :math:`\phi \neq 0`.
+The definitions used here can lead to surprising results.
 The plots below show the computed times for an angle :math:`\theta` for
 :math:`\tilde{\theta} \neq 0` and :math:`\phi = 0` (blue lines).
 Note in particular the time ranges for :math:`\theta \in [0, 2\pi)` (gray rectangles).
