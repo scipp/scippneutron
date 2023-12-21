@@ -80,7 +80,12 @@ napoleon_type_aliases = {
     # objects without namespace: numpy
     "ndarray": "~numpy.ndarray",
 }
-napoleon_custom_sections = ["Definitions", "Slit openings", "Time calculations"]
+napoleon_custom_sections = [
+    "Definitions",
+    "Slit openings",
+    "Time calculations",
+    "Time dependent parameters",
+]
 typehints_defaults = 'comma'
 typehints_use_rtype = False
 
