@@ -24,11 +24,14 @@ Note that all definitions are independent of the rotation direction.
       - Definition
     * - ``top_dead_center``
       - :math:`t_0`
-      - TDC corresponds to a sensor that tracks the rotation of the chopper.
-        Its position serves as a reference point for defining angles.
+      - Choppers typically have a top-dead-center (TDC) sensor that tracks the
+        rotation of the chopper.
+        The sensor emits a timestamp when a chosen part of the chopper disk passes by.
+        This part of the disk serves as a reference point for defining angles;
+        it is marked as 'TDC' in the image below.
 
-        The ``top_dead_center`` field of a NeXus chopper stores timestamps of the
-        TDC sensor registering a full rotation.
+        The emitted timestamps are stored in the ``top_dead_center`` field
+        of a NeXus chopper.
         This serves as a reference time for the chopper :math:`t_0`.
         In :class:`DiskChopper`, the TDC is encoded as a component of
         :attr:`DiskChopper.phase`.
