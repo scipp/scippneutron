@@ -179,6 +179,23 @@ multiple openings per slit.
    :class: only-dark
    :width: 700
    :align: center
+
+.. _disk_chopper-time_dependent_parameters:
+
+Time dependent parameters
+-------------------------
+
+In NeXus files, many chopper parameters are time-dependent, for example,
+``top_dead_center`` is an array of timestamps, or ``rotation_speed`` typically
+is an ``NXlog`` with speed measurements for different times.
+However, for simplicity and efficiency, :class:`DiskChopper` requires
+time-independent quantities.
+
+TODO:
+
+- identify in-phase regions (show plots, link to function)
+- compute constant rotation_speed, delay
+- compute phase: explain how to pick t0 and T0
 """
 
 from __future__ import annotations
@@ -222,16 +239,24 @@ except ImportError:
 class DiskChopper:
     """A disk chopper.
 
-    Encode parameters of a single disk chopper and provides methods for computing
-    slit opening times.
-    This class requires that the chopper be in phase with the neutron source and that
-    the rotation frequency be constant.
+    This is a dataclass that encodes parameters of a single disk chopper and
+    provides methods for computing slit opening times.
+
+    This class requires that the chopper is in phase with the neutron source and that
+    the rotation frequency is constant.
+    It, therefore, does not accept time-dependent parameters.
+    If your data is time-dependent, you need to select a time range where the chopper
+    is in phase and compute a constant rotation frequency and phase for this range.
+    In particular, the top-dead-center timestamps need to be subsumed by the ``phase``
+    together with the source frequency.
 
     See Also
     --------
     scippneutron.chopper.disk_chopper:
         For detailed documentation of the definitions and calculations used
         by ``DiskChopper``.
+    scippneutron.chopper.nexus_chopper.post_process_disk_chopper:
+        A function for converting NeXus chopper data into a supported layout.
     """
 
     position: sc.Variable
@@ -269,21 +294,44 @@ class DiskChopper:
 
     @classmethod
     def from_nexus(
-        cls, dg: Mapping[str, Optional[sc.Variable, sc.DataArray]]
+        cls, chopper: Mapping[str, Optional[sc.Variable, sc.DataArray]]
     ) -> DiskChopper:
-        if (typ := dg.get('type', DiskChopperType.single)) != DiskChopperType.single:
+        """Construct a new DiskChopper from data loaded from NeXus.
+
+        Keys in the input correspond to the fields of `NXdisk_chopper
+        <https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html>`_.
+        The values have to be post-processed, e.g., with
+        :func:`~scippneutron.chopper.nexus_chopper.post_process_disk_chopper`.
+        See its documentation for the required steps.
+        Also, note the class docs of :class:`DiskChopper`
+        about time-dependent fields.
+
+        Parameters
+        ----------
+        chopper:
+            Data group with fields loaded from an ``NXdisk_chopper``
+            and post-processed as described above.
+
+        Returns
+        -------
+        :
+            A new ``DiskChopper`` instance.
+        """
+        if (
+            typ := chopper.get('type', DiskChopperType.single)
+        ) != DiskChopperType.single:
             raise NotImplementedError(
                 'Class DiskChopper only supports single choppers,'
                 f'got chopper type {typ}'
             )
         return DiskChopper(
-            position=dg['position'],
-            rotation_speed=_get_1d_variable(dg, 'rotation_speed'),
-            beam_position=_get_1d_variable(dg, 'beam_position'),
-            phase=_get_1d_variable(dg, 'phase'),
-            slit_edges=dg['slit_edges'],
-            slit_height=dg.get('slit_height'),
-            radius=dg.get('radius'),
+            position=chopper['position'],
+            rotation_speed=_get_1d_variable(chopper, 'rotation_speed'),
+            beam_position=_get_1d_variable(chopper, 'beam_position'),
+            phase=_get_1d_variable(chopper, 'phase'),
+            slit_edges=chopper['slit_edges'],
+            slit_height=chopper.get('slit_height'),
+            radius=chopper.get('radius'),
         )
 
     @property

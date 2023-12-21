@@ -21,6 +21,30 @@ _CHOPPER_FIELD_NAMES = (
 def post_process_disk_chopper(
     chopper: Mapping[str, Union[sc.Variable, sc.DataArray, sc.DataGroup]]
 ) -> sc.DataGroup:
+    """Convert loaded NeXus disk chopper data to the layout used by ScipNeutron.
+
+    This function
+
+    - extracts relevant time series from ``NXlog``,
+    - converts slit edges to the 2d layout required by
+      :class:`~scippneutron.chopper.disk_chopper.DiskChopper`
+
+    The output may still contain time-dependent fields which need to be
+    further processed.
+    See :ref:`disk_chopper-time_dependent_parameters`.
+
+    Parameters
+    ----------
+    chopper:
+        The loaded NeXus disk chopper data.
+
+    Returns
+    -------
+    :
+        A new data group with processed fields in the layout expected by
+        :meth:`DiskChopper.from_nexus
+        <scippneutron.chopper.disk_chopper.DiskChopper.from_nexus>`.
+    """
     return sc.DataGroup(
         {
             'type': DiskChopperType(chopper.get('type', DiskChopperType.single)),
@@ -41,6 +65,7 @@ def _parse_rotation_speed(
     return _parse_maybe_log(rotation_speed)
 
 
+# TODO check 2d edge order -> also in DiskChopper
 def _parse_slit_edges(edges: Optional[sc.Variable]) -> Optional[sc.Variable]:
     if edges is None:
         return None
