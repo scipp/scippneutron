@@ -111,7 +111,7 @@ at angle :math:`\theta` is at the beam position is
     \frac{\theta-\tilde{\theta}}{|\omega|}, & \textsf{clockwise}\\
     \frac{2\pi - (\theta-\tilde{\theta})}{|\omega|}, & \textsf{anticlockwise}
     \end{cases}\\
-    &= t_0 + \delta t - \frac{\theta - \tilde{\theta}}{\omega} + \begin{cases}
+    &= t_0 + \delta t + \frac{\tilde{\theta} - \theta}{\omega} + \begin{cases}
     0, & \textsf{clockwise}\\
     \frac{2\pi}{\omega}, & \textsf{anticlockwise}
     \end{cases}
@@ -122,8 +122,8 @@ This can be converted to a time offset from a pulse time :math:`T_0` using
 
 .. math::
 
-    \Delta t_g(\theta) = t_g(\theta) - T_0 = - \frac{\theta - \tilde{\theta}
-       - \phi}{\omega}
+    \Delta t_g(\theta) = t_g(\theta) - T_0 = \frac{\tilde{\theta}
+       + \phi - \theta}{\omega}
        + \begin{cases}
          0, & \textsf{clockwise}\\
          \frac{2\pi}{\omega}, & \textsf{anticlockwise}
