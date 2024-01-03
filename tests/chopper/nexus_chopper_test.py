@@ -4,6 +4,8 @@
 import pytest
 import scipp as sc
 
+from scippneutron.chopper import DiskChopperType, post_process_disk_chopper
+
 
 @pytest.fixture
 def raw_nexus_chopper():
@@ -23,4 +25,24 @@ def raw_nexus_chopper():
                 dims=['time'], values=[12, 56, 78], unit='ms'
             ),
         }
+    )
+
+
+def test_post_process_assigns_default_type(raw_nexus_chopper):
+    del raw_nexus_chopper['type']
+    processed = post_process_disk_chopper(raw_nexus_chopper)
+    assert processed['type'] == DiskChopperType.single
+
+
+def test_post_process_extracts_from_logs(raw_nexus_chopper):
+    raw_nexus_chopper['rotation_speed'] = sc.DataGroup(
+        {
+            'value': sc.array(dims=['time'], values=[12, 56, 78], unit='Hz'),
+            'time': sc.datetimes(dims=['time'], values=[2, 5, 8], unit='s'),
+        }
+    )
+    processed = post_process_disk_chopper(raw_nexus_chopper)
+    assert sc.identical(
+        processed['rotation_speed'],
+        sc.array(dims=['time'], values=[12, 56, 78], unit='Hz'),
     )
