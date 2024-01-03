@@ -152,6 +152,56 @@ def test_slit_begin_end_across_0(nexus_chopper):
     )
 
 
+@pytest.mark.parametrize(
+    'edges', ([0, 100, 60, 140], [30, 100, 0, 40], [0, 100, 100, 140])
+)
+def test_overlapping_slits_from_combined_edges(nexus_chopper, edges):
+    with pytest.raises(ValueError, match='overlap'):
+        DiskChopper.from_nexus(
+            {
+                **nexus_chopper,
+                'slit_edges': sc.array(dims=['slit'], values=edges, unit='deg'),
+            }
+        )
+
+
+def test_overlapping_slits_from_separate_edges(nexus_chopper):
+    with pytest.raises(ValueError, match='overlap'):
+        del nexus_chopper['slit_edges']
+        DiskChopper.from_nexus(
+            {
+                **nexus_chopper,
+                'slit_begin': sc.array(dims=['slit'], values=[10, 80], unit='deg'),
+                'slit_end': sc.array(dims=['slit'], values=[100, 150], unit='deg'),
+            }
+        )
+
+
+@pytest.mark.parametrize(
+    'edges', ([30, 40, 10, 100], [10, 100, 10, 20], [10, 100, 80, 100])
+)
+def test_slits_contained_in_other_slit_from_combined_edges(nexus_chopper, edges):
+    with pytest.raises(ValueError, match='overlap'):
+        DiskChopper.from_nexus(
+            {
+                **nexus_chopper,
+                'slit_edges': sc.array(dims=['slit'], values=edges, unit='deg'),
+            }
+        )
+
+
+def test_slits_contained_in_other_slit_from_separate_edges(nexus_chopper):
+    del nexus_chopper['slit_edges']
+    with pytest.raises(ValueError, match='overlap'):
+        DiskChopper.from_nexus(
+            {
+                **nexus_chopper,
+                'slit_begin': sc.array(dims=['slit'], values=[10, 20], unit='deg'),
+                'slit_end': sc.array(dims=['slit'], values=[100, 30], unit='deg'),
+            }
+        )
+
+
 @pytest.mark.parametrize('beam_position_unit', ('rad', 'deg'))
 @pytest.mark.parametrize('phase_unit', ('rad', 'deg'))
 def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_clockwise_single_angle(

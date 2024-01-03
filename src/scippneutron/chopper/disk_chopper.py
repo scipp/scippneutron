@@ -589,6 +589,15 @@ def _check_edges(begin: sc.Variable, end: sc.Variable) -> None:
         )
     if sc.any(begin > end):
         raise ValueError('The begin edges must be smaller than the end edges.')
+    _check_edge_overlap(begin, end)
+
+
+def _check_edge_overlap(begin: sc.Variable, end: sc.Variable) -> None:
+    edges = sc.concat([begin.flatten(to='slit'), end.flatten(to='slit')], dim='edge')
+    edges = sc.sort(edges, key=edges['edge', 0])
+    begin, end = edges['edge', 0], edges['edge', 1]
+    if sc.any(begin[1:] <= end[:-1]):
+        raise ValueError('The chopper has overlapping slits.')
 
 
 def _get_edges_from_nexus(
