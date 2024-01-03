@@ -4,8 +4,6 @@
 import pytest
 import scipp as sc
 
-from scippneutron.chopper import post_process_disk_chopper
-
 
 @pytest.fixture
 def raw_nexus_chopper():
@@ -26,64 +24,3 @@ def raw_nexus_chopper():
             ),
         }
     )
-
-
-def test_slit_edges_converted_from_1d(raw_nexus_chopper):
-    processed = post_process_disk_chopper(raw_nexus_chopper)
-    assert sc.identical(
-        processed['slit_edges'],
-        sc.array(
-            dims=['dim_0', 'edge'], values=[[0.0, 60.0], [124.0, 126.0]], unit='deg'
-        ),
-    )
-
-
-def test_slit_edges_can_be_2d(raw_nexus_chopper):
-    raw_nexus_chopper['slit_edges'] = sc.array(
-        dims=['slit', 'edge'], values=[[0.0, 60.0], [124.0, 126.0]], unit='deg'
-    )
-    processed = post_process_disk_chopper(raw_nexus_chopper)
-    assert sc.identical(
-        processed['slit_edges'],
-        sc.array(
-            dims=['slit', 'edge'], values=[[0.0, 60.0], [124.0, 126.0]], unit='deg'
-        ),
-    )
-
-
-def test_slit_edges_disallowed_ndim(raw_nexus_chopper):
-    raw_nexus_chopper['slit_edges'] = sc.scalar(30.0, unit='deg')
-    with pytest.raises(sc.DimensionError):
-        post_process_disk_chopper(raw_nexus_chopper)
-
-    raw_nexus_chopper['slit_edges'] = sc.array(
-        dims=['time', 'slit', 'edge'],
-        values=[[[0, 60], [124, 126]]],
-        unit='deg',
-    )
-    with pytest.raises(sc.DimensionError):
-        post_process_disk_chopper(raw_nexus_chopper)
-
-
-def test_2d_slit_edges_must_have_length_2(raw_nexus_chopper):
-    raw_nexus_chopper['slit_edges'] = sc.array(
-        dims=['slit', 'edge'],
-        values=[[0, 60, 90], [124, 126, 270]],
-        unit='deg',
-    )
-    with pytest.raises(sc.DimensionError):
-        post_process_disk_chopper(raw_nexus_chopper)
-
-
-def slit_edges_must_be_ascending_per_slit(raw_nexus_chopper):
-    raw_nexus_chopper['slit_edges'] = sc.array(
-        dims=['dim_0'], values=[60.0, 0.0, 124.0, 126.0], unit='deg'
-    )
-    with pytest.raises(ValueError):
-        post_process_disk_chopper(raw_nexus_chopper)
-
-    raw_nexus_chopper['slit_edges'] = sc.array(
-        dims=['slit', 'edge'], values=[[0.0, 0.0], [126.0, 124.0]], unit='deg'
-    )
-    with pytest.raises(ValueError):
-        post_process_disk_chopper(raw_nexus_chopper)

@@ -41,13 +41,15 @@ Note that all definitions are independent of the rotation direction.
         (:attr:`DiskChopper.beam_position`).
         We do not care about the radial position and assume that the beam can
         pass through all chopper slits.
-    * - ``slit_edges``
+    * - | ``slit_begin``
+        | ``slit_end``
       -
       - Slits are defined in terms of *begin* (:attr:`DiskChopper.slit_begin`,
         :math:`\theta` in the image) and *end* (:attr:`DiskChopper.slit_end`) angles
-        that are stored together as :attr:`DiskChopper.slit_edges`.
-        See also :func:`scippneutron.chopper.nexus_chopper.post_process_disk_chopper`
-        for how to convert from NeXus encoding.
+        measured from TDC.
+        In NeXus, they are stored together as ``slit_edges``.
+        :meth:`DiskChopper.from_nexus` can extract the begin and end edges from
+        this combined array.
     * - ``rotation_speed``
       - :math:`f`
       - The rotation frequency of the chopper.
@@ -259,6 +261,7 @@ class DiskChopper:
         A function for converting NeXus chopper data into a supported layout.
     """
 
+    # TODO rename position, rotation_speed, beam_position
     position: sc.Variable
     """Position of the chopper.
 
@@ -276,11 +279,15 @@ class DiskChopper:
     TDC timestamp, :math:`\delta t` is the chopper delay, and  :math:`T_0`
     is the pulse time.
     """
-    slit_edges: sc.Variable
-    """Edges of the slits as angles measured anticlockwise from top-dead-center.
+    slit_begin: sc.Variable
+    """Begin-edges of the slits as angles measured anticlockwise from top-dead-center.
 
-    A 2d array of the form ``[[begin_0, end_0], [begin_1, end_1], ...]``.
-    The order of slits is arbitrary.
+    The order is arbitrary but must match the order of ``slit_end``.
+    """
+    slit_end: sc.Variable
+    """Begin-edges of the slits as angles measured anticlockwise from top-dead-center.
+
+    The order is arbitrary but must match the order of ``slit_end``.
     """
     slit_height: Optional[sc.Variable] = None
     """Distance from chopper outer edge to bottom of slits."""
@@ -291,10 +298,11 @@ class DiskChopper:
         # Check for frequency because not all NeXus files store a unit
         # and the name can be confusing.
         _require_frequency('rotation_speed', self.rotation_speed)
+        _check_edges(self.slit_begin, self.slit_end)
 
     @classmethod
     def from_nexus(
-        cls, chopper: Mapping[str, Optional[sc.Variable, sc.DataArray]]
+        cls, chopper: Mapping[str, Union[sc.Variable, sc.DataArray]]
     ) -> DiskChopper:
         """Construct a new DiskChopper from data loaded from NeXus.
 
@@ -329,25 +337,20 @@ class DiskChopper:
             rotation_speed=_get_1d_variable(chopper, 'rotation_speed'),
             beam_position=_get_1d_variable(chopper, 'beam_position'),
             phase=_get_1d_variable(chopper, 'phase'),
-            slit_edges=chopper['slit_edges'],
             slit_height=chopper.get('slit_height'),
             radius=chopper.get('radius'),
+            **_get_edges_from_nexus(chopper),
         )
-
-    @property
-    def slit_begin(self) -> sc.Variable:
-        """Beginning edges of the slits."""
-        return self.slit_edges[self.slit_edges.dims[1], 0]
-
-    @property
-    def slit_end(self) -> sc.Variable:
-        """Ending edges of the slits."""
-        return self.slit_edges[self.slit_edges.dims[1], 1]
 
     @property
     def n_slits(self) -> int:
         """Number of slits."""
-        return self.slit_edges.shape[0]
+        if self.slit_begin.ndim != 1:
+            raise sc.DimensionError(
+                'Cannot determine the number of slits because '
+                'the edges are not a 1d array.'
+            )
+        return len(self.slit_begin)
 
     @property
     def angular_frequency(self) -> sc.Variable:
@@ -578,6 +581,42 @@ def _require_frequency(name: str, x: sc.Variable) -> None:
         raise sc.UnitError(f"'{name}' must be a frequency, got unit {x.unit}") from None
 
 
+def _check_edges(begin: sc.Variable, end: sc.Variable) -> None:
+    if begin.sizes != end.sizes:
+        raise sc.DimensionError(
+            'The begin and end edges have different sizes: '
+            f'{begin.sizes} and {end.sizes}'
+        )
+    if sc.any(begin > end):
+        raise ValueError('The begin edges must be smaller than the end edges.')
+
+
+def _get_edges_from_nexus(
+    nexus_chopper: Mapping[str, Union[sc.Variable, sc.DataArray]]
+) -> dict[str, sc.Variable]:
+    if (edges := nexus_chopper.get('slit_edges')) is not None:
+        if 'slit_begin' in nexus_chopper or 'slit_end' in nexus_chopper:
+            raise ValueError(
+                'NeXus chopper data contains both slit_edges and slit_begin or slit_end'
+            )
+        if edges.ndim != 1:
+            raise sc.DimensionError("The slit edges must be 1-dimensional")
+
+        begin = edges[::2]
+        end = edges[1::2]
+        if sc.any(begin > end):
+            raise ValueError(
+                "Invalid slit edges, must be given as "
+                "[begin_0, end_0, begin_1, end_1, ...] where begin_n < end_n"
+            )
+        return {'slit_begin': begin, 'slit_end': end}
+
+    return {
+        'slit_begin': nexus_chopper['slit_begin'],
+        'slit_end': nexus_chopper['slit_end'],
+    }
+
+
 def _len_or_1(x: sc.Variable) -> int:
     if x.ndim == 0:
         return 1
@@ -585,7 +624,7 @@ def _len_or_1(x: sc.Variable) -> int:
 
 
 def _get_1d_variable(
-    dg: Mapping[str, Optional[sc.Variable, sc.DataArray]], name: str
+    dg: Mapping[str, Union[sc.Variable, sc.DataArray]], name: str
 ) -> sc.Variable:
     if (val := dg.get(name)) is None:
         raise ValueError(f"Chopper field '{name}' is missing")
