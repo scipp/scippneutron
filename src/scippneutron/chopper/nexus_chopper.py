@@ -45,7 +45,7 @@ def post_process_disk_chopper(
             'type': DiskChopperType(chopper.get('type', DiskChopperType.single)),
             'rotation_speed': _parse_rotation_speed(chopper['rotation_speed']),
             'slit_edges': chopper.get('slit_edges'),
-            'top_dead_center': _parse_tdc(chopper.get('top_dead_center')),
+            'top_dead_center': _parse_maybe_log(chopper.get('top_dead_center')),
             **{
                 name: _parse_maybe_log(chopper.get(name))
                 for name in _CHOPPER_FIELD_NAMES
@@ -58,17 +58,6 @@ def _parse_rotation_speed(
     rotation_speed: Union[sc.DataArray, sc.DataGroup]
 ) -> sc.DataArray:
     return _parse_maybe_log(rotation_speed)
-
-
-def _parse_tdc(
-    tdc: Optional[Union[sc.Variable, sc.DataArray, sc.DataGroup]]
-) -> Optional[Union[sc.Variable, sc.DataArray]]:
-    if tdc is None:
-        return tdc
-    if isinstance(tdc, sc.DataGroup):
-        # An NXlog
-        return tdc['time']
-    return tdc
 
 
 def _parse_maybe_log(
