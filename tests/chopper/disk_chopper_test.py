@@ -28,7 +28,9 @@ def nexus_chopper():
             'beam_position': sc.scalar(45.0, unit='deg'),
             'phase': sc.scalar(-20.0, unit='deg'),
             'slit_edges': sc.array(
-                dims=['slit', 'edge'], values=[[0.0, 60.0], [124.0, 126.0]], unit='deg'
+                dims=['slit'],
+                values=[0.0, 60.0, 124.0, 126.0],
+                unit='deg',
             ),
             'slit_height': sc.array(dims=['slit'], values=[0.4, 0.3], unit='m'),
             'radius': sc.scalar(0.5, unit='m'),
@@ -71,7 +73,7 @@ def test_eq(nexus_chopper):
         ('radius', sc.scalar(1.0, unit='m')),
         ('phase', sc.scalar(15, unit='deg')),
         ('slit_height', sc.scalar(0.14, unit='cm')),
-        ('slit_edges', sc.array(dims=['edge'], values=[0.1, 0.3], unit='rad')),
+        ('slit_edges', sc.array(dims=['slit'], values=[0.1, 0.3], unit='rad')),
     ),
 )
 def test_neq(nexus_chopper, replacement):
@@ -84,7 +86,7 @@ def test_slit_begin_end_no_slit(nexus_chopper):
     ch = DiskChopper.from_nexus(
         {
             **nexus_chopper,
-            'slit_edges': sc.zeros(sizes={'slit': 0, 'edge': 2}, unit='deg'),
+            'slit_edges': sc.zeros(sizes={'slit': 0}, unit='deg'),
         }
     )
     assert sc.identical(ch.slit_begin, sc.array(dims=['slit'], values=[], unit='deg'))
@@ -95,9 +97,7 @@ def test_slit_begin_end_one_slit(nexus_chopper):
     ch = DiskChopper.from_nexus(
         {
             **nexus_chopper,
-            'slit_edges': sc.array(
-                dims=['slit', 'edge'], values=[[13, 43]], unit='deg'
-            ),
+            'slit_edges': sc.array(dims=['slit'], values=[13, 43], unit='deg'),
         }
     )
     assert sc.identical(ch.slit_begin, sc.array(dims=['slit'], values=[13], unit='deg'))
@@ -108,9 +108,7 @@ def test_slit_begin_end_two_slits(nexus_chopper):
     ch = DiskChopper.from_nexus(
         {
             **nexus_chopper,
-            'slit_edges': sc.array(
-                dims=['slit', 'edge'], values=[[0, 60], [124, 126]], unit='deg'
-            ),
+            'slit_edges': sc.array(dims=['slit'], values=[0, 60, 124, 126], unit='deg'),
         }
     )
     assert sc.identical(
@@ -127,7 +125,7 @@ def test_slit_begin_end_two_slits_unordered(nexus_chopper, rotation_speed):
         {
             **nexus_chopper,
             'slit_edges': sc.array(
-                dims=['slit', 'edge'], values=[[2.5, 2.8], [0.8, 1.3]], unit='rad'
+                dims=['slit'], values=[2.5, 2.8, 0.8, 1.3], unit='rad'
             ),
         }
     )
@@ -143,9 +141,7 @@ def test_slit_begin_end_across_0(nexus_chopper):
     ch = DiskChopper.from_nexus(
         {
             **nexus_chopper,
-            'slit_edges': sc.array(
-                dims=['slit', 'edge'], values=[[340.0, 382.0]], unit='deg'
-            ),
+            'slit_edges': sc.array(dims=['slit'], values=[340.0, 382.0], unit='deg'),
         }
     )
     assert sc.identical(
@@ -402,7 +398,10 @@ def test_time_offset_open_close_no_slit(nexus_chopper, phase):
         {
             **nexus_chopper,
             'phase': sc.scalar(-0.7, unit='rad'),
-            'slit_edges': sc.zeros(sizes={'slit': 0, 'edge': 2}, unit='rad'),
+            'slit_edges': sc.zeros(
+                sizes={'slit': 0},
+                unit='rad',
+            ),
         }
     )
     sc.testing.assert_identical(
@@ -428,7 +427,9 @@ def test_time_offset_open_close_only_slit(nexus_chopper, rotation_speed):
             'phase': sc.scalar(0.0, unit='rad'),
             'rotation_speed': sc.scalar(rotation_speed, unit='Hz'),
             'slit_edges': sc.array(
-                dims=['slit', 'edge'], values=[[0.0, 360.0]], unit='deg'
+                dims=['slit'],
+                values=[0.0, 360.0],
+                unit='deg',
             ),
         }
     )
@@ -470,9 +471,7 @@ def test_time_offset_open_close_one_slit_clockwise(nexus_chopper, phase, beam_po
             'beam_position': beam_position,
             'phase': phase,
             'rotation_speed': sc.scalar(-7.21, unit='Hz'),
-            'slit_edges': sc.array(
-                dims=['slit', 'edge'], values=[[87.0, 177.0]], unit='deg'
-            ),
+            'slit_edges': sc.array(dims=['slit'], values=[87.0, 177.0], unit='deg'),
         }
     )
     factor = deg_angle_to_time_factor(sc.scalar(-7.21, unit='Hz'))
@@ -516,9 +515,7 @@ def test_time_offset_open_close_one_slit_anticlockwise(
             'beam_position': beam_position,
             'phase': phase,
             'rotation_speed': sc.scalar(7.21, unit='Hz'),
-            'slit_edges': sc.array(
-                dims=['slit', 'edge'], values=[[87.0, 177.0]], unit='deg'
-            ),
+            'slit_edges': sc.array(dims=['slit'], values=[87.0, 177.0], unit='deg'),
         }
     )
     factor = deg_angle_to_time_factor(sc.scalar(7.21, unit='Hz'))
@@ -562,9 +559,7 @@ def test_time_offset_open_close_one_slit_across_tdc_clockwise(
             'beam_position': beam_position,
             'phase': phase,
             'rotation_speed': sc.scalar(-7.21, unit='Hz'),
-            'slit_edges': sc.array(
-                dims=['slit', 'edge'], values=[[330.0, 380.0]], unit='deg'
-            ),
+            'slit_edges': sc.array(dims=['slit'], values=[330.0, 380.0], unit='deg'),
         }
     )
     factor = deg_angle_to_time_factor(sc.scalar(-7.21, unit='Hz'))
@@ -608,9 +603,7 @@ def test_time_offset_open_close_one_slit_across_tdc_anticlockwise(
             'beam_position': beam_position,
             'phase': phase,
             'rotation_speed': sc.scalar(7.21, unit='Hz'),
-            'slit_edges': sc.array(
-                dims=['slit', 'edge'], values=[[330.0, 380.0]], unit='deg'
-            ),
+            'slit_edges': sc.array(dims=['slit'], values=[330.0, 380.0], unit='deg'),
         }
     )
     factor = deg_angle_to_time_factor(sc.scalar(7.21, unit='Hz'))
@@ -637,8 +630,8 @@ def test_time_offset_open_close_two_slits_clockwise(nexus_chopper):
             'phase': sc.scalar(0.0, unit='deg'),
             'rotation_speed': sc.scalar(-11.2, unit='Hz'),
             'slit_edges': sc.array(
-                dims=['slit', 'edge'],
-                values=[[87.0, 177.0], [280.0, 342.0]],
+                dims=['slit'],
+                values=[87.0, 177.0, 280.0, 342.0],
                 unit='deg',
             ),
         }
@@ -666,8 +659,8 @@ def test_time_offset_open_close_two_slits_anticlockwise(nexus_chopper):
             'phase': sc.scalar(0.0, unit='deg'),
             'rotation_speed': sc.scalar(11.2, unit='Hz'),
             'slit_edges': sc.array(
-                dims=['slit', 'edge'],
-                values=[[87.0, 177.0], [280.0, 342.0]],
+                dims=['slit'],
+                values=[87.0, 177.0, 280.0, 342.0],
                 unit='deg',
             ),
         }
@@ -697,8 +690,8 @@ def test_time_offset_open_close_two_slits_clockwise_two_pulses(nexus_chopper):
             'phase': sc.scalar(60.0, unit='deg'),
             'rotation_speed': sc.scalar(-14.0, unit='Hz'),
             'slit_edges': sc.array(
-                dims=['slit', 'edge'],
-                values=[[87.0, 177.0], [200.0, 240.0]],
+                dims=['slit'],
+                values=[87.0, 177.0, 200.0, 240.0],
                 unit='deg',
             ),
         }
@@ -737,8 +730,8 @@ def test_time_offset_open_close_two_slits_anticlockwise_two_pulses(nexus_chopper
             'phase': sc.scalar(60.0, unit='deg'),
             'rotation_speed': sc.scalar(14.0, unit='Hz'),
             'slit_edges': sc.array(
-                dims=['slit', 'edge'],
-                values=[[87.0, 177.0], [200.0, 240.0]],
+                dims=['slit'],
+                values=[87.0, 177.0, 200.0, 240.0],
                 unit='deg',
             ),
         }
@@ -787,8 +780,8 @@ def test_time_offset_open_close_two_slits_clockwise_half_pulse(nexus_chopper):
             'phase': sc.scalar(60.0, unit='deg'),
             'rotation_speed': sc.scalar(-3.5, unit='Hz'),
             'slit_edges': sc.array(
-                dims=['slit', 'edge'],
-                values=[[87.0, 177.0], [200.0, 240.0]],
+                dims=['slit'],
+                values=[87.0, 177.0, 200.0, 240.0],
                 unit='deg',
             ),
         }
