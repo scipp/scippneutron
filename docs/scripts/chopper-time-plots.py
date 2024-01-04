@@ -227,9 +227,8 @@ def main() -> None:
         rotation_speed=sc.scalar(2.3, unit='Hz'),
         beam_position=sc.scalar(2.5, unit='rad'),
         phase=sc.scalar(0.0, unit='rad'),
-        slit_edges=sc.array(
-            dims=['slit', 'edge'], values=[[10.0, 70.0], [150.0, 280.0]], unit='deg'
-        ),
+        slit_begin=sc.array(dims=['slit'], values=[10.0, 150.0], unit='deg'),
+        slit_end=sc.array(dims=['slit'], values=[70.0, 280.0], unit='deg'),
     )
     pulse_frequency = sc.scalar(10.0, unit='Hz')
 
