@@ -4,10 +4,11 @@
 import scipp as sc
 
 from ..mantid import load_with_mantid
+from ._chopper_mockup import chopper_mockup
 
 _version = '5'
 
-__all__ = ['tutorial_dense_data', 'tutorial_event_data', 'get_path']
+__all__ = ['chopper_mockup', 'tutorial_dense_data', 'tutorial_event_data', 'get_path']
 
 
 def _make_pooch():
