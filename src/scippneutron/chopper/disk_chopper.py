@@ -294,6 +294,11 @@ class DiskChopper:
         # and the name can be confusing.
         _require_frequency('frequency', self.frequency)
         _check_edges(self.slit_begin, self.slit_end)
+        object.__setattr__(
+            self,
+            'slit_height',
+            _broadcast_slit_height(self.slit_height, self.slit_begin),
+        )
 
     @classmethod
     def from_nexus(
@@ -593,6 +598,12 @@ def _check_edge_overlap(begin: sc.Variable, end: sc.Variable) -> None:
     begin, end = edges['edge', 0], edges['edge', 1]
     if sc.any(begin[1:] <= end[:-1]):
         raise ValueError('The chopper has overlapping slits.')
+
+
+def _broadcast_slit_height(
+    slit_height: sc.Variable, slit_begin: sc.Variable
+) -> sc.Variable:
+    return slit_height.broadcast(sizes=slit_begin.sizes)
 
 
 def _get_edges_from_nexus(

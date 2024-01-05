@@ -32,7 +32,7 @@ def nexus_chopper():
                 values=[0.0, 60.0, 124.0, 126.0],
                 unit='deg',
             ),
-            'slit_height': sc.array(dims=['slit'], values=[0.4, 0.3], unit='m'),
+            'slit_height': sc.scalar(0.4, unit='m'),
             'radius': sc.scalar(0.5, unit='m'),
         }
     )
