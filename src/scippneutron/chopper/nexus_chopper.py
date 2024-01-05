@@ -1,21 +1,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
-from typing import Mapping, Optional, Union
+from typing import Any, Mapping, Union
 
 import scipp as sc
 
 from .disk_chopper import DiskChopperType
-
-_CHOPPER_FIELD_NAMES = (
-    'beam_position',
-    'delay',
-    'phase',
-    'position',
-    'radius',
-    'slits',
-    'slit_height',
-)
 
 
 def post_process_disk_chopper(
@@ -43,28 +33,29 @@ def post_process_disk_chopper(
     return sc.DataGroup(
         {
             'type': DiskChopperType(chopper.get('type', DiskChopperType.single)),
-            'rotation_speed': _parse_rotation_speed(chopper['rotation_speed']),
-            'slit_edges': chopper.get('slit_edges'),
-            'top_dead_center': _parse_maybe_log(chopper.get('top_dead_center')),
-            **{
-                name: _parse_maybe_log(chopper.get(name))
-                for name in _CHOPPER_FIELD_NAMES
-            },
+            **{key: _parse_field(key, val) for key, val in chopper.items()},
         }
     )
 
 
-def _parse_rotation_speed(
-    rotation_speed: Union[sc.DataArray, sc.DataGroup]
-) -> sc.DataArray:
-    return _parse_maybe_log(rotation_speed)
+def _parse_field(key: str, value: Any) -> Any:
+    if key == 'top_dead_center':
+        return _parse_tdc(value)
+    return _parse_maybe_log(value)
+
+
+def _parse_tdc(
+    tdc: Union[sc.Variable, sc.DataArray, sc.DataGroup]
+) -> Union[sc.Variable, sc.DataArray]:
+    if isinstance(tdc, sc.DataGroup):
+        # An NXlog without 'value'
+        return tdc['time']
+    return tdc
 
 
 def _parse_maybe_log(
-    x: Optional[Union[sc.Variable, sc.DataArray, sc.DataGroup]]
-) -> Optional[Union[sc.Variable, sc.DataArray]]:
-    if x is None:
-        return x
+    x: Union[sc.Variable, sc.DataArray, sc.DataGroup]
+) -> Union[sc.Variable, sc.DataArray]:
     if isinstance(x, sc.DataGroup):
         # An NXlog
         return x['value'].squeeze()
