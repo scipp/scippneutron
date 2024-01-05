@@ -70,12 +70,12 @@ def plot_axes_lines(ax, x_ticks, y_ticks):
 
 
 def plot_t_vs_angle_anticlockwise(ax, ch):
-    theta_tilde = ch.beam_position.value
+    theta_tilde = ch.beam_angle.value
     omega = ch.angular_frequency.value
 
     theta = sc.linspace('theta', -pi / 2, 3.2 * pi, 100, unit='rad')
     time = ch.time_offset_angle_at_beam(angle=theta)
-    time_wrapped = time % (1 / ch.rotation_speed)
+    time_wrapped = time % (1 / ch.frequency)
 
     x_ticks = [0.0, theta_tilde, 2 * pi, 2 * pi + theta_tilde]
     x_tick_labels = ['0', r'$\tilde{\theta}$', r'$2\pi$', r'$2\pi+\tilde{\theta}$']
@@ -103,12 +103,12 @@ def plot_t_vs_angle_anticlockwise(ax, ch):
 
 
 def plot_t_vs_angle_clockwise(ax, ch):
-    theta_tilde = ch.beam_position.value
+    theta_tilde = ch.beam_angle.value
     omega = abs(ch.angular_frequency.value)
 
     theta = sc.linspace('theta', -pi / 2, 3.2 * pi, 100, unit='rad')
     time = ch.time_offset_angle_at_beam(angle=theta)
-    time_wrapped = time % (1 / abs(ch.rotation_speed))
+    time_wrapped = time % (1 / abs(ch.frequency))
 
     x_ticks = [0, theta_tilde, 2 * pi, 2 * pi + theta_tilde]
     x_tick_labels = ['0', r'$\tilde{\theta}$', r'$2\pi$', r'$2\pi + \tilde{\theta}$']
@@ -144,7 +144,7 @@ def plot_t_vs_angle(ch, name):
     fig, axs = plt.subplots(1, 2, layout='constrained', figsize=(11, 5))
 
     axs[0].set_title('Clockwise')
-    plot_t_vs_angle_clockwise(axs[0], replace(ch, rotation_speed=-ch.rotation_speed))
+    plot_t_vs_angle_clockwise(axs[0], replace(ch, frequency=-ch.frequency))
 
     axs[1].set_title('Anticlockwise')
     assert not ch.is_clockwise  # nosec: B101
@@ -223,9 +223,9 @@ def plot_openings(ch, name, pulse_frequency):
 def main() -> None:
     OUT_DIR.mkdir(exist_ok=True)
     ch = DiskChopper(
-        position=sc.vector([0.0, 0.0, 0.0], unit='m'),
-        rotation_speed=sc.scalar(2.3, unit='Hz'),
-        beam_position=sc.scalar(2.5, unit='rad'),
+        axle_position=sc.vector([0.0, 0.0, 0.0], unit='m'),
+        frequency=sc.scalar(2.3, unit='Hz'),
+        beam_angle=sc.scalar(2.5, unit='rad'),
         phase=sc.scalar(0.0, unit='rad'),
         slit_begin=sc.array(dims=['slit'], values=[10.0, 150.0], unit='deg'),
         slit_end=sc.array(dims=['slit'], values=[70.0, 280.0], unit='deg'),
