@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
+# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
 r"""Tools for disk choppers.
 
@@ -184,7 +184,7 @@ multiple openings per slit.
 
 .. _disk_chopper-time_dependent_parameters:
 
-Time dependent parameters
+Time-dependent parameters
 -------------------------
 
 In NeXus files, many chopper parameters are time-dependent, for example,
@@ -192,12 +192,8 @@ In NeXus files, many chopper parameters are time-dependent, for example,
 is an ``NXlog`` with speed measurements for different times.
 However, for simplicity and efficiency, :class:`DiskChopper` requires
 time-independent quantities.
-
-TODO:
-
-- identify in-phase regions (show plots, link to function)
-- compute constant rotation_speed, delay
-- compute phase: explain how to pick t0 and T0
+The guide on `pre-processing choppers <../../user-guide/chopper/pre-processing.ipynb>`
+shows how to extract the required quantities.
 """
 
 from __future__ import annotations
@@ -639,8 +635,10 @@ def _get_1d_variable(
         raise ValueError(f"Chopper field '{name}' is missing")
 
     msg = (
-        "Chopper field '{name}' must be a scalar variable, {got}. " "Use "
-    )  # TODO insert use
+        "Chopper field '{name}' must be a scalar variable, {got}. "
+        "See the chopper user-guide for more information: "
+        "https://scipp.github.io/scippneutron/user-guide/chopper/pre-processing.html"
+    )
 
     if not isinstance(val, sc.Variable):
         raise TypeError(msg.format(name=name, got=f'got a {type(val)}'))

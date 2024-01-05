@@ -84,7 +84,7 @@ napoleon_custom_sections = [
     "Definitions",
     "Slit openings",
     "Time calculations",
-    "Time dependent parameters",
+    "Time-dependent parameters",
 ]
 typehints_defaults = 'comma'
 typehints_use_rtype = False
