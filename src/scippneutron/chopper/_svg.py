@@ -61,7 +61,7 @@ def _combine_slits(chopper: DiskChopper) -> sc.DataArray:
         [chopper.slit_begin.flatten(to='slit'), chopper.slit_end.flatten(to='slit')],
         dim='edge',
     )
-    height = chopper.slit_height
+    height = chopper.slit_height.rename_dims({chopper.slit_height.dim: 'slit'})
     slits = sc.DataArray(
         sc.arange('slit', edges.shape[0], unit=None),
         coords={
