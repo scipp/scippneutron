@@ -62,12 +62,15 @@ def _rotation_speed(target_frequency: float = 14.0) -> sc.DataArray:
     f_plateau = target_frequency + scale * sc.sin(omega * t + phi) * sc.exp(-lam * t)
     f_plateau.unit = 'Hz'
 
+    shoulder = (100 - np.tanh(0.7 * (t.values - 80))) / 101
+    f_plateau.values *= shoulder
+
     f_rising = sc.linspace('time', 0.0, target_frequency, 40, unit='Hz')
-    f_falling = sc.linspace('time', target_frequency, 0.0, 40, unit='Hz')
+    f_falling = sc.linspace('time', f_plateau[-1].value, 0.0, 40, unit='Hz')
     f = sc.concat([f_rising, f_plateau, f_falling], dim='time')
 
     rng = np.random.default_rng(84391)
-    noise = sc.array(dims=['time'], values=rng.normal(0.0, 6e-5, 180), unit='Hz')
+    noise = sc.array(dims=['time'], values=rng.normal(0.0, 4e-5, 180), unit='Hz')
 
     return sc.DataArray(f + noise, coords={'time': time})
 
