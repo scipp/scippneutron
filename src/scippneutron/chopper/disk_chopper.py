@@ -35,10 +35,10 @@ Note that all definitions are independent of the rotation direction.
         This serves as a reference time for the chopper :math:`t_0`.
         In :class:`DiskChopper`, the TDC is encoded as a component of
         :attr:`DiskChopper.phase`.
-    * - ``beam_position``
+    * - ``beam_angle``
       - :math:`\tilde{\theta}`
       - The angle under which the beam hits the chopper
-        (:attr:`DiskChopper.beam_position`).
+        (:attr:`DiskChopper.beam_angle`).
         We do not care about the radial position and assume that the beam can
         pass through all chopper slits.
     * - | ``slit_begin``
@@ -50,10 +50,10 @@ Note that all definitions are independent of the rotation direction.
         In NeXus, they are stored together as ``slit_edges``.
         :meth:`DiskChopper.from_nexus` can extract the begin and end edges from
         this combined array.
-    * - ``rotation_speed``
+    * - ``frequency``
       - :math:`f`
       - The rotation frequency of the chopper.
-        Stored in :attr:`DiskChopper.rotation_speed`.
+        Stored in :attr:`DiskChopper.frequency`.
         A positive frequency means anticlockwise rotation and a negative frequency
         clockwise rotation (as seen from the source).
     * - ``angular_frequency``
@@ -162,7 +162,7 @@ The resulting times are shown below for a chopper with two slits, a short one (b
 and a long one (orange/yellow) with
 :math:`\theta_\mathsf{short} < \theta_\mathsf{long}`.
 Source pulses are indicated in gray.
-The shown frequency ratio is ``rotation_speed / pulse_frequency``.
+The shown frequency ratio is ``frequency / pulse_frequency``.
 
 Times were computed for a pulse at :math:`T_0` with length :math:`\Delta T` but spill
 into neighboring pulses because of a nonzero beam position and phase.
@@ -188,7 +188,7 @@ Time-dependent parameters
 -------------------------
 
 In NeXus files, many chopper parameters are time-dependent, for example,
-``top_dead_center`` is an array of timestamps, or ``rotation_speed`` typically
+``top_dead_center`` is an array of timestamps, or ``frequency`` typically
 is an ``NXlog`` with speed measurements for different times.
 However, for simplicity and efficiency, :class:`DiskChopper` requires
 time-independent quantities.
@@ -257,16 +257,15 @@ class DiskChopper:
         A function for converting NeXus chopper data into a supported layout.
     """
 
-    # TODO rename position, rotation_speed, beam_position
-    position: sc.Variable
+    axle_position: sc.Variable
     """Position of the chopper.
 
     This is the center point of the chopper's axle in the face towards the source.
     See https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html
     """
-    rotation_speed: sc.Variable
+    frequency: sc.Variable
     """Rotation frequency of the chopper."""
-    beam_position: sc.Variable
+    beam_angle: sc.Variable
     """Angle where the beam crosses the chopper."""
     phase: sc.Variable
     r"""Phase of the chopper rotation relative to the source pulses.
@@ -293,7 +292,7 @@ class DiskChopper:
     def __post_init__(self) -> None:
         # Check for frequency because not all NeXus files store a unit
         # and the name can be confusing.
-        _require_frequency('rotation_speed', self.rotation_speed)
+        _require_frequency('frequency', self.frequency)
         _check_edges(self.slit_begin, self.slit_end)
 
     @classmethod
@@ -329,9 +328,9 @@ class DiskChopper:
                 f'got chopper type {typ}'
             )
         return DiskChopper(
-            position=chopper['position'],
-            rotation_speed=_get_1d_variable(chopper, 'rotation_speed'),
-            beam_position=_get_1d_variable(chopper, 'beam_position'),
+            axle_position=chopper['position'],
+            frequency=_get_1d_variable(chopper, 'rotation_speed'),
+            beam_angle=_get_1d_variable(chopper, 'beam_position'),
             phase=_get_1d_variable(chopper, 'phase'),
             slit_height=chopper.get('slit_height'),
             radius=chopper.get('radius'),
@@ -350,13 +349,13 @@ class DiskChopper:
 
     @property
     def angular_frequency(self) -> sc.Variable:
-        """Rotation speed as an angular frequency in ``rad * rotation_speed.unit``."""
-        return sc.scalar(2.0, unit="rad") * sc.constants.pi * self.rotation_speed
+        """Rotation speed as an angular frequency in ``rad * frequency.unit``."""
+        return sc.scalar(2.0, unit="rad") * sc.constants.pi * self.frequency
 
     @property
     def is_clockwise(self) -> bool:
         """Return True if the chopper rotates clockwise."""
-        return (self.rotation_speed < 0.0 * self.rotation_speed.unit).value
+        return (self.frequency < 0.0 * self.frequency.unit).value
 
     def time_offset_open(self, *, pulse_frequency: sc.Variable) -> sc.Variable:
         r"""Return the opening time offsets of the chopper slits.
@@ -445,7 +444,7 @@ class DiskChopper:
         """
         angle = self._apply_angle_repetitions(angle=angle, n_repetitions=n_repetitions)
         angle = (
-            self.beam_position.to(unit='rad')
+            self.beam_angle.to(unit='rad')
             + self.phase.to(unit='rad')
             - angle.to(unit='rad', copy=False)
         )
@@ -530,10 +529,10 @@ class DiskChopper:
         )
 
     def _source_phase_factor(self, pulse_frequency: sc.Variable) -> int:
-        if self.rotation_speed.ndim != 0:
+        if self.frequency.ndim != 0:
             raise sc.DimensionError(
                 'The chopper rotation speed must be a scalar, '
-                f'got dims {self.rotation_speed.sizes}.'
+                f'got dims {self.frequency.sizes}.'
             )
         if pulse_frequency.ndim != 0:
             raise sc.DimensionError(
@@ -545,18 +544,18 @@ class DiskChopper:
                 f'The pulse frequency must be > 0, got {pulse_frequency:c}.'
             )
 
-        rotation_speed = abs(self.rotation_speed)
-        pulse_frequency = pulse_frequency.to(unit=rotation_speed.unit)
-        quot = rotation_speed / pulse_frequency
+        frequency = abs(self.frequency)
+        pulse_frequency = pulse_frequency.to(unit=frequency.unit)
+        quot = frequency / pulse_frequency
         if not _is_int_or_inverse_int(quot, rtol=sc.scalar(1e-8)):
             raise ValueError(
                 'The chopper is out of phase with the source. '
-                'The rotation speed must be an integer multiple of the '
+                'The frequency must be an integer multiple of the '
                 'pulse frequency or vice versa.\n'
                 f'pulse_frequency:\n  {pulse_frequency}\n'
-                f'rotation_speed:\n  {self.rotation_speed}'
+                f'frequency:\n  {self.frequency}'
             )
-        # If pulse_frequency > rotation_speed, quot < 0 but we want 1 repetition
+        # If pulse_frequency > frequency, quot < 0 but we want 1 repetition
         # of the slits, so use `max` here:
         return round(max(quot.value, 1))
 
