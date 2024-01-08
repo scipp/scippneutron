@@ -154,7 +154,7 @@ def plot_t_vs_angle(ch, name):
 
 
 def plot_openings_for_multiple(ax, y, ch, pulse_frequency, n, clockwise):
-    ch = replace(ch, rotation_speed=n * pulse_frequency * (-1 if clockwise else 1))
+    ch = replace(ch, frequency=n * pulse_frequency * (-1 if clockwise else 1))
     open_times = ch.time_offset_open(pulse_frequency=pulse_frequency).to(unit='s')
     close_times = ch.time_offset_close(pulse_frequency=pulse_frequency).to(unit='s')
     for i, o, c in zip(cycle((0, 1)), open_times, close_times):
@@ -206,7 +206,7 @@ def plot_openings_clockwise(ax, ch, pulse_frequency, clockwise):
 
 def plot_openings(ch, name, pulse_frequency):
     ch = replace(
-        ch, beam_position=sc.scalar(5, unit='deg'), phase=sc.scalar(50, unit='deg')
+        ch, beam_angle=sc.scalar(5, unit='deg'), phase=sc.scalar(360 + 50, unit='deg')
     )
 
     fig, axs = plt.subplots(1, 2, layout='constrained', figsize=(11, 2.5))
@@ -233,10 +233,10 @@ def main() -> None:
     pulse_frequency = sc.scalar(10.0, unit='Hz')
 
     set_light_style()
-    plot_t_vs_angle(ch, 'disk-chopper-time-curve')
-    plot_openings(ch, 'disk-chopper-openings', pulse_frequency)
+    # plot_t_vs_angle(ch, 'disk-chopper-time-curve')
+    # plot_openings(ch, 'disk-chopper-openings', pulse_frequency)
     set_dark_style()
-    plot_t_vs_angle(ch, 'disk-chopper-time-curve-dark')
+    # plot_t_vs_angle(ch, 'disk-chopper-time-curve-dark')
     plot_openings(ch, 'disk-chopper-openings-dark', pulse_frequency)
 
 
