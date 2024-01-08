@@ -80,6 +80,8 @@ def _next_highest(x: sc.Variable) -> sc.Variable:
             dtype=x.dtype,
             values=np.nextafter(x.values, np.inf),
         )
+    if x.dtype == 'datetime64':
+        return x + sc.scalar(1, dtype='int64', unit=x.unit)
     return x + sc.scalar(1, dtype=x.dtype, unit=x.unit)
 
 
