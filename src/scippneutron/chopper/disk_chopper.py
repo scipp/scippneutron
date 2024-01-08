@@ -601,8 +601,10 @@ def _check_edge_overlap(begin: sc.Variable, end: sc.Variable) -> None:
 
 
 def _broadcast_slit_height(
-    slit_height: sc.Variable, slit_begin: sc.Variable
-) -> sc.Variable:
+    slit_height: Optional[sc.Variable], slit_begin: sc.Variable
+) -> Optional[sc.Variable]:
+    if slit_height is None:
+        return None
     return slit_height.broadcast(sizes=slit_begin.sizes)
 
 
