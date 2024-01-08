@@ -38,7 +38,7 @@ def chopper_mockup() -> sc.DataGroup:
             ),
             'slit_height': sc.scalar(0.1, unit='m'),
             'slit_edges': sc.array(
-                dims=['slit'], values=[0.0, 160.0, 210.0, 320.0], unit='deg'
+                dims=['slit'], values=[30.0, 160.0, 210.0, 280.0], unit='deg'
             ),
             'slits': 2,
             'top_dead_center': sc.DataGroup(
