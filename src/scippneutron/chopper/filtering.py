@@ -80,7 +80,7 @@ def _next_highest(x: sc.Variable) -> sc.Variable:
             dtype=x.dtype,
             values=np.nextafter(x.values, np.inf),
         )
-    return x + sc.scalar(1, unit=x.unit)
+    return x + sc.scalar(1, dtype=x.dtype, unit=x.unit)
 
 
 def collapse_plateaus(plateaus: sc.DataArray, *, coord: str = 'time') -> sc.DataArray:

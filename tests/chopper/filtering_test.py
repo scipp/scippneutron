@@ -55,7 +55,7 @@ def test_find_plateaus_no_plateau():
     assert plateaus.sizes == {'plateau': 0}
     sc.testing.assert_identical(
         plateaus.coords['plateau'],
-        sc.array(dims=['plateau'], values=[], dtype='int64', unit=None),
+        sc.array(dims=['plateau'], values=[], dtype=da.dtype, unit=None),
     )
 
 
@@ -203,7 +203,7 @@ def test_find_plateaus_adjacent_plateaus_select_none():
     assert plateaus.sizes == {'plateau': 0}
     sc.testing.assert_identical(
         plateaus.coords['plateau'],
-        sc.array(dims=['plateau'], values=[], dtype='int64', unit=None),
+        sc.array(dims=['plateau'], values=[], dtype=da.dtype, unit=None),
     )
 
 
