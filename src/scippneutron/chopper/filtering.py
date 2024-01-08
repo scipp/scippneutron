@@ -54,9 +54,9 @@ def find_plateaus(
         else sc.index(min_n_points)
     )
     diff = abs(data.data[1:] - data.data[:-1])
-    group_id = sc.cumsum((diff > atol).to(dtype=int))
+    group_id = sc.cumsum((diff > atol).to(dtype='int64'))
     # Prepend a 0 to align the groups with the data points (diff reduces length by 1).
-    group_id = sc.concat([sc.index(0), group_id], dim=diff.dim)
+    group_id = sc.concat([sc.index(0, dtype='int64'), group_id], dim=diff.dim)
 
     group_label = str(uuid.uuid4())
     to_group = data.copy(deep=False)
