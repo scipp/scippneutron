@@ -3,8 +3,16 @@
 # @author Simon Heybrock
 import scipp as sc
 from matplotlib.patches import Rectangle
+from scipp.constants import h, m_n
 
-from scippneutron.tof.frames import _tof_from_wavelength
+from .._utils import as_float_type, elem_unit
+
+
+def _tof_from_wavelength(
+    *, wavelength: sc.Variable, Ltotal: sc.Variable
+) -> sc.Variable:
+    scale = (m_n / h).to(unit=sc.units.us / elem_unit(Ltotal) / elem_unit(wavelength))
+    return as_float_type(Ltotal * scale, wavelength) * wavelength
 
 
 class TimeDistanceDiagram:

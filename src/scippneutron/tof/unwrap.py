@@ -8,7 +8,8 @@ from typing import Mapping, NewType, Optional, Tuple
 
 import scipp as sc
 
-from . import chopper_cascade, frames
+from .._utils import elem_unit
+from . import chopper_cascade
 
 Choppers = NewType('Choppers', Mapping[str, chopper_cascade.Chopper])
 """
@@ -181,22 +182,26 @@ def pulse_offset(
     event_time_zero: TimeZero,
     first_pulse_time: FirstPulseTime,
 ) -> PulseOffset:
-    return frames.pulse_offset_from_time_zero(
-        pulse_period=pulse_period,
-        pulse_stride=pulse_stride,
-        event_time_zero=event_time_zero,
-        first_pulse_time=first_pulse_time,
+    """
+    Return 0-based source frame index of detection frame.
+
+    The source frames containing the time marked by tof_min receive index 0.
+    The frame after that index 1, and so on, until frame_stride-1.
+    """
+    # This is roughly equivalent to
+    #   (event_time_zero - first_pulse_time) % frame_period
+    # but should avoid some issues with precision and drift
+    pulse_index = (event_time_zero - first_pulse_time) // pulse_period.to(
+        unit=elem_unit(event_time_zero)
     )
+    return PulseOffset(pulse_period * (pulse_index % pulse_stride))
 
 
 def frame_wrapped_time_offset_pulse_skipping(
     offset: PulseWrappedTimeOffset, pulse_offset: PulseOffset
 ) -> FrameWrappedTimeOffset:
-    """"""
-    return frames.update_time_offset_for_pulse_skipping(
-        event_time_offset=offset,
-        pulse_offset=pulse_offset,
-    )
+    """Return the time offset wrapped around at the frame period."""
+    return FrameWrappedTimeOffset(offset + pulse_offset.to(unit=elem_unit(offset)))
 
 
 def pulse_wrapped_time_offset(da: RawData) -> PulseWrappedTimeOffset:
