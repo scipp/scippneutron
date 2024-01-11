@@ -291,3 +291,34 @@ def test_pulse_skipping_unwrap_histogram_mode_not_implemented(
     pl[unwrap.PulseStride] = 2
     with pytest.raises(NotImplementedError):
         pl.compute(unwrap.TofData)
+
+
+def test_wfm_unwrap(ess_10s_14Hz, ess_pulse) -> None:
+    distance = sc.scalar(20.0, unit='m')
+    beamline = fakes.FakeBeamline(
+        source=ess_10s_14Hz,
+        pulse=ess_pulse,
+        choppers=fakes.wfm_choppers,
+        monitors={'monitor': distance},
+        detectors={},
+        # time_of_flight_origin='wfm1',
+    )
+    mon, ref = beamline.get_monitor('monitor')
+
+    pl = sl.Pipeline(unwrap.providers(wfm=True))
+    pl[unwrap.RawData] = mon
+    pl[unwrap.PulsePeriod] = beamline._source.pulse_period
+    pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
+    pl[unwrap.SourceWavelengthRange] = (
+        ess_pulse.wavelength_min,
+        ess_pulse.wavelength_max,
+    )
+    pl[unwrap.Choppers] = fakes.wfm_choppers
+    pl[unwrap.SourceChopperName] = 'wfm1'
+    pl[unwrap.Ltotal] = distance
+    bounds = pl.compute(unwrap.SubframeBounds)
+    assert bounds.sizes == {'bound': 2, 'subframe': 6}
+    result = pl.compute(unwrap.TofData)
+    assert_identical(
+        result.hist(tof=1000).sum('pulse'), ref.hist(tof=1000).sum('pulse')
+    )

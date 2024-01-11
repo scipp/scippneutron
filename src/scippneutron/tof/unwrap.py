@@ -366,7 +366,12 @@ def offset_to_time_of_flight_wfm(
     subframe_bounds: SubframeBounds,
 ) -> OffsetFromTimeOfFlight:
     times = subframe_bounds.flatten(dims=['subframe', 'bound'], to='subframe')
-    neg_shift = sc.zeros(dims=['subframe'], shape=[len(times) + 2], unit='s')
+    neg_shift = sc.zeros(
+        dims=['subframe'], shape=[times.sizes['subframe'] + 2], unit='s'
+    )
+    # TODO This does not work, since some openings of the "source chopper" can be
+    # completely blocked by a later chopper, and thus not show up in the subframe
+    # bounds.
     neg_shift[1::2] -= 0.5 * (source_chopper.time_open + source_chopper.time_close)
     # Set offsets before, between, and after subframes to NaN
     neg_shift[::2] = sc.scalar(math.nan, unit='s')
