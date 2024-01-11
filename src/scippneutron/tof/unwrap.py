@@ -260,6 +260,12 @@ def offset_from_wrapped(
         Time between the start of two consecutive frames, i.e., the period of the
         time-zero used by the data acquisition system.
     """
+    time_bounds = frame_bounds['time']
+    if time_bounds['bound', -1] - time_bounds['bound', 0] > frame_period:
+        raise ValueError(
+            "Frames are overlapping: Computed frame bounds "
+            f"{frame_bounds} are larger than frame period {frame_period}."
+        )
     time_offset_min = frame_bounds['time']['bound', 0]
     wrapped_time_min = time_offset_min % frame_period
     begin = sc.zeros_like(wrapped_time_min)
