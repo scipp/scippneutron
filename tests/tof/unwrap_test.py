@@ -26,6 +26,22 @@ def ess_pulse() -> fakes.FakePulse:
     )
 
 
+def test_frame_period_is_pulse_period_if_not_pulse_skipping() -> None:
+    pl = sl.Pipeline(unwrap.providers())
+    period = sc.scalar(123.0, unit='ms')
+    pl[unwrap.PulsePeriod] = period
+    assert_identical(pl.compute(unwrap.FramePeriod), period)
+
+
+@pytest.mark.parametrize('stride', [1, 2, 3, 4])
+def test_frame_period_is_multiple_pulse_period_if_pulse_skipping(stride) -> None:
+    pl = sl.Pipeline(unwrap.providers())
+    period = sc.scalar(123.0, unit='ms')
+    pl[unwrap.PulsePeriod] = period
+    pl[unwrap.PulseStride] = stride
+    assert_identical(pl.compute(unwrap.FramePeriod), stride * period)
+
+
 def test_unwrap_with_no_choppers(ess_10s_14Hz, ess_pulse) -> None:
     # At this small distance the frames are not overlapping (with the given wavelength
     # range), despite not using any choppers.
