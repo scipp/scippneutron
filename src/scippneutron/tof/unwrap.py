@@ -161,9 +161,9 @@ def frame_at_detector(
 ) -> FrameAtDetector:
     frames = chopper_cascade.FrameSequence.from_source_pulse(
         time_min=source_time_range[0],
-        time_max=source_time_range[1],
+        time_max=source_time_range[-1],
         wavelength_min=source_wavelength_range[0],
-        wavelength_max=source_wavelength_range[1],
+        wavelength_max=source_wavelength_range[-1],
     )
     frames = frames.chop(choppers.values())
     return FrameAtDetector(frames[ltotal])
@@ -187,14 +187,20 @@ def pulse_offset(
     pulse_period: PulsePeriod,
     pulse_stride: PulseStride,
     event_time_zero: TimeZero,
-    first_pulse_time: FirstPulseTime,
 ) -> PulseOffset:
     """
-    Return 0-based source frame index of detection frame.
+    Return the offset of a pulse within a frame.
 
-    The source frames containing the time marked by tof_min receive index 0.
-    The frame after that index 1, and so on, until frame_stride-1.
+    This has no special meaning, since on its own it does not define which pulse
+    is used for the frame. Instead of taking this into account here, the SourceChopper
+    used to compute OffsetFromTimeOfFlight will take care of this. This assumes that
+    the choppers have been defined correctly.
     """
+    first_pulse_time = (
+        event_time_zero[0]
+        if len(event_time_zero) > 0
+        else sc.zeros_like(event_time_zero)
+    )
     # This is roughly equivalent to
     #   (event_time_zero - first_pulse_time) % frame_period
     # but should avoid some issues with precision and drift
@@ -231,7 +237,11 @@ def time_zero(da: RawData) -> TimeZero:
     # This is not available for histogram-mode monitors. We probably need to look it
     # up elsewhere in the file, e.g., NXsource. Should we have a separate provider for
     # monitors?
-    return da.bins.coords['event_time_zero']
+    if da.bins is None:
+        raise NotImplementedError(
+            "NXevent_data/event_time_zero not available for histogram-mode monitors."
+        )
+    return da.coords['event_time_zero']
 
 
 def offset_from_wrapped(
