@@ -2,6 +2,12 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 """
+This module provides functionality for unwrapping raw frames of neutron time-of-flight
+data.
+
+The modules handles standard unwrapping, unwrapping in pulse-skipping mode, and
+unwrapping for WFM instruments, as well as combinations of the latter two. The
+functions defined here are meant to be used as providers for a Sciline pipeline.
 """
 import math
 from typing import Mapping, NewType, Optional, Tuple
