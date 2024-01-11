@@ -255,7 +255,7 @@ def offset_from_wrapped(
         Time between the start of two consecutive frames, i.e., the period of the
         time-zero used by the data acquisition system.
     """
-    time_offset_min = frame_bounds['bound', 0]
+    time_offset_min = frame_bounds['time']['bound', 0]
     wrapped_time_min = time_offset_min % frame_period
     begin = sc.zeros_like(wrapped_time_min)
     end = sc.ones_like(wrapped_time_min)
@@ -284,9 +284,9 @@ def source_chopper(
     if source_chopper_name is not None:
         return choppers[source_chopper_name]
     return chopper_cascade.Chopper(
-        distance=sc.scalar(0.0, 'm'),
-        time_open=source_time_range[0],
-        time_close=source_time_range[1],
+        distance=sc.scalar(0.0, unit='m'),
+        time_open=sc.concat([source_time_range[0]], 'cutout').to(unit='s'),
+        time_close=sc.concat([source_time_range[1]], 'cutout').to(unit='s'),
     )
 
 
@@ -317,8 +317,8 @@ def offset_to_time_of_flight(
     source_chopper :
         Chopper defining the source location and time-of-flight time origin.
     """
-    source_time_open = source_chopper.time_open
-    source_time_close = source_chopper.time_close
+    source_time_open = source_chopper.time_open[0]
+    source_time_close = source_chopper.time_close[0]
     # TODO Need to handle choppers with multiple openings, where we need to select one
     time_zero = 0.5 * (source_time_open + source_time_close)
     return OffsetFromTimeOfFlight(time_offset - time_zero)
@@ -356,16 +356,23 @@ def tof_data(da: RawData, offset: OffsetFromTimeOfFlight) -> TofData:
     with highly time-dependent properties, since precise event-filtering based on
     sample environment data may be required.
     """
-    da = da.copy(deep=False)
     if da.bins is not None:
+        da = da.copy(deep=False)
         da.data = sc.bins(**da.bins.constituents)
         da.bins.coords['tof'] = da.bins.coords['event_time_offset'] + offset
-        da.bins.coords['time_zero'] = da.bins.coords['event_time_zero'] - offset
+        da.bins.coords['time_zero'] = da.coords['event_time_zero'] - offset.to(
+            unit=da.coords['event_time_zero'].unit, dtype='int64'
+        )
     else:
-        # 'time_of_flight' is the name in, e.g., Nxmonitor
-        da.coords['tof'] = da.coords['time_of_flight'] + offset
-        # Generally the coord is now not ordered, might want to cut and concat, but it
-        # is unclear what to do with the split bin in the middle.
+        # 'time_of_flight' is the name in, e.g., NXmonitor
+        da = da.transform_coords(
+            tof=lambda time_of_flight: time_of_flight + offset, keep_inputs=False
+        )
+        # Generally the coord is now not ordered, might want to cut, swap, and concat,
+        # but it is unclear what to do with the split bin in the middle and how to
+        # join the two halves. The end of the last bin generally does not match the
+        # begin of the first bin, there may be a significant gap (which we could fill
+        # with NaNs or zeros), but there could also be a small overlap.
     return TofData(da)
 
 

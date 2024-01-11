@@ -8,24 +8,16 @@ This provides data in a structure as typically provided in a NeXus file, includi
 
 - Detector event data including event_time_offset and event_time_zero
 - Monitor event data including event_time_offset and event_time_zero
-- Monitor time_of_flight histogram data
 - Chopper timestamps
 """
 from __future__ import annotations
-from numpy import random
+
+from typing import Optional
 
 import scipp as sc
+from numpy import random
+
 from . import chopper_cascade
-
-# TODO
-# - background
-# - how will tests verify they got the correct output? provide unwrapped as reference?
-#   also wavelength range, ...
-#   Yes: Set ranges and params when creating fake, fake will create raw source info
-
-
-class FakeBackground:
-    pass
 
 
 class FakeSource:
@@ -42,8 +34,8 @@ class FakeSource:
         ----------
         frequency:
             Frequency of the source.
-        duration:
-            Duration of the source.
+        run_length:
+            Run length of the source.
         events_per_pulse:
             Number of events per pulse.
         """
@@ -67,30 +59,87 @@ class FakeSource:
         return start + (pulses * (1.0 / frequency)).to(dtype='int64', unit='ns')
 
 
+class FakePulse:
+    """
+    Simplified model of a pulse.
+
+    Currently this is simply a time and wavelength interval. The plan is to also model
+    a tail in the future, e.g., by overlaying multiple pulses.
+    """
+
+    def __init__(
+        self,
+        time_min: sc.Variable,
+        time_max: sc.Variable,
+        wavelength_min: sc.Variable,
+        wavelength_max: sc.Variable,
+    ):
+        self.time_min = time_min
+        self.time_max = time_max
+        self.wavelength_min = wavelength_min
+        self.wavelength_max = wavelength_max
+        self._center = sc.scalar(0.5) * (time_min + time_max)
+        self._frames = chopper_cascade.FrameSequence.from_source_pulse(
+            time_min=time_min,
+            time_max=time_max,
+            wavelength_min=wavelength_min,
+            wavelength_max=wavelength_max,
+        )
+
+    @property
+    def center(self) -> sc.Variable:
+        return self._center
+
+    def chop(
+        self, choppers: list[chopper_cascade.Chopper]
+    ) -> chopper_cascade.FrameSequence:
+        return self._frames.chop(choppers)
+
+
 class FakeBeamline:
     def __init__(
         self,
         source: FakeSource,
-        frames: chopper_cascade.FrameSequence,
+        pulse: FakePulse,
+        choppers: dict[str, chopper_cascade.Chopper],
         monitors: dict[str, sc.Variable],
         detectors: dict[str, sc.Variable],
-        # TODO define source chopper, so we can compute TOF?
+        time_of_flight_origin: Optional[str] = None,
     ):
-        self.source = source
-        self.monitors = {key: frames[distance] for key, distance in monitors.items()}
-        self.detectors = {key: frames[distance] for key, distance in detectors.items()}
-        # We propagate the source pulse, and compute time bounds at monitor and
-        # detector positions.
-        # Model the tail by using multiple source pulses and overlaying them?
-        # Overall algorithms:
-        # - define collection of source frames
-        # - propagate to next component using chopper_cascade.FrameSequence
-        #   - generate neutrons in time-bounds if component is a monitor or detector
-        #   - map generated neutrons into frames
-        # - iterate
+        """
+        Return a fake beamline.
+
+        Parameters
+        ----------
+        source:
+            Fake source.
+        pulse:
+            Fake pulse.
+        choppers:
+            Choppers.
+        monitors:
+            Distances of monitors.
+        detectors:
+            Distances of detectors.
+        time_of_flight_origin:
+            Name of the chopper to use as time-of-flight origin. If None, use the
+            source pulse. The center time of the slit opening of the chopper (or the
+            source pulse) is used as time-of-flight origin.
+        """
+        self._frames = pulse.chop(choppers.values())
+        self._pulse = pulse
+        self._choppers = choppers
+        self._source = source
+        self._monitors = {
+            key: self._frames[distance] for key, distance in monitors.items()
+        }
+        self.detectors = {
+            key: self._frames[distance] for key, distance in detectors.items()
+        }
+        self._time_of_flight_origin = time_of_flight_origin
 
     def get_monitor(self, name: str) -> sc.DataGroup:
-        frame = self.monitors[name]
+        frame = self._monitors[name]
         return self._fake_monitor(frame)
 
     def _split_size(self, size, N):
@@ -98,19 +147,17 @@ class FakeBeamline:
         sizes = [base + 1 if i < remainder else base for i in range(N)]
         return sizes
 
-    def _fake_monitor(self, frame: chopper_cascade.Frame) -> sc.DataArray:
-        # TODO define TOF reference point, create expected result before wrapping
-        # how to handle WFM?
-        # need some TOF reference points as when unwrapping, apply reverse?
-        # TODO generate with some shape?
+    def _fake_monitor(
+        self, frame: chopper_cascade.Frame
+    ) -> tuple[sc.DataArray, sc.DataArray]:
         bounds = frame.bounds()['time']
         subbounds = frame.subbounds()['time']
         subframes = subbounds.sizes['subframe']
 
         sizes = sc.array(
             dims=['pulse'],
-            values=self.source.rng.integers(
-                0, self.source.events_per_pulse, size=self.source.number_of_pulses
+            values=self._source.rng.integers(
+                0, self._source.events_per_pulse, size=self._source.number_of_pulses
             ),
             unit=None,
         )
@@ -122,7 +169,7 @@ class FakeBeamline:
             subframe_times.append(
                 sc.array(
                     dims=['event'],
-                    values=self.source.rng.uniform(
+                    values=self._source.rng.uniform(
                         subbounds['subframe', i][0].value,
                         subbounds['subframe', i][-1].value,
                         size=subsizes[i],
@@ -134,19 +181,48 @@ class FakeBeamline:
         # Offset from pulse that created the monitor event
         time_offset = sc.concat(subframe_times, 'event')
         # Ensure all pulses have events from all subframes
-        self.source.rng.shuffle(time_offset.values)
-        event_time_offset = time_offset % self.source.pulse_period
+        self._source.rng.shuffle(time_offset.values)
+        event_time_offset = time_offset % self._source.pulse_period
         time_zero_offset = time_offset - event_time_offset
-        event_time_zero = self.source.t0
-        events = sc.DataArray(
+        event_time_zero = self._source.t0
+        wrapped_events = sc.DataArray(
             sc.ones(sizes=event_time_offset.sizes, unit='counts'),
             coords={'event_time_offset': event_time_offset},
         )
-        binned = sc.DataArray(
-            data=sc.bins(begin=event_index, dim='event', data=events),
+        unwrapped_events = sc.DataArray(
+            sc.ones(sizes=time_offset.sizes, unit='counts'),
+            coords={
+                'time_offset': time_offset,
+                'time_zero_offset': time_zero_offset.to(dtype='int64', unit='ns'),
+            },
+        )
+        wrapped = sc.DataArray(
+            data=sc.bins(begin=event_index, dim='event', data=wrapped_events),
             coords={'event_time_zero': event_time_zero},
         )
-        return binned
+        unwrapped = sc.DataArray(
+            data=sc.bins(begin=event_index, dim='event', data=unwrapped_events),
+            coords={'event_time_zero': event_time_zero},
+        )
+        if self._time_of_flight_origin is None:
+            offset_to_tof = self._pulse.center
+        else:
+            source_chopper = self._choppers[self._time_of_flight_origin]
+            if len(source_chopper.time_open) != 1:
+                raise NotImplementedError(
+                    "Using a chopper with multiple openings as "
+                    "source chopper is not implemented yet."
+                )
+            offset_to_tof = 0.5 * (
+                source_chopper.time_open[0] + source_chopper.time_close[0]
+            )
+        unwrapped = unwrapped.transform_coords(
+            tof=lambda time_offset: time_offset - offset_to_tof.to(unit='s'),
+            time_zero=lambda event_time_zero, time_zero_offset: event_time_zero
+            + time_zero_offset.to(dtype='int64', unit='ns')
+            + offset_to_tof.to(dtype='int64', unit='ns'),
+        )
+        return wrapped, unwrapped
 
 
 wfm1 = chopper_cascade.Chopper(

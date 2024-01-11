@@ -5,7 +5,7 @@ import pytest
 import scipp as sc
 from scipp.testing import assert_identical
 
-from scippneutron.tof import chopper_cascade, fakes
+from scippneutron.tof import fakes
 
 
 @pytest.fixture
@@ -28,19 +28,18 @@ def test_fake_source(ess_10s_14Hz) -> None:
 
 
 def test_fake_monitor(ess_10s_14Hz) -> None:
-    frames = chopper_cascade.FrameSequence.from_source_pulse(
+    pulse = fakes.FakePulse(
         time_min=sc.scalar(0.0, unit='ms'),
         time_max=sc.scalar(3.0, unit='ms'),
         wavelength_min=sc.scalar(0.1, unit='angstrom'),
         wavelength_max=sc.scalar(10.0, unit='angstrom'),
     )
-    frames = fakes.wfm_frames
     beamline = fakes.FakeBeamline(
         source=ess_10s_14Hz,
-        frames=frames,
-        monitors={'source_monitor': sc.scalar(26.0, unit='m')},
+        pulse=pulse,
+        choppers=fakes.wfm_choppers,
+        monitors={'monitor': sc.scalar(26.0, unit='m')},
         detectors={},
     )
-    mon = beamline.get_monitor('source_monitor')
-    mon.hist(event_time_offset=1000).sum('pulse').plot().save("test.png")
-    assert False
+    mon, _ = beamline.get_monitor('monitor')
+    assert mon.sizes == {'pulse': 140}

@@ -497,6 +497,13 @@ class Chopper:
                 f'{self.time_close.sizes}'
             )
 
+    def __getitem__(self, key) -> Chopper:
+        return Chopper(
+            distance=self.distance,
+            time_open=self.time_open[key],
+            time_close=self.time_close[key],
+        )
+
 
 def _chop(
     frame: Subframe, time: sc.Variable, close_to_open: bool
