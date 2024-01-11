@@ -42,6 +42,39 @@ def test_frame_period_is_multiple_pulse_period_if_pulse_skipping(stride) -> None
     assert_identical(pl.compute(unwrap.FramePeriod), stride * period)
 
 
+def test_offset_from_wrapped() -> None:
+    pl = sl.Pipeline(unwrap.providers())
+    period = sc.scalar(123.0, unit='ms')
+    pl[unwrap.PulsePeriod] = period
+    pl[unwrap.FrameBounds] = unwrap.FrameBounds(
+        sc.DataGroup(time=sc.array(dims=['bound'], values=[0.01, 0.02], unit='s'))
+    )
+    wrapped_offset = sc.linspace('event', 0.0, 123.0, num=1001, unit='ms')
+    pl[unwrap.PulseWrappedTimeOffset] = unwrap.PulseWrappedTimeOffset(wrapped_offset)
+    offset = pl.compute(unwrap.OffsetFromWrapped)
+    # Times below 10 ms (we currently cut at lower bound) should be offset by period.
+    da = sc.DataArray(offset, coords={'time': wrapped_offset})
+    assert sc.all(da['time', : 10 * sc.Unit('ms')].data == period.to(unit='s'))
+    assert sc.all(da['time', 10 * sc.Unit('ms') :].data == sc.scalar(0.0, unit='s'))
+
+
+def test_offset_from_wrapped_has_no_special_handling_for_out_of_period_events() -> None:
+    pl = sl.Pipeline(unwrap.providers())
+    period = sc.scalar(123.0, unit='ms')
+    pl[unwrap.PulsePeriod] = period
+    pl[unwrap.FrameBounds] = unwrap.FrameBounds(
+        sc.DataGroup(time=sc.array(dims=['bound'], values=[0.01, 0.02], unit='s'))
+    )
+    wrapped_offset = sc.linspace('event', -10000.0, 10000.0, num=10001, unit='ms')
+    pl[unwrap.PulseWrappedTimeOffset] = unwrap.PulseWrappedTimeOffset(wrapped_offset)
+    offset = pl.compute(unwrap.OffsetFromWrapped)
+    da = sc.DataArray(offset, coords={'time': wrapped_offset})
+    # Negative times and times > 123 ms are technically invalid, but it does not affect
+    # unwrapping, so they should be left as-is.
+    assert sc.all(da['time', : 10 * sc.Unit('ms')].data == period.to(unit='s'))
+    assert sc.all(da['time', 10 * sc.Unit('ms') :].data == sc.scalar(0.0, unit='s'))
+
+
 def test_unwrap_with_no_choppers(ess_10s_14Hz, ess_pulse) -> None:
     # At this small distance the frames are not overlapping (with the given wavelength
     # range), despite not using any choppers.

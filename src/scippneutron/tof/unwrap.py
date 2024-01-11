@@ -46,7 +46,7 @@ The detector may be a monitor or a detector after scattering off the sample. The
 bounds are then computed from this.
 """
 
-FrameBounds = NewType('FrameBounds', sc.Variable)
+FrameBounds = NewType('FrameBounds', sc.DataGroup)
 """
 The computed frame boundaries, used to unwrap the raw timestamps.
 """
@@ -221,7 +221,7 @@ def pulse_wrapped_time_offset(da: RawData) -> PulseWrappedTimeOffset:
     if da.bins is None:
         # Canonical name in NXmonitor
         return PulseWrappedTimeOffset(da.coords['time_of_flight'])
-    return da.bins.coords['event_time_offset']
+    return PulseWrappedTimeOffset(da.bins.coords['event_time_offset'])
 
 
 def time_zero(da: RawData) -> TimeZero:
@@ -260,30 +260,35 @@ def offset_from_wrapped(
     ----------
     wrapped_time_offset :
         Time offset from the time-zero as recorded by the data acquisition system.
-    time_offset_min :
-        Minimum arrival time offset of neutrons that can pass through the chopper
-        cascade. Typically pixel-dependent.
+    frame_bounds :
+        The computed frame boundaries, used to unwrap the raw timestamps.
+        Typically pixel-dependent when unwrapping detectors.
     frame_period :
         Time between the start of two consecutive frames, i.e., the period of the
         time-zero used by the data acquisition system.
     """
     time_bounds = frame_bounds['time']
+    frame_period = frame_period.to(unit=elem_unit(time_bounds))
     if time_bounds['bound', -1] - time_bounds['bound', 0] > frame_period:
         raise ValueError(
             "Frames are overlapping: Computed frame bounds "
             f"{frame_bounds} are larger than frame period {frame_period}."
         )
-    time_offset_min = frame_bounds['time']['bound', 0]
+    time_offset_min = time_bounds['bound', 0]
     wrapped_time_min = time_offset_min % frame_period
-    begin = sc.zeros_like(wrapped_time_min)
-    end = sc.ones_like(wrapped_time_min)
+    # We simply cut, without special handling of times that fall outside the frame
+    # period. Everything below and above is allowed. The alternative would be to, e.g.,
+    # replace invalid inputs with NaN, but this would probable cause more trouble down
+    # the line.
+    begin = sc.full_like(wrapped_time_min, value=-math.inf)
+    end = sc.full_like(wrapped_time_min, value=math.inf)
     dim = 'section'
     time = sc.concat([begin, wrapped_time_min, end], dim).transpose().copy()
     offset = sc.DataArray(
         time_offset_min
         - wrapped_time_min
         + sc.concat([frame_period, sc.zeros_like(frame_period)], dim),
-        coords={dim: time},
+        coords={dim: time.to(unit=elem_unit(wrapped_time_offset))},
     )
     return OffsetFromWrapped(sc.lookup(offset, dim=dim)[wrapped_time_offset])
 
@@ -335,9 +340,12 @@ def offset_to_time_of_flight(
     source_chopper :
         Chopper defining the source location and time-of-flight time origin.
     """
+    if len(source_chopper.time_open) != 1:
+        raise NotImplementedError(
+            "Source chopper with multiple openings not supported yet."
+        )
     source_time_open = source_chopper.time_open[0]
     source_time_close = source_chopper.time_close[0]
-    # TODO Need to handle choppers with multiple openings, where we need to select one
     time_zero = 0.5 * (source_time_open + source_time_close)
     return OffsetFromTimeOfFlight(time_offset - time_zero)
 
