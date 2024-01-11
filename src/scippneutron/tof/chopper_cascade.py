@@ -314,9 +314,18 @@ class FrameSequence:
         """Number of frames."""
         return len(self.frames)
 
-    def __getitem__(self, item: int) -> Frame:
-        """Get a frame by index."""
-        return self.frames[item]
+    def __getitem__(self, item: Union[int, sc.Variable]) -> Frame:
+        """Get a frame by index or distance."""
+        if isinstance(item, int):
+            return self.frames[item]
+        distance = item.to(unit='m')
+        frame_before_detector = None
+        for frame in self:
+            if frame.distance > distance:
+                break
+            frame_before_detector = frame
+
+        return frame_before_detector.propagate_to(distance)
 
     def propagate_to(self, distance: sc.Variable) -> FrameSequence:
         """

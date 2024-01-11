@@ -4,13 +4,13 @@
 """
 """
 import math
-from typing import Dict, NewType, Optional, Tuple
+from typing import Mapping, NewType, Optional, Tuple
 
 import scipp as sc
 
 from . import chopper_cascade, frames
 
-Choppers = NewType('Choppers', Dict[str, chopper_cascade.Chopper])
+Choppers = NewType('Choppers', Mapping[str, chopper_cascade.Chopper])
 """
 Choppers used to define the frame parameters.
 """
@@ -157,15 +157,8 @@ def frame_at_detector(
         wavelength_min=source_wavelength_range[0],
         wavelength_max=source_wavelength_range[1],
     )
-    frames.chop(choppers.values())
-    # Find last frame before ltotal
-    frame_before_detector = None
-    for frame in frames:
-        if frame.distance > ltotal:
-            break
-        frame_before_detector = frame
-
-    return FrameAtDetector(frame_before_detector.propagate_to(ltotal))
+    frames = frames.chop(choppers.values())
+    return FrameAtDetector(frames[ltotal])
 
 
 def frame_bounds(frame: FrameAtDetector) -> FrameBounds:
