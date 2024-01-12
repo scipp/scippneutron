@@ -3,6 +3,7 @@
 # @author Matthew Jones
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple, Union
 
@@ -227,7 +228,7 @@ class JSONAttrID:
         return JSONTypeStringID()
 
 
-class JSONAttributeManager:
+class JSONAttributeManager(Mapping[str, Any]):
     def __init__(self, node: dict):
         self._node = node
 
@@ -255,6 +256,9 @@ class JSONAttributeManager:
             else:
                 for item in attrs:
                     yield item[_nexus_name]
+
+    def __len__(self):
+        return sum(1 for _ in self)
 
     def get(self, name: str, default=None):
         return self[name] if name in self else default
