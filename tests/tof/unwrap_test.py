@@ -2,11 +2,12 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 import pytest
-import sciline as sl
 import scipp as sc
 from scipp.testing import assert_identical
 
 from scippneutron.tof import fakes, unwrap
+
+sl = pytest.importorskip('sciline')
 
 
 @pytest.fixture
