@@ -365,14 +365,22 @@ def offset_to_time_of_flight_wfm(
     source_chopper: SourceChopper,
     subframe_bounds: SubframeBounds,
 ) -> OffsetFromTimeOfFlight:
-    times = subframe_bounds.flatten(dims=['subframe', 'bound'], to='subframe')
+    if len(source_chopper.time_open) != subframe_bounds['time'].sizes['subframe']:
+        raise NotImplementedError(
+            "Source chopper openings do not match the subframe count, this is ."
+            "not supported yet."
+        )
+    times = subframe_bounds['time'].flatten(dims=['subframe', 'bound'], to='subframe')
     neg_shift = sc.zeros(
-        dims=['subframe'], shape=[times.sizes['subframe'] + 2], unit='s'
+        dims=['subframe'], shape=[times.sizes['subframe'] + 1], unit='s'
     )
-    # TODO This does not work, since some openings of the "source chopper" can be
-    # completely blocked by a later chopper, and thus not show up in the subframe
-    # bounds.
-    neg_shift[1::2] -= 0.5 * (source_chopper.time_open + source_chopper.time_close)
+    padding = sc.scalar(1000.0, unit='s').to(unit=times.unit)
+    low = times[0] - padding
+    high = times[-1] + padding
+    times = sc.concat([low, times, high], 'subframe')
+    neg_shift[1::2] -= 0.5 * (
+        source_chopper.time_open + source_chopper.time_close
+    ).rename_dims(cutout='subframe')
     # Set offsets before, between, and after subframes to NaN
     neg_shift[::2] = sc.scalar(math.nan, unit='s')
     lut = sc.DataArray(neg_shift, coords={'subframe': times})
