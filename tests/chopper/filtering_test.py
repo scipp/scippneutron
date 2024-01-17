@@ -4,7 +4,7 @@
 import scipp as sc
 import scipp.testing
 
-from scippneutron.chopper import collapse_plateaus, find_plateaus
+from scippneutron.chopper import collapse_plateaus, filter_in_phase, find_plateaus
 
 
 def test_find_plateaus_only_plateau_exact_float():
@@ -236,3 +236,47 @@ def test_collapse_plateaus():
         },
     )
     sc.testing.assert_identical(collapsed, expected)
+
+
+def test_find_plateaus_plateaus_negative():
+    """
+    Plateau numbers:
+                     t
+         +------------>
+         |           x
+         |     1 1 1
+         | 0 0
+    data v
+    """
+    da = sc.DataArray(sc.array(dims=['t'], values=[-5, -5, -3, -3, -3, -2]))
+    plateaus = find_plateaus(da, atol=sc.scalar(0.1), min_n_points=2)
+    assert plateaus.sizes == {'plateau': 2}
+    sc.testing.assert_identical(
+        plateaus.coords['plateau'], sc.array(dims=['plateau'], values=[0, 1], unit=None)
+    )
+
+    plateau0 = sc.DataArray(sc.array(dims=['t'], values=[-5, -5]))
+    sc.testing.assert_identical(plateaus[0].value, plateau0)
+    plateau1 = sc.DataArray(sc.array(dims=['t'], values=[-3, -3, -3]))
+    sc.testing.assert_identical(plateaus[1].value, plateau1)
+
+
+def test_filter_in_phase_integers_positive():
+    da = sc.DataArray(sc.array(dims=['t'], values=[7, 8, 8, 8, 3, 2, 4]))
+    filtered = filter_in_phase(da, reference=sc.scalar(4), rtol=sc.scalar(0.1))
+    expected = sc.DataArray(sc.array(dims=['t'], values=[8, 8, 8, 2, 4]))
+    sc.testing.assert_identical(filtered, expected)
+
+
+def test_filter_in_phase_integers_negative():
+    da = sc.DataArray(sc.array(dims=['t'], values=[-7, -8, -8, -8, -3, -2, -4]))
+    filtered = filter_in_phase(da, reference=sc.scalar(-4), rtol=sc.scalar(0.1))
+    expected = sc.DataArray(sc.array(dims=['t'], values=[-8, -8, -8, -2, -4]))
+    sc.testing.assert_identical(filtered, expected)
+
+
+def test_filter_in_phase_floats():
+    da = sc.DataArray(sc.array(dims=['t'], values=[0.23, 0.6, 1.2, 3.3, 2.4]))
+    filtered = filter_in_phase(da, reference=sc.scalar(1.2), rtol=sc.scalar(0.1))
+    expected = sc.DataArray(sc.array(dims=['t'], values=[0.6, 1.2, 2.4]))
+    sc.testing.assert_identical(filtered, expected)
