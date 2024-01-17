@@ -4,7 +4,7 @@
 import pytest
 import scipp as sc
 
-from scippneutron.chopper import DiskChopperType, post_process_disk_chopper
+from scippneutron.chopper import DiskChopperType, extract_chopper_from_nexus
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def raw_nexus_chopper():
 
 def test_post_process_assigns_default_type(raw_nexus_chopper):
     del raw_nexus_chopper['type']
-    processed = post_process_disk_chopper(raw_nexus_chopper)
+    processed = extract_chopper_from_nexus(raw_nexus_chopper)
     assert processed['type'] == DiskChopperType.single
 
 
@@ -41,7 +41,7 @@ def test_post_process_extracts_from_logs(raw_nexus_chopper):
             'time': sc.datetimes(dims=['time'], values=[2, 5, 8], unit='s'),
         }
     )
-    processed = post_process_disk_chopper(raw_nexus_chopper)
+    processed = extract_chopper_from_nexus(raw_nexus_chopper)
     assert sc.identical(
         processed['rotation_speed'],
         sc.array(dims=['time'], values=[12, 56, 78], unit='Hz'),

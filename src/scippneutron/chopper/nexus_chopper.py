@@ -8,7 +8,7 @@ import scipp as sc
 from .disk_chopper import DiskChopperType
 
 
-def post_process_disk_chopper(
+def extract_chopper_from_nexus(
     chopper: Mapping[str, Union[sc.Variable, sc.DataArray, sc.DataGroup]]
 ) -> sc.DataGroup:
     """Convert loaded NeXus disk chopper data to the layout used by ScipNeutron.
