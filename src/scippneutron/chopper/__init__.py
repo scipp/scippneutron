@@ -5,7 +5,7 @@
 
 from .disk_chopper import DiskChopper, DiskChopperType
 from .filtering import collapse_plateaus, filter_in_phase, find_plateaus
-from .nexus_chopper import post_process_disk_chopper
+from .nexus_chopper import extract_chopper_from_nexus
 
 __all__ = [
     'DiskChopper',
@@ -13,5 +13,5 @@ __all__ = [
     'collapse_plateaus',
     'filter_in_phase',
     'find_plateaus',
-    'post_process_disk_chopper',
+    'extract_chopper_from_nexus',
 ]
