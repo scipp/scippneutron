@@ -2,6 +2,7 @@
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
 import uuid
+import warnings
 from typing import Union
 
 import numpy as np
@@ -20,6 +21,15 @@ def find_plateaus(
     Plateaus are found by collecting streaks of points where the derivative of the input
     is less than the tolerance.
     Variances are ignored for this comparison.
+
+    Warning
+    -------
+    This function technically does not search for plateaus,
+    but regions with small derivative.
+    This means that if there is a slope smaller than the noise in the input data,
+    that sloped region may be falsely identified as a plateau.
+    ``find_plateaus`` attempts to catch such a case and raise a warning, but you
+    should always inspect the result!
 
     Parameters
     ----------
@@ -70,6 +80,16 @@ def find_plateaus(
         {group_label: plateau_dim}
     )
     plateaus.coords[plateau_dim] = sc.arange(plateau_dim, len(plateaus), unit=None)
+    if sc.any(
+        exceeds_tolerance := _check_total_tolerance(
+            plateaus, atol=atol, raw_coord=data.coords[data.dim]
+        )
+    ):
+        warnings.warn(
+            f'The following plateaus exceed the tolerance: {exceeds_tolerance.values}',
+            UserWarning,
+            stacklevel=2,
+        )
     return plateaus
 
 
@@ -77,6 +97,22 @@ def _derive(da: sc.DataArray) -> sc.Variable:
     x = da.coords[da.dim]
     y = da.data
     return (y[1:] - y[:-1]) / (x[1:] - x[:-1])
+
+
+def _check_total_tolerance(
+    plateaus: sc.DataArray, *, atol: sc.Variable, raw_coord: sc.Variable
+) -> sc.Variable:
+    # ``atol`` applies to the derivative, but here, we want to check the total variation
+    # within each plateau, so we need to convert ``atol`` into a tolerance for the data.
+    # This function uses a crude approach that multiplies ``atol`` by the average
+    # change in the coordinate.
+    # For equidistant data, the coordinate factors out of the derivative
+    # and the approach here is exact.
+    # The factor of 2 is a fudge factor to account for cases where the first
+    # point of a plateau is far off the mean.
+    diff = plateaus.bins.max() - plateaus.bins.min()
+    tol = 2 * atol * sc.mean(raw_coord[1:] - raw_coord[:-1])
+    return diff.data > tol.to(unit=diff.unit)
 
 
 def _next_highest(x: sc.Variable) -> sc.Variable:

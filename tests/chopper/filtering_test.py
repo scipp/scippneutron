@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
+import pytest
 import scipp as sc
 import scipp.testing
 
@@ -279,35 +280,14 @@ def test_find_plateaus_slow_slope():
     sc.testing.assert_identical(plateaus[0].value, plateau0)
 
 
-def test_collapse_plateaus():
-    """
-    Plateau numbers:
-    data ^
-         |       1 1 1
-         |     x       x
-         | 0 0
-         +--------------->
-                        t
-    """
+def test_find_plateaus_slow_slope_false_positive_caught():
     da = sc.DataArray(
-        sc.array(dims=['t'], values=[0, 0, 1, 2, 2, 2, 1]),
-        coords={
-            't': sc.array(dims=['t'], values=[12, 13, 14, 15, 16, 17, 18], unit='s')
-        },
+        sc.linspace('s', 0.0, 1.0, 100), coords={'s': sc.arange('s', 100)}
     )
-    plateaus = find_plateaus(da, atol=sc.scalar(0.1, unit='Hz'), min_n_points=2)
-    collapsed = collapse_plateaus(plateaus, coord='t')
-
-    t = sc.array(dims=['plateau', 't'], values=[[12, 14], [15, 18]], unit='s')
-    t = t.transpose(collapsed.coords['t'].dims)
-    expected = sc.DataArray(
-        sc.array(dims=['plateau'], values=[0.0, 2.0]),
-        coords={
-            'plateau': sc.array(dims=['plateau'], values=[0, 1], unit=None),
-            't': t,
-        },
-    )
-    sc.testing.assert_identical(collapsed, expected)
+    with pytest.warns(match='tolerance'):
+        plateaus = find_plateaus(da, atol=sc.scalar(1e-1), min_n_points=2)
+    assert plateaus.sizes == {'plateau': 1}
+    sc.testing.assert_identical(plateaus[0].value, da)
 
 
 def test_find_plateaus_plateaus_negative():
@@ -340,6 +320,37 @@ def test_find_plateaus_plateaus_negative():
         coords={'t': sc.array(dims=['t'], values=[2, 3, 4])},
     )
     sc.testing.assert_identical(plateaus[1].value, plateau1)
+
+
+def test_collapse_plateaus():
+    """
+    Plateau numbers:
+    data ^
+         |       1 1 1
+         |     x       x
+         | 0 0
+         +--------------->
+                        t
+    """
+    da = sc.DataArray(
+        sc.array(dims=['t'], values=[0, 0, 1, 2, 2, 2, 1]),
+        coords={
+            't': sc.array(dims=['t'], values=[12, 13, 14, 15, 16, 17, 18], unit='s')
+        },
+    )
+    plateaus = find_plateaus(da, atol=sc.scalar(0.1, unit='Hz'), min_n_points=2)
+    collapsed = collapse_plateaus(plateaus, coord='t')
+
+    t = sc.array(dims=['plateau', 't'], values=[[12, 14], [15, 18]], unit='s')
+    t = t.transpose(collapsed.coords['t'].dims)
+    expected = sc.DataArray(
+        sc.array(dims=['plateau'], values=[0.0, 2.0]),
+        coords={
+            'plateau': sc.array(dims=['plateau'], values=[0, 1], unit=None),
+            't': t,
+        },
+    )
+    sc.testing.assert_identical(collapsed, expected)
 
 
 def test_filter_in_phase_integers_positive():
