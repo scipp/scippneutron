@@ -17,8 +17,8 @@ def find_plateaus(
 ) -> sc.DataArray:
     """Find regions where the input data is approximately constant.
 
-    Plateaus are found by collecting streaks of points that differ by less than
-    the given absolute tolerance.
+    Plateaus are found by collecting streaks of points where the derivative of the input
+    is less than the tolerance.
     Variances are ignored for this comparison.
 
     Parameters
@@ -27,7 +27,7 @@ def find_plateaus(
         Data to search for plateaus in.
         Must be 1-dimensional.
     atol:
-        Absolute tolerance.
+        Absolute tolerance for the derivative.
     min_n_points:
         Only return plateaus that have at least this many points.
     plateau_dim:
@@ -53,10 +53,12 @@ def find_plateaus(
         if isinstance(min_n_points, sc.Variable)
         else sc.index(min_n_points)
     )
-    diff = abs(data.data[1:] - data.data[:-1])
-    group_id = sc.cumsum((diff > atol).to(dtype='int64'))
+    derivative = _derive(data)
+    group_id = sc.cumsum(
+        (abs(derivative) > atol.to(unit=derivative.unit)).to(dtype='int64')
+    )
     # Prepend a 0 to align the groups with the data points (diff reduces length by 1).
-    group_id = sc.concat([sc.index(0, dtype='int64'), group_id], dim=diff.dim)
+    group_id = sc.concat([sc.index(0, dtype='int64'), group_id], dim=derivative.dim)
 
     group_label = str(uuid.uuid4())
     to_group = data.copy(deep=False)
@@ -69,6 +71,12 @@ def find_plateaus(
     )
     plateaus.coords[plateau_dim] = sc.arange(plateau_dim, len(plateaus), unit=None)
     return plateaus
+
+
+def _derive(da: sc.DataArray) -> sc.Variable:
+    x = da.coords[da.dim]
+    y = da.data
+    return (y[1:] - y[:-1]) / (x[1:] - x[:-1])
 
 
 def _next_highest(x: sc.Variable) -> sc.Variable:
