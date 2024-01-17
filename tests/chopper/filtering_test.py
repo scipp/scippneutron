@@ -8,7 +8,9 @@ from scippneutron.chopper import collapse_plateaus, filter_in_phase, find_platea
 
 
 def test_find_plateaus_only_plateau_exact_float():
-    da = sc.DataArray(sc.full(value=4.2, sizes={'x': 12}))
+    da = sc.DataArray(
+        sc.full(value=4.2, sizes={'x': 12}), coords={'x': sc.arange('x', 12)}
+    )
     plateaus = find_plateaus(da, atol=sc.scalar(1e-7), min_n_points=3)
     assert plateaus.sizes == {'plateau': 1}
     sc.testing.assert_identical(
@@ -18,7 +20,10 @@ def test_find_plateaus_only_plateau_exact_float():
 
 
 def test_find_plateaus_only_plateau_exact_int():
-    da = sc.DataArray(sc.full(value=6, sizes={'x': 12}, dtype='int64'))
+    da = sc.DataArray(
+        sc.full(value=6, sizes={'x': 12}, dtype='int64'),
+        coords={'x': sc.arange('x', 12)},
+    )
     plateaus = find_plateaus(da, atol=sc.scalar(1e-7), min_n_points=3)
     assert plateaus.sizes == {'plateau': 1}
     sc.testing.assert_identical(
@@ -28,8 +33,11 @@ def test_find_plateaus_only_plateau_exact_int():
 
 
 def test_find_plateaus_only_plateau_approx():
-    da = sc.DataArray(sc.array(dims=['y'], values=[4.02, 4.05, 3.97, 4.0]))
-    plateaus = find_plateaus(da, atol=sc.scalar(0.1), min_n_points=3)
+    da = sc.DataArray(
+        sc.array(dims=['y'], values=[4.02, 4.05, 3.97, 4.0], unit='m'),
+        coords={'y': sc.arange('y', 4, unit='s')},
+    )
+    plateaus = find_plateaus(da, atol=sc.scalar(0.1, unit='m/s'), min_n_points=3)
     assert plateaus.sizes == {'plateau': 1}
     sc.testing.assert_identical(
         plateaus.coords['plateau'], sc.array(dims=['plateau'], values=[0], unit=None)
@@ -38,7 +46,9 @@ def test_find_plateaus_only_plateau_approx():
 
 
 def test_find_plateaus_only_plateau_select_output_dim():
-    da = sc.DataArray(sc.full(value=4.2, sizes={'x': 12}))
+    da = sc.DataArray(
+        sc.full(value=4.2, sizes={'x': 12}), coords={'x': sc.arange('x', 12)}
+    )
     plateaus = find_plateaus(
         da, atol=sc.scalar(1e-7), min_n_points=3, plateau_dim='custom'
     )
@@ -50,7 +60,9 @@ def test_find_plateaus_only_plateau_select_output_dim():
 
 
 def test_find_plateaus_no_plateau():
-    da = sc.DataArray(sc.array(dims=['z'], values=[3, 6, 1, 2, 3, 2]))
+    da = sc.DataArray(
+        sc.array(dims=['z'], values=[3, 6, 1, 2, 3, 2]), coords={'z': sc.arange('z', 6)}
+    )
     plateaus = find_plateaus(da, atol=sc.scalar(0.1), min_n_points=2)
     assert plateaus.sizes == {'plateau': 0}
     sc.testing.assert_identical(
@@ -69,16 +81,24 @@ def test_find_plateaus_plateaus_at_ends():
          +------------>
                      t
     """
-    da = sc.DataArray(sc.array(dims=['t'], values=[0, 0, 1, 2, 2, 2]))
+    da = sc.DataArray(
+        sc.array(dims=['t'], values=[0, 0, 1, 2, 2, 2]), coords={'t': sc.arange('t', 6)}
+    )
     plateaus = find_plateaus(da, atol=sc.scalar(0.1), min_n_points=2)
     assert plateaus.sizes == {'plateau': 2}
     sc.testing.assert_identical(
         plateaus.coords['plateau'], sc.array(dims=['plateau'], values=[0, 1], unit=None)
     )
 
-    plateau0 = sc.DataArray(sc.array(dims=['t'], values=[0, 0]))
+    plateau0 = sc.DataArray(
+        sc.array(dims=['t'], values=[0, 0]),
+        coords={'t': sc.array(dims=['t'], values=[0, 1])},
+    )
     sc.testing.assert_identical(plateaus[0].value, plateau0)
-    plateau1 = sc.DataArray(sc.array(dims=['t'], values=[2, 2, 2]))
+    plateau1 = sc.DataArray(
+        sc.array(dims=['t'], values=[2, 2, 2]),
+        coords={'t': sc.array(dims=['t'], values=[3, 4, 5])},
+    )
     sc.testing.assert_identical(plateaus[1].value, plateau1)
 
 
@@ -92,14 +112,20 @@ def test_find_plateaus_slow_start_and_end():
          +------------>
                      t
     """
-    da = sc.DataArray(sc.array(dims=['t'], values=[-3, -2, -2, -2, -1]))
+    da = sc.DataArray(
+        sc.array(dims=['t'], values=[-3, -2, -2, -2, -1]),
+        coords={'t': sc.arange('t', 5)},
+    )
     plateaus = find_plateaus(da, atol=sc.scalar(0.1), min_n_points=2)
     assert plateaus.sizes == {'plateau': 1}
     sc.testing.assert_identical(
         plateaus.coords['plateau'], sc.array(dims=['plateau'], values=[0], unit=None)
     )
 
-    plateau0 = sc.DataArray(sc.array(dims=['t'], values=[-2, -2, -2]))
+    plateau0 = sc.DataArray(
+        sc.array(dims=['t'], values=[-2, -2, -2]),
+        coords={'t': sc.array(dims=['t'], values=[1, 2, 3])},
+    )
     sc.testing.assert_identical(plateaus[0].value, plateau0)
 
 
@@ -115,14 +141,20 @@ def test_find_plateaus_steep_start_and_end():
          +------------>
                      t
     """
-    da = sc.DataArray(sc.array(dims=['t'], values=[1, 0, -1, -1, -1.5, -2]))
+    da = sc.DataArray(
+        sc.array(dims=['t'], values=[1, 0, -1, -1, -1.5, -2]),
+        coords={'t': sc.arange('t', 6)},
+    )
     plateaus = find_plateaus(da, atol=sc.scalar(0.1), min_n_points=2)
     assert plateaus.sizes == {'plateau': 1}
     sc.testing.assert_identical(
         plateaus.coords['plateau'], sc.array(dims=['plateau'], values=[0], unit=None)
     )
 
-    plateau0 = sc.DataArray(sc.array(dims=['t'], values=[-1.0, -1.0]))
+    plateau0 = sc.DataArray(
+        sc.array(dims=['t'], values=[-1.0, -1.0]),
+        coords={'t': sc.array(dims=['t'], values=[2, 3])},
+    )
     sc.testing.assert_identical(plateaus[0].value, plateau0)
 
 
@@ -136,14 +168,20 @@ def test_find_plateaus_peak():
          +------------>
                      t
     """
-    da = sc.DataArray(sc.array(dims=['t'], values=[10, 10, 20, 25, 20]))
+    da = sc.DataArray(
+        sc.array(dims=['t'], values=[10, 10, 20, 25, 20]),
+        coords={'t': sc.arange('t', 5)},
+    )
     plateaus = find_plateaus(da, atol=sc.scalar(0.1), min_n_points=2)
     assert plateaus.sizes == {'plateau': 1}
     sc.testing.assert_identical(
         plateaus.coords['plateau'], sc.array(dims=['plateau'], values=[0], unit=None)
     )
 
-    plateau0 = sc.DataArray(sc.array(dims=['t'], values=[10, 10]))
+    plateau0 = sc.DataArray(
+        sc.array(dims=['t'], values=[10, 10]),
+        coords={'t': sc.array(dims=['t'], values=[0, 1])},
+    )
     sc.testing.assert_identical(plateaus[0].value, plateau0)
 
 
@@ -156,16 +194,24 @@ def test_find_plateaus_adjacent_plateaus():
          +------------>
                      t
     """
-    da = sc.DataArray(sc.array(dims=['t'], values=[0, 0, 1, 1, 1]))
+    da = sc.DataArray(
+        sc.array(dims=['t'], values=[0, 0, 1, 1, 1]), coords={'t': sc.arange('t', 5)}
+    )
     plateaus = find_plateaus(da, atol=sc.scalar(0.1), min_n_points=2)
     assert plateaus.sizes == {'plateau': 2}
     sc.testing.assert_identical(
         plateaus.coords['plateau'], sc.array(dims=['plateau'], values=[0, 1], unit=None)
     )
 
-    plateau0 = sc.DataArray(sc.array(dims=['t'], values=[0, 0]))
+    plateau0 = sc.DataArray(
+        sc.array(dims=['t'], values=[0, 0]),
+        coords={'t': sc.array(dims=['t'], values=[0, 1])},
+    )
     sc.testing.assert_identical(plateaus[0].value, plateau0)
-    plateau1 = sc.DataArray(sc.array(dims=['t'], values=[1, 1, 1]))
+    plateau1 = sc.DataArray(
+        sc.array(dims=['t'], values=[1, 1, 1]),
+        coords={'t': sc.array(dims=['t'], values=[2, 3, 4])},
+    )
     sc.testing.assert_identical(plateaus[1].value, plateau1)
 
 
@@ -178,14 +224,19 @@ def test_find_plateaus_adjacent_plateaus_select_long():
          +------------>
                      t
     """
-    da = sc.DataArray(sc.array(dims=['t'], values=[0, 0, 1, 1, 1]))
+    da = sc.DataArray(
+        sc.array(dims=['t'], values=[0, 0, 1, 1, 1]), coords={'t': sc.arange('t', 5)}
+    )
     plateaus = find_plateaus(da, atol=sc.scalar(0.1), min_n_points=3)
     assert plateaus.sizes == {'plateau': 1}
     sc.testing.assert_identical(
         plateaus.coords['plateau'], sc.array(dims=['plateau'], values=[0], unit=None)
     )
 
-    plateau0 = sc.DataArray(sc.array(dims=['t'], values=[1, 1, 1]))
+    plateau0 = sc.DataArray(
+        sc.array(dims=['t'], values=[1, 1, 1]),
+        coords={'t': sc.array(dims=['t'], values=[2, 3, 4])},
+    )
     sc.testing.assert_identical(plateaus[0].value, plateau0)
 
 
@@ -198,13 +249,34 @@ def test_find_plateaus_adjacent_plateaus_select_none():
          +------------>
                      t
     """
-    da = sc.DataArray(sc.array(dims=['t'], values=[0, 0, 1, 1, 1]))
+    da = sc.DataArray(
+        sc.array(dims=['t'], values=[0, 0, 1, 1, 1]), coords={'t': sc.arange('t', 5)}
+    )
     plateaus = find_plateaus(da, atol=sc.scalar(0.1), min_n_points=4)
     assert plateaus.sizes == {'plateau': 0}
     sc.testing.assert_identical(
         plateaus.coords['plateau'],
         sc.array(dims=['plateau'], values=[], dtype=da.dtype, unit=None),
     )
+
+
+def test_find_plateaus_slow_slope():
+    da = sc.DataArray(
+        sc.concat(
+            [
+                sc.linspace('s', 0.0, 1.0, 100, endpoint=False),
+                sc.full(value=1.0, sizes={'s': 10}),
+            ],
+            dim='s',
+        ),
+        coords={'s': sc.arange('s', 110)},
+    )
+    plateaus = find_plateaus(da, atol=sc.scalar(1e-6), min_n_points=2)
+    assert plateaus.sizes == {'plateau': 1}
+    plateau0 = sc.DataArray(
+        sc.full(value=1.0, sizes={'s': 10}), coords={'s': sc.arange('s', 100, 110)}
+    )
+    sc.testing.assert_identical(plateaus[0].value, plateau0)
 
 
 def test_collapse_plateaus():
@@ -223,7 +295,7 @@ def test_collapse_plateaus():
             't': sc.array(dims=['t'], values=[12, 13, 14, 15, 16, 17, 18], unit='s')
         },
     )
-    plateaus = find_plateaus(da, atol=sc.scalar(0.1), min_n_points=2)
+    plateaus = find_plateaus(da, atol=sc.scalar(0.1, unit='Hz'), min_n_points=2)
     collapsed = collapse_plateaus(plateaus, coord='t')
 
     t = sc.array(dims=['plateau', 't'], values=[[12, 14], [15, 18]], unit='s')
@@ -248,16 +320,25 @@ def test_find_plateaus_plateaus_negative():
          | 0 0
     data v
     """
-    da = sc.DataArray(sc.array(dims=['t'], values=[-5, -5, -3, -3, -3, -2]))
+    da = sc.DataArray(
+        sc.array(dims=['t'], values=[-5, -5, -3, -3, -3, -2]),
+        coords={'t': sc.arange('t', 6)},
+    )
     plateaus = find_plateaus(da, atol=sc.scalar(0.1), min_n_points=2)
     assert plateaus.sizes == {'plateau': 2}
     sc.testing.assert_identical(
         plateaus.coords['plateau'], sc.array(dims=['plateau'], values=[0, 1], unit=None)
     )
 
-    plateau0 = sc.DataArray(sc.array(dims=['t'], values=[-5, -5]))
+    plateau0 = sc.DataArray(
+        sc.array(dims=['t'], values=[-5, -5]),
+        coords={'t': sc.array(dims=['t'], values=[0, 1])},
+    )
     sc.testing.assert_identical(plateaus[0].value, plateau0)
-    plateau1 = sc.DataArray(sc.array(dims=['t'], values=[-3, -3, -3]))
+    plateau1 = sc.DataArray(
+        sc.array(dims=['t'], values=[-3, -3, -3]),
+        coords={'t': sc.array(dims=['t'], values=[2, 3, 4])},
+    )
     sc.testing.assert_identical(plateaus[1].value, plateau1)
 
 
