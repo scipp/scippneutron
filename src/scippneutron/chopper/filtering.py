@@ -2,7 +2,6 @@
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
 import uuid
-import warnings
 from typing import Union
 
 import numpy as np
@@ -28,8 +27,8 @@ def find_plateaus(
     but regions with small derivative.
     This means that if there is a slope smaller than the noise in the input data,
     that sloped region may be falsely identified as a plateau.
-    ``find_plateaus`` attempts to catch such a case and raise a warning, but you
-    should always inspect the result!
+    ``find_plateaus`` attempts to catch such a case and raise a ``RuntimeError``,
+    but you should always inspect the result!
 
     Parameters
     ----------
@@ -85,10 +84,8 @@ def find_plateaus(
     )
     plateaus.coords[plateau_dim] = sc.arange(plateau_dim, len(plateaus), unit=None)
     if exceeds_tolerance := _check_total_tolerance(plateaus, atol=atol):
-        warnings.warn(
-            f'The following plateaus exceed the tolerance: {exceeds_tolerance}',
-            UserWarning,
-            stacklevel=2,
+        raise RuntimeError(
+            f'The following plateaus exceed the tolerance: {exceeds_tolerance}'
         )
     return plateaus
 
