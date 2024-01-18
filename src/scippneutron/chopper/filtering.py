@@ -57,6 +57,10 @@ def find_plateaus(
         raise NotImplementedError(
             'find_plateaus only supports 1-dimensional data, ' f'got {data.ndim} dims'
         )
+    if not sc.issorted(data.coords[data.dim], data.dim, order='ascending'):
+        raise sc.CoordError(
+            'The coord used by find_plateaus must be sorted in ascending order'
+        )
 
     min_n_points = (
         min_n_points
@@ -80,13 +84,9 @@ def find_plateaus(
         {group_label: plateau_dim}
     )
     plateaus.coords[plateau_dim] = sc.arange(plateau_dim, len(plateaus), unit=None)
-    if sc.any(
-        exceeds_tolerance := _check_total_tolerance(
-            plateaus, atol=atol, raw_coord=data.coords[data.dim]
-        )
-    ):
+    if exceeds_tolerance := _check_total_tolerance(plateaus, atol=atol):
         warnings.warn(
-            f'The following plateaus exceed the tolerance: {exceeds_tolerance.values}',
+            f'The following plateaus exceed the tolerance: {exceeds_tolerance}',
             UserWarning,
             stacklevel=2,
         )
@@ -99,20 +99,27 @@ def _derive(da: sc.DataArray) -> sc.Variable:
     return (y[1:] - y[:-1]) / (x[1:] - x[:-1])
 
 
-def _check_total_tolerance(
-    plateaus: sc.DataArray, *, atol: sc.Variable, raw_coord: sc.Variable
-) -> sc.Variable:
-    # ``atol`` applies to the derivative, but here, we want to check the total variation
-    # within each plateau, so we need to convert ``atol`` into a tolerance for the data.
-    # This function uses a crude approach that multiplies ``atol`` by the average
-    # change in the coordinate.
-    # For equidistant data, the coordinate factors out of the derivative
-    # and the approach here is exact.
-    # The factor of 2 is a fudge factor to account for cases where the first
-    # point of a plateau is far off the mean.
-    diff = plateaus.bins.max() - plateaus.bins.min()
-    tol = 2 * atol * sc.mean(raw_coord[1:] - raw_coord[:-1])
-    return diff.data > tol.to(unit=diff.unit)
+def _check_total_tolerance(plateaus: sc.DataArray, *, atol: sc.Variable) -> list[int]:
+    # We assume that the noise within a plateau is random.
+    # So if the points within a plateau were reordered arbitrarily, the slopes between
+    # all neighbors must still be within tolerance.
+    # So this function takes the extreme points of each plateau, pretends they
+    # are next to each other and computes the corresponding slope and compares
+    # it to the tolerance.
+    #
+    # There is a fudge factor of 2 in the comparison to allow for some larger
+    # deviations, especially around the ends of a plateau.
+    # Without it, the check would almost always fail.
+    exceeds_tolerance = []
+    for plateau_bin in plateaus:
+        plateau = plateau_bin.value
+        max_diff = plateau.data.max() - plateau.data.min()
+        coord = plateau.coords[plateau.dim]
+        average_step = sc.mean(coord[1:] - coord[:-1])
+        slope = max_diff / average_step
+        if slope > 2 * atol.to(unit=slope.unit):
+            exceeds_tolerance.append(plateau_bin.coords[plateaus.dim].value)
+    return exceeds_tolerance
 
 
 def _next_highest(x: sc.Variable) -> sc.Variable:
