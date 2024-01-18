@@ -348,7 +348,8 @@ def offset_to_time_of_flight(
     time_offset :
         Time offset from the start of the frame emitting the neutron.
     source_chopper :
-        Chopper defining the source location and time-of-flight time origin.
+        Chopper defining the source location and time-of-flight time origin (as the
+        center of the slit opening).
     """
     if len(source_chopper.time_open) != 1:
         raise NotImplementedError(
@@ -365,6 +366,16 @@ def offset_to_time_of_flight_wfm(
     source_chopper: SourceChopper,
     subframe_bounds: SubframeBounds,
 ) -> OffsetFromTimeOfFlight:
+    """
+    Compute offset from time-of-flight in the WFM case.
+
+    For WFM there is not a single time-of-flight "origin", but one for each subframe.
+    For each subframe, the time-of-flight origin may be defined as the center of the
+    respective chopper slit opening of the WFM chopper. In some cases there is a pair
+    WFM choppers, in which case the time-of-flight origin may be defined using some
+    combination of the two choppers. This is not supported yet, as we only support
+    a single source chopper input.
+    """
     if len(source_chopper.time_open) != subframe_bounds['time'].sizes['subframe']:
         raise NotImplementedError(
             "Source chopper openings do not match the subframe count, this is ."
@@ -374,7 +385,9 @@ def offset_to_time_of_flight_wfm(
     neg_shift = sc.zeros(
         dims=['subframe'], shape=[times.sizes['subframe'] + 1], unit='s'
     )
-    padding = sc.scalar(1000.0, unit='s').to(unit=times.unit)
+    # All times before the first subframe and after the last subframe should be
+    # replaced by NaN. We add a large padding to make sure all events are covered.
+    padding = sc.scalar(1e9, unit='s').to(unit=times.unit)
     low = times[0] - padding
     high = times[-1] + padding
     times = sc.concat([low, times, high], 'subframe')
