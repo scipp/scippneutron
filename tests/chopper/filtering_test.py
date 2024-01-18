@@ -281,11 +281,11 @@ def test_find_plateaus_slow_slope():
 
 
 def test_find_plateaus_slow_slope_false_positive_caught():
-    da = sc.DataArray(
-        sc.linspace('s', 0.0, 1.0, 100), coords={'s': sc.arange('s', 100)}
-    )
+    da = sc.DataArray(sc.arange('s', 0.0, 1.0, 0.01), coords={'s': sc.arange('s', 100)})
     with pytest.warns(match='tolerance'):
-        plateaus = find_plateaus(da, atol=sc.scalar(1e-1), min_n_points=2)
+        plateaus = find_plateaus(da, atol=sc.scalar(0.02), min_n_points=2)
+        print(plateaus)
+        print(plateaus[0].value)
     assert plateaus.sizes == {'plateau': 1}
     sc.testing.assert_identical(plateaus[0].value, da)
 
