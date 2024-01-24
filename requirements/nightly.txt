@@ -14,10 +14,8 @@ contourpy==1.2.0
     # via matplotlib
 cycler==0.12.1
     # via matplotlib
-fonttools==4.46.0
+fonttools==4.47.2
     # via matplotlib
-graphlib-backport==1.0.3
-    # via scipp
 h5py==3.10.0
     # via
     #   -r nightly.in
@@ -30,9 +28,9 @@ kiwisolver==1.4.5
     # via matplotlib
 matplotlib==3.8.2
     # via plopp
-pillow==10.1.0
+pillow==10.2.0
     # via matplotlib
-platformdirs==4.0.0
+platformdirs==4.1.0
     # via pooch
 plopp @ git+https://github.com/scipp/plopp@main
     # via -r nightly.in
@@ -52,7 +50,7 @@ scipp @ https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly-c
     #   scippnexus
 scippnexus @ git+https://github.com/scipp/scippnexus@main
     # via -r nightly.in
-scipy==1.11.4
+scipy==1.12.0
     # via
     #   -r nightly.in
     #   scippnexus
