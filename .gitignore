@@ -7,6 +7,9 @@ html
 
 *.sw?
 
+# Environments
+venv
+
 # Caches
 .clangd/
 *.ipynb_checkpoints
