@@ -1,0 +1,13 @@
+<div>
+    ${style_sheet}
+    <div class="scn-disk-chopper">
+        <div class="scn-disk-chopper-fields">
+            ${fields}
+        </div>
+        <div class="scn-disk-chopper-image">
+            <div>
+            ${image}
+            </div>
+        </div>
+    </div>
+</div>

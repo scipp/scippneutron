@@ -2,6 +2,7 @@
 
 ```{toctree}
 installation
+chopper/index
 coordinate-transformations
 groupby
 from-mantid-to-scipp

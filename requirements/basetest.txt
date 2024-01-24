@@ -23,7 +23,7 @@ execnet==2.0.2
     # via pytest-xdist
 executing==2.0.1
     # via stack-data
-hypothesis==6.91.0
+hypothesis==6.91.1
     # via -r basetest.in
 iniconfig==2.0.0
     # via pytest
