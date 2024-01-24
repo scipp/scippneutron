@@ -159,6 +159,17 @@ def frame_at_detector(
     choppers: Choppers,
     ltotal: Ltotal,
 ) -> FrameAtDetector:
+    """
+    Return the frame at the detector.
+
+    This is the result of propagating the source pulse through the chopper cascade to
+    the detector. The detector may be a monitor or a detector after scattering off the
+    sample. The frame bounds are then computed from this.
+
+    It is assumed that the opening and closing times of the input choppers have been
+    setup correctly. This includes a correct definition of the offsets in
+    pulse-skipping mode, i.e., the caller must know which pulses are in use.
+    """
     frames = chopper_cascade.FrameSequence.from_source_pulse(
         time_min=source_time_range[0],
         time_max=source_time_range[-1],
@@ -329,6 +340,11 @@ def offset_to_time_of_flight(
 ) -> OffsetFromTimeOfFlight:
     """
     Offset from the time-of-flight of neutrons passing through a chopper cascade.
+
+    This is a naive approach for defining the time of flight. We are not sure this
+    is going to be used in practice. An possible alternative might be to calibrate
+    the time-of-flight using a sample with a known Bragg edge. This is not implemented
+    currently.
 
     A chopper is used to define (1) the "source" location and (2) the time-of-flight
     time origin. The time-of-flight is then the time difference between the time of
