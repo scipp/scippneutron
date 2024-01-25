@@ -55,6 +55,15 @@ jobs:
           ref: ${{ inputs.branch == '' && github.ref_name || inputs.branch }}
           fetch-depth: 0  # history required so cmake can determine version
       - uses: mamba-org/setup-micromamba@v1
+        if: ${{ inputs.version != '' }}
+        with:
+          environment-file: .buildconfig/ci-linux.yml
+          cache-environment: true
+          create-args: >-
+            python=3.10
+            scippneutron==${{ inputs.version }}
+      - uses: mamba-org/setup-micromamba@v1
+        if: ${{ inputs.version == '' }}
         with:
           environment-file: .buildconfig/ci-linux.yml
           cache-environment: true
@@ -63,8 +72,6 @@ jobs:
             conda-build
       - run: conda develop src
         if: ${{ inputs.version == '' }}
-      - run: conda install -c scipp 'scippneutron==${{ inputs.version }}'
-        if: ${{ inputs.version != '' }}
       - run: |
           python -m sphinx -j2 -v -b html -d doctrees docs html
           python -m sphinx -j2 -v -b doctest -d doctrees docs html
