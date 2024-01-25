@@ -21,7 +21,7 @@ decorator==5.1.1
     # via ipython
 executing==2.0.1
     # via stack-data
-fonttools==4.46.0
+fonttools==4.47.2
     # via matplotlib
 graphviz==0.20.1
     # via scipp
@@ -32,6 +32,8 @@ h5py==3.10.0
     #   scippnexus
 idna==3.6
     # via requests
+importlib-resources==6.1.1
+    # via matplotlib
 ipython==8.9.0
     # via -r base.in
 jedi==0.19.1
@@ -44,7 +46,7 @@ matplotlib==3.8.2
     #   scipp
 matplotlib-inline==0.1.6
     # via ipython
-numpy==1.26.2
+numpy==1.26.3
     # via
     #   -r base.in
     #   contourpy
@@ -62,11 +64,11 @@ pexpect==4.9.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
-pillow==10.1.0
+pillow==10.2.0
     # via matplotlib
-platformdirs==4.0.0
+platformdirs==4.1.0
     # via pooch
-plopp==23.11.0
+plopp==24.1.1
     # via scipp
 pooch==1.8.0
     # via
@@ -93,11 +95,10 @@ requests==2.31.0
 scipp[all]==23.12.0
     # via
     #   -r base.in
-    #   scipp
     #   scippnexus
-scippnexus==23.12.0
+scippnexus==23.12.1
     # via -r base.in
-scipy==1.11.4
+scipy==1.12.0
     # via
     #   -r base.in
     #   scipp
@@ -108,11 +109,13 @@ six==1.16.0
     #   python-dateutil
 stack-data==0.6.3
     # via ipython
-traitlets==5.14.0
+traitlets==5.14.1
     # via
     #   ipython
     #   matplotlib-inline
 urllib3==2.1.0
     # via requests
-wcwidth==0.2.12
+wcwidth==0.2.13
     # via prompt-toolkit
+zipp==3.17.0
+    # via importlib-resources
