@@ -55,6 +55,7 @@ minversion = "7.0"
 addopts = """
 --strict-config
 --strict-markers
+--import-mode=importlib
 -ra
 -v
 """
