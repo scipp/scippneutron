@@ -1,4 +1,5 @@
 import json
+import sys
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
@@ -12,7 +13,8 @@ import scippnexus as snx
 
 from scippneutron.io.nexus.load_nexus import json_nexus_group, load_nexus_json_str
 
-from .nexus_helpers import NexusBuilder, Source, Stream
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from nexus_helpers import NexusBuilder, Source, Stream  # noqa: E402
 
 
 class JsonNexusExampleLoader:
