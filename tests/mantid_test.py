@@ -14,7 +14,15 @@ import scipp as sc
 import scippneutron as scn
 from scippneutron._utils import get_attrs
 
-from .mantid_helper import mantid_is_available
+
+def mantid_is_available():
+    try:
+        import mantid  # noqa: F401
+
+        return True
+    except ModuleNotFoundError:
+        return False
+
 
 pytestmark = pytest.mark.skipif(
     not mantid_is_available(), reason='Mantid framework is unavailable'
