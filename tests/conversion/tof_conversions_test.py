@@ -609,3 +609,16 @@ def test_hkl_elements_from_hkl_vec():
     sc.testing.assert_identical(h, hkl_vec.fields.x)
     sc.testing.assert_identical(k, hkl_vec.fields.y)
     sc.testing.assert_identical(l, hkl_vec.fields.z)
+
+
+@pytest.mark.parametrize('pulse_time', (0.0, 1.0))
+def test_time_at_sample(pulse_time):
+    ts = tof_conv.time_at_sample_from_tof(
+        pulse_time=sc.scalar(pulse_time, unit='s'),
+        tof=sc.scalar(3.0, unit='s'),
+        L2=sc.scalar(2.0, unit='m'),
+        wavelength=(sc.constants.h / sc.constants.m_n / sc.scalar(2.0, unit='m/s')).to(
+            unit='Å'
+        ),
+    )
+    assert sc.allclose(ts, sc.scalar(pulse_time + 2.0, unit='s'))

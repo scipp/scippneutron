@@ -13,7 +13,7 @@ from typing import Tuple
 import numpy as np
 import scipp as sc
 import scipp.constants as const
-from scipp.typing import Variable
+from scipp.typing import Variable, VariableLike
 
 from .._utils import as_float_type, elem_dtype, elem_unit
 
@@ -658,3 +658,54 @@ def hkl_elements_from_hkl_vec(
         3rd component of the hkl vector.
     """
     return hkl_vec.fields.x, hkl_vec.fields.y, hkl_vec.fields.z
+
+
+def time_at_sample_from_tof(
+    *,
+    pulse_time: VariableLike,
+    tof: VariableLike,
+    L2: VariableLike,
+    wavelength: VariableLike,
+) -> VariableLike:
+    """Compute the absolute time when the neutron passed through the sample.
+
+    The result is
+
+    .. math::
+
+        t_{sample} = t_{pulse} + t_{of} - L_2 / v
+
+    where
+
+    .. math::
+
+        v = \\frac{h}{m_n \\lambda}
+
+    where :math:`v` is the estimated velocity of the neutron over its path from
+    sample to detector and :math:`\\lambda` is the wavelength of the neutron.
+
+    Parameters
+    ----------
+    pulse_time:
+        absolute time when time of flight is 0
+    tof:
+        the time of fligth of the neutron
+    L2:
+        path length from sample to detector
+    wavelength:
+        wavelength of the neutron (at the detector).
+        Assuming this did not change during the neutrons
+        travel from sample to detector this can be used to compute the
+        velocity the neutron had between the sample and the detector.
+
+    Returns
+    -------
+    :
+        :math:`t_{sample}`
+    """
+    c = sc.to_unit(
+        const.h / const.m_n,
+        sc.units.angstrom * elem_unit(L2) / elem_unit(tof),
+        copy=False,
+    )
+    return pulse_time + tof - L2 * wavelength / c
