@@ -3,8 +3,10 @@
 import datetime
 import multiprocessing as mp
 import platform
+import sys
 import warnings
 from cmath import isclose
+from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
@@ -18,7 +20,8 @@ from scippneutron.data_streaming._warnings import (
     UnknownFlatbufferIdWarning,
 )
 
-from .io.nexus_helpers import EventData, Log, NexusBuilder, Stream
+sys.path.insert(0, str(Path(__file__).resolve().parent / 'io'))
+from nexus_helpers import EventData, Log, NexusBuilder, Stream  # noqa: E402
 
 if platform.system() == "Darwin":
     pytest.skip(

@@ -14,10 +14,8 @@ import scipp as sc
 import scippneutron as scn
 from scippneutron._utils import get_attrs
 
-from .mantid_helper import mantid_is_available
-
-pytestmark = pytest.mark.skipif(
-    not mantid_is_available(), reason='Mantid framework is unavailable'
+mantid = pytest.importorskip(
+    'mantid.simpleapi', reason='Mantid framework is unavailable'
 )
 
 
@@ -36,8 +34,6 @@ def memory_is_at_least_gb(required):
 class TestMantidConversion(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        import mantid.simpleapi as mantid
-
         # This is from the Mantid system-test data
         filename = "CNCS_51936_event.nxs"
         # This needs OutputWorkspace specified, as it doesn't
@@ -50,8 +46,6 @@ class TestMantidConversion(unittest.TestCase):
         )
 
     def test_Workspace2D_data_array(self):
-        import mantid.simpleapi as mantid
-
         eventWS = self.base_event_ws
         ws = mantid.Rebin(eventWS, 10000, PreserveEvents=False)
         d = scn.mantid.convert_Workspace2D_to_data_array(ws)
@@ -65,8 +59,6 @@ class TestMantidConversion(unittest.TestCase):
         assert d.coords['tof'].dtype == sc.DType.float64
 
     def test_Workspace2D(self):
-        import mantid.simpleapi as mantid
-
         eventWS = self.base_event_ws
         ws = mantid.Rebin(eventWS, 10000, PreserveEvents=False)
         d = scn.mantid.convert_Workspace2D_to_data_group(ws)
@@ -80,8 +72,6 @@ class TestMantidConversion(unittest.TestCase):
         assert d["data"].coords['tof'].dtype == sc.DType.float64
 
     def test_EventWorkspace_data_array(self):
-        import mantid.simpleapi as mantid
-
         eventWS = self.base_event_ws
         ws = mantid.Rebin(eventWS, 10000)
 
@@ -98,8 +88,6 @@ class TestMantidConversion(unittest.TestCase):
         self.assertLess(np.abs(delta.value), 1e-5)
 
     def test_EventWorkspace(self):
-        import mantid.simpleapi as mantid
-
         eventWS = self.base_event_ws
         ws = mantid.Rebin(eventWS, 10000)
 
@@ -117,8 +105,6 @@ class TestMantidConversion(unittest.TestCase):
         assert np.abs(delta.value) < 1e-5
 
     def test_EventWorkspace_empty_event_list_consistent_bin_indices(self):
-        import mantid.simpleapi as mantid
-
         ws = mantid.CloneWorkspace(self.base_event_ws)
         ws.getSpectrum(ws.getNumberHistograms() - 1).clear(removeDetIDs=True)
 
@@ -142,8 +128,6 @@ class TestMantidConversion(unittest.TestCase):
         assert sc.allclose(x["data"].coords['position'], y["data"].coords['position'])
 
     def test_advanced_geometry_with_absent_shape(self):
-        import mantid.simpleapi as mantid
-
         # single bank 3 by 3
         ws = mantid.CreateSampleWorkspace(
             NumBanks=1, BankPixelWidth=3, StoreInADS=False
@@ -173,8 +157,6 @@ class TestMantidConversion(unittest.TestCase):
         assert detector_info.coords['spectrum'].unit is None
 
     def test_EventWorkspace_no_y_unit(self):
-        import mantid.simpleapi as mantid
-
         tiny_event_ws = mantid.CreateSampleWorkspace(
             WorkspaceType='Event', NumBanks=1, NumEvents=1
         )
@@ -189,14 +171,10 @@ class TestMantidConversion(unittest.TestCase):
         assert d.data.bins.constituents['data'].unit == sc.units.one
 
     def test_from_mantid_LoadEmptyInstrument(self):
-        import mantid.simpleapi as mantid
-
         ws = mantid.LoadEmptyInstrument(InstrumentName='PG3')
         scn.from_mantid(ws)
 
     def test_from_mantid_CreateWorkspace(self):
-        import mantid.simpleapi as mantid
-
         dataX = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
         dataY = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
         ws = mantid.CreateWorkspace(
@@ -206,8 +184,6 @@ class TestMantidConversion(unittest.TestCase):
         assert d['data'].unit == sc.units.dimensionless
 
     def test_unit_conversion(self):
-        import mantid.simpleapi as mantid
-
         eventWS = self.base_event_ws
         ws = mantid.Rebin(eventWS, 10000, PreserveEvents=False)
         tmp = scn.mantid.convert_Workspace2D_to_data_array(ws)
@@ -233,8 +209,6 @@ class TestMantidConversion(unittest.TestCase):
         )
 
     def test_inelastic_unit_conversion(self):
-        import mantid.simpleapi as mantid
-
         eventWS = self.base_event_ws
         ws_deltaE = mantid.ConvertUnits(
             eventWS, Target='DeltaE', EMode='Direct', EFixed=3
@@ -281,8 +255,6 @@ class TestMantidConversion(unittest.TestCase):
 
     @staticmethod
     def _mask_bins_and_spectra(ws, xmin, xmax, num_spectra, indices=None):
-        import mantid.simpleapi as mantid
-
         masked_ws = mantid.MaskBins(
             ws, XMin=xmin, XMax=xmax, InputWorkspaceIndexSet=indices
         )
@@ -294,8 +266,6 @@ class TestMantidConversion(unittest.TestCase):
         return masked_ws
 
     def test_Workspace2D_common_bins_masks(self):
-        import mantid.simpleapi as mantid
-
         eventWS = self.base_event_ws
         ws = mantid.Rebin(eventWS, 10000, PreserveEvents=False)
         ws_x = ws.readX(0)
@@ -316,8 +286,6 @@ class TestMantidConversion(unittest.TestCase):
         )
 
     def test_Workspace2D_common_bins_not_common_masks(self):
-        import mantid.simpleapi as mantid
-
         eventWS = self.base_event_ws
         ws = mantid.Rebin(eventWS, 10000, PreserveEvents=False)
         ws_x = ws.readX(0)
@@ -340,8 +308,6 @@ class TestMantidConversion(unittest.TestCase):
         )
 
     def test_Workspace2D_not_common_bins_masks(self):
-        import mantid.simpleapi as mantid
-
         eventWS = self.base_event_ws
         ws = mantid.Rebin(eventWS, 10000, PreserveEvents=False)
         ws = mantid.ConvertUnits(ws, "Wavelength", EMode="Direct", EFixed=0.1231)
@@ -755,8 +721,6 @@ class TestMantidConversion(unittest.TestCase):
 
     def test_convert_array_run_log_to_attrs(self):
         # Given a Mantid workspace with a run log
-        import mantid.simpleapi as mantid
-
         target = mantid.CloneWorkspace(self.base_event_ws)
         log_name = "SampleTemp"
         self.assertTrue(
@@ -788,8 +752,6 @@ class TestMantidConversion(unittest.TestCase):
 
     def test_convert_scalar_run_log_to_attrs(self):
         # Given a Mantid workspace with a run log
-        import mantid.simpleapi as mantid
-
         target = mantid.CloneWorkspace(self.base_event_ws)
         log_name = "start_time"
         self.assertTrue(
@@ -809,8 +771,6 @@ class TestMantidConversion(unittest.TestCase):
         )
 
     def test_warning_raised_when_convert_run_log_with_unrecognised_units(self):
-        import mantid.simpleapi as mantid
-
         target = mantid.CloneWorkspace(self.base_event_ws)
         target.getRun()['LambdaRequest'].units = 'abcde'
         with warnings.catch_warnings(record=True) as caught_warnings:
@@ -826,8 +786,6 @@ class TestMantidConversion(unittest.TestCase):
             )
 
     def test_no_warning_raised_explicitly_dimensionless_run_log(self):
-        import mantid.simpleapi as mantid
-
         target = mantid.CloneWorkspace(self.base_event_ws)
         with warnings.catch_warnings(record=True) as caught_warnings:
             scn.mantid.convert_EventWorkspace_to_data_array(target, False)
@@ -850,8 +808,6 @@ class TestMantidConversion(unittest.TestCase):
             )
 
     def test_set_sample(self):
-        import mantid.simpleapi as mantid
-
         target = mantid.CloneWorkspace(self.base_event_ws)
         d = scn.mantid.convert_EventWorkspace_to_data_array(target, False)
         get_attrs(d)["sample"].value.setThickness(3)
@@ -862,8 +818,6 @@ class TestMantidConversion(unittest.TestCase):
         self.assertEqual(3, target.sample().getThickness())
 
     def test_sample_ub(self):
-        import mantid.simpleapi as mantid
-
         ws = mantid.CreateWorkspace(DataY=np.ones(1), DataX=np.arange(2))
         args = {'a': 1, 'b': 1, 'c': 1, 'alpha': 90, 'beta': 90, 'gamma': 90}
         mantid.SetUB(ws, **args)
@@ -881,8 +835,6 @@ class TestMantidConversion(unittest.TestCase):
         )
 
     def test_sample_without_ub(self):
-        import mantid.simpleapi as mantid
-
         ws = mantid.CreateWorkspace(DataY=np.ones(1), DataX=np.arange(2))
         assert not ws.sample().hasOrientedLattice()  # Sanity check input
         d = scn.mantid.from_mantid(ws)
@@ -924,7 +876,6 @@ class TestMantidConversion(unittest.TestCase):
         assert spherical['p-sign'].value < 0.0
 
     def test_detector_positions(self):
-        import mantid.simpleapi as mantid
         from mantid.kernel import V3D
 
         eventWS = mantid.CloneWorkspace(self.base_event_ws)
@@ -974,8 +925,6 @@ class TestMantidConversion(unittest.TestCase):
 
 @pytest.mark.skipif(not memory_is_at_least_gb(8), reason='Insufficient virtual memory')
 def test_load_mcstas_data():
-    import mantid.simpleapi as mantid
-
     wsg = mantid.LoadMcStas(
         scn.data.get_path('mcstas_sans.h5'), OutputWorkspace="test_mcstas_sans_wsg"
     )
@@ -1123,15 +1072,13 @@ def test_attrs_with_dims():
 
 
 def test_time_series_log_extraction():
-    import mantid.simpleapi as sapi
-
-    ws = sapi.CreateWorkspace(DataX=[0, 1], DataY=[1])
+    ws = mantid.CreateWorkspace(DataX=[0, 1], DataY=[1])
     times = [
         np.datetime64(t)
         for t in ['2021-01-01T00:00:00', '2021-01-01T00:30:00', '2021-01-01T00:50:00']
     ]
     for i, t in enumerate(times):
-        sapi.AddTimeSeriesLog(ws, Name='time_log', Time=str(t), Value=float(i))
+        mantid.AddTimeSeriesLog(ws, Name='time_log', Time=str(t), Value=float(i))
     dg = scn.from_mantid(ws)
     assert dg['time_log'].coords['time'].dtype == sc.DType.datetime64
     # check times
@@ -1144,7 +1091,7 @@ def test_time_series_log_extraction():
         sc.Variable(dims=['time'], values=np.arange(3.0)),
         dg['time_log'].data,
     )
-    sapi.DeleteWorkspace(ws)
+    mantid.DeleteWorkspace(ws)
 
 
 def test_from_mask_workspace():
@@ -1245,9 +1192,7 @@ def test_extract_energy_inital_when_not_present():
 
 
 def test_EventWorkspace_with_pulse_times():
-    import mantid.simpleapi as sapi
-
-    small_event_ws = sapi.CreateSampleWorkspace(
+    small_event_ws = mantid.CreateSampleWorkspace(
         WorkspaceType='Event', NumBanks=1, NumEvents=10
     )
     d = scn.mantid.convert_EventWorkspace_to_data_group(
@@ -1264,9 +1209,7 @@ def test_EventWorkspace_with_pulse_times():
 
 @pytest.mark.filterwarnings("ignore:convert_EventWorkspace_to_data_array")
 def test_EventWorkspace_with_pulse_times_array():
-    import mantid.simpleapi as sapi
-
-    small_event_ws = sapi.CreateSampleWorkspace(
+    small_event_ws = mantid.CreateSampleWorkspace(
         WorkspaceType='Event', NumBanks=1, NumEvents=10
     )
     d = scn.mantid.convert_EventWorkspace_to_data_array(

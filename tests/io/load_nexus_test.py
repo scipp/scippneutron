@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 import pathlib
+import sys
 import warnings
+from pathlib import Path
 from typing import Callable, List, Type, Union
 
 import numpy as np
@@ -13,7 +15,8 @@ import scippneutron
 from scippneutron._utils import get_attrs, get_meta
 from scippneutron.io.nexus.load_nexus import load_nexus_json_str
 
-from .nexus_helpers import (
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from nexus_helpers import (  # noqa: E402
     Chopper,
     Detector,
     EventData,
