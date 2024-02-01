@@ -162,18 +162,25 @@ def test_cannot_save_data_with_masks(da, data):
         save_to_buffer(da, coord=next(iter(da.coords)))
 
 
+@pytest.mark.skipif(
+    lambda: sc.__version__ >= (24, 1),
+    reason='This use of the dataarrays strategy needs Scipp >= 24.*',
+)
 @given(
     da=scst.dataarrays(
         data_args={
             'ndim': st.integers(min_value=2, max_value=4),
             'dtype': 'float64',
             'with_variances': True,
-        }
+        },
+        masks=False,
+        bin_edges=False,
     ),
     data=st.data(),
 )
 @settings(max_examples=20)
 def test_input_must_be_one_dimensional(da, data):
+    assume(da.coords)
     coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
     with pytest.raises(sc.DimensionError):
         save_to_buffer(da, coord=coord_name)
