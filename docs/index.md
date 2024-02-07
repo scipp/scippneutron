@@ -5,6 +5,9 @@
   </br></br>
 </span>
 
+:::{include} user-guide/installation.md
+:heading-offset: 1
+:::
 
 ## Where can I get help?
 
