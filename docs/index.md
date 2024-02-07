@@ -19,8 +19,6 @@ New questions can be asked by
 [opening](https://github.com/scipp/scippneutron/issues/new?assignees=&labels=question&template=question.md&title=)
 a new 'question' issue.
 
-## Documentation
-
 ```{toctree}
 ---
 hidden:
