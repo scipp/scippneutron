@@ -9,15 +9,10 @@
 :heading-offset: 1
 :::
 
-## Where can I get help?
+## Get in touch
 
-For questions not answered in the documentation,
-[this page](https://github.com/scipp/scippneutron/issues?utf8=%E2%9C%93&q=label%3Aquestion)
-provides a forum with discussions on problems already met/solved in the community.
-
-New questions can be asked by
-[opening](https://github.com/scipp/scippneutron/issues/new?assignees=&labels=question&template=question.md&title=)
-a new 'question' issue.
+- If you have questions that are not answered by these documentation pages, ask on [GitHub discussions](https://github.com/orgs/scipp/discussions). Please include a self-contained reproducible example if possible.
+- Report bugs (including unclear, missing, or wrong documentation!), suggest features or view the source code [on GitHub](https://github.com/scipp/scippneutron).
 
 ```{toctree}
 ---
