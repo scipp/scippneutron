@@ -23,13 +23,6 @@ Choppers = NewType('Choppers', Mapping[str, chopper_cascade.Chopper])
 Choppers used to define the frame parameters.
 """
 
-FirstPulseTime = NewType('FirstPulseTime', sc.Variable)
-"""
-In pulse-skipping mode this defines the (or a) first pulse.
-
-This identifies which pulses are used and which are skipped.
-"""
-
 FrameAtSample = NewType('FrameAtSample', chopper_cascade.Frame)
 """
 Result of passing the source pulse through the chopper cascade.
@@ -135,14 +128,24 @@ TimeZero = NewType('TimeZero', sc.Variable)
 Time of the start of the most recent pulse, typically NXevent_data/event_time_zero.
 """
 
+UnwrappedData = NewType('UnwrappedData', sc.DataArray)
+"""
+Detector data with unwrapped time offset and pulse time coordinates.
+"""
+
 TofData = NewType('TofData', sc.DataArray)
 """
-Detector data with resulting 'tof' coordinate.
+Detector data with time-of-flight and time zero coordinates.
 """
 
 
-OffsetFromTimeOfFlight = NewType('OffsetFromTimeOfFlight', sc.Variable)
-OffsetFromWrapped = NewType('OffsetFromWrapped', sc.Variable)
+TimeOffset = NewType('TimeOffset', sc.Variable)
+"""Unwrapped time offset relative to the pulse time."""
+
+DeltaFromWrapped = NewType('DeltaFromWrapped', sc.Variable)
+
+TimeOfFlightOrigin = NewType('TimeOfFlightOrigin', sc.Variable)
+"""Time relative to the pulse time defining the origin of the time-of-flight."""
 
 
 def frame_period(
@@ -259,7 +262,7 @@ def offset_from_wrapped(
     wrapped_time_offset: FrameWrappedTimeOffset,
     frame_bounds: FrameBounds,
     frame_period: FramePeriod,
-) -> OffsetFromWrapped:
+) -> DeltaFromWrapped:
     """
     Offset of the input time offsets from the start of the frame emitting the neutron.
 
@@ -311,7 +314,7 @@ def offset_from_wrapped(
         + sc.concat([frame_period, sc.zeros_like(frame_period)], dim),
         coords={dim: time.to(unit=elem_unit(wrapped_time_offset))},
     )
-    return OffsetFromWrapped(sc.lookup(offset, dim=dim)[wrapped_time_offset])
+    return DeltaFromWrapped(sc.lookup(offset, dim=dim)[wrapped_time_offset])
 
 
 def source_chopper(
@@ -334,10 +337,7 @@ def source_chopper(
     )
 
 
-def offset_to_time_of_flight(
-    time_offset: OffsetFromWrapped,
-    source_chopper: SourceChopper,
-) -> OffsetFromTimeOfFlight:
+def time_of_flight_origin(source_chopper: SourceChopper) -> TimeOfFlightOrigin:
     """
     Offset from the time-of-flight of neutrons passing through a chopper cascade.
 
@@ -361,8 +361,6 @@ def offset_to_time_of_flight(
 
     Parameters
     ----------
-    time_offset :
-        Time offset from the start of the frame emitting the neutron.
     source_chopper :
         Chopper defining the source location and time-of-flight time origin (as the
         center of the slit opening).
@@ -374,14 +372,23 @@ def offset_to_time_of_flight(
     source_time_open = source_chopper.time_open[0]
     source_time_close = source_chopper.time_close[0]
     time_zero = 0.5 * (source_time_open + source_time_close)
-    return OffsetFromTimeOfFlight(time_offset - time_zero)
+    return TimeOfFlightOrigin(time_zero)
 
 
-def offset_to_time_of_flight_wfm(
-    time_offset: OffsetFromWrapped,
+def time_offset(unwrapped: UnwrappedData) -> TimeOffset:
+    """
+    Extract the time offset coord of the unwrapped input data.
+    """
+    if unwrapped.bins is not None:
+        return TimeOffset(unwrapped.bins.coords['time_offset'])
+    return TimeOffset(unwrapped.coords['time_offset'])
+
+
+def time_of_flight_origin_wfm(
+    time_offset: TimeOffset,
     source_chopper: SourceChopper,
     subframe_bounds: SubframeBounds,
-) -> OffsetFromTimeOfFlight:
+) -> TimeOfFlightOrigin:
     """
     Compute offset from time-of-flight in the WFM case.
 
@@ -414,12 +421,47 @@ def offset_to_time_of_flight_wfm(
     neg_shift[::2] = sc.scalar(math.nan, unit='s')
     lut = sc.DataArray(neg_shift, coords={'subframe': times})
     # Will raise if subframes overlap, since coord for lookup table must be sorted
-    out = sc.lookup(lut, dim='subframe')[time_offset]
-    out += time_offset
-    return OffsetFromTimeOfFlight(out)
+    return TimeOfFlightOrigin(sc.lookup(lut, dim='subframe')[time_offset])
 
 
-def tof_data(da: RawData, offset: OffsetFromTimeOfFlight) -> TofData:
+def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
+    """
+    Return the input data with unwrapped time offset and pulse time.
+
+    The time offset is the time since the start of the frame emitting the neutron.
+    The pulse time is the time of the pulse that emitted the neutron.
+
+    Parameters
+    ----------
+    da :
+        The input data.
+    delta :
+        The positive delta that needs to be added to the input time offsets to unwrap
+        them. The same delta is also subtracted from the input time zero to obtain the
+        pulse time.
+    """
+    if da.bins is not None:
+        da = da.copy(deep=False)
+        da.data = sc.bins(**da.bins.constituents)
+        da.bins.coords['time_offset'] = da.bins.coords['event_time_offset'] + delta
+        da.bins.coords['pulse_time'] = da.bins.coords['event_time_zero'] - delta.to(
+            unit=elem_unit(da.bins.coords['event_time_zero']), dtype='int64'
+        )
+    else:
+        # 'time_of_flight' is the name in, e.g., NXmonitor
+        da = da.transform_coords(
+            time_offset=lambda time_of_flight: time_of_flight + delta,
+            keep_inputs=False,
+        )
+        # Generally the coord is now not ordered, might want to cut, swap, and concat,
+        # but it is unclear what to do with the split bin in the middle and how to
+        # join the two halves. The end of the last bin generally does not match the
+        # begin of the first bin, there may be a significant gap (which we could fill
+        # with NaNs or zeros), but there could also be a small overlap.
+    return UnwrappedData(da)
+
+
+def to_time_of_flight(da: UnwrappedData, origin: TimeOfFlightOrigin) -> TofData:
     """
     Return the input data with 'tof' and 'time_zero' coordinates.
 
@@ -437,20 +479,14 @@ def tof_data(da: RawData, offset: OffsetFromTimeOfFlight) -> TofData:
     if da.bins is not None:
         da = da.copy(deep=False)
         da.data = sc.bins(**da.bins.constituents)
-        da.bins.coords['tof'] = da.bins.coords['event_time_offset'] + offset
-        da.bins.coords['time_zero'] = da.coords['event_time_zero'] - offset.to(
-            unit=da.coords['event_time_zero'].unit, dtype='int64'
+        da.bins.coords['tof'] = da.bins.coords['time_offset'] + origin
+        da.bins.coords['time_zero'] = da.bins.coords['pulse_time'] - origin.to(
+            unit=elem_unit(da.bins.coords['pulse_time']), dtype='int64'
         )
     else:
-        # 'time_of_flight' is the name in, e.g., NXmonitor
         da = da.transform_coords(
-            tof=lambda time_of_flight: time_of_flight + offset, keep_inputs=False
+            tof=lambda time_offset: time_offset + origin, keep_inputs=False
         )
-        # Generally the coord is now not ordered, might want to cut, swap, and concat,
-        # but it is unclear what to do with the split bin in the middle and how to
-        # join the two halves. The end of the last bin generally does not match the
-        # begin of the first bin, there may be a significant gap (which we could fill
-        # with NaNs or zeros), but there could also be a small overlap.
     return TofData(da)
 
 
@@ -461,7 +497,8 @@ _common_providers = [
     pulse_wrapped_time_offset,
     source_chopper,
     offset_from_wrapped,
-    tof_data,
+    unwrap_data,
+    to_time_of_flight,
 ]
 
 _non_skipping = [frame_wrapped_time_offset]
@@ -471,8 +508,8 @@ _skipping = [
     time_zero,
 ]
 
-_wfm = [subframe_bounds, offset_to_time_of_flight_wfm]
-_non_wfm = [offset_to_time_of_flight]
+_wfm = [subframe_bounds, time_offset, time_of_flight_origin_wfm]
+_non_wfm = [time_of_flight_origin]
 
 
 def providers(pulse_skipping: bool = False, wfm: bool = False):
