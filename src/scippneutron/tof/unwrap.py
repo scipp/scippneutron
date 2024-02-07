@@ -11,7 +11,8 @@ functions defined here are meant to be used as providers for a Sciline pipeline.
 https://scipp.github.io/sciline/ on how to use Sciline.
 """
 import math
-from typing import Callable, Mapping, NewType, Optional, Tuple
+from dataclasses import dataclass
+from typing import Callable, Mapping, NewType, Optional, Tuple, Union
 
 import scipp as sc
 
@@ -106,6 +107,12 @@ If there is no pulse-shaping chopper, a fake chopper with time_open and time_clo
 set to the source pulse begin and end time should be used.
 """
 
+SampleDistance = NewType('SampleDistance', sc.Variable)
+"""
+Location of the sample along the incident beam. Origin must be consistent with chopper
+distance origin.
+"""
+
 SourceTimeRange = NewType('SourceTimeRange', Tuple[sc.Variable, sc.Variable])
 """
 Time range of the source pulse, used for computing frame bounds.
@@ -145,11 +152,13 @@ TimeOffset = NewType('TimeOffset', sc.Variable)
 DeltaFromWrapped = NewType('DeltaFromWrapped', sc.Variable)
 """Positive delta to be added to the input time offsets to unwrap them."""
 
-DeltaToTimeOfFlight = NewType('DeltaToTimeOfFlight', sc.Variable)
-"""Positive delta to be added to the unwrapped time offsets to obtain time-of-flight."""
 
-TimeOfFlightOrigin = NewType('TimeOfFlightOrigin', sc.Variable)
-"""Time relative to the pulse time defining the origin of the time-of-flight."""
+@dataclass
+class TimeOfFlightOrigin:
+    """The origin of the time-of-flight, time since pulse time and L1."""
+
+    time: Union[sc.Variable, sc.DataArray]
+    L1: sc.Variable
 
 
 def frame_period(
@@ -343,6 +352,7 @@ def source_chopper(
 
 def time_of_flight_origin_from_chopper(
     source_chopper: SourceChopper,
+    sample_distance: SampleDistance,
 ) -> TimeOfFlightOrigin:
     """
     Compute the time-of-flight origin from a source chopper.
@@ -378,7 +388,9 @@ def time_of_flight_origin_from_chopper(
     source_time_open = source_chopper.time_open[0]
     source_time_close = source_chopper.time_close[0]
     time_zero = 0.5 * (source_time_open + source_time_close)
-    return TimeOfFlightOrigin(time_zero)
+    return TimeOfFlightOrigin(
+        time=time_zero, L1=sample_distance - source_chopper.distance
+    )
 
 
 def time_offset(unwrapped: UnwrappedData) -> TimeOffset:
@@ -391,7 +403,9 @@ def time_offset(unwrapped: UnwrappedData) -> TimeOffset:
 
 
 def time_of_flight_origin_wfm_from_chopper(
-    source_chopper: SourceChopper, subframe_bounds: SubframeBounds
+    source_chopper: SourceChopper,
+    subframe_bounds: SubframeBounds,
+    sample_distance: SampleDistance,
 ) -> TimeOfFlightOrigin:
     """
     Compute the time-of-flight origin from a source chopper in the WFM case.
@@ -423,7 +437,10 @@ def time_of_flight_origin_wfm_from_chopper(
     ).rename_dims(cutout='subframe')
     # Set offsets before, between, and after subframes to NaN
     neg_shift[::2] = sc.scalar(math.nan, unit='s')
-    return TimeOfFlightOrigin(sc.DataArray(neg_shift, coords={'subframe': times}))
+    return TimeOfFlightOrigin(
+        time=sc.DataArray(neg_shift, coords={'subframe': times}),
+        L1=sample_distance - source_chopper.distance,
+    )
 
 
 def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
@@ -463,20 +480,9 @@ def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
     return UnwrappedData(da)
 
 
-def delta_to_time_of_flight(origin: TimeOfFlightOrigin) -> DeltaToTimeOfFlight:
-    return DeltaToTimeOfFlight(origin)
-
-
-def delta_to_time_of_flight_wfm(
-    origin: TimeOfFlightOrigin, time_offset: TimeOffset
-) -> DeltaToTimeOfFlight:
-    # Will raise if subframes overlap, since coord for lookup table must be sorted
-    return DeltaToTimeOfFlight(sc.lookup(origin, dim='subframe')[time_offset])
-
-
-def to_time_of_flight(da: UnwrappedData, delta: DeltaToTimeOfFlight) -> TofData:
+def to_time_of_flight(da: UnwrappedData, origin: TimeOfFlightOrigin) -> TofData:
     """
-    Return the input data with 'tof' and 'time_zero' coordinates.
+    Return the input data with 'tof', 'time_zero', and 'L1' coordinates.
 
     The 'tof' coordinate is the time-of-flight of the neutron, i.e., the time
     difference between the time of arrival of the neutron at the detector, and the
@@ -489,10 +495,17 @@ def to_time_of_flight(da: UnwrappedData, delta: DeltaToTimeOfFlight) -> TofData:
     with highly time-dependent properties, since precise event-filtering based on
     sample environment data may be required.
     """
+    time_offset = (
+        da.coords['time_offset'] if da.bins is None else da.bins.coords['time_offset']
+    )
+    delta = origin.time
+    if isinstance(delta, sc.DataArray):
+        # Will raise if subframes overlap, since coord for lookup table must be sorted
+        delta = sc.lookup(delta, dim='subframe')[time_offset]
     if da.bins is not None:
         da = da.copy(deep=False)
         da.data = sc.bins(**da.bins.constituents)
-        da.bins.coords['tof'] = da.bins.coords['time_offset'] + delta
+        da.bins.coords['tof'] = time_offset + delta
         da.bins.coords['time_zero'] = da.bins.coords['pulse_time'] - delta.to(
             unit=elem_unit(da.bins.coords['pulse_time']), dtype='int64'
         )
@@ -500,6 +513,7 @@ def to_time_of_flight(da: UnwrappedData, delta: DeltaToTimeOfFlight) -> TofData:
         da = da.transform_coords(
             tof=lambda time_offset: time_offset + delta, keep_inputs=False
         )
+    da.coords['L1'] = origin.L1
     return TofData(da)
 
 
@@ -524,14 +538,11 @@ _wfm = (subframe_bounds, time_offset, time_of_flight_origin_wfm_from_chopper)
 _non_wfm = (time_of_flight_origin_from_chopper,)
 
 
-def time_of_flight_providers(wfm: bool = False) -> tuple[Callable]:
+def time_of_flight_providers() -> tuple[Callable]:
     """
     Return the providers computing the time-of-flight and time-zero coordinates.
     """
-    return (
-        delta_to_time_of_flight_wfm if wfm else delta_to_time_of_flight,
-        to_time_of_flight,
-    )
+    return (to_time_of_flight,)
 
 
 def time_of_flight_origin_from_choppers_providers(wfm: bool = False):
