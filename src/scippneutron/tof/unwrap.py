@@ -11,7 +11,7 @@ functions defined here are meant to be used as providers for a Sciline pipeline.
 https://scipp.github.io/sciline/ on how to use Sciline.
 """
 import math
-from typing import Mapping, NewType, Optional, Tuple
+from typing import Callable, Mapping, NewType, Optional, Tuple
 
 import scipp as sc
 
@@ -143,6 +143,10 @@ TimeOffset = NewType('TimeOffset', sc.Variable)
 """Unwrapped time offset relative to the pulse time."""
 
 DeltaFromWrapped = NewType('DeltaFromWrapped', sc.Variable)
+"""Positive delta to be added to the input time offsets to unwrap them."""
+
+DeltaToTimeOfFlight = NewType('DeltaToTimeOfFlight', sc.Variable)
+"""Positive delta to be added to the unwrapped time offsets to obtain time-of-flight."""
 
 TimeOfFlightOrigin = NewType('TimeOfFlightOrigin', sc.Variable)
 """Time relative to the pulse time defining the origin of the time-of-flight."""
@@ -337,9 +341,11 @@ def source_chopper(
     )
 
 
-def time_of_flight_origin(source_chopper: SourceChopper) -> TimeOfFlightOrigin:
+def time_of_flight_origin_from_chopper(
+    source_chopper: SourceChopper,
+) -> TimeOfFlightOrigin:
     """
-    Offset from the time-of-flight of neutrons passing through a chopper cascade.
+    Compute the time-of-flight origin from a source chopper.
 
     This is a naive approach for defining the time of flight. We are not sure this
     is going to be used in practice. An possible alternative might be to calibrate
@@ -384,13 +390,11 @@ def time_offset(unwrapped: UnwrappedData) -> TimeOffset:
     return TimeOffset(unwrapped.coords['time_offset'])
 
 
-def time_of_flight_origin_wfm(
-    time_offset: TimeOffset,
-    source_chopper: SourceChopper,
-    subframe_bounds: SubframeBounds,
+def time_of_flight_origin_wfm_from_chopper(
+    source_chopper: SourceChopper, subframe_bounds: SubframeBounds
 ) -> TimeOfFlightOrigin:
     """
-    Compute offset from time-of-flight in the WFM case.
+    Compute the time-of-flight origin from a source chopper in the WFM case.
 
     For WFM there is not a single time-of-flight "origin", but one for each subframe.
     For each subframe, the time-of-flight origin may be defined as the center of the
@@ -419,9 +423,7 @@ def time_of_flight_origin_wfm(
     ).rename_dims(cutout='subframe')
     # Set offsets before, between, and after subframes to NaN
     neg_shift[::2] = sc.scalar(math.nan, unit='s')
-    lut = sc.DataArray(neg_shift, coords={'subframe': times})
-    # Will raise if subframes overlap, since coord for lookup table must be sorted
-    return TimeOfFlightOrigin(sc.lookup(lut, dim='subframe')[time_offset])
+    return TimeOfFlightOrigin(sc.DataArray(neg_shift, coords={'subframe': times}))
 
 
 def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
@@ -461,7 +463,18 @@ def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
     return UnwrappedData(da)
 
 
-def to_time_of_flight(da: UnwrappedData, origin: TimeOfFlightOrigin) -> TofData:
+def delta_to_time_of_flight(origin: TimeOfFlightOrigin) -> DeltaToTimeOfFlight:
+    return DeltaToTimeOfFlight(origin)
+
+
+def delta_to_time_of_flight_wfm(
+    origin: TimeOfFlightOrigin, time_offset: TimeOffset
+) -> DeltaToTimeOfFlight:
+    # Will raise if subframes overlap, since coord for lookup table must be sorted
+    return DeltaToTimeOfFlight(sc.lookup(origin, dim='subframe')[time_offset])
+
+
+def to_time_of_flight(da: UnwrappedData, delta: DeltaToTimeOfFlight) -> TofData:
     """
     Return the input data with 'tof' and 'time_zero' coordinates.
 
@@ -479,18 +492,18 @@ def to_time_of_flight(da: UnwrappedData, origin: TimeOfFlightOrigin) -> TofData:
     if da.bins is not None:
         da = da.copy(deep=False)
         da.data = sc.bins(**da.bins.constituents)
-        da.bins.coords['tof'] = da.bins.coords['time_offset'] + origin
-        da.bins.coords['time_zero'] = da.bins.coords['pulse_time'] - origin.to(
+        da.bins.coords['tof'] = da.bins.coords['time_offset'] + delta
+        da.bins.coords['time_zero'] = da.bins.coords['pulse_time'] - delta.to(
             unit=elem_unit(da.bins.coords['pulse_time']), dtype='int64'
         )
     else:
         da = da.transform_coords(
-            tof=lambda time_offset: time_offset + origin, keep_inputs=False
+            tof=lambda time_offset: time_offset + delta, keep_inputs=False
         )
     return TofData(da)
 
 
-_common_providers = [
+_common_providers = (
     frame_at_detector,
     frame_bounds,
     frame_period,
@@ -498,21 +511,45 @@ _common_providers = [
     source_chopper,
     offset_from_wrapped,
     unwrap_data,
-    to_time_of_flight,
-]
+)
 
-_non_skipping = [frame_wrapped_time_offset]
-_skipping = [
+_non_skipping = (frame_wrapped_time_offset,)
+_skipping = (
     frame_wrapped_time_offset_pulse_skipping,
     pulse_offset,
     time_zero,
-]
+)
 
-_wfm = [subframe_bounds, time_offset, time_of_flight_origin_wfm]
-_non_wfm = [time_of_flight_origin]
+_wfm = (subframe_bounds, time_offset, time_of_flight_origin_wfm_from_chopper)
+_non_wfm = (time_of_flight_origin_from_chopper,)
 
 
-def providers(pulse_skipping: bool = False, wfm: bool = False):
+def time_of_flight_providers(wfm: bool = False) -> tuple[Callable]:
+    """
+    Return the providers computing the time-of-flight and time-zero coordinates.
+    """
+    return (
+        delta_to_time_of_flight_wfm if wfm else delta_to_time_of_flight,
+        to_time_of_flight,
+    )
+
+
+def time_of_flight_origin_from_choppers_providers(wfm: bool = False):
+    """
+    Return the providers for computing the time-of-flight origin via the chopper
+    cascade.
+
+    Parameters
+    ----------
+    wfm :
+        If True, the data is assumed to be from a WFM instrument.
+    """
+    wfm = _wfm if wfm else _non_wfm
+    _common = (source_chopper, frame_at_detector, subframe_bounds)
+    return _common + wfm
+
+
+def unwrap_providers(pulse_skipping: bool = False):
     """
     Return the list of providers for unwrapping frames.
 
@@ -520,9 +557,6 @@ def providers(pulse_skipping: bool = False, wfm: bool = False):
     ----------
     pulse_skipping :
         If True, the pulse-skipping mode is assumed.
-    wfm :
-        If True, the data is assumed to be from a WFM instrument.
     """
     skipping = _skipping if pulse_skipping else _non_skipping
-    wfm = _wfm if wfm else _non_wfm
-    return _common_providers + skipping + wfm
+    return _common_providers + skipping
