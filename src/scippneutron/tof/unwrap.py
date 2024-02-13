@@ -5,7 +5,7 @@
 This module provides functionality for unwrapping raw frames of neutron time-of-flight
 data.
 
-The modules handles standard unwrapping, unwrapping in pulse-skipping mode, and
+The module handles standard unwrapping, unwrapping in pulse-skipping mode, and
 unwrapping for WFM instruments, as well as combinations of the latter two. The
 functions defined here are meant to be used as providers for a Sciline pipeline. See
 https://scipp.github.io/sciline/ on how to use Sciline.
