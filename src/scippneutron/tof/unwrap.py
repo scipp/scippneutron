@@ -155,10 +155,12 @@ DeltaFromWrapped = NewType('DeltaFromWrapped', sc.Variable)
 
 @dataclass
 class TimeOfFlightOrigin:
-    """The origin of the time-of-flight, time since pulse time and L1."""
+    """
+    The origin of the time-of-flight, time since pulse time and distance from source.
+    """
 
     time: Union[sc.Variable, sc.DataArray]
-    L1: sc.Variable
+    distance: sc.Variable
 
 
 def frame_period(
@@ -352,7 +354,6 @@ def source_chopper(
 
 def time_of_flight_origin_from_chopper(
     source_chopper: SourceChopper,
-    sample_distance: SampleDistance,
 ) -> TimeOfFlightOrigin:
     """
     Compute the time-of-flight origin from a source chopper.
@@ -379,7 +380,8 @@ def time_of_flight_origin_from_chopper(
     ----------
     source_chopper :
         Chopper defining the source location and time-of-flight time origin (as the
-        center of the slit opening).
+        center of the slit opening). The chopper distance is assumed to be the distance
+        from the source position.
     """
     if len(source_chopper.time_open) != 1:
         raise NotImplementedError(
@@ -388,9 +390,7 @@ def time_of_flight_origin_from_chopper(
     source_time_open = source_chopper.time_open[0]
     source_time_close = source_chopper.time_close[0]
     time_zero = 0.5 * (source_time_open + source_time_close)
-    return TimeOfFlightOrigin(
-        time=time_zero, L1=sample_distance - source_chopper.distance
-    )
+    return TimeOfFlightOrigin(time=time_zero, distance=source_chopper.distance)
 
 
 def time_offset(unwrapped: UnwrappedData) -> TimeOffset:
@@ -403,9 +403,7 @@ def time_offset(unwrapped: UnwrappedData) -> TimeOffset:
 
 
 def time_of_flight_origin_wfm_from_chopper(
-    source_chopper: SourceChopper,
-    subframe_bounds: SubframeBounds,
-    sample_distance: SampleDistance,
+    source_chopper: SourceChopper, subframe_bounds: SubframeBounds
 ) -> TimeOfFlightOrigin:
     """
     Compute the time-of-flight origin from a source chopper in the WFM case.
@@ -439,7 +437,7 @@ def time_of_flight_origin_wfm_from_chopper(
     neg_shift[::2] = sc.scalar(math.nan, unit='s')
     return TimeOfFlightOrigin(
         time=sc.DataArray(neg_shift, coords={'subframe': times}),
-        L1=sample_distance - source_chopper.distance,
+        distance=source_chopper.distance,
     )
 
 
@@ -480,9 +478,11 @@ def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
     return UnwrappedData(da)
 
 
-def to_time_of_flight(da: UnwrappedData, origin: TimeOfFlightOrigin) -> TofData:
+def to_time_of_flight(
+    da: UnwrappedData, origin: TimeOfFlightOrigin, ltotal: Ltotal
+) -> TofData:
     """
-    Return the input data with 'tof', 'time_zero', and 'L1' coordinates.
+    Return the input data with 'tof', 'time_zero', and corrected 'Ltotal' coordinates.
 
     The 'tof' coordinate is the time-of-flight of the neutron, i.e., the time
     difference between the time of arrival of the neutron at the detector, and the
@@ -513,7 +513,7 @@ def to_time_of_flight(da: UnwrappedData, origin: TimeOfFlightOrigin) -> TofData:
         da = da.transform_coords(
             tof=lambda time_offset: time_offset + delta, keep_inputs=False
         )
-    da.coords['L1'] = origin.L1
+    da.coords['Ltotal'] = ltotal - origin.distance
     return TofData(da)
 
 
