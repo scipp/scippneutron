@@ -95,7 +95,7 @@ exclude_dirs = ["docs/conf.py", "tests", "tools"]
 
 [tool.codespell]
 ignore-words-list = "elemt"
-skip = "./.git,./.tox,*/.virtual_documents,*/.ipynb_checkpoints,*.pdf,*.svg"
+skip = "./.git,./.tox,*/.virtual_documents,*/.ipynb_checkpoints,*.pdf,*.svg,*.csv"
 
 [tool.black]
 skip-string-normalization = true
