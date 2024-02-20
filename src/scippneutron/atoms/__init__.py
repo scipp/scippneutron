@@ -42,14 +42,14 @@ def scattering_params(isotope: str) -> dict[str, Optional[sc.Variable]]:
 
         Keys:
 
-            - ``bound_coherent_scattering_length_re``
-            - ``bound_coherent_scattering_length_im``
-            - ``bound_incoherent_scattering_length_re``
-            - ``bound_incoherent_scattering_length_im``
-            - ``bound_coherent_scattering_cross_section``
-            - ``bound_incoherent_scattering_cross_section``
-            - ``total_bound_scattering_cross_section``
-            - ``absorption_cross_section``
+        - ``bound_coherent_scattering_length_re``
+        - ``bound_coherent_scattering_length_im``
+        - ``bound_incoherent_scattering_length_re``
+        - ``bound_incoherent_scattering_length_im``
+        - ``bound_coherent_scattering_cross_section``
+        - ``bound_incoherent_scattering_cross_section``
+        - ``total_bound_scattering_cross_section``
+        - ``absorption_cross_section``
     """
     with _open_scattering_parameters_file() as f:
         while line := f.readline():
