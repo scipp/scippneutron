@@ -516,6 +516,13 @@ def to_time_of_flight(
         da = da.transform_coords(
             tof=lambda time_offset: time_offset - delta, keep_inputs=False
         )
+    if (existing := da.coords.get('Ltotal')) is not None:
+        if not sc.identical(existing, ltotal):
+            raise ValueError(
+                f"Ltotal {existing} in data does not match Ltotal {ltotal} "
+                "used for calculating time-of-flight."
+            )
+
     da.coords['Ltotal'] = ltotal - origin.distance
     return TofData(da)
 
