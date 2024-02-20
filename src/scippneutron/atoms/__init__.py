@@ -9,12 +9,15 @@ from typing import Optional, TextIO
 import scipp as sc
 
 
-def _open_scattering_parameters_file() -> TextIO:
-    return (
-        importlib.resources.files('scippneutron.atoms')
-        .joinpath('scattering_parameters.csv')
-        .open('r')
-    )
+def reference_wavelength() -> sc.Variable:
+    """Return the reference wavelength for absorption cross-sections.
+
+    Returns
+    -------
+    :
+        1.7982 Å
+    """
+    return sc.scalar(1.7982, unit='angstrom')
 
 
 @lru_cache()
@@ -26,6 +29,10 @@ def scattering_params(isotope: str) -> dict[str, Optional[sc.Variable]]:
     Values have been retrieved at 2024-02-19T17:00:00Z from the list at
     https://www.ncnr.nist.gov/resources/n-lengths/list.html
     which is based on :cite:`sears:1992`.
+
+    The absorption cross-section applies to neutrons with a wavelength
+    of 1.7982 Å.
+    See :func:`reference_wavelength`.
 
     Parameters
     ----------
@@ -57,6 +64,14 @@ def scattering_params(isotope: str) -> dict[str, Optional[sc.Variable]]:
             if name == isotope:
                 return _parse_line(rest)
     raise ValueError(f"No entry for element / isotope '{isotope}'")
+
+
+def _open_scattering_parameters_file() -> TextIO:
+    return (
+        importlib.resources.files('scippneutron.atoms')
+        .joinpath('scattering_parameters.csv')
+        .open('r')
+    )
 
 
 def _parse_line(line: str) -> dict[str, Optional[sc.Variable]]:
