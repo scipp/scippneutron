@@ -421,22 +421,20 @@ def time_of_flight_origin_wfm_from_chopper(
             "not supported yet."
         )
     times = subframe_bounds['time'].flatten(dims=['subframe', 'bound'], to='subframe')
-    neg_shift = sc.zeros(
-        dims=['subframe'], shape=[times.sizes['subframe'] + 1], unit='s'
-    )
+    shift = sc.zeros(dims=['subframe'], shape=[times.sizes['subframe'] + 1], unit='s')
     # All times before the first subframe and after the last subframe should be
     # replaced by NaN. We add a large padding to make sure all events are covered.
     padding = sc.scalar(1e9, unit='s').to(unit=times.unit)
     low = times[0] - padding
     high = times[-1] + padding
     times = sc.concat([low, times, high], 'subframe')
-    neg_shift[1::2] -= 0.5 * (
+    shift[1::2] += 0.5 * (
         source_chopper.time_open + source_chopper.time_close
     ).rename_dims(cutout='subframe')
     # Set offsets before, between, and after subframes to NaN
-    neg_shift[::2] = sc.scalar(math.nan, unit='s')
+    shift[::2] = sc.scalar(math.nan, unit='s')
     return TimeOfFlightOrigin(
-        time=sc.DataArray(neg_shift, coords={'subframe': times}),
+        time=sc.DataArray(shift, coords={'subframe': times}),
         distance=source_chopper.distance,
     )
 
@@ -461,8 +459,13 @@ def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
         da = da.copy(deep=False)
         da.data = sc.bins(**da.bins.constituents)
         da.bins.coords['time_offset'] = da.bins.coords['event_time_offset'] + delta
-        da.bins.coords['pulse_time'] = da.bins.coords['event_time_zero'] - delta.to(
-            unit=elem_unit(da.bins.coords['event_time_zero']), dtype='int64'
+        if 'event_time_zero' in da.bins.coords:
+            coord = da.bins.coords['event_time_zero']
+        else:
+            # Bin edges are now invalid so we pop them
+            coord = da.coords.pop('event_time_zero')
+        da.bins.coords['pulse_time'] = coord - delta.to(
+            unit=elem_unit(coord), dtype='int64'
         )
     else:
         # 'time_of_flight' is the name in, e.g., NXmonitor
@@ -505,13 +508,13 @@ def to_time_of_flight(
     if da.bins is not None:
         da = da.copy(deep=False)
         da.data = sc.bins(**da.bins.constituents)
-        da.bins.coords['tof'] = time_offset + delta
-        da.bins.coords['time_zero'] = da.bins.coords['pulse_time'] - delta.to(
+        da.bins.coords['tof'] = time_offset - delta
+        da.bins.coords['time_zero'] = da.bins.coords['pulse_time'] + delta.to(
             unit=elem_unit(da.bins.coords['pulse_time']), dtype='int64'
         )
     else:
         da = da.transform_coords(
-            tof=lambda time_offset: time_offset + delta, keep_inputs=False
+            tof=lambda time_offset: time_offset - delta, keep_inputs=False
         )
     da.coords['Ltotal'] = ltotal - origin.distance
     return TofData(da)

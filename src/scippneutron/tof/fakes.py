@@ -222,6 +222,10 @@ class FakeBeamline:
             + time_zero_offset.to(dtype='int64', unit='ns')
             + offset_to_tof.to(dtype='int64', unit='ns'),
         )
+        if self._time_of_flight_origin is None:
+            unwrapped.coords['Ltotal'] = frame.distance
+        else:
+            unwrapped.coords['Ltotal'] = frame.distance - source_chopper.distance
         return wrapped, unwrapped
 
 
