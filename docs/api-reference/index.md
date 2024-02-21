@@ -68,6 +68,7 @@ and possible confusion of `theta` (from Bagg's law) with `theta` in spherical co
    :template: module-template.rst
    :recursive:
 
+   atoms
    conversion
    io
    logging
