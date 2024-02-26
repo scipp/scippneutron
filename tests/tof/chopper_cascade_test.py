@@ -432,3 +432,32 @@ def test_frame_sequence_chop_applies_choppers_ordered_by_distance(
     result21 = frames.chop([chopper2, chopper1])
     assert result12 == result21
     assert result12[2] == result21[2]
+
+
+def test_frame_sequence_getitem_by_distance_selects_correct_chopper(
+    source_frame_sequence: chopper_cascade.FrameSequence,
+) -> None:
+    frames = source_frame_sequence
+    chopper1 = chopper_cascade.Chopper(
+        distance=sc.scalar(1.5, unit='m'),
+        time_open=sc.array(dims=['slit'], values=[0.0], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[0.001], unit='s'),
+    )
+    chopper2 = chopper_cascade.Chopper(
+        distance=sc.scalar(2.5, unit='m'),
+        time_open=sc.array(dims=['slit'], values=[0.001], unit='s'),
+        time_close=sc.array(dims=['slit'], values=[0.003], unit='s'),
+    )
+    frames = frames.chop([chopper1, chopper2])
+    distance = sc.scalar(1.0, unit='m')
+    result = frames[distance]
+    assert_identical(result.bounds(), frames[0].propagate_to(distance).bounds())
+    distance = sc.scalar(2.0, unit='m')
+    result = frames[distance]
+    assert_identical(result.bounds(), frames[1].propagate_to(distance).bounds())
+    distance = sc.scalar(2.4, unit='m')
+    result = frames[distance]
+    assert_identical(result.bounds(), frames[1].propagate_to(distance).bounds())
+    distance = sc.scalar(3.0, unit='m')
+    result = frames[distance]
+    assert_identical(result.bounds(), frames[2].propagate_to(distance).bounds())

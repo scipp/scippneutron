@@ -243,6 +243,7 @@ class Frame:
         ]
         bounds = sorted(bounds, key=lambda x: x.start)
         current = bounds[0]
+        merged_bounds = []
         for bound in bounds[1:]:
             # If start is before current end, merge
             if bound.start <= current.end:
@@ -253,14 +254,15 @@ class Frame:
                     max(current.wav_end, bound.wav_end),
                 )
             else:
-                bounds.append(current)
+                merged_bounds.append(current)
                 current = bound
-        bounds.append(current)
+        merged_bounds.append(current)
         time_bounds = [
-            sc.concat([bound.start, bound.end], dim='bound') for bound in bounds
+            sc.concat([bound.start, bound.end], dim='bound') for bound in merged_bounds
         ]
         wav_bounds = [
-            sc.concat([bound.wav_start, bound.wav_end], dim='bound') for bound in bounds
+            sc.concat([bound.wav_start, bound.wav_end], dim='bound')
+            for bound in merged_bounds
         ]
         return sc.DataGroup(
             time=sc.concat(time_bounds, dim='subframe'),
@@ -312,9 +314,18 @@ class FrameSequence:
         """Number of frames."""
         return len(self.frames)
 
-    def __getitem__(self, item: int) -> Frame:
-        """Get a frame by index."""
-        return self.frames[item]
+    def __getitem__(self, item: Union[int, sc.Variable]) -> Frame:
+        """Get a frame by index or distance."""
+        if isinstance(item, int):
+            return self.frames[item]
+        distance = item.to(unit='m')
+        frame_before_detector = None
+        for frame in self:
+            if frame.distance > distance:
+                break
+            frame_before_detector = frame
+
+        return frame_before_detector.propagate_to(distance)
 
     def propagate_to(self, distance: sc.Variable) -> FrameSequence:
         """
@@ -485,6 +496,13 @@ class Chopper:
                 f'Inconsistent dims or shape: {self.time_open.sizes} vs '
                 f'{self.time_close.sizes}'
             )
+
+    def __getitem__(self, key) -> Chopper:
+        return Chopper(
+            distance=self.distance,
+            time_open=self.time_open[key],
+            time_close=self.time_close[key],
+        )
 
 
 def _chop(
