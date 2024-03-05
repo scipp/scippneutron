@@ -93,9 +93,8 @@ requests==2.31.0
 scipp[all]==24.2.0
     # via
     #   -r base.in
-    #   scipp
     #   scippnexus
-scippnexus==23.12.1
+scippnexus==24.3.0
     # via -r base.in
 scipy==1.12.0
     # via
