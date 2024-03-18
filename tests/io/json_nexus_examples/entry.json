@@ -3,14 +3,13 @@
   "name": "entry",
   "children": [
     {
-      "type": "dataset",
-      "name": "title",
-      "values": "my experiment",
-      "dataset": {
+      "module": "dataset",
+      "config": {
+        "name": "title",
+        "values": "my experiment",
         "string_size": 13,
         "type": "string"
-      },
-      "attributes": []
+      }
     }
   ],
   "attributes": [

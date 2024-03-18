@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
-from scippnexus.typing import H5Group
 
 _nexus_class = "NX_class"
 _nexus_units = "units"
@@ -16,6 +15,7 @@ _nexus_name = "name"
 _nexus_path = "path"
 _nexus_values = "values"
 _nexus_dataset = "dataset"
+_nexus_config = "config"
 _nexus_group = "group"
 _nexus_children = "children"
 _nexus_link = "link"
@@ -87,12 +87,13 @@ def make_json_dataset(name: str, data) -> dict:
             "size": data.shape,
             "type": numpy_to_filewriter_type[data.dtype.type],
         }
-
     return {
-        "type": "dataset",
-        "name": name,
-        "values": data,
-        "dataset": dataset_info,
+        'module': _nexus_dataset,
+        _nexus_config: {
+            **dataset_info,
+            _nexus_name: name,
+            _nexus_values: data,
+        },
         "attributes": [],
     }
 
@@ -117,100 +118,43 @@ def _get_attribute_value(
     raise MissingAttribute
 
 
-class _Node(dict):
-    def __init__(self, parent: dict, name: str, file: dict, group: dict):
-        super().__init__(**group)
-        self.parent = parent
-        self.name = name
-        self.file = file
+def _visitnodes(root: Dict):
+    for child in root.get(_nexus_children, ()):
+        yield child
+        yield from _visitnodes(child)
 
 
-def _visit_nodes(
-    root: Dict,
-    group: Dict,
-    nx_class_names: Tuple[str, ...],
-    groups_with_requested_nx_class: Dict[str, List[H5Group]],
-    path: List[str],
-):
-    try:
-        for child in group[_nexus_children]:
-            try:
-                path.append(child[_nexus_name])
-            except KeyError:
-                # If the object doesn't have a name it can't be a NeXus
-                # class we are looking for, nor can it be a group
-                # containing a NeXus class we are looking for, so skip to
-                # next object
-                continue
-            try:
-                nx_class = _get_attribute_value(child, _nexus_class)
-                if nx_class in nx_class_names:
-                    groups_with_requested_nx_class[nx_class].append(
-                        _Node(group=child, parent=group, name="/".join(path), file=root)
-                    )
-            except MissingAttribute:
-                # It may be a group but not an NX_class,
-                # that's fine, continue to its children
-                pass
-            _visit_nodes(
-                root, child, nx_class_names, groups_with_requested_nx_class, path
-            )
-            path.pop(-1)
-    except KeyError:
-        pass
+def _name(node: Dict):
+    if _nexus_name in node:
+        return node[_nexus_name]
+    if _nexus_config in node:
+        return node[_nexus_config][_nexus_name]
+    return ''
 
 
-def contains_stream(group: Dict) -> bool:
-    """
-    Return True if the group contains a stream object
-    """
-    if not isinstance(group, JSONGroup):
-        return False
-    try:
-        for child in group._node[_nexus_children]:
-            try:
-                if child["type"] == _nexus_stream:
-                    return True
-            except KeyError:
-                # "type" field ought to exist, but if it does
-                # not then assume it is not a stream
-                pass
-    except KeyError:
-        # "children" field may be missing, that is okay
-        # but means this this group cannot contain a stream
-        pass
-    return False
+def _is_group(node: Dict):
+    return _nexus_children in node
 
 
-def _find_by_type(type_name: str, root: Dict) -> List[H5Group]:
-    """
-    Finds objects with the requested "type" value
-    Returns a list of objects with requested type
-    """
+def _is_dataset(node: Dict):
+    return node.get('module') == _nexus_dataset
 
-    def _visit_nodes_for_type(
-        obj: Dict, requested_type: str, objects_found: List[H5Group]
-    ):
-        try:
-            for child in obj[_nexus_children]:
-                if child["type"] == requested_type:
-                    objects_found.append(
-                        _Node(
-                            group=child,
-                            parent=obj,
-                            name="",
-                            file={_nexus_children: [obj]},
-                        )
-                    )
-                _visit_nodes_for_type(child, requested_type, objects_found)
-        except KeyError:
-            # If this object does not have "children" array then go to next
-            pass
 
-    objects_with_requested_type: List[H5Group] = []
-    _visit_nodes_for_type(root, type_name, objects_with_requested_type)
+def _is_link(node: Dict):
+    return node.get('module') == _nexus_link
 
-    return objects_with_requested_type
+
+def _is_stream(node: Dict):
+    return 'module' in node and not (_is_dataset(node) or _is_link(node))
+
+
+def contains_stream(group: JSONGroup) -> bool:
+    """Return True if the group contains a stream object"""
+    return (
+        isinstance(group, JSONGroup)
+        and _nexus_children in group._node
+        and any(map(_is_stream, group._node[_nexus_children]))
+    )
 
 
 class JSONTypeStringID:
@@ -274,10 +218,11 @@ class JSONNode:
         self._file = parent.file if parent is not None else self
         self._parent = self if parent is None else parent
         self._node = node
+        name = _name(self._node)
         if parent is None or parent.name == '/':
-            self._name = f'/{self._node.get(_nexus_name, "")}'
+            self._name = f'/{name}'
         else:
-            self._name = f'{parent.name}/{self._node[_nexus_name]}'
+            self._name = f'{parent.name}/{name}'
 
     @property
     def attrs(self) -> JSONAttributeManager:
@@ -300,9 +245,14 @@ class JSONDataset(JSONNode):
     @property
     def dtype(self) -> str:
         try:
-            dtype = self._node[_nexus_dataset]["type"]
+            dtype = self._node[_nexus_config]["type"]
         except KeyError:
-            dtype = self._node[_nexus_dataset]["dtype"]
+            if "dtype" not in self._node[_nexus_config] and isinstance(
+                self._node[_nexus_config][_nexus_values], str
+            ):
+                dtype = 'string'
+            else:
+                dtype = self._node[_nexus_config]["dtype"]
         if dtype == 'string':
             return np.dtype(str)
         return np.dtype(dtype)
@@ -313,10 +263,10 @@ class JSONDataset(JSONNode):
 
     @property
     def shape(self):
-        return np.asarray(self._node[_nexus_values]).shape
+        return np.asarray(self._node[_nexus_config][_nexus_values]).shape
 
     def __getitem__(self, index):
-        return np.asarray(self._node[_nexus_values])[index]
+        return np.asarray(self._node[_nexus_config][_nexus_values])[index]
 
     def read_direct(self, buf, source_sel):
         buf[...] = self[source_sel]
@@ -337,16 +287,15 @@ class JSONGroup(JSONNode):
         if contains_stream(self):
             return []
         children = self._node[_nexus_children]
-        return [child[_nexus_name] for child in children if not contains_stream(child)]
+        return [_name(child) for child in children if not contains_stream(child)]
 
     def items(self) -> List[Tuple[str, JSONNode]]:
         return [(key, self[key]) for key in self.keys()]
 
     def _as_group_or_dataset(self, item, parent):
-        if item['type'] == _nexus_group:
+        if _is_group(item):
             return JSONGroup(item, parent=parent)
-        else:
-            return JSONDataset(item, parent=parent)
+        return JSONDataset(item, parent=parent)
 
     def __getitem__(self, name: str) -> Union[JSONDataset, JSONGroup]:
         if name.startswith('/') and name.count('/') == 1:
@@ -357,11 +306,11 @@ class JSONGroup(JSONNode):
             parent = self
 
         for child in parent._node[_nexus_children]:
-            if child.get(_nexus_name) != name.split('/')[-1]:
+            if _name(child) != name.split('/')[-1]:
                 continue
-            if child.get('type') == _nexus_link:
-                return self[child["target"]]
-            if child.get('type') in (_nexus_dataset, _nexus_group):
+            if _is_link(child):
+                return self[child[_nexus_config]["target"]]
+            if _is_group(child) or _is_dataset(child):
                 return self._as_group_or_dataset(child, parent)
 
         raise KeyError(f"Unable to open object (object '{name}' doesn't exist)")
@@ -371,12 +320,10 @@ class JSONGroup(JSONNode):
 
     def visititems(self, callable):
         def skip(node):
-            return node['type'] == _nexus_link or contains_stream(self)
+            return _is_link(node) or contains_stream(self)
 
         children = [
-            child[_nexus_name]
-            for child in self._node[_nexus_children]
-            if not skip(child)
+            _name(child) for child in self._node[_nexus_children] if not skip(child)
         ]
         for key in children:
             item = self[key]
@@ -409,28 +356,30 @@ class StreamInfo:
 
 
 def get_streams_info(root: Dict) -> List[StreamInfo]:
-    found_streams = _find_by_type(_nexus_stream, root)
+    found_streams = [node for node in _visitnodes(root) if _is_stream(node)]
     streams = []
     for stream in found_streams:
         try:
-            dtype = _filewriter_to_supported_numpy_dtype[stream["stream"]["dtype"]]
+            dtype = _filewriter_to_supported_numpy_dtype[stream[_nexus_config]["dtype"]]
         except KeyError:
             try:
-                dtype = _filewriter_to_supported_numpy_dtype[stream["stream"]["type"]]
+                dtype = _filewriter_to_supported_numpy_dtype[
+                    stream[_nexus_config]["type"]
+                ]
             except KeyError:
                 dtype = None
 
         units = "dimensionless"
         try:
-            units = _get_attribute_value(stream.parent, _nexus_units)
+            units = _get_attribute_value(stream, _nexus_units)
         except MissingAttribute:
             pass
 
         streams.append(
             StreamInfo(
-                stream["stream"]["topic"],
-                stream["stream"]["writer_module"],
-                stream["stream"]["source"],
+                stream[_nexus_config]["topic"],
+                stream["module"],
+                stream[_nexus_config]["source"],
                 dtype,
                 units,
             )

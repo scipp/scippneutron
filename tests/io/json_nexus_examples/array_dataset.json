@@ -1,0 +1,20 @@
+{
+  "module": "dataset",
+  "config": {
+    "name": "slit_edges",
+    "values": [
+      0.0,
+      15.0,
+      180.0,
+      195.0
+    ],
+    "type": "double"
+  },
+  "attributes": [
+    {
+      "name": "units",
+      "dtype": "string",
+      "values": "deg"
+    }
+  ]
+}

@@ -13,6 +13,7 @@ import scipp as sc
 
 from scippneutron.io.nexus._json_nexus import (
     JSONGroup,
+    _name,
     make_json_attr,
     make_json_dataset,
 )
@@ -239,7 +240,7 @@ class InMemoryNeXusWriter:
 def _get_child(obj, name):
     children = obj["children"]
     for child in children:
-        if child.get('name') == name:
+        if _name(child) == name:
             return child
     return None
 
@@ -259,7 +260,7 @@ def _add_link_to_json(file_root: Dict, new_path: str, target_path: str):
     link_name = new_path_split[-1]
     parent_path = "/".join(new_path_split[:-1])
     parent_group = _get_object_by_path(file_root, parent_path)
-    link = {"type": "link", "name": link_name, "target": target_path}
+    link = {"module": "link", "config": {"name": link_name, "target": target_path}}
     existing_object = _get_object_by_path(parent_group, link_name)
     if existing_object is not None:
         parent_group["children"].remove(existing_object)
@@ -314,11 +315,10 @@ class JsonWriter:
 
     def add_stream(self, file_root: Dict, stream: Stream):
         new_stream = {
-            "type": "stream",
-            "stream": {
+            "module": stream.writer_module,
+            "config": {
                 "topic": stream.topic,
                 "source": stream.source,
-                "writer_module": stream.writer_module,
                 "type": stream.type,
                 "value_units": stream.value_units,
             },
