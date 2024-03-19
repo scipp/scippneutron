@@ -180,7 +180,7 @@ def test_nexus_json_load_log(examples):
 
 def test_nexus_json_load_log_utf8_unit(examples):
     log = examples.log
-    assert log['children'][0]['name'] == 'value', 'is the expected child'
+    assert log['children'][0]['config']['name'] == 'value', 'is the expected child'
     assert log['children'][0]['attributes'][0]['name'] == 'units'
     log['children'][0]['attributes'][0]['values'] = '\u00b0'  # '°', i.e., degrees
 
@@ -200,3 +200,25 @@ def test_nexus_json_load_log_utf8_unit(examples):
         },
     )
     sc.testing.assert_identical(loaded, expected)
+
+
+# TODO: remove warning filter
+# Loading a NXmonitor fails with
+# 'Signal is not array like' error and issues a warning.
+# But this should probably be fixed elsewhere.
+@pytest.mark.filterwarnings('ignore::UserWarning')
+def test_nexus_json_load_ymir_instrument(examples):
+    make_group(examples.instrument)[()]
+
+
+def test_nexus_json_load_dataset(examples):
+    dg = make_group(examples.dataset)[()]
+    assert dg['name'] == 'YMIR'
+
+
+def test_nexus_json_load_array_dataset(examples):
+    dg = make_group(examples.array_dataset)[()]
+    sc.testing.assert_identical(
+        dg['slit_edges'],
+        sc.array(dims=['dim_0'], values=[0.0, 15.0, 180.0, 195.0], unit='deg'),
+    )

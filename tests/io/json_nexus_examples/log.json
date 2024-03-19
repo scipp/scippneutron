@@ -3,16 +3,13 @@
   "name": "test_log",
   "children": [
     {
-      "type": "dataset",
-      "name": "value",
-      "values": [
-        1.1,
-        2.2,
-        3.3
-      ],
-      "dataset": {
-        "size": [
-          3
+      "module": "dataset",
+      "config": {
+        "name": "value",
+        "values": [
+          1.1,
+          2.2,
+          3.3
         ],
         "type": "float64"
       },
@@ -26,16 +23,13 @@
       ]
     },
     {
-      "type": "dataset",
-      "name": "time",
-      "values": [
-        13,
-        24,
-        35
-      ],
-      "dataset": {
-        "size": [
-          3
+      "module": "dataset",
+      "config": {
+        "name": "time",
+        "values": [
+          13,
+          24,
+          35
         ],
         "type": "float64"
       },

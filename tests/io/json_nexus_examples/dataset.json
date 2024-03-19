@@ -1,0 +1,8 @@
+{
+  "module": "dataset",
+  "config": {
+    "name": "name",
+    "values": "YMIR",
+    "type": "string"
+  }
+}

@@ -3,15 +3,15 @@
   "name": "detector_0",
   "children": [
     {
-      "type": "dataset",
-      "name": "detector_number",
-      "values": [
-        1,
-        2,
-        3,
-        4
-      ],
-      "dataset": {
+      "module": "dataset",
+      "config": {
+        "name": "detector_number",
+        "values": [
+          1,
+          2,
+          3,
+          4
+        ],
         "size": [
           4
         ],
