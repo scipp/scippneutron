@@ -49,15 +49,15 @@ def fit_peaks(
         data_in_window = data[
             data.dim, window[0] * windows.unit : window[1] * windows.unit
         ]
-        results.append(_fit_peak(data_in_window, estimate))
+        results.append(_fit_peak_sc(data_in_window, estimate))
     return results
 
 
 def _fit_peak(data: sc.DataArray, peak_estimate: sc.Variable) -> FitResult:
     background_models = (
         # lmfit.models.ExponentialModel(prefix='bkg_'),
-        # lmfit.models.LinearModel(prefix='bkg_'),
-        lmfit.models.QuadraticModel(prefix='bkg_'),
+        lmfit.models.LinearModel(prefix='bkg_'),
+        # lmfit.models.QuadraticModel(prefix='bkg_'),
     )
     peak_models = (
         lmfit.models.GaussianModel(prefix='peak_'),
@@ -109,6 +109,83 @@ def _fit_peak(data: sc.DataArray, peak_estimate: sc.Variable) -> FitResult:
                 candidate_result = result
 
     return candidate_result
+
+
+def _fit_peak_sc(data: sc.DataArray, peak_estimate: sc.Variable) -> FitResult:
+    from math import pi, sqrt
+
+    from scipp.scipy.optimize import curve_fit
+
+    s2pi = sqrt(2 * pi)
+    # s2 = sqrt(2.0)
+    # # tiny had been numpy.finfo(numpy.float64).eps ~=2.2e16.
+    # # here, we explicitly set it to 1.e-15 == numpy.finfo(numpy.float64).resolution
+    # tiny = 1.0e-15
+
+    def model(x, *, bkg_slope, bkg_intercept, peak_amplitude, peak_center, peak_sigma):
+        # TODO lmfit uses max(tiny, ...) to prevent div by 0
+        bkg = bkg_slope * x + bkg_intercept
+        peak = (
+            peak_amplitude
+            / (s2pi * peak_sigma)
+            * sc.exp(-((x - peak_center) ** 2) / (2 * peak_sigma**2))
+        )
+        return bkg + peak
+
+    # Taken from lmfit
+    def guess_from_peak(y, x):
+        """Estimate starting values from 1D peak data and create Parameters."""
+        sort_increasing = np.argsort(x)
+        x = x[sort_increasing]
+        y = y[sort_increasing]
+
+        maxy, miny = max(y), min(y)
+        maxx, minx = max(x), min(x)
+        cen = x[np.argmax(y)]
+        height = (maxy - miny) * 3.0
+        sig = (maxx - minx) / 6.0
+
+        # the explicit conversion to a NumPy array is to make sure that the
+        # indexing on line 65 also works if the data is supplied as pandas.Series
+        x_halfmax = np.array(x[y > (maxy + miny) / 2.0])
+        if len(x_halfmax) > 2:
+            sig = (x_halfmax[-1] - x_halfmax[0]) / 2.0
+            cen = x_halfmax.mean()
+        amp = height * sig  # because of 1/sigma in gaussian?
+        sig = sig
+        return amp, cen, sig
+
+    x = data.coords[data.dim].values
+    y = data.values
+    n = len(x) // 4
+    x = np.r_[x[:n], x[-n:]]
+    y = np.r_[y[:n], y[-n:]]
+    slope, intercept = np.polyfit(x, y, 1)
+
+    x = data.coords[data.dim].values
+    y = data.values
+    n = len(x) // 4
+    x = x[n:-n]
+    y = y[n:-n]
+    amp, cen, sig = guess_from_peak(y, x)
+
+    params = {
+        'bkg_slope': sc.scalar(slope, unit=data.unit / sc.Unit('Å')),
+        'bkg_intercept': sc.scalar(intercept, unit=data.unit),
+        'peak_amplitude': sc.scalar(amp, unit=data.unit * sc.Unit('Å')),
+        'peak_center': sc.scalar(cen, unit='Å'),
+        'peak_sigma': sc.scalar(sig, unit='Å'),
+    }
+
+    try:
+        popt, _ = curve_fit(model, data, p0=params)
+    except RuntimeError:
+        return FitResult(lm_result=None, best_fit=data, assessment=FitAssessment.reject)
+    best_fit = sc.DataArray(
+        model(data.coords[data.dim], **{k: sc.values(p) for k, p in popt.items()}),
+        coords=data.coords,
+    )
+    return FitResult(lm_result=None, best_fit=best_fit, assessment=FitAssessment.accept)
 
 
 def assess_fit(data: sc.DataArray, result: lmfit.model.ModelResult) -> FitAssessment:
