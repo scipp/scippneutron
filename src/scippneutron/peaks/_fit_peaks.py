@@ -180,13 +180,18 @@ def _fit_peak_sc(data: sc.DataArray, peak_estimate: sc.Variable) -> FitResult:
         **_guess_background(data, model=background),
         **_guess_peak(data, model=peak),
     }
+    bounds = {
+        'peak_amplitude': (0.0, np.inf),
+        'peak_scale': (0.0, np.inf),
+        'peak_fraction': (0.0, 1.0),
+    }
 
     # Workaround for https://github.com/scipp/scipp/issues/3418
     def fit_model(x: sc.Variable, **params: sc.Variable) -> sc.Variable:
         return model(x, **params)
 
     try:
-        popt, _ = curve_fit(fit_model, data, p0=p0)
+        popt, _ = curve_fit(fit_model, data, p0=p0, bounds=bounds)
     except RuntimeError:
         # TODO log or store message in FitResult
         return FitResult.for_failure(data)
