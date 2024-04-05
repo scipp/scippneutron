@@ -9,6 +9,9 @@ from dataclasses import dataclass
 import lmfit
 import numpy as np
 import scipp as sc
+from scipp.scipy.optimize import curve_fit
+
+from .model import GaussianModel, Model, PolynomialModel
 
 
 @dataclass
@@ -170,73 +173,20 @@ def _fit_peak(data: sc.DataArray, peak_estimate: sc.Variable) -> FitResult:
 
 
 def _fit_peak_sc(data: sc.DataArray, peak_estimate: sc.Variable) -> FitResult:
-    from math import pi, sqrt
-
-    from scipp.scipy.optimize import curve_fit
-
-    s2pi = sqrt(2 * pi)
-    # s2 = sqrt(2.0)
-    # # tiny had been numpy.finfo(numpy.float64).eps ~=2.2e16.
-    # # here, we explicitly set it to 1.e-15 == numpy.finfo(numpy.float64).resolution
-    # tiny = 1.0e-15
-
-    def model(x, *, bkg_slope, bkg_intercept, peak_amplitude, peak_center, peak_sigma):
-        # TODO lmfit uses max(tiny, ...) to prevent div by 0
-        bkg = bkg_slope * x + bkg_intercept
-        peak = (
-            peak_amplitude
-            / (s2pi * peak_sigma)
-            * sc.exp(-((x - peak_center) ** 2) / (2 * peak_sigma**2))
-        )
-        return bkg + peak
-
-    # Taken from lmfit
-    def guess_from_peak(y, x):
-        """Estimate starting values from 1D peak data and create Parameters."""
-        # sort_increasing = np.argsort(x)
-        # x = x[sort_increasing]
-        # y = y[sort_increasing]
-
-        maxy, miny = max(y), min(y)
-        maxx, minx = max(x), min(x)
-        cen = x[np.argmax(y)]
-        height = (maxy - miny) * 3.0
-        sig = (maxx - minx) / 6.0
-
-        # the explicit conversion to a NumPy array is to make sure that the
-        # indexing on line 65 also works if the data is supplied as pandas.Series
-        x_halfmax = np.array(x[y > (maxy + miny) / 2.0])
-        if len(x_halfmax) > 2:
-            sig = (x_halfmax[-1] - x_halfmax[0]) / 2.0
-            cen = x_halfmax.mean()
-        amp = height * sig  # because of 1/sigma in gaussian?
-        sig = sig
-        return amp, cen, sig
-
-    x = data.coords[data.dim].values
-    y = data.values
-    n = len(x) // 4
-    x = np.r_[x[:n], x[-n:]]
-    y = np.r_[y[:n], y[-n:]]
-    slope, intercept = np.polyfit(x, y, 1)
-
-    x = data.coords[data.dim].values
-    y = data.values
-    n = len(x) // 4
-    x = x[n:-n]
-    y = y[n:-n]
-    amp, cen, sig = guess_from_peak(y, x)
-
-    params = {
-        'bkg_slope': sc.scalar(slope, unit=data.unit / sc.Unit('Å')),
-        'bkg_intercept': sc.scalar(intercept, unit=data.unit),
-        'peak_amplitude': sc.scalar(amp, unit=data.unit * sc.Unit('Å')),
-        'peak_center': sc.scalar(cen, unit='Å'),
-        'peak_sigma': sc.scalar(sig, unit='Å'),
+    background = PolynomialModel(degree=1, prefix='bkg_')
+    peak = GaussianModel(prefix='peak_')
+    model = background + peak
+    p0 = {
+        **_guess_background(data, model=background),
+        **_guess_peak(data, model=peak),
     }
 
+    # Workaround for https://github.com/scipp/scipp/issues/3418
+    def fit_model(x: sc.Variable, **params: sc.Variable) -> sc.Variable:
+        return model(x, **params)
+
     try:
-        popt, _ = curve_fit(model, data, p0=params)
+        popt, _ = curve_fit(fit_model, data, p0=p0)
     except RuntimeError:
         # TODO log or store message in FitResult
         return FitResult.for_failure(data)
@@ -291,18 +241,16 @@ def _peak_is_too_narrow(data: sc.DataArray, result: lmfit.model.ModelResult) -> 
     return (fwhm / bin_width) < 1.5  # TODO tunable
 
 
-def _guess_background(x, y, model):
-    n = len(x) // 4  # TODO tunable
-    x = np.r_[x[:n], x[-n:]]
-    y = np.r_[y[:n], y[-n:]]
-    return model.guess(y, x=x)
+def _guess_background(data: sc.DataArray, model: Model) -> dict[str, sc.Variable]:
+    n = len(data) // 4  # TODO tunable
+    tails = sc.concat([data[:n], data[-n:]], dim=data.dim)
+    return model.guess(tails)
 
 
-def _guess_peak(x, y, model):
-    n = len(x) // 4  # TODO tunable (in sync with _guess_background?)
-    x = x[n:-n]
-    y = y[n:-n]
-    return model.guess(y, x=x)
+def _guess_peak(data: sc.DataArray, model: Model) -> dict[str, sc.Variable]:
+    n = len(data) // 4  # TODO tunable (in sync with _guess_background?)
+    bulk = data[n:-n]
+    return model.guess(bulk)
 
 
 def _fit_windows(
