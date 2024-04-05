@@ -6,48 +6,63 @@ import enum
 import itertools
 from dataclasses import dataclass
 
-import lmfit
 import numpy as np
 import scipp as sc
 from scipp.scipy.optimize import curve_fit
 
-from .model import GaussianModel, Model, PolynomialModel
-
-
-@dataclass
-class FitResult_Old:
-    lm_result: lmfit.model.ModelResult
-    best_fit: sc.DataArray
-    assessment: FitAssessment
-
-    @property
-    def success(self) -> bool:
-        return self.assessment.success
-
-    def better_than(self, other: FitResult_Old) -> bool:
-        return self.lm_result.aic > other.lm_result.aic
+from .model import (
+    GaussianModel,
+    LorentzianModel,
+    Model,
+    PolynomialModel,
+    PseudoVoigtModel,
+)
 
 
 @dataclass
 class FitResult:
     best_fit: sc.DataArray
+    popt: dict[str, sc.Variable]
     red_chisq: sc.Variable
     aic: sc.Variable
     assessment: FitAssessment
+    peak: Model
+    background: Model
 
     @classmethod
-    def for_too_narrow_window(cls, data: sc.DataArray) -> FitResult:
-        return cls.for_failure(data, assessment=FitAssessment.window_too_narrow)
+    def for_too_narrow_window(
+        cls,
+        data: sc.DataArray,
+        peak: Model,
+        background: Model,
+    ) -> FitResult:
+        return cls.for_failure(
+            data,
+            assessment=FitAssessment.window_too_narrow,
+            peak=peak,
+            background=background,
+        )
 
     @classmethod
     def for_failure(
-        cls, data: sc.DataArray, *, assessment: FitAssessment | None = None
+        cls,
+        data: sc.DataArray,
+        *,
+        assessment: FitAssessment | None = None,
+        peak: Model,
+        background: Model,
     ) -> FitResult:
         return cls(
             best_fit=sc.full_like(data, np.nan, variance=np.nan),
+            popt={
+                name: sc.scalar(np.nan)
+                for name in peak.param_names | background.param_names
+            },
             red_chisq=sc.scalar(-np.nan),
             aic=sc.scalar(-np.inf),
             assessment=FitAssessment.failed if assessment is None else assessment,
+            peak=peak,
+            background=background,
         )
 
     @property
@@ -64,6 +79,7 @@ class FitAssessment(enum.Enum):
     failed = enum.auto()
     peak_too_narrow = enum.auto()
     peak_too_wide = enum.auto()
+    peak_near_edge = enum.auto()
     peak_points_down = enum.auto()
     chisq_too_large = enum.auto()
     window_too_narrow = enum.auto()
@@ -79,91 +95,43 @@ class FitAssessment(enum.Enum):
 def fit_peaks(
     data: sc.DataArray, peak_estimates: sc.Variable, windows: sc.Variable
 ) -> list[FitResult]:
-    # TODO some code assumes a sorted coord -> check!
+    if not sc.issorted(data.coords[data.dim], data.dim, order='ascending'):
+        # A lot of code here assumes a sorted coord, either to use O(1) instead of O(n)
+        # operations or to allow extracting windows.
+        raise sc.CoordError(
+            'fit_peaks requires the coordinate to be sorted in ascending order. '
+            'Consider using scipp.sort to fix this.'
+        )
+
     if windows.ndim == 0:
         windows = _fit_windows(data, peak_estimates, windows)
 
     results = []
-    for estimate, window in zip(
-        peak_estimates,
-        windows.transpose((peak_estimates.dim, 'range')).values,
-        strict=True,
-    ):
+    for window in windows.transpose((peak_estimates.dim, 'range')).values:
         data_in_window = data[
             data.dim, window[0] * windows.unit : window[1] * windows.unit
         ]
-        results.append(_fit_peak_sc(data_in_window, estimate))
+        results.append(_fit_peak_sc(data_in_window))
     return results
 
 
-def _fit_peak(data: sc.DataArray, peak_estimate: sc.Variable) -> FitResult:
+def _fit_peak_sc(data: sc.DataArray) -> FitResult:
     background_models = (
-        # lmfit.models.ExponentialModel(prefix='bkg_'),
-        lmfit.models.LinearModel(prefix='bkg_'),
-        # lmfit.models.QuadraticModel(prefix='bkg_'),
+        PolynomialModel(degree=1, prefix='bkg_'),
+        PolynomialModel(degree=2, prefix='bkg_'),
     )
     peak_models = (
-        lmfit.models.GaussianModel(prefix='peak_'),
-        # lmfit.models.LorentzianModel(prefix='peak_'),
-        # lmfit.models.PseudoVoigtModel(prefix='peak_'),
-        # lmfit.models.VoigtModel(prefix='peak_'),
+        GaussianModel(prefix='peak_'),
+        LorentzianModel(prefix='peak_'),
+        PseudoVoigtModel(prefix='peak_'),
     )
-
-    x = data.coords[data.dim].values
-    y = data.values
-    e = data.variances
 
     candidate_result = None
     for peak, background in itertools.product(peak_models, background_models):
-        params = _guess_background(x, y, background)
-        params.update(_guess_peak(x, y, peak))
-        model = background + peak
-        if len(x) < len(params):
-            if candidate_result is None:
-                candidate_result = FitResult.for_too_narrow_window(data)
-            continue  # not enough points to fit all parameters
-
-        lm_result = model.fit(y, x=x, params=params, weights=1 / np.sqrt(e))
-        if not lm_result.success:
-            if candidate_result is None:
-                candidate_result = FitResult.for_failure(data)
-            continue
-
-        print(dir(lm_result.params))
-        print(dict(lm_result.params.items()))
-        return
-        # popt = {
-        #     lm_result.
-        # }
-
-        best_fit = sc.DataArray(
-            sc.array(dims=[data.dim], values=lm_result.best_fit, unit=data.unit),
-            coords=data.coords,
-        )
-        assessment = assess_fit(data, lm_result)
-
-        chisq = sc.sum((sc.values(data) - best_fit) ** 2 / sc.variances(data)).to(
-            unit='one'
-        )
-        # nfree = len(data) - lm_result.nfree
-        # TODO lmfit has fewer free params. Shouldn't matter for the scipp fitter
-        # nfree = len(data) - len(params)
-        # print(len(params), result.lm_result.nvarys)
-        # print(chisq.value, result.lm_result.chisqr, chisq.value / nfree,
-        #       result.lm_result.redchi)
-
-        # Akaike information criterion
-        neg2_log_likel = len(data) * sc.log(chisq / len(data))
-        aic = neg2_log_likel + 2 * lm_result.nvarys
-        # TODO should be
-        # aic = neg2_log_likel + 2 * len(params)
-        # print(aic.value, result.lm_result.aic)
-
-        result = FitResult(best_fit=best_fit, aic=aic, assessment=assessment)
-
+        result = _fit_peak_single_model(data, peak=peak, background=background)
         if candidate_result is None:
             candidate_result = result
-        match assessment:
+        match result.assessment:
             case FitAssessment.candidate if result.better_than(candidate_result):
                 candidate_result = result
             case FitAssessment.accept:
@@ -173,9 +141,9 @@ def _fit_peak(data: sc.DataArray, peak_estimate: sc.Variable) -> FitResult:
     return candidate_result
 
 
-def _fit_peak_sc(data: sc.DataArray, peak_estimate: sc.Variable) -> FitResult:
-    background = PolynomialModel(degree=1, prefix='bkg_')
-    peak = GaussianModel(prefix='peak_')
+def _fit_peak_single_model(
+    data: sc.DataArray, peak: Model, background: Model
+) -> FitResult:
     model = background + peak
     p0 = {
         **_guess_background(data, model=background),
@@ -187,6 +155,10 @@ def _fit_peak_sc(data: sc.DataArray, peak_estimate: sc.Variable) -> FitResult:
         'peak_fraction': (0.0, 1.0),
     }
 
+    if len(data) < len(p0):
+        # not enough points to fit all parameters
+        return FitResult.for_too_narrow_window(data, peak=peak, background=background)
+
     # Workaround for https://github.com/scipp/scipp/issues/3418
     def fit_model(x: sc.Variable, **params: sc.Variable) -> sc.Variable:
         return model(x, **params)
@@ -195,12 +167,16 @@ def _fit_peak_sc(data: sc.DataArray, peak_estimate: sc.Variable) -> FitResult:
         popt, _ = curve_fit(fit_model, data, p0=p0, bounds=bounds)
     except RuntimeError:
         # TODO log or store message in FitResult
-        return FitResult.for_failure(data)
+        return FitResult.for_failure(
+            data,
+            peak=peak,
+            background=background,
+        )
+
     best_fit = sc.DataArray(
         model(data.coords[data.dim], **{k: sc.values(p) for k, p in popt.items()}),
         coords=data.coords,
     )
-
     goodness_stats = _goodness_of_fit_statistics(data, best_fit, popt)
     assessment = assess_fit(
         data, peak, popt, reduced_chi_square=goodness_stats['red_chisq']
@@ -208,7 +184,10 @@ def _fit_peak_sc(data: sc.DataArray, peak_estimate: sc.Variable) -> FitResult:
 
     return FitResult(
         best_fit=best_fit,
+        popt=popt,
         assessment=assessment,
+        peak=peak,
+        background=background,
         **goodness_stats,
     )
 
@@ -252,6 +231,8 @@ def assess_fit(
         # TODO mantid checks for chisq < 0
         # https://github.com/mantidproject/mantid/blob/f03bd8cd7087aeecc5c74673af93871137dfb13a/Framework/Algorithms/src/StripPeaks.cpp#L203  # noqa: E501
         return FitAssessment.chisq_too_large
+    if _peak_is_near_edge(data, popt):
+        return FitAssessment.peak_near_edge
     if _curve_points_down(popt):
         return FitAssessment.peak_points_down
     if _peak_is_too_wide(data, peak, popt):
@@ -259,6 +240,14 @@ def assess_fit(
     if _peak_is_too_narrow(data, peak, popt):
         return FitAssessment.peak_too_narrow
     return FitAssessment.accept
+
+
+def _peak_is_near_edge(data: sc.DataArray, popt: dict[str, sc.Variable]) -> bool:
+    coord = data.coords[data.dim]
+    step_size = sc.min(coord[1:] - coord[:-1])
+    return (popt['peak_loc'] - coord[0] < 2 * step_size).value or (
+        coord[-1] - popt['peak_loc'] < 2 * step_size
+    ).value
 
 
 def _curve_points_down(popt: dict[str, sc.Variable]) -> bool:
