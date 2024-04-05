@@ -82,6 +82,12 @@ class Model(abc.ABC):
             for name, param in self._guess(x=data.coords[coord], y=data.data).items()
         }
 
+    def fwhm(self, params: dict[str, sc.Variable]) -> sc.Variable:
+        """Compute full width at half maximum where possible."""
+        raise NotImplementedError(
+            f'FWHM is not implemented for model {self.__class__.__name__}'
+        )
+
     def __add__(self, other: Model) -> CompositeModel:
         if not isinstance(other, Model):
             return NotImplemented
@@ -157,9 +163,12 @@ class GaussianModel(Model):
 
     def _guess(self, x: sc.Variable, y: sc.Variable) -> dict[str, sc.Variable]:
         params = _guess_from_peak(x, y)
-
+        # Adjust by the normalization factor of gaussians.
         params['amplitude'] *= math.sqrt(2 * math.pi)
         return params
+
+    def fwhm(self, params: dict[str, sc.Variable]) -> sc.Variable:
+        return 2 * math.sqrt(2 * math.log(2)) * params[self._prefix + 'scale']
 
 
 class LorentzianModel(Model):
@@ -177,6 +186,9 @@ class LorentzianModel(Model):
         # 3.0 * math.pi / math.sqrt(2 * math.pi)
         params['amplitude'] *= 3.75
         return params
+
+    def fwhm(self, params: dict[str, sc.Variable]) -> sc.Variable:
+        return 2 * params[self._prefix + 'scale']
 
 
 class PseudoVoigtModel(Model):
@@ -205,6 +217,10 @@ class PseudoVoigtModel(Model):
         # See Lorentzian
         params['amplitude'] *= 3.75
         return params
+
+    def fwhm(self, params: dict[str, sc.Variable]) -> sc.Variable:
+        # Note that the Gaussian component has an adjusted scale to enable this.
+        return 2 * params[self._prefix + 'scale']
 
 
 def _gaussian(

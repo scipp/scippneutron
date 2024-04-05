@@ -79,6 +79,7 @@ class FitAssessment(enum.Enum):
 def fit_peaks(
     data: sc.DataArray, peak_estimates: sc.Variable, windows: sc.Variable
 ) -> list[FitResult]:
+    # TODO some code assumes a sorted coord -> check!
     if windows.ndim == 0:
         windows = _fit_windows(data, peak_estimates, windows)
 
@@ -199,51 +200,92 @@ def _fit_peak_sc(data: sc.DataArray, peak_estimate: sc.Variable) -> FitResult:
         model(data.coords[data.dim], **{k: sc.values(p) for k, p in popt.items()}),
         coords=data.coords,
     )
+
+    goodness_stats = _goodness_of_fit_statistics(data, best_fit, popt)
+    assessment = assess_fit(
+        data, peak, popt, reduced_chi_square=goodness_stats['red_chisq']
+    )
+
     return FitResult(
         best_fit=best_fit,
-        red_chisq=None,  # TODO
-        aic=None,  # TODO
-        assessment=FitAssessment.accept,
+        assessment=assessment,
+        **goodness_stats,
     )
 
 
+def _goodness_of_fit_statistics(
+    data: sc.DataArray, best_fit: sc.DataArray, params: dict[str, sc.Variable]
+) -> dict[str, sc.Variable]:
+    # number of degrees of freedom
+    n_dof = len(data) - len(params)
+
+    chi_square = _chi_square(data, best_fit)
+    reduced_chi_square = chi_square / n_dof
+    aic = _akaike_information_criterion(data, chi_square, params)
+
+    return {
+        'red_chisq': reduced_chi_square,
+        'aic': aic,
+    }
+
+
+def _chi_square(data: sc.DataArray, best_fit: sc.DataArray) -> sc.Variable:
+    aux = (sc.values(data) - best_fit) ** 2
+    aux /= sc.variances(data)
+    return sc.sum(aux).to(unit='one')
+
+
+def _akaike_information_criterion(
+    data: sc.DataArray, chi_square: sc.Variable, params: dict
+) -> sc.Variable:
+    neg2_log_likelihood = len(data) * sc.log(chi_square / len(data))
+    return neg2_log_likelihood + 2 * len(params)
+
+
 def assess_fit(
-    data: sc.DataArray, params, reduced_chi_square: sc.Variable
+    data: sc.DataArray,
+    peak: Model,
+    popt: dict[str, sc.Variable],
+    reduced_chi_square: sc.Variable,
 ) -> FitAssessment:
-    # if result.redchi > 100:  # TODO tunable
-    #     # TODO mantid checks for chisq < 0
-    #     # https://github.com/mantidproject/mantid/blob/f03bd8cd7087aeecc5c74673af93871137dfb13a/Framework/Algorithms/src/StripPeaks.cpp#L203  # noqa: E501
-    #     return FitAssessment.chisq_too_large
-    # if _curve_points_down(result):
-    #     return FitAssessment.peak_points_down
-    # if _peak_is_too_wide(data, result):
-    #     return FitAssessment.peak_too_wide
-    # if _peak_is_too_narrow(data, result):
-    #     return FitAssessment.peak_too_narrow
+    if (reduced_chi_square > sc.scalar(100)).value:  # TODO tunable
+        # TODO mantid checks for chisq < 0
+        # https://github.com/mantidproject/mantid/blob/f03bd8cd7087aeecc5c74673af93871137dfb13a/Framework/Algorithms/src/StripPeaks.cpp#L203  # noqa: E501
+        return FitAssessment.chisq_too_large
+    if _curve_points_down(popt):
+        return FitAssessment.peak_points_down
+    if _peak_is_too_wide(data, peak, popt):
+        return FitAssessment.peak_too_wide
+    if _peak_is_too_narrow(data, peak, popt):
+        return FitAssessment.peak_too_narrow
     return FitAssessment.accept
 
 
-def _curve_points_down(result: lmfit.model.ModelResult) -> bool:
+def _curve_points_down(popt: dict[str, sc.Variable]) -> bool:
     try:
-        return result.params['peak_amplitude'].value < 0
+        return popt['peak_amplitude'].value < 0
     except KeyError:
         return False
 
 
-def _peak_is_too_wide(data: sc.DataArray, result: lmfit.model.ModelResult) -> bool:
-    fwhm = result.params['peak_fwhm'].value
-    coord = data.coords[data.dim].values
-    return fwhm > (coord[-1] - coord[0])  # TODO tunable
+def _peak_is_too_wide(
+    data: sc.DataArray, peak: Model, popt: dict[str, sc.Variable]
+) -> bool:
+    fwhm = peak.fwhm(popt)
+    coord = data.coords[data.dim]
+    return (fwhm > (coord[-1] - coord[0])).value  # TODO tunable
 
 
-def _peak_is_too_narrow(data: sc.DataArray, result: lmfit.model.ModelResult) -> bool:
-    fwhm = result.params['peak_fwhm'].value
-    coord = data.coords[data.dim].values
-    center_idx = np.argmin(np.abs(coord - result.params['peak_center'].value))
+def _peak_is_too_narrow(
+    data: sc.DataArray, peak: Model, popt: dict[str, sc.Variable]
+) -> bool:
+    fwhm = peak.fwhm(popt)
+    coord = data.coords[data.dim]
+    center_idx = np.argmin(abs(coord.values - popt['peak_loc'].values))
     # Average of bins around center index.
     # Bins don't normally vary quickly, so this is a good approximation.
     bin_width = (coord[center_idx + 1] - coord[center_idx - 1]) / 2
-    return (fwhm / bin_width) < 1.5  # TODO tunable
+    return ((fwhm / bin_width) < sc.scalar(1.5)).value  # TODO tunable
 
 
 def _guess_background(data: sc.DataArray, model: Model) -> dict[str, sc.Variable]:
