@@ -153,23 +153,10 @@ class GaussianModel(Model):
         super().__init__(prefix=prefix, param_names=('amplitude', 'loc', 'scale'))
 
     def _call(self, x: sc.Variable, params: dict[str, sc.Variable]) -> sc.Variable:
-        amplitude = params['amplitude']
-        loc = params['loc']
-        scale = params['scale']
-
-        # Avoid division by 0
-        scale = sc.scalar(
-            max(scale.value, 1e-15), variance=scale.variance, unit=scale.unit
-        )
-
-        val = -((x - loc) ** 2)
-        val /= 2 * scale**2
-        val = sc.exp(val, out=val)
-        val *= amplitude / (math.sqrt(2 * math.pi) * scale)
-        return val
+        return _gaussian(x, **params)
 
     def _guess(self, x: sc.Variable, y: sc.Variable) -> dict[str, sc.Variable]:
-        params = {name: param for name, param in _guess_from_peak(x, y).items()}
+        params = _guess_from_peak(x, y)
 
         params['amplitude'] *= math.sqrt(2 * math.pi)
         return params
@@ -180,28 +167,71 @@ class LorentzianModel(Model):
         super().__init__(prefix=prefix, param_names=('amplitude', 'loc', 'scale'))
 
     def _call(self, x: sc.Variable, params: dict[str, sc.Variable]) -> sc.Variable:
-        amplitude = params['amplitude']
-        loc = params['loc']
-        scale = params['scale']
-
-        # Use `max` to avoid division by 0
-        val = (x - loc) ** 2
-        val += (
-            sc.scalar(max(scale.value, 1e-15), variance=scale.variance, unit=scale.unit)
-            ** 2
-        )
-        val = sc.reciprocal(val, out=val)
-        val *= amplitude * scale / math.pi
-        return val
+        return _lorentzian(x, **params)
 
     def _guess(self, x: sc.Variable, y: sc.Variable) -> dict[str, sc.Variable]:
-        params = {name: param for name, param in _guess_from_peak(x, y).items()}
+        params = _guess_from_peak(x, y)
         # Fudge factor taken from lmfit.
         # Not sure where exactly it comes from, but it is related to the normalization
         # of a Lorentzian and is approximately
         # 3.0 * math.pi / math.sqrt(2 * math.pi)
         params['amplitude'] *= 3.75
         return params
+
+
+class PseudoVoigtModel(Model):
+    def __init__(self, *, prefix: str) -> None:
+        super().__init__(
+            prefix=prefix, param_names=('amplitude', 'loc', 'scale', 'fraction')
+        )
+
+    def _call(self, x: sc.Variable, params: dict[str, sc.Variable]) -> sc.Variable:
+        params = dict(params.items())
+        fraction = params.pop('fraction')
+
+        lorentzian = _lorentzian(x, **params)
+        # Adjust Gaussian scale such that Gaussian and Lorentzian have the same
+        # FWHM of 2*scale.
+        scale_g = params['scale'] / math.sqrt(2 * math.log(2))
+        gaussian = _gaussian(
+            x, amplitude=params['amplitude'], loc=params['loc'], scale=scale_g
+        )
+
+        return fraction * lorentzian + (1 - fraction) * gaussian
+
+    def _guess(self, x: sc.Variable, y: sc.Variable) -> dict[str, sc.Variable]:
+        params = _guess_from_peak(x, y)
+        params['fraction'] = sc.scalar(0.5)
+        # See Lorentzian
+        params['amplitude'] *= 3.75
+        return params
+
+
+def _gaussian(
+    x: sc.Variable, *, amplitude: sc.Variable, loc: sc.Variable, scale: sc.Variable
+) -> sc.Variable:
+    # Avoid division by 0
+    scale = sc.scalar(max(scale.value, 1e-15), variance=scale.variance, unit=scale.unit)
+
+    val = -((x - loc) ** 2)
+    val /= 2 * scale**2
+    val = sc.exp(val, out=val)
+    val *= amplitude / (math.sqrt(2 * math.pi) * scale)
+    return val
+
+
+def _lorentzian(
+    x: sc.Variable, *, amplitude: sc.Variable, loc: sc.Variable, scale: sc.Variable
+) -> sc.Variable:
+    # Use `max` to avoid division by 0
+    val = (x - loc) ** 2
+    val += (
+        sc.scalar(max(scale.value, 1e-15), variance=scale.variance, unit=scale.unit)
+        ** 2
+    )
+    val = sc.reciprocal(val, out=val)
+    val *= amplitude * scale / math.pi
+    return val
 
 
 def _guess_from_peak(x: sc.Variable, y: sc.Variable) -> dict[str, sc.Variable]:
@@ -228,8 +258,6 @@ def _guess_from_peak(x: sc.Variable, y: sc.Variable) -> dict[str, sc.Variable]:
         scale = (sc.max(x) - sc.min(x)) / 6.0
 
     amplitude = scale * (y_max - y_min)
-    # TODO lower bound for sigma
-    #   also for amplitude in the actual peak fit but not necessarily here
     return {
         'amplitude': amplitude,
         'loc': loc,

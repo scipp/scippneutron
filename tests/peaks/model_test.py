@@ -79,6 +79,35 @@ def test_lorentzian_call(prefix: str):
     sc.testing.assert_allclose(actual, expected)
 
 
+@pytest.mark.parametrize('prefix', ('', 'lorentz_'))
+@pytest.mark.parametrize('fraction', (0.0, 1.0, 0.5, 0.3))
+def test_pseudo_voigt_call(prefix: str, fraction: float):
+    amplitude = sc.scalar(2.8, unit='kg')
+    loc = sc.scalar(0.4, unit='m')
+    scale = sc.scalar(0.1, unit='m')
+    fraction = sc.scalar(fraction)
+    params = {
+        f'{prefix}amplitude': amplitude,
+        f'{prefix}loc': loc,
+        f'{prefix}scale': scale,
+        f'{prefix}fraction': fraction,
+    }
+
+    m = model.PseudoVoigtModel(prefix=prefix)
+
+    x = sc.linspace('xx', -4.0, 5.0, 200, unit='m')
+    scale_g = scale / math.sqrt(2 * math.log(2))
+    gaussian = (
+        amplitude
+        / (math.sqrt(2 * math.pi) * scale_g)
+        * sc.exp(-((x - loc) ** 2) / (2 * scale_g**2))
+    )
+    lorentzian = amplitude / np.pi * scale / ((x - loc) ** 2 + scale**2)
+    expected = fraction * lorentzian + (1 - fraction) * gaussian
+    actual = m(x, **params)
+    sc.testing.assert_allclose(actual, expected)
+
+
 @pytest.mark.parametrize('prefix', ('', 'pre_'))
 def test_composite_call(prefix: str):
     amplitude = sc.scalar(2.8, unit='kg*m')
@@ -297,6 +326,35 @@ def test_lorentzian_guess_params():
     )
     sc.testing.assert_allclose(params['loc'], loc, atol=sc.scalar(0.5, unit='m'))
     sc.testing.assert_allclose(params['scale'], scale, atol=sc.scalar(0.5, unit='m'))
+
+
+@pytest.mark.parametrize('fraction', (0.0, 1.0, 0.5, 0.3))
+def test_pseudo_voigt_guess_params(fraction: float):
+    amplitude = sc.scalar(2.8, unit='kg')
+    loc = sc.scalar(0.4, unit='m')
+    scale = sc.scalar(0.1, unit='m')
+    fraction = sc.scalar(fraction)
+
+    x = sc.linspace('xx', -4.0, 5.0, 200, unit='m')
+    scale_g = scale / math.sqrt(2 * math.log(2))
+    gaussian = (
+        amplitude
+        / (math.sqrt(2 * math.pi) * scale_g)
+        * sc.exp(-((x - loc) ** 2) / (2 * scale_g**2))
+    )
+    lorentzian = amplitude / np.pi * scale / ((x - loc) ** 2 + scale**2)
+    y = (1 - fraction) * gaussian + fraction * lorentzian
+    data = sc.DataArray(y, coords={'xx': x})
+
+    m = model.PseudoVoigtModel(prefix='')
+    params = m.guess(data)
+    assert params.keys() == {'amplitude', 'loc', 'scale', 'fraction'}
+    sc.testing.assert_allclose(
+        params['amplitude'], amplitude, atol=sc.scalar(0.6, unit='kg')
+    )
+    sc.testing.assert_allclose(params['loc'], loc, atol=sc.scalar(0.5, unit='m'))
+    sc.testing.assert_allclose(params['scale'], scale, atol=sc.scalar(0.5, unit='m'))
+    sc.testing.assert_identical(params['fraction'], sc.scalar(0.5))
 
 
 def test_composite_guess_params():
