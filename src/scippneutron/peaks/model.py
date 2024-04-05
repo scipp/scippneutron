@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 """Models for peaks and background."""
+from __future__ import annotations
 
 import abc
 import math
@@ -79,6 +80,41 @@ class Model(abc.ABC):
         return {
             self._prefix + name: param
             for name, param in self._guess(x=data.coords[coord], y=data.data).items()
+        }
+
+    def __add__(self, other: Model) -> CompositeModel:
+        if not isinstance(other, Model):
+            return NotImplemented
+        return CompositeModel(left=self, right=other, prefix='')
+
+
+class CompositeModel(Model):
+    def __init__(self, left: Model, right: Model, *, prefix: str) -> None:
+        if left.param_names & right.param_names:
+            raise ValueError(
+                f'Model {left.__class__.__name__} and model {right.__class__.__name__} '
+                'have overlapping parameter names: '
+                f'{left.param_names & right.param_names}. '
+                'Use prefixes to disambiguate.'
+            )
+        self._left = left
+        self._right = right
+        super().__init__(
+            prefix=prefix, param_names=left.param_names | right.param_names
+        )
+
+    def _call(self, x: sc.Variable, params: dict[str, sc.Variable]) -> sc.Variable:
+        left = self._left(x, **{name: params[name] for name in self._left.param_names})
+        right = self._right(
+            x, **{name: params[name] for name in self._right.param_names}
+        )
+        return left + right
+
+    def _guess(self, x: sc.Variable, y: sc.Variable) -> dict[str, sc.Variable]:
+        data = sc.DataArray(y, coords={y.dim: x})
+        return {
+            **self._left.guess(data),
+            **self._right.guess(data),
         }
 
 

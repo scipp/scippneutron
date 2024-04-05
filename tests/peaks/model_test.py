@@ -79,6 +79,38 @@ def test_lorentzian_call(prefix: str):
     sc.testing.assert_allclose(actual, expected)
 
 
+@pytest.mark.parametrize('prefix', ('', 'pre_'))
+def test_composite_call(prefix: str):
+    amplitude = sc.scalar(2.8, unit='kg*m')
+    loc = sc.scalar(0.4, unit='m')
+    scale = sc.scalar(0.1, unit='m')
+    a0 = sc.scalar(-0.4, unit='kg')
+    a1 = sc.scalar(0.05, unit='kg/m')
+    params = {
+        f'{prefix}n_amplitude': amplitude,
+        f'{prefix}n_loc': loc,
+        f'{prefix}n_scale': scale,
+        f'{prefix}p_a0': a0,
+        f'{prefix}p_a1': a1,
+    }
+    m = model.CompositeModel(
+        model.PolynomialModel(degree=1, prefix='p_'),
+        model.GaussianModel(prefix='n_'),
+        prefix=prefix,
+    )
+
+    x = sc.linspace('xx', -4.0, 5.0, 200, unit='m')
+    expected_p = a0 + a1 * x
+    expected_n = (
+        amplitude
+        / (math.sqrt(2 * math.pi) * scale)
+        * sc.exp(-((x - loc) ** 2) / (2 * scale**2))
+    )
+    expected = expected_p + expected_n
+    actual = m(x, **params)
+    sc.testing.assert_allclose(actual, expected)
+
+
 def test_polynomial_degree_1_guess_params():
     a0 = sc.scalar(0.2, unit='cm')
     a1 = sc.scalar(-5.1, unit='cm/s')
@@ -248,7 +280,7 @@ def test_gaussian_guess_params_prefix():
     )
 
 
-def test_lorentzian_guess_params_linspace():
+def test_lorentzian_guess_params():
     amplitude = sc.scalar(2.8, unit='kg')
     loc = sc.scalar(0.4, unit='m')
     scale = sc.scalar(0.1, unit='m')
@@ -265,3 +297,69 @@ def test_lorentzian_guess_params_linspace():
     )
     sc.testing.assert_allclose(params['loc'], loc, atol=sc.scalar(0.5, unit='m'))
     sc.testing.assert_allclose(params['scale'], scale, atol=sc.scalar(0.5, unit='m'))
+
+
+def test_composite_guess_params():
+    amplitude = sc.scalar(2.8, unit='kg*m')
+    loc = sc.scalar(0.4, unit='m')
+    scale = sc.scalar(0.1, unit='m')
+    a0 = sc.scalar(-0.4, unit='kg')
+    a1 = sc.scalar(0.05, unit='kg/m')
+    x = sc.linspace('xx', -4.0, 5.0, 200, unit='m')
+    y_p = a0 + a1 * x
+    y_n = (
+        amplitude
+        / (math.sqrt(2 * math.pi) * scale)
+        * sc.exp(-((x - loc) ** 2) / (2 * scale**2))
+    )
+    y = y_p + y_n
+    data = sc.DataArray(y, coords={'xx': x})
+
+    m = model.CompositeModel(
+        model.PolynomialModel(degree=1, prefix='p_'),
+        model.GaussianModel(prefix='n_'),
+        prefix='',
+    )
+    params = m.guess(data)
+    assert params.keys() == {'p_a0', 'p_a1', 'n_amplitude', 'n_loc', 'n_scale'}
+    sc.testing.assert_allclose(params['p_a0'], a0, atol=sc.scalar(0.5, unit='kg'))
+    sc.testing.assert_allclose(params['p_a1'], a1, atol=sc.scalar(0.5, unit='kg/m'))
+    sc.testing.assert_allclose(
+        params['n_amplitude'], amplitude, atol=sc.scalar(0.6, unit='kg*m')
+    )
+    sc.testing.assert_allclose(params['n_loc'], loc, atol=sc.scalar(0.5, unit='m'))
+    sc.testing.assert_allclose(params['n_scale'], scale, atol=sc.scalar(0.5, unit='m'))
+
+
+def test_composite_from_sum():
+    amplitude = sc.scalar(2.8, unit='kg*m')
+    loc = sc.scalar(0.4, unit='m')
+    scale = sc.scalar(0.1, unit='m')
+    a0 = sc.scalar(-0.4, unit='kg')
+    a1 = sc.scalar(0.05, unit='kg/m')
+    params = {
+        'n_amplitude': amplitude,
+        'n_loc': loc,
+        'n_scale': scale,
+        'p_a0': a0,
+        'p_a1': a1,
+    }
+    m = model.PolynomialModel(degree=1, prefix='p_') + model.GaussianModel(prefix='n_')
+
+    x = sc.linspace('xx', -4.0, 5.0, 200, unit='m')
+    expected_p = a0 + a1 * x
+    expected_n = (
+        amplitude
+        / (math.sqrt(2 * math.pi) * scale)
+        * sc.exp(-((x - loc) ** 2) / (2 * scale**2))
+    )
+    expected = expected_p + expected_n
+    actual = m(x, **params)
+    sc.testing.assert_allclose(actual, expected)
+
+
+def test_composite_param_name_clash():
+    left = model.PolynomialModel(degree=1, prefix='p_')
+    right = model.PolynomialModel(degree=2, prefix='p_')
+    with pytest.raises(ValueError, match='overlap'):
+        left + right
