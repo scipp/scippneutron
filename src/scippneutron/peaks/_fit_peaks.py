@@ -73,7 +73,7 @@ class FitResult:
         return self.assessment.success
 
     def better_than(self, other: FitResult) -> bool:
-        return sc.all(self.aic > other.aic).value
+        return sc.all(self.aic < other.aic).value
 
 
 class FitAssessment(enum.Enum):
