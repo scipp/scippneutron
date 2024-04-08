@@ -28,6 +28,7 @@ class FitResult:
     assessment: FitAssessment
     peak: Model
     background: Model
+    message: str
 
     @classmethod
     def for_too_narrow_window(
@@ -51,6 +52,7 @@ class FitResult:
         assessment: FitAssessment | None = None,
         peak: Model,
         background: Model,
+        message: str | None = None,
     ) -> FitResult:
         return cls(
             best_fit=sc.full_like(data, np.nan, variance=np.nan),
@@ -63,6 +65,7 @@ class FitResult:
             assessment=FitAssessment.failed if assessment is None else assessment,
             peak=peak,
             background=background,
+            message=message or _message_from_assessment(assessment),
         )
 
     @property
@@ -149,6 +152,7 @@ def _fit_peak_single_model(
         **_guess_background(data, model=background),
         **_guess_peak(data, model=peak),
     }
+    # TODO get from model
     bounds = {
         'peak_amplitude': (0.0, np.inf),
         'peak_scale': (0.0, np.inf),
@@ -165,12 +169,12 @@ def _fit_peak_single_model(
 
     try:
         popt, _ = curve_fit(fit_model, data, p0=p0, bounds=bounds)
-    except RuntimeError:
-        # TODO log or store message in FitResult
+    except RuntimeError as err:
         return FitResult.for_failure(
             data,
             peak=peak,
             background=background,
+            message=str(err.args[0]),
         )
 
     best_fit = sc.DataArray(
@@ -188,6 +192,7 @@ def _fit_peak_single_model(
         assessment=assessment,
         peak=peak,
         background=background,
+        message=_message_from_assessment(assessment),
         **goodness_stats,
     )
 
@@ -211,7 +216,7 @@ def _goodness_of_fit_statistics(
 def _chi_square(data: sc.DataArray, best_fit: sc.DataArray) -> sc.Variable:
     aux = (sc.values(data) - best_fit) ** 2
     aux /= sc.variances(data)
-    return sc.sum(aux).to(unit='one')
+    return sc.sum(aux.data).to(unit='one')
 
 
 def _akaike_information_criterion(
@@ -328,3 +333,23 @@ def _separate_from_neighbors_in_place(
     right_edge = windows['range', 1][:-1]
     left_edge[:] = sc.where(left_edge < lo, lo, left_edge)
     right_edge[:] = sc.where(right_edge > hi, hi, right_edge)
+
+
+def _message_from_assessment(assessment: FitAssessment | None) -> str:
+    match assessment:
+        case FitAssessment.accept:
+            return 'success'
+        case FitAssessment.candidate:
+            return 'success'
+        case FitAssessment.peak_too_narrow:
+            return 'peak too narrow'
+        case FitAssessment.peak_too_wide:
+            return 'peak too wide'
+        case FitAssessment.peak_points_down:
+            return 'wrong sign'
+        case FitAssessment.window_too_narrow:
+            return 'window too narrow'
+        case FitAssessment.peak_near_edge:
+            return 'too close to edge'
+        case _:
+            return 'failure'
