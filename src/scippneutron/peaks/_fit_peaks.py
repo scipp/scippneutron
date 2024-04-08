@@ -22,7 +22,6 @@ from .model import (
 
 @dataclass
 class FitResult:
-    best_fit: sc.DataArray
     popt: dict[str, sc.Variable]
     red_chisq: sc.Variable
     p_value: sc.Variable
@@ -30,34 +29,34 @@ class FitResult:
     assessment: FitAssessment
     peak: Model
     background: Model
+    window: sc.Variable
     message: str
 
     @classmethod
     def for_too_narrow_window(
         cls,
-        data: sc.DataArray,
         peak: Model,
         background: Model,
+        window: sc.Variable,
     ) -> FitResult:
         return cls.for_failure(
-            data,
             assessment=FitAssessment.window_too_narrow,
             peak=peak,
             background=background,
+            window=window,
         )
 
     @classmethod
     def for_failure(
         cls,
-        data: sc.DataArray,
         *,
         assessment: FitAssessment | None = None,
         peak: Model,
         background: Model,
+        window: sc.Variable,
         message: str | None = None,
     ) -> FitResult:
         return cls(
-            best_fit=sc.full_like(data, np.nan, variance=np.nan),
             popt={
                 name: sc.scalar(np.nan)
                 for name in peak.param_names | background.param_names
@@ -68,6 +67,7 @@ class FitResult:
             assessment=FitAssessment.failed if assessment is None else assessment,
             peak=peak,
             background=background,
+            window=window,
             message=message or _message_from_assessment(assessment),
         )
 
@@ -77,6 +77,21 @@ class FitResult:
 
     def better_than(self, other: FitResult) -> bool:
         return sc.all(self.aic < other.aic).value
+
+    def eval_model(self, data: sc.Variable) -> sc.Variable:
+        return (self.background + self.peak)(
+            data, **{name: sc.values(val) for name, val in self.popt.items()}
+        )
+
+    def eval_peak(self, data: sc.Variable) -> sc.Variable:
+        return self.peak(
+            data,
+            **{
+                name: sc.values(val)
+                for name, val in self.popt.items()
+                if name.startswith('peak_')
+            },
+        )
 
 
 class FitAssessment(enum.Enum):
@@ -114,15 +129,14 @@ def fit_peaks(
         windows = _fit_windows(data, peak_estimates, windows)
 
     results = []
-    for window in windows.transpose((peak_estimates.dim, 'range')).values:
-        data_in_window = data[
-            data.dim, window[0] * windows.unit : window[1] * windows.unit
-        ]
-        results.append(_fit_peak_sc(data_in_window))
+    for i in range(windows.sizes[peak_estimates.dim]):
+        window = windows[peak_estimates.dim, i]
+        data_in_window = data[data.dim, window[0] : window[1]]
+        results.append(_fit_peak_sc(data_in_window, window))
     return results
 
 
-def _fit_peak_sc(data: sc.DataArray) -> FitResult:
+def _fit_peak_sc(data: sc.DataArray, window: sc.Variable) -> FitResult:
     background_models = (
         PolynomialModel(degree=1, prefix='bkg_'),
         PolynomialModel(degree=2, prefix='bkg_'),
@@ -135,7 +149,9 @@ def _fit_peak_sc(data: sc.DataArray) -> FitResult:
 
     candidate_result = None
     for peak, background in itertools.product(peak_models, background_models):
-        result = _fit_peak_single_model(data, peak=peak, background=background)
+        result = _fit_peak_single_model(
+            data, peak=peak, background=background, window=window
+        )
         if candidate_result is None:
             candidate_result = result
         match result.assessment:
@@ -149,7 +165,7 @@ def _fit_peak_sc(data: sc.DataArray) -> FitResult:
 
 
 def _fit_peak_single_model(
-    data: sc.DataArray, peak: Model, background: Model
+    data: sc.DataArray, peak: Model, background: Model, window: sc.Variable
 ) -> FitResult:
     model = background + peak
     bkg_p0 = _guess_background(data, model=background)
@@ -166,33 +182,28 @@ def _fit_peak_single_model(
 
     if len(data) < len(p0):
         # not enough points to fit all parameters
-        return FitResult.for_too_narrow_window(data, peak=peak, background=background)
+        return FitResult.for_too_narrow_window(
+            peak=peak, background=background, window=window
+        )
 
     bkg_goodness_stats = _fit_background(background, data, bkg_p0)
     try:
-        popt, best_fit, goodness_stats = _perform_fit(model, data, p0=p0, bounds=bounds)
+        popt, goodness_stats = _perform_fit(model, data, p0=p0, bounds=bounds)
     except RuntimeError as err:
-        if bkg_goodness_stats is not None:
-            return FitResult.for_failure(
-                data,
-                assessment=FitAssessment.background_is_better,
-                peak=peak,
-                background=background,
-            )
         return FitResult.for_failure(
-            data,
             peak=peak,
             background=background,
+            window=window,
             message=str(err.args[0]),
         )
 
     assessment = assess_fit(data, peak, popt, goodness_stats, bkg_goodness_stats)
     return FitResult(
-        best_fit=best_fit,
         popt=popt,
         assessment=assessment,
         peak=peak,
         background=background,
+        window=window,
         message=_message_from_assessment(assessment),
         **goodness_stats,
     )
@@ -202,7 +213,7 @@ def _fit_background(
     model: Model, data: sc.DataArray, p0: dict[str, sc.Variable]
 ) -> dict[str, sc.Variable] | None:
     try:
-        _, _, goodness_stats = _perform_fit(model, data, p0, bounds={})
+        _, goodness_stats = _perform_fit(model, data, p0, bounds={})
     except RuntimeError:
         # Background fits may fail when the background is a bad model.
         # Continue with a background+peak fit instead of aborting.
@@ -215,7 +226,7 @@ def _perform_fit(
     data: sc.DataArray,
     p0: dict[str, sc.Variable],
     bounds: dict[str, tuple[float, float]],
-) -> tuple[dict[str, sc.Variable], sc.DataArray, dict[str, sc.Variable]]:
+) -> tuple[dict[str, sc.Variable], dict[str, sc.Variable]]:
     # Workaround for https://github.com/scipp/scipp/issues/3418
     def fit_model(x: sc.Variable, **params: sc.Variable) -> sc.Variable:
         return model(x, **params)
@@ -226,7 +237,7 @@ def _perform_fit(
         coords=data.coords,
     )
     goodness_stats = _goodness_of_fit_statistics(data, best_fit, popt)
-    return popt, best_fit, goodness_stats
+    return popt, goodness_stats
 
 
 def _goodness_of_fit_statistics(
@@ -316,7 +327,7 @@ def _peak_is_too_narrow(
     # Average of bins around center index.
     # Bins don't normally vary quickly, so this is a good approximation.
     bin_width = (coord[center_idx + 1] - coord[center_idx - 1]) / 2
-    return ((fwhm / bin_width) < sc.scalar(1.5)).value  # TODO tunable
+    return ((fwhm / bin_width) < sc.scalar(1.0)).value  # TODO tunable
 
 
 def _guess_background(data: sc.DataArray, model: Model) -> dict[str, sc.Variable]:
@@ -336,7 +347,7 @@ def _fit_windows(
 ) -> sc.Variable:
     windows = sc.empty(sizes={data.dim: len(center), 'range': 2}, unit=center.unit)
     windows['range', 0] = center - width / 2
-    windows['range', 1] = center + width / 2
+    windows['range', 1] = np.nextafter(center.values + width.value / 2, np.inf)
 
     windows = _clip_to_data_range(data, windows)
     _separate_from_neighbors_in_place(center, windows)
