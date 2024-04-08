@@ -82,7 +82,7 @@ def test_lorentzian_call(prefix: str):
 @pytest.mark.parametrize('prefix', ('', 'lorentz_'))
 @pytest.mark.parametrize('fraction', (0.0, 1.0, 0.5, 0.3))
 def test_pseudo_voigt_call(prefix: str, fraction: float):
-    amplitude = sc.scalar(2.8, unit='kg')
+    amplitude = sc.scalar(2.8, unit='kg*m')
     loc = sc.scalar(0.4, unit='m')
     scale = sc.scalar(0.1, unit='m')
     fraction = sc.scalar(fraction)

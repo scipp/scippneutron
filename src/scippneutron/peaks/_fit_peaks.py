@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import numpy as np
 import scipp as sc
 from scipp.scipy.optimize import curve_fit
+from scipy.stats import chi2 as _scipy_chi2
 
 from .model import (
     GaussianModel,
@@ -24,6 +25,7 @@ class FitResult:
     best_fit: sc.DataArray
     popt: dict[str, sc.Variable]
     red_chisq: sc.Variable
+    p_value: sc.Variable
     aic: sc.Variable
     assessment: FitAssessment
     peak: Model
@@ -61,6 +63,7 @@ class FitResult:
                 for name in peak.param_names | background.param_names
             },
             red_chisq=sc.scalar(-np.nan),
+            p_value=sc.scalar(-np.nan),
             aic=sc.scalar(-np.inf),
             assessment=FitAssessment.failed if assessment is None else assessment,
             peak=peak,
@@ -80,11 +83,12 @@ class FitAssessment(enum.Enum):
     accept = enum.auto()
     candidate = enum.auto()
     failed = enum.auto()
+    background_is_better = enum.auto()
     peak_too_narrow = enum.auto()
     peak_too_wide = enum.auto()
     peak_near_edge = enum.auto()
     peak_points_down = enum.auto()
-    chisq_too_large = enum.auto()
+    p_too_small = enum.auto()
     window_too_narrow = enum.auto()
 
     @property
@@ -148,8 +152,9 @@ def _fit_peak_single_model(
     data: sc.DataArray, peak: Model, background: Model
 ) -> FitResult:
     model = background + peak
+    bkg_p0 = _guess_background(data, model=background)
     p0 = {
-        **_guess_background(data, model=background),
+        **bkg_p0,
         **_guess_peak(data, model=peak),
     }
     # TODO get from model
@@ -163,13 +168,17 @@ def _fit_peak_single_model(
         # not enough points to fit all parameters
         return FitResult.for_too_narrow_window(data, peak=peak, background=background)
 
-    # Workaround for https://github.com/scipp/scipp/issues/3418
-    def fit_model(x: sc.Variable, **params: sc.Variable) -> sc.Variable:
-        return model(x, **params)
-
+    bkg_goodness_stats = _fit_background(background, data, bkg_p0)
     try:
-        popt, _ = curve_fit(fit_model, data, p0=p0, bounds=bounds)
+        popt, best_fit, goodness_stats = _perform_fit(model, data, p0=p0, bounds=bounds)
     except RuntimeError as err:
+        if bkg_goodness_stats is not None:
+            return FitResult.for_failure(
+                data,
+                assessment=FitAssessment.background_is_better,
+                peak=peak,
+                background=background,
+            )
         return FitResult.for_failure(
             data,
             peak=peak,
@@ -177,15 +186,7 @@ def _fit_peak_single_model(
             message=str(err.args[0]),
         )
 
-    best_fit = sc.DataArray(
-        model(data.coords[data.dim], **{k: sc.values(p) for k, p in popt.items()}),
-        coords=data.coords,
-    )
-    goodness_stats = _goodness_of_fit_statistics(data, best_fit, popt)
-    assessment = assess_fit(
-        data, peak, popt, reduced_chi_square=goodness_stats['red_chisq']
-    )
-
+    assessment = assess_fit(data, peak, popt, goodness_stats, bkg_goodness_stats)
     return FitResult(
         best_fit=best_fit,
         popt=popt,
@@ -197,6 +198,37 @@ def _fit_peak_single_model(
     )
 
 
+def _fit_background(
+    model: Model, data: sc.DataArray, p0: dict[str, sc.Variable]
+) -> dict[str, sc.Variable] | None:
+    try:
+        _, _, goodness_stats = _perform_fit(model, data, p0, bounds={})
+    except RuntimeError:
+        # Background fits may fail when the background is a bad model.
+        # Continue with a background+peak fit instead of aborting.
+        return None
+    return goodness_stats
+
+
+def _perform_fit(
+    model: Model,
+    data: sc.DataArray,
+    p0: dict[str, sc.Variable],
+    bounds: dict[str, tuple[float, float]],
+) -> tuple[dict[str, sc.Variable], sc.DataArray, dict[str, sc.Variable]]:
+    # Workaround for https://github.com/scipp/scipp/issues/3418
+    def fit_model(x: sc.Variable, **params: sc.Variable) -> sc.Variable:
+        return model(x, **params)
+
+    popt, _ = curve_fit(fit_model, data, p0=p0, bounds=bounds)
+    best_fit = sc.DataArray(
+        model(data.coords[data.dim], **{k: sc.values(p) for k, p in popt.items()}),
+        coords=data.coords,
+    )
+    goodness_stats = _goodness_of_fit_statistics(data, best_fit, popt)
+    return popt, best_fit, goodness_stats
+
+
 def _goodness_of_fit_statistics(
     data: sc.DataArray, best_fit: sc.DataArray, params: dict[str, sc.Variable]
 ) -> dict[str, sc.Variable]:
@@ -205,10 +237,13 @@ def _goodness_of_fit_statistics(
 
     chi_square = _chi_square(data, best_fit)
     reduced_chi_square = chi_square / n_dof
+    p = sc.scalar(1 - _scipy_chi2(n_dof).cdf(chi_square.value))
+
     aic = _akaike_information_criterion(data, chi_square, params)
 
     return {
         'red_chisq': reduced_chi_square,
+        'p_value': p,
         'aic': aic,
     }
 
@@ -230,12 +265,14 @@ def assess_fit(
     data: sc.DataArray,
     peak: Model,
     popt: dict[str, sc.Variable],
-    reduced_chi_square: sc.Variable,
+    goodness_stats: dict[str, sc.Variable],
+    bkg_goodness_stats: dict[str, sc.Variable] | None,
 ) -> FitAssessment:
-    if (reduced_chi_square > sc.scalar(100)).value:  # TODO tunable
-        # TODO mantid checks for chisq < 0
-        # https://github.com/mantidproject/mantid/blob/f03bd8cd7087aeecc5c74673af93871137dfb13a/Framework/Algorithms/src/StripPeaks.cpp#L203  # noqa: E501
-        return FitAssessment.chisq_too_large
+    if bkg_goodness_stats is not None:
+        if bkg_goodness_stats['aic'] < goodness_stats['aic']:
+            return FitAssessment.background_is_better
+    if (goodness_stats['p_value'] < sc.scalar(0.01)).value:  # TODO tunable
+        return FitAssessment.p_too_small
     if _peak_is_near_edge(data, popt):
         return FitAssessment.peak_near_edge
     if _curve_points_down(popt):
@@ -351,5 +388,9 @@ def _message_from_assessment(assessment: FitAssessment | None) -> str:
             return 'window too narrow'
         case FitAssessment.peak_near_edge:
             return 'too close to edge'
-        case _:
+        case FitAssessment.p_too_small:
+            return 'p-value too small'
+        case FitAssessment.background_is_better:
+            return 'background is better'
+        case FitAssessment.failed:
             return 'failure'
