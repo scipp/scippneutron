@@ -5,6 +5,7 @@ from __future__ import annotations
 import enum
 import itertools
 from dataclasses import dataclass
+from typing import Iterable
 
 import numpy as np
 import scipp as sc
@@ -115,8 +116,16 @@ class FitAssessment(enum.Enum):
 
 
 def fit_peaks(
-    data: sc.DataArray, peak_estimates: sc.Variable, windows: sc.Variable
+    data: sc.DataArray,
+    *,
+    peak_estimates: sc.Variable,
+    windows: sc.Variable,
+    background: Model | str | Iterable[Model] | Iterable[str],
+    peak: Model | str | Iterable[Model] | Iterable[str],
 ) -> list[FitResult]:
+    background = _parse_model_spec(background, prefix='bkg_')
+    peak = _parse_model_spec(peak, prefix='peak_')
+
     if not sc.issorted(data.coords[data.dim], data.dim, order='ascending'):
         # A lot of code here assumes a sorted coord, either to use O(1) instead of O(n)
         # operations or to allow extracting windows.
@@ -132,23 +141,21 @@ def fit_peaks(
     for i in range(windows.sizes[peak_estimates.dim]):
         window = windows[peak_estimates.dim, i]
         data_in_window = data[data.dim, window[0] : window[1]]
-        results.append(_fit_peak_sc(data_in_window, window))
+        results.append(_fit_peak_sc(data_in_window, window, background, peak))
     return results
 
 
-def _fit_peak_sc(data: sc.DataArray, window: sc.Variable) -> FitResult:
-    background_models = (
-        PolynomialModel(degree=1, prefix='bkg_'),
-        PolynomialModel(degree=2, prefix='bkg_'),
-    )
-    peak_models = (
-        GaussianModel(prefix='peak_'),
-        LorentzianModel(prefix='peak_'),
-        PseudoVoigtModel(prefix='peak_'),
-    )
-
+def _fit_peak_sc(
+    data: sc.DataArray,
+    window: sc.Variable,
+    backgrounds: tuple[Model, ...],
+    peaks: tuple[Model, ...],
+) -> FitResult:
     candidate_result = None
-    for peak, background in itertools.product(peak_models, background_models):
+    # Loop order chosen as [(p0, b0), (p0, b1), (p1, b0), (p1, b1), ...]
+    # because trying different background models usually improves fits more than
+    # different peak models.
+    for peak, background in itertools.product(peaks, backgrounds):
         result = _fit_peak_single_model(
             data, peak=peak, background=background, window=window
         )
@@ -405,3 +412,31 @@ def _message_from_assessment(assessment: FitAssessment | None) -> str:
             return 'background is better'
         case FitAssessment.failed:
             return 'failure'
+
+
+def _parse_model_spec(
+    spec: Model | str | Iterable[Model] | Iterable[str], prefix: str
+) -> tuple[Model, ...]:
+    if isinstance(spec, (Model, str)):
+        spec = (spec,)
+    if not spec:
+        raise ValueError(f"No models specified for '{prefix}'")
+    return tuple(_parse_single_model_spec(s, prefix=prefix) for s in spec)
+
+
+def _parse_single_model_spec(spec: Model | str, prefix: str) -> Model:
+    match spec:
+        case Model():
+            return spec.with_prefix(prefix)
+        case 'linear':
+            return PolynomialModel(degree=1, prefix=prefix)
+        case 'quadratic':
+            return PolynomialModel(degree=2, prefix=prefix)
+        case 'gaussian':
+            return GaussianModel(prefix=prefix)
+        case 'lorentzian':
+            return LorentzianModel(prefix=prefix)
+        case 'pseudo_voigt':
+            return PseudoVoigtModel(prefix=prefix)
+        case _:
+            raise ValueError(f"Unknown model: '{spec}'")

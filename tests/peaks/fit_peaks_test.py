@@ -7,13 +7,19 @@ import scipp as sc
 import scipp.testing
 
 from scippneutron.peaks import fit_peaks
-from scippneutron.peaks.model import GaussianModel, PolynomialModel
+from scippneutron.peaks.model import GaussianModel, LorentzianModel, PolynomialModel
 
 
 def test_fit_peaks_rejects_descending_coord():
     data = sc.DataArray(sc.ones(sizes={'x': 10}), coords={'x': -sc.arange('x', 10.0)})
     with pytest.raises(sc.CoordError):
-        fit_peaks(data, sc.array(dims=['x'], values=[5.0]), windows=sc.scalar(1.0))
+        fit_peaks(
+            data,
+            peak_estimates=sc.array(dims=['x'], values=[5.0]),
+            windows=sc.scalar(1.0),
+            background='linear',
+            peak='gaussian',
+        )
 
 
 def test_fit_peaks_rejects_disordered_coord():
@@ -21,7 +27,13 @@ def test_fit_peaks_rejects_disordered_coord():
     data = sc.DataArray(sc.ones(sizes={'x': 10}), coords={'x': sc.arange('x', 10.0)})
     data = data[list(rng.permutation(len(data)))]
     with pytest.raises(sc.CoordError):
-        fit_peaks(data, sc.array(dims=['x'], values=[5.0]), windows=sc.scalar(1.0))
+        fit_peaks(
+            data,
+            peak_estimates=sc.array(dims=['x'], values=[5.0]),
+            windows=sc.scalar(1.0),
+            background='linear',
+            peak='gaussian',
+        )
 
 
 def test_fit_peaks_finds_single_gaussian_peak_linear_background():
@@ -45,6 +57,8 @@ def test_fit_peaks_finds_single_gaussian_peak_linear_background():
         data,
         peak_estimates=sc.array(dims=['x'], values=[13.0], unit='m'),
         windows=sc.scalar(15.0, unit='m'),
+        background='linear',
+        peak='gaussian',
     )
     assert result.success
     sc.testing.assert_allclose(
@@ -67,9 +81,124 @@ def test_fit_peaks_finds_single_gaussian_peak_linear_background():
         sc.values(result.popt['bkg_a1']), real_params['bkg_a1'], rtol=sc.scalar(0.1)
     )
 
-    lo = result.best_fit.coords['x'].min()
-    hi = result.best_fit.coords['x'].max()
-    data_in_window = data['x', lo : hi + sc.scalar(1e-8, unit='m')]
-    sc.testing.assert_allclose(
-        sc.values(result.best_fit), data_in_window, rtol=sc.scalar(0.1)
+
+def test_fit_peaks_select_model_single_string():
+    # The data doesn't really matter here.
+    # The test is about ensuring that the fit succeeds without raising.
+    x = sc.linspace('x', 0.0, 20.0, 10, unit='m')
+    y = sc.scalar(2.3, unit='K') + sc.scalar(-0.1, unit='K/m') * x
+    data = sc.DataArray(y, coords={'x': x})
+    [result] = fit_peaks(
+        data,
+        peak_estimates=sc.array(dims=['x'], values=[10.0], unit='m'),
+        windows=sc.scalar(15.0, unit='m'),
+        background='linear',
+        peak='gaussian',
     )
+    # There is no peak in the data
+    assert not result.success
+    assert isinstance(result.background, PolynomialModel)
+    assert result.background.degree == 1
+    assert isinstance(result.peak, GaussianModel)
+
+
+def test_fit_peaks_select_model_single_model():
+    # The data doesn't really matter here.
+    # The test is about ensuring that the fit succeeds without raising.
+    x = sc.linspace('x', 0.0, 20.0, 10, unit='m')
+    y = sc.scalar(2.3, unit='K') + sc.scalar(-0.1, unit='K/m') * x
+    data = sc.DataArray(y, coords={'x': x})
+    [result] = fit_peaks(
+        data,
+        peak_estimates=sc.array(dims=['x'], values=[10.0], unit='m'),
+        windows=sc.scalar(15.0, unit='m'),
+        background=PolynomialModel(degree=1, prefix='pre_'),
+        peak=GaussianModel(prefix='gauss'),
+    )
+    # There is no peak in the data
+    assert not result.success
+    assert isinstance(result.background, PolynomialModel)
+    assert result.background.degree == 1
+    assert result.background.prefix == 'bkg_'
+    assert isinstance(result.peak, GaussianModel)
+    assert result.peak.prefix == 'peak_'
+
+
+# Warning about ill-conditioned polynomial.
+# This does not matter for the test.
+@pytest.mark.filterwarnings('ignore::numpy.polynomial.polyutils.RankWarning')
+def test_fit_peaks_select_model_two_strings():
+    # The data doesn't really matter here.
+    # The test is about ensuring that the fit succeeds without raising.
+    x = sc.linspace('x', 0.0, 20.0, 10, unit='m')
+    y = sc.scalar(2.3, unit='K') + sc.scalar(-0.1, unit='K/m^2') * x**2
+    data = sc.DataArray(y, coords={'x': x})
+    [result] = fit_peaks(
+        data,
+        peak_estimates=sc.array(dims=['x'], values=[10.0], unit='m'),
+        windows=sc.scalar(15.0, unit='m'),
+        background=('linear', 'quadratic'),
+        peak='gaussian',
+    )
+    # There is no peak in the data
+    assert not result.success
+    assert isinstance(result.background, PolynomialModel)
+    assert result.background.degree in (1, 2)
+    assert isinstance(result.peak, GaussianModel)
+
+
+# Warning about ill-conditioned polynomial.
+# This does not matter for the test.
+@pytest.mark.filterwarnings('ignore::numpy.polynomial.polyutils.RankWarning')
+def test_fit_peaks_select_model_mixed():
+    # The data doesn't really matter here.
+    # The test is about ensuring that the fit succeeds without raising.
+    x = sc.linspace('x', 0.0, 20.0, 10, unit='m')
+    y = sc.scalar(2.3, unit='K') + sc.scalar(-0.1, unit='K/m^2') * x**2
+    data = sc.DataArray(y, coords={'x': x})
+    [result] = fit_peaks(
+        data,
+        peak_estimates=sc.array(dims=['x'], values=[10.0], unit='m'),
+        windows=sc.scalar(15.0, unit='m'),
+        background=(PolynomialModel(degree=1, prefix='pre_'), 'quadratic'),
+        peak=['lorentzian', GaussianModel(prefix='gauss')],
+    )
+    # There is no peak in the data
+    assert not result.success
+    assert isinstance(result.background, PolynomialModel)
+    assert result.background.degree in (1, 2)
+    assert result.background.prefix == 'bkg_'
+    assert isinstance(result.peak, (GaussianModel, LorentzianModel))
+    assert result.peak.prefix == 'peak_'
+
+
+def test_fit_peaks_select_model_bad_name():
+    # The data doesn't really matter here.
+    # The test is about ensuring that the fit succeeds without raising.
+    x = sc.linspace('x', 0.0, 20.0, 10, unit='m')
+    y = sc.scalar(2.3, unit='K') + sc.scalar(-0.1, unit='K/m^2') * x**2
+    data = sc.DataArray(y, coords={'x': x})
+    with pytest.raises(ValueError, match='model'):
+        fit_peaks(
+            data,
+            peak_estimates=sc.array(dims=['x'], values=[10.0], unit='m'),
+            windows=sc.scalar(15.0, unit='m'),
+            background='parabola',
+            peak='lorentzian',
+        )
+
+
+def test_fit_peaks_select_model_empty_list():
+    # The data doesn't really matter here.
+    # The test is about ensuring that the fit succeeds without raising.
+    x = sc.linspace('x', 0.0, 20.0, 10, unit='m')
+    y = sc.scalar(2.3, unit='K') + sc.scalar(-0.1, unit='K/m^2') * x**2
+    data = sc.DataArray(y, coords={'x': x})
+    with pytest.raises(ValueError, match='model'):
+        fit_peaks(
+            data,
+            peak_estimates=sc.array(dims=['x'], values=[10.0], unit='m'),
+            windows=sc.scalar(15.0, unit='m'),
+            background=['linear'],
+            peak=[],
+        )

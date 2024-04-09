@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import abc
 import math
+from copy import deepcopy
 from typing import Iterable
 
 import numpy as np
@@ -12,16 +13,16 @@ import scipp as sc
 
 
 class Model(abc.ABC):
-    def __init__(self, *, prefix: str, param_names: Iterable[str]) -> None:
+    def __init__(self, *, param_names: Iterable[str], prefix: str = '') -> None:
         """Initialize a base model.
 
         Parameters
         ----------
-        prefix:
-            Prefix used for model parameters in all user-facing data.
         param_names:
             Names of parameters in arbitrary order.
             Does not include the prefix.
+        prefix:
+            Prefix used for model parameters in all user-facing data.
         """
         self._prefix = prefix
         self._param_names = set(param_names)
@@ -93,9 +94,14 @@ class Model(abc.ABC):
             return NotImplemented
         return CompositeModel(left=self, right=other, prefix='')
 
+    def with_prefix(self, prefix: str) -> Model:
+        model = deepcopy(self)
+        model._prefix = prefix
+        return model
+
 
 class CompositeModel(Model):
-    def __init__(self, left: Model, right: Model, *, prefix: str) -> None:
+    def __init__(self, left: Model, right: Model, *, prefix: str = '') -> None:
         if left.param_names & right.param_names:
             raise ValueError(
                 f'Model {left.__class__.__name__} and model {right.__class__.__name__} '
@@ -125,7 +131,7 @@ class CompositeModel(Model):
 
 
 class PolynomialModel(Model):
-    def __init__(self, *, degree: int, prefix: str) -> None:
+    def __init__(self, *, degree: int, prefix: str = '') -> None:
         if degree <= 0:
             raise ValueError(f'Degree must be positive, got: {degree}')
         super().__init__(
@@ -155,7 +161,7 @@ class PolynomialModel(Model):
 
 
 class GaussianModel(Model):
-    def __init__(self, *, prefix: str) -> None:
+    def __init__(self, *, prefix: str = '') -> None:
         super().__init__(prefix=prefix, param_names=('amplitude', 'loc', 'scale'))
 
     def _call(self, x: sc.Variable, params: dict[str, sc.Variable]) -> sc.Variable:
@@ -172,7 +178,7 @@ class GaussianModel(Model):
 
 
 class LorentzianModel(Model):
-    def __init__(self, *, prefix: str) -> None:
+    def __init__(self, *, prefix: str = '') -> None:
         super().__init__(prefix=prefix, param_names=('amplitude', 'loc', 'scale'))
 
     def _call(self, x: sc.Variable, params: dict[str, sc.Variable]) -> sc.Variable:
@@ -192,7 +198,7 @@ class LorentzianModel(Model):
 
 
 class PseudoVoigtModel(Model):
-    def __init__(self, *, prefix: str) -> None:
+    def __init__(self, *, prefix: str = '') -> None:
         super().__init__(
             prefix=prefix, param_names=('amplitude', 'loc', 'scale', 'fraction')
         )
