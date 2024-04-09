@@ -421,3 +421,37 @@ def test_composite_param_name_clash():
     right = model.PolynomialModel(degree=2, prefix='p_')
     with pytest.raises(ValueError, match='overlap'):
         left + right
+
+
+def test_polynomial_param_bounds():
+    m = model.PolynomialModel(degree=1)
+    assert m.param_bounds == {}
+
+
+def test_gaussian_param_bounds():
+    m = model.GaussianModel()
+    assert m.param_bounds == {
+        'scale': (0.0, np.inf),
+    }
+
+
+def test_gaussian_param_bounds_prefix():
+    m = model.GaussianModel(prefix='g_')
+    assert m.param_bounds == {
+        'g_scale': (0.0, np.inf),
+    }
+
+
+def test_lorentzian_param_bounds():
+    m = model.LorentzianModel()
+    assert m.param_bounds == {
+        'scale': (0.0, np.inf),
+    }
+
+
+def test_pseudo_voigt_param_bounds():
+    m = model.PseudoVoigtModel()
+    assert m.param_bounds == {
+        'scale': (0.0, np.inf),
+        'fraction': (0.0, 1.0),
+    }

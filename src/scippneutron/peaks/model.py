@@ -54,6 +54,9 @@ class Model(abc.ABC):
         """
         ...
 
+    def _param_bounds(self) -> dict[str, tuple[float, float]]:
+        return {}
+
     @property
     def prefix(self) -> str:
         return self._prefix
@@ -81,6 +84,12 @@ class Model(abc.ABC):
         return {
             self._prefix + name: param
             for name, param in self._guess(x=data.coords[coord], y=data.data).items()
+        }
+
+    @property
+    def param_bounds(self) -> dict[str, tuple[float, float]]:
+        return {
+            self._prefix + name: bounds for name, bounds in self._param_bounds().items()
         }
 
     def fwhm(self, params: dict[str, sc.Variable]) -> sc.Variable:
@@ -129,6 +138,9 @@ class CompositeModel(Model):
             **self._right.guess(data),
         }
 
+    def _param_bounds(self) -> dict[str, tuple[float, float]]:
+        return self._left.param_bounds() | self._right.param_bounds()
+
 
 class PolynomialModel(Model):
     def __init__(self, *, degree: int, prefix: str = '') -> None:
@@ -173,6 +185,9 @@ class GaussianModel(Model):
         params['amplitude'] *= math.sqrt(2 * math.pi)
         return params
 
+    def _param_bounds(self) -> dict[str, tuple[float, float]]:
+        return {'scale': (0.0, np.inf)}
+
     def fwhm(self, params: dict[str, sc.Variable]) -> sc.Variable:
         return 2 * math.sqrt(2 * math.log(2)) * params[self._prefix + 'scale']
 
@@ -192,6 +207,9 @@ class LorentzianModel(Model):
         # 3.0 * math.pi / math.sqrt(2 * math.pi)
         params['amplitude'] *= 3.75
         return params
+
+    def _param_bounds(self) -> dict[str, tuple[float, float]]:
+        return {'scale': (0.0, np.inf)}
 
     def fwhm(self, params: dict[str, sc.Variable]) -> sc.Variable:
         return 2 * params[self._prefix + 'scale']
@@ -223,6 +241,9 @@ class PseudoVoigtModel(Model):
         # See Lorentzian
         params['amplitude'] *= 3.75
         return params
+
+    def _param_bounds(self) -> dict[str, tuple[float, float]]:
+        return {'scale': (0.0, np.inf), 'fraction': (0.0, 1.0)}
 
     def fwhm(self, params: dict[str, sc.Variable]) -> sc.Variable:
         # Note that the Gaussian component has an adjusted scale to enable this.

@@ -180,12 +180,7 @@ def _fit_peak_single_model(
         **bkg_p0,
         **_guess_peak(data, model=peak),
     }
-    # TODO get from model
-    bounds = {
-        'peak_amplitude': (0.0, np.inf),
-        'peak_scale': (0.0, np.inf),
-        'peak_fraction': (0.0, 1.0),
-    }
+    bounds = background.param_bounds | _peak_param_bounds(peak)
 
     if len(data) < len(p0):
         # not enough points to fit all parameters
@@ -220,7 +215,7 @@ def _fit_background(
     model: Model, data: sc.DataArray, p0: dict[str, sc.Variable]
 ) -> dict[str, sc.Variable] | None:
     try:
-        _, goodness_stats = _perform_fit(model, data, p0, bounds={})
+        _, goodness_stats = _perform_fit(model, data, p0, bounds=model.param_bounds)
     except RuntimeError:
         # Background fits may fail when the background is a bad model.
         # Continue with a background+peak fit instead of aborting.
@@ -347,6 +342,13 @@ def _guess_peak(data: sc.DataArray, model: Model) -> dict[str, sc.Variable]:
     n = len(data) // 4  # TODO tunable (in sync with _guess_background?)
     bulk = data[n:-n]
     return model.guess(bulk)
+
+
+def _peak_param_bounds(peak: Model) -> dict[str, tuple[float, float]]:
+    return {
+        **peak.param_bounds,
+        'peak_amplitude': (0.0, np.inf),
+    }
 
 
 def _fit_windows(
