@@ -139,7 +139,7 @@ class CompositeModel(Model):
         }
 
     def _param_bounds(self) -> dict[str, tuple[float, float]]:
-        return self._left.param_bounds() | self._right.param_bounds()
+        return self._left.param_bounds | self._right.param_bounds
 
 
 class PolynomialModel(Model):
