@@ -115,6 +115,15 @@ class FitAssessment(enum.Enum):
         )
 
 
+@dataclass
+class FitConstraints:
+    min_p_value: float
+    max_peak_width_factor: float
+    min_peak_width_factor: float
+    guess_background_range: int
+    neighbor_separation_factor: float
+
+
 def fit_peaks(
     data: sc.DataArray,
     *,
@@ -122,9 +131,21 @@ def fit_peaks(
     windows: sc.Variable,
     background: Model | str | Iterable[Model] | Iterable[str],
     peak: Model | str | Iterable[Model] | Iterable[str],
+    min_p_value: float = 0.01,
+    max_peak_width_factor: float = 1.0,
+    min_peak_width_factor: float = 1.0,
+    guess_background_range: int = 2,
+    neighbor_separation_factor: float = 1 / 3,
 ) -> list[FitResult]:
     background = _parse_model_spec(background, prefix='bkg_')
     peak = _parse_model_spec(peak, prefix='peak_')
+    constraints = FitConstraints(
+        min_p_value=min_p_value,
+        max_peak_width_factor=max_peak_width_factor,
+        min_peak_width_factor=min_peak_width_factor,
+        guess_background_range=guess_background_range,
+        neighbor_separation_factor=neighbor_separation_factor,
+    )
 
     if not sc.issorted(data.coords[data.dim], data.dim, order='ascending'):
         # A lot of code here assumes a sorted coord, either to use O(1) instead of O(n)
@@ -135,13 +156,15 @@ def fit_peaks(
         )
 
     if windows.ndim == 0:
-        windows = _fit_windows(data, peak_estimates, windows)
+        windows = _fit_windows(data, peak_estimates, windows, constraints)
 
     results = []
     for i in range(windows.sizes[peak_estimates.dim]):
         window = windows[peak_estimates.dim, i]
         data_in_window = data[data.dim, window[0] : window[1]]
-        results.append(_fit_peak_sc(data_in_window, window, background, peak))
+        results.append(
+            _fit_peak_sc(data_in_window, window, background, peak, constraints)
+        )
     return results
 
 
@@ -150,6 +173,7 @@ def _fit_peak_sc(
     window: sc.Variable,
     backgrounds: tuple[Model, ...],
     peaks: tuple[Model, ...],
+    constraints: FitConstraints,
 ) -> FitResult:
     candidate_result = None
     # Loop order chosen as [(p0, b0), (p0, b1), (p1, b0), (p1, b1), ...]
@@ -157,7 +181,11 @@ def _fit_peak_sc(
     # different peak models.
     for peak, background in itertools.product(peaks, backgrounds):
         result = _fit_peak_single_model(
-            data, peak=peak, background=background, window=window
+            data,
+            peak=peak,
+            background=background,
+            window=window,
+            constraints=constraints,
         )
         if candidate_result is None:
             candidate_result = result
@@ -172,13 +200,17 @@ def _fit_peak_sc(
 
 
 def _fit_peak_single_model(
-    data: sc.DataArray, peak: Model, background: Model, window: sc.Variable
+    data: sc.DataArray,
+    peak: Model,
+    background: Model,
+    window: sc.Variable,
+    constraints: FitConstraints,
 ) -> FitResult:
     model = background + peak
-    bkg_p0 = _guess_background(data, model=background)
+    bkg_p0 = _guess_background(data, model=background, constraints=constraints)
     p0 = {
         **bkg_p0,
-        **_guess_peak(data, model=peak),
+        **_guess_peak(data, model=peak, constraints=constraints),
     }
     bounds = background.param_bounds | _peak_param_bounds(peak)
 
@@ -199,7 +231,9 @@ def _fit_peak_single_model(
             message=str(err.args[0]),
         )
 
-    assessment = assess_fit(data, peak, popt, goodness_stats, bkg_goodness_stats)
+    assessment = assess_fit(
+        data, peak, popt, goodness_stats, bkg_goodness_stats, constraints
+    )
     return FitResult(
         popt=popt,
         assessment=assessment,
@@ -280,19 +314,20 @@ def assess_fit(
     popt: dict[str, sc.Variable],
     goodness_stats: dict[str, sc.Variable],
     bkg_goodness_stats: dict[str, sc.Variable] | None,
+    constraints: FitConstraints,
 ) -> FitAssessment:
     if bkg_goodness_stats is not None:
         if bkg_goodness_stats['aic'] < goodness_stats['aic']:
             return FitAssessment.background_is_better
-    if (goodness_stats['p_value'] < sc.scalar(0.01)).value:  # TODO tunable
+    if (goodness_stats['p_value'] < constraints.min_p_value).value:
         return FitAssessment.p_too_small
     if _peak_is_near_edge(data, popt):
         return FitAssessment.peak_near_edge
     if _curve_points_down(popt):
         return FitAssessment.peak_points_down
-    if _peak_is_too_wide(data, peak, popt):
+    if _peak_is_too_wide(data, peak, popt, constraints):
         return FitAssessment.peak_too_wide
-    if _peak_is_too_narrow(data, peak, popt):
+    if _peak_is_too_narrow(data, peak, popt, constraints):
         return FitAssessment.peak_too_narrow
     return FitAssessment.accept
 
@@ -313,15 +348,21 @@ def _curve_points_down(popt: dict[str, sc.Variable]) -> bool:
 
 
 def _peak_is_too_wide(
-    data: sc.DataArray, peak: Model, popt: dict[str, sc.Variable]
+    data: sc.DataArray,
+    peak: Model,
+    popt: dict[str, sc.Variable],
+    constraints: FitConstraints,
 ) -> bool:
     fwhm = peak.fwhm(popt)
     coord = data.coords[data.dim]
-    return (fwhm > (coord[-1] - coord[0])).value  # TODO tunable
+    return (fwhm > constraints.max_peak_width_factor * (coord[-1] - coord[0])).value
 
 
 def _peak_is_too_narrow(
-    data: sc.DataArray, peak: Model, popt: dict[str, sc.Variable]
+    data: sc.DataArray,
+    peak: Model,
+    popt: dict[str, sc.Variable],
+    constraints: FitConstraints,
 ) -> bool:
     fwhm = peak.fwhm(popt)
     coord = data.coords[data.dim]
@@ -329,17 +370,23 @@ def _peak_is_too_narrow(
     # Average of bins around center index.
     # Bins don't normally vary quickly, so this is a good approximation.
     bin_width = (coord[center_idx + 1] - coord[center_idx - 1]) / 2
-    return ((fwhm / bin_width) < sc.scalar(1.0)).value  # TODO tunable
+    return (fwhm < constraints.min_peak_width_factor * bin_width).value
 
 
-def _guess_background(data: sc.DataArray, model: Model) -> dict[str, sc.Variable]:
-    n = len(data) // 4  # TODO tunable
+def _guess_background(
+    data: sc.DataArray, model: Model, constraints: FitConstraints
+) -> dict[str, sc.Variable]:
+    # 2* because the range is split between beginning and end of window
+    n = len(data) // (2 * constraints.guess_background_range)
     tails = sc.concat([data[:n], data[-n:]], dim=data.dim)
     return model.guess(tails)
 
 
-def _guess_peak(data: sc.DataArray, model: Model) -> dict[str, sc.Variable]:
-    n = len(data) // 4  # TODO tunable (in sync with _guess_background?)
+def _guess_peak(
+    data: sc.DataArray, model: Model, constraints: FitConstraints
+) -> dict[str, sc.Variable]:
+    # 2* to match the range in _guess_background
+    n = len(data) // (2 * constraints.guess_background_range)
     bulk = data[n:-n]
     return model.guess(bulk)
 
@@ -352,14 +399,17 @@ def _peak_param_bounds(peak: Model) -> dict[str, tuple[float, float]]:
 
 
 def _fit_windows(
-    data: sc.DataArray, center: sc.Variable, width: sc.Variable
+    data: sc.DataArray,
+    center: sc.Variable,
+    width: sc.Variable,
+    constraints: FitConstraints,
 ) -> sc.Variable:
     windows = sc.empty(sizes={data.dim: len(center), 'range': 2}, unit=center.unit)
     windows['range', 0] = center - width / 2
     windows['range', 1] = np.nextafter(center.values + width.value / 2, np.inf)
 
     windows = _clip_to_data_range(data, windows)
-    _separate_from_neighbors_in_place(center, windows)
+    _separate_from_neighbors_in_place(center, windows, constraints)
 
     return windows
 
@@ -373,7 +423,7 @@ def _clip_to_data_range(data: sc.DataArray, windows: sc.Variable) -> sc.Variable
 
 
 def _separate_from_neighbors_in_place(
-    center: sc.Variable, windows: sc.Variable
+    center: sc.Variable, windows: sc.Variable, constraints: FitConstraints
 ) -> None:
     if not sc.issorted(center, center.dim):
         # Needed to easily identify neighbors.
@@ -381,7 +431,9 @@ def _separate_from_neighbors_in_place(
 
     left_neighbor = center[:-1]
     right_neighbor = center[1:]
-    min_separation = (right_neighbor - left_neighbor) * (1 / 3)  # TODO tunable
+    min_separation = (
+        right_neighbor - left_neighbor
+    ) * constraints.neighbor_separation_factor
     lo = left_neighbor + min_separation
     hi = right_neighbor - min_separation
     # Do not adjust the left edge of the first window and the right edge of the
