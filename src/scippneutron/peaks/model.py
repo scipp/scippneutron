@@ -256,8 +256,9 @@ def _gaussian(
     # Avoid division by 0
     scale = sc.scalar(max(scale.value, 1e-15), variance=scale.variance, unit=scale.unit)
 
-    val = -((x - loc) ** 2)
-    val /= 2 * scale**2
+    val = x - loc
+    val *= val
+    val /= -2 * scale**2
     val = sc.exp(val, out=val)
     val *= amplitude / (math.sqrt(2 * math.pi) * scale)
     return val
@@ -266,12 +267,12 @@ def _gaussian(
 def _lorentzian(
     x: sc.Variable, *, amplitude: sc.Variable, loc: sc.Variable, scale: sc.Variable
 ) -> sc.Variable:
-    # Use `max` to avoid division by 0
-    val = (x - loc) ** 2
-    val += (
-        sc.scalar(max(scale.value, 1e-15), variance=scale.variance, unit=scale.unit)
-        ** 2
-    )
+    # Avoid division by 0
+    scale = sc.scalar(max(scale.value, 1e-15), variance=scale.variance, unit=scale.unit)
+
+    val = x - loc
+    val *= val
+    val += scale**2
     val = sc.reciprocal(val, out=val)
     val *= amplitude * scale / math.pi
     return val
