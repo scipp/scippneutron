@@ -6,35 +6,28 @@ package:
 source:
   path: ..
 
+
+{% set pyproject = load_file_data('pyproject.toml') %}
+{% set dependencies = pyproject.get('project', {}).get('dependencies', {}) %}
+
+
 requirements:
   build:
     - setuptools
     - setuptools_scm
   run:
-    - h5py
-    - numpy>=1.20.0
-    - pooch
     - python>=3.9
-    - scipp>=23.07.0
-    - scippnexus>=23.08.0
-    - scipy>=1.7.0
+
+  {% for package in dependencies %}
+    - {% if package == "graphviz" %}python-graphviz{% else %}{{ package }}{% endif %}
+  {% endfor %}
+
 
 test:
   imports:
     - scippneutron
   requires:
-    - hypothesis==6.88.1
-    - ipympl==0.9.3
-    - ipywidgets==8.1.1
-    - markupsafe>=1.1.1,<2.1.0  # see https://github.com/pallets/markupsafe/issues/284
-    - matplotlib-base==3.8.0
-    - plopp==23.10.1
-    - psutil==5.9.5
-    - pytest==7.4.2
-    - pytest-asyncio==0.21.1
-    - pythreejs==2.4.2
-    - python-confluent-kafka==2.1.1 [linux64]
-    - ess-streaming-data-types==v0.14.0 [linux64]
+    - pytest
   source_files:
     - pyproject.toml
     - tests/

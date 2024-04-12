@@ -1,0 +1,8 @@
+diff a/requirements/dev.in b/requirements/dev.in	(rejected hunks)
+@@ -9,3 +9,6 @@ copier
+ jupyterlab
+ pip-compile-multi
+ pre-commit
++
++types-docutils
++types-requests

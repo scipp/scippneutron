@@ -10,5 +10,5 @@ jupyterlab
 pip-compile-multi
 pre-commit
 
-types-docutils
-types-requests
+# See https://github.com/copier-org/copier/issues/1568
+pyyaml-include<2
