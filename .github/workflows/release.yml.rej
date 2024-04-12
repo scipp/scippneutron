@@ -5,6 +5,6 @@ diff a/.github/workflows/release.yml b/.github/workflows/release.yml	(rejected h
              boa
 -      - run: conda mambabuild --channel conda-forge --channel scipp --no-anaconda-upload --override-channels --output-folder conda/package conda
 +      - run: conda mambabuild --channel conda-forge --channel scipp --channel ess-dmsc --no-anaconda-upload --override-channels --output-folder conda/package conda
- 
+
        - uses: actions/upload-artifact@v3
          with:

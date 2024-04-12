@@ -4,6 +4,6 @@ diff a/docs/_typehints.py b/docs/_typehints.py	(rejected hunks)
 +
  import sphinx
 -from typing import Optional, Any, NewType
- 
+
  _typehint_aliases = {
      'scipp._scipp.core.DataArray': 'scipp.DataArray',

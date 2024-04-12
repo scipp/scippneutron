@@ -35,6 +35,7 @@ extensions = [
 
 try:
     import sciline.sphinxext.domain_types  # noqa: F401
+
     extensions.append('sciline.sphinxext.domain_types')
 except ModuleNotFoundError:
     pass
@@ -161,10 +162,9 @@ html_theme_options = {
         "image_dark": "_static/logo-dark.svg",
     },
     "external_links": [
-{"name": "Plopp", "url": "https://scipp.github.io/plopp"},
-{"name": "Scipp", "url": "https://scipp.github.io"},
-{"name": "ScippNexus", "url": "https://scipp.github.io/scippnexus"},
-
+        {"name": "Plopp", "url": "https://scipp.github.io/plopp"},
+        {"name": "Scipp", "url": "https://scipp.github.io"},
+        {"name": "ScippNexus", "url": "https://scipp.github.io/scippnexus"},
     ],
     "icon_links": [
         {
