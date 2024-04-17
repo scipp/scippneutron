@@ -13,6 +13,13 @@ import scipp as sc
 
 
 class Model(abc.ABC):
+    """Abstract base class for fitting models.
+
+    This class defines the basic interface for models by way of public methods.
+    Subclasses should override the protected methods ``_call``, ``_guess``, and
+    optionally ``_param_bounds`` instead of their public counterparts.
+    """
+
     def __init__(self, *, param_names: Iterable[str], prefix: str = '') -> None:
         """Initialize a base model.
 
@@ -29,9 +36,20 @@ class Model(abc.ABC):
 
     @abc.abstractmethod
     def _call(self, x: sc.Variable, params: dict[str, sc.Variable]) -> sc.Variable:
-        """Evaluate the model at given independent variables and parameters.
+        """Evaluate the model at a given independent variable and parameters.
 
-        The parameters are given *without* the prefix.
+        Parameters
+        ----------
+        x:
+            Independent variable.
+        params:
+            Dict from parameter names to values.
+            Names are given *without* prefix.
+
+        Returns
+        -------
+        :
+            Model evaluated at the given independent variable.
         """
         ...
 
@@ -55,10 +73,20 @@ class Model(abc.ABC):
         ...
 
     def _param_bounds(self) -> dict[str, tuple[float, float]]:
+        """Return bounds for parameters.
+
+        Returns
+        -------
+        :
+            Upper and lower bounds for parameters.
+            Dict keys are parameter names *without* the prefix.
+            Parameters omitted from this dict are unbounded.
+        """
         return {}
 
     @property
     def prefix(self) -> str:
+        """Prefix for parameter names."""
         return self._prefix
 
     @property
@@ -67,6 +95,20 @@ class Model(abc.ABC):
         return {self._prefix + name for name in self._param_names}
 
     def __call__(self, x: sc.Variable, **params: sc.Variable) -> sc.Variable:
+        """Evaluate the model.
+
+        Parameters
+        ----------
+        x:
+            Independent variable.
+        params:
+            Parameter values.
+
+        Returns
+        -------
+        :
+            Model evaluated at the given independent variable and parameters.
+        """
         if params.keys() != self.param_names:
             raise ValueError(
                 f'Bad parameters for model {self.__class__.__name__},'
@@ -79,6 +121,25 @@ class Model(abc.ABC):
     def guess(
         self, data: sc.DataArray, *, coord: str | None = None
     ) -> dict[str, sc.Variable]:
+        """Roughly estimate the model parameters for given data.
+
+        The estimate can be used as the starting point for a fit
+        but does not necessarily represent a good fit by itself.
+
+        Parameters
+        ----------
+        data:
+            Data array where ``data.data`` is the dependent variable
+            and a chosen coord (see below) is the independent variable.
+        coord:
+            Coordinate name of ``data`` to use as independent variable.
+            If not given, ``data.dim`` is used instead.
+
+        Returns
+        -------
+        :
+            Estimated parameters.
+        """
         if coord is None:
             coord = data.dim
         return {
@@ -88,29 +149,90 @@ class Model(abc.ABC):
 
     @property
     def param_bounds(self) -> dict[str, tuple[float, float]]:
+        """Parameter bounds.
+
+        Returns
+        -------
+        :
+            Upper and lower bounds for parameters.
+            Parameters omitted from this dict are unbounded.
+        """
         return {
             self._prefix + name: bounds for name, bounds in self._param_bounds().items()
         }
 
     def fwhm(self, params: dict[str, sc.Variable]) -> sc.Variable:
-        """Compute full width at half maximum where possible."""
+        """Compute full width at half maximum.
+
+        Note that this function is only implemented for peaked models!
+
+        Parameters
+        ----------
+        params:
+            Parameter values for which to compute the FWHM.
+
+        Returns
+        -------
+        :
+            FWHM of the model at the given parameters.
+
+        Raises
+        ------
+        NotImplementedError:
+            If this model does not support computing the FWHM.
+        """
         raise NotImplementedError(
             f'FWHM is not implemented for model {self.__class__.__name__}'
         )
 
     def __add__(self, other: Model) -> CompositeModel:
+        """Combine two models into a :class:`CompositeModel`."""
         if not isinstance(other, Model):
             return NotImplemented
         return CompositeModel(left=self, right=other, prefix='')
 
     def with_prefix(self, prefix: str) -> Model:
+        """Return a copy of the model with a new prefix."""
         model = deepcopy(self)
         model._prefix = prefix
         return model
 
 
 class CompositeModel(Model):
+    """A combination of two models.
+
+    Composite models contain a "left" and a "right" submodel which are combined into
+
+    .. math::
+
+        f(x) = \\text{left}(x) + \\text{right}(x)
+
+    Composite models can be constructed by adding models, e.g.,
+
+    .. code-block:: python
+
+        left = PolynomialModel(degree=2)
+        right = GaussianModel()
+        composite = left + right
+
+    The parameters of the composite are the union of the component parameters.
+    If there is a clash between the names of component models, they must
+    be disambiguated by using prefixes.
+    """
+
     def __init__(self, left: Model, right: Model, *, prefix: str = '') -> None:
+        """Initialize a composite model.
+
+        Parameters
+        ----------
+        left:
+            Left component model.
+        right:
+            Right component model.
+        prefix:
+            Prefix for *all* model parameter names.
+            It is prepended to the prefixes of the component models.
+        """
         if left.param_names & right.param_names:
             raise ValueError(
                 f'Model {left.__class__.__name__} and model {right.__class__.__name__} '
@@ -143,7 +265,28 @@ class CompositeModel(Model):
 
 
 class PolynomialModel(Model):
+    """A polynomial of fixed degree.
+
+    ``PolynomialModel(degree=n)`` implements
+
+    .. math::
+
+        f(x; a_0, \\ldots, a_n) = \\sum_{i=0}^{n}\\,a_i x^i
+
+    where the sum is inclusive on the upper bound.
+    :math:`a_i` are the parameters and are named ``['a0', 'a1', ...]``.
+    """
+
     def __init__(self, *, degree: int, prefix: str = '') -> None:
+        """Initialize a polynomial model.
+
+        Parameters
+        ----------
+        degree:
+            Degree of the polynomial.
+        prefix:
+            Prefix for model parameter names.
+        """
         if degree <= 0:
             raise ValueError(f'Degree must be positive, got: {degree}')
         super().__init__(
@@ -152,6 +295,7 @@ class PolynomialModel(Model):
 
     @property
     def degree(self) -> int:
+        """The degree of the polynomial."""
         return len(self._param_names) - 1
 
     def _call(self, x: sc.Variable, params: dict[str, sc.Variable]) -> sc.Variable:
@@ -173,7 +317,30 @@ class PolynomialModel(Model):
 
 
 class GaussianModel(Model):
+    r"""A Gaussian function with arbitrary normalization.
+
+    The model implements
+
+    .. math::
+
+        f(x; A, \mu, \sigma) = \frac{A}{\sqrt{2\pi}\sigma}
+          \exp{\left(-\frac{{(x-\mu)}^2}{2\sigma^2}\right)}
+
+    with parameters
+
+    - :math:`A`: ``'amplitude'``
+    - :math:`\mu`: ``'loc'``
+    - :math:`\sigma`: ``'scale'``
+    """
+
     def __init__(self, *, prefix: str = '') -> None:
+        """Initialize a Gaussian model.
+
+        Parameters
+        ----------
+        prefix:
+            Prefix for model parameter names.
+        """
         super().__init__(prefix=prefix, param_names=('amplitude', 'loc', 'scale'))
 
     def _call(self, x: sc.Variable, params: dict[str, sc.Variable]) -> sc.Variable:
@@ -189,11 +356,45 @@ class GaussianModel(Model):
         return {'scale': (0.0, np.inf)}
 
     def fwhm(self, params: dict[str, sc.Variable]) -> sc.Variable:
+        """Compute full width at half maximum.
+
+        Parameters
+        ----------
+        params:
+            Parameter values for which to compute the FWHM.
+
+        Returns
+        -------
+        :
+            FWHM of the model at the given parameters.
+        """
         return 2 * math.sqrt(2 * math.log(2)) * params[self._prefix + 'scale']
 
 
 class LorentzianModel(Model):
+    r"""A Lorentzian function with arbitrary normalization.
+
+    The model implements
+
+    .. math::
+
+        f(x; A, \mu, \sigma) = \frac{A}{\pi} \frac{\sigma}{{(x-\mu)}^2 + \sigma^2}
+
+    with parameters
+
+    - :math:`A`: ``'amplitude'``
+    - :math:`\mu`: ``'loc'``
+    - :math:`\sigma`: ``'scale'``
+    """
+
     def __init__(self, *, prefix: str = '') -> None:
+        """Initialize a Lorentzian model.
+
+        Parameters
+        ----------
+        prefix:
+            Prefix for model parameter names.
+        """
         super().__init__(prefix=prefix, param_names=('amplitude', 'loc', 'scale'))
 
     def _call(self, x: sc.Variable, params: dict[str, sc.Variable]) -> sc.Variable:
@@ -212,10 +413,44 @@ class LorentzianModel(Model):
         return {'scale': (0.0, np.inf)}
 
     def fwhm(self, params: dict[str, sc.Variable]) -> sc.Variable:
+        """Compute full width at half maximum.
+
+        Parameters
+        ----------
+        params:
+            Parameter values for which to compute the FWHM.
+
+        Returns
+        -------
+        :
+            FWHM of the model at the given parameters.
+        """
         return 2 * params[self._prefix + 'scale']
 
 
 class PseudoVoigtModel(Model):
+    r"""A Pseudo-Voigt function.
+
+    The model implements
+
+    .. math::
+
+        f(x; A, \mu, \sigma, \alpha) = \alpha L(x; A, \mu, \sigma)
+          + (1-\alpha) G(x; A, \mu, \sigma_G)
+
+    where :math:`L` is a :class:`Lorentzian <LorentzianModel>`
+    and :math:`G` is a :class:`Gaussian <GaussianModel>`.
+    :math:`\sigma_G` is derived from :math:`\sigma` such that :math:`L` and
+    :math:`G` have the same FWHM.
+
+    It has parameters
+
+    - :math:`A`: ``'amplitude'``
+    - :math:`\mu`: ``'loc'``
+    - :math:`\sigma`: ``'scale'``
+    - :math:`\alpha`: ``'fraction'``
+    """
+
     def __init__(self, *, prefix: str = '') -> None:
         super().__init__(
             prefix=prefix, param_names=('amplitude', 'loc', 'scale', 'fraction')
@@ -246,6 +481,18 @@ class PseudoVoigtModel(Model):
         return {'scale': (0.0, np.inf), 'fraction': (0.0, 1.0)}
 
     def fwhm(self, params: dict[str, sc.Variable]) -> sc.Variable:
+        """Compute full width at half maximum.
+
+        Parameters
+        ----------
+        params:
+            Parameter values for which to compute the FWHM.
+
+        Returns
+        -------
+        :
+            FWHM of the model at the given parameters.
+        """
         # Note that the Gaussian component has an adjusted scale to enable this.
         return 2 * params[self._prefix + 'scale']
 
