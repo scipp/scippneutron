@@ -59,7 +59,7 @@ jobs:
       matrix:
         os: ['ubuntu-22.04']
         python-version: '${{needs.formatting.outputs.min_python}}'
-        build-config: ci-linux
+        build-config: 'ci-linux'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
