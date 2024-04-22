@@ -49,8 +49,29 @@ jobs:
       python-version: ${{ matrix.python.version }}
       tox-env: ${{ matrix.python.tox-env }}
 
+  mantid:
+    name: Mantid tests
+    needs: formatting
+    runs-on: 'ubuntu-22.04'
+    defaults:
+      run:
+        shell: bash -l {0}  # required for conda env
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup conda environment
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          micromamba-version: 1.5.6-0
+          environment-file: .buildconfig/ci-linux.yml
+          cache-environment: true
+          create-args: >-
+            python=3.10
+            conda-build
+      - run: conda develop src
+      - run: python -m pytest tests/mantid_*
+
   docs:
-    needs: tests
+    needs: [tests, mantid]
     uses: ./.github/workflows/docs.yml
     with:
       publish: false
