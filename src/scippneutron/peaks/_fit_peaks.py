@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
+# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 from __future__ import annotations
 
 import enum
@@ -12,6 +12,7 @@ import scipp as sc
 from scipp.scipy.optimize import curve_fit
 from scipy.stats import chi2 as _scipy_chi2
 
+from ._common import FitParameters, FitRequirements
 from .model import (
     GaussianModel,
     LorentzianModel,
@@ -21,25 +22,69 @@ from .model import (
 )
 
 
-@dataclass
+@dataclass(eq=False, kw_only=True, slots=True)
 class FitResult:
-    popt: dict[str, sc.Variable]
-    red_chisq: sc.Variable
-    p_value: sc.Variable
+    """Optimized parameters and fit statistics for a single peak."""
+
     aic: sc.Variable
+    """Akaike Information Criterion.
+
+    A relative estimate of fit quality.
+    Defined as
+
+    .. math::
+
+        \\mathsf{AIC} = 2k - 2\\ln(L)
+
+    Where :math:`k` is the number of parameters and :math:`L` the likelihood
+    if the model with the optimized parameters.
+    """
     assessment: FitAssessment
-    peak: Model
+    """Indicates whether the fit was successful or how if failed."""
     background: Model
-    window: sc.Variable
+    """Model for the background."""
     message: str
+    """Short message describing the fit assessment."""
+    p_value: sc.Variable
+    """Probability of the given chi-squared or higher.
+
+    The :math:`p`-value is the probability to get the same :math:`\\chi^2`
+    or higher when repeating the fit.
+    It is defined as
+
+    .. math::
+
+        p = 1 - F(\\chi^2;\\,\\nu)
+
+    where :math:`F(\\chi^2;\\,\\nu)` is the cumulative distribution function
+    of the :math:`\\chi^2`--distribution with :math:`\\nu` degrees of freedom.
+    """
+    peak: Model
+    """Model for the peak."""
+    popt: dict[str, sc.Variable]
+    """Optimized parameters."""
+    red_chisq: sc.Variable
+    """Reduced chi-squared for the model and optimized parameters.
+
+    .. math::
+
+        \\chi^2_{\\nu} = \\frac1{\\nu} \\sum_{i=0}^n\\,
+                         \\frac{(y_i - f(x_i))^2}{\\sigma_i^2}
+
+    where :math:`\\nu` is the number of degrees of freedom.
+    """
+    window: sc.Variable
+    """Fit window for this peak."""
 
     @classmethod
     def for_too_narrow_window(
         cls,
+        *,
         peak: Model,
         background: Model,
         window: sc.Variable,
     ) -> FitResult:
+        """Create a ``FitResult`` for a fit where the window is too narrow."""
         return cls.for_failure(
             assessment=FitAssessment.window_too_narrow,
             peak=peak,
@@ -57,6 +102,7 @@ class FitResult:
         window: sc.Variable,
         message: str | None = None,
     ) -> FitResult:
+        """Create a ``FitResult`` for a failed fit."""
         return cls(
             popt={
                 name: sc.scalar(np.nan)
@@ -74,19 +120,56 @@ class FitResult:
 
     @property
     def success(self) -> bool:
+        """Return whether the fit was successful."""
         return self.assessment.success
 
     def better_than(self, other: FitResult) -> bool:
+        """Return True if this result is better than another.
+
+        Uses :attr:`aic` to compare the results.
+
+        Parameters
+        ----------
+        other:
+            Another ``FitResult`` to compare to.
+
+        Returns
+        -------
+        :
+            Whether this result is better than the other.
+        """
         return sc.all(self.aic < other.aic).value
 
-    def eval_model(self, data: sc.Variable) -> sc.Variable:
+    def eval_model(self, x: sc.Variable) -> sc.Variable:
+        """Evaluate the model with optimized parameters.
+
+        Parameters
+        ----------
+        x:
+            Independent variable.
+
+        Returns
+        -------
+            The model evaluated at ``x`` with optimized parameters.
+        """
         return (self.background + self.peak)(
-            data, **{name: sc.values(val) for name, val in self.popt.items()}
+            x, **{name: sc.values(val) for name, val in self.popt.items()}
         )
 
-    def eval_peak(self, data: sc.Variable) -> sc.Variable:
+    def eval_peak(self, x: sc.Variable) -> sc.Variable:
+        """Evaluate the peak model with optimized parameters.
+
+        Parameters
+        ----------
+        x:
+            Independent variable.
+
+        Returns
+        -------
+            The peak model evaluated at ``x`` with optimized parameters.
+        """
         return self.peak(
-            data,
+            x,
             **{
                 name: sc.values(val)
                 for name, val in self.popt.items()
@@ -96,6 +179,8 @@ class FitResult:
 
 
 class FitAssessment(enum.Enum):
+    """Indicates whether the fit was successful or how if failed."""
+
     accept = enum.auto()
     candidate = enum.auto()
     failed = enum.auto()
@@ -115,15 +200,7 @@ class FitAssessment(enum.Enum):
         )
 
 
-@dataclass
-class FitConstraints:
-    min_p_value: float
-    max_peak_width_factor: float
-    min_peak_width_factor: float
-    guess_background_range: int
-    neighbor_separation_factor: float
-
-
+# TODO arg for custom assess_fit
 def fit_peaks(
     data: sc.DataArray,
     *,
@@ -131,21 +208,17 @@ def fit_peaks(
     windows: sc.Variable,
     background: Model | str | Iterable[Model] | Iterable[str],
     peak: Model | str | Iterable[Model] | Iterable[str],
-    min_p_value: float = 0.01,
-    max_peak_width_factor: float = 1.0,
-    min_peak_width_factor: float = 1.0,
-    guess_background_range: int = 2,
-    neighbor_separation_factor: float = 1 / 3,
+    fit_parameters: FitParameters | None = None,
+    fit_requirements: FitRequirements | None = None,
 ) -> list[FitResult]:
+    """Fit peaks to data.
+
+    TODO
+    """
     background = _parse_model_spec(background, prefix='bkg_')
     peak = _parse_model_spec(peak, prefix='peak_')
-    constraints = FitConstraints(
-        min_p_value=min_p_value,
-        max_peak_width_factor=max_peak_width_factor,
-        min_peak_width_factor=min_peak_width_factor,
-        guess_background_range=guess_background_range,
-        neighbor_separation_factor=neighbor_separation_factor,
-    )
+    fit_parameters = fit_parameters or FitParameters()
+    fit_requirements = fit_requirements or FitRequirements()
 
     if not sc.issorted(data.coords[data.dim], data.dim, order='ascending'):
         # A lot of code here assumes a sorted coord, either to use O(1) instead of O(n)
@@ -156,14 +229,21 @@ def fit_peaks(
         )
 
     if windows.ndim == 0:
-        windows = _fit_windows(data, peak_estimates, windows, constraints)
+        windows = _fit_windows(data, peak_estimates, windows, fit_parameters)
 
     results = []
     for i in range(windows.sizes[peak_estimates.dim]):
         window = windows[peak_estimates.dim, i]
         data_in_window = data[data.dim, window[0] : window[1]]
         results.append(
-            _fit_peak_sc(data_in_window, window, background, peak, constraints)
+            _fit_peak_sc(
+                data_in_window,
+                window,
+                background,
+                peak,
+                fit_parameters,
+                fit_requirements,
+            )
         )
     return results
 
@@ -173,7 +253,8 @@ def _fit_peak_sc(
     window: sc.Variable,
     backgrounds: tuple[Model, ...],
     peaks: tuple[Model, ...],
-    constraints: FitConstraints,
+    fit_parameters: FitParameters,
+    fit_requirements: FitRequirements,
 ) -> FitResult:
     candidate_result = None
     # Loop order chosen as [(p0, b0), (p0, b1), (p1, b0), (p1, b1), ...]
@@ -185,7 +266,8 @@ def _fit_peak_sc(
             peak=peak,
             background=background,
             window=window,
-            constraints=constraints,
+            fit_parameters=fit_parameters,
+            fit_requirements=fit_requirements,
         )
         if candidate_result is None:
             candidate_result = result
@@ -204,13 +286,14 @@ def _fit_peak_single_model(
     peak: Model,
     background: Model,
     window: sc.Variable,
-    constraints: FitConstraints,
+    fit_parameters: FitParameters,
+    fit_requirements: FitRequirements,
 ) -> FitResult:
     model = background + peak
-    bkg_p0 = _guess_background(data, model=background, constraints=constraints)
+    bkg_p0 = _guess_background(data, model=background, fit_parameters=fit_parameters)
     p0 = {
         **bkg_p0,
-        **_guess_peak(data, model=peak, constraints=constraints),
+        **_guess_peak(data, model=peak, fit_parameters=fit_parameters),
     }
     bounds = background.param_bounds | _peak_param_bounds(peak)
 
@@ -232,7 +315,12 @@ def _fit_peak_single_model(
         )
 
     assessment = assess_fit(
-        data, peak, popt, goodness_stats, bkg_goodness_stats, constraints
+        data,
+        peak,
+        popt,
+        goodness_stats,
+        bkg_goodness_stats,
+        fit_requirements=fit_requirements,
     )
     return FitResult(
         popt=popt,
@@ -314,20 +402,44 @@ def assess_fit(
     popt: dict[str, sc.Variable],
     goodness_stats: dict[str, sc.Variable],
     bkg_goodness_stats: dict[str, sc.Variable] | None,
-    constraints: FitConstraints,
+    fit_requirements: FitRequirements,
 ) -> FitAssessment:
+    """Default fit result assessment.
+
+    Parameters
+    ----------
+    data:
+        Input independent and dependent variable.
+    peak:
+        Model for the peak.
+    popt:
+        Optimized parameters.
+    goodness_stats:
+        Goodness-of-fit statistics for peak + background.
+        Includes ``red_chisq``, ``p_value``, ``aic``.
+    bkg_goodness_stats:
+        Goodness-of-fit statistics for a separate background fit.
+        Includes ``red_chisq``, ``p_value``, ``aic``.
+    fit_requirements:
+        Parameters controlling the fit result assessment.
+
+    Returns
+    -------
+    :
+        Fit assessment.
+    """
     if bkg_goodness_stats is not None:
         if bkg_goodness_stats['aic'] < goodness_stats['aic']:
             return FitAssessment.background_is_better
-    if (goodness_stats['p_value'] < constraints.min_p_value).value:
+    if (goodness_stats['p_value'] < fit_requirements.min_p_value).value:
         return FitAssessment.p_too_small
     if _peak_is_near_edge(data, popt):
         return FitAssessment.peak_near_edge
     if _curve_points_down(popt):
         return FitAssessment.peak_points_down
-    if _peak_is_too_wide(data, peak, popt, constraints):
+    if _peak_is_too_wide(data, peak, popt, fit_requirements):
         return FitAssessment.peak_too_wide
-    if _peak_is_too_narrow(data, peak, popt, constraints):
+    if _peak_is_too_narrow(data, peak, popt, fit_requirements):
         return FitAssessment.peak_too_narrow
     return FitAssessment.accept
 
@@ -351,18 +463,20 @@ def _peak_is_too_wide(
     data: sc.DataArray,
     peak: Model,
     popt: dict[str, sc.Variable],
-    constraints: FitConstraints,
+    fit_requirements: FitRequirements,
 ) -> bool:
     fwhm = peak.fwhm(popt)
     coord = data.coords[data.dim]
-    return (fwhm > constraints.max_peak_width_factor * (coord[-1] - coord[0])).value
+    return (
+        fwhm > fit_requirements.max_peak_width_factor * (coord[-1] - coord[0])
+    ).value
 
 
 def _peak_is_too_narrow(
     data: sc.DataArray,
     peak: Model,
     popt: dict[str, sc.Variable],
-    constraints: FitConstraints,
+    fit_requirements: FitRequirements,
 ) -> bool:
     fwhm = peak.fwhm(popt)
     coord = data.coords[data.dim]
@@ -370,23 +484,23 @@ def _peak_is_too_narrow(
     # Average of bins around center index.
     # Bins don't normally vary quickly, so this is a good approximation.
     bin_width = (coord[center_idx + 1] - coord[center_idx - 1]) / 2
-    return (fwhm < constraints.min_peak_width_factor * bin_width).value
+    return (fwhm < fit_requirements.min_peak_width_factor * bin_width).value
 
 
 def _guess_background(
-    data: sc.DataArray, model: Model, constraints: FitConstraints
+    data: sc.DataArray, model: Model, fit_parameters: FitParameters
 ) -> dict[str, sc.Variable]:
     # 2* because the range is split between beginning and end of window
-    n = len(data) // (2 * constraints.guess_background_range)
+    n = len(data) // (2 * fit_parameters.guess_background_range)
     tails = sc.concat([data[:n], data[-n:]], dim=data.dim)
     return model.guess(tails)
 
 
 def _guess_peak(
-    data: sc.DataArray, model: Model, constraints: FitConstraints
+    data: sc.DataArray, model: Model, fit_parameters: FitParameters
 ) -> dict[str, sc.Variable]:
     # 2* to match the range in _guess_background
-    n = len(data) // (2 * constraints.guess_background_range)
+    n = len(data) // (2 * fit_parameters.guess_background_range)
     bulk = data[n:-n]
     return model.guess(bulk)
 
@@ -402,14 +516,14 @@ def _fit_windows(
     data: sc.DataArray,
     center: sc.Variable,
     width: sc.Variable,
-    constraints: FitConstraints,
+    fit_parameters: FitParameters,
 ) -> sc.Variable:
     windows = sc.empty(sizes={data.dim: len(center), 'range': 2}, unit=center.unit)
     windows['range', 0] = center - width / 2
     windows['range', 1] = np.nextafter(center.values + width.value / 2, np.inf)
 
     windows = _clip_to_data_range(data, windows)
-    _separate_from_neighbors_in_place(center, windows, constraints)
+    _separate_from_neighbors_in_place(center, windows, fit_parameters)
 
     return windows
 
@@ -423,7 +537,7 @@ def _clip_to_data_range(data: sc.DataArray, windows: sc.Variable) -> sc.Variable
 
 
 def _separate_from_neighbors_in_place(
-    center: sc.Variable, windows: sc.Variable, constraints: FitConstraints
+    center: sc.Variable, windows: sc.Variable, fit_parameters: FitParameters
 ) -> None:
     if not sc.issorted(center, center.dim):
         # Needed to easily identify neighbors.
@@ -433,7 +547,7 @@ def _separate_from_neighbors_in_place(
     right_neighbor = center[1:]
     min_separation = (
         right_neighbor - left_neighbor
-    ) * constraints.neighbor_separation_factor
+    ) * fit_parameters.neighbor_separation_factor
     lo = left_neighbor + min_separation
     hi = right_neighbor - min_separation
     # Do not adjust the left edge of the first window and the right edge of the
