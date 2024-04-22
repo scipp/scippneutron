@@ -121,7 +121,7 @@ class FitResult:
     @property
     def success(self) -> bool:
         """Return whether the fit was successful."""
-        return self.assessment.success
+        return self.assessment == FitAssessment.success
 
     def better_than(self, other: FitResult) -> bool:
         """Return True if this result is better than another.
@@ -181,8 +181,7 @@ class FitResult:
 class FitAssessment(enum.Enum):
     """Indicates whether the fit was successful or how if failed."""
 
-    accept = enum.auto()
-    candidate = enum.auto()
+    success = enum.auto()
     failed = enum.auto()
     background_is_better = enum.auto()
     peak_too_narrow = enum.auto()
@@ -191,13 +190,6 @@ class FitAssessment(enum.Enum):
     peak_points_down = enum.auto()
     p_too_small = enum.auto()
     window_too_narrow = enum.auto()
-
-    @property
-    def success(self) -> bool:
-        return self in (
-            FitAssessment.accept,
-            FitAssessment.candidate,
-        )
 
 
 _BackgroundModelName = Literal['linear', 'quadratic']
@@ -366,14 +358,13 @@ def _fit_peak_sc(
             fit_parameters=fit_parameters,
             fit_requirements=fit_requirements,
         )
+        if result.assessment == FitAssessment.success:
+            return result
         if candidate_result is None:
+            # Keep a potentially failed result to have something to
+            # return in case all fits fail.
             candidate_result = result
-        match result.assessment:
-            case FitAssessment.candidate if result.better_than(candidate_result):
-                candidate_result = result
-            case FitAssessment.accept:
-                return result
-            # else: reject
+        # else: reject
 
     return candidate_result
 
@@ -538,7 +529,7 @@ def _assess_fit(
         return FitAssessment.peak_too_wide
     if _peak_is_too_narrow(data, peak, popt, fit_requirements):
         return FitAssessment.peak_too_narrow
-    return FitAssessment.accept
+    return FitAssessment.success
 
 
 def _peak_is_near_edge(data: sc.DataArray, popt: dict[str, sc.Variable]) -> bool:
@@ -657,9 +648,7 @@ def _separate_from_neighbors_in_place(
 
 def _message_from_assessment(assessment: FitAssessment | None) -> str:
     match assessment:
-        case FitAssessment.accept:
-            return 'success'
-        case FitAssessment.candidate:
+        case FitAssessment.success:
             return 'success'
         case FitAssessment.peak_too_narrow:
             return 'peak too narrow'
