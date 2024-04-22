@@ -5,7 +5,7 @@ from __future__ import annotations
 import enum
 import itertools
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Literal
 
 import numpy as np
 import scipp as sc
@@ -200,20 +200,117 @@ class FitAssessment(enum.Enum):
         )
 
 
-# TODO arg for custom assess_fit
+_BackgroundModelName = Literal['linear', 'quadratic']
+_PeakModelName = Literal['gaussian', 'lorentzian', 'pseudo_voigt']
+
+
 def fit_peaks(
     data: sc.DataArray,
     *,
     peak_estimates: sc.Variable,
     windows: sc.Variable,
-    background: Model | str | Iterable[Model] | Iterable[str],
-    peak: Model | str | Iterable[Model] | Iterable[str],
+    background: Model
+    | _BackgroundModelName
+    | Iterable[Model]
+    | Iterable[_BackgroundModelName],
+    peak: Model | _PeakModelName | Iterable[Model] | Iterable[_PeakModelName],
     fit_parameters: FitParameters | None = None,
     fit_requirements: FitRequirements | None = None,
 ) -> list[FitResult]:
     """Fit peaks to data.
 
-    TODO
+    This function fits peaks to 1-dimensional data.
+    The number of peaks and their approximate locations are determined
+    by ``peak_estimates``.
+
+    Fit procedure
+    -------------
+    For each peak, initial model parameters are estimated using
+    :meth:`model.Model.guess` with the data within the fit window.
+    Then, two fits are performed, one with only the background and one with
+    background + peak using :func:`scipp.scipy.optimize.curve_fit`.
+
+    If the latter fit converges, it is assessed based on several criteria like
+    :attr:`FitRequirements.min_p_value` and the width of the obtained peak.
+    In addition, the combined background + peak model must yield a better fit
+    than the background alone (determined by their respective Akaike Information
+    Criterion, see :attr:`FitResult.aic`).
+    If the assessment fails, another set of models may be tried, see the section
+    on model selection below.
+
+    Finally, a :class:`FitResult` is constructed for each peak which contains the
+    outcome of the assessment, the best parameters and models, and some goodness
+    of fit statistics.
+    Fits for each peak can succeed or fail independently.
+
+    Model selection
+    ---------------
+    In the simplest case, the models for peaks and the background are given as a
+    concrete model each, see :mod:`scippneutron.peaks.model`.
+    Alternatively, they can be specified as strings.
+    See the type annotations of the ``peak`` and ``background`` arguments for the lists
+    of supported model names.
+
+    If it is unclear which models are best in a given case or the best model varies
+    between peaks, ``peak`` and ``background`` can be given as iterables of models
+    or model names.
+    In this case, the fit is attempted with each combination of peak and background
+    model until a fit is successful.
+    The background is varied first.
+
+    For example, in
+
+    .. code-block:: python
+
+        fit_peaks(
+            background=['linear', 'quadratic'],
+            peak=['gaussian', 'lorentzian'],
+            ...
+        )
+
+    models are tried in the order
+
+    1. ``linear`` + ``gaussian``
+    2. ``quadratic`` + ``gaussian``
+    3. ``linear`` + ``lorentzian``
+    4. ``quadratic`` + ``lorentzian``
+
+    until the first successful fit.
+
+    Parameters
+    ----------
+    data:
+        A 1d data array where ``data.data`` is the dependent variable
+        and ``data.coords[data.dim]`` is the independent variable for the fit.
+    peak_estimates:
+        Initial estimates of peak locations.
+        A peak will be fitted for each estimate.
+        Must be a 1d variable with dimension ``data.dim``.
+    windows:
+        If a scalar, the size of fit windows.
+        A window is constructed for each peak estimate centered on the estimate
+        with a width equal to ``windows`` (adjusted to the data range and to maintain
+        a separation between peaks, see
+        :attr:`FitParameters.neighbor_separation_factor`).
+
+        If a 2d array, the windows for each peak.
+        Must have sizes ``{data.dim: len(data), 'range': 2}`` where
+        ``windows['range', 0]`` and ``windows['range', 1]`` are the lower and upper
+        bounds of the fit windows, respectively.
+        The windows are not adjusted automatically in this case.
+    background:
+        The background model or models.
+    peak:
+        The peak model or models.
+    fit_parameters:
+        Parameters for the fit not otherwise listed as function arguments.
+    fit_requirements:
+        Constraints on the fit result.
+
+    Returns
+    -------
+    :
+        A :class:`FitResult` for each peak.
     """
     background = _parse_model_spec(background, prefix='bkg_')
     peak = _parse_model_spec(peak, prefix='peak_')
@@ -314,7 +411,7 @@ def _fit_peak_single_model(
             message=str(err.args[0]),
         )
 
-    assessment = assess_fit(
+    assessment = _assess_fit(
         data,
         peak,
         popt,
@@ -396,7 +493,7 @@ def _akaike_information_criterion(
     return neg2_log_likelihood + 2 * len(params)
 
 
-def assess_fit(
+def _assess_fit(
     data: sc.DataArray,
     peak: Model,
     popt: dict[str, sc.Variable],
@@ -491,7 +588,7 @@ def _guess_background(
     data: sc.DataArray, model: Model, fit_parameters: FitParameters
 ) -> dict[str, sc.Variable]:
     # 2* because the range is split between beginning and end of window
-    n = len(data) // (2 * fit_parameters.guess_background_range)
+    n = int(len(data) * fit_parameters.guess_background_fraction / 2)
     tails = sc.concat([data[:n], data[-n:]], dim=data.dim)
     return model.guess(tails)
 
@@ -500,7 +597,7 @@ def _guess_peak(
     data: sc.DataArray, model: Model, fit_parameters: FitParameters
 ) -> dict[str, sc.Variable]:
     # 2* to match the range in _guess_background
-    n = len(data) // (2 * fit_parameters.guess_background_range)
+    n = int(len(data) * fit_parameters.guess_background_fraction / 2)
     bulk = data[n:-n]
     return model.guess(bulk)
 

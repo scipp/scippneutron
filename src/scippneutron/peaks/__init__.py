@@ -10,20 +10,21 @@
   :template: class-template.rst
 
   FitAssessment
+  FitParameters
   FitResult
+  FitRequirements
 
 .. rubric:: Functions
 
 .. autosummary::
   :toctree:
 
-  assess_fit
   fit_peaks
   remove_peaks
 """
 
 from ._common import FitParameters, FitRequirements
-from ._fit_peaks import FitAssessment, FitResult, assess_fit, fit_peaks
+from ._fit_peaks import FitAssessment, FitResult, fit_peaks
 from ._remove_peaks import remove_peaks
 
 __all__ = [
@@ -31,7 +32,6 @@ __all__ = [
     'FitParameters',
     'FitRequirements',
     'FitResult',
-    'assess_fit',
     'fit_peaks',
     'remove_peaks',
 ]
