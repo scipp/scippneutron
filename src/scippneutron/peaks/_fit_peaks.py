@@ -215,6 +215,17 @@ def fit_peaks(
     The number of peaks and their approximate locations are determined
     by ``peak_estimates``.
 
+    When defining fit windows, it is important that every
+    window contains only one peak.
+    Otherwise, fits may fail or converge to the wrong peak.
+    Windows are, however, allowed to overlap as long as that
+    overlap does not contain the bulk of a peak.
+
+    Consider adjusting ``windows`` and ``fit_parameters`` if fits fail
+    with all models.
+    Only change ``fit_requirements`` if really needed as this may lead
+    to bad fits being marked as succeeded.
+
     Fit procedure
     -------------
     For each peak, initial model parameters are estimated using
