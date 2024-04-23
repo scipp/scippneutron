@@ -325,7 +325,7 @@ def fit_peaks(
         window = windows[peak_estimates.dim, i]
         data_in_window = data[data.dim, window[0] : window[1]]
         results.append(
-            _fit_peak_sc(
+            _fit_peak(
                 data_in_window,
                 window,
                 background,
@@ -337,7 +337,7 @@ def fit_peaks(
     return results
 
 
-def _fit_peak_sc(
+def _fit_peak(
     data: sc.DataArray,
     window: sc.Variable,
     backgrounds: tuple[Model, ...],
