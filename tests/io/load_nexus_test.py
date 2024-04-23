@@ -247,8 +247,17 @@ def test_does_not_load_events_if_index_not_ordered(load_function: Callable):
         Detector(detector_numbers=np.array([0, 1]), event_data=event_data_1)
     )
 
-    with pytest.warns(UserWarning, match="Invalid index in NXevent_data at "):
+    # It seems that pytest changed the way multiple warnings are returned.
+    # We now record all warnings, and make sure there is at least one warning with
+    # the expected message
+    with pytest.warns(UserWarning) as record:
         load_function(builder)
+    msg = "Invalid index in NXevent_data at "
+    msg_found = False
+    for warn in record:
+        if msg in warn.message.args[0]:
+            msg_found = True
+    assert msg_found
 
 
 def test_loads_pulse_times_from_multiple_event_data_groups(load_function: Callable):

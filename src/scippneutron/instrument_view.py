@@ -274,7 +274,7 @@ def instrument_view(
             pixel_size = np.linalg.norm(pos_array[1] - pos_array[0])
 
     fig = pp.scatter3d(scipp_obj, pos=positions, pixel_size=pixel_size, **kwargs)
-    scene = fig.children[0].canvas.scene
+    scene = fig.canvas.scene
 
     # Add additional components from the beamline
     if components:
