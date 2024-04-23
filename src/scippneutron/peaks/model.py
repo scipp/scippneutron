@@ -299,13 +299,11 @@ class PolynomialModel(Model):
         return len(self._param_names) - 1
 
     def _call(self, x: sc.Variable, params: dict[str, sc.Variable]) -> sc.Variable:
-        # The loop is rather complex to ensure that `val` has the correct shape after
-        # broadcasting (assuming that all params have the same shape).
-        val = params[f'a{self.degree}'] * x
-        for i in range(self.degree - 1, 0, -1):
-            val += params[f'a{i}']
+        a_degree = params[f'a{self.degree}']
+        val = sc.full(value=a_degree.value, unit=a_degree.unit, sizes=x.sizes)
+        for i in range(self.degree - 1, -1, -1):
             val *= x
-        val += params['a0']
+            val += params[f'a{i}']
         return val
 
     def _guess(self, x: sc.Variable, y: sc.Variable) -> dict[str, sc.Variable]:

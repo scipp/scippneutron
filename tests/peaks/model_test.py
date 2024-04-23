@@ -39,6 +39,26 @@ def test_polynomial_degree_2_call(prefix: str):
 
 
 @pytest.mark.parametrize('prefix', ('', 'lorentz_'))
+def test_polynomial_degree_3_call(prefix: str):
+    a0 = sc.scalar(-1.3, unit='K')
+    a1 = sc.scalar(0.03, unit='K/m')
+    a2 = sc.scalar(1.7, unit='K/m^2')
+    a3 = sc.scalar(0.9, unit='K/m^3')
+    params = {
+        f'{prefix}a0': a0,
+        f'{prefix}a1': a1,
+        f'{prefix}a2': a2,
+        f'{prefix}a3': a3,
+    }
+    m = model.PolynomialModel(degree=3, prefix=prefix)
+
+    x = sc.linspace('xx', 100.0, 234.0, 100, unit='m')
+    expected = a0 + a1 * x + a2 * x**2 + a3 * x**3
+    actual = m(x, **params)
+    sc.testing.assert_allclose(actual, expected)
+
+
+@pytest.mark.parametrize('prefix', ('', 'lorentz_'))
 def test_gaussian_call(prefix: str):
     amplitude = sc.scalar(2.8, unit='kg')
     loc = sc.scalar(0.4, unit='m')
