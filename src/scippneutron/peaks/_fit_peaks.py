@@ -177,6 +177,25 @@ class FitResult:
             },
         )
 
+    def report(self) -> str:
+        """Format an overview of the fit result."""
+        param_name_length = max(map(len, self.popt.keys()))
+        params = '\n- '.join(
+            f'{{:{param_name_length}s}}: {val:c}'.format(key)
+            for key, val in self.popt.items()
+        )
+        return f'''FitResult: {self.message}
+In window: ({self.window[0].value}, {self.window[1].value}) {self.window.unit}
+Models:
+- background: {self.background.__class__.__name__}(prefix='{self.background.prefix}')
+- peak: {self.peak.__class__.__name__}(prefix='{self.peak.prefix}')
+Parameters:
+- {params}
+Statistics:
+- AIC:              {self.aic.value:.2e}
+- Red. chi-squared: {self.red_chisq.value:.2e}
+- p:                {self.p_value.value:.3f}'''
+
 
 class FitAssessment(enum.Enum):
     """Indicates whether the fit was successful or how if failed."""
