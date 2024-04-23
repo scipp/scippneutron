@@ -436,11 +436,77 @@ def test_composite_from_sum():
     sc.testing.assert_allclose(actual, expected)
 
 
+def test_composite_without_prefixes():
+    amplitude = sc.scalar(2.8, unit='kg*m')
+    loc = sc.scalar(0.4, unit='m')
+    scale = sc.scalar(0.1, unit='m')
+    a0 = sc.scalar(-0.4, unit='kg')
+    a1 = sc.scalar(0.05, unit='kg/m')
+    params = {
+        'amplitude': amplitude,
+        'loc': loc,
+        'scale': scale,
+        'a0': a0,
+        'a1': a1,
+    }
+
+    left = model.PolynomialModel(degree=1)
+    right = model.GaussianModel()
+    m = left + right
+
+    x = sc.linspace('xx', -4.0, 5.0, 200, unit='m')
+    expected_p = a0 + a1 * x
+    expected_n = (
+        amplitude
+        / (math.sqrt(2 * math.pi) * scale)
+        * sc.exp(-((x - loc) ** 2) / (2 * scale**2))
+    )
+    expected = expected_p + expected_n
+    actual = m(x, **params)
+    sc.testing.assert_allclose(actual, expected)
+
+
 def test_composite_param_name_clash():
     left = model.PolynomialModel(degree=1, prefix='p_')
     right = model.PolynomialModel(degree=2, prefix='p_')
     with pytest.raises(ValueError, match='overlap'):
         left + right
+
+
+def test_composite_clash_between_param_and_prefix():
+    amplitude1 = sc.scalar(2.8, unit='kg*m')
+    loc1 = sc.scalar(0.4, unit='m')
+    scale1 = sc.scalar(0.1, unit='m')
+    amplitude2 = sc.scalar(1.7, unit='kg*m')
+    loc2 = sc.scalar(1.2, unit='m')
+    scale2 = sc.scalar(0.2, unit='m')
+    params = {
+        'amplitude': amplitude1,
+        'loc': loc1,
+        'scale': scale1,
+        'amplitudeamplitude': amplitude2,
+        'amplitudeloc': loc2,
+        'amplitudescale': scale2,
+    }
+
+    left = model.GaussianModel(prefix='')  # has param 'amplitude'
+    right = model.GaussianModel(prefix='amplitude')  # has param 'amplitudeamplitude'
+    m = left + right
+
+    x = sc.linspace('xx', -4.0, 5.0, 200, unit='m')
+    expected1 = (
+        amplitude1
+        / (math.sqrt(2 * math.pi) * scale1)
+        * sc.exp(-((x - loc1) ** 2) / (2 * scale1**2))
+    )
+    expected2 = (
+        amplitude2
+        / (math.sqrt(2 * math.pi) * scale2)
+        * sc.exp(-((x - loc2) ** 2) / (2 * scale2**2))
+    )
+    expected = expected1 + expected2
+    actual = m(x, **params)
+    sc.testing.assert_allclose(actual, expected)
 
 
 def test_polynomial_param_bounds():

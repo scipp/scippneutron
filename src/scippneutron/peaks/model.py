@@ -33,6 +33,7 @@ class Model(abc.ABC):
         """
         self._prefix = prefix
         self._param_names = set(param_names)
+        self._prefixed_param_names = {prefix + name for name in self._param_names}
 
     @abc.abstractmethod
     def _call(self, x: sc.Variable, params: dict[str, sc.Variable]) -> sc.Variable:
@@ -92,7 +93,7 @@ class Model(abc.ABC):
     @property
     def param_names(self) -> set[str]:
         """Parameter names including the prefix."""
-        return {self._prefix + name for name in self._param_names}
+        return self._prefixed_param_names.copy()
 
     def __call__(self, x: sc.Variable, **params: sc.Variable) -> sc.Variable:
         """Evaluate the model.
@@ -195,6 +196,7 @@ class Model(abc.ABC):
         """Return a copy of the model with a new prefix."""
         model = deepcopy(self)
         model._prefix = prefix
+        model._prefixed_param_names = {prefix + name for name in model._param_names}
         return model
 
 
