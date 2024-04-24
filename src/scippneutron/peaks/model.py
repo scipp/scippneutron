@@ -112,8 +112,8 @@ class Model(abc.ABC):
         """
         if params.keys() != self.param_names:
             raise ValueError(
-                f'Bad parameters for model {self.__class__.__name__},'
-                f'got: {set(params.keys())}, expected {self._param_names}'
+                f'Bad parameters for model {self.__class__.__name__}, '
+                f'got: {set(params.keys())}, expected {self.param_names}'
             )
         return self._call(
             x, {name[len(self._prefix) :]: val for name, val in params.items()}
