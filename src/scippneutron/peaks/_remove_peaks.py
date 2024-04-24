@@ -41,6 +41,7 @@ def remove_peaks(data: sc.DataArray, fit_results: Iterable[FitResult]) -> sc.Dat
         )
 
     data = data.copy(deep=False)
+    data.data = data.data.copy()  # need a deep copy for the in-place subtraction below
     for result in fit_results:
         if not result.success:
             continue
