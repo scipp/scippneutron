@@ -21,7 +21,7 @@ class FitParameters:
     neighbor_separation_factor: float = 1 / 3
     r"""Determines how close fit windows may be to neighboring peaks.
 
-    The fit window for a peak with initial estimate :math:`p_i` ise shrunk to the
+    The fit window for a peak with initial estimate :math:`p_i` is shrunk to the
     exclusive interval :math:`(p_i - \Delta, p_i + \Delta)` if it is smaller
     than the given fit window, where
 
