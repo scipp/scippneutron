@@ -5,6 +5,8 @@
 #
 #    pip-compile-multi
 #
+appnope==0.1.4
+    # via ipython
 asttokens==2.4.1
     # via stack-data
 attrs==23.2.0
@@ -19,7 +21,7 @@ cycler==0.12.1
     # via matplotlib
 decorator==5.1.1
     # via ipython
-exceptiongroup==1.2.0
+exceptiongroup==1.2.1
     # via
     #   hypothesis
     #   pytest
@@ -71,7 +73,7 @@ pickleshare==0.7.5
     # via ipython
 pillow==10.3.0
     # via matplotlib
-pluggy==1.4.0
+pluggy==1.5.0
     # via pytest
 prompt-toolkit==3.0.36
     # via
@@ -107,7 +109,7 @@ stack-data==0.6.3
     # via ipython
 tomli==2.0.1
     # via pytest
-traitlets==5.14.2
+traitlets==5.14.3
     # via
     #   comm
     #   ipython

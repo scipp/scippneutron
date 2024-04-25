@@ -6,6 +6,11 @@ package:
 source:
   path: ..
 
+
+{% set pyproject = load_file_data('pyproject.toml') %}
+{% set dependencies = pyproject.get('project', {}).get('dependencies', {}) %}
+
+
 requirements:
   build:
     - setuptools
@@ -14,10 +19,15 @@ requirements:
     - h5py
     - numpy>=1.20.0
     - pooch
-    - python>=3.9
     - scipp>=23.07.0
     - scippnexus>=23.08.0
     - scipy>=1.7.0
+    - python>=3.10
+
+  {% for package in dependencies %}
+    - {% if package == "graphviz" %}python-graphviz{% else %}{{ package }}{% endif %}
+  {% endfor %}
+
 
 test:
   imports:
