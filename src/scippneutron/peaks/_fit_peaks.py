@@ -201,14 +201,23 @@ class FitAssessment(enum.Enum):
     """Indicates whether the fit was successful or how if failed."""
 
     success = enum.auto()
+    """The fit was successful."""
     failed = enum.auto()
+    """The fit failed for some reason."""
     background_is_better = enum.auto()
+    """The background fit yielded a better result than the background+peak fit."""
     peak_too_narrow = enum.auto()
+    """The peak is too narrow given the resolution of the data."""
     peak_too_wide = enum.auto()
+    """The peak is too wide given the size of the fit window."""
     peak_near_edge = enum.auto()
+    """The peak is too close to the edge of the window."""
     peak_points_down = enum.auto()
+    """The peak amplitude is negative."""
     p_too_small = enum.auto()
+    """The p-value of the fit is below threshold."""
     window_too_narrow = enum.auto()
+    """The fit window does not contain enough points."""
 
 
 _BackgroundModelName = Literal['linear', 'quadratic']
