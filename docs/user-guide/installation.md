@@ -12,10 +12,18 @@ pip install scippneutron
 This will install both ScippNeutron and its dependencies which include Scipp and ScippNexus.
 
 By default, this will only install minimal requirements.
-If you wish to use plotting features, you can install all the optional dependencies by doing
+If you wish to use basic plotting features, HDF5 support, or SciPy integrations, you can install the optional dependencies with
 
 ```sh
 pip install scippneutron[all]
+```
+
+If you also want to use interactive plots in Jupyter notebooks, use
+
+```sh
+pip install scippneutron[interactive]
+# or
+pip install scippneutron[all, interactive]
 ```
 
 See the [scipp documentation](https://scipp.github.io/getting-started/installation.html)
