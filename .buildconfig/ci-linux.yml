@@ -20,7 +20,7 @@ dependencies:
   - pooch==1.8.1
   - pytest==8.2.0
   - pytest-asyncio==0.23.6
-  - python-confluent-kafka==2.3.0
+  - python-confluent-kafka==2.1.0
   - python-graphviz==0.20.3
   - pythreejs==2.4.2
   - scipp==24.02.0
