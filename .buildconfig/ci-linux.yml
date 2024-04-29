@@ -8,7 +8,7 @@ channels:
 dependencies:
   #- comm=0.1.4  # earlier versions break tests with ipywidgets with latest ipykernel
   - ess-streaming-data-types==v0.14.0
-  - h5py==3.11.0
+  - h5py==3.8.0
   - hypothesis==6.100.2
   - ipykernel==6.29.3
   - ipympl==0.9.4
