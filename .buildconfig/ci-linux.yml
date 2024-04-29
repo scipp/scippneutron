@@ -7,38 +7,38 @@ channels:
   - nodefaults
 dependencies:
   #- comm=0.1.4  # earlier versions break tests with ipywidgets with latest ipykernel
-  - ess-streaming-data-types==v0.14.0
-  - h5py==3.8.0
-  - hypothesis==6.100.2
-  - ipykernel==6.29.3
-  - ipympl==0.9.4
-  - ipywidgets==8.1.2
-  - mantid==6.9.1
-  - matplotlib==3.8.4
-  - ninja==1.12.0
-  - plopp==24.04.0
-  - pooch==1.8.1
-  - pytest==8.2.0
-  - pytest-asyncio==0.23.6
-  - python-confluent-kafka==2.1.0
-  - python-graphviz==0.20.3
-  - pythreejs==2.4.2
-  - scipp==24.02.0
-  - scippnexus==24.03.1
-  - scipy==1.13.0
-  - tox==4.15.0
+  - ess-streaming-data-types
+  - h5py
+  - hypothesis
+  - ipykernel
+  - ipympl
+  - ipywidgets
+  - mantid
+  - matplotlib
+  - ninja
+  - plopp
+  - pooch
+  - pytest
+  - pytest-asyncio
+  - python-confluent-kafka
+  - python-graphviz
+  - pythreejs
+  - scipp
+  - scippnexus
+  - scipy
+  - tox
 
   # docs
-  - myst-parser==3.0.0
-  - nbsphinx==0.9.3
-  - packaging==24.0
-  - pandoc==3.1.13
-  - pydata-sphinx-theme==0.15.2
-  - sphinx==7.3.7
-  - sphinx-autodoc-typehints==2.1.0
-  - sphinx-copybutton==0.5.2
-  - sphinx-design==0.5.0
-  - sphinxcontrib-bibtex==2.6.2
+  - myst-parser
+  - nbsphinx
+  - packaging
+  - pandoc
+  - pydata-sphinx-theme
+  - sphinx
+  - sphinx-autodoc-typehints
+  - sphinx-copybutton
+  - sphinx-design
+  - sphinxcontrib-bibtex
 
   # docs and tests
-  - sciline==24.04.1
+  - sciline
