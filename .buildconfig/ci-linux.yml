@@ -6,27 +6,27 @@ channels:
   - scipp
   - nodefaults
 dependencies:
-  #- comm=0.1.4  # earlier versions break tests with ipywidgets with latest ipykernel
-  - ess-streaming-data-types
-  - h5py
-  - hypothesis
-  - ipykernel
-  - ipympl
-  - ipywidgets
-  - mantid
-  - matplotlib
-  - ninja
-  - plopp
-  - pooch
-  - pytest
-  - pytest-asyncio
-  - python-confluent-kafka
-  - python-graphviz
-  - pythreejs
-  - scipp==24.02.0
-  - scippnexus
-  - scipy
-  - tox
+  - comm=0.1.4  # earlier versions break tests with ipywidgets with latest ipykernel
+  - ess-streaming-data-types==v0.14.0
+  - h5py==3.8.0
+  - hypothesis==6.88.1
+  - ipykernel==6.25.2
+  - ipympl==0.9.3
+  - ipywidgets==8.0.6
+  - mantid==6.8.0
+  - matplotlib==3.8.2
+  - ninja==1.11.1
+  - plopp==24.01.1
+  - pooch==1.7.0
+  - pytest==7.4.2
+  - pytest-asyncio==0.21.1
+  - python-confluent-kafka==2.1.1
+  - python-graphviz==0.20.1
+  - pythreejs==2.4.2
+  - scipp==23.07.0
+  - scippnexus==23.12.1
+  - scipy==1.12.0
+  - tox==4.11.3
 
   # docs
   - myst-parser
@@ -41,4 +41,4 @@ dependencies:
   - sphinxcontrib-bibtex
 
   # docs and tests
-  - sciline
+  - sciline==24.01.1
