@@ -23,7 +23,7 @@ dependencies:
   - python-confluent-kafka
   - python-graphviz
   - pythreejs
-  - scipp
+  - scipp==24.02.0
   - scippnexus
   - scipy
   - tox
