@@ -29,16 +29,16 @@ dependencies:
   - tox==4.11.3
 
   # docs
-  - myst-parser
-  - nbsphinx
-  - packaging
-  - pandoc
-  - pydata-sphinx-theme
-  - sphinx
-  - sphinx-autodoc-typehints
-  - sphinx-copybutton
-  - sphinx-design
-  - sphinxcontrib-bibtex
+  - myst-parser==3.0.1
+  - nbsphinx==0.9.3
+  - packaging==24.0
+  - pandoc==3.1.13
+  - pydata-sphinx-theme==0.15.2
+  - sphinx==7.3.7
+  - sphinx-autodoc-typehints==2.1.0
+  - sphinx-copybutton==0.5.2
+  - sphinx-design==0.5.0
+  - sphinxcontrib-bibtex==2.6.2
 
   # docs and tests
   - sciline==24.01.1
