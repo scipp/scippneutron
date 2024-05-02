@@ -41,7 +41,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-interactive = ["scipp[interactive]"]
 all = ['scipp[all]']
 
 [project.urls]
