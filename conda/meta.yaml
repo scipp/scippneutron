@@ -16,12 +16,6 @@ requirements:
     - setuptools
     - setuptools_scm
   run:
-    - h5py
-    - numpy>=1.20.0
-    - pooch
-    - scipp>=23.07.0
-    - scippnexus>=23.08.0
-    - scipy>=1.7.0
     - python>=3.10
 
   {% for package in dependencies %}
