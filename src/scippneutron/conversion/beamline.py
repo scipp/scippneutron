@@ -23,8 +23,13 @@ This is useful for instance for monitors.
 In this case, ``Ltotal`` is the distance from source to detector.
 """
 
+from typing import TypedDict
+
 import scipp as sc
+import scipp.constants
 from scipp.typing import VariableLike
+
+from .._utils import elem_unit
 
 
 def L1(*, incident_beam: VariableLike) -> VariableLike:
@@ -220,6 +225,7 @@ def two_theta(
     scippneutron.conversions.beamline.straight_incident_beam:
     scippneutron.conversions.beamline.straight_scattered_beam:
     """
+    # TODO use proper citation
     # The implementation is based on paragraph 13 of
     # https://people.eecs.berkeley.edu/~wkahan/MathH110/Cross.pdf
     # Which is Kahan:2000:CPR in
@@ -233,3 +239,109 @@ def two_theta(
     b1 = incident_beam / L1(incident_beam=incident_beam)
     b2 = scattered_beam / L2(scattered_beam=scattered_beam)
     return 2 * sc.atan2(y=sc.norm(b1 - b2), x=sc.norm(b1 + b2))
+
+
+def cyl_x_unit_vector(gravity: sc.Variable, incident_beam: sc.Variable) -> sc.Variable:
+    """
+    Compute the horizontal unit vector in the plane normal to the incident beam
+    direction. Note that it is assumed here that the incident beam is perpendicular to
+    the gravity vector.
+    """
+    v_x = sc.cross(incident_beam, gravity)
+    return v_x / sc.norm(v_x)
+
+
+def cyl_y_unit_vector(gravity: sc.Variable) -> sc.Variable:
+    """
+    Compute the vertical unit vector in the plane normal to the incident beam
+    direction. Note that it is assumed here that the incident beam is perpendicular to
+    the gravity vector.
+    """
+    v_y = -gravity
+    return v_y / sc.norm(v_y)
+
+
+def cylindrical_x(
+    cyl_x_unit_vector: sc.Variable, scattered_beam: sc.Variable
+) -> sc.Variable:
+    """
+    Compute the horizontal x coordinate perpendicular to the incident beam direction.
+    Note that it is assumed here that the incident beam is perpendicular to the gravity
+    vector.
+    """
+    return sc.dot(scattered_beam, cyl_x_unit_vector)
+
+
+def cylindrical_y(
+    cyl_y_unit_vector: sc.Variable, scattered_beam: sc.Variable
+) -> sc.Variable:
+    """
+    Compute the vertical y coordinate perpendicular to the incident beam direction.
+    Note that it is assumed here that the incident beam is perpendicular to the gravity
+    vector.
+    """
+    return sc.dot(scattered_beam, cyl_y_unit_vector)
+
+
+class SphericalCoordinates(TypedDict):
+    two_theta: sc.Variable
+    phi: sc.Variable
+
+
+# TODO clean up
+# TODO ensure dtype of wavelength is preserved
+# TODO document coordinate system
+# TODO document definition of angles -> images + equations
+# TODO check numerical error, compare with vector based calculation
+#   not sure which one is more precise but I suspect it's the vector based one
+# TODO remove helper functions or keep?
+#   If keep, need to clearly document coord system and rename
+
+
+def scattering_angles_with_gravity(
+    incident_beam: sc.Variable,
+    scattered_beam: sc.Variable,
+    wavelength: sc.Variable,
+    gravity: sc.Variable,
+) -> SphericalCoordinates:
+    grav = sc.norm(gravity)
+
+    if sc.any(
+        abs(sc.dot(gravity, incident_beam))
+        > sc.scalar(1e-10, unit=incident_beam.unit) * grav
+    ):
+        raise ValueError(
+            '`gravity` and `incident_beam` must be orthogonal. '
+            f'Got a deviation of {sc.dot(gravity, scattered_beam).max():c}. '
+            'This is required to fully define spherical coordinates theta and phi.'
+        )
+
+    L2 = sc.norm(scattered_beam)
+
+    x_term = cylindrical_x(cyl_x_unit_vector(gravity, incident_beam), scattered_beam)
+
+    y_term = sc.to_unit(wavelength, elem_unit(L2), copy=True)
+    y_term *= y_term
+    drop = L2**2
+    drop *= grav * (sc.constants.m_n**2 / (2 * sc.constants.h**2))
+    # Optimization when handling either the dense or the event coord of binned data:
+    # - For the event coord, both operands have same dims, and we can multiply in place
+    # - For the dense coord, we need to broadcast using non in-place operation
+    if set(drop.dims).issubset(set(y_term.dims)):
+        y_term *= drop
+    else:
+        y_term = drop * y_term
+    y_term += cylindrical_y(cyl_y_unit_vector(gravity), scattered_beam)
+    phi = sc.atan2(y=y_term, x=x_term)
+
+    x_term *= x_term
+    y_term *= y_term
+
+    if set(x_term.dims).issubset(set(y_term.dims)):
+        y_term += x_term
+    else:
+        y_term = y_term + x_term
+    out = sc.sqrt(y_term, out=y_term)
+    out /= L2
+    out = sc.asin(out, out=out)
+    return {'two_theta': out, 'phi': phi}
