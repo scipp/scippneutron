@@ -298,6 +298,56 @@ class SphericalCoordinates(TypedDict):
 #   If keep, need to clearly document coord system and rename
 
 
+# def scattering_angles_with_gravity(
+#     incident_beam: sc.Variable,
+#     scattered_beam: sc.Variable,
+#     wavelength: sc.Variable,
+#     gravity: sc.Variable,
+# ) -> SphericalCoordinates:
+#     grav = sc.norm(gravity)
+#
+#     if sc.any(
+#         abs(sc.dot(gravity, incident_beam))
+#         > sc.scalar(1e-10, unit=incident_beam.unit) * grav
+#     ):
+#         raise ValueError(
+#             '`gravity` and `incident_beam` must be orthogonal. '
+#             f'Got a deviation of {sc.dot(gravity, scattered_beam).max():c}. '
+#             'This is required to fully define spherical coordinates theta and phi.'
+#         )
+#
+#     L2 = sc.norm(scattered_beam)
+#
+#     x_term = cylindrical_x(cyl_x_unit_vector(gravity, incident_beam), scattered_beam)
+#
+#     y_term = sc.to_unit(wavelength, elem_unit(L2), copy=True)
+#     y_term *= y_term
+#     drop = L2**2
+#     drop *= grav * (sc.constants.m_n**2 / (2 * sc.constants.h**2))
+#     # Optimization when handling either the dense or the event coord of binned data:
+#     # - For the event coord, both operands have same dims, and we can
+#     #   multiply in place
+#     # - For the dense coord, we need to broadcast using non in-place operation
+#     if set(drop.dims).issubset(set(y_term.dims)):
+#         y_term *= drop
+#     else:
+#         y_term = drop * y_term
+#     y_term += cylindrical_y(cyl_y_unit_vector(gravity), scattered_beam)
+#     phi = sc.atan2(y=y_term, x=x_term)
+#
+#     x_term *= x_term
+#     y_term *= y_term
+#
+#     if set(x_term.dims).issubset(set(y_term.dims)):
+#         y_term += x_term
+#     else:
+#         y_term = y_term + x_term
+#     out = sc.sqrt(y_term, out=y_term)
+#     out /= L2
+#     out = sc.asin(out, out=out)
+#     return {'two_theta': out, 'phi': phi}
+
+
 def scattering_angles_with_gravity(
     incident_beam: sc.Variable,
     scattered_beam: sc.Variable,
@@ -316,32 +366,26 @@ def scattering_angles_with_gravity(
             'This is required to fully define spherical coordinates theta and phi.'
         )
 
+    e_z = incident_beam / sc.norm(incident_beam)
+    e_y = -gravity / sc.norm(gravity)
+    e_x = sc.cross(e_y, e_z)
+
+    x = sc.dot(scattered_beam, e_x)
+    y = sc.dot(scattered_beam, e_y)
+    z = sc.dot(scattered_beam, e_z)
+
     L2 = sc.norm(scattered_beam)
+    drop = (
+        L2**2
+        * wavelength**2
+        * grav
+        * (sc.constants.m_n**2 / (2 * sc.constants.h**2))
+    )
+    drop = drop.to(unit=elem_unit(y))
 
-    x_term = cylindrical_x(cyl_x_unit_vector(gravity, incident_beam), scattered_beam)
+    y = y + drop
 
-    y_term = sc.to_unit(wavelength, elem_unit(L2), copy=True)
-    y_term *= y_term
-    drop = L2**2
-    drop *= grav * (sc.constants.m_n**2 / (2 * sc.constants.h**2))
-    # Optimization when handling either the dense or the event coord of binned data:
-    # - For the event coord, both operands have same dims, and we can multiply in place
-    # - For the dense coord, we need to broadcast using non in-place operation
-    if set(drop.dims).issubset(set(y_term.dims)):
-        y_term *= drop
-    else:
-        y_term = drop * y_term
-    y_term += cylindrical_y(cyl_y_unit_vector(gravity), scattered_beam)
-    phi = sc.atan2(y=y_term, x=x_term)
+    phi = sc.atan2(y=y, x=x)
+    two_theta_ = sc.atan2(y=sc.sqrt(x**2 + y**2), x=z)
 
-    x_term *= x_term
-    y_term *= y_term
-
-    if set(x_term.dims).issubset(set(y_term.dims)):
-        y_term += x_term
-    else:
-        y_term = y_term + x_term
-    out = sc.sqrt(y_term, out=y_term)
-    out /= L2
-    out = sc.asin(out, out=out)
-    return {'two_theta': out, 'phi': phi}
+    return {'two_theta': two_theta_, 'phi': phi}
