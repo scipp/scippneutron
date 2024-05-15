@@ -18,13 +18,13 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering",
     "Typing :: Typed",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dynamic = ["version"]
 
 # IMPORTANT:
@@ -114,5 +114,4 @@ enable_error_code = [
     "redundant-expr",
     "truthy-bool",
 ]
-show_error_codes = true
 warn_unreachable = true
