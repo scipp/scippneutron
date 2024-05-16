@@ -440,9 +440,6 @@ def test_scattering_angles_with_gravity_binned_data():
         begin=sc.array(dims=['det'], values=[0, 2], unit=None),
         end=sc.array(dims=['det'], values=[2, 3], unit=None),
     )
-
-    # Gravity and incident_beam are not aligned with the coordinate system
-    # but orthogonal to each other.
     gravity = sc.vector([-0.3, -9.81, 0.01167883211678832], unit='m/s^2')
     incident_beam = sc.vector([1.6, 0.0, 41.1], unit='m')
     scattered_beam = sc.vectors(
@@ -460,6 +457,52 @@ def test_scattering_angles_with_gravity_binned_data():
         scattered_beam=scattered_beam,
         wavelength=wavelength,
         gravity=gravity,
+    )
+
+    sc.testing.assert_allclose(
+        res['two_theta'], expected['two_theta'], rtol=sc.scalar(1e-5)
+    )
+    sc.testing.assert_allclose(res['phi'], expected['phi'], rtol=sc.scalar(1e-10))
+
+
+def test_scattering_angles_with_gravity_uses_wavelength_dtype():
+    wavelength = sc.array(
+        dims=['wavelength'], values=[1.6, 0.7], unit='Å', dtype='float32'
+    )
+    gravity = sc.vector([0.0, -9.81, 0.0], unit='m/s^2')
+    incident_beam = sc.vector([0.0, 0.0, 41.1], unit='m')
+    scattered_beam = sc.vector([1.8, 2.5, 3.6], unit='m')
+
+    res = beamline.scattering_angles_with_gravity(
+        incident_beam=incident_beam,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
+    )
+    assert res['two_theta'].dtype == 'float32'
+    assert res['phi'].dtype == 'float32'
+
+
+def test_scattering_angles_with_gravity_supports_mismatching_units():
+    wavelength = sc.array(
+        dims=['wavelength'], values=[1.6, 0.7], unit='Å', dtype='float32'
+    )
+    gravity = sc.vector([0.0, -9810, 0.0], unit='m/ms^2')
+    incident_beam = sc.vector([0.0, 0.0, 410], unit='cm')
+    scattered_beam = sc.vector([180, 1800, 2400], unit='mm')
+
+    res = beamline.scattering_angles_with_gravity(
+        incident_beam=incident_beam,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
+    )
+
+    expected = _reference_scattering_angles_with_gravity(
+        incident_beam=incident_beam.to(unit='m'),
+        scattered_beam=scattered_beam.to(unit='m'),
+        wavelength=wavelength,
+        gravity=gravity.to(unit='m/s^2'),
     )
 
     sc.testing.assert_allclose(
