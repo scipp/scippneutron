@@ -484,9 +484,7 @@ def test_scattering_angles_with_gravity_uses_wavelength_dtype():
 
 
 def test_scattering_angles_with_gravity_supports_mismatching_units():
-    wavelength = sc.array(
-        dims=['wavelength'], values=[1.6, 0.7], unit='Å', dtype='float32'
-    )
+    wavelength = sc.array(dims=['wavelength'], values=[1.6, 0.7], unit='Å')
     gravity = sc.vector([0.0, -9810, 0.0], unit='m/ms^2')
     incident_beam = sc.vector([0.0, 0.0, 410], unit='cm')
     scattered_beam = sc.vector([180, 1800, 2400], unit='mm')

@@ -29,7 +29,7 @@ import scipp as sc
 import scipp.constants
 from scipp.typing import VariableLike
 
-from .._utils import elem_unit
+from .._utils import elem_dtype, elem_unit
 
 
 def L1(*, incident_beam: VariableLike) -> VariableLike:
@@ -241,55 +241,12 @@ def two_theta(
     return 2 * sc.atan2(y=sc.norm(b1 - b2), x=sc.norm(b1 + b2))
 
 
-def cyl_x_unit_vector(gravity: sc.Variable, incident_beam: sc.Variable) -> sc.Variable:
-    """
-    Compute the horizontal unit vector in the plane normal to the incident beam
-    direction. Note that it is assumed here that the incident beam is perpendicular to
-    the gravity vector.
-    """
-    v_x = sc.cross(incident_beam, gravity)
-    return v_x / sc.norm(v_x)
-
-
-def cyl_y_unit_vector(gravity: sc.Variable) -> sc.Variable:
-    """
-    Compute the vertical unit vector in the plane normal to the incident beam
-    direction. Note that it is assumed here that the incident beam is perpendicular to
-    the gravity vector.
-    """
-    v_y = -gravity
-    return v_y / sc.norm(v_y)
-
-
-def cylindrical_x(
-    cyl_x_unit_vector: sc.Variable, scattered_beam: sc.Variable
-) -> sc.Variable:
-    """
-    Compute the horizontal x coordinate perpendicular to the incident beam direction.
-    Note that it is assumed here that the incident beam is perpendicular to the gravity
-    vector.
-    """
-    return sc.dot(scattered_beam, cyl_x_unit_vector)
-
-
-def cylindrical_y(
-    cyl_y_unit_vector: sc.Variable, scattered_beam: sc.Variable
-) -> sc.Variable:
-    """
-    Compute the vertical y coordinate perpendicular to the incident beam direction.
-    Note that it is assumed here that the incident beam is perpendicular to the gravity
-    vector.
-    """
-    return sc.dot(scattered_beam, cyl_y_unit_vector)
-
-
 class SphericalCoordinates(TypedDict):
     two_theta: sc.Variable
     phi: sc.Variable
 
 
 # TODO clean up
-# TODO ensure dtype of wavelength is preserved
 # TODO document coordinate system
 # TODO document definition of angles -> images + equations
 # TODO check numerical error, compare with vector based calculation
@@ -348,17 +305,26 @@ class SphericalCoordinates(TypedDict):
 #     return {'two_theta': out, 'phi': phi}
 
 
+def _beam_aligned_unit_vectors(
+    reference_beam: sc.Variable, up: sc.Variable
+) -> tuple[sc.Variable, sc.Variable, sc.Variable]:
+    ez = reference_beam / sc.norm(reference_beam)
+    ey = up / sc.norm(up)
+    ex = sc.cross(ey, ez)
+    return ex, ey, ez
+
+
 def scattering_angles_with_gravity(
     incident_beam: sc.Variable,
     scattered_beam: sc.Variable,
     wavelength: sc.Variable,
     gravity: sc.Variable,
 ) -> SphericalCoordinates:
-    grav = sc.norm(gravity)
+    g = sc.norm(gravity)
 
     if sc.any(
         abs(sc.dot(gravity, incident_beam))
-        > sc.scalar(1e-10, unit=incident_beam.unit) * grav
+        > sc.scalar(1e-10, unit=incident_beam.unit) * g
     ):
         raise ValueError(
             '`gravity` and `incident_beam` must be orthogonal. '
@@ -366,26 +332,41 @@ def scattering_angles_with_gravity(
             'This is required to fully define spherical coordinates theta and phi.'
         )
 
-    e_z = incident_beam / sc.norm(incident_beam)
-    e_y = -gravity / sc.norm(gravity)
-    e_x = sc.cross(e_y, e_z)
+    scattered_beam = scattered_beam
+    ex, ey, ez = _beam_aligned_unit_vectors(reference_beam=incident_beam, up=-gravity)
+    y = sc.dot(scattered_beam, ey).to(dtype=elem_dtype(wavelength), copy=False)
 
-    x = sc.dot(scattered_beam, e_x)
-    y = sc.dot(scattered_beam, e_y)
-    z = sc.dot(scattered_beam, e_z)
-
-    L2 = sc.norm(scattered_beam)
-    drop = (
-        L2**2
-        * wavelength**2
-        * grav
-        * (sc.constants.m_n**2 / (2 * sc.constants.h**2))
+    L2 = sc.norm(scattered_beam).to(dtype=elem_dtype(wavelength), copy=False)
+    factor = (g * (sc.constants.m_n**2 / (2 * sc.constants.h**2))).to(
+        dtype=elem_dtype(wavelength), copy=False
     )
-    drop = drop.to(unit=elem_unit(y))
 
-    y = y + drop
+    # Convert unit to eventually match the unit of y.
+    # Copy to make it safe to use in-place ops.
+    a = wavelength.to(
+        unit=sc.sqrt(sc.reciprocal(elem_unit(L2) * elem_unit(factor))), copy=True
+    )
+    a *= a
+    a *= factor
 
+    drop = L2
+    drop *= drop
+    drop = drop * a  # TODO in-place when possible
+    del a
+
+    y = y + drop  # TODO in-place when possible
+    del drop, L2
+
+    x = sc.dot(scattered_beam, ex).to(dtype=elem_dtype(y), copy=False)
     phi = sc.atan2(y=y, x=x)
-    two_theta_ = sc.atan2(y=sc.sqrt(x**2 + y**2), x=z)
+
+    # Corresponds to `two_theta_ = sc.atan2(y=sc.sqrt(x**2 + y**2), x=z)`
+    x *= x
+    y *= y
+    y += x
+    del x
+    y = sc.sqrt(y, out=y)
+    z = sc.dot(scattered_beam, ez).to(dtype=elem_dtype(y), copy=False)
+    two_theta_ = sc.atan2(y=y, x=z, out=y)
 
     return {'two_theta': two_theta_, 'phi': phi}
