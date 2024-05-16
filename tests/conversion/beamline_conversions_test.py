@@ -374,24 +374,13 @@ def test_scattering_angles_with_gravity_beams_aligned_with_lab_coords():
     sc.testing.assert_allclose(res['phi'], expected_phi, rtol=sc.scalar(1e-10))
 
 
-def test_scattering_angles_with_gravity_beams_unaligned_with_lab_coords():
-    wavelength = sc.array(dims=['wavelength'], values=[1.6, 0.9, 0.7], unit='Å')
-    # Gravity and incident_beam are not aligned with the coordinate system
-    # but orthogonal to each other.
-    gravity = sc.vector([-0.3, -9.81, 0.01167883211678832], unit='m/s^2')
-    incident_beam = sc.vector([1.6, 0.0, 41.1], unit='m')
-    scattered_beam = sc.vectors(
-        dims=['det'], values=[[1.8, 2.5, 3.6], [-0.4, -1.7, 2.9]], unit='m'
-    )
-
-    res = beamline.scattering_angles_with_gravity(
-        incident_beam=incident_beam,
-        scattered_beam=scattered_beam,
-        wavelength=wavelength,
-        gravity=gravity,
-    )
-
-    # This is a simplified, independently checked implementation:
+def _reference_scattering_angles_with_gravity(
+    incident_beam: sc.Variable,
+    scattered_beam: sc.Variable,
+    gravity: sc.Variable,
+    wavelength: sc.Variable,
+) -> dict[str, sc.Variable]:
+    # This is a simplified, independently checked implementation.
     e_z = incident_beam / sc.norm(incident_beam)
     e_y = -gravity / sc.norm(gravity)
     e_x = sc.cross(e_y, e_z)
@@ -409,13 +398,71 @@ def test_scattering_angles_with_gravity_beams_unaligned_with_lab_coords():
     )
     dropped_y = y + drop.to(unit=y.unit)
 
-    expected_two_theta = sc.atan2(y=sc.sqrt(x**2 + dropped_y**2), x=z)
-    expected_phi = sc.atan2(y=dropped_y, x=x)
+    two_theta = sc.atan2(y=sc.sqrt(x**2 + dropped_y**2), x=z)
+    phi = sc.atan2(y=dropped_y, x=x)
+    return {'two_theta': two_theta, 'phi': phi}
+
+
+def test_scattering_angles_with_gravity_beams_unaligned_with_lab_coords():
+    wavelength = sc.array(dims=['wavelength'], values=[1.6, 0.9, 0.7], unit='Å')
+    # Gravity and incident_beam are not aligned with the coordinate system
+    # but orthogonal to each other.
+    gravity = sc.vector([-0.3, -9.81, 0.01167883211678832], unit='m/s^2')
+    incident_beam = sc.vector([1.6, 0.0, 41.1], unit='m')
+    scattered_beam = sc.vectors(
+        dims=['det'], values=[[1.8, 2.5, 3.6], [-0.4, -1.7, 2.9]], unit='m'
+    )
+
+    res = beamline.scattering_angles_with_gravity(
+        incident_beam=incident_beam,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
+    )
+    expected = _reference_scattering_angles_with_gravity(
+        incident_beam=incident_beam,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
+    )
 
     sc.testing.assert_allclose(
-        res['two_theta'], expected_two_theta, rtol=sc.scalar(1e-5)
+        res['two_theta'], expected['two_theta'], rtol=sc.scalar(1e-5)
     )
-    sc.testing.assert_allclose(res['phi'], expected_phi, rtol=sc.scalar(1e-10))
+    sc.testing.assert_allclose(res['phi'], expected['phi'], rtol=sc.scalar(1e-10))
 
 
-# TODO binned data
+def test_scattering_angles_with_gravity_binned_data():
+    wavelength = sc.array(dims=['wavelength'], values=[1.6, 0.9, 0.7], unit='Å')
+    wavelength = sc.bins(
+        dim='wavelength',
+        data=wavelength,
+        begin=sc.array(dims=['det'], values=[0, 2], unit=None),
+        end=sc.array(dims=['det'], values=[2, 3], unit=None),
+    )
+
+    # Gravity and incident_beam are not aligned with the coordinate system
+    # but orthogonal to each other.
+    gravity = sc.vector([-0.3, -9.81, 0.01167883211678832], unit='m/s^2')
+    incident_beam = sc.vector([1.6, 0.0, 41.1], unit='m')
+    scattered_beam = sc.vectors(
+        dims=['det'], values=[[1.8, 2.5, 3.6], [-0.4, -1.7, 2.9]], unit='m'
+    )
+
+    res = beamline.scattering_angles_with_gravity(
+        incident_beam=incident_beam,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
+    )
+    expected = _reference_scattering_angles_with_gravity(
+        incident_beam=incident_beam,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
+    )
+
+    sc.testing.assert_allclose(
+        res['two_theta'], expected['two_theta'], rtol=sc.scalar(1e-5)
+    )
+    sc.testing.assert_allclose(res['phi'], expected['phi'], rtol=sc.scalar(1e-10))
