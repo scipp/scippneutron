@@ -1,6 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
-
 name: Docs
 
 on:
@@ -50,9 +47,10 @@ jobs:
         shell: bash -l {0}  # required for conda env
     steps:
       - run: sudo apt install --yes graphviz pandoc
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch == '' && github.ref_name || inputs.branch }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
           fetch-depth: 0  # history required so cmake can determine version
       - uses: mamba-org/setup-micromamba@v1
         if: ${{ inputs.version != '' }}
@@ -70,15 +68,14 @@ jobs:
           create-args: >-
             python=3.10
             conda-build
-      - run: conda develop src
+      - run: pip install --no-build-isolation --no-deps -e .
         if: ${{ inputs.version == '' }}
-      - run: |
-          python -m sphinx -j2 -v -b html -d doctrees docs html
-          python -m sphinx -j2 -v -b doctest -d doctrees docs html
-          find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
+      - run: python -m sphinx -W -v -b doctest -d doctrees docs html
+      - run: python -m sphinx -W -v -b html -d doctrees docs html
+      - run: find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
       - run: tox -e linkcheck
         if: ${{ inputs.linkcheck }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: docs_html
           path: html/
