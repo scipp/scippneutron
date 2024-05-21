@@ -3,8 +3,8 @@
 import pathlib
 import sys
 import warnings
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, List, Type, Union
 
 import numpy as np
 import pytest
@@ -59,14 +59,14 @@ def test_no_exception_if_single_nxentry_found_below_root():
 
 def load_from_nexus(
     builder: NexusBuilder, *args, **kwargs
-) -> Union[sc.Dataset, sc.DataArray, None]:
+) -> sc.Dataset | sc.DataArray | None:
     with builder.file() as nexus_file:
         return scippneutron.load_nexus(nexus_file, *args, **kwargs)
 
 
 def load_from_json(
     builder: NexusBuilder, *args, **kwargs
-) -> Union[sc.Dataset, sc.DataArray, None]:
+) -> sc.Dataset | sc.DataArray | None:
     loaded_data, _ = load_nexus_json_str(builder.json_string, *args, **kwargs)
     return loaded_data
 
@@ -906,7 +906,7 @@ def test_skips_loading_source_if_more_than_one_in_file(load_function: Callable):
     ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 def test_component_position_from_distance_dataset_missing_unit(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     load_function: Callable,
 ):
@@ -930,12 +930,12 @@ def test_component_position_from_distance_dataset_missing_unit(
     ],
 )
 def test_loads_component_position_from_single_transformation(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
     value: float,
     value_units: str,
-    expected_position: List[float],
+    expected_position: list[float],
     load_function: Callable,
 ):
     builder = NexusBuilder()
@@ -966,12 +966,12 @@ def test_loads_component_position_from_single_transformation(
     ],
 )
 def test_loads_component_position_from_single_transformation_with_offset(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
     value: float,
     value_units: str,
-    expected_position: List[float],
+    expected_position: list[float],
     load_function: Callable,
 ):
     builder = NexusBuilder()
@@ -1004,12 +1004,12 @@ def test_loads_component_position_from_single_transformation_with_offset(
     ],
 )
 def test_raises_if_offset_but_not_offset_units_found(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
     value: float,
     value_units: str,
-    expected_position: List[float],
+    expected_position: list[float],
     load_function: Callable,
 ):
     builder = NexusBuilder()
@@ -1041,12 +1041,12 @@ def test_raises_if_offset_but_not_offset_units_found(
     ],
 )
 def test_loads_component_position_from_log_transformation(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
     value: float,
     value_units: str,
-    expected_position: List[float],
+    expected_position: list[float],
     load_function: Callable,
 ):
     builder = NexusBuilder()
@@ -1080,10 +1080,10 @@ def test_loads_component_position_from_log_transformation(
     ],
 )
 def test_loads_component_position_with_multi_value_log_transformation(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
-    value: List[float],
+    value: list[float],
     value_units: str,
     expected_position: float,
     load_function: Callable,
@@ -1117,7 +1117,7 @@ def test_loads_component_position_with_multi_value_log_transformation(
     ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 def test_loads_component_position_with_multiple_multi_valued_log_transformations(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     load_function: Callable,
 ):
@@ -1157,7 +1157,7 @@ def test_loads_component_position_with_multiple_multi_valued_log_transformations
     ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 def test_multi_valued_log_transformations_time_axis_interpolated_and_trimmed(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     load_function: Callable,
 ):
@@ -1205,7 +1205,7 @@ def test_multi_valued_log_transformations_time_axis_interpolated_and_trimmed(
     [(TransformationType.ROTATION, "deg"), (TransformationType.TRANSLATION, "cm")],
 )
 def test_skips_component_position_with_empty_value_log_transformation(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
     value_units: str,
@@ -1230,7 +1230,7 @@ def test_skips_component_position_with_empty_value_log_transformation(
     ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 def test_load_component_position_prefers_transform_over_distance(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     load_function: Callable,
 ):
@@ -1266,7 +1266,7 @@ def test_load_component_position_prefers_transform_over_distance(
     "transform_type", [TransformationType.ROTATION, TransformationType.TRANSLATION]
 )
 def test_skips_component_position_from_transformation_missing_unit(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
     load_function: Callable,
@@ -1284,7 +1284,7 @@ def test_skips_component_position_from_transformation_missing_unit(
     ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 def test_loads_component_position_from_multiple_transformations(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     load_function: Callable,
 ):
@@ -1323,7 +1323,7 @@ def test_skips_source_position_if_not_given_in_file(load_function: Callable):
     ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 def test_loads_component_position_from_distance_dataset(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     load_function: Callable,
 ):

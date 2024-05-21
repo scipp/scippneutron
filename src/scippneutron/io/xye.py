@@ -4,7 +4,6 @@
 
 import io
 from pathlib import Path
-from typing import Optional, Union
 
 import numpy as np
 import scipp as sc
@@ -21,11 +20,11 @@ GenerateHeader = GenerateHeaderType()
 
 
 def save_xye(
-    fname: Union[str, Path, io.TextIOBase],
+    fname: str | Path | io.TextIOBase,
     da: sc.DataArray,
     *,
-    coord: Optional[str] = None,
-    header: Union[str, GenerateHeaderType] = GenerateHeader,
+    coord: str | None = None,
+    header: str | GenerateHeaderType = GenerateHeader,
 ) -> None:
     """Write a data array to an XYE file.
 
@@ -103,12 +102,12 @@ def save_xye(
 
 
 def load_xye(
-    fname: Union[str, Path, io.TextIOBase],
+    fname: str | Path | io.TextIOBase,
     *,
     dim: str,
-    unit: Optional[Union[sc.Unit, str]],
-    coord_unit: Optional[Union[sc.Unit, str]],
-    coord: Optional[str] = None,
+    unit: sc.Unit | str | None,
+    coord_unit: sc.Unit | str | None,
+    coord: str | None = None,
 ) -> sc.DataArray:
     """Read a data array from an XYE file.
 

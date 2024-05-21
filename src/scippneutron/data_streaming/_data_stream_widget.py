@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 from datetime import datetime
-from typing import Optional
 
 
 def _unix_ms_to_datetime(unix_ms: int) -> datetime:
@@ -11,9 +10,9 @@ def _unix_ms_to_datetime(unix_ms: int) -> datetime:
 class DataStreamWidget:
     def __init__(
         self,
-        start_time_ms: Optional[int] = None,
-        stop_time_ms: Optional[int] = None,
-        run_title: Optional[str] = None,
+        start_time_ms: int | None = None,
+        stop_time_ms: int | None = None,
+        run_title: str | None = None,
     ):
         import ipywidgets as widgets
         from IPython.display import display

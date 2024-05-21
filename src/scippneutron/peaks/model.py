@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import abc
 import math
+from collections.abc import Iterable
 from copy import deepcopy
-from typing import Iterable
 
 import numpy as np
 import scipp as sc

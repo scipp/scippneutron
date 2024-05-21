@@ -5,7 +5,7 @@ import json
 from contextlib import contextmanager
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import Any, Dict, Optional, Set, Tuple, Union
+from typing import Any
 from warnings import warn
 
 import h5py
@@ -42,7 +42,7 @@ class SkipSource(Exception):
 
 
 def add_position_and_transforms_to_data(
-    data: Union[sc.DataArray, sc.Dataset],
+    data: sc.DataArray | sc.Dataset,
     transform_name: str,
     position_name: str,
     base_position_name: str,
@@ -70,19 +70,19 @@ def add_position_and_transforms_to_data(
 
 
 @contextmanager
-def _open_if_path(file_in: Union[str, Path, h5py.File]):
+def _open_if_path(file_in: str | Path | h5py.File):
     """
     Open if file path is provided,
     otherwise yield the existing h5py.File object
     """
-    if isinstance(file_in, (str, Path)):
+    if isinstance(file_in, str | Path):
         with h5py.File(file_in, "r", libver='latest', swmr=True) as nexus_file:
             yield nexus_file
     else:
         yield file_in
 
 
-def _load_instrument_name(instruments: Dict[str, NXobject]) -> Dict:
+def _load_instrument_name(instruments: dict[str, NXobject]) -> dict:
     instrument = next(iter(instruments.values()))
     if len(instruments) > 1:
         warn(
@@ -95,13 +95,13 @@ def _load_instrument_name(instruments: Dict[str, NXobject]) -> Dict:
     return {}
 
 
-def _load_title(entry: NXobject) -> Dict:
+def _load_title(entry: NXobject) -> dict:
     if (title := entry.get('title')) is not None:
         return {"experiment_title": sc.scalar(title[()])}
     return {}
 
 
-def _load_start_and_end_time(entry: NXobject) -> Dict:
+def _load_start_and_end_time(entry: NXobject) -> dict:
     times = {}
     for time in ["start_time", "end_time"]:
         if (dataset := entry.get(time)) is not None:
@@ -110,8 +110,8 @@ def _load_start_and_end_time(entry: NXobject) -> Dict:
 
 
 def load_nexus(
-    data_file: Union[str, Path, h5py.File], root: str = "/", quiet=True
-) -> Optional[ScippData]:
+    data_file: str | Path | h5py.File, root: str = "/", quiet=True
+) -> ScippData | None:
     """
     Load a NeXus file and return required information.
 
@@ -145,10 +145,10 @@ def _origin(unit) -> sc.Variable:
     return sc.vector(value=[0, 0, 0], unit=unit)
 
 
-def _depends_on_to_position(obj) -> Union[None, sc.Variable]:
+def _depends_on_to_position(obj) -> None | sc.Variable:
     if (transform := obj.get('depends_on')) is not None:
         if (
-            isinstance(transform, (str, sc.DataArray))
+            isinstance(transform, str | sc.DataArray)
             or transform.dtype == sc.DType.DataArray
         ):
             return None  # cannot compute position if bad transform or time-dependent
@@ -198,7 +198,7 @@ def _zip_pixel_offset(da: sc.DataArray) -> sc.DataArray:
     return da
 
 
-def _by_nx_class(group) -> Dict[str, Dict[str, 'NXobject']]:
+def _by_nx_class(group) -> dict[str, dict[str, 'NXobject']]:
     from scippnexus.v1.nxobject import _nx_class_registry
 
     classes = {name: [] for name in _nx_class_registry()}
@@ -223,8 +223,8 @@ def _by_nx_class(group) -> Dict[str, Dict[str, 'NXobject']]:
 
 
 def _load_data(
-    nexus_file: Union[h5py.File, Dict], root: Optional[str], quiet: bool
-) -> Optional[ScippData]:
+    nexus_file: h5py.File | dict, root: str | None, quiet: bool
+) -> ScippData | None:
     """
     Main implementation for loading data is extracted to this function so that
     in-memory data can be used for unit tests.
@@ -338,7 +338,7 @@ def _load_data(
         tof_max.value = np.nextafter(tof_max.value, float("inf"))
         loaded_data.coords['tof'] = sc.concat([tof_min, tof_max], 'tof')
 
-    def add_metadata(metadata: Dict[str, sc.Variable]):
+    def add_metadata(metadata: dict[str, sc.Variable]):
         for key, value in metadata.items():
             if isinstance(loaded_data, sc.DataArray):
                 get_attrs(loaded_data)[key] = value
@@ -406,7 +406,7 @@ def _load_data(
 def load_nexus_json_str(
     json_template: str,
     get_start_info: bool = False,
-) -> Tuple[Optional[ScippData], Optional[sc.Variable], Optional[Set[StreamInfo]]]:
+) -> tuple[ScippData | None, sc.Variable | None, set[StreamInfo] | None]:
     """
     Use this function for testing so that file io is not required
     """
@@ -420,15 +420,15 @@ def load_nexus_json_str(
     return _load_data(group, None, True), streams
 
 
-def load_nexus_json(json_filename: str) -> Optional[ScippData]:
-    with open(json_filename, 'r') as json_file:
+def load_nexus_json(json_filename: str) -> ScippData | None:
+    with open(json_filename) as json_file:
         json_string = json_file.read()
     loaded_data, _ = load_nexus_json_str(json_string)
     return loaded_data
 
 
 def json_nexus_group(
-    json_dict: dict[str, Any], *, definitions: Optional[Dict[str, type]] = None
+    json_dict: dict[str, Any], *, definitions: dict[str, type] | None = None
 ) -> snx.Group:
     """Parse a JSON dictionary into a NeXus group.
 

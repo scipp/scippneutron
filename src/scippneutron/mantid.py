@@ -9,7 +9,7 @@ import warnings
 from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any
 
 import numpy as np
 import scipp as sc
@@ -183,7 +183,7 @@ def make_detector_info(ws, spectrum_dim):
 
 def md_dimension(mantid_dim, index):
     # Look for q dimensions
-    patterns = ["^q.*{0}$".format(coord) for coord in ['x', 'y', 'z']]
+    patterns = [f"^q.*{coord}$" for coord in ['x', 'y', 'z']]
     q_dims = ['Q_x', 'Q_y', 'Q_z']
     pattern_result = zip(patterns, q_dims, strict=True)
     if mantid_dim.getMDFrame().isQ():
@@ -200,7 +200,7 @@ def md_dimension(mantid_dim, index):
             return result
 
     # Look for common spatial dimensions
-    patterns = ["^{0}$".format(coord) for coord in ['x', 'y', 'z']]
+    patterns = [f"^{coord}$" for coord in ['x', 'y', 'z']]
     dims = ['x', 'y', 'z']
     pattern_result = zip(patterns, dims, strict=True)
     for pattern, result in pattern_result:
@@ -208,9 +208,7 @@ def md_dimension(mantid_dim, index):
             return result
 
     raise ValueError(
-        "Cannot infer scipp dimension from input mantid dimension {}".format(
-            mantid_dim.name()
-        )
+        f"Cannot infer scipp dimension from input mantid dimension {mantid_dim.name()}"
     )
 
 
@@ -458,7 +456,7 @@ def set_bin_masks(bin_masks, dim, index, masked_bins):
         bin_masks['spectrum', index][dim, masked_bin].value = True
 
 
-def _as_dict_of_variables(d: Dict[str, Any]) -> Dict[str, sc.Variable]:
+def _as_dict_of_variables(d: dict[str, Any]) -> dict[str, sc.Variable]:
     return {
         key: val if isinstance(val, sc.Variable) else sc.scalar(val)
         for key, val in d.items()
@@ -1085,7 +1083,7 @@ def from_mantid(workspace, **kwargs) -> sc.DataGroup:
     elif w_id == 'WorkspaceGroup':
         scipp_obj = convert_WorkspaceGroup_to_data_group(workspace, **kwargs)
     else:
-        raise RuntimeError('Unsupported workspace type {}'.format(w_id))
+        raise RuntimeError(f'Unsupported workspace type {w_id}')
 
     # TODO Is there ever a case where a Workspace2D has a separate monitor
     # workspace? This is not handled by ExtractMonitors above, I think.
@@ -1111,7 +1109,7 @@ def from_mantid(workspace, **kwargs) -> sc.DataGroup:
     return scipp_obj
 
 
-def array_from_mantid(workspace, **kwargs) -> Union[sc.DataArray, sc.Dataset]:
+def array_from_mantid(workspace, **kwargs) -> sc.DataArray | sc.Dataset:
     """Convert Mantid workspace to a scipp data array or dataset.
     :param workspace: Mantid workspace to convert.
 
@@ -1155,7 +1153,7 @@ def array_from_mantid(workspace, **kwargs) -> Union[sc.DataArray, sc.Dataset]:
         scipp_obj = convert_WorkspaceGroup_to_dataarray_dict(workspace, **kwargs)
 
     if scipp_obj is None:
-        raise RuntimeError('Unsupported workspace type {}'.format(w_id))
+        raise RuntimeError(f'Unsupported workspace type {w_id}')
 
     # TODO Is there ever a case where a Workspace2D has a separate monitor
     # workspace? This is not handled by ExtractMonitors above, I think.
@@ -1183,7 +1181,7 @@ def array_from_mantid(workspace, **kwargs) -> Union[sc.DataArray, sc.Dataset]:
 
 
 def load_with_mantid(
-    filename: Union[str, Path] = "",
+    filename: str | Path = "",
     load_pulse_times=True,
     instrument_filename=None,
     error_connection=None,
@@ -1276,7 +1274,7 @@ def load_with_mantid(
 
 
 def load(
-    filename: Union[str, Path] = "",
+    filename: str | Path = "",
     load_pulse_times=True,
     instrument_filename=None,
     error_connection=None,
@@ -1433,8 +1431,8 @@ def validate_dim_and_get_mantid_string(unit_dim):
     if user_k not in known_units:
         raise RuntimeError(
             "Axis unit not currently supported."
-            "Possible values are: {}, "
-            "got '{}'. ".format(list(known_units.keys()), unit_dim)
+            f"Possible values are: {list(known_units.keys())}, "
+            f"got '{unit_dim}'. "
         )
     else:
         return known_units[user_k]

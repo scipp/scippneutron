@@ -8,8 +8,6 @@ and Planck constant :math:`h`.
 Their values are taken from :mod:`scipp.constants`.
 """
 
-from typing import Tuple
-
 import numpy as np
 import scipp as sc
 import scipp.constants as const
@@ -383,7 +381,7 @@ def wavelength_from_Q(*, Q: Variable, two_theta: Variable) -> Variable:
 
 def Q_elements_from_wavelength(
     *, wavelength: Variable, incident_beam: Variable, scattered_beam: Variable
-) -> Tuple[Variable, Variable, Variable]:
+) -> tuple[Variable, Variable, Variable]:
     r"""Compute them momentum transfer vector from wavelength.
 
     Computes the three components of the Q-vector :math:`Q_x, Q_y, Q_z`
@@ -640,7 +638,7 @@ def hkl_vec_from_Q_vec(
 
 def hkl_elements_from_hkl_vec(
     *, hkl_vec: Variable
-) -> Tuple[Variable, Variable, Variable]:
+) -> tuple[Variable, Variable, Variable]:
     """Unpack vector of hkl indices into separate variables.
 
     Parameters

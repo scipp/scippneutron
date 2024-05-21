@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any
 
 import numpy as np
 
@@ -58,7 +58,7 @@ class MissingAttribute(Exception):
 
 
 def make_json_attr(name: str, value) -> dict:
-    if isinstance(value, (str, bytes)):
+    if isinstance(value, str | bytes):
         attr_info = {"string_size": len(value), "type": "string"}
     elif isinstance(value, float):
         attr_info = {"size": 1, "type": "float64"}
@@ -76,7 +76,7 @@ def make_json_attr(name: str, value) -> dict:
 
 
 def make_json_dataset(name: str, data) -> dict:
-    if isinstance(data, (str, bytes)):
+    if isinstance(data, str | bytes):
         dataset_info = {"string_size": len(data), "type": "string"}
     elif isinstance(data, float):
         dataset_info = {"size": 1, "type": "float64"}
@@ -99,8 +99,8 @@ def make_json_dataset(name: str, data) -> dict:
 
 
 def _get_attribute_value(
-    element: Dict, attribute_name: str
-) -> Union[str, float, int, List]:
+    element: dict, attribute_name: str
+) -> str | float | int | list:
     """
     attributes can be a dictionary of key-value pairs, or an array
     of dictionaries with key, value, type, etc
@@ -118,13 +118,13 @@ def _get_attribute_value(
     raise MissingAttribute
 
 
-def _visitnodes(root: Dict):
+def _visitnodes(root: dict):
     for child in root.get(_nexus_children, ()):
         yield child
         yield from _visitnodes(child)
 
 
-def _name(node: Dict):
+def _name(node: dict):
     if _nexus_name in node:
         return node[_nexus_name]
     if _nexus_config in node:
@@ -132,19 +132,19 @@ def _name(node: Dict):
     return ''
 
 
-def _is_group(node: Dict):
+def _is_group(node: dict):
     return _nexus_children in node
 
 
-def _is_dataset(node: Dict):
+def _is_dataset(node: dict):
     return node.get('module') == _nexus_dataset
 
 
-def _is_link(node: Dict):
+def _is_link(node: dict):
     return node.get('module') == _nexus_link
 
 
-def _is_stream(node: Dict):
+def _is_stream(node: dict):
     return 'module' in node and not (_is_dataset(node) or _is_link(node))
 
 
@@ -283,13 +283,13 @@ class JSONGroup(JSONNode):
         except KeyError:
             return False
 
-    def keys(self) -> List[str]:
+    def keys(self) -> list[str]:
         if contains_stream(self):
             return []
         children = self._node[_nexus_children]
         return [_name(child) for child in children if not contains_stream(child)]
 
-    def items(self) -> List[Tuple[str, JSONNode]]:
+    def items(self) -> list[tuple[str, JSONNode]]:
         return [(key, self[key]) for key in self.keys()]
 
     def _as_group_or_dataset(self, item, parent):
@@ -297,7 +297,7 @@ class JSONGroup(JSONNode):
             return JSONGroup(item, parent=parent)
         return JSONDataset(item, parent=parent)
 
-    def __getitem__(self, name: str) -> Union[JSONDataset, JSONGroup]:
+    def __getitem__(self, name: str) -> JSONDataset | JSONGroup:
         if name.startswith('/') and name.count('/') == 1:
             parent = self.file
         elif '/' in name:
@@ -355,7 +355,7 @@ class StreamInfo:
     unit: str
 
 
-def get_streams_info(root: Dict) -> List[StreamInfo]:
+def get_streams_info(root: dict) -> list[StreamInfo]:
     found_streams = [node for node in _visitnodes(root) if _is_stream(node)]
     streams = []
     for stream in found_streams:

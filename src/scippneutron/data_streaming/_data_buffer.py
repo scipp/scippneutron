@@ -2,8 +2,9 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 import multiprocessing as mp
 import threading
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 import scipp as sc
@@ -85,7 +86,7 @@ class _SlowMetadataBuffer:
             ].value = np.datetime64(log_event.timestamp_unix_ns, 'ns')
             self._buffer_filled_size += 1
 
-    def get_metadata_array(self) -> Tuple[bool, sc.Variable]:
+    def get_metadata_array(self) -> tuple[bool, sc.Variable]:
         """
         Copy collected data from the buffer
         """
@@ -182,7 +183,7 @@ class _FastMetadataBuffer:
             ].coords["time"].values = timestamps
             self._buffer_filled_size += message_size
 
-    def get_metadata_array(self) -> Tuple[bool, sc.Variable]:
+    def get_metadata_array(self) -> tuple[bool, sc.Variable]:
         """
         Copy collected data from the buffer
         """
@@ -239,7 +240,7 @@ class _ChopperMetadataBuffer:
             ].values = chopper_timestamps.timestamps
             self._buffer_filled_size += message_size
 
-    def get_metadata_array(self) -> Tuple[bool, sc.Variable]:
+    def get_metadata_array(self) -> tuple[bool, sc.Variable]:
         """
         Copy collected data from the buffer
         """
@@ -253,9 +254,7 @@ class _ChopperMetadataBuffer:
 
 
 metadata_ids = (SLOW_FB_ID, FAST_FB_ID, CHOPPER_FB_ID)
-_MetadataBuffer = Union[
-    _FastMetadataBuffer, _SlowMetadataBuffer, _ChopperMetadataBuffer
-]
+_MetadataBuffer = _FastMetadataBuffer | _SlowMetadataBuffer | _ChopperMetadataBuffer
 
 
 class StreamedDataBuffer:
@@ -319,15 +318,15 @@ class StreamedDataBuffer:
         self._cancelled = False
         self._notify_cancelled = threading.Condition()
         self._unrecognised_fb_id_count = 0
-        self._periodic_emit: Optional[threading.Thread] = None
+        self._periodic_emit: threading.Thread | None = None
         self._emit_queue = queue
         # Access metadata buffer by
         # self._metadata_buffers[flatbuffer_id][source_name]
-        self._metadata_buffers: Dict[str, Dict[str, _MetadataBuffer]] = {
+        self._metadata_buffers: dict[str, dict[str, _MetadataBuffer]] = {
             flatbuffer_id: {} for flatbuffer_id in metadata_ids
         }
 
-    def init_metadata_buffers(self, stream_info: List[StreamInfo]):
+    def init_metadata_buffers(self, stream_info: list[StreamInfo]):
         """
         Create a buffer for each of the metadata sources.
         This is not in the constructor which allows the StreamedDataBuffer

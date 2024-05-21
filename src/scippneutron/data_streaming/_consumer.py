@@ -20,9 +20,9 @@ The following Kafka terminology is used extensively in the code:
 
 import multiprocessing as mp
 import threading
+from collections.abc import Callable
 from queue import Empty as QueueEmpty
 from time import time_ns
-from typing import Callable, List, Optional, Tuple, Union
 from warnings import warn
 
 import numpy as np
@@ -43,7 +43,7 @@ class FakeConsumer:
     to avoid network io in unit tests
     """
 
-    def __init__(self, input_queue: Optional[mp.Queue]):
+    def __init__(self, input_queue: mp.Queue | None):
         if input_queue is None:
             raise RuntimeError(
                 "A multiprocessing queue for test messages "
@@ -54,7 +54,7 @@ class FakeConsumer:
         # from the Kafka broker
         self._input_queue = input_queue
 
-    def assign(self, topic_partitions: List[TopicPartition]):
+    def assign(self, topic_partitions: list[TopicPartition]):
         pass
 
     def poll(self, timeout: float):
@@ -72,9 +72,9 @@ class KafkaConsumer:
     def __init__(
         self,
         topic_partition: TopicPartition,
-        consumer: Union[Consumer, FakeConsumer],
+        consumer: Consumer | FakeConsumer,
         callback: Callable,
-        stop_time_ms: Optional[int] = None,
+        stop_time_ms: int | None = None,
     ):
         self._consumer = consumer
         # To consume messages the consumer must "subscribe" to one
@@ -89,7 +89,7 @@ class KafkaConsumer:
         self._callback = callback
         self._reached_eop = False
         self.cancelled = False
-        self._consume_data: Optional[threading.Thread] = None
+        self._consume_data: threading.Thread | None = None
         self.stopped = True
         self._stop_time_mutex = threading.Lock()
         # default stop time to distant future (run until manually stopped)
@@ -216,29 +216,29 @@ class KafkaQueryConsumer:
         """
         return self._consumer.poll(timeout=timeout)
 
-    def get_watermark_offsets(self, partition: TopicPartition) -> Tuple[int, int]:
+    def get_watermark_offsets(self, partition: TopicPartition) -> tuple[int, int]:
         """
         Get the offset of the first and last available
         message in the given partition
         """
         return self._consumer.get_watermark_offsets(partition, cached=False)
 
-    def assign(self, partitions: List[TopicPartition]):
+    def assign(self, partitions: list[TopicPartition]):
         self._consumer.assign(partitions)
 
-    def offsets_for_times(self, partitions: List[TopicPartition]):
+    def offsets_for_times(self, partitions: list[TopicPartition]):
         return self._consumer.offsets_for_times(partitions)
 
 
 def create_consumers(
     start_time_ms: int,
-    stop_time_ms: Optional[int],
-    topics: List[str],
+    stop_time_ms: int | None,
+    topics: list[str],
     kafka_broker: str,
     consumer_type_enum: ConsumerType,  # so we can inject fake consumer
     callback: Callable,
-    test_message_queue: Optional[mp.Queue],
-) -> List[KafkaConsumer]:
+    test_message_queue: mp.Queue | None,
+) -> list[KafkaConsumer]:
     """
     Creates one consumer per TopicPartition that start consuming
     at specified timestamp in the data stream
@@ -291,17 +291,17 @@ def create_consumers(
     return consumers
 
 
-def start_consumers(consumers: List[KafkaConsumer]):
+def start_consumers(consumers: list[KafkaConsumer]):
     for consumer in consumers:
         consumer.start()
 
 
-def stop_consumers(consumers: List[KafkaConsumer]):
+def stop_consumers(consumers: list[KafkaConsumer]):
     for consumer in consumers:
         consumer.stop()
 
 
-def all_consumers_stopped(consumers: List[KafkaConsumer]) -> bool:
+def all_consumers_stopped(consumers: list[KafkaConsumer]) -> bool:
     for consumer in consumers:
         if not consumer.stopped:
             # if the consumer is cancelled then cleanly stop it

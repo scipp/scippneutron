@@ -756,7 +756,7 @@ def test_save_cif_one_block_file(tmpdir, path_type):
     )
 
     cif.save_cif(path, block1)
-    with open(path, 'r') as f:
+    with open(path) as f:
         assert (
             f.read()
             == r'''#\#CIF_1.1

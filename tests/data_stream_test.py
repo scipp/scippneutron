@@ -7,7 +7,6 @@ import sys
 import warnings
 from cmath import isclose
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pytest
@@ -61,7 +60,7 @@ class FakeKafkaError:
 
 class FakeMessage:
     def __init__(
-        self, payload: bytes, error_code: Optional[int] = None, timestamp: int = 0
+        self, payload: bytes, error_code: int | None = None, timestamp: int = 0
     ):
         self._payload = payload
         self._error_code = error_code
@@ -70,12 +69,12 @@ class FakeMessage:
     def value(self):
         return self._payload
 
-    def error(self) -> Optional[KafkaError]:
+    def error(self) -> KafkaError | None:
         if self._error_code is not None:
             return FakeKafkaError(self._error_code)
         return None
 
-    def timestamp(self) -> Tuple[None, int]:
+    def timestamp(self) -> tuple[None, int]:
         return None, self._timestamp
 
 
@@ -83,11 +82,11 @@ class FakeQueryConsumer:
     def __init__(
         self,
         instrument_name: str = "",
-        low_and_high_offset: Tuple[int, int] = (2, 10),
-        streams: Optional[List[Stream]] = None,
-        start_time: Optional[Union[int, datetime.datetime]] = None,
-        stop_time: Optional[Union[int, datetime.datetime]] = None,
-        nexus_structure: Optional[str] = None,
+        low_and_high_offset: tuple[int, int] = (2, 10),
+        streams: list[Stream] | None = None,
+        start_time: int | datetime.datetime | None = None,
+        stop_time: int | datetime.datetime | None = None,
+        nexus_structure: str | None = None,
     ):
         self._instrument_name = instrument_name
         self._low_and_high_offset = low_and_high_offset
@@ -109,15 +108,15 @@ class FakeQueryConsumer:
             self._nexus_structure = nexus_structure
 
     @staticmethod
-    def assign(partitions: List[TopicPartition]):
+    def assign(partitions: list[TopicPartition]):
         pass
 
-    def get_watermark_offsets(self, partition: TopicPartition) -> Tuple[int, int]:
+    def get_watermark_offsets(self, partition: TopicPartition) -> tuple[int, int]:
         return self._low_and_high_offset
 
     def get_topic_partitions(
         self, topic: str, offset: int = -1
-    ) -> List[TopicPartition]:
+    ) -> list[TopicPartition]:
         self.queried_topics.append(topic)
         return [TopicPartition(topic, partition=0, offset=offset)]
 
@@ -135,7 +134,7 @@ class FakeQueryConsumer:
     def seek(self, partition: TopicPartition):
         pass
 
-    def offsets_for_times(self, partitions: List[TopicPartition]):
+    def offsets_for_times(self, partitions: list[TopicPartition]):
         self.queried_timestamp = partitions[0].offset
         return partitions
 

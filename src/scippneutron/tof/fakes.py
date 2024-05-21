@@ -13,8 +13,6 @@ This provides data in a structure as typically provided in a NeXus file, includi
 
 from __future__ import annotations
 
-from typing import Optional
-
 import scipp as sc
 from numpy import random
 
@@ -105,7 +103,7 @@ class FakeBeamline:
         choppers: dict[str, chopper_cascade.Chopper],
         monitors: dict[str, sc.Variable],
         detectors: dict[str, sc.Variable],
-        time_of_flight_origin: Optional[str] = None,
+        time_of_flight_origin: str | None = None,
     ):
         """
         Return a fake beamline.

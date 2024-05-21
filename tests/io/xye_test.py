@@ -3,7 +3,6 @@
 
 import string
 from io import StringIO
-from typing import Optional
 
 import numpy as np
 import pytest
@@ -41,14 +40,14 @@ def headers() -> st.SearchStrategy[str]:
     return st.text(string.ascii_letters + string.digits + string.punctuation + ' \t\n')
 
 
-def save_to_buffer(da: sc.DataArray, coord: Optional[str] = None, **kwargs) -> StringIO:
+def save_to_buffer(da: sc.DataArray, coord: str | None = None, **kwargs) -> StringIO:
     buffer = StringIO()
     scn.io.save_xye(buffer, da, coord=coord, **kwargs)
     buffer.seek(0)
     return buffer
 
 
-def roundtrip(da: sc.DataArray, coord: Optional[str] = None, **kwargs) -> sc.DataArray:
+def roundtrip(da: sc.DataArray, coord: str | None = None, **kwargs) -> sc.DataArray:
     buffer = save_to_buffer(da, coord, **kwargs)
     return scn.io.xye.load_xye(
         buffer,

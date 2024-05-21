@@ -168,7 +168,7 @@ def test_fit_peaks_select_model_mixed():
     assert isinstance(result.background, PolynomialModel)
     assert result.background.degree in (1, 2)
     assert result.background.prefix == 'bkg_'
-    assert isinstance(result.peak, (GaussianModel, LorentzianModel))
+    assert isinstance(result.peak, GaussianModel | LorentzianModel)
     assert result.peak.prefix == 'peak_'
 
 

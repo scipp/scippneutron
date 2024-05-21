@@ -40,7 +40,7 @@ class TestMantidConversion(unittest.TestCase):
         # pick up the name from the class variable name
         cls.base_event_ws = mantid.LoadEventNexus(
             scn.data.get_path(filename),
-            OutputWorkspace="test_ws{}".format(__file__),
+            OutputWorkspace=f"test_ws{__file__}",
             SpectrumMax=200,
             StoreInADS=False,
         )
