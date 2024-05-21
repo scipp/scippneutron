@@ -2,7 +2,6 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Jan-Lukas Wynen
 
-# flake8: noqa[F401]
 """Components for coordinate transformations.
 
 The submodules are mainly intended for constructing graphs for
@@ -16,3 +15,5 @@ See also the user guide on
 """
 
 from . import beamline, tof
+
+__all__ = ['beamline', 'tof']

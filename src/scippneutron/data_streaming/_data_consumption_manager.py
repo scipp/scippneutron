@@ -86,7 +86,7 @@ def data_consumption_manager(
             elif instruction.type == InstructionType.UPDATE_STOP_TIME:
                 for consumer in consumers:
                     consumer.update_stop_time(instruction.stop_time_ms)
-        except QueueEmpty:
+        except QueueEmpty:  # noqa: PERF203
             pass
         except (ValueError, OSError):
             # Queue has been closed, stop worker

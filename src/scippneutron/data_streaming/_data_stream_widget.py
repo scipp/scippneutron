@@ -5,7 +5,7 @@ from typing import Optional
 
 
 def _unix_ms_to_datetime(unix_ms: int) -> datetime:
-    return datetime.fromtimestamp(unix_ms / 1000.0)
+    return datetime.fromtimestamp(unix_ms / 1000.0, tz=None)  # noqa: DTZ006
 
 
 class DataStreamWidget:

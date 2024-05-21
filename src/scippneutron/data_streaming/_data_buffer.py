@@ -337,20 +337,20 @@ class StreamedDataBuffer:
         """
         for stream in stream_info:
             if stream.flatbuffer_id == SLOW_FB_ID:
-                self._metadata_buffers[stream.flatbuffer_id][
-                    stream.source_name
-                ] = _SlowMetadataBuffer(stream, self._slow_metadata_buffer_size)
+                self._metadata_buffers[stream.flatbuffer_id][stream.source_name] = (
+                    _SlowMetadataBuffer(stream, self._slow_metadata_buffer_size)
+                )
             elif stream.flatbuffer_id == FAST_FB_ID:
-                self._metadata_buffers[stream.flatbuffer_id][
-                    stream.source_name
-                ] = _FastMetadataBuffer(
-                    stream, self._fast_metadata_buffer_size, self._emit_queue
+                self._metadata_buffers[stream.flatbuffer_id][stream.source_name] = (
+                    _FastMetadataBuffer(
+                        stream, self._fast_metadata_buffer_size, self._emit_queue
+                    )
                 )
             elif stream.flatbuffer_id == CHOPPER_FB_ID:
-                self._metadata_buffers[stream.flatbuffer_id][
-                    stream.source_name
-                ] = _ChopperMetadataBuffer(
-                    stream, self._chopper_buffer_size, self._emit_queue
+                self._metadata_buffers[stream.flatbuffer_id][stream.source_name] = (
+                    _ChopperMetadataBuffer(
+                        stream, self._chopper_buffer_size, self._emit_queue
+                    )
                 )
             elif stream.flatbuffer_id == EVENT_FB_ID:
                 pass  # detection events, not metadata
@@ -389,7 +389,7 @@ class StreamedDataBuffer:
                 self._unrecognised_fb_id_count = 0
             new_data = self._events_buffer['event', : self._current_event].copy()
             new_data_exists = self._current_event != 0
-            for _, buffers in self._metadata_buffers.items():
+            for buffers in self._metadata_buffers.values():
                 for name, buffer in buffers.items():
                     (new_metadata_exists, metadata_array) = buffer.get_metadata_array()
                     new_data.attrs[name] = metadata_array
@@ -430,10 +430,9 @@ class StreamedDataBuffer:
                 ]
                 frame.coords['detector_id'].values = deserialised_data.detector_id
                 frame.coords['tof'].values = deserialised_data.time_of_flight
-                frame.coords[
-                    'pulse_time'
-                ].values = deserialised_data.pulse_time * np.ones_like(
-                    deserialised_data.time_of_flight
+                frame.coords['pulse_time'].values = (
+                    deserialised_data.pulse_time
+                    * np.ones_like(deserialised_data.time_of_flight)
                 )
                 self._current_event += message_size
         except WrongSchemaException:

@@ -7,6 +7,7 @@ neutron source.
 
 See :py:class:`FrameSequence` for the main entry point.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -60,7 +61,7 @@ class Subframe:
         self.time = time.to(unit='s', copy=False)
         self.wavelength = wavelength.to(unit='angstrom', copy=False)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Subframe):
             return NotImplemented
         return sc.identical(self.time, other.time) and sc.identical(
@@ -184,7 +185,7 @@ class Frame:
         # is the union of the resulting subframes.
         chopped = Frame(distance=frame.distance, subframes=[])
         for subframe in frame.subframes:
-            for open, close in zip(chopper.time_open, chopper.time_close):
+            for open, close in zip(chopper.time_open, chopper.time_close, strict=True):
                 if (tmp := _chop(subframe, open, close_to_open=True)) is not None:
                     if (tmp := _chop(tmp, close, close_to_open=False)) is not None:
                         chopped.subframes.append(tmp)
@@ -238,7 +239,7 @@ class Frame:
         bounds = [
             Bound(start, end, wav_start, wav_end)
             for start, end, wav_start, wav_end in zip(
-                starts, ends, wav_starts, wav_ends
+                starts, ends, wav_starts, wav_ends, strict=True
             )
         ]
         bounds = sorted(bounds, key=lambda x: x.start)
@@ -343,7 +344,7 @@ class FrameSequence:
         :
             New frame sequence.
         """
-        return FrameSequence(self.frames + [self.frames[-1].propagate_to(distance)])
+        return FrameSequence([*self.frames, self.frames[-1].propagate_to(distance)])
 
     def chop(self, choppers: List[Chopper]) -> FrameSequence:
         """
@@ -369,7 +370,7 @@ class FrameSequence:
 
     def draw(
         self,
-        linewidth: Union[int, float] = 0,
+        linewidth: float = 0,
         fill: bool = True,
         alpha: Optional[float] = None,
         transpose: bool = False,

@@ -37,14 +37,12 @@ def test_scattering_params_157gd():
         incoherent_scattering_cross_section=sc.scalar(
             394.0, variance=7.0**2, unit='barn'
         ),
-        total_scattering_cross_section=sc.scalar(
-            1044.0, variance=8.0**2, unit='barn'
-        ),
+        total_scattering_cross_section=sc.scalar(1044.0, variance=8.0**2, unit='barn'),
         absorption_cross_section=sc.scalar(259000.0, variance=700.0**2, unit='barn'),
     )
     assert params == expected
 
 
 def test_scattering_params_unknown():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="No entry for element / isotope 'scippium'"):
         scn.atoms.ScatteringParams.for_isotope('scippium')

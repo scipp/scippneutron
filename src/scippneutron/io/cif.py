@@ -82,12 +82,12 @@ class CIFSchema:
 CORE_SCHEMA = CIFSchema(
     name='coreCIF',
     version='3.3.0',
-    location='https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic',  # noqa: E501
+    location='https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic',
 )
 PD_SCHEMA = CIFSchema(
     name='pdCIF',
     version='2.5.0',
-    location='https://github.com/COMCIFS/Powder_Dictionary/blob/7608b92165f58f968f054344e67662e01d4b401a/cif_pow.dic',  # noqa: E501
+    location='https://github.com/COMCIFS/Powder_Dictionary/blob/7608b92165f58f968f054344e67662e01d4b401a/cif_pow.dic',
 )
 
 
@@ -267,7 +267,8 @@ class Loop:
         for key in self._columns:
             f.write(f'_{key}\n')
         formatted_values = [
-            tuple(map(_format_value, row)) for row in zip(*self._columns.values())
+            tuple(map(_format_value, row))
+            for row in zip(*self._columns.values(), strict=True)
         ]
         # If any value is a multi-line string, lay out elements as a flat vertical
         # list, otherwise use a 2d table.
@@ -481,7 +482,7 @@ class Block:
 
 
 def _convert_input_content(
-    content: Iterable[Union[Mapping[str, Any], Loop, Chunk]]
+    content: Iterable[Union[Mapping[str, Any], Loop, Chunk]],
 ) -> list[Union[Loop, Chunk]]:
     return [
         item if isinstance(item, (Loop, Chunk)) else Chunk(item) for item in content
@@ -498,7 +499,7 @@ def _open(fname: Union[str, Path, io.TextIOBase]):
 
 
 def _preprocess_schema(
-    schema: Optional[Union[CIFSchema, Iterable[CIFSchema]]]
+    schema: Optional[Union[CIFSchema, Iterable[CIFSchema]]],
 ) -> set[CIFSchema]:
     if schema is None:
         return set()

@@ -114,7 +114,7 @@ async def data_stream(
         run_info_topic,
         start_time,
         stop_time,
-    ):  # noqa: E125
+    ):
         yield data_chunk
 
 
@@ -156,8 +156,8 @@ async def _data_stream(
     end_at: StopTime = StopTime.NEVER,
     query_consumer: Optional["KafkaQueryConsumer"] = None,  # noqa: F821
     consumer_type: ConsumerType = ConsumerType.REAL,
-    halt_after_n_data_chunks: int = np.iinfo(np.int32).max,  # noqa: B008
-    halt_after_n_warnings: int = np.iinfo(np.int32).max,  # noqa: B008
+    halt_after_n_data_chunks: int = np.iinfo(np.int32).max,
+    halt_after_n_warnings: int = np.iinfo(np.int32).max,
     test_message_queue: Optional[mp.Queue] = None,  # for tests
     timeout: Optional[sc.Variable] = None,  # for tests
 ) -> Generator[sc.DataArray, None, None]:
@@ -175,7 +175,7 @@ async def _data_stream(
             data_consumption_manager,
         )
     except ImportError:
-        raise ImportError(_missing_dependency_message)
+        raise ImportError(_missing_dependency_message) from None
 
     if topics is None and run_info_topic is None:
         raise ValueError(
@@ -296,7 +296,7 @@ async def _data_stream(
                 if isinstance(new_data, Warning):
                     # Raise warnings in this process so that they
                     # can be captured in tests
-                    warn(new_data)
+                    warn(new_data, stacklevel=3)
                     n_warnings += 1
                     continue
                 elif isinstance(new_data, StopTimeUpdate):

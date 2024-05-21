@@ -87,7 +87,8 @@ def _load_instrument_name(instruments: Dict[str, NXobject]) -> Dict:
     if len(instruments) > 1:
         warn(
             f"More than one NXinstrument found in file, "
-            f"loading name from {instrument.name} only"
+            f"loading name from {instrument.name} only",
+            stacklevel=4,
         )
     if (name := instrument.get("name")) is not None:
         return {"instrument_name": sc.scalar(name[()])}
@@ -126,6 +127,7 @@ def load_nexus(
         "`load_nexus` is deprecated and will be removed in version 24.03, "
         "please switch to using ScippNexus.",
         VisibleDeprecationWarning,
+        stacklevel=2,
     )
     start_time = timer()
 
@@ -133,7 +135,9 @@ def load_nexus(
         loaded_data = _load_data(nexus_file, root, quiet)
 
     if not quiet:
-        print("Total time:", timer() - start_time)
+        from ...logging import get_logger
+
+        get_logger().info("Total time: %s", timer() - start_time)
     return loaded_data
 
 
@@ -188,7 +192,9 @@ def _zip_pixel_offset(da: sc.DataArray) -> sc.DataArray:
         offset.fields.y = y.to(dtype='float64', unit=x.unit, copy=False)
     if (z := da.coords.pop('z_pixel_offset', None)) is not None:
         offset.fields.z = z.to(dtype='float64', unit=x.unit, copy=False)
-    da.coords['pixel_offset'] = offset.rename_dims(dict(zip(offset.dims, da.dims)))
+    da.coords['pixel_offset'] = offset.rename_dims(
+        dict(zip(offset.dims, da.dims, strict=True))
+    )
     return da
 
 
@@ -212,7 +218,7 @@ def _by_nx_class(group) -> Dict[str, Dict[str, 'NXobject']]:
         names = [group.name.split('/')[-1] for group in groups]
         if len(names) != len(set(names)):  # fall back to full path if duplicate
             names = [group.name for group in groups]
-        out[nx_class] = {n: group._make(g) for n, g in zip(names, groups)}
+        out[nx_class] = {n: group._make(g) for n, g in zip(names, groups, strict=True)}
     return out
 
 
@@ -271,7 +277,7 @@ def _load_data(
                     transforms=det.coords.pop('depends_on', None),
                 )
             loaded_detectors.append(det)
-        except (
+        except (  # noqa: PERF203
             BadSource,
             SkipSource,
             NexusStructureError,
@@ -281,7 +287,7 @@ def _load_data(
             IndexError,
         ) as e:
             if not contains_stream(group._group):
-                warn(f"Skipped loading {group.name} due to:\n{e}")
+                warn(f"Skipped loading {group.name} due to:\n{e}", stacklevel=3)
 
     no_event_data = True
     loaded_data = {}
@@ -311,9 +317,9 @@ def _load_data(
                         events, groups=[det_id], erase=['pulse', 'bank']
                     )
                 loaded_events.append(events)
-            except (BadSource, SkipSource, NexusStructureError, IndexError) as e:
+            except (BadSource, SkipSource, NexusStructureError, IndexError) as e:  # noqa:PERF203
                 if not contains_stream(group._group):
-                    warn(f"Skipped loading {group.name} due to:\n{e}")
+                    warn(f"Skipped loading {group.name} due to:\n{e}", stacklevel=3)
         if len(loaded_events):
             no_event_data = False
             loaded_data = sc.concat(loaded_events, 'detector_id')
@@ -353,7 +359,7 @@ def _load_data(
             try:
                 items[name] = sc.scalar(process(group[()]))
                 loaded_groups.append(name)
-            except (
+            except (  # noqa: PERF203
                 BadSource,
                 SkipSource,
                 TransformationError,
@@ -364,7 +370,7 @@ def _load_data(
                 ValueError,
             ) as e:
                 if not contains_stream(group._group):
-                    warn(f"Skipped loading {group.name} due to:\n{e}")
+                    warn(f"Skipped loading {group.name} due to:\n{e}", stacklevel=4)
         add_metadata(items)
         return loaded_groups
 

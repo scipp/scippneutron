@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 """Models for peaks and background."""
+
 from __future__ import annotations
 
 import abc

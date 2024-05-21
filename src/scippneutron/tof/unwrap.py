@@ -10,6 +10,7 @@ unwrapping for WFM instruments, as well as combinations of the latter two. The
 functions defined here are meant to be used as providers for a Sciline pipeline. See
 https://scipp.github.io/sciline/ on how to use Sciline.
 """
+
 import math
 from dataclasses import dataclass
 from typing import Callable, Mapping, NewType, Optional, Tuple, Union

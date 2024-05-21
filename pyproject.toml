@@ -127,6 +127,9 @@ pydocstyle.convention = "numpy"
     "S101",  # asserts are used for demonstration and are safe in notebooks
     "T201",  # printing is ok for demonstration purposes
 ]
+"docs/user-guide/recipes.ipynb" = [
+  "F821"  # this notebook is never executed and uses undefined names
+]
 
 [tool.ruff.format]
 quote-style = "preserve"

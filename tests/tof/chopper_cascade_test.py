@@ -102,7 +102,7 @@ def test_subframe_start_end_properties() -> None:
     assert_identical(subframe.end_wavelength, sc.scalar(21.0, unit='angstrom'))
 
 
-@pytest.fixture
+@pytest.fixture()
 def frame() -> chopper_cascade.Frame:
     time = sc.array(dims=['vertex'], values=[0.0, 1.0, 3.0, 2.0], unit='ms')
     wavelength = sc.array(dims=['vertex'], values=[1.0, 1.1, 2.1, 2.0], unit='nm')
@@ -193,7 +193,7 @@ def test_frame_chop_raises_if_chopper_distance_is_less_than_frame_distance(
         time_open=sc.array(dims=['slit'], values=[0.0], unit='s'),
         time_close=sc.array(dims=['slit'], values=[1.0], unit='s'),
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='smaller than frame distance'):
         frame.chop(chopper)
 
 
@@ -366,7 +366,7 @@ def test_frame_sequence_sets_up_rectangular_subframe() -> None:
     assert frames[0] == expected
 
 
-@pytest.fixture
+@pytest.fixture()
 def source_frame_sequence() -> chopper_cascade.FrameSequence:
     return chopper_cascade.FrameSequence.from_source_pulse(
         time_min=sc.scalar(0.0, unit='ms'),

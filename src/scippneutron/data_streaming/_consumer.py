@@ -141,7 +141,7 @@ class KafkaConsumer:
                         self.cancelled = True
                         break
                     continue
-                warn(f"Message error in consumer: {msg.error()}")
+                warn(f"Message error in consumer: {msg.error()}", stacklevel=3)
                 self.cancelled = True
                 break
 

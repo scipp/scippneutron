@@ -10,6 +10,7 @@ This provides data in a structure as typically provided in a NeXus file, includi
 - Monitor event data including event_time_offset and event_time_zero
 - Chopper timestamps
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -164,19 +165,18 @@ class FakeBeamline:
         event_index = sc.cumsum(sizes, dim='pulse', mode='exclusive')
         size = sizes.sum().value
         subsizes = self._split_size(size, subframes)
-        subframe_times = []
-        for i in range(subframes):
-            subframe_times.append(
-                sc.array(
-                    dims=['event'],
-                    values=self._source.rng.uniform(
-                        subbounds['subframe', i][0].value,
-                        subbounds['subframe', i][-1].value,
-                        size=subsizes[i],
-                    ),
-                    unit=bounds.unit,
-                )
+        subframe_times = [
+            sc.array(
+                dims=['event'],
+                values=self._source.rng.uniform(
+                    subbounds['subframe', i][0].value,
+                    subbounds['subframe', i][-1].value,
+                    size=subsizes[i],
+                ),
+                unit=bounds.unit,
             )
+            for i in range(subframes)
+        ]
 
         # Offset from pulse that created the monitor event
         time_offset = sc.concat(subframe_times, 'event')

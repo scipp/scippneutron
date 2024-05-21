@@ -29,7 +29,7 @@ def run_mantid_alg(alg, *args, **kwargs):
             "as detailed in the installation instructions ("
             "https://scipp.github.io/scippneutron/getting-started/"
             "installation.html)"
-        )
+        ) from None
     # Deal with multiple calls to this function, which may have conflicting
     # names in the global AnalysisDataService by using uuid.
     ws_name = f'scipp.run_mantid_alg.{uuid.uuid4()}'
@@ -185,7 +185,7 @@ def md_dimension(mantid_dim, index):
     # Look for q dimensions
     patterns = ["^q.*{0}$".format(coord) for coord in ['x', 'y', 'z']]
     q_dims = ['Q_x', 'Q_y', 'Q_z']
-    pattern_result = zip(patterns, q_dims)
+    pattern_result = zip(patterns, q_dims, strict=True)
     if mantid_dim.getMDFrame().isQ():
         for pattern, result in pattern_result:
             if re.search(pattern, mantid_dim.name, re.IGNORECASE):
@@ -194,7 +194,7 @@ def md_dimension(mantid_dim, index):
     # Look for common/known mantid dimensions
     patterns = ["DeltaE", "T"]
     dims = ['energy_transfer', 'temperature']
-    pattern_result = zip(patterns, dims)
+    pattern_result = zip(patterns, dims, strict=True)
     for pattern, result in pattern_result:
         if re.search(pattern, mantid_dim.name, re.IGNORECASE):
             return result
@@ -202,7 +202,7 @@ def md_dimension(mantid_dim, index):
     # Look for common spatial dimensions
     patterns = ["^{0}$".format(coord) for coord in ['x', 'y', 'z']]
     dims = ['x', 'y', 'z']
-    pattern_result = zip(patterns, dims)
+    pattern_result = zip(patterns, dims, strict=True)
     for pattern, result in pattern_result:
         if re.search(pattern, mantid_dim.name, re.IGNORECASE):
             return result
@@ -273,7 +273,7 @@ def _rot_from_vectors(vec1, vec2):
     c = sc.vector(value=np.cross(a.value, b.value))
     angle = sc.acos(sc.dot(a, b)).value
     return sc.spatial.rotation(
-        value=list(c.value * np.sin(angle / 2)) + [np.cos(angle / 2)]
+        value=[*(c.value * np.sin(angle / 2)), np.cos(angle / 2)]
     )
 
 
@@ -896,7 +896,7 @@ def convert_EventWorkspace_to_data_group(
 
 def convert_MDHistoWorkspace_to_data_group(md_histo, **ignored) -> sc.DataGroup:
     ndims = md_histo.getNumDims()
-    coords = dict()
+    coords = {}
     dims_used = []
     for i in range(ndims):
         dim = md_histo.getDimension(i)
@@ -929,7 +929,7 @@ def convert_MDHistoWorkspace_to_data_array(md_histo, **ignored):
     )
 
     ndims = md_histo.getNumDims()
-    coords = dict()
+    coords = {}
     dims_used = []
     for i in range(ndims):
         dim = md_histo.getDimension(i)
@@ -1434,7 +1434,7 @@ def validate_dim_and_get_mantid_string(unit_dim):
         raise RuntimeError(
             "Axis unit not currently supported."
             "Possible values are: {}, "
-            "got '{}'. ".format([k for k in known_units.keys()], unit_dim)
+            "got '{}'. ".format(list(known_units.keys()), unit_dim)
         )
     else:
         return known_units[user_k]
@@ -1467,7 +1467,7 @@ def to_mantid(data, dim, instrument_file=None):
             "Mantid Python API was not found, please install Mantid framework "
             "as detailed in the installation instructions (https://scipp."
             "github.io/getting-started/installation.html)"
-        )
+        ) from None
     x = data.coords[dim].values
     y = data.values
     e = data.variances

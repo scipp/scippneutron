@@ -151,7 +151,7 @@ def convert(
             raise RuntimeError(
                 f"No viable conversion from '{origin}' to '{target}' "
                 f"with scatter={scatter}."
-            )
+            ) from None
         raise RuntimeError(
             f"Missing coordinate '{err.args[0]}' for conversion "
             f"from '{origin}' to '{target}'"
