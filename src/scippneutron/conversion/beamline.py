@@ -255,63 +255,57 @@ class SphericalCoordinates(TypedDict):
 #   If keep, need to clearly document coord system and rename
 
 
-# def scattering_angles_with_gravity(
-#     incident_beam: sc.Variable,
-#     scattered_beam: sc.Variable,
-#     wavelength: sc.Variable,
-#     gravity: sc.Variable,
-# ) -> SphericalCoordinates:
-#     grav = sc.norm(gravity)
-#
-#     if sc.any(
-#         abs(sc.dot(gravity, incident_beam))
-#         > sc.scalar(1e-10, unit=incident_beam.unit) * grav
-#     ):
-#         raise ValueError(
-#             '`gravity` and `incident_beam` must be orthogonal. '
-#             f'Got a deviation of {sc.dot(gravity, scattered_beam).max():c}. '
-#             'This is required to fully define spherical coordinates theta and phi.'
-#         )
-#
-#     L2 = sc.norm(scattered_beam)
-#
-#     x_term = cylindrical_x(cyl_x_unit_vector(gravity, incident_beam), scattered_beam)
-#
-#     y_term = sc.to_unit(wavelength, elem_unit(L2), copy=True)
-#     y_term *= y_term
-#     drop = L2**2
-#     drop *= grav * (sc.constants.m_n**2 / (2 * sc.constants.h**2))
-#     # Optimization when handling either the dense or the event coord of binned data:
-#     # - For the event coord, both operands have same dims, and we can
-#     #   multiply in place
-#     # - For the dense coord, we need to broadcast using non in-place operation
-#     if set(drop.dims).issubset(set(y_term.dims)):
-#         y_term *= drop
-#     else:
-#         y_term = drop * y_term
-#     y_term += cylindrical_y(cyl_y_unit_vector(gravity), scattered_beam)
-#     phi = sc.atan2(y=y_term, x=x_term)
-#
-#     x_term *= x_term
-#     y_term *= y_term
-#
-#     if set(x_term.dims).issubset(set(y_term.dims)):
-#         y_term += x_term
-#     else:
-#         y_term = y_term + x_term
-#     out = sc.sqrt(y_term, out=y_term)
-#     out /= L2
-#     out = sc.asin(out, out=out)
-#     return {'two_theta': out, 'phi': phi}
-
-
 def _beam_aligned_unit_vectors(
-    reference_beam: sc.Variable, up: sc.Variable
+    incident_beam: sc.Variable, gravity: sc.Variable
 ) -> tuple[sc.Variable, sc.Variable, sc.Variable]:
-    ez = reference_beam / sc.norm(reference_beam)
-    ey = up / sc.norm(up)
+    """Return unit vectors for a coordinate system aligned with the incident beam.
+
+    The coordinate system has
+
+    - z aligned with ``incident_beam``.
+    - y aligned with ``gravity``.
+    - x orthogonal to z, y forming a right-handed coordinate system.
+    """
+    if sc.any(
+        abs(sc.dot(gravity, incident_beam))
+        > sc.scalar(1e-10, unit=incident_beam.unit) * sc.norm(gravity)
+    ):
+        raise ValueError(
+            '`gravity` and `incident_beam` must be orthogonal. '
+            f'Got a deviation of {sc.dot(gravity, incident_beam).max():c}. '
+            'This is required to fully define spherical coordinates theta and phi.'
+        )
+
+    ez = incident_beam / sc.norm(incident_beam)
+    ey = -gravity / sc.norm(gravity)
     ex = sc.cross(ey, ez)
     return ex, ey, ez
+
+
+def _drop_due_to_gravity(
+    distance: sc.Variable,
+    wavelength: sc.Variable,
+    gravity: sc.Variable,
+) -> sc.Variable:
+    """Compute the distance a neutron drops due to gravity.
+
+    See the documentation of ``scattering_angles_with_gravity``.
+    """
+    distance = distance.to(dtype=elem_dtype(wavelength), copy=False)
+    const = (sc.norm(gravity) * (sc.constants.m_n**2 / (2 * sc.constants.h**2))).to(
+        dtype=elem_dtype(wavelength), copy=False
+    )
+
+    # Convert unit to eventually match the unit of y.
+    # Copy to make it safe to use in-place ops.
+    drop = wavelength.to(
+        unit=sc.sqrt(sc.reciprocal(elem_unit(distance) * elem_unit(const))), copy=True
+    )
+    drop *= drop
+    drop *= const
+
+    distance *= distance
+    return distance * drop  # TODO in-place when possible
 
 
 def scattering_angles_with_gravity(
@@ -320,42 +314,33 @@ def scattering_angles_with_gravity(
     wavelength: sc.Variable,
     gravity: sc.Variable,
 ) -> SphericalCoordinates:
-    g = sc.norm(gravity)
+    r"""Compute scattering angles theta and phi using gravity.
 
-    if sc.any(
-        abs(sc.dot(gravity, incident_beam))
-        > sc.scalar(1e-10, unit=incident_beam.unit) * g
-    ):
-        raise ValueError(
-            '`gravity` and `incident_beam` must be orthogonal. '
-            f'Got a deviation of {sc.dot(gravity, scattered_beam).max():c}. '
-            'This is required to fully define spherical coordinates theta and phi.'
-        )
+    Parameters
+    ----------
+    incident_beam:
+        Beam from source to sample. Expects ``dtype=vector3``.
+    scattered_beam:
+        Beam from sample to detector. Expects ``dtype=vector3``.
+    wavelength:
+        Wavelength of neutrons.
+    gravity:
+        Gravity vector.
 
-    scattered_beam = scattered_beam
-    ex, ey, ez = _beam_aligned_unit_vectors(reference_beam=incident_beam, up=-gravity)
-    y = sc.dot(scattered_beam, ey).to(dtype=elem_dtype(wavelength), copy=False)
-
-    L2 = sc.norm(scattered_beam).to(dtype=elem_dtype(wavelength), copy=False)
-    factor = (g * (sc.constants.m_n**2 / (2 * sc.constants.h**2))).to(
-        dtype=elem_dtype(wavelength), copy=False
+    Returns
+    -------
+    :
+        A dict containing the polar scattering angle ``'two_theta'`` and
+        the azimuthal angle ``'phi'``.
+    """
+    ex, ey, ez = _beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
     )
 
-    # Convert unit to eventually match the unit of y.
-    # Copy to make it safe to use in-place ops.
-    a = wavelength.to(
-        unit=sc.sqrt(sc.reciprocal(elem_unit(L2) * elem_unit(factor))), copy=True
+    y = _drop_due_to_gravity(
+        distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
     )
-    a *= a
-    a *= factor
-
-    drop = L2
-    drop *= drop
-    drop = drop * a  # TODO in-place when possible
-    del a
-
-    y = y + drop  # TODO in-place when possible
-    del drop, L2
+    y += sc.dot(scattered_beam, ey).to(dtype=elem_dtype(wavelength), copy=False)
 
     x = sc.dot(scattered_beam, ex).to(dtype=elem_dtype(y), copy=False)
     phi = sc.atan2(y=y, x=x)
