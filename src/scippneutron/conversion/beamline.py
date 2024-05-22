@@ -1,26 +1,100 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Jan-Lukas Wynen
-"""
-Functions for computing coordinates related to beamline geometry.
+r"""Functions for computing coordinates related to beamline geometry.
 
 Most functions in this module assume a straight beamline geometry.
 That is, the beams are not curved by, e.g., a beam guide.
-All quantities are defined as in the image below:
+Specialized functions are provided for handling gravity.
 
-.. image:: ../../../docs/_static/straight-beamline.svg
-   :scale: 75 %
-   :alt: Scattering angle in Bragg reflection.
+ScippNeutron uses three positions to define a beamline:
+
+- ``source_position`` defines the point where :math:`t=0` (or vice versa).
+  In practice, this can be the actual neutron source, a moderator, or a chopper.
+- ``sample_position`` is the position of the sample that scatters neutrons.
+- ``position`` is the position of the detector (pixel / voxel) that detects a neutron
+  at :math:`t=\mathsf{tof}`.
+
+Base on these positions, we define:
+
+- ``incident_beam`` is the vector of incoming neutrons on the sample.
+  (:func:`straight_incident_beam`)
+- ``L1`` (or :math:`L_1`) is the length of ``incident_beam``.
+  (:func:`L1`)
+- ``scattered_beam`` is the vector of neutrons that were scattered off the sample.
+  (:func:`straight_scattered_beam`)
+- ``L2`` (or :math:`L_2`) is the length of ``scattered_beam``.
+  (:func:`L2`)
+- ``Ltotal`` is the total beam length :math:`L_\mathsf{total} = L_1 + L_2`.
+  (:func:`total_beam_length` and :func:`total_straight_beam_length_no_scatter`)
+
+Coordinate system
+-----------------
+
+ScippNeutron uses a coordinate system that is aligned with
+the incident beam and gravity.
+ScippNeutron's coordinate system corresponds to that of
+`NeXus <https://manual.nexusformat.org/design.html#the-nexus-coordinate-system>`_.
+The image below shows how coordinates are defined with respect to the
+quantities defined above.
+(The sample is placed in the origin here; this is only done for illustration purposes
+and not required.)
+
+Note
+----
+  The coordinate system is not needed by most operations because beamline coordinates
+  are usually relative to the positions.
+  As long as ``position``, ``source_position``, and ``sample_position`` are defined
+  consistently, ``incident_beam``, ``scattered_beam``, and ``two_theta`` can be
+  computed without knowledge of the coordinate system.
+
+  However, when we need ``phi``, or need to correct ``two_theta`` for gravity,
+  we need the actual coordinate system.
+
+.. image:: ../../../docs/_static/beamline/beamline_coordinates_light.svg
+   :class: only-light
+   :scale: 100 %
+   :alt: Beamline coordinate system.
    :align: center
 
-The 'source position' defines the point where :math:`t=0` (or vice versa).
-Neutrons are scattered at the 'sample position' and detected
-at 'position' at :math:`t=\\mathsf{tof}`.
+.. image:: ../../../docs/_static/beamline/beamline_coordinates_dark.svg
+   :class: only-dark
+   :scale: 100 %
+   :alt: Beamline coordinate system.
+   :align: center
 
-In addition, ``total_straight_beam_length_no_scatter`` can be used if the beam
-does not scatter off of a sample.
-This is useful for instance for monitors.
-In this case, ``Ltotal`` is the distance from source to detector.
+The axes are defined by these unit vectors:
+
+.. math::
+
+    \hat{e}_z &= b_1 / |b_1| \\
+    \hat{e}_y &= -g / |g| \\
+    \hat{e}_x &= \hat{e}_y \times \hat{e}_z
+
+which span an orthogonal, right-handed coordinate system.
+Here, :math:`b_1` is the ``incident_beam`` and :math:`g` is the gravity vector.
+This means that the z-axis is parallel to the incident beam and the y-axis is
+antiparallel to gravity.
+Gravity must be orthogonal to the incident beam for this definition to produce
+and orthogonal coordinate system.
+
+The scattering angles are defined similarly to spherical coordinates as:
+
+.. math ::
+
+    \mathsf{cos}(2\theta) &= \frac{b_1 \cdot b_2}{|b_1| |b_2|} \\
+    \mathsf{tan}(\phi) &= \frac{b_2 \cdot \hat{e}_y}{b_2 \cdot \hat{e}_x}
+
+where :math:`b_2` is the scattered beam.
+
+- ``two_theta`` is the angle between the scattered beam and incident beam.
+  Note the extra factor 2 compared to spherical coordinates;
+  it ensures that the definition corresponds to Bragg's law.
+- ``phi`` is the angle between the x-axis and the projection of the scattered beam
+  onto the x-y-plane.
+
+These definitions assume that gravity can be neglected.
+See :func:`scattering_angles_with_gravity` for definitions that account for gravity.
 """
 
 from typing import TypedDict
@@ -225,6 +299,7 @@ def two_theta(
     scippneutron.conversions.beamline.straight_incident_beam:
     scippneutron.conversions.beamline.straight_scattered_beam:
     """
+    # TODO gravity
     # TODO use proper citation
     # The implementation is based on paragraph 13 of
     # https://people.eecs.berkeley.edu/~wkahan/MathH110/Cross.pdf
@@ -242,17 +317,15 @@ def two_theta(
 
 
 class SphericalCoordinates(TypedDict):
+    """A dict with keys two_theta and phi."""
+
     two_theta: sc.Variable
     phi: sc.Variable
 
 
 # TODO clean up
-# TODO document coordinate system
-# TODO document definition of angles -> images + equations
 # TODO check numerical error, compare with vector based calculation
 #   not sure which one is more precise but I suspect it's the vector based one
-# TODO remove helper functions or keep?
-#   If keep, need to clearly document coord system and rename
 
 
 def _beam_aligned_unit_vectors(
@@ -315,6 +388,32 @@ def scattering_angles_with_gravity(
     gravity: sc.Variable,
 ) -> SphericalCoordinates:
     r"""Compute scattering angles theta and phi using gravity.
+
+    With the definitions of the unit vectors in
+    `Coordinate system <./scippneutron.conversion.beamline.rst#coordinate-system>`_,
+    we have the components of the scattered beam :math:`b_2` in the beam-aligned
+    coordinate system:
+
+    .. math::
+
+        x = b_2 \cdot \hat{e}_x \\
+        y = b_2 \cdot \hat{e}_y \\
+        z = b_2 \cdot \hat{e}_z
+
+    We compute a gravity-corrected :math:`y` as
+
+    .. math::
+
+        y' = y + \frac{|g| m_n^2}{2 h^2} L_2^2 \lambda^2
+
+    Where :math:`|g|` is the strength of gravity, :math:`m_n` is the neutron mass,
+    :math:`h` is the Planck constant, and :math:`\lambda` is the wavelength.
+    This gives the gravity-corrected scattering angles:
+
+    .. math::
+
+        \mathsf{tan}(2\theta) &= \frac{\sqrt{x^2 + y'^2}}{z} \\
+        \mathsf{tan}(\phi) &= \frac{y'}{x}
 
     Parameters
     ----------
