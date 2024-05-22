@@ -7,7 +7,6 @@ import sys
 import warnings
 from cmath import isclose
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pytest
@@ -21,7 +20,7 @@ from scippneutron.data_streaming._warnings import (
 )
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / 'io'))
-from nexus_helpers import EventData, Log, NexusBuilder, Stream  # noqa: E402
+from nexus_helpers import EventData, Log, NexusBuilder, Stream
 
 if platform.system() == "Darwin":
     pytest.skip(
@@ -32,16 +31,18 @@ if platform.system() == "Darwin":
 
 try:
     import streaming_data_types  # noqa: F401
-    from confluent_kafka import KafkaError, TopicPartition  # noqa: F401
-    from streaming_data_types.eventdata_ev42 import serialise_ev42  # noqa: E402
+    from confluent_kafka import KafkaError, TopicPartition
+    from streaming_data_types.eventdata_ev42 import serialise_ev42
     from streaming_data_types.logdata_f142 import serialise_f142
     from streaming_data_types.run_start_pl72 import serialise_pl72
     from streaming_data_types.sample_environment_senv import Location, serialise_senv
     from streaming_data_types.timestamps_tdct import serialise_tdct
 
     from scippneutron.data_streaming._consumer import RunStartError
-    from scippneutron.data_streaming.data_stream import _data_stream  # noqa: E402
-    from scippneutron.data_streaming.data_stream import StopTime
+    from scippneutron.data_streaming.data_stream import (
+        StopTime,
+        _data_stream,
+    )
 except ImportError:
     pytest.skip("Kafka or Serialisation module is unavailable", allow_module_level=True)
 
@@ -59,7 +60,7 @@ class FakeKafkaError:
 
 class FakeMessage:
     def __init__(
-        self, payload: bytes, error_code: Optional[int] = None, timestamp: int = 0
+        self, payload: bytes, error_code: int | None = None, timestamp: int = 0
     ):
         self._payload = payload
         self._error_code = error_code
@@ -68,12 +69,12 @@ class FakeMessage:
     def value(self):
         return self._payload
 
-    def error(self) -> Optional[KafkaError]:
+    def error(self) -> KafkaError | None:
         if self._error_code is not None:
             return FakeKafkaError(self._error_code)
         return None
 
-    def timestamp(self) -> Tuple[None, int]:
+    def timestamp(self) -> tuple[None, int]:
         return None, self._timestamp
 
 
@@ -81,11 +82,11 @@ class FakeQueryConsumer:
     def __init__(
         self,
         instrument_name: str = "",
-        low_and_high_offset: Tuple[int, int] = (2, 10),
-        streams: List[Stream] = None,
-        start_time: Optional[Union[int, datetime.datetime]] = None,
-        stop_time: Optional[Union[int, datetime.datetime]] = None,
-        nexus_structure: Optional[str] = None,
+        low_and_high_offset: tuple[int, int] = (2, 10),
+        streams: list[Stream] | None = None,
+        start_time: int | datetime.datetime | None = None,
+        stop_time: int | datetime.datetime | None = None,
+        nexus_structure: str | None = None,
     ):
         self._instrument_name = instrument_name
         self._low_and_high_offset = low_and_high_offset
@@ -95,7 +96,7 @@ class FakeQueryConsumer:
         self._start_time = start_time
         self._stop_time = stop_time
         if self._start_time is None:
-            self._start_time = datetime.datetime.now()
+            self._start_time = datetime.datetime.now(tz=datetime.timezone.utc)
         if nexus_structure is None:
             builder = NexusBuilder()
             builder.add_instrument(self._instrument_name)
@@ -107,15 +108,15 @@ class FakeQueryConsumer:
             self._nexus_structure = nexus_structure
 
     @staticmethod
-    def assign(partitions: List[TopicPartition]):
+    def assign(partitions: list[TopicPartition]):
         pass
 
-    def get_watermark_offsets(self, partition: TopicPartition) -> Tuple[int, int]:
+    def get_watermark_offsets(self, partition: TopicPartition) -> tuple[int, int]:
         return self._low_and_high_offset
 
     def get_topic_partitions(
         self, topic: str, offset: int = -1
-    ) -> List[TopicPartition]:
+    ) -> list[TopicPartition]:
         self.queried_topics.append(topic)
         return [TopicPartition(topic, partition=0, offset=offset)]
 
@@ -133,7 +134,7 @@ class FakeQueryConsumer:
     def seek(self, partition: TopicPartition):
         pass
 
-    def offsets_for_times(self, partitions: List[TopicPartition]):
+    def offsets_for_times(self, partitions: list[TopicPartition]):
         self.queried_timestamp = partitions[0].offset
         return partitions
 
@@ -160,7 +161,7 @@ TEST_STREAM_ARGS = {
 # A TimeoutError is raised by _data_stream if the timeout occurs.
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def queues():
     # Specify to start the process using the "spawn" method, otherwise
     # on Linux the default is to fork the Python interpreter which
@@ -172,7 +173,7 @@ def queues():
     return ctx.Queue(), ctx.Queue(), ctx.Queue()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_stream_returns_data_from_single_event_message(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     time_of_flight = np.array([1.0, 2.0, 3.0])
@@ -196,7 +197,7 @@ async def test_data_stream_returns_data_from_single_event_message(queues):
     assert reached_assert
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_stream_returns_data_from_multiple_event_messages(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     first_tof = np.array([1.0, 2.0, 3.0])
@@ -227,7 +228,7 @@ async def test_data_stream_returns_data_from_multiple_event_messages(queues):
     assert reached_asserts
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_warn_if_unrecognised_message_was_encountered(queues):
     warnings.filterwarnings("error")
     data_queue, worker_instruction_queue, test_message_queue = queues
@@ -249,7 +250,7 @@ async def test_warn_if_unrecognised_message_was_encountered(queues):
             test_message_queue.put(FakeMessage(test_message))
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_warn_on_buffer_size_exceeded_by_single_message(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     buffer_size_2_events = 2
@@ -273,7 +274,7 @@ async def test_warn_on_buffer_size_exceeded_by_single_message(queues):
             test_message_queue.put(FakeMessage(test_message))
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_returned_when_buffer_size_exceeded_by_event_messages(queues):
     # Messages cumulatively exceed the buffer size, data_stream
     # will return multiple chunks of data to clear the buffer
@@ -321,7 +322,7 @@ async def test_data_returned_when_buffer_size_exceeded_by_event_messages(queues)
     assert reached_asserts
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_are_loaded_from_run_start_message(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
@@ -341,7 +342,7 @@ async def test_data_are_loaded_from_run_start_message(queues):
     assert reached_assert
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_error_raised_if_no_run_start_message_available(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
@@ -350,8 +351,8 @@ async def test_error_raised_if_no_run_start_message_available(queues):
     # Low and high offset are the same value, indicates there are
     # no messages available in the partition
     low_and_high_offset = (0, 0)
-    with pytest.raises(RunStartError):
-        async for _ in _data_stream(
+    stream = aiter(
+        _data_stream(
             data_queue,
             worker_instruction_queue,
             run_info_topic=run_info_topic,
@@ -359,19 +360,21 @@ async def test_error_raised_if_no_run_start_message_available(queues):
             test_message_queue=test_message_queue,
             query_consumer=FakeQueryConsumer(test_instrument_name, low_and_high_offset),
             **TEST_STREAM_ARGS,
-        ):
-            pass
+        )
+    )
+    with pytest.raises(RunStartError):
+        await anext(stream)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_error_if_both_topics_and_run_start_topic_not_specified(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
 
     test_stream_args = TEST_STREAM_ARGS.copy()
     test_stream_args["topics"] = None
     # At least one of "topics" and "run_start_topic" must be specified
-    with pytest.raises(ValueError):
-        async for _ in _data_stream(
+    stream = aiter(
+        _data_stream(
             data_queue,
             worker_instruction_queue,
             run_info_topic=None,
@@ -379,11 +382,15 @@ async def test_error_if_both_topics_and_run_start_topic_not_specified(queues):
             **test_stream_args,
             query_consumer=FakeQueryConsumer(),
             test_message_queue=test_message_queue,
-        ):
-            pass
+        )
+    )
+    with pytest.raises(
+        ValueError, match="At least one of 'topics' and 'run_info_topic'"
+    ):
+        await anext(stream)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_specified_topics_override_run_start_message_topics(queues):
     # If "topics" argument is specified then they should be used, even if
     # a run start topic is provided
@@ -409,7 +416,7 @@ async def test_specified_topics_override_run_start_message_topics(queues):
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_stream_returns_metadata(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
@@ -519,7 +526,7 @@ async def test_data_stream_returns_metadata(queues):
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_stream_returns_data_from_multiple_slow_metadata_messages(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
@@ -586,7 +593,7 @@ async def test_data_stream_returns_data_from_multiple_slow_metadata_messages(que
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_stream_returns_data_from_multiple_fast_metadata_messages(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
@@ -686,7 +693,7 @@ async def test_data_stream_returns_data_from_multiple_fast_metadata_messages(que
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_stream_returns_data_from_multiple_chopper_messages(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
@@ -734,7 +741,7 @@ async def test_data_stream_returns_data_from_multiple_chopper_messages(queues):
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_stream_warns_if_fast_metadata_message_exceeds_buffer(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     buffer_size = 2
@@ -794,7 +801,7 @@ async def test_data_stream_warns_if_fast_metadata_message_exceeds_buffer(queues)
             test_message_queue.put(FakeMessage(senv_test_message))
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_stream_warns_if_single_chopper_message_exceeds_buffer(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     buffer_size = 2
@@ -834,7 +841,7 @@ async def test_data_stream_warns_if_single_chopper_message_exceeds_buffer(queues
             test_message_queue.put(FakeMessage(tdct_test_message))
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_returned_if_multiple_slow_metadata_msgs_exceed_buffer(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
@@ -898,7 +905,7 @@ async def test_data_returned_if_multiple_slow_metadata_msgs_exceed_buffer(queues
     assert reached_asserts
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_returned_if_multiple_fast_metadata_msgs_exceed_buffer(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     buffer_size = 4
@@ -980,7 +987,7 @@ async def test_data_returned_if_multiple_fast_metadata_msgs_exceed_buffer(queues
     assert reached_asserts
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_returned_if_multiple_chopper_msgs_exceed_buffer(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     buffer_size = 4
@@ -1035,7 +1042,7 @@ async def test_data_returned_if_multiple_chopper_msgs_exceed_buffer(queues):
     assert reached_asserts
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_passes_with_missing_datasets_if_group_contains_stream(queues):
     # Create NeXus description for run start message which contains
     # an NXlog which contains no datasets but does have a Stream
@@ -1071,7 +1078,7 @@ async def test_passes_with_missing_datasets_if_group_contains_stream(queues):
         assert reached_assert
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_data_stream_times_out(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
@@ -1101,7 +1108,7 @@ async def test_data_stream_times_out(queues):
     assert timed_out
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_stream_loop_exits_if_stop_time_and_end_of_partition_reached(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
@@ -1112,7 +1119,9 @@ async def test_stream_loop_exits_if_stop_time_and_end_of_partition_reached(queue
     # System time is already after this stop time so the stream will stop
     # as soon as it sees the end of partition or a message with a
     # timestamp after the stop time
-    stop_time_in_past = datetime.datetime(2017, 11, 28, 23, 55, 59, 342380)
+    stop_time_in_past = datetime.datetime(
+        2017, 11, 28, 23, 55, 59, 342380, tzinfo=datetime.timezone.utc
+    )
     n_chunks = 0
     async for _ in _data_stream(
         data_queue,
@@ -1135,7 +1144,7 @@ async def test_stream_loop_exits_if_stop_time_and_end_of_partition_reached(queue
         n_chunks += 1
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_stream_loop_exits_if_stop_time_reached_and_later_message_seen(queues):
     data_queue, worker_instruction_queue, test_message_queue = queues
     run_info_topic = "fake_topic"
@@ -1161,7 +1170,9 @@ async def test_stream_loop_exits_if_stop_time_reached_and_later_message_seen(que
     # System time is already after this stop time so the stream will stop
     # as soon as it sees the end of partition or a message with a
     # timestamp after the stop time
-    stop_time_in_past = datetime.datetime(2017, 11, 28, 23, 55, 59, 342380)
+    stop_time_in_past = datetime.datetime(
+        2017, 11, 28, 23, 55, 59, 342380, tzinfo=datetime.timezone.utc
+    )
     n_chunks = 0
     async for data in _data_stream(
         data_queue,
@@ -1177,7 +1188,9 @@ async def test_stream_loop_exits_if_stop_time_reached_and_later_message_seen(que
         if n_chunks == 0:
             # Publish a message with a timestamp before the stop time
             f142_value_1 = 26.1236
-            timestamp_before_stop_dt = datetime.datetime(2017, 11, 28, 23, 55, 50, 0)
+            timestamp_before_stop_dt = datetime.datetime(
+                2017, 11, 28, 23, 55, 50, 0, tzinfo=datetime.timezone.utc
+            )
             # Convert to integer nanoseconds
             # (for timestamp in message payload)
             timestamp_before_stop_ns = int(
@@ -1207,7 +1220,9 @@ async def test_stream_loop_exits_if_stop_time_reached_and_later_message_seen(que
             # the consumer to stop and data_stream to exit.
             # A TimeoutError would occur if the functionality is broken.
             f142_value_2 = 2.725
-            timestamp_after_stop_dt = datetime.datetime(2017, 11, 28, 23, 56, 50, 0)
+            timestamp_after_stop_dt = datetime.datetime(
+                2017, 11, 28, 23, 56, 50, 0, tzinfo=datetime.timezone.utc
+            )
             timestamp_after_stop_ns = int(
                 timestamp_after_stop_dt.timestamp() * 1_000_000_000
             )

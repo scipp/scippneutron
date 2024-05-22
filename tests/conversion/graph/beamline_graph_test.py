@@ -56,13 +56,13 @@ def test_beamline_has_correct_keys():
 
 @pytest.mark.parametrize(
     'fn',
-    (
+    [
         beamline.incident_beam,
         beamline.scattered_beam,
         beamline.L1,
         beamline.L2,
         beamline.two_theta,
-    ),
+    ],
 )
 def test_beamline_returns_new_graph_without_scatter_arg(fn):
     g = fn()
@@ -70,8 +70,8 @@ def test_beamline_returns_new_graph_without_scatter_arg(fn):
     assert 'a_new_node' not in fn()
 
 
-@pytest.mark.parametrize('fn', (beamline.beamline, beamline.Ltotal))
-@pytest.mark.parametrize('scatter', (True, False))
+@pytest.mark.parametrize('fn', [beamline.beamline, beamline.Ltotal])
+@pytest.mark.parametrize('scatter', [True, False])
 def test_beamline_returns_new_graph_with_scatter_arg(fn, scatter):
     g = fn(scatter=scatter)
     g['a_new_node'] = lambda position: 2 * position

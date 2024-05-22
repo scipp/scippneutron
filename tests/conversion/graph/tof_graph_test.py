@@ -34,7 +34,7 @@ def test_elastic():
     }
 
 
-@pytest.mark.parametrize('start', ('dspacing',))
+@pytest.mark.parametrize('start', ['dspacing'])
 def test_elastic_unsupported_starts(start):
     with pytest.raises(KeyError):
         tof.elastic(start)
@@ -46,7 +46,7 @@ def test_kinematic():
     assert set(tof.kinematic('energy').keys()) == {'wavelength'}
 
 
-@pytest.mark.parametrize('start', ('dspacing', 'Q'))
+@pytest.mark.parametrize('start', ['dspacing', 'Q'])
 def test_kinematic_unsupported_starts(start):
     with pytest.raises(KeyError):
         tof.kinematic(start)
@@ -58,7 +58,7 @@ def test_elastic_dspacing():
     assert set(tof.elastic_dspacing('wavelength').keys()) == {'dspacing'}
 
 
-@pytest.mark.parametrize('start', ('Q',))
+@pytest.mark.parametrize('start', ['Q'])
 def test_elastic_dspacing_unsupported_starts(start):
     with pytest.raises(KeyError):
         tof.elastic_dspacing(start)
@@ -69,7 +69,7 @@ def test_elastic_energy():
     assert set(tof.elastic_energy('wavelength').keys()) == {'energy'}
 
 
-@pytest.mark.parametrize('start', ('Q', 'dspacing'))
+@pytest.mark.parametrize('start', ['Q', 'dspacing'])
 def test_elastic_energy_unsupported_starts(start):
     with pytest.raises(KeyError):
         tof.elastic_energy(start)
@@ -80,7 +80,7 @@ def test_elastic_Q():
     assert set(tof.elastic_Q('wavelength').keys()) == {'Q'}
 
 
-@pytest.mark.parametrize('start', ('energy', 'dspacing'))
+@pytest.mark.parametrize('start', ['energy', 'dspacing'])
 def test_elastic_Q_unsupported_starts(start):
     with pytest.raises(KeyError):
         tof.elastic_Q(start)
@@ -92,7 +92,7 @@ def test_elastic_wavelength():
     assert set(tof.elastic_wavelength('Q').keys()) == {'wavelength'}
 
 
-@pytest.mark.parametrize('start', ('dspacing',))
+@pytest.mark.parametrize('start', ['dspacing'])
 def test_elastic_wavelength_unsupported_starts(start):
     with pytest.raises(KeyError):
         tof.elastic_wavelength(start)
@@ -102,7 +102,7 @@ def test_direct_inelastic():
     assert set(tof.direct_inelastic('tof').keys()) == {'energy_transfer'}
 
 
-@pytest.mark.parametrize('start', ('wavelength', 'Q', 'dspacing'))
+@pytest.mark.parametrize('start', ['wavelength', 'Q', 'dspacing'])
 def test_direct_inelastic_unsupported_starts(start):
     with pytest.raises(KeyError):
         tof.direct_inelastic(start)
@@ -112,7 +112,7 @@ def test_indirect_inelastic():
     assert set(tof.indirect_inelastic('tof').keys()) == {'energy_transfer'}
 
 
-@pytest.mark.parametrize('start', ('wavelength', 'Q', 'dspacing'))
+@pytest.mark.parametrize('start', ['wavelength', 'Q', 'dspacing'])
 def test_indirect_inelastic_unsupported_starts(start):
     with pytest.raises(KeyError):
         tof.indirect_inelastic(start)
@@ -120,7 +120,7 @@ def test_indirect_inelastic_unsupported_starts(start):
 
 @pytest.mark.parametrize(
     'arg',
-    (
+    [
         (tof.elastic, ('energy', 'tof', 'Q', 'wavelength')),
         (tof.kinematic, ('tof', 'wavelength', 'energy')),
         (tof.elastic_dspacing, ('tof', 'wavelength', 'energy')),
@@ -129,7 +129,7 @@ def test_indirect_inelastic_unsupported_starts(start):
         (tof.elastic_wavelength, ('tof', 'energy', 'Q')),
         (tof.direct_inelastic, ('tof',)),
         (tof.indirect_inelastic, ('tof',)),
-    ),
+    ],
 )
 def test_returns_new_graph(arg):
     fn, starts = arg

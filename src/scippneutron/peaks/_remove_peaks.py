@@ -2,7 +2,7 @@
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import scipp as sc
 

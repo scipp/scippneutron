@@ -24,7 +24,7 @@ parser.add_argument('--output-dir', dest='path', help='Output folder')
 args = parser.parse_args()
 
 for name in args.names:
-    print(f"Stripping solution cells from {name}")
+    print(f"Stripping solution cells from {name}")  # noqa: T201
     output = NotebookExporter(config=c).from_filename(name)
     with open(os.path.join(args.path, os.path.basename(name)), "w") as f:
         f.write(output[0])

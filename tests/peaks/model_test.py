@@ -11,7 +11,7 @@ import scipp.testing
 from scippneutron.peaks import model
 
 
-@pytest.mark.parametrize('prefix', ('', 'lorentz_'))
+@pytest.mark.parametrize('prefix', ['', 'lorentz_'])
 def test_polynomial_degree_1_call(prefix: str):
     a0 = sc.scalar(0.2, unit='cm')
     a1 = sc.scalar(-5.1, unit='cm/s')
@@ -24,7 +24,7 @@ def test_polynomial_degree_1_call(prefix: str):
     sc.testing.assert_allclose(actual, expected)
 
 
-@pytest.mark.parametrize('prefix', ('', 'lorentz_'))
+@pytest.mark.parametrize('prefix', ['', 'lorentz_'])
 def test_polynomial_degree_2_call(prefix: str):
     a0 = sc.scalar(-1.3, unit='K')
     a1 = sc.scalar(0.03, unit='K/m')
@@ -38,7 +38,7 @@ def test_polynomial_degree_2_call(prefix: str):
     sc.testing.assert_allclose(actual, expected)
 
 
-@pytest.mark.parametrize('prefix', ('', 'lorentz_'))
+@pytest.mark.parametrize('prefix', ['', 'lorentz_'])
 def test_polynomial_degree_3_call(prefix: str):
     a0 = sc.scalar(-1.3, unit='K')
     a1 = sc.scalar(0.03, unit='K/m')
@@ -58,7 +58,7 @@ def test_polynomial_degree_3_call(prefix: str):
     sc.testing.assert_allclose(actual, expected)
 
 
-@pytest.mark.parametrize('prefix', ('', 'lorentz_'))
+@pytest.mark.parametrize('prefix', ['', 'lorentz_'])
 def test_gaussian_call(prefix: str):
     amplitude = sc.scalar(2.8, unit='kg')
     loc = sc.scalar(0.4, unit='m')
@@ -80,7 +80,7 @@ def test_gaussian_call(prefix: str):
     sc.testing.assert_allclose(actual, expected)
 
 
-@pytest.mark.parametrize('prefix', ('', 'lorentz_'))
+@pytest.mark.parametrize('prefix', ['', 'lorentz_'])
 def test_lorentzian_call(prefix: str):
     amplitude = sc.scalar(2.8, unit='kg')
     loc = sc.scalar(0.4, unit='m')
@@ -99,8 +99,8 @@ def test_lorentzian_call(prefix: str):
     sc.testing.assert_allclose(actual, expected)
 
 
-@pytest.mark.parametrize('prefix', ('', 'lorentz_'))
-@pytest.mark.parametrize('fraction', (0.0, 1.0, 0.5, 0.3))
+@pytest.mark.parametrize('prefix', ['', 'lorentz_'])
+@pytest.mark.parametrize('fraction', [0.0, 1.0, 0.5, 0.3])
 def test_pseudo_voigt_call(prefix: str, fraction: float):
     amplitude = sc.scalar(2.8, unit='kg*m')
     loc = sc.scalar(0.4, unit='m')
@@ -128,7 +128,7 @@ def test_pseudo_voigt_call(prefix: str, fraction: float):
     sc.testing.assert_allclose(actual, expected)
 
 
-@pytest.mark.parametrize('prefix', ('', 'pre_'))
+@pytest.mark.parametrize('prefix', ['', 'pre_'])
 def test_composite_call(prefix: str):
     amplitude = sc.scalar(2.8, unit='kg*m')
     loc = sc.scalar(0.4, unit='m')
@@ -348,7 +348,7 @@ def test_lorentzian_guess_params():
     sc.testing.assert_allclose(params['scale'], scale, atol=sc.scalar(0.5, unit='m'))
 
 
-@pytest.mark.parametrize('fraction', (0.0, 1.0, 0.5, 0.3))
+@pytest.mark.parametrize('fraction', [0.0, 1.0, 0.5, 0.3])
 def test_pseudo_voigt_guess_params(fraction: float):
     amplitude = sc.scalar(2.8, unit='kg')
     loc = sc.scalar(0.4, unit='m')

@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
+from __future__ import annotations
+
 import asyncio
 import multiprocessing as mp
 import time
+from collections.abc import Generator
 from enum import Enum
 from queue import Empty as QueueEmpty
-from typing import Generator, List, Optional
 from warnings import warn
 
 import numpy as np
@@ -39,13 +41,13 @@ _missing_dependency_message = (
 
 async def data_stream(
     kafka_broker: str,
-    topics: Optional[List[str]] = None,
+    topics: list[str] | None = None,
     event_buffer_size: int = 1_048_576,
     slow_metadata_buffer_size: int = 1000,
     fast_metadata_buffer_size: int = 100_000,
     chopper_buffer_size: int = 10_000,
     interval: sc.Variable = 2.0 * sc.units.s,
-    run_info_topic: Optional[str] = None,
+    run_info_topic: str | None = None,
     start_time: StartTime = StartTime.NOW,
     stop_time: StopTime = StopTime.NEVER,
 ) -> Generator[sc.DataArray, None, None]:
@@ -114,7 +116,7 @@ async def data_stream(
         run_info_topic,
         start_time,
         stop_time,
-    ):  # noqa: E125
+    ):
         yield data_chunk
 
 
@@ -134,7 +136,7 @@ def validate_buffer_size_args(
             raise ValueError(f"{buffer_name} must be greater than zero")
 
 
-def _cleanup_queue(queue: Optional[mp.Queue]):
+def _cleanup_queue(queue: mp.Queue | None):
     if queue is not None:
         queue.cancel_join_thread()
         queue.close()
@@ -145,21 +147,21 @@ async def _data_stream(
     data_queue: mp.Queue,
     worker_instruction_queue: mp.Queue,
     kafka_broker: str,
-    topics: Optional[List[str]],
+    topics: list[str] | None,
     interval: sc.Variable,
     event_buffer_size: int,
     slow_metadata_buffer_size: int,
     fast_metadata_buffer_size: int,
     chopper_buffer_size: int,
-    run_info_topic: Optional[str] = None,
+    run_info_topic: str | None = None,
     start_at: StartTime = StartTime.NOW,
     end_at: StopTime = StopTime.NEVER,
-    query_consumer: Optional["KafkaQueryConsumer"] = None,  # noqa: F821
+    query_consumer: KafkaQueryConsumer | None = None,  # noqa: F821
     consumer_type: ConsumerType = ConsumerType.REAL,
-    halt_after_n_data_chunks: int = np.iinfo(np.int32).max,  # noqa: B008
-    halt_after_n_warnings: int = np.iinfo(np.int32).max,  # noqa: B008
-    test_message_queue: Optional[mp.Queue] = None,  # for tests
-    timeout: Optional[sc.Variable] = None,  # for tests
+    halt_after_n_data_chunks: int = np.iinfo(np.int32).max,
+    halt_after_n_warnings: int = np.iinfo(np.int32).max,
+    test_message_queue: mp.Queue | None = None,  # for tests
+    timeout: sc.Variable | None = None,  # for tests
 ) -> Generator[sc.DataArray, None, None]:
     """
     Main implementation of data stream is extracted to this function so that
@@ -175,7 +177,7 @@ async def _data_stream(
             data_consumption_manager,
         )
     except ImportError:
-        raise ImportError(_missing_dependency_message)
+        raise ImportError(_missing_dependency_message) from None
 
     if topics is None and run_info_topic is None:
         raise ValueError(
@@ -296,7 +298,7 @@ async def _data_stream(
                 if isinstance(new_data, Warning):
                     # Raise warnings in this process so that they
                     # can be captured in tests
-                    warn(new_data)
+                    warn(new_data, stacklevel=3)
                     n_warnings += 1
                     continue
                 elif isinstance(new_data, StopTimeUpdate):

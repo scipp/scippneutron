@@ -40,7 +40,7 @@ class TestMantidConversion(unittest.TestCase):
         # pick up the name from the class variable name
         cls.base_event_ws = mantid.LoadEventNexus(
             scn.data.get_path(filename),
-            OutputWorkspace="test_ws{}".format(__file__),
+            OutputWorkspace=f"test_ws{__file__}",
             SpectrumMax=200,
             StoreInADS=False,
         )
@@ -85,7 +85,7 @@ class TestMantidConversion(unittest.TestCase):
 
         delta = sc.sum(binned_mantid - histogrammed, 'spectrum')
         delta = sc.sum(delta, 'tof')
-        self.assertLess(np.abs(delta.value), 1e-5)
+        assert np.abs(delta.value) < 1e-05
 
     def test_EventWorkspace(self):
         eventWS = self.base_event_ws
@@ -482,7 +482,7 @@ class TestMantidConversion(unittest.TestCase):
             scn.data.get_path("CNCS_51936_event.nxs"),
             mantid_args={"LoadMonitors": True, "SpectrumMax": 1},
         )
-        self.assertEqual(len(mtd), 0, mtd.getObjectNames())
+        assert len(mtd) == 0, mtd.getObjectNames()
         attrs = [str(key) for key in get_attrs(da).keys()]
         expected_monitor_attrs = {"monitor2", "monitor3"}
         assert expected_monitor_attrs.issubset(attrs)
@@ -568,33 +568,33 @@ class TestMantidConversion(unittest.TestCase):
 
         histo_data_array = scn.mantid.convert_MDHistoWorkspace_to_data_array(md_histo)
 
-        self.assertEqual(histo_data_array.coords['Q_x'].shape, (4,))
-        self.assertEqual(histo_data_array.coords['Q_y'].shape, (3,))
-        self.assertEqual(histo_data_array.coords['Q_z'].shape, (5,))
-        self.assertEqual(
-            histo_data_array.coords['Q_x'].unit,
-            sc.units.dimensionless / sc.units.angstrom,
+        assert histo_data_array.coords['Q_x'].shape == (4,)
+        assert histo_data_array.coords['Q_y'].shape == (3,)
+        assert histo_data_array.coords['Q_z'].shape == (5,)
+        assert (
+            histo_data_array.coords['Q_x'].unit
+            == sc.units.dimensionless / sc.units.angstrom
         )
-        self.assertEqual(
-            histo_data_array.coords['Q_y'].unit,
-            sc.units.dimensionless / sc.units.angstrom,
+        assert (
+            histo_data_array.coords['Q_y'].unit
+            == sc.units.dimensionless / sc.units.angstrom
         )
-        self.assertEqual(
-            histo_data_array.coords['Q_z'].unit,
-            sc.units.dimensionless / sc.units.angstrom,
+        assert (
+            histo_data_array.coords['Q_z'].unit
+            == sc.units.dimensionless / sc.units.angstrom
         )
 
-        self.assertEqual(histo_data_array.shape, (3, 4, 5))
+        assert histo_data_array.shape == (3, 4, 5)
 
         # Sum over 2 dimensions to simplify finding max.
         max_1d = sc.sum(sc.sum(histo_data_array, dim='Q_y'), dim='Q_x').values
         max_index = np.argmax(max_1d)
         # Check position of max 'peak'
-        self.assertEqual(np.floor(len(max_1d) / 2), max_index)
+        assert np.floor(len(max_1d) / 2) == max_index
         # All events in central 'peak'
-        self.assertEqual(100000, max_1d[max_index])
+        assert 100000 == max_1d[max_index]
 
-        self.assertTrue('nevents' in get_attrs(histo_data_array))
+        assert 'nevents' in get_attrs(histo_data_array)
 
     def test_mdhisto_workspace_many_dims(self):
         from mantid.simpleapi import BinMD, CreateMDWorkspace, FakeMDEventData
@@ -648,7 +648,7 @@ class TestMantidConversion(unittest.TestCase):
         )
 
         histo_data_array = scn.mantid.convert_MDHistoWorkspace_to_data_array(md_histo)
-        self.assertEqual(4, len(histo_data_array.dims))
+        assert 4 == len(histo_data_array.dims)
 
     def test_to_workspace_2d_no_error(self):
         from mantid.simpleapi import mtd
@@ -723,51 +723,44 @@ class TestMantidConversion(unittest.TestCase):
         # Given a Mantid workspace with a run log
         target = mantid.CloneWorkspace(self.base_event_ws)
         log_name = "SampleTemp"
-        self.assertTrue(
-            target.run().hasProperty(log_name),
-            f"Expected input workspace to have a {log_name} run log",
-        )
+        assert target.run().hasProperty(
+            log_name
+        ), f'Expected input workspace to have a {log_name} run log'
 
         # When the workspace is converted to a scipp data array
         d = scn.mantid.convert_EventWorkspace_to_data_array(target, False)
 
         # Then the data array contains the run log as an unaligned coord
-        self.assertTrue(
-            np.allclose(
-                target.run()[log_name].value,
-                get_attrs(d)[log_name].values.data.values,
-            ),
-            "Expected values in the unaligned coord to match "
-            "the original run log from the Mantid workspace",
+        assert np.allclose(
+            target.run()[log_name].value, get_attrs(d)[log_name].values.data.values
+        ), (
+            'Expected values in the unaligned coord to match '
+            'the original run log from the Mantid workspace'
         )
-        self.assertEqual(get_attrs(d)[log_name].values.unit, sc.units.K)
-        self.assertTrue(
-            np.array_equal(
-                target.run()[log_name].times.astype('datetime64[ns]'),
-                get_attrs(d)[log_name].values.coords["time"].values,
-            ),
-            "Expected times in the unaligned coord to match "
-            "the original run log from the Mantid workspace",
+        assert get_attrs(d)[log_name].values.unit == sc.units.K
+        assert np.array_equal(
+            target.run()[log_name].times.astype('datetime64[ns]'),
+            get_attrs(d)[log_name].values.coords['time'].values,
+        ), (
+            'Expected times in the unaligned coord to match '
+            'the original run log from the Mantid workspace'
         )
 
     def test_convert_scalar_run_log_to_attrs(self):
         # Given a Mantid workspace with a run log
         target = mantid.CloneWorkspace(self.base_event_ws)
         log_name = "start_time"
-        self.assertTrue(
-            target.run().hasProperty(log_name),
-            f"Expected input workspace to have a {log_name} run log",
-        )
+        assert target.run().hasProperty(
+            log_name
+        ), f'Expected input workspace to have a {log_name} run log'
 
         # When the workspace is converted to a scipp data array
         d = scn.mantid.convert_EventWorkspace_to_data_array(target, False)
 
         # Then the data array contains the run log as an unaligned coord
-        self.assertEqual(
-            target.run()[log_name].value,
-            get_attrs(d)[log_name].value,
-            "Expected value of the unaligned coord to match "
-            "the original run log from the Mantid workspace",
+        assert target.run()[log_name].value == get_attrs(d)[log_name].value, (
+            'Expected value of the unaligned coord to match '
+            'the original run log from the Mantid workspace'
         )
 
     def test_warning_raised_when_convert_run_log_with_unrecognised_units(self):
@@ -812,10 +805,10 @@ class TestMantidConversion(unittest.TestCase):
         d = scn.mantid.convert_EventWorkspace_to_data_array(target, False)
         get_attrs(d)["sample"].value.setThickness(3)
         # before
-        self.assertNotEqual(3, target.sample().getThickness())
+        assert 3 != target.sample().getThickness()
         target.setSample(get_attrs(d)["sample"].value)
         # after
-        self.assertEqual(3, target.sample().getThickness())
+        assert 3 == target.sample().getThickness()
 
     def test_sample_ub(self):
         ws = mantid.CreateWorkspace(DataY=np.ones(1), DataX=np.arange(2))
@@ -890,20 +883,20 @@ class TestMantidConversion(unittest.TestCase):
         unmoved_det_positions = unmoved.coords["position"]
         # Moving the sample accounted for in position calculations
         # but should not yield change to final detector positions
-        self.assertTrue(
-            np.all(np.isclose(moved_det_position.values, unmoved_det_positions.values))
+        assert np.all(
+            np.isclose(moved_det_position.values, unmoved_det_positions.values)
         )
 
     def test_validate_units(self):
         acceptable = ["wavelength", "Wavelength"]
         for i in acceptable:
             ret = scn.mantid.validate_dim_and_get_mantid_string(i)
-            self.assertEqual(ret, "Wavelength")
+            assert ret == 'Wavelength'
 
     def test_validate_units_throws(self):
         not_acceptable = [None, "None", "wavlength", 1, 1.0, ["wavelength"]]
         for i in not_acceptable:
-            with self.assertRaises(RuntimeError):
+            with pytest.raises(RuntimeError):
                 scn.mantid.validate_dim_and_get_mantid_string(i)
 
     def test_WorkspaceGroup_parsed_correctly(self):
@@ -959,7 +952,7 @@ def test_to_rot_from_vectors():
 @pytest.mark.skipif(not memory_is_at_least_gb(8), reason='Insufficient virtual memory')
 @pytest.mark.parametrize(
     "param_dim",
-    ('tof', 'wavelength', 'energy', 'dspacing', 'Q', 'Q^2', 'energy_transfer'),
+    ['tof', 'wavelength', 'energy', 'dspacing', 'Q', 'Q^2', 'energy_transfer'],
 )
 def test_to_workspace_2d(param_dim):
     from mantid.simpleapi import mtd
@@ -1042,7 +1035,7 @@ def test_to_workspace_2d_handles_single_x_array():
     assert np.equal(ws.readX(0), expected_x).all()
     assert np.equal(ws.readX(1), expected_x).all()
 
-    for i, (y_vals, e_vals) in enumerate(zip(expected_y, expected_e)):
+    for i, (y_vals, e_vals) in enumerate(zip(expected_y, expected_e, strict=True)):
         assert np.equal(ws.readY(i), y_vals).all()
         assert np.equal(ws.readE(i), np.sqrt(e_vals)).all()
 
@@ -1237,7 +1230,7 @@ def test_duplicate_monitor_names():
 
 
 def test_load_error_when_file_not_found_via_fuzzy_match():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='fictional.nxs'):
         scn.load_with_mantid("fictional.nxs")
 
 
@@ -1273,7 +1266,7 @@ def make_dynamic_algorithm_without_fileproperty(alg_name):
 
 def test_load_error_when_file_not_found_via_exact_match():
     make_dynamic_algorithm_without_fileproperty("DummyLoader")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='fictional.nxs'):
         # DummyLoader has no FileProperty and forces
         # load to evaluate the path given as an absolute path
         scn.load_with_mantid("fictional.nxs", mantid_alg="DummyLoader")
@@ -1286,5 +1279,5 @@ def test_load_via_exact_match():
     with tempfile.NamedTemporaryFile() as fp:
         scn.load_with_mantid(fp.name, mantid_alg="DummyLoader")
         # Sanity check corrupt full path will fail
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match='fictional_'):
             scn.load_with_mantid("fictional_" + fp.name, mantid_alg="DummyLoader")

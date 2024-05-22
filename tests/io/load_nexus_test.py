@@ -3,8 +3,8 @@
 import pathlib
 import sys
 import warnings
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, List, Type, Union
 
 import numpy as np
 import pytest
@@ -16,7 +16,7 @@ from scippneutron._utils import get_attrs, get_meta
 from scippneutron.io.nexus.load_nexus import load_nexus_json_str
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from nexus_helpers import (  # noqa: E402
+from nexus_helpers import (
     Chopper,
     Detector,
     EventData,
@@ -34,7 +34,7 @@ from nexus_helpers import (  # noqa: E402
 # representative sample of UTF-8 test strings from
 # https://www.w3.org/2001/06/utf-8-test/UTF-8-demo.html
 UTF8_TEST_STRINGS = (
-    "∮ E⋅da = Q,  n → ∞, ∑ f(i) = ∏ g(i), ∀x∈ℝ: ⌈x⌉ = −⌊−x⌋, α ∧ ¬β = ¬(¬α ∨ β)",
+    "∮ E⋅da = Q,  n → ∞, ∑ f(i) = ∏ g(i), ∀x∈ℝ: ⌈x⌉ = −⌊−x⌋, α ∧ ¬β = ¬(¬α ∨ β)",  # noqa: RUF001
     "2H₂ + O₂ ⇌ 2H₂O, R = 4.7 kΩ, ⌀ 200 mm",
     "Σὲ γνωρίζω ἀπὸ τὴν κόψη",
 )
@@ -59,14 +59,14 @@ def test_no_exception_if_single_nxentry_found_below_root():
 
 def load_from_nexus(
     builder: NexusBuilder, *args, **kwargs
-) -> Union[sc.Dataset, sc.DataArray, None]:
+) -> sc.Dataset | sc.DataArray | None:
     with builder.file() as nexus_file:
         return scippneutron.load_nexus(nexus_file, *args, **kwargs)
 
 
 def load_from_json(
     builder: NexusBuilder, *args, **kwargs
-) -> Union[sc.Dataset, sc.DataArray, None]:
+) -> sc.Dataset | sc.DataArray | None:
     loaded_data, _ = load_nexus_json_str(builder.json_string, *args, **kwargs)
     return loaded_data
 
@@ -85,7 +85,7 @@ def load_function(request) -> Callable:
     reason="The 'bigfake' file is partially broken and contains "
     "HDF5 groups without NX_class attribute."
 )
-@pytest.mark.parametrize('path_type', (str, pathlib.Path))
+@pytest.mark.parametrize('path_type', [str, pathlib.Path])
 def test_loads_from_file(path_type):
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message='Skipped load', category=UserWarning)
@@ -157,7 +157,7 @@ def test_loads_data_from_single_event_data_group(load_function: Callable):
 
 
 @pytest.mark.parametrize(
-    "unit,multiplier", (("ns", 1), ("us", 10**3), ("ms", 10**6), ("s", 10**9))
+    ("unit", "multiplier"), [("ns", 1), ("us", 10**3), ("ms", 10**6), ("s", 10**9)]
 )
 def test_loads_pulse_times_from_single_event_with_different_units(
     load_function: Callable, unit: str, multiplier: float
@@ -193,13 +193,13 @@ def test_loads_pulse_times_from_single_event_with_different_units(
 
 
 @pytest.mark.parametrize(
-    "time_zero_offset,time_zero,time_zero_unit,expected_time",
-    (
+    ("time_zero_offset", "time_zero", "time_zero_unit", "expected_time"),
+    [
         ("1980-01-01T00:00:00.0", 30, "s", "1980-01-01T00:00:30.0"),
         ("1990-01-01T00:00:00.0", 5000, "ms", "1990-01-01T00:00:05.0"),
         ("2000-01-01T00:00:00.0", 3 * 10**6, "us", "2000-01-01T00:00:03.0"),
         ("2010-01-01T00:00:00.0", 12, "hour", "2010-01-01T12:00:00.0"),
-    ),
+    ],
 )
 def test_loads_pulse_times_with_combinations_of_offset_and_units(
     load_function: Callable,
@@ -903,10 +903,10 @@ def test_skips_loading_source_if_more_than_one_in_file(load_function: Callable):
 
 
 @pytest.mark.parametrize(
-    "component_class,component_name", ((Sample, "sample"), (Source, "source"))
+    ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 def test_component_position_from_distance_dataset_missing_unit(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     load_function: Callable,
 ):
@@ -920,22 +920,22 @@ def test_component_position_from_distance_dataset_missing_unit(
 
 
 @pytest.mark.parametrize(
-    "component_class,component_name", [(Sample, "sample"), (Source, "source")]
+    ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 @pytest.mark.parametrize(
-    "transform_type,value,value_units,expected_position",
-    (
+    ("transform_type", "value", "value_units", "expected_position"),
+    [
         (TransformationType.ROTATION, 0.27, "rad", [0, 0, 0]),
         (TransformationType.TRANSLATION, 230, "cm", [0, 0, 2.3]),
-    ),
+    ],
 )
 def test_loads_component_position_from_single_transformation(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
     value: float,
     value_units: str,
-    expected_position: List[float],
+    expected_position: list[float],
     load_function: Callable,
 ):
     builder = NexusBuilder()
@@ -956,22 +956,22 @@ def test_loads_component_position_from_single_transformation(
 
 
 @pytest.mark.parametrize(
-    "component_class,component_name", [(Sample, "sample"), (Source, "source")]
+    ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 @pytest.mark.parametrize(
-    "transform_type,value,value_units,expected_position",
-    (
+    ("transform_type", "value", "value_units", "expected_position"),
+    [
         (TransformationType.ROTATION, 180, "deg", [-1, -2, 3]),
         (TransformationType.TRANSLATION, 230, "cm", [1, 2, 5.3]),
-    ),
+    ],
 )
 def test_loads_component_position_from_single_transformation_with_offset(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
     value: float,
     value_units: str,
-    expected_position: List[float],
+    expected_position: list[float],
     load_function: Callable,
 ):
     builder = NexusBuilder()
@@ -994,22 +994,22 @@ def test_loads_component_position_from_single_transformation_with_offset(
 
 
 @pytest.mark.parametrize(
-    "component_class,component_name", [(Sample, "sample"), (Source, "source")]
+    ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 @pytest.mark.parametrize(
-    "transform_type,value,value_units,expected_position",
-    (
+    ("transform_type", "value", "value_units", "expected_position"),
+    [
         (TransformationType.ROTATION, 180, "deg", [-1, -2, 3]),
         (TransformationType.TRANSLATION, 230, "cm", [1, 2, 5.3]),
-    ),
+    ],
 )
 def test_raises_if_offset_but_not_offset_units_found(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
     value: float,
     value_units: str,
-    expected_position: List[float],
+    expected_position: list[float],
     load_function: Callable,
 ):
     builder = NexusBuilder()
@@ -1031,22 +1031,22 @@ def test_raises_if_offset_but_not_offset_units_found(
 
 
 @pytest.mark.parametrize(
-    "component_class,component_name", ((Sample, "sample"), (Source, "source"))
+    ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 @pytest.mark.parametrize(
-    "transform_type,value,value_units,expected_position",
-    (
+    ("transform_type", "value", "value_units", "expected_position"),
+    [
         (TransformationType.ROTATION, 0.27, "rad", [0, 0, 0]),
         (TransformationType.TRANSLATION, 230, "cm", [0, 0, 2.3]),
-    ),
+    ],
 )
 def test_loads_component_position_from_log_transformation(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
     value: float,
     value_units: str,
-    expected_position: List[float],
+    expected_position: list[float],
     load_function: Callable,
 ):
     builder = NexusBuilder()
@@ -1070,20 +1070,20 @@ def test_loads_component_position_from_log_transformation(
 
 
 @pytest.mark.parametrize(
-    "component_class,component_name", ((Sample, "sample"), (Source, "source"))
+    ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 @pytest.mark.parametrize(
-    "transform_type,value,value_units,expected_position",
-    (
+    ("transform_type", "value", "value_units", "expected_position"),
+    [
         (TransformationType.ROTATION, [0.27, 0.73], "rad", [0, 0, 0]),
         (TransformationType.TRANSLATION, [230, 310], "cm", [0, 0, 2.3]),
-    ),
+    ],
 )
 def test_loads_component_position_with_multi_value_log_transformation(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
-    value: List[float],
+    value: list[float],
     value_units: str,
     expected_position: float,
     load_function: Callable,
@@ -1114,10 +1114,10 @@ def test_loads_component_position_with_multi_value_log_transformation(
 
 
 @pytest.mark.parametrize(
-    "component_class,component_name", ((Sample, "sample"), (Source, "source"))
+    ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 def test_loads_component_position_with_multiple_multi_valued_log_transformations(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     load_function: Callable,
 ):
@@ -1154,10 +1154,10 @@ def test_loads_component_position_with_multiple_multi_valued_log_transformations
 
 
 @pytest.mark.parametrize(
-    "component_class,component_name", ((Sample, "sample"), (Source, "source"))
+    ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 def test_multi_valued_log_transformations_time_axis_interpolated_and_trimmed(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     load_function: Callable,
 ):
@@ -1198,14 +1198,14 @@ def test_multi_valued_log_transformations_time_axis_interpolated_and_trimmed(
 
 
 @pytest.mark.parametrize(
-    "component_class,component_name", ((Sample, "sample"), (Source, "source"))
+    ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 @pytest.mark.parametrize(
-    "transform_type,value_units",
-    ((TransformationType.ROTATION, "deg"), (TransformationType.TRANSLATION, "cm")),
+    ("transform_type", "value_units"),
+    [(TransformationType.ROTATION, "deg"), (TransformationType.TRANSLATION, "cm")],
 )
 def test_skips_component_position_with_empty_value_log_transformation(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
     value_units: str,
@@ -1227,10 +1227,10 @@ def test_skips_component_position_with_empty_value_log_transformation(
 
 
 @pytest.mark.parametrize(
-    "component_class,component_name", ((Sample, "sample"), (Source, "source"))
+    ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 def test_load_component_position_prefers_transform_over_distance(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     load_function: Callable,
 ):
@@ -1260,13 +1260,13 @@ def test_load_component_position_prefers_transform_over_distance(
 
 
 @pytest.mark.parametrize(
-    "component_class,component_name", ((Sample, "sample"), (Source, "source"))
+    ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 @pytest.mark.parametrize(
-    "transform_type", (TransformationType.ROTATION, TransformationType.TRANSLATION)
+    "transform_type", [TransformationType.ROTATION, TransformationType.TRANSLATION]
 )
 def test_skips_component_position_from_transformation_missing_unit(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     transform_type: TransformationType,
     load_function: Callable,
@@ -1281,10 +1281,10 @@ def test_skips_component_position_from_transformation_missing_unit(
 
 
 @pytest.mark.parametrize(
-    "component_class,component_name", ((Sample, "sample"), (Source, "source"))
+    ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 def test_loads_component_position_from_multiple_transformations(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     load_function: Callable,
 ):
@@ -1320,10 +1320,10 @@ def test_skips_source_position_if_not_given_in_file(load_function: Callable):
 
 
 @pytest.mark.parametrize(
-    "component_class,component_name", ((Sample, "sample"), (Source, "source"))
+    ("component_class", "component_name"), [(Sample, "sample"), (Source, "source")]
 )
 def test_loads_component_position_from_distance_dataset(
-    component_class: Union[Type[Source], Type[Sample]],
+    component_class: type[Source] | type[Sample],
     component_name: str,
     load_function: Callable,
 ):
@@ -1753,12 +1753,12 @@ def test_start_and_end_times_appear_in_dataset_if_set(load_function: Callable):
 
 
 @pytest.mark.parametrize(
-    "log_start,scaling_factor",
-    (
+    ("log_start", "scaling_factor"),
+    [
         ("2000-01-01T01:00:00", 1000),
         ("2000-01-01T00:00:00", 0.001),
         ("2010-01-01T00:00:00", None),
-    ),
+    ],
 )
 def test_load_log_times(log_start: str, scaling_factor: float, load_function: Callable):
     times = np.array([0.0, 10.0, 20.0, 30.0, 40.0, 50.0], dtype="float64")
@@ -1841,7 +1841,7 @@ def test_load_log_times_when_logs_do_not_have_start_time(load_function: Callable
     assert all(diffs <= np.array(1).astype("timedelta64[ns]"))
 
 
-@pytest.mark.parametrize("units", ("ps", "ns", "us", "ms", "s", "minute", "hour"))
+@pytest.mark.parametrize("units", ["ps", "ns", "us", "ms", "s", "minute", "hour"])
 def test_adjust_log_times_with_different_time_units(units, load_function: Callable):
     times = [1, 2, 3]
 

@@ -14,7 +14,7 @@ import scippnexus as snx
 from scippneutron.io.nexus.load_nexus import json_nexus_group, load_nexus_json_str
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from nexus_helpers import NexusBuilder, Source, Stream  # noqa: E402
+from nexus_helpers import NexusBuilder, Source, Stream
 
 
 class JsonNexusExampleLoader:

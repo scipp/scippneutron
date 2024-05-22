@@ -7,10 +7,11 @@ neutron source.
 
 See :py:class:`FrameSequence` for the main entry point.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, List, Optional, Union
+from typing import Any
 
 import numpy as np
 import scipp as sc
@@ -60,7 +61,7 @@ class Subframe:
         self.time = time.to(unit='s', copy=False)
         self.wavelength = wavelength.to(unit='angstrom', copy=False)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Subframe):
             return NotImplemented
         return sc.identical(self.time, other.time) and sc.identical(
@@ -130,7 +131,7 @@ class Frame:
     """
 
     distance: sc.Variable
-    subframes: List[Subframe]
+    subframes: list[Subframe]
 
     def propagate_to(self, distance: sc.Variable) -> Frame:
         """
@@ -184,7 +185,7 @@ class Frame:
         # is the union of the resulting subframes.
         chopped = Frame(distance=frame.distance, subframes=[])
         for subframe in frame.subframes:
-            for open, close in zip(chopper.time_open, chopper.time_close):
+            for open, close in zip(chopper.time_open, chopper.time_close, strict=True):
                 if (tmp := _chop(subframe, open, close_to_open=True)) is not None:
                     if (tmp := _chop(tmp, close, close_to_open=False)) is not None:
                         chopped.subframes.append(tmp)
@@ -238,7 +239,7 @@ class Frame:
         bounds = [
             Bound(start, end, wav_start, wav_end)
             for start, end, wav_start, wav_end in zip(
-                starts, ends, wav_starts, wav_ends
+                starts, ends, wav_starts, wav_ends, strict=True
             )
         ]
         bounds = sorted(bounds, key=lambda x: x.start)
@@ -281,7 +282,7 @@ class FrameSequence:
     :py:meth:`chop`.
     """
 
-    frames: List[Frame]
+    frames: list[Frame]
 
     @staticmethod
     def from_source_pulse(
@@ -314,7 +315,7 @@ class FrameSequence:
         """Number of frames."""
         return len(self.frames)
 
-    def __getitem__(self, item: Union[int, sc.Variable]) -> Frame:
+    def __getitem__(self, item: int | sc.Variable) -> Frame:
         """Get a frame by index or distance."""
         if isinstance(item, int):
             return self.frames[item]
@@ -343,9 +344,9 @@ class FrameSequence:
         :
             New frame sequence.
         """
-        return FrameSequence(self.frames + [self.frames[-1].propagate_to(distance)])
+        return FrameSequence([*self.frames, self.frames[-1].propagate_to(distance)])
 
-    def chop(self, choppers: List[Chopper]) -> FrameSequence:
+    def chop(self, choppers: list[Chopper]) -> FrameSequence:
         """
         Chop the frame sequence by a list of choppers.
 
@@ -369,11 +370,11 @@ class FrameSequence:
 
     def draw(
         self,
-        linewidth: Union[int, float] = 0,
+        linewidth: float = 0,
         fill: bool = True,
-        alpha: Optional[float] = None,
+        alpha: float | None = None,
         transpose: bool = False,
-        colors: Optional[List[str]] = None,
+        colors: list[str] | None = None,
         grid: bool = True,
         title: str = 'Frame propagation through chopper cascade',
         time_unit: str = 'ms',
@@ -505,9 +506,7 @@ class Chopper:
         )
 
 
-def _chop(
-    frame: Subframe, time: sc.Variable, close_to_open: bool
-) -> Optional[Subframe]:
+def _chop(frame: Subframe, time: sc.Variable, close_to_open: bool) -> Subframe | None:
     inside = frame.time >= time if close_to_open else frame.time <= time
     output = []
     for i in range(len(frame.time)):

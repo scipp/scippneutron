@@ -3,7 +3,6 @@
 
 import string
 from io import StringIO
-from typing import Optional
 
 import numpy as np
 import pytest
@@ -41,14 +40,14 @@ def headers() -> st.SearchStrategy[str]:
     return st.text(string.ascii_letters + string.digits + string.punctuation + ' \t\n')
 
 
-def save_to_buffer(da: sc.DataArray, coord: Optional[str] = None, **kwargs) -> StringIO:
+def save_to_buffer(da: sc.DataArray, coord: str | None = None, **kwargs) -> StringIO:
     buffer = StringIO()
     scn.io.save_xye(buffer, da, coord=coord, **kwargs)
     buffer.seek(0)
     return buffer
 
 
-def roundtrip(da: sc.DataArray, coord: Optional[str] = None, **kwargs) -> sc.DataArray:
+def roundtrip(da: sc.DataArray, coord: str | None = None, **kwargs) -> sc.DataArray:
     buffer = save_to_buffer(da, coord, **kwargs)
     return scn.io.xye.load_xye(
         buffer,
@@ -77,7 +76,9 @@ def test_saved_file_contains_data_table(da, data):
     coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
     file_contents = save_to_buffer(da, coord=coord_name).getvalue()
     for i, line in enumerate(
-        filter(lambda l: l and not l.startswith('#'), file_contents.split('\n'))
+        filter(
+            lambda line: line and not line.startswith('#'), file_contents.split('\n')
+        )
     ):
         x, y, e = map(float, line.split(' '))
         np.testing.assert_allclose(x, da.coords[coord_name][i].value)
@@ -119,7 +120,11 @@ def test_save_deduce_coord_dim_coord(initial, data):
 def test_save_cannot_deduce_coord_if_multiple_non_dim_coords(da):
     # It can deduce if there is a dim-coord, exclude that.
     assume(da.dim not in da.coords)
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='Cannot deduce which coordinate to save because the data '
+        'has more than one and no dimension-coordinate',
+    ):
         save_to_buffer(da)
 
 
@@ -128,7 +133,9 @@ def test_save_cannot_deduce_coord_if_multiple_non_dim_coords(da):
 def test_input_must_have_at_least_one_coord(da):
     for c in list(da.coords.keys()):
         del da.coords[c]
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match='Cannot save data to XYE file because it has no coordinates'
+    ):
         save_to_buffer(da)
 
 
@@ -158,7 +165,9 @@ def test_cannot_save_data_with_bin_edges(da, data):
 def test_cannot_save_data_with_masks(da, data):
     mask = data.draw(scst.variables(sizes=da.sizes, dtype=bool))
     da.masks[data.draw(st.text())] = mask
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match='Cannot save data to XYE file because it has masks'
+    ):
         save_to_buffer(da, coord=next(iter(da.coords)))
 
 

@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 """Parameters for neutron interactions with atoms."""
+
 from __future__ import annotations
 
 import dataclasses
 import importlib.resources
 from functools import lru_cache
-from typing import Optional, TextIO, Union
+from typing import TextIO
 
 import scipp as sc
 
@@ -40,24 +41,24 @@ class ScatteringParams:
 
     isotope: str
     """Element / isotope name."""
-    coherent_scattering_length_re: Optional[sc.Variable]
+    coherent_scattering_length_re: sc.Variable | None
     """Bound coherent scattering length (real part)."""
-    coherent_scattering_length_im: Optional[sc.Variable]
+    coherent_scattering_length_im: sc.Variable | None
     """Bound coherent scattering length (imaginary part)."""
-    incoherent_scattering_length_re: Optional[sc.Variable]
+    incoherent_scattering_length_re: sc.Variable | None
     """Bound incoherent scattering length (real part)."""
-    incoherent_scattering_length_im: Optional[sc.Variable]
+    incoherent_scattering_length_im: sc.Variable | None
     """Bound incoherent scattering length (imaginary part)."""
-    coherent_scattering_cross_section: Optional[sc.Variable]
+    coherent_scattering_cross_section: sc.Variable | None
     """Bound coherent scattering cross-section."""
-    incoherent_scattering_cross_section: Optional[sc.Variable]
+    incoherent_scattering_cross_section: sc.Variable | None
     """Bound incoherent scattering cross-section."""
-    total_scattering_cross_section: Optional[sc.Variable]
+    total_scattering_cross_section: sc.Variable | None
     """Total bound scattering cross-section."""
-    absorption_cross_section: Optional[sc.Variable]
+    absorption_cross_section: sc.Variable | None
     """Absorption cross-section for λ = 1.7982 Å neutrons."""
 
-    def __eq__(self, other: object) -> Union[bool, type(NotImplemented)]:
+    def __eq__(self, other: object) -> bool | type(NotImplemented):
         if not isinstance(other, ScatteringParams):
             return NotImplemented
         return all(
@@ -68,7 +69,7 @@ class ScatteringParams:
         )
 
     @staticmethod
-    @lru_cache()
+    @lru_cache
     def for_isotope(isotope: str) -> ScatteringParams:
         """Return the scattering parameters for the given element / isotope.
 
@@ -116,7 +117,7 @@ def _parse_line(isotope: str, line: str) -> ScatteringParams:
     )
 
 
-def _assemble_scalar(value: str, std: str, unit: str) -> Optional[sc.Variable]:
+def _assemble_scalar(value: str, std: str, unit: str) -> sc.Variable | None:
     if not value:
         return None
     value = float(value)
@@ -124,7 +125,7 @@ def _assemble_scalar(value: str, std: str, unit: str) -> Optional[sc.Variable]:
     return sc.scalar(value, variance=variance, unit=unit)
 
 
-def _eq_or_identical(a: Optional[sc.Variable], b: Optional[sc.Variable]) -> bool:
+def _eq_or_identical(a: sc.Variable | None, b: sc.Variable | None) -> bool:
     if a is None:
         return b is None
     return sc.identical(a, b)

@@ -10,9 +10,11 @@ unwrapping for WFM instruments, as well as combinations of the latter two. The
 functions defined here are meant to be used as providers for a Sciline pipeline. See
 https://scipp.github.io/sciline/ on how to use Sciline.
 """
+
 import math
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Callable, Mapping, NewType, Optional, Tuple, Union
+from typing import NewType
 
 import scipp as sc
 
@@ -113,13 +115,13 @@ Location of the sample along the incident beam. Origin must be consistent with c
 distance origin.
 """
 
-SourceTimeRange = NewType('SourceTimeRange', Tuple[sc.Variable, sc.Variable])
+SourceTimeRange = NewType('SourceTimeRange', tuple[sc.Variable, sc.Variable])
 """
 Time range of the source pulse, used for computing frame bounds.
 """
 
 SourceWavelengthRange = NewType(
-    'SourceWavelengthRange', Tuple[sc.Variable, sc.Variable]
+    'SourceWavelengthRange', tuple[sc.Variable, sc.Variable]
 )
 """
 Wavelength range of the source pulse, used for computing frame bounds.
@@ -159,12 +161,12 @@ class TimeOfFlightOrigin:
     The origin of the time-of-flight, time since pulse time and distance from source.
     """
 
-    time: Union[sc.Variable, sc.DataArray]
+    time: sc.Variable | sc.DataArray
     distance: sc.Variable
 
 
 def frame_period(
-    pulse_period: PulsePeriod, pulse_stride: Optional[PulseStride]
+    pulse_period: PulsePeriod, pulse_stride: PulseStride | None
 ) -> FramePeriod:
     if pulse_stride is None:
         return pulse_period
@@ -335,7 +337,7 @@ def offset_from_wrapped(
 def source_chopper(
     choppers: Choppers,
     source_time_range: SourceTimeRange,
-    source_chopper_name: Optional[SourceChopperName],
+    source_chopper_name: SourceChopperName | None,
 ) -> SourceChopper:
     """
     Return the chopper defining the source location and time-of-flight time origin.

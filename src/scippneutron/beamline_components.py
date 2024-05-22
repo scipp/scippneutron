@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Jan-Lukas Wynen
-from typing import Union
 
 import scipp as sc
 
@@ -9,7 +8,7 @@ from .conversion import graph
 
 
 def _derived_coord(
-    da: Union[sc.DataArray, sc.Dataset], name: str, scatter: bool = True
+    da: sc.DataArray | sc.Dataset, name: str, scatter: bool = True
 ) -> sc.Variable:
     tmp = da.transform_coords(
         name,
@@ -22,7 +21,7 @@ def _derived_coord(
     return tmp.coords[name]
 
 
-def position(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
+def position(da: sc.DataArray | sc.Dataset) -> sc.Variable:
     """Extract the detector pixel positions from a data array or dataset.
 
     Parameters
@@ -38,7 +37,7 @@ def position(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
     return _derived_coord(da, 'position')
 
 
-def source_position(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
+def source_position(da: sc.DataArray | sc.Dataset) -> sc.Variable:
     """Extract the position of the neutron source from a data array or dataset.
 
     Parameters
@@ -54,7 +53,7 @@ def source_position(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
     return _derived_coord(da, 'source_position')
 
 
-def sample_position(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
+def sample_position(da: sc.DataArray | sc.Dataset) -> sc.Variable:
     """Extract the position of the sample from a data array or dataset.
 
     Parameters
@@ -70,7 +69,7 @@ def sample_position(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
     return _derived_coord(da, 'sample_position')
 
 
-def incident_beam(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
+def incident_beam(da: sc.DataArray | sc.Dataset) -> sc.Variable:
     """Extract the incident beam vector from a data array or dataset.
 
     This is the direction and length of the primary flight path,
@@ -89,7 +88,7 @@ def incident_beam(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
     return _derived_coord(da, 'incident_beam')
 
 
-def scattered_beam(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
+def scattered_beam(da: sc.DataArray | sc.Dataset) -> sc.Variable:
     """Extract the scattered beam vector from a data array or dataset.
 
     This is the direction and length of the secondary flight path,
@@ -108,7 +107,7 @@ def scattered_beam(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
     return _derived_coord(da, 'scattered_beam')
 
 
-def Ltotal(da: Union[sc.DataArray, sc.Dataset], scatter: bool) -> sc.Variable:
+def Ltotal(da: sc.DataArray | sc.Dataset, scatter: bool) -> sc.Variable:
     """Extract the length of the total flight path from a data array or dataset.
 
     Parameters
@@ -128,7 +127,7 @@ def Ltotal(da: Union[sc.DataArray, sc.Dataset], scatter: bool) -> sc.Variable:
     return _derived_coord(da, 'Ltotal', scatter=scatter)
 
 
-def L1(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
+def L1(da: sc.DataArray | sc.Dataset) -> sc.Variable:
     """Extract the length of the primary flight path from a data array or dataset.
 
     This is the distance between neutron source and sample.
@@ -146,7 +145,7 @@ def L1(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
     return _derived_coord(da, 'L1')
 
 
-def L2(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
+def L2(da: sc.DataArray | sc.Dataset) -> sc.Variable:
     """Extract the length of the secondary flight path from a data array or dataset.
 
     This is the distance between sample and detector.
@@ -164,7 +163,7 @@ def L2(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
     return _derived_coord(da, 'L2')
 
 
-def two_theta(da: Union[sc.DataArray, sc.Dataset]) -> sc.Variable:
+def two_theta(da: sc.DataArray | sc.Dataset) -> sc.Variable:
     """Extract the scattering angle from a data array or dataset.
 
     The angle is defined as in Bragg's law.

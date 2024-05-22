@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import enum
 import itertools
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, Literal
+from typing import Literal
 
 import numpy as np
 import scipp as sc
@@ -710,7 +711,7 @@ def _message_from_assessment(assessment: FitAssessment | None) -> str:
 def _parse_model_spec(
     spec: Model | str | Iterable[Model] | Iterable[str], prefix: str
 ) -> tuple[Model, ...]:
-    if isinstance(spec, (Model, str)):
+    if isinstance(spec, Model | str):
         spec = (spec,)
     if not spec:
         raise ValueError(f"No models specified for '{prefix}'")

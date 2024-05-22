@@ -30,7 +30,7 @@ def default_frame_diagram(tmax=None):
         label=r'$T_0^{i+1}+\Delta t$',
     )
 
-    props = dict(arrowstyle='-|>')
+    props = {'arrowstyle': '-|>'}
     x0 = diagram.frame_length
     x1 = diagram.frame_length + frame_offset
     m = sc.Unit('m')
@@ -85,7 +85,7 @@ def frame_skipping_diagram(tmax=None):
         Lmax=1.05 * det2, lambda_min=lambda_min, time_offset=frame_offset, stride=2
     )
 
-    props = dict(arrowstyle='-|>')
+    props = {'arrowstyle': '-|>'}
     x0 = 2 * diagram.frame_length
     x1 = 2 * diagram.frame_length + frame_offset
     m = sc.Unit('m')

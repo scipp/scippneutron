@@ -5,7 +5,7 @@ Convert a Scipp DataArray to a picklable dictionary and back.
 Can be used to move DataArrays between multiprocessing.Process.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import scipp as sc
@@ -13,7 +13,7 @@ import scipp as sc
 _scipp_containers = ("DataArray", "DataSet", "Variable")
 
 
-def convert_to_pickleable_dict(data: sc.DataArray) -> Dict:
+def convert_to_pickleable_dict(data: sc.DataArray) -> dict:
     data_dict = sc.to_dict(data)
 
     def _unit_and_dtype_to_str(d: Any):
@@ -35,7 +35,7 @@ def convert_to_pickleable_dict(data: sc.DataArray) -> Dict:
     return data_dict
 
 
-def convert_from_pickleable_dict(data_dict: Dict) -> sc.DataArray:
+def convert_from_pickleable_dict(data_dict: dict) -> sc.DataArray:
     def convert_from_str_unit_and_dtype(d):
         delete_dtype = False
         for k, v in d.items():

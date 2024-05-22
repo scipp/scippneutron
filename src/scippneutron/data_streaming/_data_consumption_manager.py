@@ -4,7 +4,6 @@ import multiprocessing as mp
 from dataclasses import dataclass
 from enum import Enum
 from queue import Empty as QueueEmpty
-from typing import List, Optional
 
 from ..io.nexus.load_nexus import StreamInfo
 from ._consumer import (
@@ -25,17 +24,17 @@ class InstructionType(Enum):
 @dataclass(frozen=True)
 class ManagerInstruction:
     type: InstructionType
-    stop_time_ms: Optional[int] = None  # milliseconds from unix epoch
+    stop_time_ms: int | None = None  # milliseconds from unix epoch
 
 
 def data_consumption_manager(
     start_time_ms: int,
-    stop_time_ms: Optional[int],
+    stop_time_ms: int | None,
     run_id: str,
-    topics: List[str],
+    topics: list[str],
     kafka_broker: str,
     consumer_type: ConsumerType,
-    stream_info: Optional[List[StreamInfo]],
+    stream_info: list[StreamInfo] | None,
     interval_s: float,
     event_buffer_size: int,
     slow_metadata_buffer_size: int,
@@ -43,7 +42,7 @@ def data_consumption_manager(
     chopper_buffer_size: int,
     worker_instruction_queue: mp.Queue,
     data_queue: mp.Queue,
-    test_message_queue: Optional[mp.Queue],
+    test_message_queue: mp.Queue | None,
 ):
     """
     Starts and stops buffers and data consumers which collect data and
@@ -86,7 +85,7 @@ def data_consumption_manager(
             elif instruction.type == InstructionType.UPDATE_STOP_TIME:
                 for consumer in consumers:
                     consumer.update_stop_time(instruction.stop_time_ms)
-        except QueueEmpty:
+        except QueueEmpty:  # noqa: PERF203
             pass
         except (ValueError, OSError):
             # Queue has been closed, stop worker

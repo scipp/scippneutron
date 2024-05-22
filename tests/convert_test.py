@@ -134,7 +134,7 @@ def make_dataset_in(dim):
 
 @pytest.mark.parametrize(
     ('origin', 'target'),
-    (('tof', 'dspacing'), ('tof', 'wavelength'), ('tof', 'energy')),
+    [('tof', 'dspacing'), ('tof', 'wavelength'), ('tof', 'energy')],
 )
 def test_convert_dataset_vs_dataarray(origin, target):
     inputs = make_dataset_in(origin)
@@ -203,7 +203,7 @@ def test_convert_scattering_conversion_fails_with_noscatter_mode():
         scn.convert(wavelength, origin='wavelength', target='Q', scatter=False)
 
 
-@pytest.mark.parametrize('target', ('incident_beam', 'scattered_beam'))
+@pytest.mark.parametrize('target', ['incident_beam', 'scattered_beam'])
 def test_convert_beams(target):
     def check_positions(data):
         assert not data.coords['sample_position'].aligned
@@ -250,12 +250,12 @@ def test_convert_beams(target):
 
 @pytest.mark.parametrize(
     ('target', 'make_ref'),
-    (
+    [
         ('L1', make_L1),
         ('L2', make_L2),
         ('two_theta', make_two_theta),
         ('Ltotal', lambda: make_L1() + make_L2()),
-    ),
+    ],
 )
 def test_convert_beam_length_and_angle(target, make_ref):
     original = make_test_data(coords=('incident_beam', 'scattered_beam'))
@@ -283,7 +283,9 @@ def test_convert_tof_to_dspacing():
     # 2d sin(theta) = n \lambda
     # theta = 45 deg => d = lambda / (2 * 1 / sqrt(2))
     for val, t in zip(
-        dspacing.coords['dspacing']['spectrum', 0].values, tof_in_seconds.values
+        dspacing.coords['dspacing']['spectrum', 0].values,
+        tof_in_seconds.values,
+        strict=True,
     ):
         np.testing.assert_almost_equal(
             val, 3956.0 / (11.0 / t) / math.sqrt(2.0), val * 1e-3
@@ -294,7 +296,9 @@ def test_convert_tof_to_dspacing():
     L = 10.0 + math.sqrt(1.0 * 1.0 + 0.1 * 0.1)
     lambda_to_d = 1.0 / (2.0 * math.sin(0.5 * math.asin(0.1 / (L - 10.0))))
     for val, t in zip(
-        dspacing.coords['dspacing']['spectrum', 1].values, tof_in_seconds.values
+        dspacing.coords['dspacing']['spectrum', 1].values,
+        tof_in_seconds.values,
+        strict=True,
     ):
         np.testing.assert_almost_equal(val, 3956.0 / (L / t) * lambda_to_d, val * 1e-3)
 
@@ -310,13 +314,17 @@ def test_convert_tof_to_wavelength():
 
     # Spectrum 0 is 11 m from source
     for val, t in zip(
-        wavelength.coords['wavelength']['spectrum', 0].values, tof_in_seconds.values
+        wavelength.coords['wavelength']['spectrum', 0].values,
+        tof_in_seconds.values,
+        strict=True,
     ):
         np.testing.assert_almost_equal(val, 3956.0 / (11.0 / t), val * 1e-3)
     # Spectrum 1
     L = 10.0 + math.sqrt(1.0 * 1.0 + 0.1 * 0.1)
     for val, t in zip(
-        wavelength.coords['wavelength']['spectrum', 1].values, tof_in_seconds.values
+        wavelength.coords['wavelength']['spectrum', 1].values,
+        tof_in_seconds.values,
+        strict=True,
     ):
         np.testing.assert_almost_equal(val, 3956.0 / (L / t), val * 1e-3)
 
@@ -351,7 +359,9 @@ def test_convert_tof_to_Q():
     # Q = 4pi sin(theta) / lambda
     # theta = 45 deg => Q = 2 sqrt(2) pi / lambda
     for val, t in zip(
-        Q_from_wavelength.coords['Q']['spectrum', 0].values, tof_in_seconds.values
+        Q_from_wavelength.coords['Q']['spectrum', 0].values,
+        tof_in_seconds.values,
+        strict=True,
     ):
         np.testing.assert_almost_equal(
             val, 2.0 * math.sqrt(2.0) * math.pi / (3956.0 / (11.0 / t)), val * 1e-3
@@ -362,7 +372,9 @@ def test_convert_tof_to_Q():
     L = 10.0 + math.sqrt(1.0 * 1.0 + 0.1 * 0.1)
     lambda_to_Q = 4.0 * math.pi * math.sin(math.asin(0.1 / (L - 10.0)) / 2.0)
     for val, t in zip(
-        Q_from_wavelength.coords['Q']['spectrum', 1].values, tof_in_seconds.values
+        Q_from_wavelength.coords['Q']['spectrum', 1].values,
+        tof_in_seconds.values,
+        strict=True,
     ):
         np.testing.assert_almost_equal(
             val, lambda_to_Q / (3956.0 / (L / t)), val * 1e-3
@@ -396,7 +408,9 @@ def test_convert_tof_to_energy_elastic():
 
     # Spectrum 0 is 11 m from source
     for val, t in zip(
-        energy.coords['energy']['spectrum', 0].values, tof_in_seconds.values
+        energy.coords['energy']['spectrum', 0].values,
+        tof_in_seconds.values,
+        strict=True,
     ):
         np.testing.assert_almost_equal(
             val, joule_to_mev * neutron_mass / 2 * (11 / t) ** 2, val * 1e-3
@@ -404,7 +418,9 @@ def test_convert_tof_to_energy_elastic():
     # Spectrum 1
     L = 10.0 + math.sqrt(1.0 * 1.0 + 0.1 * 0.1)
     for val, t in zip(
-        energy.coords['energy']['spectrum', 1].values, tof_in_seconds.values
+        energy.coords['energy']['spectrum', 1].values,
+        tof_in_seconds.values,
+        strict=True,
     ):
         np.testing.assert_almost_equal(
             val, joule_to_mev * 0.5 * neutron_mass * (L / t) ** 2, val * 1e-3
@@ -539,16 +555,16 @@ def test_convert_tof_to_energy_transfer_direct_indirect_are_distinct():
 
 # Test conversions between quantities that are themselves
 # outputs of conversions from tof.
-@pytest.mark.parametrize('keep_tof', (False, True))
+@pytest.mark.parametrize('keep_tof', [False, True])
 @pytest.mark.parametrize(
     ('target', 'target_unit'),
-    (
+    [
         ('energy', sc.units.meV),
         ('wavelength', sc.units.angstrom),
         ('dspacing', sc.units.angstrom),
-    ),
+    ],
 )
-@pytest.mark.parametrize('origin', ('energy', 'wavelength'))
+@pytest.mark.parametrize('origin', ['energy', 'wavelength'])
 def test_convert_non_tof(origin, target, target_unit, keep_tof):
     tof = make_test_data(coords=('tof', 'Ltotal', 'two_theta'), dataset=True)
     original = scn.convert(tof, origin='tof', target=origin, scatter=True)
@@ -596,9 +612,9 @@ def test_convert_integer_input_elastic(target):
     )
 
 
-@pytest.mark.parametrize('input_energy', ('incident_energy', 'final_energy'))
+@pytest.mark.parametrize('input_energy', ['incident_energy', 'final_energy'])
 @pytest.mark.parametrize(
-    'input_dtypes', (('int64', 'float64'), ('float64', 'int64'), ('int64', 'int64'))
+    'input_dtypes', [('int64', 'float64'), ('float64', 'int64'), ('int64', 'int64')]
 )
 def test_convert_integer_input_inelastic(input_energy, input_dtypes):
     da_float_coord = make_test_data(coords=('tof', 'L1', 'L2', 'two_theta'))

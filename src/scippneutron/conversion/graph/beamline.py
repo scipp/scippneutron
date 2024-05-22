@@ -7,11 +7,11 @@ See :mod:`scippneutron.conversion.beamline` for definitions
 of the quantities used here.
 """
 
-from typing import Callable, Dict
+from collections.abc import Callable
 
 from .. import beamline as _kernels
 
-Graph = Dict[str, Callable]
+Graph = dict[str, Callable]
 
 
 def incident_beam() -> Graph:

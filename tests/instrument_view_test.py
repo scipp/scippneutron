@@ -124,7 +124,9 @@ def test_neutron_instrument_view_components_with_invalid_type():
             d["a"],
             components={'sample': _make_component_settings(data=d, type=shape_type)},
         )
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match='Unknown shape: trefoil_knot requested for sample'
+    ):
         scn.instrument_view(
             d["a"],
             components={

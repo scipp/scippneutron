@@ -17,11 +17,11 @@ Functions in this module come in two categories and return graphs that
   Their ``start`` argument works as in the other functions.
 """
 
-from typing import Callable, Dict
+from collections.abc import Callable
 
 from .. import tof as _kernels
 
-Graph = Dict[str, Callable]
+Graph = dict[str, Callable]
 
 _GRAPH_DYNAMICS_BY_ORIGIN = {
     'energy': {

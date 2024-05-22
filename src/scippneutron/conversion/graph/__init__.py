@@ -2,7 +2,6 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Jan-Lukas Wynen
 
-# flake8: noqa[F401]
 """Graphs for coordinate transformations.
 
 All graphs are defined in terms of the functions in the parent module
@@ -21,3 +20,5 @@ more examples.
 """
 
 from . import beamline, tof
+
+__all__ = ['beamline', 'tof']

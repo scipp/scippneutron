@@ -2,10 +2,11 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
 import json
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Union
 
 import h5py
 import numpy as np
@@ -18,7 +19,7 @@ from scippneutron.io.nexus._json_nexus import (
     make_json_dataset,
 )
 
-h5root = Union[h5py.File, h5py.Group]
+h5root = h5py.File | h5py.Group
 
 
 def _create_nx_class(group_name: str, nx_class_name: str, parent: h5root) -> h5py.Group:
@@ -42,30 +43,30 @@ def in_memory_hdf5_file_with_two_nxentry() -> Iterator[h5py.File]:
 
 @dataclass
 class EventData:
-    event_id: Optional[np.ndarray]
-    event_time_offset: Optional[np.ndarray]
-    event_time_zero: Optional[np.ndarray]
-    event_index: Optional[np.ndarray]
-    event_time_zero_unit: Optional[Union[str, bytes]] = "ns"
-    event_time_zero_offset: Optional[Union[str, bytes]] = "1970-01-01T00:00:00Z"
-    event_time_offset_unit: Optional[Union[str, bytes]] = "ns"
+    event_id: np.ndarray | None
+    event_time_offset: np.ndarray | None
+    event_time_zero: np.ndarray | None
+    event_index: np.ndarray | None
+    event_time_zero_unit: str | bytes | None = "ns"
+    event_time_zero_offset: str | bytes | None = "1970-01-01T00:00:00Z"
+    event_time_offset_unit: str | bytes | None = "ns"
 
 
 @dataclass
 class Log:
     name: str
-    value: Optional[np.ndarray]
-    time: Optional[np.ndarray] = None
-    value_units: Optional[Union[str, bytes]] = None
+    value: np.ndarray | None
+    time: np.ndarray | None = None
+    value_units: str | bytes | None = None
 
     # From
     # https://manual.nexusformat.org/classes/base_classes/NXlog.html?highlight=nxlog
     # time units are non-optional if time series data is present, and the unit
     # must be a unit of time (i.e. convertible to seconds).
-    time_units: Optional[Union[str, bytes]] = "s"
+    time_units: str | bytes | None = "s"
 
-    start_time: Optional[Union[str, bytes]] = "1970-01-01T00:00:00Z"
-    scaling_factor: Optional[float] = None
+    start_time: str | bytes | None = "1970-01-01T00:00:00Z"
+    scaling_factor: float | None = None
 
 
 class TransformationType(Enum):
@@ -77,26 +78,26 @@ class TransformationType(Enum):
 class Transformation:
     transform_type: TransformationType
     vector: np.ndarray
-    value: Optional[np.ndarray]
-    time: Optional[np.ndarray] = None
+    value: np.ndarray | None
+    time: np.ndarray | None = None
     depends_on: Union["Transformation", str, None] = None
-    offset: Optional[np.ndarray] = None
-    offset_unit: Optional[str] = None
-    value_units: Optional[Union[str, bytes]] = None
-    time_units: Optional[Union[str, bytes]] = None
+    offset: np.ndarray | None = None
+    offset_unit: str | None = None
+    value_units: str | bytes | None = None
+    time_units: str | bytes | None = None
 
 
 @dataclass
 class Detector:
-    detector_numbers: Optional[np.ndarray] = None
-    event_data: Optional[EventData] = None
-    log: Optional[Log] = None
-    x_offsets: Optional[np.ndarray] = None
-    y_offsets: Optional[np.ndarray] = None
-    z_offsets: Optional[np.ndarray] = None
-    offsets_unit: Optional[Union[str, bytes]] = None
-    depends_on: Optional[Transformation] = None
-    data: Optional[np.ndarray] = None
+    detector_numbers: np.ndarray | None = None
+    event_data: EventData | None = None
+    log: Log | None = None
+    x_offsets: np.ndarray | None = None
+    y_offsets: np.ndarray | None = None
+    z_offsets: np.ndarray | None = None
+    offsets_unit: str | bytes | None = None
+    depends_on: Transformation | None = None
+    data: np.ndarray | None = None
 
 
 @dataclass
@@ -109,19 +110,19 @@ class Data:
 @dataclass
 class Sample:
     name: str
-    depends_on: Optional[Transformation] = None
-    distance: Optional[float] = None
-    distance_units: Optional[Union[str, bytes]] = None
-    ub_matrix: Optional[np.ndarray] = None
-    orientation_matrix: Optional[np.ndarray] = None
+    depends_on: Transformation | None = None
+    distance: float | None = None
+    distance_units: str | bytes | None = None
+    ub_matrix: np.ndarray | None = None
+    orientation_matrix: np.ndarray | None = None
 
 
 @dataclass
 class Source:
     name: str
-    depends_on: Union[Transformation, None, str] = None
-    distance: Optional[float] = None
-    distance_units: Optional[Union[str, bytes]] = None
+    depends_on: Transformation | None | str = None
+    distance: float | None = None
+    distance_units: str | bytes | None = None
 
 
 @dataclass
@@ -129,8 +130,8 @@ class Chopper:
     name: str
     distance: float
     rotation_speed: float
-    distance_units: Optional[str] = None
-    rotation_units: Optional[str] = None
+    distance_units: str | None = None
+    rotation_units: str | None = None
 
 
 @dataclass
@@ -143,7 +144,7 @@ class Link:
 class DatasetAtPath:
     path: str
     data: np.ndarray
-    attributes: Dict[str, Any]
+    attributes: dict[str, Any]
 
 
 @dataclass
@@ -184,14 +185,14 @@ class Stream:
 class Monitor:
     name: str
     data: np.ndarray
-    axes: List[Tuple[str, np.ndarray]]
-    events: Optional[EventData] = None
-    depends_on: Optional[Transformation] = None
+    axes: list[tuple[str, np.ndarray]]
+    events: EventData | None = None
+    depends_on: Transformation | None = None
 
 
 class InMemoryNeXusWriter:
     def add_dataset_at_path(
-        self, file_root: h5py.File, path: str, data: np.ndarray, attributes: Dict
+        self, file_root: h5py.File, path: str, data: np.ndarray, attributes: dict
     ):
         path_split = path.split("/")
         dataset_name = path_split[-1]
@@ -202,15 +203,15 @@ class InMemoryNeXusWriter:
 
     @staticmethod
     def add_dataset(
-        parent: h5py.Group, name: str, data: Union[str, bytes, np.ndarray]
+        parent: h5py.Group, name: str, data: str | bytes | np.ndarray
     ) -> h5py.Dataset:
         return parent.create_dataset(name, data=data)
 
     @staticmethod
     def add_attribute(
-        parent: Union[h5py.Group, h5py.Dataset],
+        parent: h5py.Group | h5py.Dataset,
         name: str,
-        value: Union[str, bytes, np.ndarray],
+        value: str | bytes | np.ndarray,
     ):
         parent.attrs[name] = value
 
@@ -255,7 +256,7 @@ def _get_object_by_path(file_root, path):
     return obj
 
 
-def _add_link_to_json(file_root: Dict, new_path: str, target_path: str):
+def _add_link_to_json(file_root: dict, new_path: str, target_path: str):
     new_path_split = new_path.split("/")
     link_name = new_path_split[-1]
     parent_path = "/".join(new_path_split[:-1])
@@ -267,7 +268,7 @@ def _add_link_to_json(file_root: Dict, new_path: str, target_path: str):
     parent_group["children"].append(link)
 
 
-def _parent_and_name_from_path(file_root: Dict, path: str) -> Tuple[Dict, str]:
+def _parent_and_name_from_path(file_root: dict, path: str) -> tuple[dict, str]:
     path_split = path.split("/")
     name = path_split[-1]
     parent_path = '/'.join(path_split[:-1])
@@ -277,7 +278,7 @@ def _parent_and_name_from_path(file_root: Dict, path: str) -> Tuple[Dict, str]:
 
 class JsonWriter:
     def add_dataset_at_path(
-        self, file_root: Dict, path: str, data: np.ndarray, attributes: Dict
+        self, file_root: dict, path: str, data: np.ndarray, attributes: dict
     ):
         parent_group, dataset_name = _parent_and_name_from_path(file_root, path)
         dataset = self.add_dataset(parent_group, dataset_name, data)
@@ -285,35 +286,31 @@ class JsonWriter:
             self.add_attribute(dataset, name, value)
 
     @staticmethod
-    def add_dataset(
-        parent: Dict, name: str, data: Union[str, bytes, np.ndarray]
-    ) -> Dict:
+    def add_dataset(parent: dict, name: str, data: str | bytes | np.ndarray) -> dict:
         dataset = make_json_dataset(name, data)
         parent["children"].append(dataset)
         return dataset
 
     @staticmethod
-    def add_attribute(
-        parent: Dict, name: str, value: Union[str, bytes, list, np.ndarray]
-    ):
+    def add_attribute(parent: dict, name: str, value: str | bytes | list | np.ndarray):
         attr = make_json_attr(name, value)
         parent["attributes"].append(attr)
 
     @staticmethod
-    def add_group(parent: Dict, name: str) -> Dict:
+    def add_group(parent: dict, name: str) -> dict:
         new_group = {"type": "group", "name": name, "children": [], "attributes": []}
         parent["children"].append(new_group)
         return new_group
 
     @staticmethod
-    def add_hard_link(file_root: Dict, new_path: str, target_path: str):
+    def add_hard_link(file_root: dict, new_path: str, target_path: str):
         _add_link_to_json(file_root, new_path, target_path)
 
     @staticmethod
-    def add_soft_link(file_root: Dict, new_path: str, target_path: str):
+    def add_soft_link(file_root: dict, new_path: str, target_path: str):
         _add_link_to_json(file_root, new_path, target_path)
 
-    def add_stream(self, file_root: Dict, stream: Stream):
+    def add_stream(self, file_root: dict, stream: Stream):
         new_stream = {
             "module": stream.writer_module,
             "config": {
@@ -342,28 +339,28 @@ class NexusBuilder:
     """
 
     def __init__(self):
-        self._event_data: List[EventData] = []
-        self._detectors: List[Detector] = []
-        self._logs: List[Log] = []
-        self._instrument_name: Optional[str] = None
-        self._choppers: List[Chopper] = []
-        self._title: Optional[str] = None
-        self._start_time: Optional[str] = None
-        self._end_time: Optional[str] = None
-        self._sample: List[Sample] = []
-        self._source: List[Source] = []
-        self._hard_links: List[Link] = []
-        self._soft_links: List[Link] = []
+        self._event_data: list[EventData] = []
+        self._detectors: list[Detector] = []
+        self._logs: list[Log] = []
+        self._instrument_name: str | None = None
+        self._choppers: list[Chopper] = []
+        self._title: str | None = None
+        self._start_time: str | None = None
+        self._end_time: str | None = None
+        self._sample: list[Sample] = []
+        self._source: list[Source] = []
+        self._hard_links: list[Link] = []
+        self._soft_links: list[Link] = []
         self._writer = None
-        self._datasets: List[DatasetAtPath] = []
+        self._datasets: list[DatasetAtPath] = []
         self._streams = []
         self._monitors = []
         self._datas = []
 
-    def add_dataset_at_path(self, path: str, data: np.ndarray, attributes: Dict):
+    def add_dataset_at_path(self, path: str, data: np.ndarray, attributes: dict):
         self._datasets.append(DatasetAtPath(path, data, attributes))
 
-    def _write_datasets(self, root: Union[Dict, h5py.File]):
+    def _write_datasets(self, root: dict | h5py.File):
         for dataset in self._datasets:
             self._writer.add_dataset_at_path(
                 root, dataset.path, dataset.data, dataset.attributes
@@ -419,7 +416,7 @@ class NexusBuilder:
         """
         self._soft_links.append(link)
 
-    def add_component(self, component: Union[Sample, Source]):
+    def add_component(self, component: Sample | Source):
         # This is a little ugly, but allows parametrisation
         # of tests which should work for sample and source
         if isinstance(component, Sample):
@@ -470,7 +467,7 @@ class NexusBuilder:
         finally:
             nexus_file.close()
 
-    def _write_file(self, nexus_file: Union[h5py.File, Dict]):
+    def _write_file(self, nexus_file: h5py.File | dict):
         entry_group = self._create_nx_class("entry", "NXentry", nexus_file)
         if self._title is not None:
             self._writer.add_dataset(entry_group, "title", data=self._title)
@@ -509,7 +506,7 @@ class NexusBuilder:
         finally:
             nexus_file.close()
 
-    def _write_links(self, file_root: Union[h5py.Group, Dict]):
+    def _write_links(self, file_root: h5py.Group | dict):
         for hard_link in self._hard_links:
             self._writer.add_hard_link(
                 file_root, hard_link.new_path, hard_link.target_path
@@ -519,7 +516,7 @@ class NexusBuilder:
                 file_root, soft_link.new_path, soft_link.target_path
             )
 
-    def _write_sample(self, parent_group: Union[h5py.Group, Dict]):
+    def _write_sample(self, parent_group: h5py.Group | dict):
         for sample in self._sample:
             sample_group = self._create_nx_class(sample.name, "NXsample", parent_group)
             if sample.depends_on is not None:
@@ -546,7 +543,7 @@ class NexusBuilder:
                     sample_group, "orientation_matrix", data=sample.orientation_matrix
                 )
 
-    def _write_source(self, parent_group: Union[h5py.Group, Dict]):
+    def _write_source(self, parent_group: h5py.Group | dict):
         for source in self._source:
             source_group = self._create_nx_class(source.name, "NXsource", parent_group)
             if source.depends_on is not None:
@@ -566,16 +563,14 @@ class NexusBuilder:
                         distance_ds, "units", source.distance_units
                     )
 
-    def _write_instrument(
-        self, parent_group: Union[h5py.Group, Dict]
-    ) -> Union[h5py.Group, Dict]:
+    def _write_instrument(self, parent_group: h5py.Group | dict) -> h5py.Group | dict:
         instrument_group = self._create_nx_class(
             "instrument", "NXinstrument", parent_group
         )
         self._writer.add_dataset(instrument_group, "name", self._instrument_name)
         return instrument_group
 
-    def _write_detectors(self, parent_group: Union[h5py.Group, Dict], parent_path: str):
+    def _write_detectors(self, parent_group: h5py.Group | dict, parent_path: str):
         for detector_index, detector in enumerate(self._detectors):
             detector_name = f"detector_{detector_index}"
             detector_group = self._add_detector_group_to_file(
@@ -607,7 +602,7 @@ class NexusBuilder:
                 )
                 self._writer.add_dataset(detector_group, "depends_on", data=depends_on)
 
-    def _write_choppers(self, parent_group: Union[h5py.Group, Dict]):
+    def _write_choppers(self, parent_group: h5py.Group | dict):
         for chopper in self._choppers:
             chopper_group = self._create_nx_class(
                 chopper.name, "NXdisk_chopper", parent_group
@@ -623,13 +618,13 @@ class NexusBuilder:
             if chopper.rotation_units is not None:
                 self._writer.add_attribute(rotation_ds, "units", chopper.rotation_units)
 
-    def _write_event_data(self, parent_group: Union[h5py.Group, Dict]):
+    def _write_event_data(self, parent_group: h5py.Group | dict):
         for event_data_index, event_data in enumerate(self._event_data):
             self._add_event_data_group_to_file(
                 event_data, parent_group, f"events_{event_data_index}"
             )
 
-    def _write_monitors(self, parent_group: Union[h5py.Group, Dict]):
+    def _write_monitors(self, parent_group: h5py.Group | dict):
         for monitor in self._monitors:
             self._add_monitor_group_to_file(monitor, parent_group)
 
@@ -660,7 +655,7 @@ class NexusBuilder:
                 )
             self._writer.add_dataset(monitor_group, "depends_on", data=depends_on)
 
-    def _write_datas(self, parent_group: Union[h5py.Group, Dict]):
+    def _write_datas(self, parent_group: h5py.Group | dict):
         for data in self._datas:
             self._add_data_group_to_file(data, parent_group)
 
@@ -682,7 +677,7 @@ class NexusBuilder:
             for k, v in data.attrs.items():
                 self._writer.add_attribute(group, k, v)
 
-    def _write_logs(self, parent_group: Union[h5py.Group, Dict]):
+    def _write_logs(self, parent_group: h5py.Group | dict):
         for log in self._logs:
             self._add_log_group_to_file(log, parent_group)
 
@@ -759,7 +754,7 @@ class NexusBuilder:
         transform_number: int,
         transforms_group: h5py.Group,
         group_path: str,
-        depends_on: Optional[str],
+        depends_on: str | None,
     ) -> str:
         transform_name = f"transform_{transform_number}"
         added_transform = self._writer.add_dataset(
@@ -794,7 +789,7 @@ class NexusBuilder:
         transform_number: int,
         transforms_group: h5py.Group,
         group_path: str,
-        depends_on: Optional[str],
+        depends_on: str | None,
     ) -> str:
         transform_name = f"transform_{transform_number}"
         added_transform = self._add_log_group_to_file(
@@ -835,8 +830,8 @@ class NexusBuilder:
 
     def _add_transform_attributes(
         self,
-        added_transform: Union[h5py.Group, h5py.Dataset],
-        depends_on: Optional[str],
+        added_transform: h5py.Group | h5py.Dataset,
+        depends_on: str | None,
         transform: Transformation,
     ):
         self._writer.add_attribute(added_transform, "vector", transform.vector)
@@ -863,7 +858,7 @@ class NexusBuilder:
         self._writer.add_attribute(nx_class, "NX_class", nx_class_name)
         return nx_class
 
-    def _write_streams(self, root: Union[h5py.File, Dict]):
+    def _write_streams(self, root: h5py.File | dict):
         if isinstance(self._writer, JsonWriter):
             for stream in self._streams:
                 self._writer.add_stream(root, stream)

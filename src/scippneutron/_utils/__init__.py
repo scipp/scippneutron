@@ -5,7 +5,7 @@
 Internal utilities; do not use outside scippneutron!
 """
 
-from typing import MutableMapping
+from collections.abc import MutableMapping
 
 import scipp as sc
 from scipp.typing import VariableLike

@@ -25,7 +25,7 @@ def test_write_block_empty():
 
 
 def test_write_block_name_with_space():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='Block name must not contain spaces'):
         cif.Block('a block-name with space')
 
 
@@ -80,7 +80,7 @@ _cell.angle_alpha 62
     )
 
 
-@pytest.mark.parametrize('unit', (None, 'deg'))
+@pytest.mark.parametrize('unit', [None, 'deg'])
 def test_write_block_single_pair_number_variable(unit):
     block = cif.Block('number', [{'cell.angle_alpha': sc.scalar(93, unit=unit)}])
     res = write_to_str(block)
@@ -93,7 +93,7 @@ _cell.angle_alpha 93
     )
 
 
-@pytest.mark.parametrize('unit', (None, 'deg'))
+@pytest.mark.parametrize('unit', [None, 'deg'])
 def test_write_block_single_pair_number_error(unit):
     block = cif.Block(
         'number', [{'cell.angle_alpha': sc.scalar(93.2, variance=2.1**2, unit=unit)}]
@@ -640,7 +640,7 @@ _audit_conform.dict_location
 coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
 
 _audit.creation_method 'written by scippneutron'
-'''  # noqa: E501
+'''
     )
 
 
@@ -668,7 +668,7 @@ _audit_author.name
 _audit_author.email
 'Ridcully, M.' m.ridcully@uu.am
 Librarian lib@uu.am
-'''  # noqa: E501
+'''
     )
 
 
@@ -748,7 +748,7 @@ sulfur
     )
 
 
-@pytest.mark.parametrize('path_type', (str, Path))
+@pytest.mark.parametrize('path_type', [str, Path])
 def test_save_cif_one_block_file(tmpdir, path_type):
     path = path_type(Path(tmpdir) / "test_save_cif_one_block.cif")
     block1 = cif.Block(
@@ -756,7 +756,7 @@ def test_save_cif_one_block_file(tmpdir, path_type):
     )
 
     cif.save_cif(path, block1)
-    with open(path, 'r') as f:
+    with open(path) as f:
         assert (
             f.read()
             == r'''#\#CIF_1.1
@@ -862,7 +862,9 @@ def test_block_with_reduced_powder_data_bad_name():
     )
 
     block = cif.Block('reduced', [])
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match='Unrecognized name for reduced powder data: bad'
+    ):
         block.add_reduced_powder_data(da)
 
 

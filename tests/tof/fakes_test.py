@@ -8,7 +8,7 @@ from scipp.testing import assert_identical
 from scippneutron.tof import fakes
 
 
-@pytest.fixture
+@pytest.fixture()
 def ess_10s_14Hz() -> fakes.FakeSource:
     return fakes.FakeSource(
         frequency=sc.scalar(14.0, unit='Hz'), run_length=sc.scalar(10.0, unit='s')

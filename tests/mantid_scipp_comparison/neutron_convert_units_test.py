@@ -2,8 +2,6 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Jan-Lukas Wynen
 
-from typing import Optional
-
 import pytest
 import scipp as sc
 
@@ -29,7 +27,7 @@ def mantid_coord(scipp_coord: str) -> str:
 
 
 def make_workspace(
-    coord: str, emode: str = 'Elastic', efixed: Optional[sc.Variable] = None
+    coord: str, emode: str = 'Elastic', efixed: sc.Variable | None = None
 ) -> 'sapi.Workspace':
     ws = sapi.CreateSampleWorkspace(XMin=1000, NumBanks=1, StoreInADS=False)
     # Crop out spectra index 0 as has two_theta=0, gives inf d-spacing
@@ -58,7 +56,7 @@ def mantid_convert_units(
     ws: 'sapi.Workspace',
     target: str,
     emode: str = 'Elastic',
-    efixed: Optional[sc.Variable] = None,
+    efixed: sc.Variable | None = None,
 ) -> sc.DataArray:
     out_ws = sapi.ConvertUnits(
         InputWorkspace=ws,

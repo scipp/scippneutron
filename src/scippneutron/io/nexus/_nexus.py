@@ -1,5 +1,3 @@
-from typing import Union
-
 import scipp as sc
 
-ScippData = Union[sc.Dataset, sc.DataArray, None]
+ScippData = sc.Dataset | sc.DataArray | None

@@ -2,7 +2,7 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Jan-Lukas Wynen
 
-from typing import Callable, Dict, Tuple, Union
+from collections.abc import Callable
 
 import scipp as sc
 
@@ -45,7 +45,7 @@ def _scatter_graph(origin, target, energy_mode):
 
 def conversion_graph(
     origin: str, target: str, scatter: bool, energy_mode: str
-) -> Dict[Union[str, Tuple[str]], Callable]:
+) -> dict[str | tuple[str], Callable]:
     """
     Get a conversion graph for given parameters.
 
@@ -105,8 +105,8 @@ def _deduce_energy_mode(data, origin, target):
 
 
 def deduce_conversion_graph(
-    data: Union[sc.DataArray, sc.Dataset], origin: str, target: str, scatter: bool
-) -> Dict[Union[str, Tuple[str]], Callable]:
+    data: sc.DataArray | sc.Dataset, origin: str, target: str, scatter: bool
+) -> dict[str | tuple[str], Callable]:
     """
     Get the conversion graph used by :py:func:`scippneutron.convert`
     when called with identical arguments.
@@ -124,8 +124,8 @@ def deduce_conversion_graph(
 
 
 def convert(
-    data: Union[sc.DataArray, sc.Dataset], origin: str, target: str, scatter: bool
-) -> Union[sc.DataArray, sc.Dataset]:
+    data: sc.DataArray | sc.Dataset, origin: str, target: str, scatter: bool
+) -> sc.DataArray | sc.Dataset:
     """
     Perform a unit conversion from the given origin unit to target.
     See the documentation page on "Coordinate Transformations"
@@ -151,7 +151,7 @@ def convert(
             raise RuntimeError(
                 f"No viable conversion from '{origin}' to '{target}' "
                 f"with scatter={scatter}."
-            )
+            ) from None
         raise RuntimeError(
             f"Missing coordinate '{err.args[0]}' for conversion "
             f"from '{origin}' to '{target}'"

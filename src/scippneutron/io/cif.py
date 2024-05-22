@@ -63,11 +63,12 @@ from __future__ import annotations
 
 import io
 import warnings
+from collections.abc import Iterable, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Optional, Union
+from typing import Any
 
 import scipp as sc
 
@@ -82,17 +83,17 @@ class CIFSchema:
 CORE_SCHEMA = CIFSchema(
     name='coreCIF',
     version='3.3.0',
-    location='https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic',  # noqa: E501
+    location='https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic',
 )
 PD_SCHEMA = CIFSchema(
     name='pdCIF',
     version='2.5.0',
-    location='https://github.com/COMCIFS/Powder_Dictionary/blob/7608b92165f58f968f054344e67662e01d4b401a/cif_pow.dic',  # noqa: E501
+    location='https://github.com/COMCIFS/Powder_Dictionary/blob/7608b92165f58f968f054344e67662e01d4b401a/cif_pow.dic',
 )
 
 
 def save_cif(
-    fname: Union[str, Path, io.TextIOBase], blocks: Union[Block, Iterable[Block]]
+    fname: str | Path | io.TextIOBase, blocks: Block | Iterable[Block]
 ) -> None:
     """Save data blocks to a CIF file.
 
@@ -127,11 +128,11 @@ class Chunk:
 
     def __init__(
         self,
-        pairs: Union[Mapping[str, Any], Iterable[tuple[str, Any]], None],
+        pairs: Mapping[str, Any] | Iterable[tuple[str, Any]] | None,
         /,
         *,
         comment: str = '',
-        schema: Optional[Union[CIFSchema, Iterable[CIFSchema]]] = None,
+        schema: CIFSchema | Iterable[CIFSchema] | None = None,
     ) -> None:
         """Create a new CIF chunk.
 
@@ -195,12 +196,10 @@ class Loop:
 
     def __init__(
         self,
-        columns: Union[
-            Mapping[str, sc.Variable], Iterable[tuple[str, sc.Variable]], None
-        ],
+        columns: Mapping[str, sc.Variable] | Iterable[tuple[str, sc.Variable]] | None,
         *,
         comment: str = '',
-        schema: Optional[Union[CIFSchema, Iterable[CIFSchema]]] = None,
+        schema: CIFSchema | Iterable[CIFSchema] | None = None,
     ) -> None:
         """Create a new CIF loop.
 
@@ -267,7 +266,8 @@ class Loop:
         for key in self._columns:
             f.write(f'_{key}\n')
         formatted_values = [
-            tuple(map(_format_value, row)) for row in zip(*self._columns.values())
+            tuple(map(_format_value, row))
+            for row in zip(*self._columns.values(), strict=True)
         ]
         # If any value is a multi-line string, lay out elements as a flat vertical
         # list, otherwise use a 2d table.
@@ -292,10 +292,10 @@ class Block:
     def __init__(
         self,
         name: str,
-        content: Optional[Iterable[Union[Mapping[str, Any], Loop, Chunk]]] = None,
+        content: Iterable[Mapping[str, Any] | Loop | Chunk] | None = None,
         *,
         comment: str = '',
-        schema: Optional[Union[CIFSchema, Iterable[CIFSchema]]] = None,
+        schema: CIFSchema | Iterable[CIFSchema] | None = None,
     ) -> None:
         """Create a new CIF data block.
 
@@ -362,7 +362,7 @@ class Block:
 
     def add(
         self,
-        content: Union[Mapping[str, Any], Iterable[tuple[str, Any]], Chunk, Loop],
+        content: Mapping[str, Any] | Iterable[tuple[str, Any]] | Chunk | Loop,
         /,
         comment: str = '',
     ) -> None:
@@ -376,7 +376,7 @@ class Block:
         comment:
             Optional comment that can be written above the chunk or loop in the file.
         """
-        if not isinstance(content, (Chunk, Loop)):
+        if not isinstance(content, Chunk | Loop):
             content = Chunk(content, comment=comment)
         self._content.append(content)
 
@@ -481,15 +481,13 @@ class Block:
 
 
 def _convert_input_content(
-    content: Iterable[Union[Mapping[str, Any], Loop, Chunk]]
-) -> list[Union[Loop, Chunk]]:
-    return [
-        item if isinstance(item, (Loop, Chunk)) else Chunk(item) for item in content
-    ]
+    content: Iterable[Mapping[str, Any] | Loop | Chunk],
+) -> list[Loop | Chunk]:
+    return [item if isinstance(item, Loop | Chunk) else Chunk(item) for item in content]
 
 
 @contextmanager
-def _open(fname: Union[str, Path, io.TextIOBase]):
+def _open(fname: str | Path | io.TextIOBase):
     if isinstance(fname, io.TextIOBase):
         yield fname
     else:
@@ -498,7 +496,7 @@ def _open(fname: Union[str, Path, io.TextIOBase]):
 
 
 def _preprocess_schema(
-    schema: Optional[Union[CIFSchema, Iterable[CIFSchema]]]
+    schema: CIFSchema | Iterable[CIFSchema] | None,
 ) -> set[CIFSchema]:
     if schema is None:
         return set()
@@ -510,7 +508,7 @@ def _preprocess_schema(
     return res
 
 
-def _make_schema_loop(schema: set[CIFSchema]) -> Optional[Loop]:
+def _make_schema_loop(schema: set[CIFSchema]) -> Loop | None:
     if not schema:
         return None
     columns = {
@@ -527,7 +525,7 @@ def _make_schema_loop(schema: set[CIFSchema]) -> Optional[Loop]:
     )
 
 
-def _quotes_for_string_value(value: str) -> Optional[str]:
+def _quotes_for_string_value(value: str) -> str | None:
     if '\n' in value:
         return ';'
     if "'" in value:
