@@ -344,6 +344,11 @@ def test_scattering_angles_with_gravity_beams_aligned_with_lab_coords():
         dims=['det'], values=[[0.0, 2.5, 3.6], [0.0, -1.7, 2.9]], unit='m'
     )
 
+    original_wavelength = wavelength.copy()
+    original_gravity = gravity.copy()
+    original_incident_beam = incident_beam.copy()
+    original_scattered_beam = scattered_beam.copy()
+
     res = beamline.scattering_angles_with_gravity(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
@@ -372,6 +377,11 @@ def test_scattering_angles_with_gravity_beams_aligned_with_lab_coords():
         res['two_theta'], expected_two_theta, rtol=sc.scalar(1e-5)
     )
     sc.testing.assert_allclose(res['phi'], expected_phi, rtol=sc.scalar(1e-10))
+
+    sc.testing.assert_identical(wavelength, original_wavelength)
+    sc.testing.assert_identical(gravity, original_gravity)
+    sc.testing.assert_identical(incident_beam, original_incident_beam)
+    sc.testing.assert_identical(scattered_beam, original_scattered_beam)
 
 
 def _reference_scattering_angles_with_gravity(
@@ -413,6 +423,11 @@ def test_scattering_angles_with_gravity_beams_unaligned_with_lab_coords():
         dims=['det'], values=[[1.8, 2.5, 3.6], [-0.4, -1.7, 2.9]], unit='m'
     )
 
+    original_wavelength = wavelength.copy()
+    original_gravity = gravity.copy()
+    original_incident_beam = incident_beam.copy()
+    original_scattered_beam = scattered_beam.copy()
+
     res = beamline.scattering_angles_with_gravity(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
@@ -430,6 +445,11 @@ def test_scattering_angles_with_gravity_beams_unaligned_with_lab_coords():
         res['two_theta'], expected['two_theta'], rtol=sc.scalar(1e-5)
     )
     sc.testing.assert_allclose(res['phi'], expected['phi'], rtol=sc.scalar(1e-10))
+
+    sc.testing.assert_identical(wavelength, original_wavelength)
+    sc.testing.assert_identical(gravity, original_gravity)
+    sc.testing.assert_identical(incident_beam, original_incident_beam)
+    sc.testing.assert_identical(scattered_beam, original_scattered_beam)
 
 
 def test_scattering_angles_with_gravity_binned_data():
@@ -446,6 +466,11 @@ def test_scattering_angles_with_gravity_binned_data():
         dims=['det'], values=[[1.8, 2.5, 3.6], [-0.4, -1.7, 2.9]], unit='m'
     )
 
+    original_wavelength = wavelength.copy()
+    original_gravity = gravity.copy()
+    original_incident_beam = incident_beam.copy()
+    original_scattered_beam = scattered_beam.copy()
+
     res = beamline.scattering_angles_with_gravity(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
@@ -463,6 +488,11 @@ def test_scattering_angles_with_gravity_binned_data():
         res['two_theta'], expected['two_theta'], rtol=sc.scalar(1e-5)
     )
     sc.testing.assert_allclose(res['phi'], expected['phi'], rtol=sc.scalar(1e-10))
+
+    sc.testing.assert_identical(wavelength, original_wavelength)
+    sc.testing.assert_identical(gravity, original_gravity)
+    sc.testing.assert_identical(incident_beam, original_incident_beam)
+    sc.testing.assert_identical(scattered_beam, original_scattered_beam)
 
 
 def test_scattering_angles_with_gravity_uses_wavelength_dtype():
