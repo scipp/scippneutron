@@ -195,7 +195,7 @@ def test_scattering_angles_with_gravity_small_gravity():
     )
     expected = beamline.two_theta(
         incident_beam=incident_beam, scattered_beam=scattered_beam
-    ).broadcast(dims=['beam', 'wavelength'], shape=[4, 3])
+    ).broadcast(dims=['wavelength', 'beam'], shape=[3, 4])
     sc.testing.assert_allclose(res['two_theta'], expected)
 
 
@@ -442,9 +442,13 @@ def test_scattering_angles_with_gravity_beams_unaligned_with_lab_coords():
     )
 
     sc.testing.assert_allclose(
-        res['two_theta'], expected['two_theta'], rtol=sc.scalar(1e-5)
+        res['two_theta'],
+        expected['two_theta'].transpose(res['two_theta'].dims),
+        rtol=sc.scalar(1e-5),
     )
-    sc.testing.assert_allclose(res['phi'], expected['phi'], rtol=sc.scalar(1e-10))
+    sc.testing.assert_allclose(
+        res['phi'], expected['phi'].transpose(res['phi'].dims), rtol=sc.scalar(1e-10)
+    )
 
     sc.testing.assert_identical(wavelength, original_wavelength)
     sc.testing.assert_identical(gravity, original_gravity)
@@ -485,9 +489,13 @@ def test_scattering_angles_with_gravity_binned_data():
     )
 
     sc.testing.assert_allclose(
-        res['two_theta'], expected['two_theta'], rtol=sc.scalar(1e-5)
+        res['two_theta'],
+        expected['two_theta'].transpose(res['two_theta'].dims),
+        rtol=sc.scalar(1e-5),
     )
-    sc.testing.assert_allclose(res['phi'], expected['phi'], rtol=sc.scalar(1e-10))
+    sc.testing.assert_allclose(
+        res['phi'], expected['phi'].transpose(res['phi'].dims), rtol=sc.scalar(1e-10)
+    )
 
     sc.testing.assert_identical(wavelength, original_wavelength)
     sc.testing.assert_identical(gravity, original_gravity)

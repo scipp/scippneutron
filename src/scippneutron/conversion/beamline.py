@@ -357,7 +357,7 @@ def _drop_due_to_gravity(
 ) -> sc.Variable:
     """Compute the distance a neutron drops due to gravity.
 
-    See the documentation of ``scattering_angles_with_gravity``.
+    See the documentation of :func:`scattering_angles_with_gravity`.
     """
     distance = distance.to(dtype=elem_dtype(wavelength), copy=False)
     const = (sc.norm(gravity) * (sc.constants.m_n**2 / (2 * sc.constants.h**2))).to(
@@ -373,7 +373,10 @@ def _drop_due_to_gravity(
     drop *= const
 
     distance *= distance
-    return distance * drop  # TODO in-place when possible
+    if set(distance.dims).issubset(drop.dims):
+        drop *= distance
+        return drop
+    return drop * distance
 
 
 def scattering_angles_with_gravity(
