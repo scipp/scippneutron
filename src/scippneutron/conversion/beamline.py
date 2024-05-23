@@ -127,7 +127,7 @@ def L1(*, incident_beam: VariableLike) -> VariableLike:
 
     See Also
     --------
-    scippneutron.conversions.beamline.straight_incident_beam:
+    straight_incident_beam:
     """
     return sc.norm(incident_beam)
 
@@ -153,7 +153,7 @@ def L2(*, scattered_beam: VariableLike) -> VariableLike:
 
     See Also
     --------
-    scippneutron.conversions.beamline.straight_scattered_beam:
+    straight_scattered_beam:
     """
     return sc.norm(scattered_beam)
 
@@ -269,7 +269,7 @@ def two_theta(
 ) -> VariableLike:
     """Compute the scattering angle between scattered and transmitted beams.
 
-    See :mod:`scippneutron.conversions.beamline` for the definition of the angle.
+    See :mod:`beamline` for the definition of the angle.
 
     The result is equivalent to
 
@@ -280,7 +280,9 @@ def two_theta(
         2\\theta &= \\mathsf{acos}(b_1 \\cdot b_2)
 
     but uses a numerically more stable implementation by W. Kahan
-    (https://people.eecs.berkeley.edu/~wkahan/MathH110/Cross.pdf).
+    described in paragraph of :cite:`kahan:2000:CPR`.
+    See also
+    https://people.eecs.berkeley.edu/~wkahan/MathH110/Cross.pdf.
 
     Parameters
     ----------
@@ -296,17 +298,15 @@ def two_theta(
 
     See Also
     --------
-    scippneutron.conversions.beamline.straight_incident_beam:
-    scippneutron.conversions.beamline.straight_scattered_beam:
+    straight_incident_beam:
+        Compute the incident beam for a straight beamline.
+    straight_scattered_beam:
+        Compute the scattered beam for a straight beamline.
+    scattering_angles_with_gravity:
+        Calculate ``two_theta`` and ``phi`` with gravity.
     """
-    # TODO gravity
-    # TODO use proper citation
     # The implementation is based on paragraph 13 of
     # https://people.eecs.berkeley.edu/~wkahan/MathH110/Cross.pdf
-    # Which is Kahan:2000:CPR in
-    # https://netlib.org/bibnet/authors/k/kahan-william-m.html
-    # And referenced by https://scicomp.stackexchange.com/a/27769
-    #
     # It claims that the formula is 'valid for euclidean spaces of any dimension'
     # and 'it never errs by more than a modest multiple of epsilon'
     # where 'epsilon is the roundoff threshold for individual arithmetic
@@ -321,11 +321,6 @@ class SphericalCoordinates(TypedDict):
 
     two_theta: sc.Variable
     phi: sc.Variable
-
-
-# TODO clean up
-# TODO check numerical error, compare with vector based calculation
-#   not sure which one is more precise but I suspect it's the vector based one
 
 
 def _beam_aligned_unit_vectors(
