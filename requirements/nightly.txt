@@ -16,13 +16,13 @@ h5py==3.11.0
     #   scippnexus
 idna==3.7
     # via requests
-platformdirs==4.2.0
+platformdirs==4.2.2
     # via pooch
 plopp @ git+https://github.com/scipp/plopp@main
     # via -r nightly.in
 pooch==1.8.1
     # via -r nightly.in
-requests==2.31.0
+requests==2.32.2
     # via pooch
 scipp @ https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
     # via
@@ -30,7 +30,7 @@ scipp @ https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly-c
     #   scippnexus
 scippnexus @ git+https://github.com/scipp/scippnexus@main
     # via -r nightly.in
-scipy==1.13.0
+scipy==1.13.1
     # via
     #   -r nightly.in
     #   scippnexus
