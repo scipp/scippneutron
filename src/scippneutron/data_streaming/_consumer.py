@@ -19,6 +19,7 @@ The following Kafka terminology is used extensively in the code:
 """
 
 import multiprocessing as mp
+import multiprocessing.queues
 import threading
 from collections.abc import Callable
 from queue import Empty as QueueEmpty
@@ -43,7 +44,7 @@ class FakeConsumer:
     to avoid network io in unit tests
     """
 
-    def __init__(self, input_queue: mp.Queue | None):
+    def __init__(self, input_queue: mp.queues.Queue | None):
         if input_queue is None:
             raise RuntimeError(
                 "A multiprocessing queue for test messages "
@@ -237,7 +238,7 @@ def create_consumers(
     kafka_broker: str,
     consumer_type_enum: ConsumerType,  # so we can inject fake consumer
     callback: Callable,
-    test_message_queue: mp.Queue | None,
+    test_message_queue: mp.queues.Queue | None,
 ) -> list[KafkaConsumer]:
     """
     Creates one consumer per TopicPartition that start consuming

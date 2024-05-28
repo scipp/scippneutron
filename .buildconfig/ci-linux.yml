@@ -41,4 +41,4 @@ dependencies:
   - sphinxcontrib-bibtex==2.6.2
 
   # docs and tests
-  - sciline==24.01.1
+  - sciline==24.04.1

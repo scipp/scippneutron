@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 import multiprocessing as mp
+import multiprocessing.queues
 from dataclasses import dataclass
 from enum import Enum
 from queue import Empty as QueueEmpty
@@ -40,15 +41,15 @@ def data_consumption_manager(
     slow_metadata_buffer_size: int,
     fast_metadata_buffer_size: int,
     chopper_buffer_size: int,
-    worker_instruction_queue: mp.Queue,
-    data_queue: mp.Queue,
-    test_message_queue: mp.Queue | None,
+    worker_instruction_queue: mp.queues.Queue,
+    data_queue: mp.queues.Queue,
+    test_message_queue: mp.queues.Queue | None,
 ):
     """
     Starts and stops buffers and data consumers which collect data and
     send them back to the main process via a queue.
 
-    All input args must be mp.Queue or pickleable as this function is launched
+    All input args must be mp.queues.Queue or pickleable as this function is launched
     as a multiprocessing.Process.
     """
     buffer = StreamedDataBuffer(
