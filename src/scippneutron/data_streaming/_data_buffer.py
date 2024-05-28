@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 import multiprocessing as mp
+import multiprocessing.queues
 import threading
 from collections.abc import Callable
 from datetime import datetime
@@ -108,7 +109,9 @@ class _FastMetadataBuffer:
     rather than via EPICS and the Forwarder.
     """
 
-    def __init__(self, stream_info: StreamInfo, buffer_size: int, data_queue: mp.Queue):
+    def __init__(
+        self, stream_info: StreamInfo, buffer_size: int, data_queue: mp.queues.Queue
+    ):
         self._buffer_mutex = threading.Lock()
         self._buffer_size = buffer_size
         self._name = stream_info.source_name
@@ -202,7 +205,9 @@ class _ChopperMetadataBuffer:
     serialised according to the flatbuffer schema with id CHOPPER_FB_ID.
     """
 
-    def __init__(self, stream_info: StreamInfo, buffer_size: int, data_queue: mp.Queue):
+    def __init__(
+        self, stream_info: StreamInfo, buffer_size: int, data_queue: mp.queues.Queue
+    ):
         self._buffer_mutex = threading.Lock()
         self._buffer_size = buffer_size
         self._name = stream_info.source_name
@@ -270,7 +275,7 @@ class StreamedDataBuffer:
 
     def __init__(
         self,
-        queue: mp.Queue,
+        queue: mp.queues.Queue,
         event_buffer_size: int,
         slow_metadata_buffer_size: int,
         fast_metadata_buffer_size: int,

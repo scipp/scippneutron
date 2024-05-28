@@ -39,6 +39,7 @@ test:
     - pythreejs==2.4.2
     - python-confluent-kafka==2.1.1 [linux64]
     - ess-streaming-data-types==v0.14.0 [linux64]
+    - sciline==24.04.1
   source_files:
     - pyproject.toml
     - tests/

@@ -180,9 +180,9 @@ Unit Testing
 
 For unit tests it would be convenient to use a fake consumer object in place of ``KafkaConsumer``
 instances. However, any input arguments or variables passed via the queue to the ``mp.Process``
-must be pickleable or ``mp.Queue``. This makes dependency injection difficult. To get around
+must be pickleable or ``mp.queues.Queue``. This makes dependency injection difficult. To get around
 this an enum can be passed via ``data_stream`` to the ``data_consumption_manager`` to tell it
-to create instances of ``FakeConsumer`` instead of ``KafkaConsumer``, additionally an ``mp.Queue``
+to create instances of ``FakeConsumer`` instead of ``KafkaConsumer``, additionally an ``mp.queues.Queue``
 can be provided and is passed to the ``FakeConsumer``. The ``FakeConsumer`` simply polls for messages
 on the queue instead of Kafka, thus allowing the test to provide the messages. There is no other
 configuration of ``FakeConsumer`` possible or necessary.

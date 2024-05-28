@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import multiprocessing as mp
+import multiprocessing.queues
 import time
 from collections.abc import Generator
 from enum import Enum
@@ -136,7 +137,7 @@ def validate_buffer_size_args(
             raise ValueError(f"{buffer_name} must be greater than zero")
 
 
-def _cleanup_queue(queue: mp.Queue | None):
+def _cleanup_queue(queue: mp.queues.Queue | None):
     if queue is not None:
         queue.cancel_join_thread()
         queue.close()
@@ -144,8 +145,8 @@ def _cleanup_queue(queue: mp.Queue | None):
 
 
 async def _data_stream(
-    data_queue: mp.Queue,
-    worker_instruction_queue: mp.Queue,
+    data_queue: mp.queues.Queue,
+    worker_instruction_queue: mp.queues.Queue,
     kafka_broker: str,
     topics: list[str] | None,
     interval: sc.Variable,
@@ -160,7 +161,7 @@ async def _data_stream(
     consumer_type: ConsumerType = ConsumerType.REAL,
     halt_after_n_data_chunks: int = np.iinfo(np.int32).max,
     halt_after_n_warnings: int = np.iinfo(np.int32).max,
-    test_message_queue: mp.Queue | None = None,  # for tests
+    test_message_queue: mp.queues.Queue | None = None,  # for tests
     timeout: sc.Variable | None = None,  # for tests
 ) -> Generator[sc.DataArray, None, None]:
     """
