@@ -15,13 +15,15 @@ ScippNeutron uses three positions to define a beamline:
 - ``position`` is the position of the detector (pixel / voxel) that detects a neutron
   at :math:`t=\mathsf{tof}`.
 
-Base on these positions, we define:
+Based on these positions, we define:
 
 - ``incident_beam`` is the vector of incoming neutrons on the sample.
+  It points from the source to the sample.
   (:func:`straight_incident_beam`)
 - ``L1`` (or :math:`L_1`) is the length of ``incident_beam``.
   (:func:`L1`)
 - ``scattered_beam`` is the vector of neutrons that were scattered off the sample.
+  It points from the sample to the detector pixels.
   (:func:`straight_scattered_beam`)
 - ``L2`` (or :math:`L_2`) is the length of ``scattered_beam``.
   (:func:`L2`)
@@ -31,7 +33,7 @@ Base on these positions, we define:
 Coordinate system
 -----------------
 
-ScippNeutron uses a coordinate system that is aligned with
+ScippNeutron uses a coordinate system aligned with
 the incident beam and gravity.
 ScippNeutron's coordinate system corresponds to that of
 `NeXus <https://manual.nexusformat.org/design.html#the-nexus-coordinate-system>`_.
