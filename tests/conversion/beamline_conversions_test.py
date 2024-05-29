@@ -307,7 +307,7 @@ def test_scattering_angles_with_gravity_reproduces_angles_polar_zero(azimuthal: 
 
 def test_scattering_angles_with_gravity_drops_in_expected_direction():
     wavelength = sc.scalar(1.6, unit='Å')
-    gravity = sc.vector([0.0, -9.81, 0.0], unit='m/s^2')
+    gravity = sc.vector([0.0, -sc.constants.g.value, 0.0], unit=sc.constants.g.unit)
     incident_beam = sc.vector([0.0, 0.0, 41.1], unit='m')
     scattered_beam = sc.vectors(
         dims=['det'], values=[[0.0, 2.5, 8.6], [0.0, -1.7, 6.9]], unit='m'
@@ -338,7 +338,7 @@ def test_scattering_angles_with_gravity_drops_in_expected_direction():
 
 def test_scattering_angles_with_gravity_beams_aligned_with_lab_coords():
     wavelength = sc.array(dims=['wavelength'], values=[1.6, 0.9, 0.7], unit='Å')
-    gravity = sc.vector([0.0, -9.81, 0.0], unit='m/s^2')
+    gravity = sc.vector([0.0, -sc.constants.g.value, 0.0], unit=sc.constants.g.unit)
     incident_beam = sc.vector([0.0, 0.0, 41.1], unit='m')
     scattered_beam = sc.vectors(
         dims=['det'], values=[[0.0, 2.5, 3.6], [0.0, -1.7, 2.9]], unit='m'
