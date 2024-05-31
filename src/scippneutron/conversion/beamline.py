@@ -33,15 +33,6 @@ Based on these positions, we define:
 Coordinate system
 -----------------
 
-ScippNeutron uses a coordinate system aligned with
-the incident beam and gravity.
-ScippNeutron's coordinate system corresponds to that of
-`NeXus <https://manual.nexusformat.org/design.html#the-nexus-coordinate-system>`_.
-The image below shows how coordinates are defined with respect to the
-quantities defined above.
-(The sample is placed in the origin here; this is only done for illustration purposes
-and not required.)
-
 Note
 ----
   The coordinate system is not needed by most operations because beamline coordinates
@@ -52,6 +43,17 @@ Note
 
   However, when we need ``phi``, or need to correct ``two_theta`` for gravity,
   we need the actual coordinate system.
+
+ScippNeutron uses a coordinate system aligned with
+the incident beam and gravity.
+ScippNeutron's coordinate system corresponds to that of
+`NeXus <https://manual.nexusformat.org/design.html#the-nexus-coordinate-system>`_.
+The image below shows how coordinates are defined with respect to the
+quantities defined above.
+The plot on the right-hand side shows the view from the sample towards the source,
+that is, the :math:`z`-axis points towards the viewer.
+(The sample is placed in the origin here; this is only done for illustration purposes
+and not required.)
 
 .. image:: ../../../docs/_static/beamline/beamline_coordinates_light.svg
    :class: only-light
@@ -79,6 +81,10 @@ This means that the z-axis is parallel to the incident beam and the y-axis is
 antiparallel to gravity.
 Gravity must be orthogonal to the incident beam for this definition to produce
 and orthogonal coordinate system.
+
+:math:`p = \sqrt{x^2 + y^2}` is the projection of the
+scattered beam onto the :math:`x-y` plane.
+It is included here because it is used by some coordinate transformations.
 
 The scattering angles are defined similarly to spherical coordinates as:
 
