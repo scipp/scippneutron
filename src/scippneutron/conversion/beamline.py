@@ -81,6 +81,7 @@ This means that the z-axis is parallel to the incident beam and the y-axis is
 antiparallel to gravity.
 Gravity must be orthogonal to the incident beam for this definition to produce
 and orthogonal coordinate system.
+Basis vectors can be computed using :func:`beam_aligned_unit_vectors`.
 
 :math:`p = \sqrt{x^2 + y^2}` is the projection of the
 scattered beam onto the :math:`x-y` plane.
@@ -136,6 +137,7 @@ def L1(*, incident_beam: VariableLike) -> VariableLike:
     See Also
     --------
     straight_incident_beam:
+        Compute the incident beam for a straight beamline.
     """
     return sc.norm(incident_beam)
 
@@ -162,6 +164,7 @@ def L2(*, scattered_beam: VariableLike) -> VariableLike:
     See Also
     --------
     straight_scattered_beam:
+        Compute the scattered beam for a straight beamline.
     """
     return sc.norm(scattered_beam)
 
@@ -325,22 +328,60 @@ def two_theta(
 
 
 class SphericalCoordinates(TypedDict):
-    """A dict with keys two_theta and phi."""
+    """A dict with keys 'two_theta' and 'phi'."""
 
     two_theta: sc.Variable
+    """Polar angle.
+
+    Between the scattered beam and continuation of the incident beam.
+    Mind the factor 2 which is defined as in Bragg's law.
+    """
+
     phi: sc.Variable
+    """Azimuthal angle.
+
+    The angle between the projection of the scattered beam onto the x-y plane
+    and the x-axis.
+    """
 
 
-def _beam_aligned_unit_vectors(
+def beam_aligned_unit_vectors(
     incident_beam: sc.Variable, gravity: sc.Variable
 ) -> tuple[sc.Variable, sc.Variable, sc.Variable]:
-    """Return unit vectors for a coordinate system aligned with the incident beam.
+    r"""Return unit vectors for a coordinate system aligned with the incident beam.
 
-    The coordinate system has
+    The unit vectors are
 
-    - z aligned with ``incident_beam``.
-    - y aligned with ``gravity``.
-    - x orthogonal to z, y forming a right-handed coordinate system.
+    .. math::
+
+        \hat{e}_z &= b_1 / |b_1| \\
+        \hat{e}_y &= -g / |g| \\
+        \hat{e}_x &= \hat{e}_y \times \hat{e}_z
+
+    where :math:`b_1` is the ``incident_beam`` and :math:`g` is the gravity vector.
+    See the module-level docs of :mod:`scippneutron.conversion.beamline` for  details.
+
+    Parameters
+    ----------
+    incident_beam:
+        Beam from source to sample. Expects ``dtype=vector3``.
+    gravity:
+        Gravity vector. Expects ``dtype=vector3``.
+
+    Returns
+    -------
+    ex: Variable
+        Unit vector in x direction.
+    ey: Variable
+        Unit vector in y direction.
+    ez: Variable
+        Unit vector in z direction.
+
+
+    See Also
+    --------
+    straight_incident_beam:
+        Compute the incident beam for a straight beamline.
     """
     if sc.any(
         abs(sc.dot(gravity, incident_beam))
@@ -438,9 +479,7 @@ def scattering_angles_with_gravity(
         A dict containing the polar scattering angle ``'two_theta'`` and
         the azimuthal angle ``'phi'``.
     """
-    ex, ey, ez = _beam_aligned_unit_vectors(
-        incident_beam=incident_beam, gravity=gravity
-    )
+    ex, ey, ez = beam_aligned_unit_vectors(incident_beam=incident_beam, gravity=gravity)
 
     y = _drop_due_to_gravity(
         distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
