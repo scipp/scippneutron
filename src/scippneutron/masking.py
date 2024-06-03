@@ -1,13 +1,18 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+from __future__ import annotations
 
 import os
+from functools import partial
+from typing import TYPE_CHECKING
 
 import plopp as pp
 import scipp as sc
-from mpltoolbox import Hspans, Vspans
-from mpltoolbox.patch import Patch
+from matplotlib.colors import to_rgb
 from plopp.core.typing import FigureLike
+
+if TYPE_CHECKING:
+    from mpltoolbox import Patch
 
 
 def _define_rect_mask(da: sc.DataArray, rect_info: dict) -> sc.Variable:
@@ -88,7 +93,7 @@ def _apply_masks(da: sc.DataArray, *masks: sc.Variable) -> sc.DataArray:
 
 
 class MaskingTool:
-    def __init__(self, data: sc.DataArray, **kwargs):
+    def __init__(self, data: sc.DataArray, color='magenta', **kwargs):
         """
         Interactive masking tool for 1D and 2D data.
         The tool will display a figure with the data and allow the user to
@@ -99,11 +104,13 @@ class MaskingTool:
         ----------
         data:
             The data to be masked.
+        color:
+            The color of the shapes drawn by the user.
         kwargs:
             Additional keyword arguments passed to the figure constructor.
         """
         import ipywidgets as ipw
-        from mpltoolbox import Rectangles
+        from mpltoolbox import Hspans, Rectangles, Vspans
         from plopp.widgets import DrawingTool, style
 
         # Convert potential bin edge coords to midpoints
@@ -124,8 +131,11 @@ class MaskingTool:
             "input_node": self.data_node,
             "destination": self.masking_node,
         }
+
+        col_args = {"edgecolor": color, "facecolor": (*to_rgb(color), 0.05)}
+
         rects = DrawingTool(
-            tool=Rectangles,
+            tool=partial(Rectangles, **col_args),
             get_artist_info=_get_rect_info,
             icon="vector-square",
             func=_define_rect_mask,
@@ -133,14 +143,14 @@ class MaskingTool:
             **common,
         )
         vspans = DrawingTool(
-            tool=Vspans,
+            tool=partial(Vspans, **col_args),
             get_artist_info=_get_vspan_info,
             icon="grip-lines-vertical",
             func=_define_span_mask,
             **common,
         )
         hspans = DrawingTool(
-            tool=Hspans,
+            tool=partial(Hspans, **col_args),
             get_artist_info=_get_hspan_info,
             icon="grip-lines",
             func=_define_span_mask,
