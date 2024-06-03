@@ -91,9 +91,9 @@ prometheus-client==0.20.0
     # via jupyter-server
 pycparser==2.22
     # via cffi
-pydantic==2.7.2
+pydantic==2.7.3
     # via copier
-pydantic-core==2.18.3
+pydantic-core==2.18.4
     # via pydantic
 python-json-logger==2.0.7
     # via jupyter-events

@@ -2,6 +2,7 @@
 # Do not make an environment from this file, use test.txt instead!
 
 hypothesis
+ipympl
 matplotlib
 psutil
 pytest
