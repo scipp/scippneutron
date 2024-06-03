@@ -2,6 +2,7 @@
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
 import numpy as np
+import pytest
 import scipp as sc
 from matplotlib.colors import to_hex
 
@@ -21,7 +22,8 @@ def make_data(npoints=50000, scale=10.0, seed=1):
     ).hist(y=300, x=300)
 
 
-def test_mask_2d_with_rectangles(_use_ipympl):
+@pytest.mark.usefixtures('_use_ipympl')
+def test_mask_2d_with_rectangles():
     da = make_data()
     masking_tool = MaskingTool(da)
     r, _, _ = masking_tool.controls
@@ -48,7 +50,8 @@ def test_mask_2d_with_rectangles(_use_ipympl):
     assert sc.identical(mask['y'], sc.array(dims=['y'], values=[-20.0, 30.0], unit='m'))
 
 
-def test_mask_2d_with_vspans(_use_ipympl):
+@pytest.mark.usefixtures('_use_ipympl')
+def test_mask_2d_with_vspans():
     da = make_data()
     masking_tool = MaskingTool(da)
     _, v, _ = masking_tool.controls
@@ -73,7 +76,8 @@ def test_mask_2d_with_vspans(_use_ipympl):
     assert sc.identical(mask['x'], sc.array(dims=['x'], values=[21.0, 27.0], unit='m'))
 
 
-def test_mask_2d_with_hspans(_use_ipympl):
+@pytest.mark.usefixtures('_use_ipympl')
+def test_mask_2d_with_hspans():
     da = make_data()
     masking_tool = MaskingTool(da)
     _, _, h = masking_tool.controls
@@ -98,7 +102,8 @@ def test_mask_2d_with_hspans(_use_ipympl):
     assert sc.identical(mask['y'], sc.array(dims=['y'], values=[-10.0, 17.0], unit='m'))
 
 
-def test_mask_2d_rectangles_and_spans(_use_ipympl):
+@pytest.mark.usefixtures('_use_ipympl')
+def test_mask_2d_rectangles_and_spans():
     da = make_data()
     masking_tool = MaskingTool(da)
     r, v, h = masking_tool.controls
@@ -132,7 +137,8 @@ def test_mask_2d_rectangles_and_spans(_use_ipympl):
     assert sc.identical(mask['y'], sc.array(dims=['y'], values=[-30.0, 1.0], unit='m'))
 
 
-def test_mask_1d(_use_ipympl):
+@pytest.mark.usefixtures('_use_ipympl')
+def test_mask_1d():
     da = make_data().sum('y')
     masking_tool = MaskingTool(da)
     _, v, _ = masking_tool.controls
@@ -157,7 +163,8 @@ def test_mask_1d(_use_ipympl):
     assert sc.identical(mask['x'], sc.array(dims=['x'], values=[21.0, 27.0], unit='m'))
 
 
-def test_mask_color(_use_ipympl):
+@pytest.mark.usefixtures('_use_ipympl')
+def test_mask_color():
     da = make_data()
     color = to_hex('red')
     masking_tool = MaskingTool(da, color=color)
