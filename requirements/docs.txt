@@ -52,7 +52,7 @@ imagesize==1.4.1
     # via sphinx
 ipykernel==6.29.4
     # via -r docs.in
-ipython==8.24.0
+ipython==8.25.0
     # via
     #   -r docs.in
     #   ipykernel
@@ -122,7 +122,7 @@ parso==0.8.4
     # via jedi
 pexpect==4.9.0
     # via ipython
-prompt-toolkit==3.0.43
+prompt-toolkit==3.0.45
     # via ipython
 psutil==5.9.8
     # via ipykernel
@@ -136,7 +136,7 @@ pybtex==0.24.0
     #   sphinxcontrib-bibtex
 pybtex-docutils==1.0.3
     # via sphinxcontrib-bibtex
-pydata-sphinx-theme==0.15.2
+pydata-sphinx-theme==0.15.3
     # via -r docs.in
 pygments==2.18.0
     # via
@@ -217,7 +217,7 @@ traitlets==5.14.3
     #   nbconvert
     #   nbformat
     #   nbsphinx
-typing-extensions==4.12.0
+typing-extensions==4.12.1
     # via
     #   ipython
     #   pydata-sphinx-theme
