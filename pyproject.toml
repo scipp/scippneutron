@@ -88,6 +88,7 @@ filterwarnings = [
   'ignore:Widget.widget_types is deprecated:DeprecationWarning',
   'ignore:Widget.widgets is deprecated:DeprecationWarning',
   'ignore:`load_nexus` is deprecated:UserWarning',
+  'ignore:Passing unrecognized arguments to super:DeprecationWarning',
 ]
 
 [tool.codespell]
