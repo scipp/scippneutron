@@ -29,25 +29,29 @@ def test_mask_2d_with_rectangles():
     r, _, _ = masking_tool.controls
 
     r.value = True
-    r._tool.click(-10, -10)
-    r._tool.click(5, 6)
+    r._tool.click(-10.0, -10.0)
+    r._tool.click(5.0, 6.0)
 
     masks = masking_tool.get_masks()
     assert len(masks) == 1
     mask = next(iter(masks.values()))
     assert len(mask) == 2  # 2 dimensions
-    assert sc.identical(mask['x'], sc.array(dims=['x'], values=[-10.0, 5.0], unit='m'))
-    assert sc.identical(mask['y'], sc.array(dims=['y'], values=[-10.0, 6.0], unit='m'))
+    assert mask['x']["min"] == {"value": -10.0, "unit": "m"}
+    assert mask['x']["max"] == {"value": 5.0, "unit": "m"}
+    assert mask['y']["min"] == {"value": -10.0, "unit": "m"}
+    assert mask['y']["max"] == {"value": 6.0, "unit": "m"}
 
-    r._tool.click(10, -20)
-    r._tool.click(15, 30)
+    r._tool.click(10.0, -20.0)
+    r._tool.click(15.0, 30.0)
 
     masks = masking_tool.get_masks()
     assert len(masks) == 2
     mask = list(masks.values())[1]
     assert len(mask) == 2  # 2 dimensions
-    assert sc.identical(mask['x'], sc.array(dims=['x'], values=[10.0, 15.0], unit='m'))
-    assert sc.identical(mask['y'], sc.array(dims=['y'], values=[-20.0, 30.0], unit='m'))
+    assert mask['x']["min"] == {"value": 10.0, "unit": "m"}
+    assert mask['x']["max"] == {"value": 15.0, "unit": "m"}
+    assert mask['y']["min"] == {"value": -20.0, "unit": "m"}
+    assert mask['y']["max"] == {"value": 30.0, "unit": "m"}
 
 
 @pytest.mark.usefixtures('_use_ipympl')
@@ -57,23 +61,25 @@ def test_mask_2d_with_vspans():
     _, v, _ = masking_tool.controls
 
     v.value = True
-    v._tool.click(-20, 0)
-    v._tool.click(1, 0)
+    v._tool.click(-20.0, 0.0)
+    v._tool.click(1.0, 0.0)
 
     masks = masking_tool.get_masks()
     assert len(masks) == 1
     mask = next(iter(masks.values()))
     assert len(mask) == 1  # 1 dimension
-    assert sc.identical(mask['x'], sc.array(dims=['x'], values=[-20.0, 1.0], unit='m'))
+    assert mask['x']["min"] == {"value": -20.0, "unit": "m"}
+    assert mask['x']["max"] == {"value": 1.0, "unit": "m"}
 
-    v._tool.click(21, 0)
-    v._tool.click(27, 0)
+    v._tool.click(21.0, 0.0)
+    v._tool.click(27.0, 0.0)
 
     masks = masking_tool.get_masks()
     assert len(masks) == 2
     mask = list(masks.values())[1]
     assert len(mask) == 1  # 1 dimension
-    assert sc.identical(mask['x'], sc.array(dims=['x'], values=[21.0, 27.0], unit='m'))
+    assert mask['x']["min"] == {"value": 21.0, "unit": "m"}
+    assert mask['x']["max"] == {"value": 27.0, "unit": "m"}
 
 
 @pytest.mark.usefixtures('_use_ipympl')
@@ -83,23 +89,25 @@ def test_mask_2d_with_hspans():
     _, _, h = masking_tool.controls
 
     h.value = True
-    h._tool.click(0, -30)
-    h._tool.click(0, 1)
+    h._tool.click(0.0, -30.0)
+    h._tool.click(0.0, 1.0)
 
     masks = masking_tool.get_masks()
     assert len(masks) == 1
     mask = next(iter(masks.values()))
     assert len(mask) == 1  # 1 dimension
-    assert sc.identical(mask['y'], sc.array(dims=['y'], values=[-30.0, 1.0], unit='m'))
+    assert mask['y']["min"] == {"value": -30.0, "unit": "m"}
+    assert mask['y']["max"] == {"value": 1.0, "unit": "m"}
 
-    h._tool.click(0, -10)
-    h._tool.click(0, 17)
+    h._tool.click(0.0, -10.0)
+    h._tool.click(0.0, 17.0)
 
     masks = masking_tool.get_masks()
     assert len(masks) == 2
     mask = list(masks.values())[1]
     assert len(mask) == 1  # 1 dimension
-    assert sc.identical(mask['y'], sc.array(dims=['y'], values=[-10.0, 17.0], unit='m'))
+    assert mask['y']["min"] == {"value": -10.0, "unit": "m"}
+    assert mask['y']["max"] == {"value": 17.0, "unit": "m"}
 
 
 @pytest.mark.usefixtures('_use_ipympl')
@@ -109,32 +117,36 @@ def test_mask_2d_rectangles_and_spans():
     r, v, h = masking_tool.controls
 
     r.value = True
-    r._tool.click(-10, -10)
-    r._tool.click(5, 6)
+    r._tool.click(-10.0, -10.0)
+    r._tool.click(5.0, 6.0)
 
     v.value = True
-    v._tool.click(-20, 0)
-    v._tool.click(1, 0)
+    v._tool.click(-20.0, 0.0)
+    v._tool.click(1.0, 0.0)
 
     h.value = True
-    h._tool.click(0, -30)
-    h._tool.click(0, 1)
+    h._tool.click(0.0, -30.0)
+    h._tool.click(0.0, 1.0)
 
     masks = list(masking_tool.get_masks().values())
     assert len(masks) == 3
 
     mask = masks[0]
     assert len(mask) == 2  # 2 dimensions
-    assert sc.identical(mask['x'], sc.array(dims=['x'], values=[-10.0, 5.0], unit='m'))
-    assert sc.identical(mask['y'], sc.array(dims=['y'], values=[-10.0, 6.0], unit='m'))
+    assert mask['x']["min"] == {"value": -10.0, "unit": "m"}
+    assert mask['x']["max"] == {"value": 5.0, "unit": "m"}
+    assert mask['y']["min"] == {"value": -10.0, "unit": "m"}
+    assert mask['y']["max"] == {"value": 6.0, "unit": "m"}
 
     mask = masks[1]
     assert len(mask) == 1  # 1 dimension
-    assert sc.identical(mask['x'], sc.array(dims=['x'], values=[-20.0, 1.0], unit='m'))
+    assert mask['x']["min"] == {"value": -20.0, "unit": "m"}
+    assert mask['x']["max"] == {"value": 1.0, "unit": "m"}
 
     mask = masks[2]
     assert len(mask) == 1  # 1 dimension
-    assert sc.identical(mask['y'], sc.array(dims=['y'], values=[-30.0, 1.0], unit='m'))
+    assert mask['y']["min"] == {"value": -30.0, "unit": "m"}
+    assert mask['y']["max"] == {"value": 1.0, "unit": "m"}
 
 
 @pytest.mark.usefixtures('_use_ipympl')
@@ -144,23 +156,25 @@ def test_mask_1d():
     _, v, _ = masking_tool.controls
 
     v.value = True
-    v._tool.click(-20, 0)
-    v._tool.click(1, 0)
+    v._tool.click(-20.0, 0.0)
+    v._tool.click(1.0, 0.0)
 
     masks = masking_tool.get_masks()
     assert len(masks) == 1
     mask = next(iter(masks.values()))
     assert len(mask) == 1  # 1 dimension
-    assert sc.identical(mask['x'], sc.array(dims=['x'], values=[-20.0, 1.0], unit='m'))
+    assert mask['x']["min"] == {"value": -20.0, "unit": "m"}
+    assert mask['x']["max"] == {"value": 1.0, "unit": "m"}
 
-    v._tool.click(21, 0)
-    v._tool.click(27, 0)
+    v._tool.click(21.0, 0.0)
+    v._tool.click(27.0, 0.0)
 
     masks = masking_tool.get_masks()
     assert len(masks) == 2
     mask = list(masks.values())[1]
     assert len(mask) == 1  # 1 dimension
-    assert sc.identical(mask['x'], sc.array(dims=['x'], values=[21.0, 27.0], unit='m'))
+    assert mask['x']["min"] == {"value": 21.0, "unit": "m"}
+    assert mask['x']["max"] == {"value": 27.0, "unit": "m"}
 
 
 @pytest.mark.usefixtures('_use_ipympl')
@@ -171,16 +185,16 @@ def test_mask_color():
     r, v, _ = masking_tool.controls
 
     r.value = True
-    r._tool.click(-10, -10)
-    r._tool.click(5, 6)
+    r._tool.click(-10.0, -10.0)
+    r._tool.click(5.0, 6.0)
 
     shape = r._tool.children[0]
     assert to_hex(shape.facecolor) == color
     assert to_hex(shape.edgecolor) == color
 
     v.value = True
-    v._tool.click(-20, 0)
-    v._tool.click(1, 0)
+    v._tool.click(-20.0, 0.0)
+    v._tool.click(1.0, 0.0)
 
     shape = v._tool.children[0]
     assert to_hex(shape.facecolor) == color
