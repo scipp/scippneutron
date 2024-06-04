@@ -18,6 +18,7 @@ dependencies:
   - ipywidgets==8.0.6
   - mantid==6.8.0
   - matplotlib==3.8.2
+  - mpltoolbox==24.05.1
   - ninja==1.11.1
   - plopp==24.05.0
   - pooch==1.7.0
