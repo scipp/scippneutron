@@ -553,9 +553,9 @@ def test_beam_aligned_unit_vectors_axis_aligned_inputs():
         gravity=sc.vector([0.0, -4.6, 0.0], unit='m/s/s'),
     )
     assert len(res) == 3
-    sc.testing.assert_identical(res['ex'], sc.vector([1.0, 0.0, 0.0]))
-    sc.testing.assert_identical(res['ey'], sc.vector([0.0, 1.0, 0.0]))
-    sc.testing.assert_identical(res['ez'], sc.vector([0.0, 0.0, 1.0]))
+    sc.testing.assert_identical(res['beam_aligned_unit_x'], sc.vector([1.0, 0.0, 0.0]))
+    sc.testing.assert_identical(res['beam_aligned_unit_y'], sc.vector([0.0, 1.0, 0.0]))
+    sc.testing.assert_identical(res['beam_aligned_unit_z'], sc.vector([0.0, 0.0, 1.0]))
 
 
 def test_beam_aligned_unit_vectors_complicated_inputs():
@@ -570,7 +570,9 @@ def test_beam_aligned_unit_vectors_complicated_inputs():
         incident_beam=incident_beam, gravity=gravity
     )
     assert len(res) == 3
-    ex, ey, ez = res['ex'], res['ey'], res['ez']
+    ex = res['beam_aligned_unit_x']
+    ey = res['beam_aligned_unit_y']
+    ez = res['beam_aligned_unit_z']
     sc.testing.assert_allclose(sc.norm(ex), sc.scalar(1.0))
     sc.testing.assert_allclose(sc.norm(ey), sc.scalar(1.0))
     sc.testing.assert_allclose(sc.norm(ez), sc.scalar(1.0))

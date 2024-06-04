@@ -327,27 +327,20 @@ def two_theta(
     return 2 * sc.atan2(y=sc.norm(b1 - b2), x=sc.norm(b1 + b2))
 
 
-class SphericalCoordinates(TypedDict):
-    """A dict with keys 'two_theta' and 'phi'."""
+class BeamAlignedUnitVectors(TypedDict):
+    """A dict with keys 'beam_aligned_unit_{x,y,z}'."""
 
-    two_theta: sc.Variable
-    """Polar angle.
-
-    Between the scattered beam and continuation of the incident beam.
-    Mind the factor 2 which is defined as in Bragg's law.
-    """
-
-    phi: sc.Variable
-    """Azimuthal angle.
-
-    The angle between the projection of the scattered beam onto the x-y plane
-    and the x-axis.
-    """
+    beam_aligned_unit_x: sc.Variable
+    """Unit vector in x-direction."""
+    beam_aligned_unit_y: sc.Variable
+    """Unit vector in y-direction."""
+    beam_aligned_unit_z: sc.Variable
+    """Unit vector in z-direction."""
 
 
 def beam_aligned_unit_vectors(
     incident_beam: sc.Variable, gravity: sc.Variable
-) -> tuple[sc.Variable, sc.Variable, sc.Variable]:
+) -> BeamAlignedUnitVectors:
     r"""Return unit vectors for a coordinate system aligned with the incident beam.
 
     The unit vectors are
@@ -370,13 +363,7 @@ def beam_aligned_unit_vectors(
 
     Returns
     -------
-    ex: Variable
-        Unit vector in x direction.
-    ey: Variable
-        Unit vector in y direction.
-    ez: Variable
-        Unit vector in z direction.
-
+    A dict containing the unit vectors with keys 'ex', 'ey', and 'ez'.
 
     See Also
     --------
@@ -396,7 +383,11 @@ def beam_aligned_unit_vectors(
     ez = incident_beam / sc.norm(incident_beam)
     ey = -gravity / sc.norm(gravity)
     ex = sc.cross(ey, ez)
-    return ex, ey, ez
+    return {
+        'beam_aligned_unit_x': ex,
+        'beam_aligned_unit_y': ey,
+        'beam_aligned_unit_z': ez,
+    }
 
 
 def _drop_due_to_gravity(
@@ -426,6 +417,24 @@ def _drop_due_to_gravity(
         drop *= distance
         return drop
     return drop * distance
+
+
+class SphericalCoordinates(TypedDict):
+    """A dict with keys 'two_theta' and 'phi'."""
+
+    two_theta: sc.Variable
+    """Polar angle.
+
+    Between the scattered beam and continuation of the incident beam.
+    Mind the factor 2 which is defined as in Bragg's law.
+    """
+
+    phi: sc.Variable
+    """Azimuthal angle.
+
+    The angle between the projection of the scattered beam onto the x-y plane
+    and the x-axis.
+    """
 
 
 def scattering_angles_with_gravity(
@@ -479,7 +488,15 @@ def scattering_angles_with_gravity(
         A dict containing the polar scattering angle ``'two_theta'`` and
         the azimuthal angle ``'phi'``.
     """
-    ex, ey, ez = beam_aligned_unit_vectors(incident_beam=incident_beam, gravity=gravity)
+    match beam_aligned_unit_vectors(incident_beam=incident_beam, gravity=gravity):
+        case {
+            'beam_aligned_unit_x': ex,
+            'beam_aligned_unit_y': ey,
+            'beam_aligned_unit_z': ez,
+        }:
+            pass
+        case _:
+            raise RuntimeError('Unexpected return value of beam_aligned_unit_vectors')
 
     y = _drop_due_to_gravity(
         distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
