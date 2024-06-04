@@ -172,7 +172,7 @@ def test_cannot_save_data_with_masks(da, data):
 
 
 @pytest.mark.skipif(
-    lambda: sc.__version__ >= (24, 1),
+    lambda: sc.__version__ < (24, 1),
     reason='This use of the dataarrays strategy needs Scipp >= 24.*',
 )
 @given(data=st.data())
