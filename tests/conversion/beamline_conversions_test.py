@@ -545,3 +545,45 @@ def test_scattering_angles_with_gravity_supports_mismatching_units():
         res['two_theta'], expected['two_theta'], rtol=sc.scalar(1e-5)
     )
     sc.testing.assert_allclose(res['phi'], expected['phi'], rtol=sc.scalar(1e-10))
+
+
+def test_beam_aligned_unit_vectors_axis_aligned_inputs():
+    res = beamline.beam_aligned_unit_vectors(
+        incident_beam=sc.vector([0.0, 0.0, 2.1], unit='mm'),
+        gravity=sc.vector([0.0, -4.6, 0.0], unit='m/s/s'),
+    )
+    assert len(res) == 3
+    sc.testing.assert_identical(res['ex'], sc.vector([1.0, 0.0, 0.0]))
+    sc.testing.assert_identical(res['ey'], sc.vector([0.0, 1.0, 0.0]))
+    sc.testing.assert_identical(res['ez'], sc.vector([0.0, 0.0, 1.0]))
+
+
+def test_beam_aligned_unit_vectors_complicated_inputs():
+    incident_beam = sc.vector([3.1, -0.2, 23.6], unit='m')
+    gravity = sc.vector([-0.01, -9.5, 3.2], unit='m/s/s')
+    # Subtract projection of gravity onto incident_beam to make the vectors orthogonal.
+    gravity -= sc.to_unit(
+        sc.dot(incident_beam, gravity) * incident_beam / sc.norm(incident_beam) ** 2,
+        'm/s/s',
+    )
+    res = beamline.beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
+    )
+    assert len(res) == 3
+    ex, ey, ez = res['ex'], res['ey'], res['ez']
+    sc.testing.assert_allclose(sc.norm(ex), sc.scalar(1.0))
+    sc.testing.assert_allclose(sc.norm(ey), sc.scalar(1.0))
+    sc.testing.assert_allclose(sc.norm(ez), sc.scalar(1.0))
+    sc.testing.assert_allclose(sc.dot(ex, ey), sc.scalar(0.0), atol=sc.scalar(1e-16))
+    sc.testing.assert_allclose(sc.dot(ey, ez), sc.scalar(0.0), atol=sc.scalar(1e-16))
+    sc.testing.assert_allclose(sc.dot(ez, ex), sc.scalar(0.0), atol=sc.scalar(1e-16))
+
+
+def test_beam_aligned_unit_vectors_requires_orthogonal_inputs():
+    with pytest.raises(
+        ValueError, match='`gravity` and `incident_beam` must be orthogonal'
+    ):
+        beamline.beam_aligned_unit_vectors(
+            incident_beam=sc.vector([0.0, 0.0, 3.1], unit='mm'),
+            gravity=sc.vector([0.0, -4.6, 1.0], unit='m/s/s'),
+        )
