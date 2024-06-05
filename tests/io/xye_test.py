@@ -9,6 +9,7 @@ import pytest
 import scipp as sc
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
+from packaging.version import Version
 from scipp.testing import strategies as scst
 
 import scippneutron as scn
@@ -172,7 +173,7 @@ def test_cannot_save_data_with_masks(da, data):
 
 
 @pytest.mark.skipif(
-    lambda: sc.__version__ < (24, 1),
+    lambda: Version(sc.__version__) < Version('24.1'),
     reason='This use of the dataarrays strategy needs Scipp >= 24.*',
 )
 @given(data=st.data())
