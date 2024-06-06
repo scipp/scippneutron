@@ -204,7 +204,7 @@ class MaskingTool:
                     c.value = False
 
     def validate_filename(self, change: dict) -> None:
-        path = change["new"]
+        path = change["new"] + ".json"
         if os.path.exists(path):
             self.filename.style.background = "#ff9999"
             self.save_button.disabled = True
@@ -241,8 +241,13 @@ class MaskingTool:
         return masks
 
     def save_masks(self, _=None) -> None:
-        with open('masks.json', 'w') as f:
-            json.dump(self.get_masks(), f, indent=2)
+        if self.save_button.disabled:
+            raise ValueError("Invalid filename, cannot save masks.")
+        masks = self.get_masks()
+        if not masks:
+            raise ValueError("There are no masks to save.")
+        with open(self.filename.value.removesuffix(".json") + ".json", "w") as f:
+            json.dump(masks, f, indent=2)
 
     def _repr_mimebundle_(self, **kwargs) -> dict:
         return self.fig._repr_mimebundle_()
