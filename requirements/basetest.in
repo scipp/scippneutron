@@ -7,3 +7,4 @@ psutil
 pytest
 pytest-xdist
 pythreejs
+sciline
