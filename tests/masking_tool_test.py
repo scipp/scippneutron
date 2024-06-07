@@ -247,3 +247,12 @@ def test_save_masks(tmp_path):
     assert len(mask) == 1  # 1 dimension
     assert mask['y']["min"] == {"value": -30.0, "unit": "m"}
     assert mask['y']["max"] == {"value": 1.0, "unit": "m"}
+
+
+@pytest.mark.usefixtures('_use_ipympl')
+def test_masking_tool_raises_with_3d_data():
+    da = make_data() * sc.arange('z', 3)
+    with pytest.raises(
+        ValueError, match="The masking tool can only handle 1D or 2D data."
+    ):
+        MaskingTool(da)
