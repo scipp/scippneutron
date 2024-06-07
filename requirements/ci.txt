@@ -48,7 +48,7 @@ tomli==2.0.1
     # via
     #   pyproject-api
     #   tox
-tox==4.15.0
+tox==4.15.1
     # via -r ci.in
 urllib3==2.2.1
     # via requests

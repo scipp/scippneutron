@@ -22,7 +22,7 @@ platformdirs==4.2.2
     # via pooch
 plopp @ git+https://github.com/scipp/plopp@main
     # via -r nightly.in
-pooch==1.8.1
+pooch==1.8.2
     # via -r nightly.in
 requests==2.32.3
     # via pooch
