@@ -5,7 +5,7 @@ description: Neutron scattering tools for Data Reduction
 max_python: '3.12'
 min_python: '3.10'
 namespace_package: ''
-nightly_deps: scipp,scippnexus,plopp
+nightly_deps: scipp,scippnexus,plopp,mpltoolbox
 orgname: scipp
 prettyname: ScippNeutron
 projectname: scippneutron
