@@ -2,7 +2,6 @@
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
 import json
-import tempfile
 
 import numpy as np
 import pytest
@@ -205,7 +204,7 @@ def test_mask_color():
 
 
 @pytest.mark.usefixtures('_use_ipympl')
-def test_save_masks():
+def test_save_masks(tmp_path):
     da = make_data()
     masking_tool = MaskingTool(da)
     r, v, h = masking_tool.controls
@@ -222,11 +221,10 @@ def test_save_masks():
     h._tool.click(0.0, -30.0)
     h._tool.click(0.0, 1.0)
 
-    file = tempfile.NamedTemporaryFile(suffix=".json")
-    masking_tool.filename.value = file.name
-    masking_tool.save_masks()
+    file = tmp_path / ".json"
+    masking_tool.save_masks(file)
 
-    with open(file.name) as f:
+    with open(file) as f:
         loaded_masks = json.load(f)
 
     assert len(loaded_masks) == 3
@@ -249,12 +247,3 @@ def test_save_masks():
     assert len(mask) == 1  # 1 dimension
     assert mask['y']["min"] == {"value": -30.0, "unit": "m"}
     assert mask['y']["max"] == {"value": 1.0, "unit": "m"}
-
-
-@pytest.mark.usefixtures('_use_ipympl')
-def test_trying_to_save_masks_with_no_masks_raises():
-    da = make_data()
-    masking_tool = MaskingTool(da)
-    masking_tool.filename.value = "masks.json"
-    with pytest.raises(ValueError, match="There are no masks to save."):
-        masking_tool.save_masks()

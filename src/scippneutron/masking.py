@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
-import os
 from functools import partial
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import plopp as pp
@@ -105,6 +105,15 @@ class MaskingTool:
         draw rectangles, horizontal spans, and vertical spans to create masks, using
         buttons in the top bar of the figure.
 
+        Instructions:
+
+        • Use the buttons in the top bar to add masks to the data
+        • Left-click to add a new shape, and left-click again to persist the shape
+        • Left-click a vertex to edit a shape
+        • Right-click and hold to drag a shape
+        • Middle-click (or Ctrl + left-click) to delete a shape
+        • Save the masks to a file when the "Save" button is clicked
+
         Parameters
         ----------
         data:
@@ -116,7 +125,10 @@ class MaskingTool:
         """
         import ipywidgets as ipw
         from mpltoolbox import Hspans, Rectangles, Vspans
+        from plopp.plotting.common import require_interactive_backend
         from plopp.widgets import DrawingTool, style
+
+        require_interactive_backend("Masking tool")
 
         # Convert potential bin edge coords to midpoints
         da = data.copy(deep=False)
@@ -144,6 +156,7 @@ class MaskingTool:
             get_artist_info=_get_rect_info,
             icon="vector-square",
             func=_define_rect_mask,
+            tooltip="Add rectangular masks",
             disabled=ndim == 1,
             **common,
         )
@@ -152,6 +165,7 @@ class MaskingTool:
             get_artist_info=_get_vspan_info,
             icon="grip-lines-vertical",
             func=_define_span_mask,
+            tooltip="Add vertical masks",
             **common,
         )
         hspans = DrawingTool(
@@ -159,6 +173,7 @@ class MaskingTool:
             get_artist_info=_get_hspan_info,
             icon="grip-lines",
             func=_define_span_mask,
+            tooltip="Add horizontal masks",
             disabled=ndim == 1,
             **common,
         )
@@ -187,7 +202,7 @@ class MaskingTool:
         self.save_button = ipw.Button(
             icon="save", tooltip="Save to JSON", disabled=True, **style.BUTTON_LAYOUT
         )
-        self.save_button.on_click(self.save_masks)
+        self.save_button.on_click(self._save_button_click)
         self.toggle_visibility = ipw.ToggleButton(
             value=True, icon="eye-slash", tooltip="Hide shapes", **style.BUTTON_LAYOUT
         )
@@ -197,6 +212,20 @@ class MaskingTool:
         self.fig.top_bar.add(self.filename)
         self.fig.top_bar.add(self.save_button)
 
+        self.info = ipw.Button(
+            icon="question-circle",
+            tooltip="""
+Instructions:
+• Use the buttons in the top bar to add masks to the data
+• Left-click to add a new shape, and left-click again to persist the shape
+• Left-click a vertex to edit a shape
+• Right-click and hold to drag a shape
+• Middle-click (or Ctrl + left-click) to delete a shape
+• Save the masks to a file when the "Save" button is clicked""",
+            **style.BUTTON_LAYOUT,
+        )
+        self.fig.top_bar.add(self.info)
+
     def toggle_button_states(self, change: dict) -> None:
         if change["new"]:
             for c in self.controls:
@@ -204,13 +233,7 @@ class MaskingTool:
                     c.value = False
 
     def validate_filename(self, change: dict) -> None:
-        path = change["new"] + ".json"
-        if os.path.exists(path):
-            self.filename.style.background = "#ff9999"
-            self.save_button.disabled = True
-        else:
-            self.filename.style.background = "#99ff99"
-            self.save_button.disabled = False
+        self.save_button.disabled = not change["new"]
 
     def toggle_shape_visibility(self, change: dict):
         for c in self.controls:
@@ -240,14 +263,21 @@ class MaskingTool:
                 mask_counter += 1
         return masks
 
-    def save_masks(self, _=None) -> None:
-        if self.save_button.disabled:
-            raise ValueError("Invalid filename, cannot save masks.")
-        masks = self.get_masks()
-        if not masks:
-            raise ValueError("There are no masks to save.")
-        with open(self.filename.value.removesuffix(".json") + ".json", "w") as f:
-            json.dump(masks, f, indent=2)
+    def _save_button_click(self, _=None) -> None:
+        self.save_masks(filename=self.filename.value)
+
+    def save_masks(self, filename: Path | str) -> None:
+        """
+        Save the masks to a JSON file.
+
+        Parameters
+        ----------
+        filename:
+            The name of the file to save the masks to. The file extension
+            will be automatically added if not present.
+        """
+        with open(str(filename).removesuffix(".json") + ".json", "w") as f:
+            json.dump(self.get_masks(), f, indent=2)
 
     def _repr_mimebundle_(self, **kwargs) -> dict:
         return self.fig._repr_mimebundle_()
