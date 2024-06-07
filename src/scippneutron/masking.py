@@ -137,11 +137,12 @@ class MaskingTool:
                 da.coords[dim] = sc.midpoints(coord)
 
         ndim = da.ndim
+        figure_lib = {1: pp.linefigure, 2: pp.imagefigure}
+        if ndim not in figure_lib:
+            raise ValueError("The masking tool can only handle 1D or 2D data.")
         self.data_node = pp.Node(da)
         self.masking_node = pp.Node(_apply_masks, self.data_node)
-        self.fig = {1: pp.linefigure, 2: pp.imagefigure}[ndim](
-            self.masking_node, **kwargs
-        )
+        self.fig = figure_lib[ndim](self.masking_node, **kwargs)
 
         common = {
             "figure": self.fig,
