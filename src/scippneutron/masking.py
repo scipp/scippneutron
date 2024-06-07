@@ -25,11 +25,8 @@ def _define_rect_mask(da: sc.DataArray, rect_info: dict) -> sc.Variable:
     y = rect_info["y"]
     xcoord = da.coords[x["dim"]]
     ycoord = da.coords[y["dim"]]
-    return (
-        (xcoord >= x["min"])
-        & (xcoord <= x["max"])
-        & (ycoord >= y["min"])
-        & (ycoord <= y["max"])
+    return ((xcoord >= x["min"]) & (xcoord <= x["max"])) & (
+        (ycoord >= y["min"]) & (ycoord <= y["max"])
     )
 
 
