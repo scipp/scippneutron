@@ -19,4 +19,11 @@ def pytest_assertrepr_compare(op: str, left: Any, right: Any) -> list[str]:
 
 @pytest.fixture()
 def _use_ipympl():
+    """
+    Use ipympl interactive backend for matplotlib.
+    Close figures when done, and reset matplotlib defaults.
+    """
     matplotlib.use('module://ipympl.backend_nbagg')
+    yield
+    matplotlib.rcdefaults()
+    matplotlib.use('Agg')
