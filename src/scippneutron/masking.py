@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from functools import partial
+from functools import partial, reduce
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -16,17 +16,18 @@ if TYPE_CHECKING:
     from mpltoolbox import Patch
 
 
-def _define_rect_mask(da: sc.DataArray, rect_info: dict) -> sc.Variable:
+def _define_shape_mask(da: sc.DataArray, info: dict) -> sc.Variable:
     """
     Function that creates a mask inside the area
-    covered by the rectangle.
+    covered by the shape.
     """
-    x = rect_info["x"]
-    y = rect_info["y"]
-    xcoord = da.coords[x["dim"]]
-    ycoord = da.coords[y["dim"]]
-    return ((xcoord >= x["min"]) & (xcoord <= x["max"])) & (
-        (ycoord >= y["min"]) & (ycoord <= y["max"])
+    bounds = info["bounds"]
+    return reduce(
+        lambda a, b: a & b,
+        [
+            (da.coords[dim] >= lims["min"]) & (da.coords[dim] <= lims["max"])
+            for dim, lims in bounds.items()
+        ],
     )
 
 
@@ -40,34 +41,31 @@ def _get_rect_info(artist: Patch, figure: FigureLike) -> dict:
     y1 = artist.xy[1]
     y2 = artist.xy[1] + artist.height
     return lambda: {
-        "x": {
-            "dim": figure.canvas.dims["x"],
-            "min": sc.scalar(min(x1, x2), unit=figure.canvas.units["x"]),
-            "max": sc.scalar(max(x1, x2), unit=figure.canvas.units["x"]),
-        },
-        "y": {
-            "dim": figure.canvas.dims["y"],
-            "min": sc.scalar(min(y1, y2), unit=figure.canvas.units["y"]),
-            "max": sc.scalar(max(y1, y2), unit=figure.canvas.units["y"]),
+        "kind": "rectangle",
+        "bounds": {
+            figure.canvas.dims["x"]: {
+                "min": sc.scalar(min(x1, x2), unit=figure.canvas.units["x"]),
+                "max": sc.scalar(max(x1, x2), unit=figure.canvas.units["x"]),
+            },
+            figure.canvas.dims["y"]: {
+                "min": sc.scalar(min(y1, y2), unit=figure.canvas.units["y"]),
+                "max": sc.scalar(max(y1, y2), unit=figure.canvas.units["y"]),
+            },
         },
     }
-
-
-def _define_span_mask(da: sc.DataArray, span_info: dict) -> sc.Variable:
-    info = next(iter(span_info.values()))
-    coord = da.coords[info["dim"]]
-    return (coord >= info["min"]) & (coord <= info["max"])
 
 
 def _get_vspan_info(artist: Patch, figure: FigureLike) -> dict:
     x1 = artist.left
     x2 = artist.right
     return lambda: {
-        "x": {
-            "dim": figure.canvas.dims["x"],
-            "min": sc.scalar(min(x1, x2), unit=figure.canvas.units["x"]),
-            "max": sc.scalar(max(x1, x2), unit=figure.canvas.units["x"]),
-        }
+        "kind": "vspan",
+        "bounds": {
+            figure.canvas.dims["x"]: {
+                "min": sc.scalar(min(x1, x2), unit=figure.canvas.units["x"]),
+                "max": sc.scalar(max(x1, x2), unit=figure.canvas.units["x"]),
+            }
+        },
     }
 
 
@@ -75,11 +73,13 @@ def _get_hspan_info(artist: Patch, figure: FigureLike) -> dict:
     y1 = artist.bottom
     y2 = artist.top
     return lambda: {
-        "y": {
-            "dim": figure.canvas.dims["y"],
-            "min": sc.scalar(min(y1, y2), unit=figure.canvas.units["y"]),
-            "max": sc.scalar(max(y1, y2), unit=figure.canvas.units["y"]),
-        }
+        "kind": "hspan",
+        "bounds": {
+            figure.canvas.dims["y"]: {
+                "min": sc.scalar(min(y1, y2), unit=figure.canvas.units["y"]),
+                "max": sc.scalar(max(y1, y2), unit=figure.canvas.units["y"]),
+            }
+        },
     }
 
 
@@ -153,7 +153,7 @@ class MaskingTool:
             tool=partial(Rectangles, **col_args),
             get_artist_info=_get_rect_info,
             icon="vector-square",
-            func=_define_rect_mask,
+            func=_define_shape_mask,
             tooltip="Add rectangular masks",
             disabled=ndim == 1,
             **common,
@@ -162,7 +162,7 @@ class MaskingTool:
             tool=partial(Vspans, **col_args),
             get_artist_info=_get_vspan_info,
             icon="grip-lines-vertical",
-            func=_define_span_mask,
+            func=_define_shape_mask,
             tooltip="Add vertical masks",
             **common,
         )
@@ -170,7 +170,7 @@ class MaskingTool:
             tool=partial(Hspans, **col_args),
             get_artist_info=_get_hspan_info,
             icon="grip-lines",
-            func=_define_span_mask,
+            func=_define_shape_mask,
             tooltip="Add horizontal masks",
             disabled=ndim == 1,
             **common,
@@ -202,7 +202,7 @@ class MaskingTool:
         )
         self.save_button.on_click(self._save_button_click)
         self.toggle_visibility = ipw.ToggleButton(
-            value=True, icon="eye-slash", tooltip="Hide shapes", **style.BUTTON_LAYOUT
+            value=True, icon="eye", tooltip="Hide shapes", **style.BUTTON_LAYOUT
         )
         self.toggle_visibility.observe(self.toggle_shape_visibility, names="value")
         self.fig.top_bar.add(ipw.HBox([], layout={"width": "40px"}))
@@ -237,7 +237,7 @@ Instructions:
         for c in self.controls:
             for child in c._tool.children:
                 child.set(visible=change["new"])
-        self.toggle_visibility.icon = "eye-slash" if change["new"] else "eye"
+        self.toggle_visibility.icon = "eye" if change["new"] else "eye-slash"
         self.toggle_visibility.tooltip = (
             "Hide shapes" if change["new"] else "Show shapes"
         )
@@ -249,14 +249,17 @@ Instructions:
         for c in self.controls:
             for node in c._draw_nodes.values():
                 info = node()
-                mask_dims = "".join([axis["dim"] for axis in info.values()])
+                mask_dims = "".join(info["bounds"].keys())
                 mask_name = f"{mask_dims}_{mask_counter}"
                 masks[mask_name] = {
-                    axis["dim"]: {
-                        "min": _scalar_to_dict(axis["min"]),
-                        "max": _scalar_to_dict(axis["max"]),
-                    }
-                    for axis in info.values()
+                    "kind": info["kind"],
+                    "bounds": {
+                        dim: {
+                            "min": _scalar_to_dict(lims["min"]),
+                            "max": _scalar_to_dict(lims["max"]),
+                        }
+                        for dim, lims in info["bounds"].items()
+                    },
                 }
                 mask_counter += 1
         return masks

@@ -37,11 +37,13 @@ def test_mask_2d_with_rectangles():
     masks = masking_tool.get_masks()
     assert len(masks) == 1
     mask = next(iter(masks.values()))
-    assert len(mask) == 2  # 2 dimensions
-    assert mask['x']["min"] == {"value": -10.0, "unit": "m"}
-    assert mask['x']["max"] == {"value": 5.0, "unit": "m"}
-    assert mask['y']["min"] == {"value": -10.0, "unit": "m"}
-    assert mask['y']["max"] == {"value": 6.0, "unit": "m"}
+    assert mask["kind"] == "rectangle"
+    bounds = mask["bounds"]
+    assert len(bounds) == 2  # 2 dimensions
+    assert bounds['x']["min"] == {"value": -10.0, "unit": "m"}
+    assert bounds['x']["max"] == {"value": 5.0, "unit": "m"}
+    assert bounds['y']["min"] == {"value": -10.0, "unit": "m"}
+    assert bounds['y']["max"] == {"value": 6.0, "unit": "m"}
 
     r._tool.click(10.0, -20.0)
     r._tool.click(15.0, 30.0)
@@ -49,11 +51,13 @@ def test_mask_2d_with_rectangles():
     masks = masking_tool.get_masks()
     assert len(masks) == 2
     mask = list(masks.values())[1]
-    assert len(mask) == 2  # 2 dimensions
-    assert mask['x']["min"] == {"value": 10.0, "unit": "m"}
-    assert mask['x']["max"] == {"value": 15.0, "unit": "m"}
-    assert mask['y']["min"] == {"value": -20.0, "unit": "m"}
-    assert mask['y']["max"] == {"value": 30.0, "unit": "m"}
+    assert mask["kind"] == "rectangle"
+    bounds = mask["bounds"]
+    assert len(bounds) == 2  # 2 dimensions
+    assert bounds['x']["min"] == {"value": 10.0, "unit": "m"}
+    assert bounds['x']["max"] == {"value": 15.0, "unit": "m"}
+    assert bounds['y']["min"] == {"value": -20.0, "unit": "m"}
+    assert bounds['y']["max"] == {"value": 30.0, "unit": "m"}
 
 
 @pytest.mark.usefixtures('_use_ipympl')
@@ -69,9 +73,11 @@ def test_mask_2d_with_vspans():
     masks = masking_tool.get_masks()
     assert len(masks) == 1
     mask = next(iter(masks.values()))
-    assert len(mask) == 1  # 1 dimension
-    assert mask['x']["min"] == {"value": -20.0, "unit": "m"}
-    assert mask['x']["max"] == {"value": 1.0, "unit": "m"}
+    assert mask["kind"] == "vspan"
+    bounds = mask["bounds"]
+    assert len(bounds) == 1  # 1 dimension
+    assert bounds['x']["min"] == {"value": -20.0, "unit": "m"}
+    assert bounds['x']["max"] == {"value": 1.0, "unit": "m"}
 
     v._tool.click(21.0, 0.0)
     v._tool.click(27.0, 0.0)
@@ -79,9 +85,11 @@ def test_mask_2d_with_vspans():
     masks = masking_tool.get_masks()
     assert len(masks) == 2
     mask = list(masks.values())[1]
-    assert len(mask) == 1  # 1 dimension
-    assert mask['x']["min"] == {"value": 21.0, "unit": "m"}
-    assert mask['x']["max"] == {"value": 27.0, "unit": "m"}
+    assert mask["kind"] == "vspan"
+    bounds = mask["bounds"]
+    assert len(bounds) == 1  # 1 dimension
+    assert bounds['x']["min"] == {"value": 21.0, "unit": "m"}
+    assert bounds['x']["max"] == {"value": 27.0, "unit": "m"}
 
 
 @pytest.mark.usefixtures('_use_ipympl')
@@ -97,9 +105,11 @@ def test_mask_2d_with_hspans():
     masks = masking_tool.get_masks()
     assert len(masks) == 1
     mask = next(iter(masks.values()))
-    assert len(mask) == 1  # 1 dimension
-    assert mask['y']["min"] == {"value": -30.0, "unit": "m"}
-    assert mask['y']["max"] == {"value": 1.0, "unit": "m"}
+    assert mask["kind"] == "hspan"
+    bounds = mask["bounds"]
+    assert len(bounds) == 1  # 1 dimension
+    assert bounds['y']["min"] == {"value": -30.0, "unit": "m"}
+    assert bounds['y']["max"] == {"value": 1.0, "unit": "m"}
 
     h._tool.click(0.0, -10.0)
     h._tool.click(0.0, 17.0)
@@ -107,9 +117,11 @@ def test_mask_2d_with_hspans():
     masks = masking_tool.get_masks()
     assert len(masks) == 2
     mask = list(masks.values())[1]
-    assert len(mask) == 1  # 1 dimension
-    assert mask['y']["min"] == {"value": -10.0, "unit": "m"}
-    assert mask['y']["max"] == {"value": 17.0, "unit": "m"}
+    assert mask["kind"] == "hspan"
+    bounds = mask["bounds"]
+    assert len(bounds) == 1  # 1 dimension
+    assert bounds['y']["min"] == {"value": -10.0, "unit": "m"}
+    assert bounds['y']["max"] == {"value": 17.0, "unit": "m"}
 
 
 @pytest.mark.usefixtures('_use_ipympl')
@@ -134,21 +146,27 @@ def test_mask_2d_rectangles_and_spans():
     assert len(masks) == 3
 
     mask = masks[0]
-    assert len(mask) == 2  # 2 dimensions
-    assert mask['x']["min"] == {"value": -10.0, "unit": "m"}
-    assert mask['x']["max"] == {"value": 5.0, "unit": "m"}
-    assert mask['y']["min"] == {"value": -10.0, "unit": "m"}
-    assert mask['y']["max"] == {"value": 6.0, "unit": "m"}
+    assert mask["kind"] == "rectangle"
+    bounds = mask["bounds"]
+    assert len(bounds) == 2  # 2 dimensions
+    assert bounds['x']["min"] == {"value": -10.0, "unit": "m"}
+    assert bounds['x']["max"] == {"value": 5.0, "unit": "m"}
+    assert bounds['y']["min"] == {"value": -10.0, "unit": "m"}
+    assert bounds['y']["max"] == {"value": 6.0, "unit": "m"}
 
     mask = masks[1]
-    assert len(mask) == 1  # 1 dimension
-    assert mask['x']["min"] == {"value": -20.0, "unit": "m"}
-    assert mask['x']["max"] == {"value": 1.0, "unit": "m"}
+    assert mask["kind"] == "vspan"
+    bounds = mask["bounds"]
+    assert len(bounds) == 1  # 1 dimension
+    assert bounds['x']["min"] == {"value": -20.0, "unit": "m"}
+    assert bounds['x']["max"] == {"value": 1.0, "unit": "m"}
 
     mask = masks[2]
-    assert len(mask) == 1  # 1 dimension
-    assert mask['y']["min"] == {"value": -30.0, "unit": "m"}
-    assert mask['y']["max"] == {"value": 1.0, "unit": "m"}
+    assert mask["kind"] == "hspan"
+    bounds = mask["bounds"]
+    assert len(bounds) == 1  # 1 dimension
+    assert bounds['y']["min"] == {"value": -30.0, "unit": "m"}
+    assert bounds['y']["max"] == {"value": 1.0, "unit": "m"}
 
 
 @pytest.mark.usefixtures('_use_ipympl')
@@ -164,9 +182,11 @@ def test_mask_1d():
     masks = masking_tool.get_masks()
     assert len(masks) == 1
     mask = next(iter(masks.values()))
-    assert len(mask) == 1  # 1 dimension
-    assert mask['x']["min"] == {"value": -20.0, "unit": "m"}
-    assert mask['x']["max"] == {"value": 1.0, "unit": "m"}
+    assert mask["kind"] == "vspan"
+    bounds = mask["bounds"]
+    assert len(bounds) == 1  # 1 dimension
+    assert bounds['x']["min"] == {"value": -20.0, "unit": "m"}
+    assert bounds['x']["max"] == {"value": 1.0, "unit": "m"}
 
     v._tool.click(21.0, 0.0)
     v._tool.click(27.0, 0.0)
@@ -174,9 +194,11 @@ def test_mask_1d():
     masks = masking_tool.get_masks()
     assert len(masks) == 2
     mask = list(masks.values())[1]
-    assert len(mask) == 1  # 1 dimension
-    assert mask['x']["min"] == {"value": 21.0, "unit": "m"}
-    assert mask['x']["max"] == {"value": 27.0, "unit": "m"}
+    assert mask["kind"] == "vspan"
+    bounds = mask["bounds"]
+    assert len(bounds) == 1  # 1 dimension
+    assert bounds['x']["min"] == {"value": 21.0, "unit": "m"}
+    assert bounds['x']["max"] == {"value": 27.0, "unit": "m"}
 
 
 @pytest.mark.usefixtures('_use_ipympl')
@@ -232,21 +254,27 @@ def test_save_masks(tmp_path):
     masks = list(loaded_masks.values())
 
     mask = masks[0]
-    assert len(mask) == 2  # 2 dimensions
-    assert mask['x']["min"] == {"value": -10.0, "unit": "m"}
-    assert mask['x']["max"] == {"value": 5.0, "unit": "m"}
-    assert mask['y']["min"] == {"value": -10.0, "unit": "m"}
-    assert mask['y']["max"] == {"value": 6.0, "unit": "m"}
+    assert mask["kind"] == "rectangle"
+    bounds = mask["bounds"]
+    assert len(bounds) == 2  # 2 dimensions
+    assert bounds['x']["min"] == {"value": -10.0, "unit": "m"}
+    assert bounds['x']["max"] == {"value": 5.0, "unit": "m"}
+    assert bounds['y']["min"] == {"value": -10.0, "unit": "m"}
+    assert bounds['y']["max"] == {"value": 6.0, "unit": "m"}
 
     mask = masks[1]
-    assert len(mask) == 1  # 1 dimension
-    assert mask['x']["min"] == {"value": -20.0, "unit": "m"}
-    assert mask['x']["max"] == {"value": 1.0, "unit": "m"}
+    assert mask["kind"] == "vspan"
+    bounds = mask["bounds"]
+    assert len(bounds) == 1  # 1 dimension
+    assert bounds['x']["min"] == {"value": -20.0, "unit": "m"}
+    assert bounds['x']["max"] == {"value": 1.0, "unit": "m"}
 
     mask = masks[2]
-    assert len(mask) == 1  # 1 dimension
-    assert mask['y']["min"] == {"value": -30.0, "unit": "m"}
-    assert mask['y']["max"] == {"value": 1.0, "unit": "m"}
+    assert mask["kind"] == "hspan"
+    bounds = mask["bounds"]
+    assert len(bounds) == 1  # 1 dimension
+    assert bounds['y']["min"] == {"value": -30.0, "unit": "m"}
+    assert bounds['y']["max"] == {"value": 1.0, "unit": "m"}
 
 
 @pytest.mark.usefixtures('_use_ipympl')
