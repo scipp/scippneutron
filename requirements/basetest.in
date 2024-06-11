@@ -2,7 +2,7 @@
 # Do not make an environment from this file, use test.txt instead!
 
 hypothesis
-matplotlib
+ipympl
 psutil
 pytest
 pytest-xdist

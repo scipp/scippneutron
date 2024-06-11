@@ -32,6 +32,7 @@ dynamic = ["version"]
 # Make sure to list one dependency per line.
 dependencies = [
     "h5py",
+    "mpltoolbox",
     "numpy>=1.20",
     "pooch",
     "plopp>=24.04.0",
@@ -87,6 +88,7 @@ filterwarnings = [
   'ignore:Widget.widget_types is deprecated:DeprecationWarning',
   'ignore:Widget.widgets is deprecated:DeprecationWarning',
   'ignore:`load_nexus` is deprecated:UserWarning',
+  'ignore:Passing unrecognized arguments to super:DeprecationWarning',
 ]
 
 [tool.codespell]

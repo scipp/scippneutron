@@ -8,3 +8,4 @@ scipy>=1.7.0
 https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 scippnexus @ git+https://github.com/scipp/scippnexus@main
 plopp @ git+https://github.com/scipp/plopp@main
+mpltoolbox @ git+https://github.com/scipp/mpltoolbox@main

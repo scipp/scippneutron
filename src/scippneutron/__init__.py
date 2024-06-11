@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-# ruff: noqa: E402, F401
+# ruff: noqa: E402
 
 """Neutron scattering toolkit built using scipp for Data Reduction.
 
@@ -42,7 +42,34 @@ from .mantid import (
 from .instrument_view import instrument_view
 from .io.nexus.load_nexus import load_nexus, load_nexus_json
 from .data_streaming.data_stream import data_stream
+from .masking import MaskingTool
 from . import atoms
 from . import data
 
 del importlib
+
+__all__ = [
+    "position",
+    "source_position",
+    "sample_position",
+    "incident_beam",
+    "scattered_beam",
+    "Ltotal",
+    "L1",
+    "L2",
+    "two_theta",
+    "convert",
+    "from_mantid",
+    "array_from_mantid",
+    "to_mantid",
+    "load_with_mantid",
+    "load",
+    "fit",
+    "instrument_view",
+    "load_nexus",
+    "load_nexus_json",
+    "data_stream",
+    "atoms",
+    "data",
+    "MaskingTool",
+]

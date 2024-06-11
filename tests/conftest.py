@@ -3,6 +3,7 @@
 
 from typing import Any
 
+import matplotlib
 import pytest
 import scipp as sc
 
@@ -14,3 +15,15 @@ def pytest_assertrepr_compare(op: str, left: Any, right: Any) -> list[str]:
         return [f'Unit({left}) {op} Unit({right})']
     if isinstance(left, sc.DType) or isinstance(right, sc.DType):
         return [f'{left!r} {op} {right!r}']
+
+
+@pytest.fixture()
+def _use_ipympl():
+    """
+    Use ipympl interactive backend for matplotlib.
+    Close figures when done, and reset matplotlib defaults.
+    """
+    matplotlib.use('module://ipympl.backend_nbagg')
+    yield
+    matplotlib.rcdefaults()
+    matplotlib.use('Agg')
