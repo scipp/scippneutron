@@ -104,12 +104,12 @@ class MaskingTool:
 
         Instructions:
 
-        • Use the buttons in the top bar to add masks to the data
-        • Left-click to add a new shape, and left-click again to persist the shape
-        • Left-click a vertex to edit a shape
-        • Right-click and hold to drag a shape
-        • Middle-click (or Ctrl + left-click) to delete a shape
-        • Save the masks to a file when the "Save" button is clicked
+        - Use the buttons in the top bar to add masks to the data
+        - Left-click to add a new shape, and left-click again to persist the shape
+        - Left-click a vertex to edit a shape
+        - Right-click and hold to drag a shape
+        - Middle-click (or Ctrl + left-click) to delete a shape
+        - Save the masks to a file when the "Save" button is clicked
 
         Parameters
         ----------
