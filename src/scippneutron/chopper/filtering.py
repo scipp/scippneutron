@@ -13,7 +13,7 @@ def find_plateaus(
     *,
     atol: sc.Variable,
     min_n_points: Union[int, sc.Variable],
-    plateau_dim: str = 'plateau',
+    plateau_dim: str = "plateau",
 ) -> sc.DataArray:
     """Find regions where the input data is approximately constant.
 
@@ -54,11 +54,11 @@ def find_plateaus(
     """
     if data.ndim != 1:
         raise NotImplementedError(
-            'find_plateaus only supports 1-dimensional data, ' f'got {data.ndim} dims'
+            "find_plateaus only supports 1-dimensional data, " f"got {data.ndim} dims"
         )
-    if not sc.issorted(data.coords[data.dim], data.dim, order='ascending'):
+    if not sc.issorted(data.coords[data.dim], data.dim, order="ascending"):
         raise sc.CoordError(
-            'The coord used by find_plateaus must be sorted in ascending order'
+            "The coord used by find_plateaus must be sorted in ascending order"
         )
 
     min_n_points = (
@@ -68,10 +68,10 @@ def find_plateaus(
     )
     derivative = _derive(data)
     group_id = sc.cumsum(
-        (abs(derivative) > atol.to(unit=derivative.unit)).to(dtype='int64')
+        (abs(derivative) > atol.to(unit=derivative.unit)).to(dtype="int64")
     )
     # Prepend a 0 to align the groups with the data points (diff reduces length by 1).
-    group_id = sc.concat([sc.index(0, dtype='int64'), group_id], dim=derivative.dim)
+    group_id = sc.concat([sc.index(0, dtype="int64"), group_id], dim=derivative.dim)
 
     group_label = str(uuid.uuid4())
     to_group = data.copy(deep=False)
@@ -85,7 +85,7 @@ def find_plateaus(
     plateaus.coords[plateau_dim] = sc.arange(plateau_dim, len(plateaus), unit=None)
     if exceeds_tolerance := _check_total_tolerance(plateaus, atol=atol):
         raise RuntimeError(
-            f'The following plateaus exceed the tolerance: {exceeds_tolerance}'
+            f"The following plateaus exceed the tolerance: {exceeds_tolerance}"
         )
     return plateaus
 
@@ -120,7 +120,7 @@ def _check_total_tolerance(plateaus: sc.DataArray, *, atol: sc.Variable) -> list
 
 
 def _next_highest(x: sc.Variable) -> sc.Variable:
-    if x.dtype in ('float64', 'float32'):
+    if x.dtype in ("float64", "float32"):
         return sc.array(
             dims=x.dims,
             variances=x.variances,
@@ -128,12 +128,12 @@ def _next_highest(x: sc.Variable) -> sc.Variable:
             dtype=x.dtype,
             values=np.nextafter(x.values, np.inf),
         )
-    if x.dtype == 'datetime64':
-        return x + sc.scalar(1, dtype='int64', unit=x.unit)
+    if x.dtype == "datetime64":
+        return x + sc.scalar(1, dtype="int64", unit=x.unit)
     return x + sc.scalar(1, dtype=x.dtype, unit=x.unit)
 
 
-def collapse_plateaus(plateaus: sc.DataArray, *, coord: str = 'time') -> sc.DataArray:
+def collapse_plateaus(plateaus: sc.DataArray, *, coord: str = "time") -> sc.DataArray:
     """Merge plateaus bins into dense data.
 
     Useful for post-processing the result of
@@ -161,7 +161,7 @@ def collapse_plateaus(plateaus: sc.DataArray, *, coord: str = 'time') -> sc.Data
     collapsed = plateaus.bins.mean()
     low = plateaus.bins.coords[coord].bins.min()
     high = _next_highest(plateaus.bins.coords[coord].bins.max())
-    collapsed.coords[coord] = sc.concat([low, high], dim=coord)
+    collapsed.coords[coord] = sc.concat([low, high], dim=coord).transpose()
     return collapsed
 
 
