@@ -99,7 +99,7 @@ napoleon_custom_sections = [
     'Model selection',
     'Slit openings',
     'Time calculations',
-    'Time dependent parameters',
+    'Time-dependent parameters',
 ]
 typehints_defaults = 'comma'
 typehints_use_rtype = False
