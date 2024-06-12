@@ -9,7 +9,7 @@ from .disk_chopper import DiskChopperType
 
 
 def extract_chopper_from_nexus(
-    chopper: Mapping[str, Union[sc.Variable, sc.DataArray, sc.DataGroup]]
+    chopper: Mapping[str, Union[sc.Variable, sc.DataArray, sc.DataGroup]],
 ) -> sc.DataGroup:
     """Convert loaded NeXus disk chopper data to the layout used by ScipNeutron.
 
@@ -32,31 +32,31 @@ def extract_chopper_from_nexus(
     """
     return sc.DataGroup(
         {
-            'type': DiskChopperType(chopper.get('type', DiskChopperType.single)),
+            "type": DiskChopperType(chopper.get("type", DiskChopperType.single)),
             **{key: _parse_field(key, val) for key, val in chopper.items()},
         }
     )
 
 
 def _parse_field(key: str, value: Any) -> Any:
-    if key == 'top_dead_center':
+    if key == "top_dead_center":
         return _parse_tdc(value)
     return _parse_maybe_log(value)
 
 
 def _parse_tdc(
-    tdc: Union[sc.Variable, sc.DataArray, sc.DataGroup]
+    tdc: Union[sc.Variable, sc.DataArray, sc.DataGroup],
 ) -> Union[sc.Variable, sc.DataArray]:
     if isinstance(tdc, sc.DataGroup):
         # An NXlog without 'value'
-        return tdc['time']
+        return tdc["time"]
     return tdc
 
 
 def _parse_maybe_log(
-    x: Union[sc.Variable, sc.DataArray, sc.DataGroup]
+    x: Union[sc.Variable, sc.DataArray, sc.DataGroup],
 ) -> Union[sc.Variable, sc.DataArray]:
-    if isinstance(x, sc.DataGroup):
+    if isinstance(x, sc.DataGroup) and "value" in x:
         # An NXlog
-        return x['value'].squeeze()
+        return x["value"].squeeze()
     return x
