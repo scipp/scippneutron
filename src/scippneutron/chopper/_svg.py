@@ -7,7 +7,6 @@
 import dataclasses
 import math
 from string import Template
-from typing import Dict, List, Tuple
 
 import scipp as sc
 
@@ -112,7 +111,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
     def to_svg_length(x: sc.Variable) -> float:
         return float(x * scale)
 
-    def polar_to_svg_coords(*, r: sc.Variable, a: sc.Variable) -> Tuple[float, float]:
+    def polar_to_svg_coords(*, r: sc.Variable, a: sc.Variable) -> tuple[float, float]:
         x = to_svg_coord(r * -sc.sin(a))
         y = image_size - to_svg_coord(r * sc.cos(a))
         return x, y
@@ -151,7 +150,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
         x, y = polar_to_svg_coords(r=radius, a=angle)
         return f"L{x:.3f} {y:.3f}"
 
-    def edge_mark(is_begin: bool, idx: int) -> Tuple[str, Dict[str, str]]:
+    def edge_mark(is_begin: bool, idx: int) -> tuple[str, dict[str, str]]:
         x, y = polar_to_svg_coords(
             r=(chopper.radius - chopper.slit_height[idx]) * radius_scale, a=angle
         )
@@ -185,7 +184,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
             text_y=y,
         )
 
-    def trace_disk() -> Tuple[List[str], List[Tuple[str, Dict[str, str]]]]:
+    def trace_disk() -> tuple[list[str], list[tuple[str, dict[str, str]]]]:
         slits = _combine_slits(chopper)
         if len(slits) == 0:
             return [], []

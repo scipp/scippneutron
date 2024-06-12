@@ -2,7 +2,6 @@
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
 import uuid
-from typing import Union
 
 import numpy as np
 import scipp as sc
@@ -12,7 +11,7 @@ def find_plateaus(
     data: sc.DataArray,
     *,
     atol: sc.Variable,
-    min_n_points: Union[int, sc.Variable],
+    min_n_points: int | sc.Variable,
     plateau_dim: str = "plateau",
 ) -> sc.DataArray:
     """Find regions where the input data is approximately constant.

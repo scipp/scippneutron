@@ -200,7 +200,7 @@ from __future__ import annotations
 
 import dataclasses
 from collections.abc import Mapping
-from typing import Any, Optional, Union
+from typing import Any
 from uuid import uuid4
 
 import numpy as np
@@ -284,9 +284,9 @@ class DiskChopper:
 
     The order is arbitrary but must match the order of ``slit_end``.
     """
-    slit_height: Optional[sc.Variable] = None
+    slit_height: sc.Variable | None = None
     """Distance from chopper outer edge to bottom of slits."""
-    radius: Optional[sc.Variable] = None
+    radius: sc.Variable | None = None
     """Radius of the chopper."""
 
     def __post_init__(self) -> None:
@@ -302,7 +302,7 @@ class DiskChopper:
 
     @classmethod
     def from_nexus(
-        cls, chopper: Mapping[str, Union[sc.Variable, sc.DataArray]]
+        cls, chopper: Mapping[str, sc.Variable | sc.DataArray]
     ) -> DiskChopper:
         """Construct a new DiskChopper from data loaded from NeXus.
 
@@ -474,7 +474,7 @@ class DiskChopper:
             pulse_frequency=pulse_frequency
         ) - self.time_offset_open(pulse_frequency=pulse_frequency)
 
-    def __eq__(self, other: Any) -> Union[bool, NotImplemented]:
+    def __eq__(self, other: object) -> bool | NotImplemented:
         if not isinstance(other, DiskChopper):
             return NotImplemented
         return all(
@@ -566,7 +566,7 @@ class DiskChopper:
 
 
 def _field_eq(a: Any, b: Any) -> bool:
-    if isinstance(a, (sc.Variable, sc.DataArray)):
+    if isinstance(a, sc.Variable | sc.DataArray):
         try:
             return sc.identical(a, b)
         except TypeError:
@@ -601,15 +601,15 @@ def _check_edge_overlap(begin: sc.Variable, end: sc.Variable) -> None:
 
 
 def _broadcast_slit_height(
-    slit_height: Optional[sc.Variable], slit_begin: sc.Variable
-) -> Optional[sc.Variable]:
+    slit_height: sc.Variable | None, slit_begin: sc.Variable
+) -> sc.Variable | None:
     if slit_height is None:
         return None
     return slit_height.broadcast(sizes=slit_begin.sizes)
 
 
 def _get_edges_from_nexus(
-    nexus_chopper: Mapping[str, Union[sc.Variable, sc.DataArray]]
+    nexus_chopper: Mapping[str, sc.Variable | sc.DataArray],
 ) -> dict[str, sc.Variable]:
     if (edges := nexus_chopper.get('slit_edges')) is not None:
         if 'slit_begin' in nexus_chopper or 'slit_end' in nexus_chopper:
@@ -641,7 +641,7 @@ def _len_or_1(x: sc.Variable) -> int:
 
 
 def _get_1d_variable(
-    dg: Mapping[str, Union[sc.Variable, sc.DataArray]], name: str
+    dg: Mapping[str, sc.Variable | sc.DataArray], name: str
 ) -> sc.Variable:
     if (val := dg.get(name)) is None:
         raise ValueError(f"Chopper field '{name}' is missing")

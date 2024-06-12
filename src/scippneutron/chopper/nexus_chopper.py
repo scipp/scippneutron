@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
-from typing import Any, Mapping, Union
+from collections.abc import Mapping
+from typing import Any
 
 import scipp as sc
 
@@ -9,7 +10,7 @@ from .disk_chopper import DiskChopperType
 
 
 def extract_chopper_from_nexus(
-    chopper: Mapping[str, Union[sc.Variable, sc.DataArray, sc.DataGroup]],
+    chopper: Mapping[str, sc.Variable | sc.DataArray | sc.DataGroup],
 ) -> sc.DataGroup:
     """Convert loaded NeXus disk chopper data to the layout used by ScipNeutron.
 
@@ -45,8 +46,8 @@ def _parse_field(key: str, value: Any) -> Any:
 
 
 def _parse_tdc(
-    tdc: Union[sc.Variable, sc.DataArray, sc.DataGroup],
-) -> Union[sc.Variable, sc.DataArray]:
+    tdc: sc.Variable | sc.DataArray | sc.DataGroup,
+) -> sc.Variable | sc.DataArray:
     if isinstance(tdc, sc.DataGroup):
         # An NXlog without 'value'
         return tdc["time"]
@@ -54,8 +55,8 @@ def _parse_tdc(
 
 
 def _parse_maybe_log(
-    x: Union[sc.Variable, sc.DataArray, sc.DataGroup],
-) -> Union[sc.Variable, sc.DataArray]:
+    x: sc.Variable | sc.DataArray | sc.DataGroup,
+) -> sc.Variable | sc.DataArray:
     if isinstance(x, sc.DataGroup) and "value" in x:
         # An NXlog
         return x["value"].squeeze()

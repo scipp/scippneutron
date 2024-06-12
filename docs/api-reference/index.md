@@ -76,4 +76,3 @@ and possible confusion of `theta` (from Bagg's law) with `theta` in spherical co
    peaks
    tof
 ```
-

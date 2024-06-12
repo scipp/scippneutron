@@ -96,8 +96,8 @@ def plot_t_vs_angle_anticlockwise(ax, ch):
     plot_axes_lines(ax, x_ticks, y_ticks)
     ax.plot(theta.values[[0, -1]], time.values[[0, -1]], linewidth=2)
     ax.plot(theta.values, time_wrapped.values, linewidth=2)
-    ax.set_xlabel(fr'$\theta$ [{theta.unit}]')
-    ax.set_ylabel(fr'$\Delta t_g(\theta)$ [{time.unit}]')
+    ax.set_xlabel(rf'$\theta$ [{theta.unit}]')
+    ax.set_ylabel(rf'$\Delta t_g(\theta)$ [{time.unit}]')
     ax.set_xticks(x_ticks, x_tick_labels)
     ax.set_yticks(y_ticks, y_tick_labels)
 
@@ -147,7 +147,7 @@ def plot_t_vs_angle(ch, name):
     plot_t_vs_angle_clockwise(axs[0], replace(ch, frequency=-ch.frequency))
 
     axs[1].set_title('Anticlockwise')
-    assert not ch.is_clockwise  # nosec: B101
+    assert not ch.is_clockwise  # noqa: S101
     plot_t_vs_angle_anticlockwise(axs[1], ch)
 
     fig.savefig(OUT_DIR.joinpath(name).with_suffix('.svg'))

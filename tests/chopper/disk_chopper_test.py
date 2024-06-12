@@ -18,7 +18,7 @@ def deg_angle_to_time_factor(frequency: sc.Variable) -> sc.Variable:
     return sc.to_unit(to_rad / angular_frequency, 's/deg')
 
 
-@pytest.fixture
+@pytest.fixture()
 def nexus_chopper():
     return sc.DataGroup(
         {
@@ -40,12 +40,12 @@ def nexus_chopper():
 
 @pytest.mark.parametrize(
     'typ',
-    (
+    [
         'contra_rotating_pair',
         'synchro_pair',
         DiskChopperType.contra_rotating_pair,
         DiskChopperType.synchro_pair,
-    ),
+    ],
 )
 def test_chopper_supports_only_single(nexus_chopper, typ):
     nexus_chopper['type'] = typ
@@ -67,14 +67,14 @@ def test_eq(nexus_chopper):
 
 @pytest.mark.parametrize(
     'replacement',
-    (
+    [
         ('rotation_speed', sc.scalar(13.0, unit='Hz')),
         ('position', sc.vector([1, 0, 0], unit='m')),
         ('radius', sc.scalar(1.0, unit='m')),
         ('phase', sc.scalar(15, unit='deg')),
         ('slit_height', sc.scalar(0.14, unit='cm')),
         ('slit_edges', sc.array(dims=['slit'], values=[0.1, 0.3], unit='rad')),
-    ),
+    ],
 )
 def test_neq(nexus_chopper, replacement):
     ch1 = DiskChopper.from_nexus(nexus_chopper)
@@ -119,7 +119,7 @@ def test_slit_begin_end_two_slits(nexus_chopper):
     )
 
 
-@pytest.mark.parametrize('rotation_speed', (1.0, -1.0))
+@pytest.mark.parametrize('rotation_speed', [1.0, -1.0])
 def test_slit_begin_end_two_slits_unordered(nexus_chopper, rotation_speed):
     ch = DiskChopper.from_nexus(
         {
@@ -153,7 +153,7 @@ def test_slit_begin_end_across_0(nexus_chopper):
 
 
 @pytest.mark.parametrize(
-    'edges', ([0, 100, 60, 140], [30, 100, 0, 40], [0, 100, 100, 140])
+    'edges', [[0, 100, 60, 140], [30, 100, 0, 40], [0, 100, 100, 140]]
 )
 def test_overlapping_slits_from_combined_edges(nexus_chopper, edges):
     with pytest.raises(ValueError, match='overlap'):
@@ -166,8 +166,8 @@ def test_overlapping_slits_from_combined_edges(nexus_chopper, edges):
 
 
 def test_overlapping_slits_from_separate_edges(nexus_chopper):
+    del nexus_chopper['slit_edges']
     with pytest.raises(ValueError, match='overlap'):
-        del nexus_chopper['slit_edges']
         DiskChopper.from_nexus(
             {
                 **nexus_chopper,
@@ -178,7 +178,7 @@ def test_overlapping_slits_from_separate_edges(nexus_chopper):
 
 
 @pytest.mark.parametrize(
-    'edges', ([30, 40, 10, 100], [10, 100, 10, 20], [10, 100, 80, 100])
+    'edges', [[30, 40, 10, 100], [10, 100, 10, 20], [10, 100, 80, 100]]
 )
 def test_slits_contained_in_other_slit_from_combined_edges(nexus_chopper, edges):
     with pytest.raises(ValueError, match='overlap'):
@@ -202,8 +202,8 @@ def test_slits_contained_in_other_slit_from_separate_edges(nexus_chopper):
         )
 
 
-@pytest.mark.parametrize('beam_position_unit', ('rad', 'deg'))
-@pytest.mark.parametrize('phase_unit', ('rad', 'deg'))
+@pytest.mark.parametrize('beam_position_unit', ['rad', 'deg'])
+@pytest.mark.parametrize('phase_unit', ['rad', 'deg'])
 def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_clockwise_single_angle(
     nexus_chopper, beam_position_unit, phase_unit
 ):
@@ -238,8 +238,8 @@ def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_clockwise_single_angle
     )
 
 
-@pytest.mark.parametrize('beam_position_unit', ('rad', 'deg'))
-@pytest.mark.parametrize('phase_unit', ('rad', 'deg'))
+@pytest.mark.parametrize('beam_position_unit', ['rad', 'deg'])
+@pytest.mark.parametrize('phase_unit', ['rad', 'deg'])
 def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_anti_clockwise_single_angle(
     nexus_chopper, beam_position_unit, phase_unit
 ):
@@ -274,8 +274,8 @@ def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_anti_clockwise_single_
     )
 
 
-@pytest.mark.parametrize('beam_position_unit', ('rad', 'deg'))
-@pytest.mark.parametrize('phase_unit', ('rad', 'deg'))
+@pytest.mark.parametrize('beam_position_unit', ['rad', 'deg'])
+@pytest.mark.parametrize('phase_unit', ['rad', 'deg'])
 def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_clockwise_multi_angle(
     nexus_chopper, beam_position_unit, phase_unit
 ):
@@ -293,8 +293,8 @@ def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_clockwise_multi_angle(
     assert sc.allclose(ch.time_offset_angle_at_beam(angle=angles), expected)
 
 
-@pytest.mark.parametrize('beam_position_unit', ('rad', 'deg'))
-@pytest.mark.parametrize('phase_unit', ('rad', 'deg'))
+@pytest.mark.parametrize('beam_position_unit', ['rad', 'deg'])
+@pytest.mark.parametrize('phase_unit', ['rad', 'deg'])
 def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_anti_clockwise_multi_angle(
     nexus_chopper, beam_position_unit, phase_unit
 ):
@@ -316,7 +316,7 @@ def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_anti_clockwise_multi_a
     assert sc.allclose(ch.time_offset_angle_at_beam(angle=angles), expected)
 
 
-@pytest.mark.parametrize('phase_unit', ('rad', 'deg'))
+@pytest.mark.parametrize('phase_unit', ['rad', 'deg'])
 def test_time_offset_angle_at_beam_no_phase_with_beam_pos_clockwise(
     nexus_chopper, phase_unit
 ):
@@ -347,7 +347,7 @@ def test_time_offset_angle_at_beam_no_phase_with_beam_pos_clockwise(
     )
 
 
-@pytest.mark.parametrize('phase_unit', ('rad', 'deg'))
+@pytest.mark.parametrize('phase_unit', ['rad', 'deg'])
 def test_time_offset_angle_at_beam_no_phase_with_beam_pos_anti_clockwise(
     nexus_chopper, phase_unit
 ):
@@ -378,7 +378,7 @@ def test_time_offset_angle_at_beam_no_phase_with_beam_pos_anti_clockwise(
     )
 
 
-@pytest.mark.parametrize('beam_position_unit', ('rad', 'deg'))
+@pytest.mark.parametrize('beam_position_unit', ['rad', 'deg'])
 def test_time_offset_angle_at_beam_with_phase_zero_beam_pos_clockwise(
     nexus_chopper, beam_position_unit
 ):
@@ -409,7 +409,7 @@ def test_time_offset_angle_at_beam_with_phase_zero_beam_pos_clockwise(
     )
 
 
-@pytest.mark.parametrize('beam_position_unit', ('rad', 'deg'))
+@pytest.mark.parametrize('beam_position_unit', ['rad', 'deg'])
 def test_time_offset_angle_at_beam_with_phase_zero_beam_pos_anti_clockwise(
     nexus_chopper, beam_position_unit
 ):
@@ -441,7 +441,7 @@ def test_time_offset_angle_at_beam_with_phase_zero_beam_pos_anti_clockwise(
 
 
 @pytest.mark.parametrize(
-    'phase', (sc.scalar(0.0, unit='rad'), sc.scalar(1.2, unit='rad'))
+    'phase', [sc.scalar(0.0, unit='rad'), sc.scalar(1.2, unit='rad')]
 )
 def test_time_offset_open_close_no_slit(nexus_chopper, phase):
     ch = DiskChopper.from_nexus(
@@ -468,7 +468,7 @@ def test_time_offset_open_close_no_slit(nexus_chopper, phase):
     )
 
 
-@pytest.mark.parametrize('rotation_speed', (5.12, -3.6))
+@pytest.mark.parametrize('rotation_speed', [5.12, -3.6])
 def test_time_offset_open_close_only_slit(nexus_chopper, rotation_speed):
     ch = DiskChopper.from_nexus(
         {
@@ -500,19 +500,19 @@ def test_time_offset_open_close_only_slit(nexus_chopper, rotation_speed):
 
 @pytest.mark.parametrize(
     'phase',
-    (
+    [
         sc.scalar(0.0, unit='rad'),
         sc.scalar(1.2, unit='rad'),
         sc.scalar(-50.0, unit='deg'),
-    ),
+    ],
 )
 @pytest.mark.parametrize(
     'beam_position',
-    (
+    [
         sc.scalar(0.0, unit='rad'),
         sc.scalar(-0.5, unit='rad'),
         sc.scalar(45.8, unit='deg'),
-    ),
+    ],
 )
 def test_time_offset_open_close_one_slit_clockwise(nexus_chopper, phase, beam_position):
     ch = DiskChopper.from_nexus(
@@ -542,19 +542,19 @@ def test_time_offset_open_close_one_slit_clockwise(nexus_chopper, phase, beam_po
 
 @pytest.mark.parametrize(
     'phase',
-    (
+    [
         sc.scalar(0.0, unit='rad'),
         sc.scalar(1.2, unit='rad'),
         sc.scalar(-50.0, unit='deg'),
-    ),
+    ],
 )
 @pytest.mark.parametrize(
     'beam_position',
-    (
+    [
         sc.scalar(0.0, unit='rad'),
         sc.scalar(-0.5, unit='rad'),
         sc.scalar(45.8, unit='deg'),
-    ),
+    ],
 )
 def test_time_offset_open_close_one_slit_anticlockwise(
     nexus_chopper, phase, beam_position
@@ -586,19 +586,19 @@ def test_time_offset_open_close_one_slit_anticlockwise(
 
 @pytest.mark.parametrize(
     'phase',
-    (
+    [
         sc.scalar(0.0, unit='rad'),
         sc.scalar(1.2, unit='rad'),
         sc.scalar(-50.0, unit='deg'),
-    ),
+    ],
 )
 @pytest.mark.parametrize(
     'beam_position',
-    (
+    [
         sc.scalar(0.0, unit='rad'),
         sc.scalar(-0.5, unit='rad'),
         sc.scalar(45.8, unit='deg'),
-    ),
+    ],
 )
 def test_time_offset_open_close_one_slit_across_tdc_clockwise(
     nexus_chopper, phase, beam_position
@@ -630,19 +630,19 @@ def test_time_offset_open_close_one_slit_across_tdc_clockwise(
 
 @pytest.mark.parametrize(
     'phase',
-    (
+    [
         sc.scalar(0.0, unit='rad'),
         sc.scalar(1.2, unit='rad'),
         sc.scalar(-50.0, unit='deg'),
-    ),
+    ],
 )
 @pytest.mark.parametrize(
     'beam_position',
-    (
+    [
         sc.scalar(0.0, unit='rad'),
         sc.scalar(-0.5, unit='rad'),
         sc.scalar(45.8, unit='deg'),
-    ),
+    ],
 )
 def test_time_offset_open_close_one_slit_across_tdc_anticlockwise(
     nexus_chopper, phase, beam_position
@@ -856,9 +856,9 @@ def test_time_offset_open_close_source_frequency_not_multiple_of_chopper(nexus_c
     ch = DiskChopper.from_nexus(
         {**nexus_chopper, 'rotation_speed': sc.scalar(4.52, unit='Hz')}
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='out of phase'):
         ch.time_offset_open(pulse_frequency=sc.scalar(4.3, unit='Hz'))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='out of phase'):
         ch.time_offset_close(pulse_frequency=sc.scalar(5.1, unit='Hz'))
 
 
