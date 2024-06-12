@@ -93,7 +93,14 @@ napoleon_type_aliases = {
     # objects without namespace: numpy
     "ndarray": "~numpy.ndarray",
 }
-napoleon_custom_sections = ['Fit procedure', 'Model selection']
+napoleon_custom_sections = [
+    'Definitions',
+    'Fit procedure',
+    'Model selection',
+    'Slit openings',
+    'Time calculations',
+    'Time-dependent parameters',
+]
 typehints_defaults = 'comma'
 typehints_use_rtype = False
 
@@ -148,7 +155,13 @@ language = "en"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    '**.ipynb_checkpoints',
+    'scripts',
+]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'

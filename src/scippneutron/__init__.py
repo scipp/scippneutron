@@ -45,6 +45,7 @@ from .data_streaming.data_stream import data_stream
 from .masking import MaskingTool
 from . import atoms
 from . import data
+from . import chopper
 
 del importlib
 
@@ -70,6 +71,7 @@ __all__ = [
     "load_nexus_json",
     "data_stream",
     "atoms",
+    "chopper",
     "data",
     "MaskingTool",
 ]

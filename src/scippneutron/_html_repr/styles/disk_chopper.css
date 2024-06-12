@@ -1,0 +1,5 @@
+.scn-disk-chopper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
