@@ -24,9 +24,7 @@ idna==3.7
 kiwisolver==1.4.5
     # via matplotlib
 matplotlib==3.9.0
-    # via
-    #   mpltoolbox
-    #   plopp
+    # via mpltoolbox
 mpltoolbox==24.5.1
     # via -r base.in
 numpy==1.26.4
@@ -46,8 +44,6 @@ pillow==10.3.0
     # via matplotlib
 platformdirs==4.2.2
     # via pooch
-plopp==24.5.0
-    # via -r base.in
 pooch==1.8.2
     # via -r base.in
 pyparsing==3.1.2
@@ -58,11 +54,11 @@ python-dateutil==2.9.0.post0
     #   scippnexus
 requests==2.32.3
     # via pooch
-scipp==24.5.1
+scipp[interactive]==24.5.1
     # via
     #   -r base.in
     #   scippnexus
-scippnexus==24.3.1
+scippnexus==24.6.0
     # via -r base.in
 scipy==1.13.1
     # via
