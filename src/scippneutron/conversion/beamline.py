@@ -452,15 +452,22 @@ def scattering_angles_with_gravity(
 
     .. math::
 
-        x = b_2 \cdot \hat{e}_x \\
-        y = b_2 \cdot \hat{e}_y \\
-        z = b_2 \cdot \hat{e}_z
+        x_d &= b_2 \cdot \hat{e}_x \\
+        y_d &= b_2 \cdot \hat{e}_y \\
+        z_d &= b_2 \cdot \hat{e}_z
 
-    We compute a gravity-corrected :math:`y` as
+    :math:`b_2` points from the sample to the detector that detected the neutron.
+    The neutron left the sample in the direction of a vector :math:`b'_2`.
+    This vector defines the scattering angles :math:`2\theta` and :math:`\phi`.
+    Taking gravity into account, we have :math:`b'_2 \neq b_2`.
+    Solving the equations of motion gives the following for the
+    components of :math:`b'_2`:
 
     .. math::
 
-        y' = y + \frac{|g| m_n^2}{2 h^2} L_2^2 \lambda^2
+        x'_d &= x_d \\
+        y'_d &= y_d + \frac{|g| m_n^2}{2 h^2} L_2^{\prime\, 2} \lambda^2 \\
+        z'_d &= z_d
 
     Where :math:`|g|` is the strength of gravity, :math:`m_n` is the neutron mass,
     :math:`h` is the Planck constant, and :math:`\lambda` is the wavelength.
@@ -468,8 +475,21 @@ def scattering_angles_with_gravity(
 
     .. math::
 
-        \mathsf{tan}(2\theta) &= \frac{\sqrt{x^2 + y'^2}}{z} \\
-        \mathsf{tan}(\phi) &= \frac{y'}{x}
+        \mathsf{tan}(2\theta) &= \frac{\sqrt{x_d^2 + y_d^{\prime\, 2}}}{z} \\
+        \mathsf{tan}(\phi) &= \frac{y'_d}{x}
+
+    Attention
+    ---------
+    The above equation for :math:`y'_d` contains :math:`L_2^{\prime\, 2} = |b'_2|`
+    which in turn depends on :math:`y'_d`.
+    Solving this equation for :math:`y'_d` is too difficult.
+    Instead, we approximate :math:`L'_2 \approx L_2`.
+    The impact of this approximation on :math:`2\theta` is of the order of
+    :math:`10^{-6}` or less for beamlines at ESS.
+    This is within the expected statistical uncertainties and can be ignored.
+
+    See the file ``docs/user-guide/auxiliary/gravity_approx/gravity_approx.typ``
+    for details.
 
     Parameters
     ----------
