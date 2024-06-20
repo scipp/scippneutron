@@ -314,6 +314,7 @@ def fit_peaks(
     data:
         A 1d data array where ``data.data`` is the dependent variable
         and ``data.coords[data.dim]`` is the independent variable for the fit.
+        Must be 1-dimensional and not binned.
     peak_estimates:
         Initial estimates of peak locations.
         A peak will be fitted for each estimate.
@@ -344,18 +345,12 @@ def fit_peaks(
     :
         A :class:`FitResult` for each peak.
     """
+    _assert_data_is_supported(data)
+
     background = _parse_model_spec(background, prefix='bkg_')
     peak = _parse_model_spec(peak, prefix='peak_')
     fit_parameters = fit_parameters or FitParameters()
     fit_requirements = fit_requirements or FitRequirements()
-
-    if not sc.issorted(data.coords[data.dim], data.dim, order='ascending'):
-        # A lot of code here assumes a sorted coord, either to use O(1) instead of O(n)
-        # operations or to allow extracting windows.
-        raise sc.CoordError(
-            'fit_peaks requires the coordinate to be sorted in ascending order. '
-            'Consider using scipp.sort to fix this.'
-        )
 
     if windows.ndim == 0:
         windows = _fit_windows(data, peak_estimates, windows, fit_parameters)
@@ -734,3 +729,24 @@ def _parse_single_model_spec(spec: Model | str, prefix: str) -> Model:
             return PseudoVoigtModel(prefix=prefix)
         case _:
             raise ValueError(f"Unknown model: '{spec}'")
+
+
+def _assert_data_is_supported(data: sc.DataArray) -> None:
+    if data.ndim != 1:
+        raise sc.DimensionError(
+            f'`fit_peaks` requires 1d data, got {data.ndim} dimensions'
+        )
+    if data.bins is not None:
+        raise sc.DTypeError('`fit_peaks` does not support binned data')
+    if data.coords.is_edges(data.dim):
+        raise sc.CoordError(
+            f'Coordinate {data.dim} is bin-edges but `fit_peaks` requires a regular '
+            f'coordinate. Consider using `sc.midpoints` to convert the coordinate.'
+        )
+    if not sc.issorted(data.coords[data.dim], data.dim, order='ascending'):
+        # A lot of code here assumes a sorted coord, either to use O(1) instead of O(n)
+        # operations or to allow extracting windows.
+        raise sc.CoordError(
+            'fit_peaks requires the coordinate to be sorted in ascending order. '
+            'Consider using scipp.sort to fix this.'
+        )
