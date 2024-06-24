@@ -54,7 +54,7 @@ python-dateutil==2.9.0.post0
     #   scippnexus
 requests==2.32.3
     # via pooch
-scipp[interactive]==24.5.1
+scipp[interactive]==24.6.0
     # via
     #   -r base.in
     #   scippnexus
