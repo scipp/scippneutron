@@ -1,0 +1,1052 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scippneutron.io.nexus.load_nexus &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../../../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+
+  
+  <link href="../../../../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../../../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+
+    <script src="../../../../_static/documentation_options.js?v=a41d8c81"></script>
+    <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/design-tabs.js?v=36754332"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scippneutron/io/nexus/load_nexus';</script>
+    <script src="../../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <script>document.write(`<img src="../../../../_static/logo-dark.svg" class="logo__image only-dark" alt="ScippNeutron - Home"/>`);</script>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav class="navbar-nav">
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../../user-guide/index.html">
+                        User Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../../api-reference/index.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../../developer/index.html">
+                        Development
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../../about/index.html">
+                        About
+                      </a>
+                    </li>
+                
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+                    Plopp
+                  </a>
+                </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+                    Scipp
+                  </a>
+                </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+                    ScippNexus
+                  </a>
+                </li>
+                
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item">
+<nav class="navbar-nav">
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../../user-guide/index.html">
+                        User Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../../api-reference/index.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../../developer/index.html">
+                        Development
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../../about/index.html">
+                        About
+                      </a>
+                    </li>
+                
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links-2">
+                    More
+                </button>
+                <ul id="pst-nav-more-links-2" class="dropdown-menu">
+                    
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+                    Plopp
+                  </a>
+                </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+                    Scipp
+                  </a>
+                </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+                    ScippNexus
+                  </a>
+                </li>
+                
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">scippneutron...</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scippneutron.io.nexus.load_nexus</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2023 Scipp contributors (https://github.com/scipp)</span>
+<span class="c1"># @author Matthew Jones</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">timeit</span> <span class="kn">import</span> <span class="n">default_timer</span> <span class="k">as</span> <span class="n">timer</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipp</span> <span class="k">as</span> <span class="nn">sc</span>
+<span class="kn">import</span> <span class="nn">scippnexus</span> <span class="k">as</span> <span class="nn">snx</span>
+<span class="kn">from</span> <span class="nn">scipp.binning</span> <span class="kn">import</span> <span class="n">make_binned</span>
+<span class="kn">from</span> <span class="nn">scipp.core.util</span> <span class="kn">import</span> <span class="n">VisibleDeprecationWarning</span>
+<span class="kn">from</span> <span class="nn">scippnexus.v1</span> <span class="kn">import</span> <span class="n">NXroot</span>
+<span class="kn">from</span> <span class="nn">scippnexus.v1.nxobject</span> <span class="kn">import</span> <span class="n">NexusStructureError</span><span class="p">,</span> <span class="n">NXobject</span>
+<span class="kn">from</span> <span class="nn">scippnexus.v1.nxtransformations</span> <span class="kn">import</span> <span class="n">TransformationError</span>
+
+<span class="kn">from</span> <span class="nn">..._utils</span> <span class="kn">import</span> <span class="n">get_attrs</span>
+<span class="kn">from</span> <span class="nn">._json_nexus</span> <span class="kn">import</span> <span class="n">JSONGroup</span><span class="p">,</span> <span class="n">StreamInfo</span><span class="p">,</span> <span class="n">contains_stream</span><span class="p">,</span> <span class="n">get_streams_info</span>
+<span class="kn">from</span> <span class="nn">._nexus</span> <span class="kn">import</span> <span class="n">ScippData</span>
+
+
+<div class="viewcode-block" id="BadSource">
+<a class="viewcode-back" href="../../../../generated/modules/scippneutron.io.nexus.load_nexus.BadSource.html#scippneutron.BadSource">[docs]</a>
+<span class="k">class</span> <span class="nc">BadSource</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raise if something is wrong with data source which</span>
+<span class="sd">    prevents it being used. Warn the user.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="SkipSource">
+<a class="viewcode-back" href="../../../../generated/modules/scippneutron.io.nexus.load_nexus.SkipSource.html#scippneutron.SkipSource">[docs]</a>
+<span class="k">class</span> <span class="nc">SkipSource</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raise to abort using the data source, do not</span>
+<span class="sd">    warn the user.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="add_position_and_transforms_to_data">
+<a class="viewcode-back" href="../../../../generated/modules/scippneutron.io.nexus.load_nexus.add_position_and_transforms_to_data.html#scippneutron.add_position_and_transforms_to_data">[docs]</a>
+<span class="k">def</span> <span class="nf">add_position_and_transforms_to_data</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">|</span> <span class="n">sc</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+    <span class="n">transform_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">position_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">base_position_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">transforms</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">positions</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">coords</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="n">get_attrs</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="n">data</span>
+
+    <span class="k">if</span> <span class="n">transforms</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">coords</span><span class="p">[</span><span class="n">position_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">positions</span>
+        <span class="n">attrs</span><span class="p">[</span><span class="n">base_position_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">positions</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transforms</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">):</span>
+        <span class="c1"># If transform is not time-dependent.</span>
+        <span class="n">coords</span><span class="p">[</span><span class="n">position_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">transforms</span> <span class="o">*</span> <span class="n">positions</span>
+        <span class="n">attrs</span><span class="p">[</span><span class="n">base_position_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">positions</span>
+        <span class="n">attrs</span><span class="p">[</span><span class="n">transform_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">transforms</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">coords</span><span class="p">[</span><span class="n">base_position_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">positions</span>
+        <span class="n">coords</span><span class="p">[</span><span class="n">transform_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">transforms</span><span class="p">)</span></div>
+
+
+
+<span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">_open_if_path</span><span class="p">(</span><span class="n">file_in</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Open if file path is provided,</span>
+<span class="sd">    otherwise yield the existing h5py.File object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_in</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">file_in</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">libver</span><span class="o">=</span><span class="s1">&#39;latest&#39;</span><span class="p">,</span> <span class="n">swmr</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">nexus_file</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">nexus_file</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">file_in</span>
+
+
+<span class="k">def</span> <span class="nf">_load_instrument_name</span><span class="p">(</span><span class="n">instruments</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NXobject</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="n">instrument</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">instruments</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">instruments</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;More than one NXinstrument found in file, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;loading name from </span><span class="si">{</span><span class="n">instrument</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> only&quot;</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="o">:=</span> <span class="n">instrument</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;instrument_name&quot;</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">name</span><span class="p">[()])}</span>
+    <span class="k">return</span> <span class="p">{}</span>
+
+
+<span class="k">def</span> <span class="nf">_load_title</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">NXobject</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">title</span> <span class="o">:=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;experiment_title&quot;</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">title</span><span class="p">[()])}</span>
+    <span class="k">return</span> <span class="p">{}</span>
+
+
+<span class="k">def</span> <span class="nf">_load_start_and_end_time</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">NXobject</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">time</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;start_time&quot;</span><span class="p">,</span> <span class="s2">&quot;end_time&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">dataset</span> <span class="o">:=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">time</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">times</span><span class="p">[</span><span class="n">time</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">dataset</span><span class="p">[()])</span>
+    <span class="k">return</span> <span class="n">times</span>
+
+
+<div class="viewcode-block" id="load_nexus">
+<a class="viewcode-back" href="../../../../generated/modules/scippneutron.io.nexus.load_nexus.load_nexus.html#scippneutron.load_nexus">[docs]</a>
+<span class="k">def</span> <span class="nf">load_nexus</span><span class="p">(</span>
+    <span class="n">data_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScippData</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load a NeXus file and return required information.</span>
+
+<span class="sd">    :param data_file: path of NeXus file containing data to load</span>
+<span class="sd">    :param root: path of group in file, only load data from the subtree of</span>
+<span class="sd">      this group</span>
+<span class="sd">    :param quiet: if False prints some details of what is being loaded</span>
+
+<span class="sd">    Usage example:</span>
+<span class="sd">      data = sc.neutron.load_nexus(&#39;PG3_4844_event.nxs&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">warn</span><span class="p">(</span>
+        <span class="s2">&quot;`load_nexus` is deprecated and will be removed in version 24.03, &quot;</span>
+        <span class="s2">&quot;please switch to using ScippNexus.&quot;</span><span class="p">,</span>
+        <span class="n">VisibleDeprecationWarning</span><span class="p">,</span>
+        <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">timer</span><span class="p">()</span>
+
+    <span class="k">with</span> <span class="n">_open_if_path</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">nexus_file</span><span class="p">:</span>
+        <span class="n">loaded_data</span> <span class="o">=</span> <span class="n">_load_data</span><span class="p">(</span><span class="n">nexus_file</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">quiet</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">quiet</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">...logging</span> <span class="kn">import</span> <span class="n">get_logger</span>
+
+        <span class="n">get_logger</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Total time: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">timer</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loaded_data</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_origin</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">vector</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="n">unit</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_depends_on_to_position</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">transform</span> <span class="o">:=</span> <span class="n">obj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;depends_on&#39;</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">transform</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">transform</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">sc</span><span class="o">.</span><span class="n">DType</span><span class="o">.</span><span class="n">DataArray</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># cannot compute position if bad transform or time-dependent</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">transform</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">sc</span><span class="o">.</span><span class="n">DType</span><span class="o">.</span><span class="n">rotation3</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">transform</span> <span class="o">*</span> <span class="n">_origin</span><span class="p">(</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">transform</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="n">_origin</span><span class="p">(</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_monitor_to_canonical</span><span class="p">(</span><span class="n">monitor</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">monitor</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">monitor</span>
+    <span class="k">if</span> <span class="n">monitor</span><span class="o">.</span><span class="n">bins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">monitor</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;tof&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;event_time_offset&#39;</span><span class="p">)</span>
+        <span class="n">monitor</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;detector_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;event_id&#39;</span><span class="p">)</span>
+        <span class="n">monitor</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;pulse_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">bins_like</span><span class="p">(</span>
+            <span class="n">monitor</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="n">monitor</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;event_time_zero&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">monitor</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="s1">&#39;pulse&#39;</span><span class="p">),</span> <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;tof&#39;</span><span class="p">],</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">position</span> <span class="o">:=</span> <span class="n">_depends_on_to_position</span><span class="p">(</span><span class="n">monitor</span><span class="o">.</span><span class="n">coords</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;position&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">position</span>
+    <span class="k">return</span> <span class="n">da</span>
+
+
+<span class="k">def</span> <span class="nf">_zip_pixel_offset</span><span class="p">(</span><span class="n">da</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove [xyz]_pixel_offset and replace them by single &#39;pixel_offset&#39; coord.</span>
+
+<span class="sd">    Returns unchanged data array if x_pixel_offset is not found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s1">&#39;x_pixel_offset&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">da</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;x_pixel_offset&#39;</span><span class="p">)</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">da</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">DType</span><span class="o">.</span><span class="n">vector3</span><span class="p">)</span>
+    <span class="n">offset</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float64&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">y</span> <span class="o">:=</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;y_pixel_offset&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">offset</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float64&#39;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">z</span> <span class="o">:=</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;z_pixel_offset&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">offset</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float64&#39;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;pixel_offset&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">offset</span><span class="o">.</span><span class="n">rename_dims</span><span class="p">(</span>
+        <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">offset</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">da</span>
+
+
+<span class="k">def</span> <span class="nf">_by_nx_class</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s1">&#39;NXobject&#39;</span><span class="p">]]:</span>
+    <span class="kn">from</span> <span class="nn">scippnexus.v1.nxobject</span> <span class="kn">import</span> <span class="n">_nx_class_registry</span>
+
+    <span class="n">classes</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_nx_class_registry</span><span class="p">()}</span>
+
+    <span class="k">def</span> <span class="nf">_match_nx_class</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s1">&#39;shape&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">nx_class</span> <span class="o">:=</span> <span class="n">node</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;NX_class&#39;</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nx_class</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="n">nx_class</span> <span class="o">=</span> <span class="n">nx_class</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;UTF-8&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">nx_class</span> <span class="ow">in</span> <span class="n">_nx_class_registry</span><span class="p">():</span>
+                    <span class="n">classes</span><span class="p">[</span><span class="n">nx_class</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+    <span class="n">group</span><span class="o">.</span><span class="n">_group</span><span class="o">.</span><span class="n">visititems</span><span class="p">(</span><span class="n">_match_nx_class</span><span class="p">)</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">nx_class</span><span class="p">,</span> <span class="n">groups</span> <span class="ow">in</span> <span class="n">classes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">names</span><span class="p">)):</span>  <span class="c1"># fall back to full path if duplicate</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">]</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">nx_class</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="n">group</span><span class="o">.</span><span class="n">_make</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)}</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span> <span class="nf">_load_data</span><span class="p">(</span>
+    <span class="n">nexus_file</span><span class="p">:</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScippData</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Main implementation for loading data is extracted to this function so that</span>
+<span class="sd">    in-memory data can be used for unit tests.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">NXroot</span><span class="p">(</span><span class="n">nexus_file</span> <span class="k">if</span> <span class="n">root</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">nexus_file</span><span class="p">[</span><span class="n">root</span><span class="p">])</span>
+    <span class="n">classes</span> <span class="o">=</span> <span class="n">_by_nx_class</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">classes</span><span class="p">[</span><span class="s1">&#39;NXentry&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># We can&#39;t sensibly load from multiple NXentry, for example each</span>
+        <span class="c1"># could could contain a description of the same detector bank</span>
+        <span class="c1"># and lead to problems with clashing detector ids etc</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;More than one NXentry group in file, use &#39;root&#39; argument &quot;</span>
+            <span class="s2">&quot;to specify which to load data from, for example&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(&#39;my_file.nxs&#39;, &#39;/entry_2&#39;)&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># In the following, we map the file structure onto a partially flattened in-memory</span>
+    <span class="c1"># structure. This behavior is quite error prone and cumbersome and will probably</span>
+    <span class="c1"># disappear in this form. We therefore keep this length code directly in this</span>
+    <span class="c1"># function to provide an overview and facility future refactoring steps.</span>
+    <span class="n">detectors</span> <span class="o">=</span> <span class="n">classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;NXdetector&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">loaded_detectors</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">detectors</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">det</span> <span class="o">=</span> <span class="n">group</span><span class="p">[()]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">det</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">NexusStructureError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to load NXdetector </span><span class="si">{</span><span class="n">group</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">det</span> <span class="o">=</span> <span class="n">_zip_pixel_offset</span><span class="p">(</span><span class="n">det</span><span class="p">)</span>
+            <span class="n">det</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="s1">&#39;detector_id&#39;</span><span class="p">)</span>
+            <span class="n">det</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;tof&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;event_time_offset&#39;</span><span class="p">)</span>
+            <span class="n">det</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;pulse_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;event_time_zero&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s1">&#39;detector_number&#39;</span> <span class="ow">in</span> <span class="n">det</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+                <span class="n">det</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;detector_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;detector_number&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="s1">&#39;pixel_id&#39;</span> <span class="ow">in</span> <span class="n">det</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+                <span class="n">det</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;detector_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;pixel_id&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="s1">&#39;spectrum_index&#39;</span> <span class="ow">in</span> <span class="n">det</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+                <span class="n">det</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;detector_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;spectrum_index&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                    <span class="s2">&quot;Found neither of detector_number, pixel_id, or spectrum_index.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="s1">&#39;pixel_offset&#39;</span> <span class="ow">in</span> <span class="n">det</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+                <span class="n">add_position_and_transforms_to_data</span><span class="p">(</span>
+                    <span class="n">data</span><span class="o">=</span><span class="n">det</span><span class="p">,</span>
+                    <span class="n">transform_name</span><span class="o">=</span><span class="s2">&quot;position_transformations&quot;</span><span class="p">,</span>
+                    <span class="n">position_name</span><span class="o">=</span><span class="s2">&quot;position&quot;</span><span class="p">,</span>
+                    <span class="n">base_position_name</span><span class="o">=</span><span class="s2">&quot;base_position&quot;</span><span class="p">,</span>
+                    <span class="n">positions</span><span class="o">=</span><span class="n">det</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;pixel_offset&#39;</span><span class="p">),</span>
+                    <span class="n">transforms</span><span class="o">=</span><span class="n">det</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;depends_on&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="n">loaded_detectors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">det</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span>  <span class="c1"># noqa: PERF203</span>
+            <span class="n">BadSource</span><span class="p">,</span>
+            <span class="n">SkipSource</span><span class="p">,</span>
+            <span class="n">NexusStructureError</span><span class="p">,</span>
+            <span class="ne">KeyError</span><span class="p">,</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">DTypeError</span><span class="p">,</span>
+            <span class="ne">ValueError</span><span class="p">,</span>
+            <span class="ne">IndexError</span><span class="p">,</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">contains_stream</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">_group</span><span class="p">):</span>
+                <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skipped loading </span><span class="si">{</span><span class="n">group</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> due to:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+    <span class="n">no_event_data</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">loaded_data</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># If no event data are found, make a Dataset and add the metadata as</span>
+    <span class="c1"># Dataset entries. Otherwise, make a DataArray.</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">loaded_detectors</span><span class="p">):</span>
+        <span class="n">no_event_data</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">loaded_data</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">loaded_detectors</span><span class="p">,</span> <span class="s1">&#39;detector_id&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">detectors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># If there are no NXdetector groups, load NXevent_data directly</span>
+        <span class="n">loaded_events</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;NXevent_data&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">events</span> <span class="o">=</span> <span class="n">group</span><span class="p">[()]</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="n">NexusStructureError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to load NXdetector </span><span class="si">{</span><span class="n">group</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">events</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;pulse_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">events</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;event_time_zero&#39;</span><span class="p">)</span>
+                <span class="n">events</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;tof&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">events</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;event_time_offset&#39;</span><span class="p">)</span>
+                <span class="n">events</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;detector_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">events</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;event_id&#39;</span><span class="p">)</span>
+                <span class="n">det_min</span> <span class="o">=</span> <span class="n">events</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;detector_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">value</span>
+                <span class="n">det_max</span> <span class="o">=</span> <span class="n">events</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;detector_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">value</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">constituents</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># See scipp/scipp#2490</span>
+                    <span class="n">det_id</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="s1">&#39;detector_id&#39;</span><span class="p">,</span> <span class="n">det_min</span><span class="p">,</span> <span class="n">det_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+                    <span class="n">events</span> <span class="o">=</span> <span class="n">make_binned</span><span class="p">(</span>
+                        <span class="n">events</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="p">[</span><span class="n">det_id</span><span class="p">],</span> <span class="n">erase</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pulse&#39;</span><span class="p">,</span> <span class="s1">&#39;bank&#39;</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="n">loaded_events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">BadSource</span><span class="p">,</span> <span class="n">SkipSource</span><span class="p">,</span> <span class="n">NexusStructureError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa:PERF203</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">contains_stream</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">_group</span><span class="p">):</span>
+                    <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skipped loading </span><span class="si">{</span><span class="n">group</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> due to:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">loaded_events</span><span class="p">):</span>
+            <span class="n">no_event_data</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">loaded_data</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">loaded_events</span><span class="p">,</span> <span class="s1">&#39;detector_id&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">no_event_data</span><span class="p">:</span>
+        <span class="c1"># Add single tof bin</span>
+        <span class="n">loaded_data</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+            <span class="n">loaded_data</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span>
+                <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;detector_id&#39;</span><span class="p">,</span> <span class="n">sizes</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;detector_id&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;tof&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+            <span class="p">),</span>
+            <span class="n">coords</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">loaded_data</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+            <span class="n">attrs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">get_attrs</span><span class="p">(</span><span class="n">loaded_data</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+        <span class="p">)</span>
+        <span class="n">tof_min</span> <span class="o">=</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;tof&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float64&#39;</span><span class="p">)</span>
+        <span class="n">tof_max</span> <span class="o">=</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;tof&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float64&#39;</span><span class="p">)</span>
+        <span class="n">tof_max</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nextafter</span><span class="p">(</span><span class="n">tof_max</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">))</span>
+        <span class="n">loaded_data</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;tof&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">tof_min</span><span class="p">,</span> <span class="n">tof_max</span><span class="p">],</span> <span class="s1">&#39;tof&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">add_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded_data</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+                <span class="n">get_attrs</span><span class="p">(</span><span class="n">loaded_data</span><span class="p">)[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">loaded_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">if</span> <span class="n">entries</span> <span class="o">:=</span> <span class="n">classes</span><span class="p">[</span><span class="s1">&#39;NXentry&#39;</span><span class="p">]:</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">entries</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="n">add_metadata</span><span class="p">(</span><span class="n">_load_title</span><span class="p">(</span><span class="n">entry</span><span class="p">))</span>
+        <span class="n">add_metadata</span><span class="p">(</span><span class="n">_load_start_and_end_time</span><span class="p">(</span><span class="n">entry</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">instruments</span> <span class="o">:=</span> <span class="n">classes</span><span class="p">[</span><span class="s1">&#39;NXinstrument&#39;</span><span class="p">]:</span>
+        <span class="n">add_metadata</span><span class="p">(</span><span class="n">_load_instrument_name</span><span class="p">(</span><span class="n">instruments</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">load_and_add_metadata</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="n">process</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">loaded_groups</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">items</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">process</span><span class="p">(</span><span class="n">group</span><span class="p">[()]))</span>
+                <span class="n">loaded_groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span>  <span class="c1"># noqa: PERF203</span>
+                <span class="n">BadSource</span><span class="p">,</span>
+                <span class="n">SkipSource</span><span class="p">,</span>
+                <span class="n">TransformationError</span><span class="p">,</span>
+                <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">,</span>
+                <span class="n">sc</span><span class="o">.</span><span class="n">UnitError</span><span class="p">,</span>
+                <span class="n">NexusStructureError</span><span class="p">,</span>
+                <span class="ne">KeyError</span><span class="p">,</span>
+                <span class="ne">ValueError</span><span class="p">,</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">contains_stream</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">_group</span><span class="p">):</span>
+                    <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skipped loading </span><span class="si">{</span><span class="n">group</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> due to:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">add_metadata</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">loaded_groups</span>
+
+    <span class="n">load_and_add_metadata</span><span class="p">(</span><span class="n">classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;NXdisk_chopper&#39;</span><span class="p">,</span> <span class="p">{}))</span>
+    <span class="n">load_and_add_metadata</span><span class="p">(</span><span class="n">classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;NXlog&#39;</span><span class="p">,</span> <span class="p">{}))</span>
+    <span class="n">load_and_add_metadata</span><span class="p">(</span><span class="n">classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;NXmonitor&#39;</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">_monitor_to_canonical</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">tag</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;sample&#39;</span><span class="p">:</span> <span class="s1">&#39;NXsample&#39;</span><span class="p">,</span> <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;NXsource&#39;</span><span class="p">}</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">comps</span> <span class="o">=</span> <span class="n">classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">comps</span> <span class="o">=</span> <span class="n">load_and_add_metadata</span><span class="p">(</span><span class="n">comps</span><span class="p">)</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="n">loaded_data</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">get_attrs</span><span class="p">(</span><span class="n">loaded_data</span><span class="p">)</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="n">loaded_data</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">coords</span>
+        <span class="k">for</span> <span class="n">comp_name</span> <span class="ow">in</span> <span class="n">comps</span><span class="p">:</span>
+            <span class="n">comp</span> <span class="o">=</span> <span class="n">attrs</span><span class="p">[</span><span class="n">comp_name</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">position</span> <span class="o">:=</span> <span class="n">_depends_on_to_position</span><span class="p">(</span><span class="n">comp</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">coords</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">comp_name</span><span class="si">}</span><span class="s1">_position&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">position</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">distance</span> <span class="o">:=</span> <span class="n">comp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;distance&#39;</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">):</span>
+                    <span class="n">distance</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+                <span class="n">coords</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">comp_name</span><span class="si">}</span><span class="s1">_position&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">vector</span><span class="p">(</span>
+                    <span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">distance</span><span class="o">.</span><span class="n">value</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="n">distance</span><span class="o">.</span><span class="n">unit</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;sample&#39;</span><span class="p">:</span>
+                <span class="n">coords</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">comp_name</span><span class="si">}</span><span class="s1">_position&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_origin</span><span class="p">(</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Return None if we have an empty dataset at this point</span>
+    <span class="k">if</span> <span class="n">no_event_data</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">loaded_data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded_data</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">loaded_data</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">loaded_data</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="load_nexus_json_str">
+<a class="viewcode-back" href="../../../../generated/modules/scippneutron.io.nexus.load_nexus.load_nexus_json_str.html#scippneutron.load_nexus_json_str">[docs]</a>
+<span class="k">def</span> <span class="nf">load_nexus_json_str</span><span class="p">(</span>
+    <span class="n">json_template</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">get_start_info</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ScippData</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="n">StreamInfo</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use this function for testing so that file io is not required</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># We do not use cls to convert value lists to sc.Variable at this</span>
+    <span class="c1"># point because we do not know what dimension names to use here</span>
+    <span class="n">loaded_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_template</span><span class="p">)</span>
+    <span class="n">streams</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">get_start_info</span><span class="p">:</span>
+        <span class="n">streams</span> <span class="o">=</span> <span class="n">get_streams_info</span><span class="p">(</span><span class="n">loaded_json</span><span class="p">)</span>
+    <span class="n">group</span> <span class="o">=</span> <span class="n">JSONGroup</span><span class="p">(</span><span class="n">loaded_json</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_load_data</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span> <span class="n">streams</span></div>
+
+
+
+<div class="viewcode-block" id="load_nexus_json">
+<a class="viewcode-back" href="../../../../generated/modules/scippneutron.io.nexus.load_nexus.load_nexus_json.html#scippneutron.load_nexus_json">[docs]</a>
+<span class="k">def</span> <span class="nf">load_nexus_json</span><span class="p">(</span><span class="n">json_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScippData</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">json_filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">json_file</span><span class="p">:</span>
+        <span class="n">json_string</span> <span class="o">=</span> <span class="n">json_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">loaded_data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">load_nexus_json_str</span><span class="p">(</span><span class="n">json_string</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loaded_data</span></div>
+
+
+
+<div class="viewcode-block" id="json_nexus_group">
+<a class="viewcode-back" href="../../../../generated/modules/scippneutron.io.nexus.load_nexus.json_nexus_group.html#scippneutron.json_nexus_group">[docs]</a>
+<span class="k">def</span> <span class="nf">json_nexus_group</span><span class="p">(</span>
+    <span class="n">json_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">definitions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a JSON dictionary into a NeXus group.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    json_dict:</span>
+<span class="sd">        ``dict`` containing a NeXus structure as JSON.</span>
+<span class="sd">    definitions:</span>
+<span class="sd">        ScippNexus application definitions.</span>
+<span class="sd">        When not given, the default definitions are used.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        A NeXus group that can be used for loading data as if it were</span>
+<span class="sd">        loaded from a file with :class:`scippnexus.File`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span><span class="p">(</span>
+        <span class="n">JSONGroup</span><span class="p">(</span><span class="n">json_dict</span><span class="p">),</span>
+        <span class="n">definitions</span><span class="o">=</span><span class="n">definitions</span> <span class="k">if</span> <span class="n">definitions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">snx</span><span class="o">.</span><span class="n">base_definitions</span><span class="p">(),</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.3.7.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 24.6.0 (<a href="https://github.com//scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.2.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

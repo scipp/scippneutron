@@ -1,0 +1,965 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Data Streaming &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+
+    <script src="../_static/documentation_options.js?v=a41d8c81"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/design-tabs.js?v=36754332"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'developer/data-stream';</script>
+    <script src="../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="File loading" href="file-loading.html" />
+    <link rel="prev" title="Dependency management" href="dependency-management.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <script>document.write(`<img src="../_static/logo-dark.svg" class="logo__image only-dark" alt="ScippNeutron - Home"/>`);</script>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav class="navbar-nav">
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../user-guide/index.html">
+                        User Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../api-reference/index.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="index.html">
+                        Development
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../about/index.html">
+                        About
+                      </a>
+                    </li>
+                
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+                    Plopp
+                  </a>
+                </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+                    Scipp
+                  </a>
+                </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+                    ScippNexus
+                  </a>
+                </li>
+                
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item">
+<nav class="navbar-nav">
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../user-guide/index.html">
+                        User Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../api-reference/index.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="index.html">
+                        Development
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../about/index.html">
+                        About
+                      </a>
+                    </li>
+                
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links-2">
+                    More
+                </button>
+                <ul id="pst-nav-more-links-2" class="dropdown-menu">
+                    
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+                    Plopp
+                  </a>
+                </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+                    Scipp
+                  </a>
+                </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+                    ScippNexus
+                  </a>
+                </li>
+                
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coding-conventions.html">Coding conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dependency-management.html">Dependency management</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Data Streaming</a></li>
+<li class="toctree-l1"><a class="reference internal" href="file-loading.html">File loading</a></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apache-kafka">Apache Kafka</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flatbuffers">FlatBuffers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture">Architecture</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#unit-testing">Unit Testing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#manual-testing">Manual Testing</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#run-test">Run Test</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clean-up">Clean Up</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/developer/data-stream.rst">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Development</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">Data Streaming</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="data-streaming">
+<h1>Data Streaming<a class="headerlink" href="#data-streaming" title="Link to this heading">#</a></h1>
+<p>The data streaming interface provides access to data in the ESS data streaming system. The functionality
+is included in <code class="docutils literal notranslate"><span class="pre">scippneutron</span></code> rather than the facility-specific <code class="docutils literal notranslate"><span class="pre">ess</span></code> library as
+the same system is also used to varying extents at other neutron sources including ISIS
+Pulsed Neutron and Muon Source, SINQ: The Swiss Spallation Neutron Source, and ANSTO:
+Australian Centre for Neutron Scattering.</p>
+<section id="apache-kafka">
+<h2>Apache Kafka<a class="headerlink" href="#apache-kafka" title="Link to this heading">#</a></h2>
+<p>The ESS data streaming system is based on the Apache Kafka data streaming platform. The
+basic terminology used in the scippneutron codebase is described here, but the
+introductory documentation at <a class="reference external" href="https://kafka.apache.org">https://kafka.apache.org</a> is well worth 5-10 minutes
+of your time.</p>
+<p>Apache Kafka is a publish-subscribe system for passing data over the network. A <em>producer</em> client
+publishes data to a named data stream, a <em>topic</em>, on a Kafka server, a <em>broker</em>. Kafka brokers are
+usually deployed as a cluster to increase the data throughput they can support and also provide
+data and service redundancy in case a broker goes down due to failure or to be updated etc. <em>Consumer</em>
+clients subscribe to data on one or more topics.</p>
+<p>On the brokers messages received from producers are written to disk in one or more log files per
+topic. These log files are called <em>partitions</em>. The position of each message in the partition is
+called the <em>offset</em>. Messages older than a configurable time are deleted, so the first available
+offset in each partition may not be 0. Consumers have control over what offset they read from, so
+they can start consuming the stream from the oldest available message, the latest message, or at
+from the next available message after a specified time.</p>
+<p>Many libraries are available for the <em>Client API</em>; to implement producer and consumer applications. In
+<code class="docutils literal notranslate"><span class="pre">scippneutron</span></code> we use <a class="reference external" href="https://github.com/confluentinc/confluent-kafka-python">confluent-kafka-python</a>
+which is based on a high performance C implementation <a class="reference external" href="https://github.com/edenhill/librdkafka">librdkafka</a>.</p>
+<p>Note, messages published to Kafka are often called <em>events</em>, but this terminology is avoided in
+<code class="docutils literal notranslate"><span class="pre">scippneutron</span></code> as we usually use this term for “neutron detection events” specifically.</p>
+<p>Terminology:</p>
+<ul class="simple">
+<li><p><em>Topic</em> - a named data stream</p></li>
+<li><p><em>Partition</em> - a log file, one or more per topic</p></li>
+<li><p><em>Offset</em> - the position of a message in a partition</p></li>
+<li><p><em>Broker</em> - Kafka server, usually deployed as a cluster</p></li>
+<li><p><em>Consumer</em> - a client application which subscribes to data on Kafka</p></li>
+<li><p><em>Producer</em> - a client application which publishes data to Kafka</p></li>
+</ul>
+</section>
+<section id="flatbuffers">
+<h2>FlatBuffers<a class="headerlink" href="#flatbuffers" title="Link to this heading">#</a></h2>
+<p>Kafka does not dictate how data are serialized to be transmitted in a message over the network.
+The ESS streaming system uses <a class="reference external" href="https://google.github.io/flatbuffers/">FlatBuffers</a> for serialization.
+Data to be serialized with FlatBuffers are described by an IDL schema, the FlatBuffer compiler <code class="docutils literal notranslate"><span class="pre">flatc</span></code>
+can be used to generate code from the schema which provides a builder class with which to construct
+the serialized buffer, as well as methods to extract data from the buffer.</p>
+<p>Each type of data, for example neutron detection events, sample environment measurement,
+experiment run start event, etc has an associated FlatBuffer schema. These are stored in a repository
+<a class="github reference external" href="https://github.com/ess-dmsc/streaming-data-types/">ess-dmsc/streaming-data-types</a>. The ESS has also developed a Python library
+to provide a convenient “serialize” and “deserialize” method for each schema
+<a class="github reference external" href="https://github.com/ess-dmsc/python-streaming-data-types/">ess-dmsc/python-streaming-data-types</a>, this is available as a conda package
+<a class="reference external" href="https://anaconda.org/ess-dmsc/ess-streaming-data-types">https://anaconda.org/ess-dmsc/ess-streaming-data-types</a>.</p>
+<p>Each schema file defines a <code class="docutils literal notranslate"><span class="pre">file_identifier</span></code>, which comprises 4 characters. These are the first 4
+bytes in the serialized buffer. It is ESS convention to also use these 4 characters in the schema
+filename and the module name in the <code class="docutils literal notranslate"><span class="pre">streaming-data-types</span></code> python library. If breaking changes are
+made to a schema, such as changing field names or removing fields, then a new <code class="docutils literal notranslate"><span class="pre">file_identifier</span></code> is
+defined.</p>
+<p>Below is a list of the FlatBuffers schemas used by scipp, along with a few informative notes on each schema.</p>
+<table class="table">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 15.0%" />
+<col style="width: 65.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Schema</p></th>
+<th class="head"><p>Name / link</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Run start message</p></td>
+<td><p><a class="reference external" href="https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/pl72_run_start.fbs">pl72_run_start</a></p></td>
+<td><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">nexus_structure</span></code>: contains any information known at the start of the run (e.g. the instrument geometry)</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>Run stop message</p></td>
+<td><p><a class="reference external" href="https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/6s4t_run_stop.fbs">6s4t_run_stop</a></p></td>
+<td><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">job_id</span></code> must be the same as in the run start message</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>Event data</p></td>
+<td><p><a class="reference external" href="https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/ev42_events.fbs">ev42_events</a></p></td>
+<td><ul class="simple">
+<li><p>All quantities are in units of nanoseconds, including time-of-flight</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">source_name</span></code>: used to filter what data to get, as Kafka may hold data from other instruments</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>Slow metadata</p></td>
+<td><p><a class="reference external" href="https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/f142_logdata.fbs">f142_logdata</a></p></td>
+<td><ul class="simple">
+<li><p>This is typically used for PV updates</p></li>
+<li><p>The format is usually just a timestamp and a value</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>Fast metadata</p></td>
+<td><p><a class="reference external" href="https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/senv_data.fbs">senv_data</a></p></td>
+<td><ul class="simple">
+<li><p>Used for fast-changing sample environment values</p></li>
+<li><p>In this case, the information is sent directly to Kafka instead of going via Epics</p></li>
+<li><p>It mostly resembles the slow metadata with a timestamp and a value</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>Chopper timestamps</p></td>
+<td><p><a class="reference external" href="https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/tdct_timestamps.fbs">tdct_timestamps</a></p></td>
+<td><ul class="simple">
+<li><p>Chopper timestamps are handled differently from other metadata as their structure is slightly different</p></li>
+<li><p>They consist of timestamps, with no associated value</p></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>It may be worth noting that we have found extracting data from serialized FlatBuffers in Python
+to be efficient, but serializing can be much more efficient in C++, particularly if serializing
+a large number of small buffers.</p>
+</section>
+<section id="architecture">
+<h2>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">#</a></h2>
+<p>The interface to streamed data is <code class="docutils literal notranslate"><span class="pre">scippneutron.data_stream()</span></code> and is an asynchronous generator.
+It is run like this</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span> <span class="nf">stream_func</span><span class="p">():</span>
+    <span class="k">async</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_stream</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="o">...</span>
+
+<span class="n">streaming_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">stream_func</span><span class="p">())</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Each chunk of <code class="docutils literal notranslate"><span class="pre">data</span></code> yielded by <code class="docutils literal notranslate"><span class="pre">data_stream</span></code> contains the data collected from the streaming system
+during the configurable time interval since the previous chunk was yielded. Each <code class="docutils literal notranslate"><span class="pre">data</span></code> chunk is a
+<code class="docutils literal notranslate"><span class="pre">DataArray</span></code> of neutron detection events of the same format that is obtained by loading a NeXus file
+with <code class="docutils literal notranslate"><span class="pre">load_nexus</span></code>. The <code class="docutils literal notranslate"><span class="pre">DataArray</span></code> has detection event weights as value, these are always 1 for
+data from the streaming system, coordinates of <code class="docutils literal notranslate"><span class="pre">tof</span></code>, <code class="docutils literal notranslate"><span class="pre">detector_id</span></code> and <code class="docutils literal notranslate"><span class="pre">pulse_time</span></code> and metadata
+logs as attributes. Metadata logs are each themselves a <code class="docutils literal notranslate"><span class="pre">DataArray</span></code> with a <code class="docutils literal notranslate"><span class="pre">time</span></code> coordinate. The logs
+are each nested in a <code class="docutils literal notranslate"><span class="pre">Variable</span></code> as they do not share coordinates with each other or the event data.
+It is up to the user to concatenate <code class="docutils literal notranslate"><span class="pre">data</span></code> from the stream if they wish to
+accumulate events. This will consume memory rapidly for instruments with high event detection rates
+so perhaps a more likely scenario is for the user to do a reduction workflow step in the <code class="docutils literal notranslate"><span class="pre">data_stream</span></code>
+loop and accumulate the result, for example sum a histogram.</p>
+<p>The architecture of the implementation under <code class="docutils literal notranslate"><span class="pre">data_stream()</span></code> is sketched in the following diagram.</p>
+<a class="reference internal image-reference" href="../_images/data_stream_arch.svg"><img alt="../_images/data_stream_arch.svg" src="../_images/data_stream_arch.svg" width="600" /></a>
+<p><code class="docutils literal notranslate"><span class="pre">data_stream</span></code> has a Kafka topic argument in which to find “run start” messages. It looks for
+the last available <a class="reference external" href="https://github.com/ess-dmsc/streaming-data-types/blob/master/schemas/pl72_run_start.fbs">run start message</a>.
+The message contains some data known at the start of an
+experiment run, for example instrument geometry. These data are yielded from the generator as
+the first chunk of streamed data, as a <code class="docutils literal notranslate"><span class="pre">DataArray</span></code> in the same format as subsequent chunks.
+The run start message also contains details of all the other data sources important to the
+experiment and where to find their data on Kafka. This information is passed to the
+<code class="docutils literal notranslate"><span class="pre">data_consumption_manager()</span></code> which is started in a separate <code class="docutils literal notranslate"><span class="pre">multiprocessing.Process</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">data_consumption_manager()</span></code> creates a <code class="docutils literal notranslate"><span class="pre">StreamedDataBuffer</span></code> which comprises buffers for data
+from each data source known about from the run start message. <code class="docutils literal notranslate"><span class="pre">data_consumption_manager()</span></code> also
+creates a <code class="docutils literal notranslate"><span class="pre">KafkaConsumer</span></code> for each partition in each Kafka topic associated with the data sources.
+It starts a <code class="docutils literal notranslate"><span class="pre">threading.Thread</span></code> in each <code class="docutils literal notranslate"><span class="pre">KafkaConsumer</span></code> which polls the consumer’s internal queue.
+If any data have been collected by the consumer they are passed to the buffer via a callback function.
+It also starts a <code class="docutils literal notranslate"><span class="pre">threading.Thread</span></code> in the buffer which periodically puts all all data collected
+in the buffer as a single <code class="docutils literal notranslate"><span class="pre">DataArray</span></code> into a <code class="docutils literal notranslate"><span class="pre">multiprocessing.Queue</span></code> for the <code class="docutils literal notranslate"><span class="pre">data_stream</span></code>
+generator to yield. The buffer is responsible for checking the flatbuffer id of each message it
+receives from the consumers, deserializing the message, checking the source name matches a data
+source named in the run start message, and if so adding the data to the buffer. If a single
+message exceeds the buffer size a warning is issued to the user and the data is skipped. If multiple
+messages arrive which collectively exceed the buffer size before the buffer has put its data on
+the queue and reset, then the buffer puts its data on the queue early.</p>
+<p><code class="docutils literal notranslate"><span class="pre">data_consumption_manager()</span></code> is also responsible for stopping the <code class="docutils literal notranslate"><span class="pre">StreamedDataBuffer</span></code> thread
+and all <code class="docutils literal notranslate"><span class="pre">KafkaConsumer</span></code> threads to stop when it receives a stop event in a
+<code class="docutils literal notranslate"><span class="pre">multiprocessing.Queue</span></code> shared with <code class="docutils literal notranslate"><span class="pre">data_stream</span></code>. This allows everything in the data consumption
+process to be cleanly stopped at a request from the main, notebook, process.</p>
+<p>A note on the choice of using <code class="docutils literal notranslate"><span class="pre">threading.Thread</span></code>, <code class="docutils literal notranslate"><span class="pre">multiprocessing.Process</span></code> and <code class="docutils literal notranslate"><span class="pre">asyncio</span></code>:</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">asyncio</span></code> and <code class="docutils literal notranslate"><span class="pre">threading</span></code> each provide concurrency but not parallelism. <code class="docutils literal notranslate"><span class="pre">threading</span></code> was the most
+simple approach to run loops polling the consumer buffers. <code class="docutils literal notranslate"><span class="pre">asyncio</span></code> provides a convenient way to
+allow <code class="docutils literal notranslate"><span class="pre">data_stream</span></code> to run while retaining interactivity of plots in the notebook. It makes use of the
+same asyncio event loop which the <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> <code class="docutils literal notranslate"><span class="pre">nbagg</span></code> backend uses.
+<code class="docutils literal notranslate"><span class="pre">multiprocessing.Process</span></code> allows us to move most of the work of consuming and aggregating the data
+in <code class="docutils literal notranslate"><span class="pre">scipp</span></code> datastructures onto a different CPU core to the one being used for updating plots etc
+in the notebook.</p>
+</div></blockquote>
+</section>
+<section id="unit-testing">
+<h2>Unit Testing<a class="headerlink" href="#unit-testing" title="Link to this heading">#</a></h2>
+<p>For unit tests it would be convenient to use a fake consumer object in place of <code class="docutils literal notranslate"><span class="pre">KafkaConsumer</span></code>
+instances. However, any input arguments or variables passed via the queue to the <code class="docutils literal notranslate"><span class="pre">mp.Process</span></code>
+must be pickleable or <code class="docutils literal notranslate"><span class="pre">mp.queues.Queue</span></code>. This makes dependency injection difficult. To get around
+this an enum can be passed via <code class="docutils literal notranslate"><span class="pre">data_stream</span></code> to the <code class="docutils literal notranslate"><span class="pre">data_consumption_manager</span></code> to tell it
+to create instances of <code class="docutils literal notranslate"><span class="pre">FakeConsumer</span></code> instead of <code class="docutils literal notranslate"><span class="pre">KafkaConsumer</span></code>, additionally an <code class="docutils literal notranslate"><span class="pre">mp.queues.Queue</span></code>
+can be provided and is passed to the <code class="docutils literal notranslate"><span class="pre">FakeConsumer</span></code>. The <code class="docutils literal notranslate"><span class="pre">FakeConsumer</span></code> simply polls for messages
+on the queue instead of Kafka, thus allowing the test to provide the messages. There is no other
+configuration of <code class="docutils literal notranslate"><span class="pre">FakeConsumer</span></code> possible or necessary.</p>
+<a class="reference internal image-reference" href="../_images/data_stream_arch_testing.svg"><img alt="../_images/data_stream_arch_testing.svg" src="../_images/data_stream_arch_testing.svg" width="600" /></a>
+</section>
+<section id="manual-testing">
+<h2>Manual Testing<a class="headerlink" href="#manual-testing" title="Link to this heading">#</a></h2>
+<p>Testing the full, real implementation, of <code class="docutils literal notranslate"><span class="pre">scippneutron</span></code>’s interface to the streaming
+system requires running a Kafka server and populating it with neutron data. The most
+convenient way to do this on a developer machine is to use docker containers.</p>
+<section id="setup">
+<h3>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h3>
+<p><a class="reference external" href="https://docs.docker.com/get-docker/">Install Docker Engine</a> on your system.
+If on Linux, do not forget to add your user to the “docker” group,
+<a class="reference external" href="https://docs.docker.com/engine/install/linux-postinstall/">see documentation</a>.
+Install the <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> conda package.</p>
+</section>
+<section id="run-test">
+<h3>Run Test<a class="headerlink" href="#run-test" title="Link to this heading">#</a></h3>
+<p>To start up a Kafka broker navigate to the <code class="docutils literal notranslate"><span class="pre">docs/developer/data_stream</span></code>
+directory and run</p>
+<blockquote>
+<div><div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>docker-compose<span class="w"> </span>up
+</pre></div>
+</div>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">Ctrl+C</span></code> cleanly stops the running containers when you are done.</p>
+<p>To populate Kafka with data the <a class="reference external" href="https://github.com/ess-dmsc/nexus-streamer-python">NeXus Streamer</a>
+tool can be used. This is available as a conda package <a class="reference external" href="https://anaconda.org/ESS-DMSC/nexus-streamer">https://anaconda.org/ESS-DMSC/nexus-streamer</a>.
+Run it from the conda environment and point it at a NeXus file, for example for the AMOR instrument</p>
+<blockquote>
+<div><div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>nexus_streamer<span class="w"> </span>--broker<span class="w"> </span>localhost<span class="w"> </span>--instrument<span class="w"> </span>AMOR<span class="w"> </span>--filename<span class="w"> </span>/path/to/nexus/file/amor.nxs<span class="w"> </span>-s<span class="w"> </span>-z
+</pre></div>
+</div>
+</div></blockquote>
+<p>see <a class="reference external" href="https://github.com/ess-dmsc/nexus-streamer-python">readme</a> or use <code class="docutils literal notranslate"><span class="pre">--help</span></code> for an explanation
+of the args.</p>
+<p>If you are in doubt whether data has reached Kafka you may want
+to use the <a class="reference external" href="https://github.com/ess-dmsc/kafkacow">kafkacow command line tool</a>
+to query the Kafka server, see <a class="reference external" href="https://github.com/ess-dmsc/kafkacow#install">installation instructions</a>.</p>
+<p>For example, to check data topics on the Kafka server</p>
+<blockquote>
+<div><div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>kafkacow<span class="w"> </span>-L<span class="w"> </span>-b<span class="w"> </span>localhost
+</pre></div>
+</div>
+</div></blockquote>
+<p>you should see output something like this</p>
+<blockquote>
+<div><div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="m">1</span><span class="w"> </span>brokers:
+<span class="w">   </span>broker<span class="w"> </span><span class="m">1</span><span class="w"> </span>at<span class="w"> </span><span class="m">0</span>.0.0.0:9092
+
+<span class="m">10</span><span class="w"> </span>topics:
+<span class="w">   </span><span class="s2">&quot;AMOR_sampleEnv&quot;</span><span class="w"> </span>with<span class="w"> </span><span class="m">1</span><span class="w"> </span>partitions:
+<span class="w">        </span>partition<span class="w">   </span><span class="m">0</span><span class="w">  </span><span class="p">|</span><span class="w">  </span>Low<span class="w"> </span>offset:<span class="w">      </span><span class="m">0</span><span class="w">  </span><span class="p">|</span><span class="w">  </span>High<span class="w"> </span>offset:<span class="w"> </span><span class="m">295782</span><span class="w"> </span><span class="p">|</span><span class="w">  </span>leader:<span class="w">  </span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w">  </span>replicas:<span class="w"> </span><span class="m">1</span>,<span class="w">  </span><span class="p">|</span><span class="w">  </span>isrs:<span class="w"> </span><span class="m">1</span>,
+<span class="w">   </span><span class="s2">&quot;AMOR_events&quot;</span><span class="w"> </span>with<span class="w"> </span><span class="m">1</span><span class="w"> </span>partitions:
+<span class="w">        </span>partition<span class="w">   </span><span class="m">0</span><span class="w">  </span><span class="p">|</span><span class="w">  </span>Low<span class="w"> </span>offset:<span class="w">      </span><span class="m">0</span><span class="w">  </span><span class="p">|</span><span class="w">  </span>High<span class="w"> </span>offset:<span class="w">   </span><span class="m">6271</span><span class="w"> </span><span class="p">|</span><span class="w">  </span>leader:<span class="w">  </span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w">  </span>replicas:<span class="w"> </span><span class="m">1</span>,<span class="w">  </span><span class="p">|</span><span class="w">  </span>isrs:<span class="w"> </span><span class="m">1</span>,
+...
+</pre></div>
+</div>
+</div></blockquote>
+<p>and you can view the event data with</p>
+<blockquote>
+<div><div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>kafkacow<span class="w"> </span>-C<span class="w"> </span>-b<span class="w"> </span>localhost<span class="w"> </span>-t<span class="w"> </span>AMOR_events
+</pre></div>
+</div>
+</div></blockquote>
+<p>output:</p>
+<blockquote>
+<div><div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>Mon<span class="w"> </span><span class="m">12</span>-Apr-2021<span class="w"> </span><span class="m">13</span>:30:56.903<span class="w">  </span><span class="o">||</span><span class="w">  </span><span class="m">2021</span>-04-12T13:30:56.903
+
+Timestamp:<span class="w"> </span><span class="m">1618234256903</span><span class="w"> </span><span class="o">||</span><span class="w"> </span>PartitionID:<span class="w">     </span><span class="m">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span>Offset:<span class="w">    </span><span class="m">1150</span><span class="w"> </span><span class="o">||</span><span class="w"> </span>File<span class="w"> </span>Identifier:<span class="w"> </span>ev42<span class="w"> </span><span class="o">||</span>
+<span class="o">{</span>
+<span class="w">  </span>detector_id:<span class="w"> </span><span class="o">[</span><span class="w">     </span><span class="m">61985</span><span class="w">     </span><span class="m">62379</span><span class="w">     </span><span class="m">62126</span><span class="w">     </span>...<span class="w"> </span>truncated<span class="w"> </span><span class="m">756</span><span class="w"> </span>elements<span class="w"> </span>...<span class="w">     </span><span class="m">120485</span><span class="w">   </span><span class="o">]</span>
+<span class="w">  </span>message_id:<span class="w"> </span><span class="m">1149</span>
+<span class="w">  </span>pulse_time:<span class="w"> </span><span class="m">1618234368838996887</span>
+<span class="w">  </span>source_name:<span class="w"> </span>NeXus-Streamer
+<span class="w">  </span>time_of_flight:<span class="w"> </span><span class="o">[</span><span class="w">     </span><span class="m">12379936</span><span class="w">     </span><span class="m">14495801</span><span class="w">     </span><span class="m">14658190</span><span class="w">     </span>...<span class="w"> </span>truncated<span class="w"> </span><span class="m">756</span><span class="w"> </span>elements<span class="w"> </span>...<span class="w">     </span><span class="m">36832880</span><span class="w">   </span><span class="o">]</span>
+<span class="o">}</span>
+...
+</pre></div>
+</div>
+</div></blockquote>
+<p>Try using <code class="docutils literal notranslate"><span class="pre">scippneutron.data_stream</span></code>, for example</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">scipp</span> <span class="k">as</span> <span class="nn">sc</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">plot_data</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">288</span><span class="p">,</span> <span class="mi">32</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>  <span class="c1"># float64</span>
+<span class="n">det_plot</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">plot_data</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">det_plot</span><span class="o">.</span><span class="n">set_draw_no_delay</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">det_plot</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
+<span class="kn">import</span> <span class="nn">scippneutron</span> <span class="k">as</span> <span class="nn">scn</span>
+<span class="kn">from</span> <span class="nn">scippneutron.data_streaming.data_stream</span> <span class="kn">import</span> <span class="n">StartTime</span>
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">my_stream_func</span><span class="p">():</span>
+    <span class="n">detector_ids</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;detector_id&quot;</span><span class="p">],</span>
+                               <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">32</span><span class="o">*</span><span class="mi">288</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">))</span>
+    <span class="k">async</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">scn</span><span class="o">.</span><span class="n">data_stream</span><span class="p">(</span><span class="s1">&#39;localhost:9092&#39;</span><span class="p">,</span>
+                                      <span class="n">run_info_topic</span><span class="o">=</span><span class="s2">&quot;AMOR_runInfo&quot;</span><span class="p">,</span>
+                                      <span class="n">start_time</span><span class="o">=</span><span class="n">StartTime</span><span class="o">.</span><span class="n">START_OF_RUN</span><span class="p">,</span>
+                                      <span class="n">interval</span><span class="o">=</span><span class="mf">2.</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">s</span><span class="p">):</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">bin</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="p">[</span><span class="n">detector_ids</span><span class="p">])</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">events</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;tof&quot;</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+            <span class="n">counts</span> <span class="o">=</span> <span class="n">counts</span><span class="p">[</span><span class="s2">&quot;tof&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">plot_data</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">plot_data</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="n">sc</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">to</span><span class="o">=</span><span class="s2">&quot;detector_id&quot;</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;detector_id&#39;</span><span class="p">,</span> <span class="n">sizes</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mi">288</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">})</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">det_plot</span><span class="o">.</span><span class="n">redraw</span><span class="p">()</span>
+
+<span class="n">streaming_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">my_stream_func</span><span class="p">())</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>If it is being used in a notebook, <code class="docutils literal notranslate"><span class="pre">data_stream</span></code> can be stopped by pressing the stop button in the widget.
+As <code class="docutils literal notranslate"><span class="pre">stop_time=StopTime.END_OF_RUN</span></code> has been specified it will automatically stop when it reaches the end
+of the data run published by the NeXus Streamer.</p>
+</section>
+<section id="clean-up">
+<h3>Clean Up<a class="headerlink" href="#clean-up" title="Link to this heading">#</a></h3>
+<p>After you are done testing you can clean up the containers and free up used disk space by running</p>
+<blockquote>
+<div><div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>rm<span class="w"> </span>-v<span class="w"> </span>data_stream_producer_1
+docker<span class="w"> </span>rm<span class="w"> </span>-v<span class="w"> </span>data_stream_kafka_1
+</pre></div>
+</div>
+</div></blockquote>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="dependency-management.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Dependency management</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="file-loading.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">File loading</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.3.7.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 24.6.0 (<a href="https://github.com//scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.2.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
