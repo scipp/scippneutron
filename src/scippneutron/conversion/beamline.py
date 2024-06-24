@@ -475,8 +475,8 @@ def scattering_angles_with_gravity(
 
     .. math::
 
-        \mathsf{tan}(2\theta) &= \frac{\sqrt{x_d^2 + y_d^{\prime\, 2}}}{z} \\
-        \mathsf{tan}(\phi) &= \frac{y'_d}{x}
+        \mathsf{tan}(2\theta) &= \frac{\sqrt{x_d^2 + y_d^{\prime\, 2}}}{z_d} \\
+        \mathsf{tan}(\phi) &= \frac{y'_d}{x_d}
 
     Attention
     ---------
