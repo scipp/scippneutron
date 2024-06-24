@@ -9,4 +9,5 @@ from-mantid-to-scipp
 instrument-view
 recipes
 masking-tool
+algorithms-background/index
 ```
