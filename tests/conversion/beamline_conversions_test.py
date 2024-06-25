@@ -551,7 +551,6 @@ def test_scattering_angle_in_yz_plane_requires_gravity_orthogonal_to_incident_be
     )
     wavelength = sc.array(dims=['wavelength'], values=[1.2, 1.6, 1.8], unit='Å')
     gravity = sc.vector([0, 0, sc.constants.g.value], unit=sc.constants.g.unit)
-    sample_rotation = sc.scalar(0.5, unit='rad')
 
     with pytest.raises(
         ValueError, match='`gravity` and `incident_beam` must be orthogonal'
@@ -561,12 +560,10 @@ def test_scattering_angle_in_yz_plane_requires_gravity_orthogonal_to_incident_be
             scattered_beam=scattered_beam,
             wavelength=wavelength,
             gravity=gravity,
-            sample_rotation=sample_rotation,
         )
 
 
-@pytest.mark.parametrize('omega', [0.0, -0.1, 0.4])
-def test_scattering_angle_in_yz_plane_small_gravity(omega: float):
+def test_scattering_angle_in_yz_plane_small_gravity():
     # This case is unphysical but tests the consistency with `two_theta`.
     # Note that the scattered beam must be in the x-z plane for `two_theta`
     # and `scattering_angle_from_sample` to compute the same angle.
@@ -578,26 +575,22 @@ def test_scattering_angle_in_yz_plane_small_gravity(omega: float):
     )
     wavelength = sc.array(dims=['wavelength'], values=[1.2, 1.6, 1.8], unit='Å')
     gravity = sc.vector([0, -1e-11, 0], unit=sc.constants.g.unit)
-    sample_rotation = sc.scalar(omega, unit='rad')
 
     res = beamline.scattering_angle_in_yz_plane(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
         wavelength=wavelength,
         gravity=gravity,
-        sample_rotation=sample_rotation,
     )
     expected = beamline.two_theta(
         incident_beam=incident_beam, scattered_beam=scattered_beam
     ).broadcast(dims=['wavelength', 'beam'], shape=[3, 2])
-    expected = expected - sample_rotation
     sc.testing.assert_allclose(res, expected)
 
 
 @pytest.mark.parametrize('polar', [np.pi / 3, np.pi / 2, 2 * np.pi / 3, np.pi])
-@pytest.mark.parametrize('omega', [0.0, -0.3, 0.1])
 def test_scattering_angle_in_yz_plane_reproduces_polar_angle(
-    polar: float, omega: float
+    polar: float,
 ):
     # This case is unphysical but tests that the function reproduces
     # the expected angles using a rotated vector.
@@ -610,26 +603,20 @@ def test_scattering_angle_in_yz_plane_reproduces_polar_angle(
     scattered_beam = rot1 * incident_beam
 
     wavelength = sc.scalar(1e-6, unit='Å')
-    sample_rotation = sc.scalar(omega, unit='rad')
 
     res = beamline.scattering_angle_in_yz_plane(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
         wavelength=wavelength,
         gravity=gravity,
-        sample_rotation=sample_rotation,
     )
 
-    sc.testing.assert_allclose(
-        res,
-        sc.scalar(polar, unit='rad') - sample_rotation,
-    )
+    sc.testing.assert_allclose(res, sc.scalar(polar, unit='rad'))
 
 
 @pytest.mark.parametrize('polar', [np.pi / 3, np.pi / 2, 2 * np.pi / 3, np.pi])
-@pytest.mark.parametrize('omega', [0.0, -0.3, 0.1])
 def test_scattering_angle_in_yz_plane_reproduces_angles_azimuth_greater_pi(
-    polar: float, omega: float
+    polar: float,
 ):
     # This case is unphysical but tests that the function reproduces
     # the expected angles using a rotated vector.
@@ -642,28 +629,20 @@ def test_scattering_angle_in_yz_plane_reproduces_angles_azimuth_greater_pi(
     scattered_beam = rot1 * incident_beam
 
     wavelength = sc.scalar(1e-6, unit='Å')
-    sample_rotation = sc.scalar(omega, unit='rad')
 
     res = beamline.scattering_angle_in_yz_plane(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
         wavelength=wavelength,
         gravity=gravity,
-        sample_rotation=sample_rotation,
     )
 
-    sc.testing.assert_allclose(
-        res,
-        sc.scalar(polar, unit='rad') - sample_rotation,
-    )
+    sc.testing.assert_allclose(res, sc.scalar(polar, unit='rad'))
 
 
 @pytest.mark.parametrize('polar', [np.pi / 3, np.pi / 2, 2 * np.pi / 3, np.pi])
-@pytest.mark.parametrize('omega', [0.0, -0.3, 0.1])
 @pytest.mark.parametrize('x', [0.5, 11.4, -9.7])
-def test_scattering_angle_in_yz_plane_does_not_depend_on_x(
-    polar: float, omega: float, x: float
-):
+def test_scattering_angle_in_yz_plane_does_not_depend_on_x(polar: float, x: float):
     # This case is unphysical but tests that the function reproduces
     # the expected angles using a rotated vector.
 
@@ -676,21 +655,18 @@ def test_scattering_angle_in_yz_plane_does_not_depend_on_x(
     scattered_beam_shift = scattered_beam_ref + sc.vector([x, 0.0, 0.0], unit='cm')
 
     wavelength = sc.scalar(1e-6, unit='Å')
-    sample_rotation = sc.scalar(omega, unit='rad')
 
     res_shift = beamline.scattering_angle_in_yz_plane(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam_shift,
         wavelength=wavelength,
         gravity=gravity,
-        sample_rotation=sample_rotation,
     )
     res_ref = beamline.scattering_angle_in_yz_plane(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam_ref,
         wavelength=wavelength,
         gravity=gravity,
-        sample_rotation=sample_rotation,
     )
 
     sc.testing.assert_allclose(res_shift, res_ref)
@@ -703,14 +679,12 @@ def test_scattering_angle_in_yz_plane_drops_in_expected_direction():
     scattered_beam = sc.vectors(
         dims=['det'], values=[[0.0, 2.5, 8.6], [0.0, -1.7, 6.9]], unit='m'
     )
-    sample_rotation = sc.scalar(0.0, unit='rad')
 
     with_gravity = beamline.scattering_angle_in_yz_plane(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
         wavelength=wavelength,
         gravity=gravity,
-        sample_rotation=sample_rotation,
     )
     without_gravity = beamline.two_theta(
         incident_beam=incident_beam, scattered_beam=scattered_beam
@@ -732,20 +706,17 @@ def test_scattering_angle_in_yz_plane_beams_aligned_with_lab_coords():
     scattered_beam = sc.vectors(
         dims=['det'], values=[[0.0, 2.5, 3.6], [0.0, -1.7, 2.9]], unit='m'
     )
-    sample_rotation = sc.scalar(0.3, unit='rad')
 
     original_wavelength = wavelength.copy()
     original_gravity = gravity.copy()
     original_incident_beam = incident_beam.copy()
     original_scattered_beam = scattered_beam.copy()
-    original_sample_rotation = sample_rotation.copy()
 
     res = beamline.scattering_angle_in_yz_plane(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
         wavelength=wavelength,
         gravity=gravity,
-        sample_rotation=sample_rotation,
     )
 
     L2 = sc.norm(scattered_beam)
@@ -762,9 +733,7 @@ def test_scattering_angle_in_yz_plane_beams_aligned_with_lab_coords():
     drop = drop.to(unit=y.unit)
     true_y = y + drop
     true_scattered_beam = sc.spatial.as_vectors(x, true_y, z)
-    expected_theta = (
-        sc.asin(abs(true_y) / sc.norm(true_scattered_beam)) - sample_rotation
-    )
+    expected_theta = sc.asin(abs(true_y) / sc.norm(true_scattered_beam))
     expected_theta = expected_theta.transpose(res.dims)
 
     sc.testing.assert_allclose(res, expected_theta)
@@ -773,7 +742,6 @@ def test_scattering_angle_in_yz_plane_beams_aligned_with_lab_coords():
     sc.testing.assert_identical(gravity, original_gravity)
     sc.testing.assert_identical(incident_beam, original_incident_beam)
     sc.testing.assert_identical(scattered_beam, original_scattered_beam)
-    sc.testing.assert_identical(sample_rotation, original_sample_rotation)
 
 
 def _reference_scattering_angle_in_yz_plane(
@@ -781,7 +749,6 @@ def _reference_scattering_angle_in_yz_plane(
     scattered_beam: sc.Variable,
     gravity: sc.Variable,
     wavelength: sc.Variable,
-    sample_rotation: sc.Variable,
 ) -> sc.Variable:
     # This is a simplified, independently checked implementation.
     e_z = incident_beam / sc.norm(incident_beam)
@@ -799,7 +766,7 @@ def _reference_scattering_angle_in_yz_plane(
     )
     dropped_y = y + drop.to(unit=y.unit)
 
-    return sc.atan2(y=abs(dropped_y), x=z) - sample_rotation
+    return sc.atan2(y=abs(dropped_y), x=z)
 
 
 def test_scattering_angle_in_yz_plane_beams_unaligned_with_lab_coords():
@@ -811,27 +778,23 @@ def test_scattering_angle_in_yz_plane_beams_unaligned_with_lab_coords():
     scattered_beam = sc.vectors(
         dims=['det'], values=[[1.8, 2.5, 3.6], [-0.4, -1.7, 2.9]], unit='m'
     )
-    sample_rotation = sc.scalar(0.4, unit='rad')
 
     original_wavelength = wavelength.copy()
     original_gravity = gravity.copy()
     original_incident_beam = incident_beam.copy()
     original_scattered_beam = scattered_beam.copy()
-    original_sample_rotation = sample_rotation.copy()
 
     res = beamline.scattering_angle_in_yz_plane(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
         wavelength=wavelength,
         gravity=gravity,
-        sample_rotation=sample_rotation,
     )
     expected = _reference_scattering_angle_in_yz_plane(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
         wavelength=wavelength,
         gravity=gravity,
-        sample_rotation=sample_rotation,
     )
 
     sc.testing.assert_allclose(res, expected.transpose(res.dims))
@@ -840,7 +803,6 @@ def test_scattering_angle_in_yz_plane_beams_unaligned_with_lab_coords():
     sc.testing.assert_identical(gravity, original_gravity)
     sc.testing.assert_identical(incident_beam, original_incident_beam)
     sc.testing.assert_identical(scattered_beam, original_scattered_beam)
-    sc.testing.assert_identical(sample_rotation, original_sample_rotation)
 
 
 def test_scattering_angle_in_yz_plane_binned_data():
@@ -856,27 +818,23 @@ def test_scattering_angle_in_yz_plane_binned_data():
     scattered_beam = sc.vectors(
         dims=['det'], values=[[1.8, 2.5, 3.6], [-0.4, -1.7, 2.9]], unit='m'
     )
-    sample_rotation = sc.scalar(0.2, unit='rad')
 
     original_wavelength = wavelength.copy()
     original_gravity = gravity.copy()
     original_incident_beam = incident_beam.copy()
     original_scattered_beam = scattered_beam.copy()
-    original_sample_rotation = sample_rotation.copy()
 
     res = beamline.scattering_angle_in_yz_plane(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
         wavelength=wavelength,
         gravity=gravity,
-        sample_rotation=sample_rotation,
     )
     expected = _reference_scattering_angle_in_yz_plane(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
         wavelength=wavelength,
         gravity=gravity,
-        sample_rotation=sample_rotation,
     )
 
     sc.testing.assert_allclose(res, expected.transpose(res.dims))
@@ -884,7 +842,6 @@ def test_scattering_angle_in_yz_plane_binned_data():
     sc.testing.assert_identical(gravity, original_gravity)
     sc.testing.assert_identical(incident_beam, original_incident_beam)
     sc.testing.assert_identical(scattered_beam, original_scattered_beam)
-    sc.testing.assert_identical(sample_rotation, original_sample_rotation)
 
 
 def test_scattering_angle_in_yz_plane_uses_wavelength_dtype():
@@ -894,14 +851,12 @@ def test_scattering_angle_in_yz_plane_uses_wavelength_dtype():
     gravity = sc.vector([0.0, -9.81, 0.0], unit='m/s^2')
     incident_beam = sc.vector([0.0, 0.0, 41.1], unit='m')
     scattered_beam = sc.vector([1.8, 2.5, 3.6], unit='m')
-    sample_rotation = sc.scalar(0.2, unit='rad')
 
     res = beamline.scattering_angle_in_yz_plane(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
         wavelength=wavelength,
         gravity=gravity,
-        sample_rotation=sample_rotation,
     )
     assert res.dtype == 'float32'
 
@@ -911,14 +866,12 @@ def test_scattering_angle_in_yz_plane_supports_mismatching_units():
     gravity = sc.vector([0.0, -9810, 0.0], unit='m/ms^2')
     incident_beam = sc.vector([0.0, 0.0, 410], unit='cm')
     scattered_beam = sc.vector([180, 1800, 2400], unit='mm')
-    sample_rotation = sc.scalar(0.2, unit='deg')
 
     res = beamline.scattering_angle_in_yz_plane(
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
         wavelength=wavelength,
         gravity=gravity,
-        sample_rotation=sample_rotation,
     )
 
     expected = _reference_scattering_angle_in_yz_plane(
@@ -926,7 +879,6 @@ def test_scattering_angle_in_yz_plane_supports_mismatching_units():
         scattered_beam=scattered_beam.to(unit='m'),
         wavelength=wavelength,
         gravity=gravity.to(unit='m/s^2'),
-        sample_rotation=sample_rotation.to(unit='rad'),
     )
 
     sc.testing.assert_allclose(res, expected)
