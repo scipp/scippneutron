@@ -488,7 +488,8 @@ def scattering_angles_with_gravity(
         :math:`10^{-6}` or less for beamlines at ESS.
         This is within the expected statistical uncertainties and can be ignored.
 
-        See the file ``docs/user-guide/auxiliary/gravity_approx/gravity_approx.typ``
+        See `two_theta gravity correction
+        <../../user-guide/algorithms-background/two_theta-gravity-correction.rst>`_
         for details.
 
     Parameters
@@ -578,7 +579,8 @@ def scattering_angle_in_yz_plane(
         :math:`10^{-6}` or less for beamlines at ESS.
         This is within the expected statistical uncertainties and can be ignored.
 
-        See the file ``docs/user-guide/auxiliary/gravity_approx/gravity_approx.typ``
+        See `two_theta gravity correction
+        <../../user-guide/algorithms-background/two_theta-gravity-correction.rst>`_
         for details.
 
     Parameters
