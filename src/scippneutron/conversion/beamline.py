@@ -536,3 +536,30 @@ def scattering_angles_with_gravity(
     two_theta_ = sc.atan2(y=y, x=z, out=y)
 
     return {'two_theta': two_theta_, 'phi': phi}
+
+
+def scattering_angle_in_yz_plane(
+    incident_beam: sc.Variable,
+    scattered_beam: sc.Variable,
+    wavelength: sc.Variable,
+    gravity: sc.Variable,
+    sample_rotation: sc.Variable,
+) -> sc.Variable:
+    match beam_aligned_unit_vectors(incident_beam=incident_beam, gravity=gravity):
+        case {
+            'beam_aligned_unit_y': ey,
+            'beam_aligned_unit_z': ez,
+        }:
+            pass
+        case _:
+            raise RuntimeError('Unexpected return value of beam_aligned_unit_vectors')
+
+    y = _drop_due_to_gravity(
+        distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
+    )
+    y += sc.dot(scattered_beam, ey).to(dtype=elem_dtype(wavelength), copy=False)
+    y = sc.abs(y, out=y)
+    z = sc.dot(scattered_beam, ez).to(dtype=elem_dtype(y), copy=False)
+    full_angle = sc.atan2(y=y, x=z, out=y)
+    full_angle -= sample_rotation.to(unit=elem_unit(full_angle), copy=False)
+    return full_angle
