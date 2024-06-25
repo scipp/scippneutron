@@ -508,15 +508,12 @@ def scattering_angles_with_gravity(
         A dict containing the polar scattering angle ``'two_theta'`` and
         the azimuthal angle ``'phi'``.
     """
-    match beam_aligned_unit_vectors(incident_beam=incident_beam, gravity=gravity):
-        case {
-            'beam_aligned_unit_x': ex,
-            'beam_aligned_unit_y': ey,
-            'beam_aligned_unit_z': ez,
-        }:
-            pass
-        case _:
-            raise RuntimeError('Unexpected return value of beam_aligned_unit_vectors')
+    unit_vectors = beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
+    )
+    ex = unit_vectors['beam_aligned_unit_x']
+    ey = unit_vectors['beam_aligned_unit_y']
+    ez = unit_vectors['beam_aligned_unit_z']
 
     y = _drop_due_to_gravity(
         distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
@@ -544,14 +541,11 @@ def scattering_angle_in_yz_plane(
     wavelength: sc.Variable,
     gravity: sc.Variable,
 ) -> sc.Variable:
-    match beam_aligned_unit_vectors(incident_beam=incident_beam, gravity=gravity):
-        case {
-            'beam_aligned_unit_y': ey,
-            'beam_aligned_unit_z': ez,
-        }:
-            pass
-        case _:
-            raise RuntimeError('Unexpected return value of beam_aligned_unit_vectors')
+    unit_vectors = beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
+    )
+    ey = unit_vectors['beam_aligned_unit_y']
+    ez = unit_vectors['beam_aligned_unit_z']
 
     y = _drop_due_to_gravity(
         distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
