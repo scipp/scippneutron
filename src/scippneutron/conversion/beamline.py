@@ -104,6 +104,8 @@ where :math:`b_2` is the scattered beam.
 
 These definitions assume that gravity can be neglected.
 See :func:`scattering_angles_with_gravity` for definitions that account for gravity.
+And :func:`scattering_angle_in_yz_plane` for the definition used in reflectometry ---
+which also includes gravity.
 """
 
 from typing import TypedDict
@@ -568,6 +570,8 @@ def scattering_angle_in_yz_plane(
     .. math::
 
         y'_d = y_d + \frac{|g| m_n^2}{2 h^2} L_2^{\prime\, 2} \lambda^2
+
+    The angle :math:`\gamma` is defined as in Fig. 5 of :cite:`STAHN201644`.
 
     Attention
     ---------
