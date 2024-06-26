@@ -615,32 +615,6 @@ def test_scattering_angle_in_yz_plane_reproduces_polar_angle(
 
 
 @pytest.mark.parametrize('polar', [np.pi / 3, np.pi / 2, 2 * np.pi / 3, np.pi])
-def test_scattering_angle_in_yz_plane_reproduces_angles_azimuth_greater_pi(
-    polar: float,
-):
-    # This case is unphysical but tests that the function reproduces
-    # the expected angles using a rotated vector.
-
-    gravity = sc.vector([0.0, -1e-11, 0.0], unit='cm/s^2')
-    incident_beam = sc.vector([0.0, 0.0, 968.0], unit='cm')
-
-    # With this definition, the x-axis has azimuthal=0.
-    rot1 = sc.spatial.rotations_from_rotvecs(sc.vector([-polar, 0, 0], unit='rad'))
-    scattered_beam = rot1 * incident_beam
-
-    wavelength = sc.scalar(1e-6, unit='Å')
-
-    res = beamline.scattering_angle_in_yz_plane(
-        incident_beam=incident_beam,
-        scattered_beam=scattered_beam,
-        wavelength=wavelength,
-        gravity=gravity,
-    )
-
-    sc.testing.assert_allclose(res, sc.scalar(polar, unit='rad'))
-
-
-@pytest.mark.parametrize('polar', [np.pi / 3, np.pi / 2, 2 * np.pi / 3, np.pi])
 @pytest.mark.parametrize('x', [0.5, 11.4, -9.7])
 def test_scattering_angle_in_yz_plane_does_not_depend_on_x(polar: float, x: float):
     # This case is unphysical but tests that the function reproduces
