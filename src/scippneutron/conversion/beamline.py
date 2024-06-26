@@ -104,6 +104,8 @@ where :math:`b_2` is the scattered beam.
 
 These definitions assume that gravity can be neglected.
 See :func:`scattering_angles_with_gravity` for definitions that account for gravity.
+And :func:`scattering_angle_in_yz_plane` for the definition used in reflectometry ---
+which also includes gravity.
 """
 
 from typing import TypedDict
@@ -475,21 +477,22 @@ def scattering_angles_with_gravity(
 
     .. math::
 
-        \mathsf{tan}(2\theta) &= \frac{\sqrt{x_d^2 + y_d^{\prime\, 2}}}{z} \\
-        \mathsf{tan}(\phi) &= \frac{y'_d}{x}
+        \mathsf{tan}(2\theta) &= \frac{\sqrt{x_d^2 + y_d^{\prime\, 2}}}{z_d} \\
+        \mathsf{tan}(\phi) &= \frac{y'_d}{x_d}
 
     Attention
     ---------
-    The above equation for :math:`y'_d` contains :math:`L_2^{\prime\, 2} = |b'_2|`
-    which in turn depends on :math:`y'_d`.
-    Solving this equation for :math:`y'_d` is too difficult.
-    Instead, we approximate :math:`L'_2 \approx L_2`.
-    The impact of this approximation on :math:`2\theta` is of the order of
-    :math:`10^{-6}` or less for beamlines at ESS.
-    This is within the expected statistical uncertainties and can be ignored.
+        The above equation for :math:`y'_d` contains :math:`L_2^{\prime\, 2} = |b'_2|`
+        which in turn depends on :math:`y'_d`.
+        Solving this equation for :math:`y'_d` is too difficult.
+        Instead, we approximate :math:`L'_2 \approx L_2`.
+        The impact of this approximation on :math:`2\theta` is of the order of
+        :math:`10^{-6}` or less for beamlines at ESS.
+        This is within the expected statistical uncertainties and can be ignored.
 
-    See the file ``docs/user-guide/auxiliary/gravity_approx/gravity_approx.typ``
-    for details.
+        See `two_theta gravity correction
+        <../../user-guide/algorithms-background/two_theta-gravity-correction.rst>`_
+        for details.
 
     Parameters
     ----------
@@ -507,16 +510,19 @@ def scattering_angles_with_gravity(
     :
         A dict containing the polar scattering angle ``'two_theta'`` and
         the azimuthal angle ``'phi'``.
+
+    See also
+    --------
+    scattering_angle_in_yz_plane:
+        Ignores the ``x`` component when computing ``theta``.
+        This is used in reflectometry.
     """
-    match beam_aligned_unit_vectors(incident_beam=incident_beam, gravity=gravity):
-        case {
-            'beam_aligned_unit_x': ex,
-            'beam_aligned_unit_y': ey,
-            'beam_aligned_unit_z': ez,
-        }:
-            pass
-        case _:
-            raise RuntimeError('Unexpected return value of beam_aligned_unit_vectors')
+    unit_vectors = beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
+    )
+    ex = unit_vectors['beam_aligned_unit_x']
+    ey = unit_vectors['beam_aligned_unit_y']
+    ez = unit_vectors['beam_aligned_unit_z']
 
     y = _drop_due_to_gravity(
         distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
@@ -536,3 +542,83 @@ def scattering_angles_with_gravity(
     two_theta_ = sc.atan2(y=y, x=z, out=y)
 
     return {'two_theta': two_theta_, 'phi': phi}
+
+
+def scattering_angle_in_yz_plane(
+    incident_beam: sc.Variable,
+    scattered_beam: sc.Variable,
+    wavelength: sc.Variable,
+    gravity: sc.Variable,
+) -> sc.Variable:
+    r"""Compute polar scattering angles in the y-z plane using gravity.
+
+    Note
+    ----
+        This function uses the reflectometry definition of the polar scattering angle.
+        Other techniques define the angle w.r.t. the incident beam.
+        See :func:`scattering_angles_with_gravity` for those use cases.
+
+    With the definitions given in :func:`scattering_angles_with_gravity`,
+    and ignoring :math:`x_d`, we get
+
+    .. math::
+
+        \mathsf{tan}(\gamma) = \frac{|y_d^{\prime}|}{z_d}
+
+    with
+
+    .. math::
+
+        y'_d = y_d + \frac{|g| m_n^2}{2 h^2} L_2^{\prime\, 2} \lambda^2
+
+    The angle :math:`\gamma` is defined as in Fig. 5 of :cite:`STAHN201644`.
+
+    Attention
+    ---------
+        The above equation for :math:`y'_d` contains :math:`L_2^{\prime\, 2} = |b'_2|`
+        which in turn depends on :math:`y'_d`.
+        Solving this equation for :math:`y'_d` is too difficult.
+        Instead, we approximate :math:`L'_2 \approx L_2`.
+        The impact of this approximation on :math:`\gamma` is of the order of
+        :math:`10^{-6}` or less for beamlines at ESS.
+        This is within the expected statistical uncertainties and can be ignored.
+
+        See `two_theta gravity correction
+        <../../user-guide/algorithms-background/two_theta-gravity-correction.rst>`_
+        for details.
+
+    Parameters
+    ----------
+    incident_beam:
+        Beam from source to sample. Expects ``dtype=vector3``.
+    scattered_beam:
+        Beam from sample to detector. Expects ``dtype=vector3``.
+    wavelength:
+        Wavelength of neutrons.
+    gravity:
+        Gravity vector.
+
+    Returns
+    -------
+    :
+        The polar scattering angle :math:`\gamma`.
+
+    See also
+    --------
+    scattering_angles_with_gravity:
+        Includes the ``x`` component when computing ``theta``.
+        This is used in techniques other than reflectometry.
+    """
+    unit_vectors = beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
+    )
+    ey = unit_vectors['beam_aligned_unit_y']
+    ez = unit_vectors['beam_aligned_unit_z']
+
+    y = _drop_due_to_gravity(
+        distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
+    )
+    y += sc.dot(scattered_beam, ey).to(dtype=elem_dtype(wavelength), copy=False)
+    y = sc.abs(y, out=y)
+    z = sc.dot(scattered_beam, ez).to(dtype=elem_dtype(y), copy=False)
+    return sc.atan2(y=y, x=z, out=y)
