@@ -16,6 +16,8 @@ from typing import Any
 import numpy as np
 import scipp as sc
 
+from ..chopper import DiskChopper
+
 
 def wavelength_to_inverse_velocity(wavelength):
     h = sc.constants.h
@@ -503,6 +505,36 @@ class Chopper:
             distance=self.distance,
             time_open=self.time_open[key],
             time_close=self.time_close[key],
+        )
+
+    @classmethod
+    def from_disk_chopper(
+        cls,
+        disk_chopper: DiskChopper,
+        pulse_frequency: sc.Variable,
+        npulses: int = 1,
+    ) -> Chopper:
+        """
+        Create a chopper from a NeXus disk chopper.
+
+        Parameters
+        ----------
+        disk_chopper:
+            Disk chopper.
+        pulse_frequency:
+            The frequency of pulses in the neutron source (this is to determine how
+            many rotations the chopper performs per pulse).
+        npulses:
+            Number of pulses to rotate the chopper for.
+        """
+        tpulse = 1.0 / pulse_frequency
+        topen = disk_chopper.time_offset_open(pulse_frequency=pulse_frequency)
+        tclose = disk_chopper.time_offset_close(pulse_frequency=pulse_frequency)
+        offsets = sc.arange('pulse', npulses) * tpulse
+        return cls(
+            distance=sc.norm(disk_chopper.axle_position),
+            time_open=(offsets + topen).flatten(to=topen.dim),
+            time_close=(offsets + tclose).flatten(to=tclose.dim),
         )
 
 
