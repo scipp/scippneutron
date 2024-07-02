@@ -12,6 +12,7 @@ https://scipp.github.io/sciline/ on how to use Sciline.
 """
 
 import math
+from uuid import uuid4
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import NewType
@@ -140,6 +141,16 @@ Time of the start of the most recent pulse, typically NXevent_data/event_time_ze
 UnwrappedData = NewType('UnwrappedData', sc.DataArray)
 """
 Detector data with unwrapped time offset and pulse time coordinates.
+"""
+
+TimeOfFlightOriginDistance = NewType('TimeOfFlightOriginDistance', sc.Variable)
+"""
+Distance from the source to the position the time-of-flight origin.
+"""
+
+TimeOfFlightOriginTime = NewType('TimeOfFlightOriginTime', sc.Variable)
+"""
+Time of the time-of-flight origin for each subframe.
 """
 
 TofData = NewType('TofData', sc.DataArray)
@@ -402,6 +413,38 @@ def time_offset(unwrapped: UnwrappedData) -> TimeOffset:
     if unwrapped.bins is not None:
         return TimeOffset(unwrapped.bins.coords['time_offset'])
     return TimeOffset(unwrapped.coords['time_offset'])
+
+
+def time_of_flight_origin_wfm(
+    distance: TimeOfFlightOriginDistance,
+    time_open: TimeOfFlightOriginTime,
+    subframe_bounds: SubframeBounds,
+) -> TimeOfFlightOrigin:
+    """ """
+    times = subframe_bounds['time'].flatten(dims=['subframe', 'bound'], to='subframe')
+    shift = sc.zeros(dims=['subframe'], shape=[times.sizes['subframe'] + 1], unit='s')
+    # All times before the first subframe and after the last subframe should be
+    # replaced by NaN. We add a large padding to make sure all events are covered.
+    padding = sc.scalar(1e9, unit='s').to(unit=times.unit)
+    low = times[0] - padding
+    high = times[-1] + padding
+    times = sc.concat([low, times, high], 'subframe')
+
+    # We need to add nans between each time_open offsets for the bins before, after,
+    # and between the subframes.
+    nans = sc.full_like(time_open, value=math.nan)
+    shift = sc.concat([nans, time_open, nans], dim=uuid4.hex()).flatten(to='subframe')
+    shift = sc.concat([shift, sc.scalar(math.nan, unit=shift.unit)], 'subframe')
+
+    # shift[1::2] += 0.5 * (
+    #     source_chopper.time_open + source_chopper.time_close
+    # ).rename_dims(cutout='subframe')
+    # # Set offsets before, between, and after subframes to NaN
+    # shift[::2] = sc.scalar(math.nan, unit='s')
+    return TimeOfFlightOrigin(
+        time=sc.DataArray(shift, coords={'subframe': times}),
+        distance=distance,
+    )
 
 
 def time_of_flight_origin_wfm_from_chopper(
