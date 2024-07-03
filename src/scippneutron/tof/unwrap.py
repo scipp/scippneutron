@@ -433,8 +433,10 @@ def time_of_flight_origin_wfm(
     # We need to add nans between each time_open offsets for the bins before, after,
     # and between the subframes.
     nans = sc.full_like(time_open, value=math.nan)
-    shift = sc.concat([nans, time_open, nans], dim=uuid4.hex()).flatten(to='subframe')
-    shift = sc.concat([shift, sc.scalar(math.nan, unit=shift.unit)], 'subframe')
+    shift = (
+        sc.concat([nans, time_open], dim=uuid4().hex).transpose().flatten(to='subframe')
+    )
+    shift = sc.concat([shift, nans[0]], 'subframe')
 
     # shift[1::2] += 0.5 * (
     #     source_chopper.time_open + source_chopper.time_close
