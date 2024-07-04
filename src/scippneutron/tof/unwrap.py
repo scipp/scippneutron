@@ -82,7 +82,7 @@ PulsePeriod = NewType('PulsePeriod', sc.Variable)
 Period of the source pulses, i.e., time between consecutive pulse starts.
 """
 
-PulseStride = NewType('PulseStride', int | None)
+PulseStride = NewType('PulseStride', int)
 """
 Stride of used pulses. Usually 1, but may be a small integer when pulse-skipping.
 """
@@ -176,7 +176,9 @@ class TimeOfFlightOrigin:
     distance: sc.Variable
 
 
-def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FramePeriod:
+def frame_period(
+    pulse_period: PulsePeriod, pulse_stride: PulseStride | None
+) -> FramePeriod:
     if pulse_stride is None:
         return pulse_period
     return FramePeriod(pulse_period * pulse_stride)
