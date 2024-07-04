@@ -38,6 +38,7 @@ def test_frame_period_is_pulse_period_if_not_pulse_skipping() -> None:
     pl = sl.Pipeline(unwrap.unwrap_providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
+    pl[unwrap.PulseStride] = None
     assert_identical(pl.compute(unwrap.FramePeriod), period)
 
 
@@ -72,6 +73,7 @@ def test_offset_from_wrapped() -> None:
     pl = sl.Pipeline(unwrap.unwrap_providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.FrameBounds] = unwrap.FrameBounds(
         sc.DataGroup(time=sc.array(dims=['bound'], values=[0.01, 0.02], unit='s'))
     )
@@ -88,6 +90,7 @@ def test_offset_from_wrapped_has_no_special_handling_for_out_of_period_events() 
     pl = sl.Pipeline(unwrap.unwrap_providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.FrameBounds] = unwrap.FrameBounds(
         sc.DataGroup(time=sc.array(dims=['bound'], values=[0.01, 0.02], unit='s'))
     )
@@ -121,12 +124,14 @@ def test_unwrap_with_no_choppers(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
         ess_pulse.wavelength_max,
     )
     pl[unwrap.Choppers] = {}
+    pl[unwrap.SourceChopperName] = None
     pl[unwrap.Ltotal] = distance
     unwrapped = pl.compute(unwrap.UnwrappedData)
     # No unwrap is happening, frame does not overlap next pulse.
@@ -156,6 +161,7 @@ def test_unwrap_with_frame_overlap_raises(ess_10s_14Hz, ess_pulse) -> None:
     pl = sl.Pipeline(unwrap.unwrap_providers())
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -186,6 +192,7 @@ def test_standard_unwrap(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -228,6 +235,7 @@ def test_standard_unwrap_histogram_mode(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -261,6 +269,7 @@ def test_pulse_skipping_unwrap(ess_10s_7Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = 0.5 * beamline._source.pulse_period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -346,6 +355,7 @@ def test_wfm_unwrap(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
