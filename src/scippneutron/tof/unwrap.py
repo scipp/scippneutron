@@ -435,16 +435,14 @@ def time_of_flight_origin_wfm(
         sc.concat([nans, time_open], dim=uuid4().hex).transpose().flatten(to='subframe')
     )
     shift = sc.concat([shift, nans[0]], 'subframe')
-
-    # shift[1::2] += 0.5 * (
-    #     source_chopper.time_open + source_chopper.time_close
-    # ).rename_dims(cutout='subframe')
-    # # Set offsets before, between, and after subframes to NaN
-    # shift[::2] = sc.scalar(math.nan, unit='s')
     return TimeOfFlightOrigin(
         time=sc.DataArray(shift, coords={'subframe': times}),
         distance=distance,
     )
+
+
+# TODO: add a helper provider that can make time of flight origin from a pair of WFM
+# choppers
 
 
 def time_of_flight_origin_wfm_from_chopper(
