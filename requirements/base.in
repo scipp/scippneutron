@@ -6,6 +6,7 @@ h5py
 mpltoolbox
 numpy>=1.20
 pooch
-scipp[interactive] >= 23.01.1
-scippnexus >= 23.08.0
-scipy >= 1.7.0
+plopp>=24.05.0
+scipp>=23.07.0
+scippnexus>=23.11.0
+scipy>=1.7.0
