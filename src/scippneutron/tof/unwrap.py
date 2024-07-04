@@ -12,10 +12,10 @@ https://scipp.github.io/sciline/ on how to use Sciline.
 """
 
 import math
-from uuid import uuid4
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import NewType
+from uuid import uuid4
 
 import scipp as sc
 
@@ -82,7 +82,7 @@ PulsePeriod = NewType('PulsePeriod', sc.Variable)
 Period of the source pulses, i.e., time between consecutive pulse starts.
 """
 
-PulseStride = NewType('PulseStride', int)
+PulseStride = NewType('PulseStride', int | None)
 """
 Stride of used pulses. Usually 1, but may be a small integer when pulse-skipping.
 """
@@ -176,9 +176,7 @@ class TimeOfFlightOrigin:
     distance: sc.Variable
 
 
-def frame_period(
-    pulse_period: PulsePeriod, pulse_stride: PulseStride | None
-) -> FramePeriod:
+def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FramePeriod:
     if pulse_stride is None:
         return pulse_period
     return FramePeriod(pulse_period * pulse_stride)
