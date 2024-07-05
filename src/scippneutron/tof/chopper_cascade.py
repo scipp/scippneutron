@@ -512,7 +512,7 @@ class Chopper:
         cls,
         disk_chopper: DiskChopper,
         pulse_frequency: sc.Variable,
-        npulses: int = 1,
+        npulses: int,
     ) -> Chopper:
         """
         Create a chopper from a NeXus disk chopper.

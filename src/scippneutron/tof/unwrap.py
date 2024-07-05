@@ -415,7 +415,7 @@ def time_offset(unwrapped: UnwrappedData) -> TimeOffset:
 
 def time_of_flight_origin_wfm(
     distance: TimeOfFlightOriginDistance,
-    time_open: TimeOfFlightOriginTime,
+    subframe_origin_time: TimeOfFlightOriginTime,
     subframe_bounds: SubframeBounds,
 ) -> TimeOfFlightOrigin:
     """ """
@@ -428,11 +428,13 @@ def time_of_flight_origin_wfm(
     high = times[-1] + padding
     times = sc.concat([low, times, high], 'subframe')
 
-    # We need to add nans between each time_open offsets for the bins before, after,
-    # and between the subframes.
-    nans = sc.full_like(time_open, value=math.nan)
+    # We need to add nans between each subframe_origin_time offsets for the bins before,
+    # after, and between the subframes.
+    nans = sc.full_like(subframe_origin_time, value=math.nan)
     shift = (
-        sc.concat([nans, time_open], dim=uuid4().hex).transpose().flatten(to='subframe')
+        sc.concat([nans, subframe_origin_time], dim=uuid4().hex)
+        .transpose()
+        .flatten(to='subframe')
     )
     shift = sc.concat([shift, nans[0]], 'subframe')
     return TimeOfFlightOrigin(
