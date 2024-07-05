@@ -176,6 +176,17 @@ class TimeOfFlightOrigin:
     distance: sc.Variable
 
 
+WFMChopperNames = NewType('WFMChopperNames', tuple[str, ...])
+"""
+Names of the WFM choppers in the beamline.
+"""
+
+WFMChoppers = NewType('WFMChoppers', tuple[chopper_cascade.Chopper, ...])
+"""
+The WFM choppers in the beamline.
+"""
+
+
 def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FramePeriod:
     if pulse_stride is None:
         return pulse_period
@@ -428,6 +439,9 @@ def time_of_flight_origin_wfm(
     high = times[-1] + padding
     times = sc.concat([low, times, high], 'subframe')
 
+    # Select the first n time origins to match subframe bounds
+    subframe_origin_time = subframe_origin_time[: subframe_bounds.sizes['subframe']]
+
     # We need to add nans between each subframe_origin_time offsets for the bins before,
     # after, and between the subframes.
     nans = sc.full_like(subframe_origin_time, value=math.nan)
@@ -443,45 +457,29 @@ def time_of_flight_origin_wfm(
     )
 
 
-# TODO: add a helper provider that can make time of flight origin from a pair of WFM
-# choppers
+def wfm_choppers(
+    choppers: Choppers,
+    wfm_chopper_names: WFMChopperNames,
+) -> WFMChoppers:
+    return WFMChoppers(tuple(choppers[name] for name in wfm_chopper_names))
 
 
-def time_of_flight_origin_wfm_from_chopper(
-    source_chopper: SourceChopper, subframe_bounds: SubframeBounds
-) -> TimeOfFlightOrigin:
-    """
-    Compute the time-of-flight origin from a source chopper in the WFM case.
-
-    For WFM there is not a single time-of-flight "origin", but one for each subframe.
-    For each subframe, the time-of-flight origin may be defined as the center of the
-    respective chopper slit opening of the WFM chopper. In some cases there is a pair
-    WFM choppers, in which case the time-of-flight origin may be defined using some
-    combination of the two choppers. This is not supported yet, as we only support
-    a single source chopper input.
-    """
-    if len(source_chopper.time_open) != subframe_bounds['time'].sizes['subframe']:
-        raise NotImplementedError(
-            "Source chopper openings do not match the subframe count, this is ."
-            "not supported yet."
-        )
-    times = subframe_bounds['time'].flatten(dims=['subframe', 'bound'], to='subframe')
-    shift = sc.zeros(dims=['subframe'], shape=[times.sizes['subframe'] + 1], unit='s')
-    # All times before the first subframe and after the last subframe should be
-    # replaced by NaN. We add a large padding to make sure all events are covered.
-    padding = sc.scalar(1e9, unit='s').to(unit=times.unit)
-    low = times[0] - padding
-    high = times[-1] + padding
-    times = sc.concat([low, times, high], 'subframe')
-    shift[1::2] += 0.5 * (
-        source_chopper.time_open + source_chopper.time_close
-    ).rename_dims(cutout='subframe')
-    # Set offsets before, between, and after subframes to NaN
-    shift[::2] = sc.scalar(math.nan, unit='s')
-    return TimeOfFlightOrigin(
-        time=sc.DataArray(shift, coords={'subframe': times}),
-        distance=source_chopper.distance,
+def time_of_flight_origin_distance_wfm_from_choppers(
+    wfm_choppers: WFMChoppers,
+) -> TimeOfFlightOriginDistance:
+    return TimeOfFlightOriginDistance(
+        sc.concat([ch.distance for ch in wfm_choppers], 'dummy').mean()
     )
+
+
+def time_of_flight_origin_time_wfm_from_choppers(
+    wfm_choppers: WFMChoppers,
+) -> TimeOfFlightOriginTime:
+    times = []
+    for ch in wfm_choppers:
+        times.append(ch.time_open)
+        times.append(ch.time_close)
+    return TimeOfFlightOriginTime(sc.concat(times, dim='dummy').mean('dummy'))
 
 
 def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
@@ -589,7 +587,14 @@ _skipping = (
     time_zero,
 )
 
-_wfm = (subframe_bounds, time_offset, time_of_flight_origin_wfm_from_chopper)
+_wfm = (
+    subframe_bounds,
+    time_offset,
+    time_of_flight_origin_time_wfm_from_choppers,
+    time_of_flight_origin_distance_wfm_from_choppers,
+    wfm_choppers,
+    time_of_flight_origin_wfm,
+)
 _non_wfm = (time_of_flight_origin_from_chopper,)
 
 
