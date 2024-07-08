@@ -15,7 +15,6 @@ import math
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import NewType
-from uuid import uuid4
 
 import scipp as sc
 
