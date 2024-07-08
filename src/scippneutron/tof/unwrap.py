@@ -429,7 +429,26 @@ def time_of_flight_origin_wfm(
     subframe_origin_time: TimeOfFlightOriginTime,
     subframe_bounds: SubframeBounds,
 ) -> TimeOfFlightOrigin:
-    """ """
+    """
+    Compute the time-of-flight origin in the WFM case.
+    For WFM there is not a single time-of-flight "origin", but one for each subframe.
+    In the case of a pair of WFM choppers, the distance to the time-of-flight origin
+    would typically be the average of the distances of the choppers, while the time
+    of the time-of-flight origin would be the average of the opening and closing times
+    of the WFM choppers.
+
+    Parameters
+    ----------
+    distance:
+        The distance to the time-of-flight origin. In the case of a pair of WFM
+        choppers, this would for example be the mid-point between the choppers.
+    subframe_origin_time:
+        The time of the time-of-flight origin for each subframe. In the case of a pair
+        of WFM choppers, this would for example be the mid-point between the opening
+        and closing times of the choppers.
+    subframe_bounds:
+        The computed subframe boundaries, used to offset the raw timestamps for WFM.
+    """
     times = subframe_bounds['time'].flatten(dims=['subframe', 'bound'], to='subframe')
     shift = sc.zeros(dims=['subframe'], shape=[times.sizes['subframe'] + 1], unit='s')
     # All times before the first subframe and after the last subframe should be
@@ -461,25 +480,56 @@ def wfm_choppers(
     choppers: Choppers,
     wfm_chopper_names: WFMChopperNames,
 ) -> WFMChoppers:
+    """
+    Get the WFM choppers from the chopper cascade.
+    The choppers are identified by their names.
+
+    Parameters
+    ----------
+    choppers:
+        All the choppers in the beamline.
+    wfm_chopper_names:
+        Names of the WFM choppers.
+    """
     return WFMChoppers(tuple(choppers[name] for name in wfm_chopper_names))
 
 
 def time_of_flight_origin_distance_wfm_from_choppers(
     wfm_choppers: WFMChoppers,
 ) -> TimeOfFlightOriginDistance:
+    """
+    Compute the distance to the time of flight origin, in the case of a set
+    (usually a pair) of WFM choppers. The distance is the average of the distances
+    of the choppers.
+
+    Parameters
+    ----------
+    wfm_choppers:
+        The WFM choppers.
+    """
     return TimeOfFlightOriginDistance(
-        sc.concat([ch.distance for ch in wfm_choppers], 'dummy').mean()
+        sc.reduce([ch.distance for ch in wfm_choppers]).mean()
     )
 
 
 def time_of_flight_origin_time_wfm_from_choppers(
     wfm_choppers: WFMChoppers,
 ) -> TimeOfFlightOriginTime:
+    """
+    Compute the time of the time of flight origin, in the case of a set
+    (usually a pair) of WFM choppers. The time is the mean of the opening and closing
+    times of the WFM choppers.
+
+    Parameters
+    ----------
+    wfm_choppers:
+        The WFM choppers.
+    """
     times = []
     for ch in wfm_choppers:
         times.append(ch.time_open)
         times.append(ch.time_close)
-    return TimeOfFlightOriginTime(sc.concat(times, dim='dummy').mean('dummy'))
+    return TimeOfFlightOriginTime(sc.reduce(times).mean())
 
 
 def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
