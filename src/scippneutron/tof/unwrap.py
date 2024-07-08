@@ -450,7 +450,6 @@ def time_of_flight_origin_wfm(
         The computed subframe boundaries, used to offset the raw timestamps for WFM.
     """
     times = subframe_bounds['time'].flatten(dims=['subframe', 'bound'], to='subframe')
-    shift = sc.zeros(dims=['subframe'], shape=[times.sizes['subframe'] + 1], unit='s')
     # All times before the first subframe and after the last subframe should be
     # replaced by NaN. We add a large padding to make sure all events are covered.
     padding = sc.scalar(1e9, unit='s').to(unit=times.unit)
@@ -463,13 +462,12 @@ def time_of_flight_origin_wfm(
 
     # We need to add nans between each subframe_origin_time offsets for the bins before,
     # after, and between the subframes.
-    nans = sc.full_like(subframe_origin_time, value=math.nan)
-    shift = (
-        sc.concat([nans, subframe_origin_time], dim=uuid4().hex)
-        .transpose()
-        .flatten(to='subframe')
+    shift = sc.full(
+        sizes={'subframe': len(subframe_origin_time) * 2 + 1},
+        value=math.nan,
+        unit='s',
     )
-    shift = sc.concat([shift, nans[0]], 'subframe')
+    shift[1::2] = subframe_origin_time.rename_dims(cutout='subframe')
     return TimeOfFlightOrigin(
         time=sc.DataArray(shift, coords={'subframe': times}),
         distance=distance,
