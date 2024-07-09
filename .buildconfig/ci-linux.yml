@@ -10,7 +10,6 @@ channels:
   - nodefaults
 dependencies:
   - comm=0.1.4  # earlier versions break tests with ipywidgets with latest ipykernel
-  - ess-streaming-data-types==v0.14.0
   - h5py==3.8.0
   - hypothesis==6.88.1
   - ipykernel==6.25.2
@@ -24,7 +23,6 @@ dependencies:
   - pooch==1.7.0
   - pytest==7.4.2
   - pytest-asyncio==0.21.1
-  - python-confluent-kafka==2.1.1
   - python-graphviz==0.20.1
   - pythreejs==2.4.2
   - scipp==23.07.0

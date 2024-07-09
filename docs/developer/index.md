@@ -13,6 +13,5 @@ hidden:
 getting-started
 coding-conventions
 dependency-management
-data-stream
 file-loading
 ```

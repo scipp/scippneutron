@@ -40,8 +40,6 @@ from .mantid import (
     fit,
 )
 from .instrument_view import instrument_view
-from .io.nexus.load_nexus import load_nexus, load_nexus_json
-from .data_streaming.data_stream import data_stream
 from .masking import MaskingTool
 from . import atoms
 from . import data
@@ -67,9 +65,6 @@ __all__ = [
     "load",
     "fit",
     "instrument_view",
-    "load_nexus",
-    "load_nexus_json",
-    "data_stream",
     "atoms",
     "chopper",
     "data",
