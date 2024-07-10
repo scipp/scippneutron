@@ -3,7 +3,7 @@ File loading
 
 Scippneutron does not provide routines to read files itself.
 However, it is able to load data files from many neutron facilities by using Mantid.
-For NeXus files, prefer `ScippNeXus <https://scipp.github.io/scippnexus/>`_
+For NeXus files, prefer `ScippNexus <https://scipp.github.io/scippnexus/>`_
 over Mantid.
 
 ``scippneutron.load_with_mantid``
