@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 from __future__ import annotations
 
 import itertools
@@ -19,14 +21,14 @@ class ORCIDiD:
 
         >>> from scippneutron.meta import ORCIDiD
         >>> orcid_id = ORCIDiD('0000-0000-0000-0001')
-        >>> orcid_id
-        https://orcid.org/0000-0000-0000-0001
+        >>> str(orcid_id)
+        'https://orcid.org/0000-0000-0000-0001'
 
     Or equivalently with an explicit resolver:
 
         >>> orcid_id = ORCIDiD('https://orcid.org/0000-0000-0000-0001')
-        >>> orcid_id
-        https://orcid.org/0000-0000-0000-0001
+        >>> str(orcid_id)
+        'https://orcid.org/0000-0000-0000-0001'
     """
 
     __slots__ = ('_orcid_id',)
@@ -47,7 +49,10 @@ class ORCIDiD:
         if isinstance(other, ORCIDiD):
             return self._orcid_id == other._orcid_id
         if isinstance(other, str):
-            return self._orcid_id == _parse_id(other)
+            try:
+                return self._orcid_id == _parse_id(other)
+            except ValueError:  # other is not a valid ORCID iD
+                return False
         return NotImplemented
 
     def __ne__(self, other: object) -> bool:

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 import pytest
 from pydantic import BaseModel
 
@@ -41,18 +43,18 @@ def test_orcid_eq() -> None:
 
     assert full == full
     assert full == no_resolver
+    assert full == full_str
+    assert full == no_resolver_str
+
     assert no_resolver == full
     assert no_resolver == no_resolver
+    assert no_resolver == full_str
+    assert no_resolver == no_resolver_str
 
     assert full_str == full
     assert full_str == no_resolver
     assert no_resolver_str == full
     assert no_resolver_str == no_resolver
-
-    assert full == full_str
-    assert full == no_resolver_str
-    assert no_resolver == full_str
-    assert no_resolver == no_resolver_str
 
 
 def test_orcid_ne() -> None:
@@ -63,6 +65,11 @@ def test_orcid_ne() -> None:
     assert ORCIDiD('0000-0000-0001-0007') != ref
     assert ORCIDiD('https://orcid.org/0000-0000-0001-0007') != ref_str
     assert ORCIDiD('0000-0000-0001-0007') != ref_str
+
+    assert ORCIDiD('https://orcid.org/0000-0000-0001-0007') != "1-007"
+    assert ORCIDiD('0000-0000-0001-0007') != "1-007"
+    assert not (ORCIDiD('https://orcid.org/0000-0000-0001-0007') == "1-007")
+    assert not (ORCIDiD('0000-0000-0001-0007') == "1-007")
 
     assert ORCIDiD('https://orcid.org/0000-0000-0001-0007') != 1007
     assert ORCIDiD('0000-0000-0001-0007') != 1007
