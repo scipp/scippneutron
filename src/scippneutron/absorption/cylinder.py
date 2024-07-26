@@ -31,6 +31,10 @@ class Cylinder:
             sc.scalar(0.0, unit=start_point.unit),
         )
 
+    @property
+    def center(self):
+        return self.center_of_base + self.symmetry_line * self.height / 2
+
     def _select_quadrature_points(self, kind):
         if kind == 'expensive':
             x, w = leggauss(max(round(10 * self.height / self.radius), 10))
@@ -56,9 +60,11 @@ class Cylinder:
 
     def quadrature(self, kind: Literal['expensive', 'medium', 'cheap']):
         quad = self._select_quadrature_points(kind)
+        # Scale to size of cylinder
         quad['x'] = quad['x'] * self.radius
         quad['y'] = quad['y'] * self.radius
         quad['z'] = quad['z'] * self.height / 2
+        quad['weights'] = quad['weights'] * (self.radius**2 * self.height / 2)
         quad_points = sc.vectors(
             dims=['quad'],
             values=(
@@ -73,6 +79,9 @@ class Cylinder:
         # We need to rotate the quadrature so the symmetry axis matches the cylinder.
         u = sc.cross(sc.vector([0, 0, 1]), self.symmetry_line)
         u *= sc.asin(sc.norm(u)) / sc.norm(u)
+        # By default the cylinder quadrature center is at the origin.
+        # We need to move it so the center matches the cylinder.
+        quad_points += self.center
         return sc.spatial.rotations_from_rotvecs(u) * quad_points, sc.array(
             dims=['quad'], values=quad['weights']
         )
