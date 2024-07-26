@@ -30,8 +30,8 @@ def compute_transmission_map(
         values=sc.concat(
             [
                 sc.sin(theta) * sc.cos(phi),
-                sc.broadcast(sc.cos(theta), sizes={**phi.sizes, **theta.sizes}),
                 sc.sin(theta) * sc.sin(phi),
+                sc.broadcast(sc.cos(theta), sizes={**phi.sizes, **theta.sizes}),
             ],
             dim='row',
         )
