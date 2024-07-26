@@ -78,13 +78,14 @@ class Cylinder:
         # By default the cylinder quadrature has z as the symmetry axis.
         # We need to rotate the quadrature so the symmetry axis matches the cylinder.
         u = sc.cross(sc.vector([0, 0, 1]), self.symmetry_line)
-        u *= sc.asin(sc.norm(u)) / sc.norm(u)
+        un = sc.norm(u)
+        if un >= 1e-10:
+            u *= sc.asin(un) / un
+            quad_points = sc.spatial.rotations_from_rotvecs(u) * quad_points
         # By default the cylinder quadrature center is at the origin.
         # We need to move it so the center matches the cylinder.
         quad_points += self.center
-        return sc.spatial.rotations_from_rotvecs(u) * quad_points, sc.array(
-            dims=['quad'], values=quad['weights']
-        )
+        return (quad_points, sc.array(dims=['quad'], values=quad['weights']))
 
 
 def _cylinder_quadrature_from_product(disk_quadrature, line_quadrature):
