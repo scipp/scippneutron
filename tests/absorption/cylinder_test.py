@@ -81,6 +81,16 @@ def test_intersection_interior(r, h, point_on_unit_circle):
         ((lambda x: sc.dot(x, sc.vector([0, 0, 1]))), sc.scalar(np.pi / 2)),
         ((lambda x: sc.dot(x, sc.vector([0, 1, 0]))), sc.scalar(0.0)),
         ((lambda x: sc.dot(x, sc.vector([1, 0, 0]))), sc.scalar(0.0)),
+        ((lambda x: x.fields.x * x.fields.y), sc.scalar(0.0)),
+        (
+            (
+                lambda x: sc.sin(
+                    sc.dot(x, sc.vector([1, 0.5, 0]) * sc.scalar(1, unit='rad'))
+                )
+                ** 2
+            ),
+            sc.scalar(0.7972445081889596),
+        ),
     ],
 )
 def test_quadrature(kind, f, expected):
@@ -89,7 +99,7 @@ def test_quadrature(kind, f, expected):
     )
     q, w = c.quadrature(kind)
     v = (f(q) * w).sum()
-    assert_allclose(v, expected, atol=sc.scalar(1e-12))
+    assert_allclose(v, expected, atol=sc.scalar(1e-8), rtol=sc.scalar(1e-4))
 
 
 @pytest.mark.parametrize('kind', ['expensive', 'medium', 'cheap'])

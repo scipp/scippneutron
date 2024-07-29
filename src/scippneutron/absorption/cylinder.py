@@ -71,11 +71,12 @@ class Cylinder:
         quad_points = sc.vectors(
             dims=['quad'],
             values=(
-                sc.concat([quad['x'] for x in 'xyz'], dim='row')
+                sc.concat([quad[x] for x in 'xyz'], dim='row')
                 .transpose(['quad', 'row'])
                 .values
             ),
         )
+
         # By default the cylinder quadrature has z as the symmetry axis.
         # We need to rotate the quadrature so the symmetry axis matches the cylinder.
         u = sc.cross(sc.vector([0, 0, 1]), self.symmetry_line)
@@ -83,6 +84,7 @@ class Cylinder:
         if un >= 1e-10:
             u *= sc.asin(un) / un
             quad_points = sc.spatial.rotations_from_rotvecs(u) * quad_points
+
         # By default the cylinder quadrature center is at the origin.
         # We need to move it so the center matches the cylinder.
         quad_points += self.center
