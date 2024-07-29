@@ -2,9 +2,10 @@ from dataclasses import dataclass
 from typing import Literal
 
 import numpy as np
-import quadratures
 import scipp as sc
 from numpy.polynomial.legendre import leggauss
+
+from . import quadratures
 
 
 @dataclass
@@ -37,26 +38,28 @@ class Cylinder:
 
     def _select_quadrature_points(self, kind):
         if kind == 'expensive':
-            x, w = leggauss(max(round(10 * self.height / self.radius), 10))
-            return _cylinder_quadrature_from_product(
+            x, w = leggauss(max(round(10 * (self.height / self.radius).value), 10))
+            quad = _cylinder_quadrature_from_product(
                 quadratures.circle254_cheb,
                 dict(x=x, weights=w),  # noqa: C408
             )
-        if kind == 'medium':
-            x, w = leggauss(max(round(10 * self.height / self.radius), 5))
+        elif kind == 'medium':
+            x, w = leggauss(max(round(10 * (self.height / self.radius).value), 5))
             # Would be nice to have a medium size Chebychev quadrature on the disk,
             # but I only found the large one for now.
-            return _cylinder_quadrature_from_product(
+            quad = _cylinder_quadrature_from_product(
                 quadratures.circle54,
                 dict(x=x, weights=w),  # noqa: C408
             )
-        if kind == 'cheap':
-            x, w = leggauss(max(round(5 * self.height / self.radius), 5))
-            return _cylinder_quadrature_from_product(
+        elif kind == 'cheap':
+            x, w = leggauss(max(round(5 * (self.height / self.radius).value), 5))
+            quad = _cylinder_quadrature_from_product(
                 quadratures.circle12,
                 dict(x=x, weights=w),  # noqa: C408
             )
-        raise NotImplementedError
+        else:
+            raise NotImplementedError
+        return {k: sc.array(dims=['quad'], values=v) for k, v in quad.items()}
 
     def quadrature(self, kind: Literal['expensive', 'medium', 'cheap']):
         quad = self._select_quadrature_points(kind)
@@ -68,9 +71,7 @@ class Cylinder:
         quad_points = sc.vectors(
             dims=['quad'],
             values=(
-                sc.concat(
-                    [sc.array(dims=['quad'], values=quad[x]) for x in 'xyz'], dim='row'
-                )
+                sc.concat([quad['x'] for x in 'xyz'], dim='row')
                 .transpose(['quad', 'row'])
                 .values
             ),
@@ -85,7 +86,7 @@ class Cylinder:
         # By default the cylinder quadrature center is at the origin.
         # We need to move it so the center matches the cylinder.
         quad_points += self.center
-        return (quad_points, sc.array(dims=['quad'], values=quad['weights']))
+        return quad_points, quad['weights']
 
 
 def _cylinder_quadrature_from_product(disk_quadrature, line_quadrature):
