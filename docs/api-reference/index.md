@@ -32,7 +32,7 @@
 
 Note that `theta` or `scattering_angle` are deliberately not supported,
 due to some ambiguity on how the terms are used in the community
-and possible confusion of `theta` (from Bagg's law) with `theta` in spherical coordinates.
+and possible confusion of `theta` (from Bragg’s law) with `theta` in spherical coordinates.
 
 ```{eval-rst}
 .. autosummary::
@@ -48,16 +48,6 @@ and possible confusion of `theta` (from Bagg's law) with `theta` in spherical co
    two_theta
    incident_beam
    scattered_beam
-```
-
-### Loading Nexus files
-
-```{eval-rst}
-.. autosummary::
-   :toctree: ../generated/functions
-   :recursive:
-
-   load_nexus
 ```
 
 ## Submodules
