@@ -41,11 +41,15 @@ def compute_transmission_map(
     Ltot = single_scatter_distance_through_sample(
         sample_shape, points, beam_direction, scatter_directions
     )
-    return sc.concat(
+    total_transmission = sc.concat(
         # The Ltot array is already large, to avoid OOM, don't vectorize this operation
         [
             (transmission(sample_material, Ltot, w) * weights).sum(weights.dim)
             for w in wavelength
         ],
         dim=wavelength.dim,
+    )
+    return sc.DataArray(
+        data=total_transmission,
+        coords={'phi': phi, 'theta': theta, 'wavelength': wavelength},
     )
