@@ -40,7 +40,7 @@ class Cylinder:
         if kind == 'expensive':
             x, w = leggauss(max(round(10 * (self.height / self.radius).value), 10))
             quad = _cylinder_quadrature_from_product(
-                quadratures.circle254_cheb,
+                quadratures.disk254_cheb,
                 dict(x=x, weights=w),  # noqa: C408
             )
         elif kind == 'medium':
@@ -48,13 +48,13 @@ class Cylinder:
             # Would be nice to have a medium size Chebychev quadrature on the disk,
             # but I only found the large one for now.
             quad = _cylinder_quadrature_from_product(
-                quadratures.circle54,
+                quadratures.disk54,
                 dict(x=x, weights=w),  # noqa: C408
             )
         elif kind == 'cheap':
             x, w = leggauss(max(round(5 * (self.height / self.radius).value), 5))
             quad = _cylinder_quadrature_from_product(
-                quadratures.circle12,
+                quadratures.disk12,
                 dict(x=x, weights=w),  # noqa: C408
             )
         else:
