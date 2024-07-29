@@ -78,15 +78,33 @@ def test_intersection_interior(r, h, point_on_unit_circle):
     ('f', 'expected'),
     [
         ((lambda x: 1.0), sc.scalar(np.pi)),
-        ((lambda x: sc.dot(x, sc.vector([0, 0, 1]))), sc.scalar(3 * np.pi / 2)),
+        ((lambda x: sc.dot(x, sc.vector([0, 0, 1]))), sc.scalar(np.pi / 2)),
         ((lambda x: sc.dot(x, sc.vector([0, 1, 0]))), sc.scalar(0.0)),
         ((lambda x: sc.dot(x, sc.vector([1, 0, 0]))), sc.scalar(0.0)),
     ],
 )
 def test_quadrature(kind, f, expected):
     c = Cylinder(
-        sc.vector([0, 0, 1]), sc.vector([0, 0, 1]), sc.scalar(1.0), sc.scalar(1.0)
+        sc.vector([0, 0, 1.0]), sc.vector([0, 0, 0.0]), sc.scalar(1.0), sc.scalar(1.0)
     )
     q, w = c.quadrature(kind)
     v = (f(q) * w).sum()
     assert_allclose(v, expected, atol=sc.scalar(1e-12))
+
+
+@pytest.mark.parametrize('kind', ['expensive', 'medium', 'cheap'])
+@pytest.mark.parametrize(
+    'axis', [sc.vector([0, 1, 0.0]), sc.vector([2**-0.5, 0, 2**-0.5])]
+)
+@pytest.mark.parametrize('base', [sc.vector([0, 0, 0.0]), sc.vector([2.0, 5.3, -4.0])])
+@pytest.mark.parametrize('r', [sc.scalar(0.2), sc.scalar(1.0)])
+@pytest.mark.parametrize('h', [sc.scalar(0.2), sc.scalar(1.0)])
+def test_quadrature_translated_cylinder(kind, axis, base, r, h):
+    c = Cylinder(axis, base, r, h)
+    q, w = c.quadrature(kind)
+
+    def f(x):
+        return sc.dot(axis / h, x - base)
+
+    v = (f(q) * w).sum()
+    assert_allclose(v, r**2 * h * np.pi / 2, atol=sc.scalar(1e-12))
