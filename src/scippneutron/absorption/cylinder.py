@@ -36,6 +36,10 @@ class Cylinder:
     def center(self):
         return self.center_of_base + self.symmetry_line * self.height / 2
 
+    @property
+    def volume(self):
+        return self.radius**2 * self.height * np.pi
+
     def _select_quadrature_points(self, kind):
         if kind == 'expensive':
             x, w = leggauss(max(round(10 * (self.height / self.radius).value), 10))

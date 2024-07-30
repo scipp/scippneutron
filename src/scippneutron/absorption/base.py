@@ -25,17 +25,19 @@ def compute_transmission_map(
     quadrature_kind='expensive',
 ):
     points, weights = sample_shape.quadrature(quadrature_kind)
+    btheta = sc.broadcast(theta, sizes={**phi.sizes, **theta.sizes})
+    bphi = sc.broadcast(phi, sizes={**phi.sizes, **theta.sizes})
     scatter_directions = sc.vectors(
-        dims=['theta', 'phi'],
+        dims=bphi.dims,
         values=sc.concat(
             [
-                sc.sin(theta) * sc.cos(phi),
-                sc.sin(theta) * sc.sin(phi),
-                sc.broadcast(sc.cos(theta), sizes={**phi.sizes, **theta.sizes}),
+                sc.sin(btheta) * sc.cos(bphi),
+                sc.sin(btheta) * sc.sin(bphi),
+                sc.cos(btheta),
             ],
             dim='row',
         )
-        .transpose(['theta', 'phi', 'row'])
+        .transpose([*bphi.dims, 'row'])
         .values,
     )
     Ltot = single_scatter_distance_through_sample(
@@ -45,6 +47,7 @@ def compute_transmission_map(
         # The Ltot array is already large, to avoid OOM, don't vectorize this operation
         [
             (transmission(sample_material, Ltot, w) * weights).sum(weights.dim)
+            / sample_shape.volume
             for w in wavelength
         ],
         dim=wavelength.dim,
