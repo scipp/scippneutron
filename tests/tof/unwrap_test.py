@@ -38,6 +38,7 @@ def test_frame_period_is_pulse_period_if_not_pulse_skipping() -> None:
     pl = sl.Pipeline(unwrap.unwrap_providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
+    pl[unwrap.PulseStride] = None
     assert_identical(pl.compute(unwrap.FramePeriod), period)
 
 
@@ -72,6 +73,7 @@ def test_offset_from_wrapped() -> None:
     pl = sl.Pipeline(unwrap.unwrap_providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.FrameBounds] = unwrap.FrameBounds(
         sc.DataGroup(time=sc.array(dims=['bound'], values=[0.01, 0.02], unit='s'))
     )
@@ -88,6 +90,7 @@ def test_offset_from_wrapped_has_no_special_handling_for_out_of_period_events() 
     pl = sl.Pipeline(unwrap.unwrap_providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.FrameBounds] = unwrap.FrameBounds(
         sc.DataGroup(time=sc.array(dims=['bound'], values=[0.01, 0.02], unit='s'))
     )
@@ -121,12 +124,14 @@ def test_unwrap_with_no_choppers(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
         ess_pulse.wavelength_max,
     )
     pl[unwrap.Choppers] = {}
+    pl[unwrap.SourceChopperName] = None
     pl[unwrap.Ltotal] = distance
     unwrapped = pl.compute(unwrap.UnwrappedData)
     # No unwrap is happening, frame does not overlap next pulse.
@@ -156,6 +161,7 @@ def test_unwrap_with_frame_overlap_raises(ess_10s_14Hz, ess_pulse) -> None:
     pl = sl.Pipeline(unwrap.unwrap_providers())
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -186,6 +192,7 @@ def test_standard_unwrap(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -228,6 +235,7 @@ def test_standard_unwrap_histogram_mode(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -261,6 +269,7 @@ def test_pulse_skipping_unwrap(ess_10s_7Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = 0.5 * beamline._source.pulse_period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -329,6 +338,7 @@ def test_wfm_unwrap(ess_10s_14Hz, ess_pulse) -> None:
     # are used (not blocked by other choppers), for this test we remove those we
     # know are not used.
     choppers['wfm1'] = choppers['wfm1'][2:]
+    choppers['wfm2'] = choppers['wfm2'][2:]
     beamline = fakes.FakeBeamline(
         source=ess_10s_14Hz,
         pulse=ess_pulse,
@@ -346,20 +356,20 @@ def test_wfm_unwrap(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
         ess_pulse.wavelength_max,
     )
     pl[unwrap.Choppers] = choppers
-    # Actually the source should be at the center between wfm1 and wfm2, but we
-    # currently don't have a way of handling this. We could manually create a
-    # "virtual" chopper.
-    pl[unwrap.SourceChopperName] = 'wfm1'
+    pl[unwrap.WFMChopperNames] = ('wfm1', 'wfm2')
     pl[unwrap.Ltotal] = distance
     bounds = pl.compute(unwrap.SubframeBounds)
     assert bounds.sizes == {'bound': 2, 'subframe': 6}
     result = pl.compute(unwrap.TofData)
-    ref.coords['Ltotal'] = distance - choppers['wfm1'].distance
+    ref.coords['Ltotal'] = distance - 0.5 * (
+        choppers['wfm1'].distance + choppers['wfm2'].distance
+    )
     # FakeBeamline does not support WFM yet, we cannot run a better check for now.
     assert_identical(result.sum(), ref.sum())
