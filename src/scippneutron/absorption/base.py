@@ -9,9 +9,9 @@ def single_scatter_distance_through_sample(
     return L1 + L2
 
 
-def transmission(sample_material, distance_through_sample, wavelength):
-    return sample_material.c * sc.exp(
-        -sample_material.mu(wavelength) * distance_through_sample
+def transmission_ratio(material, distance_through_sample, wavelength):
+    return sc.exp(
+        -material.absorption_coefficient(wavelength) * distance_through_sample
     )
 
 
@@ -20,33 +20,20 @@ def compute_transmission_map(
     sample_material,
     beam_direction,
     wavelength,
-    theta,
-    phi,
+    detector_position,
     quadrature_kind='expensive',
 ):
     points, weights = sample_shape.quadrature(quadrature_kind)
-    btheta = sc.broadcast(theta, sizes={**phi.sizes, **theta.sizes})
-    bphi = sc.broadcast(phi, sizes={**phi.sizes, **theta.sizes})
-    scatter_directions = sc.vectors(
-        dims=bphi.dims,
-        values=sc.concat(
-            [
-                sc.sin(btheta) * sc.cos(bphi),
-                sc.sin(btheta) * sc.sin(bphi),
-                sc.cos(btheta),
-            ],
-            dim='row',
-        )
-        .transpose([*bphi.dims, 'row'])
-        .values,
-    )
+    scatter_direction = detector_position - points.to(unit=detector_position.unit)
+    scatter_direction /= sc.norm(scatter_direction)
+
     Ltot = single_scatter_distance_through_sample(
-        sample_shape, points, beam_direction, scatter_directions
+        sample_shape, points, beam_direction, scatter_direction
     )
     total_transmission = sc.concat(
         # The Ltot array is already large, to avoid OOM, don't vectorize this operation
         [
-            (transmission(sample_material, Ltot, w) * weights).sum(weights.dim)
+            (transmission_ratio(sample_material, Ltot, w) * weights).sum(weights.dim)
             / sample_shape.volume
             for w in wavelength
         ],
@@ -54,5 +41,5 @@ def compute_transmission_map(
     )
     return sc.DataArray(
         data=total_transmission,
-        coords={'phi': phi, 'theta': theta, 'wavelength': wavelength},
+        coords={'detector_position': detector_position, 'wavelength': wavelength},
     )
