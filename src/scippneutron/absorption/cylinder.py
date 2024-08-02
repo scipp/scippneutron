@@ -68,17 +68,14 @@ class Cylinder:
     def quadrature(self, kind: Literal['expensive', 'medium', 'cheap']):
         quad = self._select_quadrature_points(kind)
         # Scale to size of cylinder
-        quad['x'] = quad['x'] * self.radius
-        quad['y'] = quad['y'] * self.radius
-        quad['z'] = quad['z'] * self.height / 2
-        quad['weights'] = quad['weights'] * (self.radius**2 * self.height / 2)
-        quad_points = sc.vectors(
+        x = (quad['x'] * self.radius).to(unit=self.center.unit)
+        y = (quad['y'] * self.radius).to(unit=self.center.unit)
+        z = (quad['z'] * self.height / 2).to(unit=self.center.unit)
+        weights = quad['weights'] * (self.radius**2 * self.height / 2)
+        points = sc.vectors(
             dims=['quad'],
-            values=(
-                sc.concat([quad[x] for x in 'xyz'], dim='row')
-                .transpose(['quad', 'row'])
-                .values
-            ),
+            values=(sc.concat([x, y, z], dim='row').transpose(['quad', 'row']).values),
+            unit=self.center.unit,
         )
 
         # By default the cylinder quadrature has z as the symmetry axis.
@@ -87,12 +84,12 @@ class Cylinder:
         un = sc.norm(u)
         if un >= 1e-10:
             u *= sc.asin(un) / un
-            quad_points = sc.spatial.rotations_from_rotvecs(u) * quad_points
+            points = sc.spatial.rotations_from_rotvecs(u) * points
 
         # By default the cylinder quadrature center is at the origin.
         # We need to move it so the center matches the cylinder.
-        quad_points += self.center
-        return quad_points, quad['weights']
+        points += self.center
+        return points, weights
 
 
 def _cylinder_quadrature_from_product(disk_quadrature, line_quadrature):
@@ -185,7 +182,7 @@ def _line_slab_intersection(a, b, h, n):
 
     ndota = sc.dot(n, a)
     bdota = sc.dot(b, a)
-    origin_in_plane = (bdota <= 0) & (bdota >= -h)
+    origin_in_plane = (bdota <= sc.scalar(0.0, unit=h.unit)) & (bdota >= -h)
     parallel_to_slab = sc.abs(ndota) == sc.scalar(0, unit=ndota.unit)
     t0 = bdota / ndota
     t1 = t0 + h / ndota

@@ -89,6 +89,7 @@ def test_intersection_interior(r, h, point_on_unit_circle):
                 )
                 ** 2
             ),
+            # Exact value from Sympy
             sc.scalar(0.7972445081889596),
         ),
     ],
