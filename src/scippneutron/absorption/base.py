@@ -9,7 +9,7 @@ def single_scatter_distance_through_sample(
     return L1 + L2
 
 
-def transmission_ratio(material, distance_through_sample, wavelength):
+def transmission_fraction(material, distance_through_sample, wavelength):
     return sc.exp(
         -material.absorption_coefficient(wavelength) * distance_through_sample
     )
@@ -33,7 +33,7 @@ def compute_transmission_map(
     total_transmission = sc.concat(
         # The Ltot array is already large, to avoid OOM, don't vectorize this operation
         [
-            (transmission_ratio(sample_material, Ltot, w) * weights).sum(weights.dim)
+            (transmission_fraction(sample_material, Ltot, w) * weights).sum(weights.dim)
             / sample_shape.volume
             for w in wavelength
         ],
