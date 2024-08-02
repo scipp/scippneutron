@@ -11,4 +11,5 @@ recipes
 masking-tool
 wfm/index
 algorithms-background/index
+absorption-correction
 ```
