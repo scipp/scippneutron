@@ -3,6 +3,7 @@
 
 hypothesis
 ipympl
+pooch
 psutil
 pytest
 pytest-xdist

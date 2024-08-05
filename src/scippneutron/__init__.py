@@ -42,7 +42,6 @@ from .mantid import (
 from .instrument_view import instrument_view
 from .masking import MaskingTool
 from . import atoms
-from . import data
 from . import chopper
 
 del importlib
@@ -67,6 +66,5 @@ __all__ = [
     "instrument_view",
     "atoms",
     "chopper",
-    "data",
     "MaskingTool",
 ]

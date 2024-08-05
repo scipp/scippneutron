@@ -4,6 +4,7 @@ ipympl
 ipython!=8.7.0  # Breaks syntax highlighting in Jupyter code cells.
 myst-parser
 nbsphinx
+pooch
 pydata-sphinx-theme>=0.14
 sphinx
 sphinx-autodoc-typehints
