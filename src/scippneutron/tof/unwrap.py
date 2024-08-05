@@ -216,7 +216,7 @@ def frame_wrapped_time_offset(offset: PulseWrappedTimeOffset) -> FrameWrappedTim
 
 def pulse_offset(
     pulse_period: PulsePeriod,
-    pulse_stride: PulseStride,
+    pulse_stride: PulseStride | None,
     event_time_zero: TimeZero,
 ) -> PulseOffset:
     """
@@ -227,6 +227,8 @@ def pulse_offset(
     used to compute OffsetFromTimeOfFlight will take care of this. This assumes that
     the choppers have been defined correctly.
     """
+    if pulse_stride is None:
+        return PulseOffset(sc.scalar(0, unit=elem_unit(pulse_period)))
     first_pulse_time = (
         event_time_zero[0]
         if len(event_time_zero) > 0
