@@ -93,6 +93,30 @@ def test_two_theta_arbitrary_values():
     )
 
 
+# TODO no loop
+def test_two_theta_rotated():
+    rng = np.random.default_rng(13513)
+    for _ in range(100):
+        q = rng.uniform(-5, 5, 4)
+        rot = sc.spatial.rotation(value=q / np.linalg.norm(q))
+        incident_beam = sc.vector([0.564, 1.2, -10.4], unit='m')
+        scattered_beam = sc.vectors(
+            dims=['beam'], values=[[13, 24, 35], [51, -42, 33]], unit='m'
+        )
+        incident_beam = rot * incident_beam
+        scattered_beam = rot * scattered_beam
+
+        two_theta = beamline.two_theta(
+            incident_beam=incident_beam, scattered_beam=scattered_beam
+        )
+        sc.testing.assert_allclose(
+            two_theta,
+            sc.array(
+                dims=['beam'], values=[2.352629742382, 2.061447408052], unit='rad'
+            ),
+        )
+
+
 def test_two_theta_depends_on_beam_direction():
     incident_beam = sc.vector([0.564, 1.2, -10.4], unit='m')
     scattered_beam = sc.vectors(
@@ -157,9 +181,13 @@ def test_two_theta_invariant_under_reflection_about_incident_beam():
     sc.testing.assert_allclose(two_theta[0], two_theta[1])
 
 
-def test_scattering_angles_with_gravity_small_gravity():
+@pytest.mark.parametrize('incident_y', [0.0, 1.5, -9.6])
+@pytest.mark.parametrize('incident_x', [0.0, 0.564, -1.6])
+def test_scattering_angles_with_gravity_small_gravity(
+    incident_x: float, incident_y: float
+):
     # This case is unphysical but tests the consistency with `two_theta`.
-    incident_beam = sc.vector([0.564, 0.0, 10.4], unit='m')
+    incident_beam = sc.vector([incident_x, incident_y, 10.4], unit='m')
     scattered_beam = sc.vectors(
         dims=['beam'],
         values=[[13, 24, 35], [51, -42, 33], [4, 23, -17], [-19, -31, 5]],
@@ -178,6 +206,39 @@ def test_scattering_angles_with_gravity_small_gravity():
         incident_beam=incident_beam, scattered_beam=scattered_beam
     ).broadcast(dims=['wavelength', 'beam'], shape=[3, 4])
     sc.testing.assert_allclose(res['two_theta'], expected)
+
+
+def test_scattering_angles_with_gravity_small_gravity_rotated():
+    rng = np.random.default_rng(13513)
+    for i in range(100):
+        q = rng.uniform(-5, 5, 4)
+        rot = sc.spatial.rotation(value=q / np.linalg.norm(q))
+        incident_beam = sc.vector([1.3, 0.0, 10.4], unit='m')
+        scattered_beam = sc.vectors(
+            dims=['beam'],
+            values=[[13, 24, 35], [51, -42, 33], [4, 23, -17], [-19, -31, 5]],
+            unit='m',
+        )
+
+        if i != 0:
+            incident_beam = rot * incident_beam
+            scattered_beam = rot * scattered_beam
+        incident_beam.fields.x = sc.scalar(0.0, unit='m')
+        scattered_beam.fields.x = sc.scalar(0.0, unit='m')
+
+        wavelength = sc.array(dims=['wavelength'], values=[1.2, 1.6, 1.8], unit='Å')
+        gravity = sc.vector([0, -1e-11, 0], unit=sc.constants.g.unit)
+
+        res = beamline.scattering_angles_with_gravity(
+            incident_beam=incident_beam,
+            scattered_beam=scattered_beam,
+            wavelength=wavelength,
+            gravity=gravity,
+        )
+        expected = beamline.two_theta(
+            incident_beam=incident_beam, scattered_beam=scattered_beam
+        ).broadcast(dims=['wavelength', 'beam'], shape=[3, 4])
+        sc.testing.assert_allclose(res['two_theta'], expected)
 
 
 @pytest.mark.parametrize('polar', [np.pi / 3, np.pi / 2, 2 * np.pi / 3, np.pi])

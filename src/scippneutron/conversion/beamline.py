@@ -526,6 +526,9 @@ def scattering_angles_with_gravity(
     )
     y += sc.dot(scattered_beam, ey).to(dtype=elem_dtype(wavelength), copy=False)
 
+    # iy = sc.dot(incident_beam, ey)
+    # y += iy.to(unit=elem_unit(y), dtype=elem_dtype(y))
+
     x = sc.dot(scattered_beam, ex).to(dtype=elem_dtype(y), copy=False)
     phi = sc.atan2(y=y, x=x)
 
@@ -537,6 +540,16 @@ def scattering_angles_with_gravity(
     y = sc.sqrt(y, out=y)
     z = sc.dot(scattered_beam, ez).to(dtype=elem_dtype(y), copy=False)
     two_theta_ = sc.atan2(y=y, x=z, out=y)
+
+    # iy = sc.dot(incident_beam, ey)
+    # iz = sc.dot(incident_beam, ez)
+    # alpha = sc.atan2(
+    #     y=abs(iy),
+    #     x=abs(iz),
+    # )
+    # import numpy as np
+    #
+    # two_theta_ += np.sign(iy.value) * alpha
 
     return {'two_theta': two_theta_, 'phi': phi}
 
