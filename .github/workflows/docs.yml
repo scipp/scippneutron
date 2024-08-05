@@ -45,6 +45,10 @@ jobs:
     defaults:
       run:
         shell: bash -l {0}  # required for conda env
+    env:
+        ESS_PROTECTED_FILESTORE_USERNAME: ${{ secrets.ESS_PROTECTED_FILESTORE_USERNAME }}
+        ESS_PROTECTED_FILESTORE_PASSWORD: ${{ secrets.ESS_PROTECTED_FILESTORE_PASSWORD }}
+
     steps:
       - run: sudo apt install --yes graphviz pandoc
       - uses: actions/checkout@v4
@@ -79,7 +83,7 @@ jobs:
         with:
           name: docs_html
           path: html/
-      - uses: JamesIves/github-pages-deploy-action@v4.6.1
+      - uses: JamesIves/github-pages-deploy-action@v4.6.3
         if: ${{ inputs.publish }}
         with:
           branch: gh-pages
