@@ -7,17 +7,19 @@
 #
 asttokens==2.4.1
     # via stack-data
-attrs==23.2.0
+attrs==24.1.0
     # via hypothesis
 comm==0.2.2
     # via ipywidgets
 contourpy==1.2.1
     # via matplotlib
+cyclebane==24.6.0
+    # via sciline
 cycler==0.12.1
     # via matplotlib
 decorator==5.1.1
     # via ipython
-exceptiongroup==1.2.1
+exceptiongroup==1.2.2
     # via
     #   hypothesis
     #   ipython
@@ -26,9 +28,9 @@ execnet==2.1.1
     # via pytest-xdist
 executing==2.0.1
     # via stack-data
-fonttools==4.53.0
+fonttools==4.53.1
     # via matplotlib
-hypothesis==6.103.1
+hypothesis==6.108.8
     # via -r basetest.in
 iniconfig==2.0.0
     # via pytest
@@ -36,7 +38,7 @@ ipydatawidgets==4.3.5
     # via pythreejs
 ipympl==0.9.4
     # via -r basetest.in
-ipython==8.25.0
+ipython==8.26.0
     # via
     #   ipympl
     #   ipywidgets
@@ -57,14 +59,16 @@ matplotlib==3.9.0
     # via ipympl
 matplotlib-inline==0.1.7
     # via ipython
-numpy==1.26.4
+networkx==3.3
+    # via cyclebane
+numpy==2.0.1
     # via
     #   contourpy
     #   ipydatawidgets
     #   ipympl
     #   matplotlib
     #   pythreejs
-packaging==24.0
+packaging==24.1
     # via
     #   matplotlib
     #   pytest
@@ -72,25 +76,25 @@ parso==0.8.4
     # via jedi
 pexpect==4.9.0
     # via ipython
-pillow==10.3.0
+pillow==10.4.0
     # via
     #   ipympl
     #   matplotlib
 pluggy==1.5.0
     # via pytest
-prompt-toolkit==3.0.46
+prompt-toolkit==3.0.47
     # via ipython
-psutil==5.9.8
+psutil==6.0.0
     # via -r basetest.in
 ptyprocess==0.7.0
     # via pexpect
-pure-eval==0.2.2
+pure-eval==0.2.3
     # via stack-data
 pygments==2.18.0
     # via ipython
 pyparsing==3.1.2
     # via matplotlib
-pytest==8.2.2
+pytest==8.3.2
     # via
     #   -r basetest.in
     #   pytest-xdist
@@ -100,7 +104,7 @@ python-dateutil==2.9.0.post0
     # via matplotlib
 pythreejs==2.4.2
     # via -r basetest.in
-sciline==24.4.1
+sciline==24.6.2
     # via -r basetest.in
 six==1.16.0
     # via
@@ -123,7 +127,7 @@ traitlets==5.14.3
     #   traittypes
 traittypes==0.2.1
     # via ipydatawidgets
-typing-extensions==4.12.1
+typing-extensions==4.12.2
     # via ipython
 wcwidth==0.2.13
     # via prompt-toolkit
