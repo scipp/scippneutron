@@ -43,8 +43,8 @@ class Cylinder:
 
     def _select_quadrature_points(self, kind):
         if kind == 'expensive':
-            # x, w = leggauss(40)
-            x, w = chebgauss(35)
+            k = round(max(min(11 * (self.height / self.radius).value, 35), 11))
+            x, w = chebgauss(k)
             w *= (1 - x**2) ** 0.5
             w /= sum(w) / 2
             quad = _cylinder_quadrature_from_product(
@@ -52,7 +52,10 @@ class Cylinder:
                 dict(x=x, weights=w),  # noqa: C408
             )
         elif kind == 'medium':
-            x, w = leggauss(40)
+            k = round(max(min(7 * (self.height / self.radius).value, 25), 7))
+            x, w = chebgauss(k)
+            w *= (1 - x**2) ** 0.5
+            w /= sum(w) / 2
             # Would be nice to have a medium size Chebychev quadrature on the disk,
             # but I only found the large one for now.
             quad = _cylinder_quadrature_from_product(
@@ -60,26 +63,29 @@ class Cylinder:
                 dict(x=x, weights=w),  # noqa: C408
             )
         elif kind == 'cheap':
-            x, w = leggauss(5)
+            k = round(max(min(5 * (self.height / self.radius).value, 15), 5))
+            x, w = leggauss(k)
             quad = _cylinder_quadrature_from_product(
                 quadratures.disk12,
                 dict(x=x, weights=w),  # noqa: C408
             )
         elif kind == 'mc':
-            r = np.random.random(5000) ** 0.5
-            th = 2 * np.pi * np.random.random(5000)
-            z = 2 * np.random.random(5000) - 1
+            k = 5000
+            # Uniform sampling in cylinder
+            r = np.random.random(k) ** 0.5
+            th = 2 * np.pi * np.random.random(k)
+            z = 2 * np.random.random(k) - 1
             quad = {
                 'x': r * np.cos(th),
                 'y': r * np.sin(th),
                 'z': z,
-                'weights': 2 * np.pi * np.ones(5000) / 5000,
+                'weights': 2 * np.pi * np.ones(k) / k,
             }
         else:
             raise NotImplementedError
         return {k: sc.array(dims=['quad'], values=v) for k, v in quad.items()}
 
-    def quadrature(self, kind: Literal['expensive', 'medium', 'cheap']):
+    def quadrature(self, kind: Literal['expensive', 'medium', 'cheap', 'mc']):
         quad = self._select_quadrature_points(kind)
         # Scale to size of cylinder
         x = (quad['x'] * self.radius).to(unit=self.center.unit)
