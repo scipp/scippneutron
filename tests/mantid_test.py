@@ -12,6 +12,7 @@ import pytest
 import scipp as sc
 
 import scippneutron as scn
+import scippneutron.data
 from scippneutron._utils import get_attrs
 
 mantid = pytest.importorskip(
