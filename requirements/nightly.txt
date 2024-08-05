@@ -6,7 +6,7 @@
 #    pip-compile-multi
 #
 -r basetest.txt
-certifi==2024.6.2
+certifi==2024.7.4
     # via requests
 charset-normalizer==3.3.2
     # via requests
@@ -32,9 +32,9 @@ scipp @ https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly-c
     #   scippnexus
 scippnexus @ git+https://github.com/scipp/scippnexus@main
     # via -r nightly.in
-scipy==1.13.1
+scipy==1.14.0
     # via
     #   -r nightly.in
     #   scippnexus
-urllib3==2.2.1
+urllib3==2.2.2
     # via requests
