@@ -29,12 +29,15 @@ class MIRGroup(BaseModel):
 
 class Person(MIRGroup):
     name: str  # free form even though some file formats require a specific format
-    email: EmailStr | None = None
-    orcid: ORCIDiD | None = None  # custom type, already implemented in Scitacean
-    affiliation: str | None = None
-    role: str | None = None  # CIF has a fixed set of allowed roles
+    orcid: ORCIDiD | None = None
+
     corresponding: bool = False  # aka 'contact'; formatted differently in some formats
-    owner: bool = True  # owner of the data
+    owner: bool = True
+    role: str | None = None  # CIF has a fixed set of allowed roles
+
+    address: str | None = None
+    email: EmailStr | None = None
+    affiliation: str | None = None
 
 
 class Beamline(MIRGroup):
@@ -42,3 +45,9 @@ class Beamline(MIRGroup):
     facility: str | None = None
     site: str | None = None
     revision: str | None = None
+
+
+class Software(MIRGroup):
+    name: str
+    version: str
+    url: str | None = None
