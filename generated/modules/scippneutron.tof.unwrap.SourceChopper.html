@@ -1,0 +1,862 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>scippneutron.tof.unwrap.SourceChopper &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+
+    <script src="../../_static/documentation_options.js?v=48478c4e"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=36754332"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'generated/modules/scippneutron.tof.unwrap.SourceChopper';</script>
+    <script src="../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="scippneutron.tof.unwrap.SampleDistance" href="scippneutron.tof.unwrap.SampleDistance.html" />
+    <link rel="prev" title="scippneutron.tof.unwrap.SourceChopperName" href="scippneutron.tof.unwrap.SourceChopperName.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <script>document.write(`<img src="../../_static/logo-dark.svg" class="logo__image only-dark" alt="ScippNeutron - Home"/>`);</script>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav class="navbar-nav">
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../user-guide/index.html">
+                        User Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../../api-reference/index.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../developer/index.html">
+                        Development
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../about/index.html">
+                        About
+                      </a>
+                    </li>
+                
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+                    Plopp
+                  </a>
+                </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+                    Scipp
+                  </a>
+                </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+                    ScippNexus
+                  </a>
+                </li>
+                
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item">
+<nav class="navbar-nav">
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../user-guide/index.html">
+                        User Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../../api-reference/index.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../developer/index.html">
+                        Development
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../about/index.html">
+                        About
+                      </a>
+                    </li>
+                
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links-2">
+                    More
+                </button>
+                <ul id="pst-nav-more-links-2" class="dropdown-menu">
+                    
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+                    Plopp
+                  </a>
+                </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+                    Scipp
+                  </a>
+                </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+                    ScippNexus
+                  </a>
+                </li>
+                
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i></span>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.array_from_mantid.html">scippneutron.array_from_mantid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.from_mantid.html">scippneutron.from_mantid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.load_with_mantid.html">scippneutron.load_with_mantid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.to_mantid.html">scippneutron.to_mantid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.fit.html">scippneutron.fit</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.convert.html">scippneutron.convert</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.position.html">scippneutron.position</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.source_position.html">scippneutron.source_position</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.sample_position.html">scippneutron.sample_position</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.Ltotal.html">scippneutron.Ltotal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.L1.html">scippneutron.L1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.L2.html">scippneutron.L2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.two_theta.html">scippneutron.two_theta</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.incident_beam.html">scippneutron.incident_beam</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.scattered_beam.html">scippneutron.scattered_beam</a></li>
+</ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.atoms.html">scippneutron.atoms</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.atoms.reference_wavelength.html">scippneutron.atoms.reference_wavelength</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.atoms.ScatteringParams.html">scippneutron.atoms.ScatteringParams</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.chopper.html">scippneutron.chopper</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.chopper.disk_chopper.html">scippneutron.chopper.disk_chopper</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html">scippneutron.chopper.disk_chopper.DiskChopper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopperType.html">scippneutron.chopper.disk_chopper.DiskChopperType</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.chopper.filtering.html">scippneutron.chopper.filtering</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.chopper.filtering.collapse_plateaus.html">scippneutron.chopper.filtering.collapse_plateaus</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.chopper.filtering.filter_in_phase.html">scippneutron.chopper.filtering.filter_in_phase</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.chopper.filtering.find_plateaus.html">scippneutron.chopper.filtering.find_plateaus</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.chopper.nexus_chopper.html">scippneutron.chopper.nexus_chopper</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.chopper.nexus_chopper.extract_chopper_from_nexus.html">scippneutron.chopper.nexus_chopper.extract_chopper_from_nexus</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.conversion.html">scippneutron.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.conversion.beamline.html">scippneutron.conversion.beamline</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.L1.html">scippneutron.conversion.beamline.L1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.L2.html">scippneutron.conversion.beamline.L2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.beam_aligned_unit_vectors.html">scippneutron.conversion.beamline.beam_aligned_unit_vectors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.scattering_angle_in_yz_plane.html">scippneutron.conversion.beamline.scattering_angle_in_yz_plane</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.scattering_angles_with_gravity.html">scippneutron.conversion.beamline.scattering_angles_with_gravity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.straight_incident_beam.html">scippneutron.conversion.beamline.straight_incident_beam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.straight_scattered_beam.html">scippneutron.conversion.beamline.straight_scattered_beam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.total_beam_length.html">scippneutron.conversion.beamline.total_beam_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.total_straight_beam_length_no_scatter.html">scippneutron.conversion.beamline.total_straight_beam_length_no_scatter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.two_theta.html">scippneutron.conversion.beamline.two_theta</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.BeamAlignedUnitVectors.html">scippneutron.conversion.beamline.BeamAlignedUnitVectors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.SphericalCoordinates.html">scippneutron.conversion.beamline.SphericalCoordinates</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.conversion.graph.html">scippneutron.conversion.graph</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="scippneutron.conversion.graph.beamline.html">scippneutron.conversion.graph.beamline</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.L1.html">scippneutron.conversion.graph.beamline.L1</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.L2.html">scippneutron.conversion.graph.beamline.L2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.Ltotal.html">scippneutron.conversion.graph.beamline.Ltotal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.beamline.html">scippneutron.conversion.graph.beamline.beamline</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.incident_beam.html">scippneutron.conversion.graph.beamline.incident_beam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.scattered_beam.html">scippneutron.conversion.graph.beamline.scattered_beam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.two_theta.html">scippneutron.conversion.graph.beamline.two_theta</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="scippneutron.conversion.graph.tof.html">scippneutron.conversion.graph.tof</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.direct_inelastic.html">scippneutron.conversion.graph.tof.direct_inelastic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic.html">scippneutron.conversion.graph.tof.elastic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic_Q.html">scippneutron.conversion.graph.tof.elastic_Q</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic_Q_vec.html">scippneutron.conversion.graph.tof.elastic_Q_vec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic_dspacing.html">scippneutron.conversion.graph.tof.elastic_dspacing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic_energy.html">scippneutron.conversion.graph.tof.elastic_energy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic_hkl.html">scippneutron.conversion.graph.tof.elastic_hkl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic_wavelength.html">scippneutron.conversion.graph.tof.elastic_wavelength</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.indirect_inelastic.html">scippneutron.conversion.graph.tof.indirect_inelastic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.kinematic.html">scippneutron.conversion.graph.tof.kinematic</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.conversion.tof.html">scippneutron.conversion.tof</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.Q_elements_from_wavelength.html">scippneutron.conversion.tof.Q_elements_from_wavelength</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.Q_from_wavelength.html">scippneutron.conversion.tof.Q_from_wavelength</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.Q_vec_from_Q_elements.html">scippneutron.conversion.tof.Q_vec_from_Q_elements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.dspacing_from_energy.html">scippneutron.conversion.tof.dspacing_from_energy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.dspacing_from_tof.html">scippneutron.conversion.tof.dspacing_from_tof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.dspacing_from_wavelength.html">scippneutron.conversion.tof.dspacing_from_wavelength</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.energy_from_tof.html">scippneutron.conversion.tof.energy_from_tof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.energy_from_wavelength.html">scippneutron.conversion.tof.energy_from_wavelength</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.energy_transfer_direct_from_tof.html">scippneutron.conversion.tof.energy_transfer_direct_from_tof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.energy_transfer_indirect_from_tof.html">scippneutron.conversion.tof.energy_transfer_indirect_from_tof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.hkl_elements_from_hkl_vec.html">scippneutron.conversion.tof.hkl_elements_from_hkl_vec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.hkl_vec_from_Q_vec.html">scippneutron.conversion.tof.hkl_vec_from_Q_vec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.time_at_sample_from_tof.html">scippneutron.conversion.tof.time_at_sample_from_tof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.ub_matrix_from_u_and_b.html">scippneutron.conversion.tof.ub_matrix_from_u_and_b</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.wavelength_from_Q.html">scippneutron.conversion.tof.wavelength_from_Q</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.wavelength_from_energy.html">scippneutron.conversion.tof.wavelength_from_energy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.wavelength_from_tof.html">scippneutron.conversion.tof.wavelength_from_tof</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.io.html">scippneutron.io</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.io.cif.html">scippneutron.io.cif</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.cif.save_cif.html">scippneutron.io.cif.save_cif</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.cif.Block.html">scippneutron.io.cif.Block</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.cif.CIFSchema.html">scippneutron.io.cif.CIFSchema</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.cif.Chunk.html">scippneutron.io.cif.Chunk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.cif.Loop.html">scippneutron.io.cif.Loop</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.io.xye.html">scippneutron.io.xye</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.xye.load_xye.html">scippneutron.io.xye.load_xye</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.xye.save_xye.html">scippneutron.io.xye.save_xye</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.xye.GenerateHeaderType.html">scippneutron.io.xye.GenerateHeaderType</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.logging.html">scippneutron.logging</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.logging.get_logger.html">scippneutron.logging.get_logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.logging.logger_name.html">scippneutron.logging.logger_name</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.peaks.html">scippneutron.peaks</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.peaks.FitAssessment.html">scippneutron.peaks.FitAssessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.peaks.FitParameters.html">scippneutron.peaks.FitParameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.peaks.FitResult.html">scippneutron.peaks.FitResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.peaks.FitRequirements.html">scippneutron.peaks.FitRequirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.peaks.fit_peaks.html">scippneutron.peaks.fit_peaks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.peaks.remove_peaks.html">scippneutron.peaks.remove_peaks</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.peaks.model.html">scippneutron.peaks.model</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.peaks.model.CompositeModel.html">scippneutron.peaks.model.CompositeModel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.peaks.model.GaussianModel.html">scippneutron.peaks.model.GaussianModel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.peaks.model.LorentzianModel.html">scippneutron.peaks.model.LorentzianModel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.peaks.model.Model.html">scippneutron.peaks.model.Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.peaks.model.PolynomialModel.html">scippneutron.peaks.model.PolynomialModel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.peaks.model.PseudoVoigtModel.html">scippneutron.peaks.model.PseudoVoigtModel</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="scippneutron.tof.html">scippneutron.tof</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.tof.chopper_cascade.html">scippneutron.tof.chopper_cascade</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-19"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.chopper_cascade.propagate_times.html">scippneutron.tof.chopper_cascade.propagate_times</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.chopper_cascade.wavelength_to_inverse_velocity.html">scippneutron.tof.chopper_cascade.wavelength_to_inverse_velocity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.chopper_cascade.Chopper.html">scippneutron.tof.chopper_cascade.Chopper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.chopper_cascade.Frame.html">scippneutron.tof.chopper_cascade.Frame</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.chopper_cascade.FrameSequence.html">scippneutron.tof.chopper_cascade.FrameSequence</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.chopper_cascade.Subframe.html">scippneutron.tof.chopper_cascade.Subframe</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.tof.diagram.html">scippneutron.tof.diagram</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-20"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.diagram.TimeDistanceDiagram.html">scippneutron.tof.diagram.TimeDistanceDiagram</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.tof.fakes.html">scippneutron.tof.fakes</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-21"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.fakes.FakeBeamline.html">scippneutron.tof.fakes.FakeBeamline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.fakes.FakePulse.html">scippneutron.tof.fakes.FakePulse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.fakes.FakeSource.html">scippneutron.tof.fakes.FakeSource</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="scippneutron.tof.unwrap.html">scippneutron.tof.unwrap</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-22"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.Choppers.html">scippneutron.tof.unwrap.Choppers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.FrameAtSample.html">scippneutron.tof.unwrap.FrameAtSample</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.FrameAtDetector.html">scippneutron.tof.unwrap.FrameAtDetector</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.FrameBounds.html">scippneutron.tof.unwrap.FrameBounds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.FramePeriod.html">scippneutron.tof.unwrap.FramePeriod</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.FrameWrappedTimeOffset.html">scippneutron.tof.unwrap.FrameWrappedTimeOffset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.Ltotal.html">scippneutron.tof.unwrap.Ltotal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.PulseOffset.html">scippneutron.tof.unwrap.PulseOffset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.PulsePeriod.html">scippneutron.tof.unwrap.PulsePeriod</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.PulseStride.html">scippneutron.tof.unwrap.PulseStride</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.PulseWrappedTimeOffset.html">scippneutron.tof.unwrap.PulseWrappedTimeOffset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.RawData.html">scippneutron.tof.unwrap.RawData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.SourceChopperName.html">scippneutron.tof.unwrap.SourceChopperName</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">scippneutron.tof.unwrap.SourceChopper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.SampleDistance.html">scippneutron.tof.unwrap.SampleDistance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.SourceTimeRange.html">scippneutron.tof.unwrap.SourceTimeRange</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.SourceWavelengthRange.html">scippneutron.tof.unwrap.SourceWavelengthRange</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.SubframeBounds.html">scippneutron.tof.unwrap.SubframeBounds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.TimeZero.html">scippneutron.tof.unwrap.TimeZero</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.UnwrappedData.html">scippneutron.tof.unwrap.UnwrappedData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.TofData.html">scippneutron.tof.unwrap.TofData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.TimeOffset.html">scippneutron.tof.unwrap.TimeOffset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.DeltaFromWrapped.html">scippneutron.tof.unwrap.DeltaFromWrapped</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.frame_at_detector.html">scippneutron.tof.unwrap.frame_at_detector</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.frame_bounds.html">scippneutron.tof.unwrap.frame_bounds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.frame_period.html">scippneutron.tof.unwrap.frame_period</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.frame_wrapped_time_offset.html">scippneutron.tof.unwrap.frame_wrapped_time_offset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.frame_wrapped_time_offset_pulse_skipping.html">scippneutron.tof.unwrap.frame_wrapped_time_offset_pulse_skipping</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.offset_from_wrapped.html">scippneutron.tof.unwrap.offset_from_wrapped</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.pulse_offset.html">scippneutron.tof.unwrap.pulse_offset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.pulse_wrapped_time_offset.html">scippneutron.tof.unwrap.pulse_wrapped_time_offset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.source_chopper.html">scippneutron.tof.unwrap.source_chopper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.subframe_bounds.html">scippneutron.tof.unwrap.subframe_bounds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.time_of_flight_origin_from_chopper.html">scippneutron.tof.unwrap.time_of_flight_origin_from_chopper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.time_of_flight_origin_from_choppers_providers.html">scippneutron.tof.unwrap.time_of_flight_origin_from_choppers_providers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.time_of_flight_origin_wfm_from_chopper.html">scippneutron.tof.unwrap.time_of_flight_origin_wfm_from_chopper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.time_of_flight_providers.html">scippneutron.tof.unwrap.time_of_flight_providers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.time_offset.html">scippneutron.tof.unwrap.time_offset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.time_zero.html">scippneutron.tof.unwrap.time_zero</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.to_time_of_flight.html">scippneutron.tof.unwrap.to_time_of_flight</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.unwrap_data.html">scippneutron.tof.unwrap.unwrap_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.unwrap_providers.html">scippneutron.tof.unwrap.unwrap_providers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.unwrap.TimeOfFlightOrigin.html">scippneutron.tof.unwrap.TimeOfFlightOrigin</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scippneutron.tof.unwrap.SourceChopper"><code class="docutils literal notranslate"><span class="pre">SourceChopper</span></code></a></li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../../_sources/generated/modules/scippneutron.tof.unwrap.SourceChopper.rst">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+
+
+<nav aria-label="Breadcrumb">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../api-reference/index.html" class="nav-link">API Reference</a></li>
+    
+    
+    <li class="breadcrumb-item"><i class="fa-solid fa-ellipsis"></i></li>
+    
+    
+    <li class="breadcrumb-item"><a href="scippneutron.tof.unwrap.html" class="nav-link">scippneutron.tof.unwrap</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">scippneutron...</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="scippneutron-tof-unwrap-sourcechopper">
+<h1>scippneutron.tof.unwrap.SourceChopper<a class="headerlink" href="#scippneutron-tof-unwrap-sourcechopper" title="Link to this heading">#</a></h1>
+<dl class="py data">
+<dt class="sig sig-object py" id="scippneutron.tof.unwrap.SourceChopper">
+<span class="sig-prename descclassname"><span class="pre">scippneutron.tof.unwrap.</span></span><span class="sig-name descname"><span class="pre">SourceChopper</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">scippneutron.tof.unwrap.SourceChopper</span></em><a class="headerlink" href="#scippneutron.tof.unwrap.SourceChopper" title="Link to this definition">#</a></dt>
+<dd><p>Chopper defining the source location and time-of-flight time origin.</p>
+<p>If there is no pulse-shaping chopper, a fake chopper with time_open and time_close
+set to the source pulse begin and end time should be used.</p>
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="scippneutron.tof.unwrap.SourceChopperName.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">scippneutron.tof.unwrap.SourceChopperName</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="scippneutron.tof.unwrap.SampleDistance.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">scippneutron.tof.unwrap.SampleDistance</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.3.7.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 24.8.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.2.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
