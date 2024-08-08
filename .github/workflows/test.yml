@@ -53,8 +53,8 @@ jobs:
           python-version: ${{ inputs.python-version }}
       - run: python -m pip install --upgrade pip
       - run: python -m pip install .
-      - run: python -c 'import scippneutron'
-        name: Import package with minimal dependencies
+      - run: python tests/package_test.py
+        name: Run package tests
 
   test:
     runs-on: ${{ inputs.os-variant }}

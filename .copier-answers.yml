@@ -1,5 +1,5 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: 0a3cac5
+_commit: 86a1e5c
 _src_path: gh:scipp/copier_template
 description: Neutron scattering tools for Data Reduction
 max_python: '3.12'
