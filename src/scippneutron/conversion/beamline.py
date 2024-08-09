@@ -71,7 +71,7 @@ The axes are defined by these unit vectors:
 
 .. math::
 
-    \hat{e}_z &= b_1 / |b_1| \\
+    \hat{e}_z &= b_1 - (b_1 \cdot \hat{e}_y) \hat{e}_y \\
     \hat{e}_y &= -g / |g| \\
     \hat{e}_x &= \hat{e}_y \times \hat{e}_z
 
@@ -349,7 +349,7 @@ def beam_aligned_unit_vectors(
 
     .. math::
 
-        \hat{e}_z &= b_1 / |b_1| \\
+        \hat{e}_z &= b_1 - (b_1 \cdot \hat{e}_y) \hat{e}_y \\
         \hat{e}_y &= -g / |g| \\
         \hat{e}_x &= \hat{e}_y \times \hat{e}_z
 
@@ -372,18 +372,12 @@ def beam_aligned_unit_vectors(
     straight_incident_beam:
         Compute the incident beam for a straight beamline.
     """
-    if sc.any(
-        abs(sc.dot(gravity, incident_beam))
-        > sc.scalar(1e-10, unit=incident_beam.unit) * sc.norm(gravity)
-    ):
-        raise ValueError(
-            '`gravity` and `incident_beam` must be orthogonal. '
-            f'Got a deviation of {sc.dot(gravity, incident_beam).max():c}. '
-            'This is required to fully define spherical coordinates theta and phi.'
-        )
-
-    ez = incident_beam / sc.norm(incident_beam)
     ey = -gravity / sc.norm(gravity)
+
+    # project incoming_beam onto the plane perpendicular to gravity
+    z = incident_beam - sc.dot(incident_beam, ey) * ey
+    ez = z / sc.norm(z)
+
     ex = sc.cross(ey, ez)
     return {
         'beam_aligned_unit_x': ex,

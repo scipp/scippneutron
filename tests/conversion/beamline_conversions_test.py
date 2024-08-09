@@ -892,11 +892,37 @@ def test_beam_aligned_unit_vectors_complicated_inputs():
     sc.testing.assert_allclose(sc.dot(ez, ex), sc.scalar(0.0), atol=sc.scalar(1e-16))
 
 
-def test_beam_aligned_unit_vectors_requires_orthogonal_inputs():
-    with pytest.raises(
-        ValueError, match='`gravity` and `incident_beam` must be orthogonal'
-    ):
-        beamline.beam_aligned_unit_vectors(
-            incident_beam=sc.vector([0.0, 0.0, 3.1], unit='mm'),
-            gravity=sc.vector([0.0, -4.6, 1.0], unit='m/s/s'),
-        )
+def test_beam_aligned_unit_vectors_simple_non_orthogonal_inputs():
+    incident_beam = sc.vector([0.0, -1.1, 14.7], unit='m')
+    gravity = sc.vector([0.0, -9.3, 0.0], unit='m/s/s')
+    res = beamline.beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
+    )
+    sc.testing.assert_allclose(res['beam_aligned_unit_x'], sc.vector([1.0, 0.0, 0.0]))
+    sc.testing.assert_allclose(res['beam_aligned_unit_y'], sc.vector([0.0, 1.0, 0.0]))
+    sc.testing.assert_allclose(res['beam_aligned_unit_z'], sc.vector([0.0, 0.0, 1.0]))
+
+
+def test_beam_aligned_unit_vectors_complex_non_orthogonal_inputs():
+    incident_beam = sc.vector([2.3, -1.1, 14.7], unit='m')
+    gravity = sc.vector([0.0, -9.3, 0.0], unit='m/s/s')
+    res = beamline.beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
+    )
+    z = sc.vector([2.3, 0.0, 14.7], unit='m')
+    ez = z / sc.norm(z)
+    sc.testing.assert_allclose(sc.dot(res['beam_aligned_unit_x'], ez), sc.scalar(0.0))
+    sc.testing.assert_allclose(sc.dot(res['beam_aligned_unit_y'], ez), sc.scalar(0.0))
+    sc.testing.assert_allclose(res['beam_aligned_unit_y'], sc.vector([0.0, 1.0, 0.0]))
+    sc.testing.assert_allclose(res['beam_aligned_unit_z'], ez)
+
+
+def test_beam_aligned_unit_vectors_non_orthogonal_inputs_gravity_along_z():
+    incident_beam = sc.vector([0.0, 6.7, 0.3], unit='m')
+    gravity = sc.vector([0.0, 0.0, 3.4], unit='m/s/s')
+    res = beamline.beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
+    )
+    sc.testing.assert_allclose(res['beam_aligned_unit_x'], sc.vector([1.0, 0.0, 0.0]))
+    sc.testing.assert_allclose(res['beam_aligned_unit_y'], sc.vector([0.0, 0.0, -1.0]))
+    sc.testing.assert_allclose(res['beam_aligned_unit_z'], sc.vector([0.0, 1.0, 0.0]))
