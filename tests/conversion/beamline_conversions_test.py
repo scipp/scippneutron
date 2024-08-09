@@ -3,10 +3,14 @@
 # @author Jan-Lukas Wynen
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 import scipp as sc
 import scipp.constants
 import scipp.testing
+from hypothesis import given, settings
+from hypothesis import strategies as st
+from hypothesis.extra import numpy as npst
 
 from scippneutron.conversion import beamline
 
@@ -157,6 +161,37 @@ def test_two_theta_invariant_under_reflection_about_incident_beam():
     sc.testing.assert_allclose(two_theta[0], two_theta[1])
 
 
+def quaternions() -> st.SearchStrategy[npt.NDArray[float]]:
+    coefficients = st.floats(
+        allow_nan=False, allow_infinity=False, allow_subnormal=False
+    )
+    return (
+        npst.arrays(dtype=np.float64, shape=4, elements=coefficients)
+        .filter(lambda q: q.all())
+        .map(lambda q: q / np.linalg.norm(q))
+    )
+
+
+@given(q=quaternions())
+@settings(max_examples=10)
+def test_two_theta_invariant_under_rotation(q: npt.NDArray[float]) -> None:
+    incident_beam = sc.vector([0.564, 1.2, -10.4], unit='m')
+    scattered_beam = sc.vectors(
+        dims=['beam'], values=[[13, 24, 35], [51, -42, 33]], unit='m'
+    )
+    original = beamline.two_theta(
+        incident_beam=incident_beam, scattered_beam=scattered_beam
+    )
+
+    rotation = sc.spatial.rotation(value=q)
+    rotated = beamline.two_theta(
+        incident_beam=rotation * incident_beam, scattered_beam=rotation * scattered_beam
+    )
+
+    sc.testing.assert_allclose(original, rotated)
+
+
+# TODO
 def test_scattering_angles_requires_gravity_orthogonal_to_incident_beam():
     incident_beam = sc.vector([0.564, 1.2, -10.4], unit='m')
     scattered_beam = sc.vectors(
