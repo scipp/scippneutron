@@ -3,7 +3,6 @@
 # @author Jan-Lukas Wynen
 
 import numpy as np
-import numpy.typing as npt
 import pytest
 import scipp as sc
 import scipp.constants
@@ -13,6 +12,17 @@ from hypothesis import strategies as st
 from hypothesis.extra import numpy as npst
 
 from scippneutron.conversion import beamline
+
+
+def rotations() -> st.SearchStrategy[sc.Variable]:
+    coefficients = st.floats(
+        allow_nan=False, allow_infinity=False, allow_subnormal=False
+    )
+    return (
+        npst.arrays(dtype=np.float64, shape=4, elements=coefficients)
+        .filter(lambda q: np.linalg.norm(q) != 0)
+        .map(lambda q: sc.spatial.rotation(value=q / np.linalg.norm(q)))
+    )
 
 
 def test_straight_incident_beam():
@@ -161,20 +171,9 @@ def test_two_theta_invariant_under_reflection_about_incident_beam():
     sc.testing.assert_allclose(two_theta[0], two_theta[1])
 
 
-def quaternions() -> st.SearchStrategy[npt.NDArray[float]]:
-    coefficients = st.floats(
-        allow_nan=False, allow_infinity=False, allow_subnormal=False
-    )
-    return (
-        npst.arrays(dtype=np.float64, shape=4, elements=coefficients)
-        .filter(lambda q: q.all())
-        .map(lambda q: q / np.linalg.norm(q))
-    )
-
-
-@given(q=quaternions())
+@given(rotation=rotations())
 @settings(max_examples=10)
-def test_two_theta_invariant_under_rotation(q: npt.NDArray[float]) -> None:
+def test_two_theta_invariant_under_rotation(rotation: sc.Variable) -> None:
     incident_beam = sc.vector([0.564, 1.2, -10.4], unit='m')
     scattered_beam = sc.vectors(
         dims=['beam'], values=[[13, 24, 35], [51, -42, 33]], unit='m'
@@ -183,7 +182,6 @@ def test_two_theta_invariant_under_rotation(q: npt.NDArray[float]) -> None:
         incident_beam=incident_beam, scattered_beam=scattered_beam
     )
 
-    rotation = sc.spatial.rotation(value=q)
     rotated = beamline.two_theta(
         incident_beam=rotation * incident_beam, scattered_beam=rotation * scattered_beam
     )
@@ -579,6 +577,38 @@ def test_scattering_angles_with_gravity_supports_mismatching_units():
     sc.testing.assert_allclose(res['phi'], expected['phi'])
 
 
+@given(rotation=rotations())
+@settings(max_examples=10)
+def test_scattering_angles_with_gravity_invariant_under_rotation(
+    rotation: sc.Variable,
+) -> None:
+    wavelength = sc.array(dims=['wavelength'], values=[1.6, 0.9, 0.7], unit='Å')
+    # Gravity and incident_beam are not aligned with the coordinate system
+    # but orthogonal to each other.
+    gravity = sc.vector([-0.3, -9.81, 0.01167883211678832], unit='m/s^2')
+    incident_beam = sc.vector([1.6, 0.0, 41.1], unit='m')
+    scattered_beam = sc.vectors(
+        dims=['det'], values=[[1.8, 2.5, 3.6], [-0.4, -1.7, 2.9]], unit='m'
+    )
+    original = beamline.scattering_angles_with_gravity(
+        incident_beam=incident_beam,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
+    )
+
+    rotated = beamline.scattering_angles_with_gravity(
+        incident_beam=rotation * incident_beam,
+        scattered_beam=rotation * scattered_beam,
+        wavelength=wavelength,
+        gravity=rotation * gravity,
+    )
+
+    sc.testing.assert_allclose(original['two_theta'], rotated['two_theta'])
+    sc.testing.assert_allclose(original['phi'], rotated['phi'])
+
+
+# TODO
 def test_scattering_angle_in_yz_plane_requires_gravity_orthogonal_to_incident_beam():
     incident_beam = sc.vector([0.564, 1.2, -10.4], unit='m')
     scattered_beam = sc.vectors(
