@@ -46,7 +46,11 @@ def run_mantid_alg(alg, *args, **kwargs):
     finally:
         for name in AnalysisDataService.Instance().getObjectNames():
             if name.startswith(ws_name):
-                mantid.DeleteWorkspace(name)
+                try:
+                    mantid.DeleteWorkspace(name)
+                except ValueError:
+                    # The workspace was deleted already,
+                    pass
 
 
 def get_pos(pos):
