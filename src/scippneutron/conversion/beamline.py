@@ -44,6 +44,9 @@ Note
   However, when we need ``phi``, or need to correct ``two_theta`` for gravity,
   we need the actual coordinate system.
 
+TODO change def of coord system
+TODO check whether angle computation is correct:
+  should be between rays, not plane
 ScippNeutron uses a coordinate system aligned with
 the incident beam and gravity.
 ScippNeutron's coordinate system corresponds to that of
@@ -349,7 +352,7 @@ def beam_aligned_unit_vectors(
 
     .. math::
 
-        \hat{e}_z &= b_1 - (b_1 \cdot \hat{e}_y) \hat{e}_y \\
+        \hat{e}_z &= b_1 / |b_1| \\
         \hat{e}_y &= -g / |g| \\
         \hat{e}_x &= \hat{e}_y \times \hat{e}_z
 
@@ -372,12 +375,18 @@ def beam_aligned_unit_vectors(
     straight_incident_beam:
         Compute the incident beam for a straight beamline.
     """
+    if sc.any(
+        abs(sc.dot(gravity, incident_beam))
+        > sc.scalar(1e-10, unit=incident_beam.unit) * sc.norm(gravity)
+    ):
+        raise ValueError(
+            '`gravity` and `incident_beam` must be orthogonal. '
+            f'Got a deviation of {sc.dot(gravity, incident_beam).max():c}. '
+            'This is required to fully define spherical coordinates theta and phi.'
+        )
+
+    ez = incident_beam / sc.norm(incident_beam)
     ey = -gravity / sc.norm(gravity)
-
-    # project incoming_beam onto the plane perpendicular to gravity
-    z = incident_beam - sc.dot(incident_beam, ey) * ey
-    ez = z / sc.norm(z)
-
     ex = sc.cross(ey, ez)
     return {
         'beam_aligned_unit_x': ex,
@@ -433,6 +442,7 @@ class SphericalCoordinates(TypedDict):
     """
 
 
+# TODO docs: show simple formula and explain complicated one for optimisation
 def scattering_angles_with_gravity(
     incident_beam: sc.Variable,
     scattered_beam: sc.Variable,
@@ -511,9 +521,62 @@ def scattering_angles_with_gravity(
         Ignores the ``x`` component when computing ``theta``.
         This is used in reflectometry.
     """
-    unit_vectors = beam_aligned_unit_vectors(
-        incident_beam=incident_beam, gravity=gravity
+    try:
+        unit_vectors = beam_aligned_unit_vectors(
+            incident_beam=incident_beam, gravity=gravity
+        )
+    except ValueError as err:
+        if "orthogonal" not in err.args[0]:
+            raise
+        return _scattering_angles_with_gravity_generic(
+            incident_beam=incident_beam,
+            scattered_beam=scattered_beam,
+            wavelength=wavelength,
+            gravity=gravity,
+        )
+    return _scattering_angles_with_gravity_orthogonal_coords(
+        unit_vectors=unit_vectors,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
     )
+
+
+def _scattering_angles_with_gravity_generic(
+    incident_beam: sc.Variable,
+    scattered_beam: sc.Variable,
+    wavelength: sc.Variable,
+    gravity: sc.Variable,
+) -> SphericalCoordinates:
+    # TODO check works for any units
+    # TODO check uses dtype of wavelength
+    drop_distance = _drop_due_to_gravity(
+        distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
+    )
+    drop = drop_distance * (gravity / sc.norm(gravity))
+    drop += scattered_beam
+    return {
+        'two_theta': two_theta(incident_beam=incident_beam, scattered_beam=drop),
+        'phi': None,
+        # TODO: how to define phi?
+        #   it is define wrt. a coord system, so we need one
+        #   we could use the idea of projecting `incident_beam` onto a plane
+        #   that is perpendicular to `gravity`. This defines a system that should
+        #   be close enough to the lab system of the instrument:
+        #     # project incoming_beam onto the plane perpendicular to gravity
+        #     z = incident_beam - sc.dot(incident_beam, ey) * ey
+        #     ez = z / sc.norm(z)
+    }
+
+
+# This is an optimized implementation that only works when `incident_beam` and `gravity`
+# are orthogonal to each other. It uses less memory than the generic version.
+def _scattering_angles_with_gravity_orthogonal_coords(
+    unit_vectors: BeamAlignedUnitVectors,
+    scattered_beam: sc.Variable,
+    wavelength: sc.Variable,
+    gravity: sc.Variable,
+) -> SphericalCoordinates:
     ex = unit_vectors['beam_aligned_unit_x']
     ey = unit_vectors['beam_aligned_unit_y']
     ez = unit_vectors['beam_aligned_unit_z']

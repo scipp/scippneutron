@@ -189,28 +189,38 @@ def test_two_theta_invariant_under_rotation(rotation: sc.Variable) -> None:
     sc.testing.assert_allclose(original, rotated)
 
 
-# TODO
-def test_scattering_angles_requires_gravity_orthogonal_to_incident_beam():
-    incident_beam = sc.vector([0.564, 1.2, -10.4], unit='m')
-    scattered_beam = sc.vectors(
-        dims=['beam'], values=[[13, 24, 35], [51, -42, 33]], unit='m'
-    )
-    wavelength = sc.array(dims=['wavelength'], values=[1.2, 1.6, 1.8], unit='Å')
-    gravity = sc.vector([0, 0, sc.constants.g.value], unit=sc.constants.g.unit)
-
-    with pytest.raises(
-        ValueError, match='`gravity` and `incident_beam` must be orthogonal'
-    ):
-        beamline.scattering_angles_with_gravity(
-            incident_beam=incident_beam,
-            scattered_beam=scattered_beam,
-            wavelength=wavelength,
-            gravity=gravity,
-        )
-
-
-def test_scattering_angles_with_gravity_small_gravity():
+@given(incident_rotation=rotations(), scattered_rotation=rotations())
+@settings(max_examples=50)
+def test_scattering_angles_with_gravity_small_gravity(
+    incident_rotation: sc.Variable, scattered_rotation: sc.Variable
+) -> None:
     # This case is unphysical but tests the consistency with `two_theta`.
+    incident_beam = sc.vector([0.564, 0.0, 10.4], unit='m')
+    scattered_beam = sc.vectors(
+        dims=['beam'],
+        values=[[13, 24, 35], [51, -42, 33], [4, 23, -17], [-19, -31, 5]],
+        unit='m',
+    )
+    incident_beam = incident_rotation * incident_beam
+    scattered_beam = scattered_rotation * scattered_beam
+    wavelength = sc.array(dims=['wavelength'], values=[1.2, 1.6, 1.8], unit='Å')
+    gravity = sc.vector([0, -1e-11, 0], unit=sc.constants.g.unit)
+
+    res = beamline.scattering_angles_with_gravity(
+        incident_beam=incident_beam,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
+    )
+    expected = beamline.two_theta(
+        incident_beam=incident_beam, scattered_beam=scattered_beam
+    ).broadcast(dims=['wavelength', 'beam'], shape=[3, 4])
+    sc.testing.assert_allclose(res['two_theta'], expected)
+
+
+def test_scattering_angles_with_gravity_small_gravity_orthogonal_coords() -> None:
+    # This case is unphysical but tests the consistency with `two_theta`.
+    # Here, incident_beam and gravity are orthogonal to use the optimized code.
     incident_beam = sc.vector([0.564, 0.0, 10.4], unit='m')
     scattered_beam = sc.vectors(
         dims=['beam'],
@@ -234,11 +244,52 @@ def test_scattering_angles_with_gravity_small_gravity():
 
 @pytest.mark.parametrize('polar', [np.pi / 3, np.pi / 2, 2 * np.pi / 3, np.pi])
 @pytest.mark.parametrize('azimuthal', [0.0, np.pi / 2, np.pi])
+@given(gravity_rotation=rotations())
+@settings(max_examples=20)
 def test_scattering_angles_with_gravity_reproduces_angles(
-    polar: float, azimuthal: float
+    polar: float, azimuthal: float, gravity_rotation: sc.Variable
 ):
     # This case is unphysical but tests that the function reproduces
     # the expected angles using a rotated vector.
+
+    gravity = gravity_rotation * sc.vector([0.0, -1e-11, 0.0], unit='cm/s^2')
+    incident_beam = sc.vector([0.0, 0.0, 968.0], unit='cm')
+
+    # With this definition, the x-axis has azimuthal=0.
+    rot1 = sc.spatial.rotations_from_rotvecs(sc.vector([-polar, 0, 0], unit='rad'))
+    rot2 = sc.spatial.rotations_from_rotvecs(
+        sc.vector([0, 0, azimuthal - np.pi / 2], unit='rad')
+    )
+    scattered_beam = rot2 * (rot1 * incident_beam)
+
+    wavelength = sc.scalar(1e-6, unit='Å')
+
+    res = beamline.scattering_angles_with_gravity(
+        incident_beam=incident_beam,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
+    )
+
+    sc.testing.assert_allclose(
+        res['two_theta'],
+        sc.scalar(polar, unit='rad'),
+        atol=sc.scalar(1e-15, unit='rad'),
+    )
+    sc.testing.assert_allclose(
+        res['phi'], sc.scalar(azimuthal, unit='rad'), atol=sc.scalar(1e-15, unit='rad')
+    )
+
+
+@pytest.mark.parametrize('polar', [np.pi / 3, np.pi / 2, 2 * np.pi / 3, np.pi])
+@pytest.mark.parametrize('azimuthal', [0.0, np.pi / 2, np.pi])
+def test_scattering_angles_with_gravity_reproduces_angles_orthogonal_coords(
+    polar: float,
+    azimuthal: float,
+):
+    # This case is unphysical but tests that the function reproduces
+    # the expected angles using a rotated vector.
+    # Here, incident_beam and gravity are orthogonal to use the optimized code.
 
     gravity = sc.vector([0.0, -1e-11, 0.0], unit='cm/s^2')
     incident_beam = sc.vector([0.0, 0.0, 968.0], unit='cm')
@@ -271,11 +322,54 @@ def test_scattering_angles_with_gravity_reproduces_angles(
 
 @pytest.mark.parametrize('polar', [np.pi / 3, np.pi / 2, 2 * np.pi / 3, np.pi])
 @pytest.mark.parametrize('azimuthal', [3 * np.pi / 2, 8 * np.pi / 5, 2 * np.pi])
+@given(gravity_rotation=rotations())
+@settings(max_examples=20)
 def test_scattering_angles_with_gravity_reproduces_angles_azimuth_greater_pi(
+    polar: float, azimuthal: float, gravity_rotation: sc.Variable
+):
+    # This case is unphysical but tests that the function reproduces
+    # the expected angles using a rotated vector.
+
+    gravity = gravity_rotation * sc.vector([0.0, -1e-11, 0.0], unit='cm/s^2')
+    incident_beam = sc.vector([0.0, 0.0, 968.0], unit='cm')
+
+    # With this definition, the x-axis has azimuthal=0.
+    rot1 = sc.spatial.rotations_from_rotvecs(sc.vector([-polar, 0, 0], unit='rad'))
+    rot2 = sc.spatial.rotations_from_rotvecs(
+        sc.vector([0, 0, azimuthal - np.pi / 2], unit='rad')
+    )
+    scattered_beam = rot2 * (rot1 * incident_beam)
+
+    wavelength = sc.scalar(1e-6, unit='Å')
+
+    res = beamline.scattering_angles_with_gravity(
+        incident_beam=incident_beam,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
+    )
+
+    sc.testing.assert_allclose(
+        res['two_theta'],
+        sc.scalar(polar, unit='rad'),
+        atol=sc.scalar(1e-15, unit='rad'),
+    )
+    # phi has range (-pi, pi], so for azimuthal > pi, we get a negative result
+    sc.testing.assert_allclose(
+        res['phi'],
+        sc.scalar(azimuthal - 2 * np.pi, unit='rad'),
+        atol=sc.scalar(1e-15, unit='rad'),
+    )
+
+
+@pytest.mark.parametrize('polar', [np.pi / 3, np.pi / 2, 2 * np.pi / 3, np.pi])
+@pytest.mark.parametrize('azimuthal', [3 * np.pi / 2, 8 * np.pi / 5, 2 * np.pi])
+def test_scattering_angles_with_gravity_reproduces_angles_azimuth_greater_pi_orthogonal_coords(  # noqa: E501
     polar: float, azimuthal: float
 ):
     # This case is unphysical but tests that the function reproduces
     # the expected angles using a rotated vector.
+    # Here, incident_beam and gravity are orthogonal to use the optimized code.
 
     gravity = sc.vector([0.0, -1e-11, 0.0], unit='cm/s^2')
     incident_beam = sc.vector([0.0, 0.0, 968.0], unit='cm')
@@ -957,37 +1051,11 @@ def test_beam_aligned_unit_vectors_complicated_inputs():
     sc.testing.assert_allclose(sc.dot(ez, ex), sc.scalar(0.0), atol=sc.scalar(1e-16))
 
 
-def test_beam_aligned_unit_vectors_simple_non_orthogonal_inputs():
-    incident_beam = sc.vector([0.0, -1.1, 14.7], unit='m')
-    gravity = sc.vector([0.0, -9.3, 0.0], unit='m/s/s')
-    res = beamline.beam_aligned_unit_vectors(
-        incident_beam=incident_beam, gravity=gravity
-    )
-    sc.testing.assert_allclose(res['beam_aligned_unit_x'], sc.vector([1.0, 0.0, 0.0]))
-    sc.testing.assert_allclose(res['beam_aligned_unit_y'], sc.vector([0.0, 1.0, 0.0]))
-    sc.testing.assert_allclose(res['beam_aligned_unit_z'], sc.vector([0.0, 0.0, 1.0]))
-
-
-def test_beam_aligned_unit_vectors_complex_non_orthogonal_inputs():
-    incident_beam = sc.vector([2.3, -1.1, 14.7], unit='m')
-    gravity = sc.vector([0.0, -9.3, 0.0], unit='m/s/s')
-    res = beamline.beam_aligned_unit_vectors(
-        incident_beam=incident_beam, gravity=gravity
-    )
-    z = sc.vector([2.3, 0.0, 14.7], unit='m')
-    ez = z / sc.norm(z)
-    sc.testing.assert_allclose(sc.dot(res['beam_aligned_unit_x'], ez), sc.scalar(0.0))
-    sc.testing.assert_allclose(sc.dot(res['beam_aligned_unit_y'], ez), sc.scalar(0.0))
-    sc.testing.assert_allclose(res['beam_aligned_unit_y'], sc.vector([0.0, 1.0, 0.0]))
-    sc.testing.assert_allclose(res['beam_aligned_unit_z'], ez)
-
-
-def test_beam_aligned_unit_vectors_non_orthogonal_inputs_gravity_along_z():
-    incident_beam = sc.vector([0.0, 6.7, 0.3], unit='m')
-    gravity = sc.vector([0.0, 0.0, 3.4], unit='m/s/s')
-    res = beamline.beam_aligned_unit_vectors(
-        incident_beam=incident_beam, gravity=gravity
-    )
-    sc.testing.assert_allclose(res['beam_aligned_unit_x'], sc.vector([1.0, 0.0, 0.0]))
-    sc.testing.assert_allclose(res['beam_aligned_unit_y'], sc.vector([0.0, 0.0, -1.0]))
-    sc.testing.assert_allclose(res['beam_aligned_unit_z'], sc.vector([0.0, 1.0, 0.0]))
+def test_beam_aligned_unit_vectors_requires_orthogonal_inputs():
+    with pytest.raises(
+        ValueError, match='`gravity` and `incident_beam` must be orthogonal'
+    ):
+        beamline.beam_aligned_unit_vectors(
+            incident_beam=sc.vector([0.0, 0.0, 3.1], unit='mm'),
+            gravity=sc.vector([0.0, -4.6, 1.0], unit='m/s/s'),
+        )
