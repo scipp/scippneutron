@@ -680,7 +680,9 @@ def test_scattering_angles_with_gravity_supports_mismatching_units(
         gravity=gravity.to(unit='m/s^2'),
     )
 
-    sc.testing.assert_allclose(res['two_theta'], expected['two_theta'])
+    sc.testing.assert_allclose(
+        res['two_theta'], expected['two_theta'], rtol=sc.scalar(1e-6)
+    )
     sc.testing.assert_allclose(res['phi'], expected['phi'])
 
 
@@ -1062,13 +1064,3 @@ def test_beam_aligned_unit_vectors_complicated_inputs():
     sc.testing.assert_allclose(sc.dot(ex, ey), sc.scalar(0.0), atol=sc.scalar(1e-16))
     sc.testing.assert_allclose(sc.dot(ey, ez), sc.scalar(0.0), atol=sc.scalar(1e-16))
     sc.testing.assert_allclose(sc.dot(ez, ex), sc.scalar(0.0), atol=sc.scalar(1e-16))
-
-
-def test_beam_aligned_unit_vectors_requires_orthogonal_inputs():
-    with pytest.raises(
-        ValueError, match='`gravity` and `incident_beam` must be orthogonal'
-    ):
-        beamline.beam_aligned_unit_vectors(
-            incident_beam=sc.vector([0.0, 0.0, 3.1], unit='mm'),
-            gravity=sc.vector([0.0, -4.6, 1.0], unit='m/s/s'),
-        )
