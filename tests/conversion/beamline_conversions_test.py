@@ -7,7 +7,7 @@ import pytest
 import scipp as sc
 import scipp.constants
 import scipp.testing
-from hypothesis import assume, given, settings
+from hypothesis import given, settings
 from hypothesis import strategies as st
 from hypothesis.extra import numpy as npst
 
@@ -244,19 +244,14 @@ def test_scattering_angles_with_gravity_small_gravity_orthogonal_coords() -> Non
 
 @pytest.mark.parametrize('polar', [np.pi / 3, np.pi / 2, 2 * np.pi / 3, np.pi])
 @pytest.mark.parametrize('azimuthal', [0.0, np.pi / 2, np.pi])
-@given(gravity_rotation=rotations())
-@settings(max_examples=20)
 def test_scattering_angles_with_gravity_reproduces_angles(
-    polar: float, azimuthal: float, gravity_rotation: sc.Variable
+    polar: float, azimuthal: float
 ):
     # This case is unphysical but tests that the function reproduces
     # the expected angles using a rotated vector.
 
-    gravity = gravity_rotation * sc.vector([0.0, -1e-11, 0.0], unit='cm/s^2')
+    gravity = sc.vector([1e-12, -1e-11, 2e-12], unit='cm/s^2')
     incident_beam = sc.vector([0.0, 0.0, 968.0], unit='cm')
-
-    # We cannot compute phi when gravity and incident_beam are parallel.
-    assume(np.all(sc.norm(sc.cross(gravity, incident_beam)).values > 1e-8))
 
     # With this definition, the x-axis has azimuthal=0.
     rot1 = sc.spatial.rotations_from_rotvecs(sc.vector([-polar, 0, 0], unit='rad'))
@@ -323,19 +318,14 @@ def test_scattering_angles_with_gravity_reproduces_angles_orthogonal_coords(
 
 @pytest.mark.parametrize('polar', [np.pi / 3, np.pi / 2, 2 * np.pi / 3, np.pi])
 @pytest.mark.parametrize('azimuthal', [3 * np.pi / 2, 8 * np.pi / 5, 2 * np.pi])
-@given(gravity_rotation=rotations())
-@settings(max_examples=20)
 def test_scattering_angles_with_gravity_reproduces_angles_azimuth_greater_pi(
-    polar: float, azimuthal: float, gravity_rotation: sc.Variable
+    polar: float, azimuthal: float
 ):
     # This case is unphysical but tests that the function reproduces
     # the expected angles using a rotated vector.
 
-    gravity = gravity_rotation * sc.vector([0.0, -1e-11, 0.0], unit='cm/s^2')
+    gravity = sc.vector([-2e-12, -1e-11, 1e-13], unit='cm/s^2')
     incident_beam = sc.vector([0.0, 0.0, 968.0], unit='cm')
-
-    # We cannot compute phi when gravity and incident_beam are parallel.
-    assume(np.all(sc.norm(sc.cross(gravity, incident_beam)).values > 1e-8))
 
     # With this definition, the x-axis has azimuthal=0.
     rot1 = sc.spatial.rotations_from_rotvecs(sc.vector([-polar, 0, 0], unit='rad'))
@@ -628,20 +618,14 @@ def test_scattering_angles_with_gravity_binned_data():
     sc.testing.assert_identical(scattered_beam, original_scattered_beam)
 
 
-@given(gravity_rotation=rotations())
-@settings(max_examples=20)
-def test_scattering_angles_with_gravity_uses_wavelength_dtype(
-    gravity_rotation: sc.Variable,
-):
+@pytest.mark.parametrize('g', [[0.0, -9.81, 0.0], [2.3, 0.4, -7.5]])
+def test_scattering_angles_with_gravity_uses_wavelength_dtype(g: list[float]):
     wavelength = sc.array(
         dims=['wavelength'], values=[1.6, 0.7], unit='Å', dtype='float32'
     )
-    gravity = gravity_rotation * sc.vector([0.0, -9.81, 0.0], unit='m/s^2')
+    gravity = sc.vector(g, unit='m/s^2')
     incident_beam = sc.vector([0.0, 0.0, 41.1], unit='m')
     scattered_beam = sc.vector([1.8, 2.5, 3.6], unit='m')
-
-    # We cannot compute phi when gravity and incident_beam are parallel.
-    assume(np.all(sc.norm(sc.cross(gravity, incident_beam)).values > 1e-8))
 
     res = beamline.scattering_angles_with_gravity(
         incident_beam=incident_beam,
@@ -653,18 +637,12 @@ def test_scattering_angles_with_gravity_uses_wavelength_dtype(
     assert res['phi'].dtype == 'float32'
 
 
-@given(gravity_rotation=rotations())
-@settings(max_examples=20)
-def test_scattering_angles_with_gravity_supports_mismatching_units(
-    gravity_rotation: sc.Variable,
-):
+@pytest.mark.parametrize('g', [[0.0, -9.81, 0.0], [2.3, 0.4, -7.5]])
+def test_scattering_angles_with_gravity_supports_mismatching_units(g: list[float]):
     wavelength = sc.array(dims=['wavelength'], values=[1.6, 0.7], unit='Å')
-    gravity = gravity_rotation * sc.vector([0.0, -9810, 0.0], unit='m/ms^2')
+    gravity = sc.vector(g, unit='m/ms^2')
     incident_beam = sc.vector([0.0, 0.0, 410], unit='cm')
     scattered_beam = sc.vector([180, 1800, 2400], unit='mm')
-
-    # We cannot compute phi when gravity and incident_beam are parallel.
-    assume(np.all(sc.norm(sc.cross(gravity, incident_beam)).values > 1e-8))
 
     res = beamline.scattering_angles_with_gravity(
         incident_beam=incident_beam,
