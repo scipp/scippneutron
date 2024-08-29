@@ -329,7 +329,13 @@ def two_theta(
     # operations'.
     b1 = incident_beam / L1(incident_beam=incident_beam)
     b2 = scattered_beam / L2(scattered_beam=scattered_beam)
-    return 2 * sc.atan2(y=sc.norm(b1 - b2), x=sc.norm(b1 + b2))
+
+    y = sc.norm(b1 - b2)
+    b2 += b1
+    x = sc.norm(b2)
+    res = sc.atan2(y=y, x=x, out=x)
+    res *= 2
+    return res
 
 
 class BeamAlignedUnitVectors(TypedDict):
@@ -548,24 +554,49 @@ def _scattering_angles_with_gravity_generic(
     wavelength: sc.Variable,
     gravity: sc.Variable,
 ) -> SphericalCoordinates:
-    # TODO check works for any units
-    # TODO check uses dtype of wavelength
+    unit_vectors = _projected_beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
+    )
+    ex = unit_vectors['beam_aligned_unit_x']
+    ey = unit_vectors['beam_aligned_unit_y']
+
     drop_distance = _drop_due_to_gravity(
         distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
     )
+    y = drop_distance + sc.dot(scattered_beam, ey).to(
+        dtype=elem_dtype(wavelength), copy=False
+    )
+    x = sc.dot(scattered_beam, ex).to(dtype=elem_dtype(y), copy=False)
+    phi = sc.atan2(y=y, x=x, out=y)
+
     drop = drop_distance * (gravity / sc.norm(gravity))
     drop += scattered_beam
     return {
-        'two_theta': two_theta(incident_beam=incident_beam, scattered_beam=drop),
-        'phi': None,
-        # TODO: how to define phi?
-        #   it is define wrt. a coord system, so we need one
-        #   we could use the idea of projecting `incident_beam` onto a plane
-        #   that is perpendicular to `gravity`. This defines a system that should
-        #   be close enough to the lab system of the instrument:
-        #     # project incoming_beam onto the plane perpendicular to gravity
-        #     z = incident_beam - sc.dot(incident_beam, ey) * ey
-        #     ez = z / sc.norm(z)
+        'two_theta': two_theta(incident_beam=incident_beam, scattered_beam=drop).to(
+            dtype=elem_dtype(wavelength), copy=False
+        ),
+        'phi': phi,
+    }
+
+
+def _projected_beam_aligned_unit_vectors(
+    incident_beam: sc.Variable, gravity: sc.Variable
+) -> BeamAlignedUnitVectors:
+    ey = -gravity / sc.norm(gravity)
+    # Project incident_beam onto a plane perpendicular to ey.
+    z = incident_beam - sc.dot(incident_beam, ey) * ey
+    z_norm = sc.norm(z)
+    if sc.any(z_norm < sc.scalar(1e-10, unit=z_norm.unit)):
+        raise ValueError(
+            "Cannot construct a coordinate system. The incident beam and "
+            "gravity are parallel to each other."
+        )
+    ez = z / sc.norm(z)
+    ex = sc.cross(ey, ez)
+    return {
+        'beam_aligned_unit_x': ex,
+        'beam_aligned_unit_y': ey,
+        'beam_aligned_unit_z': ez,
     }
 
 
