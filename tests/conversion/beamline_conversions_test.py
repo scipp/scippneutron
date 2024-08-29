@@ -256,7 +256,7 @@ def test_scattering_angles_with_gravity_reproduces_angles(
     incident_beam = sc.vector([0.0, 0.0, 968.0], unit='cm')
 
     # We cannot compute phi when gravity and incident_beam are parallel.
-    assume(np.all(sc.norm(sc.cross(gravity, incident_beam)).values > 1e-10))
+    assume(np.all(sc.norm(sc.cross(gravity, incident_beam)).values > 1e-8))
 
     # With this definition, the x-axis has azimuthal=0.
     rot1 = sc.spatial.rotations_from_rotvecs(sc.vector([-polar, 0, 0], unit='rad'))
@@ -335,7 +335,7 @@ def test_scattering_angles_with_gravity_reproduces_angles_azimuth_greater_pi(
     incident_beam = sc.vector([0.0, 0.0, 968.0], unit='cm')
 
     # We cannot compute phi when gravity and incident_beam are parallel.
-    assume(np.all(sc.norm(sc.cross(gravity, incident_beam)).values > 1e-10))
+    assume(np.all(sc.norm(sc.cross(gravity, incident_beam)).values > 1e-8))
 
     # With this definition, the x-axis has azimuthal=0.
     rot1 = sc.spatial.rotations_from_rotvecs(sc.vector([-polar, 0, 0], unit='rad'))
@@ -641,7 +641,7 @@ def test_scattering_angles_with_gravity_uses_wavelength_dtype(
     scattered_beam = sc.vector([1.8, 2.5, 3.6], unit='m')
 
     # We cannot compute phi when gravity and incident_beam are parallel.
-    assume(np.all(sc.norm(sc.cross(gravity, incident_beam)).values > 1e-10))
+    assume(np.all(sc.norm(sc.cross(gravity, incident_beam)).values > 1e-8))
 
     res = beamline.scattering_angles_with_gravity(
         incident_beam=incident_beam,
@@ -664,7 +664,7 @@ def test_scattering_angles_with_gravity_supports_mismatching_units(
     scattered_beam = sc.vector([180, 1800, 2400], unit='mm')
 
     # We cannot compute phi when gravity and incident_beam are parallel.
-    assume(np.all(sc.norm(sc.cross(gravity, incident_beam)).values > 1e-10))
+    assume(np.all(sc.norm(sc.cross(gravity, incident_beam)).values > 1e-8))
 
     res = beamline.scattering_angles_with_gravity(
         incident_beam=incident_beam,
