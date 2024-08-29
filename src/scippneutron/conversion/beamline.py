@@ -691,6 +691,16 @@ def scattering_angle_in_yz_plane(
         Includes the ``x`` component when computing ``theta``.
         This is used in techniques other than reflectometry.
     """
+    if sc.any(
+        abs(sc.dot(gravity, incident_beam))
+        > sc.scalar(1e-10, unit=incident_beam.unit) * sc.norm(gravity)
+    ):
+        raise ValueError(
+            '`gravity` and `incident_beam` must be orthogonal. '
+            f'Got a deviation of {sc.dot(gravity, incident_beam).max():c}. '
+            'It is unclear how the angle is defined in this case.'
+        )
+
     unit_vectors = beam_aligned_unit_vectors(
         incident_beam=incident_beam, gravity=gravity
     )

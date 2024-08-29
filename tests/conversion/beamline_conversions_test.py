@@ -717,7 +717,6 @@ def test_scattering_angles_with_gravity_invariant_under_rotation(
     sc.testing.assert_allclose(original['phi'], rotated['phi'])
 
 
-# TODO
 def test_scattering_angle_in_yz_plane_requires_gravity_orthogonal_to_incident_beam():
     incident_beam = sc.vector([0.564, 1.2, -10.4], unit='m')
     scattered_beam = sc.vectors(
