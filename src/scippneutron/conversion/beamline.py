@@ -450,7 +450,6 @@ class SphericalCoordinates(TypedDict):
     """
 
 
-# TODO docs: show simple formula and explain complicated one for optimisation
 def scattering_angles_with_gravity(
     incident_beam: sc.Variable,
     scattered_beam: sc.Variable,
