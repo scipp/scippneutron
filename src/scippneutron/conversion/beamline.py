@@ -492,7 +492,7 @@ def scattering_angles_with_gravity(
 
     .. math::
 
-        \mathsf{tan}(2\theta) &= \sphericalangle(b_1, b_2 + \delta_y \hat{e}_y) \\
+        2\theta &= \sphericalangle(b_1, b_2 + \delta_y \hat{e}_y) \\
         \mathsf{tan}(\phi) &= \frac{y'_d}{x_d}
 
     where :math:`\sphericalangle` is the angle between two vectors as implemented by
