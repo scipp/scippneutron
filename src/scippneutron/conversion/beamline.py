@@ -72,7 +72,8 @@ The axes are defined by these unit vectors:
 .. math::
 
     \hat{e}_y &= -g / |g| \\
-    \hat{e}_z &= b_1 - (b_1 \cdot \hat{e}_y) \hat{e}_y \\
+    z_{\text{proj}} &= b_1 - (b_1 \cdot \hat{e}_y) \hat{e}_y \\
+    \hat{e}_z &= z_{\text{proj}} / |z_{\text{proj}}| \\
     \hat{e}_x &= \hat{e}_y \times \hat{e}_z
 
 which span an orthogonal, right-handed coordinate system.
@@ -355,7 +356,8 @@ def beam_aligned_unit_vectors(
     .. math::
 
         \hat{e}_y &= -g / |g| \\
-        \hat{e}_z &= b_1 - (b_1 \cdot \hat{e}_y) \hat{e}_y \\
+        z_{\text{proj}} &= b_1 - (b_1 \cdot \hat{e}_y) \hat{e}_y \\
+        \hat{e}_z &= z_{\text{proj}} / |z_{\text{proj}}| \\
         \hat{e}_x &= \hat{e}_y \times \hat{e}_z
 
     where :math:`b_1` is the ``incident_beam`` and :math:`g` is the gravity vector.
