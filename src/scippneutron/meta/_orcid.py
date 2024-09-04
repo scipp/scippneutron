@@ -5,8 +5,6 @@ from typing import Any
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 
-_ORCID_PREFIX: str = 'https://orcid.org'
-
 
 class ORCIDiD:
     """An ORCID iD.
@@ -39,7 +37,7 @@ class ORCIDiD:
             self._orcid_id = _parse_id(orcid_id)
 
     def __str__(self) -> str:
-        return f'{_ORCID_PREFIX}/{self._orcid_id}'
+        return self._orcid_id
 
     def __repr__(self) -> str:
         return f'ORCIDiD({self!s})'
@@ -76,6 +74,9 @@ def _parse_pydantic(value: str | ORCIDiD) -> ORCIDiD:
     return ORCIDiD(value)
 
 
+_ORCID_PREFIX: str = 'https://orcid.org'
+
+
 def _parse_id(value: str) -> str:
     parts = value.rsplit('/', 1)
     if len(parts) == 2:
@@ -86,6 +87,7 @@ def _parse_id(value: str) -> str:
                 f"Invalid ORCID URL: '{prefix}'. Must be '{_ORCID_PREFIX}'"
             )
     else:
+        value = f'{_ORCID_PREFIX}/{value}'
         (orcid_id,) = parts
 
     segments = orcid_id.split('-')
@@ -97,7 +99,7 @@ def _parse_id(value: str) -> str:
         # checksum must match the last digit
         raise ValueError(f"Invalid ORCID iD: '{orcid_id}'. Checksum does not match.")
 
-    return orcid_id
+    return value
 
 
 def _orcid_id_checksum(orcid_id: str) -> str:
