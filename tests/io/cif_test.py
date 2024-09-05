@@ -853,8 +853,8 @@ _audit.creation_method 'Written by scippneutron v{expected_version}'
     assert re.match(expected, res)
 
 
-def test_builder_writes_audit_with_reducer() -> None:
-    cif_ = cif.CIF(reducers='mypackage vFINAL')
+def test_builder_writes_audit_with_one_reducer() -> None:
+    cif_ = cif.CIF().with_reducers('mypackage vFINAL')
     res = save_to_str(cif_)
 
     # Escape + to make this usable in a regex
@@ -871,6 +871,32 @@ coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633
 _audit.creation_date \d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}:\d{{2}}:\d{{2}}\+00.00
 _audit.creation_method 'Written by scippneutron v{expected_version}'
 _computing.diffrn_reduction 'mypackage vFINAL'
+''')
+    assert re.match(expected, res)
+
+
+def test_builder_writes_audit_with_multiple_reducers() -> None:
+    cif_ = cif.CIF().with_reducers('package 1', 'package 2')
+    res = save_to_str(cif_)
+
+    # Escape + to make this usable in a regex
+    expected_version = str(__version__).replace('+', r'\+')
+    expected = re.compile(rf'''#\\#CIF_1.1
+data_
+
+loop_
+_audit_conform.dict_name
+_audit_conform.dict_version
+_audit_conform.dict_location
+coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
+
+_audit.creation_date \d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}:\d{{2}}:\d{{2}}\+00.00
+_audit.creation_method 'Written by scippneutron v{expected_version}'
+
+loop_
+_computing.diffrn_reduction
+'package 1'
+'package 2'
 ''')
     assert re.match(expected, res)
 
@@ -1016,15 +1042,13 @@ DIFB -1 6.7
 
 
 def test_builder_single_contact_author() -> None:
-    authors = [
-        cif.Author(
-            name='Jane Doe',
-            email='jane.doe@ess.eu',
-            address='Partikelgatan, Lund',
-            orcid='https://orcid.org/0000-0000-0000-0001',
-        )
-    ]
-    cif_ = cif.CIF().with_authors(authors)
+    author = cif.Author(
+        name='Jane Doe',
+        email='jane.doe@ess.eu',
+        address='Partikelgatan, Lund',
+        orcid='https://orcid.org/0000-0000-0000-0001',
+    )
+    cif_ = cif.CIF().with_authors(author)
     result = save_to_str(cif_)
     expected = '''_audit_contact_author.name 'Jane Doe'
 _audit_contact_author.email jane.doe@ess.eu
@@ -1034,16 +1058,14 @@ _audit_contact_author.id_orcid https://orcid.org/0000-0000-0000-0001'''
 
 
 def test_builder_regular_author() -> None:
-    authors = [
-        cif.Author(
-            name='Jane Doe',
-            email='jane.doe@ess.eu',
-            address='Partikelgatan, Lund',
-            orcid='https://orcid.org/0000-0000-0000-0001',
-            corresponding=False,
-        )
-    ]
-    cif_ = cif.CIF().with_authors(authors)
+    author = cif.Author(
+        name='Jane Doe',
+        email='jane.doe@ess.eu',
+        address='Partikelgatan, Lund',
+        orcid='https://orcid.org/0000-0000-0000-0001',
+        corresponding=False,
+    )
+    cif_ = cif.CIF().with_authors(author)
     result = save_to_str(cif_)
     expected = '''_audit_author.name 'Jane Doe'
 _audit_author.email jane.doe@ess.eu
@@ -1068,7 +1090,7 @@ def test_builder_multiple_regular_authors() -> None:
             corresponding=False,
         ),
     ]
-    cif_ = cif.CIF().with_authors(authors)
+    cif_ = cif.CIF().with_authors(*authors)
     result = save_to_str(cif_)
     expected = """loop_
 _audit_author.name
@@ -1082,14 +1104,12 @@ _audit_author.id_orcid
 
 
 def test_builder_regular_author_role() -> None:
-    authors = [
-        cif.Author(
-            name='Jane Doe',
-            role='measurement',
-            corresponding=False,
-        )
-    ]
-    cif_ = cif.CIF().with_authors(authors)
+    author = cif.Author(
+        name='Jane Doe',
+        role='measurement',
+        corresponding=False,
+    )
+    cif_ = cif.CIF().with_authors(author)
     result = save_to_str(cif_)
 
     author_pattern = re.compile(r"""_audit_author.name 'Jane Doe'
@@ -1104,3 +1124,19 @@ _audit_author_role.role
 {author_id} measurement"""
 
     assert expected in result
+
+
+def test_builder_many_fields() -> None:
+    cif_ = (
+        cif.CIF('my/name')
+        .with_authors(cif.Author(name='Jane Doe'))
+        .with_reducers('test-package')
+        .with_beamline(beamline='fake')
+    )
+    result = save_to_str(cif_)
+
+    assert 'data_my/name' in result
+    assert '_audit_contact_author.name' in result
+    assert '_diffrn_radiation.probe neutron' in result
+    assert '_diffrn_source.beamline fake' in result
+    assert '_computing.diffrn_reduction test-package'

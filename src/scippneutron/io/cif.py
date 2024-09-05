@@ -63,7 +63,7 @@ from __future__ import annotations
 
 import io
 import warnings
-from collections.abc import Iterable, Iterator, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -127,13 +127,10 @@ def save_cif(
 
 class CIF:
     # TODO document (also in module docs)
-    def __init__(
-        self, name='', *, comment: str = '', reducers: str | Sequence[str] | None = None
-    ) -> None:
+    def __init__(self, name='', *, comment: str = '') -> None:
         self._block = Block(
             name=name
         )  # We mainly keep this around for managing the name.
-        _add_audit(self._block, reducers)
 
         self._comment = ''
         self.comment = comment
@@ -141,6 +138,7 @@ class CIF:
         # in a specific order when saving.
         self._content: list[Chunk | Loop] = []
         self._authors: list[Author] = []
+        self._reducers: list[str] = []
 
         # Should be long enough to never run out of IDs.
         self._id_generator = (str(i) for i in range(1, 1_000_000_000))
@@ -175,6 +173,7 @@ class CIF:
             Path or file handle for the output file.
         """
         block = self._block.copy()
+        _add_audit(block, self._reducers)
         for item in (*self._assemble_authors(), *self._content):
             block.add(item)
         save_cif(fname, block, comment=self._comment)
@@ -184,6 +183,7 @@ class CIF:
         cif_._block = self._block.copy()
         cif_._content.extend(self._content)
         cif_._authors.extend(self._authors)
+        cif_._reducers.extend(self._reducers)
         return cif_
 
     def with_beamline(
@@ -308,9 +308,14 @@ class CIF:
         cif_._content.append(_make_powder_calibration_loop(cal, comment=comment))
         return cif_
 
-    def with_authors(self, authors: Iterable[Author] | Author) -> CIF:
+    def with_authors(self, *authors: Author) -> CIF:
         cif_ = self.copy()
-        cif_._authors.extend((authors,) if isinstance(authors, Author) else authors)
+        cif_._authors.extend(authors)
+        return cif_
+
+    def with_reducers(self, *reducers: str) -> CIF:
+        cif_ = self.copy()
+        cif_._reducers.extend(reducers)
         return cif_
 
     def _assemble_authors(self) -> list[Chunk | Loop]:
@@ -804,7 +809,7 @@ def _make_powder_calibration_loop(data: sc.DataArray, comment: str) -> Loop:
     return res
 
 
-def _add_audit(block: Block, reducers: str | Sequence[str] | None = None) -> None:
+def _add_audit(block: Block, reducers: list[str]) -> None:
     from .. import __version__
 
     audit_chunk = Chunk(
@@ -816,9 +821,9 @@ def _add_audit(block: Block, reducers: str | Sequence[str] | None = None) -> Non
     )
     block.add(audit_chunk)
 
-    if isinstance(reducers, str):
-        audit_chunk['computing.diffrn_reduction'] = reducers
-    elif reducers is not None:
+    if len(reducers) == 1:
+        audit_chunk['computing.diffrn_reduction'] = reducers[0]
+    elif len(reducers) > 1:
         block.add(
             Loop(
                 {'computing.diffrn_reduction': sc.array(dims=['r'], values=reducers)},
