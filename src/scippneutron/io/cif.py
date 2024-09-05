@@ -4,11 +4,79 @@
 
 This module contains tools for writing `CIF <https://www.iucr.org/resources/cif>`_
 files with diffraction data.
-It does not support reading CIF files.
+`It does not support reading CIF files.`
 
-Examples
---------
-Make mockup powder diffraction data:
+CIF Builder: High-level interface
+---------------------------------
+This module supports two interfaces for writing files.
+The high-level interface uses a builder pattern for assembling files.
+It is implemented by :class:`CIF`.
+
+To demnstrate the interface, first make some mockup powder diffraction data:
+
+  >>> import scipp as sc
+  >>> tof = sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')
+  >>> intensity = sc.array(
+  ...     dims=['tof'],
+  ...     values=[13.6, 26.0, 9.7],
+  ...     variances=[0.7, 1.1, 0.5],
+  ... )
+  >>> da = sc.DataArray(intensity, coords={'tof': tof})
+
+Assemble data and metadata using a :class:`CIF` builder:
+
+  >>> from scippneutron.io import cif
+  >>> cif_ = (
+  ...  cif.CIF('my-data', comment="This is a demo of ScippNeutron's CIF builder.")
+  ...  .with_beamline(beamline='fake', facility='made up')
+  ...  .with_authors(cif.Author(name='Jane Doe', orcid='0000-0000-0000-0001'))
+  ...  .with_reduced_powder_data(da)
+  ... )
+
+When all data has been added, write it to a file:
+
+  >>> cif_.save('example.cif')
+
+This results in a file containing
+
+.. code-block:: text
+
+    #\\#CIF_1.1
+    # This is a demo of ScippNeutron's CIF builder.
+    data_my-data
+
+    loop_
+    _audit_conform.dict_name
+    _audit_conform.dict_version
+    _audit_conform.dict_location
+    pdCIF 2.5.0 https://github.com/COMCIFS/Powder_Dictionary/blob/7608b92165f58f968f054344e67662e01d4b401a/cif_pow.dic
+    coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
+
+    _audit.creation_date 2024-09-05T13:47:54+00:00
+    _audit.creation_method 'Written by scippneutron v24.6.1
+
+    _audit_contact_author.name 'Jane Doe'
+    _audit_contact_author.id_orcid 0000-0000-0000-0001
+
+    _diffrn_radiation.probe neutron
+    _diffrn_source.beamline fake
+    _diffrn_source.facility 'made up'
+
+    loop_
+    _pd_meas.time_of_flight
+    _pd_proc.intensity_net
+    _pd_proc.intensity_net_su
+    1.2 13.6 0.8366600265340756
+    1.4 26.0 1.0488088481701516
+    2.3 9.7 0.7071067811865476
+
+Chunks and loops: Low-level interface
+-------------------------------------
+The high-level CIF builder uses :class:`Block`, :class:`Chunk`, and :class:`Loop` to
+encode data.
+Those classes can also be used directly to gain more control over the file contents.
+
+To demonstrate, make mockup powder diffraction data:
 
   >>> import scipp as sc
   >>> tof = sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')
@@ -19,8 +87,6 @@ Make mockup powder diffraction data:
   ... )
 
 Wrap the data in a ``Loop`` to write them together as columns.
-(Note that this particular example could more easily be done with
-:math:`scippneutron.io.cif.Block.add_reduced_powder_data`.)
 
   >>> from scippneutron.io import cif
   >>> tof_loop = cif.Loop({
@@ -126,7 +192,12 @@ def save_cif(
 
 
 class CIF:
-    # TODO document (also in module docs)
+    """A builder for CIF files.
+
+    This class implements a builder pattern for defining the contents of a CIF file.
+    See the module documentation of :mod:`cif` for examples.
+    """
+
     def __init__(self, name='', *, comment: str = '') -> None:
         self._block = Block(
             name=name
@@ -179,6 +250,7 @@ class CIF:
         save_cif(fname, block, comment=self._comment)
 
     def copy(self) -> CIF:
+        """Return a copy of this builder."""
         cif_ = CIF(name=self.name, comment=self.comment)
         cif_._block = self._block.copy()
         cif_._content.extend(self._content)
@@ -186,6 +258,8 @@ class CIF:
         cif_._reducers.extend(self._reducers)
         return cif_
 
+    # TODO use Beamline model when available
+    #  see https://github.com/scipp/scippneutron/issues/473
     def with_beamline(
         self,
         *,
@@ -194,6 +268,7 @@ class CIF:
         device: str | None = None,
         comment: str = '',
     ) -> CIF:
+        """Add beamline information."""
         if device is None:
             if (facility or '').lower() in _KNOWN_SPALLATION_SOURCES:
                 device = 'spallation'
@@ -309,11 +384,37 @@ class CIF:
         return cif_
 
     def with_authors(self, *authors: Author) -> CIF:
+        """Add one or more authors.
+
+        Parameters
+        ----------
+        authors:
+            Authors to add to this CIF object.
+
+        Returns
+        -------
+        :
+            A builder with added calibration data.
+        """
         cif_ = self.copy()
         cif_._authors.extend(authors)
         return cif_
 
     def with_reducers(self, *reducers: str) -> CIF:
+        """Add one or more programs that were used to reduce the software.
+
+        Parameters
+        ----------
+        reducers:
+            Pieces of software that were used to reduce the data.
+            Each string is one piece of software in freeform notation.
+            It is recommended to include the program name and version.
+
+        Returns
+        -------
+        :
+            A builder with added calibration data.
+        """
         cif_ = self.copy()
         cif_._reducers.extend(reducers)
         return cif_
@@ -339,7 +440,7 @@ class CIF:
 
 
 # TODO replace with common metadata `Person` once that exists.
-#  See branch metadata-util
+#  See https://github.com/scipp/scippneutron/issues/473
 @dataclass(kw_only=True)
 class Author:
     name: str
@@ -408,6 +509,7 @@ class Chunk(_CIFBase):
         self._pairs = dict(pairs) if pairs is not None else {}
 
     def __setitem__(self, key: str, value: Any) -> None:
+        """Add a key-value pair to the chunk."""
         self._pairs[key] = value
 
     def write(self, f: io.TextIOBase) -> None:
@@ -465,6 +567,15 @@ class Loop(_CIFBase):
             self[key] = column
 
     def __setitem__(self, name: str, value: sc.Variable) -> None:
+        """Add a column to the loop.
+
+        Parameters
+        ---------
+        name:
+            Column name.
+        value:
+            Values of the column.
+        """
         if value.ndim != 1:
             raise sc.DimensionError(
                 "CIF loops can only contain 1d variables, got " f"{value.ndim} dims"
