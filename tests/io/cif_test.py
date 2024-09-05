@@ -236,6 +236,18 @@ _audit.creation_method 'Unicode: \xb5\xc5'
     )
 
 
+def test_write_block_single_pair_empty_value():
+    block = cif.Block('utf-8', [{'audit.creation_method': ''}])
+    res = write_to_str(block)
+    assert (
+        res
+        == r'''data_utf-8
+
+_audit.creation_method ''
+'''
+    )
+
+
 def test_write_block_single_pair_single_line_comment():
     block = cif.Block('comment')
     block.add({'diffrn_radiation.probe': 'neutron'}, comment='a comment')
@@ -434,6 +446,26 @@ and some salt
 123
 sulfur
 x6a
+'''
+    )
+
+
+def test_write_block_single_loop_empty_string():
+    env = sc.array(dims=['x'], values=['', 'sulfur'])
+    id_ = sc.array(dims=['x'], values=['123', 'x6a'])
+    block = cif.Block(
+        'looped', [cif.Loop({'diffrn.ambient_environment': env, 'diffrn.id': id_})]
+    )
+    res = write_to_str(block)
+    assert (
+        res
+        == '''data_looped
+
+loop_
+_diffrn.ambient_environment
+_diffrn.id
+'' 123
+sulfur x6a
 '''
     )
 

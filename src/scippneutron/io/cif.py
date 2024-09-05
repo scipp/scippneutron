@@ -514,6 +514,8 @@ def _quotes_for_string_value(value: str) -> str | None:
         return "'"
     if ' ' in value:
         return "'"
+    if not value:
+        return "'"  # so that empty strings are shown as ''
     return None
 
 
