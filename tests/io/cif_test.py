@@ -989,7 +989,7 @@ def test_builder_with_reduced_powder_data_bad_coord_unit():
         cif_.with_reduced_powder_data(da)
 
 
-def test_block_powder_calibration():
+def test_builder_powder_calibration():
     da = sc.DataArray(
         sc.array(dims=['cal'], values=[1.2, 4.5, 6.7]),
         coords={'power': sc.array(dims=['cal'], values=[0, 1, -1])},
@@ -1013,3 +1013,94 @@ DIFC 1 4.5
 DIFB -1 6.7
 '''
     )
+
+
+def test_builder_single_contact_author() -> None:
+    authors = [
+        cif.Author(
+            name='Jane Doe',
+            email='jane.doe@ess.eu',
+            address='Partikelgatan, Lund',
+            orcid='https://orcid.org/0000-0000-0000-0001',
+        )
+    ]
+    cif_ = cif.CIF().with_authors(authors)
+    result = save_to_str(cif_)
+    expected = '''_audit_contact_author.name 'Jane Doe'
+_audit_contact_author.email jane.doe@ess.eu
+_audit_contact_author.address 'Partikelgatan, Lund'
+_audit_contact_author.id_orcid https://orcid.org/0000-0000-0000-0001'''
+    assert expected in result
+
+
+def test_builder_regular_author() -> None:
+    authors = [
+        cif.Author(
+            name='Jane Doe',
+            email='jane.doe@ess.eu',
+            address='Partikelgatan, Lund',
+            orcid='https://orcid.org/0000-0000-0000-0001',
+            corresponding=False,
+        )
+    ]
+    cif_ = cif.CIF().with_authors(authors)
+    result = save_to_str(cif_)
+    expected = '''_audit_author.name 'Jane Doe'
+_audit_author.email jane.doe@ess.eu
+_audit_author.address 'Partikelgatan, Lund'
+_audit_author.id_orcid https://orcid.org/0000-0000-0000-0001'''
+    assert expected in result
+
+
+def test_builder_multiple_regular_authors() -> None:
+    authors = [
+        cif.Author(
+            name='Jane Doe',
+            email='jane.doe@ess.eu',
+            address='Partikelgatan, Lund',
+            orcid='https://orcid.org/0000-0000-0000-0001',
+            corresponding=False,
+        ),
+        cif.Author(
+            name='Max Mustermann',
+            email='mm@scipp.eu',
+            orcid='https://orcid.org/0000-0000-0000-0002',
+            corresponding=False,
+        ),
+    ]
+    cif_ = cif.CIF().with_authors(authors)
+    result = save_to_str(cif_)
+    expected = """loop_
+_audit_author.name
+_audit_author.email
+_audit_author.address
+_audit_author.id_orcid
+'Jane Doe' jane.doe@ess.eu 'Partikelgatan, Lund' https://orcid.org/0000-0000-0000-0001
+'Max Mustermann' mm@scipp.eu '' https://orcid.org/0000-0000-0000-0002
+"""
+    assert expected in result
+
+
+def test_builder_regular_author_role() -> None:
+    authors = [
+        cif.Author(
+            name='Jane Doe',
+            role='measurement',
+            corresponding=False,
+        )
+    ]
+    cif_ = cif.CIF().with_authors(authors)
+    result = save_to_str(cif_)
+
+    author_pattern = re.compile(r"""_audit_author.name 'Jane Doe'
+_audit_author.id ([0-9a-f]+)""")
+    author_match = re.search(author_pattern, result)
+    assert author_match is not None
+    author_id = author_match.group(1)
+
+    expected = rf"""loop_
+_audit_author_role.id
+_audit_author_role.role
+{author_id} measurement"""
+
+    assert expected in result

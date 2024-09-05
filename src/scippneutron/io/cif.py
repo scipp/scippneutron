@@ -63,7 +63,7 @@ from __future__ import annotations
 
 import io
 import warnings
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -130,11 +130,20 @@ class CIF:
     def __init__(
         self, name='', *, comment: str = '', reducers: str | Sequence[str] | None = None
     ) -> None:
-        self._block = Block(name=name)
+        self._block = Block(
+            name=name
+        )  # We mainly keep this around for managing the name.
+        _add_audit(self._block, reducers)
+
         self._comment = ''
         self.comment = comment
+        # Keep a separate list from self._block to assemble items
+        # in a specific order when saving.
+        self._content: list[Chunk | Loop] = []
+        self._authors: list[Author] = []
 
-        self._add_audit(reducers)
+        # Should be long enough to never run out of IDs.
+        self._id_generator = (str(i) for i in range(1, 1_000_000_000))
 
     @property
     def name(self) -> str:
@@ -165,11 +174,16 @@ class CIF:
         fname:
             Path or file handle for the output file.
         """
-        save_cif(fname, self._block, comment=self._comment)
+        block = self._block.copy()
+        for item in (*self._assemble_authors(), *self._content):
+            block.add(item)
+        save_cif(fname, block, comment=self._comment)
 
     def copy(self) -> CIF:
         cif_ = CIF(name=self.name, comment=self.comment)
         cif_._block = self._block.copy()
+        cif_._content.extend(self._content)
+        cif_._authors.extend(self._authors)
         return cif_
 
     def with_beamline(
@@ -191,7 +205,7 @@ class CIF:
         }
 
         cif_ = self.copy()
-        cif_._block.add(
+        cif_._content.append(
             Chunk(
                 {k: v for k, v in fields.items() if v is not None},
                 comment=comment,
@@ -247,7 +261,7 @@ class CIF:
           >>> cif_ = cif_.with_reduced_powder_data(da)
         """
         cif_ = self.copy()
-        cif_._block.add(_make_reduced_powder_loop(data, comment=comment))
+        cif_._content.append(_make_reduced_powder_loop(data, comment=comment))
         return cif_
 
     def with_powder_calibration(self, cal: sc.DataArray, *, comment: str = '') -> CIF:
@@ -291,35 +305,44 @@ class CIF:
           >>> cif_ = cif_.with_powder_calibration(cal)
         """
         cif_ = self.copy()
-        cif_._block.add(_make_powder_calibration_loop(cal, comment=comment))
+        cif_._content.append(_make_powder_calibration_loop(cal, comment=comment))
         return cif_
 
-    def _add_audit(self, reducers: str | Sequence[str] | None = None) -> None:
-        from .. import __version__
+    def with_authors(self, authors: Iterable[Author] | Author) -> CIF:
+        cif_ = self.copy()
+        cif_._authors.extend((authors,) if isinstance(authors, Author) else authors)
+        return cif_
 
-        audit_chunk = Chunk(
-            {
-                'audit.creation_date': datetime.now(timezone.utc).replace(
-                    microsecond=0
-                ),
-                'audit.creation_method': f'Written by scippneutron v{__version__}',
-            },
-            schema=CORE_SCHEMA,
-        )
-        self._block.add(audit_chunk)
-        if isinstance(reducers, str):
-            audit_chunk['computing.diffrn_reduction'] = reducers
-        elif reducers is not None:
-            self._block.add(
-                Loop(
-                    {
-                        'computing.diffrn_reduction': sc.array(
-                            dims=['r'], values=reducers
-                        )
-                    },
-                    schema=CORE_SCHEMA,
-                )
-            )
+    def _assemble_authors(self) -> list[Chunk | Loop]:
+        contact = [author for author in self._authors if author.corresponding]
+        regular = [author for author in self._authors if not author.corresponding]
+
+        results = []
+        roles = {}
+        for authors, category in zip(
+            (contact, regular), ('audit_contact_author', 'audit_author'), strict=True
+        ):
+            if not authors:
+                continue
+            data, rols = _serialize_authors(authors, category, self._id_generator)
+            results.append(data)
+            roles.update(rols)
+        if roles:
+            results.append(_serialize_roles(roles))
+
+        return results
+
+
+# TODO replace with common metadata `Person` once that exists.
+#  See branch metadata-util
+@dataclass(kw_only=True)
+class Author:
+    name: str
+    address: str | None = None
+    email: str | None = None
+    orcid: str | None = None
+    corresponding: bool = True
+    role: str | None = None
 
 
 class _CIFBase:
@@ -779,3 +802,68 @@ def _make_powder_calibration_loop(data: sc.DataArray, comment: str) -> Loop:
     if data.variances is not None:
         res['pd_calib_d_to_tof.coeff_su'] = sc.stddevs(data.data)
     return res
+
+
+def _add_audit(block: Block, reducers: str | Sequence[str] | None = None) -> None:
+    from .. import __version__
+
+    audit_chunk = Chunk(
+        {
+            'audit.creation_date': datetime.now(timezone.utc).replace(microsecond=0),
+            'audit.creation_method': f'Written by scippneutron v{__version__}',
+        },
+        schema=CORE_SCHEMA,
+    )
+    block.add(audit_chunk)
+
+    if isinstance(reducers, str):
+        audit_chunk['computing.diffrn_reduction'] = reducers
+    elif reducers is not None:
+        block.add(
+            Loop(
+                {'computing.diffrn_reduction': sc.array(dims=['r'], values=reducers)},
+                schema=CORE_SCHEMA,
+            )
+        )
+
+
+def _serialize_authors(
+    authors: list[Author],
+    category: str,
+    id_generator: Iterator[str],
+) -> tuple[Chunk | Loop, dict[str, str]]:
+    fields = {
+        f'{category}.{key}': f
+        for key in ('name', 'email', 'address', 'orcid')
+        if any(f := [getattr(a, key) or '' for a in authors])
+    }
+    # Map between our name (Author.orcid) and CIF's (id_orcid)
+    if orcid_id := fields.pop(f'{category}.orcid', None):
+        fields[f'{category}.id_orcid'] = orcid_id
+
+    roles = {next(id_generator): a.role for a in authors}
+    if any(roles.values()):
+        fields[f'{category}.id'] = list(roles.keys())
+    roles = {key: val for key, val in roles.items() if val}
+
+    if len(authors) == 1:
+        return Chunk(
+            {key: val[0] for key, val in fields.items()},
+            schema=CORE_SCHEMA,
+        ), roles
+    return Loop(
+        {key: sc.array(dims=['author'], values=val) for key, val in fields.items()},
+        schema=CORE_SCHEMA,
+    ), roles
+
+
+def _serialize_roles(roles: dict[str, str]) -> Loop:
+    return Loop(
+        {
+            'audit_author_role.id': sc.array(dims=['role'], values=list(roles)),
+            'audit_author_role.role': sc.array(
+                dims=['role'], values=list(roles.values())
+            ),
+        },
+        schema=CORE_SCHEMA,
+    )
