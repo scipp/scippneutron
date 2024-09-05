@@ -114,7 +114,28 @@ def save_cif(
         _write_multi(f, blocks)
 
 
-class Chunk:
+class _CIFBase:
+    def __init__(self, *, comment: str = '', schema: CIFSchema) -> None:
+        self._comment = ''
+        self.comment = comment  # use str-encoding logic
+        self._schema = _preprocess_schema(schema)
+
+    @property
+    def comment(self) -> str:
+        """Optional comment that can be written above the object in the file."""
+        return self._comment
+
+    @comment.setter
+    def comment(self, comment: str) -> None:
+        self._comment = _encode_non_ascii(comment)
+
+    @property
+    def schema(self) -> set[CIFSchema]:
+        """CIF schemas used for the object."""
+        return self._schema
+
+
+class Chunk(_CIFBase):
     """A group of CIF key-value pairs.
 
     Chunks contain one or more key-value pairs where values are scalars,
@@ -143,28 +164,12 @@ class Chunk:
         comment:
             Optional comment that can be written above the chunk in the file.
         schema:
-            CIF Schema used for the chunk.
+            CIF schemas used for the chunk.
             Content is not checked against the schema, but the schema is written
             to the file.
         """
+        super().__init__(comment=comment, schema=schema)
         self._pairs = dict(pairs) if pairs is not None else {}
-        self._comment = ''
-        self.comment = comment
-        self._schema = _preprocess_schema(schema)
-
-    @property
-    def comment(self) -> str:
-        """Optional comment that can be written above the chunk in the file."""
-        return self._comment
-
-    @comment.setter
-    def comment(self, comment: str) -> None:
-        self._comment = _encode_non_ascii(comment)
-
-    @property
-    def schema(self) -> set[CIFSchema]:
-        """CIF Schema used for the chunk."""
-        return self._schema
 
     def write(self, f: io.TextIOBase) -> None:
         """Write this chunk to a file.
@@ -185,7 +190,7 @@ class Chunk:
                 f.write(f'_{key} {v}\n')
 
 
-class Loop:
+class Loop(_CIFBase):
     """A CIF loop.
 
     Contains a mapping from strings to Scipp variables.
@@ -211,30 +216,14 @@ class Loop:
         comment:
             Optional comment that can be written above the loop in the file.
         schema:
-            CIF Schema used for the loop.
+            CIF schemas used for the loop.
             Content is not checked against the schema, but the schema is written
             to the file.
         """
+        super().__init__(comment=comment, schema=schema)
         self._columns = {}
         for key, column in columns.items():
             self[key] = column
-        self._comment = ''
-        self.comment = comment
-        self._schema = _preprocess_schema(schema)
-
-    @property
-    def comment(self) -> str:
-        """Optional comment that can be written above the loop in the file."""
-        return self._comment
-
-    @comment.setter
-    def comment(self, comment: str) -> None:
-        self._comment = _encode_non_ascii(comment)
-
-    @property
-    def schema(self) -> set[CIFSchema]:
-        """CIF Schema used for the loop."""
-        return self._schema
 
     def __setitem__(self, name: str, value: sc.Variable) -> None:
         if value.ndim != 1:
@@ -281,7 +270,7 @@ class Loop:
             f.write('\n')
 
 
-class Block:
+class Block(_CIFBase):
     """A CIF data block.
 
     A block contains an ordered sequence of loops
@@ -311,16 +300,14 @@ class Block:
         comment:
             Optional comment that can be written above the block in the file.
         schema:
-            CIF Schema used for the block.
+            CIF schemas used for the block.
             Content is not checked against the schema, but the schema is written
             to the file.
         """
+        super().__init__(comment=comment, schema=schema)
         self._name = ''
         self.name = name
         self._content = _convert_input_content(content) if content is not None else []
-        self._comment = ''
-        self.comment = comment
-        self._schema = _preprocess_schema(schema)
 
     @property
     def name(self) -> str:
@@ -344,18 +331,9 @@ class Block:
             )
 
     @property
-    def comment(self) -> str:
-        """Optional comment that can be written above the block in the file."""
-        return self._comment
-
-    @comment.setter
-    def comment(self, comment: str) -> None:
-        self._comment = _encode_non_ascii(comment)
-
-    @property
     def schema(self) -> set[CIFSchema]:
-        """CIF Schema used for the block."""
-        merged = set(self._schema)
+        """CIF schemas used for the block."""
+        merged = set(super().schema)
         for item in self._content:
             merged.update(item.schema)
         return merged
