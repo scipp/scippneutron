@@ -753,7 +753,8 @@ def _make_reduced_powder_loop(data: sc.DataArray, comment: str) -> Loop:
         res[data_name + '_su'] = sc.stddevs(data.data)
 
     if data.unit != 'one':
-        res.comment = f'Unit of intensity: [{data.unit}]'
+        pre = res.comment + '\n' if res.comment else ''
+        res.comment = f'{pre}Unit of intensity: [{data.unit}]'
 
     return res
 
