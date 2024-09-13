@@ -34,7 +34,7 @@ executing==2.1.0
     # via stack-data
 fonttools==4.53.1
     # via matplotlib
-hypothesis==6.112.0
+hypothesis==6.112.1
     # via -r basetest.in
 idna==3.8
     # via requests
@@ -142,7 +142,7 @@ traittypes==0.2.1
     # via ipydatawidgets
 typing-extensions==4.12.2
     # via ipython
-urllib3==2.2.2
+urllib3==2.2.3
     # via requests
 wcwidth==0.2.13
     # via prompt-toolkit

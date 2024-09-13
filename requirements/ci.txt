@@ -50,7 +50,7 @@ tomli==2.0.1
     #   tox
 tox==4.18.1
     # via -r ci.in
-urllib3==2.2.2
+urllib3==2.2.3
     # via requests
 virtualenv==20.26.4
     # via tox

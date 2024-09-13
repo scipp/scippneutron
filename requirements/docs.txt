@@ -203,7 +203,7 @@ sphinx==8.0.2
     #   sphinx-copybutton
     #   sphinx-design
     #   sphinxcontrib-bibtex
-sphinx-autodoc-typehints==2.4.0
+sphinx-autodoc-typehints==2.4.1
     # via -r docs.in
 sphinx-copybutton==0.5.2
     # via -r docs.in
@@ -211,7 +211,7 @@ sphinx-design==0.6.1
     # via -r docs.in
 sphinxcontrib-applehelp==2.0.0
     # via sphinx
-sphinxcontrib-bibtex==2.6.2
+sphinxcontrib-bibtex==2.6.3
     # via -r docs.in
 sphinxcontrib-devhelp==2.0.0
     # via sphinx
@@ -251,7 +251,7 @@ typing-extensions==4.12.2
     # via
     #   ipython
     #   pydata-sphinx-theme
-urllib3==2.2.2
+urllib3==2.2.3
     # via requests
 wcwidth==0.2.13
     # via prompt-toolkit
