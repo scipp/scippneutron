@@ -12,7 +12,7 @@ This module supports two interfaces for writing files.
 The high-level interface uses a builder pattern for assembling files.
 It is implemented by :class:`CIF`.
 
-To demnstrate the interface, first make some mockup powder diffraction data:
+To demonstrate the interface, first make some mockup powder diffraction data:
 
   >>> import scipp as sc
   >>> tof = sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')
