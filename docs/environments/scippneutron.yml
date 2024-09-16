@@ -4,7 +4,6 @@ channels:
   - conda-forge
 
 dependencies:
-  - ess-dmsc::ess-streaming-data-types
   - h5py
   - ipympl
   - ipython
@@ -15,7 +14,6 @@ dependencies:
   - jupyter_nbextensions_configurator
   - matplotlib-base
   - nodejs
-  - python-confluent-kafka
   - pythreejs
   - mantid::mantid
   - scipp::scippneutron

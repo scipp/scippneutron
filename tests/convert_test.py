@@ -75,7 +75,9 @@ _COORD_MAKERS = {
 
 def make_test_data(coords=(), dataset=False):
     da = sc.DataArray(
-        sc.arange('x', 1, 7, unit='counts').fold('x', {'spectrum': 2, 'tof': 3})
+        sc.arange('x', 1, 7, unit='counts').fold(
+            dim='x', sizes={'spectrum': 2, 'tof': 3}
+        )
     )
     for name, maker in _COORD_MAKERS.items():
         if name in coords:
@@ -107,7 +109,7 @@ def make_tof_binned_events():
 
 def make_count_density_variable(unit):
     return sc.arange('x', 1.0, 7.0, unit=sc.units.counts / unit).fold(
-        'x', {'spectrum': 2, 'tof': 3}
+        dim='x', sizes={'spectrum': 2, 'tof': 3}
     )
 
 
@@ -474,7 +476,7 @@ def make_unphysical_tof(t0, da):
     tof = sc.concat([t0 - t0 / 2, sc.full_like(t0, -2), 2 * t0], 'tof')
     is_unphysical = sc.array(
         dims=['energy_transfer'], values=[True, True, False]
-    ).broadcast(['energy_transfer', 'spectrum'], [3, da.sizes['spectrum']])
+    ).broadcast(dims=['energy_transfer', 'spectrum'], shape=[3, da.sizes['spectrum']])
     return tof, is_unphysical
 
 

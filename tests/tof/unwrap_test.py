@@ -38,7 +38,7 @@ def test_frame_period_is_pulse_period_if_not_pulse_skipping() -> None:
     pl = sl.Pipeline(unwrap.unwrap_providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
-    pl[unwrap.PulseStride] = None
+    pl[unwrap.PulseStride | None] = None
     assert_identical(pl.compute(unwrap.FramePeriod), period)
 
 
@@ -47,7 +47,7 @@ def test_frame_period_is_multiple_pulse_period_if_pulse_skipping(stride) -> None
     pl = sl.Pipeline(unwrap.unwrap_providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
-    pl[unwrap.PulseStride] = stride
+    pl[unwrap.PulseStride | None] = stride
     assert_identical(pl.compute(unwrap.FramePeriod), stride * period)
 
 
@@ -56,7 +56,7 @@ def test_pulse_offset(stride) -> None:
     pl = sl.Pipeline(unwrap.unwrap_providers(pulse_skipping=True))
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
-    pl[unwrap.PulseStride] = stride
+    pl[unwrap.PulseStride | None] = stride
     start = sc.datetime('2020-01-01T00:00:00.0', unit='ns')
     time_zero = start + sc.arange('pulse', 0 * period, 100 * period, period).to(
         unit='ns', dtype='int64'
@@ -73,7 +73,7 @@ def test_offset_from_wrapped() -> None:
     pl = sl.Pipeline(unwrap.unwrap_providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
-    pl[unwrap.PulseStride] = None
+    pl[unwrap.PulseStride | None] = None
     pl[unwrap.FrameBounds] = unwrap.FrameBounds(
         sc.DataGroup(time=sc.array(dims=['bound'], values=[0.01, 0.02], unit='s'))
     )
@@ -90,7 +90,7 @@ def test_offset_from_wrapped_has_no_special_handling_for_out_of_period_events() 
     pl = sl.Pipeline(unwrap.unwrap_providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
-    pl[unwrap.PulseStride] = None
+    pl[unwrap.PulseStride | None] = None
     pl[unwrap.FrameBounds] = unwrap.FrameBounds(
         sc.DataGroup(time=sc.array(dims=['bound'], values=[0.01, 0.02], unit='s'))
     )
@@ -124,14 +124,14 @@ def test_unwrap_with_no_choppers(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride] = None
+    pl[unwrap.PulseStride | None] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
         ess_pulse.wavelength_max,
     )
     pl[unwrap.Choppers] = {}
-    pl[unwrap.SourceChopperName] = None
+    pl[unwrap.SourceChopperName | None] = None
     pl[unwrap.Ltotal] = distance
     unwrapped = pl.compute(unwrap.UnwrappedData)
     # No unwrap is happening, frame does not overlap next pulse.
@@ -161,7 +161,7 @@ def test_unwrap_with_frame_overlap_raises(ess_10s_14Hz, ess_pulse) -> None:
     pl = sl.Pipeline(unwrap.unwrap_providers())
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride] = None
+    pl[unwrap.PulseStride | None] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -192,14 +192,14 @@ def test_standard_unwrap(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride] = None
+    pl[unwrap.PulseStride | None] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
         ess_pulse.wavelength_max,
     )
     pl[unwrap.Choppers] = fakes.psc_choppers
-    pl[unwrap.SourceChopperName] = 'psc1'
+    pl[unwrap.SourceChopperName | None] = 'psc1'
     pl[unwrap.Ltotal] = distance
     result = pl.compute(unwrap.TofData)
     assert_identical(
@@ -235,14 +235,14 @@ def test_standard_unwrap_histogram_mode(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride] = None
+    pl[unwrap.PulseStride | None] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
         ess_pulse.wavelength_max,
     )
     pl[unwrap.Choppers] = fakes.psc_choppers
-    pl[unwrap.SourceChopperName] = 'psc1'
+    pl[unwrap.SourceChopperName | None] = 'psc1'
     pl[unwrap.Ltotal] = distance
     result = pl.compute(unwrap.TofData)
     assert_identical(result.sum(), ref.sum())
@@ -269,7 +269,7 @@ def test_pulse_skipping_unwrap(ess_10s_7Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = 0.5 * beamline._source.pulse_period
-    pl[unwrap.PulseStride] = None
+    pl[unwrap.PulseStride | None] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -277,7 +277,7 @@ def test_pulse_skipping_unwrap(ess_10s_7Hz, ess_pulse) -> None:
     )
 
     pl[unwrap.Choppers] = fakes.psc_choppers
-    pl[unwrap.SourceChopperName] = 'psc1'
+    pl[unwrap.SourceChopperName | None] = 'psc1'
     pl[unwrap.Ltotal] = distance
     pl[unwrap.PulseStride] = 2
 
@@ -318,13 +318,14 @@ def test_pulse_skipping_unwrap_histogram_mode_not_implemented(
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = 0.5 * beamline._source.pulse_period
+    pl[unwrap.PulseStride | None] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
         ess_pulse.wavelength_max,
     )
     pl[unwrap.Choppers] = fakes.psc_choppers
-    pl[unwrap.SourceChopperName] = 'psc1'
+    pl[unwrap.SourceChopperName | None] = 'psc1'
     pl[unwrap.Ltotal] = distance
     pl[unwrap.PulseStride] = 2
     with pytest.raises(NotImplementedError):
@@ -356,14 +357,14 @@ def test_wfm_unwrap(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride] = None
+    pl[unwrap.PulseStride | None] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
         ess_pulse.wavelength_max,
     )
     pl[unwrap.Choppers] = choppers
-    pl[unwrap.WFMChopperNames] = ('wfm1', 'wfm2')
+    pl[unwrap.WFMChopperNames | None] = ('wfm1', 'wfm2')
     pl[unwrap.Ltotal] = distance
     bounds = pl.compute(unwrap.SubframeBounds)
     assert bounds.sizes == {'bound': 2, 'subframe': 6}

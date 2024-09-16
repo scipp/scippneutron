@@ -41,16 +41,16 @@ Note
   consistently, ``incident_beam``, ``scattered_beam``, and ``two_theta`` can be
   computed without knowledge of the coordinate system.
 
-  However, when we need ``phi``, or need to correct ``two_theta`` for gravity,
-  we need the actual coordinate system.
+  However, we need the actual coordinate system to compute ``phi``.
 
 ScippNeutron uses a coordinate system aligned with
 the incident beam and gravity.
 ScippNeutron's coordinate system corresponds to that of
-`NeXus <https://manual.nexusformat.org/design.html#the-nexus-coordinate-system>`_.
+`NeXus <https://manual.nexusformat.org/design.html#the-nexus-coordinate-system>`_
+when the incident beam is perpendicular to gravity.
 The image below shows how coordinates are defined with respect to the
 quantities defined above.
-The plot on the right-hand side shows the view from the sample towards the source,
+The plot on the right-hand side shows the view from the sample along the :math:`z`-axis,
 that is, the :math:`z`-axis points towards the viewer.
 (The sample is placed in the origin here; this is only done for illustration purposes
 and not required.)
@@ -71,16 +71,16 @@ The axes are defined by these unit vectors:
 
 .. math::
 
-    \hat{e}_z &= b_1 / |b_1| \\
     \hat{e}_y &= -g / |g| \\
+    z_{\text{proj}} &= b_1 - (b_1 \cdot \hat{e}_y) \hat{e}_y \\
+    \hat{e}_z &= z_{\text{proj}} / |z_{\text{proj}}| \\
     \hat{e}_x &= \hat{e}_y \times \hat{e}_z
 
 which span an orthogonal, right-handed coordinate system.
 Here, :math:`b_1` is the ``incident_beam`` and :math:`g` is the gravity vector.
-This means that the z-axis is parallel to the incident beam and the y-axis is
-antiparallel to gravity.
-Gravity must be orthogonal to the incident beam for this definition to produce
-and orthogonal coordinate system.
+This means that the y-axis is antiparallel to gravity.
+The z-axis is defined by projecting the incident beam onto a plane perpendicular
+to gravity.
 Basis vectors can be computed using :func:`beam_aligned_unit_vectors`.
 
 :math:`p = \sqrt{x^2 + y^2}` is the projection of the
@@ -104,6 +104,8 @@ where :math:`b_2` is the scattered beam.
 
 These definitions assume that gravity can be neglected.
 See :func:`scattering_angles_with_gravity` for definitions that account for gravity.
+And :func:`scattering_angle_in_yz_plane` for the definition used in reflectometry ---
+which also includes gravity.
 """
 
 from typing import TypedDict
@@ -324,7 +326,13 @@ def two_theta(
     # operations'.
     b1 = incident_beam / L1(incident_beam=incident_beam)
     b2 = scattered_beam / L2(scattered_beam=scattered_beam)
-    return 2 * sc.atan2(y=sc.norm(b1 - b2), x=sc.norm(b1 + b2))
+
+    y = sc.norm(b1 - b2)
+    b2 += b1
+    x = sc.norm(b2)
+    res = sc.atan2(y=y, x=x, out=x)
+    res *= 2
+    return res
 
 
 class BeamAlignedUnitVectors(TypedDict):
@@ -347,8 +355,9 @@ def beam_aligned_unit_vectors(
 
     .. math::
 
-        \hat{e}_z &= b_1 / |b_1| \\
         \hat{e}_y &= -g / |g| \\
+        z_{\text{proj}} &= b_1 - (b_1 \cdot \hat{e}_y) \hat{e}_y \\
+        \hat{e}_z &= z_{\text{proj}} / |z_{\text{proj}}| \\
         \hat{e}_x &= \hat{e}_y \times \hat{e}_z
 
     where :math:`b_1` is the ``incident_beam`` and :math:`g` is the gravity vector.
@@ -365,23 +374,27 @@ def beam_aligned_unit_vectors(
     -------
     A dict containing the unit vectors with keys 'ex', 'ey', and 'ez'.
 
+    Raises
+    ------
+    ValueError
+        If the incident beam is parallel to gravity.
+        The rotation of the x-z plane is ill-define din this case.
+
     See Also
     --------
     straight_incident_beam:
         Compute the incident beam for a straight beamline.
     """
-    if sc.any(
-        abs(sc.dot(gravity, incident_beam))
-        > sc.scalar(1e-10, unit=incident_beam.unit) * sc.norm(gravity)
-    ):
-        raise ValueError(
-            '`gravity` and `incident_beam` must be orthogonal. '
-            f'Got a deviation of {sc.dot(gravity, incident_beam).max():c}. '
-            'This is required to fully define spherical coordinates theta and phi.'
-        )
-
-    ez = incident_beam / sc.norm(incident_beam)
     ey = -gravity / sc.norm(gravity)
+    # Project incident_beam onto a plane perpendicular to ey.
+    z = incident_beam - sc.dot(incident_beam, ey) * ey
+    z_norm = sc.norm(z)
+    if sc.any(z_norm < sc.scalar(1e-10, unit=z_norm.unit)):
+        raise ValueError(
+            "Cannot construct a coordinate system. The incident beam and "
+            "gravity are parallel to each other."
+        )
+    ez = z / sc.norm(z)
     ex = sc.cross(ey, ez)
     return {
         'beam_aligned_unit_x': ex,
@@ -466,30 +479,46 @@ def scattering_angles_with_gravity(
     .. math::
 
         x'_d &= x_d \\
-        y'_d &= y_d + \frac{|g| m_n^2}{2 h^2} L_2^{\prime\, 2} \lambda^2 \\
+        y'_d &= y_d + \delta_y \\
         z'_d &= z_d
 
     Where :math:`|g|` is the strength of gravity, :math:`m_n` is the neutron mass,
-    :math:`h` is the Planck constant, and :math:`\lambda` is the wavelength.
+    :math:`h` is the Planck constant, :math:`\lambda` is the wavelength, and
+
+    .. math::
+
+        \delta_y = \frac{|g| m_n^2}{2 h^2} L_2^{\prime\, 2} \lambda^2
+
     This gives the gravity-corrected scattering angles:
 
     .. math::
 
-        \mathsf{tan}(2\theta) &= \frac{\sqrt{x_d^2 + y_d^{\prime\, 2}}}{z} \\
-        \mathsf{tan}(\phi) &= \frac{y'_d}{x}
+        2\theta &= \sphericalangle(b_1, b_2 + \delta_y \hat{e}_y) \\
+        \mathsf{tan}(\phi) &= \frac{y'_d}{x_d}
+
+    where :math:`\sphericalangle` is the angle between two vectors as implemented by
+    :func:`two_theta`.
+    When :math:`b_1` is orthogonal to gravity, we can equivalently use
+
+    .. math::
+
+        \mathsf{tan}(2\theta) = \frac{\sqrt{x_d^2 + y_d^{\prime\, 2}}}{z_d}
+
+    This equation allowed for a more efficient implementation.
 
     Attention
     ---------
-    The above equation for :math:`y'_d` contains :math:`L_2^{\prime\, 2} = |b'_2|`
-    which in turn depends on :math:`y'_d`.
-    Solving this equation for :math:`y'_d` is too difficult.
-    Instead, we approximate :math:`L'_2 \approx L_2`.
-    The impact of this approximation on :math:`2\theta` is of the order of
-    :math:`10^{-6}` or less for beamlines at ESS.
-    This is within the expected statistical uncertainties and can be ignored.
+        The above equation for :math:`y'_d` contains :math:`L_2^{\prime\, 2} = |b'_2|`
+        which in turn depends on :math:`y'_d`.
+        Solving this equation for :math:`y'_d` is too difficult.
+        Instead, we approximate :math:`L'_2 \approx L_2`.
+        The impact of this approximation on :math:`2\theta` is of the order of
+        :math:`10^{-6}` or less for beamlines at ESS.
+        This is within the expected statistical uncertainties and can be ignored.
 
-    See the file ``docs/user-guide/auxiliary/gravity_approx/gravity_approx.typ``
-    for details.
+        See `two_theta gravity correction
+        <../../user-guide/algorithms-background/two_theta-gravity-correction.rst>`_
+        for details.
 
     Parameters
     ----------
@@ -507,16 +536,76 @@ def scattering_angles_with_gravity(
     :
         A dict containing the polar scattering angle ``'two_theta'`` and
         the azimuthal angle ``'phi'``.
+
+    See also
+    --------
+    scattering_angle_in_yz_plane:
+        Ignores the ``x`` component when computing ``theta``.
+        This is used in reflectometry.
     """
-    match beam_aligned_unit_vectors(incident_beam=incident_beam, gravity=gravity):
-        case {
-            'beam_aligned_unit_x': ex,
-            'beam_aligned_unit_y': ey,
-            'beam_aligned_unit_z': ez,
-        }:
-            pass
-        case _:
-            raise RuntimeError('Unexpected return value of beam_aligned_unit_vectors')
+    if sc.any(
+        abs(sc.dot(gravity, incident_beam))
+        > sc.scalar(1e-10, unit=incident_beam.unit) * sc.norm(gravity)
+    ):
+        return _scattering_angles_with_gravity_generic(
+            incident_beam=incident_beam,
+            scattered_beam=scattered_beam,
+            wavelength=wavelength,
+            gravity=gravity,
+        )
+    return _scattering_angles_with_gravity_orthogonal_coords(
+        incident_beam=incident_beam,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
+    )
+
+
+def _scattering_angles_with_gravity_generic(
+    incident_beam: sc.Variable,
+    scattered_beam: sc.Variable,
+    wavelength: sc.Variable,
+    gravity: sc.Variable,
+) -> SphericalCoordinates:
+    unit_vectors = beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
+    )
+    ex = unit_vectors['beam_aligned_unit_x']
+    ey = unit_vectors['beam_aligned_unit_y']
+
+    drop_distance = _drop_due_to_gravity(
+        distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
+    )
+    y = drop_distance + sc.dot(scattered_beam, ey).to(
+        dtype=elem_dtype(wavelength), copy=False
+    )
+    x = sc.dot(scattered_beam, ex).to(dtype=elem_dtype(y), copy=False)
+    phi = sc.atan2(y=y, x=x, out=y)
+
+    drop = drop_distance * (gravity / sc.norm(gravity))
+    drop += scattered_beam
+    return {
+        'two_theta': two_theta(incident_beam=incident_beam, scattered_beam=drop).to(
+            dtype=elem_dtype(wavelength), copy=False
+        ),
+        'phi': phi,
+    }
+
+
+# This is an optimized implementation that only works when `incident_beam` and `gravity`
+# are orthogonal to each other. It uses less memory than the generic version.
+def _scattering_angles_with_gravity_orthogonal_coords(
+    incident_beam: sc.Variable,
+    scattered_beam: sc.Variable,
+    wavelength: sc.Variable,
+    gravity: sc.Variable,
+) -> SphericalCoordinates:
+    unit_vectors = beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
+    )
+    ex = unit_vectors['beam_aligned_unit_x']
+    ey = unit_vectors['beam_aligned_unit_y']
+    ez = unit_vectors['beam_aligned_unit_z']
 
     y = _drop_due_to_gravity(
         distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
@@ -536,3 +625,93 @@ def scattering_angles_with_gravity(
     two_theta_ = sc.atan2(y=y, x=z, out=y)
 
     return {'two_theta': two_theta_, 'phi': phi}
+
+
+def scattering_angle_in_yz_plane(
+    incident_beam: sc.Variable,
+    scattered_beam: sc.Variable,
+    wavelength: sc.Variable,
+    gravity: sc.Variable,
+) -> sc.Variable:
+    r"""Compute polar scattering angles in the y-z plane using gravity.
+
+    Note
+    ----
+        This function uses the reflectometry definition of the polar scattering angle.
+        Other techniques define the angle w.r.t. the incident beam.
+        See :func:`scattering_angles_with_gravity` for those use cases.
+
+    With the definitions given in :func:`scattering_angles_with_gravity`,
+    and ignoring :math:`x_d`, we get
+
+    .. math::
+
+        \mathsf{tan}(\gamma) = \frac{|y_d^{\prime}|}{z_d}
+
+    with
+
+    .. math::
+
+        y'_d = y_d + \frac{|g| m_n^2}{2 h^2} L_2^{\prime\, 2} \lambda^2
+
+    The angle :math:`\gamma` is defined as in Fig. 5 of :cite:`STAHN201644`.
+
+    Attention
+    ---------
+        The above equation for :math:`y'_d` contains :math:`L_2^{\prime\, 2} = |b'_2|`
+        which in turn depends on :math:`y'_d`.
+        Solving this equation for :math:`y'_d` is too difficult.
+        Instead, we approximate :math:`L'_2 \approx L_2`.
+        The impact of this approximation on :math:`\gamma` is of the order of
+        :math:`10^{-6}` or less for beamlines at ESS.
+        This is within the expected statistical uncertainties and can be ignored.
+
+        See `two_theta gravity correction
+        <../../user-guide/algorithms-background/two_theta-gravity-correction.rst>`_
+        for details.
+
+    Parameters
+    ----------
+    incident_beam:
+        Beam from source to sample. Expects ``dtype=vector3``.
+    scattered_beam:
+        Beam from sample to detector. Expects ``dtype=vector3``.
+    wavelength:
+        Wavelength of neutrons.
+    gravity:
+        Gravity vector.
+
+    Returns
+    -------
+    :
+        The polar scattering angle :math:`\gamma`.
+
+    See also
+    --------
+    scattering_angles_with_gravity:
+        Includes the ``x`` component when computing ``theta``.
+        This is used in techniques other than reflectometry.
+    """
+    if sc.any(
+        abs(sc.dot(gravity, incident_beam))
+        > sc.scalar(1e-10, unit=incident_beam.unit) * sc.norm(gravity)
+    ):
+        raise ValueError(
+            '`gravity` and `incident_beam` must be orthogonal. '
+            f'Got a deviation of {sc.dot(gravity, incident_beam).max():c}. '
+            'It is unclear how the angle is defined in this case.'
+        )
+
+    unit_vectors = beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
+    )
+    ey = unit_vectors['beam_aligned_unit_y']
+    ez = unit_vectors['beam_aligned_unit_z']
+
+    y = _drop_due_to_gravity(
+        distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
+    )
+    y += sc.dot(scattered_beam, ey).to(dtype=elem_dtype(wavelength), copy=False)
+    y = sc.abs(y, out=y)
+    z = sc.dot(scattered_beam, ez).to(dtype=elem_dtype(y), copy=False)
+    return sc.atan2(y=y, x=z, out=y)

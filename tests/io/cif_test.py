@@ -2,18 +2,27 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
 import io
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 import scipp as sc
 
+from scippneutron import __version__
 from scippneutron.io import cif
 
 
 def write_to_str(block: cif.Block) -> str:
     buffer = io.StringIO()
     block.write(buffer)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def save_to_str(cif_: cif.CIF) -> str:
+    buffer = io.StringIO()
+    cif_.save(buffer)
     buffer.seek(0)
     return buffer.getvalue()
 
@@ -236,6 +245,18 @@ _audit.creation_method 'Unicode: \xb5\xc5'
     )
 
 
+def test_write_block_single_pair_empty_value():
+    block = cif.Block('utf-8', [{'audit.creation_method': ''}])
+    res = write_to_str(block)
+    assert (
+        res
+        == r'''data_utf-8
+
+_audit.creation_method ''
+'''
+    )
+
+
 def test_write_block_single_pair_single_line_comment():
     block = cif.Block('comment')
     block.add({'diffrn_radiation.probe': 'neutron'}, comment='a comment')
@@ -434,6 +455,26 @@ and some salt
 123
 sulfur
 x6a
+'''
+    )
+
+
+def test_write_block_single_loop_empty_string():
+    env = sc.array(dims=['x'], values=['', 'sulfur'])
+    id_ = sc.array(dims=['x'], values=['123', 'x6a'])
+    block = cif.Block(
+        'looped', [cif.Loop({'diffrn.ambient_environment': env, 'diffrn.id': id_})]
+    )
+    res = write_to_str(block)
+    assert (
+        res
+        == '''data_looped
+
+loop_
+_diffrn.ambient_environment
+_diffrn.id
+'' 123
+sulfur x6a
 '''
     )
 
@@ -779,7 +820,102 @@ def test_loop_requires_matching_dims():
         cif.Loop({'a': sc.zeros(sizes={'x': 4}), 'b': sc.zeros(sizes={'y': 4})})
 
 
-def test_block_with_reduced_powder_data():
+def test_builder_writes_comment() -> None:
+    cif_ = cif.CIF(comment='This is a test comment\nacross multiple lines.')
+    res = save_to_str(cif_)
+
+    expected_start = r'''#\#CIF_1.1
+# This is a test comment
+# across multiple lines.
+data_
+'''
+    assert res.startswith(expected_start)
+
+
+def test_builder_writes_audit() -> None:
+    cif_ = cif.CIF()
+    res = save_to_str(cif_)
+
+    # Escape + to make this usable in a regex
+    expected_version = str(__version__).replace('+', r'\+')
+    expected = re.compile(rf'''#\\#CIF_1.1
+data_
+
+loop_
+_audit_conform.dict_name
+_audit_conform.dict_version
+_audit_conform.dict_location
+coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
+
+_audit.creation_date \d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}:\d{{2}}:\d{{2}}\+00.00
+_audit.creation_method 'Written by scippneutron v{expected_version}'
+''')
+    assert re.match(expected, res)
+
+
+def test_builder_writes_audit_with_one_reducer() -> None:
+    cif_ = cif.CIF().with_reducers('mypackage vFINAL')
+    res = save_to_str(cif_)
+
+    # Escape + to make this usable in a regex
+    expected_version = str(__version__).replace('+', r'\+')
+    expected = re.compile(rf'''#\\#CIF_1.1
+data_
+
+loop_
+_audit_conform.dict_name
+_audit_conform.dict_version
+_audit_conform.dict_location
+coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
+
+_audit.creation_date \d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}:\d{{2}}:\d{{2}}\+00.00
+_audit.creation_method 'Written by scippneutron v{expected_version}'
+_computing.diffrn_reduction 'mypackage vFINAL'
+''')
+    assert re.match(expected, res)
+
+
+def test_builder_writes_audit_with_multiple_reducers() -> None:
+    cif_ = cif.CIF().with_reducers('package 1', 'package 2')
+    res = save_to_str(cif_)
+
+    # Escape + to make this usable in a regex
+    expected_version = str(__version__).replace('+', r'\+')
+    expected = re.compile(rf'''#\\#CIF_1.1
+data_
+
+loop_
+_audit_conform.dict_name
+_audit_conform.dict_version
+_audit_conform.dict_location
+coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
+
+_audit.creation_date \d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}:\d{{2}}:\d{{2}}\+00.00
+_audit.creation_method 'Written by scippneutron v{expected_version}'
+
+loop_
+_computing.diffrn_reduction
+'package 1'
+'package 2'
+''')
+    assert re.match(expected, res)
+
+
+def test_builder_with_beamline() -> None:
+    original = cif.CIF()
+    cif_ = original.with_beamline(beamline='DREAM', facility='ESS')
+    res = save_to_str(cif_)
+    original_res = save_to_str(original)
+
+    expected = '''_diffrn_radiation.probe neutron
+_diffrn_source.beamline DREAM
+_diffrn_source.facility ESS
+_diffrn_source.device spallation'''
+    assert expected in res
+    assert expected not in original_res
+
+
+def test_builder_with_reduced_powder_data():
     da = sc.DataArray(
         sc.array(
             dims=['tof'],
@@ -789,14 +925,14 @@ def test_block_with_reduced_powder_data():
         coords={'tof': sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')},
     )
 
-    block = cif.Block('reduced', [])
-    block.add_reduced_powder_data(da)
-    res = write_to_str(block)
+    cif_ = cif.CIF('reduced')
+    cif_ = cif_.with_reduced_powder_data(da)
+    res = save_to_str(cif_)
 
     assert 'pdCIF' in res
     assert 'coreCIF' in res
 
-    _, _, tof_loop = res.split('\n\n')
+    _, tof_loop = res.rsplit('\n\n', 1)
     assert (
         tof_loop
         == '''loop_
@@ -810,20 +946,20 @@ _pd_proc.intensity_net_su
     )
 
 
-def test_block_with_reduced_powder_data_custom_unit():
+def test_builder_with_reduced_powder_data_custom_unit():
     da = sc.DataArray(
         sc.array(dims=['tof'], values=[13.6, 26.0, 9.7], unit='counts'),
         coords={'tof': sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')},
     )
 
-    block = cif.Block('reduced', [])
-    block.add_reduced_powder_data(da)
-    res = write_to_str(block)
+    cif_ = cif.CIF('reduced')
+    cif_ = cif_.with_reduced_powder_data(da)
+    res = save_to_str(cif_)
 
     assert 'pdCIF' in res
     assert 'coreCIF' in res
 
-    _, _, tof_loop = res.split('\n\n')
+    _, tof_loop = res.rsplit('\n\n', 1)
     assert (
         tof_loop
         == '''# Unit of intensity: [counts]
@@ -837,7 +973,7 @@ _pd_proc.intensity_net
     )
 
 
-def test_block_with_reduced_powder_data_bad_dim():
+def test_builder_with_reduced_powder_data_bad_dim():
     da = sc.DataArray(
         sc.array(
             dims=['time'],
@@ -846,12 +982,12 @@ def test_block_with_reduced_powder_data_bad_dim():
         coords={'time': sc.array(dims=['time'], values=[1.2, 1.4, 2.3], unit='us')},
     )
 
-    block = cif.Block('reduced', [])
+    cif_ = cif.CIF('reduced')
     with pytest.raises(sc.CoordError):
-        block.add_reduced_powder_data(da)
+        cif_.with_reduced_powder_data(da)
 
 
-def test_block_with_reduced_powder_data_bad_name():
+def test_builder_with_reduced_powder_data_bad_name():
     da = sc.DataArray(
         sc.array(
             dims=['tof'],
@@ -861,37 +997,37 @@ def test_block_with_reduced_powder_data_bad_name():
         name='bad',
     )
 
-    block = cif.Block('reduced', [])
+    cif_ = cif.CIF('reduced')
     with pytest.raises(
         ValueError, match='Unrecognized name for reduced powder data: bad'
     ):
-        block.add_reduced_powder_data(da)
+        cif_.with_reduced_powder_data(da)
 
 
-def test_block_with_reduced_powder_data_bad_coord_unit():
+def test_builder_with_reduced_powder_data_bad_coord_unit():
     da = sc.DataArray(
         sc.array(dims=['tof'], values=[13.6, 26.0, 9.7]),
         coords={'tof': sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='ns')},
     )
 
-    block = cif.Block('reduced', [])
+    cif_ = cif.CIF('reduced')
     with pytest.raises(sc.UnitError):
-        block.add_reduced_powder_data(da)
+        cif_.with_reduced_powder_data(da)
 
 
-def test_block_powder_calibration():
+def test_builder_powder_calibration():
     da = sc.DataArray(
         sc.array(dims=['cal'], values=[1.2, 4.5, 6.7]),
         coords={'power': sc.array(dims=['cal'], values=[0, 1, -1])},
     )
-    block = cif.Block('cal', [])
-    block.add_powder_calibration(da)
-    res = write_to_str(block)
+    cif_ = cif.CIF('cal')
+    cif_ = cif_.with_powder_calibration(da)
+    res = save_to_str(cif_)
 
     assert 'pdCIF' in res
     assert 'coreCIF' in res
 
-    _, _, cal_loop = res.split('\n\n')
+    _, cal_loop = res.rsplit('\n\n', 1)
     assert (
         cal_loop
         == '''loop_
@@ -903,3 +1039,104 @@ DIFC 1 4.5
 DIFB -1 6.7
 '''
     )
+
+
+def test_builder_single_contact_author() -> None:
+    author = cif.Author(
+        name='Jane Doe',
+        email='jane.doe@ess.eu',
+        address='Partikelgatan, Lund',
+        orcid='https://orcid.org/0000-0000-0000-0001',
+    )
+    cif_ = cif.CIF().with_authors(author)
+    result = save_to_str(cif_)
+    expected = '''_audit_contact_author.name 'Jane Doe'
+_audit_contact_author.email jane.doe@ess.eu
+_audit_contact_author.address 'Partikelgatan, Lund'
+_audit_contact_author.id_orcid https://orcid.org/0000-0000-0000-0001'''
+    assert expected in result
+
+
+def test_builder_regular_author() -> None:
+    author = cif.Author(
+        name='Jane Doe',
+        email='jane.doe@ess.eu',
+        address='Partikelgatan, Lund',
+        orcid='https://orcid.org/0000-0000-0000-0001',
+        corresponding=False,
+    )
+    cif_ = cif.CIF().with_authors(author)
+    result = save_to_str(cif_)
+    expected = '''_audit_author.name 'Jane Doe'
+_audit_author.email jane.doe@ess.eu
+_audit_author.address 'Partikelgatan, Lund'
+_audit_author.id_orcid https://orcid.org/0000-0000-0000-0001'''
+    assert expected in result
+
+
+def test_builder_multiple_regular_authors() -> None:
+    authors = [
+        cif.Author(
+            name='Jane Doe',
+            email='jane.doe@ess.eu',
+            address='Partikelgatan, Lund',
+            orcid='https://orcid.org/0000-0000-0000-0001',
+            corresponding=False,
+        ),
+        cif.Author(
+            name='Max Mustermann',
+            email='mm@scipp.eu',
+            orcid='https://orcid.org/0000-0000-0000-0002',
+            corresponding=False,
+        ),
+    ]
+    cif_ = cif.CIF().with_authors(*authors)
+    result = save_to_str(cif_)
+    expected = """loop_
+_audit_author.name
+_audit_author.email
+_audit_author.address
+_audit_author.id_orcid
+'Jane Doe' jane.doe@ess.eu 'Partikelgatan, Lund' https://orcid.org/0000-0000-0000-0001
+'Max Mustermann' mm@scipp.eu '' https://orcid.org/0000-0000-0000-0002
+"""
+    assert expected in result
+
+
+def test_builder_regular_author_role() -> None:
+    author = cif.Author(
+        name='Jane Doe',
+        role='measurement',
+        corresponding=False,
+    )
+    cif_ = cif.CIF().with_authors(author)
+    result = save_to_str(cif_)
+
+    author_pattern = re.compile(r"""_audit_author.name 'Jane Doe'
+_audit_author.id ([0-9a-f]+)""")
+    author_match = re.search(author_pattern, result)
+    assert author_match is not None
+    author_id = author_match.group(1)
+
+    expected = rf"""loop_
+_audit_author_role.id
+_audit_author_role.role
+{author_id} measurement"""
+
+    assert expected in result
+
+
+def test_builder_many_fields() -> None:
+    cif_ = (
+        cif.CIF('my/name')
+        .with_authors(cif.Author(name='Jane Doe'))
+        .with_reducers('test-package')
+        .with_beamline(beamline='fake')
+    )
+    result = save_to_str(cif_)
+
+    assert 'data_my/name' in result
+    assert '_audit_contact_author.name' in result
+    assert '_diffrn_radiation.probe neutron' in result
+    assert '_diffrn_source.beamline fake' in result
+    assert '_computing.diffrn_reduction test-package'
