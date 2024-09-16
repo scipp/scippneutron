@@ -1218,6 +1218,7 @@ def test_EventWorkspace_with_pulse_times_array():
     )
 
 
+@pytest.mark.skip("Loading POLARIS data freezes")
 def test_duplicate_monitor_names():
     from mantid.simpleapi import LoadEmptyInstrument
 
