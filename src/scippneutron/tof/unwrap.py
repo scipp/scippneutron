@@ -81,7 +81,7 @@ PulsePeriod = NewType('PulsePeriod', sc.Variable)
 Period of the source pulses, i.e., time between consecutive pulse starts.
 """
 
-PulseStride = NewType('PulseStride', int | None)
+PulseStride = NewType('PulseStride', int)
 """
 Stride of used pulses. Usually 1, but may be a small integer when pulse-skipping.
 """
@@ -96,7 +96,7 @@ RawData = NewType('RawData', sc.DataArray)
 Raw detector data loaded from a NeXus file, e.g., NXdetector containing NXevent_data.
 """
 
-SourceChopperName = NewType('SourceChopperName', str | None)
+SourceChopperName = NewType('SourceChopperName', str)
 """
 Name of the chopper defining the source location and time-of-flight time origin.
 """
@@ -186,7 +186,9 @@ The WFM choppers in the beamline.
 """
 
 
-def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FramePeriod:
+def frame_period(
+    pulse_period: PulsePeriod, pulse_stride: PulseStride | None
+) -> FramePeriod:
     if pulse_stride is None:
         return pulse_period
     return FramePeriod(pulse_period * pulse_stride)
@@ -358,7 +360,7 @@ def offset_from_wrapped(
 def source_chopper(
     choppers: Choppers,
     source_time_range: SourceTimeRange,
-    source_chopper_name: SourceChopperName,
+    source_chopper_name: SourceChopperName | None,
 ) -> SourceChopper:
     """
     Return the chopper defining the source location and time-of-flight time origin.

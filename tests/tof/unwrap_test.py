@@ -364,7 +364,7 @@ def test_wfm_unwrap(ess_10s_14Hz, ess_pulse) -> None:
         ess_pulse.wavelength_max,
     )
     pl[unwrap.Choppers] = choppers
-    pl[unwrap.WFMChopperNames | None] = ('wfm1', 'wfm2')
+    pl[unwrap.WFMChopperNames] = ('wfm1', 'wfm2')
     pl[unwrap.Ltotal] = distance
     bounds = pl.compute(unwrap.SubframeBounds)
     assert bounds.sizes == {'bound': 2, 'subframe': 6}
