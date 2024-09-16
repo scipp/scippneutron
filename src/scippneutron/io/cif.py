@@ -131,6 +131,7 @@ import io
 import warnings
 from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager
+from copy import copy
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -180,7 +181,8 @@ def save_cif(
     """
     if isinstance(content, CIF):
         if comment:
-            raise ValueError('Cannot specify a comment when saving a CIF object')
+            content = copy(content)
+            content.comment = comment
         content.save(fname)
         return
 
