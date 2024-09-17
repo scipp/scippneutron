@@ -13,6 +13,7 @@ This provides data in a structure as typically provided in a NeXus file, includi
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import timedelta
 
 import numpy as np
@@ -237,6 +238,7 @@ class FakeBeamlineEss:
         monitors: dict[str, sc.Variable],
         run_length: sc.Variable,
         events_per_pulse: int = 200000,
+        source: Callable | None = None,
         # time_of_flight_origin: str | None = None,
     ):
         import math
@@ -245,13 +247,16 @@ class FakeBeamlineEss:
         from tof.facilities.ess_pulse import pulse
 
         frequency = pulse.frequency
-        npulses = math.ceil((run_length * frequency).to(unit='').value)
+        self.npulses = math.ceil((run_length * frequency).to(unit='').value)
         self.events_per_pulse = events_per_pulse
 
         # Create a source
-        self.source = tof.Source(
-            facility='ess', neutrons=self.events_per_pulse, pulses=npulses
-        )
+        if source is None:
+            self.source = tof.Source(
+                facility='ess', neutrons=self.events_per_pulse, pulses=self.npulses
+            )
+        else:
+            self.source = source(pulses=self.npulses)
 
         # Convert the choppers to tof.Chopper
         angular_speed = sc.constants.pi * (2.0 * sc.units.rad) * frequency
@@ -282,17 +287,14 @@ class FakeBeamlineEss:
 
     def get_monitor(self, name: str) -> sc.DataGroup:
         # Create some fake pulse time zero
+        start = np.datetime64("2024-01-01T12:00:00.000000")
+        dt = np.timedelta64(int(1 / 14 * 1e6), 'us')
+        end = start + dt * self.npulses
+
         event_time_zero = sc.array(
             dims=['event'],
             # Repeat N times the time_zero for each event in a pulse
-            values=np.repeat(
-                np.arange(
-                    np.datetime64("2024-01-01T12:00:00.000000"),
-                    np.datetime64("2024-01-01T12:00:01.000000"),
-                    timedelta(seconds=1 / 14),
-                ),
-                self.events_per_pulse,
-            ),
+            values=np.repeat(np.arange(start, end, dt), self.events_per_pulse),
         )
 
         # Format the data in a way that resembles data loaded from NeXus
