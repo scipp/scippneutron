@@ -4,11 +4,79 @@
 
 This module contains tools for writing `CIF <https://www.iucr.org/resources/cif>`_
 files with diffraction data.
-It does not support reading CIF files.
+`It does not support reading CIF files.`
 
-Examples
---------
-Make mockup powder diffraction data:
+CIF Builder: High-level interface
+---------------------------------
+This module supports two interfaces for writing files.
+The high-level interface uses a builder pattern for assembling files.
+It is implemented by :class:`CIF`.
+
+To demonstrate the interface, first make some mockup powder diffraction data:
+
+  >>> import scipp as sc
+  >>> tof = sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')
+  >>> intensity = sc.array(
+  ...     dims=['tof'],
+  ...     values=[13.6, 26.0, 9.7],
+  ...     variances=[0.7, 1.1, 0.5],
+  ... )
+  >>> da = sc.DataArray(intensity, coords={'tof': tof})
+
+Assemble data and metadata using a :class:`CIF` builder:
+
+  >>> from scippneutron.io import cif
+  >>> cif_ = (
+  ...  cif.CIF('my-data', comment="This is a demo of ScippNeutron's CIF builder.")
+  ...  .with_beamline(beamline='fake', facility='made up')
+  ...  .with_authors(cif.Author(name='Jane Doe', orcid='0000-0000-0000-0001'))
+  ...  .with_reduced_powder_data(da)
+  ... )
+
+When all data has been added, write it to a file:
+
+  >>> cif_.save('example.cif')
+
+This results in a file containing
+
+.. code-block:: text
+
+    #\\#CIF_1.1
+    # This is a demo of ScippNeutron's CIF builder.
+    data_my-data
+
+    loop_
+    _audit_conform.dict_name
+    _audit_conform.dict_version
+    _audit_conform.dict_location
+    pdCIF 2.5.0 https://github.com/COMCIFS/Powder_Dictionary/blob/7608b92165f58f968f054344e67662e01d4b401a/cif_pow.dic
+    coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
+
+    _audit.creation_date 2024-09-05T13:47:54+00:00
+    _audit.creation_method 'Written by scippneutron v24.6.1
+
+    _audit_contact_author.name 'Jane Doe'
+    _audit_contact_author.id_orcid 0000-0000-0000-0001
+
+    _diffrn_radiation.probe neutron
+    _diffrn_source.beamline fake
+    _diffrn_source.facility 'made up'
+
+    loop_
+    _pd_meas.time_of_flight
+    _pd_proc.intensity_net
+    _pd_proc.intensity_net_su
+    1.2 13.6 0.8366600265340756
+    1.4 26.0 1.0488088481701516
+    2.3 9.7 0.7071067811865476
+
+Chunks and loops: Low-level interface
+-------------------------------------
+The high-level CIF builder uses :class:`Block`, :class:`Chunk`, and :class:`Loop` to
+encode data.
+Those classes can also be used directly to gain more control over the file contents.
+
+To demonstrate, make mockup powder diffraction data:
 
   >>> import scipp as sc
   >>> tof = sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')
@@ -19,8 +87,6 @@ Make mockup powder diffraction data:
   ... )
 
 Wrap the data in a ``Loop`` to write them together as columns.
-(Note that this particular example could more easily be done with
-:math:`scippneutron.io.cif.Block.add_reduced_powder_data`.)
 
   >>> from scippneutron.io import cif
   >>> tof_loop = cif.Loop({
@@ -63,10 +129,11 @@ from __future__ import annotations
 
 import io
 import warnings
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager
+from copy import copy
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -93,7 +160,10 @@ PD_SCHEMA = CIFSchema(
 
 
 def save_cif(
-    fname: str | Path | io.TextIOBase, blocks: Block | Iterable[Block]
+    fname: str | Path | io.TextIOBase,
+    content: Block | Iterable[Block] | CIF,
+    *,
+    comment: str = '',
 ) -> None:
     """Save data blocks to a CIF file.
 
@@ -104,17 +174,307 @@ def save_cif(
     ----------
     fname:
         Path or file handle for the output file.
-    blocks:
-        One or more CIF data blocks to write to the file.
+    content:
+        One or more CIF data blocks or a ``CIF`` object to write to the file.
+    comment:
+        Optional comment that can be written at the top of the file.
     """
-    if isinstance(blocks, Block):
-        blocks = (blocks,)
+    if isinstance(content, CIF):
+        if comment:
+            content = copy(content)
+            content.comment = comment
+        content.save(fname)
+        return
+
+    if isinstance(content, Block):
+        content = (content,)
     with _open(fname) as f:
-        _write_file_heading(f)
-        _write_multi(f, blocks)
+        _write_file_heading(f, comment=comment)
+        _write_multi(f, content)
 
 
-class Chunk:
+class CIF:
+    """A builder for CIF files.
+
+    This class implements a builder pattern for defining the contents of a CIF file.
+    See the module documentation of :mod:`cif` for examples.
+    """
+
+    def __init__(self, name='', *, comment: str = '') -> None:
+        self._block = Block(
+            name=name
+        )  # We mainly keep this around for managing the name.
+
+        self._comment = ''
+        self.comment = comment
+        # Keep a separate list from self._block to assemble items
+        # in a specific order when saving.
+        self._content: list[Chunk | Loop] = []
+        self._authors: list[Author] = []
+        self._reducers: list[str] = []
+
+        # Should be long enough to never run out of IDs.
+        self._id_generator = (str(i) for i in range(1, 1_000_000_000))
+
+    @property
+    def name(self) -> str:
+        return self._block.name
+
+    @name.setter
+    def name(self, name: str) -> None:
+        self._block.name = name
+
+    @property
+    def comment(self) -> str:
+        """Optional comment that can be written at the top of the file."""
+        return self._comment
+
+    @comment.setter
+    def comment(self, comment: str) -> None:
+        self._comment = _encode_non_ascii(comment)
+
+    @property
+    def schema(self) -> set[CIFSchema]:
+        """CIF schemas used for the file."""
+        return self._block.schema
+
+    def save(self, fname: str | Path | io.TextIOBase) -> None:
+        """
+        Parameters
+        ----------
+        fname:
+            Path or file handle for the output file.
+        """
+        block = self._block.copy()
+        _add_audit(block, self._reducers)
+        for item in (*self._assemble_authors(), *self._content):
+            block.add(item)
+        save_cif(fname, block, comment=self._comment)
+
+    def copy(self) -> CIF:
+        """Return a copy of this builder."""
+        cif_ = CIF(name=self.name, comment=self.comment)
+        cif_._block = self._block.copy()
+        cif_._content.extend(self._content)
+        cif_._authors.extend(self._authors)
+        cif_._reducers.extend(self._reducers)
+        return cif_
+
+    # TODO use Beamline model when available
+    #  see https://github.com/scipp/scippneutron/issues/473
+    def with_beamline(
+        self,
+        *,
+        beamline: str,
+        facility: str | None = None,
+        device: str | None = None,
+        comment: str = '',
+    ) -> CIF:
+        """Add beamline information."""
+        if device is None:
+            if (facility or '').lower() in _KNOWN_SPALLATION_SOURCES:
+                device = 'spallation'
+        fields = {
+            'diffrn_radiation.probe': 'neutron',
+            'diffrn_source.beamline': beamline,
+            'diffrn_source.facility': facility,
+            'diffrn_source.device': device,
+        }
+
+        cif_ = self.copy()
+        cif_._content.append(
+            Chunk(
+                {k: v for k, v in fields.items() if v is not None},
+                comment=comment,
+                schema=CORE_SCHEMA,
+            )
+        )
+        return cif_
+
+    def with_reduced_powder_data(self, data: sc.DataArray, *, comment: str = '') -> CIF:
+        """Add a loop with reduced powder data.
+
+        The input must be 1-dimensional with a dimension name in
+        ``('tof', 'dspacing')``.
+        The data array may also have a name in
+        ``('intensity_net', 'intensity_norm', 'intensity_total')``.
+        If the name is not set, it defaults to ``'intensity_net'``.
+
+        The data gets written as intensity along a single coord whose
+        name matches the dimension name.
+        Standard uncertainties are also written if present.
+
+        The unit of the coordinate must match the requirement of pdCIF.
+
+        Parameters
+        ----------
+        data:
+            1-dimensional data array with a recognized dimension name
+        comment:
+            Optional comment that can be written above the data in the file.
+
+        Returns
+        -------
+        :
+            A builder with added reduced data.
+
+        Examples
+        --------
+        Make mockup powder diffraction data:
+
+          >>> import scipp as sc
+          >>> tof = sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')
+          >>> intensity = sc.array(
+          ...     dims=['tof'],
+          ...     values=[13.6, 26.0, 9.7],
+          ...     variances=[0.7, 1.1, 0.5],
+          ... )
+
+        Add to a CIF builder:
+
+          >>> from scippneutron.io import cif
+          >>> cif_ = cif.CIF('reduced-data')
+          >>> da = sc.DataArray(intensity, coords={'tof': tof})
+          >>> cif_ = cif_.with_reduced_powder_data(da)
+        """
+        cif_ = self.copy()
+        cif_._content.append(_make_reduced_powder_loop(data, comment=comment))
+        return cif_
+
+    def with_powder_calibration(self, cal: sc.DataArray, *, comment: str = '') -> CIF:
+        r"""Add a powder calibration table.
+
+        The calibration data encode the following transformation from
+        d-spacing to time-of-flight:
+
+        .. math::
+
+            t = \sum_{i=0}^N\, c_i d^{p_i}
+
+        where :math:`c_i` is the i-th element of ``cal`` and :math:`p^{p_i}`
+        is the i-th element of ``cal.coords['power']``.
+
+        Parameters
+        ----------
+        cal:
+            The data are the calibration coefficients (possibly with variances).
+            Must have a coordinate called ``'power'`` defining :math:`p` in the
+            equation above.
+        comment:
+            Optional comment that can be written above the data in the file.
+
+        Returns
+        -------
+        :
+            A builder with added calibration data.
+
+        Examples
+        --------
+        Add a mockup calibration table:
+
+          >>> import scipp as sc
+          >>> from scippneutron.io import cif
+          >>> cal = sc.DataArray(
+          ...     sc.array(dims=['cal'], values=[3.4, 0.2]),
+          ...     coords={'power': sc.array(dims=['cal'], values=[0, 1])},
+          ... )
+          >>> cif_ = cif.CIF('powder-calibration')
+          >>> cif_ = cif_.with_powder_calibration(cal)
+        """
+        cif_ = self.copy()
+        cif_._content.append(_make_powder_calibration_loop(cal, comment=comment))
+        return cif_
+
+    def with_authors(self, *authors: Author) -> CIF:
+        """Add one or more authors.
+
+        Parameters
+        ----------
+        authors:
+            Authors to add to this CIF object.
+
+        Returns
+        -------
+        :
+            A builder with added calibration data.
+        """
+        cif_ = self.copy()
+        cif_._authors.extend(authors)
+        return cif_
+
+    def with_reducers(self, *reducers: str) -> CIF:
+        """Add one or more programs that were used to reduce the software.
+
+        Parameters
+        ----------
+        reducers:
+            Pieces of software that were used to reduce the data.
+            Each string is one piece of software in freeform notation.
+            It is recommended to include the program name and version.
+
+        Returns
+        -------
+        :
+            A builder with added calibration data.
+        """
+        cif_ = self.copy()
+        cif_._reducers.extend(reducers)
+        return cif_
+
+    def _assemble_authors(self) -> list[Chunk | Loop]:
+        contact = [author for author in self._authors if author.corresponding]
+        regular = [author for author in self._authors if not author.corresponding]
+
+        results = []
+        roles = {}
+        for authors, category in zip(
+            (contact, regular), ('audit_contact_author', 'audit_author'), strict=True
+        ):
+            if not authors:
+                continue
+            data, rols = _serialize_authors(authors, category, self._id_generator)
+            results.append(data)
+            roles.update(rols)
+        if roles:
+            results.append(_serialize_roles(roles))
+
+        return results
+
+
+# TODO replace with common metadata `Person` once that exists.
+#  See https://github.com/scipp/scippneutron/issues/473
+@dataclass(kw_only=True)
+class Author:
+    name: str
+    address: str | None = None
+    email: str | None = None
+    orcid: str | None = None
+    corresponding: bool = True
+    role: str | None = None
+
+
+class _CIFBase:
+    def __init__(self, *, comment: str = '', schema: CIFSchema) -> None:
+        self._comment = ''
+        self.comment = comment  # use str-encoding logic
+        self._schema = _preprocess_schema(schema)
+
+    @property
+    def comment(self) -> str:
+        """Optional comment that can be written above the object in the file."""
+        return self._comment
+
+    @comment.setter
+    def comment(self, comment: str) -> None:
+        self._comment = _encode_non_ascii(comment)
+
+    @property
+    def schema(self) -> set[CIFSchema]:
+        """CIF schemas used for the object."""
+        return self._schema
+
+
+class Chunk(_CIFBase):
     """A group of CIF key-value pairs.
 
     Chunks contain one or more key-value pairs where values are scalars,
@@ -143,28 +503,16 @@ class Chunk:
         comment:
             Optional comment that can be written above the chunk in the file.
         schema:
-            CIF Schema used for the chunk.
+            CIF schemas used for the chunk.
             Content is not checked against the schema, but the schema is written
             to the file.
         """
+        super().__init__(comment=comment, schema=schema)
         self._pairs = dict(pairs) if pairs is not None else {}
-        self._comment = ''
-        self.comment = comment
-        self._schema = _preprocess_schema(schema)
 
-    @property
-    def comment(self) -> str:
-        """Optional comment that can be written above the chunk in the file."""
-        return self._comment
-
-    @comment.setter
-    def comment(self, comment: str) -> None:
-        self._comment = _encode_non_ascii(comment)
-
-    @property
-    def schema(self) -> set[CIFSchema]:
-        """CIF Schema used for the chunk."""
-        return self._schema
+    def __setitem__(self, key: str, value: Any) -> None:
+        """Add a key-value pair to the chunk."""
+        self._pairs[key] = value
 
     def write(self, f: io.TextIOBase) -> None:
         """Write this chunk to a file.
@@ -185,7 +533,7 @@ class Chunk:
                 f.write(f'_{key} {v}\n')
 
 
-class Loop:
+class Loop(_CIFBase):
     """A CIF loop.
 
     Contains a mapping from strings to Scipp variables.
@@ -211,32 +559,25 @@ class Loop:
         comment:
             Optional comment that can be written above the loop in the file.
         schema:
-            CIF Schema used for the loop.
+            CIF schemas used for the loop.
             Content is not checked against the schema, but the schema is written
             to the file.
         """
+        super().__init__(comment=comment, schema=schema)
         self._columns = {}
         for key, column in columns.items():
             self[key] = column
-        self._comment = ''
-        self.comment = comment
-        self._schema = _preprocess_schema(schema)
-
-    @property
-    def comment(self) -> str:
-        """Optional comment that can be written above the loop in the file."""
-        return self._comment
-
-    @comment.setter
-    def comment(self, comment: str) -> None:
-        self._comment = _encode_non_ascii(comment)
-
-    @property
-    def schema(self) -> set[CIFSchema]:
-        """CIF Schema used for the loop."""
-        return self._schema
 
     def __setitem__(self, name: str, value: sc.Variable) -> None:
+        """Add a column to the loop.
+
+        Parameters
+        ---------
+        name:
+            Column name.
+        value:
+            Values of the column.
+        """
         if value.ndim != 1:
             raise sc.DimensionError(
                 "CIF loops can only contain 1d variables, got " f"{value.ndim} dims"
@@ -281,7 +622,7 @@ class Loop:
             f.write('\n')
 
 
-class Block:
+class Block(_CIFBase):
     """A CIF data block.
 
     A block contains an ordered sequence of loops
@@ -311,16 +652,14 @@ class Block:
         comment:
             Optional comment that can be written above the block in the file.
         schema:
-            CIF Schema used for the block.
+            CIF schemas used for the block.
             Content is not checked against the schema, but the schema is written
             to the file.
         """
+        super().__init__(comment=comment, schema=schema)
         self._name = ''
         self.name = name
         self._content = _convert_input_content(content) if content is not None else []
-        self._comment = ''
-        self.comment = comment
-        self._schema = _preprocess_schema(schema)
 
     @property
     def name(self) -> str:
@@ -344,21 +683,18 @@ class Block:
             )
 
     @property
-    def comment(self) -> str:
-        """Optional comment that can be written above the block in the file."""
-        return self._comment
-
-    @comment.setter
-    def comment(self, comment: str) -> None:
-        self._comment = _encode_non_ascii(comment)
-
-    @property
     def schema(self) -> set[CIFSchema]:
-        """CIF Schema used for the block."""
-        merged = set(self._schema)
+        """CIF schemas used for the block."""
+        merged = set(super().schema)
         for item in self._content:
             merged.update(item.schema)
         return merged
+
+    def copy(self) -> Block:
+        """Return a shallow copy of the block."""
+        return Block(
+            self.name, list(self._content), comment=self.comment, schema=self.schema
+        )
 
     def add(
         self,
@@ -380,86 +716,6 @@ class Block:
             content = Chunk(content, comment=comment)
         self._content.append(content)
 
-    def add_reduced_powder_data(self, data: sc.DataArray, *, comment: str = '') -> None:
-        """Add a loop with reduced powder data.
-
-        The input must be 1-dimensional with a dimension name in
-        ``('tof', 'dspacing')``.
-        The data array may also have a name in
-        ``('intensity_net', 'intensity_norm', 'intensity_total')``.
-        If the name is not set, it defaults to ``'intensity_net'``.
-
-        The data gets written as intensity along a single coord whose
-        name matches the dimension name.
-        Standard uncertainties are also written if present.
-
-        The unit of the coordinate must match the requirement of pdCIF.
-
-        Parameters
-        ----------
-        data:
-            1-dimensional data array with a recognized dimension name
-        comment:
-            Optional comment that can be written above the data in the file.
-
-        Examples
-        --------
-        Make mockup powder diffraction data:
-
-          >>> import scipp as sc
-          >>> tof = sc.array(dims=['tof'], values=[1.2, 1.4, 2.3], unit='us')
-          >>> intensity = sc.array(
-          ...     dims=['tof'],
-          ...     values=[13.6, 26.0, 9.7],
-          ...     variances=[0.7, 1.1, 0.5],
-          ... )
-
-        Add to a block:
-
-          >>> from scippneutron.io import cif
-          >>> block = cif.Block('reduced-data')
-          >>> da = sc.DataArray(intensity, coords={'tof': tof})
-          >>> block.add_reduced_powder_data(da)
-        """
-        self.add(_make_reduced_powder_loop(data, comment=comment))
-
-    def add_powder_calibration(self, cal: sc.DataArray, *, comment: str = '') -> None:
-        r"""Add a powder calibration table.
-
-        The calibration data encode the following transformation from
-        d-spacing to time-of-flight:
-
-        .. math::
-
-            t = \sum_{i=0}^N\, c_i d^{p_i}
-
-        where :math:`c_i` is the i-th element of ``cal`` and :math:`p^{p_i}`
-        is the i-th element of ``cal.coords['power']``.
-
-        Parameters
-        ----------
-        cal:
-            The data are the calibration coefficients (possibly with variances).
-            Must have a coordinate called ``'power'`` defining :math:`p` in the
-            equation above.
-        comment:
-            Optional comment that can be written above the data in the file.
-
-        Examples
-        --------
-        Add a mockup calibration table:
-
-          >>> import scipp as sc
-          >>> from scippneutron.io import cif
-          >>> cal = sc.DataArray(
-          ...     sc.array(dims=['cal'], values=[3.4, 0.2]),
-          ...     coords={'power': sc.array(dims=['cal'], values=[0, 1])},
-          ... )
-          >>> block = cif.Block('powder-calibration')
-          >>> block.add_powder_calibration(cal)
-        """
-        self.add(_make_powder_calibration_loop(cal, comment=comment))
-
     def write(self, f: io.TextIOBase) -> None:
         """Write this block to a file.
 
@@ -478,6 +734,16 @@ class Block:
             schema_loop.write(f)
             f.write('\n')
         _write_multi(f, self._content)
+
+
+_KNOWN_SPALLATION_SOURCES = {
+    'csns',
+    'ess',
+    'isis',
+    'j-parc',
+    'lansce' 'sinq',
+    'sns',
+}
 
 
 def _convert_input_content(
@@ -536,6 +802,8 @@ def _quotes_for_string_value(value: str) -> str | None:
         return "'"
     if ' ' in value:
         return "'"
+    if not value:
+        return "'"  # so that empty strings are shown as ''
     return None
 
 
@@ -580,8 +848,9 @@ def _write_multi(f: io.TextIOBase, to_write: Iterable[Any]) -> None:
         item.write(f)
 
 
-def _write_file_heading(f: io.TextIOBase) -> None:
+def _write_file_heading(f: io.TextIOBase, comment: str) -> None:
     f.write('#\\#CIF_1.1\n')
+    _write_comment(f, comment)
 
 
 def _reduced_powder_coord(data) -> tuple[str, sc.Variable]:
@@ -625,7 +894,8 @@ def _make_reduced_powder_loop(data: sc.DataArray, comment: str) -> Loop:
         res[data_name + '_su'] = sc.stddevs(data.data)
 
     if data.unit != 'one':
-        res.comment = f'Unit of intensity: [{data.unit}]'
+        pre = res.comment + '\n' if res.comment else ''
+        res.comment = f'{pre}Unit of intensity: [{data.unit}]'
 
     return res
 
@@ -650,3 +920,68 @@ def _make_powder_calibration_loop(data: sc.DataArray, comment: str) -> Loop:
     if data.variances is not None:
         res['pd_calib_d_to_tof.coeff_su'] = sc.stddevs(data.data)
     return res
+
+
+def _add_audit(block: Block, reducers: list[str]) -> None:
+    from .. import __version__
+
+    audit_chunk = Chunk(
+        {
+            'audit.creation_date': datetime.now(timezone.utc).replace(microsecond=0),
+            'audit.creation_method': f'Written by scippneutron v{__version__}',
+        },
+        schema=CORE_SCHEMA,
+    )
+    block.add(audit_chunk)
+
+    if len(reducers) == 1:
+        audit_chunk['computing.diffrn_reduction'] = reducers[0]
+    elif len(reducers) > 1:
+        block.add(
+            Loop(
+                {'computing.diffrn_reduction': sc.array(dims=['r'], values=reducers)},
+                schema=CORE_SCHEMA,
+            )
+        )
+
+
+def _serialize_authors(
+    authors: list[Author],
+    category: str,
+    id_generator: Iterator[str],
+) -> tuple[Chunk | Loop, dict[str, str]]:
+    fields = {
+        f'{category}.{key}': f
+        for key in ('name', 'email', 'address', 'orcid')
+        if any(f := [getattr(a, key) or '' for a in authors])
+    }
+    # Map between our name (Author.orcid) and CIF's (id_orcid)
+    if orcid_id := fields.pop(f'{category}.orcid', None):
+        fields[f'{category}.id_orcid'] = orcid_id
+
+    roles = {next(id_generator): a.role for a in authors}
+    if any(roles.values()):
+        fields[f'{category}.id'] = list(roles.keys())
+    roles = {key: val for key, val in roles.items() if val}
+
+    if len(authors) == 1:
+        return Chunk(
+            {key: val[0] for key, val in fields.items()},
+            schema=CORE_SCHEMA,
+        ), roles
+    return Loop(
+        {key: sc.array(dims=['author'], values=val) for key, val in fields.items()},
+        schema=CORE_SCHEMA,
+    ), roles
+
+
+def _serialize_roles(roles: dict[str, str]) -> Loop:
+    return Loop(
+        {
+            'audit_author_role.id': sc.array(dims=['role'], values=list(roles)),
+            'audit_author_role.role': sc.array(
+                dims=['role'], values=list(roles.values())
+            ),
+        },
+        schema=CORE_SCHEMA,
+    )
