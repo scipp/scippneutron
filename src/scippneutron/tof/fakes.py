@@ -14,7 +14,6 @@ This provides data in a structure as typically provided in a NeXus file, includi
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import timedelta
 
 import numpy as np
 import scipp as sc
