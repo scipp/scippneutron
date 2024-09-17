@@ -128,6 +128,10 @@ class TestMantidConversion(unittest.TestCase):
         y = scn.from_mantid(self.base_event_ws, advanced_geometry=True)
         assert sc.allclose(x["data"].coords['position'], y["data"].coords['position'])
 
+    @pytest.mark.skip(
+        reason="Mantid now raises the error: LoadEmptyInstrument-v1: "
+        "No instrument XML definition found"
+    )
     def test_advanced_geometry_with_absent_shape(self):
         # single bank 3 by 3
         ws = mantid.CreateSampleWorkspace(
