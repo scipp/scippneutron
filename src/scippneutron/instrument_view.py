@@ -208,7 +208,12 @@ def _get_camera(scene):
 
 
 def instrument_view(
-    scipp_obj, positions="position", pixel_size=None, components=None, **kwargs
+    scipp_obj,
+    positions="position",
+    pixel_size=None,
+    components=None,
+    cbar=True,
+    **kwargs,
 ):
     """Plot a 3D view of the instrument, using the `position` coordinate as the
     detector vector positions.
@@ -254,6 +259,8 @@ def instrument_view(
     components:
         Dictionary containing display names and corresponding settings
         (also a Dictionary) for additional components to display.
+    cbar:
+        If True, show a colorbar.
     kwargs:
         Additional keyword arguments to pass to :func:`plopp.scatter3d`.
 
@@ -273,7 +280,9 @@ def instrument_view(
         if len(pos_array) > 1:
             pixel_size = np.linalg.norm(pos_array[1] - pos_array[0])
 
-    fig = pp.scatter3d(scipp_obj, pos=positions, pixel_size=pixel_size, **kwargs)
+    fig = pp.scatter3d(
+        scipp_obj, pos=positions, pixel_size=pixel_size, cbar=cbar, **kwargs
+    )
     scene = fig.canvas.scene
 
     # Add additional components from the beamline
