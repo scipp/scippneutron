@@ -122,10 +122,8 @@ class MaskingTool:
         """
         import ipywidgets as ipw
         from mpltoolbox import Hspans, Rectangles, Vspans
-        from plopp.plotting.common import require_interactive_backend
+        from plopp.plotting.common import require_interactive_figure
         from plopp.widgets import DrawingTool, style
-
-        require_interactive_backend("Masking tool")
 
         # Convert potential bin edge coords to midpoints
         da = data.copy(deep=False)
@@ -140,6 +138,7 @@ class MaskingTool:
         self.data_node = pp.Node(da)
         self.masking_node = pp.Node(_apply_masks, self.data_node)
         self.fig = figure_lib[ndim](self.masking_node, **kwargs)
+        require_interactive_figure(self.fig, "Masking tool")
 
         common = {
             "figure": self.fig,

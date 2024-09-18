@@ -4,8 +4,9 @@
 h5py
 numpy>=1.20
 scipy>=1.7.0
-scipp @ https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+scipp @ https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 scippnexus @ git+https://github.com/scipp/scippnexus@main
 plopp @ git+https://github.com/scipp/plopp@main
 mpltoolbox @ git+https://github.com/scipp/mpltoolbox@main
 sciline @ git+https://github.com/scipp/sciline@main
+tof @ git+https://github.com/scipp/tof@main

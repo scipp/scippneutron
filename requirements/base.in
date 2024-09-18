@@ -5,7 +5,7 @@
 h5py
 mpltoolbox
 numpy>=1.20
-plopp>=24.05.0
+plopp>=24.09.1
 scipp>=23.07.0
 scippnexus>=23.11.0
 scipy>=1.7.0

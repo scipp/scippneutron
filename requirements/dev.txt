@@ -26,7 +26,7 @@ arrow==1.3.0
     # via isoduration
 async-lru==2.0.4
     # via jupyterlab
-cffi==1.16.0
+cffi==1.17.1
     # via argon2-cffi-bindings
 click==8.1.7
     # via
@@ -34,7 +34,7 @@ click==8.1.7
     #   pip-tools
 copier==9.3.1
     # via -r dev.in
-dunamai==1.21.2
+dunamai==1.22.0
     # via copier
 fqdn==1.5.1
     # via jsonschema
@@ -44,7 +44,7 @@ h11==0.14.0
     # via httpcore
 httpcore==1.0.5
     # via httpx
-httpx==0.27.0
+httpx==0.27.2
     # via jupyterlab
 isoduration==20.11.0
     # via jsonschema
@@ -71,7 +71,7 @@ jupyter-server==2.14.2
     #   notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.2.4
+jupyterlab==4.2.5
     # via -r dev.in
 jupyterlab-server==2.27.3
     # via jupyterlab
@@ -91,9 +91,9 @@ prometheus-client==0.20.0
     # via jupyter-server
 pycparser==2.22
     # via cffi
-pydantic==2.8.2
+pydantic==2.9.2
     # via copier
-pydantic-core==2.20.1
+pydantic-core==2.23.4
     # via pydantic
 python-json-logger==2.0.7
     # via jupyter-events
@@ -119,15 +119,15 @@ terminado==0.18.1
     #   jupyter-server-terminals
 toposort==1.10
     # via pip-compile-multi
-types-docutils==0.21.0.20240724
+types-docutils==0.21.0.20240907
     # via -r dev.in
-types-python-dateutil==2.9.0.20240316
+types-python-dateutil==2.9.0.20240906
     # via arrow
-types-requests==2.32.0.20240712
+types-requests==2.32.0.20240914
     # via -r dev.in
 uri-template==1.3.0
     # via jsonschema
-webcolors==24.6.0
+webcolors==24.8.0
     # via jsonschema
 websocket-client==1.8.0
     # via jupyter-server
