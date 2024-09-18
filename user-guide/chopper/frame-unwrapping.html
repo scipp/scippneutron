@@ -1,0 +1,832 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Frame Unwrapping &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=b49db9a2"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user-guide/chopper/frame-unwrapping';</script>
+    <script src="../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Coordinate Transformations" href="../coordinate-transformations.html" />
+    <link rel="prev" title="Chopper Cascades" href="chopper-cascade.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <script>document.write(`<img src="../../_static/logo-dark.svg" class="logo__image only-dark" alt="ScippNeutron - Home"/>`);</script>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Choppers</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="processing-nexus-choppers.html">Processing NeXus Choppers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chopper-cascade.html">Chopper Cascades</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Frame Unwrapping</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../coordinate-transformations.html">Coordinate Transformations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../groupby.html">GroupBy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../from-mantid-to-scipp.html">From Mantid to Scipp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../instrument-view.html">Instrument view</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../recipes.html">Recipes: How do I …?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../masking-tool.html">Interactive masking tool</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../algorithms-background/index.html">Background on algorithms</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../algorithms-background/two_theta-gravity-correction.html">two_theta gravity correction</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Context">Context</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Default-mode">Default mode</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Unwrapping">Unwrapping</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Time-of-flight-computation">Time-of-flight computation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Time-of-flight-origin">Time-of-flight origin</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Pulse-skipping-mode">Pulse-skipping mode</a></li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../../_sources/user-guide/chopper/frame-unwrapping.ipynb">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">User Guide</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Choppers</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">Frame Unwrapping</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="Frame-Unwrapping">
+<h1>Frame Unwrapping<a class="headerlink" href="#Frame-Unwrapping" title="Link to this heading">#</a></h1>
+<section id="Context">
+<h2>Context<a class="headerlink" href="#Context" title="Link to this heading">#</a></h2>
+<p>At time-of-flight neutron sources recording event-mode, time-stamps of detected neutrons are written to files in an <code class="docutils literal notranslate"><span class="pre">NXevent_data</span></code> group. This contains two main time components, <code class="docutils literal notranslate"><span class="pre">event_time_zero</span></code> and <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code>. The sum of the two would typically yield the absolute detection time of the neutron. For computation of wavelengths or energies during data-reduction, a time-of-flight is required. In principle the time-of-flight could be equivalent to <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code>, and the
+emission time of the neutron to <code class="docutils literal notranslate"><span class="pre">event_time_zero</span></code>. Since an actual computation of time-of-flight would require knowledge about chopper settings, detector positions, and whether the scattering of the sample is elastic or inelastic, this may however not be the case in practice. Instead, the data acquisition system may, e.g., record the time at which the proton pulse hits the target as <code class="docutils literal notranslate"><span class="pre">event_time_zero</span></code>, with <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> representing the offset since then.</p>
+<p>We refer to the process of “unwrapping” these time stamps into an actual time-of-flight as <em>frame unwrapping</em>, since <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> “wraps around” with the period of the proton pulse and neutrons created by different proton pulses may be recorded with the <em>same</em> <code class="docutils literal notranslate"><span class="pre">event_time_zero</span></code>. The figures in the remainder of this document will clarify this.</p>
+</section>
+<section id="Default-mode">
+<h2>Default mode<a class="headerlink" href="#Default-mode" title="Link to this heading">#</a></h2>
+<p>Often there is a 1:1 correspondence between source pulses and neutron pulses propagated to the sample and detectors.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">frameunwrapping</span> <span class="kn">import</span> <span class="n">default_frame_diagram</span>
+
+<span class="n">default_frame_diagram</span><span class="p">()</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_3_0.png" src="../../_images/user-guide_chopper_frame-unwrapping_3_0.png" />
+</div>
+</div>
+<p>In the figure above the index <code class="docutils literal notranslate"><span class="pre">i</span></code> labels source pulses. We define:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(T_0^i\)</span> is the <code class="docutils literal notranslate"><span class="pre">event_time_zero</span></code> recorded in an <code class="docutils literal notranslate"><span class="pre">NXevent_data</span></code> group. These times are indicated by the vertical dotted lines.</p></li>
+<li><p><span class="math notranslate nohighlight">\(T_0^{i+1} = T_0^i + L_0\)</span> where the frame length <span class="math notranslate nohighlight">\(L_0\)</span> is defined by <span class="math notranslate nohighlight">\(L_0 = 1/f_0\)</span>, given a source frequency <span class="math notranslate nohighlight">\(f_0\)</span>.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\Delta T_0\)</span> is the offset from <span class="math notranslate nohighlight">\(T_0^i\)</span> at which the neutrons are “emitted”. This may be zero (or half the pulse length) if the full pulse length is used, but choppers such as resolution choppers may extract a section of the pulse that is not aligned with the start of the full pulse. This offset can also be used to take into account a potential difference between the timing system’s definition of the pulse time and the actual beginning of the neutron pulse exiting, e.g., the
+moderator.</p></li>
+<li><p>The black solid line within the first pulse (blue) indicates a neutron detected at <span class="math notranslate nohighlight">\(T_0^{i+1} + \Delta t\)</span>. <span class="math notranslate nohighlight">\(\Delta t\)</span> is the <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> in an <code class="docutils literal notranslate"><span class="pre">NXevent_data</span></code> group. This value is recorded for every neutron and gives the offset from the latest (previous) <code class="docutils literal notranslate"><span class="pre">event_time_zero</span></code> (<span class="math notranslate nohighlight">\(T_0^j\)</span>), i.e., the time difference to the previous vertical dotted line.</p></li>
+</ul>
+<p>To compute the time-of-flight for a neutron, we need to identify which source pulse it originated from. Consider the shaded vertical band above, indicating the time during which arriving neutrons are associated with <span class="math notranslate nohighlight">\(T_0^{i+1}\)</span>. For, e.g., detector 1 we observe:</p>
+<ul class="simple">
+<li><p>First (small <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> <span class="math notranslate nohighlight">\(\Delta t\)</span>, to the left of the dashed black line) we see the slowest neutrons from N (in this case N=2) source pulses earlier.</p></li>
+<li><p>Then (larger <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> <span class="math notranslate nohighlight">\(\Delta t\)</span>, to the right of the dashed black line) we see the fastest neutrons from N-1 (in this case N-1=1) source pulses earlier.</p></li>
+<li><p>Typically there is is an intermediate region where no neutrons should be able to traverse the chopper cascade. Neutrons detected in this time interval must thus be background from other sources.</p></li>
+</ul>
+<p>To compute the time-of-flight we first add an integer multiple of the frame length to <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> (and subtract the equivalent from <code class="docutils literal notranslate"><span class="pre">event_time_zero</span></code>). Within a given frame (indicated above by a band between two dotted vertical lines, such as the grey shaded band) there is a <em>pivot time</em>: Neutrons with <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> <em>before</em> the pivot time originated one source frame <em>before</em> neutrons <em>after</em> the pivot time. As illustrated in the figure, the pivot time <span class="math notranslate nohighlight">\(t_\text{pivot}\)</span>
+depends on the detector or rather the distance of the detector (or monitor) from the scattering position.</p>
+<section id="Unwrapping">
+<h3>Unwrapping<a class="headerlink" href="#Unwrapping" title="Link to this heading">#</a></h3>
+<p>The pivot time and the resulting offsets can be computed from the properties of the source pulse and the chopper cascade, using the <a class="reference external" href="https://scipp.github.io/scippneutron/generated/modules/scippneutron.tof.unwrap.html">scippneutron.tof.unwrap</a> module:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sciline</span> <span class="k">as</span> <span class="nn">sl</span>
+<span class="kn">from</span> <span class="nn">scippneutron.tof</span> <span class="kn">import</span> <span class="n">unwrap</span>
+</pre></div>
+</div>
+</div>
+<p>The module performs the following transformations for unwrapping the time stamps:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pl</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">unwrap_providers</span><span class="p">())</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">UnwrappedData</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_8_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_8_0.svg" />
+</div>
+</div>
+<p>It is currently unclear if the simple chopper-cascade model used in the current implementation is sufficient for all use-cases. In practice it may be that <code class="docutils literal notranslate"><span class="pre">FrameBounds</span></code> will be defined or provided differently.</p>
+</section>
+<section id="Time-of-flight-computation">
+<h3>Time-of-flight computation<a class="headerlink" href="#Time-of-flight-computation" title="Link to this heading">#</a></h3>
+<p>After unwrapping, the time-of-flight can be computed by defining an origin time and a distance <span class="math notranslate nohighlight">\(L_1\)</span>. If we, e.g., define the start of time-of-flight at a chopper, we must also adapt the distance <span class="math notranslate nohighlight">\(L_1\)</span> between the origin and the sample which will be used later on to compute, e.g., the wavelength or energy of the neutron. If defined via, e.g., a calibration, this can also be used to deal with curved guides or other non-linearities in the neutron path.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pl</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">time_of_flight_providers</span><span class="p">())</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">TofData</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_11_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_11_0.svg" />
+</div>
+</div>
+</section>
+<section id="Time-of-flight-origin">
+<h3>Time-of-flight origin<a class="headerlink" href="#Time-of-flight-origin" title="Link to this heading">#</a></h3>
+<p>The origin time (used above) could be defined by a chopper, a calibration, or even set by hand. The module currently provides a naive definition via the chopper cascade:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pl</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">time_of_flight_origin_from_choppers_providers</span><span class="p">())</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">TimeOfFlightOrigin</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_13_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_13_0.svg" />
+</div>
+</div>
+<p>With WFM we have the following task graph:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pl</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">time_of_flight_origin_from_choppers_providers</span><span class="p">(</span><span class="n">wfm</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">TimeOfFlightOrigin</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_15_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_15_0.svg" />
+</div>
+</div>
+</section>
+</section>
+<section id="Pulse-skipping-mode">
+<h2>Pulse-skipping mode<a class="headerlink" href="#Pulse-skipping-mode" title="Link to this heading">#</a></h2>
+<p>Choppers may be used to skip pulses, for the purpose of a simultaneous study of a wider wavelength range. Conceptually this looks as follows:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">frameunwrapping</span> <span class="kn">import</span> <span class="n">frame_skipping_diagram</span>
+
+<span class="n">frame_skipping_diagram</span><span class="p">()</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_17_0.png" src="../../_images/user-guide_chopper_frame-unwrapping_17_0.png" />
+</div>
+</div>
+<p>The task graph that was given above for the non-pulse-skipping mode is then extended as shown below:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pl</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">unwrap_providers</span><span class="p">(</span><span class="n">pulse_skipping</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">UnwrappedData</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_19_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_19_0.svg" />
+</div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="chopper-cascade.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Chopper Cascades</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../coordinate-transformations.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Coordinate Transformations</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.0.2.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 24.9.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.4.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
