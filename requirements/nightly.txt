@@ -18,7 +18,7 @@ plopp @ git+https://github.com/scipp/plopp@main
     # via
     #   -r nightly.in
     #   tof
-scipp @ https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+scipp @ https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
     # via
     #   -r nightly.in
     #   scippnexus
