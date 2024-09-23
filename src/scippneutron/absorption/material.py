@@ -21,5 +21,5 @@ class Material:
                     wavelength
                     / sc.scalar(1.7982, unit='angstrom').to(unit=wavelength.unit)
                 )
-            ).to(unit=self.scatter_cross_section.unit)
+            ).to(unit=self.scattering_cross_section.unit)
         )
