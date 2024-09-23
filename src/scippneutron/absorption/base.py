@@ -11,7 +11,9 @@ def single_scatter_distance_through_sample(
 
 def transmission_fraction(material, distance_through_sample, wavelength):
     return sc.exp(
-        -material.attenuation_coefficient(wavelength) * distance_through_sample
+        -(material.attenuation_coefficient(wavelength) * distance_through_sample).to(
+            unit='dimensionless'
+        )
     )
 
 
