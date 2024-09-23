@@ -19,17 +19,15 @@ class Cylinder:
     def beam_intersection(self, start_point, direction):
         'Length of intersection between beam and cylinder'
         base_point = self.center_of_base - start_point
-        cyl_intersection, cyl_left, cyl_right = _line_infinite_cylinder_intersection(
+        cyl_intersection, *cyl_interval = _line_infinite_cylinder_intersection(
             self.symmetry_line, base_point, self.radius, direction
         )
-        sla_intersection, sla_left, sla_right = _line_slab_intersection(
+        slab_intersection, *slab_interval = _line_slab_intersection(
             self.symmetry_line, base_point, self.height, direction
         )
         return sc.where(
-            cyl_intersection & sla_intersection,
-            _positive_interval_intersection(
-                (sla_left, sla_right), (cyl_left, cyl_right)
-            ),
+            cyl_intersection & slab_intersection,
+            _positive_interval_intersection(slab_interval, cyl_interval),
             sc.scalar(0.0, unit=start_point.unit),
         )
 
@@ -86,6 +84,7 @@ class Cylinder:
         return {k: sc.array(dims=['quad'], values=v) for k, v in quad.items()}
 
     def quadrature(self, kind: Literal['expensive', 'medium', 'cheap', 'mc']):
+        'Returns quadrature points and weights of the cylinder.'
         quad = self._select_quadrature_points(kind)
         # Scale to size of cylinder
         x = (quad['x'] * self.radius).to(unit=self.center.unit)
@@ -97,9 +96,8 @@ class Cylinder:
             values=(sc.concat([x, y, z], dim='row').transpose(['quad', 'row']).values),
             unit=self.center.unit,
         )
-
         # By default the cylinder quadrature has z as the symmetry axis.
-        # We need to rotate the quadrature so the symmetry axis matches the cylinder.
+        # We need to rotate the quadrature to match the symmetry axis of the cylinder.
         u = sc.cross(sc.vector([0, 0, 1]), self.symmetry_line)
         un = sc.norm(u)
         if un >= 1e-10:
@@ -127,10 +125,6 @@ def _cylinder_quadrature_from_product(disk_quadrature, line_quadrature):
     )
 
 
-def _max0(x):
-    return sc.where(x >= sc.scalar(0.0, unit=x.unit), x, sc.scalar(0.0, unit=x.unit))
-
-
 def _minimum(x, y):
     return sc.where(x <= y, x, y)
 
@@ -139,35 +133,39 @@ def _maximum(x, y):
     return sc.where(x >= y, x, y)
 
 
-def _positive_intersection_sorted_by_left(a, b):
-    '''Length of the intersection of a and b and the positive real axis,
-    provided that the leftmost point of a is left of the leftmost point of b'''
-    return sc.where(
-        b[0] <= a[1],
-        _max0(_minimum(b[1], a[1])) - _max0(b[0]),
-        sc.scalar(0.0, unit=a[0].unit),
-    )
+def _max0(x):
+    return _maximum(x, sc.scalar(0.0, unit=x.unit))
 
 
 def _positive_interval_intersection(a, b):
     '''Length of the intersection of a and b and the positive real axis'''
-    return sc.where(
-        a[0] <= b[0],
-        _positive_intersection_sorted_by_left(a, b),
-        _positive_intersection_sorted_by_left(b, a),
-    )
+    left, right = _maximum(a[0], b[0]), _minimum(a[1], b[1])
+    return _max0(_max0(right) - _max0(left))
 
 
 def _line_infinite_cylinder_intersection(a, b, r, n):
     '''Intersection between a cylinder and a line through the origin with direction n.
+    See https://en.wikipedia.org/wiki/Line-cylinder_intersection.
+
+    Parameters:
+    -----------
+    a: cylinder symmetry line
+    b: point on cylinder symmetry line
+    r: radius
+    n: direction of line to intersect cylinder
+
+    If the cylinder intersects the line through the origin in the direction of n
+    then `intersection` is `True` and the cylinder and the line intersects all
+    points `t * n` for `left <= t <= right`.
+
     Returns:
-        intersection: bool, True if the line and the cylinder intersect anywhere
-        left: float,
-            distance from origin to left edge
-            of intersection segment (direction opposite n)
-        right: float,
-            distance from origin to right edge
-            of intersection segment (direction n)
+    ---------
+    intersection:
+        True if the line and the cylinder intersect anywhere
+    left:
+        first edge of intersection segment (direction opposite n)
+    right:
+        second edge of intersection segment (direction n)
     '''
     nxa = sc.cross(n, a)
     nxa_square = sc.dot(nxa, nxa)
@@ -195,16 +193,16 @@ def _line_infinite_cylinder_intersection(a, b, r, n):
 def _line_slab_intersection(a, b, h, n):
     '''Intersection between a slab (the volume between two parallel planes)
     and a line through the origin with direction n.
-    Returns:
-        intersection: bool, True if the line and the slab intersect anywhere
-        left: float,
-            distance from origin to left edge
-            of intersection segment (direction opposite n)
-        right: float,
-            distance from origin to right edge
-            of intersection segment (direction n)
-    '''
 
+    Returns:
+    --------
+    intersection:
+        True if the line and the slab intersect anywhere
+    left:
+        first edge of intersection segment (direction opposite n)
+    right:
+        second edge of intersection segment (direction n)
+    '''
     ndota = sc.dot(n, a)
     bdota = sc.dot(b, a)
     origin_in_plane = (bdota <= sc.scalar(0.0, unit=h.unit)) & (bdota >= -h)
