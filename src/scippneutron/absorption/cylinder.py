@@ -68,8 +68,15 @@ class Cylinder(SampleShape):
                 quadratures.disk12,
                 dict(x=x, weights=w),  # noqa: C408
             )
-        elif kind == 'mc':
-            k = 5000
+        elif (
+            kind == 'mc'
+            or isinstance(kind, tuple)
+            and len(kind) > 0
+            and kind[0] == 'mc'
+        ):
+            # The Monte-Carlo integration option is useful because
+            # while inefficient it is guaranteed unbiased and good for debugging.
+            k = 5000 if kind == 'mc' or len(kind) == 1 else kind[1]
             # Uniform sampling in cylinder
             r = np.random.random(k) ** 0.5
             th = 2 * np.pi * np.random.random(k)
@@ -84,13 +91,17 @@ class Cylinder(SampleShape):
             raise NotImplementedError
         return {k: sc.array(dims=['quad'], values=v) for k, v in quad.items()}
 
-    def quadrature(self, kind: Literal['expensive', 'medium', 'cheap', 'mc']):
+    def quadrature(
+        self,
+        kind: Literal['expensive', 'medium', 'cheap', 'mc'] | tuple[Literal['mc'], int],
+    ):
         'Returns quadrature points and weights of the cylinder.'
         quad = self._select_quadrature_points(kind)
         # Scale to size of cylinder
         x = (quad['x'] * self.radius).to(unit=self.center.unit)
         y = (quad['y'] * self.radius).to(unit=self.center.unit)
         z = (quad['z'] * self.height / 2).to(unit=self.center.unit)
+        # Quadrature had total weight 2pi before, now it is 2pi radius^2 * height
         weights = quad['weights'] * (self.radius**2 * self.height / 2)
         points = sc.vectors(
             dims=['quad'],
