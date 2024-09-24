@@ -2,40 +2,30 @@ from functools import partial
 
 import scipp as sc
 
-
-def single_scatter_distance_through_sample(
-    sample_shape, scatter_point, initial_direction, scatter_direction
-):
-    L1 = sample_shape.beam_intersection(scatter_point, -initial_direction)
-    L2 = sample_shape.beam_intersection(scatter_point, scatter_direction)
-    return L1 + L2
-
-
-def transmission_fraction(material, distance_through_sample, wavelength):
-    return sc.exp(
-        -(material.attenuation_coefficient(wavelength) * distance_through_sample).to(
-            unit='dimensionless', copy=False
-        )
-    )
+from .material import Material
+from .types import SampleShape
 
 
 def compute_transmission_map(
-    sample_shape,
-    sample_material,
-    beam_direction,
-    wavelength,
-    detector_position,
+    sample_shape: SampleShape,
+    sample_material: Material,
+    beam_direction: sc.Variable,
+    wavelength: sc.Variable,
+    detector_position: sc.Variable,
     quadrature_kind='medium',
-):
+) -> sc.DataArray:
     points, weights = sample_shape.quadrature(quadrature_kind)
     scatter_direction = detector_position - points.to(unit=detector_position.unit)
     scatter_direction /= sc.norm(scatter_direction)
 
     transmission = _integrate_transmission_fraction(
         partial(
-            single_scatter_distance_through_sample, sample_shape, points, beam_direction
+            _single_scatter_distance_through_sample,
+            sample_shape,
+            points,
+            beam_direction,
         ),
-        partial(transmission_fraction, sample_material),
+        partial(_transmission_fraction, sample_material),
         points,
         weights,
         scatter_direction,
@@ -44,6 +34,22 @@ def compute_transmission_map(
     return sc.DataArray(
         data=transmission / sample_shape.volume,
         coords={'detector_position': detector_position, 'wavelength': wavelength},
+    )
+
+
+def _single_scatter_distance_through_sample(
+    sample_shape, scatter_point, initial_direction, scatter_direction
+):
+    L1 = sample_shape.beam_intersection(scatter_point, -initial_direction)
+    L2 = sample_shape.beam_intersection(scatter_point, scatter_direction)
+    return L1 + L2
+
+
+def _transmission_fraction(material, distance_through_sample, wavelength):
+    return sc.exp(
+        -(material.attenuation_coefficient(wavelength) * distance_through_sample).to(
+            unit='dimensionless', copy=False
+        )
     )
 
 

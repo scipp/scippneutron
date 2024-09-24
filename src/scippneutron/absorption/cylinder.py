@@ -7,10 +7,11 @@ from numpy.polynomial.chebyshev import chebgauss
 from numpy.polynomial.legendre import leggauss
 
 from . import quadratures
+from .types import SampleShape
 
 
 @dataclass
-class Cylinder:
+class Cylinder(SampleShape):
     symmetry_line: sc.Variable
     center_of_base: sc.Variable
     radius: sc.Variable
@@ -32,7 +33,7 @@ class Cylinder:
         )
 
     @property
-    def center(self):
+    def center(self) -> sc.Variable:
         return self.center_of_base + self.symmetry_line * self.height / 2
 
     @property
