@@ -179,6 +179,28 @@ def test_quadrature(kind, f, expected):
     assert_allclose(v, expected, atol=sc.scalar(1e-8), rtol=sc.scalar(1e-4))
 
 
+@pytest.mark.parametrize('kind', ['mc', ('mc', 4000)])
+def test_quadrature_mc(kind):
+    import numpy
+
+    numpy.random.seed(1)
+
+    c = Cylinder(
+        sc.vector([0, 0, 1.0]), sc.vector([0, 0, 0.0]), sc.scalar(1.0), sc.scalar(1.0)
+    )
+
+    def f(x):
+        return sc.sin(sc.dot(x, sc.vector([1, 0.5, 0]) * sc.scalar(1, unit='rad'))) ** 2
+
+    expected = sc.scalar(0.7972445081889596)
+    q, w = c.quadrature(kind)
+    v = (f(q) * w).sum()
+    assert_allclose(v, expected, atol=sc.scalar(5e-2), rtol=sc.scalar(5e-2))
+
+    if isinstance(kind, tuple):
+        assert len(q) == kind[1]
+
+
 @pytest.mark.parametrize('kind', ['expensive', 'medium', 'cheap'])
 @pytest.mark.parametrize(
     'axis', [sc.vector([0, 1, 0.0]), sc.vector([2**-0.5, 0, 2**-0.5])]
