@@ -3,4 +3,4 @@ from .cylinder import Cylinder
 from .material import Material
 
 
-__all__ = (compute_transmission_map, Cylinder, Material)
+__all__ = ('compute_transmission_map', 'Cylinder', 'Material')

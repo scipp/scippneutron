@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from typing import Any
 
 import scipp as sc
 
@@ -14,12 +15,12 @@ class SampleShape(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def volume(self):
+    def volume(self) -> sc.Variable:
         '''Volume of the shape'''
         pass
 
     @abstractmethod
-    def quadrature(self, kind) -> tuple[sc.Variable, sc.Variable]:
+    def quadrature(self, kind: Any) -> tuple[sc.Variable, sc.Variable]:
         '''Returns quadrature points and weights for evaluating integrals over
         the shape. The method returns a tuple where the first entry is
         an array containing vectors representing points in the shape and the
