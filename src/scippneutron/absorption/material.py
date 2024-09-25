@@ -10,7 +10,7 @@ class Material:
     scattering_cross_section: sc.Variable
     effective_sample_number_density: sc.Variable
 
-    def attenuation_coefficient(self, wavelength):
+    def attenuation_coefficient(self, wavelength: sc.Variable) -> sc.Variable:
         '''Computes marginal attenuation per distance for
         the given neutron wavelength.'''
         return self.effective_sample_number_density * (

@@ -17,7 +17,9 @@ class Cylinder(SampleShape):
     radius: sc.Variable
     height: sc.Variable
 
-    def beam_intersection(self, start_point, direction):
+    def beam_intersection(
+        self, start_point: sc.Variable, direction: sc.Variable
+    ) -> sc.Variable:
         'Length of intersection between beam and cylinder'
         base_point = self.center_of_base - start_point
         cyl_intersection, *cyl_interval = _line_infinite_cylinder_intersection(
@@ -37,7 +39,7 @@ class Cylinder(SampleShape):
         return self.center_of_base + self.symmetry_line * self.height / 2
 
     @property
-    def volume(self):
+    def volume(self) -> sc.Variable:
         return self.radius**2 * self.height * np.pi
 
     def _select_quadrature_points(self, kind):
@@ -94,7 +96,7 @@ class Cylinder(SampleShape):
     def quadrature(
         self,
         kind: Literal['expensive', 'medium', 'cheap', 'mc'] | tuple[Literal['mc'], int],
-    ):
+    ) -> tuple[sc.Variable, sc.Variable]:
         'Returns quadrature points and weights of the cylinder.'
         quad = self._select_quadrature_points(kind)
         # Scale to size of cylinder

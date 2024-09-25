@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Any
 
 import scipp as sc
 
@@ -12,7 +13,7 @@ def compute_transmission_map(
     beam_direction: sc.Variable,
     wavelength: sc.Variable,
     detector_position: sc.Variable,
-    quadrature_kind='medium',
+    quadrature_kind: Any = 'medium',
 ) -> sc.DataArray:
     points, weights = sample_shape.quadrature(quadrature_kind)
     scatter_direction = detector_position - points.to(unit=detector_position.unit)
