@@ -36,7 +36,7 @@ packaging==24.1
     # via matplotlib
 pillow==10.4.0
     # via matplotlib
-plopp==24.9.1
+plopp==24.9.3
     # via -r base.in
 pyparsing==3.1.4
     # via matplotlib

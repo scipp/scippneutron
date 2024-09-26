@@ -43,6 +43,7 @@ from .instrument_view import instrument_view
 from .masking import MaskingTool
 from . import atoms
 from . import chopper
+from . import io
 
 del importlib
 
@@ -60,6 +61,7 @@ __all__ = [
     "from_mantid",
     "array_from_mantid",
     "to_mantid",
+    "io",
     "load_with_mantid",
     "load",
     "fit",
