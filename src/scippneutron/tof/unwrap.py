@@ -460,8 +460,18 @@ def time_of_flight_origin_wfm(
     high = times[-1] + padding
     times = sc.concat([low, times, high], 'subframe')
 
-    # Select the first n time origins to match subframe bounds
-    subframe_origin_time = subframe_origin_time[: subframe_bounds.sizes['subframe']]
+    # Select n time origins to match subframe bounds.
+    # We compute the time the fastest neutron would take to reach the chopper and take
+    # the first set of time origins that are greater than that time.
+    t_fastest_neutron = (
+        chopper_cascade.wavelength_to_inverse_velocity(
+            subframe_bounds['wavelength'].min()
+        )
+        * distance
+    )
+    subframe_origin_time = subframe_origin_time[
+        subframe_origin_time > t_fastest_neutron
+    ][: subframe_bounds.sizes['subframe']]
 
     # We need to add nans between each subframe_origin_time offsets for the bins before,
     # after, and between the subframes.
