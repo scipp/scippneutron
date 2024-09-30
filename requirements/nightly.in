@@ -9,3 +9,4 @@ scippnexus @ git+https://github.com/scipp/scippnexus@main
 plopp @ git+https://github.com/scipp/plopp@main
 mpltoolbox @ git+https://github.com/scipp/mpltoolbox@main
 sciline @ git+https://github.com/scipp/sciline@main
+tof @ git+https://github.com/scipp/tof@main

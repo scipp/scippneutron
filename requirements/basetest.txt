@@ -23,11 +23,6 @@ cycler==0.12.1
     # via matplotlib
 decorator==5.1.1
     # via ipython
-exceptiongroup==1.2.2
-    # via
-    #   hypothesis
-    #   ipython
-    #   pytest
 execnet==2.1.1
     # via pytest-xdist
 executing==2.1.0
@@ -36,7 +31,7 @@ fonttools==4.53.1
     # via matplotlib
 hypothesis==6.112.1
     # via -r basetest.in
-idna==3.8
+idna==3.10
     # via requests
 iniconfig==2.0.0
     # via pytest
@@ -87,7 +82,7 @@ pillow==10.4.0
     # via
     #   ipympl
     #   matplotlib
-platformdirs==4.3.2
+platformdirs==4.3.6
     # via pooch
 pluggy==1.5.0
     # via pytest
@@ -127,8 +122,6 @@ sortedcontainers==2.4.0
     # via hypothesis
 stack-data==0.6.3
     # via ipython
-tomli==2.0.1
-    # via pytest
 traitlets==5.14.3
     # via
     #   comm

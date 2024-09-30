@@ -13,6 +13,9 @@ This provides data in a structure as typically provided in a NeXus file, includi
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
+import numpy as np
 import scipp as sc
 from numpy import random
 
@@ -225,6 +228,91 @@ class FakeBeamline:
         else:
             unwrapped.coords['Ltotal'] = frame.distance - source_chopper.distance
         return wrapped, unwrapped
+
+
+class FakeBeamlineEss:
+    def __init__(
+        self,
+        choppers: dict[str, chopper_cascade.Chopper],
+        monitors: dict[str, sc.Variable],
+        run_length: sc.Variable,
+        events_per_pulse: int = 200000,
+        source: Callable | None = None,
+        # time_of_flight_origin: str | None = None,
+    ):
+        import math
+
+        import tof
+        from tof.facilities.ess_pulse import pulse
+
+        frequency = pulse.frequency
+        self.npulses = math.ceil((run_length * frequency).to(unit='').value)
+        self.events_per_pulse = events_per_pulse
+
+        # Create a source
+        if source is None:
+            self.source = tof.Source(
+                facility='ess', neutrons=self.events_per_pulse, pulses=self.npulses
+            )
+        else:
+            self.source = source(pulses=self.npulses)
+
+        # Convert the choppers to tof.Chopper
+        angular_speed = sc.constants.pi * (2.0 * sc.units.rad) * frequency
+
+        self.choppers = [
+            tof.Chopper(
+                frequency=pulse.frequency,
+                open=ch.time_open * angular_speed,
+                close=ch.time_close * angular_speed,
+                phase=sc.scalar(0.0, unit='rad'),
+                distance=ch.distance,
+                name=name,
+            )
+            for name, ch in choppers.items()
+        ]
+
+        # Add detectors
+        self.monitors = [
+            tof.Detector(distance=distance, name=key)
+            for key, distance in monitors.items()
+        ]
+
+        #  Propagate the neutrons
+        self.model = tof.Model(
+            source=self.source, choppers=self.choppers, detectors=self.monitors
+        )
+        self.model_result = self.model.run()
+
+    def get_monitor(self, name: str) -> sc.DataGroup:
+        # Create some fake pulse time zero
+        start = np.datetime64("2024-01-01T12:00:00.000000")
+        dt = np.timedelta64(int(1 / 14 * 1e6), 'us')
+        end = start + dt * self.npulses
+
+        event_time_zero = sc.array(
+            dims=['event'],
+            # Repeat N times the time_zero for each event in a pulse
+            values=np.repeat(np.arange(start, end, dt), self.events_per_pulse),
+        )
+
+        # Format the data in a way that resembles data loaded from NeXus
+        event_data = self.model_result.detectors[name].data.flatten(to='event')
+        event_data.coords['event_time_zero'] = event_time_zero
+        event_data.coords['event_time_offset'] = event_data.coords.pop('tof').to(
+            unit='s'
+        ) % sc.scalar(1 / 14, unit='s')
+        del event_data.coords['speed']
+        del event_data.coords['time']
+        del event_data.coords['wavelength']
+
+        # Select only the neutrons that make it to the detector
+        out = (
+            event_data[~event_data.masks['blocked_by_others']]
+            .group('event_time_zero')
+            .rename_dims(event_time_zero='pulse')
+        )
+        return out
 
 
 wfm1 = chopper_cascade.Chopper(
