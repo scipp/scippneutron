@@ -20,7 +20,7 @@ class Cylinder(SampleShape):
     def beam_intersection(
         self, start_point: sc.Variable, direction: sc.Variable
     ) -> sc.Variable:
-"""Length of intersection between beam and cylinder"""
+        """Length of intersection between beam and cylinder"""
         base_point = self.center_of_base - start_point
         cyl_intersection, *cyl_interval = _line_infinite_cylinder_intersection(
             self.symmetry_line, base_point, self.radius, direction
