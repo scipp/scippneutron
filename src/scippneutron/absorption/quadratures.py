@@ -1,3 +1,16 @@
+"""Quadrature rules for computing integrals on the unit disk
+For each dictionary :pycode:`{x: ..., y: ..., weights: ...}` in this module:
+:math:`\\int_{||(x, y)|| < 1} f(x, y) dxdy \\approx \\sum_i weights[i] f(x[i], y[i])`
+
+In practice the functions we integrate in the absorption module often have large values
+and steep gradients close to the edge of the disk. Therefore it was found beneficial to
+use a quadrature rule with more points close to the edge, such as disk256_cheb.
+
+In most cases the moderately large disk55 quadrature seems to be accurate enough.
+The cheapest quadrature disk12 should probably only be used for testing and in
+simple cases where accuracy is less important and speed is essential.
+"""
+
 # https://mathsfromnothing.au/circle-quadrature-rules/?i=1
 disk12 = {
     'weights': [
