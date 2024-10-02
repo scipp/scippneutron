@@ -49,7 +49,7 @@ class Cylinder(SampleShape):
             w *= (1 - x**2) ** 0.5
             w /= sum(w) / 2
             quad = _cylinder_quadrature_from_product(
-                quadratures.disk254_cheb,
+                quadratures.disk256_cheb,
                 dict(x=x, weights=w),  # noqa: C408
             )
         elif kind == 'medium':
@@ -60,7 +60,7 @@ class Cylinder(SampleShape):
             # Would be nice to have a medium size Chebychev quadrature on the disk,
             # but I only found the large one for now.
             quad = _cylinder_quadrature_from_product(
-                quadratures.disk54,
+                quadratures.disk55,
                 dict(x=x, weights=w),  # noqa: C408
             )
         elif kind == 'cheap':

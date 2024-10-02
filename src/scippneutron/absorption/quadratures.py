@@ -1,3 +1,4 @@
+# https://mathsfromnothing.au/circle-quadrature-rules/?i=1
 disk12 = {
     'weights': [
         0.390106733337761,
@@ -42,7 +43,9 @@ disk12 = {
         -0.381173907187935,
     ],
 }
-disk54 = {
+# https://www.sciencedirect.com/science/article/pii/S0377042721006324
+# File T17_6segment.txt
+disk55 = {
     'x': [
         0.0,
         0.36377542,
@@ -215,7 +218,9 @@ disk54 = {
         0.01620811,
     ],
 }
-disk254_cheb = {
+# https://www.sciencedirect.com/science/article/pii/S0377042721006324
+# File T37_FullSym_Cheby.txt
+disk256_cheb = {
     'x': [
         -9.89354995e-01,
         -9.89354995e-01,
