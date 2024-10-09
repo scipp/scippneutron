@@ -41,21 +41,21 @@ class ScatteringParams:
 
     isotope: str
     """Element / isotope name."""
-    coherent_scattering_length_re: sc.Variable | None
+    coherent_scattering_length_re: sc.Variable | None = None
     """Bound coherent scattering length (real part)."""
-    coherent_scattering_length_im: sc.Variable | None
+    coherent_scattering_length_im: sc.Variable | None = None
     """Bound coherent scattering length (imaginary part)."""
-    incoherent_scattering_length_re: sc.Variable | None
+    incoherent_scattering_length_re: sc.Variable | None = None
     """Bound incoherent scattering length (real part)."""
-    incoherent_scattering_length_im: sc.Variable | None
+    incoherent_scattering_length_im: sc.Variable | None = None
     """Bound incoherent scattering length (imaginary part)."""
-    coherent_scattering_cross_section: sc.Variable | None
+    coherent_scattering_cross_section: sc.Variable | None = None
     """Bound coherent scattering cross-section."""
-    incoherent_scattering_cross_section: sc.Variable | None
+    incoherent_scattering_cross_section: sc.Variable | None = None
     """Bound incoherent scattering cross-section."""
-    total_scattering_cross_section: sc.Variable | None
+    total_scattering_cross_section: sc.Variable | None = None
     """Total bound scattering cross-section."""
-    absorption_cross_section: sc.Variable | None
+    absorption_cross_section: sc.Variable | None = None
     """Absorption cross-section for λ = 1.7982 Å neutrons."""
 
     def __eq__(self, other: object) -> bool | type(NotImplemented):
