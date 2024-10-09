@@ -5,6 +5,7 @@ from scipp.testing import assert_allclose
 from scipy.integrate import quad
 
 from scippneutron.absorption import Cylinder, Material, compute_transmission_map
+from scippneutron.atoms import ScatteringParams
 
 
 def transmission_fraction_case1(effective_attenuation_factor):
@@ -29,8 +30,13 @@ def transmission_fraction_case1(effective_attenuation_factor):
 @pytest.mark.parametrize('scattering_cross_section', [0.1, 0.5, 1.0])
 def test_compute_transmission_map(scattering_cross_section):
     material = Material(
-        sc.scalar(0.0, unit='mm**2'),
-        sc.scalar(scattering_cross_section, unit='mm**2'),
+        ScatteringParams(
+            'Fake',
+            absorption_cross_section=sc.scalar(0.0, unit='mm**2'),
+            total_scattering_cross_section=sc.scalar(
+                scattering_cross_section, unit='mm**2'
+            ),
+        ),
         sc.scalar(1.0, unit='1/mm**3'),
     )
     cylinder = Cylinder(
@@ -58,9 +64,14 @@ def test_compute_transmission_map(scattering_cross_section):
 @pytest.mark.parametrize('scattering_cross_section', [0.1, 0.5, 1.0])
 def test_compute_transmission_map_wavelength_dependent(scattering_cross_section):
     material = Material(
-        # Modify the absorption cross section
-        sc.scalar(scattering_cross_section / 5, unit='mm**2'),
-        sc.scalar(0, unit='mm**2'),
+        ScatteringParams(
+            'Fake',
+            # Modify the absorption cross section
+            absorption_cross_section=sc.scalar(
+                scattering_cross_section / 5, unit='mm**2'
+            ),
+            total_scattering_cross_section=sc.scalar(0.0, unit='mm**2'),
+        ),
         sc.scalar(1.0, unit='1/mm**3'),
     )
     cylinder = Cylinder(
