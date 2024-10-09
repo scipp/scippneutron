@@ -504,6 +504,7 @@ def test_time_offset_open_close_only_slit(nexus_chopper, rotation_speed):
         sc.scalar(0.0, unit='rad'),
         sc.scalar(1.2, unit='rad'),
         sc.scalar(-50.0, unit='deg'),
+        sc.scalar(-50, unit='deg'),  # also check for integer phase
     ],
 )
 @pytest.mark.parametrize(
@@ -525,7 +526,7 @@ def test_time_offset_open_close_one_slit_clockwise(nexus_chopper, phase, beam_po
         }
     )
     factor = deg_angle_to_time_factor(sc.scalar(-7.21, unit='Hz'))
-    shift = phase.to(unit='deg') + beam_position.to(unit='deg')
+    shift = phase.to(unit='deg', dtype='float64') + beam_position.to(unit='deg')
     assert sc.allclose(
         ch.time_offset_open(pulse_frequency=abs(ch.frequency)),
         (sc.array(dims=['slit'], values=[87.0], unit='deg') - shift) * factor,

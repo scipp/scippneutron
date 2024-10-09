@@ -449,9 +449,9 @@ class DiskChopper:
         """
         angle = self._apply_angle_repetitions(angle=angle, n_repetitions=n_repetitions)
         angle = (
-            self.beam_angle.to(unit='rad')
-            + self.phase.to(unit='rad')
-            - angle.to(unit='rad', copy=False)
+            self.beam_angle.to(unit='rad', dtype='float64')
+            + self.phase.to(unit='rad', dtype='float64')
+            - angle.to(unit='rad', dtype='float64', copy=False)
         )
         if not self.is_clockwise:
             angle = sc.scalar(2.0, unit='rad') * sc.constants.pi + angle
@@ -511,12 +511,13 @@ class DiskChopper:
         self, *, angle: sc.Variable, n_repetitions: int
     ) -> sc.Variable:
         dim = str(uuid4())
-        if n_repetitions == 1:
-            repetition_offsets = sc.scalar(0, unit=angle.unit)
-        else:
-            repetition_offsets = sc.arange(dim, 0, n_repetitions, unit='rad') * (
-                2 * np.pi
-            )
+        # if n_repetitions == 1:
+        #     repetition_offsets = sc.scalar(0, unit=angle.unit)
+        # else:
+        #     repetition_offsets = sc.arange(dim, 0, n_repetitions, unit='rad') * (
+        #         2 * np.pi
+        #     )
+        repetition_offsets = sc.arange(dim, -1, n_repetitions, unit='rad') * (2 * np.pi)
         if self.is_clockwise:
             repeated = angle + repetition_offsets.to(unit=angle.unit)
         else:
@@ -525,7 +526,8 @@ class DiskChopper:
 
         if n_repetitions == 1:
             # Do not add a new dimension to the output.
-            return repeated
+            print("not repeated", repeated)
+            return repeated.flatten(to=angle.dim)
         if angle.ndim == 0:
             return repeated.flatten(to='slit')
         # Remove aux dimension.

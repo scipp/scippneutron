@@ -245,17 +245,35 @@ class Frame:
             )
         ]
         bounds = sorted(bounds, key=lambda x: x.start)
+        print(bounds)
         current = bounds[0]
         merged_bounds = []
         for bound in bounds[1:]:
             # If start is before current end, merge
             if bound.start <= current.end:
-                current = Bound(
-                    current.start,
-                    max(current.end, bound.end),
-                    current.wav_start,
-                    max(current.wav_end, bound.wav_end),
-                )
+                if bound.end > current.end:
+                    old_end = current.end
+                    old_wav_end = current.wav_end
+                    current = Bound(
+                        current.start,
+                        bound.start,
+                        current.wav_start,
+                        bound.wav_start,
+                    )
+                    merged_bounds.append(current)
+                    current = Bound(
+                        old_end,
+                        bound.end,
+                        old_wav_end,
+                        bound.wav_end,
+                    )
+                else:
+                    current = Bound(
+                        current.start,
+                        max(current.end, bound.end),
+                        current.wav_start,
+                        max(current.wav_end, bound.wav_end),
+                    )
             else:
                 merged_bounds.append(current)
                 current = bound
@@ -529,6 +547,7 @@ class Chopper:
         """
         tpulse = 1.0 / pulse_frequency
         topen = disk_chopper.time_offset_open(pulse_frequency=pulse_frequency)
+        print('topen.sizes', topen.sizes)
         tclose = disk_chopper.time_offset_close(pulse_frequency=pulse_frequency)
         offsets = sc.arange('pulse', npulses) * tpulse
         return cls(
