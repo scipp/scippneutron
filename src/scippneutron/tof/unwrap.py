@@ -342,7 +342,7 @@ def offset_from_wrapped(
     wrapped_time_min = time_offset_min % frame_period
     # We simply cut, without special handling of times that fall outside the frame
     # period. Everything below and above is allowed. The alternative would be to, e.g.,
-    # replace invalid inputs with NaN, but this would probable cause more trouble down
+    # replace invalid inputs with NaN, but this would probably cause more trouble down
     # the line.
     begin = sc.full_like(wrapped_time_min, value=-math.inf)
     end = sc.full_like(wrapped_time_min, value=math.inf)

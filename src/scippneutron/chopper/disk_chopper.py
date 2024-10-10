@@ -524,10 +524,10 @@ class DiskChopper:
             # Make sure the repeated angles are later in time.
             repeated = angle - repetition_offsets.to(unit=angle.unit)
 
-        if n_repetitions == 1:
-            # Do not add a new dimension to the output.
-            print("not repeated", repeated)
-            return repeated.flatten(to=angle.dim)
+        # if n_repetitions == 1:
+        #     # Do not add a new dimension to the output.
+        #     print("not repeated", repeated)
+        #     return repeated.flatten(to=angle.dim)
         if angle.ndim == 0:
             return repeated.flatten(to='slit')
         # Remove aux dimension.

@@ -245,12 +245,12 @@ class Frame:
             )
         ]
         bounds = sorted(bounds, key=lambda x: x.start)
-        print(bounds)
         current = bounds[0]
         merged_bounds = []
         for bound in bounds[1:]:
-            # If start is before current end, merge
+            # If start is before current end, we need to either merge or clip
             if bound.start <= current.end:
+                # If end is after current end, there is only partial overlap, so we clip
                 if bound.end > current.end:
                     old_end = current.end
                     old_wav_end = current.wav_end
@@ -267,6 +267,7 @@ class Frame:
                         old_wav_end,
                         bound.wav_end,
                     )
+                # If end is before current end, overlap is total and we merge
                 else:
                     current = Bound(
                         current.start,
