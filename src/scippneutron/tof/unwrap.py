@@ -243,13 +243,6 @@ def frame_at_detector(
     the detector. The detector may be a monitor or a detector after scattering off the
     sample. The frame bounds are then computed from this.
     """
-    # frames = chopper_cascade.FrameSequence.from_source_pulse(
-    #     time_min=source_time_range[0],
-    #     time_max=source_time_range[-1],
-    #     wavelength_min=source_wavelength_range[0],
-    #     wavelength_max=source_wavelength_range[-1],
-    # )
-    # frames = frames.chop(choppers.values())
     return FrameAtDetector(frames[ltotal])
 
 
@@ -460,8 +453,6 @@ def time_offset(unwrapped: UnwrappedData) -> TimeOffset:
 
 
 def time_of_flight_origin_wfm(
-    # distance: TimeOfFlightOriginDistance,
-    # subframe_origin_time: TimeOfFlightOriginTime,
     frame_for_origin: FrameForTimeOfFlightOrigin,
     detector_subframe_bounds: SubframeBounds,
 ) -> TimeOfFlightOrigin:
@@ -486,20 +477,6 @@ def time_of_flight_origin_wfm(
     high = times[-1] + padding
     times = sc.concat([low, times, high], 'subframe')
 
-    # # Select n time origins to match subframe bounds.
-    # # We compute the time the fastest neutron would take to reach the chopper and take
-    # # the first set of time origins that are greater than that time.
-    # t_fastest_neutron = (
-    #     chopper_cascade.wavelength_to_inverse_velocity(
-    #         detector_subframe_bounds['wavelength'].min()
-    #     )
-    #     * distance
-    # )
-    # print('BEFORE: subframe_origin_time', subframe_origin_time)
-    # subframe_origin_time = subframe_origin_time[
-    #     subframe_origin_time > t_fastest_neutron
-    # ][: detector_subframe_bounds.sizes['subframe']]
-    # print('AFTER: subframe_origin_time', subframe_origin_time)
     subframe_origin_time = sc.concat(
         sorted(
             [0.5 * (sf.start_time + sf.end_time) for sf in frame_for_origin.subframes]
@@ -514,9 +491,7 @@ def time_of_flight_origin_wfm(
         value=math.nan,
         unit='s',
     )
-    shift[1::2] = subframe_origin_time  # .rename_dims(cutout='subframe')
-    print(times, shift, subframe_origin_time)
-    print(frame_for_origin)
+    shift[1::2] = subframe_origin_time
     return TimeOfFlightOrigin(
         time=sc.DataArray(shift, coords={'subframe': times}),
         distance=frame_for_origin.distance,
@@ -564,48 +539,11 @@ def time_of_flight_origin_wfm_frame(
         sc.concat([(subf.end_time - subf.start_time) for subf in f.subframes], dim='x')
         .sum()
         .value
-        for f in frames
         if len(f.subframes) == nframes
+        else np.inf
+        for f in frames
     ]
     return FrameForTimeOfFlightOrigin(frames[int(np.argmin(delta_t))])
-
-
-def time_of_flight_origin_distance_wfm_from_choppers(
-    wfm_choppers: WFMChoppers,
-) -> TimeOfFlightOriginDistance:
-    """
-    Compute the distance to the time of flight origin, in the case of a set
-    (usually a pair) of WFM choppers. The distance is the average of the distances
-    of the choppers.
-
-    Parameters
-    ----------
-    wfm_choppers:
-        The WFM choppers.
-    """
-    return TimeOfFlightOriginDistance(
-        sc.reduce([ch.distance for ch in wfm_choppers]).mean()
-    )
-
-
-def time_of_flight_origin_time_wfm_from_choppers(
-    wfm_choppers: WFMChoppers,
-) -> TimeOfFlightOriginTime:
-    """
-    Compute the time of the time of flight origin, in the case of a set
-    (usually a pair) of WFM choppers. The time is the mean of the opening and closing
-    times of the WFM choppers.
-
-    Parameters
-    ----------
-    wfm_choppers:
-        The WFM choppers.
-    """
-    times = []
-    for ch in wfm_choppers:
-        times.append(ch.time_open)
-        times.append(ch.time_close)
-    return TimeOfFlightOriginTime(sc.reduce(times).mean())
 
 
 def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
@@ -718,8 +656,6 @@ _wfm = (
     subframe_bounds,
     time_offset,
     time_of_flight_origin_wfm_frame,
-    time_of_flight_origin_time_wfm_from_choppers,
-    time_of_flight_origin_distance_wfm_from_choppers,
     wfm_choppers,
     time_of_flight_origin_wfm,
 )
