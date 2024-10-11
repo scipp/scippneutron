@@ -531,6 +531,23 @@ def wfm_choppers(
     return WFMChoppers(tuple(choppers[name] for name in wfm_chopper_names))
 
 
+def time_of_flight_origin_defining_chopper(
+    frame_at_detector: FrameAtDetector,
+    frames: ChopperCascadeFrames,
+) -> TimeOfFlightOriginChopper:
+    nframes = len(frame_at_detector.subframes)
+    # Find the chopper with the shortest opening time
+    delta_t = {
+        f.name: sc.concat(
+            [(subf.end_time - subf.start_time) for subf in f.subframes], dim='x'
+        ).sum()
+        for f in frames
+        if len(f.subframes) == nframes
+    }
+    chopper_name = min(delta_t, key=delta_t.get)
+    # Use the name
+
+
 def time_of_flight_origin_distance_wfm_from_choppers(
     wfm_choppers: WFMChoppers,
 ) -> TimeOfFlightOriginDistance:
