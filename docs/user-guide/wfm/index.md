@@ -6,4 +6,5 @@ maxdepth: 1
 ---
 
 wfm-time-of-flight
+dream-wfm
 ```
