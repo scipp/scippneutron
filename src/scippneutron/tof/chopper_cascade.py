@@ -134,6 +134,7 @@ class Frame:
 
     distance: sc.Variable
     subframes: list[Subframe]
+    name: str | None = None
 
     def propagate_to(self, distance: sc.Variable) -> Frame:
         """
@@ -387,6 +388,7 @@ class FrameSequence:
         frames = list(self.frames)
         for chopper in choppers:
             frames.append(frames[-1].chop(chopper))
+            frames[-1].name = chopper.name
         return FrameSequence(frames)
 
     def draw(
@@ -511,6 +513,7 @@ class Chopper:
     distance: sc.Variable
     time_open: sc.Variable
     time_close: sc.Variable
+    name: str | None = None
 
     def __post_init__(self):
         if self.time_open.sizes != self.time_close.sizes:
@@ -532,6 +535,7 @@ class Chopper:
         disk_chopper: DiskChopper,
         pulse_frequency: sc.Variable,
         npulses: int,
+        name: str | None = None,
     ) -> Chopper:
         """
         Create a chopper from a NeXus disk chopper.
@@ -555,6 +559,7 @@ class Chopper:
             distance=sc.norm(disk_chopper.axle_position),
             time_open=(offsets + topen).flatten(to=topen.dim),
             time_close=(offsets + tclose).flatten(to=tclose.dim),
+            name=name,
         )
 
 

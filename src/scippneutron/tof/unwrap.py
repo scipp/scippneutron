@@ -21,10 +21,17 @@ import scipp as sc
 from .._utils import elem_unit
 from . import chopper_cascade
 
+ChopperCascadeFrames = NewType('ChopperCascadeFrames', chopper_cascade.FrameSequence)
+"""
+Result of passing the source pulse through the chopper cascade.
+"""
+
+
 Choppers = NewType('Choppers', Mapping[str, chopper_cascade.Chopper])
 """
 Choppers used to define the frame parameters.
 """
+
 
 FrameAtSample = NewType('FrameAtSample', chopper_cascade.Frame)
 """
@@ -194,18 +201,15 @@ def frame_period(
     return FramePeriod(pulse_period * pulse_stride)
 
 
-def frame_at_detector(
+def chopper_cascade_frames(
     source_wavelength_range: SourceWavelengthRange,
     source_time_range: SourceTimeRange,
     choppers: Choppers,
-    ltotal: Ltotal,
-) -> FrameAtDetector:
+) -> ChopperCascadeFrames:
     """
-    Return the frame at the detector.
+    Return all the chopper frames.
 
-    This is the result of propagating the source pulse through the chopper cascade to
-    the detector. The detector may be a monitor or a detector after scattering off the
-    sample. The frame bounds are then computed from this.
+    This is the result of propagating the source pulse through the chopper cascade.
 
     It is assumed that the opening and closing times of the input choppers have been
     setup correctly. This includes a correct definition of the offsets in
@@ -217,7 +221,27 @@ def frame_at_detector(
         wavelength_min=source_wavelength_range[0],
         wavelength_max=source_wavelength_range[-1],
     )
-    frames = frames.chop(choppers.values())
+    return ChopperCascadeFrames(frames.chop(choppers.values()))
+
+
+def frame_at_detector(
+    frames: ChopperCascadeFrames,
+    ltotal: Ltotal,
+) -> FrameAtDetector:
+    """
+    Return the frame at the detector.
+
+    This is the result of propagating the source pulse through the chopper cascade to
+    the detector. The detector may be a monitor or a detector after scattering off the
+    sample. The frame bounds are then computed from this.
+    """
+    # frames = chopper_cascade.FrameSequence.from_source_pulse(
+    #     time_min=source_time_range[0],
+    #     time_max=source_time_range[-1],
+    #     wavelength_min=source_wavelength_range[0],
+    #     wavelength_max=source_wavelength_range[-1],
+    # )
+    # frames = frames.chop(choppers.values())
     return FrameAtDetector(frames[ltotal])
 
 
@@ -469,9 +493,11 @@ def time_of_flight_origin_wfm(
         )
         * distance
     )
+    print('BEFORE: subframe_origin_time', subframe_origin_time)
     subframe_origin_time = subframe_origin_time[
         subframe_origin_time > t_fastest_neutron
     ][: subframe_bounds.sizes['subframe']]
+    print('AFTER: subframe_origin_time', subframe_origin_time)
 
     # We need to add nans between each subframe_origin_time offsets for the bins before,
     # after, and between the subframes.
@@ -632,6 +658,7 @@ def to_time_of_flight(
 
 
 _common_providers = (
+    chopper_cascade_frames,
     frame_at_detector,
     frame_bounds,
     frame_period,
