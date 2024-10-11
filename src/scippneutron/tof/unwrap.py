@@ -190,17 +190,6 @@ class TimeOfFlightOrigin:
     distance: sc.Variable
 
 
-WFMChopperNames = NewType('WFMChopperNames', tuple[str, ...])
-"""
-Names of the WFM choppers in the beamline.
-"""
-
-WFMChoppers = NewType('WFMChoppers', tuple[chopper_cascade.Chopper, ...])
-"""
-The WFM choppers in the beamline.
-"""
-
-
 def frame_period(
     pulse_period: PulsePeriod, pulse_stride: PulseStride | None
 ) -> FramePeriod:
@@ -498,24 +487,6 @@ def time_of_flight_origin_wfm(
     )
 
 
-def wfm_choppers(
-    choppers: Choppers,
-    wfm_chopper_names: WFMChopperNames,
-) -> WFMChoppers:
-    """
-    Get the WFM choppers from the chopper cascade.
-    The choppers are identified by their names.
-
-    Parameters
-    ----------
-    choppers:
-        All the choppers in the beamline.
-    wfm_chopper_names:
-        Names of the WFM choppers.
-    """
-    return WFMChoppers(tuple(choppers[name] for name in wfm_chopper_names))
-
-
 def time_of_flight_origin_wfm_frame(
     frame_at_detector: FrameAtDetector,
     frames: ChopperCascadeFrames,
@@ -656,7 +627,6 @@ _wfm = (
     subframe_bounds,
     time_offset,
     time_of_flight_origin_wfm_frame,
-    wfm_choppers,
     time_of_flight_origin_wfm,
 )
 _non_wfm = (time_of_flight_origin_from_chopper,)
