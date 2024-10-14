@@ -673,6 +673,33 @@ def test_time_offset_open_close_one_slit_across_tdc_anticlockwise(
     )
 
 
+def test_time_offset_open_close_one_slit_clockwise_include_previous_rotation(
+    nexus_chopper,
+):
+    ch = DiskChopper.from_nexus(
+        {
+            **nexus_chopper,
+            'beam_position': sc.scalar(0.0, unit='rad'),
+            'phase': sc.scalar(0.0, unit='rad'),
+            'rotation_speed': sc.scalar(-7.21, unit='Hz'),
+            'slit_edges': sc.array(dims=['slit'], values=[87.0, 177.0], unit='deg'),
+        }
+    )
+    factor = deg_angle_to_time_factor(sc.scalar(-7.21, unit='Hz'))
+    assert sc.allclose(
+        ch.time_offset_open(pulse_frequency=abs(ch.frequency), start_rotation=-1),
+        (sc.array(dims=['slit'], values=[87.0 - 360.0, 87.0], unit='deg')) * factor,
+    )
+    assert sc.allclose(
+        ch.time_offset_close(pulse_frequency=abs(ch.frequency), start_rotation=-1),
+        (sc.array(dims=['slit'], values=[177.0 - 360.0, 177.0], unit='deg')) * factor,
+    )
+    assert sc.allclose(
+        ch.open_duration(pulse_frequency=abs(ch.frequency), start_rotation=-1),
+        sc.array(dims=['slit'], values=[90.0, 90.0], unit='deg') * factor,
+    )
+
+
 def test_time_offset_open_close_two_slits_clockwise(nexus_chopper):
     ch = DiskChopper.from_nexus(
         {

@@ -362,7 +362,9 @@ class DiskChopper:
         """Return True if the chopper rotates clockwise."""
         return (self.frequency < 0.0 * self.frequency.unit).value
 
-    def time_offset_open(self, *, pulse_frequency: sc.Variable) -> sc.Variable:
+    def time_offset_open(
+        self, *, pulse_frequency: sc.Variable, start_rotation: int = 0
+    ) -> sc.Variable:
         r"""Return the opening time offsets of the chopper slits.
 
         Computes :math:`\Delta t_g(\theta)` as defined in
@@ -381,6 +383,10 @@ class DiskChopper:
         ----------
         pulse_frequency;
             Frequency of the neutron source.
+        start_rotation:
+            This can be used to include rotations before the first pulse by giving a
+            negative integer. This is useful for choppers that are not in phase with
+            the source. The default is 0.
 
         Returns
         -------
@@ -389,10 +395,14 @@ class DiskChopper:
         """
         slit_edges = self.slit_begin if self.is_clockwise else self.slit_end
         return self.time_offset_angle_at_beam(
-            angle=slit_edges, n_repetitions=self._source_phase_factor(pulse_frequency)
+            angle=slit_edges,
+            start_rotation=start_rotation,
+            end_rotation=self._source_phase_factor(pulse_frequency),
         )
 
-    def time_offset_close(self, *, pulse_frequency: sc.Variable) -> sc.Variable:
+    def time_offset_close(
+        self, *, pulse_frequency: sc.Variable, start_rotation: int = 0
+    ) -> sc.Variable:
         r"""Return the opening time offsets of the chopper slits.
 
         Computes :math:`\Delta t_g(\theta)` as defined in
@@ -411,6 +421,10 @@ class DiskChopper:
         ----------
         pulse_frequency;
             Frequency of the neutron source.
+        start_rotation:
+            This can be used to include rotations before the first pulse by giving a
+            negative integer. This is useful for choppers that are not in phase with
+            the source. The default is 0.
 
         Returns
         -------
@@ -419,11 +433,13 @@ class DiskChopper:
         """
         slit_edges = self.slit_end if self.is_clockwise else self.slit_begin
         return self.time_offset_angle_at_beam(
-            angle=slit_edges, n_repetitions=self._source_phase_factor(pulse_frequency)
+            angle=slit_edges,
+            start_rotation=start_rotation,
+            end_rotation=self._source_phase_factor(pulse_frequency),
         )
 
     def time_offset_angle_at_beam(
-        self, *, angle: sc.Variable, n_repetitions: int = 1
+        self, *, angle: sc.Variable, start_rotation: int = 0, end_rotation: int = 1
     ) -> sc.Variable:
         r"""Return the time offset when an angle on the chopper is at the beam.
 
@@ -438,16 +454,23 @@ class DiskChopper:
         angle:
             Angle to compute time for.
             Defined anticlockwise with respect to top-dead-center.
-        n_repetitions:
-            Return this many times for each angle corresponding to multiple rotations
-            of the chopper.
+        start_rotation:
+            This can be used to include rotations before the first pulse by giving a
+            negative integer. This is useful for choppers that are not in phase with
+            the source. The default is 0.
+        end_rotation:
+            How many chopper rotations to perform.
 
         Returns
         -------
         :
             Computed time offset.
         """
-        angle = self._apply_angle_repetitions(angle=angle, n_repetitions=n_repetitions)
+        angle = self._apply_angle_repetitions(
+            angle=angle,
+            start_rotation=start_rotation,
+            end_rotation=end_rotation,
+        )
         angle = (
             self.beam_angle.to(unit='rad', dtype='float64')
             + self.phase.to(unit='rad', dtype='float64')
@@ -457,13 +480,19 @@ class DiskChopper:
             angle = sc.scalar(2.0, unit='rad') * sc.constants.pi + angle
         return angle / self.angular_frequency
 
-    def open_duration(self, *, pulse_frequency: sc.Variable) -> sc.Variable:
+    def open_duration(
+        self, *, pulse_frequency: sc.Variable, start_rotation: int = 0
+    ) -> sc.Variable:
         """Return how long the chopper is open for.
 
         Parameters
         ----------
         pulse_frequency;
             Frequency of the neutron source.
+        start_rotation:
+            This can be used to include rotations before the first pulse by giving a
+            negative integer. This is useful for choppers that are not in phase with
+            the source. The default is 0.
 
         Returns
         -------
@@ -471,8 +500,10 @@ class DiskChopper:
             Variable of opening durations.
         """
         return self.time_offset_close(
-            pulse_frequency=pulse_frequency
-        ) - self.time_offset_open(pulse_frequency=pulse_frequency)
+            pulse_frequency=pulse_frequency, start_rotation=start_rotation
+        ) - self.time_offset_open(
+            pulse_frequency=pulse_frequency, start_rotation=start_rotation
+        )
 
     def __eq__(self, other: object) -> bool | NotImplemented:
         if not isinstance(other, DiskChopper):
@@ -508,18 +539,25 @@ class DiskChopper:
         return disk_chopper_html_repr(self)
 
     def _apply_angle_repetitions(
-        self, *, angle: sc.Variable, n_repetitions: int
+        self, *, angle: sc.Variable, start_rotation: int, end_rotation: int
     ) -> sc.Variable:
         dim = str(uuid4())
-        # Start at -1 to ensure a rotation that is finishing when the pulse begins is
-        # also included.
-        repetition_offsets = sc.arange(dim, -1, n_repetitions, unit='rad') * (2 * np.pi)
+        n_repetitions = end_rotation - start_rotation
+        if n_repetitions == 1:
+            repetition_offsets = sc.scalar(0, unit=angle.unit)
+        else:
+            repetition_offsets = sc.arange(
+                dim, start_rotation, end_rotation, unit='rad'
+            ) * (2 * np.pi)
         if self.is_clockwise:
             repeated = angle + repetition_offsets.to(unit=angle.unit)
         else:
             # Make sure the repeated angles are later in time.
             repeated = angle - repetition_offsets.to(unit=angle.unit)
 
+        if n_repetitions == 1:
+            # Do not add a new dimension to the output.
+            return repeated
         if angle.ndim == 0:
             return repeated.flatten(to='slit')
         # Remove aux dimension.
