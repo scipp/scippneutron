@@ -506,40 +506,17 @@ def time_of_flight_origin_wfm(
     high = times[-1] + padding
     times = sc.concat([low, times, high], 'subframe')
 
-    # subframe_origin_time = sc.concat(
-    #     sorted(
-    #         [0.5 * (sf.start_time + sf.end_time) for sf in frame_for_origin.subframes]
-    #     ),
-    #     dim='subframe',
-    # )
-
+    # Find boundaries of each subframe at the detector
     tmin = detector_subframe_bounds['time'].min('bound')
     tmax = detector_subframe_bounds['time'].max('bound')
     wmin = detector_subframe_bounds['wavelength'].min('bound')
     wmax = detector_subframe_bounds['wavelength'].max('bound')
-
-    # a1 = 1.0 / chopper_cascade.wavelength_to_inverse_velocity(wmin)
-    # a2 = 1.0 / chopper_cascade.wavelength_to_inverse_velocity(wmax)
-    # b1 = ltotal - (a1 * tmin)
-    # b2 = ltotal - (a2 * tmax)
-    # # crossing_times =
-    # crossing_distances = a1 * (b2 - b1) / (a1 - a2) + b1
-    # distance = crossing_distances.mean()
-
+    # Ray-trace back to the position of the first chopper (note that frame 0 is the
+    # pulse itself)
     distance = frames[1].distance
-
-    # distances = sc.concat([f.distance.to(dtype='float64') for f in frames], 'distance')
-    # distances = 0.5 * (
-    #     frames[1].distance.to(dtype='float64') + frames[2].distance.to(dtype='float64')
-    # )
     dist = ltotal - distance
     t1 = tmin - dist * chopper_cascade.wavelength_to_inverse_velocity(wmin)
     t2 = tmax - dist * chopper_cascade.wavelength_to_inverse_velocity(wmax)
-    # diff = abs(t2 - t1)
-    # ind = np.argmin(diff.sum('subframe').values)
-    # print(f"Using chopper {ind} for time-of-flight origin.")
-    # ind = 2
-    # time_origins = 0.5 * (t1['distance', ind] + t2['distance', ind])
     time_origins = 0.5 * (t1 + t2)
 
     # We need to add nans between each crossing_time offsets for the bins before,
@@ -552,39 +529,8 @@ def time_of_flight_origin_wfm(
     shift[1::2] = time_origins
     return TimeOfFlightOrigin(
         time=sc.DataArray(shift, coords={'subframe': times}),
-        # distance=distances['distance', ind],
         distance=distance,
     )
-
-
-# def time_of_flight_origin_wfm_frame(
-#     frame_at_detector: FrameAtDetector,
-#     frames: ChopperCascadeFrames,
-# ) -> FrameForTimeOfFlightOrigin:
-#     """
-#     Return the frame used to compute the time-of-flight origin for WFM.
-#     We select the frame with the shortest opening time among the frames that have the
-#     same number of subframes as the frame at detector.
-
-#     Parameters
-#     ----------
-#     frame_at_detector:
-#         The frame at the detector.
-#     frames:
-#         All the frames in the chopper cascade.
-#     """
-#     nframes = len(frame_at_detector.subframes)
-#     # Among the frames that have the same number of subframes as the frame at
-#     # detector, find the one with the shortest opening time
-#     delta_t = [
-#         sc.concat([(subf.end_time - subf.start_time) for subf in f.subframes], dim='x')
-#         .sum()
-#         .value
-#         if len(f.subframes) == nframes
-#         else np.inf
-#         for f in frames
-#     ]
-#     return FrameForTimeOfFlightOrigin(frames[int(np.argmin(delta_t))])
 
 
 def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
