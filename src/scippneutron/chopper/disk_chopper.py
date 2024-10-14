@@ -511,12 +511,8 @@ class DiskChopper:
         self, *, angle: sc.Variable, n_repetitions: int
     ) -> sc.Variable:
         dim = str(uuid4())
-        # if n_repetitions == 1:
-        #     repetition_offsets = sc.scalar(0, unit=angle.unit)
-        # else:
-        #     repetition_offsets = sc.arange(dim, 0, n_repetitions, unit='rad') * (
-        #         2 * np.pi
-        #     )
+        # Start at -1 to ensure a rotation that is finishing when the pulse begins is
+        # also included.
         repetition_offsets = sc.arange(dim, -1, n_repetitions, unit='rad') * (2 * np.pi)
         if self.is_clockwise:
             repeated = angle + repetition_offsets.to(unit=angle.unit)
@@ -524,10 +520,6 @@ class DiskChopper:
             # Make sure the repeated angles are later in time.
             repeated = angle - repetition_offsets.to(unit=angle.unit)
 
-        # if n_repetitions == 1:
-        #     # Do not add a new dimension to the output.
-        #     print("not repeated", repeated)
-        #     return repeated.flatten(to=angle.dim)
         if angle.ndim == 0:
             return repeated.flatten(to='slit')
         # Remove aux dimension.
