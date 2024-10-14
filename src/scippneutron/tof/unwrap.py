@@ -16,7 +16,6 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import NewType
 
-import numpy as np
 import scipp as sc
 
 from .._utils import elem_unit

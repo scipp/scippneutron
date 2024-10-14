@@ -547,11 +547,13 @@ class Chopper:
             Number of pulses to rotate the chopper for.
         """
         tpulse = 1.0 / pulse_frequency
+        # Start at -1 to ensure a rotation that is finishing when the pulse begins is
+        # also included.
         topen = disk_chopper.time_offset_open(
-            pulse_frequency=pulse_frequency, starting_rotation=-1
+            pulse_frequency=pulse_frequency, start_rotation=-1
         )
         tclose = disk_chopper.time_offset_close(
-            pulse_frequency=pulse_frequency, starting_rotation=-1
+            pulse_frequency=pulse_frequency, start_rotation=-1
         )
         offsets = sc.arange('pulse', npulses) * tpulse
         return cls(
