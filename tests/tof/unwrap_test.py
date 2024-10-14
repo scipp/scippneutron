@@ -334,21 +334,15 @@ def test_pulse_skipping_unwrap_histogram_mode_not_implemented(
 
 def test_wfm_unwrap(ess_10s_14Hz, ess_pulse) -> None:
     distance = sc.scalar(20.0, unit='m')
-    choppers = fakes.wfm_choppers.copy()
-    # We currently have no way of detecting which cutouts of the "source" chopper
-    # are used (not blocked by other choppers), for this test we remove those we
-    # know are not used.
-    choppers['wfm1'] = choppers['wfm1'][2:]
-    choppers['wfm2'] = choppers['wfm2'][2:]
+    choppers = fakes.wfm_choppers
     beamline = fakes.FakeBeamline(
         source=ess_10s_14Hz,
         pulse=ess_pulse,
         choppers=choppers,
         monitors={'monitor': distance},
         detectors={},
-        # time_of_flight_origin='wfm1',
     )
-    mon, ref = beamline.get_monitor('monitor')
+    mon, _ = beamline.get_monitor('monitor')
 
     pl = sl.Pipeline(
         unwrap.unwrap_providers()
@@ -364,13 +358,8 @@ def test_wfm_unwrap(ess_10s_14Hz, ess_pulse) -> None:
         ess_pulse.wavelength_max,
     )
     pl[unwrap.Choppers] = choppers
-    pl[unwrap.WFMChopperNames] = ('wfm1', 'wfm2')
     pl[unwrap.Ltotal] = distance
     bounds = pl.compute(unwrap.SubframeBounds)
     assert bounds.sizes == {'bound': 2, 'subframe': 6}
     result = pl.compute(unwrap.TofData)
-    ref.coords['Ltotal'] = distance - 0.5 * (
-        choppers['wfm1'].distance + choppers['wfm2'].distance
-    )
-    # FakeBeamline does not support WFM yet, we cannot run a better check for now.
-    assert_identical(result.sum(), ref.sum())
+    assert_identical(result.coords['Ltotal'], distance - choppers['wfm1'].distance)
