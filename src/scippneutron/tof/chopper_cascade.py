@@ -56,7 +56,7 @@ class Subframe:
     """
 
     def __init__(self, time: sc.Variable, wavelength: sc.Variable):
-        if time.sizes != wavelength.sizes:
+        if {dim: time.sizes[dim] for dim in wavelength.sizes} != wavelength.sizes:
             raise sc.DimensionError(
                 f'Inconsistent dims or shape: {time.sizes} vs {wavelength.sizes}'
             )
@@ -105,24 +105,48 @@ class Subframe:
         )
 
     @property
-    def start_time(self) -> sc.Variable:
-        """The start time of the subframe."""
+    def global_start_time(self) -> sc.Variable:
+        """The global start time of the subframe."""
         return self.time.min()
 
     @property
-    def end_time(self) -> sc.Variable:
-        """The end time of the subframe."""
+    def global_end_time(self) -> sc.Variable:
+        """The global end time of the subframe."""
         return self.time.max()
 
     @property
-    def start_wavelength(self) -> sc.Variable:
-        """The start wavelength of the subframe."""
+    def global_start_wavelength(self) -> sc.Variable:
+        """The global start wavelength of the subframe."""
         return self.wavelength.min()
 
     @property
-    def end_wavelength(self) -> sc.Variable:
-        """The end wavelength of the subframe."""
+    def global_end_wavelength(self) -> sc.Variable:
+        """The global end wavelength of the subframe."""
         return self.wavelength.max()
+
+    @property
+    def start_time(self) -> sc.Variable:
+        """The start time of the subframe for each of the distances in self.time."""
+        return self.time.min('vertex' if 'vertex' in self.time.dims else None)
+
+    @property
+    def end_time(self) -> sc.Variable:
+        """The end time of the subframe for each of the distances in self.time."""
+        return self.time.max('vertex' if 'vertex' in self.time.dims else None)
+
+    @property
+    def start_wavelength(self) -> sc.Variable:
+        """The start wavelength of the subframe for each of the distances in self.time."""
+        return self.wavelength.min(
+            'vertex' if 'vertex' in self.wavelength.dims else None
+        )
+
+    @property
+    def end_wavelength(self) -> sc.Variable:
+        """The end wavelength of the subframe for each of the distances in self.time."""
+        return self.wavelength.max(
+            'vertex' if 'vertex' in self.wavelength.dims else None
+        )
 
 
 @dataclass
