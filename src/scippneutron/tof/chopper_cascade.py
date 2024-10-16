@@ -241,8 +241,12 @@ class Frame:
         simply indicate a problem with the chopper cascade. Attempts to handle this
         automatically may be misguided.
         """
-        starts = [subframe.start_time for subframe in self.subframes]
-        ends = [subframe.end_time for subframe in self.subframes]
+        starts = sc.concat(
+            [subframe.start_time for subframe in self.subframes], dim='subframe'
+        )
+        ends = sc.concat(
+            [subframe.end_time for subframe in self.subframes], dim='subframe'
+        )
         # Given how time-propagation and chopping works, the min wavelength is always
         # given by the same vertex as the min time, and the max wavelength by the same
         # vertex as the max time. Thus, this check should generally always pass.
@@ -252,8 +256,22 @@ class Frame:
                 'Subframes must be regular, i.e., min/max time and wavelength must '
                 'coincide.'
             )
-        wav_starts = [subframe.start_wavelength for subframe in self.subframes]
-        wav_ends = [subframe.end_wavelength for subframe in self.subframes]
+        wav_starts = sc.concat(
+            [subframe.start_wavelength for subframe in self.subframes], dim='subframe'
+        )
+        wav_ends = sc.concat(
+            [subframe.end_wavelength for subframe in self.subframes], dim='subframe'
+        )
+
+        # print("starts", starts)
+        # print("ends", ends)
+        # print("wav_starts", wav_starts)
+        # print("wav_ends", wav_ends)
+
+        return sc.DataGroup(
+            time=sc.concat([starts, ends], dim='bound'),
+            wavelength=sc.concat([wav_starts, wav_ends], dim='bound'),
+        )
 
         @dataclass
         class Bound:
@@ -268,6 +286,7 @@ class Frame:
                 starts, ends, wav_starts, wav_ends, strict=True
             )
         ]
+        print(bounds)
         bounds = sorted(bounds, key=lambda x: x.start)
         current = bounds[0]
         merged_bounds = []
