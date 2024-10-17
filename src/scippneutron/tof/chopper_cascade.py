@@ -136,7 +136,8 @@ class Subframe:
 
     @property
     def start_wavelength(self) -> sc.Variable:
-        """The start wavelength of the subframe for each of the distances in self.time."""
+        """The start wavelength of the subframe for each of the distances in
+        self.time"""
         return self.wavelength.min(
             'vertex' if 'vertex' in self.wavelength.dims else None
         )
