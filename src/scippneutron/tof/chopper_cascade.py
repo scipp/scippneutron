@@ -232,16 +232,7 @@ class Frame:
 
     def subbounds(self) -> sc.DataGroup:
         """
-        The bounds of the subframes, defined as the union over subframes.
-
-        This is not the same as the bounds of the individual subframes, but defined as
-        the union of all subframes. Subframes that overlap in time are "merged" into a
-        single subframe.
-
-        This function is to some extent experimental: It is not clear if taking the
-        union of overlapping subframes has any utility in practice, since this may
-        simply indicate a problem with the chopper cascade. Attempts to handle this
-        automatically may be misguided.
+        The bounds of the individual subframes, stored as a DataGroup.
         """
         starts = sc.concat(
             [subframe.start_time for subframe in self.subframes], dim='subframe'
@@ -265,56 +256,9 @@ class Frame:
             [subframe.end_wavelength for subframe in self.subframes], dim='subframe'
         )
 
-        # print("starts", starts)
-        # print("ends", ends)
-        # print("wav_starts", wav_starts)
-        # print("wav_ends", wav_ends)
-
         return sc.DataGroup(
             time=sc.concat([starts, ends], dim='bound'),
             wavelength=sc.concat([wav_starts, wav_ends], dim='bound'),
-        )
-
-        @dataclass
-        class Bound:
-            start: sc.Variable
-            end: sc.Variable
-            wav_start: sc.Variable
-            wav_end: sc.Variable
-
-        bounds = [
-            Bound(start, end, wav_start, wav_end)
-            for start, end, wav_start, wav_end in zip(
-                starts, ends, wav_starts, wav_ends, strict=True
-            )
-        ]
-        print(bounds)
-        bounds = sorted(bounds, key=lambda x: x.start)
-        current = bounds[0]
-        merged_bounds = []
-        for bound in bounds[1:]:
-            # If start is before current end, merge
-            if bound.start <= current.end:
-                current = Bound(
-                    current.start,
-                    max(current.end, bound.end),
-                    current.wav_start,
-                    max(current.wav_end, bound.wav_end),
-                )
-            else:
-                merged_bounds.append(current)
-                current = bound
-        merged_bounds.append(current)
-        time_bounds = [
-            sc.concat([bound.start, bound.end], dim='bound') for bound in merged_bounds
-        ]
-        wav_bounds = [
-            sc.concat([bound.wav_start, bound.wav_end], dim='bound')
-            for bound in merged_bounds
-        ]
-        return sc.DataGroup(
-            time=sc.concat(time_bounds, dim='subframe'),
-            wavelength=sc.concat(wav_bounds, dim='subframe'),
         )
 
 
