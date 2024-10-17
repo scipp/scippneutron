@@ -56,7 +56,7 @@ class Subframe:
     """
 
     def __init__(self, time: sc.Variable, wavelength: sc.Variable):
-        if {dim: time.sizes[dim] for dim in wavelength.sizes} != wavelength.sizes:
+        if {dim: time.sizes.get(dim) for dim in wavelength.sizes} != wavelength.sizes:
             raise sc.DimensionError(
                 f'Inconsistent dims or shape: {time.sizes} vs {wavelength.sizes}'
             )
@@ -219,10 +219,12 @@ class Frame:
 
     def bounds(self) -> sc.DataGroup:
         """The bounds of the frame, i.e., the global min and max time and wavelength."""
-        start = sc.reduce([sub.start_time for sub in self.subframes]).min()
-        end = sc.reduce([sub.end_time for sub in self.subframes]).max()
-        wav_start = sc.reduce([sub.start_wavelength for sub in self.subframes]).min()
-        wav_end = sc.reduce([sub.end_wavelength for sub in self.subframes]).max()
+        start = sc.reduce([sub.global_start_time for sub in self.subframes]).min()
+        end = sc.reduce([sub.global_end_time for sub in self.subframes]).max()
+        wav_start = sc.reduce(
+            [sub.global_start_wavelength for sub in self.subframes]
+        ).min()
+        wav_end = sc.reduce([sub.global_end_wavelength for sub in self.subframes]).max()
         return sc.DataGroup(
             time=sc.concat([start, end], dim='bound'),
             wavelength=sc.concat([wav_start, wav_end], dim='bound'),

@@ -391,6 +391,53 @@ def test_frame_sequence_propagate_to_returns_new_sequence_with_added_propagated_
     assert result2[2] == result[1].propagate_to(distance * 2)
 
 
+def test_frame_sequence_propagate_to_array_of_distances(
+    source_frame_sequence: chopper_cascade.FrameSequence,
+) -> None:
+    frames = source_frame_sequence
+    distances = sc.array(dims=['distance'], values=[1.5, 1.7], unit='m')
+    result = frames.propagate_to(distances)
+    assert len(frames) == 1
+    assert len(result) == 2
+    assert result[1] == frames[0].propagate_to(distances)
+    # print(result[1].subframes)
+    subframe = result[1].subframes[0]
+    assert subframe.start_time.sizes["distance"] == 2
+    assert subframe.end_time.sizes["distance"] == 2
+
+
+def test_frame_sequence_propagate_to_array_of_distances_global_bounds(
+    source_frame_sequence: chopper_cascade.FrameSequence,
+) -> None:
+    frames = source_frame_sequence
+    distances = sc.array(dims=['distance'], values=[1.5, 1.7], unit='m')
+    result = frames.propagate_to(distances)
+    bounds = result[-1].bounds()
+    subframe = result[1].subframes[0]
+    assert_identical(bounds['time']['bound', 0], subframe.start_time.min())
+    assert_identical(bounds['time']['bound', 1], subframe.end_time.max())
+    assert_identical(bounds['wavelength']['bound', 0], subframe.start_wavelength.min())
+    assert_identical(bounds['wavelength']['bound', 1], subframe.end_wavelength.max())
+
+
+def test_frame_sequence_propagate_to_array_of_distances_subbounds(
+    source_frame_sequence: chopper_cascade.FrameSequence,
+) -> None:
+    frames = source_frame_sequence
+    distances = sc.array(dims=['distance'], values=[1.5, 1.7], unit='m')
+    result = frames.propagate_to(distances)
+    subbounds = result[-1].subbounds()
+    subframe = result[1].subframes[0]
+    assert_identical(subbounds['time']['subframe', 0]['bound', 0], subframe.start_time)
+    assert_identical(subbounds['time']['subframe', 0]['bound', 1], subframe.end_time)
+    assert_identical(
+        subbounds['wavelength']['subframe', 0]['bound', 0], subframe.start_wavelength
+    )
+    assert_identical(
+        subbounds['wavelength']['subframe', 0]['bound', 1], subframe.end_wavelength
+    )
+
+
 def test_frame_sequence_chop_returns_new_sequence_with_added_chopped_frames(
     source_frame_sequence: chopper_cascade.FrameSequence,
 ) -> None:
