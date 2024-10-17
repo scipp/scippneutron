@@ -400,7 +400,6 @@ def test_frame_sequence_propagate_to_array_of_distances(
     assert len(frames) == 1
     assert len(result) == 2
     assert result[1] == frames[0].propagate_to(distances)
-    # print(result[1].subframes)
     subframe = result[1].subframes[0]
     assert subframe.start_time.sizes["distance"] == 2
     assert subframe.end_time.sizes["distance"] == 2
