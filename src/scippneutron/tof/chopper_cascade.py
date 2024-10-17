@@ -257,9 +257,14 @@ class Frame:
             [subframe.end_wavelength for subframe in self.subframes], dim='subframe'
         )
 
+        time = sc.concat([starts, ends], dim='bound')
+        wavelength = sc.concat([wav_starts, wav_ends], dim='bound')
+        time_dims = list(set(time.dims) - {'subframe', 'bound'})
+        wavelength_dims = list(set(wavelength.dims) - {'subframe', 'bound'})
+
         return sc.DataGroup(
-            time=sc.concat([starts, ends], dim='bound'),
-            wavelength=sc.concat([wav_starts, wav_ends], dim='bound'),
+            time=time.transpose([*time_dims, 'subframe', 'bound']),
+            wavelength=wavelength.transpose([*wavelength_dims, 'subframe', 'bound']),
         )
 
 
