@@ -248,14 +248,33 @@ class Frame:
         current = bounds[0]
         merged_bounds = []
         for bound in bounds[1:]:
-            # If start is before current end, merge
+            # If start is before current end, we need to either merge or clip
             if bound.start <= current.end:
-                current = Bound(
-                    current.start,
-                    max(current.end, bound.end),
-                    current.wav_start,
-                    max(current.wav_end, bound.wav_end),
-                )
+                # If end is after current end, there is only partial overlap, so we clip
+                if bound.end > current.end:
+                    old_end = current.end
+                    old_wav_end = current.wav_end
+                    current = Bound(
+                        current.start,
+                        bound.start,
+                        current.wav_start,
+                        bound.wav_start,
+                    )
+                    merged_bounds.append(current)
+                    current = Bound(
+                        old_end,
+                        bound.end,
+                        old_wav_end,
+                        bound.wav_end,
+                    )
+                # If end is before current end, overlap is total and we merge
+                else:
+                    current = Bound(
+                        current.start,
+                        max(current.end, bound.end),
+                        current.wav_start,
+                        max(current.wav_end, bound.wav_end),
+                    )
             else:
                 merged_bounds.append(current)
                 current = bound
@@ -528,6 +547,8 @@ class Chopper:
             Number of pulses to rotate the chopper for.
         """
         tpulse = 1.0 / pulse_frequency
+        # Start at -1 to ensure a rotation that is finishing when the pulse begins is
+        # also included.
         topen = disk_chopper.time_offset_open(pulse_frequency=pulse_frequency)
         tclose = disk_chopper.time_offset_close(pulse_frequency=pulse_frequency)
         offsets = sc.arange('pulse', npulses) * tpulse
