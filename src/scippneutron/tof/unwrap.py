@@ -440,6 +440,39 @@ def time_offset(unwrapped: UnwrappedData) -> TimeOffset:
     return TimeOffset(unwrapped.coords['time_offset'])
 
 
+def maybe_clip_detector_subframes(frame: FrameAtDetector) -> CleanFrameAtDetector:
+    starts = sc.concat([sf.start_time for sf in frame.subframes], dim='subframe')
+    ends = sc.concat([sf.end_time for sf in frame.subframes], dim='subframe')
+
+    sizes = starts.sizes
+    sizes['subframe'] *= 2
+    bounds = sc.empty(sizes=sizes, unit=starts.unit)
+    bounds['subframe', ::2] = sc.sort(starts, 'subframe')
+    bounds['subframe', 1::2] = sc.sort(ends, 'subframe')
+    if not sc.issorted(bounds, 'subframe'):
+        # Chop the subframes one by one
+        # chopped = chopper_cascade.Frame(distance=frame.distance, subframes=[])
+        subframes = []
+        sorted_times = sc.sort(bounds, 'subframe')
+        fake_chopper = chopper_cascade.Chopper(
+            distance=frame.distance,
+            time_open=sorted_times['subframe', ::2],
+            time_close=sorted_times['subframe', 1::2],
+        )
+        for subframe in frame.subframes:
+            f = chopper_cascade.Frame(distance=frame.distance, subframes=[subframe])
+            chopped = f.chop(fake_chopper)
+            subframes.extend(chopped.subframes)
+        print(subframes)
+
+    return CleanFrameAtDetector(
+        chopper_cascade.Frame(
+            distance=frame.distance,
+            subframes=subframes,
+        )
+    )
+
+
 def time_of_flight_origin_wfm(
     frames: ChopperCascadeFrames,
     detector_subframe_bounds: SubframeBounds,
