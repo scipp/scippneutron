@@ -105,26 +105,6 @@ class Subframe:
         )
 
     @property
-    def global_start_time(self) -> sc.Variable:
-        """The global start time of the subframe."""
-        return self.time.min()
-
-    @property
-    def global_end_time(self) -> sc.Variable:
-        """The global end time of the subframe."""
-        return self.time.max()
-
-    @property
-    def global_start_wavelength(self) -> sc.Variable:
-        """The global start wavelength of the subframe."""
-        return self.wavelength.min()
-
-    @property
-    def global_end_wavelength(self) -> sc.Variable:
-        """The global end wavelength of the subframe."""
-        return self.wavelength.max()
-
-    @property
     def start_time(self) -> sc.Variable:
         """The start time of the subframe for each of the distances in self.time."""
         return self.time.min('vertex' if 'vertex' in self.time.dims else None)
@@ -220,12 +200,10 @@ class Frame:
 
     def bounds(self) -> sc.DataGroup:
         """The bounds of the frame, i.e., the global min and max time and wavelength."""
-        start = sc.reduce([sub.global_start_time for sub in self.subframes]).min()
-        end = sc.reduce([sub.global_end_time for sub in self.subframes]).max()
-        wav_start = sc.reduce(
-            [sub.global_start_wavelength for sub in self.subframes]
-        ).min()
-        wav_end = sc.reduce([sub.global_end_wavelength for sub in self.subframes]).max()
+        start = sc.reduce([sub.start_time for sub in self.subframes]).min()
+        end = sc.reduce([sub.end_time for sub in self.subframes]).max()
+        wav_start = sc.reduce([sub.start_wavelength for sub in self.subframes]).min()
+        wav_end = sc.reduce([sub.end_wavelength for sub in self.subframes]).max()
         return sc.DataGroup(
             time=sc.concat([start, end], dim='bound'),
             wavelength=sc.concat([wav_start, wav_end], dim='bound'),
