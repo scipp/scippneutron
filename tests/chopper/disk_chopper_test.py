@@ -216,25 +216,27 @@ def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_clockwise_single_angle
         }
     )
     omega = 2 * pi * 2.3
-    sc.testing.assert_identical(
-        ch.time_offset_angle_at_beam(angle=sc.scalar(0.0, unit='rad')),
-        sc.scalar(0.0, unit='s'),
+    # Note that the chopper performs one rotation prior to the first pulse, hence
+    # the additional -2 * pi.
+    expected = sc.array(dims=['slit'], values=[-2 * pi, 0.0], unit='s') / omega
+    assert sc.allclose(
+        ch.time_offset_angle_at_beam(angle=sc.scalar(0.0, unit='rad')), expected
     )
-    sc.testing.assert_identical(
-        ch.time_offset_angle_at_beam(angle=sc.scalar(0.0, unit='deg')),
-        sc.scalar(0.0, unit='s'),
+    assert sc.allclose(
+        ch.time_offset_angle_at_beam(angle=sc.scalar(0.0, unit='deg')), expected
     )
-    sc.testing.assert_identical(
+
+    assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(1.2, unit='rad')),
-        sc.scalar(1.2 / omega, unit='s'),
+        sc.array(dims=['slit'], values=[1.2 - 2 * pi, 1.2], unit='s') / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(-0.4, unit='rad')),
-        sc.scalar(-0.4 / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-0.4 - 2 * pi, -0.4], unit='s') / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(7.1, unit='rad')),
-        sc.scalar(7.1 / omega, unit='s'),
+        sc.array(dims=['slit'], values=[7.1 - 2 * pi, 7.1], unit='s') / omega,
     )
 
 
@@ -252,25 +254,26 @@ def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_anti_clockwise_single_
         }
     )
     omega = 2 * pi * 2.3
-    sc.testing.assert_identical(
-        ch.time_offset_angle_at_beam(angle=sc.scalar(0.0, unit='rad')),
-        sc.scalar(1 / 2.3, unit='s'),
+    # Note that the chopper performs one rotation prior to the first pulse, hence
+    # the additional 0.0.
+    expected = sc.array(dims=['slit'], values=[0.0, 2 * pi], unit='s') / omega
+    assert sc.allclose(
+        ch.time_offset_angle_at_beam(angle=sc.scalar(0.0, unit='rad')), expected
     )
-    sc.testing.assert_identical(
-        ch.time_offset_angle_at_beam(angle=sc.scalar(0.0, unit='deg')),
-        sc.scalar(1 / 2.3, unit='s'),
+    assert sc.allclose(
+        ch.time_offset_angle_at_beam(angle=sc.scalar(0.0, unit='deg')), expected
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(1.2, unit='rad')),
-        sc.scalar((2 * pi - 1.2) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-1.2, 2 * pi - 1.2], unit='s') / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(-0.4, unit='rad')),
-        sc.scalar((2 * pi + 0.4) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[0.4, 2 * pi + 0.4], unit='s') / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(7.1, unit='rad')),
-        sc.scalar((2 * pi - 7.1) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-7.1, 2 * pi - 7.1], unit='s') / omega,
     )
 
 
@@ -289,7 +292,13 @@ def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_clockwise_multi_angle(
     )
     omega = 2 * pi * 4.4
     angles = sc.array(dims=['angle'], values=[0.0, 0.4, -1.3, 6.9], unit='rad')
-    expected = sc.array(dims=['angle'], values=[0.0, 0.4, -1.3, 6.9], unit='s') / omega
+    # Note that the chopper performs one rotation prior to the first pulse, hence
+    # the additional -2 * pi.
+    # Note that order here is important for the flatten to happen in the correct order.
+    expected = (
+        sc.array(dims=['dummy'], values=[-2.0 * pi, 0.0], unit='s')
+        + sc.array(dims=['angle'], values=[0.0, 0.4, -1.3, 6.9], unit='s')
+    ).flatten(to='angle') / omega
     assert sc.allclose(ch.time_offset_angle_at_beam(angle=angles), expected)
 
 
@@ -307,12 +316,13 @@ def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_anti_clockwise_multi_a
         }
     )
     omega = 2 * pi * 4.4
-    offset = sc.scalar(2 * pi / omega, unit='s')
+    # Note that the chopper performs one rotation prior to the first pulse, hence
+    # the additional 0.0.
+    offset = sc.array(dims=['dummy'], values=[0.0, 2.0 * pi], unit='s')
     angles = sc.array(dims=['angle'], values=[0.0, 0.4, -1.3, 6.9], unit='rad')
     expected = (
-        offset
-        - sc.array(dims=['angle'], values=[0.0, 0.4, -1.3, 6.9], unit='s') / omega
-    )
+        offset - sc.array(dims=['angle'], values=[0.0, 0.4, -1.3, 6.9], unit='s')
+    ).flatten(to='angle') / omega
     assert sc.allclose(ch.time_offset_angle_at_beam(angle=angles), expected)
 
 
@@ -331,19 +341,21 @@ def test_time_offset_angle_at_beam_no_phase_with_beam_pos_clockwise(
     omega = 2 * pi * 2.3
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(0.0, unit='rad')),
-        sc.scalar(-1.8 / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-2.0 * pi - 1.8, -1.8], unit='s') / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(1.8, unit='rad')),
-        sc.scalar(0.0, unit='s'),
+        sc.array(dims=['slit'], values=[-2.0 * pi, 0.0], unit='s') / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(2.4, unit='rad')),
-        sc.scalar((2.4 - 1.8) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-2.0 * pi + 2.4 - 1.8, 2.4 - 1.8], unit='s')
+        / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(7.1, unit='rad')),
-        sc.scalar((7.1 - 1.8) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-2.0 * pi + 7.1 - 1.8, 7.1 - 1.8], unit='s')
+        / omega,
     )
 
 
@@ -362,19 +374,21 @@ def test_time_offset_angle_at_beam_no_phase_with_beam_pos_anti_clockwise(
     omega = 2 * pi * 2.3
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(0.0, unit='rad')),
-        sc.scalar((2 * pi + 1.8) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[1.8, 2 * pi + 1.8], unit='s') / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(1.8, unit='rad')),
-        sc.scalar(1 / 2.3, unit='s'),
+        sc.array(dims=['slit'], values=[0.0, 2 * pi], unit='s') / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(2.4, unit='rad')),
-        sc.scalar((2 * pi - 2.4 + 1.8) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-2.4 + 1.8, 2 * pi - 2.4 + 1.8], unit='s')
+        / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(7.1, unit='rad')),
-        sc.scalar((2 * pi - 7.1 + 1.8) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-7.1 + 1.8, 2 * pi - 7.1 + 1.8], unit='s')
+        / omega,
     )
 
 
@@ -393,19 +407,22 @@ def test_time_offset_angle_at_beam_with_phase_zero_beam_pos_clockwise(
     omega = 2 * pi * 1.1
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(0.0, unit='rad')),
-        sc.scalar(0.7 / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-2.0 * pi + 0.7, 0.7], unit='s') / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(1.8, unit='rad')),
-        sc.scalar((1.8 + 0.7) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-2.0 * pi + 1.8 + 0.7, 1.8 + 0.7], unit='s')
+        / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(2.4, unit='rad')),
-        sc.scalar((2.4 + 0.7) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-2.0 * pi + 2.4 + 0.7, 2.4 + 0.7], unit='s')
+        / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(7.1, unit='rad')),
-        sc.scalar((7.1 + 0.7) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-2.0 * pi + 7.1 + 0.7, 7.1 + 0.7], unit='s')
+        / omega,
     )
 
 
@@ -424,26 +441,26 @@ def test_time_offset_angle_at_beam_with_phase_zero_beam_pos_anti_clockwise(
     omega = 2 * pi * 1.1
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(0.0, unit='rad')),
-        sc.scalar((2 * pi - 0.7) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-0.7, 2.0 * pi - 0.7], unit='s') / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(1.8, unit='rad')),
-        sc.scalar((2 * pi - 1.8 - 0.7) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-1.8 - 0.7, 2.0 * pi - 1.8 - 0.7], unit='s')
+        / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(2.4, unit='rad')),
-        sc.scalar((2 * pi - 2.4 - 0.7) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-2.4 - 0.7, 2.0 * pi - 2.4 - 0.7], unit='s')
+        / omega,
     )
     assert sc.allclose(
         ch.time_offset_angle_at_beam(angle=sc.scalar(7.1, unit='rad')),
-        sc.scalar((2 * pi - 7.1 - 0.7) / omega, unit='s'),
+        sc.array(dims=['slit'], values=[-7.1 - 0.7, 2.0 * pi - 7.1 - 0.7], unit='s')
+        / omega,
     )
 
 
-@pytest.mark.parametrize(
-    'phase', [sc.scalar(0.0, unit='rad'), sc.scalar(1.2, unit='rad')]
-)
-def test_time_offset_open_close_no_slit(nexus_chopper, phase):
+def test_time_offset_open_close_no_slit(nexus_chopper):
     ch = DiskChopper.from_nexus(
         {
             **nexus_chopper,
@@ -486,15 +503,15 @@ def test_time_offset_open_close_only_slit(nexus_chopper, rotation_speed):
     factor = deg_angle_to_time_factor(sc.scalar(rotation_speed, unit='Hz'))
     assert sc.allclose(
         ch.time_offset_open(pulse_frequency=abs(ch.frequency)),
-        sc.array(dims=['slit'], values=[0.0], unit='deg') * factor,
+        sc.array(dims=['slit'], values=[-360.0, 0.0], unit='deg') * factor,
     )
     assert sc.allclose(
         ch.time_offset_close(pulse_frequency=abs(ch.frequency)),
-        sc.array(dims=['slit'], values=[360.0], unit='deg') * factor,
+        sc.array(dims=['slit'], values=[0.0, 360.0], unit='deg') * factor,
     )
     assert sc.allclose(
         ch.open_duration(pulse_frequency=abs(ch.frequency)),
-        sc.array(dims=['slit'], values=[1 / abs(rotation_speed)], unit='s'),
+        sc.array(dims=['slit'], values=[1 / abs(rotation_speed)] * 2, unit='s'),
     )
 
 
@@ -504,6 +521,7 @@ def test_time_offset_open_close_only_slit(nexus_chopper, rotation_speed):
         sc.scalar(0.0, unit='rad'),
         sc.scalar(1.2, unit='rad'),
         sc.scalar(-50.0, unit='deg'),
+        sc.scalar(-50, unit='deg'),  # also check for integer phase
     ],
 )
 @pytest.mark.parametrize(
@@ -525,18 +543,20 @@ def test_time_offset_open_close_one_slit_clockwise(nexus_chopper, phase, beam_po
         }
     )
     factor = deg_angle_to_time_factor(sc.scalar(-7.21, unit='Hz'))
-    shift = phase.to(unit='deg') + beam_position.to(unit='deg')
+    shift = phase.to(unit='deg', dtype='float64') + beam_position.to(unit='deg')
     assert sc.allclose(
         ch.time_offset_open(pulse_frequency=abs(ch.frequency)),
-        (sc.array(dims=['slit'], values=[87.0], unit='deg') - shift) * factor,
+        (sc.array(dims=['slit'], values=[87.0 - 360.0, 87.0], unit='deg') - shift)
+        * factor,
     )
     assert sc.allclose(
         ch.time_offset_close(pulse_frequency=abs(ch.frequency)),
-        (sc.array(dims=['slit'], values=[177.0], unit='deg') - shift) * factor,
+        (sc.array(dims=['slit'], values=[177.0 - 360.0, 177.0], unit='deg') - shift)
+        * factor,
     )
     assert sc.allclose(
         ch.open_duration(pulse_frequency=abs(ch.frequency)),
-        sc.array(dims=['slit'], values=[90.0], unit='deg') * factor,
+        sc.array(dims=['slit'], values=[90.0] * 2, unit='deg') * factor,
     )
 
 
@@ -572,15 +592,17 @@ def test_time_offset_open_close_one_slit_anticlockwise(
     shift = phase.to(unit='deg') + beam_position.to(unit='deg')
     assert sc.allclose(
         ch.time_offset_open(pulse_frequency=ch.frequency),
-        (sc.array(dims=['slit'], values=[360 - 177.0], unit='deg') + shift) * factor,
+        (sc.array(dims=['slit'], values=[-177.0, 360 - 177.0], unit='deg') + shift)
+        * factor,
     )
     assert sc.allclose(
         ch.time_offset_close(pulse_frequency=ch.frequency),
-        (sc.array(dims=['slit'], values=[360 - 87.0], unit='deg') + shift) * factor,
+        (sc.array(dims=['slit'], values=[-87.0, 360 - 87.0], unit='deg') + shift)
+        * factor,
     )
     assert sc.allclose(
         ch.open_duration(pulse_frequency=ch.frequency),
-        sc.array(dims=['slit'], values=[90.0], unit='deg') * factor,
+        sc.array(dims=['slit'], values=[90.0] * 2, unit='deg') * factor,
     )
 
 
@@ -616,15 +638,17 @@ def test_time_offset_open_close_one_slit_across_tdc_clockwise(
     shift = phase.to(unit='deg') + beam_position.to(unit='deg')
     assert sc.allclose(
         ch.time_offset_open(pulse_frequency=abs(ch.frequency)),
-        (sc.array(dims=['slit'], values=[330.0], unit='deg') - shift) * factor,
+        (sc.array(dims=['slit'], values=[330.0 - 360.0, 330.0], unit='deg') - shift)
+        * factor,
     )
     assert sc.allclose(
         ch.time_offset_close(pulse_frequency=abs(ch.frequency)),
-        (sc.array(dims=['slit'], values=[380.0], unit='deg') - shift) * factor,
+        (sc.array(dims=['slit'], values=[380.0 - 360.0, 380.0], unit='deg') - shift)
+        * factor,
     )
     assert sc.allclose(
         ch.open_duration(pulse_frequency=abs(ch.frequency)),
-        sc.array(dims=['slit'], values=[50.0], unit='deg') * factor,
+        sc.array(dims=['slit'], values=[50.0] * 2, unit='deg') * factor,
     )
 
 
@@ -660,15 +684,17 @@ def test_time_offset_open_close_one_slit_across_tdc_anticlockwise(
     shift = phase.to(unit='deg') + beam_position.to(unit='deg')
     assert sc.allclose(
         ch.time_offset_open(pulse_frequency=ch.frequency),
-        (sc.array(dims=['slit'], values=[360 - 380.0], unit='deg') + shift) * factor,
+        (sc.array(dims=['slit'], values=[-380.0, 360 - 380.0], unit='deg') + shift)
+        * factor,
     )
     assert sc.allclose(
         ch.time_offset_close(pulse_frequency=ch.frequency),
-        (sc.array(dims=['slit'], values=[360 - 330.0], unit='deg') + shift) * factor,
+        (sc.array(dims=['slit'], values=[-330.0, 360 - 330.0], unit='deg') + shift)
+        * factor,
     )
     assert sc.allclose(
         ch.open_duration(pulse_frequency=ch.frequency),
-        sc.array(dims=['slit'], values=[50.0], unit='deg') * factor,
+        sc.array(dims=['slit'], values=[50.0] * 2, unit='deg') * factor,
     )
 
 
@@ -689,15 +715,25 @@ def test_time_offset_open_close_two_slits_clockwise(nexus_chopper):
     factor = deg_angle_to_time_factor(sc.scalar(-11.2, unit='Hz'))
     assert sc.allclose(
         ch.time_offset_open(pulse_frequency=abs(ch.frequency)),
-        sc.array(dims=['slit'], values=[87.0 + 32, 280 + 32], unit='deg') * factor,
+        sc.array(
+            dims=['slit'],
+            values=[87.0 + 32 - 360.0, 280 + 32 - 360.0, 87.0 + 32, 280 + 32],
+            unit='deg',
+        )
+        * factor,
     )
     assert sc.allclose(
         ch.time_offset_close(pulse_frequency=abs(ch.frequency)),
-        sc.array(dims=['slit'], values=[177.0 + 32, 342 + 32], unit='deg') * factor,
+        sc.array(
+            dims=['slit'],
+            values=[177.0 + 32 - 360.0, 342 + 32 - 360.0, 177.0 + 32, 342 + 32],
+            unit='deg',
+        )
+        * factor,
     )
     assert sc.allclose(
         ch.open_duration(pulse_frequency=abs(ch.frequency)),
-        sc.array(dims=['slit'], values=[90.0, 62.0], unit='deg') * factor,
+        sc.array(dims=['slit'], values=[90.0, 62.0] * 2, unit='deg') * factor,
     )
 
 
@@ -718,17 +754,25 @@ def test_time_offset_open_close_two_slits_anticlockwise(nexus_chopper):
     factor = deg_angle_to_time_factor(sc.scalar(11.2, unit='Hz'))
     assert sc.allclose(
         ch.time_offset_open(pulse_frequency=ch.frequency),
-        sc.array(dims=['slit'], values=[360 - 177.0 - 32, 360 - 342 - 32], unit='deg')
+        sc.array(
+            dims=['slit'],
+            values=[-177.0 - 32, -342 - 32, 360 - 177.0 - 32, 360 - 342 - 32],
+            unit='deg',
+        )
         * factor,
     )
     assert sc.allclose(
         ch.time_offset_close(pulse_frequency=ch.frequency),
-        sc.array(dims=['slit'], values=[360 - 87.0 - 32, 360 - 280 - 32], unit='deg')
+        sc.array(
+            dims=['slit'],
+            values=[-87.0 - 32, -280 - 32, 360 - 87.0 - 32, 360 - 280 - 32],
+            unit='deg',
+        )
         * factor,
     )
     assert sc.allclose(
         ch.open_duration(pulse_frequency=ch.frequency),
-        sc.array(dims=['slit'], values=[90.0, 62.0], unit='deg') * factor,
+        sc.array(dims=['slit'], values=[90.0, 62.0] * 2, unit='deg') * factor,
     )
 
 
@@ -752,7 +796,14 @@ def test_time_offset_open_close_two_slits_clockwise_two_pulses(nexus_chopper):
         ch.time_offset_open(pulse_frequency=pulse_frequency),
         sc.array(
             dims=['slit'],
-            values=[87.0 - 60, 200.0 - 60, 87.0 - 60 + 360, 200.0 - 60 + 360],
+            values=[
+                87.0 - 60 - 360,
+                200.0 - 60 - 360,
+                87.0 - 60,
+                200.0 - 60,
+                87.0 - 60 + 360,
+                200.0 - 60 + 360,
+            ],
             unit='deg',
         )
         * factor,
@@ -761,14 +812,22 @@ def test_time_offset_open_close_two_slits_clockwise_two_pulses(nexus_chopper):
         ch.time_offset_close(pulse_frequency=pulse_frequency),
         sc.array(
             dims=['slit'],
-            values=[177.0 - 60, 240.0 - 60, 177.0 - 60 + 360, 240.0 - 60 + 360],
+            values=[
+                177.0 - 60 - 360,
+                240.0 - 60 - 360,
+                177.0 - 60,
+                240.0 - 60,
+                177.0 - 60 + 360,
+                240.0 - 60 + 360,
+            ],
             unit='deg',
         )
         * factor,
     )
     assert sc.allclose(
         ch.open_duration(pulse_frequency=pulse_frequency),
-        sc.array(dims=['slit'], values=[90.0, 40.0, 90.0, 40.0], unit='deg') * factor,
+        sc.array(dims=['slit'], values=[90.0, 40.0, 90.0, 40.0, 90.0, 40.0], unit='deg')
+        * factor,
     )
 
 
@@ -793,6 +852,8 @@ def test_time_offset_open_close_two_slits_anticlockwise_two_pulses(nexus_chopper
         sc.array(
             dims=['slit'],
             values=[
+                -177.0 + 60,
+                -240.0 + 60,
                 360 - 177.0 + 60,
                 360 - 240.0 + 60,
                 360 - 177.0 + 60 + 360,
@@ -807,6 +868,8 @@ def test_time_offset_open_close_two_slits_anticlockwise_two_pulses(nexus_chopper
         sc.array(
             dims=['slit'],
             values=[
+                -87.0 + 60,
+                -200.0 + 60,
                 360 - 87.0 + 60,
                 360 - 200.0 + 60,
                 360 - 87.0 + 60 + 360,
@@ -818,7 +881,8 @@ def test_time_offset_open_close_two_slits_anticlockwise_two_pulses(nexus_chopper
     )
     assert sc.allclose(
         ch.open_duration(pulse_frequency=pulse_frequency),
-        sc.array(dims=['slit'], values=[90.0, 40.0, 90.0, 40.0], unit='deg') * factor,
+        sc.array(dims=['slit'], values=[90.0, 40.0, 90.0, 40.0, 90.0, 40.0], unit='deg')
+        * factor,
     )
 
 
@@ -840,15 +904,25 @@ def test_time_offset_open_close_two_slits_clockwise_half_pulse(nexus_chopper):
     factor = deg_angle_to_time_factor(sc.scalar(-3.5, unit='Hz'))
     assert sc.allclose(
         ch.time_offset_open(pulse_frequency=pulse_frequency),
-        sc.array(dims=['slit'], values=[87.0 - 60, 200.0 - 60], unit='deg') * factor,
+        sc.array(
+            dims=['slit'],
+            values=[87.0 - 60 - 360, 200.0 - 60 - 360, 87.0 - 60, 200.0 - 60],
+            unit='deg',
+        )
+        * factor,
     )
     assert sc.allclose(
         ch.time_offset_close(pulse_frequency=pulse_frequency),
-        sc.array(dims=['slit'], values=[177.0 - 60, 240.0 - 60], unit='deg') * factor,
+        sc.array(
+            dims=['slit'],
+            values=[177.0 - 60 - 360, 240.0 - 60 - 360, 177.0 - 60, 240.0 - 60],
+            unit='deg',
+        )
+        * factor,
     )
     assert sc.allclose(
         ch.open_duration(pulse_frequency=pulse_frequency),
-        sc.array(dims=['slit'], values=[90.0, 40.0], unit='deg') * factor,
+        sc.array(dims=['slit'], values=[90.0, 40.0, 90.0, 40.0], unit='deg') * factor,
     )
 
 
