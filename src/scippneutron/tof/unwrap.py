@@ -49,6 +49,11 @@ The detector may be a monitor or a detector after scattering off the sample. The
 bounds are then computed from this.
 """
 
+CleanFrameAtDetector = NewType('CleanFrameAtDetector', chopper_cascade.Frame)
+"""
+Version of the frame at the detector with subframes that do not overlap.
+"""
+
 FrameBounds = NewType('FrameBounds', sc.DataGroup)
 """
 The computed frame boundaries, used to unwrap the raw timestamps.
@@ -451,7 +456,8 @@ def maybe_clip_detector_subframes(frame: FrameAtDetector) -> CleanFrameAtDetecto
     bounds['subframe', 1::2] = sc.sort(ends, 'subframe')
     if not sc.issorted(bounds, 'subframe'):
         # Chop the subframes one by one
-        # chopped = chopper_cascade.Frame(distance=frame.distance, subframes=[])
+        # TODO: We currently need to chop them one by one as the `chop` method seems
+        # to not work correctly with overlapping subframes.
         subframes = []
         sorted_times = sc.sort(bounds, 'subframe')
         fake_chopper = chopper_cascade.Chopper(
@@ -462,7 +468,15 @@ def maybe_clip_detector_subframes(frame: FrameAtDetector) -> CleanFrameAtDetecto
         for subframe in frame.subframes:
             f = chopper_cascade.Frame(distance=frame.distance, subframes=[subframe])
             chopped = f.chop(fake_chopper)
-            subframes.extend(chopped.subframes)
+            subframes.extend(
+                subframes.extend(
+                    [
+                        sf
+                        for sf in chopped.subframes
+                        if not sc.allclose(sf.start_time, sf.end_time)
+                    ]
+                )
+            )
         print(subframes)
 
     return CleanFrameAtDetector(
