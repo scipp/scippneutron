@@ -107,27 +107,33 @@ class Subframe:
     @property
     def start_time(self) -> sc.Variable:
         """The start time of the subframe for each of the distances in self.time."""
-        return self.time.min('vertex' if 'vertex' in self.time.dims else None)
+        # The `self.time` may have an additional dimension for distance, compared to
+        # `self.wavelength`, and we need to keep that dimension in the output.
+        out = self.time
+        for dim in self.wavelength.dims:
+            out = out.min(dim)
+        return out
 
     @property
     def end_time(self) -> sc.Variable:
         """The end time of the subframe for each of the distances in self.time."""
-        return self.time.max('vertex' if 'vertex' in self.time.dims else None)
+        # The `self.time` may have an additional dimension for distance, compared to
+        # `self.wavelength`, and we need to keep that dimension in the output.
+        out = self.time
+        for dim in self.wavelength.dims:
+            out = out.max(dim)
+        return out
 
     @property
     def start_wavelength(self) -> sc.Variable:
         """The start wavelength of the subframe for each of the distances in
         self.time"""
-        return self.wavelength.min(
-            'vertex' if 'vertex' in self.wavelength.dims else None
-        )
+        return self.wavelength.min()
 
     @property
     def end_wavelength(self) -> sc.Variable:
         """The end wavelength of the subframe for each of the distances in self.time."""
-        return self.wavelength.max(
-            'vertex' if 'vertex' in self.wavelength.dims else None
-        )
+        return self.wavelength.max()
 
 
 @dataclass
