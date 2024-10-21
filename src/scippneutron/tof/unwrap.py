@@ -236,7 +236,8 @@ def frame_at_detector(
     the detector. The detector may be a monitor or a detector after scattering off the
     sample. The frame bounds are then computed from this.
     """
-    return FrameAtDetector(frames[ltotal])
+    return FrameAtDetector(frames[-1].propagate_to(ltotal))
+    # return FrameAtDetector(frames[ltotal])
 
 
 def frame_bounds(frame: FrameAtDetector) -> FrameBounds:
@@ -351,7 +352,9 @@ def offset_from_wrapped(
     """
     time_bounds = frame_bounds['time']
     frame_period = frame_period.to(unit=elem_unit(time_bounds))
-    if time_bounds['bound', -1] - time_bounds['bound', 0] > frame_period:
+    diff = (time_bounds['bound', -1] - time_bounds['bound', 0]) - frame_period
+    # if time_bounds['bound', -1] - time_bounds['bound', 0] > frame_period:
+    if any(diff):
         raise ValueError(
             "Frames are overlapping: Computed frame bounds "
             f"{frame_bounds} are larger than frame period {frame_period}."
@@ -446,6 +449,22 @@ def time_offset(unwrapped: UnwrappedData) -> TimeOffset:
 
 
 def maybe_clip_detector_subframes(frame: FrameAtDetector) -> CleanFrameAtDetector:
+    """
+    Check for time overlap between subframes.
+    If overlap is found, we clip away the regions where there is overlap.
+    This is done by adding a fake chopper which is closed during the overlapping times.
+
+    Examples:
+
+        1. partial overlap:
+        |-------------|            ->   |--------|
+                 |-------------|   ->                 |--------|
+
+        2. total overlap:
+        |----------------------|   ->   |--------|       |-----|
+                 |-------|         ->
+
+    """
     starts = sc.concat([sf.start_time for sf in frame.subframes], dim='subframe')
     ends = sc.concat([sf.end_time for sf in frame.subframes], dim='subframe')
 
@@ -454,30 +473,29 @@ def maybe_clip_detector_subframes(frame: FrameAtDetector) -> CleanFrameAtDetecto
     bounds = sc.empty(sizes=sizes, unit=starts.unit)
     bounds['subframe', ::2] = sc.sort(starts, 'subframe')
     bounds['subframe', 1::2] = sc.sort(ends, 'subframe')
-    if not sc.issorted(bounds, 'subframe'):
-        # Chop the subframes one by one
-        # TODO: We currently need to chop them one by one as the `chop` method seems
-        # to not work correctly with overlapping subframes.
-        subframes = []
-        sorted_times = sc.sort(bounds, 'subframe')
-        fake_chopper = chopper_cascade.Chopper(
-            distance=frame.distance,
-            time_open=sorted_times['subframe', ::2],
-            time_close=sorted_times['subframe', 1::2],
+    if sc.issorted(bounds, 'subframe'):
+        return CleanFrameAtDetector(frame)
+
+    # Chop the subframes one by one
+    # TODO: We currently need to chop them one by one as the `chop` method seems
+    # to not work correctly with overlapping subframes.
+    subframes = []
+    sorted_times = sc.sort(bounds, 'subframe')
+    fake_chopper = chopper_cascade.Chopper(
+        distance=frame.distance,
+        time_open=sorted_times['subframe', ::2],
+        time_close=sorted_times['subframe', 1::2],
+    )
+    for subframe in frame.subframes:
+        f = chopper_cascade.Frame(distance=frame.distance, subframes=[subframe])
+        chopped = f.chop(fake_chopper)
+        subframes.extend(
+            [
+                sf
+                for sf in chopped.subframes
+                if not sc.allclose(sf.start_time, sf.end_time)
+            ]
         )
-        for subframe in frame.subframes:
-            f = chopper_cascade.Frame(distance=frame.distance, subframes=[subframe])
-            chopped = f.chop(fake_chopper)
-            subframes.extend(
-                subframes.extend(
-                    [
-                        sf
-                        for sf in chopped.subframes
-                        if not sc.allclose(sf.start_time, sf.end_time)
-                    ]
-                )
-            )
-        print(subframes)
 
     return CleanFrameAtDetector(
         chopper_cascade.Frame(
@@ -489,8 +507,8 @@ def maybe_clip_detector_subframes(frame: FrameAtDetector) -> CleanFrameAtDetecto
 
 def time_of_flight_origin_wfm(
     frames: ChopperCascadeFrames,
-    detector_subframe_bounds: SubframeBounds,
-    ltotal: Ltotal,
+    clean_detector_frame: CleanFrameAtDetector,
+    # ltotal: Ltotal,
 ) -> TimeOfFlightOrigin:
     """
     Compute the time-of-flight origin in the WFM case.
@@ -542,7 +560,12 @@ def time_of_flight_origin_wfm(
        the neutrons went through the openings they were meant to go through. We are
        however relatively sure which openings of the first chopper they went through.
     """
-    times = detector_subframe_bounds['time'].flatten(
+    sorted_frame = chopper_cascade.Frame(
+        distance=clean_detector_frame.distance,
+        subframes=sorted(clean_detector_frame.subframes, key=lambda x: x.start_time),
+    )
+
+    times = sorted_frame.subbounds()['time'].flatten(
         dims=['subframe', 'bound'], to='subframe'
     )
     # All times before the first subframe and after the last subframe should be
@@ -552,18 +575,29 @@ def time_of_flight_origin_wfm(
     high = times[-1] + padding
     times = sc.concat([low, times, high], 'subframe')
 
-    # Find boundaries of each subframe at the detector
-    tmin = detector_subframe_bounds['time'].min('bound')
-    tmax = detector_subframe_bounds['time'].max('bound')
-    wmin = detector_subframe_bounds['wavelength'].min('bound')
-    wmax = detector_subframe_bounds['wavelength'].max('bound')
-    # Ray-trace back to the position of the first chopper (note that frame 0 is the
-    # pulse itself)
-    distance = frames[1].distance
-    dist = ltotal - distance
-    t1 = tmin - dist * chopper_cascade.wavelength_to_inverse_velocity(wmin)
-    t2 = tmax - dist * chopper_cascade.wavelength_to_inverse_velocity(wmax)
-    time_origins = 0.5 * (t1 + t2)
+    # Propagate the subframes from the detector back to the position of the first
+    # chopper (note that frame 0 is the pulse itself).
+    at_first_chopper = sorted_frame.propagate_to(frames[1].distance)
+
+    # # Find boundaries of each subframe at the detector
+    # tmin = detector_subframe_bounds['time'].min('bound')
+    # tmax = detector_subframe_bounds['time'].max('bound')
+    # wmin = detector_subframe_bounds['wavelength'].min('bound')
+    # wmax = detector_subframe_bounds['wavelength'].max('bound')
+    # # Ray-trace back to the position of the first chopper (note that frame 0 is the
+    # # pulse itself)
+    # distance = frames[1].distance
+    # dist = ltotal - distance
+    # t1 = tmin - dist * chopper_cascade.wavelength_to_inverse_velocity(wmin)
+    # t2 = tmax - dist * chopper_cascade.wavelength_to_inverse_velocity(wmax)
+    # time_origins = 0.5 * (t1 + t2)
+    starts = sc.concat(
+        [subframe.start_time for subframe in at_first_chopper.subframes], dim='subframe'
+    )
+    ends = sc.concat(
+        [subframe.end_time for subframe in at_first_chopper.subframes], dim='subframe'
+    )
+    time_origins = 0.5 * (starts + ends)
 
     # We need to add nans between each crossing_time offsets for the bins before,
     # after, and between the subframes.
@@ -575,7 +609,7 @@ def time_of_flight_origin_wfm(
     shift[1::2] = time_origins
     return TimeOfFlightOrigin(
         time=sc.DataArray(shift, coords={'subframe': times}),
-        distance=distance,
+        distance=at_first_chopper.distance,
     )
 
 
@@ -681,7 +715,12 @@ _common_providers = (
 _non_skipping = (frame_wrapped_time_offset,)
 _skipping = (frame_wrapped_time_offset_pulse_skipping, pulse_offset, time_zero)
 
-_wfm = (subframe_bounds, time_offset, time_of_flight_origin_wfm)
+_wfm = (
+    maybe_clip_detector_subframes,
+    subframe_bounds,
+    time_offset,
+    time_of_flight_origin_wfm,
+)
 _non_wfm = (time_of_flight_origin_from_chopper,)
 
 
