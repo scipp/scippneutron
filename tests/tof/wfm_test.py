@@ -158,7 +158,6 @@ def test_compute_wavelengths_from_wfm(disk_choppers, npulses):
 
     workflow[unwrap.Choppers] = choppers
     workflow[unwrap.Ltotal] = Ltotal
-    workflow[unwrap.WFMChopperNames] = ("wfm1", "wfm2")
     workflow[unwrap.RawData] = raw_data
 
     # Compute time-of-flight
