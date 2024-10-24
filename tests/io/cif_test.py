@@ -1034,7 +1034,7 @@ def test_builder_powder_calibration():
 _pd_calib_d_to_tof.id
 _pd_calib_d_to_tof.power
 _pd_calib_d_to_tof.coeff
-tzero 0 1.2
+ZERO 0 1.2
 DIFC 1 4.5
 DIFB -1 6.7
 '''

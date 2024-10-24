@@ -901,11 +901,13 @@ def _make_reduced_powder_loop(data: sc.DataArray, comment: str) -> Loop:
 
 
 def _make_powder_calibration_loop(data: sc.DataArray, comment: str) -> Loop:
-    id_by_power = {0: 'tzero', 1: 'DIFC', 2: 'DIFA', -1: 'DIFB'}
+    # All names are valid python identifiers
+    id_by_power = {0: 'ZERO', 1: 'DIFC', 2: 'DIFA', -1: 'DIFB'}
     ids = sc.array(
         dims=[data.dim],
         values=[
-            id_by_power.get(power, str(power)) for power in data.coords['power'].values
+            id_by_power.get(power, f'c{power}'.replace('-', '_').replace('.', '_'))
+            for power in data.coords['power'].values
         ],
     )
     res = Loop(
