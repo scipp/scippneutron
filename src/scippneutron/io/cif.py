@@ -298,7 +298,9 @@ class CIF:
         ``('tof', 'dspacing')``.
         The data array may also have a name in
         ``('intensity_net', 'intensity_norm', 'intensity_total')``.
-        If the name is not set, it defaults to ``'intensity_net'``.
+        If the name is not set, it defaults to ``'intensity_norm'``,
+        whichis appropriate for typical outputs from data reduction.
+        See https://github.com/COMCIFS/Powder_Dictionary/blob/master/cif_pow.dic
 
         The data gets written as intensity along a single coord whose
         name matches the dimension name.
@@ -884,7 +886,7 @@ def _normalize_reduced_powder_name(name: str) -> str:
 
 def _make_reduced_powder_loop(data: sc.DataArray, comment: str) -> Loop:
     coord_name, coord = _reduced_powder_coord(data)
-    data_name = _normalize_reduced_powder_name(data.name or 'intensity_net')
+    data_name = _normalize_reduced_powder_name(data.name or 'intensity_norm')
 
     res = Loop({coord_name: sc.values(coord)}, comment=comment, schema=PD_SCHEMA)
     if coord.variances is not None:

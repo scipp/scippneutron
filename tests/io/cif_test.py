@@ -937,8 +937,8 @@ def test_builder_with_reduced_powder_data():
         tof_loop
         == '''loop_
 _pd_meas.time_of_flight
-_pd_proc.intensity_net
-_pd_proc.intensity_net_su
+_pd_proc.intensity_norm
+_pd_proc.intensity_norm_su
 1.2 13.6 0.9
 1.4 26.0 1.0
 2.3 9.7 0.6
@@ -965,7 +965,7 @@ def test_builder_with_reduced_powder_data_custom_unit():
         == '''# Unit of intensity: [counts]
 loop_
 _pd_meas.time_of_flight
-_pd_proc.intensity_net
+_pd_proc.intensity_norm
 1.2 13.6
 1.4 26.0
 2.3 9.7
