@@ -299,7 +299,7 @@ class CIF:
         The data array may also have a name in
         ``('intensity_net', 'intensity_norm', 'intensity_total')``.
         If the name is not set, it defaults to ``'intensity_norm'``,
-        whichis appropriate for typical outputs from data reduction.
+        which is appropriate for typical outputs from data reduction.
         See https://github.com/COMCIFS/Powder_Dictionary/blob/master/cif_pow.dic
 
         The data gets written as intensity along a single coord whose
