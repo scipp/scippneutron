@@ -150,12 +150,12 @@ class CIFSchema:
 CORE_SCHEMA = CIFSchema(
     name='coreCIF',
     version='3.3.0',
-    location='https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic',
+    location='https://github.com/COMCIFS/cif_core/blob/6f8502e81b623eb0fd779c79efaf191d49fa198c/cif_core.dic',
 )
 PD_SCHEMA = CIFSchema(
     name='pdCIF',
     version='2.5.0',
-    location='https://github.com/COMCIFS/Powder_Dictionary/blob/7608b92165f58f968f054344e67662e01d4b401a/cif_pow.dic',
+    location='https://github.com/COMCIFS/Powder_Dictionary/blob/970c2b2850a923796db5f4e9b7207d10ab5fd8e5/cif_pow.dic',
 )
 
 

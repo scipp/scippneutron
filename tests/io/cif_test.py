@@ -678,7 +678,7 @@ loop_
 _audit_conform.dict_name
 _audit_conform.dict_version
 _audit_conform.dict_location
-coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
+coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/6f8502e81b623eb0fd779c79efaf191d49fa198c/cif_core.dic
 
 _audit.creation_method 'written by scippneutron'
 '''
@@ -702,7 +702,7 @@ loop_
 _audit_conform.dict_name
 _audit_conform.dict_version
 _audit_conform.dict_location
-coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
+coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/6f8502e81b623eb0fd779c79efaf191d49fa198c/cif_core.dic
 
 loop_
 _audit_author.name
@@ -845,7 +845,7 @@ loop_
 _audit_conform.dict_name
 _audit_conform.dict_version
 _audit_conform.dict_location
-coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
+coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/6f8502e81b623eb0fd779c79efaf191d49fa198c/cif_core.dic
 
 _audit.creation_date \d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}:\d{{2}}:\d{{2}}\+00.00
 _audit.creation_method 'Written by scippneutron v{expected_version}'
@@ -866,7 +866,7 @@ loop_
 _audit_conform.dict_name
 _audit_conform.dict_version
 _audit_conform.dict_location
-coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
+coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/6f8502e81b623eb0fd779c79efaf191d49fa198c/cif_core.dic
 
 _audit.creation_date \d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}:\d{{2}}:\d{{2}}\+00.00
 _audit.creation_method 'Written by scippneutron v{expected_version}'
@@ -888,7 +888,7 @@ loop_
 _audit_conform.dict_name
 _audit_conform.dict_version
 _audit_conform.dict_location
-coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic
+coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/6f8502e81b623eb0fd779c79efaf191d49fa198c/cif_core.dic
 
 _audit.creation_date \d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}:\d{{2}}:\d{{2}}\+00.00
 _audit.creation_method 'Written by scippneutron v{expected_version}'
