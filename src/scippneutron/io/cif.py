@@ -150,12 +150,12 @@ class CIFSchema:
 CORE_SCHEMA = CIFSchema(
     name='coreCIF',
     version='3.3.0',
-    location='https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic',
+    location='https://github.com/COMCIFS/cif_core/blob/6f8502e81b623eb0fd779c79efaf191d49fa198c/cif_core.dic',
 )
 PD_SCHEMA = CIFSchema(
     name='pdCIF',
     version='2.5.0',
-    location='https://github.com/COMCIFS/Powder_Dictionary/blob/7608b92165f58f968f054344e67662e01d4b401a/cif_pow.dic',
+    location='https://github.com/COMCIFS/Powder_Dictionary/blob/970c2b2850a923796db5f4e9b7207d10ab5fd8e5/cif_pow.dic',
 )
 
 
@@ -298,7 +298,9 @@ class CIF:
         ``('tof', 'dspacing')``.
         The data array may also have a name in
         ``('intensity_net', 'intensity_norm', 'intensity_total')``.
-        If the name is not set, it defaults to ``'intensity_net'``.
+        If the name is not set, it defaults to ``'intensity_norm'``,
+        which is appropriate for typical outputs from data reduction.
+        See https://github.com/COMCIFS/Powder_Dictionary/blob/master/cif_pow.dic
 
         The data gets written as intensity along a single coord whose
         name matches the dimension name.
@@ -884,9 +886,16 @@ def _normalize_reduced_powder_name(name: str) -> str:
 
 def _make_reduced_powder_loop(data: sc.DataArray, comment: str) -> Loop:
     coord_name, coord = _reduced_powder_coord(data)
-    data_name = _normalize_reduced_powder_name(data.name or 'intensity_net')
+    data_name = _normalize_reduced_powder_name(data.name or 'intensity_norm')
 
-    res = Loop({coord_name: sc.values(coord)}, comment=comment, schema=PD_SCHEMA)
+    res = Loop(
+        {
+            'pd_data.point_id': sc.arange(data.dim, len(data), unit=None),
+            coord_name: sc.values(coord),
+        },
+        comment=comment,
+        schema=PD_SCHEMA,
+    )
     if coord.variances is not None:
         res[coord_name + '_su'] = sc.stddevs(coord)
     res[data_name] = sc.values(data.data)
@@ -901,11 +910,13 @@ def _make_reduced_powder_loop(data: sc.DataArray, comment: str) -> Loop:
 
 
 def _make_powder_calibration_loop(data: sc.DataArray, comment: str) -> Loop:
-    id_by_power = {0: 'tzero', 1: 'DIFC', 2: 'DIFA', -1: 'DIFB'}
+    # All names are valid python identifiers
+    id_by_power = {0: 'ZERO', 1: 'DIFC', 2: 'DIFA', -1: 'DIFB'}
     ids = sc.array(
         dims=[data.dim],
         values=[
-            id_by_power.get(power, str(power)) for power in data.coords['power'].values
+            id_by_power.get(power, f'c{power}'.replace('-', '_').replace('.', '_'))
+            for power in data.coords['power'].values
         ],
     )
     res = Loop(
