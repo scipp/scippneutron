@@ -888,7 +888,14 @@ def _make_reduced_powder_loop(data: sc.DataArray, comment: str) -> Loop:
     coord_name, coord = _reduced_powder_coord(data)
     data_name = _normalize_reduced_powder_name(data.name or 'intensity_norm')
 
-    res = Loop({coord_name: sc.values(coord)}, comment=comment, schema=PD_SCHEMA)
+    res = Loop(
+        {
+            'pd_data.point_id': sc.arange(data.dim, len(data), unit=None),
+            coord_name: sc.values(coord),
+        },
+        comment=comment,
+        schema=PD_SCHEMA,
+    )
     if coord.variances is not None:
         res[coord_name + '_su'] = sc.stddevs(coord)
     res[data_name] = sc.values(data.data)
