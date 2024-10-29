@@ -354,7 +354,8 @@ def offset_from_wrapped(
     frame_period = frame_period.to(unit=elem_unit(time_bounds))
     diff = (time_bounds['bound', -1] - time_bounds['bound', 0]) - frame_period
     # if time_bounds['bound', -1] - time_bounds['bound', 0] > frame_period:
-    if any(diff):
+    print(diff)
+    if any(diff.flatten(to='x') > sc.scalar(0.0, unit=frame_period.unit)):
         raise ValueError(
             "Frames are overlapping: Computed frame bounds "
             f"{frame_bounds} are larger than frame period {frame_period}."
@@ -467,13 +468,15 @@ def maybe_clip_detector_subframes(frame: FrameAtDetector) -> CleanFrameAtDetecto
     """
     starts = sc.concat([sf.start_time for sf in frame.subframes], dim='subframe')
     ends = sc.concat([sf.end_time for sf in frame.subframes], dim='subframe')
+    # Need subframe dim at the end because sorting requires contiguous data
+    dims = (*[d for d in starts.dims if d != 'subframe'], 'subframe')
 
     sizes = starts.sizes
     sizes['subframe'] *= 2
     bounds = sc.empty(sizes=sizes, unit=starts.unit)
-    bounds['subframe', ::2] = sc.sort(starts, 'subframe')
-    bounds['subframe', 1::2] = sc.sort(ends, 'subframe')
-    if sc.issorted(bounds, 'subframe'):
+    bounds['subframe', ::2] = sc.sort(starts.transpose(dims), 'subframe')
+    bounds['subframe', 1::2] = sc.sort(ends.transpose(dims), 'subframe')
+    if all(sc.issorted(bounds, 'subframe').flatten(to='x')):
         return CleanFrameAtDetector(frame)
 
     # Chop the subframes one by one
@@ -562,8 +565,28 @@ def time_of_flight_origin_wfm(
     """
     sorted_frame = chopper_cascade.Frame(
         distance=clean_detector_frame.distance,
-        subframes=sorted(clean_detector_frame.subframes, key=lambda x: x.start_time),
+        subframes=sorted(
+            clean_detector_frame.subframes, key=lambda x: x.start_time.min()
+        ),
     )
+
+    # # Sort the subframes by start time
+    # # TODO: annoying gymnastics of concatenating, transposing, sorting, and transposing
+    # subframes = sc.concat(
+    #     [
+    #         sc.concat([sf.start_time, sf.end_time], dim='start_end')
+    #         for sf in clean_detector_frame.subframes
+    #     ],
+    #     dim='subframe',
+    # )
+    # dims = (*[d for d in subframes.dims if d != 'subframe'], 'subframe')
+    # sorted_subframes = sc.sort(subframes.transpose(dims), 'subframe').transpose(
+    #     subframes.dims
+    # )
+
+    # sorted_frame = chopper_cascade.Frame(
+    #     distance=clean_detector_frame.distance, subframes=sorted_subframes
+    # )
 
     times = sorted_frame.subbounds()['time'].flatten(
         dims=['subframe', 'bound'], to='subframe'
@@ -571,8 +594,9 @@ def time_of_flight_origin_wfm(
     # All times before the first subframe and after the last subframe should be
     # replaced by NaN. We add a large padding to make sure all events are covered.
     padding = sc.scalar(1e9, unit='s').to(unit=times.unit)
-    low = times[0] - padding
-    high = times[-1] + padding
+    print('times', times)
+    low = times['subframe', 0] - padding
+    high = times['subframe', -1] + padding
     times = sc.concat([low, times, high], 'subframe')
 
     # Propagate the subframes from the detector back to the position of the first
@@ -598,17 +622,16 @@ def time_of_flight_origin_wfm(
         [subframe.end_time for subframe in at_first_chopper.subframes], dim='subframe'
     )
     time_origins = 0.5 * (starts + ends)
+    print('time_origins', time_origins)
 
     # We need to add nans between each crossing_time offsets for the bins before,
     # after, and between the subframes.
-    shift = sc.full(
-        sizes={'subframe': len(time_origins) * 2 + 1},
-        value=math.nan,
-        unit='s',
-    )
-    shift[1::2] = time_origins
+    sizes = time_origins.sizes
+    sizes['subframe'] = 2 * sizes['subframe'] + 1
+    shift = sc.full(sizes=sizes, value=math.nan, unit='s')
+    shift['subframe', 1::2] = time_origins
     return TimeOfFlightOrigin(
-        time=sc.DataArray(shift, coords={'subframe': times}),
+        time=sc.DataArray(shift, coords={'subframe': times.transpose(shift.dims)}),
         distance=at_first_chopper.distance,
     )
 
@@ -678,6 +701,8 @@ def to_time_of_flight(
     delta = origin.time
     if isinstance(delta, sc.DataArray):
         # Will raise if subframes overlap, since coord for lookup table must be sorted
+        print('delta', delta)
+        print('time_offset', time_offset)
         delta = sc.lookup(delta, dim='subframe')[time_offset]
     if da.bins is not None:
         da = da.copy(deep=False)
