@@ -56,7 +56,7 @@ class Subframe:
     """
 
     def __init__(self, time: sc.Variable, wavelength: sc.Variable):
-        if time.sizes != wavelength.sizes:
+        if {dim: time.sizes.get(dim) for dim in wavelength.sizes} != wavelength.sizes:
             raise sc.DimensionError(
                 f'Inconsistent dims or shape: {time.sizes} vs {wavelength.sizes}'
             )
@@ -106,22 +106,33 @@ class Subframe:
 
     @property
     def start_time(self) -> sc.Variable:
-        """The start time of the subframe."""
-        return self.time.min()
+        """The start time of the subframe for each of the distances in self.time."""
+        # The `self.time` may have an additional dimension for distance, compared to
+        # `self.wavelength`, and we need to keep that dimension in the output.
+        out = self.time
+        for dim in self.wavelength.dims:
+            out = out.min(dim)
+        return out
 
     @property
     def end_time(self) -> sc.Variable:
-        """The end time of the subframe."""
-        return self.time.max()
+        """The end time of the subframe for each of the distances in self.time."""
+        # The `self.time` may have an additional dimension for distance, compared to
+        # `self.wavelength`, and we need to keep that dimension in the output.
+        out = self.time
+        for dim in self.wavelength.dims:
+            out = out.max(dim)
+        return out
 
     @property
     def start_wavelength(self) -> sc.Variable:
-        """The start wavelength of the subframe."""
+        """The start wavelength of the subframe for each of the distances in
+        self.time"""
         return self.wavelength.min()
 
     @property
     def end_wavelength(self) -> sc.Variable:
-        """The end wavelength of the subframe."""
+        """The end wavelength of the subframe for each of the distances in self.time."""
         return self.wavelength.max()
 
 
@@ -206,19 +217,14 @@ class Frame:
 
     def subbounds(self) -> sc.DataGroup:
         """
-        The bounds of the subframes, defined as the union over subframes.
-
-        This is not the same as the bounds of the individual subframes, but defined as
-        the union of all subframes. Subframes that overlap in time are "merged" into a
-        single subframe.
-
-        This function is to some extent experimental: It is not clear if taking the
-        union of overlapping subframes has any utility in practice, since this may
-        simply indicate a problem with the chopper cascade. Attempts to handle this
-        automatically may be misguided.
+        The bounds of the individual subframes, stored as a DataGroup.
         """
-        starts = [subframe.start_time for subframe in self.subframes]
-        ends = [subframe.end_time for subframe in self.subframes]
+        starts = sc.concat(
+            [subframe.start_time for subframe in self.subframes], dim='subframe'
+        )
+        ends = sc.concat(
+            [subframe.end_time for subframe in self.subframes], dim='subframe'
+        )
         # Given how time-propagation and chopping works, the min wavelength is always
         # given by the same vertex as the min time, and the max wavelength by the same
         # vertex as the max time. Thus, this check should generally always pass.
@@ -228,48 +234,21 @@ class Frame:
                 'Subframes must be regular, i.e., min/max time and wavelength must '
                 'coincide.'
             )
-        wav_starts = [subframe.start_wavelength for subframe in self.subframes]
-        wav_ends = [subframe.end_wavelength for subframe in self.subframes]
+        wav_starts = sc.concat(
+            [subframe.start_wavelength for subframe in self.subframes], dim='subframe'
+        )
+        wav_ends = sc.concat(
+            [subframe.end_wavelength for subframe in self.subframes], dim='subframe'
+        )
 
-        @dataclass
-        class Bound:
-            start: sc.Variable
-            end: sc.Variable
-            wav_start: sc.Variable
-            wav_end: sc.Variable
+        time = sc.concat([starts, ends], dim='bound')
+        wavelength = sc.concat([wav_starts, wav_ends], dim='bound')
+        time_dims = list(set(time.dims) - {'subframe', 'bound'})
+        wavelength_dims = list(set(wavelength.dims) - {'subframe', 'bound'})
 
-        bounds = [
-            Bound(start, end, wav_start, wav_end)
-            for start, end, wav_start, wav_end in zip(
-                starts, ends, wav_starts, wav_ends, strict=True
-            )
-        ]
-        bounds = sorted(bounds, key=lambda x: x.start)
-        current = bounds[0]
-        merged_bounds = []
-        for bound in bounds[1:]:
-            # If start is before current end, merge
-            if bound.start <= current.end:
-                current = Bound(
-                    current.start,
-                    max(current.end, bound.end),
-                    current.wav_start,
-                    max(current.wav_end, bound.wav_end),
-                )
-            else:
-                merged_bounds.append(current)
-                current = bound
-        merged_bounds.append(current)
-        time_bounds = [
-            sc.concat([bound.start, bound.end], dim='bound') for bound in merged_bounds
-        ]
-        wav_bounds = [
-            sc.concat([bound.wav_start, bound.wav_end], dim='bound')
-            for bound in merged_bounds
-        ]
         return sc.DataGroup(
-            time=sc.concat(time_bounds, dim='subframe'),
-            wavelength=sc.concat(wav_bounds, dim='subframe'),
+            time=time.transpose([*time_dims, 'subframe', 'bound']),
+            wavelength=wavelength.transpose([*wavelength_dims, 'subframe', 'bound']),
         )
 
 
