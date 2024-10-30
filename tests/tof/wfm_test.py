@@ -149,7 +149,7 @@ def test_compute_wavelengths_from_wfm(disk_choppers, npulses):
     # computed correctly
     workflow[unwrap.SourceTimeRange] = (
         sc.scalar(0.0, unit='ms'),
-        sc.scalar(4.0, unit='ms'),
+        sc.scalar(3.4, unit='ms'),
     )
     workflow[unwrap.SourceWavelengthRange] = (
         sc.scalar(0.01, unit='angstrom'),
