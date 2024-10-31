@@ -483,6 +483,7 @@ def maybe_clip_detector_subframes(frame: FrameAtDetector) -> CleanFrameAtDetecto
     # TODO: We currently need to chop them one by one as the `chop` method seems
     # to not work correctly with overlapping subframes.
     subframes = []
+    print("bounds", bounds)
     sorted_times = sc.sort(bounds, 'subframe')
     fake_chopper = chopper_cascade.Chopper(
         distance=frame.distance,
@@ -630,10 +631,11 @@ def time_of_flight_origin_wfm(
     sizes['subframe'] = 2 * sizes['subframe'] + 1
     shift = sc.full(sizes=sizes, value=math.nan, unit='s')
     shift['subframe', 1::2] = time_origins
-    return TimeOfFlightOrigin(
-        time=sc.DataArray(shift, coords={'subframe': times.transpose(shift.dims)}),
-        distance=at_first_chopper.distance,
-    )
+
+    # TODO: what dimension order is the best here? Where should `detector_number` be?
+    origin_time = sc.DataArray(shift.transpose(times.dims), coords={'subframe': times})
+
+    return TimeOfFlightOrigin(time=origin_time, distance=at_first_chopper.distance)
 
 
 def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
@@ -701,9 +703,8 @@ def to_time_of_flight(
     delta = origin.time
     if isinstance(delta, sc.DataArray):
         # Will raise if subframes overlap, since coord for lookup table must be sorted
-        print('delta', delta)
-        print('time_offset', time_offset)
-        delta = sc.lookup(delta, dim='subframe')[time_offset]
+        # TODO: Can we do without making a copy of delta?
+        delta = sc.lookup(delta.copy(deep=True), dim='subframe')[time_offset]
     if da.bins is not None:
         da = da.copy(deep=False)
         da.data = sc.bins(**da.bins.constituents)
