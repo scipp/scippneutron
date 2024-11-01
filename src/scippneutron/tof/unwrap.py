@@ -16,6 +16,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import NewType
 
+import numpy as np
 import scipp as sc
 
 from .._utils import elem_unit
@@ -353,8 +354,6 @@ def offset_from_wrapped(
     time_bounds = frame_bounds['time']
     frame_period = frame_period.to(unit=elem_unit(time_bounds))
     diff = (time_bounds['bound', -1] - time_bounds['bound', 0]) - frame_period
-    # if time_bounds['bound', -1] - time_bounds['bound', 0] > frame_period:
-    print(diff)
     if any(diff.flatten(to='x') > sc.scalar(0.0, unit=frame_period.unit)):
         raise ValueError(
             "Frames are overlapping: Computed frame bounds "
@@ -449,7 +448,9 @@ def time_offset(unwrapped: UnwrappedData) -> TimeOffset:
     return TimeOffset(unwrapped.coords['time_offset'])
 
 
-def maybe_clip_detector_subframes(frame: FrameAtDetector) -> CleanFrameAtDetector:
+def maybe_clip_detector_subframes(
+    frame: FrameAtDetector, ltotal: Ltotal, chopper_cascade_frames: ChopperCascadeFrames
+) -> CleanFrameAtDetector:
     """
     Check for time overlap between subframes.
     If overlap is found, we clip away the regions where there is overlap.
@@ -465,33 +466,61 @@ def maybe_clip_detector_subframes(frame: FrameAtDetector) -> CleanFrameAtDetecto
         |----------------------|   ->   |--------|       |-----|
                  |-------|         ->
 
+    In the case of multiple detector pixels, we find the pixel closest to the source
+    and use that as the reference for the clipping.
+
+    Parameters
+    ----------
+    frame:
+        The frame at the detector, with subframes that may overlap.
+    ltotal:
+        The total distance between the source and the detector.
+    chopper_cascade_frames:
+        All the frames in the chopper cascade, before the detector.
     """
-    starts = sc.concat([sf.start_time for sf in frame.subframes], dim='subframe')
-    ends = sc.concat([sf.end_time for sf in frame.subframes], dim='subframe')
     # Need subframe dim at the end because sorting requires contiguous data
-    dims = (*[d for d in starts.dims if d != 'subframe'], 'subframe')
+    dims = (*ltotal.dims, 'subframe')
+    starts = sc.concat(
+        [sf.start_time for sf in frame.subframes], dim='subframe'
+    ).transpose(dims)
+    ends = sc.concat([sf.end_time for sf in frame.subframes], dim='subframe').transpose(
+        dims
+    )
 
     sizes = starts.sizes
     sizes['subframe'] *= 2
     bounds = sc.empty(sizes=sizes, unit=starts.unit)
-    bounds['subframe', ::2] = sc.sort(starts.transpose(dims), 'subframe')
-    bounds['subframe', 1::2] = sc.sort(ends.transpose(dims), 'subframe')
+    bounds['subframe', ::2] = sc.sort(starts, 'subframe')
+    bounds['subframe', 1::2] = sc.sort(ends, 'subframe')
     if all(sc.issorted(bounds, 'subframe').flatten(to='x')):
         return CleanFrameAtDetector(frame)
+
+    sorted_times = sc.sort(bounds, 'subframe')
+    if ltotal.dims:
+        # Find the pixel closest to the source
+        closest_pixel = np.argmin(ltotal.flatten(to='pixel').values)
+        sorted_times = sorted_times.flatten(dims=ltotal.dims, to='pixel')[
+            'pixel', closest_pixel
+        ]
+
+    # Make a fake chopper that is closed during the overlapping times, placed
+    # immediately before the closest detector pixel.
+    fake_chopper = chopper_cascade.Chopper(
+        distance=frame.distance.min(),
+        time_open=sorted_times['subframe', ::2],
+        time_close=sorted_times['subframe', 1::2],
+    )
+    # We cannot chop frames at multiple distances at once, so instead of chopping the
+    # frame at the detector, we chop the last frame in the chopper cascade before the
+    # detector.
+    last_frame = chopper_cascade_frames[-1]
 
     # Chop the subframes one by one
     # TODO: We currently need to chop them one by one as the `chop` method seems
     # to not work correctly with overlapping subframes.
     subframes = []
-    print("bounds", bounds)
-    sorted_times = sc.sort(bounds, 'subframe')
-    fake_chopper = chopper_cascade.Chopper(
-        distance=frame.distance,
-        time_open=sorted_times['subframe', ::2],
-        time_close=sorted_times['subframe', 1::2],
-    )
-    for subframe in frame.subframes:
-        f = chopper_cascade.Frame(distance=frame.distance, subframes=[subframe])
+    for subframe in last_frame.subframes:
+        f = chopper_cascade.Frame(distance=last_frame.distance, subframes=[subframe])
         chopped = f.chop(fake_chopper)
         subframes.extend(
             [
@@ -503,16 +532,15 @@ def maybe_clip_detector_subframes(frame: FrameAtDetector) -> CleanFrameAtDetecto
 
     return CleanFrameAtDetector(
         chopper_cascade.Frame(
-            distance=frame.distance,
+            distance=fake_chopper.distance,
             subframes=subframes,
-        )
+        ).propagate_to(frame.distance)
     )
 
 
 def time_of_flight_origin_wfm(
     frames: ChopperCascadeFrames,
     clean_detector_frame: CleanFrameAtDetector,
-    # ltotal: Ltotal,
 ) -> TimeOfFlightOrigin:
     """
     Compute the time-of-flight origin in the WFM case.
@@ -522,10 +550,8 @@ def time_of_flight_origin_wfm(
     ----------
     frames:
         All the frames in the chopper cascade.
-    detector_subframe_bounds:
-        The computed subframe boundaries, used to offset the raw timestamps for WFM.
-    ltotal:
-        The total distance between the source and the detector.
+    clean_detector_frame:
+        The frame at the detector, with subframes that do not overlap.
 
     Notes
     -----
@@ -571,31 +597,12 @@ def time_of_flight_origin_wfm(
         ),
     )
 
-    # # Sort the subframes by start time
-    # # TODO: annoying gymnastics of concatenating, transposing, sorting, and transposing
-    # subframes = sc.concat(
-    #     [
-    #         sc.concat([sf.start_time, sf.end_time], dim='start_end')
-    #         for sf in clean_detector_frame.subframes
-    #     ],
-    #     dim='subframe',
-    # )
-    # dims = (*[d for d in subframes.dims if d != 'subframe'], 'subframe')
-    # sorted_subframes = sc.sort(subframes.transpose(dims), 'subframe').transpose(
-    #     subframes.dims
-    # )
-
-    # sorted_frame = chopper_cascade.Frame(
-    #     distance=clean_detector_frame.distance, subframes=sorted_subframes
-    # )
-
     times = sorted_frame.subbounds()['time'].flatten(
         dims=['subframe', 'bound'], to='subframe'
     )
     # All times before the first subframe and after the last subframe should be
     # replaced by NaN. We add a large padding to make sure all events are covered.
     padding = sc.scalar(1e9, unit='s').to(unit=times.unit)
-    print('times', times)
     low = times['subframe', 0] - padding
     high = times['subframe', -1] + padding
     times = sc.concat([low, times, high], 'subframe')
@@ -604,18 +611,6 @@ def time_of_flight_origin_wfm(
     # chopper (note that frame 0 is the pulse itself).
     at_first_chopper = sorted_frame.propagate_to(frames[1].distance)
 
-    # # Find boundaries of each subframe at the detector
-    # tmin = detector_subframe_bounds['time'].min('bound')
-    # tmax = detector_subframe_bounds['time'].max('bound')
-    # wmin = detector_subframe_bounds['wavelength'].min('bound')
-    # wmax = detector_subframe_bounds['wavelength'].max('bound')
-    # # Ray-trace back to the position of the first chopper (note that frame 0 is the
-    # # pulse itself)
-    # distance = frames[1].distance
-    # dist = ltotal - distance
-    # t1 = tmin - dist * chopper_cascade.wavelength_to_inverse_velocity(wmin)
-    # t2 = tmax - dist * chopper_cascade.wavelength_to_inverse_velocity(wmax)
-    # time_origins = 0.5 * (t1 + t2)
     starts = sc.concat(
         [subframe.start_time for subframe in at_first_chopper.subframes], dim='subframe'
     )
@@ -623,7 +618,6 @@ def time_of_flight_origin_wfm(
         [subframe.end_time for subframe in at_first_chopper.subframes], dim='subframe'
     )
     time_origins = 0.5 * (starts + ends)
-    print('time_origins', time_origins)
 
     # We need to add nans between each crossing_time offsets for the bins before,
     # after, and between the subframes.
