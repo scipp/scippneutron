@@ -98,7 +98,7 @@ def disk_choppers():
 
 
 @pytest.mark.parametrize("npulses", [1, 2])
-def test_compute_wavelengths_from_wfm(disk_choppers, npulses):
+def test_v20_compute_wavelengths_from_wfm_one_pixel(disk_choppers, npulses):
     Ltotal = sc.scalar(26.0, unit="m")  # Distance to detector
     choppers = {
         key: chopper_cascade.Chopper.from_disk_chopper(
@@ -152,7 +152,7 @@ def test_compute_wavelengths_from_wfm(disk_choppers, npulses):
         sc.scalar(3.4, unit='ms'),
     )
     workflow[unwrap.SourceWavelengthRange] = (
-        sc.scalar(0.01, unit='angstrom'),
+        sc.scalar(0.2, unit='angstrom'),
         sc.scalar(10.0, unit='angstrom'),
     )
 
@@ -173,3 +173,96 @@ def test_compute_wavelengths_from_wfm(disk_choppers, npulses):
         assert sc.allclose(
             computed_wavelengths, true_wavelengths['pulse', i], rtol=sc.scalar(1e-02)
         )
+
+
+@pytest.mark.parametrize("npulses", [1, 2])
+def test_v20_compute_wavelengths_from_wfm_two_pixels(disk_choppers, npulses):
+    Ltotal = sc.scalar(26.0, unit="m")  # Distance to detector
+    choppers = {
+        key: chopper_cascade.Chopper.from_disk_chopper(
+            chop, pulse_frequency=sc.scalar(14.0, unit="Hz"), npulses=npulses
+        )
+        for key, chop in disk_choppers.items()
+    }
+
+    # Create some neutron events
+    wavelengths = sc.array(
+        dims=['event'], values=[2.75, 4.2, 5.4, 6.5, 7.6, 8.75], unit='angstrom'
+    )
+    birth_times = sc.full(sizes=wavelengths.sizes, value=1.5, unit='ms')
+    ess_beamline = fakes.FakeBeamlineEss(
+        choppers=choppers,
+        monitors={"detector1": Ltotal, "detector2": Ltotal * 0.98},
+        run_length=sc.scalar(1 / 14, unit="s") * npulses,
+        events_per_pulse=len(wavelengths),
+        source=partial(
+            tof.Source.from_neutrons,
+            birth_times=birth_times,
+            wavelengths=wavelengths,
+            frequency=sc.scalar(14.0, unit="Hz"),
+        ),
+    )
+
+    # Save the true wavelengths for later
+    true_wavelengths = ess_beamline.source.data.coords["wavelength"]
+
+    # Verify that all 6 neutrons made it through the chopper cascade
+    # raw_data = ess_beamline.get_monitor("detector1")
+    raw_data = sc.concat(
+        [ess_beamline.get_monitor("detector1"), ess_beamline.get_monitor("detector2")],
+        dim='detector_number',
+    )
+    assert sc.identical(
+        raw_data['detector_number', 0].sum().data,
+        sc.scalar(len(wavelengths) * npulses, unit="counts", dtype='float64'),
+    )
+    assert sc.identical(
+        raw_data['detector_number', 1].sum().data,
+        sc.scalar(len(wavelengths) * npulses, unit="counts", dtype='float64'),
+    )
+
+    # Set up the workflow
+    workflow = sl.Pipeline(
+        unwrap.unwrap_providers()
+        + unwrap.time_of_flight_providers()
+        + unwrap.time_of_flight_origin_from_choppers_providers(wfm=True)
+    )
+    workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
+    workflow[unwrap.PulseStride | None] = None
+
+    # Define the extent of the pulse that contains the 6 neutrons in time and wavelength
+    # Note that we make a larger encompassing pulse to ensure that the frame bounds are
+    # computed correctly
+    workflow[unwrap.SourceTimeRange] = (
+        sc.scalar(0.0, unit='ms'),
+        sc.scalar(3.4, unit='ms'),
+    )
+    workflow[unwrap.SourceWavelengthRange] = (
+        sc.scalar(0.2, unit='angstrom'),
+        sc.scalar(10.0, unit='angstrom'),
+    )
+
+    workflow[unwrap.Choppers] = choppers
+    workflow[unwrap.Ltotal] = sc.concat(
+        [m.distance for m in ess_beamline.monitors], dim='detector_number'
+    )
+    workflow[unwrap.RawData] = raw_data
+
+    # Compute time-of-flight
+    tofs = workflow.compute(unwrap.TofData)
+
+    # Convert to wavelength
+    graph = {**beamline(scatter=False), **elastic("tof")}
+    wav_wfm = tofs.transform_coords("wavelength", graph=graph)
+
+    # Compare the computed wavelengths to the true wavelengths
+    for i in range(npulses):
+        for det in range(2):
+            computed_wavelengths = wav_wfm['detector_number', det][
+                'pulse', i
+            ].values.coords["wavelength"]
+            assert sc.allclose(
+                computed_wavelengths,
+                true_wavelengths['pulse', i],
+                rtol=sc.scalar(1e-02),
+            )
