@@ -147,11 +147,6 @@ SourceWavelengthRange = NewType(
 Wavelength range of the source pulse, used for computing frame bounds.
 """
 
-SubframeBounds = NewType('SubframeBounds', sc.Variable)
-"""
-The computed subframe boundaries, used to offset the raw timestamps for WFM.
-"""
-
 TimeZero = NewType('TimeZero', sc.Variable)
 """
 Time of the start of the most recent pulse, typically NXevent_data/event_time_zero.
@@ -243,11 +238,6 @@ def frame_at_detector(
 
 def frame_bounds(frame: FrameAtDetector) -> FrameBounds:
     return FrameBounds(frame.bounds())
-
-
-def subframe_bounds(frame: FrameAtDetector) -> SubframeBounds:
-    """Used for WFM."""
-    return SubframeBounds(frame.subbounds())
 
 
 def frame_wrapped_time_offset(offset: PulseWrappedTimeOffset) -> FrameWrappedTimeOffset:
@@ -737,7 +727,6 @@ _skipping = (frame_wrapped_time_offset_pulse_skipping, pulse_offset, time_zero)
 
 _wfm = (
     maybe_clip_detector_subframes,
-    subframe_bounds,
     time_offset,
     time_of_flight_origin_wfm,
 )
@@ -762,7 +751,7 @@ def time_of_flight_origin_from_choppers_providers(wfm: bool = False):
         If True, the data is assumed to be from a WFM instrument.
     """
     wfm = _wfm if wfm else _non_wfm
-    _common = (source_chopper, frame_at_detector, subframe_bounds)
+    _common = (source_chopper, frame_at_detector)
     return _common + wfm
 
 
