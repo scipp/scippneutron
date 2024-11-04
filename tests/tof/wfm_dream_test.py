@@ -15,7 +15,7 @@ from scippneutron.tof import chopper_cascade, fakes, unwrap
 sl = pytest.importorskip('sciline')
 
 
-@pytest.fixture
+@pytest.fixture()
 def disk_choppers():
     psc1 = DiskChopper(
         frequency=sc.scalar(14.0, unit="Hz"),
@@ -91,7 +91,7 @@ def disk_choppers():
     return {"psc1": psc1, "psc2": psc2, "oc": oc, "bcc": bcc, "t0": t0}
 
 
-@pytest.fixture
+@pytest.fixture()
 def overlap_choppers(disk_choppers):
     out = disk_choppers.copy()
     out['bcc'] = DiskChopper(
