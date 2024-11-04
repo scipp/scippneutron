@@ -3,7 +3,6 @@
 
 from functools import partial
 
-import numpy as np
 import pytest
 import scipp as sc
 import tof
@@ -70,7 +69,6 @@ def disk_choppers():
     bcc = DiskChopper(
         frequency=sc.scalar(112.0, unit="Hz"),
         beam_angle=sc.scalar(0.0, unit="deg"),
-        # phase=sc.scalar(215-180, unit="deg"),
         phase=sc.scalar(240 - 180, unit="deg"),
         axle_position=sc.vector(value=[0, 0, 9.78], unit="m"),
         slit_begin=sc.array(dims=["cutout"], values=[-36.875, 143.125], unit="deg"),
@@ -99,11 +97,8 @@ def overlap_choppers(disk_choppers):
     out['bcc'] = DiskChopper(
         frequency=sc.scalar(112.0, unit="Hz"),
         beam_angle=sc.scalar(0.0, unit="deg"),
-        # phase=sc.scalar(215-180, unit="deg"),
-        # phase=sc.scalar(232-180, unit="deg"),
         phase=sc.scalar(240 - 180, unit="deg"),
         axle_position=sc.vector(value=[0, 0, 9.78], unit="m"),
-        # slit_begin=sc.array(dims=["cutout"], values=[-36.875, 143.125], unit="deg"),
         slit_begin=sc.array(dims=["cutout"], values=[-36.875, 143.125], unit="deg"),
         slit_end=sc.array(dims=["cutout"], values=[46.875, 216.875], unit="deg"),
         slit_height=sc.scalar(10.0, unit="cm"),
@@ -113,8 +108,19 @@ def overlap_choppers(disk_choppers):
 
 
 @pytest.mark.parametrize("npulses", [1, 2])
-def test_dream_wfm_one_pixel_no_overlap(disk_choppers, npulses):
-    Ltotal = sc.scalar(76.55 + 1.125, unit="m")
+@pytest.mark.parametrize(
+    "ltotal",
+    [
+        sc.array(dims=['detector_number'], values=[77.675], unit='m'),
+        sc.array(dims=['detector_number'], values=[77.675, 76.5], unit='m'),
+        sc.array(
+            dims=['y', 'x'],
+            values=[[77.675, 76.1, 78.05], [77.15, 77.3, 77.675]],
+            unit='m',
+        ),
+    ],
+)
+def test_dream_wfm(disk_choppers, npulses, ltotal):
     choppers = {
         key: chopper_cascade.Chopper.from_disk_chopper(
             chop, pulse_frequency=sc.scalar(14.0, unit="Hz"), npulses=npulses
@@ -122,82 +128,8 @@ def test_dream_wfm_one_pixel_no_overlap(disk_choppers, npulses):
         for key, chop in disk_choppers.items()
     }
 
-    # Create some neutron events
-    wavelengths = sc.array(
-        dims=['event'], values=[1.5, 1.6, 1.7, 3.3, 3.4, 3.5], unit='angstrom'
-    )
-    birth_times = sc.full(sizes=wavelengths.sizes, value=1.5, unit='ms')
-    ess_beamline = fakes.FakeBeamlineEss(
-        choppers=choppers,
-        monitors={"detector": Ltotal},
-        run_length=sc.scalar(1 / 14, unit="s") * npulses,
-        events_per_pulse=len(wavelengths),
-        source=partial(
-            tof.Source.from_neutrons,
-            birth_times=birth_times,
-            wavelengths=wavelengths,
-            frequency=sc.scalar(14.0, unit="Hz"),
-        ),
-    )
-
-    # Save the true wavelengths for later
-    true_wavelengths = ess_beamline.source.data.coords["wavelength"]
-
-    # Verify that all 6 neutrons made it through the chopper cascade
-    raw_data = ess_beamline.get_monitor("detector")
-    assert sc.identical(
-        raw_data.sum().data,
-        sc.scalar(len(wavelengths) * npulses, unit="counts", dtype='float64'),
-    )
-
-    # Set up the workflow
-    workflow = sl.Pipeline(
-        unwrap.unwrap_providers()
-        + unwrap.time_of_flight_providers()
-        + unwrap.time_of_flight_origin_from_choppers_providers(wfm=True)
-    )
-    workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
-    workflow[unwrap.PulseStride | None] = None
-
-    # Define the extent of the pulse that contains the 6 neutrons in time and wavelength
-    # Note that we make a larger encompassing pulse to ensure that the frame bounds are
-    # computed correctly
-    workflow[unwrap.SourceTimeRange] = (
-        sc.scalar(0.0, unit='ms'),
-        sc.scalar(4.9, unit='ms'),
-    )
-    workflow[unwrap.SourceWavelengthRange] = (
-        sc.scalar(0.2, unit='angstrom'),
-        sc.scalar(16.0, unit='angstrom'),
-    )
-
-    workflow[unwrap.Choppers] = choppers
-    workflow[unwrap.Ltotal] = Ltotal
-    workflow[unwrap.RawData] = raw_data
-
-    # Compute time-of-flight
-    tofs = workflow.compute(unwrap.TofData)
-
-    # Convert to wavelength
-    graph = {**beamline(scatter=False), **elastic("tof")}
-    wav_wfm = tofs.transform_coords("wavelength", graph=graph)
-
-    # Compare the computed wavelengths to the true wavelengths
-    for i in range(npulses):
-        computed_wavelengths = wav_wfm['pulse', i].values.coords["wavelength"]
-        assert sc.allclose(
-            computed_wavelengths, true_wavelengths['pulse', i], rtol=sc.scalar(1e-02)
-        )
-
-
-@pytest.mark.parametrize("npulses", [1, 2])
-def test_dream_wfm_one_pixel_with_overlap(overlap_choppers, npulses):
-    Ltotal = sc.scalar(76.55 + 1.125, unit="m")
-    choppers = {
-        key: chopper_cascade.Chopper.from_disk_chopper(
-            chop, pulse_frequency=sc.scalar(14.0, unit="Hz"), npulses=npulses
-        )
-        for key, chop in overlap_choppers.items()
+    monitors = {
+        f"detector{i}": ltot for i, ltot in enumerate(ltotal.flatten(to='detector'))
     }
 
     # Create some neutron events
@@ -207,7 +139,7 @@ def test_dream_wfm_one_pixel_with_overlap(overlap_choppers, npulses):
     birth_times = sc.full(sizes=wavelengths.sizes, value=1.5, unit='ms')
     ess_beamline = fakes.FakeBeamlineEss(
         choppers=choppers,
-        monitors={"detector": Ltotal},
+        monitors=monitors,
         run_length=sc.scalar(1 / 14, unit="s") * npulses,
         events_per_pulse=len(wavelengths),
         source=partial(
@@ -221,11 +153,20 @@ def test_dream_wfm_one_pixel_with_overlap(overlap_choppers, npulses):
     # Save the true wavelengths for later
     true_wavelengths = ess_beamline.source.data.coords["wavelength"]
 
+    raw_data = sc.concat(
+        [ess_beamline.get_monitor(key) for key in monitors.keys()],
+        dim='detector',
+    ).fold(dim='detector', sizes=ltotal.sizes)
+
     # Verify that all 6 neutrons made it through the chopper cascade
-    raw_data = ess_beamline.get_monitor("detector")
     assert sc.identical(
-        raw_data.sum().data,
-        sc.scalar(len(wavelengths) * npulses, unit="counts", dtype='float64'),
+        raw_data.bins.concat('pulse').hist().data,
+        sc.array(
+            dims=['detector'],
+            values=[len(wavelengths) * npulses] * len(monitors),
+            unit="counts",
+            dtype='float64',
+        ).fold(dim='detector', sizes=ltotal.sizes),
     )
 
     # Set up the workflow
@@ -250,11 +191,12 @@ def test_dream_wfm_one_pixel_with_overlap(overlap_choppers, npulses):
     )
 
     workflow[unwrap.Choppers] = choppers
-    workflow[unwrap.Ltotal] = Ltotal
+    workflow[unwrap.Ltotal] = ltotal
     workflow[unwrap.RawData] = raw_data
 
     # Compute time-of-flight
     tofs = workflow.compute(unwrap.TofData)
+    assert {dim: tofs.sizes[dim] for dim in ltotal.sizes} == ltotal.sizes
 
     # Convert to wavelength
     graph = {**beamline(scatter=False), **elastic("tof")}
@@ -262,7 +204,133 @@ def test_dream_wfm_one_pixel_with_overlap(overlap_choppers, npulses):
 
     # Compare the computed wavelengths to the true wavelengths
     for i in range(npulses):
-        computed_wavelengths = wav_wfm['pulse', i].values.coords["wavelength"]
-        assert sc.allclose(
-            computed_wavelengths, true_wavelengths['pulse', i], rtol=sc.scalar(1e-02)
+        result = wav_wfm['pulse', i].flatten(to='detector')
+        for j in range(len(result)):
+            computed_wavelengths = result[j].values.coords["wavelength"]
+            assert sc.allclose(
+                computed_wavelengths,
+                true_wavelengths['pulse', i],
+                rtol=sc.scalar(1e-02),
+            )
+
+
+@pytest.mark.parametrize("npulses", [1, 2])
+@pytest.mark.parametrize(
+    "ltotal",
+    [
+        sc.array(dims=['detector_number'], values=[77.675], unit='m'),
+        sc.array(dims=['detector_number'], values=[77.675, 76.5], unit='m'),
+        sc.array(
+            dims=['y', 'x'],
+            values=[[77.675, 76.1, 78.05], [77.15, 77.3, 77.675]],
+            unit='m',
+        ),
+    ],
+)
+def test_dream_wfm_with_subframe_time_overlap(overlap_choppers, npulses, ltotal):
+    choppers = {
+        key: chopper_cascade.Chopper.from_disk_chopper(
+            chop, pulse_frequency=sc.scalar(14.0, unit="Hz"), npulses=npulses
         )
+        for key, chop in overlap_choppers.items()
+    }
+
+    monitors = {
+        f"detector{i}": ltot for i, ltot in enumerate(ltotal.flatten(to='detector'))
+    }
+
+    # Create some neutron events
+    wavelengths = [1.5, 1.6, 1.7, 3.3, 3.4, 3.5]
+    birth_times = [1.5] * len(wavelengths)
+
+    # Add overlap neutrons
+    birth_times.extend([0.0, 3.1])
+    wavelengths.extend([2.7, 2.5])
+
+    wavelengths = sc.array(dims=['event'], values=wavelengths, unit='angstrom')
+    birth_times = sc.array(dims=['event'], values=birth_times, unit='ms')
+
+    ess_beamline = fakes.FakeBeamlineEss(
+        choppers=choppers,
+        monitors=monitors,
+        run_length=sc.scalar(1 / 14, unit="s") * npulses,
+        events_per_pulse=len(wavelengths),
+        source=partial(
+            tof.Source.from_neutrons,
+            birth_times=birth_times,
+            wavelengths=wavelengths,
+            frequency=sc.scalar(14.0, unit="Hz"),
+        ),
+    )
+
+    # Save the true wavelengths for later
+    true_wavelengths = ess_beamline.source.data.coords["wavelength"]
+
+    raw_data = sc.concat(
+        [ess_beamline.get_monitor(key) for key in monitors.keys()],
+        dim='detector',
+    ).fold(dim='detector', sizes=ltotal.sizes)
+
+    # Verify that all 6 neutrons made it through the chopper cascade
+    assert sc.identical(
+        raw_data.bins.concat('pulse').hist().data,
+        sc.array(
+            dims=['detector'],
+            values=[len(wavelengths) * npulses] * len(monitors),
+            unit="counts",
+            dtype='float64',
+        ).fold(dim='detector', sizes=ltotal.sizes),
+    )
+
+    # Set up the workflow
+    workflow = sl.Pipeline(
+        unwrap.unwrap_providers()
+        + unwrap.time_of_flight_providers()
+        + unwrap.time_of_flight_origin_from_choppers_providers(wfm=True)
+    )
+    workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
+    workflow[unwrap.PulseStride | None] = None
+
+    # Define the extent of the pulse that contains the 6 neutrons in time and wavelength
+    # Note that we make a larger encompassing pulse to ensure that the frame bounds are
+    # computed correctly
+    workflow[unwrap.SourceTimeRange] = (
+        sc.scalar(0.0, unit='ms'),
+        sc.scalar(4.9, unit='ms'),
+    )
+    workflow[unwrap.SourceWavelengthRange] = (
+        sc.scalar(0.2, unit='angstrom'),
+        sc.scalar(16.0, unit='angstrom'),
+    )
+
+    workflow[unwrap.Choppers] = choppers
+    workflow[unwrap.Ltotal] = ltotal
+    workflow[unwrap.RawData] = raw_data
+
+    # Compute time-of-flight
+    tofs = workflow.compute(unwrap.TofData)
+    assert {dim: tofs.sizes[dim] for dim in ltotal.sizes} == ltotal.sizes
+
+    # Convert to wavelength
+    graph = {**beamline(scatter=False), **elastic("tof")}
+    wav_wfm = tofs.transform_coords("wavelength", graph=graph)
+
+    # Compare the computed wavelengths to the true wavelengths
+    for i in range(npulses):
+        result_wav = wav_wfm['pulse', i].flatten(to='detector')
+        result_tof = tofs['pulse', i].flatten(to='detector')
+        for j in range(len(result_wav)):
+            computed_tofs = result_tof[j].values.coords["tof"]
+            # The two neutrons in the overlap region should have NaN tofs
+            assert sc.isnan(computed_tofs[-2])
+            assert sc.isnan(computed_tofs[-1])
+
+            computed_wavelengths = result_wav[j].values.coords["wavelength"]
+            assert sc.allclose(
+                computed_wavelengths[:-2],
+                true_wavelengths['pulse', i][:-2],
+                rtol=sc.scalar(1e-02),
+            )
+            # The two neutrons in the overlap region should have NaN wavelengths
+            assert sc.isnan(computed_wavelengths[-2])
+            assert sc.isnan(computed_wavelengths[-1])
