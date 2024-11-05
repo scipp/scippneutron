@@ -616,8 +616,9 @@ def time_of_flight_origin_wfm(
     shift = sc.full(sizes=sizes, value=math.nan, unit='s')
     shift['subframe', 1::2] = time_origins
 
-    # TODO: what dimension order is the best here? Where should `detector_number` be?
-    origin_time = sc.DataArray(shift.transpose(times.dims), coords={'subframe': times})
+    origin_time = sc.DataArray(
+        shift.transpose(times.dims).copy(deep=True), coords={'subframe': times}
+    )
 
     return TimeOfFlightOrigin(time=origin_time, distance=at_first_chopper.distance)
 
@@ -687,8 +688,7 @@ def to_time_of_flight(
     delta = origin.time
     if isinstance(delta, sc.DataArray):
         # Will raise if subframes overlap, since coord for lookup table must be sorted
-        # TODO: Can we do without making a copy of delta?
-        delta = sc.lookup(delta.copy(deep=True), dim='subframe')[time_offset]
+        delta = sc.lookup(delta, dim='subframe')[time_offset]
     if da.bins is not None:
         da = da.copy(deep=False)
         da.data = sc.bins(**da.bins.constituents)
