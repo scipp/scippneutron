@@ -344,7 +344,7 @@ def offset_from_wrapped(
     time_bounds = frame_bounds['time']
     frame_period = frame_period.to(unit=elem_unit(time_bounds))
     diff = (time_bounds['bound', -1] - time_bounds['bound', 0]) - frame_period
-    if any(diff.flatten(to='x') > sc.scalar(0.0, unit=frame_period.unit)):
+    if (diff > sc.scalar(0.0, unit=frame_period.unit)).any():
         raise ValueError(
             "Frames are overlapping: Computed frame bounds "
             f"{frame_bounds} are larger than frame period {frame_period}."
