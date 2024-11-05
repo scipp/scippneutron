@@ -1,5 +1,6 @@
-"""Quadrature rules for computing integrals on the unit disk
-For each dictionary :pycode:`{x: ..., y: ..., weights: ...}` in this module:
+"""Quadrature rules for computing integrals on the unit disk.
+
+For each dictionary ``{x: ..., y: ..., weights: ...}`` in this module:
 :math:`\\int_{||(x, y)|| < 1} f(x, y) dxdy \\approx \\sum_i weights[i] f(x[i], y[i])`
 
 In practice the functions we integrate in the absorption module often have large values
