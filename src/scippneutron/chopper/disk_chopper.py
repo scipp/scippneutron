@@ -35,10 +35,10 @@ Note that all definitions are independent of the rotation direction.
         This serves as a reference time for the chopper :math:`t_0`.
         In :class:`DiskChopper`, the TDC is encoded as a component of
         :attr:`DiskChopper.phase`.
-    * - ``beam_angle``
+    * - ``beam_position``
       - :math:`\tilde{\theta}`
       - The angle under which the beam hits the chopper
-        (:attr:`DiskChopper.beam_angle`).
+        (:attr:`DiskChopper.beam_position`).
         We do not care about the radial position and assume that the beam can
         pass through all chopper slits.
     * - | ``slit_begin``
@@ -265,7 +265,7 @@ class DiskChopper:
     """
     frequency: sc.Variable
     """Rotation frequency of the chopper."""
-    beam_angle: sc.Variable
+    beam_position: sc.Variable
     """Angle where the beam crosses the chopper."""
     phase: sc.Variable
     r"""Phase of the chopper rotation relative to the source pulses.
@@ -335,7 +335,7 @@ class DiskChopper:
         return DiskChopper(
             axle_position=chopper['position'],
             frequency=_get_1d_variable(chopper, 'rotation_speed'),
-            beam_angle=_get_1d_variable(chopper, 'beam_position'),
+            beam_position=_get_1d_variable(chopper, 'beam_position'),
             phase=_get_1d_variable(chopper, 'phase'),
             slit_height=chopper.get('slit_height'),
             radius=chopper.get('radius'),
@@ -449,7 +449,7 @@ class DiskChopper:
         """
         angle = self._apply_angle_repetitions(angle=angle, n_repetitions=n_repetitions)
         angle = (
-            self.beam_angle.to(unit='rad')
+            self.beam_position.to(unit='rad')
             + self.phase.to(unit='rad')
             - angle.to(unit='rad', copy=False)
         )
