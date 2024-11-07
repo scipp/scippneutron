@@ -53,14 +53,14 @@ class _BytesBuffer:
         return self.buffer.read(n)
 
 
-@pytest.fixture(params=["BytesIO", "Path"])
+@pytest.fixture(params=["buffer", "file"])
 def buffer(
     request: pytest.FixtureRequest, tmp_path: Path
 ) -> _BytesBuffer | _PathBuffer:
     match request.param:
-        case "BytesIO":
+        case "buffer":
             return _BytesBuffer()
-        case "Path":
+        case "file":
             return _PathBuffer(tmp_path / "sqw_file.sqw")
 
 

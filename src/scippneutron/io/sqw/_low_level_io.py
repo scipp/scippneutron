@@ -148,6 +148,11 @@ class LowLevelSqw:
             flat = np.frombuffer(
                 self._file.getbuffer(), offset=self.position, dtype=dtype, count=count
             )
+            # Make a copy because np.frombuffer creates a view of the buffer.
+            # This makes it impossible to write to the buffer while the view exists.
+            # But when writing pixel data, we need to both
+            # read and write from / to the same buffer.
+            flat = flat.copy()
             self._file.seek(self.position + count * dtype.itemsize)
         else:
             flat = np.fromfile(self._file, dtype=dtype, count=int(np.prod(shape)))
