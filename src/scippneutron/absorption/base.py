@@ -39,6 +39,7 @@ def compute_transmission_map(
 
     Returns
     -------
+    :
         the transmission fraction as a function of detector_position and wavelength
 
     """
