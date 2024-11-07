@@ -2,8 +2,8 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 """File writer and reader for XYE files."""
 
-import io
 from pathlib import Path
+from typing import TextIO
 
 import numpy as np
 import scipp as sc
@@ -20,7 +20,7 @@ GenerateHeader = GenerateHeaderType()
 
 
 def save_xye(
-    fname: str | Path | io.TextIOBase,
+    fname: str | Path | TextIO,
     da: sc.DataArray,
     *,
     coord: str | None = None,
@@ -102,7 +102,7 @@ def save_xye(
 
 
 def load_xye(
-    fname: str | Path | io.TextIOBase,
+    fname: str | Path | TextIO,
     *,
     dim: str,
     unit: sc.Unit | str | None,

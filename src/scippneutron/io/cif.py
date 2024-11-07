@@ -127,17 +127,17 @@ This results in a file containing
 
 from __future__ import annotations
 
-import io
 import warnings
 from collections.abc import Iterable, Iterator, Mapping
-from contextlib import contextmanager
 from copy import copy
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, TextIO
 
 import scipp as sc
+
+from ._files import open_or_pass
 
 
 @dataclass(frozen=True)
@@ -160,7 +160,7 @@ PD_SCHEMA = CIFSchema(
 
 
 def save_cif(
-    fname: str | Path | io.TextIOBase,
+    fname: str | Path | TextIO,
     content: Block | Iterable[Block] | CIF,
     *,
     comment: str = '',
@@ -188,7 +188,7 @@ def save_cif(
 
     if isinstance(content, Block):
         content = (content,)
-    with _open(fname) as f:
+    with open_or_pass(fname, "w") as f:
         _write_file_heading(f, comment=comment)
         _write_multi(f, content)
 
@@ -238,7 +238,7 @@ class CIF:
         """CIF schemas used for the file."""
         return self._block.schema
 
-    def save(self, fname: str | Path | io.TextIOBase) -> None:
+    def save(self, fname: str | Path | TextIO) -> None:
         """
         Parameters
         ----------
@@ -516,7 +516,7 @@ class Chunk(_CIFBase):
         """Add a key-value pair to the chunk."""
         self._pairs[key] = value
 
-    def write(self, f: io.TextIOBase) -> None:
+    def write(self, f: TextIO) -> None:
         """Write this chunk to a file.
 
         Used mainly internally, use :func:`scippneutron.io.cif.save_cif` instead.
@@ -594,7 +594,7 @@ class Loop(_CIFBase):
 
         self._columns[name] = value
 
-    def write(self, f: io.TextIOBase) -> None:
+    def write(self, f: TextIO) -> None:
         """Write this loop to a file.
 
         Used mainly internally, use :func:`scippneutron.io.cif.save_cif` instead.
@@ -718,7 +718,7 @@ class Block(_CIFBase):
             content = Chunk(content, comment=comment)
         self._content.append(content)
 
-    def write(self, f: io.TextIOBase) -> None:
+    def write(self, f: TextIO) -> None:
         """Write this block to a file.
 
         Used mainly internally, use :func:`scippneutron.io.cif.save_cif` instead.
@@ -752,15 +752,6 @@ def _convert_input_content(
     content: Iterable[Mapping[str, Any] | Loop | Chunk],
 ) -> list[Loop | Chunk]:
     return [item if isinstance(item, Loop | Chunk) else Chunk(item) for item in content]
-
-
-@contextmanager
-def _open(fname: str | Path | io.TextIOBase):
-    if isinstance(fname, io.TextIOBase):
-        yield fname
-    else:
-        with open(fname, 'w') as f:
-            yield f
 
 
 def _preprocess_schema(
@@ -834,14 +825,14 @@ def _format_value(value: Any) -> str:
     return s
 
 
-def _write_comment(f: io.TextIOBase, comment: str) -> None:
+def _write_comment(f: TextIO, comment: str) -> None:
     if comment:
         f.write('# ')
         f.write('\n# '.join(comment.splitlines()))
         f.write('\n')
 
 
-def _write_multi(f: io.TextIOBase, to_write: Iterable[Any]) -> None:
+def _write_multi(f: TextIO, to_write: Iterable[Any]) -> None:
     first = True
     for item in to_write:
         if not first:
@@ -850,7 +841,7 @@ def _write_multi(f: io.TextIOBase, to_write: Iterable[Any]) -> None:
         item.write(f)
 
 
-def _write_file_heading(f: io.TextIOBase, comment: str) -> None:
+def _write_file_heading(f: TextIO, comment: str) -> None:
     f.write('#\\#CIF_1.1\n')
     _write_comment(f, comment)
 
