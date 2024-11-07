@@ -10,21 +10,21 @@ from scippneutron.tof import fakes, unwrap
 sl = pytest.importorskip('sciline')
 
 
-@pytest.fixture()
+@pytest.fixture
 def ess_10s_14Hz() -> fakes.FakeSource:
     return fakes.FakeSource(
         frequency=sc.scalar(14.0, unit='Hz'), run_length=sc.scalar(10.0, unit='s')
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def ess_10s_7Hz() -> fakes.FakeSource:
     return fakes.FakeSource(
         frequency=sc.scalar(7.0, unit='Hz'), run_length=sc.scalar(10.0, unit='s')
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def ess_pulse() -> fakes.FakePulse:
     return fakes.FakePulse(
         time_min=sc.scalar(0.0, unit='ms'),

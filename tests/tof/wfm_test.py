@@ -16,7 +16,7 @@ from scippneutron.tof import chopper_cascade, fakes, unwrap
 sl = pytest.importorskip('sciline')
 
 
-@pytest.fixture()
+@pytest.fixture
 def disk_choppers():
     wfm1 = DiskChopper(
         frequency=sc.scalar(-70.0, unit="Hz"),

@@ -49,7 +49,7 @@ def base(request):
     return request.param
 
 
-@pytest.fixture()
+@pytest.fixture
 def cylinder(request, axis, base, radius, height):
     return Cylinder(axis, base, radius, height)
 

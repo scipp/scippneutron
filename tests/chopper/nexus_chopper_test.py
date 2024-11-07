@@ -7,7 +7,7 @@ import scipp as sc
 from scippneutron.chopper import DiskChopperType, extract_chopper_from_nexus
 
 
-@pytest.fixture()
+@pytest.fixture
 def raw_nexus_chopper():
     return sc.DataGroup(
         {
