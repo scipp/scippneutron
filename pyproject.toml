@@ -42,6 +42,16 @@ dependencies = [
 
 [project.optional-dependencies]
 all = ["scipp[all]", "pooch"]
+test = [
+    "hypothesis",
+    "ipympl",
+    "pooch",
+    "psutil",
+    "pytest",
+    "pytest-xdist",
+    "pythreejs",
+    "sciline",
+]
 
 [project.urls]
 "Bug Tracker" = "https://github.com/scipp/scippneutron/issues"
@@ -88,10 +98,6 @@ filterwarnings = [
   'ignore:Passing unrecognized arguments to super:DeprecationWarning',
 ]
 
-[tool.codespell]
-ignore-words-list = "elemt"
-skip = "./.git,./.tox,*/.virtual_documents,*/.ipynb_checkpoints,*.pdf,*.svg,*.csv"
-
 [tool.ruff]
 line-length = 88
 extend-include = ["*.ipynb"]
@@ -107,7 +113,7 @@ ignore = [
     # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
     "COM812", "COM819", "D206", "D300", "E111", "E114", "E117", "ISC001", "ISC002", "Q000", "Q001", "Q002", "Q003", "W191",
 ]
-fixable = ["I001", "B010"]
+fixable = ["B010", "I001", "PT001"]
 isort.known-first-party = ["scippneutron"]
 pydocstyle.convention = "numpy"
 
@@ -142,3 +148,13 @@ enable_error_code = [
     "truthy-bool",
 ]
 warn_unreachable = true
+
+[tool.codespell]
+ignore-words-list = [
+    # Codespell wants "socioeconomic" which seems to be the standard spelling.
+    # But we use the word in our code of conduct which is the contributor covenant.
+    # Let's not modify it if we don't have to.
+    "socio-economic",
+    "elemt",
+]
+skip = "./.git,./.tox,*/.virtual_documents,*/.ipynb_checkpoints,*.pdf,*.svg,*.csv"

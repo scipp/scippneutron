@@ -41,7 +41,7 @@ env:
 jobs:
   docs:
     name: Build documentation
-    runs-on: 'ubuntu-22.04'
+    runs-on: 'ubuntu-24.04'
     defaults:
       run:
         shell: bash -l {0}  # required for conda env
@@ -83,7 +83,7 @@ jobs:
         with:
           name: docs_html
           path: html/
-      - uses: JamesIves/github-pages-deploy-action@v4.6.3
+      - uses: JamesIves/github-pages-deploy-action@v4.6.8
         if: ${{ inputs.publish }}
         with:
           branch: gh-pages
