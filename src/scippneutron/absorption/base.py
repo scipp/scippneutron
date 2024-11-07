@@ -15,6 +15,33 @@ def compute_transmission_map(
     detector_position: sc.Variable,
     quadrature_kind: Any = 'medium',
 ) -> sc.DataArray:
+    """
+    Computes the fraction of neutrons transmitted through the sample
+    given that they scattered to the positions in the ``detector_positions`` array.
+
+    Parameters
+    ----------
+    sample_shape:
+        the size and shape of the sample
+    sample_material:
+        the sample material, this parameter determines the absorption and scattering
+        coefficients
+    beam_direction:
+        direction of the incoming beam
+    wavelength:
+        an array of wavelengths for which to compute the transmission fraction
+    detector_position:
+        an array of vectors where to compute the transmission fraction
+    quadrature_kind:
+        What kind of quadrature to use.
+        A denser quadrature makes the result more accurate but takes longer to compute.
+        What options exists depend on the sample shape.
+
+    Returns
+    -------
+        the transmission fraction as a function of detector_position and wavelength
+
+    """
     points, weights = sample_shape.quadrature(quadrature_kind)
     transmission = _integrate_transmission_fraction(
         partial(
