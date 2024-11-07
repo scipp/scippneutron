@@ -70,7 +70,7 @@ def plot_axes_lines(ax, x_ticks, y_ticks):
 
 
 def plot_t_vs_angle_anticlockwise(ax, ch):
-    theta_tilde = ch.beam_angle.value
+    theta_tilde = ch.beam_position.value
     omega = ch.angular_frequency.value
 
     theta = sc.linspace('theta', -pi / 2, 3.2 * pi, 100, unit='rad')
@@ -103,7 +103,7 @@ def plot_t_vs_angle_anticlockwise(ax, ch):
 
 
 def plot_t_vs_angle_clockwise(ax, ch):
-    theta_tilde = ch.beam_angle.value
+    theta_tilde = ch.beam_position.value
     omega = abs(ch.angular_frequency.value)
 
     theta = sc.linspace('theta', -pi / 2, 3.2 * pi, 100, unit='rad')
@@ -206,7 +206,9 @@ def plot_openings_clockwise(ax, ch, pulse_frequency, clockwise):
 
 def plot_openings(ch, name, pulse_frequency):
     ch = replace(
-        ch, beam_angle=sc.scalar(5, unit='deg'), phase=sc.scalar(360 + 50, unit='deg')
+        ch,
+        beam_position=sc.scalar(5, unit='deg'),
+        phase=sc.scalar(360 + 50, unit='deg'),
     )
 
     fig, axs = plt.subplots(1, 2, layout='constrained', figsize=(11, 2.5))
@@ -225,7 +227,7 @@ def main() -> None:
     ch = DiskChopper(
         axle_position=sc.vector([0.0, 0.0, 0.0], unit='m'),
         frequency=sc.scalar(2.3, unit='Hz'),
-        beam_angle=sc.scalar(2.5, unit='rad'),
+        beam_position=sc.scalar(2.5, unit='rad'),
         phase=sc.scalar(0.0, unit='rad'),
         slit_begin=sc.array(dims=['slit'], values=[10.0, 150.0], unit='deg'),
         slit_end=sc.array(dims=['slit'], values=[70.0, 280.0], unit='deg'),
