@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
+# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
 import scipp as sc
 
@@ -35,6 +35,7 @@ def _make_pooch():
             'PG3_4866_event.nxs': 'md5:3d543bc6a646e622b3f4542bc3435e7e',
             'PG3_4871_event.nxs': 'md5:a3d0edcb36ab8e9e3342cd8a4440b779',
             'WISH00016748.raw': 'md5:37ecc6f99662b57e405ed967bdc068af',
+            'horace_sqw_4d.sqw': 'md5:5a53bdc40334f03741c54d62075c8f27',
         },
     )
 
