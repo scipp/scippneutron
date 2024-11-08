@@ -18,7 +18,7 @@ def deg_angle_to_time_factor(frequency: sc.Variable) -> sc.Variable:
     return sc.to_unit(to_rad / angular_frequency, 's/deg')
 
 
-@pytest.fixture()
+@pytest.fixture
 def nexus_chopper():
     return sc.DataGroup(
         {

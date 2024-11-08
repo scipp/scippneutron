@@ -17,7 +17,7 @@ def pytest_assertrepr_compare(op: str, left: Any, right: Any) -> list[str]:
         return [f'{left!r} {op} {right!r}']
 
 
-@pytest.fixture()
+@pytest.fixture
 def _use_ipympl():
     """
     Use ipympl interactive backend for matplotlib.

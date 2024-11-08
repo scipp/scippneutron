@@ -16,7 +16,7 @@ except ImportError:
     kernel = None
 
 
-@pytest.fixture()
+@pytest.fixture
 def in_ws():
     ws = sapi.CreateSampleWorkspace(
         SourceDistanceFromSample=10.0,
@@ -29,7 +29,7 @@ def in_ws():
     return ws
 
 
-@pytest.fixture()
+@pytest.fixture
 def in_da(in_ws):
     return scn.mantid.from_mantid(in_ws)
 
