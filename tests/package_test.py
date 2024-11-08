@@ -3,7 +3,7 @@
 
 """Tests of package integrity.
 
-Note that addidional imports need to be added for repositories that
+Note that additional imports need to be added for repositories that
 contain multiple packages.
 """
 

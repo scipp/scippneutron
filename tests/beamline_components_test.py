@@ -8,7 +8,7 @@ import scipp as sc
 import scippneutron as scn
 
 
-@pytest.fixture()
+@pytest.fixture
 def data_array():
     positions = [[-1, 0, 0], [0, 1, 0], [0, 0, 1]]
     return sc.DataArray(

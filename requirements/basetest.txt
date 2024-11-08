@@ -11,25 +11,30 @@ attrs==24.2.0
     # via hypothesis
 certifi==2024.8.30
     # via requests
-charset-normalizer==3.3.2
+charset-normalizer==3.4.0
     # via requests
 comm==0.2.2
     # via ipywidgets
 contourpy==1.3.0
     # via matplotlib
-cyclebane==24.6.0
+cyclebane==24.10.0
     # via sciline
 cycler==0.12.1
     # via matplotlib
 decorator==5.1.1
     # via ipython
+exceptiongroup==1.2.2
+    # via
+    #   hypothesis
+    #   ipython
+    #   pytest
 execnet==2.1.1
     # via pytest-xdist
 executing==2.1.0
     # via stack-data
-fonttools==4.53.1
+fonttools==4.54.1
     # via matplotlib
-hypothesis==6.112.1
+hypothesis==6.116.0
     # via -r basetest.in
 idna==3.10
     # via requests
@@ -39,7 +44,7 @@ ipydatawidgets==4.3.5
     # via pythreejs
 ipympl==0.9.4
     # via -r basetest.in
-ipython==8.27.0
+ipython==8.29.0
     # via
     #   ipympl
     #   ipywidgets
@@ -60,9 +65,9 @@ matplotlib==3.9.2
     # via ipympl
 matplotlib-inline==0.1.7
     # via ipython
-networkx==3.3
+networkx==3.4.2
     # via cyclebane
-numpy==2.1.1
+numpy==2.1.3
     # via
     #   contourpy
     #   ipydatawidgets
@@ -78,7 +83,7 @@ parso==0.8.4
     # via jedi
 pexpect==4.9.0
     # via ipython
-pillow==10.4.0
+pillow==11.0.0
     # via
     #   ipympl
     #   matplotlib
@@ -88,9 +93,9 @@ pluggy==1.5.0
     # via pytest
 pooch==1.8.2
     # via -r basetest.in
-prompt-toolkit==3.0.47
+prompt-toolkit==3.0.48
     # via ipython
-psutil==6.0.0
+psutil==6.1.0
     # via -r basetest.in
 ptyprocess==0.7.0
     # via pexpect
@@ -98,7 +103,7 @@ pure-eval==0.2.3
     # via stack-data
 pygments==2.18.0
     # via ipython
-pyparsing==3.1.4
+pyparsing==3.2.0
     # via matplotlib
 pytest==8.3.3
     # via
@@ -122,6 +127,8 @@ sortedcontainers==2.4.0
     # via hypothesis
 stack-data==0.6.3
     # via ipython
+tomli==2.0.2
+    # via pytest
 traitlets==5.14.3
     # via
     #   comm
