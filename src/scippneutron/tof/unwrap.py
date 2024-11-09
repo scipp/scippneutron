@@ -16,6 +16,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import NewType
 
+import numpy as np
 import scipp as sc
 
 from .._utils import elem_unit
@@ -60,6 +61,30 @@ In normal mode, this is identical to the NXevent_data/event_time_offset recorded
 the data acquisition system, i.e., the same as :py:class:`PulseWrappedTimeOffset`.
 
 In pulse-skipping mode, this is the time offset since the start of the frame.
+"""
+
+UnwrappedTimeOfArrival = NewType('UnwrappedTimeOfArrival', sc.Variable)
+"""
+Time of arrival of the neutron at the detector, unwrapped at the pulse period.
+"""
+
+FrameAtDetectorStartTime = NewType('FrameAtDetectorStartTime', sc.Variable)
+"""
+Time of the start of the frame at the detector.
+"""
+
+UnwrappedTimeOfArrivalMinusStartTime = NewType(
+    'UnwrappedTimeOfArrivalMinusStartTime', sc.Variable
+)
+"""
+Time of arrival of the neutron at the detector, unwrapped at the pulse period, minus
+the start time of the frame.
+"""
+
+TimeOfArrivalModuloPeriod = NewType('TimeOfArrivalModuloPeriod', sc.Variable)
+"""
+Time of arrival of the neutron at the detector, unwrapped at the pulse period, minus
+the start time of the frame, modulo the frame period.
 """
 
 Ltotal = NewType('Ltotal', sc.Variable)
@@ -218,7 +243,7 @@ def frame_at_detector(
         wavelength_max=source_wavelength_range[-1],
     )
     frames = frames.chop(choppers.values())
-    return FrameAtDetector(frames[ltotal])
+    return FrameAtDetector(frames[-1].propagate_to(ltotal))
 
 
 def frame_bounds(frame: FrameAtDetector) -> FrameBounds:
@@ -282,6 +307,62 @@ def pulse_wrapped_time_offset(da: RawData) -> PulseWrappedTimeOffset:
         # Canonical name in NXmonitor
         return PulseWrappedTimeOffset(da.coords['time_of_flight'])
     return PulseWrappedTimeOffset(da.bins.coords['event_time_offset'])
+
+
+def unwrapped_time_of_arrival(
+    da: RawData, period: PulsePeriod
+) -> UnwrappedTimeOfArrival:
+    """ """
+    if da.bins is None:
+        # Canonical name in NXmonitor
+        coord = da.coords['time_of_flight']
+    else:
+        coord = da.bins.coords['event_time_offset']
+
+    toa = coord + sc.arange('pulse', da.sizes['pulse']) * period
+    return UnwrappedTimeOfArrival(toa)
+
+
+def frame_at_detector_start_time(frame: FrameAtDetector) -> FrameAtDetectorStartTime:
+    return FrameAtDetectorStartTime(frame.bounds()['time']['bound', 0])
+
+
+def unwrapped_time_of_arrival_minus_frame_start_time(
+    toa: UnwrappedTimeOfArrival, start_time: FrameAtDetectorStartTime
+) -> UnwrappedTimeOfArrivalMinusStartTime:
+    return UnwrappedTimeOfArrivalMinusStartTime(toa - start_time)
+
+
+def time_of_arrival_modulo_period(
+    toa_minus_start_time: UnwrappedTimeOfArrivalMinusStartTime,
+    period: PulsePeriod,
+    pulse_stride: PulseStride | None,
+) -> TimeOfArrivalModuloPeriod:
+    if pulse_stride is None:
+        pulse_stride = 1
+    return TimeOfArrivalModuloPeriod(toa_minus_start_time % (pulse_stride * period))
+
+
+def subframes_slopes_and_intercepts(
+    frame: FrameAtDetector, frame_start: FrameAtDetectorStartTime
+) -> SubframesSlopesAndIntercepts:
+    slopes = []
+    intercepts = []
+    subframes = sorted(frame.subframes, key=lambda x: x.start_time)
+    edges = []
+    for sf in subframes:
+        edges.extend([sf.start_time, sf.end_time])
+        x = (sf.time - frame_start).values
+        y = sf.wavelength.values
+        xdiff = x - x.reshape((-1, 1))
+        ydiff = y - y.reshape((-1, 1))
+        mm = ydiff / xdiff
+        weight = np.triu(np.sqrt(xdiff**2 + ydiff**2), 1)
+        # weight = np.triu(xdiff, 1)
+        a = (weight * np.triu(mm, 1)).sum() / weight.sum()
+        b = (y - a * x).mean()
+        slopes.append(a)
+        intercepts.append(b)
 
 
 def time_zero(da: RawData) -> TimeZero:
