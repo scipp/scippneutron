@@ -19,7 +19,7 @@ sl = pytest.importorskip('sciline')
 def disk_choppers():
     psc1 = DiskChopper(
         frequency=sc.scalar(14.0, unit="Hz"),
-        beam_angle=sc.scalar(0.0, unit="deg"),
+        beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(286 - 180, unit="deg"),
         axle_position=sc.vector(value=[0, 0, 6.145], unit="m"),
         slit_begin=sc.array(
@@ -38,7 +38,7 @@ def disk_choppers():
 
     psc2 = DiskChopper(
         frequency=sc.scalar(-14.0, unit="Hz"),
-        beam_angle=sc.scalar(0.0, unit="deg"),
+        beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(-236, unit="deg"),
         axle_position=sc.vector(value=[0, 0, 6.155], unit="m"),
         slit_begin=sc.array(
@@ -57,7 +57,7 @@ def disk_choppers():
 
     oc = DiskChopper(
         frequency=sc.scalar(14.0, unit="Hz"),
-        beam_angle=sc.scalar(0.0, unit="deg"),
+        beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(297 - 180 - 90, unit="deg"),
         axle_position=sc.vector(value=[0, 0, 6.174], unit="m"),
         slit_begin=sc.array(dims=["cutout"], values=[-27.6 * 0.5], unit="deg"),
@@ -68,7 +68,7 @@ def disk_choppers():
 
     bcc = DiskChopper(
         frequency=sc.scalar(112.0, unit="Hz"),
-        beam_angle=sc.scalar(0.0, unit="deg"),
+        beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(240 - 180, unit="deg"),
         axle_position=sc.vector(value=[0, 0, 9.78], unit="m"),
         slit_begin=sc.array(dims=["cutout"], values=[-36.875, 143.125], unit="deg"),
@@ -79,7 +79,7 @@ def disk_choppers():
 
     t0 = DiskChopper(
         frequency=sc.scalar(28.0, unit="Hz"),
-        beam_angle=sc.scalar(0.0, unit="deg"),
+        beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(280 - 180, unit="deg"),
         axle_position=sc.vector(value=[0, 0, 13.05], unit="m"),
         slit_begin=sc.array(dims=["cutout"], values=[-314.9 * 0.5], unit="deg"),
@@ -96,7 +96,7 @@ def overlap_choppers(disk_choppers):
     out = disk_choppers.copy()
     out['bcc'] = DiskChopper(
         frequency=sc.scalar(112.0, unit="Hz"),
-        beam_angle=sc.scalar(0.0, unit="deg"),
+        beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(240 - 180, unit="deg"),
         axle_position=sc.vector(value=[0, 0, 9.78], unit="m"),
         slit_begin=sc.array(dims=["cutout"], values=[-36.875, 143.125], unit="deg"),

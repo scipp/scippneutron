@@ -359,7 +359,7 @@ def test_wfm_unwrap(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.Choppers] = choppers
     pl[unwrap.Ltotal] = distance
-    bounds = pl.compute(unwrap.SubframeBounds)
+    bounds = pl.compute(unwrap.FrameAtDetector).subbounds()
     assert bounds.sizes == {'bound': 2, 'subframe': 6}
     result = pl.compute(unwrap.TofData)
     assert_identical(result.coords['Ltotal'], distance - choppers['wfm1'].distance)
