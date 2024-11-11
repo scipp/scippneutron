@@ -18,6 +18,7 @@ from typing import NewType
 
 import numpy as np
 import scipp as sc
+from scipp.core.bins import Lookup
 
 from .._utils import elem_unit
 from . import chopper_cascade
@@ -85,6 +86,26 @@ TimeOfArrivalModuloPeriod = NewType('TimeOfArrivalModuloPeriod', sc.Variable)
 """
 Time of arrival of the neutron at the detector, unwrapped at the pulse period, minus
 the start time of the frame, modulo the frame period.
+"""
+
+
+@dataclass
+class SlopeAndInterceptLookup:
+    """ """
+
+    slope: Lookup
+    intercept: Lookup
+
+
+WavelengthFromLookup = NewType('WavelengthFromLookup', sc.Variable)
+"""
+Wavelength computed from the time of arrival and the slope and intercept lookups.
+"""
+
+TofCoord = NewType('TofCoord', sc.Variable)
+"""
+Time-of-flight of the neutron, i.e., the time difference between the time of arrival of
+the neutron at the detector, and the time the neutron left the source.
 """
 
 Ltotal = NewType('Ltotal', sc.Variable)
@@ -336,16 +357,16 @@ def unwrapped_time_of_arrival_minus_frame_start_time(
 def time_of_arrival_modulo_period(
     toa_minus_start_time: UnwrappedTimeOfArrivalMinusStartTime,
     period: PulsePeriod,
-    pulse_stride: PulseStride | None,
+    pulse_stride: PulseStride,
 ) -> TimeOfArrivalModuloPeriod:
     if pulse_stride is None:
         pulse_stride = 1
     return TimeOfArrivalModuloPeriod(toa_minus_start_time % (pulse_stride * period))
 
 
-def subframes_slopes_and_intercepts(
+def slope_and_intercept_lookups(
     frame: FrameAtDetector, frame_start: FrameAtDetectorStartTime
-) -> SubframesSlopesAndIntercepts:
+) -> SlopeAndInterceptLookup:
     slopes = []
     intercepts = []
     subframes = sorted(frame.subframes, key=lambda x: x.start_time)
@@ -354,15 +375,66 @@ def subframes_slopes_and_intercepts(
         edges.extend([sf.start_time, sf.end_time])
         x = (sf.time - frame_start).values
         y = sf.wavelength.values
+        # Compute the slopes for all pairs of points
         xdiff = x - x.reshape((-1, 1))
         ydiff = y - y.reshape((-1, 1))
         mm = ydiff / xdiff
+        # Compute the weighted mean of the slope, where the weight is the distance
+        # between the vertices
         weight = np.triu(np.sqrt(xdiff**2 + ydiff**2), 1)
-        # weight = np.triu(xdiff, 1)
         a = (weight * np.triu(mm, 1)).sum() / weight.sum()
+        # Compute the intercept as the mean of the intercepts of the curves that pass
+        # through the vertices
         b = (y - a * x).mean()
         slopes.append(a)
         intercepts.append(b)
+
+    edges = sc.concat(edges, 'subframe') - frame_start
+    sizes = {'subframe': 2 * len(subframes) - 1}
+
+    unit = sf.wavelength.unit / sf.time.unit
+    data = sc.full(sizes=sizes, value=np.nan, unit=unit)
+    data['subframe', ::2] = sc.array(dims=['subframe'], values=slopes, unit=unit)
+    a_lookup = sc.DataArray(data=data, coords={'subframe': edges})
+
+    unit = sf.wavelength.unit
+    data = sc.full(sizes=sizes, value=np.nan, unit=unit)
+    data['subframe', ::2] = sc.array(dims=['subframe'], values=intercepts, unit=unit)
+    b_lookup = sc.DataArray(data=data, coords={'subframe': edges})
+    return SlopeAndInterceptLookup(slope=a_lookup, intercept=b_lookup)
+
+
+def wavelength_from_lookup(
+    toa: TimeOfArrivalModuloPeriod,
+    lookup: SlopeAndInterceptLookup,
+) -> WavelengthFromLookup:
+    """
+    Compute the wavelength from the time of arrival and the slope and intercept lookups.
+    """
+    slope = sc.lookup(lookup.slope, dim='subframe')[toa]
+    intercept = sc.lookup(lookup.intercept, dim='subframe')[toa]
+    return WavelengthFromLookup(slope * toa + intercept)
+
+
+def time_of_flight_from_wavelength(
+    wavelength: WavelengthFromLookup,
+    ltotal: Ltotal,
+) -> TofCoord:
+    return TofCoord(ltotal * chopper_cascade.wavelength_to_inverse_velocity(wavelength))
+
+
+def time_of_flight_data(
+    da: RawData,
+    tof: TofCoord,
+    ltotal: Ltotal,
+) -> TofData:
+    out = da.copy(deep=False)
+    if tof.bins is not None:
+        out.bins.coords['tof'] = tof
+    else:
+        out.coords['tof'] = tof
+    out.coords['Ltotal'] = ltotal
+    return TofData(out)
 
 
 def time_zero(da: RawData) -> TimeZero:
@@ -712,64 +784,77 @@ def to_time_of_flight(
     return TofData(da)
 
 
-_common_providers = (
+providers = (
     frame_at_detector,
-    frame_bounds,
-    frame_period,
-    pulse_wrapped_time_offset,
-    source_chopper,
-    offset_from_wrapped,
-    unwrap_data,
+    unwrapped_time_of_arrival,
+    frame_at_detector_start_time,
+    unwrapped_time_of_arrival_minus_frame_start_time,
+    time_of_arrival_modulo_period,
+    slope_and_intercept_lookups,
+    wavelength_from_lookup,
+    time_of_flight_from_wavelength,
+    time_of_flight_data,
 )
 
-_non_skipping = (frame_wrapped_time_offset,)
-_skipping = (
-    frame_wrapped_time_offset_pulse_skipping,
-    pulse_offset,
-    time_zero,
-)
 
-_wfm = (
-    subframe_bounds,
-    time_offset,
-    time_of_flight_origin_time_wfm_from_choppers,
-    time_of_flight_origin_distance_wfm_from_choppers,
-    wfm_choppers,
-    time_of_flight_origin_wfm,
-)
-_non_wfm = (time_of_flight_origin_from_chopper,)
+# _common_providers = (
+#     frame_at_detector,
+#     frame_bounds,
+#     frame_period,
+#     pulse_wrapped_time_offset,
+#     source_chopper,
+#     offset_from_wrapped,
+#     unwrap_data,
+# )
 
+# _non_skipping = (frame_wrapped_time_offset,)
+# _skipping = (
+#     frame_wrapped_time_offset_pulse_skipping,
+#     pulse_offset,
+#     time_zero,
+# )
 
-def time_of_flight_providers() -> tuple[Callable]:
-    """
-    Return the providers computing the time-of-flight and time-zero coordinates.
-    """
-    return (to_time_of_flight,)
-
-
-def time_of_flight_origin_from_choppers_providers(wfm: bool = False):
-    """
-    Return the providers for computing the time-of-flight origin via the chopper
-    cascade.
-
-    Parameters
-    ----------
-    wfm :
-        If True, the data is assumed to be from a WFM instrument.
-    """
-    wfm = _wfm if wfm else _non_wfm
-    _common = (source_chopper, frame_at_detector, subframe_bounds)
-    return _common + wfm
+# _wfm = (
+#     subframe_bounds,
+#     time_offset,
+#     time_of_flight_origin_time_wfm_from_choppers,
+#     time_of_flight_origin_distance_wfm_from_choppers,
+#     wfm_choppers,
+#     time_of_flight_origin_wfm,
+# )
+# _non_wfm = (time_of_flight_origin_from_chopper,)
 
 
-def unwrap_providers(pulse_skipping: bool = False):
-    """
-    Return the list of providers for unwrapping frames.
+# def time_of_flight_providers() -> tuple[Callable]:
+#     """
+#     Return the providers computing the time-of-flight and time-zero coordinates.
+#     """
+#     return (to_time_of_flight,)
 
-    Parameters
-    ----------
-    pulse_skipping :
-        If True, the pulse-skipping mode is assumed.
-    """
-    skipping = _skipping if pulse_skipping else _non_skipping
-    return _common_providers + skipping
+
+# def time_of_flight_origin_from_choppers_providers(wfm: bool = False):
+#     """
+#     Return the providers for computing the time-of-flight origin via the chopper
+#     cascade.
+
+#     Parameters
+#     ----------
+#     wfm :
+#         If True, the data is assumed to be from a WFM instrument.
+#     """
+#     wfm = _wfm if wfm else _non_wfm
+#     _common = (source_chopper, frame_at_detector, subframe_bounds)
+#     return _common + wfm
+
+
+# def unwrap_providers(pulse_skipping: bool = False):
+#     """
+#     Return the list of providers for unwrapping frames.
+
+#     Parameters
+#     ----------
+#     pulse_skipping :
+#         If True, the pulse-skipping mode is assumed.
+#     """
+#     skipping = _skipping if pulse_skipping else _non_skipping
+#     return _common_providers + skipping
