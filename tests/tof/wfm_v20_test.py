@@ -16,11 +16,11 @@ from scippneutron.tof import chopper_cascade, fakes, unwrap
 sl = pytest.importorskip('sciline')
 
 
-@pytest.fixture()
+@pytest.fixture
 def disk_choppers():
     wfm1 = DiskChopper(
         frequency=sc.scalar(-70.0, unit="Hz"),
-        beam_angle=sc.scalar(0.0, unit="deg"),
+        beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(-47.10, unit="deg"),
         axle_position=sc.vector(value=[0, 0, 6.6], unit="m"),
         slit_begin=sc.array(
@@ -39,7 +39,7 @@ def disk_choppers():
 
     wfm2 = DiskChopper(
         frequency=sc.scalar(-70.0, unit="Hz"),
-        beam_angle=sc.scalar(0.0, unit="deg"),
+        beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(-76.76, unit="deg"),
         axle_position=sc.vector(value=[0, 0, 7.1], unit="m"),
         slit_begin=sc.array(
@@ -58,7 +58,7 @@ def disk_choppers():
 
     foc1 = DiskChopper(
         frequency=sc.scalar(-56.0, unit="Hz"),
-        beam_angle=sc.scalar(0.0, unit="deg"),
+        beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(-62.40, unit="deg"),
         axle_position=sc.vector(value=[0, 0, 8.8], unit="m"),
         slit_begin=sc.array(
@@ -77,7 +77,7 @@ def disk_choppers():
 
     foc2 = DiskChopper(
         frequency=sc.scalar(-28.0, unit="Hz"),
-        beam_angle=sc.scalar(0.0, unit="deg"),
+        beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(-12.27, unit="deg"),
         axle_position=sc.vector(value=[0, 0, 15.9], unit="m"),
         slit_begin=sc.array(

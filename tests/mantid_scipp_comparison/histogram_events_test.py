@@ -16,13 +16,13 @@ except ImportError:
     kernel = None
 
 
-@pytest.fixture()
+@pytest.fixture
 def in_ws():
     ws = sapi.Load(Filename=scn.data.get_path("CNCS_51936_event.nxs"), StoreInADS=False)
     return ws
 
 
-@pytest.fixture()
+@pytest.fixture
 def in_da(in_ws):
     return scn.mantid.from_mantid(in_ws)['data'].astype('float64')
 

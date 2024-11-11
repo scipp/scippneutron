@@ -41,7 +41,7 @@ env:
 jobs:
   docs:
     name: Build documentation
-    runs-on: 'ubuntu-22.04'
+    runs-on: 'ubuntu-24.04'
     defaults:
       run:
         shell: bash -l {0}  # required for conda env
@@ -76,14 +76,14 @@ jobs:
         if: ${{ inputs.version == '' }}
       - run: python -m sphinx -W -v -b doctest -d doctrees docs html
       - run: python -m sphinx -W -v -b html -d doctrees docs html
-      - run: find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
-      - run: tox -e linkcheck
+      - run: python -m sphinx -W -v -b linkcheck -d doctrees docs html
         if: ${{ inputs.linkcheck }}
+      - run: find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
       - uses: actions/upload-artifact@v4
         with:
           name: docs_html
           path: html/
-      - uses: JamesIves/github-pages-deploy-action@v4.6.3
+      - uses: JamesIves/github-pages-deploy-action@v4.6.8
         if: ${{ inputs.publish }}
         with:
           branch: gh-pages

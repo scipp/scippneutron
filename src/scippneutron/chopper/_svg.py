@@ -176,8 +176,8 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
             text_y=y - 11,
         )
 
-    def beam_pos(beam_angle: sc.Variable) -> str:
-        x, y = polar_to_svg_coords(r=chopper.radius * radius_scale, a=beam_angle)
+    def beam_pos(beam_position: sc.Variable) -> str:
+        x, y = polar_to_svg_coords(r=chopper.radius * radius_scale, a=beam_position)
         return _BEAM_POSITION_TEMPLATE.substitute(
             path=f"M{image_size // 2} {image_size // 2} L{x} {y}",
             text_x=x,
@@ -226,8 +226,8 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
         tdc_marker(),
         _rotation_arrow(image_size=image_size, clockwise=chopper.is_clockwise),
     ]
-    if (beam_angle := chopper.beam_angle) is not None:
-        elements.append(beam_pos(beam_angle))
+    if (beam_position := chopper.beam_position) is not None:
+        elements.append(beam_pos(beam_position))
     elements.append(f'<circle cx="{image_size/2}" cy="{image_size/2}" r="5"/>')
     return _CHOPPER_TEMPLATE.substitute(
         image_size=image_size, elements="\n".join(elements)
