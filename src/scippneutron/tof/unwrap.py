@@ -367,40 +367,90 @@ def time_of_arrival_modulo_period(
 def slope_and_intercept_lookups(
     frame: FrameAtDetector, frame_start: FrameAtDetectorStartTime
 ) -> SlopeAndInterceptLookup:
+    # slopes = []
+    # intercepts = []
+    # subframes = sorted(frame.subframes, key=lambda x: x.start_time.min())
+    # edges = []
+    # for sf in subframes:
+    #     edges.extend([sf.start_time, sf.end_time])
+    #     x = (sf.time - frame_start).values
+    #     y = sf.wavelength.values
+    #     # Compute the slopes for all pairs of points
+    #     xdiff = x - x.reshape((-1, 1))
+    #     ydiff = y - y.reshape((-1, 1))
+    #     mm = ydiff / xdiff
+    #     # Compute the weighted mean of the slope, where the weight is the distance
+    #     # between the vertices
+    #     weight = np.triu(np.sqrt(xdiff**2 + ydiff**2), 1)
+    #     a = (weight * np.triu(mm, 1)).sum() / weight.sum()
+    #     # Compute the intercept as the mean of the intercepts of the curves that pass
+    #     # through the vertices
+    #     b = (y - a * x).mean()
+    #     slopes.append(a)
+    #     intercepts.append(b)
+
+    # edges = sc.concat(edges, 'subframe') - frame_start
+    # sizes = {'subframe': 2 * len(subframes) - 1}
+
+    # unit = sf.wavelength.unit / sf.time.unit
+    # data = sc.full(sizes=sizes, value=np.nan, unit=unit)
+    # data['subframe', ::2] = sc.array(dims=['subframe'], values=slopes, unit=unit)
+    # a_lookup = sc.DataArray(data=data, coords={'subframe': edges})
+
+    # unit = sf.wavelength.unit
+    # data = sc.full(sizes=sizes, value=np.nan, unit=unit)
+    # data['subframe', ::2] = sc.array(dims=['subframe'], values=intercepts, unit=unit)
+    # b_lookup = sc.DataArray(data=data, coords={'subframe': edges})
     slopes = []
     intercepts = []
-    subframes = sorted(frame.subframes, key=lambda x: x.start_time)
+    subframes = sorted(frame.subframes, key=lambda x: x.start_time.min())
     edges = []
     for sf in subframes:
         edges.extend([sf.start_time, sf.end_time])
-        x = (sf.time - frame_start).values
-        y = sf.wavelength.values
+        x = sf.time - frame_start
+        y = sf.wavelength
         # Compute the slopes for all pairs of points
-        xdiff = x - x.reshape((-1, 1))
-        ydiff = y - y.reshape((-1, 1))
+        xdiff = x - x.rename_dims(vertex='vertex2')
+        ydiff = y - y.rename_dims(vertex='vertex2')
+        # print(xdiff)
         mm = ydiff / xdiff
         # Compute the weighted mean of the slope, where the weight is the distance
         # between the vertices
-        weight = np.triu(np.sqrt(xdiff**2 + ydiff**2), 1)
-        a = (weight * np.triu(mm, 1)).sum() / weight.sum()
+        # print(mm)
+        dims = set(mm.dims) - set(frame_start.dims)
+        # print("DIMS", dims)
+        # weight = np.triu(np.sqrt(xdiff**2 + ydiff**2), 1)
+        weight = sc.array(
+            dims=mm.dims, values=np.sqrt(xdiff.values**2 + ydiff.values**2)
+        )
+        a = weight * mm
+        for dim in dims:
+            a = a.nansum(dim)
+        a /= weight.sum(dims)
         # Compute the intercept as the mean of the intercepts of the curves that pass
         # through the vertices
-        b = (y - a * x).mean()
+        b = (y - a * x).mean('vertex')
+        # for dim in dims:
+        #     b = b.mean(dim)
         slopes.append(a)
         intercepts.append(b)
 
-    edges = sc.concat(edges, 'subframe') - frame_start
-    sizes = {'subframe': 2 * len(subframes) - 1}
+    edges = sc.concat(edges, 'subframe').transpose().copy() - frame_start
+    sizes = frame_start.sizes | {'subframe': 2 * len(subframes) - 1}
+    keys = list(sizes.keys())
 
     unit = sf.wavelength.unit / sf.time.unit
     data = sc.full(sizes=sizes, value=np.nan, unit=unit)
-    data['subframe', ::2] = sc.array(dims=['subframe'], values=slopes, unit=unit)
+    # data['subframe', ::2] = sc.array(dims=keys, values=slopes, unit=unit)
+    data['subframe', ::2] = sc.concat(slopes, 'subframe').transpose(keys)
     a_lookup = sc.DataArray(data=data, coords={'subframe': edges})
 
     unit = sf.wavelength.unit
     data = sc.full(sizes=sizes, value=np.nan, unit=unit)
-    data['subframe', ::2] = sc.array(dims=['subframe'], values=intercepts, unit=unit)
+    # data['subframe', ::2] = sc.array(dims=keys, values=intercepts, unit=unit)
+    data['subframe', ::2] = sc.concat(intercepts, 'subframe').transpose(keys)
     b_lookup = sc.DataArray(data=data, coords={'subframe': edges})
+
     return SlopeAndInterceptLookup(slope=a_lookup, intercept=b_lookup)
 
 
