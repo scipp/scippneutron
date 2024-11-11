@@ -25,13 +25,13 @@ dependencies:
   - pythreejs==2.4.2
   - scipp==24.11.0
   - scippnexus==24.11.0
-  - scipy==1.14.1
+  - scipy==1.13
   - tox==4.23.2
 
   # docs
   - myst-parser==4.0.0
   - nbsphinx==0.9.5
-  - packaging==24.2
+  - packaging==24.1
   - pandoc==3.4.0
   - pydata-sphinx-theme==0.16.0
   - sphinx==8.1.3
