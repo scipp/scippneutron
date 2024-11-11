@@ -23,18 +23,13 @@ cycler==0.12.1
     # via matplotlib
 decorator==5.1.1
     # via ipython
-exceptiongroup==1.2.2
-    # via
-    #   hypothesis
-    #   ipython
-    #   pytest
 execnet==2.1.1
     # via pytest-xdist
 executing==2.1.0
     # via stack-data
 fonttools==4.54.1
     # via matplotlib
-hypothesis==6.116.0
+hypothesis==6.118.7
     # via -r basetest.in
 idna==3.10
     # via requests
@@ -55,7 +50,7 @@ ipywidgets==8.1.5
     #   ipydatawidgets
     #   ipympl
     #   pythreejs
-jedi==0.19.1
+jedi==0.19.2
     # via ipython
 jupyterlab-widgets==3.0.13
     # via ipywidgets
@@ -74,7 +69,7 @@ numpy==2.1.3
     #   ipympl
     #   matplotlib
     #   pythreejs
-packaging==24.1
+packaging==24.2
     # via
     #   matplotlib
     #   pooch
@@ -127,8 +122,6 @@ sortedcontainers==2.4.0
     # via hypothesis
 stack-data==0.6.3
     # via ipython
-tomli==2.0.2
-    # via pytest
 traitlets==5.14.3
     # via
     #   comm
