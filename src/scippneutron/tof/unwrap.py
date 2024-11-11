@@ -233,7 +233,6 @@ def frame_at_detector(
     sample. The frame bounds are then computed from this.
     """
     return FrameAtDetector(frames[-1].propagate_to(ltotal))
-    # return FrameAtDetector(frames[ltotal])
 
 
 def frame_bounds(frame: FrameAtDetector) -> FrameBounds:
