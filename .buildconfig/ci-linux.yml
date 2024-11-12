@@ -10,7 +10,7 @@ channels:
   - nodefaults
 dependencies:
   - h5py==3.12.1
-  - hypothesis==6.118.7
+  - hypothesis==6.118.8
   - ipykernel==6.29.5
   - ipympl==0.9.4
   - ipywidgets==8.1.5
@@ -23,7 +23,7 @@ dependencies:
   - pytest-asyncio==0.24.0
   - python-graphviz==0.20.3
   - pythreejs==2.4.2
-  - scipp==24.11.0
+  - scipp==24.11.1
   - scippnexus==24.11.0
   - scipy==1.13
   - tox==4.23.2
@@ -42,4 +42,4 @@ dependencies:
   - tof==24.10.0
 
   # docs and tests
-  - sciline==24.06.3
+  - sciline==24.10.0
