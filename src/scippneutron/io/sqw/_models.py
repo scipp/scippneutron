@@ -257,6 +257,9 @@ class SqwIXSource(ir.Serializable):
             "frequency": ir.F64(self.frequency.value),  # TODO unit
         }
 
+    def serialize_to_ir(self) -> ir.SelfSerializing:
+        return ir.SelfSerializing(body=super().serialize_to_ir().to_type_tagged())
+
 
 @dataclass(kw_only=True, slots=True)
 class SqwIXNullInstrument(ir.Serializable):
@@ -392,7 +395,7 @@ class UniqueRefContainer(ir.Serializable):
             "version": ir.F64(self.version),
             "stored_baseclass": ir.String(self.objects.baseclass),
             "global_name": ir.String(self.global_name),
-            "unique_objects": self.objects.serialize_to_ir().to_object_array(),
+            "unique_objects": self.objects.serialize_to_ir().to_type_tagged(),
         }
 
 
@@ -414,7 +417,7 @@ class UniqueObjContainer(ir.Serializable):
             "baseclass": ir.String(self.baseclass),
             "unique_objects": ir.CellArray(
                 shape=(len(self.objects),),
-                data=[obj.serialize_to_ir().to_object_array() for obj in self.objects],
+                data=[obj.serialize_to_ir().to_type_tagged() for obj in self.objects],
             ),
             "idx": ir.ObjectArray(
                 shape=(len(self.indices),),

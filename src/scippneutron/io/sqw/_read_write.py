@@ -48,14 +48,13 @@ _READERS = _IORegistry[_ObjectReader]("reader")
 _WRITERS = _IORegistry[_ObjectWriter]("writer")
 
 
-def read_object_array(sqw_io: LowLevelSqw) -> ir.ObjectArray | ir.CellArray:
+def read_objects(
+    sqw_io: LowLevelSqw,
+) -> ir.ObjectArray | ir.CellArray | ir.SelfSerializing:
     position = sqw_io.position
     ty = ir.TypeTag(sqw_io.read_u8())
-    if ty == ir.TypeTag.serializable:  # TODO
-        # raise RuntimeError(f'!!!! {ty.value} {sqw_io.position-1}')
-        # This type object does not encode a shape, so just attempt
-        # to read its contents.
-        return read_object_array(sqw_io)
+    if ty == ir.TypeTag.self_serializing:
+        return ir.SelfSerializing(read_objects(sqw_io))
 
     shape = _read_shape(sqw_io)
     reader = _READERS.get(ty, position)
@@ -65,23 +64,14 @@ def read_object_array(sqw_io: LowLevelSqw) -> ir.ObjectArray | ir.CellArray:
     return ir.ObjectArray(ty=ty, shape=shape, data=data)  # type: ignore[arg-type]
 
 
-def write_object_array(
-    sqw_io: LowLevelSqw, objects: ir.ObjectArray | ir.CellArray
+def write_objects(
+    sqw_io: LowLevelSqw, objects: ir.ObjectArray | ir.CellArray | ir.SelfSerializing
 ) -> None:
     position = sqw_io.position
 
-    if objects.ty == ir.TypeTag.struct:
-        structs = objects.data
-        if len(structs) == 1:
-            from ._sqw import AbortParse, _get_scalar_struct_field
-
-            try:
-                # TODO use better mechanism
-                name = _get_scalar_struct_field(structs[0], "serial_name")
-                if name.startswith("IX_"):
-                    sqw_io.write_u8(32)
-            except AbortParse:
-                pass
+    if objects.ty == ir.TypeTag.self_serializing:
+        sqw_io.write_u8(ir.TypeTag.self_serializing.value)
+        write_objects(sqw_io, objects.body)
 
     sqw_io.write_u8(objects.ty.value)
     sqw_io.write_u8(len(objects.shape))  # TODO correct for list of structs?
@@ -109,14 +99,14 @@ def _write_char_array(sqw_io: LowLevelSqw, objects: _AnyObjectList) -> None:
 
 @_READERS.add(ir.TypeTag.cell)
 def _read_cell(sqw_io: LowLevelSqw, shape: _Shape) -> Any:
-    return [read_object_array(sqw_io) for _ in range(_volume(shape))]
+    return [read_objects(sqw_io) for _ in range(_volume(shape))]
 
 
 @_WRITERS.add(ir.TypeTag.cell)
 def _write_cell(sqw_io: LowLevelSqw, objects: _AnyObjectList) -> None:
     obj_arrays: list[ir.ObjectArray] = objects  # type: ignore[assignment]
     for obj in obj_arrays:
-        write_object_array(sqw_io, obj)
+        write_objects(sqw_io, obj)
 
 
 # Arrays of struct are encoded with both the shape of the object array and the shape of
@@ -161,7 +151,7 @@ def _read_single_struct(sqw_io: LowLevelSqw) -> ir.Struct:
     n_fields = sqw_io.read_u32()
     field_name_sizes = [sqw_io.read_u32() for _ in range(n_fields)]
     field_names = tuple(sqw_io.read_n_chars(size) for size in field_name_sizes)
-    field_values: ir.CellArray = _expect_ty(ir.TypeTag.cell, read_object_array(sqw_io))  # type: ignore[assignment]
+    field_values: ir.CellArray = _expect_ty(ir.TypeTag.cell, read_objects(sqw_io))  # type: ignore[assignment]
     return ir.Struct(field_names=field_names, field_values=field_values)
 
 
@@ -191,7 +181,7 @@ def _write_single_struct(sqw_io: LowLevelSqw, struct: ir.Struct) -> None:
         sqw_io.write_u32(len(name))
     for name in struct.field_names:
         sqw_io.write_chars(name)
-    write_object_array(sqw_io, struct.field_values)
+    write_objects(sqw_io, struct.field_values)
 
 
 @_READERS.add(ir.TypeTag.f64)

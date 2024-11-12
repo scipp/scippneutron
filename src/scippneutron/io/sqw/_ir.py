@@ -32,7 +32,7 @@ class TypeTag(enum.Enum):
     u64 = 12
     cell = 23
     struct = 24
-    serializable = 32  # objects that 'serialize themselves'
+    self_serializing = 32
 
 
 @dataclass(kw_only=True)
@@ -50,13 +50,29 @@ class CellArray:
     ty: ClassVar[TypeTag] = TypeTag.cell
 
 
+@dataclass()
+class SelfSerializing:
+    """An object with a custom serializer.
+
+    In HORACE, such objects don't use a special mechanism for (de)serialization.
+    But here, all types have custom serializers.
+    So ``SelfSerializing`` only servers as a marker to help construct files correctly.
+    """
+
+    body: ObjectArray
+    ty: ClassVar[TypeTag] = TypeTag.self_serializing
+
+    def to_type_tagged(self) -> SelfSerializing:
+        return self
+
+
 @dataclass(kw_only=True)
 class Struct:
     field_names: tuple[str, ...]
     field_values: CellArray
     ty: ClassVar[TypeTag] = TypeTag.struct
 
-    def to_object_array(self) -> ObjectArray:
+    def to_type_tagged(self) -> ObjectArray:
         return ObjectArray(
             ty=self.ty,
             shape=(1,),
@@ -122,7 +138,7 @@ class Serializable(ABC):
     @abstractmethod
     def _serialize_to_dict(self) -> dict[str, Object | ObjectArray | CellArray]: ...
 
-    def serialize_to_ir(self) -> Struct:
+    def serialize_to_ir(self) -> Struct | SelfSerializing:
         fields = self._serialize_to_dict()
         return Struct(
             field_names=tuple(fields),

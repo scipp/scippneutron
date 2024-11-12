@@ -35,7 +35,7 @@ from ._models import (
     UniqueObjContainer,
     UniqueRefContainer,
 )
-from ._read_write import write_object_array
+from ._read_write import write_objects
 
 if TYPE_CHECKING:
     from ._sqw import Sqw
@@ -215,7 +215,7 @@ class SqwBuilder:
             sqw_io = LowLevelSqw(
                 buffer, path=self._stored_path, byteorder=self._byteorder
             )
-            write_object_array(sqw_io, data_block.serialize_to_ir().to_object_array())
+            write_objects(sqw_io, data_block.serialize_to_ir().to_type_tagged())
 
             buffer.seek(0)
             buf = buffer.getbuffer()

@@ -38,7 +38,7 @@ from ._models import (
     SqwMainHeader,
     SqwPixelMetadata,
 )
-from ._read_write import read_object_array, write_object_array
+from ._read_write import read_objects, write_objects
 
 
 class Sqw:
@@ -111,7 +111,7 @@ class Sqw:
         self._sqw_io.seek(block_descriptor.position)
         match block_descriptor.block_type:
             case SqwDataBlockType.regular:
-                return _parse_block(read_object_array(self._sqw_io))
+                return _parse_block(read_objects(self._sqw_io))
             case SqwDataBlockType.pix:
                 return _read_pix_block(self._sqw_io)
             case SqwDataBlockType.dnd:
@@ -156,7 +156,7 @@ class Sqw:
         data_range[:, 0] = np.minimum(data_range[:, 0], run_data_min)
         data_range[:, 1] = np.maximum(data_range[:, 1], run_data_max)
         self._sqw_io.seek(self._block_allocation_table[("pix", "metadata")].position)
-        write_object_array(self._sqw_io, metadata.serialize_to_ir().to_object_array())
+        write_objects(self._sqw_io, metadata.serialize_to_ir().to_type_tagged())
 
         # Write data
         descriptor = self._block_allocation_table[("pix", "data_wrap")]
@@ -238,11 +238,15 @@ def _normalize_data_block_name(
 class AbortParse(Exception): ...
 
 
-def _parse_block(block: ir.ObjectArray | ir.CellArray) -> Any:
+def _parse_block(block: ir.ObjectArray | ir.CellArray | ir.SelfSerializing) -> Any:
     try:
-        if isinstance(block, ir.CellArray):
-            raise AbortParse("Block is a cell array, not a struct")
-        return _try_parse_block(block)
+        match block:
+            case ir.ObjectArray():
+                return _try_parse_block(block)
+            case ir.SelfSerializing(body):
+                return _try_parse_block(body)
+            case ir.CellArray():
+                raise AbortParse("Block is a cell array, not a struct")
     except AbortParse as abort:
         warnings.warn(
             f"Unable to parse SQW block: {abort.args[0]}", UserWarning, stacklevel=2
@@ -448,7 +452,8 @@ def _parse_ix_source_2_0(struct: ir.Struct) -> SqwIXSource:
     )
 
 
-def _parse_ix_null_instrument_1_0(struct: ir.Struct) -> SqwIXNullInstrument:
+def _parse_ix_null_instrument_1_0(obj: ir.SelfSerializing) -> SqwIXNullInstrument:
+    struct = obj.body
     source = _try_parse_block(_get_struct_field(struct, "source"))
     name = _get_scalar_struct_field(struct, "name")
     return SqwIXNullInstrument(name=name, source=source)
@@ -525,7 +530,7 @@ def _parse_unique_objects_container_1_0(struct: ir.Struct) -> list[Any]:
     idx = _get_struct_field(struct, "idx").data
     if not isinstance(idx, np.ndarray):  # it is list[ir.F64]
         idx = np.array([i.value for i in idx])
-    parsed_objects = [_try_parse_block(obj) for obj in objects]
+    parsed_objects = [_parse_block(obj) for obj in objects]
     # -1 to convert to 0-based index
     return [parsed_objects[int(i) - 1] for i in idx]
 
