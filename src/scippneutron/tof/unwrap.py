@@ -447,13 +447,15 @@ def maybe_clip_detector_subframes(
 
     Examples:
 
-        1. partial overlap:
-        |-------------|            ->   |--------|
-                 |-------------|   ->                 |--------|
+    .. code-block:: text
 
-        2. total overlap:
-        |----------------------|   ->   |--------|       |-----|
-                 |-------|         ->
+       1. partial overlap:
+       |-------------|            ->   |--------|
+                |-------------|   ->                 |--------|
+
+       2. total overlap:
+       |----------------------|   ->   |--------|       |-----|
+                |-------|         ->
 
     In the case of multiple detector pixels, we find the pixel closest to the source
     and use that as the reference for the clipping.
