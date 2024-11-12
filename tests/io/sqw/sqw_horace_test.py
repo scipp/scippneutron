@@ -29,7 +29,13 @@ pace_neutrons = pytest.importorskip("pace_neutrons")
 
 @pytest.fixture(scope="module")
 def matlab() -> Any:
-    return pace_neutrons.Matlab()
+    try:
+        return pace_neutrons.Matlab()
+    except RuntimeError as err:
+        if err.args[0].startswith("No supported MATLAB"):
+            pytest.skip("Not MATLAB runtime found")
+        else:
+            raise
 
 
 @pytest.fixture

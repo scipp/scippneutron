@@ -5,7 +5,7 @@
 #
 #    pip-compile-multi
 #
-contourpy==1.3.0
+contourpy==1.3.1
     # via matplotlib
 cycler==0.12.1
     # via matplotlib
@@ -32,7 +32,7 @@ numpy==2.1.3
     #   mpltoolbox
     #   scipp
     #   scipy
-packaging==24.1
+packaging==24.2
     # via matplotlib
 pillow==11.0.0
     # via matplotlib
@@ -44,7 +44,7 @@ python-dateutil==2.9.0.post0
     # via
     #   matplotlib
     #   scippnexus
-scipp==24.9.1
+scipp==24.11.1
     # via
     #   -r base.in
     #   scippnexus

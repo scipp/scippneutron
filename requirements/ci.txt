@@ -27,7 +27,7 @@ gitpython==3.1.43
     # via -r ci.in
 idna==3.10
     # via requests
-packaging==24.1
+packaging==24.2
     # via
     #   -r ci.in
     #   pyproject-api
@@ -44,7 +44,7 @@ requests==2.32.3
     # via -r ci.in
 smmap==5.0.1
     # via gitdb
-tomli==2.0.2
+tomli==2.1.0
     # via
     #   pyproject-api
     #   tox
