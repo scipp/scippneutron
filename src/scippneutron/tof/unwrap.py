@@ -459,6 +459,15 @@ def maybe_clip_detector_subframes(
 
     In the case of multiple detector pixels, we find the pixel closest to the source
     and use that as the reference for the clipping.
+    Because we are removing the entire region where overlap occurs, we are inserting
+    a gap between subframes. The gap starts at the start of subframe n+1 and ends at
+    the end of subframe n.
+    The distance it would take for the gap to be entirely filled again with overlap
+    is usually greater than the range of pixel distances (some edge cases are possible).
+
+    TODO: We currently do not handle the case where there is overlap between subframes
+    at the detector farthest from the source, and no overlap at the detector closest to
+    the source. Although rare, this is not impossible.
 
     Parameters
     ----------
