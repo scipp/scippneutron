@@ -227,7 +227,7 @@ stack-data==0.6.3
     # via ipython
 tinycss2==1.4.0
     # via nbconvert
-tof==24.10.0
+tof==24.11.0
     # via -r docs.in
 tornado==6.4.1
     # via

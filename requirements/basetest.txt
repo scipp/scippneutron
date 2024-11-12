@@ -29,7 +29,7 @@ executing==2.1.0
     # via stack-data
 fonttools==4.54.1
     # via matplotlib
-hypothesis==6.118.7
+hypothesis==6.118.8
     # via -r basetest.in
 idna==3.10
     # via requests
@@ -112,7 +112,7 @@ pythreejs==2.4.2
     # via -r basetest.in
 requests==2.32.3
     # via pooch
-sciline==24.6.3
+sciline==24.10.0
     # via -r basetest.in
 six==1.16.0
     # via

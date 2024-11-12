@@ -33,7 +33,7 @@ h5py==3.12.1
     # via
     #   -r nightly.in
     #   scippnexus
-hypothesis==6.118.7
+hypothesis==6.118.8
     # via -r nightly.in
 idna==3.10
     # via requests
