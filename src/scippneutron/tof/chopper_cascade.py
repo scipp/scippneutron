@@ -146,6 +146,20 @@ class Frame:
     distance: sc.Variable
     subframes: list[Subframe]
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Frame):
+            return NotImplemented
+        # Note: we don't use sc.identical here because it can fail on the dtype even
+        # if the values are equal.
+        same_distance = (
+            np.array_equal(self.distance.values, other.distance.values)
+            and self.distance.unit == other.distance.unit
+        )
+        return same_distance and all(
+            self_sub == other_sub
+            for self_sub, other_sub in zip(self.subframes, other.subframes, strict=True)
+        )
+
     def propagate_to(self, distance: sc.Variable) -> Frame:
         """
         Compute new frame by propagating to a distance.
