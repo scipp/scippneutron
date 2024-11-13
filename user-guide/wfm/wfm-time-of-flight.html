@@ -1,0 +1,1218 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Computing time-of-flight for WFM data &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../_static/documentation_options.js?v=d2b731f8"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user-guide/wfm/wfm-time-of-flight';</script>
+    <script src="../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="DREAM in WFM mode" href="dream-wfm.html" />
+    <link rel="prev" title="Wavelength frame multiplication" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="24.11.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../chopper/index.html">Choppers</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../chopper/processing-nexus-choppers.html">Processing NeXus Choppers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chopper/chopper-cascade.html">Chopper Cascades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chopper/frame-unwrapping.html">Frame Unwrapping</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../coordinate-transformations.html">Coordinate Transformations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../groupby.html">GroupBy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../from-mantid-to-scipp.html">From Mantid to Scipp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../instrument-view.html">Instrument view</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../recipes.html">Recipes: How do I …?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../masking-tool.html">Interactive masking tool</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Wavelength frame multiplication</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Computing time-of-flight for WFM data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dream-wfm.html">DREAM in WFM mode</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../algorithms-background/index.html">Background on algorithms</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../algorithms-background/two_theta-gravity-correction.html">two_theta gravity correction</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../absorption-correction.html">Absorption correction example</a></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Setting-up-the-beamline">Setting up the beamline</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Creating-the-beamline-choppers">Creating the beamline choppers</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Adding-a-detector">Adding a detector</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Convert-the-choppers">Convert the choppers</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Creating-some-neutron-events">Creating some neutron events</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Using-the-chopper-cascade-to-chop-the-pulse">Using the chopper cascade to chop the pulse</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Create-a-pulse-of-neutrons">Create a pulse of neutrons</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Propagate-the-neutrons-through-the-choppers">Propagate the neutrons through the choppers</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Computing-the-time-of-flight-coordinate-using-Sciline">Computing the time-of-flight coordinate using Sciline</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Setting-up-the-workflow">Setting up the workflow</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Checking-the-frame-bounds">Checking the frame bounds</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Computing-a-time-of-flight-coordinate">Computing a time-of-flight coordinate</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Converting-to-wavelength">Converting to wavelength</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Comparing-to-the-ground-truth">Comparing to the ground truth</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../../_sources/user-guide/wfm/wfm-time-of-flight.ipynb">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">User Guide</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Wavelength frame multiplication</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Computing time-of-flight for WFM data</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="Computing-time-of-flight-for-WFM-data">
+<h1>Computing time-of-flight for WFM data<a class="headerlink" href="#Computing-time-of-flight-for-WFM-data" title="Link to this heading">#</a></h1>
+<p>Wavelength-frame-multiplication (WFM) is a technique commonly used at long-pulse facilities to improve the resolution of the results measured at the neutron detectors. See for example the article by <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0168900220308640">Schmakat et al. (2020)</a> for a description of how WFM works.</p>
+<p>In this notebook, we show how to use Scippneutron’s <code class="docutils literal notranslate"><span class="pre">tof</span></code> module to find the boundaries of the WFM frames, and apply a time correction to each frame, in order to obtain more accurate a time-of-flight coordinate, from which a wavelength can be computed.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">plopp</span> <span class="k">as</span> <span class="nn">pp</span>
+<span class="kn">import</span> <span class="nn">scipp</span> <span class="k">as</span> <span class="nn">sc</span>
+<span class="kn">import</span> <span class="nn">sciline</span> <span class="k">as</span> <span class="nn">sl</span>
+<span class="kn">from</span> <span class="nn">scippneutron.chopper</span> <span class="kn">import</span> <span class="n">DiskChopper</span>
+<span class="kn">from</span> <span class="nn">scippneutron.tof</span> <span class="kn">import</span> <span class="n">unwrap</span>
+<span class="kn">from</span> <span class="nn">scippneutron.tof</span> <span class="kn">import</span> <span class="n">chopper_cascade</span>
+</pre></div>
+</div>
+</div>
+<section id="Setting-up-the-beamline">
+<h2>Setting up the beamline<a class="headerlink" href="#Setting-up-the-beamline" title="Link to this heading">#</a></h2>
+<section id="Creating-the-beamline-choppers">
+<h3>Creating the beamline choppers<a class="headerlink" href="#Creating-the-beamline-choppers" title="Link to this heading">#</a></h3>
+<p>We begin by defining the chopper settings for our beamline. In principle, the chopper setting could simply be read from a NeXus file.</p>
+<p>For this example, we create choppers modeled on the <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0168900216309597">V20 ESS beamline at HZB</a>. It consists of 5 choppers:</p>
+<ul class="simple">
+<li><p>2 WFM choppers</p></li>
+<li><p>2 frame-overlap choppers</p></li>
+<li><p>1 pulse-overlap chopper</p></li>
+</ul>
+<p>The first 4 choppers have 6 openings (also known as cutouts), while the last one only has a single opening.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wfm1</span> <span class="o">=</span> <span class="n">DiskChopper</span><span class="p">(</span>
+    <span class="n">frequency</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="o">-</span><span class="mf">70.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;Hz&quot;</span><span class="p">),</span>
+    <span class="n">beam_position</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+    <span class="n">phase</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="o">-</span><span class="mf">47.10</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+    <span class="n">axle_position</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">vector</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">6.6</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">),</span>
+    <span class="n">slit_begin</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">83.71</span><span class="p">,</span> <span class="mf">140.49</span><span class="p">,</span> <span class="mf">193.26</span><span class="p">,</span> <span class="mf">242.32</span><span class="p">,</span> <span class="mf">287.91</span><span class="p">,</span> <span class="mf">330.3</span><span class="p">])</span> <span class="o">+</span> <span class="mf">15.0</span><span class="p">,</span>
+        <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">slit_end</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">94.7</span><span class="p">,</span> <span class="mf">155.79</span><span class="p">,</span> <span class="mf">212.56</span><span class="p">,</span> <span class="mf">265.33</span><span class="p">,</span> <span class="mf">314.37</span><span class="p">,</span> <span class="mf">360.0</span><span class="p">])</span> <span class="o">+</span> <span class="mf">15.0</span><span class="p">,</span>
+        <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">slit_height</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;cm&quot;</span><span class="p">),</span>
+    <span class="n">radius</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">30.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;cm&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">wfm2</span> <span class="o">=</span> <span class="n">DiskChopper</span><span class="p">(</span>
+    <span class="n">frequency</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="o">-</span><span class="mf">70.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;Hz&quot;</span><span class="p">),</span>
+    <span class="n">beam_position</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+    <span class="n">phase</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="o">-</span><span class="mf">76.76</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+    <span class="n">axle_position</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">vector</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">7.1</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">),</span>
+    <span class="n">slit_begin</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">65.04</span><span class="p">,</span> <span class="mf">126.1</span><span class="p">,</span> <span class="mf">182.88</span><span class="p">,</span> <span class="mf">235.67</span><span class="p">,</span> <span class="mf">284.73</span><span class="p">,</span> <span class="mf">330.32</span><span class="p">])</span> <span class="o">+</span> <span class="mf">15.0</span><span class="p">,</span>
+        <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">slit_end</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">76.03</span><span class="p">,</span> <span class="mf">141.4</span><span class="p">,</span> <span class="mf">202.18</span><span class="p">,</span> <span class="mf">254.97</span><span class="p">,</span> <span class="mf">307.74</span><span class="p">,</span> <span class="mf">360.0</span><span class="p">])</span> <span class="o">+</span> <span class="mf">15.0</span><span class="p">,</span>
+        <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">slit_height</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;cm&quot;</span><span class="p">),</span>
+    <span class="n">radius</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">30.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;cm&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">foc1</span> <span class="o">=</span> <span class="n">DiskChopper</span><span class="p">(</span>
+    <span class="n">frequency</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="o">-</span><span class="mf">56.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;Hz&quot;</span><span class="p">),</span>
+    <span class="n">beam_position</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+    <span class="n">phase</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="o">-</span><span class="mf">62.40</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+    <span class="n">axle_position</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">vector</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">8.8</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">),</span>
+    <span class="n">slit_begin</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">74.6</span><span class="p">,</span> <span class="mf">139.6</span><span class="p">,</span> <span class="mf">194.3</span><span class="p">,</span> <span class="mf">245.3</span><span class="p">,</span> <span class="mf">294.8</span><span class="p">,</span> <span class="mf">347.2</span><span class="p">]),</span>
+        <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">slit_end</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">95.2</span><span class="p">,</span> <span class="mf">162.8</span><span class="p">,</span> <span class="mf">216.1</span><span class="p">,</span> <span class="mf">263.1</span><span class="p">,</span> <span class="mf">310.5</span><span class="p">,</span> <span class="mf">371.6</span><span class="p">]),</span>
+        <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">slit_height</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;cm&quot;</span><span class="p">),</span>
+    <span class="n">radius</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">30.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;cm&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">foc2</span> <span class="o">=</span> <span class="n">DiskChopper</span><span class="p">(</span>
+    <span class="n">frequency</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="o">-</span><span class="mf">28.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;Hz&quot;</span><span class="p">),</span>
+    <span class="n">beam_position</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+    <span class="n">phase</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="o">-</span><span class="mf">12.27</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+    <span class="n">axle_position</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">vector</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">15.9</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">),</span>
+    <span class="n">slit_begin</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">98.0</span><span class="p">,</span> <span class="mf">154.0</span><span class="p">,</span> <span class="mf">206.8</span><span class="p">,</span> <span class="mf">255.0</span><span class="p">,</span> <span class="mf">299.0</span><span class="p">,</span> <span class="mf">344.65</span><span class="p">]),</span>
+        <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">slit_end</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">134.6</span><span class="p">,</span> <span class="mf">190.06</span><span class="p">,</span> <span class="mf">237.01</span><span class="p">,</span> <span class="mf">280.88</span><span class="p">,</span> <span class="mf">323.56</span><span class="p">,</span> <span class="mf">373.76</span><span class="p">]),</span>
+        <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">slit_height</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;cm&quot;</span><span class="p">),</span>
+    <span class="n">radius</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">30.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;cm&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">pol</span> <span class="o">=</span> <span class="n">DiskChopper</span><span class="p">(</span>
+    <span class="n">frequency</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="o">-</span><span class="mf">14.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;Hz&quot;</span><span class="p">),</span>
+    <span class="n">beam_position</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+    <span class="n">phase</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+    <span class="n">axle_position</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">vector</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">17.0</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">),</span>
+    <span class="n">slit_begin</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">40.0</span><span class="p">]),</span>
+        <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">slit_end</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">240.0</span><span class="p">]),</span>
+        <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">slit_height</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;cm&quot;</span><span class="p">),</span>
+    <span class="n">radius</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">30.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;cm&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">disk_choppers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;wfm1&quot;</span><span class="p">:</span> <span class="n">wfm1</span><span class="p">,</span> <span class="s2">&quot;wfm2&quot;</span><span class="p">:</span> <span class="n">wfm2</span><span class="p">,</span> <span class="s2">&quot;foc1&quot;</span><span class="p">:</span> <span class="n">foc1</span><span class="p">,</span> <span class="s2">&quot;foc2&quot;</span><span class="p">:</span> <span class="n">foc2</span><span class="p">,</span> <span class="s2">&quot;pol&quot;</span><span class="p">:</span> <span class="n">pol</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>It is possible to visualize the properties of the choppers by inspecting their <code class="docutils literal notranslate"><span class="pre">repr</span></code>:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wfm1</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+    <style id="scipp-style-sheet">.sc-root{--sc-background-color0:var(--jp-layout-color0,#fff);--sc-background-color1:var(--jp-layout-color1,#fcfcfc);--sc-background-color2:var(--jp-layout-color2,#efefef);--sc-inverse-background-color0:var(--jp-inverse-layout-color4,#111);--sc-font-color0:var(--jp-content-font-color0,#000);--sc-font-color1:var(--jp-content-font-color1,#555);--sc-font-color2:var(--jp-content-font-color2,#888);--sc-font-color3:var(--jp-content-font-color3,#ccc);}body.vscode-dark .sc-root{--sc-font-color0:rgba(255,255,255,1);--sc-font-color1:rgba(255,255,255,0.70);--sc-font-color2:rgba(255,255,255,0.54);--sc-font-color3:rgba(255,255,255,0.38);--sc-border-color:#1F1F1F;--sc-disabled-color:#515151;--sc-background-color0:#111111;--sc-background-color1:#111111;--sc-background-color2:#313131;}.sc-wrap{font-size:14px;min-width:300px;max-width:800px;}.sc-var-attrs .sc-wrap{padding-left:3em;}.sc-header{padding-top:6px;padding-bottom:6px;margin-bottom:4px;border-bottom:solid 1px #ddd;}.sc-header > div,.sc-header > ul{display:inline;margin-top:0;margin-bottom:0;}.sc-obj-type,.sc-array-name{margin-left:2px;margin-right:10px;}.sc-obj-type{color:var(--sc-font-color1);}.sc-underlying-size{color:var(--sc-font-color2);}.sc-sections,.reveal .sc-sections{padding-left:0 !important;display:grid;grid-template-columns:150px auto auto auto 1fr 20px 20px;}.sc-section-item{display:contents;}.sc-section-item input{display:none;}.sc-section-item input:enabled + label{cursor:pointer;color:var(--sc-font-color1);}.sc-section-item input:enabled + label:hover{color:var(--sc-font-color0);}.sc-section-summary{grid-column:1;font-weight:500;}.sc-section-summary > span{display:inline-block;padding-left:0.5em;}.sc-section-summary-in:disabled + label{color:var(--sc-font-color1);}.sc-section-summary-in + label:before{display:inline-block;content:'►';font-size:11px;width:15px;text-align:center;}.sc-section-summary-in:disabled + label:before{color:var(--sc-font-color3);}.sc-section-summary-in:checked + label:before{content:'▼';}.sc-section-summary-in:checked + label > span{display:none;}.sc-section-summary,.sc-section-inline-details{padding-top:4px;padding-bottom:4px;}.sc-section-inline-details{grid-column:2 / 6;}.sc-section-details{display:none;grid-column:1 / -1;margin-bottom:5px;}.sc-section-summary-in:checked ~ .sc-section-details{display:contents;}.sc-array-wrap{grid-column:1 / -1;display:grid;grid-template-columns:20px auto;}.sc-array-wrap > label{grid-column:1;vertical-align:top;}.sc-preview{color:var(--sc-font-color2);}.sc-array-preview,.sc-array-data{padding:0 5px !important;grid-column:2;}.sc-array-data,.sc-array-in:checked ~ .sc-array-preview{display:none;}.sc-array-in:checked ~ .sc-array-data,.sc-array-preview{display:inline-block;}.sc-dim-list{display:inline-block !important;list-style:none;padding:0 !important;margin:0;}.sc-dim-list li{display:inline-block;padding:0;margin:0!important;}.sc-dim-list:before{content:'(';}.sc-dim-list:after{content:')';}.sc-dim-list li:not(:last-child):after{content:',';padding-right:5px;}.sc-dim-list li span,.sc-standalone-var-name > span span,.sc-var-name > span span{padding:0 !important;}.sc-aligned{font-weight:bold;}.sc-var-list,.sc-var-item,.reveal .sc-var-list,.reveal .sc-var-item{display:contents;}.sc-var-item > div,.sc-var-item label,.sc-var-item > .sc-var-name span{background-color:var(--sc-background-color1);margin-bottom:0;}.sc-var-item > .sc-var-name:hover span{padding-right:5px;}.sc-var-list > li:nth-child(odd) > div,.sc-var-list > li:nth-child(odd) > label,.sc-var-list > li:nth-child(odd) > .sc-var-name span{background-color:var(--sc-background-color2);}.sc-var-name{grid-column:1;}.sc-var-dims{grid-column:2;}.sc-var-dtype{grid-column:3;text-align:right;color:var(--sc-font-color2);}.sc-var-unit{grid-column:4;text-align:left;color:var(--sc-font-color1);max-width:50pt;text-overflow:ellipsis;}.sc-value-preview{grid-column:5;}.sc-var-preview-variances{text-align:right;}.sc-sections .sc-section-item .sc-section-summary,.sc-sections .sc-section-item .sc-section-inline-details,.sc-section-item .sc-var-list .sc-var-item > div,.sc-section-item .sc-var-list .sc-var-item > label,.sc-section-details .sc-var-list .sc-var-item > div,.sc-section-details .sc-var-list .sc-var-item > label{margin-top:0;margin-bottom:0;}.sc-var-name,.sc-var-dims,.sc-var-dtype,.sc-var-unit,.sc-preview,.sc-attrs dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px;}.sc-var-name:hover,.sc-var-dims:hover,.sc-var-dtype:hover,.sc-var-unit:hover,.sc-attrs dt:hover{overflow:visible;width:auto;z-index:1;}.sc-var-attrs{display:block;}.sc-var-data,.reveal .sc-var-data{display:none;}.sc-var-attrs,.sc-var-data{background-color:var(--sc-background-color0) !important;padding-bottom:5px !important;}.sc-var-attrs-in:checked ~ .sc-var-attrs{display:none;}.sc-var-data-in:checked ~ .sc-var-data{display:block;}.sc-var-data > table{float:right;}.sc-var-name span,.sc-var-data{padding-left:25px !important;}.sc-var-attrs,.sc-var-data{grid-column:1 / -1;}dl.sc-attrs{padding:0;margin:0;display:grid;grid-template-columns:125px auto;}.sc-attrs dt,dd{padding:0;margin:0;float:left;padding-right:10px;width:auto;}.sc-attrs dt{font-weight:normal;grid-column:1;}.sc-attrs dt:hover span{display:inline-block;padding-right:10px;}.sc-attrs dd{grid-column:2;white-space:pre-wrap;word-break:break-all;}.sc-icon-database,.sc-icon-file-text2{display:inline-block;vertical-align:middle;width:1em;height:1.5em !important;stroke-width:0;stroke:currentColor;fill:currentColor;}label.sc-hide-icon svg{opacity:0;}.sc-standalone-var-name{grid-column:1/3;}.sc-standalone-var-name span{padding-left:25px;padding-right:10px;}.sc-title{font-weight:bold;font-size:1.5em;}.sc-subtitle{font-weight:normal;font-style:italic;text-align:left;font-size:1.2em;padding:1px;}.sc-label{fill:var(--sc-font-color0,#444444);text-anchor:middle;}.sc-name{fill:var(--sc-font-color0,#111111);}.sc-inset-line{stroke:var(--sc-font-color1);stroke-width:0.05;stroke-dasharray:0.2,0.2;}.sc-log-wrap{height:25ex;resize:vertical;overflow-y:scroll;display:flex;flex-direction:column-reverse;border:1px solid;border-color:var(--jp-border-color2);background-color:var(--sc-background-color1);}div.sc-log{line-height:2.5ex;}table.sc-log{table-layout:auto;border-collapse:collapse;}tr.sc-log:nth-child(even){background-color:var(--sc-background-color0);}tr.sc-log > td{vertical-align:top;padding-bottom:0.5ex;}.sc-log-time-stamp{min-width:22ch;font-family:var(--jp-code-font-family);color:var(--sc-font-color2);}.sc-log-level{min-width:10ch;}tr.sc-log-debug td.sc-log-level{color:var(--jp-accent-color1);}tr.sc-log-info td.sc-log-level{color:var(--jp-info-color1);}tr.sc-log-warning td.sc-log-level{color:var(--jp-warn-color1);}tr.sc-log-error td.sc-log-level{font-weight:bold;color:var(--jp-error-color2);}tr.sc-log-critical td.sc-log-level{font-weight:bold;color:var(--sc-background-color0);background-color:var(--jp-error-color1);}.sc-log-message{white-space:pre-wrap;width:100%;}.sc-log-html-payload{white-space:normal;}.sc-log-name{padding-right:0.5em;text-align:right;white-space:pre-wrap;color:var(--sc-font-color3);}</style><style id="datagroup-style-sheet">.dg-root{white-space:normal;font-size:14px;min-width:300px;max-width:1200px;}.dg-root *{box-sizing:border-box;}.sc-header > label,.sc-header > label > div,.sc-header > label > div > ul{display:inline;margin-bottom:0;}.dg-header-in{display:none;}.dg-header-in + .sc-header > label:before{display:inline-block;font-size:11px;text-align:left;content:'►';}.dg-header-in:checked + .sc-header > label:before{content:'▼';}.dg-header-in ~ .dg-detail-box{display:none;}.dg-header-in:checked ~ .dg-detail-box{display:grid;}.dg-detail-box{margin-top:5px;margin-bottom:5px;column-gap:0 !important;display:grid;grid-template-columns:max-content max-content max-content max-content max-content max-content max-content;grid-template-areas:"name        parent      object-type shape       dtype       unit        preview";}.dg-detail-box *{margin-top:0;margin-bottom:0;}.dg-detail-list{display:contents;}.dg-detail-item{display:contents;list-style-type:none;}.dg-detail-item-in{display:none;}.dg-detail-item-in + .dg-detail-name > label:before{display:inline-block;font-size:14px;text-align:left;content:'►';}.dg-detail-item-in:checked + .dg-detail-name > label:before{content:'▼';}.dg-detail-item div,.dg-detail-item span,.dg-detail-item label{word-break:break-all;min-width:1em;max-width:20em;width:100%;}.dg-detail-item > div{display:contents;}.dg-detail-item > div > div > div{width:100%;}.dg-detail-item:hover > div > div{background-color:var(--sc-background-color2) !important;}.dg-detail-item > div span{padding-left:10px;padding-right:10px;}.dg-detail-item > div > div:first-of-type{grid-column-start:1;}.dg-detail-item-subsection{display:none;}.dg-detail-item-in{margin:0;}.dg-detail-item-in:checked ~ .dg-detail-item-subsection{display:contents;}.dg-detail-item .dg-detail-name{grid-area:"name";min-width:5em;}.dg-detail-name{padding-left:calc(var(--depth)*2em);}.dg-detail-name > label{padding-left:8px;}.dg-detail-name > label > span{padding-left:0.1em;}.dg-detail-item .dg-detail-parent{grid-area:"parent";text-align:right;}.dg-detail-item .dg-detail-objtype{grid-area:"objtype";text-align:left;}.dg-detail-item .dg-detail-shape{max-width:30em;grid-area:"shape";text-align:left;}.sc-header .dg-detail-shape{margin-left:1em;text-align:left;}.dg-detail-item .dg-detail-dtype{grid-area:"dtype";text-align:left;}.dg-detail-item .dg-detail-unit{grid-area:"unit";text-align:center;}.dg-detail-item .dg-detail-preview{grid-area:"preview";min-width:15em;max-width:100em !important;text-align:left;}.dg-detail-preview .sc-preview span,.dg-detail-shape span{padding:0 !important;}</style><style>.scn-disk-chopper{display:flex;flex-direction:row;align-items:center;}</style>
+    <div class="scn-disk-chopper">
+        <div class="scn-disk-chopper-fields">
+            <div><div class='sc-root dg-root'><input class='dg-header-in' id='group-view-144e015e-0187-4934-807f-9e2a115e6a24' type='checkbox' checked><div class='sc-header'><label for=group-view-144e015e-0187-4934-807f-9e2a115e6a24 title='Expand/collapse'><div class='sc-obj-type'>DiskChopper</div><div class='dg-detail-shape'>(cutout: 6)</div></label></div><div class='dg-detail-box'><ul class='dg-detail-list'><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>axle_position</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>vector3</span></div><div class='dg-detail-unit'><span>m</span></div><div class='dg-detail-preview'><span class='sc-preview'>[0.  0.  6.6]</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>frequency</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>Hz</span></div><div class='dg-detail-preview'><span class='sc-preview'>-70.0</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>beam_position</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>deg</span></div><div class='dg-detail-preview'><span class='sc-preview'>0.0</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>phase</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>deg</span></div><div class='dg-detail-preview'><span class='sc-preview'>-47.1</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>slit_begin</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>(cutout: 6)</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>deg</span></div><div class='dg-detail-preview'><span class='sc-preview'>98.71, 155.490, ..., 302.910, 345.3</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>slit_end</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>(cutout: 6)</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>deg</span></div><div class='dg-detail-preview'><span class='sc-preview'>109.7, 170.790, ..., 329.370, 375.0</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>slit_height</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>(cutout: 6)</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>cm</span></div><div class='dg-detail-preview'><span class='sc-preview'>10.0, 10.0, ..., 10.0, 10.0</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>radius</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>cm</span></div><div class='dg-detail-preview'><span class='sc-preview'>30.0</span></div></div></li></ul></div></div></div>
+        </div>
+        <div class="scn-disk-chopper-image">
+            <div>
+            <svg
+    version="1.1"
+    width="400"
+    height="400"
+    viewBox="0 0 400 400"
+    xmlns="http://www.w3.org/2000/svg">
+<path d="M53.213 222.488 L102.142 214.992 A99.000 99.000 0 0 0 106.794 233.372 L60.192 250.059 A148.500 148.500 0 0 0 138.394 335.118 L158.930 290.079 A99.000 99.000 0 0 0 184.155 297.724 L176.232 346.586 A148.500 148.500 0 0 0 270.311 330.800 L246.874 287.200 A99.000 99.000 0 0 0 273.060 266.807 L309.591 300.210 A148.500 148.500 0 0 0 344.878 232.597 L296.586 221.731 A99.000 99.000 0 0 0 297.395 182.248 L346.093 173.371 A148.500 148.500 0 0 0 324.669 119.317 L283.113 146.211 A99.000 99.000 0 0 0 250.440 114.813 L275.660 72.219 A148.500 148.500 0 0 0 237.683 56.361 L225.122 104.240 A99.000 99.000 0 0 0 174.377 104.373 L161.565 56.560 A148.500 148.500 0 0 0 53.213 222.488" fill="#e0e0e0" stroke="#a0a0a0" stroke-width="2"/>
+<path d="M200 200 L102.142 214.992" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="53.21258044367431" y="222.48785138680915" text-anchor="end" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">begin0</text>
+<path d="M200 200 L106.794 233.372" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="60.19162409541235" y="250.0586458758277" text-anchor="end" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">end0</text>
+<path d="M200 200 L158.930 290.079" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="138.39446990055495" y="335.118498589817" text-anchor="end" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">begin1</text>
+<path d="M200 200 L184.155 297.724" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="176.23205925419197" y="346.58558930776167" text-anchor="end" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">end1</text>
+<path d="M200 200 L246.874 287.200" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="270.31080055522835" y="330.8000050660661" text-anchor="start" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">begin2</text>
+<path d="M200 200 L273.060 266.807" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="309.5906847119005" y="300.2104377017525" text-anchor="start" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">end2</text>
+<path d="M200 200 L296.586 221.731" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="344.8782669590718" y="232.59659127786097" text-anchor="start" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">begin3</text>
+<path d="M200 200 L297.395 182.248" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="346.0930054435397" y="173.3713732897492" text-anchor="start" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">end3</text>
+<path d="M200 200 L283.113 146.211" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="324.66946991328473" y="119.31683402629392" text-anchor="start" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">begin4</text>
+<path d="M200 200 L250.440 114.813" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="275.6595663693048" y="72.21940672853032" text-anchor="start" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">end4</text>
+<path d="M200 200 L225.122 104.240" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="237.68305477084368" y="56.36073871278228" text-anchor="start" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">begin5</text>
+<path d="M200 200 L174.377 104.373" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="161.56537180227573" y="56.56001479607335" text-anchor="end" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">end5</text>
+<path d="M200 200 L200.0 51.5" stroke="#0065ac" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="200.0" y="40.5" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" fill="#0065ac">TDC</text>
+<g id="rotation-arrow" transform="matrix(-1.0,0,0,1.0,400,20)">
+<path fill="#606060"
+ d="m 190.46289,4.140625 c -19.2285,0.9736749 -38.20846,4.7790001 -56.32617,11.292969 l 0.89453,2.490234 C 152.90409,11.497902 171.62709,7.7437179 190.5957,6.7832031 Z"/>
+<path fill="#606060" stroke-linecap="round"
+ d="m 138.29883,5.5019531 a 1.322835,1.322835 0 0 0 -0.75,0.6816406 l -5.34766,11.3515623 11.35156,5.347656 A 1.322835,1.322835 0 0 0 145.3125,22.25 1.322835,1.322835 0 0 0 144.67969,20.488281 l -8.95703,-4.21875 4.21875,-8.9589841 a 1.322835,1.322835 0 0 0 -0.63282,-1.7597657 1.322835,1.322835 0 0 0 -1.00976,-0.048828 z"/>
+</g>
+<path d="M200 200 L200.0 51.5" stroke="#c83737" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="200.0" y="51.5" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" fill="#c83737">beam position</text>
+<circle cx="200.0" cy="200.0" r="5"/>
+</svg>
+
+            </div>
+        </div>
+    </div>
+</div></div>
+</div>
+</section>
+<section id="Adding-a-detector">
+<h3>Adding a detector<a class="headerlink" href="#Adding-a-detector" title="Link to this heading">#</a></h3>
+<p>We also have a detector, which we place 26 meters away from the source.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Ltotal</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">26.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Convert-the-choppers">
+<h3>Convert the choppers<a class="headerlink" href="#Convert-the-choppers" title="Link to this heading">#</a></h3>
+<p>Lastly, we convert our disk choppers to a simpler chopper representation used by the <code class="docutils literal notranslate"><span class="pre">chopper_cascade</span></code> module.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">choppers</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n">chopper_cascade</span><span class="o">.</span><span class="n">Chopper</span><span class="o">.</span><span class="n">from_disk_chopper</span><span class="p">(</span>
+        <span class="n">chop</span><span class="p">,</span> <span class="n">pulse_frequency</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">14.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;Hz&quot;</span><span class="p">),</span> <span class="n">npulses</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">chop</span> <span class="ow">in</span> <span class="n">disk_choppers</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="Creating-some-neutron-events">
+<h2>Creating some neutron events<a class="headerlink" href="#Creating-some-neutron-events" title="Link to this heading">#</a></h2>
+<p>We create a semi-realistic set of neutron events based on the ESS pulse.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">scippneutron.tof.fakes</span> <span class="kn">import</span> <span class="n">FakeBeamlineEss</span>
+
+<span class="n">ess_beamline</span> <span class="o">=</span> <span class="n">FakeBeamlineEss</span><span class="p">(</span>
+    <span class="n">choppers</span><span class="o">=</span><span class="n">choppers</span><span class="p">,</span>
+    <span class="n">monitors</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;detector&quot;</span><span class="p">:</span> <span class="n">Ltotal</span><span class="p">},</span>
+    <span class="n">run_length</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">14</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="mi">14</span><span class="p">,</span>
+    <span class="n">events_per_pulse</span><span class="o">=</span><span class="mi">200_000</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>The initial birth times and wavelengths of the generated neutrons can be visualized (for a single pulse):</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">one_pulse</span> <span class="o">=</span> <span class="n">ess_beamline</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;pulse&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">one_pulse</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span> <span class="o">+</span> <span class="n">one_pulse</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_wfm_wfm-time-of-flight_13_0.svg" src="../../_images/user-guide_wfm_wfm-time-of-flight_13_0.svg" />
+</div>
+</div>
+<p>From this fake beamline, we extract the raw neutron signal at our detector:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">raw_data</span> <span class="o">=</span> <span class="n">ess_beamline</span><span class="o">.</span><span class="n">get_monitor</span><span class="p">(</span><span class="s2">&quot;detector&quot;</span><span class="p">)</span>
+
+<span class="c1"># Visualize</span>
+<span class="n">raw_data</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">event_time_offset</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s2">&quot;pulse&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_wfm_wfm-time-of-flight_15_0.svg" src="../../_images/user-guide_wfm_wfm-time-of-flight_15_0.svg" />
+</div>
+</div>
+<p>The total number of neutrons in our sample data that make it through the to detector is:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">raw_data</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">value</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+203715.0
+</pre></div></div>
+</div>
+</section>
+<section id="Using-the-chopper-cascade-to-chop-the-pulse">
+<h2>Using the chopper cascade to chop the pulse<a class="headerlink" href="#Using-the-chopper-cascade-to-chop-the-pulse" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">chopper_cascade</span></code> module can now be used to chop a pulse of neutrons using the choppers created above.</p>
+<section id="Create-a-pulse-of-neutrons">
+<h3>Create a pulse of neutrons<a class="headerlink" href="#Create-a-pulse-of-neutrons" title="Link to this heading">#</a></h3>
+<p>We then create a (fake) pulse of neutrons, whose time and wavelength ranges cover our ESS pulse above:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">time_min</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;ms&#39;</span><span class="p">)</span>
+<span class="n">time_max</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">3.4</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;ms&#39;</span><span class="p">)</span>
+<span class="n">wavs_min</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;angstrom&#39;</span><span class="p">)</span>
+<span class="n">wavs_max</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;angstrom&#39;</span><span class="p">)</span>
+
+<span class="n">frames</span> <span class="o">=</span> <span class="n">chopper_cascade</span><span class="o">.</span><span class="n">FrameSequence</span><span class="o">.</span><span class="n">from_source_pulse</span><span class="p">(</span>
+    <span class="n">time_min</span><span class="o">=</span><span class="n">time_min</span><span class="p">,</span>
+    <span class="n">time_max</span><span class="o">=</span><span class="n">time_max</span><span class="p">,</span>
+    <span class="n">wavelength_min</span><span class="o">=</span><span class="n">wavs_min</span><span class="p">,</span>
+    <span class="n">wavelength_max</span><span class="o">=</span><span class="n">wavs_max</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Propagate-the-neutrons-through-the-choppers">
+<h3>Propagate the neutrons through the choppers<a class="headerlink" href="#Propagate-the-neutrons-through-the-choppers" title="Link to this heading">#</a></h3>
+<p>We are now able to propagate the pulse of neutrons through the chopper cascade, chopping away the parts of the pulse that do not make it through.</p>
+<p>For this, we need to decide how far we want to propagate the neutrons, by choosing a distance to our detector. We set this to 32 meters here.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Chop the frames</span>
+<span class="n">frames</span> <span class="o">=</span> <span class="n">frames</span><span class="o">.</span><span class="n">chop</span><span class="p">(</span><span class="n">choppers</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+<span class="c1"># Propagate the neutrons to the detector</span>
+<span class="n">at_sample</span> <span class="o">=</span> <span class="n">frames</span><span class="o">.</span><span class="n">propagate_to</span><span class="p">(</span><span class="n">Ltotal</span><span class="p">)</span>
+
+<span class="c1"># Visualize the results</span>
+<span class="n">cascade_fig</span><span class="p">,</span> <span class="n">cascade_ax</span> <span class="o">=</span> <span class="n">at_sample</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_wfm_wfm-time-of-flight_22_0.png" src="../../_images/user-guide_wfm_wfm-time-of-flight_22_0.png" />
+</div>
+</div>
+<p>We can now see that at the detector (pink color), we have 6 sub-pulses of neutrons, where the longest wavelength of one frame is very close to the shortest wavelength of the next frame.</p>
+</section>
+</section>
+<section id="Computing-the-time-of-flight-coordinate-using-Sciline">
+<h2>Computing the time-of-flight coordinate using Sciline<a class="headerlink" href="#Computing-the-time-of-flight-coordinate-using-Sciline" title="Link to this heading">#</a></h2>
+<section id="Setting-up-the-workflow">
+<h3>Setting up the workflow<a class="headerlink" href="#Setting-up-the-workflow" title="Link to this heading">#</a></h3>
+<p>We will now construct a workflow to compute the <code class="docutils literal notranslate"><span class="pre">time-of-flight</span></code> coordinate from the neutron events above, taking into account the choppers in the beamline.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">workflow</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">(</span>
+    <span class="n">unwrap</span><span class="o">.</span><span class="n">unwrap_providers</span><span class="p">()</span>
+    <span class="o">+</span> <span class="n">unwrap</span><span class="o">.</span><span class="n">time_of_flight_providers</span><span class="p">()</span>
+    <span class="o">+</span> <span class="n">unwrap</span><span class="o">.</span><span class="n">time_of_flight_origin_from_choppers_providers</span><span class="p">(</span><span class="n">wfm</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">PulsePeriod</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">(</span><span class="n">ess_beamline</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">frequency</span><span class="p">)</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">PulseStride</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">SourceTimeRange</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_min</span><span class="p">,</span> <span class="n">time_max</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">SourceWavelengthRange</span><span class="p">]</span> <span class="o">=</span> <span class="n">wavs_min</span><span class="p">,</span> <span class="n">wavs_max</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">Choppers</span><span class="p">]</span> <span class="o">=</span> <span class="n">choppers</span>
+
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">Ltotal</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ltotal</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">RawData</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw_data</span>
+
+<span class="n">workflow</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">TofData</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_wfm_wfm-time-of-flight_25_0.svg" src="../../_images/user-guide_wfm_wfm-time-of-flight_25_0.svg" />
+</div>
+</div>
+</section>
+<section id="Checking-the-frame-bounds">
+<h3>Checking the frame bounds<a class="headerlink" href="#Checking-the-frame-bounds" title="Link to this heading">#</a></h3>
+<p>We can check that the bounds for the frames the workflow computes agrees with the chopper-cascade diagram</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">bounds</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">FrameAtDetector</span><span class="p">)</span><span class="o">.</span><span class="n">subbounds</span><span class="p">()</span>
+<span class="n">bounds</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><style id="scipp-style-sheet">.sc-root{--sc-background-color0:var(--jp-layout-color0,#fff);--sc-background-color1:var(--jp-layout-color1,#fcfcfc);--sc-background-color2:var(--jp-layout-color2,#efefef);--sc-inverse-background-color0:var(--jp-inverse-layout-color4,#111);--sc-font-color0:var(--jp-content-font-color0,#000);--sc-font-color1:var(--jp-content-font-color1,#555);--sc-font-color2:var(--jp-content-font-color2,#888);--sc-font-color3:var(--jp-content-font-color3,#ccc);}body.vscode-dark .sc-root{--sc-font-color0:rgba(255,255,255,1);--sc-font-color1:rgba(255,255,255,0.70);--sc-font-color2:rgba(255,255,255,0.54);--sc-font-color3:rgba(255,255,255,0.38);--sc-border-color:#1F1F1F;--sc-disabled-color:#515151;--sc-background-color0:#111111;--sc-background-color1:#111111;--sc-background-color2:#313131;}.sc-wrap{font-size:14px;min-width:300px;max-width:800px;}.sc-var-attrs .sc-wrap{padding-left:3em;}.sc-header{padding-top:6px;padding-bottom:6px;margin-bottom:4px;border-bottom:solid 1px #ddd;}.sc-header > div,.sc-header > ul{display:inline;margin-top:0;margin-bottom:0;}.sc-obj-type,.sc-array-name{margin-left:2px;margin-right:10px;}.sc-obj-type{color:var(--sc-font-color1);}.sc-underlying-size{color:var(--sc-font-color2);}.sc-sections,.reveal .sc-sections{padding-left:0 !important;display:grid;grid-template-columns:150px auto auto auto 1fr 20px 20px;}.sc-section-item{display:contents;}.sc-section-item input{display:none;}.sc-section-item input:enabled + label{cursor:pointer;color:var(--sc-font-color1);}.sc-section-item input:enabled + label:hover{color:var(--sc-font-color0);}.sc-section-summary{grid-column:1;font-weight:500;}.sc-section-summary > span{display:inline-block;padding-left:0.5em;}.sc-section-summary-in:disabled + label{color:var(--sc-font-color1);}.sc-section-summary-in + label:before{display:inline-block;content:'►';font-size:11px;width:15px;text-align:center;}.sc-section-summary-in:disabled + label:before{color:var(--sc-font-color3);}.sc-section-summary-in:checked + label:before{content:'▼';}.sc-section-summary-in:checked + label > span{display:none;}.sc-section-summary,.sc-section-inline-details{padding-top:4px;padding-bottom:4px;}.sc-section-inline-details{grid-column:2 / 6;}.sc-section-details{display:none;grid-column:1 / -1;margin-bottom:5px;}.sc-section-summary-in:checked ~ .sc-section-details{display:contents;}.sc-array-wrap{grid-column:1 / -1;display:grid;grid-template-columns:20px auto;}.sc-array-wrap > label{grid-column:1;vertical-align:top;}.sc-preview{color:var(--sc-font-color2);}.sc-array-preview,.sc-array-data{padding:0 5px !important;grid-column:2;}.sc-array-data,.sc-array-in:checked ~ .sc-array-preview{display:none;}.sc-array-in:checked ~ .sc-array-data,.sc-array-preview{display:inline-block;}.sc-dim-list{display:inline-block !important;list-style:none;padding:0 !important;margin:0;}.sc-dim-list li{display:inline-block;padding:0;margin:0!important;}.sc-dim-list:before{content:'(';}.sc-dim-list:after{content:')';}.sc-dim-list li:not(:last-child):after{content:',';padding-right:5px;}.sc-dim-list li span,.sc-standalone-var-name > span span,.sc-var-name > span span{padding:0 !important;}.sc-aligned{font-weight:bold;}.sc-var-list,.sc-var-item,.reveal .sc-var-list,.reveal .sc-var-item{display:contents;}.sc-var-item > div,.sc-var-item label,.sc-var-item > .sc-var-name span{background-color:var(--sc-background-color1);margin-bottom:0;}.sc-var-item > .sc-var-name:hover span{padding-right:5px;}.sc-var-list > li:nth-child(odd) > div,.sc-var-list > li:nth-child(odd) > label,.sc-var-list > li:nth-child(odd) > .sc-var-name span{background-color:var(--sc-background-color2);}.sc-var-name{grid-column:1;}.sc-var-dims{grid-column:2;}.sc-var-dtype{grid-column:3;text-align:right;color:var(--sc-font-color2);}.sc-var-unit{grid-column:4;text-align:left;color:var(--sc-font-color1);max-width:50pt;text-overflow:ellipsis;}.sc-value-preview{grid-column:5;}.sc-var-preview-variances{text-align:right;}.sc-sections .sc-section-item .sc-section-summary,.sc-sections .sc-section-item .sc-section-inline-details,.sc-section-item .sc-var-list .sc-var-item > div,.sc-section-item .sc-var-list .sc-var-item > label,.sc-section-details .sc-var-list .sc-var-item > div,.sc-section-details .sc-var-list .sc-var-item > label{margin-top:0;margin-bottom:0;}.sc-var-name,.sc-var-dims,.sc-var-dtype,.sc-var-unit,.sc-preview,.sc-attrs dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px;}.sc-var-name:hover,.sc-var-dims:hover,.sc-var-dtype:hover,.sc-var-unit:hover,.sc-attrs dt:hover{overflow:visible;width:auto;z-index:1;}.sc-var-attrs{display:block;}.sc-var-data,.reveal .sc-var-data{display:none;}.sc-var-attrs,.sc-var-data{background-color:var(--sc-background-color0) !important;padding-bottom:5px !important;}.sc-var-attrs-in:checked ~ .sc-var-attrs{display:none;}.sc-var-data-in:checked ~ .sc-var-data{display:block;}.sc-var-data > table{float:right;}.sc-var-name span,.sc-var-data{padding-left:25px !important;}.sc-var-attrs,.sc-var-data{grid-column:1 / -1;}dl.sc-attrs{padding:0;margin:0;display:grid;grid-template-columns:125px auto;}.sc-attrs dt,dd{padding:0;margin:0;float:left;padding-right:10px;width:auto;}.sc-attrs dt{font-weight:normal;grid-column:1;}.sc-attrs dt:hover span{display:inline-block;padding-right:10px;}.sc-attrs dd{grid-column:2;white-space:pre-wrap;word-break:break-all;}.sc-icon-database,.sc-icon-file-text2{display:inline-block;vertical-align:middle;width:1em;height:1.5em !important;stroke-width:0;stroke:currentColor;fill:currentColor;}label.sc-hide-icon svg{opacity:0;}.sc-standalone-var-name{grid-column:1/3;}.sc-standalone-var-name span{padding-left:25px;padding-right:10px;}.sc-title{font-weight:bold;font-size:1.5em;}.sc-subtitle{font-weight:normal;font-style:italic;text-align:left;font-size:1.2em;padding:1px;}.sc-label{fill:var(--sc-font-color0,#444444);text-anchor:middle;}.sc-name{fill:var(--sc-font-color0,#111111);}.sc-inset-line{stroke:var(--sc-font-color1);stroke-width:0.05;stroke-dasharray:0.2,0.2;}.sc-log-wrap{height:25ex;resize:vertical;overflow-y:scroll;display:flex;flex-direction:column-reverse;border:1px solid;border-color:var(--jp-border-color2);background-color:var(--sc-background-color1);}div.sc-log{line-height:2.5ex;}table.sc-log{table-layout:auto;border-collapse:collapse;}tr.sc-log:nth-child(even){background-color:var(--sc-background-color0);}tr.sc-log > td{vertical-align:top;padding-bottom:0.5ex;}.sc-log-time-stamp{min-width:22ch;font-family:var(--jp-code-font-family);color:var(--sc-font-color2);}.sc-log-level{min-width:10ch;}tr.sc-log-debug td.sc-log-level{color:var(--jp-accent-color1);}tr.sc-log-info td.sc-log-level{color:var(--jp-info-color1);}tr.sc-log-warning td.sc-log-level{color:var(--jp-warn-color1);}tr.sc-log-error td.sc-log-level{font-weight:bold;color:var(--jp-error-color2);}tr.sc-log-critical td.sc-log-level{font-weight:bold;color:var(--sc-background-color0);background-color:var(--jp-error-color1);}.sc-log-message{white-space:pre-wrap;width:100%;}.sc-log-html-payload{white-space:normal;}.sc-log-name{padding-right:0.5em;text-align:right;white-space:pre-wrap;color:var(--sc-font-color3);}</style><style id="datagroup-style-sheet">.dg-root{white-space:normal;font-size:14px;min-width:300px;max-width:1200px;}.dg-root *{box-sizing:border-box;}.sc-header > label,.sc-header > label > div,.sc-header > label > div > ul{display:inline;margin-bottom:0;}.dg-header-in{display:none;}.dg-header-in + .sc-header > label:before{display:inline-block;font-size:11px;text-align:left;content:'►';}.dg-header-in:checked + .sc-header > label:before{content:'▼';}.dg-header-in ~ .dg-detail-box{display:none;}.dg-header-in:checked ~ .dg-detail-box{display:grid;}.dg-detail-box{margin-top:5px;margin-bottom:5px;column-gap:0 !important;display:grid;grid-template-columns:max-content max-content max-content max-content max-content max-content max-content;grid-template-areas:"name        parent      object-type shape       dtype       unit        preview";}.dg-detail-box *{margin-top:0;margin-bottom:0;}.dg-detail-list{display:contents;}.dg-detail-item{display:contents;list-style-type:none;}.dg-detail-item-in{display:none;}.dg-detail-item-in + .dg-detail-name > label:before{display:inline-block;font-size:14px;text-align:left;content:'►';}.dg-detail-item-in:checked + .dg-detail-name > label:before{content:'▼';}.dg-detail-item div,.dg-detail-item span,.dg-detail-item label{word-break:break-all;min-width:1em;max-width:20em;width:100%;}.dg-detail-item > div{display:contents;}.dg-detail-item > div > div > div{width:100%;}.dg-detail-item:hover > div > div{background-color:var(--sc-background-color2) !important;}.dg-detail-item > div span{padding-left:10px;padding-right:10px;}.dg-detail-item > div > div:first-of-type{grid-column-start:1;}.dg-detail-item-subsection{display:none;}.dg-detail-item-in{margin:0;}.dg-detail-item-in:checked ~ .dg-detail-item-subsection{display:contents;}.dg-detail-item .dg-detail-name{grid-area:"name";min-width:5em;}.dg-detail-name{padding-left:calc(var(--depth)*2em);}.dg-detail-name > label{padding-left:8px;}.dg-detail-name > label > span{padding-left:0.1em;}.dg-detail-item .dg-detail-parent{grid-area:"parent";text-align:right;}.dg-detail-item .dg-detail-objtype{grid-area:"objtype";text-align:left;}.dg-detail-item .dg-detail-shape{max-width:30em;grid-area:"shape";text-align:left;}.sc-header .dg-detail-shape{margin-left:1em;text-align:left;}.dg-detail-item .dg-detail-dtype{grid-area:"dtype";text-align:left;}.dg-detail-item .dg-detail-unit{grid-area:"unit";text-align:center;}.dg-detail-item .dg-detail-preview{grid-area:"preview";min-width:15em;max-width:100em !important;text-align:left;}.dg-detail-preview .sc-preview span,.dg-detail-shape span{padding:0 !important;}</style><div class='sc-root dg-root'><input class='dg-header-in' id='datagroup-view-4e101764-8d56-4735-aa46-35230a3c8441' type='checkbox' checked><div class='sc-header'><label for=datagroup-view-4e101764-8d56-4735-aa46-35230a3c8441 title='Expand/collapse'><div class='sc-obj-type'>scipp.DataGroup </div><div class='dg-detail-shape'>(subframe: 6, bound: 2)</div></label></div><div class='dg-detail-box'><ul class='dg-detail-list'><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>time</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>(subframe: 6, bound: 2)</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>s</span></div><div class='dg-detail-preview'><span class='sc-preview'>0.016, 0.023, ..., 0.056, 0.063</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>wavelength</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>(subframe: 6, bound: 2)</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>Å</span></div><div class='dg-detail-preview'><span class='sc-preview'>2.007, 3.514, ..., 7.964, 9.528</span></div></div></li></ul></div></div></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">sc</span><span class="o">.</span><span class="n">collapse</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">keep</span><span class="o">=</span><span class="s2">&quot;bound&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+    <span class="n">cascade_ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
+        <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s2">&quot;ms&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s2">&quot;ms&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+        <span class="n">zorder</span><span class="o">=-</span><span class="mi">5</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="n">cascade_fig</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_wfm_wfm-time-of-flight_28_0.png" src="../../_images/user-guide_wfm_wfm-time-of-flight_28_0.png" />
+</div>
+</div>
+<p>There should be one vertical band matching the extent of each pink polygon, which there is.</p>
+</section>
+<section id="Computing-a-time-of-flight-coordinate">
+<h3>Computing a time-of-flight coordinate<a class="headerlink" href="#Computing-a-time-of-flight-coordinate" title="Link to this heading">#</a></h3>
+<p>We will now use our workflow to obtain our event data with a time-of-flight coordinate:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tofs</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">TofData</span><span class="p">)</span>
+<span class="n">tofs</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><!-- Original source from -->
+<!-- https://github.com/jsignell/xarray/blob/1d960933ab252e0f79f7e050e6c9261d55568057/xarray/static/html/icons-svg-inline.html -->
+<svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewBox="0 0 32 32">
+<title>Show/Hide data repr</title>
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewBox="0 0 32 32">
+<title>Show/Hide attributes</title>
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg><style id="scipp-style-sheet">.sc-root{--sc-background-color0:var(--jp-layout-color0,#fff);--sc-background-color1:var(--jp-layout-color1,#fcfcfc);--sc-background-color2:var(--jp-layout-color2,#efefef);--sc-inverse-background-color0:var(--jp-inverse-layout-color4,#111);--sc-font-color0:var(--jp-content-font-color0,#000);--sc-font-color1:var(--jp-content-font-color1,#555);--sc-font-color2:var(--jp-content-font-color2,#888);--sc-font-color3:var(--jp-content-font-color3,#ccc);}body.vscode-dark .sc-root{--sc-font-color0:rgba(255,255,255,1);--sc-font-color1:rgba(255,255,255,0.70);--sc-font-color2:rgba(255,255,255,0.54);--sc-font-color3:rgba(255,255,255,0.38);--sc-border-color:#1F1F1F;--sc-disabled-color:#515151;--sc-background-color0:#111111;--sc-background-color1:#111111;--sc-background-color2:#313131;}.sc-wrap{font-size:14px;min-width:300px;max-width:800px;}.sc-var-attrs .sc-wrap{padding-left:3em;}.sc-header{padding-top:6px;padding-bottom:6px;margin-bottom:4px;border-bottom:solid 1px #ddd;}.sc-header > div,.sc-header > ul{display:inline;margin-top:0;margin-bottom:0;}.sc-obj-type,.sc-array-name{margin-left:2px;margin-right:10px;}.sc-obj-type{color:var(--sc-font-color1);}.sc-underlying-size{color:var(--sc-font-color2);}.sc-sections,.reveal .sc-sections{padding-left:0 !important;display:grid;grid-template-columns:150px auto auto auto 1fr 20px 20px;}.sc-section-item{display:contents;}.sc-section-item input{display:none;}.sc-section-item input:enabled + label{cursor:pointer;color:var(--sc-font-color1);}.sc-section-item input:enabled + label:hover{color:var(--sc-font-color0);}.sc-section-summary{grid-column:1;font-weight:500;}.sc-section-summary > span{display:inline-block;padding-left:0.5em;}.sc-section-summary-in:disabled + label{color:var(--sc-font-color1);}.sc-section-summary-in + label:before{display:inline-block;content:'►';font-size:11px;width:15px;text-align:center;}.sc-section-summary-in:disabled + label:before{color:var(--sc-font-color3);}.sc-section-summary-in:checked + label:before{content:'▼';}.sc-section-summary-in:checked + label > span{display:none;}.sc-section-summary,.sc-section-inline-details{padding-top:4px;padding-bottom:4px;}.sc-section-inline-details{grid-column:2 / 6;}.sc-section-details{display:none;grid-column:1 / -1;margin-bottom:5px;}.sc-section-summary-in:checked ~ .sc-section-details{display:contents;}.sc-array-wrap{grid-column:1 / -1;display:grid;grid-template-columns:20px auto;}.sc-array-wrap > label{grid-column:1;vertical-align:top;}.sc-preview{color:var(--sc-font-color2);}.sc-array-preview,.sc-array-data{padding:0 5px !important;grid-column:2;}.sc-array-data,.sc-array-in:checked ~ .sc-array-preview{display:none;}.sc-array-in:checked ~ .sc-array-data,.sc-array-preview{display:inline-block;}.sc-dim-list{display:inline-block !important;list-style:none;padding:0 !important;margin:0;}.sc-dim-list li{display:inline-block;padding:0;margin:0!important;}.sc-dim-list:before{content:'(';}.sc-dim-list:after{content:')';}.sc-dim-list li:not(:last-child):after{content:',';padding-right:5px;}.sc-dim-list li span,.sc-standalone-var-name > span span,.sc-var-name > span span{padding:0 !important;}.sc-aligned{font-weight:bold;}.sc-var-list,.sc-var-item,.reveal .sc-var-list,.reveal .sc-var-item{display:contents;}.sc-var-item > div,.sc-var-item label,.sc-var-item > .sc-var-name span{background-color:var(--sc-background-color1);margin-bottom:0;}.sc-var-item > .sc-var-name:hover span{padding-right:5px;}.sc-var-list > li:nth-child(odd) > div,.sc-var-list > li:nth-child(odd) > label,.sc-var-list > li:nth-child(odd) > .sc-var-name span{background-color:var(--sc-background-color2);}.sc-var-name{grid-column:1;}.sc-var-dims{grid-column:2;}.sc-var-dtype{grid-column:3;text-align:right;color:var(--sc-font-color2);}.sc-var-unit{grid-column:4;text-align:left;color:var(--sc-font-color1);max-width:50pt;text-overflow:ellipsis;}.sc-value-preview{grid-column:5;}.sc-var-preview-variances{text-align:right;}.sc-sections .sc-section-item .sc-section-summary,.sc-sections .sc-section-item .sc-section-inline-details,.sc-section-item .sc-var-list .sc-var-item > div,.sc-section-item .sc-var-list .sc-var-item > label,.sc-section-details .sc-var-list .sc-var-item > div,.sc-section-details .sc-var-list .sc-var-item > label{margin-top:0;margin-bottom:0;}.sc-var-name,.sc-var-dims,.sc-var-dtype,.sc-var-unit,.sc-preview,.sc-attrs dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px;}.sc-var-name:hover,.sc-var-dims:hover,.sc-var-dtype:hover,.sc-var-unit:hover,.sc-attrs dt:hover{overflow:visible;width:auto;z-index:1;}.sc-var-attrs{display:block;}.sc-var-data,.reveal .sc-var-data{display:none;}.sc-var-attrs,.sc-var-data{background-color:var(--sc-background-color0) !important;padding-bottom:5px !important;}.sc-var-attrs-in:checked ~ .sc-var-attrs{display:none;}.sc-var-data-in:checked ~ .sc-var-data{display:block;}.sc-var-data > table{float:right;}.sc-var-name span,.sc-var-data{padding-left:25px !important;}.sc-var-attrs,.sc-var-data{grid-column:1 / -1;}dl.sc-attrs{padding:0;margin:0;display:grid;grid-template-columns:125px auto;}.sc-attrs dt,dd{padding:0;margin:0;float:left;padding-right:10px;width:auto;}.sc-attrs dt{font-weight:normal;grid-column:1;}.sc-attrs dt:hover span{display:inline-block;padding-right:10px;}.sc-attrs dd{grid-column:2;white-space:pre-wrap;word-break:break-all;}.sc-icon-database,.sc-icon-file-text2{display:inline-block;vertical-align:middle;width:1em;height:1.5em !important;stroke-width:0;stroke:currentColor;fill:currentColor;}label.sc-hide-icon svg{opacity:0;}.sc-standalone-var-name{grid-column:1/3;}.sc-standalone-var-name span{padding-left:25px;padding-right:10px;}.sc-title{font-weight:bold;font-size:1.5em;}.sc-subtitle{font-weight:normal;font-style:italic;text-align:left;font-size:1.2em;padding:1px;}.sc-label{fill:var(--sc-font-color0,#444444);text-anchor:middle;}.sc-name{fill:var(--sc-font-color0,#111111);}.sc-inset-line{stroke:var(--sc-font-color1);stroke-width:0.05;stroke-dasharray:0.2,0.2;}.sc-log-wrap{height:25ex;resize:vertical;overflow-y:scroll;display:flex;flex-direction:column-reverse;border:1px solid;border-color:var(--jp-border-color2);background-color:var(--sc-background-color1);}div.sc-log{line-height:2.5ex;}table.sc-log{table-layout:auto;border-collapse:collapse;}tr.sc-log:nth-child(even){background-color:var(--sc-background-color0);}tr.sc-log > td{vertical-align:top;padding-bottom:0.5ex;}.sc-log-time-stamp{min-width:22ch;font-family:var(--jp-code-font-family);color:var(--sc-font-color2);}.sc-log-level{min-width:10ch;}tr.sc-log-debug td.sc-log-level{color:var(--jp-accent-color1);}tr.sc-log-info td.sc-log-level{color:var(--jp-info-color1);}tr.sc-log-warning td.sc-log-level{color:var(--jp-warn-color1);}tr.sc-log-error td.sc-log-level{font-weight:bold;color:var(--jp-error-color2);}tr.sc-log-critical td.sc-log-level{font-weight:bold;color:var(--sc-background-color0);background-color:var(--jp-error-color1);}.sc-log-message{white-space:pre-wrap;width:100%;}.sc-log-html-payload{white-space:normal;}.sc-log-name{padding-right:0.5em;text-align:right;white-space:pre-wrap;color:var(--sc-font-color3);}</style><div class='sc-wrap sc-root'><div class='sc-header'><div class='sc-obj-type'>scipp.DataArray (12.63 MB)</div></div><ul class='sc-sections'><li class='sc-section-item'><input id='section-8f023ea4-0434-4177-9a57-60decffd147d' class='sc-section-summary-in' type='checkbox' disabled ><label for='section-8f023ea4-0434-4177-9a57-60decffd147d' class='sc-section-summary' >Dimensions:</label><div class='sc-section-inline-details'><ul class='sc-dim-list'><li><span>pulse</span>: 14</li></ul></div><div class='sc-section-details'></div></li><li class='sc-section-item'><input id='section-9100a242-81bb-4240-a67a-0498313de39f' class='sc-section-summary-in' type='checkbox'  checked><label for='section-9100a242-81bb-4240-a67a-0498313de39f' class='sc-section-summary'  title='Expand/collapse section'>Coordinates: <span>(1)</span></label><div class='sc-section-inline-details'></div><div class='sc-section-details'><ul class='sc-var-list'><li class='sc-var-item'><div class='sc-var-name'><span class='sc-aligned'>Ltotal</span></div><div class='sc-var-dims'>()</div><div class='sc-var-dtype'>float64</div><div class='sc-var-unit'>m</div><div class='sc-value-preview sc-preview'><span><div>19.4</div></span></div><input id='attrs-ea933605-40ac-46c8-89cb-4644f2b7275f' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-ea933605-40ac-46c8-89cb-4644f2b7275f' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-858e2e66-d3da-4162-8a3e-cdd6327204c2' class='sc-var-data-in' type='checkbox'><label for='data-858e2e66-d3da-4162-8a3e-cdd6327204c2' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array(19.4)</pre></span></li></ul></div></li><li class='sc-section-item'><input id='section-30fe4edb-ec9a-4887-8dac-59b6d7c406fe' class='sc-section-summary-in' type='checkbox'  checked><label for='section-30fe4edb-ec9a-4887-8dac-59b6d7c406fe' class='sc-section-summary'  title='Expand/collapse section'>Data: <span>(1)</span></label><div class='sc-section-inline-details'></div><div class='sc-section-details'><ul class='sc-var-list'><li class='sc-var-item'><div class='sc-var-name'><span></span></div><div class='sc-var-dims'>(pulse)</div><div class='sc-var-dtype'>DataArrayView</div><div class='sc-var-unit'></div><div class='sc-value-preview sc-preview'><span><div>binned data [len=14396, len=14450, ..., len=14797, len=14571]</div></span></div><input id='attrs-646d2588-6d21-4b07-8c69-c7ec5735f706' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-646d2588-6d21-4b07-8c69-c7ec5735f706' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-2f307f1d-b27a-4c55-beb5-80b4ac745ef7' class='sc-var-data-in' type='checkbox'><label for='data-2f307f1d-b27a-4c55-beb5-80b4ac745ef7' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>dim=&#x27;event&#x27;,
+content=DataArray(
+          dims=(event: 203715),
+          data=float64[counts],
+          coords={&#x27;id&#x27;:int64, &#x27;toa&#x27;:float64[µs], &#x27;event_time_offset&#x27;:float64[s],
+                  &#x27;time_offset&#x27;:float64[s], &#x27;pulse_time&#x27;:datetime64[µs],
+                  &#x27;tof&#x27;:float64[s], &#x27;time_zero&#x27;:datetime64[µs]},
+          masks={&#x27;blocked_by_others&#x27;:bool})</pre></li></ul></div></li></ul></div></div></div>
+</div>
+<p>Histogramming the data for a plot should show a profile with 6 bumps that correspond to the frames:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">edges</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="s2">&quot;tof&quot;</span><span class="p">,</span> <span class="mf">0.005</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">)</span>
+<span class="n">tofs</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">()</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">tof</span><span class="o">=</span><span class="n">edges</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_wfm_wfm-time-of-flight_32_0.svg" src="../../_images/user-guide_wfm_wfm-time-of-flight_32_0.svg" />
+</div>
+</div>
+</section>
+<section id="Converting-to-wavelength">
+<h3>Converting to wavelength<a class="headerlink" href="#Converting-to-wavelength" title="Link to this heading">#</a></h3>
+<p>We can now convert our new time-of-flight coordinate to a neutron wavelength, using <code class="docutils literal notranslate"><span class="pre">tranform_coords</span></code>:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">scippneutron.conversion.graph.beamline</span> <span class="kn">import</span> <span class="n">beamline</span>
+<span class="kn">from</span> <span class="nn">scippneutron.conversion.graph.tof</span> <span class="kn">import</span> <span class="n">elastic</span>
+
+<span class="c1"># Perform coordinate transformation</span>
+<span class="n">graph</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">beamline</span><span class="p">(</span><span class="n">scatter</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="o">**</span><span class="n">elastic</span><span class="p">(</span><span class="s2">&quot;tof&quot;</span><span class="p">)}</span>
+<span class="n">wav_wfm</span> <span class="o">=</span> <span class="n">tofs</span><span class="o">.</span><span class="n">transform_coords</span><span class="p">(</span><span class="s2">&quot;wavelength&quot;</span><span class="p">,</span> <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">)</span>
+
+<span class="c1"># Define wavelength bin edges</span>
+<span class="n">wavs</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="s2">&quot;wavelength&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">301</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;angstrom&quot;</span><span class="p">)</span>
+
+<span class="n">wav_wfm</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="n">wavs</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s2">&quot;pulse&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_wfm_wfm-time-of-flight_34_0.svg" src="../../_images/user-guide_wfm_wfm-time-of-flight_34_0.svg" />
+</div>
+</div>
+</section>
+<section id="Comparing-to-the-ground-truth">
+<h3>Comparing to the ground truth<a class="headerlink" href="#Comparing-to-the-ground-truth" title="Link to this heading">#</a></h3>
+<p>As a consistency check, because we actually know the wavelengths of the neutrons we created, we can compare the true neutron wavelengths to those we computed above.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ground_truth</span> <span class="o">=</span> <span class="n">ess_beamline</span><span class="o">.</span><span class="n">model_result</span><span class="p">[</span><span class="s2">&quot;detector&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="s2">&quot;event&quot;</span><span class="p">)</span>
+<span class="n">ground_truth</span> <span class="o">=</span> <span class="n">ground_truth</span><span class="p">[</span><span class="o">~</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="s2">&quot;blocked_by_others&quot;</span><span class="p">]]</span>
+
+<span class="n">pp</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;wfm&quot;</span><span class="p">:</span> <span class="n">wav_wfm</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="n">wavs</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s2">&quot;pulse&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;ground_truth&quot;</span><span class="p">:</span> <span class="n">ground_truth</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="n">wavs</span><span class="p">),</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_wfm_wfm-time-of-flight_36_0.svg" src="../../_images/user-guide_wfm_wfm-time-of-flight_36_0.svg" />
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Wavelength frame multiplication</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="dream-wfm.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">DREAM in WFM mode</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 24.11.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
