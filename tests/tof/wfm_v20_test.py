@@ -98,13 +98,26 @@ def disk_choppers():
 
 
 @pytest.mark.parametrize("npulses", [1, 2])
-def test_compute_wavelengths_from_wfm(disk_choppers, npulses):
-    Ltotal = sc.scalar(26.0, unit="m")  # Distance to detector
+@pytest.mark.parametrize(
+    "ltotal",
+    [
+        sc.array(dims=['detector_number'], values=[26.0], unit='m'),
+        sc.array(dims=['detector_number'], values=[26.0, 25.5], unit='m'),
+        sc.array(
+            dims=['y', 'x'], values=[[26.0, 25.1, 26.33], [25.9, 26.0, 25.7]], unit='m'
+        ),
+    ],
+)
+def test_v20_compute_wavelengths_from_wfm(disk_choppers, npulses, ltotal):
     choppers = {
         key: chopper_cascade.Chopper.from_disk_chopper(
             chop, pulse_frequency=sc.scalar(14.0, unit="Hz"), npulses=npulses
         )
         for key, chop in disk_choppers.items()
+    }
+
+    monitors = {
+        f"detector{i}": ltot for i, ltot in enumerate(ltotal.flatten(to='detector'))
     }
 
     # Create some neutron events
@@ -114,7 +127,7 @@ def test_compute_wavelengths_from_wfm(disk_choppers, npulses):
     birth_times = sc.full(sizes=wavelengths.sizes, value=1.5, unit='ms')
     ess_beamline = fakes.FakeBeamlineEss(
         choppers=choppers,
-        monitors={"detector": Ltotal},
+        monitors=monitors,
         run_length=sc.scalar(1 / 14, unit="s") * npulses,
         events_per_pulse=len(wavelengths),
         source=partial(
@@ -128,11 +141,20 @@ def test_compute_wavelengths_from_wfm(disk_choppers, npulses):
     # Save the true wavelengths for later
     true_wavelengths = ess_beamline.source.data.coords["wavelength"]
 
+    raw_data = sc.concat(
+        [ess_beamline.get_monitor(key) for key in monitors.keys()],
+        dim='detector',
+    ).fold(dim='detector', sizes=ltotal.sizes)
+
     # Verify that all 6 neutrons made it through the chopper cascade
-    raw_data = ess_beamline.get_monitor("detector")
     assert sc.identical(
-        raw_data.sum().data,
-        sc.scalar(len(wavelengths) * npulses, unit="counts", dtype='float64'),
+        raw_data.bins.concat('pulse').hist().data,
+        sc.array(
+            dims=['detector'],
+            values=[len(wavelengths) * npulses] * len(monitors),
+            unit="counts",
+            dtype='float64',
+        ).fold(dim='detector', sizes=ltotal.sizes),
     )
 
     # Set up the workflow
@@ -152,17 +174,17 @@ def test_compute_wavelengths_from_wfm(disk_choppers, npulses):
         sc.scalar(3.4, unit='ms'),
     )
     workflow[unwrap.SourceWavelengthRange] = (
-        sc.scalar(0.01, unit='angstrom'),
+        sc.scalar(0.2, unit='angstrom'),
         sc.scalar(10.0, unit='angstrom'),
     )
 
     workflow[unwrap.Choppers] = choppers
-    workflow[unwrap.Ltotal] = Ltotal
-    workflow[unwrap.WFMChopperNames] = ("wfm1", "wfm2")
+    workflow[unwrap.Ltotal] = ltotal
     workflow[unwrap.RawData] = raw_data
 
     # Compute time-of-flight
     tofs = workflow.compute(unwrap.TofData)
+    assert {dim: tofs.sizes[dim] for dim in ltotal.sizes} == ltotal.sizes
 
     # Convert to wavelength
     graph = {**beamline(scatter=False), **elastic("tof")}
@@ -170,7 +192,11 @@ def test_compute_wavelengths_from_wfm(disk_choppers, npulses):
 
     # Compare the computed wavelengths to the true wavelengths
     for i in range(npulses):
-        computed_wavelengths = wav_wfm['pulse', i].values.coords["wavelength"]
-        assert sc.allclose(
-            computed_wavelengths, true_wavelengths['pulse', i], rtol=sc.scalar(1e-02)
-        )
+        result = wav_wfm['pulse', i].flatten(to='detector')
+        for j in range(len(result)):
+            computed_wavelengths = result[j].values.coords["wavelength"]
+            assert sc.allclose(
+                computed_wavelengths,
+                true_wavelengths['pulse', i],
+                rtol=sc.scalar(1e-02),
+            )
