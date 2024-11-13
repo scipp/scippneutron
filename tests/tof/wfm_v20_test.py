@@ -6,7 +6,7 @@ from functools import partial
 import numpy as np
 import pytest
 import scipp as sc
-import tof
+import tof as tof_pkg
 
 from scippneutron.chopper import DiskChopper
 from scippneutron.conversion.graph.beamline import beamline
@@ -131,7 +131,7 @@ def test_v20_compute_wavelengths_from_wfm(disk_choppers, npulses, ltotal):
         run_length=sc.scalar(1 / 14, unit="s") * npulses,
         events_per_pulse=len(wavelengths),
         source=partial(
-            tof.Source.from_neutrons,
+            tof_pkg.Source.from_neutrons,
             birth_times=birth_times,
             wavelengths=wavelengths,
             frequency=sc.scalar(14.0, unit="Hz"),

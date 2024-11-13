@@ -241,7 +241,7 @@ class FakeBeamlineEss:
     ):
         import math
 
-        import tof
+        import tof as tof_pkg
         from tof.facilities.ess_pulse import pulse
 
         self.frequency = pulse.frequency
@@ -250,7 +250,7 @@ class FakeBeamlineEss:
 
         # Create a source
         if source is None:
-            self.source = tof.Source(
+            self.source = tof_pkg.Source(
                 facility='ess', neutrons=self.events_per_pulse, pulses=self.npulses
             )
         else:
@@ -260,7 +260,7 @@ class FakeBeamlineEss:
         angular_speed = sc.constants.pi * (2.0 * sc.units.rad) * self.frequency
 
         self.choppers = [
-            tof.Chopper(
+            tof_pkg.Chopper(
                 frequency=pulse.frequency,
                 open=ch.time_open * angular_speed,
                 close=ch.time_close * angular_speed,
@@ -273,12 +273,12 @@ class FakeBeamlineEss:
 
         # Add detectors
         self.monitors = [
-            tof.Detector(distance=distance, name=key)
+            tof_pkg.Detector(distance=distance, name=key)
             for key, distance in monitors.items()
         ]
 
         #  Propagate the neutrons
-        self.model = tof.Model(
+        self.model = tof_pkg.Model(
             source=self.source, choppers=self.choppers, detectors=self.monitors
         )
         self.model_result = self.model.run()
