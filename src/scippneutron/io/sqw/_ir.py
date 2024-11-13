@@ -140,16 +140,23 @@ class Serializable(ABC):
 
     def serialize_to_ir(self) -> Struct | SelfSerializing:
         fields = self._serialize_to_dict()
-        return Struct(
+        struct = Struct(
             field_names=tuple(fields),
             field_values=CellArray(
                 shape=(len(fields), 1),  # HORACE uses a 2D array
                 data=[_serialize_field(field) for field in fields.values()],
             ),
         )
+        if self._detect_is_self_serializing():
+            return SelfSerializing(body=struct.to_type_tagged())
+        return struct
 
     def prepare_for_serialization(self: _T, filename: str, filepath: str) -> _T:  # noqa: PYI019
         return self
+
+    @classmethod
+    def _detect_is_self_serializing(cls) -> bool:
+        return getattr(cls, "_is_self_serializing", False)
 
 
 def _serialize_field(

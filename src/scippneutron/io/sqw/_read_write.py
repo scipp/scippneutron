@@ -68,12 +68,11 @@ def write_objects(
     sqw_io: LowLevelSqw, objects: ir.ObjectArray | ir.CellArray | ir.SelfSerializing
 ) -> None:
     position = sqw_io.position
-
-    if objects.ty == ir.TypeTag.self_serializing:
-        sqw_io.write_u8(ir.TypeTag.self_serializing.value)
-        write_objects(sqw_io, objects.body)
-
     sqw_io.write_u8(objects.ty.value)
+
+    if isinstance(objects, ir.SelfSerializing):
+        return write_objects(sqw_io, objects.body)
+
     sqw_io.write_u8(len(objects.shape))  # TODO correct for list of structs?
     for size in objects.shape:
         sqw_io.write_u32(size)
@@ -182,6 +181,12 @@ def _write_single_struct(sqw_io: LowLevelSqw, struct: ir.Struct) -> None:
     for name in struct.field_names:
         sqw_io.write_chars(name)
     write_objects(sqw_io, struct.field_values)
+
+
+@_WRITERS.add(ir.TypeTag.self_serializing)
+def _write_self_serializing(sqw_io: LowLevelSqw, objects: _AnyObjectList) -> None:
+    for obj in objects:
+        write_objects(sqw_io, obj)
 
 
 @_READERS.add(ir.TypeTag.f64)

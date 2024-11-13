@@ -186,7 +186,9 @@ def test_horace_roundtrip_null_instruments(
     assert loaded.name == null_instrument.name
     assert loaded.source.name == null_instrument.source.name
     assert loaded.source.target_name == null_instrument.source.target_name
-    assert loaded.source.frequency == null_instrument.source.frequency.value
+    assert (
+        loaded.source.frequency == null_instrument.source.frequency.to(unit='Hz').value
+    )
 
 
 def test_horace_roundtrip_sample(

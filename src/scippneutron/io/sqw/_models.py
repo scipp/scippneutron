@@ -245,6 +245,7 @@ class SqwIXSource(ir.Serializable):
 
     serial_name: ClassVar[str] = "IX_source"
     version: ClassVar[float] = 2.0
+    _is_self_serializing: ClassVar[bool] = True
 
     def _serialize_to_dict(
         self,
@@ -254,11 +255,8 @@ class SqwIXSource(ir.Serializable):
             "version": ir.F64(self.version),
             "name": ir.String(self.name),
             "target_name": ir.String(self.target_name),
-            "frequency": ir.F64(self.frequency.value),  # TODO unit
+            "frequency": ir.F64(self.frequency.to(unit='Hz').value),
         }
-
-    def serialize_to_ir(self) -> ir.SelfSerializing:
-        return ir.SelfSerializing(body=super().serialize_to_ir().to_type_tagged())
 
 
 @dataclass(kw_only=True, slots=True)
@@ -268,6 +266,7 @@ class SqwIXNullInstrument(ir.Serializable):
 
     serial_name: ClassVar[str] = "IX_null_inst"
     version: ClassVar[float] = 2.0
+    _is_self_serializing: ClassVar[bool] = True
 
     def _serialize_to_dict(
         self,
@@ -275,7 +274,8 @@ class SqwIXNullInstrument(ir.Serializable):
         return {
             "serial_name": ir.String(self.serial_name),
             "version": ir.F64(self.version),
-            "source": self.source.serialize_to_ir(),
+            # Unpack SelfSerializing; should be plain struct here.
+            "source": self.source.serialize_to_ir().body.data[0],
             "name": ir.String(self.name),
         }
 
@@ -293,6 +293,7 @@ class SqwIXSample(ir.Serializable):
 
     serial_name: ClassVar[str] = "IX_sample"
     version: ClassVar[float] = 3.0
+    _is_self_serializing: ClassVar[bool] = True
 
     def _serialize_to_dict(
         self,

@@ -19,6 +19,9 @@ from scippneutron.io.sqw import (
     Sqw,
     SqwDndMetadata,
     SqwIXExperiment,
+    SqwIXNullInstrument,
+    SqwIXSample,
+    SqwIXSource,
     SqwLineAxes,
     SqwLineProj,
 )
@@ -148,6 +151,104 @@ def test_create_writes_main_header(
     assert (main_header.creation_date - datetime.now(tz=timezone.utc)) < timedelta(
         seconds=1
     )
+
+
+@pytest.mark.parametrize("byteorder", ["native", "little", "big"])
+def test_writes_instrument(
+    byteorder: Literal["native", "little", "big"], buffer: _BytesBuffer | _PathBuffer
+) -> None:
+    instrument = SqwIXNullInstrument(
+        name="Custom Instrument",
+        source=SqwIXSource(
+            name="My Source",
+            target_name="The target",
+            frequency=sc.scalar(13.4, unit="MHz"),
+        ),
+    )
+
+    builder = Sqw.build(buffer.get(), byteorder=byteorder)
+    builder = builder.add_default_instrument(instrument)
+    # Need to register pixel data, otherwise, it won't write the instrument
+    builder.register_pixel_data(
+        n_pixels=1,
+        n_dims=4,
+        experiments=[
+            SqwIXExperiment(
+                run_id=0,
+                efix=sc.scalar(1.2, unit="meV"),
+                emode=EnergyMode.direct,
+                en=sc.array(dims=["energy_transfer"], values=[3.0], unit="ueV"),
+                psi=sc.scalar(1.2, unit="rad"),
+                u=sc.vector([0.0, 1.0, 0.0]),
+                v=sc.vector([1.0, 1.0, 0.0]),
+                omega=sc.scalar(1.4, unit="rad"),
+                dpsi=sc.scalar(46, unit="deg"),
+                gl=sc.scalar(3, unit="rad"),
+                gs=sc.scalar(-0.5, unit="rad"),
+                filename="run1.nxspe",
+                filepath="/data",
+            ),
+        ],
+    )
+    with builder.create():
+        pass
+    buffer.rewind()
+
+    with Sqw.open(buffer.get()) as sqw:
+        loaded_instruments = sqw.read_data_block(("experiment_info", "instruments"))
+    [loaded] = loaded_instruments
+    assert loaded.name == instrument.name
+    assert loaded.source.name == instrument.source.name
+    assert loaded.source.target_name == instrument.source.target_name
+    sc.testing.assert_identical(
+        loaded.source.frequency, instrument.source.frequency.to(unit='Hz')
+    )
+
+
+@pytest.mark.parametrize("byteorder", ["native", "little", "big"])
+def test_writes_sample(
+    byteorder: Literal["native", "little", "big"], buffer: _BytesBuffer | _PathBuffer
+) -> None:
+    sample = SqwIXSample(
+        name="Vibranium",
+        lattice_spacing=sc.vector([2.86, 2.86, 2.86], unit="1/angstrom"),
+        lattice_angle=sc.vector([90.0, 90.0, 90.0], unit="deg"),
+    )
+
+    builder = Sqw.build(buffer.get(), byteorder=byteorder)
+    builder = builder.add_default_sample(sample)
+    # Need to register pixel data, otherwise, it won't write the sample
+    builder.register_pixel_data(
+        n_pixels=1,
+        n_dims=4,
+        experiments=[
+            SqwIXExperiment(
+                run_id=0,
+                efix=sc.scalar(1.2, unit="meV"),
+                emode=EnergyMode.direct,
+                en=sc.array(dims=["energy_transfer"], values=[3.0], unit="ueV"),
+                psi=sc.scalar(1.2, unit="rad"),
+                u=sc.vector([0.0, 1.0, 0.0]),
+                v=sc.vector([1.0, 1.0, 0.0]),
+                omega=sc.scalar(1.4, unit="rad"),
+                dpsi=sc.scalar(46, unit="deg"),
+                gl=sc.scalar(3, unit="rad"),
+                gs=sc.scalar(-0.5, unit="rad"),
+                filename="run1.nxspe",
+                filepath="/data",
+            ),
+        ],
+    )
+    with builder.create():
+        pass
+    buffer.rewind()
+
+    with Sqw.open(buffer.get()) as sqw:
+        loaded_samples = sqw.read_data_block(("experiment_info", "samples"))
+    [loaded] = loaded_samples
+    assert loaded.name == sample.name
+    sc.testing.assert_identical(loaded.lattice_spacing, sample.lattice_spacing)
+    sc.testing.assert_identical(loaded.lattice_angle, sample.lattice_angle)
 
 
 @pytest.mark.parametrize("byteorder", ["native", "little", "big"])

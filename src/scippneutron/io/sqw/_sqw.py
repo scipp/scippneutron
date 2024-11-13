@@ -447,13 +447,11 @@ def _parse_ix_source_2_0(struct: ir.Struct) -> SqwIXSource:
     return SqwIXSource(
         name=name,
         target_name=target_name,
-        # TODO unit currently unknown
-        frequency=sc.scalar(frequency, unit=None),
+        frequency=sc.scalar(frequency, unit="Hz"),
     )
 
 
-def _parse_ix_null_instrument_1_0(obj: ir.SelfSerializing) -> SqwIXNullInstrument:
-    struct = obj.body
+def _parse_ix_null_instrument_1_0(struct: ir.Struct) -> SqwIXNullInstrument:
     source = _try_parse_block(_get_struct_field(struct, "source"))
     name = _get_scalar_struct_field(struct, "name")
     return SqwIXNullInstrument(name=name, source=source)
