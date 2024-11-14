@@ -439,8 +439,7 @@ class DiskChopper:
             Angle to compute time for.
             Defined anticlockwise with respect to top-dead-center.
         n_repetitions:
-            Return this many times for each angle corresponding to multiple rotations
-            of the chopper.
+            How many chopper rotations to perform.
 
         Returns
         -------
@@ -449,9 +448,9 @@ class DiskChopper:
         """
         angle = self._apply_angle_repetitions(angle=angle, n_repetitions=n_repetitions)
         angle = (
-            self.beam_position.to(unit='rad')
-            + self.phase.to(unit='rad')
-            - angle.to(unit='rad', copy=False)
+            self.beam_position.to(unit='rad', dtype='float64')
+            + self.phase.to(unit='rad', dtype='float64')
+            - angle.to(unit='rad', dtype='float64', copy=False)
         )
         if not self.is_clockwise:
             angle = sc.scalar(2.0, unit='rad') * sc.constants.pi + angle
@@ -511,21 +510,15 @@ class DiskChopper:
         self, *, angle: sc.Variable, n_repetitions: int
     ) -> sc.Variable:
         dim = str(uuid4())
-        if n_repetitions == 1:
-            repetition_offsets = sc.scalar(0, unit=angle.unit)
-        else:
-            repetition_offsets = sc.arange(dim, 0, n_repetitions, unit='rad') * (
-                2 * np.pi
-            )
+        # Start at -1 to ensure a rotation that is finishing when the pulse begins is
+        # also included.
+        repetition_offsets = sc.arange(dim, -1, n_repetitions, unit='rad') * (2 * np.pi)
         if self.is_clockwise:
             repeated = angle + repetition_offsets.to(unit=angle.unit)
         else:
             # Make sure the repeated angles are later in time.
             repeated = angle - repetition_offsets.to(unit=angle.unit)
 
-        if n_repetitions == 1:
-            # Do not add a new dimension to the output.
-            return repeated
         if angle.ndim == 0:
             return repeated.flatten(to='slit')
         # Remove aux dimension.

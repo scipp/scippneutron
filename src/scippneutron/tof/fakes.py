@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-import numpy as np
 import scipp as sc
 from numpy import random
 
@@ -242,26 +241,26 @@ class FakeBeamlineEss:
     ):
         import math
 
-        import tof
+        import tof as tof_pkg
         from tof.facilities.ess_pulse import pulse
 
-        frequency = pulse.frequency
-        self.npulses = math.ceil((run_length * frequency).to(unit='').value)
+        self.frequency = pulse.frequency
+        self.npulses = math.ceil((run_length * self.frequency).to(unit='').value)
         self.events_per_pulse = events_per_pulse
 
         # Create a source
         if source is None:
-            self.source = tof.Source(
+            self.source = tof_pkg.Source(
                 facility='ess', neutrons=self.events_per_pulse, pulses=self.npulses
             )
         else:
             self.source = source(pulses=self.npulses)
 
         # Convert the choppers to tof.Chopper
-        angular_speed = sc.constants.pi * (2.0 * sc.units.rad) * frequency
+        angular_speed = sc.constants.pi * (2.0 * sc.units.rad) * self.frequency
 
         self.choppers = [
-            tof.Chopper(
+            tof_pkg.Chopper(
                 frequency=pulse.frequency,
                 open=ch.time_open * angular_speed,
                 close=ch.time_close * angular_speed,
@@ -274,34 +273,30 @@ class FakeBeamlineEss:
 
         # Add detectors
         self.monitors = [
-            tof.Detector(distance=distance, name=key)
+            tof_pkg.Detector(distance=distance, name=key)
             for key, distance in monitors.items()
         ]
 
         #  Propagate the neutrons
-        self.model = tof.Model(
+        self.model = tof_pkg.Model(
             source=self.source, choppers=self.choppers, detectors=self.monitors
         )
         self.model_result = self.model.run()
 
     def get_monitor(self, name: str) -> sc.DataGroup:
         # Create some fake pulse time zero
-        start = np.datetime64("2024-01-01T12:00:00.000000")
-        dt = np.timedelta64(int(1 / 14 * 1e6), 'us')
-        end = start + dt * self.npulses
-
-        event_time_zero = sc.array(
-            dims=['event'],
-            # Repeat N times the time_zero for each event in a pulse
-            values=np.repeat(np.arange(start, end, dt), self.events_per_pulse),
-        )
+        start = sc.datetime("2024-01-01T12:00:00.000000")
+        period = sc.reciprocal(self.frequency)
 
         # Format the data in a way that resembles data loaded from NeXus
         event_data = self.model_result.detectors[name].data.flatten(to='event')
-        event_data.coords['event_time_zero'] = event_time_zero
-        event_data.coords['event_time_offset'] = event_data.coords.pop('tof').to(
-            unit='s'
-        ) % sc.scalar(1 / 14, unit='s')
+        dt = period.to(unit='us')
+        event_data.coords['event_time_zero'] = (
+            dt * (event_data.coords['toa'] // dt)
+        ).to(dtype=int) + start
+        event_data.coords['event_time_offset'] = (
+            event_data.coords.pop('tof').to(unit='s') % period
+        )
         del event_data.coords['speed']
         del event_data.coords['time']
         del event_data.coords['wavelength']

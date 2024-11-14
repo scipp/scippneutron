@@ -16,15 +16,23 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import NewType
 
+import numpy as np
 import scipp as sc
 
 from .._utils import elem_unit
 from . import chopper_cascade
 
+ChopperCascadeFrames = NewType('ChopperCascadeFrames', chopper_cascade.FrameSequence)
+"""
+Result of passing the source pulse through the chopper cascade.
+"""
+
+
 Choppers = NewType('Choppers', Mapping[str, chopper_cascade.Chopper])
 """
 Choppers used to define the frame parameters.
 """
+
 
 FrameAtSample = NewType('FrameAtSample', chopper_cascade.Frame)
 """
@@ -42,9 +50,21 @@ The detector may be a monitor or a detector after scattering off the sample. The
 bounds are then computed from this.
 """
 
+CleanFrameAtDetector = NewType('CleanFrameAtDetector', chopper_cascade.Frame)
+"""
+Version of the frame at the detector with subframes that do not overlap.
+"""
+
 FrameBounds = NewType('FrameBounds', sc.DataGroup)
 """
 The computed frame boundaries, used to unwrap the raw timestamps.
+"""
+
+FrameForTimeOfFlightOrigin = NewType(
+    'FrameForTimeOfFlightOrigin', chopper_cascade.Frame
+)
+"""
+Frame used to compute the time-of-flight origin. Used in WFM.
 """
 
 FramePeriod = NewType('FramePeriod', sc.Variable)
@@ -127,11 +147,6 @@ SourceWavelengthRange = NewType(
 Wavelength range of the source pulse, used for computing frame bounds.
 """
 
-SubframeBounds = NewType('SubframeBounds', sc.Variable)
-"""
-The computed subframe boundaries, used to offset the raw timestamps for WFM.
-"""
-
 TimeZero = NewType('TimeZero', sc.Variable)
 """
 Time of the start of the most recent pulse, typically NXevent_data/event_time_zero.
@@ -175,17 +190,6 @@ class TimeOfFlightOrigin:
     distance: sc.Variable
 
 
-WFMChopperNames = NewType('WFMChopperNames', tuple[str, ...])
-"""
-Names of the WFM choppers in the beamline.
-"""
-
-WFMChoppers = NewType('WFMChoppers', tuple[chopper_cascade.Chopper, ...])
-"""
-The WFM choppers in the beamline.
-"""
-
-
 def frame_period(
     pulse_period: PulsePeriod, pulse_stride: PulseStride | None
 ) -> FramePeriod:
@@ -194,18 +198,15 @@ def frame_period(
     return FramePeriod(pulse_period * pulse_stride)
 
 
-def frame_at_detector(
+def chopper_cascade_frames(
     source_wavelength_range: SourceWavelengthRange,
     source_time_range: SourceTimeRange,
     choppers: Choppers,
-    ltotal: Ltotal,
-) -> FrameAtDetector:
+) -> ChopperCascadeFrames:
     """
-    Return the frame at the detector.
+    Return all the chopper frames.
 
-    This is the result of propagating the source pulse through the chopper cascade to
-    the detector. The detector may be a monitor or a detector after scattering off the
-    sample. The frame bounds are then computed from this.
+    This is the result of propagating the source pulse through the chopper cascade.
 
     It is assumed that the opening and closing times of the input choppers have been
     setup correctly. This includes a correct definition of the offsets in
@@ -217,17 +218,25 @@ def frame_at_detector(
         wavelength_min=source_wavelength_range[0],
         wavelength_max=source_wavelength_range[-1],
     )
-    frames = frames.chop(choppers.values())
-    return FrameAtDetector(frames[ltotal])
+    return ChopperCascadeFrames(frames.chop(choppers.values()))
+
+
+def frame_at_detector(
+    frames: ChopperCascadeFrames,
+    ltotal: Ltotal,
+) -> FrameAtDetector:
+    """
+    Return the frame at the detector.
+
+    This is the result of propagating the source pulse through the chopper cascade to
+    the detector. The detector may be a monitor or a detector after scattering off the
+    sample. The frame bounds are then computed from this.
+    """
+    return FrameAtDetector(frames[-1].propagate_to(ltotal))
 
 
 def frame_bounds(frame: FrameAtDetector) -> FrameBounds:
     return FrameBounds(frame.bounds())
-
-
-def subframe_bounds(frame: FrameAtDetector) -> SubframeBounds:
-    """Used for WFM."""
-    return SubframeBounds(frame.subbounds())
 
 
 def frame_wrapped_time_offset(offset: PulseWrappedTimeOffset) -> FrameWrappedTimeOffset:
@@ -333,7 +342,8 @@ def offset_from_wrapped(
     """
     time_bounds = frame_bounds['time']
     frame_period = frame_period.to(unit=elem_unit(time_bounds))
-    if time_bounds['bound', -1] - time_bounds['bound', 0] > frame_period:
+    diff = (time_bounds['bound', -1] - time_bounds['bound', 0]) - frame_period
+    if (diff > sc.scalar(0.0, unit=frame_period.unit)).any():
         raise ValueError(
             "Frames are overlapping: Computed frame bounds "
             f"{frame_bounds} are larger than frame period {frame_period}."
@@ -342,7 +352,7 @@ def offset_from_wrapped(
     wrapped_time_min = time_offset_min % frame_period
     # We simply cut, without special handling of times that fall outside the frame
     # period. Everything below and above is allowed. The alternative would be to, e.g.,
-    # replace invalid inputs with NaN, but this would probable cause more trouble down
+    # replace invalid inputs with NaN, but this would probably cause more trouble down
     # the line.
     begin = sc.full_like(wrapped_time_min, value=-math.inf)
     end = sc.full_like(wrapped_time_min, value=math.inf)
@@ -427,120 +437,200 @@ def time_offset(unwrapped: UnwrappedData) -> TimeOffset:
     return TimeOffset(unwrapped.coords['time_offset'])
 
 
+def maybe_clip_detector_subframes(
+    frame: FrameAtDetector, ltotal: Ltotal, chopper_cascade_frames: ChopperCascadeFrames
+) -> CleanFrameAtDetector:
+    """
+    Check for time overlap between subframes.
+    If overlap is found, we clip away the regions where there is overlap.
+    This is done by adding a fake chopper which is closed during the overlapping times.
+
+    Examples:
+
+    .. code-block:: text
+
+       1. partial overlap:
+       |-------------|            ->   |--------|
+                |-------------|   ->                 |--------|
+
+       2. total overlap:
+       |----------------------|   ->   |--------|       |-----|
+                |-------|         ->
+
+    In the case of multiple detector pixels, we find the pixel closest to the source
+    and use that as the reference for the clipping.
+    Because we are removing the entire region where overlap occurs, we are inserting
+    a gap between subframes. The gap starts at the start of subframe n+1 and ends at
+    the end of subframe n.
+    The distance it would take for the gap to be entirely filled again with overlap
+    is usually greater than the range of pixel distances (some edge cases are possible).
+
+    TODO: We currently do not handle the case where there is overlap between subframes
+    at the detector farthest from the source, and no overlap at the detector closest to
+    the source. Although rare, this is not impossible.
+
+    Parameters
+    ----------
+    frame:
+        The frame at the detector, with subframes that may overlap.
+    ltotal:
+        The total distance between the source and the detector.
+    chopper_cascade_frames:
+        All the frames in the chopper cascade, before the detector.
+    """
+    # Need subframe dim at the end because sorting requires contiguous data
+    dims = (*ltotal.dims, 'subframe')
+    starts = sc.concat(
+        [sf.start_time for sf in frame.subframes], dim='subframe'
+    ).transpose(dims)
+    ends = sc.concat([sf.end_time for sf in frame.subframes], dim='subframe').transpose(
+        dims
+    )
+
+    sizes = starts.sizes
+    sizes['subframe'] *= 2
+    bounds = sc.empty(sizes=sizes, unit=starts.unit)
+    bounds['subframe', ::2] = sc.sort(starts, 'subframe')
+    bounds['subframe', 1::2] = sc.sort(ends, 'subframe')
+    if all(sc.issorted(bounds, 'subframe').flatten(to='x')):
+        return CleanFrameAtDetector(frame)
+
+    sorted_times = sc.sort(bounds, 'subframe')
+    if ltotal.dims:
+        # Find the pixel closest to the source
+        closest_pixel = np.argmin(ltotal.flatten(to='pixel').values)
+        sorted_times = sorted_times.flatten(dims=ltotal.dims, to='pixel')[
+            'pixel', closest_pixel
+        ]
+
+    # Make a fake chopper that is closed during the overlapping times, placed
+    # immediately before the closest detector pixel.
+    fake_chopper = chopper_cascade.Chopper(
+        distance=frame.distance.min(),
+        time_open=sorted_times['subframe', ::2],
+        time_close=sorted_times['subframe', 1::2],
+    )
+    # We cannot chop frames at multiple distances at once, so instead of chopping the
+    # frame at the detector, we chop the last frame in the chopper cascade before the
+    # detector.
+    last_frame = chopper_cascade_frames[-1]
+
+    # Chop the subframes one by one
+    # TODO: We currently need to chop them one by one as the `chop` method seems
+    # to not work correctly with overlapping subframes.
+    subframes = []
+    for subframe in last_frame.subframes:
+        f = chopper_cascade.Frame(distance=last_frame.distance, subframes=[subframe])
+        chopped = f.chop(fake_chopper)
+        subframes.extend(
+            [
+                sf
+                for sf in chopped.subframes
+                if not sc.allclose(sf.start_time, sf.end_time)
+            ]
+        )
+
+    return CleanFrameAtDetector(
+        chopper_cascade.Frame(
+            distance=fake_chopper.distance,
+            subframes=subframes,
+        ).propagate_to(frame.distance)
+    )
+
+
 def time_of_flight_origin_wfm(
-    distance: TimeOfFlightOriginDistance,
-    subframe_origin_time: TimeOfFlightOriginTime,
-    subframe_bounds: SubframeBounds,
+    frames: ChopperCascadeFrames,
+    clean_detector_frame: CleanFrameAtDetector,
 ) -> TimeOfFlightOrigin:
     """
     Compute the time-of-flight origin in the WFM case.
     For WFM there is not a single time-of-flight "origin", but one for each subframe.
-    In the case of a pair of WFM choppers, the distance to the time-of-flight origin
-    would typically be the average of the distances of the choppers, while the time
-    of the time-of-flight origin would be the average of the opening and closing times
-    of the WFM choppers.
 
     Parameters
     ----------
-    distance:
-        The distance to the time-of-flight origin. In the case of a pair of WFM
-        choppers, this would for example be the mid-point between the choppers.
-    subframe_origin_time:
-        The time of the time-of-flight origin for each subframe. In the case of a pair
-        of WFM choppers, this would for example be the mid-point between the opening
-        and closing times of the choppers.
-    subframe_bounds:
-        The computed subframe boundaries, used to offset the raw timestamps for WFM.
+    frames:
+        All the frames in the chopper cascade.
+    clean_detector_frame:
+        The frame at the detector, with subframes that do not overlap.
+
+    Notes
+    -----
+    To find the time-of-flight origin, we ray-trace the fastest and slowest neutrons of
+    the subframes back to the first chopper to determine the time-of-flight origin.
+    The assumption here is that the first chopper is one of the two wfm choppers.
+    We also assume that the first chopper will be inundated with neutrons from the
+    source, and propagating the boundaries of the frame backwards should thus give
+    us a good estimate of the opening and closing times of the first chopper. There is
+    also the general rule that the longer the instrument, the better the wavelength
+    resolution, so going back to the first chopper also makes sense.
+
+    We use this method instead of reading the opening and closing times of the choppers
+    because it is not possible to know in a trivial way which opening and closing times
+    correspond to which subframe at the detector. There is not always a 1-1
+    mapping between the subframes at the detector and the chopper cutouts (for instance,
+    the DREAM pulse shaping choppers have 8 cutouts, but typically create 2 subframes
+    at the detector). In addition, if the chopper is rotating rapidly, there may be
+    multiple opening and closing times, where the extra subframes get blocked by other
+    choppers further down the beamline.
+
+    While developing this method, we attempted several other implementations, which all
+    gave worse results than the current implementation. These are summarized here for
+    reference:
+
+    1. We tried to ray-trace the fastest and slowest neutrons of the subframes back to
+       the point in time and space where they intersected, to get the converging point
+       for all neutrons. This gives a different distance for each subframe, which is
+       not really supported in the current implementation of transform_coords.
+
+    2. A slightly modified version of idea 1. was to ray-trace back to the intersection
+       point for each frame, and then compute a mean distance that would apply to all
+       frames. We then re-traced all subframes back to this mean distance. This seems to
+       give a worse estimate of the time-of-flight origin, probably because in a
+       slightly faulty chopper setup (such as V20), we are not always guaranteed that
+       the neutrons went through the openings they were meant to go through. We are
+       however relatively sure which openings of the first chopper they went through.
     """
-    times = subframe_bounds['time'].flatten(dims=['subframe', 'bound'], to='subframe')
+    sorted_frame = chopper_cascade.Frame(
+        distance=clean_detector_frame.distance,
+        subframes=sorted(
+            clean_detector_frame.subframes, key=lambda x: x.start_time.min()
+        ),
+    )
+
+    times = sorted_frame.subbounds()['time'].flatten(
+        dims=['subframe', 'bound'], to='subframe'
+    )
     # All times before the first subframe and after the last subframe should be
     # replaced by NaN. We add a large padding to make sure all events are covered.
     padding = sc.scalar(1e9, unit='s').to(unit=times.unit)
-    low = times[0] - padding
-    high = times[-1] + padding
+    low = times['subframe', 0] - padding
+    high = times['subframe', -1] + padding
     times = sc.concat([low, times, high], 'subframe')
 
-    # Select n time origins to match subframe bounds.
-    # We compute the time the fastest neutron would take to reach the chopper and take
-    # the first set of time origins that are greater than that time.
-    t_fastest_neutron = (
-        chopper_cascade.wavelength_to_inverse_velocity(
-            subframe_bounds['wavelength'].min()
-        )
-        * distance
-    )
-    subframe_origin_time = subframe_origin_time[
-        subframe_origin_time > t_fastest_neutron
-    ][: subframe_bounds.sizes['subframe']]
+    # Propagate the subframes from the detector back to the position of the first
+    # chopper (note that frame 0 is the pulse itself).
+    at_first_chopper = sorted_frame.propagate_to(frames[1].distance)
 
-    # We need to add nans between each subframe_origin_time offsets for the bins before,
+    starts = sc.concat(
+        [subframe.start_time for subframe in at_first_chopper.subframes], dim='subframe'
+    )
+    ends = sc.concat(
+        [subframe.end_time for subframe in at_first_chopper.subframes], dim='subframe'
+    )
+    time_origins = 0.5 * (starts + ends)
+
+    # We need to add nans between each crossing_time offsets for the bins before,
     # after, and between the subframes.
-    shift = sc.full(
-        sizes={'subframe': len(subframe_origin_time) * 2 + 1},
-        value=math.nan,
-        unit='s',
-    )
-    shift[1::2] = subframe_origin_time.rename_dims(cutout='subframe')
-    return TimeOfFlightOrigin(
-        time=sc.DataArray(shift, coords={'subframe': times}),
-        distance=distance,
+    sizes = time_origins.sizes
+    sizes['subframe'] = 2 * sizes['subframe'] + 1
+    shift = sc.full(sizes=sizes, value=math.nan, unit='s')
+    shift['subframe', 1::2] = time_origins
+
+    origin_time = sc.DataArray(
+        shift.transpose(times.dims).copy(deep=True), coords={'subframe': times}
     )
 
-
-def wfm_choppers(
-    choppers: Choppers,
-    wfm_chopper_names: WFMChopperNames,
-) -> WFMChoppers:
-    """
-    Get the WFM choppers from the chopper cascade.
-    The choppers are identified by their names.
-
-    Parameters
-    ----------
-    choppers:
-        All the choppers in the beamline.
-    wfm_chopper_names:
-        Names of the WFM choppers.
-    """
-    return WFMChoppers(tuple(choppers[name] for name in wfm_chopper_names))
-
-
-def time_of_flight_origin_distance_wfm_from_choppers(
-    wfm_choppers: WFMChoppers,
-) -> TimeOfFlightOriginDistance:
-    """
-    Compute the distance to the time of flight origin, in the case of a set
-    (usually a pair) of WFM choppers. The distance is the average of the distances
-    of the choppers.
-
-    Parameters
-    ----------
-    wfm_choppers:
-        The WFM choppers.
-    """
-    return TimeOfFlightOriginDistance(
-        sc.reduce([ch.distance for ch in wfm_choppers]).mean()
-    )
-
-
-def time_of_flight_origin_time_wfm_from_choppers(
-    wfm_choppers: WFMChoppers,
-) -> TimeOfFlightOriginTime:
-    """
-    Compute the time of the time of flight origin, in the case of a set
-    (usually a pair) of WFM choppers. The time is the mean of the opening and closing
-    times of the WFM choppers.
-
-    Parameters
-    ----------
-    wfm_choppers:
-        The WFM choppers.
-    """
-    times = []
-    for ch in wfm_choppers:
-        times.append(ch.time_open)
-        times.append(ch.time_close)
-    return TimeOfFlightOriginTime(sc.reduce(times).mean())
+    return TimeOfFlightOrigin(time=origin_time, distance=at_first_chopper.distance)
 
 
 def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
@@ -632,6 +722,7 @@ def to_time_of_flight(
 
 
 _common_providers = (
+    chopper_cascade_frames,
     frame_at_detector,
     frame_bounds,
     frame_period,
@@ -642,18 +733,11 @@ _common_providers = (
 )
 
 _non_skipping = (frame_wrapped_time_offset,)
-_skipping = (
-    frame_wrapped_time_offset_pulse_skipping,
-    pulse_offset,
-    time_zero,
-)
+_skipping = (frame_wrapped_time_offset_pulse_skipping, pulse_offset, time_zero)
 
 _wfm = (
-    subframe_bounds,
+    maybe_clip_detector_subframes,
     time_offset,
-    time_of_flight_origin_time_wfm_from_choppers,
-    time_of_flight_origin_distance_wfm_from_choppers,
-    wfm_choppers,
     time_of_flight_origin_wfm,
 )
 _non_wfm = (time_of_flight_origin_from_chopper,)
@@ -677,7 +761,7 @@ def time_of_flight_origin_from_choppers_providers(wfm: bool = False):
         If True, the data is assumed to be from a WFM instrument.
     """
     wfm = _wfm if wfm else _non_wfm
-    _common = (source_chopper, frame_at_detector, subframe_bounds)
+    _common = (source_chopper, frame_at_detector)
     return _common + wfm
 
 

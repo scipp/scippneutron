@@ -9,5 +9,5 @@
 -r basetest.txt
 importlib-resources==6.4.5
     # via tof
-tof==24.10.0
+tof==24.11.0
     # via -r test.in
