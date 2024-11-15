@@ -201,12 +201,13 @@ class Frame:
         :
             Chopped frame.
         """
-        if chopper.distance < self.distance:
+        distance = chopper.distance.to(unit=self.distance.unit, copy=False)
+        if distance < self.distance:
             raise ValueError(
-                f'Chopper distance {chopper.distance} is smaller than frame distance '
+                f'Chopper distance {distance} is smaller than frame distance '
                 f'{self.distance}'
             )
-        frame = self.propagate_to(chopper.distance)
+        frame = self.propagate_to(distance)
 
         # A chopper can have multiple openings, call _chop for each of them. The result
         # is the union of the resulting subframes.
