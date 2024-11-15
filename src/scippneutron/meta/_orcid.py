@@ -19,14 +19,14 @@ class ORCIDiD:
 
         >>> from scippneutron.meta import ORCIDiD
         >>> orcid_id = ORCIDiD('0000-0000-0000-0001')
-        >>> orcid_id
-        https://orcid.org/0000-0000-0000-0001
+        >>> str(orcid_id)
+        'https://orcid.org/0000-0000-0000-0001'
 
     Or equivalently with an explicit resolver:
 
         >>> orcid_id = ORCIDiD('https://orcid.org/0000-0000-0000-0001')
-        >>> orcid_id
-        https://orcid.org/0000-0000-0000-0001
+        >>> str(orcid_id)
+        'https://orcid.org/0000-0000-0000-0001'
     """
 
     __slots__ = ('_orcid_id',)
