@@ -652,7 +652,9 @@ def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
     if da.bins is not None:
         da = da.copy(deep=False)
         da.data = sc.bins(**da.bins.constituents)
-        da.bins.coords['time_offset'] = da.bins.coords['event_time_offset'] + delta
+        da.bins.coords['time_offset'] = da.bins.coords['event_time_offset'] + delta.to(
+            unit=elem_unit(da.bins.coords['event_time_offset']), copy=False
+        )
         if 'event_time_zero' in da.bins.coords:
             coord = da.bins.coords['event_time_zero']
         else:
@@ -664,7 +666,8 @@ def unwrap_data(da: RawData, delta: DeltaFromWrapped) -> UnwrappedData:
     else:
         # 'time_of_flight' is the name in, e.g., NXmonitor
         da = da.transform_coords(
-            time_offset=lambda time_of_flight: time_of_flight + delta,
+            time_offset=lambda time_of_flight: time_of_flight
+            + delta.to(unit=time_of_flight.unit, copy=False),
             keep_inputs=False,
         )
         # Generally the coord is now not ordered, might want to cut, swap, and concat,
@@ -697,6 +700,11 @@ def to_time_of_flight(
     )
     delta = origin.time
     if isinstance(delta, sc.DataArray):
+        time_unit = elem_unit(time_offset)
+        delta.data = delta.data.to(unit=time_unit, copy=False)
+        delta.coords['subframe'] = delta.coords['subframe'].to(
+            unit=time_unit, copy=False
+        )
         # Will raise if subframes overlap, since coord for lookup table must be sorted
         delta = sc.lookup(delta, dim='subframe')[time_offset]
     if da.bins is not None:
@@ -717,7 +725,7 @@ def to_time_of_flight(
                 "used for calculating time-of-flight."
             )
 
-    da.coords['Ltotal'] = ltotal - origin.distance
+    da.coords['Ltotal'] = ltotal - origin.distance.to(unit=ltotal.unit, copy=False)
     return TofData(da)
 
 
