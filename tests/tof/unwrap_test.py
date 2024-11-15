@@ -38,7 +38,7 @@ def test_frame_period_is_pulse_period_if_not_pulse_skipping() -> None:
     pl = sl.Pipeline(unwrap.unwrap_providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
-    pl[unwrap.PulseStride | None] = None
+    pl[unwrap.PulseStride] = 1
     assert_identical(pl.compute(unwrap.FramePeriod), period)
 
 
@@ -47,61 +47,61 @@ def test_frame_period_is_multiple_pulse_period_if_pulse_skipping(stride) -> None
     pl = sl.Pipeline(unwrap.unwrap_providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
-    pl[unwrap.PulseStride | None] = stride
+    pl[unwrap.PulseStride] = stride
     assert_identical(pl.compute(unwrap.FramePeriod), stride * period)
 
 
-@pytest.mark.parametrize('stride', [1, 2, 3, 4])
-def test_pulse_offset(stride) -> None:
-    pl = sl.Pipeline(unwrap.unwrap_providers(pulse_skipping=True))
-    period = sc.scalar(123.0, unit='ms')
-    pl[unwrap.PulsePeriod] = period
-    pl[unwrap.PulseStride | None] = stride
-    start = sc.datetime('2020-01-01T00:00:00.0', unit='ns')
-    time_zero = start + sc.arange('pulse', 0 * period, 100 * period, period).to(
-        unit='ns', dtype='int64'
-    )
-    pl[unwrap.TimeZero] = time_zero
+# @pytest.mark.parametrize('stride', [1, 2, 3, 4])
+# def test_pulse_offset(stride) -> None:
+#     pl = sl.Pipeline(unwrap.unwrap_providers(pulse_skipping=True))
+#     period = sc.scalar(123.0, unit='ms')
+#     pl[unwrap.PulsePeriod] = period
+#     pl[unwrap.PulseStride] = stride
+#     start = sc.datetime('2020-01-01T00:00:00.0', unit='ns')
+#     time_zero = start + sc.arange('pulse', 0 * period, 100 * period, period).to(
+#         unit='ns', dtype='int64'
+#     )
+#     pl[unwrap.TimeZero] = time_zero
 
-    result = pl.compute(unwrap.PulseOffset)
-    assert_identical(
-        result, (sc.arange('pulse', 0, 100, dtype='int64') % stride) * period
-    )
-
-
-def test_offset_from_wrapped() -> None:
-    pl = sl.Pipeline(unwrap.unwrap_providers())
-    period = sc.scalar(123.0, unit='ms')
-    pl[unwrap.PulsePeriod] = period
-    pl[unwrap.PulseStride | None] = None
-    pl[unwrap.FrameBounds] = unwrap.FrameBounds(
-        sc.DataGroup(time=sc.array(dims=['bound'], values=[0.01, 0.02], unit='s'))
-    )
-    wrapped_offset = sc.linspace('event', 0.0, 123.0, num=1001, unit='ms')
-    pl[unwrap.PulseWrappedTimeOffset] = unwrap.PulseWrappedTimeOffset(wrapped_offset)
-    offset = pl.compute(unwrap.DeltaFromWrapped)
-    # Times below 10 ms (we currently cut at lower bound) should be offset by period.
-    da = sc.DataArray(offset, coords={'time': wrapped_offset})
-    assert sc.all(da['time', : 10 * sc.Unit('ms')].data == period.to(unit='s'))
-    assert sc.all(da['time', 10 * sc.Unit('ms') :].data == sc.scalar(0.0, unit='s'))
+#     result = pl.compute(unwrap.PulseOffset)
+#     assert_identical(
+#         result, (sc.arange('pulse', 0, 100, dtype='int64') % stride) * period
+#     )
 
 
-def test_offset_from_wrapped_has_no_special_handling_for_out_of_period_events() -> None:
-    pl = sl.Pipeline(unwrap.unwrap_providers())
-    period = sc.scalar(123.0, unit='ms')
-    pl[unwrap.PulsePeriod] = period
-    pl[unwrap.PulseStride | None] = None
-    pl[unwrap.FrameBounds] = unwrap.FrameBounds(
-        sc.DataGroup(time=sc.array(dims=['bound'], values=[0.01, 0.02], unit='s'))
-    )
-    wrapped_offset = sc.linspace('event', -10000.0, 10000.0, num=10001, unit='ms')
-    pl[unwrap.PulseWrappedTimeOffset] = unwrap.PulseWrappedTimeOffset(wrapped_offset)
-    offset = pl.compute(unwrap.DeltaFromWrapped)
-    da = sc.DataArray(offset, coords={'time': wrapped_offset})
-    # Negative times and times > 123 ms are technically invalid, but it does not affect
-    # unwrapping, so they should be left as-is.
-    assert sc.all(da['time', : 10 * sc.Unit('ms')].data == period.to(unit='s'))
-    assert sc.all(da['time', 10 * sc.Unit('ms') :].data == sc.scalar(0.0, unit='s'))
+# def test_offset_from_wrapped() -> None:
+#     pl = sl.Pipeline(unwrap.unwrap_providers())
+#     period = sc.scalar(123.0, unit='ms')
+#     pl[unwrap.PulsePeriod] = period
+#     pl[unwrap.PulseStride] = None
+#     pl[unwrap.FrameBounds] = unwrap.FrameBounds(
+#         sc.DataGroup(time=sc.array(dims=['bound'], values=[0.01, 0.02], unit='s'))
+#     )
+#     wrapped_offset = sc.linspace('event', 0.0, 123.0, num=1001, unit='ms')
+#     pl[unwrap.PulseWrappedTimeOffset] = unwrap.PulseWrappedTimeOffset(wrapped_offset)
+#     offset = pl.compute(unwrap.DeltaFromWrapped)
+#     # Times below 10 ms (we currently cut at lower bound) should be offset by period.
+#     da = sc.DataArray(offset, coords={'time': wrapped_offset})
+#     assert sc.all(da['time', : 10 * sc.Unit('ms')].data == period.to(unit='s'))
+#     assert sc.all(da['time', 10 * sc.Unit('ms') :].data == sc.scalar(0.0, unit='s'))
+
+
+# def test_offset_from_wrapped_has_no_special_handling_for_out_of_period_events() -> None:
+#     pl = sl.Pipeline(unwrap.unwrap_providers())
+#     period = sc.scalar(123.0, unit='ms')
+#     pl[unwrap.PulsePeriod] = period
+#     pl[unwrap.PulseStride] = None
+#     pl[unwrap.FrameBounds] = unwrap.FrameBounds(
+#         sc.DataGroup(time=sc.array(dims=['bound'], values=[0.01, 0.02], unit='s'))
+#     )
+#     wrapped_offset = sc.linspace('event', -10000.0, 10000.0, num=10001, unit='ms')
+#     pl[unwrap.PulseWrappedTimeOffset] = unwrap.PulseWrappedTimeOffset(wrapped_offset)
+#     offset = pl.compute(unwrap.DeltaFromWrapped)
+#     da = sc.DataArray(offset, coords={'time': wrapped_offset})
+#     # Negative times and times > 123 ms are technically invalid, but it does not affect
+#     # unwrapping, so they should be left as-is.
+#     assert sc.all(da['time', : 10 * sc.Unit('ms')].data == period.to(unit='s'))
+#     assert sc.all(da['time', 10 * sc.Unit('ms') :].data == sc.scalar(0.0, unit='s'))
 
 
 def test_unwrap_with_no_choppers(ess_10s_14Hz, ess_pulse) -> None:
@@ -118,22 +118,23 @@ def test_unwrap_with_no_choppers(ess_10s_14Hz, ess_pulse) -> None:
     mon, ref = beamline.get_monitor('monitor')
 
     pl = sl.Pipeline(
-        unwrap.unwrap_providers()
-        + unwrap.time_of_flight_providers()
-        + unwrap.time_of_flight_origin_from_choppers_providers()
+        unwrap.unwrap_providers
+        # ()
+        # + unwrap.time_of_flight_providers()
+        # + unwrap.time_of_flight_origin_from_choppers_providers()
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride | None] = None
+    pl[unwrap.PulseStride] = 1
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
         ess_pulse.wavelength_max,
     )
     pl[unwrap.Choppers] = {}
-    pl[unwrap.SourceChopperName | None] = None
+    # pl[unwrap.SourceChopperName | None] = None
     pl[unwrap.Ltotal] = distance
-    unwrapped = pl.compute(unwrap.UnwrappedData)
+    unwrapped_toa = pl.compute(unwrap.UnwrappedTimeOfArrival)
     # No unwrap is happening, frame does not overlap next pulse.
     assert (mon.coords['event_time_zero'] == unwrapped.bins.coords['pulse_time']).all()
 
@@ -161,7 +162,7 @@ def test_unwrap_with_frame_overlap_raises(ess_10s_14Hz, ess_pulse) -> None:
     pl = sl.Pipeline(unwrap.unwrap_providers())
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride | None] = None
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -192,7 +193,7 @@ def test_standard_unwrap(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride | None] = None
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -235,7 +236,7 @@ def test_standard_unwrap_histogram_mode(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride | None] = None
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -269,7 +270,7 @@ def test_pulse_skipping_unwrap(ess_10s_7Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = 0.5 * beamline._source.pulse_period
-    pl[unwrap.PulseStride | None] = None
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -318,7 +319,7 @@ def test_pulse_skipping_unwrap_histogram_mode_not_implemented(
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = 0.5 * beamline._source.pulse_period
-    pl[unwrap.PulseStride | None] = None
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -357,7 +358,7 @@ def test_wfm_unwrap(ess_10s_14Hz, ess_pulse) -> None:
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride | None] = None
+    pl[unwrap.PulseStride] = None
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,

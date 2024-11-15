@@ -49,10 +49,10 @@ bounds are then computed from this.
 # The computed frame boundaries, used to unwrap the raw timestamps.
 # """
 
-# FramePeriod = NewType('FramePeriod', sc.Variable)
-# """
-# The period of a frame, a (small) integer multiple of the source period.
-# """
+FramePeriod = NewType('FramePeriod', sc.Variable)
+"""
+The period of a frame, a (small) integer multiple of the source period.
+"""
 
 # FrameWrappedTimeOffset = NewType('FrameWrappedTimeOffset', sc.Variable)
 # """
@@ -226,12 +226,10 @@ Detector data with time-of-flight and time zero coordinates.
 # """
 
 
-# def frame_period(
-#     pulse_period: PulsePeriod, pulse_stride: PulseStride | None
-# ) -> FramePeriod:
-#     if pulse_stride is None:
-#         return pulse_period
-#     return FramePeriod(pulse_period * pulse_stride)
+def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FramePeriod:
+    # if pulse_stride is None:
+    #     return pulse_period
+    return FramePeriod(pulse_period * pulse_stride)
 
 
 def frame_at_detector(
@@ -350,12 +348,9 @@ def unwrapped_time_of_arrival_minus_frame_start_time(
 
 def time_of_arrival_modulo_period(
     toa_minus_start_time: UnwrappedTimeOfArrivalMinusStartTime,
-    period: PulsePeriod,
-    pulse_stride: PulseStride,
+    frame_period: FramePeriod,
 ) -> TimeOfArrivalModuloPeriod:
-    if pulse_stride is None:
-        pulse_stride = 1
-    return TimeOfArrivalModuloPeriod(toa_minus_start_time % (pulse_stride * period))
+    return TimeOfArrivalModuloPeriod(toa_minus_start_time % frame_period)
 
 
 def slope_and_intercept_lookups(
@@ -799,6 +794,7 @@ def time_of_flight_data(da: RawData, tof: TofFromLookup) -> TofData:
 
 providers = (
     frame_at_detector,
+    frame_period,
     unwrapped_time_of_arrival,
     frame_at_detector_start_time,
     unwrapped_time_of_arrival_minus_frame_start_time,
