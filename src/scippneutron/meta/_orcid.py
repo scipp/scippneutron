@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 from typing import Any
 
 from pydantic import GetCoreSchemaHandler
@@ -21,7 +22,7 @@ class ORCIDiD:
         >>> orcid_id
         https://orcid.org/0000-0000-0000-0001
 
-    Or equivalently with an explicit prefix:
+    Or equivalently with an explicit resolver:
 
         >>> orcid_id = ORCIDiD('https://orcid.org/0000-0000-0000-0001')
         >>> orcid_id
@@ -50,10 +51,12 @@ class ORCIDiD:
         return NotImplemented
 
     def __ne__(self, other: object) -> bool:
-        return not self.__eq__(other)
+        if (b := self.__eq__(other)) is NotImplemented:
+            return NotImplemented
+        return not b
 
     def __hash__(self) -> int:
-        return hash(str(self._orcid_id))
+        return hash(self._orcid_id)
 
     @classmethod
     def __get_pydantic_core_schema__(
@@ -74,37 +77,38 @@ def _parse_pydantic(value: str | ORCIDiD) -> ORCIDiD:
     return ORCIDiD(value)
 
 
-_ORCID_PREFIX: str = 'https://orcid.org'
+_ORCID_RESOLVER: str = 'https://orcid.org'
 
 
 def _parse_id(value: str) -> str:
     parts = value.rsplit('/', 1)
     if len(parts) == 2:
-        prefix, orcid_id = parts
-        if prefix != _ORCID_PREFIX:
-            # must be the correct ORCID URL
+        resolver, orcid_id = parts
+        if resolver != _ORCID_RESOLVER:
+            # Must be the correct ORCID URL.
             raise ValueError(
-                f"Invalid ORCID URL: '{prefix}'. Must be '{_ORCID_PREFIX}'"
+                f"Invalid ORCID URL: '{resolver}'. Must be '{_ORCID_RESOLVER}'"
             )
     else:
-        value = f'{_ORCID_PREFIX}/{value}'
+        value = f'{_ORCID_RESOLVER}/{value}'
         (orcid_id,) = parts
-
-    segments = orcid_id.split('-')
-    if len(segments) != 4 or not all(len(s) == 4 for s in segments):
-        # must have four blocks of numbers
-        # and each block must have 4 digits
-        raise ValueError(f"Invalid ORCID iD: '{orcid_id}'. Incorrect structure.")
-    if _orcid_id_checksum(orcid_id) != orcid_id[-1]:
-        # checksum must match the last digit
-        raise ValueError(f"Invalid ORCID iD: '{orcid_id}'. Checksum does not match.")
-
+    _check_id(orcid_id)
     return value
 
 
-def _orcid_id_checksum(orcid_id: str) -> str:
+def _check_id(orcid_id: str) -> None:
+    segments = orcid_id.split('-')
+    if len(segments) != 4 or not all(len(s) == 4 for s in segments):
+        # Must have 4 blocks of 4 digits each.
+        raise ValueError(f"Invalid ORCID iD: '{orcid_id}'. Incorrect structure.")
+    if _orcid_id_checksum(segments) != orcid_id[-1]:
+        # Checksum must match the last digit.
+        raise ValueError(f"Invalid ORCID iD: '{orcid_id}'. Checksum does not match.")
+
+
+def _orcid_id_checksum(segments: list[str]) -> str:
     total = 0
-    for c in orcid_id[:-1].replace('-', ''):
-        total = (total + int(c)) * 2
+    for d in map(int, itertools.islice(itertools.chain(*segments), 4 * 4 - 1)):
+        total = (total + d) * 2
     result = (12 - total % 11) % 11
     return 'X' if result == 10 else str(result)
