@@ -326,7 +326,7 @@ def test_dream_wfm_with_subframe_time_overlap(
     )
 
     workflow[unwrap.Choppers] = choppers
-    workflow[unwrap.Ltotal] = ltotal.to(unit=distance_unit, copy=False)
+    workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
     workflow[unwrap.RawData] = raw_data
 
     # Compute time-of-flight

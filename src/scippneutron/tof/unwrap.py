@@ -36,6 +36,11 @@ Choppers used to define the frame parameters.
 # compute the frame bounds.
 # """
 
+ChopperCascadeFrames = NewType('ChopperCascadeFrames', chopper_cascade.FrameSequence)
+"""
+Frames of the chopper cascade.
+"""
+
 FrameAtDetector = NewType('FrameAtDetector', chopper_cascade.Frame)
 """
 Result of passing the source pulse through the chopper cascade to the detector.
@@ -232,11 +237,24 @@ def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FrameP
     return FramePeriod(pulse_period * pulse_stride)
 
 
-def frame_at_detector(
+def chopper_cascade_frames(
     source_wavelength_range: SourceWavelengthRange,
     source_time_range: SourceTimeRange,
     choppers: Choppers,
+) -> ChopperCascadeFrames:
+    frames = chopper_cascade.FrameSequence.from_source_pulse(
+        time_min=source_time_range[0],
+        time_max=source_time_range[-1],
+        wavelength_min=source_wavelength_range[0],
+        wavelength_max=source_wavelength_range[-1],
+    )
+    return ChopperCascadeFrames(frames.chop(choppers.values()))
+
+
+def frame_at_detector(
+    frames: ChopperCascadeFrames,
     ltotal: Ltotal,
+    period: FramePeriod,
 ) -> FrameAtDetector:
     """
     Return the frame at the detector.
@@ -249,14 +267,24 @@ def frame_at_detector(
     setup correctly. This includes a correct definition of the offsets in
     pulse-skipping mode, i.e., the caller must know which pulses are in use.
     """
-    frames = chopper_cascade.FrameSequence.from_source_pulse(
-        time_min=source_time_range[0],
-        time_max=source_time_range[-1],
-        wavelength_min=source_wavelength_range[0],
-        wavelength_max=source_wavelength_range[-1],
-    )
-    frames = frames.chop(choppers.values())
-    return FrameAtDetector(frames[-1].propagate_to(ltotal))
+    # frames = chopper_cascade.FrameSequence.from_source_pulse(
+    #     time_min=source_time_range[0],
+    #     time_max=source_time_range[-1],
+    #     wavelength_min=source_wavelength_range[0],
+    #     wavelength_max=source_wavelength_range[-1],
+    # )
+    # frames = frames.chop(choppers.values())
+    at_detector = frames[-1].propagate_to(ltotal)
+
+    # Check that the frame bounds do not span a range larger than the frame period.
+    # This would indicate that the chopper phases are not set correctly.
+    bounds = at_detector.bounds()['time']
+    if bounds.max() - bounds.min() > period:
+        raise ValueError(
+            "Frames are overlapping: Computed frame bounds "
+            f"{bounds} are larger than frame period {period}."
+        )
+    return FrameAtDetector(at_detector)
 
 
 # def frame_bounds(frame: FrameAtDetector) -> FrameBounds:
@@ -809,6 +837,7 @@ def time_of_flight_data(da: RawData, tof: TofFromLookup) -> TofData:
 
 
 providers = (
+    chopper_cascade_frames,
     frame_at_detector,
     frame_period,
     unwrapped_time_of_arrival,
