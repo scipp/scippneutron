@@ -332,7 +332,9 @@ def unwrapped_time_of_arrival(
     else:
         coord = da.bins.coords['event_time_offset']
 
-    toa = coord + sc.arange('pulse', da.sizes['pulse']) * period
+    toa = coord + (sc.arange('pulse', da.sizes['pulse']) * period).to(
+        unit=elem_unit(coord), copy=False
+    )
     return UnwrappedTimeOfArrival(toa)
 
 
@@ -343,14 +345,19 @@ def frame_at_detector_start_time(frame: FrameAtDetector) -> FrameAtDetectorStart
 def unwrapped_time_of_arrival_minus_frame_start_time(
     toa: UnwrappedTimeOfArrival, start_time: FrameAtDetectorStartTime
 ) -> UnwrappedTimeOfArrivalMinusStartTime:
-    return UnwrappedTimeOfArrivalMinusStartTime(toa - start_time)
+    return UnwrappedTimeOfArrivalMinusStartTime(
+        toa - start_time.to(unit=elem_unit(toa), copy=False)
+    )
 
 
 def time_of_arrival_modulo_period(
     toa_minus_start_time: UnwrappedTimeOfArrivalMinusStartTime,
     frame_period: FramePeriod,
 ) -> TimeOfArrivalModuloPeriod:
-    return TimeOfArrivalModuloPeriod(toa_minus_start_time % frame_period)
+    return TimeOfArrivalModuloPeriod(
+        toa_minus_start_time
+        % frame_period.to(unit=elem_unit(toa_minus_start_time), copy=False)
+    )
 
 
 def slope_and_intercept_lookups(
@@ -379,7 +386,9 @@ def slope_and_intercept_lookups(
     for sf in subframes:
         edges.extend([sf.start_time, sf.end_time])
         x = sf.time - frame_start
-        y = chopper_cascade.wavelength_to_inverse_velocity(sf.wavelength) * ltotal
+        y = (ltotal * chopper_cascade.wavelength_to_inverse_velocity(sf.wavelength)).to(
+            unit=x.unit, copy=False
+        )
         # Compute the slopes for all pairs of points
         xdiff = x - x.rename_dims(vertex='vertex2')
         ydiff = y - y.rename_dims(vertex='vertex2')
@@ -431,6 +440,13 @@ def time_of_flight_from_lookup(
     """
     Compute the wavelength from the time of arrival and the slope and intercept lookups.
     """
+    # Ensure unit consistency
+    subframe_edges = lookup.slope.coords['subframe'].to(unit=elem_unit(toa), copy=False)
+    # Both slope and intercepts should have the same subframe edges
+    lookup.slope.coords['subframe'] = subframe_edges
+    lookup.intercept.coords['subframe'] = subframe_edges
+    lookup.intercept.data = lookup.intercept.data.to(unit=elem_unit(toa), copy=False)
+
     slope = sc.lookup(lookup.slope, dim='subframe')[toa]
     intercept = sc.lookup(lookup.intercept, dim='subframe')[toa]
     return TofFromLookup(slope * toa + intercept)

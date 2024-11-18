@@ -165,6 +165,8 @@ def test_dream_wfm(disk_choppers, npulses, ltotal, time_offset_unit, distance_un
         "event_time_offset"
     ].to(unit=time_offset_unit, copy=False)
 
+    raw_data.coords['Ltotal'] = ltotal.to(unit=distance_unit, copy=False)
+
     # Verify that all 6 neutrons made it through the chopper cascade
     assert sc.identical(
         raw_data.bins.concat('pulse').hist().data,
@@ -178,12 +180,13 @@ def test_dream_wfm(disk_choppers, npulses, ltotal, time_offset_unit, distance_un
 
     # Set up the workflow
     workflow = sl.Pipeline(
-        unwrap.unwrap_providers()
-        + unwrap.time_of_flight_providers()
-        + unwrap.time_of_flight_origin_from_choppers_providers(wfm=True)
+        unwrap.providers
+        # unwrap.unwrap_providers()
+        # + unwrap.time_of_flight_providers()
+        # + unwrap.time_of_flight_origin_from_choppers_providers(wfm=True)
     )
     workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
-    workflow[unwrap.PulseStride | None] = None
+    workflow[unwrap.PulseStride] = 1
 
     # Define the extent of the pulse that contains the 6 neutrons in time and wavelength
     # Note that we make a larger encompassing pulse to ensure that the frame bounds are
@@ -198,7 +201,7 @@ def test_dream_wfm(disk_choppers, npulses, ltotal, time_offset_unit, distance_un
     )
 
     workflow[unwrap.Choppers] = choppers
-    workflow[unwrap.Ltotal] = ltotal.to(unit=distance_unit, copy=False)
+    workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
     workflow[unwrap.RawData] = raw_data
 
     # Compute time-of-flight
@@ -287,6 +290,8 @@ def test_dream_wfm_with_subframe_time_overlap(
         "event_time_offset"
     ].to(unit=time_offset_unit, copy=False)
 
+    raw_data.coords['Ltotal'] = ltotal.to(unit=distance_unit, copy=False)
+
     # Verify that all 6 neutrons made it through the chopper cascade
     assert sc.identical(
         raw_data.bins.concat('pulse').hist().data,
@@ -300,12 +305,13 @@ def test_dream_wfm_with_subframe_time_overlap(
 
     # Set up the workflow
     workflow = sl.Pipeline(
-        unwrap.unwrap_providers()
-        + unwrap.time_of_flight_providers()
-        + unwrap.time_of_flight_origin_from_choppers_providers(wfm=True)
+        unwrap.providers
+        # unwrap.unwrap_providers()
+        # + unwrap.time_of_flight_providers()
+        # + unwrap.time_of_flight_origin_from_choppers_providers(wfm=True)
     )
     workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
-    workflow[unwrap.PulseStride | None] = None
+    workflow[unwrap.PulseStride] = 1
 
     # Define the extent of the pulse that contains the 6 neutrons in time and wavelength
     # Note that we make a larger encompassing pulse to ensure that the frame bounds are
