@@ -439,8 +439,7 @@ class DiskChopper:
             Angle to compute time for.
             Defined anticlockwise with respect to top-dead-center.
         n_repetitions:
-            Return this many times for each angle corresponding to multiple rotations
-            of the chopper.
+            How many chopper rotations to perform.
 
         Returns
         -------

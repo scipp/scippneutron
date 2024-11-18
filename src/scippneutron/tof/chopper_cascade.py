@@ -46,7 +46,7 @@ def propagate_times(
         Propagated time.
     """
     inverse_velocity = wavelength_to_inverse_velocity(wavelength)
-    return time + distance * inverse_velocity
+    return time + (distance * inverse_velocity).to(unit=time.unit, copy=False)
 
 
 class Subframe:
@@ -146,6 +146,20 @@ class Frame:
     distance: sc.Variable
     subframes: list[Subframe]
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Frame):
+            return NotImplemented
+        # Note: we don't use sc.identical here because it can fail on the dtype even
+        # if the values are equal.
+        same_distance = (
+            np.array_equal(self.distance.values, other.distance.values)
+            and self.distance.unit == other.distance.unit
+        )
+        return same_distance and all(
+            self_sub == other_sub
+            for self_sub, other_sub in zip(self.subframes, other.subframes, strict=True)
+        )
+
     def propagate_to(self, distance: sc.Variable) -> Frame:
         """
         Compute new frame by propagating to a distance.
@@ -160,7 +174,7 @@ class Frame:
         :
             Propagated frame.
         """
-        delta = distance - self.distance
+        delta = distance.to(unit=self.distance.unit, copy=False) - self.distance
         subframes = [subframe.propagate_by(delta) for subframe in self.subframes]
         return Frame(distance=distance, subframes=subframes)
 
@@ -187,12 +201,13 @@ class Frame:
         :
             Chopped frame.
         """
-        if chopper.distance < self.distance:
+        distance = chopper.distance.to(unit=self.distance.unit, copy=False)
+        if distance < self.distance:
             raise ValueError(
-                f'Chopper distance {chopper.distance} is smaller than frame distance '
+                f'Chopper distance {distance} is smaller than frame distance '
                 f'{self.distance}'
             )
-        frame = self.propagate_to(chopper.distance)
+        frame = self.propagate_to(distance)
 
         # A chopper can have multiple openings, call _chop for each of them. The result
         # is the union of the resulting subframes.
