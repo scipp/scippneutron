@@ -363,13 +363,12 @@ def unwrapped_time_of_arrival(
     """ """
     if da.bins is None:
         # Canonical name in NXmonitor
-        coord = da.coords['time_of_flight']
+        toa = da.coords['time_of_flight']
     else:
         coord = da.bins.coords['event_time_offset']
-
-    toa = coord + (sc.arange('pulse', da.sizes['pulse']) * period).to(
-        unit=elem_unit(coord), copy=False
-    )
+        toa = coord + (sc.arange('pulse', da.sizes['pulse']) * period).to(
+            unit=elem_unit(coord), copy=False
+        )
     return UnwrappedTimeOfArrival(toa)
 
 
