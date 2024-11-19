@@ -5,6 +5,8 @@ import pytest
 import scipp as sc
 from scipp.testing import assert_identical
 
+from scippneutron.conversion.graph.beamline import beamline as beamline_graph
+from scippneutron.conversion.graph.tof import elastic as elastic_graph
 from scippneutron.tof import fakes, unwrap
 
 sl = pytest.importorskip('sciline')
@@ -36,7 +38,7 @@ def ess_pulse() -> fakes.FakePulse:
 
 def test_frame_period_is_pulse_period_if_not_pulse_skipping() -> None:
     # pl = sl.Pipeline(unwrap.unwrap_providers())
-    pl = sl.Pipeline(unwrap.providers)
+    pl = sl.Pipeline(unwrap.providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
     pl[unwrap.PulseStride] = 1
@@ -46,7 +48,7 @@ def test_frame_period_is_pulse_period_if_not_pulse_skipping() -> None:
 @pytest.mark.parametrize('stride', [1, 2, 3, 4])
 def test_frame_period_is_multiple_pulse_period_if_pulse_skipping(stride) -> None:
     # pl = sl.Pipeline(unwrap.unwrap_providers())
-    pl = sl.Pipeline(unwrap.providers)
+    pl = sl.Pipeline(unwrap.providers())
     period = sc.scalar(123.0, unit='ms')
     pl[unwrap.PulsePeriod] = period
     pl[unwrap.PulseStride] = stride
@@ -106,48 +108,56 @@ def test_frame_period_is_multiple_pulse_period_if_pulse_skipping(stride) -> None
 #     assert sc.all(da['time', 10 * sc.Unit('ms') :].data == sc.scalar(0.0, unit='s'))
 
 
-# def test_unwrap_with_no_choppers(ess_10s_14Hz, ess_pulse) -> None:
-#     # At this small distance the frames are not overlapping (with the given wavelength
-#     # range), despite not using any choppers.
-#     distance = sc.scalar(10.0, unit='m')
-#     beamline = fakes.FakeBeamline(
-#         source=ess_10s_14Hz,
-#         pulse=ess_pulse,
-#         choppers={},  # no choppers
-#         monitors={'monitor': distance},
-#         detectors={},
-#     )
-#     mon, ref = beamline.get_monitor('monitor')
+def test_unwrap_with_no_choppers(ess_10s_14Hz, ess_pulse) -> None:
+    # At this small distance the frames are not overlapping (with the given wavelength
+    # range), despite not using any choppers.
+    distance = sc.scalar(10.0, unit='m')
+    beamline = fakes.FakeBeamline(
+        source=ess_10s_14Hz,
+        pulse=ess_pulse,
+        choppers={},  # no choppers
+        monitors={'monitor': distance},
+        detectors={},
+    )
+    mon, ref = beamline.get_monitor('monitor')
 
-#     pl = sl.Pipeline(
-#         unwrap.unwrap_providers
-#         # ()
-#         # + unwrap.time_of_flight_providers()
-#         # + unwrap.time_of_flight_origin_from_choppers_providers()
-#     )
-#     pl[unwrap.RawData] = mon
-#     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-#     pl[unwrap.PulseStride] = 1
-#     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
-#     pl[unwrap.SourceWavelengthRange] = (
-#         ess_pulse.wavelength_min,
-#         ess_pulse.wavelength_max,
-#     )
-#     pl[unwrap.Choppers] = {}
-#     # pl[unwrap.SourceChopperName | None] = None
-#     pl[unwrap.Ltotal] = distance
-#     unwrapped_toa = pl.compute(unwrap.UnwrappedTimeOfArrival)
-#     # No unwrap is happening, frame does not overlap next pulse.
-#     assert (mon.coords['event_time_zero'] == unwrapped.bins.coords['pulse_time']).all()
+    pl = sl.Pipeline(
+        unwrap.providers_no_choppers()
+        # ()
+        # + unwrap.time_of_flight_providers()
+        # + unwrap.time_of_flight_origin_from_choppers_providers()
+    )
+    pl[unwrap.RawData] = mon
+    pl[unwrap.PulsePeriod] = beamline._source.pulse_period
+    pl[unwrap.PulseStride] = 1
+    # pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
+    # pl[unwrap.SourceWavelengthRange] = (
+    #     ess_pulse.wavelength_min,
+    #     ess_pulse.wavelength_max,
+    # )
+    # pl[unwrap.Choppers] = {}
+    # pl[unwrap.SourceChopperName | None] = None
+    pl[unwrap.Ltotal] = distance
 
-#     origin = pl.compute(unwrap.TimeOfFlightOrigin)
-#     assert_identical(origin.time, sc.scalar(0.0015, unit='s'))
-#     assert_identical(origin.distance, sc.scalar(0.0, unit='m'))
+    result = pl.compute(unwrap.TofData)
 
-#     result = pl.compute(unwrap.TofData)
-#     assert_identical(
-#         result.hist(tof=1000).sum('pulse'), ref.hist(tof=1000).sum('pulse')
-#     )
+    assert sc.allclose(
+        result.bins.concat().value.coords['tof'],
+        ref.bins.concat().value.coords['tof'],
+    )
+
+    # unwrapped_toa = pl.compute(unwrap.UnwrappedTimeOfArrival)
+    # # No unwrap is happening, frame does not overlap next pulse.
+    # assert (mon.coords['event_time_zero'] == unwrapped.bins.coords['pulse_time']).all()
+
+    # origin = pl.compute(unwrap.TimeOfFlightOrigin)
+    # assert_identical(origin.time, sc.scalar(0.0015, unit='s'))
+    # assert_identical(origin.distance, sc.scalar(0.0, unit='m'))
+
+    # result = pl.compute(unwrap.TofData)
+    # assert_identical(
+    #     result.hist(tof=1000).sum('pulse'), ref.hist(tof=1000).sum('pulse')
+    # )
 
 
 def test_unwrap_with_frame_overlap_raises(ess_10s_14Hz, ess_pulse) -> None:
@@ -161,7 +171,7 @@ def test_unwrap_with_frame_overlap_raises(ess_10s_14Hz, ess_pulse) -> None:
     )
     mon, _ = beamline.get_monitor('monitor')
 
-    pl = sl.Pipeline(unwrap.providers)
+    pl = sl.Pipeline(unwrap.providers())
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
     pl[unwrap.PulseStride] = 1
@@ -176,8 +186,11 @@ def test_unwrap_with_frame_overlap_raises(ess_10s_14Hz, ess_pulse) -> None:
         pl.compute(unwrap.TofData)
 
 
-def test_standard_unwrap(ess_10s_14Hz, ess_pulse) -> None:
-    distance = sc.scalar(46.0, unit='m')
+# At 44m, event_time_offset does not wrap around (all events are within the same pulse).
+# At 47m, event_time_offset wraps around.
+@pytest.mark.parametrize('dist', [44.0, 47.0])
+def test_standard_unwrap(ess_10s_14Hz, ess_pulse, dist) -> None:
+    distance = sc.scalar(dist, unit='m')
     beamline = fakes.FakeBeamline(
         source=ess_10s_14Hz,
         pulse=ess_pulse,
@@ -189,7 +202,7 @@ def test_standard_unwrap(ess_10s_14Hz, ess_pulse) -> None:
     mon, ref = beamline.get_monitor('monitor')
 
     pl = sl.Pipeline(
-        unwrap.providers
+        unwrap.providers()
         # unwrap.unwrap_providers()
         # + unwrap.time_of_flight_providers()
         # + unwrap.time_of_flight_origin_from_choppers_providers()
@@ -206,20 +219,68 @@ def test_standard_unwrap(ess_10s_14Hz, ess_pulse) -> None:
     # pl[unwrap.SourceChopperName | None] = 'psc1'
     pl[unwrap.Ltotal] = distance
     result = pl.compute(unwrap.TofData)
-    assert_identical(
-        result.hist(tof=1000).sum('pulse'), ref.hist(tof=1000).sum('pulse')
+    # assert_identical(
+    #     result.hist(tof=1000).sum('pulse'), ref.hist(tof=1000).sum('pulse')
+    # )
+    graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
+    ref_wav = ref.transform_coords('wavelength', graph=graph).bins.concat().value
+    result.coords['Ltotal'] = distance
+    result_wav = result.transform_coords('wavelength', graph=graph).bins.concat().value
+
+    assert sc.allclose(
+        result_wav.coords['wavelength'],
+        ref_wav.coords['wavelength'],
+        rtol=sc.scalar(1e-02),
     )
 
 
-def test_standard_unwrap_histogram_mode(ess_10s_14Hz, ess_pulse) -> None:
-    distance = sc.scalar(46.0, unit='m')
+# def test_standard_unwrap(ess_10s_14Hz, ess_pulse) -> None:
+#     distance = sc.scalar(47.0, unit='m')
+#     beamline = fakes.FakeBeamline(
+#         source=ess_10s_14Hz,
+#         pulse=ess_pulse,
+#         choppers=fakes.psc_choppers,
+#         monitors={'monitor': distance},
+#         detectors={},
+#         time_of_flight_origin='psc1',
+#     )
+#     mon, ref = beamline.get_monitor('monitor')
+
+#     pl = sl.Pipeline(
+#         unwrap.providers
+#         # unwrap.unwrap_providers()
+#         # + unwrap.time_of_flight_providers()
+#         # + unwrap.time_of_flight_origin_from_choppers_providers()
+#     )
+#     pl[unwrap.RawData] = mon
+#     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
+#     pl[unwrap.PulseStride] = 1
+#     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
+#     pl[unwrap.SourceWavelengthRange] = (
+#         ess_pulse.wavelength_min,
+#         ess_pulse.wavelength_max,
+#     )
+#     pl[unwrap.Choppers] = fakes.psc_choppers
+#     # pl[unwrap.SourceChopperName | None] = 'psc1'
+#     pl[unwrap.Ltotal] = distance
+#     result = pl.compute(unwrap.TofData)
+#     assert_identical(
+#         result.hist(tof=1000).sum('pulse'), ref.hist(tof=1000).sum('pulse')
+#     )
+
+
+# At 44m, event_time_offset does not wrap around (all events are within the same pulse).
+# At 47m, event_time_offset wraps around.
+@pytest.mark.parametrize('dist', [44.0, 47.0])
+def test_standard_unwrap_histogram_mode(ess_10s_14Hz, ess_pulse, dist) -> None:
+    distance = sc.scalar(dist, unit='m')
     beamline = fakes.FakeBeamline(
         source=ess_10s_14Hz,
         pulse=ess_pulse,
         choppers=fakes.psc_choppers,
         monitors={'monitor': distance},
         detectors={},
-        time_of_flight_origin='psc1',
+        # time_of_flight_origin='psc1',
     )
     mon, ref = beamline.get_monitor('monitor')
     mon = (
@@ -233,23 +294,34 @@ def test_standard_unwrap_histogram_mode(ess_10s_14Hz, ess_pulse) -> None:
     )
 
     pl = sl.Pipeline(
-        unwrap.unwrap_providers()
-        + unwrap.time_of_flight_providers()
-        + unwrap.time_of_flight_origin_from_choppers_providers()
+        unwrap.providers()
+        # + unwrap.time_of_flight_providers()
+        # + unwrap.time_of_flight_origin_from_choppers_providers()
     )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride] = None
+    pl[unwrap.PulseStride] = 1
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
         ess_pulse.wavelength_max,
     )
     pl[unwrap.Choppers] = fakes.psc_choppers
-    pl[unwrap.SourceChopperName | None] = 'psc1'
+    # pl[unwrap.SourceChopperName | None] = 'psc1'
     pl[unwrap.Ltotal] = distance
+    # result = pl.compute(unwrap.TofData)
+    # assert_identical(result.sum(), ref.sum())
     result = pl.compute(unwrap.TofData)
-    assert_identical(result.sum(), ref.sum())
+    graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
+    ref_wav = ref.transform_coords('wavelength', graph=graph).bins.concat().value
+    result.coords['Ltotal'] = distance
+    result_wav = result.transform_coords('wavelength', graph=graph).bins.concat().value
+
+    assert sc.allclose(
+        result_wav.coords['wavelength'],
+        ref_wav.coords['wavelength'],
+        rtol=sc.scalar(1e-02),
+    )
 
 
 def test_pulse_skipping_unwrap(ess_10s_7Hz, ess_pulse) -> None:

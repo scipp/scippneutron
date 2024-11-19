@@ -89,8 +89,15 @@ the start time of the frame.
 
 TimeOfArrivalModuloPeriod = NewType('TimeOfArrivalModuloPeriod', sc.Variable)
 """
-Time of arrival of the neutron at the detector, unwrapped at the pulse period, minus
-the start time of the frame, modulo the frame period.
+Time of arrival of the neutron at the detector modulo the frame period.
+"""
+
+TimeOfArrivalMinusStartTimeModuloPeriod = NewType(
+    'TimeOfArrivalMinusStartTimeModuloPeriod', sc.Variable
+)
+"""
+Time of arrival of the neutron at the detector minus the start time of the frame,
+modulo the frame period.
 """
 
 
@@ -102,9 +109,9 @@ class SlopeAndInterceptLookup:
     intercept: Lookup
 
 
-TofFromLookup = NewType('TofFromLookup', sc.Variable)
+TofCoord = NewType('TofCoord', sc.Variable)
 """
-computed from the time of arrival and the slope and intercept lookups.
+Tof coordinate computed by the workflow.
 """
 
 Ltotal = NewType('Ltotal', sc.Variable)
@@ -378,13 +385,21 @@ def unwrapped_time_of_arrival_minus_frame_start_time(
     )
 
 
-def time_of_arrival_modulo_period(
+def time_of_arrival_minus_start_time_modulo_period(
     toa_minus_start_time: UnwrappedTimeOfArrivalMinusStartTime,
     frame_period: FramePeriod,
-) -> TimeOfArrivalModuloPeriod:
-    return TimeOfArrivalModuloPeriod(
+) -> TimeOfArrivalMinusStartTimeModuloPeriod:
+    return TimeOfArrivalMinusStartTimeModuloPeriod(
         toa_minus_start_time
         % frame_period.to(unit=elem_unit(toa_minus_start_time), copy=False)
+    )
+
+
+def time_of_arrival_modulo_period(
+    toa: UnwrappedTimeOfArrival, frame_period: FramePeriod
+) -> TimeOfArrivalModuloPeriod:
+    return TimeOfArrivalModuloPeriod(
+        toa % frame_period.to(unit=elem_unit(toa), copy=False)
     )
 
 
@@ -462,9 +477,9 @@ def slope_and_intercept_lookups(
 
 
 def time_of_flight_from_lookup(
-    toa: TimeOfArrivalModuloPeriod,
+    toa: TimeOfArrivalMinusStartTimeModuloPeriod,
     lookup: SlopeAndInterceptLookup,
-) -> TofFromLookup:
+) -> TofCoord:
     """
     Compute the wavelength from the time of arrival and the slope and intercept lookups.
     """
@@ -477,12 +492,21 @@ def time_of_flight_from_lookup(
 
     slope = sc.lookup(lookup.slope, dim='subframe')[toa]
     intercept = sc.lookup(lookup.intercept, dim='subframe')[toa]
-    return TofFromLookup(slope * toa + intercept)
+    return TofCoord(slope * toa + intercept)
 
 
-def time_of_flight_data(da: RawData, tof: TofFromLookup) -> TofData:
+def time_of_flight_no_choppers(toa: TimeOfArrivalModuloPeriod) -> TofCoord:
+    """
+    Compute the time-of-flight without choppers.
+    """
+    return TofCoord(toa)
+
+
+def time_of_flight_data(da: RawData, tof: TofCoord) -> TofData:
     out = da.copy(deep=False)
     if tof.bins is not None:
+        out.data = sc.bins(**out.bins.constituents)
+        # da.bins.coords['tof']
         out.bins.coords['tof'] = tof
     else:
         out.coords['tof'] = tof
@@ -836,20 +860,38 @@ def time_of_flight_data(da: RawData, tof: TofFromLookup) -> TofData:
 #     return TofData(da)
 
 
-providers = (
-    chopper_cascade_frames,
-    frame_at_detector,
-    frame_period,
-    unwrapped_time_of_arrival,
-    frame_at_detector_start_time,
-    unwrapped_time_of_arrival_minus_frame_start_time,
-    time_of_arrival_modulo_period,
-    slope_and_intercept_lookups,
-    time_of_flight_from_lookup,
-    # wavelength_from_lookup,
-    # time_of_flight_from_wavelength,
-    time_of_flight_data,
-)
+def providers() -> tuple[Callable]:
+    """
+    Return the providers for the time-of-flight workflow.
+    """
+    return (
+        chopper_cascade_frames,
+        frame_at_detector,
+        frame_period,
+        unwrapped_time_of_arrival,
+        frame_at_detector_start_time,
+        unwrapped_time_of_arrival_minus_frame_start_time,
+        # time_of_arrival_modulo_period,
+        time_of_arrival_minus_start_time_modulo_period,
+        slope_and_intercept_lookups,
+        time_of_flight_from_lookup,
+        # wavelength_from_lookup,
+        # time_of_flight_from_wavelength,
+        time_of_flight_data,
+    )
+
+
+def providers_no_choppers() -> tuple[Callable]:
+    """
+    Return the providers for the time-of-flight workflow without choppers.
+    """
+    return (
+        frame_period,
+        time_of_arrival_modulo_period,
+        unwrapped_time_of_arrival,
+        time_of_flight_no_choppers,
+        time_of_flight_data,
+    )
 
 
 # _common_providers = (
