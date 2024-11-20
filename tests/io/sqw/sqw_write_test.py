@@ -353,7 +353,7 @@ def test_writes_data_metadata(
             changes_aspect_ratio=True,
         ),
         proj=SqwLineProj(
-            lattice_spacing=sc.vector([2.1, 2.1, 2.5], unit="1/angstrom"),
+            lattice_spacing=sc.vector([2.1, 2.1, 2.5], unit="angstrom"),
             lattice_angle=sc.vector([np.pi / 2, np.pi / 4, np.pi / 2], unit="rad"),
             offset=[
                 1.0 / sc.Unit("2*angstrom"),
@@ -405,7 +405,7 @@ def test_writes_data_metadata(
             else str(buffer.get().parent),
         ),
         proj=SqwLineProj(
-            lattice_spacing=sc.vector([2.1, 2.1, 2.5], unit="1/angstrom"),
+            lattice_spacing=sc.vector([2.1, 2.1, 2.5], unit="angstrom"),
             lattice_angle=sc.vector([90.0, 45.0, 90.0], unit="deg"),
             offset=[
                 0.5 / sc.Unit("angstrom"),
