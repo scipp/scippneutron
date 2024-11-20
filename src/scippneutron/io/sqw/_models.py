@@ -328,11 +328,12 @@ class SqwIXExperiment(ir.Serializable):
     def _serialize_to_dict(
         self,
     ) -> dict[str, ir.Object | ir.ObjectArray | ir.CellArray]:
-        en = (
-            self.en.to(unit="meV", dtype="float64", copy=False)
-            .broadcast(sizes={"_": 1, "energy_transfer": self.en.shape[0]})
-            .values
-        )
+        en = self.en.to(unit="meV", dtype="float64", copy=False)
+        if en.ndim == 1:  # direct mode; still needs 2D en like indirect mode
+            en = en.broadcast(sizes={"_": 1, "energy_transfer": self.en.shape[0]})
+        else:
+            en = en.transpose(dims=["detector", "energy_transfer"])
+
         efix = self.efix.to(unit="meV", dtype="float64", copy=False)
         if efix.ndim == 0:
             efix = efix.broadcast(sizes={"_": 1})
@@ -342,7 +343,7 @@ class SqwIXExperiment(ir.Serializable):
             "run_id": ir.F64(float(self.run_id + 1)),
             "efix": ir.Array(efix.values, ty=ir.TypeTag.f64),
             "emode": ir.F64(float(self.emode.value)),
-            "en": ir.Array(en, ty=ir.TypeTag.f64),
+            "en": ir.Array(en.values, ty=ir.TypeTag.f64),
             "psi": ir.F64(_angle_value(self.psi)),
             "u": ir.Array(self.u.values, ty=ir.TypeTag.f64),
             "v": ir.Array(self.v.values, ty=ir.TypeTag.f64),
