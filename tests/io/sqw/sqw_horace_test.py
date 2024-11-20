@@ -255,6 +255,65 @@ def test_horace_roundtrip_experiment(
     assert loaded.filepath == expected.filepath
 
 
+def test_horace_roundtrip_experiment_indirect(
+    matlab: Any,
+    dnd_metadata: SqwDndMetadata,
+    null_instrument: SqwIXNullInstrument,
+    sample: SqwIXSample,
+    tmp_path: Path,
+) -> None:
+    experiment_template = SqwIXExperiment(
+        run_id=0,
+        efix=sc.array(dims=['detector'], values=[0.5, 0.6, 0.8, 0.9, 1.1], unit="meV"),
+        emode=EnergyMode.direct,
+        en=sc.array(
+            dims=["detector", "energy_transfer"],
+            values=[[-0.1, 0.3], [-0.2, 0.2], [0.0, 0.6], [0.1, 0.7], [0.3, 0.7]],
+            unit="meV",
+        ),
+        psi=sc.scalar(0.4, unit="rad"),
+        u=sc.vector([1.0, 0.0, 0.0], unit="1/angstrom"),
+        v=sc.vector([0.0, 1.0, 0.0], unit="1/angstrom"),
+        omega=sc.scalar(-0.01, unit="rad"),
+        dpsi=sc.scalar(0.0, unit="rad"),
+        gl=sc.scalar(1.2, unit="rad"),
+        gs=sc.scalar(0.6, unit="rad"),
+        filename="experiment1.nxspe",
+        filepath="/data",
+    )
+
+    path = tmp_path / "roundtrip_experiment_indirect.sqw"
+    with (
+        Sqw.build(path)
+        .add_default_instrument(null_instrument)
+        .add_default_sample(sample)
+        .add_empty_dnd_data(dnd_metadata)
+        .register_pixel_data(n_pixels=1, n_dims=4, experiments=[experiment_template])
+        .create()
+    ) as sqw:
+        sqw.write_pixel_data(np.zeros((1, 9)), run=0)
+
+    loaded_file = matlab.read_horace(os.fspath(path))
+    loaded_experiments = loaded_file.experiment_info.expdata
+    assert matlab.numel(loaded_experiments).squeeze() == 1
+    loaded = loaded_experiments[0]
+    expected = experiment_template
+
+    assert loaded.run_id.squeeze() == expected.run_id + 1
+    np.testing.assert_equal(loaded.efix, expected.efix.to(unit="meV").values)
+    assert loaded.emode == expected.emode.value
+    np.testing.assert_equal(loaded.en, expected.en.to(unit="meV").values)
+    np.testing.assert_equal(loaded.psi.squeeze(), expected.psi.to(unit="rad").value)
+    np.testing.assert_equal(loaded.u.squeeze(), expected.u.to(unit="1/angstrom").values)
+    np.testing.assert_equal(loaded.v.squeeze(), expected.v.to(unit="1/angstrom").values)
+    np.testing.assert_equal(loaded.omega.squeeze(), expected.omega.to(unit="rad").value)
+    np.testing.assert_equal(loaded.dpsi.squeeze(), expected.dpsi.to(unit="rad").value)
+    np.testing.assert_equal(loaded.gl.squeeze(), expected.gl.to(unit="rad").value)
+    np.testing.assert_equal(loaded.gs.squeeze(), expected.gs.to(unit="rad").value)
+    assert loaded.filename == expected.filename
+    assert loaded.filepath == expected.filepath
+
+
 def test_horace_roundtrip_pixels_single_experiment(
     matlab: Any,
     dnd_metadata: SqwDndMetadata,
@@ -359,5 +418,4 @@ def test_horace_roundtrip_pixels_two_experiments(
     )
 
 
-# TODO indirect
 # TODO ndims
