@@ -146,7 +146,7 @@ class SqwLineProj(ir.Serializable):
         return {
             "serial_name": ir.String(self.serial_name),
             "version": ir.F64(self.version),
-            "alatt": _variable_to_float_array(self.lattice_spacing, "1/angstrom"),
+            "alatt": _variable_to_float_array(self.lattice_spacing, "angstrom"),
             "angdeg": _variable_to_float_array(self.lattice_angle, "deg"),
             "offset": _serialize_multi_unit_array(self.offset, units),
             "title": ir.String(self.title),
@@ -297,7 +297,7 @@ class SqwIXSample(ir.Serializable):
         return {
             "serial_name": ir.String(self.serial_name),
             "version": ir.F64(self.version),
-            "alatt": _variable_to_float_array(self.lattice_spacing, "1/angstrom"),
+            "alatt": _variable_to_float_array(self.lattice_spacing, "angstrom"),
             "angdeg": _variable_to_float_array(self.lattice_angle, "deg"),
             "name": ir.String(self.name),
         }
