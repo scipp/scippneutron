@@ -157,5 +157,6 @@ ignore-words-list = [
     # Let's not modify it if we don't have to.
     "socio-economic",
     "elemt",
+    "nd",
 ]
 skip = "./.git,./.tox,*/.virtual_documents,*/.ipynb_checkpoints,*.pdf,*.svg,*.csv"
