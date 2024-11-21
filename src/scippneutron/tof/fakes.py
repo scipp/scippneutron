@@ -256,11 +256,12 @@ class FakeBeamlineEss:
             self.source = source(pulses=self.npulses)
 
         # Convert the choppers to tof.Chopper
-        angular_speed = sc.constants.pi * (2.0 * sc.units.rad) * self.frequency
+        chopper_frequency = pulse.frequency  # sc.scalar(7.0, unit='Hz')
+        angular_speed = sc.constants.pi * (2.0 * sc.units.rad) * chopper_frequency
 
         self.choppers = [
             tof_pkg.Chopper(
-                frequency=pulse.frequency,
+                frequency=chopper_frequency,  # pulse.frequency,
                 open=ch.time_open * angular_speed,
                 close=ch.time_close * angular_speed,
                 phase=sc.scalar(0.0, unit='rad'),

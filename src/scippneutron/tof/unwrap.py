@@ -12,6 +12,7 @@ https://scipp.github.io/sciline/ on how to use Sciline.
 """
 
 import math
+import uuid
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import NewType
@@ -373,7 +374,7 @@ def unwrapped_time_of_arrival(
 
 
 def frame_at_detector_start_time(frame: FrameAtDetector) -> FrameAtDetectorStartTime:
-    return FrameAtDetectorStartTime(frame.bounds()['time']['bound', 0])
+    return FrameAtDetectorStartTime(frame.bounds()['time']['bound', 0] * 0.9)
 
 
 def unwrapped_time_of_arrival_minus_frame_start_time(
@@ -472,44 +473,177 @@ def slope_and_intercept_lookups(
     data['subframe', ::2] = sc.concat(intercepts, 'subframe').transpose(keys)
     b_lookup = sc.DataArray(data=data, coords={'subframe': edges})
 
-    return SlopeAndInterceptLookup(slope=a_lookup, intercept=b_lookup)
+    return SlopeAndInterceptLookup(
+        # slope=sc.concat(slopes, 'subframe').transpose(keys).mean('subframe'),
+        slope=a_lookup,
+        intercept=b_lookup,
+    )
 
 
-def time_of_flight_from_lookup(
+# def time_of_flight_from_lookup(
+#     toa: TimeOfArrivalMinusStartTimeModuloPeriod,
+#     lookup: SlopeAndInterceptLookup,
+# ) -> TofCoord:
+#     """
+#     Compute the wavelength from the time of arrival and the slope and intercept lookups.
+#     """
+#     # Ensure unit consistency
+#     # subframe_edges = lookup.slope.coords['subframe'].to(unit=elem_unit(toa), copy=False)
+#     # Both slope and intercepts should have the same subframe edges
+#     # lookup.slope.coords['subframe'] = subframe_edges
+#     lookup.intercept.coords['subframe'] = lookup.intercept.coords['subframe'].to(
+#         unit=elem_unit(toa), copy=False
+#     )
+#     lookup.intercept.data = lookup.intercept.data.to(unit=elem_unit(toa), copy=False)
+
+#     if toa.bins is not None:
+#         # slope = sc.lookup(lookup.slope, dim='subframe')[toa]
+#         intercept = sc.lookup(lookup.intercept, dim='subframe')[toa]
+#         out = lookup.slope * toa + intercept
+#     else:
+#         # In the case of histogrammed data, we exclude the NaNs that were introduced
+#         # further up, and simply broadcast the toas over the subframe dimension.
+#         intercept = intercept.data[::2]
+#         # Next, we add the subframe edges to the toas and then sort them: this will be
+#         # our new time_of_flight coordinate.
+#         dim = 'time_of_flight'
+#         edges = sc.sort(
+#             sc.concat(
+#                 [
+#                     toa,
+#                     lookup.intercept.coords['subframe'].rename_dims(subframe=dim),
+#                 ],
+#                 dim=dim,
+#             ),
+#             dim,
+#         )
+#         out = lookup.slope * edges + intercept
+#     return TofCoord(out)
+
+
+def time_of_flight_no_choppers(da: RawData, toa: TimeOfArrivalModuloPeriod) -> TofData:
+    """
+    Compute the time-of-flight without choppers.
+    """
+
+    out = da.copy(deep=False)
+    if toa.bins is not None:
+        out.data = sc.bins(**out.bins.constituents)
+        # da.bins.coords['tof']
+        out.bins.coords['tof'] = toa
+    else:
+        out.coords['tof'] = toa
+    return TofData(out)
+
+
+def time_of_flight_data(
+    da: RawData,
     toa: TimeOfArrivalMinusStartTimeModuloPeriod,
     lookup: SlopeAndInterceptLookup,
-) -> TofCoord:
-    """
-    Compute the wavelength from the time of arrival and the slope and intercept lookups.
-    """
+) -> TofData:
+    # out = da.copy(deep=False)
+
     # Ensure unit consistency
     subframe_edges = lookup.slope.coords['subframe'].to(unit=elem_unit(toa), copy=False)
     # Both slope and intercepts should have the same subframe edges
     lookup.slope.coords['subframe'] = subframe_edges
-    lookup.intercept.coords['subframe'] = subframe_edges
+    lookup.intercept.coords['subframe'] = lookup.intercept.coords['subframe'].to(
+        unit=elem_unit(toa), copy=False
+    )
     lookup.intercept.data = lookup.intercept.data.to(unit=elem_unit(toa), copy=False)
 
-    slope = sc.lookup(lookup.slope, dim='subframe')[toa]
-    intercept = sc.lookup(lookup.intercept, dim='subframe')[toa]
-    return TofCoord(slope * toa + intercept)
+    # if toa.bins is not None:
+    #     # slope = sc.lookup(lookup.slope, dim='subframe')[toa]
+    #     intercept = sc.lookup(lookup.intercept, dim='subframe')[toa]
+    #     out = lookup.slope * toa + intercept
 
+    # lookup.intercept.coords['subframe'] = lookup.intercept.coords['subframe'].to(
+    #     unit=elem_unit(toa), copy=False
+    # )
+    # lookup.intercept.data = lookup.intercept.data.to(unit=elem_unit(toa), copy=False)
 
-def time_of_flight_no_choppers(toa: TimeOfArrivalModuloPeriod) -> TofCoord:
-    """
-    Compute the time-of-flight without choppers.
-    """
-    return TofCoord(toa)
-
-
-def time_of_flight_data(da: RawData, tof: TofCoord) -> TofData:
-    out = da.copy(deep=False)
-    if tof.bins is not None:
+    if toa.bins is not None:
+        slope = sc.lookup(lookup.slope, dim='subframe')[toa]
+        intercept = sc.lookup(lookup.intercept, dim='subframe')[toa]
+        # tof = lookup.slope * toa + intercept
+        tof = slope * toa + intercept
+        out = da.copy(deep=False)
         out.data = sc.bins(**out.bins.constituents)
-        # da.bins.coords['tof']
         out.bins.coords['tof'] = tof
     else:
-        out.coords['tof'] = tof
+        # In the case of histogrammed data, we exclude the NaNs that were introduced
+        # further up, and simply broadcast the toas over the subframe dimension.
+        slope = lookup.slope.data['subframe', ::2]
+        intercept = lookup.intercept.data['subframe', ::2]
+        # Next, we add the subframe edges to the toas and then sort them: this will be
+        # our new time_of_flight coordinate.
+        dim = 'time_of_flight'
+        edges = sc.sort(
+            sc.concat(
+                [
+                    toa,
+                    lookup.intercept.coords['subframe'].rename_dims(subframe=dim),
+                ],
+                dim=dim,
+            ),
+            dim,
+        )
+        print(edges)
+        tof = slope * edges + intercept
+
+        with_toa = da.copy(deep=False)
+        with_toa.coords['time_of_flight'] = toa
+        with_toa = sc.broadcast(
+            with_toa, sizes=with_toa.sizes | {'subframe': slope.sizes['subframe']}
+        )
+
+        rebinned = with_toa.rebin(time_of_flight=edges)
+
+        # Create a 2d mask to exlude invalid data in each subframe
+        mask = sc.DataArray(
+            data=sc.ones(sizes=rebinned.data.sizes, dtype=bool),
+            coords={'time_of_flight': rebinned.coords['time_of_flight']},
+        )
+        # for i in range((lookup.intercept.sizes['subframe'] - 1) // 2):
+        for i in range(slope.sizes['subframe']):
+            bounds = lookup.intercept[i * 2].coords['subframe']
+            tmin = bounds.min()
+            tmax = bounds.max()
+            # Exclude the upper edge to avoid masking one bin too many
+            tmax = sc.scalar(np.nextafter(tmax.value, -np.inf), unit=tmax.unit)
+            print(tmin, tmax)
+            mask['subframe', i]['time_of_flight', tmin:tmax].values[:] = False
+
+        rebinned.masks[uuid.uuid4().hex] = mask.data
+        rebinned.coords['tof'] = tof
+
+        # We now switch to the new time-of-flight coordinate and rebin on a common axis.
+        # We use a reasonable number of to try and preserve the resolution of the data.
+        old = rebinned.coords['time_of_flight']
+        new = rebinned.coords['tof']
+        nbins = int(len(old) * (new.max() - new.min()) / (old.max() - old.min()))
+
+        out = (
+            rebinned.rename_dims(time_of_flight='tof').rebin(tof=nbins).sum('subframe')
+        )
+
+    #         c = reb.coords['time_of_flight'] * a.mean() + b
+    # tofdata = reb.copy(deep=False)
+    # tofdata.coords['tof'] = c
+
     return TofData(out)
+
+    # if tof.bins is not None:
+    #     out.data = sc.bins(**out.bins.constituents)
+    #     # da.bins.coords['tof']
+    #     out.bins.coords['tof'] = tof
+    # else:
+    #     da.coords['time_of_flight'] = workflow.compute(
+    #         unwrap.TimeOfArrivalMinusStartTimeModuloPeriod
+    #     )
+
+    #     out.coords['tof'] = tof
+    # return TofData(out)
 
 
 # def time_zero(da: RawData) -> TimeZero:
@@ -873,7 +1007,7 @@ def providers() -> tuple[Callable]:
         # time_of_arrival_modulo_period,
         time_of_arrival_minus_start_time_modulo_period,
         slope_and_intercept_lookups,
-        time_of_flight_from_lookup,
+        # time_of_flight_from_lookup,
         # wavelength_from_lookup,
         # time_of_flight_from_wavelength,
         time_of_flight_data,
@@ -889,7 +1023,7 @@ def providers_no_choppers() -> tuple[Callable]:
         time_of_arrival_modulo_period,
         unwrapped_time_of_arrival,
         time_of_flight_no_choppers,
-        time_of_flight_data,
+        # time_of_flight_data,
     )
 
 
