@@ -206,9 +206,14 @@ Wavelength range of the source pulse, used for computing frame bounds.
 
 TofData = NewType('TofData', sc.DataArray)
 """
-Detector data with time-of-flight and time zero coordinates.
+Detector data with time-of-flight coordinate.
 """
 
+
+ReHistogrammedTofData = NewType('ReHistogrammedTofData', sc.DataArray)
+"""
+Detector data with time-of-flight coordinate, re-histogrammed.
+"""
 
 # # TimeOffset = NewType('TimeOffset', sc.Variable)
 # # """Unwrapped time offset relative to the pulse time."""
@@ -507,11 +512,59 @@ def time_of_flight_data(da: RawData, tof: TofCoord) -> TofData:
     out = da.copy(deep=False)
     if tof.bins is not None:
         out.data = sc.bins(**out.bins.constituents)
-        # da.bins.coords['tof']
         out.bins.coords['tof'] = tof
     else:
         out.coords['tof'] = tof
     return TofData(out)
+
+
+def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
+    """
+    Histogrammed data that has been converted to `tof` will typically have
+    unsorted bin edges (due to either wrapping of `time_of_flight` or wavelength
+    overlap between subframes).
+    This function re-histograms the data to ensure that the bin edges are sorted.
+    It generates a number of events in each bin with a normal distribution around
+    the bin center. The width of the distribution is the bin width divided by 2.
+    The new events are then histogrammed using a set of sorted bin edges.
+    """
+    # In each bin, we generate a number of events with a normal distribution around the
+    # bin center. The width of the distribution is the bin width divided by 2.
+    mid_tofs = sc.midpoints(da.coords['tof'], dim='time_of_flight')
+    events_per_bin = 200
+    min_bin_width = sc.abs(
+        mid_tofs['time_of_flight', 1:] - mid_tofs['time_of_flight', :-1]
+    ).nanmin()
+    spread = sc.array(
+        dims=['event'],
+        values=np.random.normal(size=events_per_bin, scale=min_bin_width.value / 2),
+        unit=mid_tofs.unit,
+    )
+
+    events = mid_tofs + spread
+    data = sc.broadcast(da.data / float(events_per_bin), sizes=events.sizes)
+    new = sc.DataArray(
+        data=data,
+        coords={
+            'event': events,
+            'detector_number': sc.broadcast(
+                sc.arange('detector_number', data.sizes['detector_number'], unit=None),
+                sizes=events.sizes,
+            ),
+        },
+    )
+
+    # Define a new bin width, close to the original bin width.
+    # TODO: this could be a workflow parameter
+    coord = da.coords['tof']
+    bin_width = (coord['time_of_flight', 1:] - coord['time_of_flight', :-1]).nanmean()
+    rehist = (
+        new.flatten(to='event')
+        .group('detector_number')
+        .hist(event=bin_width)
+        .rename(event='tof')
+    )
+    return ReHistogrammedTofData(rehist)
 
 
 # def time_zero(da: RawData) -> TimeZero:
@@ -879,6 +932,7 @@ def providers() -> tuple[Callable]:
         # wavelength_from_lookup,
         # time_of_flight_from_wavelength,
         time_of_flight_data,
+        re_histogram_tof_data,
     )
 
 
