@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
+import numpy as np
 import pytest
 import scipp as sc
 from scipp.testing import assert_identical
@@ -280,7 +281,7 @@ def test_standard_unwrap_histogram_mode(ess_10s_14Hz, ess_pulse, dist) -> None:
         choppers=fakes.psc_choppers,
         monitors={'monitor': distance},
         detectors={},
-        # time_of_flight_origin='psc1',
+        time_of_flight_origin='psc1',
     )
     mon, ref = beamline.get_monitor('monitor')
     mon = (
@@ -311,17 +312,20 @@ def test_standard_unwrap_histogram_mode(ess_10s_14Hz, ess_pulse, dist) -> None:
     pl[unwrap.Ltotal] = distance
     # result = pl.compute(unwrap.TofData)
     # assert_identical(result.sum(), ref.sum())
-    result = pl.compute(unwrap.TofData)
+    result = pl.compute(unwrap.ReHistogrammedTofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
-    ref_wav = ref.transform_coords('wavelength', graph=graph).bins.concat().value
     result.coords['Ltotal'] = distance
-    result_wav = result.transform_coords('wavelength', graph=graph).bins.concat().value
-
-    assert sc.allclose(
-        result_wav.coords['wavelength'],
-        ref_wav.coords['wavelength'],
-        rtol=sc.scalar(1e-02),
+    result_wav = result.transform_coords('wavelength', graph=graph)
+    ref_wav = (
+        ref.transform_coords('wavelength', graph=graph)
+        .bins.concat()
+        .value.hist(wavelength=result_wav.coords['wavelength'])
     )
+    diff = (result_wav - ref_wav) / ref_wav
+    # There are outliers in the diff because the bins don't cover the exact same range.
+    # We check that 96% of the data has an error below 0.1.
+    x = np.abs(diff.data.values)
+    assert np.percentile(x[np.isfinite(x)], 96.0) < 0.1
 
 
 def test_pulse_skipping_unwrap(ess_10s_7Hz, ess_pulse) -> None:

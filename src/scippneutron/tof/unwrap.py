@@ -12,6 +12,7 @@ https://scipp.github.io/sciline/ on how to use Sciline.
 """
 
 import math
+import uuid
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import NewType
@@ -535,22 +536,31 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     min_bin_width = sc.abs(
         mid_tofs['time_of_flight', 1:] - mid_tofs['time_of_flight', :-1]
     ).nanmin()
+
+    dim = uuid.uuid4().hex
+
     spread = sc.array(
-        dims=['event'],
-        values=np.random.normal(size=events_per_bin, scale=min_bin_width.value / 2),
+        dims=[dim],
+        values=np.random.normal(size=events_per_bin, scale=min_bin_width.value / 2.5),
         unit=mid_tofs.unit,
     )
 
     events = mid_tofs + spread
     data = sc.broadcast(da.data / float(events_per_bin), sizes=events.sizes)
+
+    # Sizes of the other dimensions
+    sizes = mid_tofs.sizes
+    del sizes['time_of_flight']
+
     new = sc.DataArray(
         data=data,
-        coords={
-            'event': events,
-            'detector_number': sc.broadcast(
-                sc.arange('detector_number', data.sizes['detector_number'], unit=None),
+        coords={dim: events}
+        | {
+            key: sc.broadcast(
+                sc.arange(key, size, unit=None),
                 sizes=events.sizes,
-            ),
+            )
+            for key, size in sizes.items()
         },
     )
 
@@ -558,12 +568,13 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     # TODO: this could be a workflow parameter
     coord = da.coords['tof']
     bin_width = (coord['time_of_flight', 1:] - coord['time_of_flight', :-1]).nanmean()
-    rehist = (
-        new.flatten(to='event')
-        .group('detector_number')
-        .hist(event=bin_width)
-        .rename(event='tof')
-    )
+    grouped = new.flatten(to=dim)
+    for group in sizes.keys():
+        grouped = grouped.group(group)
+    rehist = grouped.hist({dim: bin_width}).rename({dim: 'tof'})
+    for key, var in da.coords.items():
+        if 'time_of_flight' not in var.dims:
+            rehist.coords[key] = var
     return ReHistogrammedTofData(rehist)
 
 
