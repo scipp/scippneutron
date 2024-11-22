@@ -379,8 +379,10 @@ def frame_at_detector_start_time(frame: FrameAtDetector) -> FrameAtDetectorStart
 def unwrapped_time_of_arrival_minus_frame_start_time(
     toa: UnwrappedTimeOfArrival, start_time: FrameAtDetectorStartTime
 ) -> UnwrappedTimeOfArrivalMinusStartTime:
+    # Order of operation to preserve dimension order
     return UnwrappedTimeOfArrivalMinusStartTime(
-        toa - start_time.to(unit=elem_unit(toa), copy=False)
+        -start_time.to(unit=elem_unit(toa), copy=False) + toa
+        # toa - start_time.to(unit=elem_unit(toa), copy=False)
     )
 
 
