@@ -442,10 +442,18 @@ frame_overlap_2 = chopper_cascade.Chopper(
         unit='s',
     ),
 )
-pulse_overlap = chopper_cascade.Chopper(
-    distance=sc.scalar(22.0, unit='m'),
-    time_open=sc.array(dims=('cutout',), values=[-0.130952, 0.011905], unit='s'),
-    time_close=sc.array(dims=('cutout',), values=[-0.087302, 0.055556], unit='s'),
+# pulse_overlap = chopper_cascade.Chopper(
+#     distance=sc.scalar(22.0, unit='m'),
+#     time_open=sc.array(dims=('cutout',), values=[-0.130952, 0.011905], unit='s'),
+#     time_close=sc.array(dims=('cutout',), values=[-0.087302, 0.055556], unit='s'),
+# )
+
+pulse_skipping = chopper_cascade.Chopper(
+    distance=sc.scalar(15.91, unit='m'),
+    time_open=sc.scalar(0.021733, unit='s'),
+    # + sc.arange('cutout', -2, 2, unit='s') * (2 / 14),
+    time_close=sc.scalar(0.024730, unit='s'),
+    # + sc.arange('cutout', -2, 2, unit='s') * (2 / 14),
 )
 
 wfm_choppers = sc.DataGroup(
@@ -453,15 +461,16 @@ wfm_choppers = sc.DataGroup(
     wfm2=wfm2,
     frame_overlap_1=frame_overlap_1,
     frame_overlap_2=frame_overlap_2,
-    pulse_overlap=pulse_overlap,
+    # pulse_overlap=pulse_overlap,
 )
 psc_choppers = sc.DataGroup(
     psc1=psc1,
     psc2=psc2,
     frame_overlap_1=frame_overlap_1,
     frame_overlap_2=frame_overlap_2,
-    pulse_overlap=pulse_overlap,
+    # pulse_overlap=pulse_overlap,
 )
+
 
 ess_time_min = sc.scalar(0.0, unit='ms')
 ess_time_max = sc.scalar(3.0, unit='ms')
