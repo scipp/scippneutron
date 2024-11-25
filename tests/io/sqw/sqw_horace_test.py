@@ -330,7 +330,9 @@ def test_horace_roundtrip_experiment_indirect(
     assert loaded.run_id.squeeze() == expected.run_id + 1
     np.testing.assert_equal(loaded.efix.squeeze(), expected.efix.to(unit="meV").values)
     assert loaded.emode == expected.emode.value
-    np.testing.assert_equal(loaded.en, expected.en.to(unit="meV").values)
+    np.testing.assert_equal(
+        loaded.en, expected.en.flatten(to='obs').to(unit="meV").values
+    )
     np.testing.assert_equal(loaded.psi.squeeze(), expected.psi.to(unit="rad").value)
     np.testing.assert_equal(loaded.u.squeeze(), expected.u.to(unit="1/angstrom").values)
     np.testing.assert_equal(loaded.v.squeeze(), expected.v.to(unit="1/angstrom").values)
