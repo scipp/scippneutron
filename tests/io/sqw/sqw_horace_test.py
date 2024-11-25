@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import pace_neutrons
 import pytest
 import scipp as sc
 from dateutil.parser import parse as parse_datetime
@@ -24,12 +25,14 @@ from scippneutron.io.sqw import (
     SqwLineProj,
 )
 
-pace_neutrons = pytest.importorskip("pace_neutrons")
-
 
 @pytest.fixture(scope="module")
 def matlab() -> Any:
-    return pace_neutrons.Matlab()
+    try:
+        return pace_neutrons.Matlab()
+    except RuntimeError as e:
+        if "No supported MATLAB" in e.args[0]:
+            pytest.skip("MATLAB is unavailable")
 
 
 @pytest.fixture
