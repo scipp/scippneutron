@@ -96,7 +96,7 @@ class SqwBuilder:
         self._sample: SqwIXSample | None = None
 
     @contextmanager
-    def create(self) -> Path | None:
+    def create(self, *, chunk_size: int = 8192) -> Path | None:
         with open_or_pass(self._path, "wb") as f:
             sqw_io = LowLevelSqw(
                 f,
@@ -120,7 +120,7 @@ class SqwBuilder:
                         sqw_io.write_raw(buffer)  # type: ignore[arg-type]
                     case SqwDataBlockType.pix:
                         # Type guaranteed by _serialize_data_blocks
-                        self._pix_wrap.write(sqw_io)  # type: ignore[union-attr]
+                        self._pix_wrap.write(sqw_io, chunk_size=chunk_size)  # type: ignore[union-attr]
                     case SqwDataBlockType.dnd:
                         # Type guaranteed by _serialize_data_blocks
                         self._dnd_placeholder.write(sqw_io)  # type: ignore[union-attr]
@@ -442,16 +442,19 @@ class _PixWrap:
     def n_pixels(self) -> int:
         return len(self.row_data[0])
 
-    def write(self, sqw_io: LowLevelSqw) -> None:
+    def write(self, sqw_io: LowLevelSqw, chunk_size: int) -> None:
         sqw_io.write_u32(self.n_rows())
         sqw_io.write_u64(self.n_pixels())
 
-        r = np.stack(
-            [
-                sc.to_unit(row, unit, copy=False).values.astype(np.float32)
-                for row, unit in zip(self.row_data, self.row_units, strict=True)
-            ],
-            axis=1,
-        )
-
-        sqw_io.write_array(r)
+        buffer = np.empty((self.n_pixels(), self.n_rows()), dtype=np.float32)
+        remaining = self.n_pixels()
+        for offset in range(0, self.n_rows(), chunk_size):
+            n = min(chunk_size, remaining)
+            remaining -= n
+            for i_row, (row, unit) in enumerate(
+                zip(self.row_data, self.row_units, strict=True)
+            ):
+                buffer[:n, i_row] = sc.to_unit(
+                    row[offset : offset + chunk_size], unit, copy=False
+                ).values
+            sqw_io.write_array(buffer[:n])
