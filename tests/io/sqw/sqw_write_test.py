@@ -308,6 +308,70 @@ def test_writes_pixel_data(
 
 
 @pytest.mark.parametrize("byteorder", ["native", "little", "big"])
+def test_writes_pixel_data_chunked(
+    byteorder: Literal["native", "little", "big"], buffer: _BytesBuffer | _PathBuffer
+) -> None:
+    rng = np.random.default_rng(1732)
+    experiment_template = SqwIXExperiment(
+        run_id=-1,
+        efix=sc.scalar(1.2, unit="meV"),
+        emode=EnergyMode.direct,
+        en=sc.array(dims=["energy_transfer"], values=[3.0], unit="meV"),
+        psi=sc.scalar(1.2, unit="rad"),
+        u=sc.vector([0.0, 1.0, 0.0]),
+        v=sc.vector([1.0, 1.0, 0.0]),
+        omega=sc.scalar(1.4, unit="rad"),
+        dpsi=sc.scalar(0.0, unit="rad"),
+        gl=sc.scalar(3, unit="rad"),
+        gs=sc.scalar(-0.5, unit="rad"),
+        filename="",
+        filepath="/data",
+    )
+    experiments = [
+        dataclasses.replace(experiment_template, run_id=0, filename="f1"),
+        dataclasses.replace(experiment_template, run_id=1, filename="f2"),
+    ]
+
+    # Chosen numbers can all be represented in float32 to allow exact comparisons.
+    n_pixels = 7
+    original = sc.DataArray(
+        sc.array(
+            dims=['obs'],
+            values=rng.uniform(0, 100, n_pixels).astype('float32'),
+            variances=rng.uniform(0.1, 1, n_pixels).astype('float32'),
+            unit='count',
+        ),
+        coords={
+            'idet': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(3),
+            'irun': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(2),
+            'ien': sc.arange('obs', 0, 2 * n_pixels, 2, unit=None).astype(int)
+            // sc.index(10),
+            'u1': sc.arange('obs', 0.0, n_pixels + 0.0, unit='1/Å'),
+            'u2': sc.arange('obs', 1.0, n_pixels + 1.0, unit='1/Å'),
+            'u3': sc.arange('obs', 2.0, n_pixels + 2.0, unit='1/Å'),
+            'u4': sc.arange('obs', n_pixels, unit='meV') * 2,
+        },
+    )
+    builder = Sqw.build(buffer.get(), byteorder=byteorder)
+    builder = builder.add_pixel_data(original, experiments=experiments)
+    builder.create(chunk_size=n_pixels // 3)
+    buffer.rewind()
+
+    with Sqw.open(buffer.get()) as sqw:
+        loaded = sqw.read_data_block(("pix", "data_wrap"))
+
+    np.testing.assert_equal(loaded[:, 0], original.coords['u1'].values)
+    np.testing.assert_equal(loaded[:, 1], original.coords['u2'].values)
+    np.testing.assert_equal(loaded[:, 2], original.coords['u3'].values)
+    np.testing.assert_equal(loaded[:, 3], original.coords['u4'].values)
+    np.testing.assert_equal(loaded[:, 4], original.coords['irun'].values)
+    np.testing.assert_equal(loaded[:, 5], original.coords['idet'].values)
+    np.testing.assert_equal(loaded[:, 6], original.coords['ien'].values)
+    np.testing.assert_equal(loaded[:, 7], original.values)
+    np.testing.assert_equal(loaded[:, 8], original.variances)
+
+
+@pytest.mark.parametrize("byteorder", ["native", "little", "big"])
 def test_writes_pixel_data_convert_units(
     byteorder: Literal["native", "little", "big"], buffer: _BytesBuffer | _PathBuffer
 ) -> None:
