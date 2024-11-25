@@ -135,8 +135,8 @@ def pixel_data() -> sc.DataArray:
     return sc.DataArray(
         sc.array(
             dims=['obs'],
-            values=rng.uniform(0, 100, n_pixels),
-            variances=rng.uniform(0.1, 1, n_pixels),
+            values=rng.uniform(0, 100, n_pixels).astype('float32'),
+            variances=rng.uniform(0.1, 1, n_pixels).astype('float32'),
             unit='count',
         ),
         coords={
