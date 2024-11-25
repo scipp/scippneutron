@@ -168,7 +168,7 @@ class SqwBuilder:
         # The file must always contain a DND block
         builder = self._add_dnd_metadata(block)
         builder._dnd_placeholder = _DndPlaceholder(
-            shape=tuple(map(int, block.axes.n_bins_all_dims))
+            shape=tuple(map(int, block.axes.n_bins_all_dims))  # type: ignore[call-overload]
         )
         return builder
 

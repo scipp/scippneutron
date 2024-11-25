@@ -157,8 +157,7 @@ def _read_block_allocation_table(
 ) -> dict[DataBlockName, SqwDataBlockDescriptor]:
     _bat_size = sqw_io.read_u32()  # don't need this
     n_blocks = sqw_io.read_u32()
-    descriptors = (_read_data_block_descriptor(sqw_io) for _ in range(n_blocks))
-    descriptors = list(descriptors)
+    descriptors = [_read_data_block_descriptor(sqw_io) for _ in range(n_blocks)]
     return {descriptor.name: descriptor for descriptor in descriptors}
 
 
@@ -504,11 +503,13 @@ def _read_pix_block(sqw_io: LowLevelSqw) -> npt.NDArray[np.float32]:
     return sqw_io.read_array((n_rows, n_pixels), np.dtype("float32"))
 
 
-def _read_dnd_block(sqw_io: LowLevelSqw):
+def _read_dnd_block(
+    sqw_io: LowLevelSqw,
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.uint64]]:
     # like metadata.axes.n_bins_all_dims?
     n_dims = sqw_io.read_u32()  # u32 not u8 as normal
     shape = tuple(sqw_io.read_u32() for _ in range(n_dims))
     values = sqw_io.read_array(shape, np.dtype("float64"))
     errors = sqw_io.read_array(shape, np.dtype("float64"))
     counts = sqw_io.read_array(shape, np.dtype("uint64"))
-    return [values, errors, counts]
+    return values, errors, counts
