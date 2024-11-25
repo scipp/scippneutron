@@ -305,9 +305,11 @@ class FakeBeamlineEss:
         start = sc.datetime("2024-01-01T12:00:00.000000")
         period = sc.reciprocal(self.frequency)
 
-        raw_data = self.model_result.detectors[name].data.flatten(to='event')
+        detector = self.model_result.detectors[name]
+        raw_data = detector.data.flatten(to='event')
         # Select only the neutrons that make it to the detector
         raw_data = raw_data[~raw_data.masks['blocked_by_others']].copy()
+        raw_data.coords['Ltotal'] = detector.distance
 
         # Format the data in a way that resembles data loaded from NeXus
         event_data = raw_data.copy(deep=False)
