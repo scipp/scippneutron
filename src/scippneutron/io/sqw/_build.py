@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import dataclasses
 import os
-from contextlib import contextmanager
 from datetime import datetime, timezone
 from io import BytesIO
 from os import PathLike
@@ -95,7 +94,6 @@ class SqwBuilder:
         self._instrument: SqwIXNullInstrument | None = None
         self._sample: SqwIXSample | None = None
 
-    @contextmanager
     def create(self, *, chunk_size: int = 8192) -> Path | None:
         with open_or_pass(self._path, "wb") as f:
             sqw_io = LowLevelSqw(
