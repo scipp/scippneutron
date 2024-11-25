@@ -6,6 +6,7 @@ numpy>=1.20
 scipy>=1.7.0
 hypothesis
 ipympl
+pace_neutrons
 pooch
 psutil
 pytest
