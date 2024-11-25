@@ -66,8 +66,7 @@ def buffer(
 
 def test_create_sets_byteorder_native(buffer: _BytesBuffer | _PathBuffer) -> None:
     builder = Sqw.build(buffer.get())
-    with builder.create():
-        pass
+    builder.create()
     buffer.rewind()
 
     with Sqw.open(buffer.get()) as sqw:
@@ -76,8 +75,7 @@ def test_create_sets_byteorder_native(buffer: _BytesBuffer | _PathBuffer) -> Non
 
 def test_create_sets_byteorder_little(buffer: _BytesBuffer | _PathBuffer) -> None:
     builder = Sqw.build(buffer.get(), byteorder="little")
-    with builder.create():
-        pass
+    builder.create()
     buffer.rewind()
 
     with Sqw.open(buffer.get()) as sqw:
@@ -86,8 +84,7 @@ def test_create_sets_byteorder_little(buffer: _BytesBuffer | _PathBuffer) -> Non
 
 def test_create_sets_byteorder_big(buffer: _BytesBuffer | _PathBuffer) -> None:
     builder = Sqw.build(buffer.get(), byteorder="big")
-    with builder.create():
-        pass
+    builder.create()
     buffer.rewind()
 
     with Sqw.open(buffer.get()) as sqw:
@@ -98,8 +95,7 @@ def test_create_writes_file_header_little_endian(
     buffer: _BytesBuffer | _PathBuffer,
 ) -> None:
     builder = Sqw.build(buffer.get(), byteorder="little")
-    with builder.create():
-        pass
+    builder.create()
 
     buffer.rewind()
     expected = (
@@ -116,8 +112,7 @@ def test_create_writes_file_header_big_endian(
     buffer: _BytesBuffer | _PathBuffer,
 ) -> None:
     builder = Sqw.build(buffer.get(), byteorder="big")
-    with builder.create():
-        pass
+    builder.create()
 
     buffer.rewind()
     expected = (
@@ -135,8 +130,7 @@ def test_create_writes_main_header(
     byteorder: Literal["native", "little", "big"], buffer: _BytesBuffer | _PathBuffer
 ) -> None:
     builder = Sqw.build(buffer.get(), title="my title", byteorder=byteorder)
-    with builder.create():
-        pass
+    builder.create()
     buffer.rewind()
 
     with Sqw.open(buffer.get()) as sqw:
@@ -148,24 +142,6 @@ def test_create_writes_main_header(
     assert (main_header.creation_date - datetime.now(tz=timezone.utc)) < timedelta(
         seconds=1
     )
-
-
-@pytest.mark.parametrize("byteorder", ["native", "little", "big"])
-def test_register_pixel_data_writes_pix_metadata(
-    byteorder: Literal["native", "little", "big"], buffer: _BytesBuffer | _PathBuffer
-) -> None:
-    builder = Sqw.build(buffer.get(), byteorder=byteorder)
-    builder = builder.register_pixel_data(n_pixels=13, n_dims=3, experiments=[])
-    with builder.create():
-        pass
-    buffer.rewind()
-
-    with Sqw.open(buffer.get()) as sqw:
-        pix_metadata = sqw.read_data_block(("pix", "metadata"))
-    filename = "in_memory" if isinstance(buffer, _BytesBuffer) else str(buffer.get())
-    assert pix_metadata.full_filename == filename
-    assert pix_metadata.npix == 13
-    assert pix_metadata.data_range.shape == (9, 2)
 
 
 @pytest.mark.parametrize("byteorder", ["native", "little", "big"])
@@ -238,12 +214,23 @@ def test_writes_expdata(
         ),
     ]
 
-    builder = Sqw.build(buffer.get(), byteorder=byteorder)
-    builder = builder.register_pixel_data(
-        n_pixels=13, n_dims=3, experiments=experiments
+    n_pixels = 7
+    pixels = sc.DataArray(
+        sc.zeros(sizes={'obs': n_pixels}, with_variances=True, unit='count'),
+        coords={
+            'u1': sc.zeros(sizes={'obs': n_pixels}, unit='1/Å'),
+            'u2': sc.zeros(sizes={'obs': n_pixels}, unit='1/Å'),
+            'u3': sc.zeros(sizes={'obs': n_pixels}, unit='1/Å'),
+            'u4': sc.zeros(sizes={'obs': n_pixels}, unit='meV'),
+            'idet': sc.zeros(sizes={'obs': n_pixels}, dtype=int, unit=None),
+            'irun': sc.zeros(sizes={'obs': n_pixels}, dtype=int, unit=None),
+            'ien': sc.zeros(sizes={'obs': n_pixels}, dtype=int, unit=None),
+        },
     )
-    with builder.create():
-        pass
+
+    builder = Sqw.build(buffer.get(), byteorder=byteorder)
+    builder = builder.add_pixel_data(pixels, experiments=experiments)
+    builder.create()
     buffer.rewind()
 
     with Sqw.open(buffer.get()) as sqw:
@@ -260,6 +247,71 @@ def test_writes_expdata(
 def test_writes_pixel_data(
     byteorder: Literal["native", "little", "big"], buffer: _BytesBuffer | _PathBuffer
 ) -> None:
+    rng = np.random.default_rng(1732)
+    experiment_template = SqwIXExperiment(
+        run_id=-1,
+        efix=sc.scalar(1.2, unit="meV"),
+        emode=EnergyMode.direct,
+        en=sc.array(dims=["energy_transfer"], values=[3.0], unit="meV"),
+        psi=sc.scalar(1.2, unit="rad"),
+        u=sc.vector([0.0, 1.0, 0.0]),
+        v=sc.vector([1.0, 1.0, 0.0]),
+        omega=sc.scalar(1.4, unit="rad"),
+        dpsi=sc.scalar(0.0, unit="rad"),
+        gl=sc.scalar(3, unit="rad"),
+        gs=sc.scalar(-0.5, unit="rad"),
+        filename="",
+        filepath="/data",
+    )
+    experiments = [
+        dataclasses.replace(experiment_template, run_id=0, filename="f1"),
+        dataclasses.replace(experiment_template, run_id=1, filename="f2"),
+    ]
+
+    # Chosen numbers can all be represented in float32 to allow exact comparisons.
+    n_pixels = 7
+    original = sc.DataArray(
+        sc.array(
+            dims=['obs'],
+            values=rng.uniform(0, 100, n_pixels).astype('float32'),
+            variances=rng.uniform(0.1, 1, n_pixels).astype('float32'),
+            unit='count',
+        ),
+        coords={
+            'idet': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(3),
+            'irun': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(2),
+            'ien': sc.arange('obs', 0, 2 * n_pixels, 2, unit=None).astype(int)
+            // sc.index(10),
+            'u1': sc.arange('obs', 0.0, n_pixels + 0.0, unit='1/Å'),
+            'u2': sc.arange('obs', 1.0, n_pixels + 1.0, unit='1/Å'),
+            'u3': sc.arange('obs', 2.0, n_pixels + 2.0, unit='1/Å'),
+            'u4': sc.arange('obs', n_pixels, unit='meV') * 2,
+        },
+    )
+    builder = Sqw.build(buffer.get(), byteorder=byteorder)
+    builder = builder.add_pixel_data(original, experiments=experiments)
+    builder.create()
+    buffer.rewind()
+
+    with Sqw.open(buffer.get()) as sqw:
+        loaded = sqw.read_data_block(("pix", "data_wrap"))
+
+    np.testing.assert_equal(loaded[:, 0], original.coords['u1'].values)
+    np.testing.assert_equal(loaded[:, 1], original.coords['u2'].values)
+    np.testing.assert_equal(loaded[:, 2], original.coords['u3'].values)
+    np.testing.assert_equal(loaded[:, 3], original.coords['u4'].values)
+    np.testing.assert_equal(loaded[:, 4], original.coords['irun'].values)
+    np.testing.assert_equal(loaded[:, 5], original.coords['idet'].values)
+    np.testing.assert_equal(loaded[:, 6], original.coords['ien'].values)
+    np.testing.assert_equal(loaded[:, 7], original.values)
+    np.testing.assert_equal(loaded[:, 8], original.variances)
+
+
+@pytest.mark.parametrize("byteorder", ["native", "little", "big"])
+def test_writes_pixel_data_convert_units(
+    byteorder: Literal["native", "little", "big"], buffer: _BytesBuffer | _PathBuffer
+) -> None:
+    rng = np.random.default_rng(1732)
     experiment_template = SqwIXExperiment(
         run_id=-1,
         efix=sc.scalar(1.2, unit="meV"),
@@ -281,42 +333,49 @@ def test_writes_pixel_data(
     ]
 
     n_pixels = 7
-    # Chosen numbers can all be represented in float32 to allow exact comparisons.
-    u1 = np.arange(n_pixels) + 0.0
-    u2 = np.arange(n_pixels) + 1.0
-    u3 = np.arange(n_pixels) + 3.0
-    u4 = np.arange(n_pixels) * 2
-    irun = np.full(n_pixels, 0)
-    idet = (np.arange(n_pixels) / 3).astype(int)
-    ien = np.full(n_pixels, 1)
-    values = 20 * np.arange(n_pixels)
-    variances = values / 2
-
-    builder = Sqw.build(buffer.get(), byteorder=byteorder)
-    builder = builder.register_pixel_data(
-        n_pixels=n_pixels * 2, n_dims=4, experiments=experiments
+    original = sc.DataArray(
+        sc.array(
+            dims=['obs'],
+            values=rng.uniform(0, 100, n_pixels),
+            variances=rng.uniform(0.1, 1, n_pixels),
+            unit='mega count',
+        ),
+        coords={
+            'idet': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(3),
+            'irun': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(2),
+            'ien': sc.arange('obs', 0, 2 * n_pixels, 2, unit=None).astype(int)
+            // sc.index(10),
+            'u1': sc.arange('obs', 0.0, n_pixels + 0.0, unit='1/fm'),
+            'u2': sc.arange('obs', 1.0, n_pixels + 1.0, unit='10/Å'),
+            'u3': sc.arange('obs', 2.0, n_pixels + 2.0, unit='1/um'),
+            'u4': sc.arange('obs', n_pixels, unit='eV') * 2,
+        },
     )
-    with builder.create() as sqw:
-        sqw.write_pixel_data(
-            np.c_[u1, u2, u3, u4, irun, idet, ien, values, variances], run=0
-        )
-        sqw.write_pixel_data(
-            np.c_[u1, u2, u3, u4, irun, idet, ien, values, variances] + 1000, run=1
-        )
+    builder = Sqw.build(buffer.get(), byteorder=byteorder)
+    builder = builder.add_pixel_data(original, experiments=experiments)
+    builder.create()
     buffer.rewind()
 
     with Sqw.open(buffer.get()) as sqw:
         loaded = sqw.read_data_block(("pix", "data_wrap"))
 
-    np.testing.assert_equal(loaded[:, 0], np.r_[u1, u1 + 1000])
-    np.testing.assert_equal(loaded[:, 1], np.r_[u2, u2 + 1000])
-    np.testing.assert_equal(loaded[:, 2], np.r_[u3, u3 + 1000])
-    np.testing.assert_equal(loaded[:, 3], np.r_[u4, u4 + 1000])
-    np.testing.assert_equal(loaded[:, 4], np.r_[irun, irun + 1000])
-    np.testing.assert_equal(loaded[:, 5], np.r_[idet, idet + 1000])
-    np.testing.assert_equal(loaded[:, 6], np.r_[ien, ien + 1000])
-    np.testing.assert_equal(loaded[:, 7], np.r_[values, values + 1000])
-    np.testing.assert_equal(loaded[:, 8], np.r_[variances, variances + 1000])
+    np.testing.assert_allclose(
+        loaded[:, 0], original.coords['u1'].to(unit='1/Å').values
+    )
+    np.testing.assert_allclose(
+        loaded[:, 1], original.coords['u2'].to(unit='1/Å').values
+    )
+    np.testing.assert_allclose(
+        loaded[:, 2], original.coords['u3'].to(unit='1/Å').values
+    )
+    np.testing.assert_allclose(
+        loaded[:, 3], original.coords['u4'].to(unit='meV').values
+    )
+    np.testing.assert_equal(loaded[:, 4], original.coords['irun'].values)
+    np.testing.assert_equal(loaded[:, 5], original.coords['idet'].values)
+    np.testing.assert_equal(loaded[:, 6], original.coords['ien'].values)
+    np.testing.assert_allclose(loaded[:, 7], original.to(unit='count').values)
+    np.testing.assert_allclose(loaded[:, 8], original.to(unit='count').variances)
 
 
 @pytest.mark.parametrize("byteorder", ["native", "little", "big"])
@@ -425,8 +484,7 @@ def test_writes_data_metadata(
 
     builder = Sqw.build(buffer.get(), byteorder=byteorder)
     builder = builder.add_empty_dnd_data(metadata)
-    with builder.create():
-        pass
+    builder.create()
     buffer.rewind()
 
     with Sqw.open(buffer.get()) as sqw:

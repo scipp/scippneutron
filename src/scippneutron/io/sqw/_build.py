@@ -5,15 +5,15 @@ from __future__ import annotations
 
 import dataclasses
 import os
-from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from io import BytesIO
 from os import PathLike
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, BinaryIO
+from typing import Any, BinaryIO
 
 import numpy as np
+import scipp as sc
 
 from .._files import open_or_pass
 from . import _ir as ir
@@ -37,9 +37,6 @@ from ._models import (
 )
 from ._read_write import write_object_array
 
-if TYPE_CHECKING:
-    from ._sqw import Sqw
-
 # Based on
 # https://github.com/pace-neutrons/Horace/blob/master/documentation/add/05_file_formats.md
 _DEFAULT_PIX_ROWS = (
@@ -52,6 +49,17 @@ _DEFAULT_PIX_ROWS = (
     "ien",  # Energy bin number
     "signal",  # Signal
     "error",  # Variance
+)
+_DEFAULT_PIX_ROW_UNITS = (
+    '1/angstrom',
+    '1/angstrom',
+    '1/angstrom',
+    'meV',
+    None,
+    None,
+    None,
+    'count',
+    'count**2',
 )
 
 
@@ -68,7 +76,7 @@ class SqwBuilder:
             None if isinstance(self._path, BinaryIO | BytesIO) else Path(self._path)
         )
         self._byteorder = byteorder
-        self._n_dim = 0
+        self._n_dims = 0
 
         main_header = SqwMainHeader(
             full_filename=self._full_filename,
@@ -83,27 +91,20 @@ class SqwBuilder:
         }
 
         self._dnd_placeholder: _DndPlaceholder | None = None
-        self._pix_placeholder: _PixPlaceholder | None = None
+        self._pix_wrap: _PixWrap | None = None
         self._instrument: SqwIXNullInstrument | None = None
         self._sample: SqwIXSample | None = None
 
     @contextmanager
-    def create(self) -> Generator[Sqw, None, None]:
-        from ._sqw import Sqw
-
-        # TODO better mechanism that doesn't use "r+"
-        if isinstance(self._stored_path, Path):
-            self._stored_path.touch()
-
-        with open_or_pass(self._path, "r+b") as f:
+    def create(self) -> Path | None:
+        with open_or_pass(self._path, "wb") as f:
             sqw_io = LowLevelSqw(
                 f,
                 path=self._stored_path,
                 byteorder=self._byteorder,
             )
 
-            file_header = self._make_file_header()
-            _write_file_header(sqw_io, file_header)
+            _write_file_header(sqw_io, self._make_file_header())
 
             block_buffers, block_descriptors = self._serialize_data_blocks()
             bat_buffer, block_descriptors = self._serialize_block_allocation_table(
@@ -119,8 +120,7 @@ class SqwBuilder:
                         sqw_io.write_raw(buffer)  # type: ignore[arg-type]
                     case SqwDataBlockType.pix:
                         # Type guaranteed by _serialize_data_blocks
-                        self._pix_placeholder.write(sqw_io)  # type: ignore[union-attr]
-                        sqw_io.seek(descriptor.position + descriptor.size)
+                        self._pix_wrap.write(sqw_io)  # type: ignore[union-attr]
                     case SqwDataBlockType.dnd:
                         # Type guaranteed by _serialize_data_blocks
                         self._dnd_placeholder.write(sqw_io)  # type: ignore[union-attr]
@@ -129,36 +129,25 @@ class SqwBuilder:
                             f"Unsupported data block type: {descriptor.block_type}"
                         )
 
-            yield Sqw(
-                sqw_io=sqw_io,
-                file_header=file_header,
-                block_allocation_table=block_descriptors,
-            )
+        return self._stored_path
 
-    def register_pixel_data(
+    def add_pixel_data(
         self,
+        data: sc.DataArray,
         *,
-        n_pixels: int,
-        n_dims: int,
         experiments: list[SqwIXExperiment],
+        n_dims: int = 4,
         rows: tuple[str, ...] = _DEFAULT_PIX_ROWS,
+        row_units: tuple[str | None, ...] = _DEFAULT_PIX_ROW_UNITS,
     ) -> SqwBuilder:
-        if self._pix_placeholder is not None:
-            raise RuntimeError("SQW builder already has pixel data")
-        self._n_dim = n_dims
-
+        self._n_dims = n_dims
         self._data_blocks[("experiment_info", "expdata")] = SqwMultiIXExperiment(
             experiments
         )
-        self._data_blocks[("pix", "metadata")] = SqwPixelMetadata(
-            full_filename=self._full_filename,
-            npix=n_pixels,
-            data_range=np.c_[np.full(len(rows), np.inf), np.full(len(rows), -np.inf)],
-        )
-        self._pix_placeholder = _PixPlaceholder(
-            n_pixels=n_pixels,
-            rows=rows,
-        )
+
+        self._pix_wrap = _split_pix_rows(data, rows, row_units)
+        metadata = self._make_pix_metadata(self._pix_wrap)
+        self._data_blocks[("pix", "metadata")] = metadata
         self._data_blocks[("", "main_header")].nfiles = len(experiments)
         return self
 
@@ -198,7 +187,24 @@ class SqwBuilder:
             prog_name="horace",
             prog_version=4.0,
             sqw_type=SqwFileType.SQW,
-            n_dims=self._n_dim,
+            n_dims=self._n_dims,
+        )
+
+    def _make_pix_metadata(self, pix_wrap: _PixWrap) -> SqwPixelMetadata:
+        return SqwPixelMetadata(
+            full_filename=self._full_filename,
+            npix=pix_wrap.n_pixels(),
+            data_range=np.vstack(
+                [
+                    (
+                        sc.to_unit(row.min(), unit).value,
+                        sc.to_unit(row.max(), unit).value,
+                    )
+                    for row, unit in zip(
+                        pix_wrap.row_data, pix_wrap.row_units, strict=True
+                    )
+                ]
+            ),
         )
 
     def _serialize_data_blocks(
@@ -238,13 +244,13 @@ class SqwBuilder:
                 locked=False,
             )
 
-        if self._pix_placeholder is not None:
+        if self._pix_wrap is not None:
             buffers[("pix", "data_wrap")] = None
             descriptors[("pix", "data_wrap")] = SqwDataBlockDescriptor(
                 block_type=SqwDataBlockType.pix,
                 name=("pix", "data_wrap"),
                 position=0,
-                size=self._pix_placeholder.size(),
+                size=self._pix_wrap.size(),
                 locked=False,
             )
 
@@ -381,6 +387,28 @@ def _to_canonical_block_order(
     return out
 
 
+def _split_pix_rows(
+    data: sc.DataArray, rows: tuple[str, ...], row_units: tuple[str | None, ...]
+) -> _PixWrap:
+    """Prepare the selected pixel rows for writing."""
+    selected = []
+    for name in rows:
+        if name == 'signal':
+            selected.append(sc.values(data.data))
+        elif name == 'error':
+            selected.append(sc.variances(data.data))
+        else:
+            if data.coords.is_edges(name, data.dim):
+                raise sc.BinEdgeError(
+                    f"Pixel data must not contain bin-edges, got edges for '{name}'."
+                )
+            selected.append(data.coords[name])
+    return _PixWrap(
+        row_data=selected,
+        row_units=row_units,
+    )
+
+
 @dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
 class _DndPlaceholder:
     shape: tuple[int, ...]
@@ -400,14 +428,30 @@ class _DndPlaceholder:
 
 
 @dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
-class _PixPlaceholder:
-    n_pixels: int
-    rows: tuple[str, ...]
+class _PixWrap:
+    row_data: list[sc.Variable]
+    row_units: tuple[str | None, ...]
 
     def size(self) -> int:
         # *4 for f32
-        return 4 + 8 + self.n_pixels * len(self.rows) * 4
+        return 4 + 8 + self.n_rows() * 4 * self.n_pixels()
+
+    def n_rows(self) -> int:
+        return len(self.row_data)
+
+    def n_pixels(self) -> int:
+        return len(self.row_data[0])
 
     def write(self, sqw_io: LowLevelSqw) -> None:
-        sqw_io.write_u32(len(self.rows))
-        sqw_io.write_u64(self.n_pixels)
+        sqw_io.write_u32(self.n_rows())
+        sqw_io.write_u64(self.n_pixels())
+
+        r = np.stack(
+            [
+                sc.to_unit(row, unit, copy=False).values.astype(np.float32)
+                for row, unit in zip(self.row_data, self.row_units, strict=True)
+            ],
+            axis=1,
+        )
+
+        sqw_io.write_array(r)
