@@ -179,12 +179,7 @@ def test_dream_wfm(disk_choppers, npulses, ltotal, time_offset_unit, distance_un
     )
 
     # Set up the workflow
-    workflow = sl.Pipeline(
-        unwrap.providers()
-        # unwrap.unwrap_providers()
-        # + unwrap.time_of_flight_providers()
-        # + unwrap.time_of_flight_origin_from_choppers_providers(wfm=True)
-    )
+    workflow = sl.Pipeline(unwrap.providers())
     workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
     workflow[unwrap.PulseStride] = 1
 
@@ -304,12 +299,7 @@ def test_dream_wfm_with_subframe_time_overlap(
     )
 
     # Set up the workflow
-    workflow = sl.Pipeline(
-        unwrap.providers()
-        # unwrap.unwrap_providers()
-        # + unwrap.time_of_flight_providers()
-        # + unwrap.time_of_flight_origin_from_choppers_providers(wfm=True)
-    )
+    workflow = sl.Pipeline(unwrap.providers())
     workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
     workflow[unwrap.PulseStride] = 1
 

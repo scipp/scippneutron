@@ -169,12 +169,7 @@ def test_v20_compute_wavelengths_from_wfm(
     )
 
     # Set up the workflow
-    workflow = sl.Pipeline(
-        unwrap.providers()
-        # unwrap.unwrap_providers()
-        # + unwrap.time_of_flight_providers()
-        # + unwrap.time_of_flight_origin_from_choppers_providers(wfm=True)
-    )
+    workflow = sl.Pipeline(unwrap.providers())
     workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
     workflow[unwrap.PulseStride] = 1
 
