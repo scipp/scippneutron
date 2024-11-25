@@ -45,6 +45,7 @@ all = ["scipp[all]", "pooch"]
 test = [
     "hypothesis",
     "ipympl",
+    "pace_neutrons",
     "pooch",
     "psutil",
     "pytest",
