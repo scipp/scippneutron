@@ -69,7 +69,7 @@ def dnd_metadata() -> SqwDndMetadata:
         ),
         proj=SqwLineProj(
             title="My Projection",
-            lattice_spacing=sc.vector([2.86, 2.86, 2.86], unit="1/angstrom"),
+            lattice_spacing=sc.vector([2.86, 2.86, 2.86], unit="angstrom"),
             lattice_angle=sc.vector([90.0, 90.0, 90.0], unit="deg"),
             offset=[
                 sc.scalar(0.0, unit="1/angstrom"),
@@ -103,7 +103,7 @@ def null_instrument() -> SqwIXNullInstrument:
 def sample() -> SqwIXSample:
     return SqwIXSample(
         name="Vibranium",
-        lattice_spacing=sc.vector([2.86, 2.86, 2.86], unit="1/angstrom"),
+        lattice_spacing=sc.vector([2.86, 2.86, 2.86], unit="angstrom"),
         lattice_angle=sc.vector([90.0, 90.0, 90.0], unit="deg"),
     )
 
@@ -236,7 +236,7 @@ def test_horace_roundtrip_sample(
     loaded = loaded_samples[0]
     assert loaded.name == sample.name
     np.testing.assert_equal(
-        loaded.alatt.squeeze(), sample.lattice_spacing.to(unit="1/angstrom").values
+        loaded.alatt.squeeze(), sample.lattice_spacing.to(unit="angstrom").values
     )
     np.testing.assert_equal(
         loaded.angdeg.squeeze(), sample.lattice_angle.to(unit="deg").values
