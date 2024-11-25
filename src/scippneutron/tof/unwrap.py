@@ -364,17 +364,24 @@ def frame_at_detector(
 
 
 def unwrapped_time_of_arrival(
-    da: RawData, period: PulsePeriod
+    da: RawData,
+    # period: PulsePeriod
 ) -> UnwrappedTimeOfArrival:
     """ """
     if da.bins is None:
         # Canonical name in NXmonitor
         toa = da.coords['time_of_flight']
     else:
+        time_zero = da.coords['event_time_zero'] - da.coords['event_time_zero'].min()
         coord = da.bins.coords['event_time_offset']
-        toa = coord + (sc.arange('pulse', da.sizes['pulse']) * period).to(
-            unit=elem_unit(coord), copy=False
-        )
+        toa = coord + time_zero.to(dtype=float, unit=elem_unit(coord), copy=False)
+    # mon.bins.coords['absolute_time_offset'] = mon.bins.coords['event_time_offset'] + time_zero.to(dtype=float, unit=mon.bins.coords['event_time_offset'].unit)
+    #         print("pulse period", period)
+    #         dim = da.coords['event_time_zero'].dim
+    #         coord = da.bins.coords['event_time_offset']
+    #         toa = coord + (sc.arange(dim, da.sizes[dim]) * period).to(
+    #             unit=elem_unit(coord), copy=False
+    #         )
     return UnwrappedTimeOfArrival(toa)
 
 
@@ -568,10 +575,14 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     # TODO: this could be a workflow parameter
     coord = da.coords['tof']
     bin_width = (coord['time_of_flight', 1:] - coord['time_of_flight', :-1]).nanmean()
-    grouped = new.flatten(to=dim)
-    for group in sizes.keys():
-        grouped = grouped.group(group)
-    rehist = grouped.hist({dim: bin_width}).rename({dim: 'tof'})
+    flat = new.flatten(to=dim)  # .group(*list(sizes.keys()))
+    # print(list(sizes.keys()))
+    # print(grouped.group(*list(sizes.keys())))
+    # for group in sizes.keys():
+    #     grouped = grouped.group(group)
+    if sizes:
+        flat = flat.group(*list(sizes.keys()))
+    rehist = flat.hist({dim: bin_width}).rename({dim: 'tof'})
     for key, var in da.coords.items():
         if 'time_of_flight' not in var.dims:
             rehist.coords[key] = var

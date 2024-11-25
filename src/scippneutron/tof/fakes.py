@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+import numpy as np
 import scipp as sc
 from numpy import random
 
@@ -256,19 +257,36 @@ class FakeBeamlineEss:
             self.source = source(pulses=self.npulses)
 
         # Convert the choppers to tof.Chopper
-        angular_speed = sc.constants.pi * (2.0 * sc.units.rad) * self.frequency
-
-        self.choppers = [
-            tof_pkg.Chopper(
-                frequency=pulse.frequency,
-                open=ch.time_open * angular_speed,
-                close=ch.time_close * angular_speed,
-                phase=sc.scalar(0.0, unit='rad'),
-                distance=ch.distance,
-                name=name,
+        def _open_close_angles(chopper, frequency):
+            angular_speed = sc.constants.pi * (2.0 * sc.units.rad) * frequency
+            return (
+                chopper.time_open * angular_speed,
+                chopper.time_close * angular_speed,
             )
-            for name, ch in choppers.items()
-        ]
+
+        self.choppers = []
+        for name, ch in choppers.items():
+            frequency = self.frequency
+            open_angles, close_angles = _open_close_angles(ch, frequency)
+            # If the difference between open and close angles is larger than 2pi,
+            # the boundaries have crossed, which means that the chopper is rotating
+            # must rotate at a lower frequency.
+            two_pi = np.pi * 2
+            if any(abs(np.diff(open_angles.values) > two_pi)) or any(
+                abs(np.diff(close_angles.values) > two_pi)
+            ):
+                frequency = 0.5 * frequency
+                open_angles, close_angles = _open_close_angles(ch, frequency)
+            self.choppers.append(
+                tof_pkg.Chopper(
+                    frequency=frequency,
+                    open=open_angles,
+                    close=close_angles,
+                    phase=sc.scalar(0.0, unit='rad'),
+                    distance=ch.distance,
+                    name=name,
+                )
+            )
 
         # Add detectors
         self.monitors = [
@@ -287,26 +305,28 @@ class FakeBeamlineEss:
         start = sc.datetime("2024-01-01T12:00:00.000000")
         period = sc.reciprocal(self.frequency)
 
+        raw_data = self.model_result.detectors[name].data.flatten(to='event')
+        # Select only the neutrons that make it to the detector
+        raw_data = raw_data[~raw_data.masks['blocked_by_others']].copy()
+
         # Format the data in a way that resembles data loaded from NeXus
-        event_data = self.model_result.detectors[name].data.flatten(to='event')
+        event_data = raw_data.copy(deep=False)
         dt = period.to(unit='us')
-        event_data.coords['event_time_zero'] = (
-            dt * (event_data.coords['toa'] // dt)
-        ).to(dtype=int) + start
+        event_time_zero = (dt * (event_data.coords['toa'] // dt)).to(dtype=int) + start
+        raw_data.coords['event_time_zero'] = event_time_zero
+        event_data.coords['event_time_zero'] = event_time_zero
         event_data.coords['event_time_offset'] = (
-            event_data.coords.pop('tof').to(unit='s') % period
+            event_data.coords.pop('toa').to(unit='s') % period
         )
+        del event_data.coords['tof']
         del event_data.coords['speed']
         del event_data.coords['time']
         del event_data.coords['wavelength']
 
-        # Select only the neutrons that make it to the detector
-        out = (
-            event_data[~event_data.masks['blocked_by_others']]
-            .group('event_time_zero')
-            .rename_dims(event_time_zero='pulse')
+        return (
+            event_data.group('event_time_zero').rename_dims(event_time_zero='pulse'),
+            raw_data.group('event_time_zero').rename_dims(event_time_zero='pulse'),
         )
-        return out
 
 
 wfm1 = chopper_cascade.Chopper(
@@ -450,10 +470,10 @@ frame_overlap_2 = chopper_cascade.Chopper(
 
 pulse_skipping = chopper_cascade.Chopper(
     distance=sc.scalar(15.91, unit='m'),
-    time_open=sc.scalar(0.021733, unit='s'),
-    # + sc.arange('cutout', -2, 2, unit='s') * (2 / 14),
-    time_close=sc.scalar(0.024730, unit='s'),
-    # + sc.arange('cutout', -2, 2, unit='s') * (2 / 14),
+    time_open=sc.scalar(0.021733, unit='s')
+    + sc.arange('cutout', 2, unit='s') * (2 / 14),
+    time_close=sc.scalar(0.024730, unit='s')
+    + sc.arange('cutout', 2, unit='s') * (2 / 14),
 )
 
 wfm_choppers = sc.DataGroup(

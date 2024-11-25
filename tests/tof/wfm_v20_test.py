@@ -146,7 +146,7 @@ def test_v20_compute_wavelengths_from_wfm(
     true_wavelengths = ess_beamline.source.data.coords["wavelength"]
 
     raw_data = sc.concat(
-        [ess_beamline.get_monitor(key) for key in monitors.keys()],
+        [ess_beamline.get_monitor(key)[0] for key in monitors.keys()],
         dim='detector',
     ).fold(dim='detector', sizes=ltotal.sizes)
 
@@ -170,7 +170,7 @@ def test_v20_compute_wavelengths_from_wfm(
 
     # Set up the workflow
     workflow = sl.Pipeline(
-        unwrap.providers
+        unwrap.providers()
         # unwrap.unwrap_providers()
         # + unwrap.time_of_flight_providers()
         # + unwrap.time_of_flight_origin_from_choppers_providers(wfm=True)

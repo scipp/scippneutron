@@ -156,7 +156,7 @@ def test_dream_wfm(disk_choppers, npulses, ltotal, time_offset_unit, distance_un
     true_wavelengths = ess_beamline.source.data.coords["wavelength"]
 
     raw_data = sc.concat(
-        [ess_beamline.get_monitor(key) for key in monitors.keys()],
+        [ess_beamline.get_monitor(key)[0] for key in monitors.keys()],
         dim='detector',
     ).fold(dim='detector', sizes=ltotal.sizes)
 
@@ -281,7 +281,7 @@ def test_dream_wfm_with_subframe_time_overlap(
     true_wavelengths = ess_beamline.source.data.coords["wavelength"]
 
     raw_data = sc.concat(
-        [ess_beamline.get_monitor(key) for key in monitors.keys()],
+        [ess_beamline.get_monitor(key)[0] for key in monitors.keys()],
         dim='detector',
     ).fold(dim='detector', sizes=ltotal.sizes)
 
@@ -305,7 +305,7 @@ def test_dream_wfm_with_subframe_time_overlap(
 
     # Set up the workflow
     workflow = sl.Pipeline(
-        unwrap.providers
+        unwrap.providers()
         # unwrap.unwrap_providers()
         # + unwrap.time_of_flight_providers()
         # + unwrap.time_of_flight_origin_from_choppers_providers(wfm=True)
