@@ -38,7 +38,7 @@ from ._models import (
     SqwMainHeader,
     SqwPixelMetadata,
 )
-from ._read_write import read_object_array, write_object_array
+from ._read_write import read_object_array
 
 
 class Sqw:
@@ -120,54 +120,6 @@ class Sqw:
                 raise NotImplementedError(
                     f"Unsupported data block type: {block_descriptor.block_type}"
                 )
-
-    def write_pixel_data(self, data: npt.NDArray[np.float64], run: int) -> None:
-        """Write pixel data for a given run.
-
-        This writes the given data into the slot for the run in the file.
-        It requires that space has been reserved for this run and the given
-        number of pixels.
-
-        Parameters
-        ----------
-        data:
-            (n_pixel, n_columns) array.
-            Will be converted to float32 in memory if it is not already in that format.
-        run:
-            Index of the run for which to write the pixel data.
-        """
-        # Note: This function is quite inefficient in that is reads some data from file
-        # for every run. It also writes the data range multiple times.
-        # This could be improved, e.g., by caching data blocks. But that could be
-        # brittle. Alternatively, the builder could be responsible for writing the data.
-        # Its interface is more constrained which could make caching more tenable.
-        main_header = self.read_data_block(("", "main_header"))
-        metadata = self.read_data_block(("pix", "metadata"))
-        if data.shape[0] * main_header.nfiles != metadata.npix:
-            raise ValueError(
-                f"Bad data shape, expected {metadata.npix / main_header.nfiles} rows"
-            )
-        f32_data = data.astype(np.float32, copy=False)
-
-        # Update data range and write to file
-        data_range = metadata.data_range
-        run_data_min = np.min(f32_data, axis=0)
-        run_data_max = np.max(f32_data, axis=0)
-        data_range[:, 0] = np.minimum(data_range[:, 0], run_data_min)
-        data_range[:, 1] = np.maximum(data_range[:, 1], run_data_max)
-        self._sqw_io.seek(self._block_allocation_table[("pix", "metadata")].position)
-        write_object_array(self._sqw_io, metadata.serialize_to_ir().to_object_array())
-
-        # Write data
-        descriptor = self._block_allocation_table[("pix", "data_wrap")]
-        offset = (
-            descriptor.position  # start of block
-            + 4  # sizeof(u32)
-            + 8  # sizeof(64)
-            + run * f32_data.nbytes  # run offset
-        )
-        self._sqw_io.seek(offset)
-        self._sqw_io.write_array(f32_data)
 
     def __str__(self) -> str:
         path = self._sqw_io.path
