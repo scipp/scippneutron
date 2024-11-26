@@ -98,3 +98,26 @@ def frame_skipping_diagram(tmax=None):
     )
 
     return fig
+
+
+def to_event_data(data, source):
+    """
+    Convert a detector reading from the `tof` package to event data that resembles
+    event data found in a NeXus file.
+    """
+    start = sc.datetime("2024-01-01T12:00:00.000000")
+    period = sc.reciprocal(source.frequency)
+    raw_data = data.flatten(to='event')
+    # Select only the neutrons that make it to the detector
+    event_data = raw_data[~raw_data.masks['blocked_by_others']].copy()
+    dt = period.to(unit='us')
+    event_time_zero = (dt * (event_data.coords['toa'] // dt)).to(dtype=int) + start
+    event_data.coords['event_time_zero'] = event_time_zero
+    event_data.coords['event_time_offset'] = (
+        event_data.coords.pop('toa').to(unit='s') % period
+    )
+    del event_data.coords['tof']
+    del event_data.coords['speed']
+    del event_data.coords['time']
+    del event_data.coords['wavelength']
+    return event_data.group('event_time_zero').rename_dims(event_time_zero='pulse')
