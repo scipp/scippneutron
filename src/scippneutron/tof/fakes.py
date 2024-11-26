@@ -206,7 +206,7 @@ class FakeBeamline:
             coords={'event_time_zero': event_time_zero},
         )
         if self._time_of_flight_origin is None:
-            offset_to_tof = sc.scalar(0.0, unit='s')  # self._pulse.center
+            offset_to_tof = self._pulse.center
         else:
             source_chopper = self._choppers[self._time_of_flight_origin]
             if len(source_chopper.time_open) != 1:
