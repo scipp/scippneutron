@@ -324,12 +324,11 @@ def slope_and_intercept_lookups(
 
     We take the polygons that define the subframes, given by the chopper cascade, and
     approximate them by straight lines.
-    To compute the slopes of these lines, we compute the slopes of all the lines that
-    connect any two vertices of the polygons (all-to-all).
-    We then compute the weighted mean of these slopes, where the weight is the distance
-    between the vertices.
-    The intercepts are computed as the mean of the intercepts of the lines that pass
-    through all the polygon's vertices.
+    To compute the slopes of these lines, we minimize the integrated squared error over
+    the polygon (i.e. taking the area of the polygon into account, as opposed to just
+    computing a least-squares fit of the vertices).
+    The method is described at
+    https://mathproblems123.wordpress.com/2022/09/13/integrating-polynomials-on-polygons/
 
     The slopes and intercepts are stored in lookup tables, which are used further down
     the pipeline to compute the time-of-flight from the time-of-arrival.
@@ -347,27 +346,31 @@ def slope_and_intercept_lookups(
     intercepts = []
     subframes = sorted(frame.subframes, key=lambda x: x.start_time.min())
     edges = []
+    dim = 'vertex'
+
     for sf in subframes:
         edges.extend([sf.start_time, sf.end_time])
-        x = sf.time - frame_start
-        y = (ltotal * chopper_cascade.wavelength_to_inverse_velocity(sf.wavelength)).to(
-            unit=x.unit, copy=False
-        )
-        # Compute the slopes for all pairs of points
-        xdiff = x - x.rename_dims(vertex='vertex2')
-        ydiff = y - y.rename_dims(vertex='vertex2')
-        mm = ydiff / xdiff
-        # Compute the weighted mean of the slope, where the weight is the distance
-        # between the vertices
-        dims = set(mm.dims) - set(frame_start.dims)
-        weight = sc.sqrt(xdiff**2 + ydiff**2)
-        a = weight * mm
-        for dim in dims:
-            a = a.nansum(dim)
-        a /= weight.sum(dims)
-        # Compute the intercept as the mean of the intercepts of the curves that pass
-        # through the vertices
-        b = (y - a * x).mean('vertex')
+        x0 = sf.time - frame_start
+        y0 = (
+            ltotal * chopper_cascade.wavelength_to_inverse_velocity(sf.wavelength)
+        ).to(unit=x0.unit, copy=False)
+
+        iv = x0.dims.index(dim)
+        x1 = sc.array(dims=x0.dims, values=np.roll(x0.values, 1, axis=iv), unit=x0.unit)
+        y1 = sc.array(dims=y0.dims, values=np.roll(y0.values, 1, axis=iv), unit=x0.unit)
+
+        x0y1 = x0 * y1
+        x1y0 = x1 * y0
+        x0y1_x1y0 = x0y1 - x1y0
+
+        A = ((x0y1_x1y0) / 2).sum(dim)
+        x = ((x0 + x1) * (x0y1_x1y0) / 6).sum(dim)
+        y = ((y0 + y1) * (x0y1_x1y0) / 6).sum(dim)
+        xy = ((x0y1_x1y0) * (2 * x0 * y0 + x0y1 + x1y0 + 2 * x1 * y1) / 24).sum(dim)
+        xx = ((x0y1_x1y0) * (x0**2 + x0 * x1 + x1**2) / 12).sum(dim)
+
+        a = (xy - x * y / A) / (xx - x**2 / A)
+        b = (y / A) - a * (x / A)
         slopes.append(a)
         intercepts.append(b)
 
