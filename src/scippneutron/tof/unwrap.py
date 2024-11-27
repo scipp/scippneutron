@@ -213,7 +213,8 @@ def frame_at_detector(
     if bounds.max() - bounds.min() > period:
         raise ValueError(
             "Frames are overlapping: Computed frame bounds "
-            f"{bounds} are larger than frame period {period}."
+            f"{bounds} = {bounds.max() - bounds.min()} are larger than frame period "
+            f"{period}."
         )
     return FrameAtDetector(at_detector)
 
