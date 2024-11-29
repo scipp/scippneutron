@@ -240,7 +240,9 @@ def unwrapped_time_of_arrival(da: RawData) -> UnwrappedTimeOfArrival:
     return UnwrappedTimeOfArrival(toa)
 
 
-def frame_at_detector_start_time(frame: FrameAtDetector) -> FrameAtDetectorStartTime:
+def frame_at_detector_start_time(
+    frame: FrameAtDetector,  # source_time_range: SourceTimeRange
+) -> FrameAtDetectorStartTime:
     """
     Compute the start time of the frame at the detector.
 
@@ -249,7 +251,9 @@ def frame_at_detector_start_time(frame: FrameAtDetector) -> FrameAtDetectorStart
     frame:
         Frame at the detector
     """
-    return FrameAtDetectorStartTime(frame.bounds()['time']['bound', 0])
+    return FrameAtDetectorStartTime(
+        frame.bounds()['time']['bound', 0]  # - source_time_range[0]
+    )
 
 
 def unwrapped_time_of_arrival_minus_frame_start_time(
@@ -277,6 +281,7 @@ def unwrapped_time_of_arrival_minus_frame_start_time(
 def time_of_arrival_minus_start_time_modulo_period(
     toa_minus_start_time: UnwrappedTimeOfArrivalMinusStartTime,
     frame_period: FramePeriod,
+    source_time_range: SourceTimeRange,
 ) -> TimeOfArrivalMinusStartTimeModuloPeriod:
     """
     Compute the time of arrival of the neutron at the detector, unwrapped at the pulse
@@ -290,9 +295,15 @@ def time_of_arrival_minus_start_time_modulo_period(
     frame_period:
         Period of the frame, i.e., time between the start of two consecutive frames.
     """
+    # return TimeOfArrivalMinusStartTimeModuloPeriod(
+    #     toa_minus_start_time
+    #     % frame_period.to(unit=elem_unit(toa_minus_start_time), copy=False)
+    # )
+    out = toa_minus_start_time % frame_period.to(
+        unit=elem_unit(toa_minus_start_time), copy=False
+    )
     return TimeOfArrivalMinusStartTimeModuloPeriod(
-        toa_minus_start_time
-        % frame_period.to(unit=elem_unit(toa_minus_start_time), copy=False)
+        out  # - source_time_range[0].to(unit=elem_unit(out), copy=False)
     )
 
 
@@ -317,7 +328,10 @@ def time_of_arrival_modulo_period(
 
 
 def slope_and_intercept_lookups(
-    frame: FrameAtDetector, frame_start: FrameAtDetectorStartTime, ltotal: Ltotal
+    frame: FrameAtDetector,
+    frame_start: FrameAtDetectorStartTime,
+    ltotal: Ltotal,
+    source_time_range: SourceTimeRange,
 ) -> SlopeAndInterceptLookup:
     """
     Compute the slope and intercept lookups which can be used to compute the
@@ -351,7 +365,7 @@ def slope_and_intercept_lookups(
 
     for sf in subframes:
         edges.extend([sf.start_time, sf.end_time])
-        x0 = sf.time - frame_start
+        x0 = sf.time - frame_start  # + source_time_range[0]
         y0 = (
             ltotal * chopper_cascade.wavelength_to_inverse_velocity(sf.wavelength)
         ).to(unit=x0.unit, copy=False)
@@ -404,6 +418,7 @@ def slope_and_intercept_lookups(
 def time_of_flight_from_lookup(
     toa: TimeOfArrivalMinusStartTimeModuloPeriod,
     lookup: SlopeAndInterceptLookup,
+    source_time_range: SourceTimeRange,
 ) -> TofCoord:
     """
     Compute the wavelength from the time of arrival and the slope and intercept lookups.
@@ -416,6 +431,7 @@ def time_of_flight_from_lookup(
     lookup:
         Slope and intercept lookups.
     """
+    # toa = toa + source_time_range[0].to(unit=elem_unit(toa), copy=False)
     # Ensure unit consistency
     subframe_edges = lookup.slope.coords['subframe'].to(unit=elem_unit(toa), copy=False)
     # Both slope and intercepts should have the same subframe edges
@@ -425,7 +441,10 @@ def time_of_flight_from_lookup(
 
     slope = sc.lookup(lookup.slope, dim='subframe')[toa]
     intercept = sc.lookup(lookup.intercept, dim='subframe')[toa]
-    return TofCoord(slope * toa + intercept)
+    out = slope * toa + intercept
+    return TofCoord(
+        out  # + source_time_range[0].to(unit=elem_unit(out), copy=False)
+    )
 
 
 def time_of_flight_no_choppers(

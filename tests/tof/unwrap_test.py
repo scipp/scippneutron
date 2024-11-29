@@ -67,19 +67,43 @@ def test_unwrap_with_no_choppers(ess_10s_14Hz, ess_pulse) -> None:
     )
     mon, ref = beamline.get_monitor('monitor')
 
-    pl = sl.Pipeline(unwrap.providers_no_choppers())
+    # pl = sl.Pipeline(unwrap.providers_no_choppers())
+    pl = sl.Pipeline(unwrap.providers())
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
     pl[unwrap.PulseStride] = 1
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
+    pl[unwrap.SourceWavelengthRange] = (
+        ess_pulse.wavelength_min,
+        ess_pulse.wavelength_max,
+    )
+    pl[unwrap.Choppers] = {}
     pl[unwrap.Ltotal] = distance
 
-    result = pl.compute(unwrap.TofData)
+    result = pl.compute(unwrap.TofData).bins.concat().value
+    ref = ref.bins.concat().value
 
-    assert sc.allclose(
-        result.bins.concat().value.coords['tof'],
-        ref.bins.concat().value.coords['tof'],
+    # Ensure that the bounds are close
+    res_tof = result.coords['tof']
+    ref_tof = ref.coords['tof']
+    delta = ref_tof.max() - ref_tof.min()
+    assert sc.abs((res_tof.min() - ref_tof.min()) / delta) < sc.scalar(1e-02)
+    assert sc.abs((res_tof.max() - ref_tof.max()) / delta) < sc.scalar(1e-02)
+
+    # Because the bounds are not the same, using the same bins for bot results would
+    # lead to large differences at the edges. So we pick the most narrow range to
+    # histogram.
+    bins = sc.linspace(
+        'tof',
+        max(res_tof.min(), ref_tof.min()),
+        min(res_tof.max(), ref_tof.max()),
+        num=501,
     )
+
+    ref_hist = ref.hist(tof=bins)
+    res_hist = result.hist(tof=bins)
+    diff = ((res_hist - ref_hist) / ref_hist.max()).data
+    assert sc.abs(diff).max() < sc.scalar(1.0e-1)
 
 
 def test_unwrap_with_frame_overlap_raises(ess_10s_14Hz, ess_pulse) -> None:
