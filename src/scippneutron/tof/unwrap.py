@@ -447,31 +447,6 @@ def time_of_flight_from_lookup(
     )
 
 
-def time_of_flight_no_choppers(
-    toa: TimeOfArrivalModuloPeriod, source_time_range: SourceTimeRange
-) -> TofCoord:
-    """
-    Compute the time-of-flight without choppers.
-    This is used when there are no choppers in the beamline.
-    We return the time-of-flight as the time-of-arrival minus the pulse mid-point.
-
-    Parameters
-    ----------
-    toa:
-        Time of arrival of the neutron at the detector, unwrapped at the pulse period,
-        modulo the frame period.
-    source_time_range:
-        Time range of the source pulse.
-    """
-    return TofCoord(
-        toa
-        - 0.5
-        * (source_time_range[0] + source_time_range[-1]).to(
-            unit=elem_unit(toa), copy=False
-        )
-    )
-
-
 def time_of_flight_data(da: RawData, tof: TofCoord) -> TofData:
     """
     Add the time-of-flight coordinate to the data.
@@ -573,17 +548,4 @@ def providers() -> tuple[Callable]:
         time_of_flight_from_lookup,
         time_of_flight_data,
         re_histogram_tof_data,
-    )
-
-
-def providers_no_choppers() -> tuple[Callable]:
-    """
-    Return the providers for the time-of-flight workflow without choppers.
-    """
-    return (
-        frame_period,
-        time_of_arrival_modulo_period,
-        unwrapped_time_of_arrival,
-        time_of_flight_no_choppers,
-        time_of_flight_data,
     )
