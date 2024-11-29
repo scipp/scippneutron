@@ -234,6 +234,10 @@ def unwrapped_time_of_arrival(da: RawData) -> UnwrappedTimeOfArrival:
         # Canonical name in NXmonitor
         toa = da.coords['time_of_flight']
     else:
+        # To unwrap the time of arrival, we want to add the event_time_zero to the
+        # event_time_offset. However, we do not really care about the exact datetimes,
+        # we just want to know the offsets with respect to the start of the run.
+        # Hence we use the smallest event_time_zero as the time origin.
         time_zero = da.coords['event_time_zero'] - da.coords['event_time_zero'].min()
         coord = da.bins.coords['event_time_offset']
         toa = coord + time_zero.to(dtype=float, unit=elem_unit(coord), copy=False)
