@@ -210,11 +210,11 @@ def frame_at_detector(
     # Check that the frame bounds do not span a range larger than the frame period.
     # This would indicate that the chopper phases are not set correctly.
     bounds = at_detector.bounds()['time']
-    if bounds.max() - bounds.min() > period:
+    diff = (bounds.max('bound') - bounds.min('bound')).flatten(to='x')
+    if any(diff > period.to(unit=diff.unit, copy=False)):
         raise ValueError(
             "Frames are overlapping: Computed frame bounds "
-            f"{bounds} = {bounds.max() - bounds.min()} are larger than frame period "
-            f"{period}."
+            f"{bounds} = {diff.max()} are larger than frame period {period}."
         )
     return FrameAtDetector(at_detector)
 
@@ -240,9 +240,7 @@ def unwrapped_time_of_arrival(da: RawData) -> UnwrappedTimeOfArrival:
     return UnwrappedTimeOfArrival(toa)
 
 
-def frame_at_detector_start_time(
-    frame: FrameAtDetector,  # source_time_range: SourceTimeRange
-) -> FrameAtDetectorStartTime:
+def frame_at_detector_start_time(frame: FrameAtDetector) -> FrameAtDetectorStartTime:
     """
     Compute the start time of the frame at the detector.
 
@@ -251,9 +249,7 @@ def frame_at_detector_start_time(
     frame:
         Frame at the detector
     """
-    return FrameAtDetectorStartTime(
-        frame.bounds()['time']['bound', 0]  # - source_time_range[0]
-    )
+    return FrameAtDetectorStartTime(frame.bounds()['time']['bound', 0])
 
 
 def unwrapped_time_of_arrival_minus_frame_start_time(
@@ -281,7 +277,6 @@ def unwrapped_time_of_arrival_minus_frame_start_time(
 def time_of_arrival_minus_start_time_modulo_period(
     toa_minus_start_time: UnwrappedTimeOfArrivalMinusStartTime,
     frame_period: FramePeriod,
-    source_time_range: SourceTimeRange,
 ) -> TimeOfArrivalMinusStartTimeModuloPeriod:
     """
     Compute the time of arrival of the neutron at the detector, unwrapped at the pulse
@@ -295,15 +290,9 @@ def time_of_arrival_minus_start_time_modulo_period(
     frame_period:
         Period of the frame, i.e., time between the start of two consecutive frames.
     """
-    # return TimeOfArrivalMinusStartTimeModuloPeriod(
-    #     toa_minus_start_time
-    #     % frame_period.to(unit=elem_unit(toa_minus_start_time), copy=False)
-    # )
-    out = toa_minus_start_time % frame_period.to(
-        unit=elem_unit(toa_minus_start_time), copy=False
-    )
     return TimeOfArrivalMinusStartTimeModuloPeriod(
-        out  # - source_time_range[0].to(unit=elem_unit(out), copy=False)
+        toa_minus_start_time
+        % frame_period.to(unit=elem_unit(toa_minus_start_time), copy=False)
     )
 
 
@@ -328,10 +317,7 @@ def time_of_arrival_modulo_period(
 
 
 def slope_and_intercept_lookups(
-    frame: FrameAtDetector,
-    frame_start: FrameAtDetectorStartTime,
-    ltotal: Ltotal,
-    source_time_range: SourceTimeRange,
+    frame: FrameAtDetector, frame_start: FrameAtDetectorStartTime, ltotal: Ltotal
 ) -> SlopeAndInterceptLookup:
     """
     Compute the slope and intercept lookups which can be used to compute the
@@ -365,7 +351,7 @@ def slope_and_intercept_lookups(
 
     for sf in subframes:
         edges.extend([sf.start_time, sf.end_time])
-        x0 = sf.time - frame_start  # + source_time_range[0]
+        x0 = sf.time - frame_start
         y0 = (
             ltotal * chopper_cascade.wavelength_to_inverse_velocity(sf.wavelength)
         ).to(unit=x0.unit, copy=False)
@@ -416,9 +402,7 @@ def slope_and_intercept_lookups(
 
 
 def time_of_flight_from_lookup(
-    toa: TimeOfArrivalMinusStartTimeModuloPeriod,
-    lookup: SlopeAndInterceptLookup,
-    source_time_range: SourceTimeRange,
+    toa: TimeOfArrivalMinusStartTimeModuloPeriod, lookup: SlopeAndInterceptLookup
 ) -> TofCoord:
     """
     Compute the wavelength from the time of arrival and the slope and intercept lookups.
@@ -431,7 +415,6 @@ def time_of_flight_from_lookup(
     lookup:
         Slope and intercept lookups.
     """
-    # toa = toa + source_time_range[0].to(unit=elem_unit(toa), copy=False)
     # Ensure unit consistency
     subframe_edges = lookup.slope.coords['subframe'].to(unit=elem_unit(toa), copy=False)
     # Both slope and intercepts should have the same subframe edges
@@ -441,10 +424,7 @@ def time_of_flight_from_lookup(
 
     slope = sc.lookup(lookup.slope, dim='subframe')[toa]
     intercept = sc.lookup(lookup.intercept, dim='subframe')[toa]
-    out = slope * toa + intercept
-    return TofCoord(
-        out  # + source_time_range[0].to(unit=elem_unit(out), copy=False)
-    )
+    return TofCoord(slope * toa + intercept)
 
 
 def time_of_flight_data(da: RawData, tof: TofCoord) -> TofData:
