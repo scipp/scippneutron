@@ -195,7 +195,7 @@ def test_standard_unwrap_histogram_mode(ess_10s_14Hz, ess_pulse, dist) -> None:
         .rename(event_time_offset='time_of_flight')
     )
 
-    pl = sl.Pipeline(unwrap.providers())
+    pl = sl.Pipeline((*unwrap.providers(), unwrap.re_histogram_tof_data))
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
     pl[unwrap.PulseStride] = 1
@@ -296,7 +296,7 @@ def test_pulse_skipping_unwrap_histogram_mode(dist) -> None:
         .rename(event_time_offset='time_of_flight')
     )
 
-    pl = sl.Pipeline(unwrap.providers())
+    pl = sl.Pipeline((*unwrap.providers(), unwrap.re_histogram_tof_data))
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = 1.0 / beamline.source.frequency
     pl[unwrap.PulseStride] = 2

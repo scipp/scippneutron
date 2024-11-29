@@ -79,7 +79,7 @@ modulo the frame period.
 
 
 @dataclass
-class SlopeAndInterceptLookup:
+class TimeOfArrivalToTimeOfFlight:
     """ """
 
     slope: Lookup
@@ -320,11 +320,12 @@ def time_of_arrival_modulo_period(
     )
 
 
-def slope_and_intercept_lookups(
+def relation_between_time_of_arrival_and_tof(
     frame: FrameAtDetector, frame_start: FrameAtDetectorStartTime, ltotal: Ltotal
-) -> SlopeAndInterceptLookup:
+) -> TimeOfArrivalToTimeOfFlight:
     """
-    Compute the slope and intercept lookups which can be used to compute the
+    Compute the slope and intercept of a linear relationship between time-of-arrival
+    and tof, which can be used to create lookup tables which can give the
     time-of-flight from the time-of-arrival.
 
     We take the polygons that define the subframes, given by the chopper cascade, and
@@ -334,9 +335,6 @@ def slope_and_intercept_lookups(
     computing a least-squares fit of the vertices).
     The method is described at
     https://mathproblems123.wordpress.com/2022/09/13/integrating-polynomials-on-polygons/
-
-    The slopes and intercepts are stored in lookup tables, which are used further down
-    the pipeline to compute the time-of-flight from the time-of-arrival.
 
     Parameters
     ----------
@@ -396,38 +394,44 @@ def slope_and_intercept_lookups(
 
     data = sc.full(sizes=sizes, value=np.nan)
     data['subframe', ::2] = sc.concat(slopes, 'subframe').transpose(keys)
-    a_lookup = sc.DataArray(data=data, coords={'subframe': edges})
+    da_slope = sc.DataArray(data=data, coords={'subframe': edges})
 
     data = sc.full(sizes=sizes, value=np.nan, unit=sf.time.unit)
     data['subframe', ::2] = sc.concat(intercepts, 'subframe').transpose(keys)
-    b_lookup = sc.DataArray(data=data, coords={'subframe': edges})
+    da_intercept = sc.DataArray(data=data, coords={'subframe': edges})
 
-    return SlopeAndInterceptLookup(slope=a_lookup, intercept=b_lookup)
+    return TimeOfArrivalToTimeOfFlight(slope=da_slope, intercept=da_intercept)
 
 
 def time_of_flight_from_lookup(
-    toa: TimeOfArrivalMinusStartTimeModuloPeriod, lookup: SlopeAndInterceptLookup
+    toa: TimeOfArrivalMinusStartTimeModuloPeriod,
+    toa_to_tof: TimeOfArrivalToTimeOfFlight,
 ) -> TofCoord:
     """
-    Compute the wavelength from the time of arrival and the slope and intercept lookups.
+    Compute the time-of-flight from the time-of-arrival.
+    Lookup tables to convert time-of-arrival to time-of-flight are created internally.
 
     Parameters
     ----------
     toa:
         Time of arrival of the neutron at the detector, unwrapped at the pulse period,
         minus the start time of the frame, modulo the frame period.
-    lookup:
-        Slope and intercept lookups.
+    toa_to_tof:
+        Conversion from-time-of arrival to time-of-flight.
     """
     # Ensure unit consistency
-    subframe_edges = lookup.slope.coords['subframe'].to(unit=elem_unit(toa), copy=False)
+    subframe_edges = toa_to_tof.slope.coords['subframe'].to(
+        unit=elem_unit(toa), copy=False
+    )
     # Both slope and intercepts should have the same subframe edges
-    lookup.slope.coords['subframe'] = subframe_edges
-    lookup.intercept.coords['subframe'] = subframe_edges
-    lookup.intercept.data = lookup.intercept.data.to(unit=elem_unit(toa), copy=False)
+    toa_to_tof.slope.coords['subframe'] = subframe_edges
+    toa_to_tof.intercept.coords['subframe'] = subframe_edges
+    toa_to_tof.intercept.data = toa_to_tof.intercept.data.to(
+        unit=elem_unit(toa), copy=False
+    )
 
-    slope = sc.lookup(lookup.slope, dim='subframe')[toa]
-    intercept = sc.lookup(lookup.intercept, dim='subframe')[toa]
+    slope = sc.lookup(toa_to_tof.slope, dim='subframe')[toa]
+    intercept = sc.lookup(toa_to_tof.intercept, dim='subframe')[toa]
     return TofCoord(slope * toa + intercept)
 
 
@@ -462,6 +466,14 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     the bin center. The width of the distribution is the bin width divided by 2.
     The new events are then histogrammed using a set of sorted bin edges.
 
+    WARNING:
+    This function is highly experimental, has limitations and should be used with
+    caution. It is a workaround to the issue that rebinning data with unsorted bin
+    edges is not supported in scipp.
+    We also do not support variances on the data.
+    As such, this function is not part of the default set of providers, and needs to be
+    inserted manually into the workflow.
+
     Parameters
     ----------
     da:
@@ -479,7 +491,7 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
 
     spread = sc.array(
         dims=[dim],
-        values=np.random.normal(size=events_per_bin, scale=min_bin_width.value / 2.5),
+        values=np.random.normal(size=events_per_bin, scale=min_bin_width.value / 2),
         unit=mid_tofs.unit,
     )
 
@@ -528,8 +540,7 @@ def providers() -> tuple[Callable]:
         frame_at_detector_start_time,
         unwrapped_time_of_arrival_minus_frame_start_time,
         time_of_arrival_minus_start_time_modulo_period,
-        slope_and_intercept_lookups,
+        relation_between_time_of_arrival_and_tof,
         time_of_flight_from_lookup,
         time_of_flight_data,
-        re_histogram_tof_data,
     )
