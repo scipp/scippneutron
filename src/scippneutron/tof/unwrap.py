@@ -353,6 +353,7 @@ def relation_between_time_of_arrival_and_tof(
 
     for sf in subframes:
         edges.extend([sf.start_time, sf.end_time])
+        # x is time-of-arrival, y is time-of-flight
         x0 = sf.time - frame_start
         y0 = (
             ltotal * chopper_cascade.wavelength_to_inverse_velocity(sf.wavelength)
