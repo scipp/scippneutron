@@ -320,6 +320,45 @@ def time_of_arrival_modulo_period(
     )
 
 
+def _approximate_polygon_with_line(
+    x0: sc.Variable, y0: sc.Variable, dim: str
+) -> tuple[sc.Variable, sc.Variable]:
+    """
+    Approximate a polygon defined by the vertices of the subframe with a straight line.
+    Compute the slope and intercept of the line that minimizes the integrated squared
+    error over the polygon (i.e. taking the area of the polygon into account, as opposed
+    to just computing a least-squares fit of the vertices).
+    The method is described at
+    https://mathproblems123.wordpress.com/2022/09/13/integrating-polynomials-on-polygons/
+
+    Parameters
+    ----------
+    x0:
+        x coordinates of the polygon vertices.
+    y0:
+        y coordinates of the polygon vertices.
+    dim:
+        Dimension along which the vertices are defined.
+    """
+    iv = x0.dims.index(dim)
+    x1 = sc.array(dims=x0.dims, values=np.roll(x0.values, 1, axis=iv), unit=x0.unit)
+    y1 = sc.array(dims=y0.dims, values=np.roll(y0.values, 1, axis=iv), unit=x0.unit)
+
+    x0y1 = x0 * y1
+    x1y0 = x1 * y0
+    x0y1_x1y0 = x0y1 - x1y0
+
+    A = ((x0y1_x1y0) / 2).sum(dim)
+    x = ((x0 + x1) * (x0y1_x1y0) / 6).sum(dim)
+    y = ((y0 + y1) * (x0y1_x1y0) / 6).sum(dim)
+    xy = ((x0y1_x1y0) * (2 * x0 * y0 + x0y1 + x1y0 + 2 * x1 * y1) / 24).sum(dim)
+    xx = ((x0y1_x1y0) * (x0**2 + x0 * x1 + x1**2) / 12).sum(dim)
+
+    a = (xy - x * y / A) / (xx - x**2 / A)
+    b = (y / A) - a * (x / A)
+    return a, b
+
+
 def relation_between_time_of_arrival_and_tof(
     frame: FrameAtDetector, frame_start: FrameAtDetectorStartTime, ltotal: Ltotal
 ) -> TimeOfArrivalToTimeOfFlight:
@@ -330,11 +369,6 @@ def relation_between_time_of_arrival_and_tof(
 
     We take the polygons that define the subframes, given by the chopper cascade, and
     approximate them by straight lines.
-    To compute the slopes of these lines, we minimize the integrated squared error over
-    the polygon (i.e. taking the area of the polygon into account, as opposed to just
-    computing a least-squares fit of the vertices).
-    The method is described at
-    https://mathproblems123.wordpress.com/2022/09/13/integrating-polynomials-on-polygons/
 
     Parameters
     ----------
@@ -349,32 +383,16 @@ def relation_between_time_of_arrival_and_tof(
     intercepts = []
     subframes = sorted(frame.subframes, key=lambda x: x.start_time.min())
     edges = []
-    dim = 'vertex'
 
     for sf in subframes:
         edges.extend([sf.start_time, sf.end_time])
-        # x is time-of-arrival, y is time-of-flight
-        x0 = sf.time - frame_start
-        y0 = (
-            ltotal * chopper_cascade.wavelength_to_inverse_velocity(sf.wavelength)
-        ).to(unit=x0.unit, copy=False)
-
-        iv = x0.dims.index(dim)
-        x1 = sc.array(dims=x0.dims, values=np.roll(x0.values, 1, axis=iv), unit=x0.unit)
-        y1 = sc.array(dims=y0.dims, values=np.roll(y0.values, 1, axis=iv), unit=x0.unit)
-
-        x0y1 = x0 * y1
-        x1y0 = x1 * y0
-        x0y1_x1y0 = x0y1 - x1y0
-
-        A = ((x0y1_x1y0) / 2).sum(dim)
-        x = ((x0 + x1) * (x0y1_x1y0) / 6).sum(dim)
-        y = ((y0 + y1) * (x0y1_x1y0) / 6).sum(dim)
-        xy = ((x0y1_x1y0) * (2 * x0 * y0 + x0y1 + x1y0 + 2 * x1 * y1) / 24).sum(dim)
-        xx = ((x0y1_x1y0) * (x0**2 + x0 * x1 + x1**2) / 12).sum(dim)
-
-        a = (xy - x * y / A) / (xx - x**2 / A)
-        b = (y / A) - a * (x / A)
+        a, b = _approximate_polygon_with_line(
+            x0=sf.time - frame_start,
+            y0=(
+                ltotal * chopper_cascade.wavelength_to_inverse_velocity(sf.wavelength)
+            ).to(unit=sf.time.unit, copy=False),
+            dim='vertex',
+        )
         slopes.append(a)
         intercepts.append(b)
 
