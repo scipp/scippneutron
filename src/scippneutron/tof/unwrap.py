@@ -497,7 +497,13 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     )
 
     events = mid_tofs + spread
-    data = sc.broadcast(da.data / float(events_per_bin), sizes=events.sizes)
+    val = sc.broadcast(sc.values(da.data) / float(events_per_bin), sizes=events.sizes)
+    kwargs = {'dims': events.dims, 'values': val.values, 'unit': da.data.unit}
+    if da.data.variances is not None:
+        kwargs['variances'] = sc.broadcast(
+            sc.variances(da.data) / float(events_per_bin), sizes=events.sizes
+        ).values
+    data = sc.array(**kwargs)
 
     # Sizes of the other dimensions
     sizes = mid_tofs.sizes
@@ -518,7 +524,7 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     # Define a new bin width, close to the original bin width.
     # TODO: this could be a workflow parameter
     coord = da.coords['tof']
-    bin_width = (coord['time_of_flight', 1:] - coord['time_of_flight', :-1]).nanmean()
+    bin_width = (coord['time_of_flight', 1:] - coord['time_of_flight', :-1]).nanmedian()
     flat = new.flatten(to=dim)
     if sizes:
         flat = flat.group(*list(sizes.keys()))
