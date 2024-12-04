@@ -34,7 +34,7 @@ click==8.1.7
     #   pip-tools
 copier==9.4.1
     # via -r dev.in
-dunamai==1.22.0
+dunamai==1.23.0
     # via copier
 fqdn==1.5.1
     # via jsonschema
@@ -42,7 +42,7 @@ funcy==2.0
     # via copier
 h11==0.14.0
     # via httpcore
-httpcore==1.0.6
+httpcore==1.0.7
     # via httpx
 httpx==0.27.2
     # via jupyterlab
@@ -50,7 +50,7 @@ isoduration==20.11.0
     # via jsonschema
 jinja2-ansible-filters==1.3.2
     # via copier
-json5==0.9.28
+json5==0.10.0
     # via jupyterlab-server
 jsonpointer==3.0.0
     # via jsonschema
@@ -71,7 +71,7 @@ jupyter-server==2.14.2
     #   notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.3.0
+jupyterlab==4.3.1
     # via -r dev.in
 jupyterlab-server==2.27.3
     # via jupyterlab
@@ -91,9 +91,9 @@ prometheus-client==0.21.0
     # via jupyter-server
 pycparser==2.22
     # via cffi
-pydantic==2.9.2
+pydantic==2.10.2
     # via copier
-pydantic-core==2.23.4
+pydantic-core==2.27.1
     # via pydantic
 python-json-logger==2.0.7
     # via jupyter-events
@@ -131,7 +131,7 @@ webcolors==24.11.1
     # via jsonschema
 websocket-client==1.8.0
     # via jupyter-server
-wheel==0.45.0
+wheel==0.45.1
     # via pip-tools
 
 # The following packages are considered to be unsafe in a requirements file:
