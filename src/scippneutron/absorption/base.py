@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Any
+from typing import Any, Literal
 
 import scipp as sc
 
@@ -13,8 +13,48 @@ def compute_transmission_map(
     beam_direction: sc.Variable,
     wavelength: sc.Variable,
     detector_position: sc.Variable,
-    quadrature_kind: Any = 'medium',
+    quadrature_kind: Literal['cheap', 'medium', 'expensive'] | Any = 'medium',
 ) -> sc.DataArray:
+    """
+    Computes transmission probability of single-scattered neutrons.
+
+    Computes the probability that a neutron is transmitted to
+    ``detector_position`` given that it travelled in ``beam_direction`` and
+    scattered incoherently a single time when passing through the sample.
+
+    .. math::
+      C(\\mathbf{p}, \\lambda) = \\int_{Sample} \\exp{(-\\mu(\\lambda)
+      L(\\mathbf{p}, \\mathbf{x}))} \\ d\\mathbf{x}
+
+    where :math:`L` is the length of the path through the sample,
+    :math:`\\mu` is the material dependent attenuation factor,
+    and :math:`\\mathbf{p}` is the ``detector_position``.
+
+    Parameters
+    ----------
+    sample_shape:
+        The size and shape of the sample.
+    sample_material:
+        The sample material, this parameter determines the
+        absorption and scattering coefficients.
+    beam_direction:
+        The direction of the incoming beam.
+    wavelength:
+        An array of wavelengths for which to evaluate the transmission fraction.
+    detector_position:
+        An array of vectors representing the scattering directions
+        where the transmission fraction is evaluated.
+    quadrature_kind:
+        What kind of quadrature to use.
+        A denser quadrature makes the result more accurate but takes longer to compute.
+        What options exists depend on the sample shape.
+
+    Returns
+    -------
+    :
+        the transmission fraction as a function of detector_position and wavelength
+
+    """
     points, weights = sample_shape.quadrature(quadrature_kind)
     transmission = _integrate_transmission_fraction(
         partial(
