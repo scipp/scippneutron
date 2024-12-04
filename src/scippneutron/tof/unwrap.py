@@ -481,8 +481,7 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     unsorted bin edges (due to either wrapping of `time_of_flight` or wavelength
     overlap between subframes).
     This function re-histograms the data to ensure that the bin edges are sorted.
-    It generates a number of events in each bin with a normal distribution around
-    the bin center. The width of the distribution is the bin width divided by 2.
+    It generates a number of events in each bin with a uniform distribution.
     The new events are then histogrammed using a set of sorted bin edges.
 
     WARNING:
@@ -498,23 +497,25 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     da:
         TofData with the time-of-flight coordinate.
     """
-    # In each bin, we generate a number of events with a normal distribution around the
-    # bin center. The width of the distribution is the bin width divided by 2.
-    mid_tofs = sc.midpoints(da.coords['tof'], dim='time_of_flight')
-    events_per_bin = 200
-    min_bin_width = sc.abs(
-        mid_tofs['time_of_flight', 1:] - mid_tofs['time_of_flight', :-1]
-    ).nanmin()
-
+    tof = da.coords['tof']
+    events_per_bin = 500
     dim = uuid.uuid4().hex
+    low = tof['time_of_flight', :-1].values
+    high = tof['time_of_flight', 1:].values
 
-    spread = sc.array(
-        dims=[dim],
-        values=np.random.normal(size=events_per_bin, scale=min_bin_width.value / 2),
-        unit=mid_tofs.unit,
-    )
+    # The numpy.random.uniform function below does not support NaNs, so we need to
+    # replace them with zeros, and then replace them back after the random numbers
+    # have been generated.
+    nans = np.isnan(low) | np.isnan(high)
+    low = np.where(nans, 0.0, low)
+    high = np.where(nans, 0.0, high)
 
-    events = mid_tofs + spread
+    # In each bin, we generate a number of events with a uniform distribution.
+    rng = np.random.default_rng()
+    events = rng.uniform(low, high, size=(events_per_bin, *da.shape))
+    events[:, nans] = np.nan
+    events = sc.array(dims=[dim, *da.dims], values=events, unit=tof.unit)
+
     val = sc.broadcast(sc.values(da.data) / float(events_per_bin), sizes=events.sizes)
     kwargs = {'dims': events.dims, 'values': val.values, 'unit': da.data.unit}
     if da.data.variances is not None:
@@ -524,17 +525,14 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     data = sc.array(**kwargs)
 
     # Sizes of the other dimensions
-    sizes = mid_tofs.sizes
+    sizes = da.sizes
     del sizes['time_of_flight']
 
     new = sc.DataArray(
         data=data,
         coords={dim: events}
         | {
-            key: sc.broadcast(
-                sc.arange(key, size, unit=None),
-                sizes=events.sizes,
-            )
+            key: sc.broadcast(sc.arange(key, size, unit=None), sizes=events.sizes)
             for key, size in sizes.items()
         },
     )
