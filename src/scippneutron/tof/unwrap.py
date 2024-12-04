@@ -387,10 +387,10 @@ def relation_between_time_of_arrival_and_tof(
     for sf in subframes:
         edges.extend([sf.start_time, sf.end_time])
         a, b = _approximate_polygon_with_line(
-            x0=sf.time - frame_start,
+            x0=sf.time - frame_start,  # Horizontal axis is time-of-arrival
             y0=(
                 ltotal * chopper_cascade.wavelength_to_inverse_velocity(sf.wavelength)
-            ).to(unit=sf.time.unit, copy=False),
+            ).to(unit=sf.time.unit, copy=False),  # Vertical axis is time-of-flight
             dim='vertex',
         )
         slopes.append(a)
