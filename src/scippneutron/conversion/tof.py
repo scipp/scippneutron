@@ -381,7 +381,7 @@ def wavelength_from_Q(*, Q: Variable, two_theta: Variable) -> Variable:
 
 def Q_elements_from_wavelength(
     *, wavelength: Variable, incident_beam: Variable, scattered_beam: Variable
-) -> tuple[Variable, Variable, Variable]:
+) -> dict[str, Variable]:
     r"""Compute them momentum transfer vector from wavelength.
 
     Computes the three components of the Q-vector :math:`Q_x, Q_y, Q_z`
@@ -425,7 +425,7 @@ def Q_elements_from_wavelength(
     e_f = scattered_beam / sc.norm(scattered_beam)
     e = e_i - e_f
     k = 2 * np.pi / wavelength
-    return k * e.fields.x, k * e.fields.y, k * e.fields.z
+    return {'Qx': k * e.fields.x, 'Qy': k * e.fields.y, 'Qz': k * e.fields.z}
 
 
 def dspacing_from_wavelength(*, wavelength: Variable, two_theta: Variable) -> Variable:
@@ -636,9 +636,7 @@ def hkl_vec_from_Q_vec(
     return (sc.spatial.inv(sample_rotation * ub_matrix) * Q_vec) / (2 * np.pi)
 
 
-def hkl_elements_from_hkl_vec(
-    *, hkl_vec: Variable
-) -> tuple[Variable, Variable, Variable]:
+def hkl_elements_from_hkl_vec(*, hkl_vec: Variable) -> dict[str, Variable]:
     """Unpack vector of hkl indices into separate variables.
 
     Parameters
@@ -655,7 +653,7 @@ def hkl_elements_from_hkl_vec(
     l: scipp.Variable
         3rd component of the hkl vector.
     """
-    return hkl_vec.fields.x, hkl_vec.fields.y, hkl_vec.fields.z
+    return {'h': hkl_vec.fields.x, 'k': hkl_vec.fields.y, 'l': hkl_vec.fields.z}
 
 
 def time_at_sample_from_tof(

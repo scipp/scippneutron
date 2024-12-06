@@ -365,11 +365,12 @@ def test_wavelength_from_Q_single_precision(two_theta_dtype):
 @settings(**global_settings)
 def test_Q_elements_from_wavelength_equal_beams(incident_beam, wavelength):
     scattered_beam = incident_beam.copy()
-    (Qx, Qy, Qz) = tof_conv.Q_elements_from_wavelength(
+    Q_elements = tof_conv.Q_elements_from_wavelength(
         wavelength=wavelength,
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
     )
+    Qx, Qy, Qz = Q_elements['Qx'], Q_elements['Qy'], Q_elements['Qz']
     assert sc.allclose(Qx, 0.0 / wavelength.unit)
     assert sc.allclose(Qy, 0.0 / wavelength.unit)
     assert sc.allclose(Qz, 0.0 / wavelength.unit)
@@ -385,11 +386,12 @@ def test_Q_elements_from_wavelength_consistent_with_Q(
     incident_beam, scattered_beam, wavelength
 ):
     wavelength = wavelength.rename({wavelength.dim: 'wavelength'})
-    (Qx, Qy, Qz) = tof_conv.Q_elements_from_wavelength(
+    Q_elements = tof_conv.Q_elements_from_wavelength(
         wavelength=wavelength,
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
     )
+    Qx, Qy, Qz = Q_elements['Qx'], Q_elements['Qy'], Q_elements['Qz']
     Q_vec = sc.spatial.as_vectors(Qx, Qy, Qz)
     Q = tof_conv.Q_from_wavelength(
         wavelength=wavelength,
@@ -408,11 +410,12 @@ def test_Q_elements_from_wavelength():
         unit='cm',
     )
     wavelength = sc.array(dims=['wavelength'], values=[0.3, 2.0], unit='angstrom')
-    (Qx, Qy, Qz) = tof_conv.Q_elements_from_wavelength(
+    Q_elements = tof_conv.Q_elements_from_wavelength(
         wavelength=wavelength,
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
     )
+    Qx, Qy, Qz = Q_elements['Qx'], Q_elements['Qy'], Q_elements['Qz']
     Q_vec = sc.spatial.as_vectors(Qx, Qy, Qz)
     assert sc.identical(
         Q_vec['pos', 0], 2 * np.pi / wavelength * sc.vector([-1.0, 0.0, 1.0])
@@ -605,7 +608,8 @@ def test_hkl_vec_from_Q_vec(inv_q):
 
 def test_hkl_elements_from_hkl_vec():
     hkl_vec = sc.vector([3.1, 4.5, 6.9])
-    h, k, l = tof_conv.hkl_elements_from_hkl_vec(hkl_vec=hkl_vec)  # noqa: E741
+    hkl = tof_conv.hkl_elements_from_hkl_vec(hkl_vec=hkl_vec)
+    h, k, l = hkl['h'], hkl['k'], hkl['l']  # noqa: E741
     sc.testing.assert_identical(h, hkl_vec.fields.x)
     sc.testing.assert_identical(k, hkl_vec.fields.y)
     sc.testing.assert_identical(l, hkl_vec.fields.z)
