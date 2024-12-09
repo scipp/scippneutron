@@ -3,12 +3,12 @@
 # @author Simon Heybrock
 import numpy as np
 import pytest
-import scipp as sc
-from scipp.testing import assert_identical
-
 from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
 from scippneutron.tof import fakes, unwrap
+
+import scipp as sc
+from scipp.testing import assert_identical
 
 sl = pytest.importorskip('sciline')
 
@@ -229,6 +229,80 @@ def test_pulse_skipping_unwrap(dist) -> None:
     distance = sc.scalar(dist, unit='m')
     choppers = fakes.psc_choppers.copy()
     choppers['pulse_skipping'] = fakes.pulse_skipping
+
+    # We use the ESS fake here because the fake beamline does not support choppers
+    # rotating at 7 Hz.
+    beamline = fakes.FakeBeamlineEss(
+        choppers=choppers,
+        monitors={'monitor': distance},
+        run_length=sc.scalar(1.0, unit='s'),
+        events_per_pulse=100_000,
+    )
+    mon, ref = beamline.get_monitor('monitor')
+
+    pl = sl.Pipeline(unwrap.providers())
+    pl[unwrap.RawData] = mon
+    pl[unwrap.PulsePeriod] = 1.0 / beamline.source.frequency
+    pl[unwrap.PulseStride] = 2
+
+    one_pulse = beamline.source.data['pulse', 0]
+    pl[unwrap.SourceTimeRange] = (
+        one_pulse.coords['time'].min(),
+        one_pulse.coords['time'].max(),
+    )
+    pl[unwrap.SourceWavelengthRange] = (
+        one_pulse.coords['wavelength'].min(),
+        one_pulse.coords['wavelength'].max(),
+    )
+
+    pl[unwrap.Choppers] = choppers
+    pl[unwrap.Ltotal] = distance
+    result = pl.compute(unwrap.TofData)
+    graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
+    ref_wav = ref.transform_coords('wavelength', graph=graph).bins.concat().value
+    result.coords['Ltotal'] = distance
+    result_wav = result.transform_coords('wavelength', graph=graph).bins.concat().value
+
+    assert sc.allclose(
+        result_wav.coords['wavelength'],
+        ref_wav.coords['wavelength'],
+        rtol=sc.scalar(1e-02),
+    )
+
+
+@pytest.mark.parametrize('dist', [44.0, 47.0])
+def test_pulse_skipping_with_180deg_phase_unwrap(dist) -> None:
+    from copy import copy
+
+    distance = sc.scalar(dist, unit='m')
+
+    # choppers = fakes.psc_choppers.copy()
+    # We will add 180 deg to the phase of the pulse-skipping chopper. This means that
+    # the first pulse will be blocked and the second one will be transmitted.
+    # When finding the FrameAtDetector, we need to propagate the second pulse through
+    # the cascade as well. For that, we need to spin the choppers by an additional
+    # rotation.
+    period = 1.0 / sc.scalar(14.0, unit='Hz')
+    choppers = sc.DataGroup()
+    for key, value in fakes.psc_choppers.items():
+        ch = copy(value)
+        ch.time_open = sc.concat(
+            [ch.time_open, ch.time_open + period], ch.time_open.dim
+        )
+        ch.time_close = sc.concat(
+            [ch.time_close, ch.time_close + period], ch.time_close.dim
+        )
+        choppers[key] = ch
+
+    choppers['pulse_skipping'] = copy(fakes.pulse_skipping)
+    # Add 180 deg to the phase of the pulse-skipping chopper (same as offsetting the
+    # time by one period).
+    choppers['pulse_skipping'].time_open = choppers['pulse_skipping'].time_open + period
+    choppers['pulse_skipping'].time_close = (
+        choppers['pulse_skipping'].time_close + period
+    )
+
+    # choppers['pulse_skipping'] = fakes.pulse_skipping
 
     # We use the ESS fake here because the fake beamline does not support choppers
     # rotating at 7 Hz.
