@@ -120,7 +120,9 @@ def overlap_choppers(disk_choppers):
         ),
     ],
 )
-def test_dream_wfm(disk_choppers, npulses, ltotal):
+@pytest.mark.parametrize("time_offset_unit", ['s', 'ms', 'us', 'ns'])
+@pytest.mark.parametrize("distance_unit", ['m', 'mm'])
+def test_dream_wfm(disk_choppers, npulses, ltotal, time_offset_unit, distance_unit):
     choppers = {
         key: chopper_cascade.Chopper.from_disk_chopper(
             chop, pulse_frequency=sc.scalar(14.0, unit="Hz"), npulses=npulses
@@ -158,6 +160,11 @@ def test_dream_wfm(disk_choppers, npulses, ltotal):
         dim='detector',
     ).fold(dim='detector', sizes=ltotal.sizes)
 
+    # Convert the time offset to the unit requested by the test
+    raw_data.bins.coords["event_time_offset"] = raw_data.bins.coords[
+        "event_time_offset"
+    ].to(unit=time_offset_unit, copy=False)
+
     # Verify that all 6 neutrons made it through the chopper cascade
     assert sc.identical(
         raw_data.bins.concat('pulse').hist().data,
@@ -191,7 +198,7 @@ def test_dream_wfm(disk_choppers, npulses, ltotal):
     )
 
     workflow[unwrap.Choppers] = choppers
-    workflow[unwrap.Ltotal] = ltotal
+    workflow[unwrap.Ltotal] = ltotal.to(unit=distance_unit, copy=False)
     workflow[unwrap.RawData] = raw_data
 
     # Compute time-of-flight
@@ -227,7 +234,11 @@ def test_dream_wfm(disk_choppers, npulses, ltotal):
         ),
     ],
 )
-def test_dream_wfm_with_subframe_time_overlap(overlap_choppers, npulses, ltotal):
+@pytest.mark.parametrize("time_offset_unit", ['s', 'ms', 'us', 'ns'])
+@pytest.mark.parametrize("distance_unit", ['m', 'mm'])
+def test_dream_wfm_with_subframe_time_overlap(
+    overlap_choppers, npulses, ltotal, time_offset_unit, distance_unit
+):
     choppers = {
         key: chopper_cascade.Chopper.from_disk_chopper(
             chop, pulse_frequency=sc.scalar(14.0, unit="Hz"), npulses=npulses
@@ -271,6 +282,11 @@ def test_dream_wfm_with_subframe_time_overlap(overlap_choppers, npulses, ltotal)
         dim='detector',
     ).fold(dim='detector', sizes=ltotal.sizes)
 
+    # Convert the time offset to the unit requested by the test
+    raw_data.bins.coords["event_time_offset"] = raw_data.bins.coords[
+        "event_time_offset"
+    ].to(unit=time_offset_unit, copy=False)
+
     # Verify that all 6 neutrons made it through the chopper cascade
     assert sc.identical(
         raw_data.bins.concat('pulse').hist().data,
@@ -304,7 +320,7 @@ def test_dream_wfm_with_subframe_time_overlap(overlap_choppers, npulses, ltotal)
     )
 
     workflow[unwrap.Choppers] = choppers
-    workflow[unwrap.Ltotal] = ltotal
+    workflow[unwrap.Ltotal] = ltotal.to(unit=distance_unit, copy=False)
     workflow[unwrap.RawData] = raw_data
 
     # Compute time-of-flight

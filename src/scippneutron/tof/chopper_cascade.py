@@ -46,7 +46,7 @@ def propagate_times(
         Propagated time.
     """
     inverse_velocity = wavelength_to_inverse_velocity(wavelength)
-    return time + distance * inverse_velocity
+    return time + (distance * inverse_velocity).to(unit=time.unit, copy=False)
 
 
 class Subframe:
@@ -174,7 +174,7 @@ class Frame:
         :
             Propagated frame.
         """
-        delta = distance - self.distance
+        delta = distance.to(unit=self.distance.unit, copy=False) - self.distance
         subframes = [subframe.propagate_by(delta) for subframe in self.subframes]
         return Frame(distance=distance, subframes=subframes)
 
@@ -201,12 +201,13 @@ class Frame:
         :
             Chopped frame.
         """
-        if chopper.distance < self.distance:
+        distance = chopper.distance.to(unit=self.distance.unit, copy=False)
+        if distance < self.distance:
             raise ValueError(
-                f'Chopper distance {chopper.distance} is smaller than frame distance '
+                f'Chopper distance {distance} is smaller than frame distance '
                 f'{self.distance}'
             )
-        frame = self.propagate_to(chopper.distance)
+        frame = self.propagate_to(distance)
 
         # A chopper can have multiple openings, call _chop for each of them. The result
         # is the union of the resulting subframes.
