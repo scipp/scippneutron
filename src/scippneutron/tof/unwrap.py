@@ -28,7 +28,9 @@ Choppers = NewType('Choppers', Mapping[str, chopper_cascade.Chopper])
 Choppers used to define the frame parameters.
 """
 
-ChopperCascadeFrames = NewType('ChopperCascadeFrames', chopper_cascade.FrameSequence)
+ChopperCascadeFrames = NewType(
+    'ChopperCascadeFrames', list[chopper_cascade.FrameSequence]
+)
 """
 Frames of the chopper cascade.
 """
@@ -158,10 +160,16 @@ def chopper_cascade_frames(
     source_wavelength_range: SourceWavelengthRange,
     source_time_range: SourceTimeRange,
     choppers: Choppers,
+    pulse_stride: PulseStride,
+    pulse_period: PulsePeriod,
 ) -> ChopperCascadeFrames:
     """
     Return the frames of the chopper cascade.
     This is the result of propagating the source pulse through the chopper cascade.
+
+    In the case of pulse-skipping, the frames are computed for each pulse in the stride,
+    to make sure that we include cases where e.g. the first pulse in the stride is
+    skipped, but the second is not.
 
     Parameters
     ----------
@@ -171,14 +179,27 @@ def chopper_cascade_frames(
         Time range of the source pulse.
     choppers:
         Choppers used to define the frame parameters.
+    pulse_stride:
+        Stride of used pulses. Usually 1, but may be a small integer when
+        pulse-skipping.
+    pulse_period:
+        Period of the source pulses, i.e., time between consecutive pulse starts.
     """
-    frames = chopper_cascade.FrameSequence.from_source_pulse(
-        time_min=source_time_range[0],
-        time_max=source_time_range[-1],
-        wavelength_min=source_wavelength_range[0],
-        wavelength_max=source_wavelength_range[-1],
-    )
-    return ChopperCascadeFrames(frames.chop(choppers.values()))
+    out = []
+    for i in range(pulse_stride):
+        offset = (pulse_period * i).to(unit=source_time_range[0].unit, copy=False)
+        frames = chopper_cascade.FrameSequence.from_source_pulse(
+            time_min=source_time_range[0] + offset,
+            time_max=source_time_range[-1] + offset,
+            wavelength_min=source_wavelength_range[0],
+            wavelength_max=source_wavelength_range[-1],
+        )
+        chopped = frames.chop(choppers.values())
+        for f in chopped:
+            for sf in f.subframes:
+                sf.time -= offset.to(unit=sf.time.unit, copy=False)
+        out.append(chopped)
+    return ChopperCascadeFrames(out)
 
 
 def frame_at_detector(
@@ -205,7 +226,19 @@ def frame_at_detector(
     period:
         Period of the frame, i.e., time between the start of two consecutive frames.
     """
-    at_detector = frames[-1].propagate_to(ltotal)
+
+    # In the case of pulse-skipping, only one of the frames should have subframes (the
+    # others should be empty).
+    at_detector = []
+    for f in frames:
+        propagated = f[-1].propagate_to(ltotal)
+        if len(propagated.subframes) > 0:
+            at_detector.append(propagated)
+    if len(at_detector) == 0:
+        raise ValueError("FrameAtDetector: No frames with subframes found.")
+    if len(at_detector) > 1:
+        raise ValueError("FrameAtDetector: Multiple frames with subframes found.")
+    at_detector = at_detector[0]
 
     # Check that the frame bounds do not span a range larger than the frame period.
     # This would indicate that the chopper phases are not set correctly.
