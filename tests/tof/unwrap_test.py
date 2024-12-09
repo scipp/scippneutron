@@ -3,12 +3,12 @@
 # @author Simon Heybrock
 import numpy as np
 import pytest
+import scipp as sc
+from scipp.testing import assert_identical
+
 from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
 from scippneutron.tof import fakes, unwrap
-
-import scipp as sc
-from scipp.testing import assert_identical
 
 sl = pytest.importorskip('sciline')
 
