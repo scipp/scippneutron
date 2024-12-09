@@ -276,7 +276,6 @@ def test_pulse_skipping_with_180deg_phase_unwrap(dist) -> None:
 
     distance = sc.scalar(dist, unit='m')
 
-    # choppers = fakes.psc_choppers.copy()
     # We will add 180 deg to the phase of the pulse-skipping chopper. This means that
     # the first pulse will be blocked and the second one will be transmitted.
     # When finding the FrameAtDetector, we need to propagate the second pulse through
@@ -301,8 +300,6 @@ def test_pulse_skipping_with_180deg_phase_unwrap(dist) -> None:
     choppers['pulse_skipping'].time_close = (
         choppers['pulse_skipping'].time_close + period
     )
-
-    # choppers['pulse_skipping'] = fakes.pulse_skipping
 
     # We use the ESS fake here because the fake beamline does not support choppers
     # rotating at 7 Hz.

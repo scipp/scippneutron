@@ -112,6 +112,11 @@ PulseStride = NewType('PulseStride', int)
 Stride of used pulses. Usually 1, but may be a small integer when pulse-skipping.
 """
 
+PulseStrideOffset = NewType('PulseStrideOffset', int)
+"""
+When pulse-skipping, the offset of the first pulse in the stride.
+"""
+
 RawData = NewType('RawData', sc.DataArray)
 """
 Raw detector data loaded from a NeXus file, e.g., NXdetector containing NXevent_data.
@@ -252,7 +257,9 @@ def frame_at_detector(
     return FrameAtDetector(at_detector)
 
 
-def unwrapped_time_of_arrival(da: RawData) -> UnwrappedTimeOfArrival:
+def unwrapped_time_of_arrival(
+    da: RawData, offset: PulseStrideOffset, period: PulsePeriod
+) -> UnwrappedTimeOfArrival:
     """
     Compute the unwrapped time of arrival of the neutron at the detector.
     For event data, this is essentially ``event_time_offset + event_time_zero``.
@@ -262,6 +269,12 @@ def unwrapped_time_of_arrival(da: RawData) -> UnwrappedTimeOfArrival:
     da:
         Raw detector data loaded from a NeXus file, e.g., NXdetector containing
         NXevent_data.
+    offset:
+        Integer offset of the first pulse in the stride (typically zero unless we are
+        using pulse-skipping and the events do not begin with the first pulse in the
+        stride).
+    period:
+        Period of the source pulses, i.e., time between consecutive pulse starts.
     """
     if da.bins is None:
         # Canonical name in NXmonitor
@@ -273,7 +286,12 @@ def unwrapped_time_of_arrival(da: RawData) -> UnwrappedTimeOfArrival:
         # Hence we use the smallest event_time_zero as the time origin.
         time_zero = da.coords['event_time_zero'] - da.coords['event_time_zero'].min()
         coord = da.bins.coords['event_time_offset']
-        toa = coord + time_zero.to(dtype=float, unit=elem_unit(coord), copy=False)
+        unit = elem_unit(coord)
+        toa = (
+            coord
+            + time_zero.to(dtype=float, unit=unit, copy=False)
+            - (offset * period).to(unit=unit, copy=False)
+        )
     return UnwrappedTimeOfArrival(toa)
 
 
@@ -333,24 +351,24 @@ def time_of_arrival_minus_start_time_modulo_period(
     )
 
 
-def time_of_arrival_modulo_period(
-    toa: UnwrappedTimeOfArrival, frame_period: FramePeriod
-) -> TimeOfArrivalModuloPeriod:
-    """
-    Compute the time of arrival of the neutron at the detector, unwrapped at the pulse
-    period, modulo the frame period.
-    This is used when there are no choppers in the beamline.
+# def time_of_arrival_modulo_period(
+#     toa: UnwrappedTimeOfArrival, frame_period: FramePeriod
+# ) -> TimeOfArrivalModuloPeriod:
+#     """
+#     Compute the time of arrival of the neutron at the detector, unwrapped at the pulse
+#     period, modulo the frame period.
+#     This is used when there are no choppers in the beamline.
 
-    Parameters
-    ----------
-    toa:
-        Time of arrival of the neutron at the detector, unwrapped at the pulse period.
-    frame_period:
-        Period of the frame, i.e., time between the start of two consecutive frames.
-    """
-    return TimeOfArrivalModuloPeriod(
-        toa % frame_period.to(unit=elem_unit(toa), copy=False)
-    )
+#     Parameters
+#     ----------
+#     toa:
+#         Time of arrival of the neutron at the detector, unwrapped at the pulse period.
+#     frame_period:
+#         Period of the frame, i.e., time between the start of two consecutive frames.
+#     """
+#     return TimeOfArrivalModuloPeriod(
+#         toa % frame_period.to(unit=elem_unit(toa), copy=False)
+#     )
 
 
 def _approximate_polygon_with_line(
@@ -600,3 +618,10 @@ def providers() -> tuple[Callable]:
         time_of_flight_from_lookup,
         time_of_flight_data,
     )
+
+
+def default_parameters():
+    return {
+        PulseStride: 1,
+        PulseStrideOffset: 0,
+    }
