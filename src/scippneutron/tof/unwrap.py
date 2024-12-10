@@ -602,26 +602,47 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     return ReHistogrammedTofData(rehist)
 
 
-def providers() -> tuple[Callable]:
-    """
-    Return the providers for the time-of-flight workflow.
-    """
-    return (
-        chopper_cascade_frames,
-        frame_at_detector,
-        frame_period,
-        unwrapped_time_of_arrival,
-        frame_at_detector_start_time,
-        unwrapped_time_of_arrival_minus_frame_start_time,
-        time_of_arrival_minus_start_time_modulo_period,
-        relation_between_time_of_arrival_and_tof,
-        time_of_flight_from_lookup,
-        time_of_flight_data,
-    )
-
-
-def default_parameters():
+def init() -> dict:
     return {
-        PulseStride: 1,
-        PulseStrideOffset: 0,
+        "providers": (
+            chopper_cascade_frames,
+            frame_at_detector,
+            frame_period,
+            unwrapped_time_of_arrival,
+            frame_at_detector_start_time,
+            unwrapped_time_of_arrival_minus_frame_start_time,
+            time_of_arrival_minus_start_time_modulo_period,
+            relation_between_time_of_arrival_and_tof,
+            time_of_flight_from_lookup,
+            time_of_flight_data,
+        ),
+        "params": {
+            PulseStride: 1,
+            PulseStrideOffset: 0,
+        },
     }
+
+
+# def providers() -> tuple[Callable]:
+#     """
+#     Return the providers for the time-of-flight workflow.
+#     """
+#     return (
+#         chopper_cascade_frames,
+#         frame_at_detector,
+#         frame_period,
+#         unwrapped_time_of_arrival,
+#         frame_at_detector_start_time,
+#         unwrapped_time_of_arrival_minus_frame_start_time,
+#         time_of_arrival_minus_start_time_modulo_period,
+#         relation_between_time_of_arrival_and_tof,
+#         time_of_flight_from_lookup,
+#         time_of_flight_data,
+#     )
+
+
+# def default_parameters():
+#     return {
+#         PulseStride: 1,
+#         PulseStrideOffset: 0,
+#     }
