@@ -169,9 +169,8 @@ def test_v20_compute_wavelengths_from_wfm(
     )
 
     # Set up the workflow
-    workflow = sl.Pipeline(unwrap.providers())
+    workflow = sl.Pipeline(unwrap.providers(), params=unwrap.params())
     workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
-    workflow[unwrap.PulseStride] = 1
 
     # Define the extent of the pulse that contains the 6 neutrons in time and wavelength
     # Note that we make a larger encompassing pulse to ensure that the frame bounds are

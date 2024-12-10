@@ -67,11 +67,9 @@ def test_unwrap_with_no_choppers(ess_10s_14Hz, ess_pulse) -> None:
     )
     mon, ref = beamline.get_monitor('monitor')
 
-    # pl = sl.Pipeline(unwrap.providers_no_choppers())
-    pl = sl.Pipeline(unwrap.providers())
+    pl = sl.Pipeline(unwrap.providers(), params=unwrap.params())
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride] = 1
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -117,10 +115,9 @@ def test_unwrap_with_frame_overlap_raises(ess_10s_14Hz, ess_pulse) -> None:
     )
     mon, _ = beamline.get_monitor('monitor')
 
-    pl = sl.Pipeline(unwrap.providers())
+    pl = sl.Pipeline(unwrap.providers(), params=unwrap.params())
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride] = 1
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -147,10 +144,9 @@ def test_standard_unwrap(ess_10s_14Hz, ess_pulse, dist) -> None:
     )
     mon, ref = beamline.get_monitor('monitor')
 
-    pl = sl.Pipeline(unwrap.providers())
+    pl = sl.Pipeline(unwrap.providers(), params=unwrap.params())
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride] = 1
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -195,10 +191,11 @@ def test_standard_unwrap_histogram_mode(ess_10s_14Hz, ess_pulse, dist) -> None:
         .rename(event_time_offset='time_of_flight')
     )
 
-    pl = sl.Pipeline((*unwrap.providers(), unwrap.re_histogram_tof_data))
+    pl = sl.Pipeline(
+        (*unwrap.providers(), unwrap.re_histogram_tof_data), params=unwrap.params()
+    )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.PulseStride] = 1
     pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
     pl[unwrap.SourceWavelengthRange] = (
         ess_pulse.wavelength_min,
@@ -240,7 +237,7 @@ def test_pulse_skipping_unwrap(dist) -> None:
     )
     mon, ref = beamline.get_monitor('monitor')
 
-    pl = sl.Pipeline(unwrap.providers())
+    pl = sl.Pipeline(unwrap.providers(), params=unwrap.params())
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = 1.0 / beamline.source.frequency
     pl[unwrap.PulseStride] = 2
@@ -311,7 +308,7 @@ def test_pulse_skipping_with_180deg_phase_unwrap(dist) -> None:
     )
     mon, ref = beamline.get_monitor('monitor')
 
-    pl = sl.Pipeline(unwrap.providers())
+    pl = sl.Pipeline(unwrap.providers(), params=unwrap.params())
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = 1.0 / beamline.source.frequency
     pl[unwrap.PulseStride] = 2
@@ -356,7 +353,7 @@ def test_pulse_skipping_unwrap_with_half_of_first_frame_missing() -> None:
     )
     mon, ref = beamline.get_monitor('monitor')
 
-    pl = sl.Pipeline(**unwrap.init())
+    pl = sl.Pipeline(unwrap.providers(), params=unwrap.params())
     pl[unwrap.RawData] = mon[1:].copy()  # Skip first pulse = half of the first frame
     pl[unwrap.PulsePeriod] = 1.0 / beamline.source.frequency
     pl[unwrap.PulseStride] = 2
@@ -415,7 +412,9 @@ def test_pulse_skipping_unwrap_histogram_mode(dist) -> None:
         .rename(event_time_offset='time_of_flight')
     )
 
-    pl = sl.Pipeline((*unwrap.providers(), unwrap.re_histogram_tof_data))
+    pl = sl.Pipeline(
+        (*unwrap.providers(), unwrap.re_histogram_tof_data), params=unwrap.params()
+    )
     pl[unwrap.RawData] = mon
     pl[unwrap.PulsePeriod] = 1.0 / beamline.source.frequency
     pl[unwrap.PulseStride] = 2
