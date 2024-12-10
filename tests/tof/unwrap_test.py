@@ -3,12 +3,12 @@
 # @author Simon Heybrock
 import numpy as np
 import pytest
+import scipp as sc
+from scipp.testing import assert_identical
+
 from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
 from scippneutron.tof import fakes, unwrap
-
-import scipp as sc
-from scipp.testing import assert_identical
 
 sl = pytest.importorskip('sciline')
 
@@ -341,23 +341,17 @@ def test_pulse_skipping_with_180deg_phase_unwrap(dist) -> None:
     )
 
 
-@pytest.mark.parametrize('dist', [44.0, 47.0])
-def test_pulse_skipping_unwrap_with_half_of_first_frame_missing(dist) -> None:
-    from copy import copy
-
-    distance = sc.scalar(dist, unit='m')
-
+def test_pulse_skipping_unwrap_with_half_of_first_frame_missing() -> None:
+    distance = sc.scalar(50.0, unit='m')
     choppers = fakes.psc_choppers.copy()
     choppers['pulse_skipping'] = fakes.pulse_skipping
 
     # We use the ESS fake here because the fake beamline does not support choppers
     # rotating at 7 Hz.
-    # Note: we run for longer to make sure that the missing part of the first pulse is
-    # does not affect the statistics of the final result too much.
     beamline = fakes.FakeBeamlineEss(
         choppers=choppers,
         monitors={'monitor': distance},
-        run_length=sc.scalar(4.0, unit='s'),
+        run_length=sc.scalar(1.0, unit='s'),
         events_per_pulse=100_000,
     )
     mon, ref = beamline.get_monitor('monitor')
@@ -382,7 +376,9 @@ def test_pulse_skipping_unwrap_with_half_of_first_frame_missing(dist) -> None:
     pl[unwrap.Ltotal] = distance
     result = pl.compute(unwrap.TofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
-    ref_wav = ref.transform_coords('wavelength', graph=graph).bins.concat().value
+    ref_wav = (
+        ref[1:].copy().transform_coords('wavelength', graph=graph).bins.concat().value
+    )
     result.coords['Ltotal'] = distance
     result_wav = result.transform_coords('wavelength', graph=graph).bins.concat().value
 

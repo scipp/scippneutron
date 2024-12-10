@@ -12,7 +12,7 @@ https://scipp.github.io/sciline/ on how to use Sciline.
 """
 
 import uuid
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import NewType
 
@@ -351,26 +351,6 @@ def time_of_arrival_minus_start_time_modulo_period(
     )
 
 
-# def time_of_arrival_modulo_period(
-#     toa: UnwrappedTimeOfArrival, frame_period: FramePeriod
-# ) -> TimeOfArrivalModuloPeriod:
-#     """
-#     Compute the time of arrival of the neutron at the detector, unwrapped at the pulse
-#     period, modulo the frame period.
-#     This is used when there are no choppers in the beamline.
-
-#     Parameters
-#     ----------
-#     toa:
-#         Time of arrival of the neutron at the detector, unwrapped at the pulse period.
-#     frame_period:
-#         Period of the frame, i.e., time between the start of two consecutive frames.
-#     """
-#     return TimeOfArrivalModuloPeriod(
-#         toa % frame_period.to(unit=elem_unit(toa), copy=False)
-#     )
-
-
 def _approximate_polygon_with_line(
     x0: sc.Variable, y0: sc.Variable, dim: str
 ) -> tuple[sc.Variable, sc.Variable]:
@@ -621,28 +601,3 @@ def init() -> dict:
             PulseStrideOffset: 0,
         },
     }
-
-
-# def providers() -> tuple[Callable]:
-#     """
-#     Return the providers for the time-of-flight workflow.
-#     """
-#     return (
-#         chopper_cascade_frames,
-#         frame_at_detector,
-#         frame_period,
-#         unwrapped_time_of_arrival,
-#         frame_at_detector_start_time,
-#         unwrapped_time_of_arrival_minus_frame_start_time,
-#         time_of_arrival_minus_start_time_modulo_period,
-#         relation_between_time_of_arrival_and_tof,
-#         time_of_flight_from_lookup,
-#         time_of_flight_data,
-#     )
-
-
-# def default_parameters():
-#     return {
-#         PulseStride: 1,
-#         PulseStrideOffset: 0,
-#     }
