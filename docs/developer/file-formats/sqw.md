@@ -2,8 +2,7 @@
 
 This document describes the **SQW format v4.0**.
 
-SQW files are used in spectroscopy by [Horace](https://pace-neutrons.github.io/Horace) for reduced data and intermediate
-analysis results.
+SQW files are used in spectroscopy by [Horace](https://pace-neutrons.github.io/Horace) for reduced data and intermediate analysis results.
 ScippNeutron can write and, to a limited degree, read SQW files using {mod}`scippneutron.io.sqw`.
 
 ```{note}
@@ -14,10 +13,8 @@ It should *not* be regarded as authoritative.
 
 ## Overview
 
-SQW files are binary files that encode neutron counts both in a flexible binned format called 'pixels' and a histogram
-called 'DND' (or D1D through D4D for concrete cases).
-In addition to the data, SQW files store metadata that describe how the experiment was set up and how the data were
-binned.
+SQW files are binary files that encode neutron counts both in a flexible binned format called 'pixels' and a multidimensional histogram called 'DND' (or D1D through D4D for concrete cases).
+In addition to the data, SQW files store metadata that describe how the experiment was set up and how the data were binned.
 
 ### Data Blocks
 
@@ -40,13 +37,13 @@ Block names are split into a 'name' and a 'level2_name' which in ScippNeutron ar
   - Used for data analysis, in particular [Tobyfit](https://pace-neutrons.github.io/Horace/v4.0.0/manual/Tobyfit.html). ScippNeutron leaves this block empty.
 * - data
   - metadata
-  - Information about how the nd data was histogrammed and how to display it. ({class}`SqwDndMetadata <scippneutron.io.sqw.SqwDndMetadata>`
+  - Information about how the nd data was histogrammed and how to display it. ({class}`SqwDndMetadata <scippneutron.io.sqw.SqwDndMetadata>`)
 * - data
   - nd_data
   - Histogram data.
 * - experiment_info
   - instruments
-  - Information about the instrument where the data were measured. One {class}`SqwIXNullInstrument <scippneutron.io.sqw.SqwIXNullInstrument>` per [run](#Runs).
+  - Information about the instrument where the data were measured. One {class}`SqwIXNullInstrument <scippneutron.io.sqw.SqwIXNullInstrument>` per [run](#Runs). (Horace defines several instrument classes but so far, we have only use the null instrument.)
 * - experiment_info
   - samples
   - Information on the sample that was measured. One {class}`SqwIXSample <scippneutron.io.sqw.SqwIXSample>` per [run](#Runs).
@@ -55,7 +52,7 @@ Block names are split into a 'name' and a 'level2_name' which in ScippNeutron ar
   - Experimental settings such as sample rotation. One {class}`SqwIXExperiment <scippneutron.io.sqw.SqwIXExperiment>` per [run](#Runs).
 * - pix
   - metadata
-  - Information about the pixel data. largely hidden and automated in ScippNeutron.
+  - Information about the pixel data. Largely hidden and automated in ScippNeutron.
 * - pix
   - data_wrap
   - 'Pixel' data, i.e., binned observations as a function of momentum and energy transfer. Stored as a $9 \times N$ array with [rows](https://github.com/pace-neutrons/Horace/blob/master/documentation/add/05_file_formats.md):
@@ -77,7 +74,7 @@ This can be encoded by way of 'unique object containers' which store only one co
 ### Byte Order
 
 SQW files do not have a dedicated mechanism for encoding or detecting byte order.
-Horace seems to ignore the issue and always read and write files in the host machine's native order.
+Horace seems to ignore the issue and seems to always read and write files in the host machine's native order.
 ScippNeutron supports saving files with native, little, or big endianness.
 It also attempts to detect the byte order of a file by inspecting the [header](#File-Header).
 
@@ -97,12 +94,12 @@ For Horace version 4.0, this header is
 | :char array  | :float64        | :uint32   | :uint32 |
 ```
 - The program name is a [character array](#character-array) with value `"horace"`.
-  (Note that the first 4 bytes are the array length.)
-- The program version is a [float64](#number-uintx-floatx) with value `4.0`
+  (Note that the first 4 bytes in the file are the array length.)
+- The program version is a [float64](#number-uintx-floatx) with value `4.0`.
 - The file type can be either
   - `0` for DND files or
   - `1` for SQW files. (Required by ScippNeutron.)
-- The number of dimensions indicates how many rows `u1` - `u4` in the ixel data are used.
+- The number of dimensions indicates how many rows `u1` - `u4` in the pixel data are used.
 
 ### Block Allocation Table
 
@@ -125,23 +122,31 @@ where `descriptor` is
     - `"data_block"`
     - `"dnd_data_block` (For `("data", "nd_data")`)
     - `"pix_data_block"` (For `("pix", "data_wrap")`)
-  - `descriptor.name` and `descriptor.level2_name`: The blocks name.
+  - `descriptor.name` and `descriptor.level2_name`: The block's name.
   - `descriptor.position`: Offset in bytes from the start of the file where the block is located.
   - `descriptor.size`: Size in bytes of the block.
-  - `descriptor.locked`: Interpreted as a boolean. If true, the block is currently locked by for writing and should not be accessed.
+  - `descriptor.locked`: Interpreted as a boolean. If true, the block is currently locked for writing and should not be accessed.
 
 ### Block Storage
 
-Blocks are stored after the BAT in any order and can have gaps between them.
+Blocks are stored after the BAT in any order.
 How blocks are stored depends on their type.
 
 #### Regular Data Blocks
 
-Blocks with type `"data_block"` are stored as a [struct](#struct).
+Blocks with type `"data_block"` are stored as a single [object array](#object-array) or [self serializing object](#self-serializing).
 
 #### DND Data Blocks
 
-Blocks with type `"dnd_data_block"` are stored as a TODO
+Blocks with type `"dnd_data_block"` are stored as a
+```text
+| ndim | length_0 | length_1 | ... | values     | errors     | counts     |
+| :u32 | :u32     | :u32     | ... | :f64 array | :f64 array | :u64 array |
+```
+- `ndim` and `length_i` encode a [shape](#shape) but uses a `u32` for `ndim` instead of the usual `u8`.
+- `values` currently unknown but looks like a spectroscopy pattern.
+- `errors` currently unknown, uncertainties of `values`?
+- `counts` currently unknown but looks like a spectroscopy pattern.
 
 #### Pixel Data Blocks
 
@@ -172,8 +177,8 @@ All numbers are encoded as their byte representation in the target byte order.
 A sequence of ASCII characters with *known* length.
 Encoded as
 ```text
-| length     | c1     | ... | cn    |
-| :uint32    | :uint8 | ... | :uint8 |
+| length  | c0     | c1     | ... |
+| :uint32 | :uint8 | :uint8 | ... |
 ```
 
 ### Fixed Character Array
@@ -181,6 +186,20 @@ Encoded as
 A sequence of ASCII characters with *unknown* length.
 Like [Character Array](#character-array) but the length is not stored in the file.
 
+### Shape
+
+The shape of a multidimensional array.
+Encoded as
+```text
+| ndim | length_0 | length_1 | ... |
+| :u8  | :u32     | :u32     | ... |
+```
+where `ndim` is the number of dimensions and there are this many `length_i` entries.
+
 ### Struct
 
 TODO
+
+### Object Array
+
+### Self Serializing

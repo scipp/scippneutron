@@ -4,7 +4,9 @@
 ```
 
 ```{toctree}
-:hidden:
+---
+hidden:
+---
 
 getting-started
 coding-conventions
