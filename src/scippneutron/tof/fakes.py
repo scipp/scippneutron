@@ -270,7 +270,7 @@ class FakeBeamlineEss:
             open_angles, close_angles = _open_close_angles(ch, frequency)
             # If the difference between open and close angles is larger than 2pi,
             # the boundaries have crossed, which means that the chopper is rotating
-            # must rotate at a lower frequency.
+            # at a lower frequency.
             two_pi = np.pi * 2
             if any(abs(np.diff(open_angles.values) > two_pi)) or any(
                 abs(np.diff(close_angles.values) > two_pi)
