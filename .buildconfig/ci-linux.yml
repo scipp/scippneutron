@@ -39,7 +39,7 @@ dependencies:
   - sphinx-copybutton==0.5.2
   - sphinx-design==0.6.1
   - sphinxcontrib-bibtex==2.6.3
-  - tof==24.10.0
+  - tof==24.12.0
 
   # docs and tests
   - sciline==24.10.0

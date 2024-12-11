@@ -108,7 +108,11 @@ def disk_choppers():
         ),
     ],
 )
-def test_v20_compute_wavelengths_from_wfm(disk_choppers, npulses, ltotal):
+@pytest.mark.parametrize("time_offset_unit", ['s', 'ms', 'us', 'ns'])
+@pytest.mark.parametrize("distance_unit", ['m', 'mm'])
+def test_v20_compute_wavelengths_from_wfm(
+    disk_choppers, npulses, ltotal, time_offset_unit, distance_unit
+):
     choppers = {
         key: chopper_cascade.Chopper.from_disk_chopper(
             chop, pulse_frequency=sc.scalar(14.0, unit="Hz"), npulses=npulses
@@ -142,9 +146,16 @@ def test_v20_compute_wavelengths_from_wfm(disk_choppers, npulses, ltotal):
     true_wavelengths = ess_beamline.source.data.coords["wavelength"]
 
     raw_data = sc.concat(
-        [ess_beamline.get_monitor(key) for key in monitors.keys()],
+        [ess_beamline.get_monitor(key)[0] for key in monitors.keys()],
         dim='detector',
     ).fold(dim='detector', sizes=ltotal.sizes)
+
+    # Convert the time offset to the unit requested by the test
+    raw_data.bins.coords["event_time_offset"] = raw_data.bins.coords[
+        "event_time_offset"
+    ].to(unit=time_offset_unit, copy=False)
+
+    raw_data.coords['Ltotal'] = ltotal.to(unit=distance_unit, copy=False)
 
     # Verify that all 6 neutrons made it through the chopper cascade
     assert sc.identical(
@@ -158,13 +169,8 @@ def test_v20_compute_wavelengths_from_wfm(disk_choppers, npulses, ltotal):
     )
 
     # Set up the workflow
-    workflow = sl.Pipeline(
-        unwrap.unwrap_providers()
-        + unwrap.time_of_flight_providers()
-        + unwrap.time_of_flight_origin_from_choppers_providers(wfm=True)
-    )
+    workflow = sl.Pipeline(unwrap.providers(), params=unwrap.params())
     workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
-    workflow[unwrap.PulseStride | None] = None
 
     # Define the extent of the pulse that contains the 6 neutrons in time and wavelength
     # Note that we make a larger encompassing pulse to ensure that the frame bounds are
@@ -179,7 +185,7 @@ def test_v20_compute_wavelengths_from_wfm(disk_choppers, npulses, ltotal):
     )
 
     workflow[unwrap.Choppers] = choppers
-    workflow[unwrap.Ltotal] = ltotal
+    workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
     workflow[unwrap.RawData] = raw_data
 
     # Compute time-of-flight
