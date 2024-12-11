@@ -10,7 +10,7 @@ accessible-pygments==0.0.5
     # via pydata-sphinx-theme
 alabaster==1.0.0
     # via sphinx
-asttokens==2.4.1
+asttokens==3.0.0
     # via stack-data
 attrs==24.2.0
     # via
@@ -34,7 +34,7 @@ comm==0.2.2
     # via
     #   ipykernel
     #   ipywidgets
-debugpy==1.8.9
+debugpy==1.8.10
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -52,7 +52,7 @@ exceptiongroup==1.2.2
     # via ipython
 executing==2.1.0
     # via stack-data
-fastjsonschema==2.20.0
+fastjsonschema==2.21.1
     # via nbformat
 idna==3.10
     # via requests
@@ -64,7 +64,7 @@ ipykernel==6.29.5
     # via -r docs.in
 ipympl==0.9.4
     # via -r docs.in
-ipython==8.29.0
+ipython==8.30.0
     # via
     #   -r docs.in
     #   ipykernel
@@ -123,7 +123,7 @@ mistune==3.0.2
     # via nbconvert
 myst-parser==4.0.0
     # via -r docs.in
-nbclient==0.10.0
+nbclient==0.10.1
     # via nbconvert
 nbconvert==7.16.4
     # via nbsphinx
@@ -187,7 +187,7 @@ requests==2.32.3
     # via
     #   pooch
     #   sphinx
-rpds-py==0.21.0
+rpds-py==0.22.3
     # via
     #   jsonschema
     #   referencing
@@ -231,7 +231,7 @@ tinycss2==1.4.0
     # via nbconvert
 tof==24.12.0
     # via -r docs.in
-tomli==2.1.0
+tomli==2.2.1
     # via sphinx
 tornado==6.4.2
     # via
