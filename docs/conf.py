@@ -290,6 +290,8 @@ linkcheck_ignore = [
     'https://github.com/scipp/scipp/pull/[0-9]+',
     # This returns '403 Forbidden' but the link works in a browser.
     'https://opensource.org/licenses/BSD-3-Clause',
+    # This returns '403 Forbidden' but the link works in a browser.
+    'https://doi.org/10.1080/10448639208218770',
 ]
 
 # -- Options for bibtex ---------------------------------------------------
