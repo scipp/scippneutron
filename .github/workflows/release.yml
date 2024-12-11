@@ -20,7 +20,7 @@ jobs:
           submodules: true
           fetch-depth: 0  # history required so setuptools_scm can determine version
 
-      - uses: mamba-org/setup-micromamba@v1
+      - uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: build-env
           create-args: >-
@@ -78,7 +78,7 @@ jobs:
 
     steps:
       - uses: actions/download-artifact@v4
-      - uses: mamba-org/setup-micromamba@v1
+      - uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: upload-env
           # frozen python due to breaking removal of 'imp' in 3.12
