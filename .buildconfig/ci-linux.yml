@@ -10,12 +10,12 @@ channels:
   - nodefaults
 dependencies:
   - h5py==3.12.1
-  - hypothesis==6.118.8
+  - hypothesis==6.119.4
   - ipykernel==6.29.5
   - ipympl==0.9.4
   - ipywidgets==8.1.5
-  - mantid==6.10.0
-  - matplotlib==3.9.2
+  - mantid==6.11.0
+  - matplotlib==3.7.3
   - mpltoolbox==24.05.1
   - plopp==24.10.0
   - pooch==1.8.2
