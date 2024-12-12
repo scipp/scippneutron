@@ -24,13 +24,11 @@ from scippneutron.io.sqw import (
     SqwLineProj,
 )
 
-pytest.importorskip("pace_neutrons")
+pace_neutrons = pytest.importorskip("pace_neutrons")
 
 
 @pytest.fixture(scope="module")
 def matlab() -> Any:
-    import pace_neutrons
-
     try:
         return pace_neutrons.Matlab()
     except RuntimeError as e:
