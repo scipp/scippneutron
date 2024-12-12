@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import pace_neutrons
 import pytest
 import scipp as sc
 from dateutil.parser import parse as parse_datetime
@@ -24,6 +23,8 @@ from scippneutron.io.sqw import (
     SqwLineAxes,
     SqwLineProj,
 )
+
+pace_neutrons = pytest.importorskip("pace_neutrons")
 
 
 @pytest.fixture(scope="module")

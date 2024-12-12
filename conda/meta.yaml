@@ -32,7 +32,9 @@ test:
 
   {# Conda does not allow spaces between package name and version, so remove them #}
   {% for package in test_dependencies %}
+    {% if package != "pace_neutrons" %}
     - {% if package == "graphviz" %}python-graphviz{% else %}{{ package|replace(" ", "") }}{% endif %}
+    {% endif %}
   {% endfor %}
     # Note that we add tof here because it depends on plopp, and plopp should not be in
     # basetest.in because of the nightly dependencies
