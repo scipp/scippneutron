@@ -1,0 +1,41 @@
+Results of doctest builder run on 2024-12-12 12:26:06
+=====================================================
+
+Document: generated/functions/scippneutron.load_with_mantid
+-----------------------------------------------------------
+1 items passed all tests:
+   1 tests in default
+1 tests in 1 items.
+1 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/scippneutron.conversion.graph
+---------------------------------------------------------
+1 items passed all tests:
+   2 tests in default
+2 tests in 1 items.
+2 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/scippneutron.io.cif
+-----------------------------------------------
+1 items passed all tests:
+  14 tests in default
+14 tests in 1 items.
+14 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/scippneutron.io.cif.CIF
+---------------------------------------------------
+1 items passed all tests:
+  12 tests in default
+12 tests in 1 items.
+12 passed and 0 failed.
+Test passed.
+
+Doctest summary
+===============
+   29 tests
+    0 failures in tests
+    0 failures in setup code
+    0 failures in cleanup code
