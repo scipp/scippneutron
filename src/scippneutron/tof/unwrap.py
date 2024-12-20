@@ -79,8 +79,12 @@ modulo the frame period.
 class TimeOfArrivalToTimeOfFlight:
     """ """
 
-    slope: Lookup
-    intercept: Lookup
+    # slope: Lookup
+    # intercept: Lookup
+    a: sc.DataArray
+    b: sc.DataArray
+    c: sc.DataArray
+    d: sc.DataArray
 
 
 TofCoord = NewType('TofCoord', sc.Variable)
@@ -346,6 +350,127 @@ def time_of_arrival_minus_start_time_modulo_period(
     )
 
 
+def _fit_line_cubic(x0: sc.Variable, y0: sc.Variable, dim: str):
+    # vertices = np.asarray(vertices)
+    # if vertices.ndim < 3:
+    #     vertices = vertices[..., None]
+    # if vertices.shape[0] != 2:
+    #     vertices = vertices.transpose((1, 0, 2))
+
+    # x0, y0 = vertices
+    # x1, y1 = np.roll(vertices, -1, axis=-2)
+    x0_var = x0
+    y0_var = y0
+
+    iv = x0.dims.index(dim)
+    # x1 = sc.array(dims=x0.dims, values=np.roll(x0.values, 1, axis=iv), unit=x0.unit)
+    # y1 = sc.array(dims=y0.dims, values=np.roll(y0.values, 1, axis=iv), unit=x0.unit)
+
+    x0 = x0.values
+    y0 = y0.values
+    x1 = np.roll(x0, 1, axis=iv)
+    y1 = np.roll(y0, 1, axis=iv)
+
+    A = ((x0 * y1 - x1 * y0) / 2).sum(iv)
+    x = ((x0 + x1) * (x0 * y1 - x1 * y0) / 6).sum(iv)
+    y = ((y0 + y1) * (x0 * y1 - x1 * y0) / 6).sum(iv)
+    xy = (
+        (x0 * y1 - x1 * y0) * (2 * x0 * y0 + x0 * y1 + x1 * y0 + 2 * x1 * y1) / 24
+    ).sum(iv)
+    xx = ((x0 * y1 - x1 * y0) * (x0**2 + x0 * x1 + x1**2) / 12).sum(iv)
+    xxx = ((x0 + x1) * (x0**2 + x1**2) * (x0 * y1 - x1 * y0) / 20).sum(iv)
+    xxxx = (
+        (x0 * y1 - x1 * y0)
+        * (x0**4 + x0**3 * x1 + x0**2 * x1**2 + x0 * x1**3 + x1**4)
+        / 30
+    ).sum(iv)
+    xxy = (
+        (x0 * y1 - x1 * y0)
+        * (
+            3 * x0**2 * y0
+            + x0**2 * y1
+            + 2 * x0 * x1 * y0
+            + 2 * x0 * x1 * y1
+            + x1**2 * y0
+            + 3 * x1**2 * y1
+        )
+        / 60
+    ).sum(iv)
+    xxxxx = (
+        (x0 + x1)
+        * (x0 * y1 - x1 * y0)
+        * (x0**2 - x0 * x1 + x1**2)
+        * (x0**2 + x0 * x1 + x1**2)
+        / 42
+    ).sum(iv)
+    xxxxxx = (
+        (x0 * y1 - x1 * y0)
+        * (
+            x0**6
+            + x0**5 * x1
+            + x0**4 * x1**2
+            + x0**3 * x1**3
+            + x0**2 * x1**4
+            + x0 * x1**5
+            + x1**6
+        )
+        / 56
+    ).sum(iv)
+    xxxy = (
+        (x0 * y1 - x1 * y0)
+        * (
+            4 * x0**3 * y0
+            + x0**3 * y1
+            + 3 * x0**2 * x1 * y0
+            + 2 * x0**2 * x1 * y1
+            + 2 * x0 * x1**2 * y0
+            + 3 * x0 * x1**2 * y1
+            + x1**3 * y0
+            + 4 * x1**3 * y1
+        )
+        / 120
+    ).sum(iv)
+
+    print(
+        np.stack(
+            [
+                [xxxxxx, xxxxx, xxxx, xxx],
+                [xxxxx, xxxx, xxx, xx],
+                [xxxx, xxx, xx, x],
+                [xxx, xx, x, A],
+            ]
+        ).shape
+    )
+    print(np.stack([xxxy, xxy, xy, y]).shape)
+    # assert False
+
+    a, b, c, d = (
+        np.linalg.solve(
+            np.stack(
+                [
+                    [xxxxxx, xxxxx, xxxx, xxx],
+                    [xxxxx, xxxx, xxx, xx],
+                    [xxxx, xxx, xx, x],
+                    [xxx, xx, x, A],
+                ]
+            ).transpose((2, 0, 1)),
+            np.stack([xxxy, xxy, xy, y]).T[..., None],
+        )
+        .squeeze()
+        .T
+    )
+    # print(out.shape)
+    # # return out
+    # a, b, c, d = out
+    dims = list(x0_var.dims)
+    dims.pop(iv)
+    a = sc.array(dims=dims, values=a, unit=y0_var.unit / x0_var.unit**3)
+    b = sc.array(dims=dims, values=b, unit=y0_var.unit / x0_var.unit**2)
+    c = sc.array(dims=dims, values=c, unit=y0_var.unit / x0_var.unit)
+    d = sc.array(dims=dims, values=d, unit=y0_var.unit)
+    return a, b, c, d
+
+
 def _approximate_polygon_with_line(
     x0: sc.Variable, y0: sc.Variable, dim: str
 ) -> tuple[sc.Variable, sc.Variable]:
@@ -405,22 +530,31 @@ def relation_between_time_of_arrival_and_tof(
     ltotal:
         Total distance between the source and the detector(s).
     """
-    slopes = []
-    intercepts = []
+    fit_params = {'a': [], 'b': [], 'c': [], 'd': []}
     subframes = sorted(frame.subframes, key=lambda x: x.start_time.min())
     edges = []
 
     for sf in subframes:
         edges.extend([sf.start_time, sf.end_time])
-        a, b = _approximate_polygon_with_line(
+        # a, b = _approximate_polygon_with_line(
+        #     x0=sf.time - frame_start,  # Horizontal axis is time-of-arrival
+        #     y0=(
+        #         ltotal * chopper_cascade.wavelength_to_inverse_velocity(sf.wavelength)
+        #     ).to(unit=sf.time.unit, copy=False),  # Vertical axis is time-of-flight
+        #     dim='vertex',
+        # )
+        a, b, c, d = _fit_line_cubic(
             x0=sf.time - frame_start,  # Horizontal axis is time-of-arrival
             y0=(
                 ltotal * chopper_cascade.wavelength_to_inverse_velocity(sf.wavelength)
             ).to(unit=sf.time.unit, copy=False),  # Vertical axis is time-of-flight
             dim='vertex',
         )
-        slopes.append(a)
-        intercepts.append(b)
+        fit_params['a'].append(a)
+        fit_params['b'].append(b)
+        fit_params['c'].append(c)
+        fit_params['d'].append(d)
+        # intercepts.append(b)
 
     # It is sometimes possible that there is time overlap between subframes.
     # This is not desired in a chopper cascade but can sometimes happen if the phases
@@ -437,15 +571,17 @@ def relation_between_time_of_arrival_and_tof(
     sizes = frame_start.sizes | {'subframe': 2 * len(subframes) - 1}
     keys = list(sizes.keys())
 
-    data = sc.full(sizes=sizes, value=np.nan)
-    data['subframe', ::2] = sc.concat(slopes, 'subframe').transpose(keys)
-    da_slope = sc.DataArray(data=data, coords={'subframe': edges})
+    out = {}
+    for key, param in fit_params.items():
+        data = sc.full(sizes=sizes, value=np.nan, unit=param[0].unit)
+        data['subframe', ::2] = sc.concat(param, 'subframe').transpose(keys)
+        out[key] = sc.DataArray(data=data, coords={'subframe': edges})
 
-    data = sc.full(sizes=sizes, value=np.nan, unit=sf.time.unit)
-    data['subframe', ::2] = sc.concat(intercepts, 'subframe').transpose(keys)
-    da_intercept = sc.DataArray(data=data, coords={'subframe': edges})
+    # data = sc.full(sizes=sizes, value=np.nan, unit=sf.time.unit)
+    # data['subframe', ::2] = sc.concat(intercepts, 'subframe').transpose(keys)
+    # da_intercept = sc.DataArray(data=data, coords={'subframe': edges})
 
-    return TimeOfArrivalToTimeOfFlight(slope=da_slope, intercept=da_intercept)
+    return TimeOfArrivalToTimeOfFlight(**out)
 
 
 def time_of_flight_from_lookup(
@@ -464,20 +600,38 @@ def time_of_flight_from_lookup(
     toa_to_tof:
         Conversion from-time-of arrival to time-of-flight.
     """
-    # Ensure unit consistency
-    subframe_edges = toa_to_tof.slope.coords['subframe'].to(
-        unit=elem_unit(toa), copy=False
-    )
-    # Both slope and intercepts should have the same subframe edges
-    toa_to_tof.slope.coords['subframe'] = subframe_edges
-    toa_to_tof.intercept.coords['subframe'] = subframe_edges
-    toa_to_tof.intercept.data = toa_to_tof.intercept.data.to(
-        unit=elem_unit(toa), copy=False
-    )
+    # # Ensure unit consistency
+    # subframe_edges = toa_to_tof.slope.coords['subframe'].to(
+    #     unit=elem_unit(toa), copy=False
+    # )
+    # # Both slope and intercepts should have the same subframe edges
+    # toa_to_tof.slope.coords['subframe'] = subframe_edges
+    # toa_to_tof.intercept.coords['subframe'] = subframe_edges
+    # toa_to_tof.intercept.data = toa_to_tof.intercept.data.to(
+    #     unit=elem_unit(toa), copy=False
+    # )
 
-    slope = sc.lookup(toa_to_tof.slope, dim='subframe')[toa]
-    intercept = sc.lookup(toa_to_tof.intercept, dim='subframe')[toa]
-    return TofCoord(slope * toa + intercept)
+    subframe_edges = toa_to_tof.a.coords['subframe'].to(unit=elem_unit(toa), copy=False)
+    # Both slope and intercepts should have the same subframe edges
+    toa_to_tof.a.coords['subframe'] = subframe_edges
+    toa_to_tof.b.coords['subframe'] = subframe_edges
+    toa_to_tof.c.coords['subframe'] = subframe_edges
+    toa_to_tof.d.coords['subframe'] = subframe_edges
+
+    unit = elem_unit(toa)
+    toa_to_tof.d.data = toa_to_tof.d.data.to(unit=unit, copy=False)
+
+    a = sc.lookup(toa_to_tof.a, dim='subframe')[toa]
+    b = sc.lookup(toa_to_tof.b, dim='subframe')[toa]
+    c = sc.lookup(toa_to_tof.c, dim='subframe')[toa]
+    d = sc.lookup(toa_to_tof.d, dim='subframe')[toa]
+    return TofCoord(
+        (a * toa**3).to(unit=unit)
+        + (b * toa**2).to(unit=unit)
+        + (c * toa).to(unit=unit)
+        + d
+    )
+    # return TofCoord(slope * toa + intercept)
 
 
 def time_of_flight_data(da: RawData, tof: TofCoord) -> TofData:
