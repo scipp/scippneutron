@@ -359,111 +359,130 @@ def _fit_line_cubic(x0: sc.Variable, y0: sc.Variable, dim: str):
 
     # x0, y0 = vertices
     # x1, y1 = np.roll(vertices, -1, axis=-2)
+
+    # put dim at the end of the dims
+    dims = [d for d in x0.dims if d != dim] + [dim]
+    x0 = x0.transpose(dims)
+    y0 = y0.transpose(dims)
     x0_var = x0
     y0_var = y0
 
-    iv = x0.dims.index(dim)
-    # x1 = sc.array(dims=x0.dims, values=np.roll(x0.values, 1, axis=iv), unit=x0.unit)
-    # y1 = sc.array(dims=y0.dims, values=np.roll(y0.values, 1, axis=iv), unit=x0.unit)
+    print(x0_var.dims)
+
+    # iv = x0.dims.index(dim)
+    # x1 = sc.array(dims=x0.dims, values=np.roll(x0.values, 1, axis=isum), unit=x0.unit)
+    # y1 = sc.array(dims=y0.dims, values=np.roll(y0.values, 1, axis=isum), unit=x0.unit)
+
+    isum = -1
 
     x0 = x0.values
     y0 = y0.values
-    x1 = np.roll(x0, 1, axis=iv)
-    y1 = np.roll(y0, 1, axis=iv)
+    x1 = np.roll(x0, 1, axis=isum)
+    y1 = np.roll(y0, 1, axis=isum)
 
-    A = ((x0 * y1 - x1 * y0) / 2).sum(iv)
-    x = ((x0 + x1) * (x0 * y1 - x1 * y0) / 6).sum(iv)
-    y = ((y0 + y1) * (x0 * y1 - x1 * y0) / 6).sum(iv)
-    xy = (
-        (x0 * y1 - x1 * y0) * (2 * x0 * y0 + x0 * y1 + x1 * y0 + 2 * x1 * y1) / 24
-    ).sum(iv)
-    xx = ((x0 * y1 - x1 * y0) * (x0**2 + x0 * x1 + x1**2) / 12).sum(iv)
-    xxx = ((x0 + x1) * (x0**2 + x1**2) * (x0 * y1 - x1 * y0) / 20).sum(iv)
-    xxxx = (
-        (x0 * y1 - x1 * y0)
-        * (x0**4 + x0**3 * x1 + x0**2 * x1**2 + x0 * x1**3 + x1**4)
-        / 30
-    ).sum(iv)
-    xxy = (
-        (x0 * y1 - x1 * y0)
+    x0y1 = x0 * y1
+    x1y0 = x1 * y0
+    x0y1_x1y0 = x0y1 - x1y0
+    x0_sq = x0**2
+    x1_sq = x1**2
+    x0_cu = x0**3
+    x1_cu = x1**3
+    x0_qu = x0**4
+    x1_qu = x1**4
+    x0_se = x0**6
+    x1_se = x1**6
+
+    a0 = (x0y1_x1y0 / 2).sum(isum)
+    a1 = ((x0 + x1) * x0y1_x1y0 / 6).sum(isum)
+    b0 = ((y0 + y1) * x0y1_x1y0 / 6).sum(isum)
+    b1 = (x0y1_x1y0 * (2 * x0 * y0 + x0 * y1 + x1 * y0 + 2 * x1 * y1) / 24).sum(isum)
+    a2 = (x0y1_x1y0 * (x0_sq + x0 * x1 + x1_sq) / 12).sum(isum)
+    a3 = ((x0 + x1) * (x0_sq + x1_sq) * x0y1_x1y0 / 20).sum(isum)
+    a4 = (
+        x0y1_x1y0 * (x0_qu + x0_cu * x1 + x0_sq * x1_sq + x0 * x1_cu + x1_qu) / 30
+    ).sum(isum)
+    b2 = (
+        x0y1_x1y0
         * (
-            3 * x0**2 * y0
-            + x0**2 * y1
+            3 * x0_sq * y0
+            + x0_sq * y1
             + 2 * x0 * x1 * y0
             + 2 * x0 * x1 * y1
-            + x1**2 * y0
-            + 3 * x1**2 * y1
+            + x1_sq * y0
+            + 3 * x1_sq * y1
         )
         / 60
-    ).sum(iv)
-    xxxxx = (
+    ).sum(isum)
+    a5 = (
         (x0 + x1)
-        * (x0 * y1 - x1 * y0)
-        * (x0**2 - x0 * x1 + x1**2)
-        * (x0**2 + x0 * x1 + x1**2)
+        * x0y1_x1y0
+        * (x0_sq - x0 * x1 + x1_sq)
+        * (x0_sq + x0 * x1 + x1_sq)
         / 42
-    ).sum(iv)
-    xxxxxx = (
-        (x0 * y1 - x1 * y0)
+    ).sum(isum)
+    a6 = (x0y1_x1y0 * (x0_se + x0_cu * x1_sq + x0_sq * x1_cu + x1_se) / 56).sum(isum)
+    b3 = (
+        x0y1_x1y0
         * (
-            x0**6
-            + x0**5 * x1
-            + x0**4 * x1**2
-            + x0**3 * x1**3
-            + x0**2 * x1**4
-            + x0 * x1**5
-            + x1**6
-        )
-        / 56
-    ).sum(iv)
-    xxxy = (
-        (x0 * y1 - x1 * y0)
-        * (
-            4 * x0**3 * y0
-            + x0**3 * y1
-            + 3 * x0**2 * x1 * y0
-            + 2 * x0**2 * x1 * y1
-            + 2 * x0 * x1**2 * y0
-            + 3 * x0 * x1**2 * y1
-            + x1**3 * y0
-            + 4 * x1**3 * y1
+            4 * x0_cu * y0
+            + x0_cu * y1
+            + 3 * x0_sq * x1 * y0
+            + 2 * x0_sq * x1 * y1
+            + 2 * x0 * x1_sq * y0
+            + 3 * x0 * x1_sq * y1
+            + x1_cu * y0
+            + 4 * x1_cu * y1
         )
         / 120
-    ).sum(iv)
+    ).sum(isum)
 
-    print(
-        np.stack(
-            [
-                [xxxxxx, xxxxx, xxxx, xxx],
-                [xxxxx, xxxx, xxx, xx],
-                [xxxx, xxx, xx, x],
-                [xxx, xx, x, A],
-            ]
-        ).shape
-    )
-    print(np.stack([xxxy, xxy, xy, y]).shape)
-    # assert False
+    # print(
+    #     np.stack(
+    #         [
+    #             [xxxxxx, xxxxx, xxxx, xxx],
+    #             [xxxxx, xxxx, xxx, xx],
+    #             [xxxx, xxx, xx, x],
+    #             [xxx, xx, x, A],
+    #         ]
+    #     ).shape
+    # )
+    # print(np.stack([xxxy, xxy, xy, y]).shape)
+    # # assert False
+    # print(
+    #     np.stack(
+    #         [
+    #             [a6, a5, a4, a3],
+    #             [a5, a4, a3, a2],
+    #             [a4, a3, a2, a1],
+    #             [a3, a2, a1, a0],
+    #         ]
+    #     ).shape,
+    #     np.stack([b3, b2, b1, b0])[..., None].shape,
+    # )
 
-    a, b, c, d = (
-        np.linalg.solve(
-            np.stack(
-                [
-                    [xxxxxx, xxxxx, xxxx, xxx],
-                    [xxxxx, xxxx, xxx, xx],
-                    [xxxx, xxx, xx, x],
-                    [xxx, xx, x, A],
-                ]
-            ).transpose((2, 0, 1)),
-            np.stack([xxxy, xxy, xy, y]).T[..., None],
-        )
-        .squeeze()
-        .T
+    A = np.stack(
+        [
+            [a6, a5, a4, a3],
+            [a5, a4, a3, a2],
+            [a4, a3, a2, a1],
+            [a3, a2, a1, a0],
+        ]
     )
+    B = np.stack([b3, b2, b1, b0])
+    inds = list(range(B.ndim))[1:]
+    B = B.transpose(*inds, 0)[..., None]
+    print(A.shape)
+    print(B.shape)
+    X = np.linalg.solve(A, B).squeeze()
+    print(X.shape)
+
+    a, b, c, d = X
+
     # print(out.shape)
     # # return out
     # a, b, c, d = out
     dims = list(x0_var.dims)
-    dims.pop(iv)
+    dims.pop(isum)
     a = sc.array(dims=dims, values=a, unit=y0_var.unit / x0_var.unit**3)
     b = sc.array(dims=dims, values=b, unit=y0_var.unit / x0_var.unit**2)
     c = sc.array(dims=dims, values=c, unit=y0_var.unit / x0_var.unit)
