@@ -361,19 +361,19 @@ def _fit_line_cubic(x0: sc.Variable, y0: sc.Variable, dim: str):
     # x1, y1 = np.roll(vertices, -1, axis=-2)
 
     # put dim at the end of the dims
-    dims = [d for d in x0.dims if d != dim] + [dim]
-    x0 = x0.transpose(dims)
-    y0 = y0.transpose(dims)
+    # dims = [d for d in x0.dims if d != dim] + [dim]
+    # x0 = x0.transpose(dims)
+    # y0 = y0.transpose(dims)
     x0_var = x0
     y0_var = y0
 
-    print(x0_var.dims)
+    # print(x0_var.dims)
 
     # iv = x0.dims.index(dim)
     # x1 = sc.array(dims=x0.dims, values=np.roll(x0.values, 1, axis=isum), unit=x0.unit)
     # y1 = sc.array(dims=y0.dims, values=np.roll(y0.values, 1, axis=isum), unit=x0.unit)
 
-    isum = -1
+    isum = x0.dims.index(dim)  # -1
 
     x0 = x0.values
     y0 = y0.values
@@ -468,6 +468,8 @@ def _fit_line_cubic(x0: sc.Variable, y0: sc.Variable, dim: str):
             [a3, a2, a1, a0],
         ]
     )
+    inds = list(range(A.ndim))[2:]
+    A = A.transpose(*inds, 0, 1)
     B = np.stack([b3, b2, b1, b0])
     inds = list(range(B.ndim))[1:]
     B = B.transpose(*inds, 0)[..., None]
@@ -476,7 +478,8 @@ def _fit_line_cubic(x0: sc.Variable, y0: sc.Variable, dim: str):
     X = np.linalg.solve(A, B).squeeze()
     print(X.shape)
 
-    a, b, c, d = X
+    inds = list(range(X.ndim))[:-1]
+    a, b, c, d = X.transpose(-1, *inds)
 
     # print(out.shape)
     # # return out
