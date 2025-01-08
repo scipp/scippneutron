@@ -1,12 +1,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-""" """
+"""
+Time-of-flight workflow for unwrapping the time of arrival of the neutron at the
+detector.
+This workflow is used to convert raw detector data with event_time_zero and
+event_time_offset coordinates to data with a time-of-flight coordinate.
+"""
 
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import NewType
 
-import numpy as np
 import scipp as sc
 import tof
 from scipp._scipp.core import _bins_no_validate
@@ -17,24 +21,26 @@ from . import chopper_cascade
 from .to_events import to_events
 
 Facility = NewType('Facility', str)
+"""
+Facility where the experiment is performed.
+"""
 
 Choppers = NewType('Choppers', Mapping[str, DiskChopper])
 """
 Choppers used to define the frame parameters.
 """
 
-# PrimaryFlightPath = NewType('PrimaryFlightPath', sc.Variable)
-
-# SecondaryFlightPath = NewType('SecondaryFlightPath', sc.Variable)
-
-# # SimulationResults = NewType('SimulationResults', tof.Result)
-
 Ltotal = NewType('Ltotal', sc.Variable)
+"""
+Total length of the flight path from the source to the detector.
+"""
 
 
 @dataclass
 class SimulationResults:
-    """ """
+    """
+    Results of a time-of-flight simulation used to create a lookup table.
+    """
 
     time_of_arrival: sc.Variable
     speed: sc.Variable
@@ -44,9 +50,14 @@ class SimulationResults:
 
 
 DistanceResolution = NewType('DistanceResolution', sc.Variable)
+"""
+Resolution of the distance axis in the lookup table.
+"""
 
 TimeOfFlightLookupTable = NewType('TimeOfFlightLookupTable', sc.DataArray)
-
+"""
+Lookup table giving time-of-flight as a function of distance and time of arrival.
+"""
 
 FramePeriod = NewType('FramePeriod', sc.Variable)
 """
@@ -113,6 +124,19 @@ Detector data with time-of-flight coordinate, re-histogrammed.
 """
 
 
+def pulse_period_from_source(facility: Facility) -> PulsePeriod:
+    """
+    Return the period of the source pulses, i.e., time between consecutive pulse starts.
+
+    Parameters
+    ----------
+    facility:
+        Facility where the experiment is performed (used to determine the source pulse
+        parameters).
+    """
+    return PulsePeriod(1.0 / tof.facilities[facility].frequency)
+
+
 def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FramePeriod:
     """
     Return the period of a frame, which is defined by the pulse period times the pulse
@@ -131,7 +155,7 @@ def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FrameP
 
 def run_tof_model(
     facility: Facility,
-    choppers: Choppers,  # l1: PrimaryFlightPath
+    choppers: Choppers,
 ) -> SimulationResults:
     tof_choppers = [
         tof.Chopper(
@@ -148,12 +172,7 @@ def run_tof_model(
         for name, ch in choppers.items()
     ]
     source = tof.Source(facility=facility, neutrons=1_000_000)
-    # detectors = [tof.Detector(distance=l1, name='sample')]
-    model = tof.Model(
-        source=source,
-        choppers=tof_choppers,
-        #   detectors=detectors
-    )
+    model = tof.Model(source=source, choppers=tof_choppers)
     results = model.run()
     # Find name of the furthest chopper in tof_choppers
     furthest_chopper = max(tof_choppers, key=lambda c: c.distance)
@@ -174,7 +193,6 @@ def frame_at_detector_start_time(
     pulse_stride: PulseStride,
     pulse_period: PulsePeriod,
     ltotal: Ltotal,
-    # l2: SecondaryFlightPath,
 ) -> FrameAtDetectorStartTime:
     """
     Compute the start time of the frame at the detector.
@@ -196,14 +214,9 @@ def frame_at_detector_start_time(
         Usually 1, but may be a small integer when pulse-skipping.
     pulse_period:
         Period of the source pulses, i.e., time between consecutive pulse starts.
-    l1:
-        Primary flight path from the source to the sample.
-    l2:
-        Secondary flight path from the sample to the detector.
+    ltotal:
+        Total length of the flight path from the source to the detector.
     """
-
-    # ltotal = l1 + l2
-
     source_pulse_params = tof.facilities[facility]
     time = source_pulse_params.time.coords['time']
     source_time_range = time.min(), time.max()
@@ -253,24 +266,21 @@ def frame_at_detector_start_time(
 
 def tof_lookup(
     simulation: SimulationResults,
-    # l1: PrimaryFlightPath,
-    # l2: SecondaryFlightPath,
     ltotal: Ltotal,
     distance_resolution: DistanceResolution,
 ) -> TimeOfFlightLookupTable:
-    # events = results['sample'].data.squeeze()
-    # events = events[~events.masks['blocked_by_others']]
-
-    max_dist = (ltotal - simulation.distance).max()
-
-    # l2max = l2.max()
-    ndist = int((max_dist / distance_resolution.to(unit=max_dist.unit)).value) + 1
-    dist = sc.linspace(
-        'distance', 0, np.nextafter(max_dist.value, np.inf), ndist, unit=max_dist.unit
+    dist = ltotal - simulation.distance
+    res = distance_resolution.to(unit=dist.unit)
+    # Add padding to ensure that the lookup table covers the full range of distances
+    # because the midpoints of the table edges are used in the 2d grid interpolator.
+    min_dist, max_dist = dist.min() - res, dist.max() + res
+    ndist = int(((max_dist - min_dist) / res).value) + 1
+    distances = sc.linspace(
+        'distance', min_dist.value, max_dist.value, ndist, unit=dist.unit
     )
 
     time_unit = simulation.time_of_arrival.unit
-    toas = simulation.time_of_arrival + (dist / simulation.speed).to(
+    toas = simulation.time_of_arrival + (distances / simulation.speed).to(
         unit=time_unit, copy=False
     )
 
@@ -281,10 +291,11 @@ def tof_lookup(
             'wavelength': sc.broadcast(simulation.wavelength, sizes=toas.sizes).flatten(
                 to='event'
             ),
-            'distance': sc.broadcast(dist, sizes=toas.sizes).flatten(to='event'),
+            'distance': sc.broadcast(distances, sizes=toas.sizes).flatten(to='event'),
         },
     )
 
+    # TODO: move toa resolution to workflow parameter
     binned = data.bin(distance=ndist, toa=500)
     # Weighted mean of wavelength inside each bin
     wavelength = (
@@ -406,7 +417,7 @@ def time_of_arrival_folded_by_frame(
 def time_of_flight_data(
     da: RawData,
     lookup: TimeOfFlightLookupTable,
-    l2: SecondaryFlightPath,
+    ltotal: Ltotal,
     toas: FrameFoldedTimeOfArrival,
 ) -> TofData:
     from scipy.interpolate import RegularGridInterpolator
@@ -422,10 +433,12 @@ def time_of_flight_data(
     )
 
     if da.bins is not None:
-        l2 = sc.bins_like(toas, l2).bins.constituents['data']
+        ltotal = sc.bins_like(toas, ltotal).bins.constituents['data']
         toas = toas.bins.constituents['data']
 
-    tofs = sc.array(dims=toas.dims, values=f((toas.values, l2.values)), unit=toas.unit)
+    tofs = sc.array(
+        dims=toas.dims, values=f((toas.values, ltotal.values)), unit=toas.unit
+    )
 
     out = da.copy(deep=False)
     if out.bins is not None:
@@ -479,6 +492,7 @@ def providers():
     Providers of the time-of-flight workflow.
     """
     return (
+        pulse_period_from_source,
         frame_period,
         run_tof_model,
         frame_at_detector_start_time,
