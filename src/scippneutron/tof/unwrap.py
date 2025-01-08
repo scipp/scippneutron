@@ -424,10 +424,12 @@ def time_of_flight_data(
 
     f = RegularGridInterpolator(
         (
-            sc.midpoints(lookup.coords['toa']).values,
+            sc.midpoints(
+                lookup.coords['toa'].to(unit=elem_unit(toas), copy=False)
+            ).values,
             sc.midpoints(lookup.coords['distance']).values,
         ),
-        lookup.values.T,
+        lookup.data.to(unit=elem_unit(toas), copy=False).values.T,
         method='linear',
         bounds_error=False,
     )
@@ -437,7 +439,7 @@ def time_of_flight_data(
         toas = toas.bins.constituents['data']
 
     tofs = sc.array(
-        dims=toas.dims, values=f((toas.values, ltotal.values)), unit=toas.unit
+        dims=toas.dims, values=f((toas.values, ltotal.values)), unit=elem_unit(toas)
     )
 
     out = da.copy(deep=False)
