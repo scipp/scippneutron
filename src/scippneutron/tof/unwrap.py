@@ -1,15 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-# @author Simon Heybrock
-"""
-This module provides functionality for unwrapping raw frames of neutron time-of-flight
-data.
-
-The module handles standard unwrapping, unwrapping in pulse-skipping mode, and
-unwrapping for WFM instruments, as well as combinations of the latter two. The
-functions defined here are meant to be used as providers for a Sciline pipeline. See
-https://scipp.github.io/sciline/ on how to use Sciline.
-"""
+""" """
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -17,31 +8,45 @@ from typing import NewType
 
 import numpy as np
 import scipp as sc
-from scipp.core.bins import Lookup
+import tof
+from scipp._scipp.core import _bins_no_validate
 
 from .._utils import elem_unit
+from ..chopper import DiskChopper
 from . import chopper_cascade
 from .to_events import to_events
 
-Choppers = NewType('Choppers', Mapping[str, chopper_cascade.Chopper])
+Facility = NewType('Facility', str)
+
+Choppers = NewType('Choppers', Mapping[str, DiskChopper])
 """
 Choppers used to define the frame parameters.
 """
 
-ChopperCascadeFrames = NewType(
-    'ChopperCascadeFrames', list[chopper_cascade.FrameSequence]
-)
-"""
-Frames of the chopper cascade.
-"""
+# PrimaryFlightPath = NewType('PrimaryFlightPath', sc.Variable)
 
-FrameAtDetector = NewType('FrameAtDetector', chopper_cascade.Frame)
-"""
-Result of passing the source pulse through the chopper cascade to the detector.
+# SecondaryFlightPath = NewType('SecondaryFlightPath', sc.Variable)
 
-The detector may be a monitor or a detector after scattering off the sample. The frame
-bounds are then computed from this.
-"""
+# # SimulationResults = NewType('SimulationResults', tof.Result)
+
+Ltotal = NewType('Ltotal', sc.Variable)
+
+
+@dataclass
+class SimulationResults:
+    """ """
+
+    time_of_arrival: sc.Variable
+    speed: sc.Variable
+    wavelength: sc.Variable
+    weight: sc.Variable
+    distance: sc.Variable
+
+
+DistanceResolution = NewType('DistanceResolution', sc.Variable)
+
+TimeOfFlightLookupTable = NewType('TimeOfFlightLookupTable', sc.DataArray)
+
 
 FramePeriod = NewType('FramePeriod', sc.Variable)
 """
@@ -74,28 +79,8 @@ Time of arrival of the neutron at the detector minus the start time of the frame
 modulo the frame period.
 """
 
+FrameFoldedTimeOfArrival = NewType('FrameFoldedTimeOfArrival', sc.Variable)
 
-@dataclass
-class TimeOfArrivalToTimeOfFlight:
-    """ """
-
-    slope: Lookup
-    intercept: Lookup
-
-
-TofCoord = NewType('TofCoord', sc.Variable)
-"""
-Tof coordinate computed by the workflow.
-"""
-
-Ltotal = NewType('Ltotal', sc.Variable)
-"""
-Total distance between the source and the detector(s).
-
-This is used to propagate the frame to the detector position. This will then yield
-detector-dependent frame bounds. This is typically the sum of L1 and L2, except for
-monitors.
-"""
 
 PulsePeriod = NewType('PulsePeriod', sc.Variable)
 """
@@ -115,18 +100,6 @@ When pulse-skipping, the offset of the first pulse in the stride.
 RawData = NewType('RawData', sc.DataArray)
 """
 Raw detector data loaded from a NeXus file, e.g., NXdetector containing NXevent_data.
-"""
-
-SourceTimeRange = NewType('SourceTimeRange', tuple[sc.Variable, sc.Variable])
-"""
-Time range of the source pulse, used for computing frame bounds.
-"""
-
-SourceWavelengthRange = NewType(
-    'SourceWavelengthRange', tuple[sc.Variable, sc.Variable]
-)
-"""
-Wavelength range of the source pulse, used for computing frame bounds.
 """
 
 TofData = NewType('TofData', sc.DataArray)
@@ -156,36 +129,98 @@ def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FrameP
     return FramePeriod(pulse_period * pulse_stride)
 
 
-def chopper_cascade_frames(
-    source_wavelength_range: SourceWavelengthRange,
-    source_time_range: SourceTimeRange,
-    choppers: Choppers,
+def run_tof_model(
+    facility: Facility,
+    choppers: Choppers,  # l1: PrimaryFlightPath
+) -> SimulationResults:
+    tof_choppers = [
+        tof.Chopper(
+            frequency=abs(ch.frequency),
+            direction=tof.AntiClockwise
+            if (ch.frequency.value > 0.0)
+            else tof.Clockwise,
+            open=ch.slit_begin,
+            close=ch.slit_end,
+            phase=abs(ch.phase),
+            distance=ch.axle_position.fields.z,
+            name=name,
+        )
+        for name, ch in choppers.items()
+    ]
+    source = tof.Source(facility=facility, neutrons=1_000_000)
+    # detectors = [tof.Detector(distance=l1, name='sample')]
+    model = tof.Model(
+        source=source,
+        choppers=tof_choppers,
+        #   detectors=detectors
+    )
+    results = model.run()
+    # Find name of the furthest chopper in tof_choppers
+    furthest_chopper = max(tof_choppers, key=lambda c: c.distance)
+    events = results[furthest_chopper.name].data.squeeze()
+    events = events[~events.masks['blocked_by_others']]
+    return SimulationResults(
+        time_of_arrival=events.coords['toa'],
+        speed=events.coords['speed'],
+        wavelength=events.coords['wavelength'],
+        weight=events.data,
+        distance=furthest_chopper.distance,
+    )
+
+
+def frame_at_detector_start_time(
+    facility: Facility,
+    disk_choppers: Choppers,
     pulse_stride: PulseStride,
     pulse_period: PulsePeriod,
-) -> ChopperCascadeFrames:
+    ltotal: Ltotal,
+    # l2: SecondaryFlightPath,
+) -> FrameAtDetectorStartTime:
     """
-    Return the frames of the chopper cascade.
-    This is the result of propagating the source pulse through the chopper cascade.
+    Compute the start time of the frame at the detector.
 
-    In the case of pulse-skipping, the frames are computed for each pulse in the stride,
-    to make sure that we include cases where e.g. the first pulse in the stride is
-    skipped, but the second is not.
+    This is the result of propagating the source pulse through the chopper cascade to
+    the detector. The detector may be a single-pixel monitor or a multi-pixel detector
+    bank after scattering off the sample.
+    The frame bounds are then computed from this.
 
     Parameters
     ----------
-    source_wavelength_range:
-        Wavelength range of the source pulse.
-    source_time_range:
-        Time range of the source pulse.
-    choppers:
-        Choppers used to define the frame parameters.
+    facility:
+        Facility where the experiment is performed (used to determine the source pulse
+        parameters).
+    disk_choppers:
+        Disk choppers used to chop the pulse and define the frame parameters.
     pulse_stride:
-        Stride of used pulses. Usually 1, but may be a small integer when
-        pulse-skipping.
+        Stride of used pulses.
+        Usually 1, but may be a small integer when pulse-skipping.
     pulse_period:
         Period of the source pulses, i.e., time between consecutive pulse starts.
+    l1:
+        Primary flight path from the source to the sample.
+    l2:
+        Secondary flight path from the sample to the detector.
     """
-    out = []
+
+    # ltotal = l1 + l2
+
+    source_pulse_params = tof.facilities[facility]
+    time = source_pulse_params.time.coords['time']
+    source_time_range = time.min(), time.max()
+    wavelength = source_pulse_params.wavelength.coords['wavelength']
+    source_wavelength_range = wavelength.min(), wavelength.max()
+
+    # Convert DiskChoppers to chopper_cascade.Chopper
+    choppers = {
+        key: chopper_cascade.Chopper.from_disk_chopper(
+            chop,
+            pulse_frequency=source_pulse_params.frequency,
+            npulses=1,
+        )
+        for key, chop in disk_choppers.items()
+    }
+
+    chopper_cascade_frames = []
     for i in range(pulse_stride):
         offset = (pulse_period * i).to(unit=source_time_range[0].unit, copy=False)
         frames = chopper_cascade.FrameSequence.from_source_pulse(
@@ -198,39 +233,12 @@ def chopper_cascade_frames(
         for f in chopped:
             for sf in f.subframes:
                 sf.time -= offset.to(unit=sf.time.unit, copy=False)
-        out.append(chopped)
-    return ChopperCascadeFrames(out)
-
-
-def frame_at_detector(
-    frames: ChopperCascadeFrames,
-    ltotal: Ltotal,
-    period: FramePeriod,
-) -> FrameAtDetector:
-    """
-    Return the frame at the detector.
-
-    This is the result of propagating the source pulse through the chopper cascade to
-    the detector. The detector may be a monitor or a detector after scattering off the
-    sample. The frame bounds are then computed from this.
-
-    It is assumed that the opening and closing times of the input choppers have been
-    setup correctly.
-
-    Parameters
-    ----------
-    frames:
-        Frames of the chopper cascade.
-    ltotal:
-        Total distance between the source and the detector(s).
-    period:
-        Period of the frame, i.e., time between the start of two consecutive frames.
-    """
+        chopper_cascade_frames.append(chopped)
 
     # In the case of pulse-skipping, only one of the frames should have subframes (the
     # others should be empty).
     at_detector = []
-    for f in frames:
+    for f in chopper_cascade_frames:
         propagated = f[-1].propagate_to(ltotal)
         if len(propagated.subframes) > 0:
             at_detector.append(propagated)
@@ -240,16 +248,57 @@ def frame_at_detector(
         raise ValueError("FrameAtDetector: Multiple frames with subframes found.")
     at_detector = at_detector[0]
 
-    # Check that the frame bounds do not span a range larger than the frame period.
-    # This would indicate that the chopper phases are not set correctly.
-    bounds = at_detector.bounds()['time']
-    diff = (bounds.max('bound') - bounds.min('bound')).flatten(to='x')
-    if any(diff > period.to(unit=diff.unit, copy=False)):
-        raise ValueError(
-            "Frames are overlapping: Computed frame bounds "
-            f"{bounds} = {diff.max()} are larger than frame period {period}."
-        )
-    return FrameAtDetector(at_detector)
+    return FrameAtDetectorStartTime(at_detector.bounds()['time']['bound', 0])
+
+
+def tof_lookup(
+    simulation: SimulationResults,
+    # l1: PrimaryFlightPath,
+    # l2: SecondaryFlightPath,
+    ltotal: Ltotal,
+    distance_resolution: DistanceResolution,
+) -> TimeOfFlightLookupTable:
+    # events = results['sample'].data.squeeze()
+    # events = events[~events.masks['blocked_by_others']]
+
+    max_dist = (ltotal - simulation.distance).max()
+
+    # l2max = l2.max()
+    ndist = int((max_dist / distance_resolution.to(unit=max_dist.unit)).value) + 1
+    dist = sc.linspace(
+        'distance', 0, np.nextafter(max_dist.value, np.inf), ndist, unit=max_dist.unit
+    )
+
+    time_unit = simulation.time_of_arrival.unit
+    toas = simulation.time_of_arrival + (dist / simulation.speed).to(
+        unit=time_unit, copy=False
+    )
+
+    data = sc.DataArray(
+        data=sc.broadcast(simulation.weight, sizes=toas.sizes).flatten(to='event'),
+        coords={
+            'toa': toas.flatten(to='event'),
+            'wavelength': sc.broadcast(simulation.wavelength, sizes=toas.sizes).flatten(
+                to='event'
+            ),
+            'distance': sc.broadcast(dist, sizes=toas.sizes).flatten(to='event'),
+        },
+    )
+
+    binned = data.bin(distance=ndist, toa=500)
+    # Weighted mean of wavelength inside each bin
+    wavelength = (
+        binned.bins.data * binned.bins.coords['wavelength']
+    ).bins.sum() / binned.bins.sum()
+
+    binned.coords['distance'] += simulation.distance
+
+    # Convert wavelengths to time-of-flight
+    h = sc.constants.h
+    m_n = sc.constants.m_n
+    velocity = (h / (wavelength * m_n)).to(unit='m/s')
+    timeofflight = (sc.midpoints(binned.coords['distance'])) / velocity
+    return TimeOfFlightLookupTable(timeofflight.to(unit=time_unit, copy=False))
 
 
 def unwrapped_time_of_arrival(
@@ -288,18 +337,6 @@ def unwrapped_time_of_arrival(
             - (offset * period).to(unit=unit, copy=False)
         )
     return UnwrappedTimeOfArrival(toa)
-
-
-def frame_at_detector_start_time(frame: FrameAtDetector) -> FrameAtDetectorStartTime:
-    """
-    Compute the start time of the frame at the detector.
-
-    Parameters
-    ----------
-    frame:
-        Frame at the detector
-    """
-    return FrameAtDetectorStartTime(frame.bounds()['time']['bound', 0])
 
 
 def unwrapped_time_of_arrival_minus_frame_start_time(
@@ -346,158 +383,58 @@ def time_of_arrival_minus_start_time_modulo_period(
     )
 
 
-def _approximate_polygon_with_line(
-    x0: sc.Variable, y0: sc.Variable, dim: str
-) -> tuple[sc.Variable, sc.Variable]:
-    """
-    Approximate a polygon defined by the vertices of the subframe with a straight line.
-    Compute the slope and intercept of the line that minimizes the integrated squared
-    error over the polygon (i.e. taking the area of the polygon into account, as opposed
-    to just computing a least-squares fit of the vertices).
-    The method is described at
-    https://mathproblems123.wordpress.com/2022/09/13/integrating-polynomials-on-polygons/
-
-    Parameters
-    ----------
-    x0:
-        x coordinates of the polygon vertices.
-    y0:
-        y coordinates of the polygon vertices.
-    dim:
-        Dimension along which the vertices are defined.
-    """
-    iv = x0.dims.index(dim)
-    x1 = sc.array(dims=x0.dims, values=np.roll(x0.values, 1, axis=iv), unit=x0.unit)
-    y1 = sc.array(dims=y0.dims, values=np.roll(y0.values, 1, axis=iv), unit=x0.unit)
-
-    x0y1 = x0 * y1
-    x1y0 = x1 * y0
-    x0y1_x1y0 = x0y1 - x1y0
-
-    A = ((x0y1_x1y0) / 2).sum(dim)
-    x = ((x0 + x1) * (x0y1_x1y0) / 6).sum(dim)
-    y = ((y0 + y1) * (x0y1_x1y0) / 6).sum(dim)
-    xy = ((x0y1_x1y0) * (2 * x0 * y0 + x0y1 + x1y0 + 2 * x1 * y1) / 24).sum(dim)
-    xx = ((x0y1_x1y0) * (x0**2 + x0 * x1 + x1**2) / 12).sum(dim)
-
-    a = (xy - x * y / A) / (xx - x**2 / A)
-    b = (y / A) - a * (x / A)
-    return a, b
-
-
-def relation_between_time_of_arrival_and_tof(
-    frame: FrameAtDetector, frame_start: FrameAtDetectorStartTime, ltotal: Ltotal
-) -> TimeOfArrivalToTimeOfFlight:
-    """
-    Compute the slope and intercept of a linear relationship between time-of-arrival
-    and tof, which can be used to create lookup tables which can give the
-    time-of-flight from the time-of-arrival.
-
-    We take the polygons that define the subframes, given by the chopper cascade, and
-    approximate them by straight lines.
-
-    Parameters
-    ----------
-    frame:
-        Frame at the detector.
-    frame_start:
-        Time of the start of the frame at the detector.
-    ltotal:
-        Total distance between the source and the detector(s).
-    """
-    slopes = []
-    intercepts = []
-    subframes = sorted(frame.subframes, key=lambda x: x.start_time.min())
-    edges = []
-
-    for sf in subframes:
-        edges.extend([sf.start_time, sf.end_time])
-        a, b = _approximate_polygon_with_line(
-            x0=sf.time - frame_start,  # Horizontal axis is time-of-arrival
-            y0=(
-                ltotal * chopper_cascade.wavelength_to_inverse_velocity(sf.wavelength)
-            ).to(unit=sf.time.unit, copy=False),  # Vertical axis is time-of-flight
-            dim='vertex',
-        )
-        slopes.append(a)
-        intercepts.append(b)
-
-    # It is sometimes possible that there is time overlap between subframes.
-    # This is not desired in a chopper cascade but can sometimes happen if the phases
-    # are not set correctly. Overlap would mean that the start of the next subframe is
-    # before the end of the previous subframe.
-    # We sort the edges to make sure that the lookup table is sorted. This creates a
-    # gap between the overlapping subframes, and discards any neutrons (gives them a
-    # NaN tof) that fall into the gap, which is the desired behaviour because we
-    # cannot determine the correct tof for them.
-    edges = (
-        sc.sort(sc.concat(edges, 'subframe').transpose().copy(), 'subframe')
-        - frame_start
-    )
-    sizes = frame_start.sizes | {'subframe': 2 * len(subframes) - 1}
-    keys = list(sizes.keys())
-
-    data = sc.full(sizes=sizes, value=np.nan)
-    data['subframe', ::2] = sc.concat(slopes, 'subframe').transpose(keys)
-    da_slope = sc.DataArray(data=data, coords={'subframe': edges})
-
-    data = sc.full(sizes=sizes, value=np.nan, unit=sf.time.unit)
-    data['subframe', ::2] = sc.concat(intercepts, 'subframe').transpose(keys)
-    da_intercept = sc.DataArray(data=data, coords={'subframe': edges})
-
-    return TimeOfArrivalToTimeOfFlight(slope=da_slope, intercept=da_intercept)
-
-
-def time_of_flight_from_lookup(
+def time_of_arrival_folded_by_frame(
     toa: TimeOfArrivalMinusStartTimeModuloPeriod,
-    toa_to_tof: TimeOfArrivalToTimeOfFlight,
-) -> TofCoord:
+    start_time: FrameAtDetectorStartTime,
+) -> FrameFoldedTimeOfArrival:
     """
-    Compute the time-of-flight from the time-of-arrival.
-    Lookup tables to convert time-of-arrival to time-of-flight are created internally.
+    The time of arrival of the neutron at the detector, folded by the frame period.
 
     Parameters
     ----------
     toa:
         Time of arrival of the neutron at the detector, unwrapped at the pulse period,
         minus the start time of the frame, modulo the frame period.
-    toa_to_tof:
-        Conversion from-time-of arrival to time-of-flight.
+    start_time:
+        Time of the start of the frame at the detector.
     """
-    # Ensure unit consistency
-    subframe_edges = toa_to_tof.slope.coords['subframe'].to(
-        unit=elem_unit(toa), copy=False
-    )
-    # Both slope and intercepts should have the same subframe edges
-    toa_to_tof.slope.coords['subframe'] = subframe_edges
-    toa_to_tof.intercept.coords['subframe'] = subframe_edges
-    toa_to_tof.intercept.data = toa_to_tof.intercept.data.to(
-        unit=elem_unit(toa), copy=False
+    return FrameFoldedTimeOfArrival(
+        toa + start_time.to(unit=elem_unit(toa), copy=False)
     )
 
-    slope = sc.lookup(toa_to_tof.slope, dim='subframe')[toa]
-    intercept = sc.lookup(toa_to_tof.intercept, dim='subframe')[toa]
-    return TofCoord(slope * toa + intercept)
 
+def time_of_flight_data(
+    da: RawData,
+    lookup: TimeOfFlightLookupTable,
+    l2: SecondaryFlightPath,
+    toas: FrameFoldedTimeOfArrival,
+) -> TofData:
+    from scipy.interpolate import RegularGridInterpolator
 
-def time_of_flight_data(da: RawData, tof: TofCoord) -> TofData:
-    """
-    Add the time-of-flight coordinate to the data.
+    f = RegularGridInterpolator(
+        (
+            sc.midpoints(lookup.coords['toa']).values,
+            sc.midpoints(lookup.coords['distance']).values,
+        ),
+        lookup.values.T,
+        method='linear',
+        bounds_error=False,
+    )
 
-    Parameters
-    ----------
-    da:
-        Raw detector data loaded from a NeXus file, e.g., NXdetector containing
-        NXevent_data.
-    tof:
-        Time-of-flight coordinate.
-    """
+    if da.bins is not None:
+        l2 = sc.bins_like(toas, l2).bins.constituents['data']
+        toas = toas.bins.constituents['data']
+
+    tofs = sc.array(dims=toas.dims, values=f((toas.values, l2.values)), unit=toas.unit)
+
     out = da.copy(deep=False)
-    if tof.bins is not None:
-        out.data = sc.bins(**out.bins.constituents)
-        out.bins.coords['tof'] = tof
+    if out.bins is not None:
+        parts = out.bins.constituents
+        out.data = sc.bins(**parts)
+        parts['data'] = tofs
+        out.bins.coords['tof'] = _bins_no_validate(**parts)
     else:
-        out.coords['tof'] = tof
+        out.coords['tof'] = tofs
     return TofData(out)
 
 
@@ -537,23 +474,18 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     return ReHistogrammedTofData(rehist)
 
 
-def providers() -> tuple[Callable, ...]:
+def providers():
+    """
+    Providers of the time-of-flight workflow.
+    """
     return (
-        chopper_cascade_frames,
-        frame_at_detector,
         frame_period,
-        unwrapped_time_of_arrival,
+        run_tof_model,
         frame_at_detector_start_time,
+        tof_lookup,
+        unwrapped_time_of_arrival,
         unwrapped_time_of_arrival_minus_frame_start_time,
         time_of_arrival_minus_start_time_modulo_period,
-        relation_between_time_of_arrival_and_tof,
-        time_of_flight_from_lookup,
+        time_of_arrival_folded_by_frame,
         time_of_flight_data,
     )
-
-
-def params() -> dict:
-    return {
-        PulseStride: 1,
-        PulseStrideOffset: 0,
-    }
