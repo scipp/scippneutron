@@ -278,7 +278,8 @@ def tof_lookup(
     ltotal: Ltotal,
     distance_resolution: DistanceResolution,
 ) -> TimeOfFlightLookupTable:
-    dist = ltotal - simulation.distance
+    simulation_distance = simulation.distance.to(unit=ltotal.unit)
+    dist = ltotal - simulation_distance
     res = distance_resolution.to(unit=dist.unit)
     # Add padding to ensure that the lookup table covers the full range of distances
     # because the midpoints of the table edges are used in the 2d grid interpolator.
@@ -311,7 +312,7 @@ def tof_lookup(
         binned.bins.data * binned.bins.coords['wavelength']
     ).bins.sum() / binned.bins.sum()
 
-    binned.coords['distance'] += simulation.distance
+    binned.coords['distance'] += simulation_distance
 
     # Convert wavelengths to time-of-flight
     h = sc.constants.h

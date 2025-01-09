@@ -170,23 +170,10 @@ def test_v20_compute_wavelengths_from_wfm(
 
     # Set up the workflow
     workflow = sl.Pipeline(unwrap.providers(), params=unwrap.params())
-    workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
-
-    # Define the extent of the pulse that contains the 6 neutrons in time and wavelength
-    # Note that we make a larger encompassing pulse to ensure that the frame bounds are
-    # computed correctly
-    workflow[unwrap.SourceTimeRange] = (
-        sc.scalar(0.0, unit='ms'),
-        sc.scalar(3.4, unit='ms'),
-    )
-    workflow[unwrap.SourceWavelengthRange] = (
-        sc.scalar(0.2, unit='angstrom'),
-        sc.scalar(10.0, unit='angstrom'),
-    )
-
-    workflow[unwrap.Choppers] = choppers
-    workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
+    workflow[unwrap.Facility] = 'ess'
     workflow[unwrap.RawData] = raw_data
+    workflow[unwrap.Choppers] = disk_choppers
+    workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
 
     # Compute time-of-flight
     tofs = workflow.compute(unwrap.TofData)

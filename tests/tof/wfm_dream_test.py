@@ -182,29 +182,8 @@ def test_dream_wfm(disk_choppers, npulses, ltotal, time_offset_unit, distance_un
     workflow = sl.Pipeline(unwrap.providers(), params=unwrap.params())
     workflow[unwrap.Facility] = 'ess'
     workflow[unwrap.RawData] = raw_data
-    # workflow[unwrap.PulseStride] = 1
-    # workflow[unwrap.PulseStrideOffset] = 0
     workflow[unwrap.Choppers] = disk_choppers
     workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
-    # workflow[unwrap.DistanceResolution] = sc.scalar(1.0, unit='cm')
-
-    # workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
-
-    # # Define the extent of the pulse that contains the 6 neutrons in time and wavelength
-    # # Note that we make a larger encompassing pulse to ensure that the frame bounds are
-    # # computed correctly
-    # workflow[unwrap.SourceTimeRange] = (
-    #     sc.scalar(0.0, unit='ms'),
-    #     sc.scalar(4.9, unit='ms'),
-    # )
-    # workflow[unwrap.SourceWavelengthRange] = (
-    #     sc.scalar(0.2, unit='angstrom'),
-    #     sc.scalar(16.0, unit='angstrom'),
-    # )
-
-    # workflow[unwrap.Choppers] = choppers
-    # workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
-    # workflow[unwrap.RawData] = raw_data
 
     # Compute time-of-flight
     tofs = workflow.compute(unwrap.TofData)
@@ -307,23 +286,10 @@ def test_dream_wfm_with_subframe_time_overlap(
 
     # Set up the workflow
     workflow = sl.Pipeline(unwrap.providers(), params=unwrap.params())
-    workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
-
-    # Define the extent of the pulse that contains the 6 neutrons in time and wavelength
-    # Note that we make a larger encompassing pulse to ensure that the frame bounds are
-    # computed correctly
-    workflow[unwrap.SourceTimeRange] = (
-        sc.scalar(0.0, unit='ms'),
-        sc.scalar(4.9, unit='ms'),
-    )
-    workflow[unwrap.SourceWavelengthRange] = (
-        sc.scalar(0.2, unit='angstrom'),
-        sc.scalar(16.0, unit='angstrom'),
-    )
-
-    workflow[unwrap.Choppers] = choppers
-    workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
+    workflow[unwrap.Facility] = 'ess'
     workflow[unwrap.RawData] = raw_data
+    workflow[unwrap.Choppers] = overlap_choppers
+    workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
 
     # Compute time-of-flight
     tofs = workflow.compute(unwrap.TofData)
@@ -335,20 +301,17 @@ def test_dream_wfm_with_subframe_time_overlap(
 
     # Compare the computed wavelengths to the true wavelengths
     for i in range(npulses):
-        result_wav = wav_wfm['pulse', i].flatten(to='detector')
-        result_tof = tofs['pulse', i].flatten(to='detector')
-        for j in range(len(result_wav)):
-            computed_tofs = result_tof[j].values.coords["tof"]
-            # The two neutrons in the overlap region should have NaN tofs
-            assert sc.isnan(computed_tofs[-2])
-            assert sc.isnan(computed_tofs[-1])
-
-            computed_wavelengths = result_wav[j].values.coords["wavelength"]
+        result = wav_wfm['pulse', i].flatten(to='detector')
+        for j in range(len(result)):
+            computed_wavelengths = result[j].values.coords["wavelength"]
             assert sc.allclose(
                 computed_wavelengths[:-2],
                 true_wavelengths['pulse', i][:-2],
                 rtol=sc.scalar(1e-02),
             )
-            # The two neutrons in the overlap region should have NaN wavelengths
-            assert sc.isnan(computed_wavelengths[-2])
-            assert sc.isnan(computed_wavelengths[-1])
+            # The two neutrons in the overlap region needs larger tolerance
+            assert sc.allclose(
+                computed_wavelengths[-2:],
+                true_wavelengths['pulse', i][-2:],
+                rtol=sc.scalar(1e-01),
+            )
