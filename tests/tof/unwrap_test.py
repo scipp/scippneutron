@@ -245,7 +245,6 @@ def test_standard_unwrap_histogram_mode(dist) -> None:
     pl[unwrap.Ltotal] = distance
     tofs = pl.compute(unwrap.ReHistogrammedTofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
-    # result.coords['Ltotal'] = distance
     wavs = tofs.transform_coords('wavelength', graph=graph)
     ref = ref.bins.concat().value.hist(wavelength=wavs.coords['wavelength'])
     # We divide by the maximum to avoid large relative differences at the edges of the
@@ -254,50 +253,40 @@ def test_standard_unwrap_histogram_mode(dist) -> None:
     assert np.nanpercentile(diff.values, 96.0) < 0.3
 
 
-@pytest.mark.parametrize('dist', [44.0, 47.0])
+@pytest.mark.parametrize('dist', [150.0, 180.0])
 def test_pulse_skipping_unwrap(dist) -> None:
     distance = sc.scalar(dist, unit='m')
-    choppers = fakes.psc_choppers.copy()
+    choppers = fakes.psc_disk_choppers.copy()
     choppers['pulse_skipping'] = fakes.pulse_skipping
 
-    # We use the ESS fake here because the fake beamline does not support choppers
-    # rotating at 7 Hz.
     beamline = fakes.FakeBeamlineEss(
         choppers=choppers,
-        monitors={'monitor': distance},
+        monitors={'detector': distance},
         run_length=sc.scalar(1.0, unit='s'),
         events_per_pulse=100_000,
     )
-    mon, ref = beamline.get_monitor('monitor')
+    mon, ref = beamline.get_monitor('detector')
 
     pl = sl.Pipeline(unwrap.providers(), params=unwrap.params())
+    pl[unwrap.Facility] = 'ess'
     pl[unwrap.RawData] = mon
-    pl[unwrap.PulsePeriod] = 1.0 / beamline.source.frequency
-    pl[unwrap.PulseStride] = 2
-
-    one_pulse = beamline.source.data['pulse', 0]
-    pl[unwrap.SourceTimeRange] = (
-        one_pulse.coords['time'].min(),
-        one_pulse.coords['time'].max(),
-    )
-    pl[unwrap.SourceWavelengthRange] = (
-        one_pulse.coords['wavelength'].min(),
-        one_pulse.coords['wavelength'].max(),
-    )
-
     pl[unwrap.Choppers] = choppers
     pl[unwrap.Ltotal] = distance
-    result = pl.compute(unwrap.TofData)
-    graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
-    ref_wav = ref.transform_coords('wavelength', graph=graph).bins.concat().value
-    result.coords['Ltotal'] = distance
-    result_wav = result.transform_coords('wavelength', graph=graph).bins.concat().value
+    pl[unwrap.PulseStride] = 2
 
-    assert sc.allclose(
-        result_wav.coords['wavelength'],
-        ref_wav.coords['wavelength'],
-        rtol=sc.scalar(1e-02),
+    tofs = pl.compute(unwrap.TofData)
+
+    # Convert to wavelength
+    graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
+    wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
+    ref = ref.bins.concat().value
+
+    diff = abs(
+        (wavs.coords['wavelength'] - ref.coords['wavelength'])
+        / ref.coords['wavelength']
     )
+    # All errors should be small
+    assert np.nanpercentile(diff.values, 100) < 0.01
 
 
 @pytest.mark.parametrize('dist', [44.0, 47.0])
@@ -373,50 +362,85 @@ def test_pulse_skipping_with_180deg_phase_unwrap(dist) -> None:
 
 def test_pulse_skipping_unwrap_with_half_of_first_frame_missing() -> None:
     distance = sc.scalar(50.0, unit='m')
-    choppers = fakes.psc_choppers.copy()
+
+    choppers = fakes.psc_disk_choppers.copy()
     choppers['pulse_skipping'] = fakes.pulse_skipping
 
     # We use the ESS fake here because the fake beamline does not support choppers
     # rotating at 7 Hz.
     beamline = fakes.FakeBeamlineEss(
         choppers=choppers,
-        monitors={'monitor': distance},
+        monitors={'detector': distance},
         run_length=sc.scalar(1.0, unit='s'),
         events_per_pulse=100_000,
     )
-    mon, ref = beamline.get_monitor('monitor')
+    mon, ref = beamline.get_monitor('detector')
 
     pl = sl.Pipeline(unwrap.providers(), params=unwrap.params())
+    pl[unwrap.Facility] = 'ess'
     pl[unwrap.RawData] = mon[1:].copy()  # Skip first pulse = half of the first frame
-    pl[unwrap.PulsePeriod] = 1.0 / beamline.source.frequency
-    pl[unwrap.PulseStride] = 2
-    pl[unwrap.PulseStrideOffset] = 1  # Start the stride at the second pulse
-
-    one_pulse = beamline.source.data['pulse', 0]
-    pl[unwrap.SourceTimeRange] = (
-        one_pulse.coords['time'].min(),
-        one_pulse.coords['time'].max(),
-    )
-    pl[unwrap.SourceWavelengthRange] = (
-        one_pulse.coords['wavelength'].min(),
-        one_pulse.coords['wavelength'].max(),
-    )
-
     pl[unwrap.Choppers] = choppers
     pl[unwrap.Ltotal] = distance
-    result = pl.compute(unwrap.TofData)
-    graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
-    ref_wav = (
-        ref[1:].copy().transform_coords('wavelength', graph=graph).bins.concat().value
-    )
-    result.coords['Ltotal'] = distance
-    result_wav = result.transform_coords('wavelength', graph=graph).bins.concat().value
+    pl[unwrap.PulseStride] = 2
 
-    assert sc.allclose(
-        result_wav.coords['wavelength'],
-        ref_wav.coords['wavelength'],
-        rtol=sc.scalar(1e-02),
+    tofs = pl.compute(unwrap.TofData)
+
+    # Convert to wavelength
+    graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
+    wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
+    ref = ref.bins.concat().value
+
+    diff = abs(
+        (wavs.coords['wavelength'] - ref.coords['wavelength'])
+        / ref.coords['wavelength']
     )
+    # All errors should be small
+    assert np.nanpercentile(diff.values, 100) < 0.01
+
+    # choppers = fakes.psc_choppers.copy()
+    # choppers['pulse_skipping'] = fakes.pulse_skipping
+
+    # # We use the ESS fake here because the fake beamline does not support choppers
+    # # rotating at 7 Hz.
+    # beamline = fakes.FakeBeamlineEss(
+    #     choppers=choppers,
+    #     monitors={'monitor': distance},
+    #     run_length=sc.scalar(1.0, unit='s'),
+    #     events_per_pulse=100_000,
+    # )
+    # mon, ref = beamline.get_monitor('monitor')
+
+    # pl = sl.Pipeline(unwrap.providers(), params=unwrap.params())
+    # pl[unwrap.RawData] = mon[1:].copy()  # Skip first pulse = half of the first frame
+    # pl[unwrap.PulsePeriod] = 1.0 / beamline.source.frequency
+    # pl[unwrap.PulseStride] = 2
+    # pl[unwrap.PulseStrideOffset] = 1  # Start the stride at the second pulse
+
+    # one_pulse = beamline.source.data['pulse', 0]
+    # pl[unwrap.SourceTimeRange] = (
+    #     one_pulse.coords['time'].min(),
+    #     one_pulse.coords['time'].max(),
+    # )
+    # pl[unwrap.SourceWavelengthRange] = (
+    #     one_pulse.coords['wavelength'].min(),
+    #     one_pulse.coords['wavelength'].max(),
+    # )
+
+    # pl[unwrap.Choppers] = choppers
+    # pl[unwrap.Ltotal] = distance
+    # result = pl.compute(unwrap.TofData)
+    # graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
+    # ref_wav = (
+    #     ref[1:].copy().transform_coords('wavelength', graph=graph).bins.concat().value
+    # )
+    # result.coords['Ltotal'] = distance
+    # result_wav = result.transform_coords('wavelength', graph=graph).bins.concat().value
+
+    # assert sc.allclose(
+    #     result_wav.coords['wavelength'],
+    #     ref_wav.coords['wavelength'],
+    #     rtol=sc.scalar(1e-02),
+    # )
 
 
 @pytest.mark.parametrize('dist', [44.0, 47.0])

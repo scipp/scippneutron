@@ -620,6 +620,25 @@ pol_disk_chopper = DiskChopper(
     radius=sc.scalar(30.0, unit="cm"),
 )
 
+pulse_skipping = DiskChopper(
+    frequency=sc.scalar(-7.0, unit="Hz"),
+    beam_position=sc.scalar(0.0, unit="deg"),
+    phase=sc.scalar(0.0, unit="deg"),
+    axle_position=sc.vector(value=[0, 0, 30.0], unit="m"),
+    slit_begin=sc.array(
+        dims=["cutout"],
+        values=np.array([40.0]),
+        unit="deg",
+    ),
+    slit_end=sc.array(
+        dims=["cutout"],
+        values=np.array([140.0]),
+        unit="deg",
+    ),
+    slit_height=sc.scalar(10.0, unit="cm"),
+    radius=sc.scalar(30.0, unit="cm"),
+)
+
 wfm_disk_choppers = {
     "wfm1": wfm1_disk_chopper,
     "wfm2": wfm2_disk_chopper,
