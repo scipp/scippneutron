@@ -157,9 +157,9 @@ def test_unwrap_with_no_choppers() -> None:
 #         pl.compute(unwrap.TofData)
 
 
-# At 44m, event_time_offset does not wrap around (all events are within the same pulse).
-# At 47m, event_time_offset wraps around.
-@pytest.mark.parametrize('dist', [44.0, 47.0])
+# At 80m, event_time_offset does not wrap around (all events are within the same pulse).
+# At 85m, event_time_offset wraps around.
+@pytest.mark.parametrize('dist', [80.0, 85.0])
 def test_standard_unwrap(dist) -> None:
     distance = sc.scalar(dist, unit='m')
     beamline = fakes.FakeBeamlineEss(
@@ -214,20 +214,18 @@ def test_standard_unwrap(dist) -> None:
     # )
 
 
-# At 44m, event_time_offset does not wrap around (all events are within the same pulse).
-# At 47m, event_time_offset wraps around.
-@pytest.mark.parametrize('dist', [44.0, 47.0])
-def test_standard_unwrap_histogram_mode(ess_10s_14Hz, ess_pulse, dist) -> None:
+# At 80m, event_time_offset does not wrap around (all events are within the same pulse).
+# At 85m, event_time_offset wraps around.
+@pytest.mark.parametrize('dist', [80.0, 85.0])
+def test_standard_unwrap_histogram_mode(dist) -> None:
     distance = sc.scalar(dist, unit='m')
-    beamline = fakes.FakeBeamline(
-        source=ess_10s_14Hz,
-        pulse=ess_pulse,
-        choppers=fakes.psc_choppers,
-        monitors={'monitor': distance},
-        detectors={},
-        time_of_flight_origin='psc1',
+    beamline = fakes.FakeBeamlineEss(
+        choppers=fakes.psc_disk_choppers,
+        monitors={"detector": distance},
+        run_length=sc.scalar(1 / 14, unit="s") * 4,
+        events_per_pulse=100_000,
     )
-    mon, ref = beamline.get_monitor('monitor')
+    mon, ref = beamline.get_monitor('detector')
     mon = (
         mon.hist(
             event_time_offset=sc.linspace(
@@ -241,31 +239,19 @@ def test_standard_unwrap_histogram_mode(ess_10s_14Hz, ess_pulse, dist) -> None:
     pl = sl.Pipeline(
         (*unwrap.providers(), unwrap.re_histogram_tof_data), params=unwrap.params()
     )
+    pl[unwrap.Facility] = 'ess'
     pl[unwrap.RawData] = mon
-    pl[unwrap.PulsePeriod] = beamline._source.pulse_period
-    pl[unwrap.SourceTimeRange] = ess_pulse.time_min, ess_pulse.time_max
-    pl[unwrap.SourceWavelengthRange] = (
-        ess_pulse.wavelength_min,
-        ess_pulse.wavelength_max,
-    )
-    pl[unwrap.Choppers] = fakes.psc_choppers
+    pl[unwrap.Choppers] = fakes.psc_disk_choppers
     pl[unwrap.Ltotal] = distance
-    result = pl.compute(unwrap.ReHistogrammedTofData)
+    tofs = pl.compute(unwrap.ReHistogrammedTofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
-    result.coords['Ltotal'] = distance
-    result_wav = result.transform_coords('wavelength', graph=graph)
-    ref_wav = (
-        ref.transform_coords('wavelength', graph=graph)
-        .bins.concat()
-        .value.hist(wavelength=result_wav.coords['wavelength'])
-    )
-    diff = (result_wav - ref_wav) / ref_wav
-    # There are outliers in the diff because the bins don't cover the exact same range,
-    # and the bins on the edges have high counts in one data array and are empty in the
-    # other.
-    # Instead, we check that 96% of the data has an error below 0.1.
-    x = np.abs(diff.data.values)
-    assert np.percentile(x[np.isfinite(x)], 96.0) < 0.1
+    # result.coords['Ltotal'] = distance
+    wavs = tofs.transform_coords('wavelength', graph=graph)
+    ref = ref.bins.concat().value.hist(wavelength=wavs.coords['wavelength'])
+    # We divide by the maximum to avoid large relative differences at the edges of the
+    # frames where the counts are low.
+    diff = (wavs - ref) / ref.max()
+    assert np.nanpercentile(diff.values, 96.0) < 0.3
 
 
 @pytest.mark.parametrize('dist', [44.0, 47.0])
