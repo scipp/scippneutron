@@ -19,6 +19,7 @@ import numpy as np
 import scipp as sc
 from numpy import random
 
+from ..chopper import DiskChopper
 from . import chopper_cascade
 
 
@@ -233,7 +234,7 @@ class FakeBeamline:
 class FakeBeamlineEss:
     def __init__(
         self,
-        choppers: dict[str, chopper_cascade.Chopper],
+        choppers: dict[str, DiskChopper],
         monitors: dict[str, sc.Variable],
         run_length: sc.Variable,
         events_per_pulse: int = 200000,
@@ -256,37 +257,52 @@ class FakeBeamlineEss:
         else:
             self.source = source(pulses=self.npulses)
 
-        # Convert the choppers to tof.Chopper
-        def _open_close_angles(chopper, frequency):
-            angular_speed = sc.constants.pi * (2.0 * sc.units.rad) * frequency
-            return (
-                chopper.time_open * angular_speed,
-                chopper.time_close * angular_speed,
-            )
+        # # Convert the choppers to tof.Chopper
+        # def _open_close_angles(chopper, frequency):
+        #     angular_speed = sc.constants.pi * (2.0 * sc.units.rad) * frequency
+        #     return (
+        #         chopper.time_open * angular_speed,
+        #         chopper.time_close * angular_speed,
+        #     )
 
-        self.choppers = []
-        for name, ch in choppers.items():
-            frequency = self.frequency
-            open_angles, close_angles = _open_close_angles(ch, frequency)
-            # If the difference between open and close angles is larger than 2pi,
-            # the boundaries have crossed, which means that the chopper is rotating
-            # at a lower frequency.
-            two_pi = np.pi * 2
-            if any(abs(np.diff(open_angles.values) > two_pi)) or any(
-                abs(np.diff(close_angles.values) > two_pi)
-            ):
-                frequency = 0.5 * frequency
-                open_angles, close_angles = _open_close_angles(ch, frequency)
-            self.choppers.append(
-                tof_pkg.Chopper(
-                    frequency=frequency,
-                    open=open_angles,
-                    close=close_angles,
-                    phase=sc.scalar(0.0, unit='rad'),
-                    distance=ch.distance,
-                    name=name,
-                )
+        # self.choppers = []
+        # for name, ch in choppers.items():
+        #     frequency = self.frequency
+        #     open_angles, close_angles = _open_close_angles(ch, frequency)
+        #     # If the difference between open and close angles is larger than 2pi,
+        #     # the boundaries have crossed, which means that the chopper is rotating
+        #     # at a lower frequency.
+        #     two_pi = np.pi * 2
+        #     if any(abs(np.diff(open_angles.values) > two_pi)) or any(
+        #         abs(np.diff(close_angles.values) > two_pi)
+        #     ):
+        #         frequency = 0.5 * frequency
+        #         open_angles, close_angles = _open_close_angles(ch, frequency)
+        #     self.choppers.append(
+        #         tof_pkg.Chopper(
+        #             frequency=frequency,
+        #             open=open_angles,
+        #             close=close_angles,
+        #             phase=sc.scalar(0.0, unit='rad'),
+        #             distance=ch.distance,
+        #             name=name,
+        #         )
+        #     )
+
+        self.choppers = [
+            tof_pkg.Chopper(
+                frequency=abs(ch.frequency),
+                direction=tof_pkg.AntiClockwise
+                if (ch.frequency.value > 0.0)
+                else tof_pkg.Clockwise,
+                open=ch.slit_begin,
+                close=ch.slit_end,
+                phase=abs(ch.phase),
+                distance=ch.axle_position.fields.z,
+                name=name,
             )
+            for name, ch in choppers.items()
+        ]
 
         # Add detectors
         self.monitors = [
@@ -507,3 +523,121 @@ psc_frames = chopper_cascade.FrameSequence.from_source_pulse(
     wavelength_max=ess_wavelength_max,
 )
 psc_frames = psc_frames.chop(psc_choppers.values())
+
+
+wfm1_disk_chopper = DiskChopper(
+    frequency=sc.scalar(-70.0, unit="Hz"),
+    beam_position=sc.scalar(0.0, unit="deg"),
+    phase=sc.scalar(-47.10, unit="deg"),
+    axle_position=sc.vector(value=[0, 0, 6.6], unit="m"),
+    slit_begin=sc.array(
+        dims=["cutout"],
+        values=np.array([83.71, 140.49, 193.26, 242.32, 287.91, 330.3]) + 15.0,
+        unit="deg",
+    ),
+    slit_end=sc.array(
+        dims=["cutout"],
+        values=np.array([94.7, 155.79, 212.56, 265.33, 314.37, 360.0]) + 15.0,
+        unit="deg",
+    ),
+    slit_height=sc.scalar(10.0, unit="cm"),
+    radius=sc.scalar(30.0, unit="cm"),
+)
+
+wfm2_disk_chopper = DiskChopper(
+    frequency=sc.scalar(-70.0, unit="Hz"),
+    beam_position=sc.scalar(0.0, unit="deg"),
+    phase=sc.scalar(-76.76, unit="deg"),
+    axle_position=sc.vector(value=[0, 0, 7.1], unit="m"),
+    slit_begin=sc.array(
+        dims=["cutout"],
+        values=np.array([65.04, 126.1, 182.88, 235.67, 284.73, 330.32]) + 15.0,
+        unit="deg",
+    ),
+    slit_end=sc.array(
+        dims=["cutout"],
+        values=np.array([76.03, 141.4, 202.18, 254.97, 307.74, 360.0]) + 15.0,
+        unit="deg",
+    ),
+    slit_height=sc.scalar(10.0, unit="cm"),
+    radius=sc.scalar(30.0, unit="cm"),
+)
+
+foc1_disk_chopper = DiskChopper(
+    frequency=sc.scalar(-56.0, unit="Hz"),
+    beam_position=sc.scalar(0.0, unit="deg"),
+    phase=sc.scalar(-62.40, unit="deg"),
+    axle_position=sc.vector(value=[0, 0, 8.8], unit="m"),
+    slit_begin=sc.array(
+        dims=["cutout"],
+        values=np.array([74.6, 139.6, 194.3, 245.3, 294.8, 347.2]),
+        unit="deg",
+    ),
+    slit_end=sc.array(
+        dims=["cutout"],
+        values=np.array([95.2, 162.8, 216.1, 263.1, 310.5, 371.6]),
+        unit="deg",
+    ),
+    slit_height=sc.scalar(10.0, unit="cm"),
+    radius=sc.scalar(30.0, unit="cm"),
+)
+
+foc2_disk_chopper = DiskChopper(
+    frequency=sc.scalar(-28.0, unit="Hz"),
+    beam_position=sc.scalar(0.0, unit="deg"),
+    phase=sc.scalar(-12.27, unit="deg"),
+    axle_position=sc.vector(value=[0, 0, 15.9], unit="m"),
+    slit_begin=sc.array(
+        dims=["cutout"],
+        values=np.array([98.0, 154.0, 206.8, 255.0, 299.0, 344.65]),
+        unit="deg",
+    ),
+    slit_end=sc.array(
+        dims=["cutout"],
+        values=np.array([134.6, 190.06, 237.01, 280.88, 323.56, 373.76]),
+        unit="deg",
+    ),
+    slit_height=sc.scalar(10.0, unit="cm"),
+    radius=sc.scalar(30.0, unit="cm"),
+)
+
+pol_disk_chopper = DiskChopper(
+    frequency=sc.scalar(-14.0, unit="Hz"),
+    beam_position=sc.scalar(0.0, unit="deg"),
+    phase=sc.scalar(0.0, unit="deg"),
+    axle_position=sc.vector(value=[0, 0, 17.0], unit="m"),
+    slit_begin=sc.array(
+        dims=["cutout"],
+        values=np.array([40.0]),
+        unit="deg",
+    ),
+    slit_end=sc.array(
+        dims=["cutout"],
+        values=np.array([240.0]),
+        unit="deg",
+    ),
+    slit_height=sc.scalar(10.0, unit="cm"),
+    radius=sc.scalar(30.0, unit="cm"),
+)
+
+wfm_disk_choppers = {
+    "wfm1": wfm1_disk_chopper,
+    "wfm2": wfm2_disk_chopper,
+    "foc1": foc1_disk_chopper,
+    "foc2": foc2_disk_chopper,
+    "pol": pol_disk_chopper,
+}
+
+psc_disk_choppers = {
+    name: DiskChopper(
+        frequency=ch.frequency,
+        beam_position=ch.beam_position,
+        phase=ch.phase,
+        axle_position=ch.axle_position,
+        slit_begin=ch.slit_begin[0:1],
+        slit_end=ch.slit_end[0:1],
+        slit_height=ch.slit_height[0:1],
+        radius=ch.radius,
+    )
+    for name, ch in wfm_disk_choppers.items()
+}
