@@ -180,23 +180,31 @@ def test_dream_wfm(disk_choppers, npulses, ltotal, time_offset_unit, distance_un
 
     # Set up the workflow
     workflow = sl.Pipeline(unwrap.providers(), params=unwrap.params())
-    workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
-
-    # Define the extent of the pulse that contains the 6 neutrons in time and wavelength
-    # Note that we make a larger encompassing pulse to ensure that the frame bounds are
-    # computed correctly
-    workflow[unwrap.SourceTimeRange] = (
-        sc.scalar(0.0, unit='ms'),
-        sc.scalar(4.9, unit='ms'),
-    )
-    workflow[unwrap.SourceWavelengthRange] = (
-        sc.scalar(0.2, unit='angstrom'),
-        sc.scalar(16.0, unit='angstrom'),
-    )
-
-    workflow[unwrap.Choppers] = choppers
-    workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
+    workflow[unwrap.Facility] = 'ess'
     workflow[unwrap.RawData] = raw_data
+    # workflow[unwrap.PulseStride] = 1
+    # workflow[unwrap.PulseStrideOffset] = 0
+    workflow[unwrap.Choppers] = disk_choppers
+    workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
+    # workflow[unwrap.DistanceResolution] = sc.scalar(1.0, unit='cm')
+
+    # workflow[unwrap.PulsePeriod] = sc.reciprocal(ess_beamline.source.frequency)
+
+    # # Define the extent of the pulse that contains the 6 neutrons in time and wavelength
+    # # Note that we make a larger encompassing pulse to ensure that the frame bounds are
+    # # computed correctly
+    # workflow[unwrap.SourceTimeRange] = (
+    #     sc.scalar(0.0, unit='ms'),
+    #     sc.scalar(4.9, unit='ms'),
+    # )
+    # workflow[unwrap.SourceWavelengthRange] = (
+    #     sc.scalar(0.2, unit='angstrom'),
+    #     sc.scalar(16.0, unit='angstrom'),
+    # )
+
+    # workflow[unwrap.Choppers] = choppers
+    # workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
+    # workflow[unwrap.RawData] = raw_data
 
     # Compute time-of-flight
     tofs = workflow.compute(unwrap.TofData)

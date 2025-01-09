@@ -172,6 +172,15 @@ def run_tof_model(
         for name, ch in choppers.items()
     ]
     source = tof.Source(facility=facility, neutrons=1_000_000)
+    if not tof_choppers:
+        events = source.data
+        return SimulationResults(
+            time_of_arrival=events.coords['time'],
+            speed=events.coords['speed'],
+            wavelength=events.coords['wavelength'],
+            weight=events.data,
+            distance=0.0 * sc.units.m,
+        )
     model = tof.Model(source=source, choppers=tof_choppers)
     results = model.run()
     # Find name of the furthest chopper in tof_choppers
@@ -505,3 +514,14 @@ def providers():
         time_of_arrival_folded_by_frame,
         time_of_flight_data,
     )
+
+
+def params() -> dict:
+    """
+    Default parameters of the time-of-flight workflow.
+    """
+    return {
+        PulseStride: 1,
+        PulseStrideOffset: 0,
+        DistanceResolution: sc.scalar(1.0, unit='cm'),
+    }
