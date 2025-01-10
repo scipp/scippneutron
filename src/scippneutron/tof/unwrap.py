@@ -11,6 +11,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import NewType
 
+import numpy as np
 import scipp as sc
 import tof
 from scipp._scipp.core import _bins_no_validate
@@ -58,6 +59,8 @@ TimeOfFlightLookupTable = NewType('TimeOfFlightLookupTable', sc.DataArray)
 """
 Lookup table giving time-of-flight as a function of distance and time of arrival.
 """
+
+LookupTableVarianceThreshold = NewType('LookupTableVarianceThreshold', float)
 
 FramePeriod = NewType('FramePeriod', sc.Variable)
 """
@@ -277,6 +280,7 @@ def tof_lookup(
     simulation: SimulationResults,
     ltotal: Ltotal,
     distance_resolution: DistanceResolution,
+    variance_threshold: LookupTableVarianceThreshold,
 ) -> TimeOfFlightLookupTable:
     simulation_distance = simulation.distance.to(unit=ltotal.unit)
     dist = ltotal - simulation_distance
@@ -311,6 +315,15 @@ def tof_lookup(
     wavelength = (
         binned.bins.data * binned.bins.coords['wavelength']
     ).bins.sum() / binned.bins.sum()
+    # Compute the variance of the wavelength to mask out regions with large uncertainty
+    variance = (
+        binned.bins.data * (binned.bins.coords['wavelength'] - wavelength) ** 2
+    ).bins.sum() / binned.bins.sum()
+    # wavelength.masks["uncertain"] = binned.data > sc.scalar(
+    #     variance_threshold, unit=variance.data.unit
+    # )
+
+    # return wavelength, variance
 
     binned.coords['distance'] += simulation_distance
 
@@ -319,7 +332,19 @@ def tof_lookup(
     m_n = sc.constants.m_n
     velocity = (h / (wavelength * m_n)).to(unit='m/s')
     timeofflight = (sc.midpoints(binned.coords['distance'])) / velocity
-    return TimeOfFlightLookupTable(timeofflight.to(unit=time_unit, copy=False))
+    out = timeofflight.to(unit=time_unit, copy=False)
+    # wavelength.masks["uncertain"] = binned.data > sc.scalar(
+    #     variance_threshold, unit=variance.data.unit
+    # )
+
+    # lookup_values = lookup.data.to(unit=elem_unit(toas), copy=False).values
+    mask = (
+        variance.data > sc.scalar(variance_threshold, unit=variance.data.unit)
+    ).values
+    print(mask.sum())
+    # var.masks['m'].values
+    out.values[mask] = np.nan
+    return TimeOfFlightLookupTable(out)
 
 
 def unwrapped_time_of_arrival(
@@ -525,4 +550,5 @@ def params() -> dict:
         PulseStride: 1,
         PulseStrideOffset: 0,
         DistanceResolution: sc.scalar(1.0, unit='cm'),
+        LookupTableVarianceThreshold: 1.0e-3,
     }

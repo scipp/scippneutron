@@ -10,7 +10,7 @@ import tof as tof_pkg
 from scippneutron.chopper import DiskChopper
 from scippneutron.conversion.graph.beamline import beamline
 from scippneutron.conversion.graph.tof import elastic
-from scippneutron.tof import chopper_cascade, fakes, unwrap
+from scippneutron.tof import fakes, unwrap
 
 sl = pytest.importorskip('sciline')
 
@@ -92,8 +92,8 @@ def dream_disk_choppers():
 
 
 @pytest.fixture
-def dream_choppers_with_frame_overlap(disk_choppers):
-    out = disk_choppers.copy()
+def dream_choppers_with_frame_overlap(dream_disk_choppers):
+    out = dream_disk_choppers.copy()
     out['bcc'] = DiskChopper(
         frequency=sc.scalar(112.0, unit="Hz"),
         beam_position=sc.scalar(0.0, unit="deg"),
@@ -228,7 +228,7 @@ def test_dream_wfm_with_subframe_time_overlap(
 
     # Add overlap neutrons
     birth_times.extend([0.0, 3.1])
-    wavelengths.extend([2.7, 2.5])
+    wavelengths.extend([2.67, 2.5])
 
     wavelengths = sc.array(dims=['event'], values=wavelengths, unit='angstrom')
     birth_times = sc.array(dims=['event'], values=birth_times, unit='ms')
@@ -278,6 +278,7 @@ def test_dream_wfm_with_subframe_time_overlap(
     workflow[unwrap.RawData] = raw_data
     workflow[unwrap.Choppers] = dream_choppers_with_frame_overlap
     workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
+    workflow[unwrap.LookupTableVarianceThreshold] = 1.0e-3
 
     # Compute time-of-flight
     tofs = workflow.compute(unwrap.TofData)
@@ -297,12 +298,9 @@ def test_dream_wfm_with_subframe_time_overlap(
                 true_wavelengths['pulse', i][:-2],
                 rtol=sc.scalar(1e-02),
             )
-            # The two neutrons in the overlap region needs larger tolerance
-            assert sc.allclose(
-                computed_wavelengths[-2:],
-                true_wavelengths['pulse', i][-2:],
-                rtol=sc.scalar(1e-01),
-            )
+            # The two neutrons in the overlap region should have NaN wavelengths
+            assert sc.isnan(computed_wavelengths[-2])
+            assert sc.isnan(computed_wavelengths[-1])
 
 
 @pytest.mark.parametrize("npulses", [1, 2])
