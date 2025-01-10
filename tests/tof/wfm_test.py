@@ -16,7 +16,7 @@ sl = pytest.importorskip('sciline')
 
 
 @pytest.fixture
-def disk_choppers():
+def dream_disk_choppers():
     psc1 = DiskChopper(
         frequency=sc.scalar(14.0, unit="Hz"),
         beam_position=sc.scalar(0.0, unit="deg"),
@@ -92,7 +92,7 @@ def disk_choppers():
 
 
 @pytest.fixture
-def overlap_choppers(disk_choppers):
+def dream_choppers_with_frame_overlap(disk_choppers):
     out = disk_choppers.copy()
     out['bcc'] = DiskChopper(
         frequency=sc.scalar(112.0, unit="Hz"),
@@ -122,14 +122,9 @@ def overlap_choppers(disk_choppers):
 )
 @pytest.mark.parametrize("time_offset_unit", ['s', 'ms', 'us', 'ns'])
 @pytest.mark.parametrize("distance_unit", ['m', 'mm'])
-def test_dream_wfm(disk_choppers, npulses, ltotal, time_offset_unit, distance_unit):
-    choppers = {
-        key: chopper_cascade.Chopper.from_disk_chopper(
-            chop, pulse_frequency=sc.scalar(14.0, unit="Hz"), npulses=npulses
-        )
-        for key, chop in disk_choppers.items()
-    }
-
+def test_dream_wfm(
+    dream_disk_choppers, npulses, ltotal, time_offset_unit, distance_unit
+):
     monitors = {
         f"detector{i}": ltot for i, ltot in enumerate(ltotal.flatten(to='detector'))
     }
@@ -140,7 +135,7 @@ def test_dream_wfm(disk_choppers, npulses, ltotal, time_offset_unit, distance_un
     )
     birth_times = sc.full(sizes=wavelengths.sizes, value=1.5, unit='ms')
     ess_beamline = fakes.FakeBeamlineEss(
-        choppers=choppers,
+        choppers=dream_disk_choppers,
         monitors=monitors,
         run_length=sc.scalar(1 / 14, unit="s") * npulses,
         events_per_pulse=len(wavelengths),
@@ -182,7 +177,7 @@ def test_dream_wfm(disk_choppers, npulses, ltotal, time_offset_unit, distance_un
     workflow = sl.Pipeline(unwrap.providers(), params=unwrap.params())
     workflow[unwrap.Facility] = 'ess'
     workflow[unwrap.RawData] = raw_data
-    workflow[unwrap.Choppers] = disk_choppers
+    workflow[unwrap.Choppers] = dream_disk_choppers
     workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
 
     # Compute time-of-flight
@@ -221,15 +216,8 @@ def test_dream_wfm(disk_choppers, npulses, ltotal, time_offset_unit, distance_un
 @pytest.mark.parametrize("time_offset_unit", ['s', 'ms', 'us', 'ns'])
 @pytest.mark.parametrize("distance_unit", ['m', 'mm'])
 def test_dream_wfm_with_subframe_time_overlap(
-    overlap_choppers, npulses, ltotal, time_offset_unit, distance_unit
+    dream_choppers_with_frame_overlap, npulses, ltotal, time_offset_unit, distance_unit
 ):
-    choppers = {
-        key: chopper_cascade.Chopper.from_disk_chopper(
-            chop, pulse_frequency=sc.scalar(14.0, unit="Hz"), npulses=npulses
-        )
-        for key, chop in overlap_choppers.items()
-    }
-
     monitors = {
         f"detector{i}": ltot for i, ltot in enumerate(ltotal.flatten(to='detector'))
     }
@@ -246,7 +234,7 @@ def test_dream_wfm_with_subframe_time_overlap(
     birth_times = sc.array(dims=['event'], values=birth_times, unit='ms')
 
     ess_beamline = fakes.FakeBeamlineEss(
-        choppers=choppers,
+        choppers=dream_choppers_with_frame_overlap,
         monitors=monitors,
         run_length=sc.scalar(1 / 14, unit="s") * npulses,
         events_per_pulse=len(wavelengths),
@@ -288,7 +276,7 @@ def test_dream_wfm_with_subframe_time_overlap(
     workflow = sl.Pipeline(unwrap.providers(), params=unwrap.params())
     workflow[unwrap.Facility] = 'ess'
     workflow[unwrap.RawData] = raw_data
-    workflow[unwrap.Choppers] = overlap_choppers
+    workflow[unwrap.Choppers] = dream_choppers_with_frame_overlap
     workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
 
     # Compute time-of-flight
@@ -314,4 +302,95 @@ def test_dream_wfm_with_subframe_time_overlap(
                 computed_wavelengths[-2:],
                 true_wavelengths['pulse', i][-2:],
                 rtol=sc.scalar(1e-01),
+            )
+
+
+@pytest.mark.parametrize("npulses", [1, 2])
+@pytest.mark.parametrize(
+    "ltotal",
+    [
+        sc.array(dims=['detector_number'], values=[26.0], unit='m'),
+        sc.array(dims=['detector_number'], values=[26.0, 25.5], unit='m'),
+        sc.array(
+            dims=['y', 'x'], values=[[26.0, 25.1, 26.33], [25.9, 26.0, 25.7]], unit='m'
+        ),
+    ],
+)
+@pytest.mark.parametrize("time_offset_unit", ['s', 'ms', 'us', 'ns'])
+@pytest.mark.parametrize("distance_unit", ['m', 'mm'])
+def test_v20_compute_wavelengths_from_wfm(
+    npulses, ltotal, time_offset_unit, distance_unit
+):
+    monitors = {
+        f"detector{i}": ltot for i, ltot in enumerate(ltotal.flatten(to='detector'))
+    }
+
+    # Create some neutron events
+    wavelengths = sc.array(
+        dims=['event'], values=[2.75, 4.2, 5.4, 6.5, 7.6, 8.75], unit='angstrom'
+    )
+    birth_times = sc.full(sizes=wavelengths.sizes, value=1.5, unit='ms')
+    ess_beamline = fakes.FakeBeamlineEss(
+        choppers=fakes.wfm_disk_choppers,
+        monitors=monitors,
+        run_length=sc.scalar(1 / 14, unit="s") * npulses,
+        events_per_pulse=len(wavelengths),
+        source=partial(
+            tof_pkg.Source.from_neutrons,
+            birth_times=birth_times,
+            wavelengths=wavelengths,
+            frequency=sc.scalar(14.0, unit="Hz"),
+        ),
+    )
+
+    # Save the true wavelengths for later
+    true_wavelengths = ess_beamline.source.data.coords["wavelength"]
+
+    raw_data = sc.concat(
+        [ess_beamline.get_monitor(key)[0] for key in monitors.keys()],
+        dim='detector',
+    ).fold(dim='detector', sizes=ltotal.sizes)
+
+    # Convert the time offset to the unit requested by the test
+    raw_data.bins.coords["event_time_offset"] = raw_data.bins.coords[
+        "event_time_offset"
+    ].to(unit=time_offset_unit, copy=False)
+
+    raw_data.coords['Ltotal'] = ltotal.to(unit=distance_unit, copy=False)
+
+    # Verify that all 6 neutrons made it through the chopper cascade
+    assert sc.identical(
+        raw_data.bins.concat('pulse').hist().data,
+        sc.array(
+            dims=['detector'],
+            values=[len(wavelengths) * npulses] * len(monitors),
+            unit="counts",
+            dtype='float64',
+        ).fold(dim='detector', sizes=ltotal.sizes),
+    )
+
+    # Set up the workflow
+    workflow = sl.Pipeline(unwrap.providers(), params=unwrap.params())
+    workflow[unwrap.Facility] = 'ess'
+    workflow[unwrap.RawData] = raw_data
+    workflow[unwrap.Choppers] = fakes.wfm_disk_choppers
+    workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
+
+    # Compute time-of-flight
+    tofs = workflow.compute(unwrap.TofData)
+    assert {dim: tofs.sizes[dim] for dim in ltotal.sizes} == ltotal.sizes
+
+    # Convert to wavelength
+    graph = {**beamline(scatter=False), **elastic("tof")}
+    wav_wfm = tofs.transform_coords("wavelength", graph=graph)
+
+    # Compare the computed wavelengths to the true wavelengths
+    for i in range(npulses):
+        result = wav_wfm['pulse', i].flatten(to='detector')
+        for j in range(len(result)):
+            computed_wavelengths = result[j].values.coords["wavelength"]
+            assert sc.allclose(
+                computed_wavelengths,
+                true_wavelengths['pulse', i],
+                rtol=sc.scalar(1e-02),
             )

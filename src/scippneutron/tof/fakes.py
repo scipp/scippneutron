@@ -257,38 +257,7 @@ class FakeBeamlineEss:
         else:
             self.source = source(pulses=self.npulses)
 
-        # # Convert the choppers to tof.Chopper
-        # def _open_close_angles(chopper, frequency):
-        #     angular_speed = sc.constants.pi * (2.0 * sc.units.rad) * frequency
-        #     return (
-        #         chopper.time_open * angular_speed,
-        #         chopper.time_close * angular_speed,
-        #     )
-
-        # self.choppers = []
-        # for name, ch in choppers.items():
-        #     frequency = self.frequency
-        #     open_angles, close_angles = _open_close_angles(ch, frequency)
-        #     # If the difference between open and close angles is larger than 2pi,
-        #     # the boundaries have crossed, which means that the chopper is rotating
-        #     # at a lower frequency.
-        #     two_pi = np.pi * 2
-        #     if any(abs(np.diff(open_angles.values) > two_pi)) or any(
-        #         abs(np.diff(close_angles.values) > two_pi)
-        #     ):
-        #         frequency = 0.5 * frequency
-        #         open_angles, close_angles = _open_close_angles(ch, frequency)
-        #     self.choppers.append(
-        #         tof_pkg.Chopper(
-        #             frequency=frequency,
-        #             open=open_angles,
-        #             close=close_angles,
-        #             phase=sc.scalar(0.0, unit='rad'),
-        #             distance=ch.distance,
-        #             name=name,
-        #         )
-        #     )
-
+        # Convert the choppers to tof.Chopper
         self.choppers = [
             tof_pkg.Chopper(
                 frequency=abs(ch.frequency),
