@@ -189,7 +189,9 @@ def run_tof_model(
     # Find name of the furthest chopper in tof_choppers
     furthest_chopper = max(tof_choppers, key=lambda c: c.distance)
     events = results[furthest_chopper.name].data.squeeze()
-    events = events[~events.masks['blocked_by_others']]
+    events = events[
+        ~(events.masks['blocked_by_others'] | events.masks['blocked_by_me'])
+    ]
     return SimulationResults(
         time_of_arrival=events.coords['toa'],
         speed=events.coords['speed'],
@@ -550,5 +552,5 @@ def params() -> dict:
         PulseStride: 1,
         PulseStrideOffset: 0,
         DistanceResolution: sc.scalar(1.0, unit='cm'),
-        LookupTableVarianceThreshold: 1.0e-3,
+        LookupTableVarianceThreshold: 1.0e-2,
     }
