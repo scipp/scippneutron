@@ -19,8 +19,6 @@ from scipp._scipp.core import _bins_no_validate
 
 from .._utils import elem_unit
 from ..chopper import DiskChopper
-
-# from . import chopper_cascade
 from .to_events import to_events
 
 Facility = NewType('Facility', str)
@@ -36,6 +34,11 @@ Choppers used to define the frame parameters.
 Ltotal = NewType('Ltotal', sc.Variable)
 """
 Total length of the flight path from the source to the detector.
+"""
+
+SimulationSeed = NewType('SimulationSeed', int)
+"""
+Seed for the random number generator used in the simulation.
 """
 
 
@@ -167,6 +170,7 @@ def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FrameP
 def run_tof_model(
     facility: Facility,
     choppers: Choppers,
+    seed: SimulationSeed,
 ) -> SimulationResults:
     tof_choppers = [
         tof.Chopper(
@@ -182,9 +186,9 @@ def run_tof_model(
         )
         for name, ch in choppers.items()
     ]
-    source = tof.Source(facility=facility, neutrons=1_000_000)
+    source = tof.Source(facility=facility, neutrons=1_000_000, seed=seed)
     if not tof_choppers:
-        events = source.data
+        events = source.data.squeeze()
         return SimulationResults(
             time_of_arrival=events.coords['time'],
             speed=events.coords['speed'],
@@ -529,4 +533,5 @@ def params() -> dict:
         PulseStrideOffset: 0,
         DistanceResolution: sc.scalar(1.0, unit='cm'),
         LookupTableVarianceThreshold: 1.0e-2,
+        SimulationSeed: 1234,
     }
