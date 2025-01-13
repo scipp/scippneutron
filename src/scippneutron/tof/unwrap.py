@@ -19,7 +19,8 @@ from scipp._scipp.core import _bins_no_validate
 
 from .._utils import elem_unit
 from ..chopper import DiskChopper
-from . import chopper_cascade
+
+# from . import chopper_cascade
 from .to_events import to_events
 
 Facility = NewType('Facility', str)
@@ -59,6 +60,12 @@ Resolution of the distance axis in the lookup table.
 TimeOfFlightLookupTable = NewType('TimeOfFlightLookupTable', sc.DataArray)
 """
 Lookup table giving time-of-flight as a function of distance and time of arrival.
+"""
+
+MaskedTimeOfFlightLookupTable = NewType('MaskedTimeOfFlightLookupTable', sc.DataArray)
+"""
+Lookup table giving time-of-flight as a function of distance and time of arrival, with
+regions of large uncertainty masked out.
 """
 
 LookupTableVarianceThreshold = NewType('LookupTableVarianceThreshold', float)
@@ -202,88 +209,10 @@ def run_tof_model(
     )
 
 
-# def frame_at_detector_start_time(
-#     facility: Facility,
-#     disk_choppers: Choppers,
-#     pulse_stride: PulseStride,
-#     pulse_period: PulsePeriod,
-#     ltotal: Ltotal,
-# ) -> FrameAtDetectorStartTime:
-#     """
-#     Compute the start time of the frame at the detector.
-
-#     This is the result of propagating the source pulse through the chopper cascade to
-#     the detector. The detector may be a single-pixel monitor or a multi-pixel detector
-#     bank after scattering off the sample.
-#     The frame bounds are then computed from this.
-
-#     Parameters
-#     ----------
-#     facility:
-#         Facility where the experiment is performed (used to determine the source pulse
-#         parameters).
-#     disk_choppers:
-#         Disk choppers used to chop the pulse and define the frame parameters.
-#     pulse_stride:
-#         Stride of used pulses.
-#         Usually 1, but may be a small integer when pulse-skipping.
-#     pulse_period:
-#         Period of the source pulses, i.e., time between consecutive pulse starts.
-#     ltotal:
-#         Total length of the flight path from the source to the detector.
-#     """
-#     source_pulse_params = tof.facilities[facility]
-#     time = source_pulse_params.time.coords['time']
-#     source_time_range = time.min(), time.max()
-#     wavelength = source_pulse_params.wavelength.coords['wavelength']
-#     source_wavelength_range = wavelength.min(), wavelength.max()
-
-#     # Convert DiskChoppers to chopper_cascade.Chopper
-#     choppers = {
-#         key: chopper_cascade.Chopper.from_disk_chopper(
-#             chop,
-#             pulse_frequency=source_pulse_params.frequency,
-#             npulses=1,
-#         )
-#         for key, chop in disk_choppers.items()
-#     }
-
-#     chopper_cascade_frames = []
-#     for i in range(pulse_stride):
-#         offset = (pulse_period * i).to(unit=source_time_range[0].unit, copy=False)
-#         frames = chopper_cascade.FrameSequence.from_source_pulse(
-#             time_min=source_time_range[0] + offset,
-#             time_max=source_time_range[-1] + offset,
-#             wavelength_min=source_wavelength_range[0],
-#             wavelength_max=source_wavelength_range[-1],
-#         )
-#         chopped = frames.chop(choppers.values())
-#         for f in chopped:
-#             for sf in f.subframes:
-#                 sf.time -= offset.to(unit=sf.time.unit, copy=False)
-#         chopper_cascade_frames.append(chopped)
-
-#     # In the case of pulse-skipping, only one of the frames should have subframes (the
-#     # others should be empty).
-#     at_detector = []
-#     for f in chopper_cascade_frames:
-#         propagated = f[-1].propagate_to(ltotal)
-#         if len(propagated.subframes) > 0:
-#             at_detector.append(propagated)
-#     if len(at_detector) == 0:
-#         raise ValueError("FrameAtDetector: No frames with subframes found.")
-#     if len(at_detector) > 1:
-#         raise ValueError("FrameAtDetector: Multiple frames with subframes found.")
-#     at_detector = at_detector[0]
-
-#     return FrameAtDetectorStartTime(at_detector.bounds()['time']['bound', 0])
-
-
-def tof_lookup(
+def compute_tof_lookup_table(
     simulation: SimulationResults,
     ltotal: Ltotal,
     distance_resolution: DistanceResolution,
-    variance_threshold: LookupTableVarianceThreshold,
 ) -> TimeOfFlightLookupTable:
     simulation_distance = simulation.distance.to(unit=ltotal.unit)
     dist = ltotal - simulation_distance
@@ -318,47 +247,78 @@ def tof_lookup(
     wavelength = (
         binned.bins.data * binned.bins.coords['wavelength']
     ).bins.sum() / binned.bins.sum()
-    # Compute the variance of the wavelength to mask out regions with large uncertainty
+    # Compute the variance of the wavelength to track regions with large uncertainty
     variance = (
         binned.bins.data * (binned.bins.coords['wavelength'] - wavelength) ** 2
     ).bins.sum() / binned.bins.sum()
 
-    mask = variance.data > sc.scalar(variance_threshold, unit=variance.unit)
-    if mask.any():
-        wavelength.masks["uncertain"] = mask
-
-    # return wavelength, variance
-
-    binned.coords['distance'] += simulation_distance
-
-    # Convert wavelengths to time-of-flight
+    # Need to add the simulation distance to the distance coordinate
+    wavelength.coords['distance'] = wavelength.coords['distance'] + simulation_distance
     h = sc.constants.h
     m_n = sc.constants.m_n
     velocity = (h / (wavelength * m_n)).to(unit='m/s')
-    timeofflight = (sc.midpoints(binned.coords['distance'])) / velocity
+    timeofflight = (sc.midpoints(wavelength.coords['distance'])) / velocity
     out = timeofflight.to(unit=time_unit, copy=False)
-    # wavelength.masks["uncertain"] = binned.data > sc.scalar(
-    #     variance_threshold, unit=variance.data.unit
-    # )
-
-    # # lookup_values = lookup.data.to(unit=elem_unit(toas), copy=False).values
-    # mask = (
-    #     variance.data > sc.scalar(variance_threshold, unit=variance.data.unit)
-    # ).values
-    # print(mask.sum())
-    # # var.masks['m'].values
-    # out.values[mask] = np.nan
+    # Include the variances computed above
+    out.variances = variance.values
     return TimeOfFlightLookupTable(out)
 
 
+def masked_tof_lookup_table(
+    tof_lookup: TimeOfFlightLookupTable,
+    variance_threshold: LookupTableVarianceThreshold,
+) -> MaskedTimeOfFlightLookupTable:
+    """
+    Mask regions of the lookup table where the variance of the projected time-of-flight
+    is larger than a given threshold.
+
+    Parameters
+    ----------
+    tof_lookup:
+        Lookup table giving time-of-flight as a function of distance and
+        time-of-arrival.
+    variance_threshold:
+        Threshold for the variance of the projected time-of-flight above which regions
+        are masked.
+    """
+    variances = sc.variances(tof_lookup.data)
+    mask = variances > sc.scalar(variance_threshold, unit=variances.unit)
+    out = tof_lookup.copy(deep=False)
+    if mask.any():
+        out.masks["uncertain"] = mask
+    return MaskedTimeOfFlightLookupTable(out)
+
+
 def frame_at_detector_start_time(
-    lookup: TimeOfFlightLookupTable,
+    simulation: SimulationResults, ltotal: Ltotal
 ) -> FrameAtDetectorStartTime:
-    return FrameAtDetectorStartTime(lookup.coords['toa'].min())
+    """
+    Compute the start time of the frame at the detector.
+    The assumption here is that the fastest neutron in the simulation results is the one
+    that arrives at the detector first.
+    One could have an edge case where a slightly slower neutron which is born earlier
+    could arrive at the detector first, but this edge case is most probably uncommon,
+    and the difference in arrival times is likely to be small.
+
+    Parameters
+    ----------
+    simulation:
+        Results of a time-of-flight simulation used to create a lookup table.
+    ltotal:
+        Total length of the flight path from the source to the detector.
+    """
+    dist = ltotal - simulation.distance.to(unit=ltotal.unit)
+    # Find the fastest neutron
+    ind = np.argmax(simulation.speed.values)
+    time_at_simulation = simulation.time_of_arrival[ind]
+    toa = time_at_simulation + (dist / simulation.speed[ind]).to(
+        unit=time_at_simulation.unit, copy=False
+    )
+    return FrameAtDetectorStartTime(toa)
 
 
 def unwrapped_time_of_arrival(
-    da: RawData, offset: PulseStrideOffset, period: PulsePeriod
+    da: RawData, offset: PulseStrideOffset, pulse_period: PulsePeriod
 ) -> UnwrappedTimeOfArrival:
     """
     Compute the unwrapped time of arrival of the neutron at the detector.
@@ -373,7 +333,7 @@ def unwrapped_time_of_arrival(
         Integer offset of the first pulse in the stride (typically zero unless we are
         using pulse-skipping and the events do not begin with the first pulse in the
         stride).
-    period:
+    pulse_period:
         Period of the source pulses, i.e., time between consecutive pulse starts.
     """
     if da.bins is None:
@@ -390,7 +350,7 @@ def unwrapped_time_of_arrival(
         toa = (
             coord
             + time_zero.to(dtype=float, unit=unit, copy=False)
-            - (offset * period).to(unit=unit, copy=False)
+            - (offset * pulse_period).to(unit=unit, copy=False)
         )
     return UnwrappedTimeOfArrival(toa)
 
@@ -461,7 +421,7 @@ def time_of_arrival_folded_by_frame(
 
 def time_of_flight_data(
     da: RawData,
-    lookup: TimeOfFlightLookupTable,
+    lookup: MaskedTimeOfFlightLookupTable,
     ltotal: Ltotal,
     toas: FrameFoldedTimeOfArrival,
 ) -> TofData:
@@ -550,12 +510,13 @@ def providers():
         frame_period,
         run_tof_model,
         frame_at_detector_start_time,
-        tof_lookup,
         unwrapped_time_of_arrival,
         unwrapped_time_of_arrival_minus_frame_start_time,
         time_of_arrival_minus_start_time_modulo_period,
         time_of_arrival_folded_by_frame,
         time_of_flight_data,
+        compute_tof_lookup_table,
+        masked_tof_lookup_table,
     )
 
 
