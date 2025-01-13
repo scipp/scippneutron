@@ -9,6 +9,7 @@ event_time_offset coordinates to data with a time-of-flight coordinate.
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from functools import reduce
 from typing import NewType
 
 import numpy as np
@@ -201,81 +202,81 @@ def run_tof_model(
     )
 
 
-def frame_at_detector_start_time(
-    facility: Facility,
-    disk_choppers: Choppers,
-    pulse_stride: PulseStride,
-    pulse_period: PulsePeriod,
-    ltotal: Ltotal,
-) -> FrameAtDetectorStartTime:
-    """
-    Compute the start time of the frame at the detector.
+# def frame_at_detector_start_time(
+#     facility: Facility,
+#     disk_choppers: Choppers,
+#     pulse_stride: PulseStride,
+#     pulse_period: PulsePeriod,
+#     ltotal: Ltotal,
+# ) -> FrameAtDetectorStartTime:
+#     """
+#     Compute the start time of the frame at the detector.
 
-    This is the result of propagating the source pulse through the chopper cascade to
-    the detector. The detector may be a single-pixel monitor or a multi-pixel detector
-    bank after scattering off the sample.
-    The frame bounds are then computed from this.
+#     This is the result of propagating the source pulse through the chopper cascade to
+#     the detector. The detector may be a single-pixel monitor or a multi-pixel detector
+#     bank after scattering off the sample.
+#     The frame bounds are then computed from this.
 
-    Parameters
-    ----------
-    facility:
-        Facility where the experiment is performed (used to determine the source pulse
-        parameters).
-    disk_choppers:
-        Disk choppers used to chop the pulse and define the frame parameters.
-    pulse_stride:
-        Stride of used pulses.
-        Usually 1, but may be a small integer when pulse-skipping.
-    pulse_period:
-        Period of the source pulses, i.e., time between consecutive pulse starts.
-    ltotal:
-        Total length of the flight path from the source to the detector.
-    """
-    source_pulse_params = tof.facilities[facility]
-    time = source_pulse_params.time.coords['time']
-    source_time_range = time.min(), time.max()
-    wavelength = source_pulse_params.wavelength.coords['wavelength']
-    source_wavelength_range = wavelength.min(), wavelength.max()
+#     Parameters
+#     ----------
+#     facility:
+#         Facility where the experiment is performed (used to determine the source pulse
+#         parameters).
+#     disk_choppers:
+#         Disk choppers used to chop the pulse and define the frame parameters.
+#     pulse_stride:
+#         Stride of used pulses.
+#         Usually 1, but may be a small integer when pulse-skipping.
+#     pulse_period:
+#         Period of the source pulses, i.e., time between consecutive pulse starts.
+#     ltotal:
+#         Total length of the flight path from the source to the detector.
+#     """
+#     source_pulse_params = tof.facilities[facility]
+#     time = source_pulse_params.time.coords['time']
+#     source_time_range = time.min(), time.max()
+#     wavelength = source_pulse_params.wavelength.coords['wavelength']
+#     source_wavelength_range = wavelength.min(), wavelength.max()
 
-    # Convert DiskChoppers to chopper_cascade.Chopper
-    choppers = {
-        key: chopper_cascade.Chopper.from_disk_chopper(
-            chop,
-            pulse_frequency=source_pulse_params.frequency,
-            npulses=1,
-        )
-        for key, chop in disk_choppers.items()
-    }
+#     # Convert DiskChoppers to chopper_cascade.Chopper
+#     choppers = {
+#         key: chopper_cascade.Chopper.from_disk_chopper(
+#             chop,
+#             pulse_frequency=source_pulse_params.frequency,
+#             npulses=1,
+#         )
+#         for key, chop in disk_choppers.items()
+#     }
 
-    chopper_cascade_frames = []
-    for i in range(pulse_stride):
-        offset = (pulse_period * i).to(unit=source_time_range[0].unit, copy=False)
-        frames = chopper_cascade.FrameSequence.from_source_pulse(
-            time_min=source_time_range[0] + offset,
-            time_max=source_time_range[-1] + offset,
-            wavelength_min=source_wavelength_range[0],
-            wavelength_max=source_wavelength_range[-1],
-        )
-        chopped = frames.chop(choppers.values())
-        for f in chopped:
-            for sf in f.subframes:
-                sf.time -= offset.to(unit=sf.time.unit, copy=False)
-        chopper_cascade_frames.append(chopped)
+#     chopper_cascade_frames = []
+#     for i in range(pulse_stride):
+#         offset = (pulse_period * i).to(unit=source_time_range[0].unit, copy=False)
+#         frames = chopper_cascade.FrameSequence.from_source_pulse(
+#             time_min=source_time_range[0] + offset,
+#             time_max=source_time_range[-1] + offset,
+#             wavelength_min=source_wavelength_range[0],
+#             wavelength_max=source_wavelength_range[-1],
+#         )
+#         chopped = frames.chop(choppers.values())
+#         for f in chopped:
+#             for sf in f.subframes:
+#                 sf.time -= offset.to(unit=sf.time.unit, copy=False)
+#         chopper_cascade_frames.append(chopped)
 
-    # In the case of pulse-skipping, only one of the frames should have subframes (the
-    # others should be empty).
-    at_detector = []
-    for f in chopper_cascade_frames:
-        propagated = f[-1].propagate_to(ltotal)
-        if len(propagated.subframes) > 0:
-            at_detector.append(propagated)
-    if len(at_detector) == 0:
-        raise ValueError("FrameAtDetector: No frames with subframes found.")
-    if len(at_detector) > 1:
-        raise ValueError("FrameAtDetector: Multiple frames with subframes found.")
-    at_detector = at_detector[0]
+#     # In the case of pulse-skipping, only one of the frames should have subframes (the
+#     # others should be empty).
+#     at_detector = []
+#     for f in chopper_cascade_frames:
+#         propagated = f[-1].propagate_to(ltotal)
+#         if len(propagated.subframes) > 0:
+#             at_detector.append(propagated)
+#     if len(at_detector) == 0:
+#         raise ValueError("FrameAtDetector: No frames with subframes found.")
+#     if len(at_detector) > 1:
+#         raise ValueError("FrameAtDetector: Multiple frames with subframes found.")
+#     at_detector = at_detector[0]
 
-    return FrameAtDetectorStartTime(at_detector.bounds()['time']['bound', 0])
+#     return FrameAtDetectorStartTime(at_detector.bounds()['time']['bound', 0])
 
 
 def tof_lookup(
@@ -321,9 +322,10 @@ def tof_lookup(
     variance = (
         binned.bins.data * (binned.bins.coords['wavelength'] - wavelength) ** 2
     ).bins.sum() / binned.bins.sum()
-    # wavelength.masks["uncertain"] = binned.data > sc.scalar(
-    #     variance_threshold, unit=variance.data.unit
-    # )
+
+    mask = variance.data > sc.scalar(variance_threshold, unit=variance.unit)
+    if mask.any():
+        wavelength.masks["uncertain"] = mask
 
     # return wavelength, variance
 
@@ -339,14 +341,20 @@ def tof_lookup(
     #     variance_threshold, unit=variance.data.unit
     # )
 
-    # lookup_values = lookup.data.to(unit=elem_unit(toas), copy=False).values
-    mask = (
-        variance.data > sc.scalar(variance_threshold, unit=variance.data.unit)
-    ).values
-    print(mask.sum())
-    # var.masks['m'].values
-    out.values[mask] = np.nan
+    # # lookup_values = lookup.data.to(unit=elem_unit(toas), copy=False).values
+    # mask = (
+    #     variance.data > sc.scalar(variance_threshold, unit=variance.data.unit)
+    # ).values
+    # print(mask.sum())
+    # # var.masks['m'].values
+    # out.values[mask] = np.nan
     return TimeOfFlightLookupTable(out)
+
+
+def frame_at_detector_start_time(
+    lookup: TimeOfFlightLookupTable,
+) -> FrameAtDetectorStartTime:
+    return FrameAtDetectorStartTime(lookup.coords['toa'].min())
 
 
 def unwrapped_time_of_arrival(
@@ -459,6 +467,13 @@ def time_of_flight_data(
 ) -> TofData:
     from scipy.interpolate import RegularGridInterpolator
 
+    lookup_values = lookup.data.to(unit=elem_unit(toas), copy=False).values
+    # Merge all masks into a single mask
+    if lookup.masks:
+        one_mask = reduce(lambda a, b: a | b, lookup.masks.values()).values
+        # Set masked values to NaN
+        lookup_values[one_mask] = np.nan
+
     f = RegularGridInterpolator(
         (
             sc.midpoints(
@@ -466,7 +481,7 @@ def time_of_flight_data(
             ).values,
             sc.midpoints(lookup.coords['distance']).values,
         ),
-        lookup.data.to(unit=elem_unit(toas), copy=False).values.T,
+        lookup_values.T,
         method='linear',
         bounds_error=False,
     )
