@@ -6,8 +6,6 @@ import numpy as np
 import scipp as sc
 from scipy.spatial.transform import Rotation as Rot
 
-from ._utils import get_meta
-
 try:
     import pythreejs as p3
 except ImportError as ex:
@@ -274,7 +272,7 @@ def instrument_view(
 
     import plopp as pp
 
-    positions_var = get_meta(scipp_obj)[positions]
+    positions_var = scipp_obj.coords[positions]
     if pixel_size is None:
         pos_array = positions_var.values
         if len(pos_array) > 1:

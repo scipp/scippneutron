@@ -68,7 +68,7 @@ def _make_component_settings(
         if isinstance(component_size, tuple)
         else sc.scalar(value=component_size, unit=size_unit)
     )
-    center = data.meta[center] if isinstance(center, str) else center
+    center = data.coords[center] if isinstance(center, str) else center
     sample_settings = {'center': center, 'size': comp_size, 'type': type}
     return sample_settings
 
