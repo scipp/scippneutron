@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+# @author Simon Heybrock
+# @author Neil Vaytet
 """
 Time-of-flight workflow for unwrapping the time of arrival of the neutron at the
 detector.
