@@ -15,7 +15,7 @@ dependencies:
   - ipympl==0.9.6
   - ipywidgets==8.1.5
   - mantid==6.11.0
-  - matplotlib==3.10.0
+  - matplotlib==3.7.3  # Note that this version is out of sync with requirements because of Mantid
   - mpltoolbox==24.05.1
   - plopp==24.10.0
   - pooch==1.8.2
