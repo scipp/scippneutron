@@ -159,7 +159,7 @@ class Frame:
             self_sub == other_sub
             for self_sub, other_sub in zip(self.subframes, other.subframes, strict=True)
         )
-        print(same_distance, same_subframes)
+        print(same_distance, same_subframes)  # noqa: T201
         return same_distance and same_subframes
 
     def propagate_to(self, distance: sc.Variable) -> Frame:
