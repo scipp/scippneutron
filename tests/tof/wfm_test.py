@@ -100,7 +100,7 @@ def dream_choppers_with_frame_overlap(dream_disk_choppers):
         phase=sc.scalar(240 - 180, unit="deg"),
         axle_position=sc.vector(value=[0, 0, 9.78], unit="m"),
         slit_begin=sc.array(dims=["cutout"], values=[-36.875, 143.125], unit="deg"),
-        slit_end=sc.array(dims=["cutout"], values=[46.875, 216.875], unit="deg"),
+        slit_end=sc.array(dims=["cutout"], values=[56.875, 216.875], unit="deg"),
         slit_height=sc.scalar(10.0, unit="cm"),
         radius=sc.scalar(30.0, unit="cm"),
     )
@@ -179,6 +179,7 @@ def test_dream_wfm(
     workflow[unwrap.RawData] = raw_data
     workflow[unwrap.Choppers] = dream_disk_choppers
     workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
+    workflow[unwrap.NumberOfNeutrons] = 100_000
 
     # Compute time-of-flight
     tofs = workflow.compute(unwrap.TofData)
@@ -227,8 +228,8 @@ def test_dream_wfm_with_subframe_time_overlap(
     birth_times = [1.5] * len(wavelengths)
 
     # Add overlap neutrons
-    birth_times.extend([0.0, 3.1])
-    wavelengths.extend([2.67, 2.5])
+    birth_times.extend([0.0, 3.3])
+    wavelengths.extend([2.6, 2.4])
 
     wavelengths = sc.array(dims=['event'], values=wavelengths, unit='angstrom')
     birth_times = sc.array(dims=['event'], values=birth_times, unit='ms')
@@ -279,6 +280,7 @@ def test_dream_wfm_with_subframe_time_overlap(
     workflow[unwrap.Choppers] = dream_choppers_with_frame_overlap
     workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
     workflow[unwrap.LookupTableVarianceThreshold] = 1.0e-3
+    workflow[unwrap.NumberOfNeutrons] = 100_000
 
     # Compute time-of-flight
     tofs = workflow.compute(unwrap.TofData)
@@ -373,6 +375,7 @@ def test_v20_compute_wavelengths_from_wfm(
     workflow[unwrap.RawData] = raw_data
     workflow[unwrap.Choppers] = fakes.wfm_disk_choppers
     workflow[unwrap.Ltotal] = raw_data.coords['Ltotal']
+    workflow[unwrap.NumberOfNeutrons] = 100_000
 
     # Compute time-of-flight
     tofs = workflow.compute(unwrap.TofData)
