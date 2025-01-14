@@ -15,15 +15,15 @@ h5py==3.12.1
     # via
     #   -r base.in
     #   scippnexus
-kiwisolver==1.4.7
+kiwisolver==1.4.8
     # via matplotlib
-matplotlib==3.9.3
+matplotlib==3.10.0
     # via
     #   mpltoolbox
     #   plopp
 mpltoolbox==24.5.1
     # via -r base.in
-numpy==2.2.0
+numpy==2.2.1
     # via
     #   -r base.in
     #   contourpy
@@ -34,11 +34,11 @@ numpy==2.2.0
     #   scipy
 packaging==24.2
     # via matplotlib
-pillow==11.0.0
+pillow==11.1.0
     # via matplotlib
 plopp==24.10.0
     # via -r base.in
-pyparsing==3.2.0
+pyparsing==3.2.1
     # via matplotlib
 python-dateutil==2.9.0.post0
     # via
@@ -50,7 +50,7 @@ scipp==24.11.2
     #   scippnexus
 scippnexus==24.11.1
     # via -r base.in
-scipy==1.14.1
+scipy==1.15.1
     # via
     #   -r base.in
     #   scippnexus
