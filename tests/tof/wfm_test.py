@@ -282,6 +282,9 @@ def test_dream_wfm_with_subframe_time_overlap(
     workflow[unwrap.LookupTableVarianceThreshold] = 1.0e-3
     workflow[unwrap.NumberOfNeutrons] = 100_000
 
+    # Make sure the lookup table has a mask
+    assert len(workflow.compute(unwrap.MaskedTimeOfFlightLookupTable).masks) > 0
+
     # Compute time-of-flight
     tofs = workflow.compute(unwrap.TofData)
     assert {dim: tofs.sizes[dim] for dim in ltotal.sizes} == ltotal.sizes
