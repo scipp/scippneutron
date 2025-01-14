@@ -66,9 +66,21 @@ class Subframe:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Subframe):
             return NotImplemented
-        return sc.identical(self.time, other.time) and sc.identical(
-            self.wavelength, other.wavelength
+        # Using sc.identical can lead to flaky behavior (different frames might have
+        # been obtained via a different operation order), so we use allclose instead.
+        same_time = sc.allclose(
+            self.time,
+            other.time,
+            rtol=sc.scalar(1.0e-12),
+            atol=sc.scalar(1.0e-16, unit=self.time.unit),
         )
+        same_wavelength = sc.allclose(
+            self.wavelength,
+            other.wavelength,
+            rtol=sc.scalar(1.0e-12),
+            atol=sc.scalar(1.0e-16, unit=self.wavelength.unit),
+        )
+        return same_time and same_wavelength
 
     def is_regular(self) -> bool:
         """
@@ -159,7 +171,6 @@ class Frame:
             self_sub == other_sub
             for self_sub, other_sub in zip(self.subframes, other.subframes, strict=True)
         )
-        print(same_distance, same_subframes)  # noqa: T201
         return same_distance and same_subframes
 
     def propagate_to(self, distance: sc.Variable) -> Frame:
