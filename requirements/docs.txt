@@ -229,7 +229,7 @@ stack-data==0.6.3
     # via ipython
 tinycss2==1.4.0
     # via nbconvert
-tof==24.12.0
+tof==25.01.2
     # via -r docs.in
 tomli==2.2.1
     # via sphinx
