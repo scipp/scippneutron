@@ -167,11 +167,10 @@ class Frame:
             np.array_equal(self.distance.values, other.distance.values)
             and self.distance.unit == other.distance.unit
         )
-        same_subframes = all(
+        return same_distance and all(
             self_sub == other_sub
             for self_sub, other_sub in zip(self.subframes, other.subframes, strict=True)
         )
-        return same_distance and same_subframes
 
     def propagate_to(self, distance: sc.Variable) -> Frame:
         """
