@@ -44,6 +44,12 @@ Seed for the random number generator used in the simulation.
 """
 
 
+NumberOfNeutrons = NewType('NumberOfNeutrons', int)
+"""
+Number of neutrons to use in the simulation.
+"""
+
+
 @dataclass
 class SimulationResults:
     """
@@ -173,6 +179,7 @@ def run_tof_model(
     facility: Facility,
     choppers: Choppers,
     seed: SimulationSeed,
+    number_of_neutrons: NumberOfNeutrons,
 ) -> SimulationResults:
     tof_choppers = [
         tof.Chopper(
@@ -188,7 +195,7 @@ def run_tof_model(
         )
         for name, ch in choppers.items()
     ]
-    source = tof.Source(facility=facility, neutrons=1_000_000, seed=seed)
+    source = tof.Source(facility=facility, neutrons=number_of_neutrons, seed=seed)
     if not tof_choppers:
         events = source.data.squeeze()
         return SimulationResults(
@@ -226,7 +233,7 @@ def compute_tof_lookup_table(
     # Add padding to ensure that the lookup table covers the full range of distances
     # because the midpoints of the table edges are used in the 2d grid interpolator.
     min_dist, max_dist = dist.min() - res, dist.max() + res
-    ndist = int(((max_dist - min_dist) / res).value) + 1
+    ndist = round(((max_dist - min_dist) / res).value) + 1
     distances = sc.linspace(
         'distance', min_dist.value, max_dist.value, ndist, unit=dist.unit
     )
@@ -536,4 +543,5 @@ def params() -> dict:
         DistanceResolution: sc.scalar(1.0, unit='cm'),
         LookupTableVarianceThreshold: 1.0e-2,
         SimulationSeed: 1234,
+        NumberOfNeutrons: 1_000_000,
     }
