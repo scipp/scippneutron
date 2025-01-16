@@ -9,14 +9,13 @@ This workflow is used to convert raw detector data with event_time_zero and
 event_time_offset coordinates to data with a time-of-flight coordinate.
 """
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from functools import reduce
 from typing import NewType
 
 import numpy as np
 import scipp as sc
-import tof
 from scipp._scipp.core import _bins_no_validate
 
 from .._utils import elem_unit
@@ -91,9 +90,9 @@ UnwrappedTimeOfArrival = NewType('UnwrappedTimeOfArrival', sc.Variable)
 Time of arrival of the neutron at the detector, unwrapped at the pulse period.
 """
 
-FrameAtDetectorStartTime = NewType('FrameAtDetectorStartTime', sc.Variable)
+PivotTimeAtDetector = NewType('PivotTimeAtDetector', sc.Variable)
 """
-Time of the start of the frame at the detector.
+Pivot time at the detector, i.e., the time of the start of the frame at the detector.
 """
 
 UnwrappedTimeOfArrivalMinusStartTime = NewType(
@@ -156,7 +155,8 @@ def pulse_period_from_source(facility: Facility) -> PulsePeriod:
         Facility where the experiment is performed (used to determine the source pulse
         parameters).
     """
-    return PulsePeriod(1.0 / tof.facilities[facility].frequency)
+    facilities = {"ess": sc.scalar(14.0, unit='Hz')}
+    return PulsePeriod(1.0 / facilities[facility])
 
 
 def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FramePeriod:
@@ -173,53 +173,6 @@ def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FrameP
         pulse-skipping.
     """
     return FramePeriod(pulse_period * pulse_stride)
-
-
-def run_tof_model(
-    facility: Facility,
-    choppers: Choppers,
-    seed: SimulationSeed,
-    number_of_neutrons: NumberOfNeutrons,
-) -> SimulationResults:
-    tof_choppers = [
-        tof.Chopper(
-            frequency=abs(ch.frequency),
-            direction=tof.AntiClockwise
-            if (ch.frequency.value > 0.0)
-            else tof.Clockwise,
-            open=ch.slit_begin,
-            close=ch.slit_end,
-            phase=abs(ch.phase),
-            distance=ch.axle_position.fields.z,
-            name=name,
-        )
-        for name, ch in choppers.items()
-    ]
-    source = tof.Source(facility=facility, neutrons=number_of_neutrons, seed=seed)
-    if not tof_choppers:
-        events = source.data.squeeze()
-        return SimulationResults(
-            time_of_arrival=events.coords['time'],
-            speed=events.coords['speed'],
-            wavelength=events.coords['wavelength'],
-            weight=events.data,
-            distance=0.0 * sc.units.m,
-        )
-    model = tof.Model(source=source, choppers=tof_choppers)
-    results = model.run()
-    # Find name of the furthest chopper in tof_choppers
-    furthest_chopper = max(tof_choppers, key=lambda c: c.distance)
-    events = results[furthest_chopper.name].data.squeeze()
-    events = events[
-        ~(events.masks['blocked_by_others'] | events.masks['blocked_by_me'])
-    ]
-    return SimulationResults(
-        time_of_arrival=events.coords['toa'],
-        speed=events.coords['speed'],
-        wavelength=events.coords['wavelength'],
-        weight=events.data,
-        distance=furthest_chopper.distance,
-    )
 
 
 def compute_tof_lookup_table(
@@ -302,11 +255,12 @@ def masked_tof_lookup_table(
     return MaskedTimeOfFlightLookupTable(out)
 
 
-def frame_at_detector_start_time(
+def pivot_time_at_detector(
     simulation: SimulationResults, ltotal: Ltotal
-) -> FrameAtDetectorStartTime:
+) -> PivotTimeAtDetector:
     """
-    Compute the start time of the frame at the detector.
+    Compute the pivot time at the detector, i.e., the time of the start of the frame at
+    the detector.
     The assumption here is that the fastest neutron in the simulation results is the one
     that arrives at the detector first.
     One could have an edge case where a slightly slower neutron which is born earlier
@@ -327,7 +281,7 @@ def frame_at_detector_start_time(
     toa = time_at_simulation + (dist / simulation.speed[ind]).to(
         unit=time_at_simulation.unit, copy=False
     )
-    return FrameAtDetectorStartTime(toa)
+    return PivotTimeAtDetector(toa)
 
 
 def unwrapped_time_of_arrival(
@@ -369,7 +323,7 @@ def unwrapped_time_of_arrival(
 
 
 def unwrapped_time_of_arrival_minus_frame_start_time(
-    toa: UnwrappedTimeOfArrival, start_time: FrameAtDetectorStartTime
+    toa: UnwrappedTimeOfArrival, pivot_time: PivotTimeAtDetector
 ) -> UnwrappedTimeOfArrivalMinusStartTime:
     """
     Compute the time of arrival of the neutron at the detector, unwrapped at the pulse
@@ -381,12 +335,13 @@ def unwrapped_time_of_arrival_minus_frame_start_time(
     ----------
     toa:
         Time of arrival of the neutron at the detector, unwrapped at the pulse period.
-    start_time:
-        Time of the start of the frame at the detector.
+    pivot_time:
+        Pivot time at the detector, i.e., the time of the start of the frame at the
+        detector.
     """
     # Order of operation to preserve dimension order
     return UnwrappedTimeOfArrivalMinusStartTime(
-        -start_time.to(unit=elem_unit(toa), copy=False) + toa
+        -pivot_time.to(unit=elem_unit(toa), copy=False) + toa
     )
 
 
@@ -414,7 +369,7 @@ def time_of_arrival_minus_start_time_modulo_period(
 
 def time_of_arrival_folded_by_frame(
     toa: TimeOfArrivalMinusStartTimeModuloPeriod,
-    start_time: FrameAtDetectorStartTime,
+    pivot_time: PivotTimeAtDetector,
 ) -> FrameFoldedTimeOfArrival:
     """
     The time of arrival of the neutron at the detector, folded by the frame period.
@@ -424,11 +379,12 @@ def time_of_arrival_folded_by_frame(
     toa:
         Time of arrival of the neutron at the detector, unwrapped at the pulse period,
         minus the start time of the frame, modulo the frame period.
-    start_time:
-        Time of the start of the frame at the detector.
+    pivot_time:
+        Pivot time at the detector, i.e., the time of the start of the frame at the
+        detector.
     """
     return FrameFoldedTimeOfArrival(
-        toa + start_time.to(unit=elem_unit(toa), copy=False)
+        toa + pivot_time.to(unit=elem_unit(toa), copy=False)
     )
 
 
@@ -514,25 +470,6 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     return ReHistogrammedTofData(rehist)
 
 
-def providers():
-    """
-    Providers of the time-of-flight workflow.
-    """
-    return (
-        pulse_period_from_source,
-        frame_period,
-        run_tof_model,
-        frame_at_detector_start_time,
-        unwrapped_time_of_arrival,
-        unwrapped_time_of_arrival_minus_frame_start_time,
-        time_of_arrival_minus_start_time_modulo_period,
-        time_of_arrival_folded_by_frame,
-        time_of_flight_data,
-        compute_tof_lookup_table,
-        masked_tof_lookup_table,
-    )
-
-
 def params() -> dict:
     """
     Default parameters of the time-of-flight workflow.
@@ -545,3 +482,30 @@ def params() -> dict:
         SimulationSeed: 1234,
         NumberOfNeutrons: 1_000_000,
     }
+
+
+def _providers() -> tuple[Callable]:
+    """
+    Providers of the time-of-flight workflow.
+    """
+    return (
+        compute_tof_lookup_table,
+        frame_period,
+        masked_tof_lookup_table,
+        pivot_time_at_detector,
+        pulse_period_from_source,
+        time_of_arrival_folded_by_frame,
+        time_of_arrival_minus_start_time_modulo_period,
+        time_of_flight_data,
+        unwrapped_time_of_arrival,
+        unwrapped_time_of_arrival_minus_frame_start_time,
+    )
+
+
+def standard_providers() -> tuple[Callable]:
+    """
+    Standard providers of the time-of-flight workflow.
+    """
+    from .tof_simulation import run_tof_simulation
+
+    return (*_providers(), run_tof_simulation)
