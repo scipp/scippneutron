@@ -9,14 +9,13 @@ This workflow is used to convert raw detector data with event_time_zero and
 event_time_offset coordinates to data with a time-of-flight coordinate.
 """
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from functools import reduce
 from typing import NewType
 
 import numpy as np
 import scipp as sc
-import tof
 from scipp._scipp.core import _bins_no_validate
 
 from .._utils import elem_unit
@@ -156,7 +155,8 @@ def pulse_period_from_source(facility: Facility) -> PulsePeriod:
         Facility where the experiment is performed (used to determine the source pulse
         parameters).
     """
-    return PulsePeriod(1.0 / tof.facilities[facility].frequency)
+    facilities = {"ess": sc.scalar(14.0, unit='Hz')}
+    return PulsePeriod(1.0 / facilities[facility])
 
 
 def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FramePeriod:
@@ -173,53 +173,6 @@ def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FrameP
         pulse-skipping.
     """
     return FramePeriod(pulse_period * pulse_stride)
-
-
-def run_tof_model(
-    facility: Facility,
-    choppers: Choppers,
-    seed: SimulationSeed,
-    number_of_neutrons: NumberOfNeutrons,
-) -> SimulationResults:
-    tof_choppers = [
-        tof.Chopper(
-            frequency=abs(ch.frequency),
-            direction=tof.AntiClockwise
-            if (ch.frequency.value > 0.0)
-            else tof.Clockwise,
-            open=ch.slit_begin,
-            close=ch.slit_end,
-            phase=abs(ch.phase),
-            distance=ch.axle_position.fields.z,
-            name=name,
-        )
-        for name, ch in choppers.items()
-    ]
-    source = tof.Source(facility=facility, neutrons=number_of_neutrons, seed=seed)
-    if not tof_choppers:
-        events = source.data.squeeze()
-        return SimulationResults(
-            time_of_arrival=events.coords['time'],
-            speed=events.coords['speed'],
-            wavelength=events.coords['wavelength'],
-            weight=events.data,
-            distance=0.0 * sc.units.m,
-        )
-    model = tof.Model(source=source, choppers=tof_choppers)
-    results = model.run()
-    # Find name of the furthest chopper in tof_choppers
-    furthest_chopper = max(tof_choppers, key=lambda c: c.distance)
-    events = results[furthest_chopper.name].data.squeeze()
-    events = events[
-        ~(events.masks['blocked_by_others'] | events.masks['blocked_by_me'])
-    ]
-    return SimulationResults(
-        time_of_arrival=events.coords['toa'],
-        speed=events.coords['speed'],
-        wavelength=events.coords['wavelength'],
-        weight=events.data,
-        distance=furthest_chopper.distance,
-    )
 
 
 def compute_tof_lookup_table(
@@ -517,25 +470,6 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     return ReHistogrammedTofData(rehist)
 
 
-def providers():
-    """
-    Providers of the time-of-flight workflow.
-    """
-    return (
-        compute_tof_lookup_table,
-        frame_period,
-        masked_tof_lookup_table,
-        pivot_time_at_detector,
-        pulse_period_from_source,
-        run_tof_model,
-        time_of_arrival_folded_by_frame,
-        time_of_arrival_minus_start_time_modulo_period,
-        time_of_flight_data,
-        unwrapped_time_of_arrival,
-        unwrapped_time_of_arrival_minus_frame_start_time,
-    )
-
-
 def params() -> dict:
     """
     Default parameters of the time-of-flight workflow.
@@ -548,3 +482,30 @@ def params() -> dict:
         SimulationSeed: 1234,
         NumberOfNeutrons: 1_000_000,
     }
+
+
+def _providers() -> tuple[Callable]:
+    """
+    Providers of the time-of-flight workflow.
+    """
+    return (
+        compute_tof_lookup_table,
+        frame_period,
+        masked_tof_lookup_table,
+        pivot_time_at_detector,
+        pulse_period_from_source,
+        time_of_arrival_folded_by_frame,
+        time_of_arrival_minus_start_time_modulo_period,
+        time_of_flight_data,
+        unwrapped_time_of_arrival,
+        unwrapped_time_of_arrival_minus_frame_start_time,
+    )
+
+
+def standard_providers() -> tuple[Callable]:
+    """
+    Standard providers of the time-of-flight workflow.
+    """
+    from .tof_simulation import run_tof_simulation
+
+    return (*_providers(), run_tof_simulation)
