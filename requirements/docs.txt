@@ -58,8 +58,6 @@ idna==3.10
     # via requests
 imagesize==1.4.1
     # via sphinx
-importlib-resources==6.5.2
-    # via tof
 ipykernel==6.29.5
     # via -r docs.in
 ipympl==0.9.6
@@ -227,8 +225,6 @@ stack-data==0.6.3
     # via ipython
 tinycss2==1.4.0
     # via bleach
-tof==25.1.2
-    # via -r docs.in
 tomli==2.2.1
     # via sphinx
 tornado==6.4.2
