@@ -11,7 +11,6 @@
    :toctree: ../generated/functions
    :recursive:
 
-   array_from_mantid
    from_mantid
    load_with_mantid
    to_mantid

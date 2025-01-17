@@ -33,10 +33,8 @@ from .beamline_components import (
 from .core import convert
 from .mantid import (
     from_mantid,
-    array_from_mantid,
     to_mantid,
     load_with_mantid,
-    load,
     fit,
 )
 from .instrument_view import instrument_view
@@ -59,11 +57,9 @@ __all__ = [
     "two_theta",
     "convert",
     "from_mantid",
-    "array_from_mantid",
     "to_mantid",
     "io",
     "load_with_mantid",
-    "load",
     "fit",
     "instrument_view",
     "atoms",

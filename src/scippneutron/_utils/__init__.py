@@ -5,8 +5,6 @@
 Internal utilities; do not use outside scippneutron!
 """
 
-from collections.abc import MutableMapping
-
 import scipp as sc
 from scipp.typing import VariableLike
 
@@ -28,29 +26,3 @@ def float_dtype(var: VariableLike) -> sc.DType:
 
 def as_float_type(var: VariableLike, ref: VariableLike) -> VariableLike:
     return var.astype(float_dtype(ref), copy=False)
-
-
-def get_attrs(da: sc.DataArray) -> MutableMapping[str, sc.Variable]:
-    try:
-        # During deprecation phase
-        return da.deprecated_attrs
-    except AttributeError:
-        try:
-            # Before deprecation phase
-            return da.attrs
-        except AttributeError:
-            # After deprecation phase / removal of attrs
-            return da.coords
-
-
-def get_meta(da: sc.DataArray) -> MutableMapping[str, sc.Variable]:
-    try:
-        # During deprecation phase
-        return da.deprecated_meta
-    except AttributeError:
-        try:
-            # Before deprecation phase
-            return da.meta
-        except AttributeError:
-            # After deprecation phase / removal of attrs
-            return da.coords
