@@ -9,10 +9,12 @@ This workflow is used to convert raw detector data with event_time_zero and
 event_time_offset coordinates to data with a time-of-flight coordinate.
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from functools import reduce
-from typing import NewType
+from typing import Any, NewType
 
 import numpy as np
 import scipp as sc
@@ -62,9 +64,32 @@ class SimulationResults:
     distance: sc.Variable
 
 
+@dataclass
+class FastestNeutron:
+    """
+    Properties of the fastest neutron in the simulation results.
+    """
+
+    time_of_arrival: sc.Variable
+    speed: sc.Variable
+    distance: sc.Variable
+
+
+LtotalRange = NewType('LtotalRange', tuple[sc.Variable, sc.Variable])
+"""
+Range (min, max) of the total length of the flight path from the source to the detector.
+"""
+
+
 DistanceResolution = NewType('DistanceResolution', sc.Variable)
 """
 Resolution of the distance axis in the lookup table.
+"""
+
+TimeOfArrivalResolution = NewType('TimeOfArrivalResolution', int | sc.Variable)
+"""
+Resolution of the time of arrival axis in the lookup table.
+Can be an integer (number of bins) or a sc.Variable (bin width).
 """
 
 TimeOfFlightLookupTable = NewType('TimeOfFlightLookupTable', sc.DataArray)
@@ -175,21 +200,48 @@ def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FrameP
     return FramePeriod(pulse_period * pulse_stride)
 
 
+def extract_ltotal(da: RawData) -> Ltotal:
+    """
+    Extract the total length of the flight path from the source to the detector from the
+    detector data.
+
+    Parameters
+    ----------
+    da:
+        Raw detector data loaded from a NeXus file, e.g., NXdetector containing
+        NXevent_data.
+    """
+    return Ltotal(da.coords["Ltotal"])
+
+
 def compute_tof_lookup_table(
     simulation: SimulationResults,
-    ltotal: Ltotal,
+    ltotal_range: LtotalRange,
     distance_resolution: DistanceResolution,
+    toa_resolution: TimeOfArrivalResolution,
 ) -> TimeOfFlightLookupTable:
-    simulation_distance = simulation.distance.to(unit=ltotal.unit)
-    dist = ltotal - simulation_distance
-    res = distance_resolution.to(unit=dist.unit)
-    # Add padding to ensure that the lookup table covers the full range of distances
-    # because the midpoints of the table edges are used in the 2d grid interpolator.
-    min_dist, max_dist = dist.min() - res, dist.max() + res
-    ndist = round(((max_dist - min_dist) / res).value) + 1
-    distances = sc.linspace(
-        'distance', min_dist.value, max_dist.value, ndist, unit=dist.unit
+    distance_unit = 'm'
+    res = distance_resolution.to(unit=distance_unit)
+    simulation_distance = simulation.distance.to(unit=distance_unit)
+
+    # We need to bin the data below, to compute the weighted mean of the wavelength.
+    # This results in data with bin edges.
+    # However, the 2d interpolator expects bin centers.
+    # We want to give the 2d interpolator a table that covers the requested range,
+    # hence we need to extend the range by half a resolution in each direction.
+    min_dist, max_dist = [
+        x.to(unit=distance_unit) - simulation_distance for x in ltotal_range
+    ]
+    min_dist, max_dist = min_dist - 0.5 * res, max_dist + 0.5 * res
+
+    dist_edges = sc.array(
+        dims=['distance'],
+        values=np.arange(
+            min_dist.value, np.nextafter(max_dist.value, np.inf), res.value
+        ),
+        unit=distance_unit,
     )
+    distances = sc.midpoints(dist_edges)
 
     time_unit = simulation.time_of_arrival.unit
     toas = simulation.time_of_arrival + (distances / simulation.speed).to(
@@ -207,8 +259,7 @@ def compute_tof_lookup_table(
         },
     )
 
-    # TODO: move toa resolution to workflow parameter
-    binned = data.bin(distance=ndist, toa=500)
+    binned = data.bin(distance=dist_edges, toa=toa_resolution)
     # Weighted mean of wavelength inside each bin
     wavelength = (
         binned.bins.data * binned.bins.coords['wavelength']
@@ -227,6 +278,11 @@ def compute_tof_lookup_table(
     out = timeofflight.to(unit=time_unit, copy=False)
     # Include the variances computed above
     out.variances = variance.values
+
+    # Convert coordinates to midpoints
+    out.coords['toa'] = sc.midpoints(out.coords['toa'])
+    out.coords['distance'] = sc.midpoints(out.coords['distance'])
+
     return TimeOfFlightLookupTable(out)
 
 
@@ -255,8 +311,20 @@ def masked_tof_lookup_table(
     return MaskedTimeOfFlightLookupTable(out)
 
 
+def find_fastest_neutron(simulation: SimulationResults) -> FastestNeutron:
+    """
+    Find the fastest neutron in the simulation results.
+    """
+    ind = np.argmax(simulation.speed.values)
+    return FastestNeutron(
+        time_of_arrival=simulation.time_of_arrival[ind],
+        speed=simulation.speed[ind],
+        distance=simulation.distance,
+    )
+
+
 def pivot_time_at_detector(
-    simulation: SimulationResults, ltotal: Ltotal
+    fastest_neutron: FastestNeutron, ltotal: Ltotal
 ) -> PivotTimeAtDetector:
     """
     Compute the pivot time at the detector, i.e., the time of the start of the frame at
@@ -269,17 +337,14 @@ def pivot_time_at_detector(
 
     Parameters
     ----------
-    simulation:
-        Results of a time-of-flight simulation used to create a lookup table.
+    fastest_neutron:
+        Properties of the fastest neutron in the simulation results.
     ltotal:
         Total length of the flight path from the source to the detector.
     """
-    dist = ltotal - simulation.distance.to(unit=ltotal.unit)
-    # Find the fastest neutron
-    ind = np.argmax(simulation.speed.values)
-    time_at_simulation = simulation.time_of_arrival[ind]
-    toa = time_at_simulation + (dist / simulation.speed[ind]).to(
-        unit=time_at_simulation.unit, copy=False
+    dist = ltotal - fastest_neutron.distance.to(unit=ltotal.unit)
+    toa = fastest_neutron.time_of_arrival + (dist / fastest_neutron.speed).to(
+        unit=fastest_neutron.time_of_arrival.unit, copy=False
     )
     return PivotTimeAtDetector(toa)
 
@@ -304,8 +369,10 @@ def unwrapped_time_of_arrival(
         Period of the source pulses, i.e., time between consecutive pulse starts.
     """
     if da.bins is None:
-        # Canonical name in NXmonitor
-        toa = da.coords['time_of_flight']
+        # 'time_of_flight' is the canonical name in NXmonitor, but in some files, it
+        # may be called 'tof'.
+        key = next(iter(set(da.coords.keys()) & {'time_of_flight', 'tof'}))
+        toa = da.coords[key]
     else:
         # To unwrap the time of arrival, we want to add the event_time_zero to the
         # event_time_offset. However, we do not really care about the exact datetimes,
@@ -405,10 +472,8 @@ def time_of_flight_data(
 
     f = RegularGridInterpolator(
         (
-            sc.midpoints(
-                lookup.coords['toa'].to(unit=elem_unit(toas), copy=False)
-            ).values,
-            sc.midpoints(lookup.coords['distance']).values,
+            lookup.coords['toa'].to(unit=elem_unit(toas), copy=False).values,
+            lookup.coords['distance'].to(unit=ltotal.unit, copy=False).values,
         ),
         lookup_values.T,
         method='linear',
@@ -470,7 +535,7 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     return ReHistogrammedTofData(rehist)
 
 
-def params() -> dict:
+def default_parameters() -> dict:
     """
     Default parameters of the time-of-flight workflow.
     """
@@ -478,6 +543,7 @@ def params() -> dict:
         PulseStride: 1,
         PulseStrideOffset: 0,
         DistanceResolution: sc.scalar(1.0, unit='cm'),
+        TimeOfArrivalResolution: 500,
         LookupTableVarianceThreshold: 1.0e-2,
         SimulationSeed: 1234,
         NumberOfNeutrons: 1_000_000,
@@ -486,10 +552,12 @@ def params() -> dict:
 
 def _providers() -> tuple[Callable]:
     """
-    Providers of the time-of-flight workflow.
+    Base providers of the time-of-flight workflow.
     """
     return (
         compute_tof_lookup_table,
+        extract_ltotal,
+        find_fastest_neutron,
         frame_period,
         masked_tof_lookup_table,
         pivot_time_at_detector,
@@ -504,8 +572,74 @@ def _providers() -> tuple[Callable]:
 
 def standard_providers() -> tuple[Callable]:
     """
-    Standard providers of the time-of-flight workflow.
+    Standard providers of the time-of-flight workflow, using the ``tof`` library to
+    build the time-of-arrival to time-of-flight lookup table.
     """
     from .tof_simulation import run_tof_simulation
 
     return (*_providers(), run_tof_simulation)
+
+
+class TofWorkflow:
+    """
+    Helper class to build a time-of-flight workflow and cache the expensive part of
+    the computation: running the simulation and building the lookup table.
+    """
+
+    def __init__(
+        self,
+        choppers,
+        facility,
+        ltotal_range,
+        pulse_stride=None,
+        pulse_stride_offset=None,
+        distance_resolution=None,
+        toa_resolution=None,
+        variance_threshold=None,
+        seed=None,
+        number_of_neutrons=None,
+    ):
+        import sciline as sl
+
+        self.pipeline = sl.Pipeline(standard_providers())
+        self.pipeline[Facility] = facility
+        self.pipeline[Choppers] = choppers
+        self.pipeline[LtotalRange] = ltotal_range
+
+        params = default_parameters()
+        self.pipeline[PulseStride] = pulse_stride or params[PulseStride]
+        self.pipeline[PulseStrideOffset] = (
+            pulse_stride_offset or params[PulseStrideOffset]
+        )
+        self.pipeline[DistanceResolution] = (
+            distance_resolution or params[DistanceResolution]
+        )
+        self.pipeline[TimeOfArrivalResolution] = (
+            toa_resolution or params[TimeOfArrivalResolution]
+        )
+        self.pipeline[LookupTableVarianceThreshold] = (
+            variance_threshold or params[LookupTableVarianceThreshold]
+        )
+        self.pipeline[SimulationSeed] = seed or params[SimulationSeed]
+        self.pipeline[NumberOfNeutrons] = number_of_neutrons or params[NumberOfNeutrons]
+
+    def __getitem__(self, key):
+        return self.pipeline[key]
+
+    def __setitem__(self, key, value):
+        self.pipeline[key] = value
+
+    def persist(self) -> None:
+        for t in (SimulationResults, MaskedTimeOfFlightLookupTable, FastestNeutron):
+            self.pipeline[t] = self.pipeline.compute(t)
+
+    def compute(self, *args, **kwargs) -> Any:
+        return self.pipeline.compute(*args, **kwargs)
+
+    def visualize(self, *args, **kwargs) -> Any:
+        return self.pipeline.visualize(*args, **kwargs)
+
+    def copy(self) -> TofWorkflow:
+        out = self.__class__(choppers=None, facility=None, ltotal_range=None)
+        out.pipeline = self.pipeline.copy()
+        return out

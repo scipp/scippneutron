@@ -10,8 +10,5 @@ Specifics for time-of-flight neutron-scattering data reduction, including coordi
 from . import chopper_cascade, unwrap
 from .diagram import TimeDistanceDiagram
 
-__all__ = [
-    'chopper_cascade',
-    'unwrap',
-    'TimeDistanceDiagram',
-]
+
+__all__ = ['chopper_cascade', 'unwrap', 'TimeDistanceDiagram']
