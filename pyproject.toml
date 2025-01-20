@@ -153,6 +153,7 @@ enable_error_code = [
     "truthy-bool",
 ]
 warn_unreachable = true
+plugins = ["pydantic.mypy"]
 
 [tool.codespell]
 ignore-words-list = [
