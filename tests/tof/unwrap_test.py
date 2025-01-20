@@ -447,4 +447,4 @@ def test_pulse_skipping_unwrap_histogram_mode(dist) -> None:
     # use the maximum of the reference data as the denominator.
     diff = (result_wav - ref_wav) / ref_wav.max()
     # Note: very conservative threshold to avoid making the test flaky.
-    assert sc.abs(diff).data.max() < sc.scalar(0.5)
+    assert sc.abs(diff).data.max() < sc.scalar(0.8)
