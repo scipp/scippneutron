@@ -1,0 +1,1420 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Frame Unwrapping &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../_static/documentation_options.js?v=9bf08bdf"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user-guide/chopper/frame-unwrapping';</script>
+    <script src="../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Coordinate Transformations" href="../coordinate-transformations.html" />
+    <link rel="prev" title="Chopper Cascades" href="chopper-cascade.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="25.1.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Choppers</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="processing-nexus-choppers.html">Processing NeXus Choppers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chopper-cascade.html">Chopper Cascades</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Frame Unwrapping</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../coordinate-transformations.html">Coordinate Transformations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../groupby.html">GroupBy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../from-mantid-to-scipp.html">From Mantid to Scipp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../instrument-view.html">Instrument view</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../recipes.html">Recipes: How do I …?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../masking-tool.html">Interactive masking tool</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../wfm/index.html">Wavelength frame multiplication</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../wfm/wfm-time-of-flight.html">Computing time-of-flight for WFM data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../wfm/dream-wfm.html">DREAM in WFM mode</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../algorithms-background/index.html">Background on algorithms</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../algorithms-background/two_theta-gravity-correction.html">two_theta gravity correction</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../absorption-correction.html">Absorption correction example</a></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Context">Context</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Default-mode">Default mode</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Pivot-time">Pivot time</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Computing-time-of-flight">Computing time-of-flight</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#Unwrapped-neutron-time-of-arrival">Unwrapped neutron time-of-arrival</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#Unwrapped-neutron-time-of-arrival-minus-pivot-time">Unwrapped neutron time-of-arrival minus pivot time</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#Unwrapped-neutron-time-of-arrival-modulo-the-frame-period">Unwrapped neutron time-of-arrival modulo the frame period</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#Using-the-subframes-as-a-lookup-table">Using the subframes as a lookup table</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#Computing-time-of-flight-from-the-lookup">Computing time-of-flight from the lookup</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Converting-to-wavelength">Converting to wavelength</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Pulse-skipping-mode">Pulse-skipping mode</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Computing time-of-flight</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Conversion-to-wavelength">Conversion to wavelength</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Wavelength-frame-multiplication-mode">Wavelength-frame multiplication mode</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Setting-up-the-workflow">Setting up the workflow</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Computing time-of-flight</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Conversion to wavelength</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../../_sources/user-guide/chopper/frame-unwrapping.ipynb">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">User Guide</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Choppers</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Frame Unwrapping</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="Frame-Unwrapping">
+<h1>Frame Unwrapping<a class="headerlink" href="#Frame-Unwrapping" title="Link to this heading">#</a></h1>
+<section id="Context">
+<h2>Context<a class="headerlink" href="#Context" title="Link to this heading">#</a></h2>
+<p>At time-of-flight neutron sources recording event-mode, time-stamps of detected neutrons are written to files in an <code class="docutils literal notranslate"><span class="pre">NXevent_data</span></code> group. This contains two main time components, <code class="docutils literal notranslate"><span class="pre">event_time_zero</span></code> and <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code>. The sum of the two would typically yield the absolute detection time of the neutron. For computation of wavelengths or energies during data-reduction, a time-of-flight is required. In principle the time-of-flight could be equivalent to <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code>, and the
+emission time of the neutron to <code class="docutils literal notranslate"><span class="pre">event_time_zero</span></code>. Since an actual computation of time-of-flight would require knowledge about chopper settings, detector positions, and whether the scattering of the sample is elastic or inelastic, this may however not be the case in practice. Instead, the data acquisition system may, e.g., record the time at which the proton pulse hits the target as <code class="docutils literal notranslate"><span class="pre">event_time_zero</span></code>, with <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> representing the offset since then.</p>
+<p>We refer to the process of “unwrapping” these time stamps into an actual time-of-flight as <em>frame unwrapping</em>, since <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> “wraps around” with the period of the proton pulse and neutrons created by different proton pulses may be recorded with the <em>same</em> <code class="docutils literal notranslate"><span class="pre">event_time_zero</span></code>. The figures in the remainder of this document will clarify this.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">plopp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sciline</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sl</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron.tof</span><span class="w"> </span><span class="kn">import</span> <span class="n">unwrap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron.tof</span><span class="w"> </span><span class="kn">import</span> <span class="n">chopper_cascade</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tof</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tof_pkg</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="kn">import</span> <span class="n">Polygon</span>
+
+<span class="n">Hz</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s2">&quot;Hz&quot;</span><span class="p">)</span>
+<span class="n">deg</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s2">&quot;deg&quot;</span><span class="p">)</span>
+<span class="n">meter</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s2">&quot;m&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Default-mode">
+<h2>Default mode<a class="headerlink" href="#Default-mode" title="Link to this heading">#</a></h2>
+<p>Often there is a 1:1 correspondence between source pulses and neutron pulses propagated to the sample and detectors.</p>
+<p>In this first example:</p>
+<ul class="simple">
+<li><p>We begin by creating a source of neutrons which mimics the ESS source.</p></li>
+<li><p>We set up a single chopper with a single opening</p></li>
+<li><p>We place 4 ‘monitors’ along the path of the neutrons (none of which absorb any neutrons)</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="o">=</span> <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span><span class="n">facility</span><span class="o">=</span><span class="s2">&quot;ess&quot;</span><span class="p">,</span> <span class="n">neutrons</span><span class="o">=</span><span class="mi">300_000</span><span class="p">,</span> <span class="n">pulses</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">chopper</span> <span class="o">=</span> <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Chopper</span><span class="p">(</span>
+    <span class="n">frequency</span><span class="o">=</span><span class="mf">14.0</span> <span class="o">*</span> <span class="n">Hz</span><span class="p">,</span>
+    <span class="nb">open</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+    <span class="n">close</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="mf">3.0</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+    <span class="n">phase</span><span class="o">=</span><span class="mf">85.</span> <span class="o">*</span> <span class="n">deg</span><span class="p">,</span>
+    <span class="n">distance</span><span class="o">=</span><span class="mf">8.0</span> <span class="o">*</span> <span class="n">meter</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;chopper&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">detectors</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Detector</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="mf">20.0</span> <span class="o">*</span> <span class="n">meter</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;beam&quot;</span><span class="p">),</span>
+    <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Detector</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="mf">60.0</span> <span class="o">*</span> <span class="n">meter</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;sample&quot;</span><span class="p">),</span>
+    <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Detector</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="mf">80.0</span> <span class="o">*</span> <span class="n">meter</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;monitor&quot;</span><span class="p">),</span>
+    <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Detector</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="mf">108.0</span> <span class="o">*</span> <span class="n">meter</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detector&quot;</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">choppers</span><span class="o">=</span><span class="p">[</span><span class="n">chopper</span><span class="p">],</span> <span class="n">detectors</span><span class="o">=</span><span class="n">detectors</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">pl</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis_r&#39;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">pulses</span><span class="p">):</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">source</span><span class="o">.</span><span class="n">frequency</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;us&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;dotted&#39;</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="n">results</span><span class="p">[</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">toas</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;visible&#39;</span><span class="p">][</span><span class="sa">f</span><span class="s1">&#39;pulse:</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;toa&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">value</span>
+         <span class="k">for</span> <span class="n">det</span> <span class="ow">in</span> <span class="n">detectors</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="n">det</span><span class="o">.</span><span class="n">distance</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">det</span> <span class="ow">in</span> <span class="n">detectors</span><span class="p">]</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="s1">&#39;--o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;magenta&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">pl</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.05</span><span class="p">,</span> <span class="s2">&quot;pivot time&quot;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;bottom&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;magenta&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_4_0.png" src="../../_images/user-guide_chopper_frame-unwrapping_4_0.png" />
+</div>
+</div>
+<p>In the figure above, the dotted vertical lines represent the <code class="docutils literal notranslate"><span class="pre">event_time_zero</span></code> of each pulse, i.e. the start of a new origin for <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> recorded at the various detectors.</p>
+<p>The span between two dotted lines is called a ‘frame’.</p>
+<p>The figure gives a good representation of the situation at each detector:</p>
+<ul class="simple">
+<li><p><strong>beam</strong> monitor: all the arrival times at the detector are inside the same frame within which the neutrons were created.</p></li>
+<li><p><strong>sample</strong>: all the arrival times are offset by one frame</p></li>
+<li><p><strong>monitor</strong>: most of the neutrons arrive with an offset of two frames, but a small amount of neutrons (shortest wavelengths) only have a 1-frame offset</p></li>
+<li><p><strong>detector</strong>: most of the neutrons arrive with an offset of two frames, but a small amount of neutrons (longest wavelengths) have a 3-frame offset</p></li>
+</ul>
+<p>We can further illustrate this by making histograms of the <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> of the neutrons for each detector:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">subplots</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">tiled</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">det</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">detectors</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">to_nxevent_data</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">subplots</span><span class="p">[</span><span class="n">i</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">()</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">event_time_offset</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">det</span><span class="o">.</span><span class="n">distance</span><span class="si">:</span><span class="s1">c</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;C</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">subplots</span><span class="p">[</span><span class="n">i</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">xpiv</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;toa&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">%</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">source</span><span class="o">.</span><span class="n">frequency</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;us&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">da</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">toas</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;visible&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">xpiv</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;dashed&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;magenta&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">xpiv</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;pivot time&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;magenta&#39;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+<span class="n">subplots</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_6_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_6_0.svg" />
+</div>
+</div>
+<section id="Pivot-time">
+<h3>Pivot time<a class="headerlink" href="#Pivot-time" title="Link to this heading">#</a></h3>
+<p>To compute the time-of-flight for a neutron, we need to identify which source pulse it originated from.</p>
+<p>In the first figure, the pink lines represent the earliest recorded arrival time at each detector: we know that within a given frame at a selected detector, any neutron recorded at a time earlier than this ‘pivot’ time must from from a previous pulse.</p>
+<p>The position of the pink lines is repeated in the second figure (above). We can use this knowledge to unwrap the frames and compute the absolute time-of-arrival of the neutrons at the detectors.</p>
+</section>
+<section id="Computing-time-of-flight">
+<h3>Computing time-of-flight<a class="headerlink" href="#Computing-time-of-flight" title="Link to this heading">#</a></h3>
+<p>The pivot time and the resulting offsets can be computed from the properties of the source pulse and the chopper cascade.</p>
+<p>We describe in this section the workflow that computes time-of-flight, given <code class="docutils literal notranslate"><span class="pre">event_time_zero</span></code> and <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> for neutron events, as well as the properties of the source pulse and the choppers in the beamline.</p>
+<p>The workflow can be visualized as follows:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">one_pulse</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;pulse&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">time_min</span> <span class="o">=</span> <span class="n">one_pulse</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+<span class="n">time_max</span> <span class="o">=</span> <span class="n">one_pulse</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="n">wavs_min</span> <span class="o">=</span> <span class="n">one_pulse</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;wavelength&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+<span class="n">wavs_max</span> <span class="o">=</span> <span class="n">one_pulse</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;wavelength&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="n">oc_times</span> <span class="o">=</span> <span class="n">chopper</span><span class="o">.</span><span class="n">open_close_times</span><span class="p">()</span>
+
+<span class="n">workflow</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">providers</span><span class="p">(),</span> <span class="n">params</span><span class="o">=</span><span class="n">unwrap</span><span class="o">.</span><span class="n">params</span><span class="p">())</span>
+
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">PulsePeriod</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">frequency</span><span class="p">)</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">SourceTimeRange</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_min</span><span class="p">,</span> <span class="n">time_max</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">SourceWavelengthRange</span><span class="p">]</span> <span class="o">=</span> <span class="n">wavs_min</span><span class="p">,</span> <span class="n">wavs_max</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">Choppers</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;chopper&#39;</span><span class="p">:</span> <span class="n">chopper_cascade</span><span class="o">.</span><span class="n">Chopper</span><span class="p">(</span>
+        <span class="n">distance</span><span class="o">=</span><span class="n">chopper</span><span class="o">.</span><span class="n">distance</span><span class="p">,</span>
+        <span class="n">time_open</span><span class="o">=</span><span class="n">oc_times</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">),</span>
+        <span class="n">time_close</span><span class="o">=</span><span class="n">oc_times</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n">det</span> <span class="o">=</span> <span class="n">detectors</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">Ltotal</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">distance</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">RawData</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">to_nxevent_data</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+<span class="n">workflow</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">TofData</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_9_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_9_0.svg" />
+</div>
+</div>
+<section id="Unwrapped-neutron-time-of-arrival">
+<h4>Unwrapped neutron time-of-arrival<a class="headerlink" href="#Unwrapped-neutron-time-of-arrival" title="Link to this heading">#</a></h4>
+<p>The first step that is computed in the workflow is the unwrapped detector arrival time of each neutron. This is essentially just <code class="docutils literal notranslate"><span class="pre">event_time_offset</span> <span class="pre">+</span> <span class="pre">event_time_zero</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">da</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">UnwrappedTimeOfArrival</span><span class="p">)</span>
+<span class="n">da</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">()</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">time_of_arrival</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_11_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_11_0.svg" />
+</div>
+</div>
+</section>
+<section id="Unwrapped-neutron-time-of-arrival-minus-pivot-time">
+<h4>Unwrapped neutron time-of-arrival minus pivot time<a class="headerlink" href="#Unwrapped-neutron-time-of-arrival-minus-pivot-time" title="Link to this heading">#</a></h4>
+<p>The next step is to subtract the pivot time to the unwrapped arrival times, to align the times so that they start at zero.</p>
+<p>This allows us to perform a computationally cheap modulo operation on the times below.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">da</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">UnwrappedTimeOfArrivalMinusStartTime</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">()</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">time_of_arrival</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">pulses</span><span class="p">):</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">source</span><span class="o">.</span><span class="n">frequency</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;us&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;dotted&#39;</span><span class="p">)</span>
+<span class="n">f</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_13_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_13_0.svg" />
+</div>
+</div>
+<p>The vertical dotted lines here represent the frame period.</p>
+</section>
+<section id="Unwrapped-neutron-time-of-arrival-modulo-the-frame-period">
+<h4>Unwrapped neutron time-of-arrival modulo the frame period<a class="headerlink" href="#Unwrapped-neutron-time-of-arrival-modulo-the-frame-period" title="Link to this heading">#</a></h4>
+<p>We now wrap the arrival times with the frame period to obtain well formed (unbroken) set of events.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">da</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">TimeOfArrivalMinusStartTimeModuloPeriod</span><span class="p">)</span>
+<span class="n">da</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">()</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">time_of_arrival</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_15_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_15_0.svg" />
+</div>
+</div>
+</section>
+<section id="Using-the-subframes-as-a-lookup-table">
+<h4>Using the subframes as a lookup table<a class="headerlink" href="#Using-the-subframes-as-a-lookup-table" title="Link to this heading">#</a></h4>
+<p>The chopper information is next used to construct a lookup table that provides an estimate of the real time-of-flight as a function of time-of-arrival.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">chopper_cascade</span></code> module can be used to propagate the pulse through the chopper system to the detector, and predict the extent of the frames in arrival time and wavelength.</p>
+<p>Assuming neutrons travel in straight lines, we can convert the wavelength range to a time-of-flight range.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="c1"># The chopper cascade frame (at the last component in the system which is the chopper)</span>
+<span class="n">frame</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">ChopperCascadeFrames</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="c1"># Plot the ranges covered by the neutrons at each detector as polygons</span>
+<span class="n">polygons</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">det</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">detectors</span><span class="p">):</span>
+    <span class="n">at_detector</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">propagate_to</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">distance</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">sf</span> <span class="ow">in</span> <span class="n">at_detector</span><span class="o">.</span><span class="n">subframes</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">time</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">wavelength</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">distance</span> <span class="o">*</span> <span class="n">chopper_cascade</span><span class="o">.</span><span class="n">wavelength_to_inverse_velocity</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">Polygon</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">values</span><span class="p">])</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;C</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">))</span>
+        <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">Polygon</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">values</span><span class="p">])</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;C</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">))</span>
+        <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;top&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+        <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;top&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axs</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">autoscale</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time of arrival [s]&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Wavelength [\AA]&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Time of flight [s]&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Lookup tables for wavelength and time-of-flight as a function of time-of-arrival&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_17_0.png" src="../../_images/user-guide_chopper_frame-unwrapping_17_0.png" />
+</div>
+</div>
+<p>Since the polygons are very thin, we can <strong>approximate them with straight lines</strong>. This is done by using a least-squares method which minimizes the area on each side of the line that passes through the polygon (see <a class="reference external" href="https://mathproblems123.wordpress.com/2022/09/13/integrating-polynomials-on-polygons">https://mathproblems123.wordpress.com/2022/09/13/integrating-polynomials-on-polygons</a> for more details).</p>
+<p>These straight lines will be our lookup tables for computing time-of-flight as a function of time-of-arrival (we need two lookup tables: one for the slope of each line and one for the intercept).</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="n">axs</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">det</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">detectors</span><span class="p">):</span>
+    <span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">Ltotal</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">distance</span>
+    <span class="n">at_detector</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">FrameAtDetector</span><span class="p">)</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">FrameAtDetectorStartTime</span><span class="p">)</span>
+    <span class="n">toa2tof</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">TimeOfArrivalToTimeOfFlight</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">sf</span> <span class="ow">in</span> <span class="n">at_detector</span><span class="o">.</span><span class="n">subframes</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">time</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">distance</span> <span class="o">*</span> <span class="n">chopper_cascade</span><span class="o">.</span><span class="n">wavelength_to_inverse_velocity</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">wavelength</span><span class="p">)</span>
+        <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">Polygon</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">values</span><span class="p">])</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;C</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">toa2tof</span><span class="o">.</span><span class="n">slope</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;subframe&#39;</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">toa2tof</span><span class="o">.</span><span class="n">slope</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">toa2tof</span><span class="o">.</span><span class="n">intercept</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">((</span><span class="n">x</span><span class="o">+</span><span class="n">start</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;dashed&#39;</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time of arrival [s]&quot;</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Time of flight [s]&quot;</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">det</span><span class="o">.</span><span class="n">distance</span><span class="si">:</span><span class="s1">c</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Approximating the polygons with straight lines&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_19_0.png" src="../../_images/user-guide_chopper_frame-unwrapping_19_0.png" />
+</div>
+</div>
+</section>
+<section id="Computing-time-of-flight-from-the-lookup">
+<h4>Computing time-of-flight from the lookup<a class="headerlink" href="#Computing-time-of-flight-from-the-lookup" title="Link to this heading">#</a></h4>
+<p>Now that we have a slope and an intercept for the frames at each detector, we can compute the time-of-flight of the neutrons.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tofs</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">for</span> <span class="n">det</span> <span class="ow">in</span> <span class="n">detectors</span><span class="p">:</span>
+    <span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">RawData</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">to_nxevent_data</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">Ltotal</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">distance</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">TofData</span><span class="p">)</span>
+    <span class="n">tofs</span><span class="p">[</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">()</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">tof</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">500.</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;us&#39;</span><span class="p">))</span>
+
+<span class="n">pp</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tofs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_21_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_21_0.svg" />
+</div>
+</div>
+</section>
+</section>
+<section id="Converting-to-wavelength">
+<h3>Converting to wavelength<a class="headerlink" href="#Converting-to-wavelength" title="Link to this heading">#</a></h3>
+<p>The time-of-flight of a neutron is commonly used as the fundamental quantity from which one can compute the neutron energy or wavelength.</p>
+<p>Here, we compute the wavelengths from the time-of-flight using Scippneutron’s <code class="docutils literal notranslate"><span class="pre">transform_coord</span></code> utility, and compare our computed wavelengths to the true wavelengths which are known for the simulated neutrons.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron.conversion.graph.beamline</span><span class="w"> </span><span class="kn">import</span> <span class="n">beamline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron.conversion.graph.tof</span><span class="w"> </span><span class="kn">import</span> <span class="n">elastic</span>
+
+<span class="c1"># Perform coordinate transformation</span>
+<span class="n">graph</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">beamline</span><span class="p">(</span><span class="n">scatter</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="o">**</span><span class="n">elastic</span><span class="p">(</span><span class="s2">&quot;tof&quot;</span><span class="p">)}</span>
+
+<span class="c1"># Define wavelength bin edges</span>
+<span class="n">bins</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="s2">&quot;wavelength&quot;</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">,</span> <span class="mi">101</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;angstrom&quot;</span><span class="p">)</span>
+
+<span class="n">wavs</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">det</span> <span class="ow">in</span> <span class="n">detectors</span><span class="p">:</span>
+    <span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">RawData</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">to_nxevent_data</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">Ltotal</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">distance</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">TofData</span><span class="p">)</span>
+    <span class="n">wavs</span><span class="p">[</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">transform_coords</span><span class="p">(</span><span class="s2">&quot;wavelength&quot;</span><span class="p">,</span> <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">)</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">()</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+
+<span class="n">ground_truth</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;detector&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="s2">&quot;event&quot;</span><span class="p">)</span>
+<span class="n">ground_truth</span> <span class="o">=</span> <span class="n">ground_truth</span><span class="p">[</span><span class="o">~</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="s2">&quot;blocked_by_others&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+
+<span class="n">wavs</span><span class="p">[</span><span class="s1">&#39;true&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ground_truth</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_23_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_23_0.svg" />
+</div>
+</div>
+<p>We see that all detectors agree on the wavelength spectrum, which is also in very good agreement with the true neutron wavelengths.</p>
+</section>
+</section>
+<section id="Pulse-skipping-mode">
+<h2>Pulse-skipping mode<a class="headerlink" href="#Pulse-skipping-mode" title="Link to this heading">#</a></h2>
+<p>In some beamline configurations, one wishes to study a wide range of wavelengths at a high flux. This usually means that the spread of arrival times will spill-over into the next pulse if the detector is placed far enough to yield a good wavelength resolution.</p>
+<p>To avoid the next pulse polluting the data from the current pulse, it is common practice to use a pulse-skipping chopper which basically blocks all neutrons every other pulse. This could also be every 3 or 4 pulses for very long instruments.</p>
+<p>The time-distance diagram may look something like:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="o">=</span> <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span><span class="n">facility</span><span class="o">=</span><span class="s2">&quot;ess&quot;</span><span class="p">,</span> <span class="n">neutrons</span><span class="o">=</span><span class="mi">300_000</span><span class="p">,</span> <span class="n">pulses</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">choppers</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Chopper</span><span class="p">(</span>
+        <span class="n">frequency</span><span class="o">=</span><span class="mf">14.0</span> <span class="o">*</span> <span class="n">Hz</span><span class="p">,</span>
+        <span class="nb">open</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+        <span class="n">close</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="mf">33.0</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+        <span class="n">phase</span><span class="o">=</span><span class="mf">35.</span> <span class="o">*</span> <span class="n">deg</span><span class="p">,</span>
+        <span class="n">distance</span><span class="o">=</span><span class="mf">8.0</span> <span class="o">*</span> <span class="n">meter</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;chopper&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Chopper</span><span class="p">(</span>
+        <span class="n">frequency</span><span class="o">=</span><span class="mf">7.0</span> <span class="o">*</span> <span class="n">Hz</span><span class="p">,</span>
+        <span class="nb">open</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+        <span class="n">close</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cutout&quot;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="mf">120.0</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+        <span class="n">phase</span><span class="o">=</span><span class="mf">10.</span> <span class="o">*</span> <span class="n">deg</span><span class="p">,</span>
+        <span class="n">distance</span><span class="o">=</span><span class="mf">15.0</span> <span class="o">*</span> <span class="n">meter</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pulse-skipping&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="p">]</span>
+<span class="n">detectors</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Detector</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="mf">60.0</span> <span class="o">*</span> <span class="n">meter</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;monitor&quot;</span><span class="p">),</span>
+    <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Detector</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="mf">100.0</span> <span class="o">*</span> <span class="n">meter</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detector&quot;</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">choppers</span><span class="o">=</span><span class="n">choppers</span><span class="p">,</span> <span class="n">detectors</span><span class="o">=</span><span class="n">detectors</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">results</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis_r&#39;</span><span class="p">,</span> <span class="n">blocked_rays</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Plot(ax=&lt;Axes: xlabel=&#39;Time-of-flight (us)&#39;, ylabel=&#39;Distance (m)&#39;&gt;, fig=&lt;Figure size 1200x480 with 2 Axes&gt;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_25_1.png" src="../../_images/user-guide_chopper_frame-unwrapping_25_1.png" />
+</div>
+</div>
+<section id="id1">
+<h3>Computing time-of-flight<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<p>To compute the time-of-flight in pulse skipping mode, we can use the same workflow as before.</p>
+<p>The only difference is that we set the <code class="docutils literal notranslate"><span class="pre">PulseStride</span></code> to 2 to skip every other pulse.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">one_pulse</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;pulse&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">time_min</span> <span class="o">=</span> <span class="n">one_pulse</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+<span class="n">time_max</span> <span class="o">=</span> <span class="n">one_pulse</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="n">wavs_min</span> <span class="o">=</span> <span class="n">one_pulse</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;wavelength&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+<span class="n">wavs_max</span> <span class="o">=</span> <span class="n">one_pulse</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;wavelength&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+<span class="n">workflow</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">providers</span><span class="p">(),</span> <span class="n">params</span><span class="o">=</span><span class="n">unwrap</span><span class="o">.</span><span class="n">params</span><span class="p">())</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">PulsePeriod</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">frequency</span><span class="p">)</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">PulseStride</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">SourceTimeRange</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_min</span><span class="p">,</span> <span class="n">time_max</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">SourceWavelengthRange</span><span class="p">]</span> <span class="o">=</span> <span class="n">wavs_min</span><span class="p">,</span> <span class="n">wavs_max</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">Choppers</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">ch</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">chopper_cascade</span><span class="o">.</span><span class="n">Chopper</span><span class="p">(</span>
+        <span class="n">distance</span><span class="o">=</span><span class="n">ch</span><span class="o">.</span><span class="n">distance</span><span class="p">,</span>
+        <span class="n">time_open</span><span class="o">=</span><span class="n">ch</span><span class="o">.</span><span class="n">open_close_times</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">),</span>
+        <span class="n">time_close</span><span class="o">=</span><span class="n">ch</span><span class="o">.</span><span class="n">open_close_times</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">choppers</span>
+<span class="p">}</span>
+
+<span class="n">det</span> <span class="o">=</span> <span class="n">detectors</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">Ltotal</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">distance</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">RawData</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">to_nxevent_data</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>If we inspect the time and wavelength polygons for the frames at the different detectors, we can see that they now span longer than the pulse period of 71 ms.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">frame</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">ChopperCascadeFrames</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="n">polygons</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">det</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">detectors</span><span class="p">):</span>
+    <span class="n">at_detector</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">propagate_to</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">distance</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">sf</span> <span class="ow">in</span> <span class="n">at_detector</span><span class="o">.</span><span class="n">subframes</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">time</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">wavelength</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">distance</span> <span class="o">*</span> <span class="n">chopper_cascade</span><span class="o">.</span><span class="n">wavelength_to_inverse_velocity</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">Polygon</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">values</span><span class="p">])</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;C</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">))</span>
+        <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">Polygon</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">values</span><span class="p">])</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;C</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axs</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">autoscale</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time of arrival [s]&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Wavelength [\AA]&quot;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Time of flight [s]&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Lookup tables for wavelength and time-of-flight as a function of time-of-arrival&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_29_0.png" src="../../_images/user-guide_chopper_frame-unwrapping_29_0.png" />
+</div>
+</div>
+<p>The time-of-flight profiles are then:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tofs</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">for</span> <span class="n">det</span> <span class="ow">in</span> <span class="n">detectors</span><span class="p">:</span>
+    <span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">RawData</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">to_nxevent_data</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">Ltotal</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">distance</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">TofData</span><span class="p">)</span>
+    <span class="n">tofs</span><span class="p">[</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">()</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">tof</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">500.</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;us&#39;</span><span class="p">))</span>
+
+<span class="n">pp</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tofs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_31_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_31_0.svg" />
+</div>
+</div>
+</section>
+<section id="Conversion-to-wavelength">
+<h3>Conversion to wavelength<a class="headerlink" href="#Conversion-to-wavelength" title="Link to this heading">#</a></h3>
+<p>We now use the <code class="docutils literal notranslate"><span class="pre">transform_coords</span></code> as above to convert to wavelength.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define wavelength bin edges</span>
+<span class="n">bins</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="s2">&quot;wavelength&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="mi">401</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;angstrom&quot;</span><span class="p">)</span>
+
+<span class="n">wavs</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">det</span> <span class="ow">in</span> <span class="n">detectors</span><span class="p">:</span>
+    <span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">RawData</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">to_nxevent_data</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">Ltotal</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">distance</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">TofData</span><span class="p">)</span>
+    <span class="n">wavs</span><span class="p">[</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">transform_coords</span><span class="p">(</span><span class="s2">&quot;wavelength&quot;</span><span class="p">,</span> <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">)</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">()</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+
+<span class="n">ground_truth</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;detector&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="s2">&quot;event&quot;</span><span class="p">)</span>
+<span class="n">ground_truth</span> <span class="o">=</span> <span class="n">ground_truth</span><span class="p">[</span><span class="o">~</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="s2">&quot;blocked_by_others&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+
+<span class="n">wavs</span><span class="p">[</span><span class="s1">&#39;true&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ground_truth</span>
+
+
+<span class="n">pp</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_33_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_33_0.svg" />
+</div>
+</div>
+</section>
+</section>
+<section id="Wavelength-frame-multiplication-mode">
+<h2>Wavelength-frame multiplication mode<a class="headerlink" href="#Wavelength-frame-multiplication-mode" title="Link to this heading">#</a></h2>
+<p>The case of wavelength-frame multiplication is treated in exactly the same way as above.</p>
+<p>The only difference is that the choppers have multiple openings, and that the lookup tables have more than one distinct region (subframes) per detector.</p>
+<p>But the workflow setup and execution remains exactly the same.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="o">=</span> <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Source</span><span class="p">(</span><span class="n">facility</span><span class="o">=</span><span class="s2">&quot;ess&quot;</span><span class="p">,</span> <span class="n">neutrons</span><span class="o">=</span><span class="mi">500_000</span><span class="p">,</span> <span class="n">pulses</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">slit_width</span> <span class="o">=</span> <span class="mf">3.</span>
+<span class="n">open_edge</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="s1">&#39;cutout&#39;</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mi">75</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;deg&#39;</span><span class="p">)</span>
+<span class="n">wfm</span> <span class="o">=</span> <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Chopper</span><span class="p">(</span>
+    <span class="n">frequency</span><span class="o">=</span><span class="mf">14.0</span> <span class="o">*</span> <span class="n">Hz</span><span class="p">,</span>
+    <span class="nb">open</span><span class="o">=</span><span class="n">open_edge</span><span class="p">,</span>
+    <span class="n">close</span><span class="o">=</span><span class="n">open_edge</span> <span class="o">+</span> <span class="n">slit_width</span> <span class="o">*</span> <span class="n">deg</span><span class="p">,</span>
+    <span class="n">phase</span><span class="o">=</span><span class="mf">45.</span> <span class="o">*</span> <span class="n">deg</span><span class="p">,</span>
+    <span class="n">distance</span><span class="o">=</span><span class="mf">8.0</span> <span class="o">*</span> <span class="n">meter</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;WFM&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">slit_width</span> <span class="o">=</span> <span class="mf">25.</span>
+<span class="n">open_edge</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="s1">&#39;cutout&#39;</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mi">190</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;deg&#39;</span><span class="p">)</span>
+<span class="n">foc</span> <span class="o">=</span> <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Chopper</span><span class="p">(</span>
+    <span class="n">frequency</span><span class="o">=</span><span class="mf">14.0</span> <span class="o">*</span> <span class="n">Hz</span><span class="p">,</span>
+    <span class="nb">open</span><span class="o">=</span><span class="n">open_edge</span><span class="p">,</span>
+    <span class="n">close</span><span class="o">=</span><span class="n">open_edge</span> <span class="o">+</span> <span class="n">slit_width</span> <span class="o">*</span> <span class="n">deg</span><span class="p">,</span>
+    <span class="n">phase</span><span class="o">=</span><span class="mf">85.</span> <span class="o">*</span> <span class="n">deg</span><span class="p">,</span>
+    <span class="n">distance</span><span class="o">=</span><span class="mf">20.0</span> <span class="o">*</span> <span class="n">meter</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;FOC&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">choppers</span> <span class="o">=</span> <span class="p">[</span><span class="n">wfm</span><span class="p">,</span> <span class="n">foc</span><span class="p">]</span>
+<span class="n">detectors</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Detector</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="mf">30.0</span> <span class="o">*</span> <span class="n">meter</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detector&quot;</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">tof_pkg</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">choppers</span><span class="o">=</span><span class="n">choppers</span><span class="p">,</span> <span class="n">detectors</span><span class="o">=</span><span class="n">detectors</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">results</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis_r&#39;</span><span class="p">,</span> <span class="n">blocked_rays</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Plot(ax=&lt;Axes: xlabel=&#39;Time-of-flight (us)&#39;, ylabel=&#39;Distance (m)&#39;&gt;, fig=&lt;Figure size 1200x480 with 2 Axes&gt;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_35_1.png" src="../../_images/user-guide_chopper_frame-unwrapping_35_1.png" />
+</div>
+</div>
+<p>The signal of the raw <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> at the detector wras around the 71 ms mark:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span><span class="o">.</span><span class="n">to_nxevent_data</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">()</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">event_time_offset</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_37_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_37_0.svg" />
+</div>
+</div>
+<section id="Setting-up-the-workflow">
+<h3>Setting up the workflow<a class="headerlink" href="#Setting-up-the-workflow" title="Link to this heading">#</a></h3>
+<p>We set up the workflow as before, with <code class="docutils literal notranslate"><span class="pre">PulseStride=1</span></code>.</p>
+<p>We have two choppers: a WFM chopper with 6 openings, and a frame-overlap chopper which ensures that the individual subframes do not overlap when they reach the detector.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">one_pulse</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;pulse&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">time_min</span> <span class="o">=</span> <span class="n">one_pulse</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+<span class="n">time_max</span> <span class="o">=</span> <span class="n">one_pulse</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="n">wavs_min</span> <span class="o">=</span> <span class="n">one_pulse</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;wavelength&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+<span class="n">wavs_max</span> <span class="o">=</span> <span class="n">one_pulse</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;wavelength&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+<span class="n">workflow</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">providers</span><span class="p">(),</span> <span class="n">params</span><span class="o">=</span><span class="n">unwrap</span><span class="o">.</span><span class="n">params</span><span class="p">())</span>
+
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">PulsePeriod</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">frequency</span><span class="p">)</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">SourceTimeRange</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_min</span><span class="p">,</span> <span class="n">time_max</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">SourceWavelengthRange</span><span class="p">]</span> <span class="o">=</span> <span class="n">wavs_min</span><span class="p">,</span> <span class="n">wavs_max</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">Choppers</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">ch</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">chopper_cascade</span><span class="o">.</span><span class="n">Chopper</span><span class="p">(</span>
+        <span class="n">distance</span><span class="o">=</span><span class="n">ch</span><span class="o">.</span><span class="n">distance</span><span class="p">,</span>
+        <span class="n">time_open</span><span class="o">=</span><span class="n">ch</span><span class="o">.</span><span class="n">open_close_times</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">),</span>
+        <span class="n">time_close</span><span class="o">=</span><span class="n">ch</span><span class="o">.</span><span class="n">open_close_times</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">choppers</span>
+<span class="p">}</span>
+
+<span class="n">det</span> <span class="o">=</span> <span class="n">detectors</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">Ltotal</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="o">.</span><span class="n">distance</span>
+<span class="n">workflow</span><span class="p">[</span><span class="n">unwrap</span><span class="o">.</span><span class="n">RawData</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">to_nxevent_data</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>At this point it is useful to look at the propagation of the pulse through the chopper cascade:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">frames</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">ChopperCascadeFrames</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">at_detector</span> <span class="o">=</span> <span class="n">frames</span><span class="o">.</span><span class="n">propagate_to</span><span class="p">(</span><span class="n">det</span><span class="o">.</span><span class="n">distance</span><span class="p">)</span>
+<span class="n">at_detector</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(&lt;Figure size 640x480 with 1 Axes&gt;,
+ &lt;Axes: title={&#39;center&#39;: &#39;Frame propagation through chopper cascade&#39;}, xlabel=&#39;ms&#39;, ylabel=&#39;Å&#39;&gt;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_41_1.png" src="../../_images/user-guide_chopper_frame-unwrapping_41_1.png" />
+</div>
+</div>
+<p>It illustrates nicely the pulse being chopped into 6 pieces, corresponding to the 6 openings of the choppers.</p>
+</section>
+<section id="id2">
+<h3>Computing time-of-flight<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<p>The time-of-flight profile resembles the <code class="docutils literal notranslate"><span class="pre">event_time_offset</span></code> profile above, without the wrapping around at 71 ms.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tofs</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">unwrap</span><span class="o">.</span><span class="n">TofData</span><span class="p">)</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tofs</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">()</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">tof</span><span class="o">=</span><span class="mi">300</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_43_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_43_0.svg" />
+</div>
+</div>
+</section>
+<section id="id3">
+<h3>Conversion to wavelength<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
+<p>Finally, the computed wavelengths show a very good agreement with the true wavelengths:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define wavelength bin edges</span>
+<span class="n">bins</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="s2">&quot;wavelength&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">12.0</span><span class="p">,</span> <span class="mi">401</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;angstrom&quot;</span><span class="p">)</span>
+
+<span class="n">wavs</span> <span class="o">=</span> <span class="n">tofs</span><span class="o">.</span><span class="n">transform_coords</span><span class="p">(</span><span class="s2">&quot;wavelength&quot;</span><span class="p">,</span> <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">)</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">()</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+
+<span class="n">ground_truth</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;detector&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="s2">&quot;event&quot;</span><span class="p">)</span>
+<span class="n">ground_truth</span> <span class="o">=</span> <span class="n">ground_truth</span><span class="p">[</span><span class="o">~</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="s2">&quot;blocked_by_others&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+
+<span class="n">pp</span><span class="o">.</span><span class="n">plot</span><span class="p">({</span><span class="s1">&#39;wfm&#39;</span><span class="p">:</span> <span class="n">wavs</span><span class="p">,</span> <span class="s1">&#39;true&#39;</span><span class="p">:</span> <span class="n">ground_truth</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_frame-unwrapping_45_0.svg" src="../../_images/user-guide_chopper_frame-unwrapping_45_0.svg" />
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="chopper-cascade.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Chopper Cascades</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../coordinate-transformations.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Coordinate Transformations</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 25.1.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

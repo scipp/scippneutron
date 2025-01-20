@@ -1,0 +1,1153 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scippneutron.tof.unwrap &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../../_static/documentation_options.js?v=9bf08bdf"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scippneutron/tof/unwrap';</script>
+    <script src="../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="25.1.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/scipp/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">scippneutron.tof.unwrap</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scippneutron.tof.unwrap</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2024 Scipp contributors (https://github.com/scipp)</span>
+<span class="c1"># @author Simon Heybrock</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module provides functionality for unwrapping raw frames of neutron time-of-flight</span>
+<span class="sd">data.</span>
+
+<span class="sd">The module handles standard unwrapping, unwrapping in pulse-skipping mode, and</span>
+<span class="sd">unwrapping for WFM instruments, as well as combinations of the latter two. The</span>
+<span class="sd">functions defined here are meant to be used as providers for a Sciline pipeline. See</span>
+<span class="sd">https://scipp.github.io/sciline/ on how to use Sciline.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NewType</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipp.core.bins</span><span class="w"> </span><span class="kn">import</span> <span class="n">Lookup</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">elem_unit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">chopper_cascade</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.to_events</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_events</span>
+
+<span class="n">Choppers</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Choppers&#39;</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">chopper_cascade</span><span class="o">.</span><span class="n">Chopper</span><span class="p">])</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Choppers used to define the frame parameters.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">ChopperCascadeFrames</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span>
+    <span class="s1">&#39;ChopperCascadeFrames&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">chopper_cascade</span><span class="o">.</span><span class="n">FrameSequence</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Frames of the chopper cascade.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">FrameAtDetector</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;FrameAtDetector&#39;</span><span class="p">,</span> <span class="n">chopper_cascade</span><span class="o">.</span><span class="n">Frame</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Result of passing the source pulse through the chopper cascade to the detector.</span>
+
+<span class="sd">The detector may be a monitor or a detector after scattering off the sample. The frame</span>
+<span class="sd">bounds are then computed from this.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">FramePeriod</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;FramePeriod&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The period of a frame, a (small) integer multiple of the source period.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">UnwrappedTimeOfArrival</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;UnwrappedTimeOfArrival&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Time of arrival of the neutron at the detector, unwrapped at the pulse period.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">FrameAtDetectorStartTime</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;FrameAtDetectorStartTime&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Time of the start of the frame at the detector.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">UnwrappedTimeOfArrivalMinusStartTime</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span>
+    <span class="s1">&#39;UnwrappedTimeOfArrivalMinusStartTime&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Time of arrival of the neutron at the detector, unwrapped at the pulse period, minus</span>
+<span class="sd">the start time of the frame.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">TimeOfArrivalMinusStartTimeModuloPeriod</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span>
+    <span class="s1">&#39;TimeOfArrivalMinusStartTimeModuloPeriod&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Time of arrival of the neutron at the detector minus the start time of the frame,</span>
+<span class="sd">modulo the frame period.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="TimeOfArrivalToTimeOfFlight">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.TimeOfArrivalToTimeOfFlight.html#scippneutron.tof.unwrap.TimeOfArrivalToTimeOfFlight">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TimeOfArrivalToTimeOfFlight</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; &quot;&quot;&quot;</span>
+
+    <span class="n">slope</span><span class="p">:</span> <span class="n">Lookup</span>
+    <span class="n">intercept</span><span class="p">:</span> <span class="n">Lookup</span></div>
+
+
+
+<span class="n">TofCoord</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;TofCoord&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Tof coordinate computed by the workflow.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">Ltotal</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Ltotal&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Total distance between the source and the detector(s).</span>
+
+<span class="sd">This is used to propagate the frame to the detector position. This will then yield</span>
+<span class="sd">detector-dependent frame bounds. This is typically the sum of L1 and L2, except for</span>
+<span class="sd">monitors.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">PulsePeriod</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;PulsePeriod&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Period of the source pulses, i.e., time between consecutive pulse starts.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">PulseStride</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;PulseStride&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Stride of used pulses. Usually 1, but may be a small integer when pulse-skipping.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">PulseStrideOffset</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;PulseStrideOffset&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">When pulse-skipping, the offset of the first pulse in the stride.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">RawData</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;RawData&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Raw detector data loaded from a NeXus file, e.g., NXdetector containing NXevent_data.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">SourceTimeRange</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;SourceTimeRange&#39;</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">])</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Time range of the source pulse, used for computing frame bounds.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">SourceWavelengthRange</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span>
+    <span class="s1">&#39;SourceWavelengthRange&#39;</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Wavelength range of the source pulse, used for computing frame bounds.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">TofData</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;TofData&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Detector data with time-of-flight coordinate.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">ReHistogrammedTofData</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;ReHistogrammedTofData&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Detector data with time-of-flight coordinate, re-histogrammed.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="frame_period">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.frame_period.html#scippneutron.tof.unwrap.frame_period">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">frame_period</span><span class="p">(</span><span class="n">pulse_period</span><span class="p">:</span> <span class="n">PulsePeriod</span><span class="p">,</span> <span class="n">pulse_stride</span><span class="p">:</span> <span class="n">PulseStride</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FramePeriod</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the period of a frame, which is defined by the pulse period times the pulse</span>
+<span class="sd">    stride.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pulse_period:</span>
+<span class="sd">        Period of the source pulses, i.e., time between consecutive pulse starts.</span>
+<span class="sd">    pulse_stride:</span>
+<span class="sd">        Stride of used pulses. Usually 1, but may be a small integer when</span>
+<span class="sd">        pulse-skipping.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">FramePeriod</span><span class="p">(</span><span class="n">pulse_period</span> <span class="o">*</span> <span class="n">pulse_stride</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="chopper_cascade_frames">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.chopper_cascade_frames.html#scippneutron.tof.unwrap.chopper_cascade_frames">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">chopper_cascade_frames</span><span class="p">(</span>
+    <span class="n">source_wavelength_range</span><span class="p">:</span> <span class="n">SourceWavelengthRange</span><span class="p">,</span>
+    <span class="n">source_time_range</span><span class="p">:</span> <span class="n">SourceTimeRange</span><span class="p">,</span>
+    <span class="n">choppers</span><span class="p">:</span> <span class="n">Choppers</span><span class="p">,</span>
+    <span class="n">pulse_stride</span><span class="p">:</span> <span class="n">PulseStride</span><span class="p">,</span>
+    <span class="n">pulse_period</span><span class="p">:</span> <span class="n">PulsePeriod</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChopperCascadeFrames</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the frames of the chopper cascade.</span>
+<span class="sd">    This is the result of propagating the source pulse through the chopper cascade.</span>
+
+<span class="sd">    In the case of pulse-skipping, the frames are computed for each pulse in the stride,</span>
+<span class="sd">    to make sure that we include cases where e.g. the first pulse in the stride is</span>
+<span class="sd">    skipped, but the second is not.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    source_wavelength_range:</span>
+<span class="sd">        Wavelength range of the source pulse.</span>
+<span class="sd">    source_time_range:</span>
+<span class="sd">        Time range of the source pulse.</span>
+<span class="sd">    choppers:</span>
+<span class="sd">        Choppers used to define the frame parameters.</span>
+<span class="sd">    pulse_stride:</span>
+<span class="sd">        Stride of used pulses. Usually 1, but may be a small integer when</span>
+<span class="sd">        pulse-skipping.</span>
+<span class="sd">    pulse_period:</span>
+<span class="sd">        Period of the source pulses, i.e., time between consecutive pulse starts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pulse_stride</span><span class="p">):</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">pulse_period</span> <span class="o">*</span> <span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">source_time_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">frames</span> <span class="o">=</span> <span class="n">chopper_cascade</span><span class="o">.</span><span class="n">FrameSequence</span><span class="o">.</span><span class="n">from_source_pulse</span><span class="p">(</span>
+            <span class="n">time_min</span><span class="o">=</span><span class="n">source_time_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span>
+            <span class="n">time_max</span><span class="o">=</span><span class="n">source_time_range</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span>
+            <span class="n">wavelength_min</span><span class="o">=</span><span class="n">source_wavelength_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">wavelength_max</span><span class="o">=</span><span class="n">source_wavelength_range</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">chopped</span> <span class="o">=</span> <span class="n">frames</span><span class="o">.</span><span class="n">chop</span><span class="p">(</span><span class="n">choppers</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">chopped</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">sf</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">subframes</span><span class="p">:</span>
+                <span class="n">sf</span><span class="o">.</span><span class="n">time</span> <span class="o">-=</span> <span class="n">offset</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chopped</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ChopperCascadeFrames</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="frame_at_detector">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.frame_at_detector.html#scippneutron.tof.unwrap.frame_at_detector">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">frame_at_detector</span><span class="p">(</span>
+    <span class="n">frames</span><span class="p">:</span> <span class="n">ChopperCascadeFrames</span><span class="p">,</span>
+    <span class="n">ltotal</span><span class="p">:</span> <span class="n">Ltotal</span><span class="p">,</span>
+    <span class="n">period</span><span class="p">:</span> <span class="n">FramePeriod</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FrameAtDetector</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the frame at the detector.</span>
+
+<span class="sd">    This is the result of propagating the source pulse through the chopper cascade to</span>
+<span class="sd">    the detector. The detector may be a monitor or a detector after scattering off the</span>
+<span class="sd">    sample. The frame bounds are then computed from this.</span>
+
+<span class="sd">    It is assumed that the opening and closing times of the input choppers have been</span>
+<span class="sd">    setup correctly.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    frames:</span>
+<span class="sd">        Frames of the chopper cascade.</span>
+<span class="sd">    ltotal:</span>
+<span class="sd">        Total distance between the source and the detector(s).</span>
+<span class="sd">    period:</span>
+<span class="sd">        Period of the frame, i.e., time between the start of two consecutive frames.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># In the case of pulse-skipping, only one of the frames should have subframes (the</span>
+    <span class="c1"># others should be empty).</span>
+    <span class="n">at_detector</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
+        <span class="n">propagated</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">propagate_to</span><span class="p">(</span><span class="n">ltotal</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">propagated</span><span class="o">.</span><span class="n">subframes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">at_detector</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">propagated</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">at_detector</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;FrameAtDetector: No frames with subframes found.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">at_detector</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;FrameAtDetector: Multiple frames with subframes found.&quot;</span><span class="p">)</span>
+    <span class="n">at_detector</span> <span class="o">=</span> <span class="n">at_detector</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Check that the frame bounds do not span a range larger than the frame period.</span>
+    <span class="c1"># This would indicate that the chopper phases are not set correctly.</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">at_detector</span><span class="o">.</span><span class="n">bounds</span><span class="p">()[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span>
+    <span class="n">diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">bounds</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s1">&#39;bound&#39;</span><span class="p">)</span> <span class="o">-</span> <span class="n">bounds</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="s1">&#39;bound&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">diff</span> <span class="o">&gt;</span> <span class="n">period</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">diff</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Frames are overlapping: Computed frame bounds &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bounds</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">diff</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">}</span><span class="s2"> are larger than frame period </span><span class="si">{</span><span class="n">period</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">FrameAtDetector</span><span class="p">(</span><span class="n">at_detector</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="unwrapped_time_of_arrival">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.unwrapped_time_of_arrival.html#scippneutron.tof.unwrap.unwrapped_time_of_arrival">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unwrapped_time_of_arrival</span><span class="p">(</span>
+    <span class="n">da</span><span class="p">:</span> <span class="n">RawData</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="n">PulseStrideOffset</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="n">PulsePeriod</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">UnwrappedTimeOfArrival</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the unwrapped time of arrival of the neutron at the detector.</span>
+<span class="sd">    For event data, this is essentially ``event_time_offset + event_time_zero``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    da:</span>
+<span class="sd">        Raw detector data loaded from a NeXus file, e.g., NXdetector containing</span>
+<span class="sd">        NXevent_data.</span>
+<span class="sd">    offset:</span>
+<span class="sd">        Integer offset of the first pulse in the stride (typically zero unless we are</span>
+<span class="sd">        using pulse-skipping and the events do not begin with the first pulse in the</span>
+<span class="sd">        stride).</span>
+<span class="sd">    period:</span>
+<span class="sd">        Period of the source pulses, i.e., time between consecutive pulse starts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">bins</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Canonical name in NXmonitor</span>
+        <span class="n">toa</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;time_of_flight&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># To unwrap the time of arrival, we want to add the event_time_zero to the</span>
+        <span class="c1"># event_time_offset. However, we do not really care about the exact datetimes,</span>
+        <span class="c1"># we just want to know the offsets with respect to the start of the run.</span>
+        <span class="c1"># Hence we use the smallest event_time_zero as the time origin.</span>
+        <span class="n">time_zero</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;event_time_zero&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;event_time_zero&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">coord</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;event_time_offset&#39;</span><span class="p">]</span>
+        <span class="n">unit</span> <span class="o">=</span> <span class="n">elem_unit</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+        <span class="n">toa</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">coord</span>
+            <span class="o">+</span> <span class="n">time_zero</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="o">-</span> <span class="p">(</span><span class="n">offset</span> <span class="o">*</span> <span class="n">period</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">UnwrappedTimeOfArrival</span><span class="p">(</span><span class="n">toa</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="frame_at_detector_start_time">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.frame_at_detector_start_time.html#scippneutron.tof.unwrap.frame_at_detector_start_time">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">frame_at_detector_start_time</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="n">FrameAtDetector</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FrameAtDetectorStartTime</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the start time of the frame at the detector.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    frame:</span>
+<span class="sd">        Frame at the detector</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">FrameAtDetectorStartTime</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">bounds</span><span class="p">()[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="s1">&#39;bound&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="unwrapped_time_of_arrival_minus_frame_start_time">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.unwrapped_time_of_arrival_minus_frame_start_time.html#scippneutron.tof.unwrap.unwrapped_time_of_arrival_minus_frame_start_time">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unwrapped_time_of_arrival_minus_frame_start_time</span><span class="p">(</span>
+    <span class="n">toa</span><span class="p">:</span> <span class="n">UnwrappedTimeOfArrival</span><span class="p">,</span> <span class="n">start_time</span><span class="p">:</span> <span class="n">FrameAtDetectorStartTime</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">UnwrappedTimeOfArrivalMinusStartTime</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the time of arrival of the neutron at the detector, unwrapped at the pulse</span>
+<span class="sd">    period, minus the start time of the frame.</span>
+<span class="sd">    We subtract the start time of the frame so that we can use a modulo operation to</span>
+<span class="sd">    wrap the time of arrival at the frame period in the case of pulse-skipping.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    toa:</span>
+<span class="sd">        Time of arrival of the neutron at the detector, unwrapped at the pulse period.</span>
+<span class="sd">    start_time:</span>
+<span class="sd">        Time of the start of the frame at the detector.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Order of operation to preserve dimension order</span>
+    <span class="k">return</span> <span class="n">UnwrappedTimeOfArrivalMinusStartTime</span><span class="p">(</span>
+        <span class="o">-</span><span class="n">start_time</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">toa</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">+</span> <span class="n">toa</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="time_of_arrival_minus_start_time_modulo_period">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.time_of_arrival_minus_start_time_modulo_period.html#scippneutron.tof.unwrap.time_of_arrival_minus_start_time_modulo_period">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">time_of_arrival_minus_start_time_modulo_period</span><span class="p">(</span>
+    <span class="n">toa_minus_start_time</span><span class="p">:</span> <span class="n">UnwrappedTimeOfArrivalMinusStartTime</span><span class="p">,</span>
+    <span class="n">frame_period</span><span class="p">:</span> <span class="n">FramePeriod</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TimeOfArrivalMinusStartTimeModuloPeriod</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the time of arrival of the neutron at the detector, unwrapped at the pulse</span>
+<span class="sd">    period, minus the start time of the frame, modulo the frame period.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    toa_minus_start_time:</span>
+<span class="sd">        Time of arrival of the neutron at the detector, unwrapped at the pulse period,</span>
+<span class="sd">        minus the start time of the frame.</span>
+<span class="sd">    frame_period:</span>
+<span class="sd">        Period of the frame, i.e., time between the start of two consecutive frames.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TimeOfArrivalMinusStartTimeModuloPeriod</span><span class="p">(</span>
+        <span class="n">toa_minus_start_time</span>
+        <span class="o">%</span> <span class="n">frame_period</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">toa_minus_start_time</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_approximate_polygon_with_line</span><span class="p">(</span>
+    <span class="n">x0</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">y0</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Approximate a polygon defined by the vertices of the subframe with a straight line.</span>
+<span class="sd">    Compute the slope and intercept of the line that minimizes the integrated squared</span>
+<span class="sd">    error over the polygon (i.e. taking the area of the polygon into account, as opposed</span>
+<span class="sd">    to just computing a least-squares fit of the vertices).</span>
+<span class="sd">    The method is described at</span>
+<span class="sd">    https://mathproblems123.wordpress.com/2022/09/13/integrating-polynomials-on-polygons/</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x0:</span>
+<span class="sd">        x coordinates of the polygon vertices.</span>
+<span class="sd">    y0:</span>
+<span class="sd">        y coordinates of the polygon vertices.</span>
+<span class="sd">    dim:</span>
+<span class="sd">        Dimension along which the vertices are defined.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">iv</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">dims</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="n">x0</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">x0</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">iv</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="n">x0</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+    <span class="n">y1</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="n">y0</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">y0</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">iv</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="n">x0</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+
+    <span class="n">x0y1</span> <span class="o">=</span> <span class="n">x0</span> <span class="o">*</span> <span class="n">y1</span>
+    <span class="n">x1y0</span> <span class="o">=</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">y0</span>
+    <span class="n">x0y1_x1y0</span> <span class="o">=</span> <span class="n">x0y1</span> <span class="o">-</span> <span class="n">x1y0</span>
+
+    <span class="n">A</span> <span class="o">=</span> <span class="p">((</span><span class="n">x0y1_x1y0</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">((</span><span class="n">x0</span> <span class="o">+</span> <span class="n">x1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x0y1_x1y0</span><span class="p">)</span> <span class="o">/</span> <span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">((</span><span class="n">y0</span> <span class="o">+</span> <span class="n">y1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x0y1_x1y0</span><span class="p">)</span> <span class="o">/</span> <span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+    <span class="n">xy</span> <span class="o">=</span> <span class="p">((</span><span class="n">x0y1_x1y0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">x0</span> <span class="o">*</span> <span class="n">y0</span> <span class="o">+</span> <span class="n">x0y1</span> <span class="o">+</span> <span class="n">x1y0</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">y1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">24</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+    <span class="n">xx</span> <span class="o">=</span> <span class="p">((</span><span class="n">x0y1_x1y0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x0</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x0</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">+</span> <span class="n">x1</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">12</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+
+    <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="n">xy</span> <span class="o">-</span> <span class="n">x</span> <span class="o">*</span> <span class="n">y</span> <span class="o">/</span> <span class="n">A</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">xx</span> <span class="o">-</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="n">A</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span> <span class="o">/</span> <span class="n">A</span><span class="p">)</span> <span class="o">-</span> <span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">A</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span>
+
+
+<div class="viewcode-block" id="relation_between_time_of_arrival_and_tof">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.relation_between_time_of_arrival_and_tof.html#scippneutron.tof.unwrap.relation_between_time_of_arrival_and_tof">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">relation_between_time_of_arrival_and_tof</span><span class="p">(</span>
+    <span class="n">frame</span><span class="p">:</span> <span class="n">FrameAtDetector</span><span class="p">,</span> <span class="n">frame_start</span><span class="p">:</span> <span class="n">FrameAtDetectorStartTime</span><span class="p">,</span> <span class="n">ltotal</span><span class="p">:</span> <span class="n">Ltotal</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TimeOfArrivalToTimeOfFlight</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the slope and intercept of a linear relationship between time-of-arrival</span>
+<span class="sd">    and tof, which can be used to create lookup tables which can give the</span>
+<span class="sd">    time-of-flight from the time-of-arrival.</span>
+
+<span class="sd">    We take the polygons that define the subframes, given by the chopper cascade, and</span>
+<span class="sd">    approximate them by straight lines.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    frame:</span>
+<span class="sd">        Frame at the detector.</span>
+<span class="sd">    frame_start:</span>
+<span class="sd">        Time of the start of the frame at the detector.</span>
+<span class="sd">    ltotal:</span>
+<span class="sd">        Total distance between the source and the detector(s).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">slopes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">intercepts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">subframes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">subframes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">start_time</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+    <span class="n">edges</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">sf</span> <span class="ow">in</span> <span class="n">subframes</span><span class="p">:</span>
+        <span class="n">edges</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">sf</span><span class="o">.</span><span class="n">start_time</span><span class="p">,</span> <span class="n">sf</span><span class="o">.</span><span class="n">end_time</span><span class="p">])</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">_approximate_polygon_with_line</span><span class="p">(</span>
+            <span class="n">x0</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">time</span> <span class="o">-</span> <span class="n">frame_start</span><span class="p">,</span>  <span class="c1"># Horizontal axis is time-of-arrival</span>
+            <span class="n">y0</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">ltotal</span> <span class="o">*</span> <span class="n">chopper_cascade</span><span class="o">.</span><span class="n">wavelength_to_inverse_velocity</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">wavelength</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>  <span class="c1"># Vertical axis is time-of-flight</span>
+            <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;vertex&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">slopes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">intercepts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+
+    <span class="c1"># It is sometimes possible that there is time overlap between subframes.</span>
+    <span class="c1"># This is not desired in a chopper cascade but can sometimes happen if the phases</span>
+    <span class="c1"># are not set correctly. Overlap would mean that the start of the next subframe is</span>
+    <span class="c1"># before the end of the previous subframe.</span>
+    <span class="c1"># We sort the edges to make sure that the lookup table is sorted. This creates a</span>
+    <span class="c1"># gap between the overlapping subframes, and discards any neutrons (gives them a</span>
+    <span class="c1"># NaN tof) that fall into the gap, which is the desired behaviour because we</span>
+    <span class="c1"># cannot determine the correct tof for them.</span>
+    <span class="n">edges</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">edges</span><span class="p">,</span> <span class="s1">&#39;subframe&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="s1">&#39;subframe&#39;</span><span class="p">)</span>
+        <span class="o">-</span> <span class="n">frame_start</span>
+    <span class="p">)</span>
+    <span class="n">sizes</span> <span class="o">=</span> <span class="n">frame_start</span><span class="o">.</span><span class="n">sizes</span> <span class="o">|</span> <span class="p">{</span><span class="s1">&#39;subframe&#39;</span><span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">subframes</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">}</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sizes</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">sizes</span><span class="o">=</span><span class="n">sizes</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;subframe&#39;</span><span class="p">,</span> <span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">slopes</span><span class="p">,</span> <span class="s1">&#39;subframe&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+    <span class="n">da_slope</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;subframe&#39;</span><span class="p">:</span> <span class="n">edges</span><span class="p">})</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">sizes</span><span class="o">=</span><span class="n">sizes</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;subframe&#39;</span><span class="p">,</span> <span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">intercepts</span><span class="p">,</span> <span class="s1">&#39;subframe&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+    <span class="n">da_intercept</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;subframe&#39;</span><span class="p">:</span> <span class="n">edges</span><span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">TimeOfArrivalToTimeOfFlight</span><span class="p">(</span><span class="n">slope</span><span class="o">=</span><span class="n">da_slope</span><span class="p">,</span> <span class="n">intercept</span><span class="o">=</span><span class="n">da_intercept</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="time_of_flight_from_lookup">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.time_of_flight_from_lookup.html#scippneutron.tof.unwrap.time_of_flight_from_lookup">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">time_of_flight_from_lookup</span><span class="p">(</span>
+    <span class="n">toa</span><span class="p">:</span> <span class="n">TimeOfArrivalMinusStartTimeModuloPeriod</span><span class="p">,</span>
+    <span class="n">toa_to_tof</span><span class="p">:</span> <span class="n">TimeOfArrivalToTimeOfFlight</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TofCoord</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the time-of-flight from the time-of-arrival.</span>
+<span class="sd">    Lookup tables to convert time-of-arrival to time-of-flight are created internally.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    toa:</span>
+<span class="sd">        Time of arrival of the neutron at the detector, unwrapped at the pulse period,</span>
+<span class="sd">        minus the start time of the frame, modulo the frame period.</span>
+<span class="sd">    toa_to_tof:</span>
+<span class="sd">        Conversion from-time-of arrival to time-of-flight.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Ensure unit consistency</span>
+    <span class="n">subframe_edges</span> <span class="o">=</span> <span class="n">toa_to_tof</span><span class="o">.</span><span class="n">slope</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;subframe&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+        <span class="n">unit</span><span class="o">=</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">toa</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+    <span class="c1"># Both slope and intercepts should have the same subframe edges</span>
+    <span class="n">toa_to_tof</span><span class="o">.</span><span class="n">slope</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;subframe&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subframe_edges</span>
+    <span class="n">toa_to_tof</span><span class="o">.</span><span class="n">intercept</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;subframe&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subframe_edges</span>
+    <span class="n">toa_to_tof</span><span class="o">.</span><span class="n">intercept</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">toa_to_tof</span><span class="o">.</span><span class="n">intercept</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+        <span class="n">unit</span><span class="o">=</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">toa</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+
+    <span class="n">slope</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">toa_to_tof</span><span class="o">.</span><span class="n">slope</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;subframe&#39;</span><span class="p">)[</span><span class="n">toa</span><span class="p">]</span>
+    <span class="n">intercept</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">toa_to_tof</span><span class="o">.</span><span class="n">intercept</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;subframe&#39;</span><span class="p">)[</span><span class="n">toa</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">TofCoord</span><span class="p">(</span><span class="n">slope</span> <span class="o">*</span> <span class="n">toa</span> <span class="o">+</span> <span class="n">intercept</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="time_of_flight_data">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.time_of_flight_data.html#scippneutron.tof.unwrap.time_of_flight_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">time_of_flight_data</span><span class="p">(</span><span class="n">da</span><span class="p">:</span> <span class="n">RawData</span><span class="p">,</span> <span class="n">tof</span><span class="p">:</span> <span class="n">TofCoord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TofData</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add the time-of-flight coordinate to the data.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    da:</span>
+<span class="sd">        Raw detector data loaded from a NeXus file, e.g., NXdetector containing</span>
+<span class="sd">        NXevent_data.</span>
+<span class="sd">    tof:</span>
+<span class="sd">        Time-of-flight coordinate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tof</span><span class="o">.</span><span class="n">bins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">bins</span><span class="p">(</span><span class="o">**</span><span class="n">out</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">constituents</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;tof&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tof</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;tof&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tof</span>
+    <span class="k">return</span> <span class="n">TofData</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="re_histogram_tof_data">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.re_histogram_tof_data.html#scippneutron.tof.unwrap.re_histogram_tof_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">re_histogram_tof_data</span><span class="p">(</span><span class="n">da</span><span class="p">:</span> <span class="n">TofData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReHistogrammedTofData</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Histogrammed data that has been converted to `tof` will typically have</span>
+<span class="sd">    unsorted bin edges (due to either wrapping of `time_of_flight` or wavelength</span>
+<span class="sd">    overlap between subframes).</span>
+<span class="sd">    This function re-histograms the data to ensure that the bin edges are sorted.</span>
+<span class="sd">    It makes use of the ``to_events`` helper which generates a number of events in each</span>
+<span class="sd">    bin with a uniform distribution. The new events are then histogrammed using a set of</span>
+<span class="sd">    sorted bin edges.</span>
+
+<span class="sd">    WARNING:</span>
+<span class="sd">    This function is highly experimental, has limitations and should be used with</span>
+<span class="sd">    caution. It is a workaround to the issue that rebinning data with unsorted bin</span>
+<span class="sd">    edges is not supported in scipp.</span>
+<span class="sd">    We also do not support variances on the data.</span>
+<span class="sd">    As such, this function is not part of the default set of providers, and needs to be</span>
+<span class="sd">    inserted manually into the workflow.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    da:</span>
+<span class="sd">        TofData with the time-of-flight coordinate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">events</span> <span class="o">=</span> <span class="n">to_events</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">rename_dims</span><span class="p">(</span><span class="n">time_of_flight</span><span class="o">=</span><span class="s1">&#39;tof&#39;</span><span class="p">),</span> <span class="s1">&#39;event&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Define a new bin width, close to the original bin width.</span>
+    <span class="c1"># TODO: this could be a workflow parameter</span>
+    <span class="n">coord</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;tof&#39;</span><span class="p">]</span>
+    <span class="n">bin_width</span> <span class="o">=</span> <span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="s1">&#39;time_of_flight&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">coord</span><span class="p">[</span><span class="s1">&#39;time_of_flight&#39;</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">()</span>
+    <span class="n">rehist</span> <span class="o">=</span> <span class="n">events</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">tof</span><span class="o">=</span><span class="n">bin_width</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="s1">&#39;time_of_flight&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">var</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+            <span class="n">rehist</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">var</span>
+    <span class="k">return</span> <span class="n">ReHistogrammedTofData</span><span class="p">(</span><span class="n">rehist</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="providers">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.providers.html#scippneutron.tof.unwrap.providers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">providers</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">chopper_cascade_frames</span><span class="p">,</span>
+        <span class="n">frame_at_detector</span><span class="p">,</span>
+        <span class="n">frame_period</span><span class="p">,</span>
+        <span class="n">unwrapped_time_of_arrival</span><span class="p">,</span>
+        <span class="n">frame_at_detector_start_time</span><span class="p">,</span>
+        <span class="n">unwrapped_time_of_arrival_minus_frame_start_time</span><span class="p">,</span>
+        <span class="n">time_of_arrival_minus_start_time_modulo_period</span><span class="p">,</span>
+        <span class="n">relation_between_time_of_arrival_and_tof</span><span class="p">,</span>
+        <span class="n">time_of_flight_from_lookup</span><span class="p">,</span>
+        <span class="n">time_of_flight_data</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="params">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.unwrap.params.html#scippneutron.tof.unwrap.params">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">params</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">PulseStride</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">PulseStrideOffset</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 25.1.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
