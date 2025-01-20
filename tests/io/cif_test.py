@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 import scipp as sc
 
-from scippneutron import __version__
+from scippneutron import __version__, meta
 from scippneutron.io import cif
 
 
@@ -848,7 +848,7 @@ _audit_conform.dict_location
 coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/6f8502e81b623eb0fd779c79efaf191d49fa198c/cif_core.dic
 
 _audit.creation_date \d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}:\d{{2}}:\d{{2}}\+00.00
-_audit.creation_method 'Written by scippneutron v{expected_version}'
+_audit.creation_method 'Written by scippneutron {expected_version}'
 ''')
     assert re.match(expected, res)
 
@@ -869,7 +869,7 @@ _audit_conform.dict_location
 coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/6f8502e81b623eb0fd779c79efaf191d49fa198c/cif_core.dic
 
 _audit.creation_date \d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}:\d{{2}}:\d{{2}}\+00.00
-_audit.creation_method 'Written by scippneutron v{expected_version}'
+_audit.creation_method 'Written by scippneutron {expected_version}'
 _computing.diffrn_reduction 'mypackage vFINAL'
 ''')
     assert re.match(expected, res)
@@ -891,7 +891,7 @@ _audit_conform.dict_location
 coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/6f8502e81b623eb0fd779c79efaf191d49fa198c/cif_core.dic
 
 _audit.creation_date \d{{4}}-\d{{2}}-\d{{2}}T\d{{2}}:\d{{2}}:\d{{2}}\+00.00
-_audit.creation_method 'Written by scippneutron v{expected_version}'
+_audit.creation_method 'Written by scippneutron {expected_version}'
 
 loop_
 _computing.diffrn_reduction
@@ -903,14 +903,42 @@ _computing.diffrn_reduction
 
 def test_builder_with_beamline() -> None:
     original = cif.CIF()
-    cif_ = original.with_beamline(beamline='DREAM', facility='ESS')
+    cif_ = original.with_beamline(
+        meta.Beamline(name='DREAM', facility='ESS'),
+        comment="Dreaming of things to come",
+    )
     res = save_to_str(cif_)
     original_res = save_to_str(original)
 
-    expected = '''_diffrn_radiation.probe neutron
+    # Probe and device are auto detected
+    expected = '''# Dreaming of things to come
+_diffrn_radiation.probe neutron
 _diffrn_source.beamline DREAM
 _diffrn_source.facility ESS
 _diffrn_source.device spallation'''
+    assert expected in res
+    assert expected not in original_res
+
+
+def test_builder_with_beamline_and_source() -> None:
+    original = cif.CIF()
+    cif_ = original.with_beamline(
+        meta.Beamline(name='Balder', facility='MAX IV'),
+        meta.Source(
+            frequency=meta.SourceFrequency(sc.scalar(0)),
+            pulse_duration=meta.PulseDuration(sc.scalar(0)),
+            source_type=meta.SourceType.SynchrotronXraySource,
+            probe=meta.RadiationProbe.Xray,
+        ),
+    )
+    res = save_to_str(cif_)
+    original_res = save_to_str(original)
+
+    # Probe and device are auto detected
+    expected = '''_diffrn_radiation.probe x-ray
+_diffrn_source.beamline Balder
+_diffrn_source.facility 'MAX IV'
+_diffrn_source.device synch'''
     assert expected in res
     assert expected not in original_res
 
@@ -1044,11 +1072,12 @@ DIFB -1 6.7
 
 
 def test_builder_single_contact_author() -> None:
-    author = cif.Author(
+    author = meta.Person(
         name='Jane Doe',
         email='jane.doe@ess.eu',
         address='Partikelgatan, Lund',
         orcid='https://orcid.org/0000-0000-0000-0001',
+        corresponding=True,
     )
     cif_ = cif.CIF().with_authors(author)
     result = save_to_str(cif_)
@@ -1060,7 +1089,7 @@ _audit_contact_author.id_orcid https://orcid.org/0000-0000-0000-0001'''
 
 
 def test_builder_regular_author() -> None:
-    author = cif.Author(
+    author = meta.Person(
         name='Jane Doe',
         email='jane.doe@ess.eu',
         address='Partikelgatan, Lund',
@@ -1078,17 +1107,17 @@ _audit_author.id_orcid https://orcid.org/0000-0000-0000-0001'''
 
 def test_builder_multiple_regular_authors() -> None:
     authors = [
-        cif.Author(
+        meta.Person(
             name='Jane Doe',
             email='jane.doe@ess.eu',
             address='Partikelgatan, Lund',
             orcid='https://orcid.org/0000-0000-0000-0001',
             corresponding=False,
         ),
-        cif.Author(
+        meta.Person(
             name='Max Mustermann',
             email='mm@scipp.eu',
-            orcid='https://orcid.org/0000-0000-0000-0002',
+            orcid='https://orcid.org/0000-0000-0001-0082',
             corresponding=False,
         ),
     ]
@@ -1100,13 +1129,13 @@ _audit_author.email
 _audit_author.address
 _audit_author.id_orcid
 'Jane Doe' jane.doe@ess.eu 'Partikelgatan, Lund' https://orcid.org/0000-0000-0000-0001
-'Max Mustermann' mm@scipp.eu '' https://orcid.org/0000-0000-0000-0002
+'Max Mustermann' mm@scipp.eu '' https://orcid.org/0000-0000-0001-0082
 """
     assert expected in result
 
 
 def test_builder_regular_author_role() -> None:
-    author = cif.Author(
+    author = meta.Person(
         name='Jane Doe',
         role='measurement',
         corresponding=False,
@@ -1131,14 +1160,14 @@ _audit_author_role.role
 def test_builder_many_fields() -> None:
     cif_ = (
         cif.CIF('my/name')
-        .with_authors(cif.Author(name='Jane Doe'))
+        .with_authors(meta.Person(name='Jane Doe'))
         .with_reducers('test-package')
-        .with_beamline(beamline='fake')
+        .with_beamline(beamline=meta.Beamline(name='fake'))
     )
     result = save_to_str(cif_)
 
     assert 'data_my/name' in result
-    assert '_audit_contact_author.name' in result
-    assert '_diffrn_radiation.probe neutron' in result
+    assert '_audit_author.name' in result
+    assert '_diffrn_radiation.probe' not in result  # cannot be deduced from 'fake'
     assert '_diffrn_source.beamline fake' in result
     assert '_computing.diffrn_reduction test-package'
