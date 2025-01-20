@@ -9,13 +9,13 @@ appdirs==1.4.4
     # via pace-neutrons
 asttokens==3.0.0
     # via stack-data
-attrs==24.2.0
+attrs==24.3.0
     # via hypothesis
 brille==0.8.0
     # via pace-neutrons
-certifi==2024.8.30
+certifi==2024.12.14
     # via requests
-charset-normalizer==3.4.0
+charset-normalizer==3.4.1
     # via requests
 comm==0.2.2
     # via ipywidgets
@@ -27,7 +27,7 @@ cycler==0.12.1
     # via matplotlib
 decorator==5.1.1
     # via ipython
-euphonic[phonopy-reader]==1.4.0
+euphonic[phonopy-reader]==1.4.0.post1
     # via pace-neutrons
 exceptiongroup==1.2.2
     # via
@@ -49,25 +49,23 @@ h5py==3.12.1
     #   -r nightly.in
     #   euphonic
     #   scippnexus
-hypothesis==6.122.3
+hypothesis==6.124.1
     # via -r nightly.in
 idna==3.10
     # via requests
-importlib-resources==6.4.5
+importlib-resources==6.5.2
     # via tof
 iniconfig==2.0.0
     # via pytest
 ipydatawidgets==4.3.5
     # via pythreejs
-ipympl==0.9.4
+ipympl==0.9.6
     # via -r nightly.in
-ipython==8.30.0
+ipython==8.31.0
     # via
     #   ipympl
     #   ipywidgets
     #   pace-neutrons
-ipython-genutils==0.2.0
-    # via ipympl
 ipywidgets==8.1.5
     # via
     #   ipydatawidgets
@@ -77,11 +75,11 @@ jedi==0.19.2
     # via ipython
 jupyterlab-widgets==3.0.13
     # via ipywidgets
-kiwisolver==1.4.7
+kiwisolver==1.4.8
     # via matplotlib
 libpymcr==0.1.8
     # via pace-neutrons
-matplotlib==3.9.3
+matplotlib==3.10.0
     # via
     #   ipympl
     #   mpltoolbox
@@ -93,7 +91,7 @@ mpltoolbox @ git+https://github.com/scipp/mpltoolbox@main
     # via -r nightly.in
 networkx==3.4.2
     # via cyclebane
-numpy==2.2.0
+numpy==2.2.2
     # via
     #   -r nightly.in
     #   brille
@@ -123,7 +121,7 @@ parso==0.8.4
     # via jedi
 pexpect==4.9.0
     # via ipython
-pillow==11.0.0
+pillow==11.1.0
     # via
     #   ipympl
     #   matplotlib
@@ -143,7 +141,7 @@ pooch==1.8.2
     # via -r nightly.in
 prompt-toolkit==3.0.48
     # via ipython
-psutil==6.1.0
+psutil==6.1.1
     # via
     #   -r nightly.in
     #   pace-neutrons
@@ -151,9 +149,9 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
     # via stack-data
-pygments==2.18.0
+pygments==2.19.1
     # via ipython
-pyparsing==3.2.0
+pyparsing==3.2.1
     # via matplotlib
 pytest==8.3.4
     # via
@@ -182,7 +180,7 @@ scipp @ https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly-c
     #   tof
 scippnexus @ git+https://github.com/scipp/scippnexus@main
     # via -r nightly.in
-scipy==1.14.1
+scipy==1.15.1
     # via
     #   -r nightly.in
     #   euphonic
@@ -227,7 +225,7 @@ typing-extensions==4.12.2
     #   flexparser
     #   ipython
     #   pint
-urllib3==2.2.3
+urllib3==2.3.0
     # via requests
 wcwidth==0.2.13
     # via prompt-toolkit
