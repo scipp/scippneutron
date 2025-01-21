@@ -9,6 +9,7 @@ channels:
   - scipp
   - nodefaults
 dependencies:
+  - email-validator==2.2.0
   - h5py==3.12.1
   - hypothesis==6.119.4
   - ipykernel==6.29.5
@@ -20,8 +21,10 @@ dependencies:
   - mpltoolbox==24.05.1
   - plopp==24.10.0
   - pooch==1.8.2
+  - pydantic==2.10.5
   - pytest==8.3.3
   - pytest-asyncio==0.24.0
+  - python-dateutil==2.9.0
   - python-graphviz==0.20.3
   - pythreejs==2.4.2
   - scipp==24.11.1
