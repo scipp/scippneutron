@@ -21,7 +21,8 @@ class Beamline(BaseModel):
     The location of the beamline is split into ``facility`` and ``site``, where
     a 'facility' is located at a 'site'. For example:
 
-    >>> Beamline(
+    >>> from scippneutron.meta import Beamline
+    >>> beamline = Beamline(
     ...     name='Amor',
     ...     facility='SINQ',
     ...     site='PSI',
@@ -29,7 +30,7 @@ class Beamline(BaseModel):
 
     If there is no separate facility and site, omit ``site``:
 
-    >>> Beamline(
+    >>> beamline = Beamline(
     ...     name='ESTIA',
     ...     facility='ESS',
     ...     site=None,  # can be omitted
@@ -196,7 +197,8 @@ class Software(BaseModel):
     The piece of software should be specified as precisely as possible.
     For example, a release version of ScippNeutron could be specified as follows:
 
-    >>> Software(
+    >>> from scippneutron.meta import Software
+    >>> software = Software(
     ...     name='ScippNeutron',
     ...     version='24.11.0',
     ...     url='https://github.com/scipp/scippneutron/releases/tag/24.11.0',
@@ -208,7 +210,7 @@ class Software(BaseModel):
     But the software should be specified as precisely as possible.
     For example:
 
-    >>> Software(
+    >>> software = Software(
     ...     name='ScippNeutron',
     ...     version='24.11.1.dev8+g10d09ab0',
     ...     url='https://github.com/scipp/scippneutron',
