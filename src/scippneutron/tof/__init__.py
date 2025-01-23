@@ -4,14 +4,13 @@
 
 # flake8: noqa
 r"""
-Specifics for time-of-flight neutron-scattering data reduction, including coordinate transformations.
+Specifics for chopper cascades and time, distance, and wavelength diagrams.
 """
 
-from . import chopper_cascade, unwrap
+from . import chopper_cascade
 from .diagram import TimeDistanceDiagram
 
 __all__ = [
     'chopper_cascade',
-    'unwrap',
     'TimeDistanceDiagram',
 ]
