@@ -26,12 +26,13 @@ class Beamline(BaseModel):
     ...     site='PSI',
     ... )
 
-    If there is no separate facility and site, omit ``site``:
+    If there is no separate facility and site, either omit ``site`` or use the same
+    value for both ``facility`` and ``site``. For example:
 
     >>> beamline = Beamline(
     ...     name='ESTIA',
     ...     facility='ESS',
-    ...     site=None,  # can be omitted
+    ...     site='ESS',  # can be omitted
     ... )
 
     If the beamline has been upgraded, provide a revision to indicate
@@ -401,4 +402,4 @@ def _guess_facility_and_site(
         case (facility, site):
             return facility, site
         case facility:
-            return facility, None
+            return facility, facility
