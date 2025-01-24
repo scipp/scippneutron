@@ -19,7 +19,7 @@ class ORCIDiD:
     Examples
     --------
 
-        >>> from scippneutron.meta import ORCIDiD
+        >>> from scippneutron.metadata import ORCIDiD
         >>> orcid_id = ORCIDiD('0000-0000-0000-0001')
         >>> str(orcid_id)
         'https://orcid.org/0000-0000-0000-0001'

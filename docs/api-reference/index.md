@@ -62,7 +62,7 @@ and possible confusion of `theta` (from Bragg’s law) with `theta` in spherical
    conversion
    io
    logging
-   meta
+   metadata
    peaks
    tof
 ```

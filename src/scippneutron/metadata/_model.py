@@ -21,7 +21,7 @@ class Beamline(BaseModel):
     The location of the beamline is split into ``facility`` and ``site``, where
     a 'facility' is located at a 'site'. For example:
 
-    >>> from scippneutron.meta import Beamline
+    >>> from scippneutron.metadata import Beamline
     >>> beamline = Beamline(
     ...     name='Amor',
     ...     facility='SINQ',
@@ -197,7 +197,7 @@ class Software(BaseModel):
     The piece of software should be specified as precisely as possible.
     For example, a release version of ScippNeutron could be specified as follows:
 
-    >>> from scippneutron.meta import Software
+    >>> from scippneutron.metadata import Software
     >>> software = Software(
     ...     name='ScippNeutron',
     ...     version='24.11.0',
@@ -324,7 +324,7 @@ class RadiationProbe(str, enum.Enum):
 class Source(BaseModel):
     """Information about a neutron source.
 
-    The ESS source is provided as ``scippneutron.meta.ESS_SOURCE``.
+    The ESS source is provided as ``scippneutron.metadata.ESS_SOURCE``.
     """
 
     # Needed to allow Scipp objects

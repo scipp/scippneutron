@@ -3,7 +3,7 @@
 import pytest
 from pydantic import BaseModel
 
-from scippneutron.meta import ORCIDiD
+from scippneutron.metadata import ORCIDiD
 
 
 def test_orcid_init_no_resolver() -> None:
