@@ -925,8 +925,6 @@ def test_builder_with_beamline_and_source() -> None:
     cif_ = original.with_beamline(
         metadata.Beamline(name='Balder', facility='MAX IV'),
         metadata.Source(
-            frequency=metadata.SourceFrequency(sc.scalar(0)),
-            pulse_duration=metadata.PulseDuration(sc.scalar(0)),
             source_type=metadata.SourceType.SynchrotronXraySource,
             probe=metadata.RadiationProbe.Xray,
         ),

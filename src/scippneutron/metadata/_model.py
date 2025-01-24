@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
-from typing import NewType
 
-import scipp as sc
 import scippnexus as snx
 from dateutil.parser import parse as parse_datetime
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, EmailStr
 
 from ._orcid import ORCIDiD
 
@@ -292,14 +290,6 @@ def _deduce_package_source_url(package_name: str) -> str | None:
         return None
 
 
-PulseDuration = NewType('PulseDuration', sc.Variable)
-PulseDuration.__doc__ = """Duration of a source pulse."""
-SourceFrequency = NewType('SourceFrequency', sc.Variable)
-SourceFrequency.__doc__ = """Frequency of a source pulse."""
-SourcePeriod = NewType('SourcePeriod', sc.Variable)
-SourcePeriod.__doc__ = """Period of a source pulse."""
-
-
 class SourceType(str, enum.Enum):
     """Type of source.
 
@@ -327,36 +317,16 @@ class Source(BaseModel):
     The ESS source is provided as ``scippneutron.metadata.ESS_SOURCE``.
     """
 
-    # Needed to allow Scipp objects
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    frequency: SourceFrequency
-    """The source frequency in Hz."""
-    pulse_duration: PulseDuration
-    """The pulse duration in s."""
-
+    name: str | None = None
+    """Name of the source."""
     source_type: SourceType
     """Type of this source."""
     probe: RadiationProbe
     """Radiation probe of the source."""
 
-    @property
-    def period(self) -> SourcePeriod:
-        """The source period in ns."""
-        return SourcePeriod((1 / self.frequency).to(unit='ns'))
-
-    def to_pipeline_params(self) -> dict[type, object]:
-        """Package the physical source parameters for a Sciline pipeline."""
-        return {
-            PulseDuration: self.pulse_duration,
-            SourceFrequency: self.frequency,
-            SourcePeriod: self.period,
-        }
-
 
 ESS_SOURCE = Source(
-    frequency=SourceFrequency(sc.scalar(14.0, unit='Hz')),
-    pulse_duration=PulseDuration(sc.scalar(0.003, unit='s')),
+    name="ESS Butterfly",
     source_type=SourceType.SpallationNeutronSource,
     probe=RadiationProbe.Neutron,
 )

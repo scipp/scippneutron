@@ -24,16 +24,6 @@
   RadiationProbe
   SourceType
 
-.. rubric:: Domain Types
-
-.. autosummary::
-  :toctree: ../classes
-  :template: model-template.rst
-
-  PulseDuration
-  SourceFrequency
-  SourcePeriod
-
 .. rubric:: Attributes
 
 .. autosummary::
@@ -47,9 +37,6 @@ from ._model import (
     Software,
     Source,
     Measurement,
-    PulseDuration,
-    SourceFrequency,
-    SourcePeriod,
     SourceType,
     ESS_SOURCE,
     RadiationProbe,
@@ -63,9 +50,6 @@ __all__ = [
     'ORCIDiD',
     'Software',
     'Source',
-    'PulseDuration',
-    'SourceFrequency',
-    'SourcePeriod',
     'SourceType',
     'ESS_SOURCE',
     'RadiationProbe',
