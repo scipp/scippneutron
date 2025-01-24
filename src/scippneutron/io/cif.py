@@ -26,11 +26,11 @@ To demonstrate the interface, first make some mockup powder diffraction data:
 Assemble data and metadata using a :class:`CIF` builder:
 
   >>> from scippneutron.io import cif
-  >>> from scippneutron import meta
+  >>> from scippneutron import metadata
   >>> cif_ = (
   ...  cif.CIF('my-data', comment="This is a demo of ScippNeutron's CIF builder.")
-  ...  .with_beamline(meta.Beamline(name='fake', facility='made up'))
-  ...  .with_authors(meta.Person(
+  ...  .with_beamline(metadata.Beamline(name='fake', facility='made up'))
+  ...  .with_authors(metadata.Person(
   ...      name='Jane Doe',
   ...      orcid='0000-0000-0000-0001',
   ...      corresponding=True
@@ -141,7 +141,7 @@ from typing import Any, TextIO
 
 import scipp as sc
 
-from ..meta import Beamline, Person, Source, SourceType
+from ..metadata import Beamline, Person, Source, SourceType
 from ._files import open_or_pass
 
 

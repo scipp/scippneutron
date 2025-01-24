@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 import scipp as sc
 
-from scippneutron import __version__, meta
+from scippneutron import __version__, metadata
 from scippneutron.io import cif
 
 
@@ -904,7 +904,7 @@ _computing.diffrn_reduction
 def test_builder_with_beamline() -> None:
     original = cif.CIF()
     cif_ = original.with_beamline(
-        meta.Beamline(name='DREAM', facility='ESS'),
+        metadata.Beamline(name='DREAM', facility='ESS'),
         comment="Dreaming of things to come",
     )
     res = save_to_str(cif_)
@@ -923,12 +923,12 @@ _diffrn_source.device spallation'''
 def test_builder_with_beamline_and_source() -> None:
     original = cif.CIF()
     cif_ = original.with_beamline(
-        meta.Beamline(name='Balder', facility='MAX IV'),
-        meta.Source(
-            frequency=meta.SourceFrequency(sc.scalar(0)),
-            pulse_duration=meta.PulseDuration(sc.scalar(0)),
-            source_type=meta.SourceType.SynchrotronXraySource,
-            probe=meta.RadiationProbe.Xray,
+        metadata.Beamline(name='Balder', facility='MAX IV'),
+        metadata.Source(
+            frequency=metadata.SourceFrequency(sc.scalar(0)),
+            pulse_duration=metadata.PulseDuration(sc.scalar(0)),
+            source_type=metadata.SourceType.SynchrotronXraySource,
+            probe=metadata.RadiationProbe.Xray,
         ),
     )
     res = save_to_str(cif_)
@@ -1072,7 +1072,7 @@ DIFB -1 6.7
 
 
 def test_builder_single_contact_author() -> None:
-    author = meta.Person(
+    author = metadata.Person(
         name='Jane Doe',
         email='jane.doe@ess.eu',
         address='Partikelgatan, Lund',
@@ -1089,7 +1089,7 @@ _audit_contact_author.id_orcid https://orcid.org/0000-0000-0000-0001'''
 
 
 def test_builder_regular_author() -> None:
-    author = meta.Person(
+    author = metadata.Person(
         name='Jane Doe',
         email='jane.doe@ess.eu',
         address='Partikelgatan, Lund',
@@ -1107,14 +1107,14 @@ _audit_author.id_orcid https://orcid.org/0000-0000-0000-0001'''
 
 def test_builder_multiple_regular_authors() -> None:
     authors = [
-        meta.Person(
+        metadata.Person(
             name='Jane Doe',
             email='jane.doe@ess.eu',
             address='Partikelgatan, Lund',
             orcid='https://orcid.org/0000-0000-0000-0001',
             corresponding=False,
         ),
-        meta.Person(
+        metadata.Person(
             name='Max Mustermann',
             email='mm@scipp.eu',
             orcid='https://orcid.org/0000-0000-0001-0082',
@@ -1135,7 +1135,7 @@ _audit_author.id_orcid
 
 
 def test_builder_regular_author_role() -> None:
-    author = meta.Person(
+    author = metadata.Person(
         name='Jane Doe',
         role='measurement',
         corresponding=False,
@@ -1160,9 +1160,9 @@ _audit_author_role.role
 def test_builder_many_fields() -> None:
     cif_ = (
         cif.CIF('my/name')
-        .with_authors(meta.Person(name='Jane Doe'))
+        .with_authors(metadata.Person(name='Jane Doe'))
         .with_reducers('test-package')
-        .with_beamline(beamline=meta.Beamline(name='fake'))
+        .with_beamline(beamline=metadata.Beamline(name='fake'))
     )
     result = save_to_str(cif_)
 
