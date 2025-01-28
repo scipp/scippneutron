@@ -3,15 +3,13 @@
 
 """Chopper utilities."""
 
-from .disk_chopper import DiskChopper, DiskChopperType
-from .filtering import collapse_plateaus, filter_in_phase, find_plateaus
-from .nexus_chopper import extract_chopper_from_nexus
+import lazy_loader as lazy
 
-__all__ = [
-    'DiskChopper',
-    'DiskChopperType',
-    'collapse_plateaus',
-    'filter_in_phase',
-    'find_plateaus',
-    'extract_chopper_from_nexus',
-]
+__getattr__, __dir__, __all__ = lazy.attach(
+    __name__,
+    submod_attrs={
+        'disk_chopper': ['DiskChopper', 'DiskChopperType'],
+        'filtering': ['collapse_plateaus', 'filter_in_phase', 'find_plateaus'],
+        'nexus_chopper': ['extract_chopper_from_nexus'],
+    },
+)
