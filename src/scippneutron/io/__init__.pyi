@@ -3,4 +3,3 @@
 """File input and output."""
 
 from .xye import load_xye, save_xye
-

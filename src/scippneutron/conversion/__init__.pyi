@@ -2,4 +2,4 @@
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 # @author Jan-Lukas Wynen
 
-from . import beamline, tof, graph
+from . import beamline, graph, tof
