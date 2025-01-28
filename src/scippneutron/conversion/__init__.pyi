@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
+# @author Jan-Lukas Wynen
 
-import lazy_loader as lazy
-
-__getattr__, __dir__, __all__ = lazy.attach_stub(__name__, __file__)
+from . import beamline, tof, graph

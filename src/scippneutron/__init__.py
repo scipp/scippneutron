@@ -23,7 +23,7 @@ del importlib
 
 import lazy_loader as lazy
 
-submodules = ['atoms' 'chopper', 'io']
+submodules = ['atoms' 'chopper', 'io', 'conversion']
 
 __getattr__, __dir__, __all__ = lazy.attach(
     __name__,
@@ -40,7 +40,7 @@ __getattr__, __dir__, __all__ = lazy.attach(
             'L2',
             'two_theta',
         ],
-        'core': ['convert'],
+        'core': ['convert', 'conversion_graph', 'deduce_conversion_graph'],
         'mantid': ['from_mantid', 'to_mantid', 'load_with_mantid', 'fit'],
         'instrument_view': ['instrument_view'],
         'masking': ['MaskingTool'],
