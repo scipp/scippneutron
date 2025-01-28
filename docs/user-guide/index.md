@@ -9,7 +9,6 @@ from-mantid-to-scipp
 instrument-view
 recipes
 masking-tool
-wfm/index
 algorithms-background/index
 absorption-correction
 ```
