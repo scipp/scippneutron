@@ -31,6 +31,7 @@ dynamic = ["version"]
 # Run 'tox -e deps' after making changes here. This will update requirement files.
 # Make sure to list one dependency per line.
 dependencies = [
+    "lazy_loader",
     "h5py",
     "mpltoolbox",
     "numpy>=1.20",

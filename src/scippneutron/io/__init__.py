@@ -2,4 +2,6 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 """File input and output."""
 
-from .xye import load_xye, save_xye  # noqa: F401
+import lazy_loader as lazy
+
+__getattr__, __dir__, __all__ = lazy.attach_stub(__name__, __file__)

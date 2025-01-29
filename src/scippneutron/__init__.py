@@ -19,50 +19,30 @@ try:
 except importlib.metadata.PackageNotFoundError:
     __version__ = "0.0.0"
 
-from .beamline_components import (
-    position,
-    source_position,
-    sample_position,
-    incident_beam,
-    scattered_beam,
-    Ltotal,
-    L1,
-    L2,
-    two_theta,
-)
-from .core import convert
-from .mantid import (
-    from_mantid,
-    to_mantid,
-    load_with_mantid,
-    fit,
-)
-from .instrument_view import instrument_view
-from .masking import MaskingTool
-from . import atoms
-from . import chopper
-from . import io
-
 del importlib
 
-__all__ = [
-    "position",
-    "source_position",
-    "sample_position",
-    "incident_beam",
-    "scattered_beam",
-    "Ltotal",
-    "L1",
-    "L2",
-    "two_theta",
-    "convert",
-    "from_mantid",
-    "to_mantid",
-    "io",
-    "load_with_mantid",
-    "fit",
-    "instrument_view",
-    "atoms",
-    "chopper",
-    "MaskingTool",
-]
+import lazy_loader as lazy
+
+submodules = ['atoms' 'chopper', 'io', 'conversion']
+
+__getattr__, __dir__, __all__ = lazy.attach(
+    __name__,
+    submodules=submodules,
+    submod_attrs={
+        'beamline_components': [
+            'position',
+            'source_position',
+            'sample_position',
+            'incident_beam',
+            'scattered_beam',
+            'Ltotal',
+            'L1',
+            'L2',
+            'two_theta',
+        ],
+        'core': ['convert', 'conversion_graph', 'deduce_conversion_graph'],
+        'mantid': ['from_mantid', 'to_mantid', 'load_with_mantid', 'fit'],
+        'instrument_view': ['instrument_view'],
+        'masking': ['MaskingTool'],
+    },
+)
