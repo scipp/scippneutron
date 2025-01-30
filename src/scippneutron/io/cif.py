@@ -32,7 +32,7 @@ Assemble data and metadata using a :class:`CIF` builder:
   ...  .with_beamline(metadata.Beamline(name='fake', facility='made up'))
   ...  .with_authors(metadata.Person(
   ...      name='Jane Doe',
-  ...      orcid='0000-0000-0000-0001',
+  ...      orcid_id='0000-0000-0000-0001',
   ...      corresponding=True
   ...  ))
   ...  .with_reduced_powder_data(da)
@@ -971,11 +971,11 @@ def _serialize_authors(
 ) -> tuple[Chunk | Loop, dict[str, str]]:
     fields = {
         f'{category}.{key}': f
-        for key in ('name', 'email', 'address', 'orcid')
+        for key in ('name', 'email', 'address', 'orcid_id')
         if any(f := [getattr(a, key) or '' for a in authors])
     }
-    # Map between our name (Person.orcid) and CIF's (id_orcid)
-    if orcid_id := fields.pop(f'{category}.orcid', None):
+    # Map between our name (Person.orcid_id) and CIF's (id_orcid)
+    if orcid_id := fields.pop(f'{category}.orcid_id', None):
         fields[f'{category}.id_orcid'] = orcid_id
 
     roles = {next(id_generator): a.role for a in authors}
