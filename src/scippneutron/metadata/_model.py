@@ -291,25 +291,30 @@ def _deduce_package_source_url(package_name: str) -> str | None:
         return None
 
 
-class SourceType(str, enum.Enum):
+class SourceType(enum.Enum):
     """Type of source.
 
     Names are based on NeXus definitions.
     """
 
     SpallationNeutronSource = 'Spallation Neutron Source'
+    """A spallation neutron source."""
     ReactorNeutronSource = 'Reactor Neutron Source'
+    """A reactor neutron source."""
     SynchrotronXraySource = 'Synchrotron X-ray Source'
+    """A synchrotron X-ray source."""
 
 
-class RadiationProbe(str, enum.Enum):
+class RadiationProbe(enum.Enum):
     """Type of radiation probe.
 
     Names are based on NeXus definitions.
     """
 
     Neutron = 'neutron'
+    """Neutron probe."""
     Xray = 'X-ray'
+    """X-ray probe."""
 
 
 class Source(BaseModel):
