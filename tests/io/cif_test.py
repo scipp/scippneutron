@@ -1074,7 +1074,7 @@ def test_builder_single_contact_author() -> None:
         name='Jane Doe',
         email='jane.doe@ess.eu',
         address='Partikelgatan, Lund',
-        orcid='https://orcid.org/0000-0000-0000-0001',
+        orcid_id='https://orcid.org/0000-0000-0000-0001',
         corresponding=True,
     )
     cif_ = cif.CIF().with_authors(author)
@@ -1091,7 +1091,7 @@ def test_builder_regular_author() -> None:
         name='Jane Doe',
         email='jane.doe@ess.eu',
         address='Partikelgatan, Lund',
-        orcid='https://orcid.org/0000-0000-0000-0001',
+        orcid_id='https://orcid.org/0000-0000-0000-0001',
         corresponding=False,
     )
     cif_ = cif.CIF().with_authors(author)
@@ -1109,13 +1109,13 @@ def test_builder_multiple_regular_authors() -> None:
             name='Jane Doe',
             email='jane.doe@ess.eu',
             address='Partikelgatan, Lund',
-            orcid='https://orcid.org/0000-0000-0000-0001',
+            orcid_id='https://orcid.org/0000-0000-0000-0001',
             corresponding=False,
         ),
         metadata.Person(
             name='Max Mustermann',
             email='mm@scipp.eu',
-            orcid='https://orcid.org/0000-0000-0001-0082',
+            orcid_id='https://orcid.org/0000-0000-0001-0082',
             corresponding=False,
         ),
     ]

@@ -166,7 +166,7 @@ class Person(BaseModel):
 
     name: str
     """Free form name of the person."""
-    orcid: ORCIDiD | None = None
+    orcid_id: ORCIDiD | None = None
     """ORCID iD of the person."""
 
     corresponding: bool = False
