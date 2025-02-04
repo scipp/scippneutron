@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
-# @author Jan-Lukas Wynen
+# Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 
 """Graphs for coordinate transformations.
 
@@ -19,6 +18,6 @@ The `user guide <../../user-guide/coordinate-transformations.rst>`_ gives
 more examples.
 """
 
-from . import beamline, tof
+import lazy_loader as lazy
 
-__all__ = ['beamline', 'tof']
+__getattr__, __dir__, __all__ = lazy.attach_stub(__name__, __file__)

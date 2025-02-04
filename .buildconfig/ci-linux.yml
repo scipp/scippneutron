@@ -14,6 +14,7 @@ dependencies:
   - ipykernel==6.29.5
   - ipympl==0.9.4
   - ipywidgets==8.1.5
+  - lazy-loader==0.4
   - mantid==6.11.0
   - matplotlib==3.7.3
   - mpltoolbox==24.05.1
