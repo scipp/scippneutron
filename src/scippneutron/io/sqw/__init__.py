@@ -47,36 +47,36 @@ except importlib.metadata.PackageNotFoundError:
 
 del importlib
 
-from ._sqw import Sqw
 from ._build import SqwBuilder
 from ._bytes import Byteorder
 from ._models import (
-    SqwFileType,
-    SqwFileHeader,
-    SqwMainHeader,
     EnergyMode,
-    SqwIXExperiment,
     SqwDndMetadata,
-    SqwLineAxes,
-    SqwLineProj,
+    SqwFileHeader,
+    SqwFileType,
+    SqwIXExperiment,
     SqwIXNullInstrument,
     SqwIXSample,
     SqwIXSource,
+    SqwLineAxes,
+    SqwLineProj,
+    SqwMainHeader,
 )
+from ._sqw import Sqw
 
 __all__ = [
     "Byteorder",
     "EnergyMode",
-    "SqwIXExperiment",
-    "SqwMainHeader",
     "Sqw",
     "SqwBuilder",
-    "SqwFileType",
-    "SqwFileHeader",
     "SqwDndMetadata",
-    "SqwLineAxes",
-    "SqwLineProj",
+    "SqwFileHeader",
+    "SqwFileType",
+    "SqwIXExperiment",
     "SqwIXNullInstrument",
     "SqwIXSample",
     "SqwIXSource",
+    "SqwLineAxes",
+    "SqwLineProj",
+    "SqwMainHeader",
 ]
