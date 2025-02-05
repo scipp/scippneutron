@@ -70,11 +70,8 @@ class Cylinder(SampleShape):
                 quadratures.disk12,
                 dict(x=x, weights=w),  # noqa: C408
             )
-        elif (
-            kind == 'mc'
-            or isinstance(kind, tuple)
-            and len(kind) > 0
-            and kind[0] == 'mc'
+        elif kind == 'mc' or (
+            isinstance(kind, tuple) and len(kind) > 0 and kind[0] == 'mc'
         ):
             # The Monte-Carlo integration option is useful because
             # while inefficient it is guaranteed unbiased and good for debugging.
