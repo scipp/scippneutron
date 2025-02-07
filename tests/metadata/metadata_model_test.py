@@ -2,6 +2,7 @@
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 
 
+import pytest
 import scipp as sc
 import scippnexus as snx
 from dateutil.parser import parse as parse_datetime
@@ -44,10 +45,15 @@ def test_software_from_from_package_metadata_first_party() -> None:
 
 def test_software_from_from_package_metadata_third_party() -> None:
     software = metadata.Software.from_package_metadata('scipp')
-    expected = metadata.Software(
-        name='scipp',
-        version=sc.__version__,
-        url='https://github.com/scipp/scipp',
-        doi=None,  # Cannot be deduced
+    assert software.name == 'scipp'
+    assert software.version == sc.__version__
+    assert software.url in (
+        'https://github.com/scipp/scipp',  # properly deduced
+        None,  # fallback for our conda packages
     )
-    assert software == expected
+    assert software.doi is None
+
+
+def test_software_from_from_package_metadata_fails_when_package_not_installed() -> None:
+    with pytest.raises(ModuleNotFoundError):
+        metadata.Software.from_package_metadata('not-a-package')
