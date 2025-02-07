@@ -26,10 +26,15 @@ To demonstrate the interface, first make some mockup powder diffraction data:
 Assemble data and metadata using a :class:`CIF` builder:
 
   >>> from scippneutron.io import cif
+  >>> from scippneutron import metadata
   >>> cif_ = (
   ...  cif.CIF('my-data', comment="This is a demo of ScippNeutron's CIF builder.")
-  ...  .with_beamline(beamline='fake', facility='made up')
-  ...  .with_authors(cif.Author(name='Jane Doe', orcid='0000-0000-0000-0001'))
+  ...  .with_beamline(metadata.Beamline(name='fake', facility='made up'))
+  ...  .with_authors(metadata.Person(
+  ...      name='Jane Doe',
+  ...      orcid_id='0000-0000-0000-0001',
+  ...      corresponding=True
+  ...  ))
   ...  .with_reduced_powder_data(da)
   ... )
 
@@ -58,7 +63,6 @@ This results in a file containing
     _audit_contact_author.name 'Jane Doe'
     _audit_contact_author.id_orcid 0000-0000-0000-0001
 
-    _diffrn_radiation.probe neutron
     _diffrn_source.beamline fake
     _diffrn_source.facility 'made up'
 
@@ -137,6 +141,7 @@ from typing import Any, TextIO
 
 import scipp as sc
 
+from ..metadata import Beamline, Person, Source, SourceType
 from ._files import open_or_pass
 
 
@@ -210,7 +215,7 @@ class CIF:
         # Keep a separate list from self._block to assemble items
         # in a specific order when saving.
         self._content: list[Chunk | Loop] = []
-        self._authors: list[Author] = []
+        self._authors: list[Person] = []
         self._reducers: list[str] = []
 
         # Should be long enough to never run out of IDs.
@@ -260,24 +265,20 @@ class CIF:
         cif_._reducers.extend(self._reducers)
         return cif_
 
-    # TODO use Beamline model when available
-    #  see https://github.com/scipp/scippneutron/issues/473
     def with_beamline(
         self,
+        beamline: Beamline,
+        source: Source | None = None,
         *,
-        beamline: str,
-        facility: str | None = None,
-        device: str | None = None,
         comment: str = '',
     ) -> CIF:
         """Add beamline information."""
-        if device is None:
-            if (facility or '').lower() in _KNOWN_SPALLATION_SOURCES:
-                device = 'spallation'
+        device = _get_beamline_device(beamline, source)
+        probe = _get_beamline_probe(beamline, source)
         fields = {
-            'diffrn_radiation.probe': 'neutron',
-            'diffrn_source.beamline': beamline,
-            'diffrn_source.facility': facility,
+            'diffrn_radiation.probe': probe,
+            'diffrn_source.beamline': beamline.name,
+            'diffrn_source.facility': beamline.facility,
             'diffrn_source.device': device,
         }
 
@@ -387,7 +388,7 @@ class CIF:
         cif_._content.append(_make_powder_calibration_loop(cal, comment=comment))
         return cif_
 
-    def with_authors(self, *authors: Author) -> CIF:
+    def with_authors(self, *authors: Person) -> CIF:
         """Add one or more authors.
 
         Parameters
@@ -441,18 +442,6 @@ class CIF:
             results.append(_serialize_roles(roles))
 
         return results
-
-
-# TODO replace with common metadata `Person` once that exists.
-#  See https://github.com/scipp/scippneutron/issues/473
-@dataclass(kw_only=True)
-class Author:
-    name: str
-    address: str | None = None
-    email: str | None = None
-    orcid: str | None = None
-    corresponding: bool = True
-    role: str | None = None
 
 
 class _CIFBase:
@@ -748,6 +737,34 @@ _KNOWN_SPALLATION_SOURCES = {
 }
 
 
+def _get_beamline_device(beamline: Beamline, source: Source | None) -> str | None:
+    if source is None:
+        if (beamline.facility or '').lower() in _KNOWN_SPALLATION_SOURCES:
+            return 'spallation'
+        else:
+            return None
+    match source.source_type:
+        case SourceType.SpallationNeutronSource:
+            return 'spallation'
+        case SourceType.ReactorNeutronSource:
+            return 'nuclear'
+        case SourceType.SynchrotronXraySource:
+            return 'synch'
+
+
+def _get_beamline_probe(beamline: Beamline, source: Source | None) -> str | None:
+    if source is None:
+        if (beamline.facility or '').lower() in _KNOWN_SPALLATION_SOURCES:
+            return 'neutron'
+        else:
+            return None
+    match source.source_type:
+        case SourceType.SpallationNeutronSource | SourceType.ReactorNeutronSource:
+            return 'neutron'
+        case SourceType.SynchrotronXraySource:
+            return 'x-ray'
+
+
 def _convert_input_content(
     content: Iterable[Mapping[str, Any] | Loop | Chunk],
 ) -> list[Loop | Chunk]:
@@ -930,7 +947,7 @@ def _add_audit(block: Block, reducers: list[str]) -> None:
     audit_chunk = Chunk(
         {
             'audit.creation_date': datetime.now(timezone.utc).replace(microsecond=0),
-            'audit.creation_method': f'Written by scippneutron v{__version__}',
+            'audit.creation_method': f'Written by scippneutron {__version__}',
         },
         schema=CORE_SCHEMA,
     )
@@ -948,17 +965,17 @@ def _add_audit(block: Block, reducers: list[str]) -> None:
 
 
 def _serialize_authors(
-    authors: list[Author],
+    authors: list[Person],
     category: str,
     id_generator: Iterator[str],
 ) -> tuple[Chunk | Loop, dict[str, str]]:
     fields = {
         f'{category}.{key}': f
-        for key in ('name', 'email', 'address', 'orcid')
+        for key in ('name', 'email', 'address', 'orcid_id')
         if any(f := [getattr(a, key) or '' for a in authors])
     }
-    # Map between our name (Author.orcid) and CIF's (id_orcid)
-    if orcid_id := fields.pop(f'{category}.orcid', None):
+    # Map between our name (Person.orcid_id) and CIF's (id_orcid)
+    if orcid_id := fields.pop(f'{category}.orcid_id', None):
         fields[f'{category}.id_orcid'] = orcid_id
 
     roles = {next(id_generator): a.role for a in authors}

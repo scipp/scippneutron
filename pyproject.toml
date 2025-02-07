@@ -31,11 +31,14 @@ dynamic = ["version"]
 # Run 'tox -e deps' after making changes here. This will update requirement files.
 # Make sure to list one dependency per line.
 dependencies = [
-    "lazy_loader",
+    "python-dateutil",
+    "email-validator>=2",
     "h5py",
+    "lazy_loader",
     "mpltoolbox",
     "numpy>=1.20",
     "plopp>=24.09.1",
+    "pydantic>=2",
     "scipp>=23.07.0",
     "scippnexus>=23.11.0",
     "scipy>=1.7.0",
@@ -151,6 +154,7 @@ enable_error_code = [
     "truthy-bool",
 ]
 warn_unreachable = true
+plugins = ["pydantic.mypy"]
 
 [tool.codespell]
 ignore-words-list = [

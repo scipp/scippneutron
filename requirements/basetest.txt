@@ -13,7 +13,7 @@ attrs==25.1.0
     # via hypothesis
 brille==0.8.0
     # via pace-neutrons
-certifi==2024.12.14
+certifi==2025.1.31
     # via requests
 charset-normalizer==3.4.1
     # via requests
@@ -42,11 +42,11 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.55.6
+fonttools==4.55.8
     # via matplotlib
 h5py==3.12.1
     # via euphonic
-hypothesis==6.124.7
+hypothesis==6.125.2
     # via -r basetest.in
 idna==3.10
     # via requests
@@ -56,7 +56,7 @@ ipydatawidgets==4.3.5
     # via pythreejs
 ipympl==0.9.6
     # via -r basetest.in
-ipython==8.31.0
+ipython==8.32.0
     # via
     #   ipympl
     #   ipywidgets
