@@ -255,11 +255,9 @@ class Software(BaseModel):
         :
             A Software instance.
         """
-        from importlib.metadata import version
-
         return cls(
             name=package_name,
-            version=version(package_name),
+            version=_deduce_package_version(package_name),
             url=_deduce_package_source_url(package_name),
             doi=None,
         )
@@ -277,10 +275,39 @@ class Software(BaseModel):
         return self.name_version
 
 
-def _deduce_package_source_url(package_name: str) -> str | None:
-    from importlib.metadata import metadata
+def _deduce_package_version(package_name: str) -> str | None:
+    from importlib.metadata import PackageNotFoundError, version
 
-    if not (urls := metadata(package_name).get_all("project-url")):
+    try:
+        return version(package_name)
+    except PackageNotFoundError:
+        # Either the package is not installed or has no metadata.
+        from importlib import import_module
+
+        try:
+            package = import_module(package_name)
+        except ModuleNotFoundError as e:
+            raise e from None
+
+        try:
+            return package.__version__
+        except AttributeError:
+            raise RuntimeError(
+                f"Package '{package_name}' has no metadata and no "
+                f"__version__ attribute. Specify the version manually."
+            ) from None
+
+
+def _deduce_package_source_url(package_name: str) -> str | None:
+    from importlib.metadata import PackageNotFoundError, metadata
+
+    try:
+        meta = metadata(package_name)
+    except PackageNotFoundError:
+        # Either the package is not installed or has no metadata.
+        return None
+
+    if not (urls := meta.get_all("project-url")):
         return None
 
     try:
