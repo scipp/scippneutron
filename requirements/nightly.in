@@ -16,7 +16,10 @@ psutil
 pytest
 pytest-xdist
 pythreejs
-scipp @ https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+scipp
+--index-url=https://pypi.anaconda.org/scipp-nightly-wheels/simple/
+--extra-index-url=https://pypi.org/simple
+--pre
 scippnexus @ git+https://github.com/scipp/scippnexus@main
 plopp @ git+https://github.com/scipp/plopp@main
 mpltoolbox @ git+https://github.com/scipp/mpltoolbox@main

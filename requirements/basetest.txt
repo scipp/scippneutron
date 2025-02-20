@@ -27,7 +27,7 @@ cycler==0.12.1
     # via matplotlib
 decorator==5.1.1
     # via ipython
-euphonic[phonopy-reader]==1.4.0.post1
+euphonic[phonopy-reader]==1.4.1
     # via pace-neutrons
 exceptiongroup==1.2.2
     # via
@@ -42,11 +42,11 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.55.8
+fonttools==4.56.0
     # via matplotlib
-h5py==3.12.1
+h5py==3.13.0
     # via euphonic
-hypothesis==6.125.2
+hypothesis==6.126.0
     # via -r basetest.in
 idna==3.10
     # via requests
@@ -82,7 +82,7 @@ matplotlib-inline==0.1.7
     # via ipython
 networkx==3.4.2
     # via cyclebane
-numpy==2.2.2
+numpy==2.2.3
     # via
     #   brille
     #   contourpy
@@ -125,7 +125,7 @@ pooch==1.8.2
     # via -r basetest.in
 prompt-toolkit==3.0.50
     # via ipython
-psutil==6.1.1
+psutil==7.0.0
     # via
     #   -r basetest.in
     #   pace-neutrons
@@ -155,7 +155,7 @@ requests==2.32.3
     #   pooch
 sciline==24.10.0
     # via -r basetest.in
-scipy==1.15.1
+scipy==1.15.2
     # via euphonic
 seekpath==2.1.0
     # via euphonic

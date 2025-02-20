@@ -1,8 +1,8 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: ec3c4a2
+_commit: 5c4fd02
 _src_path: gh:scipp/copier_template
 description: Neutron scattering tools for Data Reduction
-max_python: '3.12'
+max_python: '3.13'
 min_python: '3.10'
 namespace_package: ''
 nightly_deps: scipp,scippnexus,plopp,mpltoolbox,sciline,tof
@@ -10,4 +10,4 @@ orgname: scipp
 prettyname: ScippNeutron
 projectname: scippneutron
 related_projects: Scipp,ScippNexus,Plopp
-year: 2024
+year: 2025

@@ -32,25 +32,25 @@
 """
 
 from ._model import (
+    ESS_SOURCE,
     Beamline,
+    Measurement,
     Person,
+    RadiationProbe,
     Software,
     Source,
-    Measurement,
     SourceType,
-    ESS_SOURCE,
-    RadiationProbe,
 )
 from ._orcid import ORCIDiD
 
 __all__ = [
+    'ESS_SOURCE',
     'Beamline',
     'Measurement',
-    'Person',
     'ORCIDiD',
+    'Person',
+    'RadiationProbe',
     'Software',
     'Source',
     'SourceType',
-    'ESS_SOURCE',
-    'RadiationProbe',
 ]
