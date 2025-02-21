@@ -4,12 +4,25 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
+from typing import Annotated, Any
 
+import scipp as sc
 import scippnexus as snx
 from dateutil.parser import parse as parse_datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, BeforeValidator, EmailStr
 
 from ._orcid import ORCIDiD
+
+
+def _unpack_variable(value: object) -> Any:
+    """Before validator to support passing scalar scipp variables as inputs."""
+    if isinstance(value, sc.Variable):
+        if value.dims:
+            raise ValueError("Must be a scalar")
+        if value.unit and value.unit != '':
+            raise ValueError("Must be dimensionless or have no unit at all")
+        return value.value
+    return value
 
 
 class Beamline(BaseModel):
@@ -39,13 +52,13 @@ class Beamline(BaseModel):
     which version of the beamline was used.
     """
 
-    name: str
+    name: Annotated[str, BeforeValidator(_unpack_variable)]
     """Name of the beamline."""
-    facility: str | None = None
+    facility: Annotated[str | None, BeforeValidator(_unpack_variable)] = None
     """Facility where the beamline is located."""
-    site: str | None = None
+    site: Annotated[str | None, BeforeValidator(_unpack_variable)] = None
     """Site where the facility is located."""
-    revision: str | None = None
+    revision: Annotated[str | None, BeforeValidator(_unpack_variable)] = None
     """Revision of the beamline in case of upgrades."""
 
     @classmethod
@@ -105,14 +118,16 @@ class Measurement(BaseModel):
     ``start_time`` and ``end_time``.
     """
 
-    title: str | None
+    title: Annotated[str | None, BeforeValidator(_unpack_variable)]
     """The title of the measurement."""
-    run_number: str | None = None
+    run_number: Annotated[str | None, BeforeValidator(_unpack_variable)] = None
     """Run number of the measurement."""
-    experiment_id: str | None = None
+    experiment_id: Annotated[str | None, BeforeValidator(_unpack_variable)] = None
     """An ID for the experiment that this measurement is part of, e.g., proposal ID."""
-    experiment_doi: str | None = None
+    experiment_doi: Annotated[str | None, BeforeValidator(_unpack_variable)] = None
     """A DOI for the experiment that this measurement is part of."""
+    # These do not support conversion from variables because variables are naive w.r.t.
+    # timezones and converting them to datetime.datetime would require extra info.
     start_time: datetime | None = None
     """Date and time when the measurement started."""
     end_time: datetime | None = None
@@ -164,16 +179,16 @@ class Person(BaseModel):
     and can usually be omitted when an ORCID iD is provided.
     """
 
-    name: str
+    name: Annotated[str, BeforeValidator(_unpack_variable)]
     """Free form name of the person."""
-    orcid_id: ORCIDiD | None = None
+    orcid_id: Annotated[ORCIDiD | None, BeforeValidator(_unpack_variable)] = None
     """ORCID iD of the person."""
 
     corresponding: bool = False
     """Whether the person is the corresponding / contact author."""
     owner: bool = True
     """Whether the person owns the data."""
-    role: str | None = None
+    role: Annotated[str | None, BeforeValidator(_unpack_variable)] = None
     """The role that the person played in collecting / processing the data.
 
     `NeXus <https://manual.nexusformat.org/classes/base_classes/NXuser.html#nxuser>`_
@@ -182,11 +197,11 @@ class Person(BaseModel):
     list possible roles.
     """
 
-    address: str | None = None
+    address: Annotated[str | None, BeforeValidator(_unpack_variable)] = None
     """Physical (work) address of the person."""
-    email: EmailStr | None = None
+    email: Annotated[EmailStr | None, BeforeValidator(_unpack_variable)] = None
     """Email address of the person."""
-    affiliation: str | None = None
+    affiliation: Annotated[str | None, BeforeValidator(_unpack_variable)] = None
     """Affiliation of the person."""
 
 
@@ -350,7 +365,7 @@ class Source(BaseModel):
     The ESS source is provided as ``scippneutron.metadata.ESS_SOURCE``.
     """
 
-    name: str | None = None
+    name: Annotated[str | None, BeforeValidator(_unpack_variable)] = None
     """Name of the source."""
     source_type: SourceType
     """Type of this source."""
