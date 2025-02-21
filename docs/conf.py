@@ -295,6 +295,8 @@ linkcheck_ignore = [
     'https://opensource.org/licenses/BSD-3-Clause',
     # This returns '403 Forbidden' but the link works in a browser.
     'https://doi.org/10.1080/10448639208218770',
+    # We get 403 Forbidden for this for some reason; works in a browser, though.
+    'https://support.orcid.org/hc/en-us/articles/360006897674-Structure-of-the-ORCID-Identifier',
 ]
 
 # -- Options for bibtex ---------------------------------------------------
