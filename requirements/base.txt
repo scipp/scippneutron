@@ -5,20 +5,30 @@
 #
 #    pip-compile-multi
 #
+annotated-types==0.7.0
+    # via pydantic
 contourpy==1.3.1
     # via matplotlib
 cycler==0.12.1
     # via matplotlib
+dnspython==2.7.0
+    # via email-validator
+email-validator==2.2.0
+    # via -r base.in
 fonttools==4.56.0
     # via matplotlib
 h5py==3.13.0
     # via
     #   -r base.in
     #   scippnexus
+idna==3.10
+    # via email-validator
 kiwisolver==1.4.8
     # via matplotlib
 lazy-loader==0.4
-    # via -r base.in
+    # via
+    #   -r base.in
+    #   plopp
 matplotlib==3.10.0
     # via
     #   mpltoolbox
@@ -40,12 +50,17 @@ packaging==24.2
     #   matplotlib
 pillow==11.1.0
     # via matplotlib
-plopp==24.10.0
+plopp==25.2.0
     # via -r base.in
+pydantic==2.10.6
+    # via -r base.in
+pydantic-core==2.27.2
+    # via pydantic
 pyparsing==3.2.1
     # via matplotlib
 python-dateutil==2.9.0.post0
     # via
+    #   -r base.in
     #   matplotlib
     #   scippnexus
 scipp==25.2.0
@@ -60,3 +75,7 @@ scipy==1.15.2
     #   scippnexus
 six==1.17.0
     # via python-dateutil
+typing-extensions==4.12.2
+    # via
+    #   pydantic
+    #   pydantic-core
