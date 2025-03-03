@@ -115,9 +115,9 @@ mdit-py-plugins==0.4.2
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
-mistune==3.1.1
+mistune==3.1.2
     # via nbconvert
-myst-parser==4.0.0
+myst-parser==4.0.1
     # via -r docs.in
 nbclient==0.10.2
     # via nbconvert
@@ -146,7 +146,7 @@ pooch==1.8.2
     # via -r docs.in
 prompt-toolkit==3.0.50
     # via ipython
-psutil==6.1.1
+psutil==7.0.0
     # via ipykernel
 ptyprocess==0.7.0
     # via pexpect

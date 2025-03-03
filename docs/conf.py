@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
+
 import doctest
 import os
 import sys
@@ -12,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # General information about the project.
 project = 'ScippNeutron'
-copyright = '2024 Scipp contributors'
+copyright = '2025 Scipp contributors'
 author = 'Scipp contributors'
 
 html_show_sourcelink = True
@@ -292,6 +295,8 @@ linkcheck_ignore = [
     'https://opensource.org/licenses/BSD-3-Clause',
     # This returns '403 Forbidden' but the link works in a browser.
     'https://doi.org/10.1080/10448639208218770',
+    # We get 403 Forbidden for this for some reason; works in a browser, though.
+    'https://support.orcid.org/hc/en-us/articles/360006897674-Structure-of-the-ORCID-Identifier',
 ]
 
 # -- Options for bibtex ---------------------------------------------------
