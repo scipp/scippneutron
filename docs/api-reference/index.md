@@ -58,6 +58,7 @@ and possible confusion of `theta` (from Bragg’s law) with `theta` in spherical
    :recursive:
 
    atoms
+   absorption
    chopper
    conversion
    io
