@@ -435,11 +435,11 @@ def _get_dtype_from_values(values, coerce_floats_to_ints):
                 dtype = sc.DType.float64
             else:
                 raise RuntimeError(
-                    "Cannot handle the dtype that this " "workspace has on Axis 1."
+                    "Cannot handle the dtype that this workspace has on Axis 1."
                 )
         else:
             raise RuntimeError(
-                "Axis 1 of this workspace has no values. " "Cannot determine dtype."
+                "Axis 1 of this workspace has no values. Cannot determine dtype."
             )
     return dtype
 

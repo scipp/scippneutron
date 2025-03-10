@@ -53,7 +53,7 @@ def find_plateaus(
     """
     if data.ndim != 1:
         raise NotImplementedError(
-            "find_plateaus only supports 1-dimensional data, " f"got {data.ndim} dims"
+            f"find_plateaus only supports 1-dimensional data, got {data.ndim} dims"
         )
     if not sc.issorted(data.coords[data.dim], data.dim, order="ascending"):
         raise sc.CoordError(

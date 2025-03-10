@@ -571,7 +571,7 @@ class Loop(_CIFBase):
         """
         if value.ndim != 1:
             raise sc.DimensionError(
-                "CIF loops can only contain 1d variables, got " f"{value.ndim} dims"
+                f"CIF loops can only contain 1d variables, got {value.ndim} dims"
             )
         if self._columns:
             existing = next(iter(self._columns.values())).sizes
@@ -732,7 +732,7 @@ _KNOWN_SPALLATION_SOURCES = {
     'ess',
     'isis',
     'j-parc',
-    'lansce' 'sinq',
+    'lanscesinq',
     'sns',
 }
 
@@ -880,8 +880,7 @@ def _reduced_powder_coord(data) -> tuple[str, sc.Variable]:
     coord = data.coords[data.dim]
     if coord.unit != unit:
         raise sc.UnitError(
-            f'Incorrect unit for powder coordinate {name}: {coord.unit} '
-            f'expected {unit}'
+            f'Incorrect unit for powder coordinate {name}: {coord.unit} expected {unit}'
         )
     return name, coord
 
