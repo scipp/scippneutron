@@ -5,7 +5,7 @@
 #
 #    pip-compile-multi
 #
-cachetools==5.5.1
+cachetools==5.5.2
     # via tox
 certifi==2025.1.31
     # via requests
@@ -48,11 +48,11 @@ tomli==2.2.1
     # via
     #   pyproject-api
     #   tox
-tox==4.24.1
+tox==4.24.2
     # via -r ci.in
 typing-extensions==4.12.2
     # via tox
 urllib3==2.3.0
     # via requests
-virtualenv==20.29.2
+virtualenv==20.29.3
     # via tox
