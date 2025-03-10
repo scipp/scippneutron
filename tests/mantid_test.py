@@ -311,9 +311,9 @@ class TestMantidConversion(unittest.TestCase):
         # no need for these, and it avoids duplication:
         assert 'detector_info' not in monitor.coords
         assert 'sample' not in monitor.coords
-        assert (
-            'SampleTemp' not in monitor.coords
-        ), "Expect run logs not be duplicated in monitor workspaces"
+        assert 'SampleTemp' not in monitor.coords, (
+            "Expect run logs not be duplicated in monitor workspaces"
+        )
 
     def test_Workspace2D_with_separate_monitors(self):
         from mantid.simpleapi import mtd
@@ -530,9 +530,9 @@ class TestMantidConversion(unittest.TestCase):
         # Given a Mantid workspace with a run log
         target = mantid.CloneWorkspace(self.base_event_ws)
         log_name = "SampleTemp"
-        assert target.run().hasProperty(
-            log_name
-        ), f'Expected input workspace to have a {log_name} run log'
+        assert target.run().hasProperty(log_name), (
+            f'Expected input workspace to have a {log_name} run log'
+        )
 
         # When the workspace is converted to a scipp data array
         dg = scn.mantid.convert_EventWorkspace_to_data_group(target, False)
@@ -555,9 +555,9 @@ class TestMantidConversion(unittest.TestCase):
         # Given a Mantid workspace with a run log
         target = mantid.CloneWorkspace(self.base_event_ws)
         log_name = "start_time"
-        assert target.run().hasProperty(
-            log_name
-        ), f'Expected input workspace to have a {log_name} run log'
+        assert target.run().hasProperty(log_name), (
+            f'Expected input workspace to have a {log_name} run log'
+        )
 
         # When the workspace is converted to a scipp data array
         dg = scn.mantid.convert_EventWorkspace_to_data_group(target, False)

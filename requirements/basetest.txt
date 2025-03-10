@@ -11,8 +11,6 @@ asttokens==3.0.0
     # via stack-data
 attrs==25.1.0
     # via hypothesis
-brille==0.8.0
-    # via pace-neutrons
 certifi==2025.1.31
     # via requests
 charset-normalizer==3.4.1
@@ -25,9 +23,9 @@ cyclebane==24.10.0
     # via sciline
 cycler==0.12.1
     # via matplotlib
-decorator==5.1.1
+decorator==5.2.1
     # via ipython
-euphonic[phonopy-reader]==1.4.1
+euphonic[phonopy-reader]==1.4.2
     # via pace-neutrons
 exceptiongroup==1.2.2
     # via
@@ -46,7 +44,7 @@ fonttools==4.56.0
     # via matplotlib
 h5py==3.13.0
     # via euphonic
-hypothesis==6.126.0
+hypothesis==6.128.2
     # via -r basetest.in
 idna==3.10
     # via requests
@@ -54,9 +52,9 @@ iniconfig==2.0.0
     # via pytest
 ipydatawidgets==4.3.5
     # via pythreejs
-ipympl==0.9.6
+ipympl==0.9.7
     # via -r basetest.in
-ipython==8.32.0
+ipython==8.34.0
     # via
     #   ipympl
     #   ipywidgets
@@ -72,9 +70,9 @@ jupyterlab-widgets==3.0.13
     # via ipywidgets
 kiwisolver==1.4.8
     # via matplotlib
-libpymcr==0.1.8
+libpymcr==0.2.1
     # via pace-neutrons
-matplotlib==3.10.0
+matplotlib==3.10.1
     # via
     #   ipympl
     #   pace-neutrons
@@ -84,7 +82,6 @@ networkx==3.4.2
     # via cyclebane
 numpy==2.2.3
     # via
-    #   brille
     #   contourpy
     #   euphonic
     #   h5py
@@ -97,7 +94,7 @@ numpy==2.2.3
     #   scipy
     #   seekpath
     #   spglib
-pace-neutrons==0.3.1
+pace-neutrons==0.4.0
     # via -r basetest.in
 packaging==24.2
     # via
@@ -137,7 +134,7 @@ pygments==2.19.1
     # via ipython
 pyparsing==3.2.1
     # via matplotlib
-pytest==8.3.4
+pytest==8.3.5
     # via
     #   -r basetest.in
     #   pytest-xdist
@@ -165,7 +162,7 @@ six==1.17.0
     #   python-dateutil
 sortedcontainers==2.4.0
     # via hypothesis
-spglib==2.5.0
+spglib==2.6.0
     # via
     #   euphonic
     #   seekpath
@@ -194,6 +191,7 @@ typing-extensions==4.12.2
     #   flexparser
     #   ipython
     #   pint
+    #   spglib
 urllib3==2.3.0
     # via requests
 wcwidth==0.2.13

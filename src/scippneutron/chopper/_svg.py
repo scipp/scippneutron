@@ -24,7 +24,7 @@ ${elements}
 """
 )
 _DISK_TEMPLATE = Template(
-    '<path d="${path}" fill="#e0e0e0" ' 'stroke="#a0a0a0" stroke-width="2"/>'
+    '<path d="${path}" fill="#e0e0e0" stroke="#a0a0a0" stroke-width="2"/>'
 )
 _EDGE_MARK_TEMPLATE = Template(
     '<path d="${path}" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>'
@@ -48,7 +48,7 @@ def _rotation_arrow(*, image_size: int, clockwise: bool) -> str:
     # The arrow was drawn with Inkscape at an image size of 400.
     s = image_size / 400
     flip, shift = (-1, image_size) if clockwise else (1, 0)
-    return f"""<g id="rotation-arrow" transform="matrix({flip*s},0,0,{s},{shift},20)">
+    return f"""<g id="rotation-arrow" transform="matrix({flip * s},0,0,{s},{shift},20)">
 <path fill="#606060"
  d="m 190.46289,4.140625 c -19.2285,0.9736749 -38.20846,4.7790001 -56.32617,11.292969 l 0.89453,2.490234 C 152.90409,11.497902 171.62709,7.7437179 190.5957,6.7832031 Z"/>
 <path fill="#606060" stroke-linecap="round"
@@ -228,7 +228,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
     ]
     if (beam_position := chopper.beam_position) is not None:
         elements.append(beam_pos(beam_position))
-    elements.append(f'<circle cx="{image_size/2}" cy="{image_size/2}" r="5"/>')
+    elements.append(f'<circle cx="{image_size / 2}" cy="{image_size / 2}" r="5"/>')
     return _CHOPPER_TEMPLATE.substitute(
         image_size=image_size, elements="\n".join(elements)
     )
