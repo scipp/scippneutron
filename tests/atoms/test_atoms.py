@@ -12,7 +12,7 @@ def test_atom_h() -> None:
     expected = scn.atoms.Atom(
         isotope='H',
         z=1,
-        _atomic_weight=sc.scalar(1.008, variance=0.0002, unit='Da'),
+        _atomic_weight=sc.scalar(1.008, variance=0.0002**2, unit='Da'),
         _atomic_mass=None,
     )
     assert atom == expected
@@ -23,8 +23,8 @@ def test_atom_1h() -> None:
     expected = scn.atoms.Atom(
         isotope='1H',
         z=1,
-        _atomic_weight=sc.scalar(1.008, variance=0.0002, unit='Da'),
-        _atomic_mass=sc.scalar(1.007825031898, variance=0.000000000014, unit='Da'),
+        _atomic_weight=sc.scalar(1.008, variance=0.0002**2, unit='Da'),
+        _atomic_mass=sc.scalar(1.007825031898, variance=0.000000000014**2, unit='Da'),
     )
     assert atom == expected
 
