@@ -34,6 +34,8 @@ def matlab() -> Any:
     except RuntimeError as e:
         if "No supported MATLAB" in e.args[0]:
             pytest.skip("MATLAB is unavailable")
+        else:
+            raise
 
 
 @pytest.fixture
