@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
+# Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 
 import pytest
 import scipp as sc
@@ -7,7 +7,37 @@ import scipp as sc
 import scippneutron as scn
 
 
-def test_scattering_params_h():
+def test_atom_h() -> None:
+    atom = scn.atoms.Atom.for_isotope('H')
+    expected = scn.atoms.Atom(
+        isotope='H',
+        z=1,
+        _atomic_weight=sc.scalar(1.008, variance=0.0002**2, unit='Da'),
+        _atomic_mass=None,
+    )
+    assert atom == expected
+
+
+def test_atom_1h() -> None:
+    atom = scn.atoms.Atom.for_isotope('1H')
+    expected = scn.atoms.Atom(
+        isotope='1H',
+        z=1,
+        _atomic_weight=sc.scalar(1.008, variance=0.0002**2, unit='Da'),
+        _atomic_mass=sc.scalar(1.007825031898, variance=0.000000000014**2, unit='Da'),
+    )
+    assert atom == expected
+
+
+def test_atom_mass_and_weight_are_masses() -> None:
+    # Check that the unit ('Da') is correctly parsed.
+    atom = scn.atoms.Atom.for_isotope('3He')
+    atom.atomic_weight.to(unit='kg')
+    atom.atomic_mass.to(unit='kg')
+    assert True
+
+
+def test_scattering_params_h() -> None:
     params = scn.atoms.ScatteringParams.for_isotope('H')
     expected = scn.atoms.ScatteringParams(
         isotope='H',
@@ -23,7 +53,7 @@ def test_scattering_params_h():
     assert params == expected
 
 
-def test_scattering_params_157gd():
+def test_scattering_params_157gd() -> None:
     params = scn.atoms.ScatteringParams.for_isotope('157Gd')
     expected = scn.atoms.ScatteringParams(
         isotope='157Gd',
@@ -43,6 +73,6 @@ def test_scattering_params_157gd():
     assert params == expected
 
 
-def test_scattering_params_unknown():
+def test_scattering_params_unknown() -> None:
     with pytest.raises(ValueError, match="No entry for element / isotope 'scippium'"):
         scn.atoms.ScatteringParams.for_isotope('scippium')
