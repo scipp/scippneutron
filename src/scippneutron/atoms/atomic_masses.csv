@@ -1,3 +1,4 @@
+# Numbers extracted using tools/atomic_weights.ipynb from https://www.ciaaw.org/atomic-masses.htm
 Isotope,Atomic Mass [Da],Uncertainty [Da]
 100Ag,99.916115443,0.000005367
 100Cd,99.920348829,0.000001800

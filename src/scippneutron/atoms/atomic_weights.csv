@@ -1,3 +1,4 @@
+# Numbers extracted using tools/atomic_weights.ipynb from https://www.ciaaw.org/abridged-atomic-weights.htm
 Element,Z,Atomic Weight [Da],Uncertainty [Da]
 H,1,1.008,0.0002
 He,2,4.0026,0.0001

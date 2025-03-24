@@ -201,7 +201,11 @@ def _find_line_with_isotope(isotope: str, io: TextIO) -> str | None:
 
 
 def _load_atomic_weight(element: str) -> tuple[int, sc.Variable | None]:
+    # The CSV file was extracted from https://www.ciaaw.org/abridged-atomic-weights.htm
+    # using the notebook in tools/atomic_weights.ipynb (in the ScippNeutron repo).
     with _open_bundled_parameters_file('atomic_weights.csv') as f:
+        f.readline()  # skip copyright
+        f.readline()  # skip header
         if line_remainder := _find_line_with_isotope(element, f):
             z, weight, error = line_remainder.rstrip().split(',')
             return int(z), _assemble_scalar(weight, error, 'Da')
@@ -209,7 +213,11 @@ def _load_atomic_weight(element: str) -> tuple[int, sc.Variable | None]:
 
 
 def _load_atomic_mass(isotope: str) -> sc.Variable | None:
+    # The CSV file was extracted from https://www.ciaaw.org/atomic-masses.htm
+    # using the notebook in tools/atomic_weights.ipynb (in the ScippNeutron repo).
     with _open_bundled_parameters_file('atomic_masses.csv') as f:
+        f.readline()  # skip copyright
+        f.readline()  # skip header
         if line_remainder := _find_line_with_isotope(isotope, f):
             weight, error = line_remainder.rstrip().split(',')
             return _assemble_scalar(weight, error, 'Da')
