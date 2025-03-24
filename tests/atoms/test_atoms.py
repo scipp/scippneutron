@@ -31,7 +31,7 @@ def test_atom_1h() -> None:
 
 def test_atom_mass_and_weight_are_masses() -> None:
     # Check that the unit ('Da') is correctly parsed.
-    atom = scn.atoms.atom.for_isotope('3He')
+    atom = scn.atoms.Atom.for_isotope('3He')
     atom.atomic_weight.to(unit='kg')
     atom.atomic_mass.to(unit='kg')
     assert True
