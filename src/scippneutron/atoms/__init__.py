@@ -42,7 +42,7 @@ class Atom:
                 "This likely means that there is no standard atomic weight "
                 "for this element."
             )
-        return self._atomic_weight
+        return self._atomic_weight.copy()
 
     @property
     def atomic_mass(self) -> sc.Variable:
@@ -53,7 +53,7 @@ class Atom:
                 "This likely means that you specified an element name, not a specific "
                 "isotope; atomic masses are only defined for isotopes / nuclides."
             )
-        return self._atomic_mass
+        return self._atomic_mass.copy()
 
     def __eq__(self, other: object) -> bool | type(NotImplemented):
         if not isinstance(other, Atom):
