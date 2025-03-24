@@ -23,7 +23,17 @@ del importlib
 
 import lazy_loader as lazy
 
-submodules = ['atomschopper', 'io', 'conversion']
+submodules = [
+    'absorption',
+    'atoms',
+    'chopper',
+    'io',
+    'conversion',
+    'data',
+    'metadata',
+    'peaks',
+    'tof',
+]
 
 __getattr__, __dir__, __all__ = lazy.attach(
     __name__,
