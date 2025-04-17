@@ -50,7 +50,7 @@ packaging==24.2
     #   matplotlib
 pillow==11.1.0
     # via matplotlib
-plopp==25.3.0
+plopp==25.4.0
     # via -r base.in
 pydantic==2.10.6
     # via -r base.in
