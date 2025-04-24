@@ -312,6 +312,37 @@ def wavelength_from_energy(*, energy: Variable) -> Variable:
     return sc.sqrt(c / energy)
 
 
+def wavevector_from_wavelength(*, wavelength: Variable, beam: Variable) -> Variable:
+    r"""Compute a wavevector from a wavelength.
+
+    The result is
+
+    .. math::
+
+        Q = 2 \pi \frac{\hat{b}}{\lambda}
+
+    where :math:`\hat{b}` is the normalized beam vector.
+
+    Parameters
+    ----------
+    wavelength:
+        De Broglie wavelength :math:`\lambda`.
+    beam:
+        The direction the neutron travels :math:`\vec{b}`.
+        It does not have to be normalized.
+
+    Returns
+    -------
+    :
+        Wavevector :math:`k`.
+        Has unit 1/ångström.
+    """
+    c = sc.scalar(2 * np.pi).to(
+        unit=elem_unit(wavelength) / sc.units.angstrom,
+    )
+    return c * (beam / sc.norm(beam)) / wavelength
+
+
 def _wavelength_Q_conversions(x: Variable, two_theta: Variable) -> Variable:
     """Convert either from Q to wavelength or vice-versa."""
     c = as_float_type(4 * const.pi, x)

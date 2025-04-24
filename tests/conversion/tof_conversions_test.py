@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
-# @author Jan-Lukas Wynen
+# Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 
 import numpy as np
 import pytest
@@ -66,6 +65,13 @@ def time_variables():
     return simple_variables(
         dims=st.sampled_from(('time', 't', 'tof')),
         unit=st.sampled_from(('s', 'ms', 'us')),
+    )
+
+
+def wavelength_variables():
+    return simple_variables(
+        dims=st.sampled_from(('wavelength', 'lambda', 'tof')),
+        unit=st.sampled_from(('angstrom', 'mÅ', 'nm')),
     )
 
 
@@ -144,6 +150,17 @@ def test_wavelength_from_tof_single_precision(Ltotal_dtype):
     tof = sc.scalar(1.2, unit='s', dtype='float32')
     Ltotal = sc.scalar(10.1, unit='m', dtype=Ltotal_dtype)
     assert tof_conv.wavelength_from_tof(tof=tof, Ltotal=Ltotal).dtype == 'float32'
+
+
+@given(wavelength=wavelength_variables(), beam=vector_variables())
+@settings(**global_settings)
+def test_wavevector_from_wavelength(wavelength: sc.Variable, beam: sc.Variable) -> None:
+    wavevector = tof_conv.wavevector_from_wavelength(wavelength=wavelength, beam=beam)
+    naive = sc.to_unit(
+        2 * np.pi * beam / sc.norm(beam) / wavelength,
+        '1/angstrom',
+    )
+    sc.testing.assert_allclose(wavevector, naive)
 
 
 @given(
