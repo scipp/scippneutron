@@ -321,6 +321,10 @@ def _wavelength_Q_conversions(x: Variable, two_theta: Variable) -> Variable:
 def Q_from_wavelength(*, wavelength: Variable, two_theta: Variable) -> Variable:
     r"""Compute the absolute value of the momentum transfer from wavelength.
 
+    Attention
+    ---------
+        :math:`Q` as defined here is the momentum transfer for **elastic** scattering.
+
     The result is
 
     .. math::
@@ -349,6 +353,10 @@ def Q_from_wavelength(*, wavelength: Variable, two_theta: Variable) -> Variable:
 
 def wavelength_from_Q(*, Q: Variable, two_theta: Variable) -> Variable:
     r"""Compute the wavelength from momentum transfer.
+
+    Attention
+    ---------
+        :math:`Q` as defined here is the momentum transfer for **elastic** scattering.
 
     The result is the de Broglie wavelength
 
@@ -383,6 +391,10 @@ def Q_elements_from_wavelength(
     *, wavelength: Variable, incident_beam: Variable, scattered_beam: Variable
 ) -> dict[str, Variable]:
     r"""Compute them momentum transfer vector from wavelength.
+
+    Attention
+    ---------
+        :math:`Q` as defined here is the momentum transfer for **elastic** scattering.
 
     Computes the three components of the Q-vector :math:`Q_x, Q_y, Q_z`
     separately using
