@@ -312,14 +312,49 @@ def wavelength_from_energy(*, energy: Variable) -> Variable:
     return sc.sqrt(c / energy)
 
 
-def _wavelength_Q_conversions(x: Variable, two_theta: Variable) -> Variable:
-    """Convert either from Q to wavelength or vice-versa."""
+def wavevector_from_wavelength(*, wavelength: Variable, beam: Variable) -> Variable:
+    r"""Compute a wavevector from a wavelength.
+
+    The result is
+
+    .. math::
+
+        Q = 2 \pi \frac{\hat{b}}{\lambda}
+
+    where :math:`\hat{b}` is the normalized beam vector.
+
+    Parameters
+    ----------
+    wavelength:
+        De Broglie wavelength :math:`\lambda`.
+    beam:
+        The direction the neutron travels :math:`\vec{b}`.
+        It does not have to be normalized.
+
+    Returns
+    -------
+    :
+        Wavevector :math:`k`.
+        Has unit 1/ångström.
+    """
+    c = sc.scalar(2 * np.pi).to(
+        unit=elem_unit(wavelength) / sc.units.angstrom,
+    )
+    return c * (beam / sc.norm(beam)) / wavelength
+
+
+def _wavelength_elastic_Q_conversions(x: Variable, two_theta: Variable) -> Variable:
+    """Convert either from elastic Q to wavelength or vice-versa."""
     c = as_float_type(4 * const.pi, x)
     return c * sc.sin(as_float_type(two_theta, x) / 2) / x
 
 
-def Q_from_wavelength(*, wavelength: Variable, two_theta: Variable) -> Variable:
-    r"""Compute the absolute value of the momentum transfer from wavelength.
+def elastic_Q_from_wavelength(*, wavelength: Variable, two_theta: Variable) -> Variable:
+    r"""Compute the absolute value of the elastic momentum transfer from wavelength.
+
+    Attention
+    ---------
+        :math:`Q` as defined here is the momentum transfer for **elastic** scattering.
 
     The result is
 
@@ -344,11 +379,15 @@ def Q_from_wavelength(*, wavelength: Variable, two_theta: Variable) -> Variable:
     scippneutron.conversions.beamline:
         Definition of ``two_theta``.
     """
-    return _wavelength_Q_conversions(wavelength, two_theta)
+    return _wavelength_elastic_Q_conversions(wavelength, two_theta)
 
 
 def wavelength_from_Q(*, Q: Variable, two_theta: Variable) -> Variable:
     r"""Compute the wavelength from momentum transfer.
+
+    Attention
+    ---------
+        :math:`Q` as defined here is the momentum transfer for **elastic** scattering.
 
     The result is the de Broglie wavelength
 
@@ -375,14 +414,18 @@ def wavelength_from_Q(*, Q: Variable, two_theta: Variable) -> Variable:
         Definition of ``two_theta``.
     """
     return sc.to_unit(
-        _wavelength_Q_conversions(Q, two_theta), unit='angstrom', copy=False
+        _wavelength_elastic_Q_conversions(Q, two_theta), unit='angstrom', copy=False
     )
 
 
-def Q_elements_from_wavelength(
+def elastic_Q_elements_from_wavelength(
     *, wavelength: Variable, incident_beam: Variable, scattered_beam: Variable
 ) -> dict[str, Variable]:
-    r"""Compute them momentum transfer vector from wavelength.
+    r"""Compute the elastic momentum transfer vector from wavelength.
+
+    Attention
+    ---------
+        :math:`Q` as defined here is the momentum transfer for **elastic** scattering.
 
     Computes the three components of the Q-vector :math:`Q_x, Q_y, Q_z`
     separately using
@@ -499,8 +542,10 @@ def dspacing_from_energy(*, energy: Variable, two_theta: Variable) -> Variable:
     return sc.sqrt(c / energy) / sc.sin(as_float_type(two_theta, energy) / 2)
 
 
-def Q_vec_from_Q_elements(*, Qx: Variable, Qy: Variable, Qz: Variable) -> Variable:
-    """Combine elements of Q into a single vector variable.
+def elastic_Q_vec_from_Q_elements(
+    *, Qx: Variable, Qy: Variable, Qz: Variable
+) -> Variable:
+    """Combine elements of elastic momentum transfer into a single vector variable.
 
     Parameters
     ----------
@@ -549,10 +594,10 @@ def ub_matrix_from_u_and_b(*, u_matrix: Variable, b_matrix: Variable) -> Variabl
     return u_matrix * b_matrix
 
 
-def hkl_vec_from_Q_vec(
+def hkl_vec_from_elastic_Q_vec(
     *, Q_vec: Variable, ub_matrix: Variable, sample_rotation: Variable
 ) -> Variable:
-    r"""Compute hkl indices from momentum transfer.
+    r"""Compute hkl indices from elastic momentum transfer.
 
     The hkl indices define the components of the momentum transfer in the
     sample coordinate system

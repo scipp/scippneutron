@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
-# @author Jan-Lukas Wynen
+# Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 
 import numpy as np
 import pytest
@@ -66,6 +65,13 @@ def time_variables():
     return simple_variables(
         dims=st.sampled_from(('time', 't', 'tof')),
         unit=st.sampled_from(('s', 'ms', 'us')),
+    )
+
+
+def wavelength_variables():
+    return simple_variables(
+        dims=st.sampled_from(('wavelength', 'lambda', 'tof')),
+        unit=st.sampled_from(('angstrom', 'mÅ', 'nm')),
     )
 
 
@@ -144,6 +150,17 @@ def test_wavelength_from_tof_single_precision(Ltotal_dtype):
     tof = sc.scalar(1.2, unit='s', dtype='float32')
     Ltotal = sc.scalar(10.1, unit='m', dtype=Ltotal_dtype)
     assert tof_conv.wavelength_from_tof(tof=tof, Ltotal=Ltotal).dtype == 'float32'
+
+
+@given(wavelength=wavelength_variables(), beam=vector_variables())
+@settings(**global_settings)
+def test_wavevector_from_wavelength(wavelength: sc.Variable, beam: sc.Variable) -> None:
+    wavevector = tof_conv.wavevector_from_wavelength(wavelength=wavelength, beam=beam)
+    naive = sc.to_unit(
+        2 * np.pi * beam / sc.norm(beam) / wavelength,
+        '1/angstrom',
+    )
+    sc.testing.assert_allclose(wavevector, naive)
 
 
 @given(
@@ -310,35 +327,39 @@ def test_wavelength_from_energy_single_precision():
 
 @given(wavelength=space_variables(), two_theta=angle_variables())
 @settings(**global_settings)
-def test_Q_from_wavelength(wavelength, two_theta):
-    Q = tof_conv.Q_from_wavelength(wavelength=wavelength, two_theta=two_theta)
+def test_elastic_Q_from_wavelength(wavelength, two_theta):
+    Q = tof_conv.elastic_Q_from_wavelength(wavelength=wavelength, two_theta=two_theta)
     assert sc.allclose(Q, 4 * np.pi * sc.sin(two_theta / 2) / wavelength)
 
 
 @pytest.mark.parametrize('wavelength_dtype', ['float64', 'int64'])
 @pytest.mark.parametrize('two_theta_dtype', ['float64', 'float32', 'int64'])
-def test_Q_from_wavelength_double_precision(wavelength_dtype, two_theta_dtype):
+def test_elastic_Q_from_wavelength_double_precision(wavelength_dtype, two_theta_dtype):
     wavelength = sc.scalar(3.51, unit='s', dtype=wavelength_dtype)
     two_theta = sc.scalar(0.041, unit='deg', dtype=two_theta_dtype)
     assert (
-        tof_conv.Q_from_wavelength(wavelength=wavelength, two_theta=two_theta).dtype
+        tof_conv.elastic_Q_from_wavelength(
+            wavelength=wavelength, two_theta=two_theta
+        ).dtype
         == 'float64'
     )
 
 
 @pytest.mark.parametrize('two_theta_dtype', ['float64', 'float32', 'int64'])
-def test_Q_from_wavelength_single_precision(two_theta_dtype):
+def test_elastic_Q_from_wavelength_single_precision(two_theta_dtype):
     wavelength = sc.scalar(3.51, unit='s', dtype='float32')
     two_theta = sc.scalar(0.041, unit='deg', dtype=two_theta_dtype)
     assert (
-        tof_conv.Q_from_wavelength(wavelength=wavelength, two_theta=two_theta).dtype
+        tof_conv.elastic_Q_from_wavelength(
+            wavelength=wavelength, two_theta=two_theta
+        ).dtype
         == 'float32'
     )
 
 
 @given(Q=space_variables(), two_theta=angle_variables())
 @settings(**global_settings)
-def test_wavelength_from_Q(Q, two_theta):
+def test_wavelength_from_elastic_Q(Q, two_theta):
     Q.unit = f'1/{Q.unit}'
     wavelength = tof_conv.wavelength_from_Q(Q=Q, two_theta=two_theta)
     assert sc.allclose(
@@ -348,14 +369,14 @@ def test_wavelength_from_Q(Q, two_theta):
 
 @pytest.mark.parametrize('Q_dtype', ['float64', 'int64'])
 @pytest.mark.parametrize('two_theta_dtype', ['float64', 'float32', 'int64'])
-def test_wavelength_from_Q_double_precision(Q_dtype, two_theta_dtype):
+def test_wavelength_from_elastic_Q_double_precision(Q_dtype, two_theta_dtype):
     Q = sc.scalar(4.151, unit='1/nm', dtype=Q_dtype)
     two_theta = sc.scalar(5.71, unit='deg', dtype=two_theta_dtype)
     assert tof_conv.wavelength_from_Q(Q=Q, two_theta=two_theta).dtype == 'float64'
 
 
 @pytest.mark.parametrize('two_theta_dtype', ['float64', 'float32', 'int64'])
-def test_wavelength_from_Q_single_precision(two_theta_dtype):
+def test_wavelength_from_elastic_Q_single_precision(two_theta_dtype):
     Q = sc.scalar(4.151, unit='1/nm', dtype='float32')
     two_theta = sc.scalar(5.71, unit='deg', dtype=two_theta_dtype)
     assert tof_conv.wavelength_from_Q(Q=Q, two_theta=two_theta).dtype == 'float32'
@@ -363,9 +384,9 @@ def test_wavelength_from_Q_single_precision(two_theta_dtype):
 
 @given(incident_beam=vector_variables(), wavelength=space_variables())
 @settings(**global_settings)
-def test_Q_elements_from_wavelength_equal_beams(incident_beam, wavelength):
+def test_elastic_Q_elements_from_wavelength_equal_beams(incident_beam, wavelength):
     scattered_beam = incident_beam.copy()
-    Q_elements = tof_conv.Q_elements_from_wavelength(
+    Q_elements = tof_conv.elastic_Q_elements_from_wavelength(
         wavelength=wavelength,
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
@@ -382,18 +403,18 @@ def test_Q_elements_from_wavelength_equal_beams(incident_beam, wavelength):
     wavelength=space_variables(),
 )
 @settings(**global_settings)
-def test_Q_elements_from_wavelength_consistent_with_Q(
+def test_elastic_Q_elements_from_wavelength_consistent_with_Q(
     incident_beam, scattered_beam, wavelength
 ):
     wavelength = wavelength.rename({wavelength.dim: 'wavelength'})
-    Q_elements = tof_conv.Q_elements_from_wavelength(
+    Q_elements = tof_conv.elastic_Q_elements_from_wavelength(
         wavelength=wavelength,
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
     )
     Qx, Qy, Qz = Q_elements['Qx'], Q_elements['Qy'], Q_elements['Qz']
     Q_vec = sc.spatial.as_vectors(Qx, Qy, Qz)
-    Q = tof_conv.Q_from_wavelength(
+    Q = tof_conv.elastic_Q_from_wavelength(
         wavelength=wavelength,
         two_theta=beamline_conv.two_theta(
             incident_beam=incident_beam, scattered_beam=scattered_beam
@@ -402,7 +423,7 @@ def test_Q_elements_from_wavelength_consistent_with_Q(
     assert sc.allclose(sc.norm(Q_vec), Q)
 
 
-def test_Q_elements_from_wavelength():
+def test_elastic_Q_elements_from_wavelength():
     incident_beam = sc.vector([0.0, 0.0, 10.0], unit='m')
     scattered_beam = sc.vectors(
         dims=['pos'],
@@ -410,7 +431,7 @@ def test_Q_elements_from_wavelength():
         unit='cm',
     )
     wavelength = sc.array(dims=['wavelength'], values=[0.3, 2.0], unit='angstrom')
-    Q_elements = tof_conv.Q_elements_from_wavelength(
+    Q_elements = tof_conv.elastic_Q_elements_from_wavelength(
         wavelength=wavelength,
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
@@ -502,41 +523,41 @@ def test_dspacing_from_energy_single_precision(two_theta_dtype):
     )
 
 
-def test_q_vec_from_q_elements():
+def test_elastic_q_vec_from_q_elements():
     Qx, Qy, Qz = (
         sc.array(dims=['Q'], values=[2.1 * i, i / 3], unit='1/angstrom')
         for i in range(3)
     )
-    q_vec = tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+    q_vec = tof_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
     sc.testing.assert_identical(q_vec.fields.x, Qx)
     sc.testing.assert_identical(q_vec.fields.y, Qy)
     sc.testing.assert_identical(q_vec.fields.z, Qz)
 
 
-def test_q_vec_from_q_elements_raises_for_shape_mismatch():
+def test_elastic_q_vec_from_q_elements_raises_for_shape_mismatch():
     Qx = sc.array(dims=['q'], values=[2.0, 3.0])
     Qy = Qx.copy()
     Qz = sc.array(dims=['q'], values=[2.0, 3.0, 4.0])
     with pytest.raises(sc.DimensionError):
-        tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+        tof_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
 
 
-def test_q_vec_from_q_elements_raises_for_dim_mismatch():
+def test_elastic_q_vec_from_q_elements_raises_for_dim_mismatch():
     Qx = sc.array(dims=['q'], values=[2.0, 3.0])
     Qy = Qx.copy()
     Qz = sc.array(dims=['Q'], values=[2.0, 3.0])
     with pytest.raises(sc.DimensionError):
-        tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+        tof_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
 
 
-def test_q_vec_from_q_elements_raises_for_unit_mismatch():
+def test_elastic_q_vec_from_q_elements_raises_for_unit_mismatch():
     Qx, Qy, Qz = (
         sc.array(dims=['Q'], values=[2.1 * i, i / 3], unit='1/angstrom')
         for i in range(3)
     )
     Qy.unit = '1/m'
     with pytest.raises(sc.UnitError):
-        tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+        tof_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
 
 
 def make_b_matrix() -> sc.Variable:
@@ -576,9 +597,9 @@ def test_ub_matrix_from_u_and_b():
 
 
 @given(inv_q=n_space_variables(3))
-def test_hkl_vec_from_Q_vec(inv_q):
+def test_hkl_vec_from_elastic_Q_vec(inv_q):
     Qx, Qy, Qz = (sc.reciprocal(x.to(dtype='float64')) for x in inv_q)
-    Q_vec = tof_conv.Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+    Q_vec = tof_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
 
     b_matrix = make_b_matrix()
     u_coeffs = np.array([0.5, 0.1, -0.4, 0.9])
@@ -590,7 +611,7 @@ def test_hkl_vec_from_Q_vec(inv_q):
         value=sample_rotation_coeffs / np.linalg.norm(sample_rotation_coeffs)
     )
 
-    hkl_vec = tof_conv.hkl_vec_from_Q_vec(
+    hkl_vec = tof_conv.hkl_vec_from_elastic_Q_vec(
         Q_vec=Q_vec, ub_matrix=ub_matrix, sample_rotation=sample_rotation_matrix
     )
 
