@@ -1,6 +1,10 @@
 # User Guide
 
 ```{toctree}
+---
+maxdepth: 1
+---
+
 installation
 chopper/index
 coordinate-transformations
@@ -12,3 +16,4 @@ masking-tool
 algorithms-background/index
 absorption-correction
 ```
+

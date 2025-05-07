@@ -293,10 +293,11 @@ linkcheck_ignore = [
     'https://github.com/scipp/scipp/pull/[0-9]+',
     # This returns '403 Forbidden' but the link works in a browser.
     'https://opensource.org/licenses/BSD-3-Clause',
-    # This returns '403 Forbidden' but the link works in a browser.
-    'https://doi.org/10.1080/10448639208218770',
     # We get 403 Forbidden for this for some reason; works in a browser, though.
     'https://support.orcid.org/hc/en-us/articles/360006897674-Structure-of-the-ORCID-Identifier',
+    # Linkcheck seems to be denied access by some DOI resolvers.
+    # Since DOIs are supposed to be permanent, we don't need to check them.'
+    r'https://doi\.org/',
 ]
 
 # -- Options for bibtex ---------------------------------------------------

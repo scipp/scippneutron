@@ -35,7 +35,7 @@ dependencies:
   # docs
   - myst-parser==4.0.0
   - nbsphinx==0.9.5
-  - packaging==24.1
+  - packaging==25.0
   - pandoc==3.4.0
   - pydata-sphinx-theme==0.16.0
   - sphinx==8.1.3

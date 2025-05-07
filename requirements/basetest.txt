@@ -96,7 +96,7 @@ numpy==2.2.3
     #   spglib
 pace-neutrons==0.4.0
     # via -r basetest.in
-packaging==24.2
+packaging==25.0
     # via
     #   euphonic
     #   matplotlib

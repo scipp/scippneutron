@@ -44,7 +44,7 @@ numpy==2.2.3
     #   mpltoolbox
     #   scipp
     #   scipy
-packaging==24.2
+packaging==25.0
     # via
     #   lazy-loader
     #   matplotlib
