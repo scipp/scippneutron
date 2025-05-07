@@ -23,10 +23,10 @@
 
 # {transparent}`ScippNeutron`
 
-<span style="font-size:1.2em;font-style:italic;color:var(--pst-color-text-muted)">
+<div style="font-size:1.2em;font-style:italic;color:var(--pst-color-text-muted);text-align:center;">
   Neutron scattering tools for Data Reduction
   </br></br>
-</span>
+</div>
 
 :::{include} user-guide/installation.md
 :heading-offset: 1
@@ -35,15 +35,6 @@
 ## Get in touch
 
 - If you have questions that are not answered by these documentation pages, ask on [discussions](https://github.com/scipp/scippneutron/discussions). Please include a self-contained reproducible example if possible.
-- Report bugs (including unclear, missing, or wrong documentation!), suggest features or view the source code [on GitHub](https://github.com/scipp/scippneutron).
-
-:::{include} user-guide/installation.md
-:heading-offset: 1
-:::
-
-## Get in touch
-
-- If you have questions that are not answered by these documentation pages, ask on [GitHub discussions](https://github.com/orgs/scipp/discussions). Please include a self-contained reproducible example if possible.
 - Report bugs (including unclear, missing, or wrong documentation!), suggest features or view the source code [on GitHub](https://github.com/scipp/scippneutron).
 
 ```{toctree}
