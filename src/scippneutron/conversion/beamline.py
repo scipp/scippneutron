@@ -274,7 +274,7 @@ def total_straight_beam_length_no_scatter(
     :
         :math:`L_\\mathsf{total}`
     """
-    return sc.norm(position - source_position)
+    return sc.norm(position - source_position.to(unit=position.unit, copy=False))
 
 
 def two_theta(
