@@ -93,6 +93,17 @@ def test_total_straight_beam_length_no_scatter():
     )
 
 
+def test_total_straight_beam_length_no_scatter_source_position_unit_is_converted():
+    position = sc.vectors(dims=['po'], values=[[1, 2, 3], [4, 5, 6]], unit='m')
+    source_position = sc.vector([0.1, 0.2, 0.3], unit='m').to(unit='mm')
+    Ltotal = beamline.total_straight_beam_length_no_scatter(
+        source_position=source_position, position=position
+    )
+    sc.testing.assert_allclose(
+        Ltotal, sc.array(dims=['po'], values=[3.367491648096, 8.410707461325], unit='m')
+    )
+
+
 def test_two_theta_arbitrary_values():
     incident_beam = sc.vector([0.564, 1.2, -10.4], unit='m')
     scattered_beam = sc.vectors(
