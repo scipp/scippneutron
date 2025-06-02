@@ -291,10 +291,10 @@ linkcheck_ignore = [
     r'https?://github\.com/[^/]+/[^/]+\#',
     # Many links for PRs from our release notes. Slow and unlikely to cause issues.
     'https://github.com/scipp/scipp/pull/[0-9]+',
-    # This returns '403 Forbidden' but the link works in a browser.
-    'https://opensource.org/licenses/BSD-3-Clause',
-    # We get 403 Forbidden for this for some reason; works in a browser, though.
-    'https://support.orcid.org/hc/en-us/articles/360006897674-Structure-of-the-ORCID-Identifier',
+    # These return '403 Forbidden':
+    r'https://opensource\.org/licenses/BSD-3-Clause',
+    r'https://support\.orcid\.org/hc/en-us/articles/360006897674-Structure-of-the-ORCID-Identifier',
+    r'https://www\.iucr\.org',
     # Linkcheck seems to be denied access by some DOI resolvers.
     # Since DOIs are supposed to be permanent, we don't need to check them.'
     r'https://doi\.org/',
