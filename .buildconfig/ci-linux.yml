@@ -47,3 +47,6 @@ dependencies:
 
   # docs and tests
   - sciline==24.10.0
+
+  # Temporary pin, see https://github.com/mantidproject/mantid/issues/39393
+  - muparser==2.3.4
