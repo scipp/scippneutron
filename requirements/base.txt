@@ -67,7 +67,7 @@ scipp==25.5.1
     # via
     #   -r base.in
     #   scippnexus
-scippnexus==25.4.0
+scippnexus==25.6.0
     # via -r base.in
 scipy==1.15.2
     # via
