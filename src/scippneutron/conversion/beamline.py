@@ -548,6 +548,8 @@ def scattering_angles_with_gravity(
         Ignores the ``x`` component when computing ``theta``.
         This is used in reflectometry.
     """
+    incident_beam = _canonical_length(incident_beam)
+    scattered_beam = _canonical_length(scattered_beam)
     if sc.any(
         abs(sc.dot(gravity, incident_beam))
         > sc.scalar(1e-10, unit=incident_beam.unit) * sc.norm(gravity)
