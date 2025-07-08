@@ -117,6 +117,11 @@ from scipp.typing import VariableLike
 from .._utils import elem_dtype, elem_unit
 
 
+def _canonical_length(var: VariableLike) -> VariableLike:
+    """Convert a beam length to the canonical unit (meter)."""
+    return var.to(unit='m', copy=False)
+
+
 def L1(*, incident_beam: VariableLike) -> VariableLike:
     """Compute the length of the incident beam.
 
@@ -141,7 +146,7 @@ def L1(*, incident_beam: VariableLike) -> VariableLike:
     straight_incident_beam:
         Compute the incident beam for a straight beamline.
     """
-    return sc.norm(incident_beam)
+    return sc.norm(_canonical_length(incident_beam))
 
 
 def L2(*, scattered_beam: VariableLike) -> VariableLike:
@@ -168,7 +173,7 @@ def L2(*, scattered_beam: VariableLike) -> VariableLike:
     straight_scattered_beam:
         Compute the scattered beam for a straight beamline.
     """
-    return sc.norm(scattered_beam)
+    return sc.norm(_canonical_length(scattered_beam))
 
 
 def straight_incident_beam(
@@ -196,7 +201,7 @@ def straight_incident_beam(
     :
         ``incident_beam``
     """
-    return sample_position - source_position
+    return _canonical_length(sample_position - source_position)
 
 
 def straight_scattered_beam(
@@ -223,7 +228,7 @@ def straight_scattered_beam(
     :
         ``scattered_beam``
     """
-    return position - sample_position
+    return _canonical_length(position) - _canonical_length(sample_position)
 
 
 def total_beam_length(*, L1: VariableLike, L2: VariableLike) -> VariableLike:
@@ -247,7 +252,7 @@ def total_beam_length(*, L1: VariableLike, L2: VariableLike) -> VariableLike:
     :
         :math:`L_\\mathsf{total}`
     """
-    return L1 + L2
+    return _canonical_length(L1 + L2)
 
 
 def total_straight_beam_length_no_scatter(
@@ -274,7 +279,7 @@ def total_straight_beam_length_no_scatter(
     :
         :math:`L_\\mathsf{total}`
     """
-    return sc.norm(position - source_position.to(unit=position.unit, copy=False))
+    return sc.norm(_canonical_length(position) - _canonical_length(source_position))
 
 
 def two_theta(
