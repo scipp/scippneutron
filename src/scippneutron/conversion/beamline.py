@@ -146,7 +146,7 @@ def L1(*, incident_beam: VariableLike) -> VariableLike:
     straight_incident_beam:
         Compute the incident beam for a straight beamline.
     """
-    return sc.norm(_canonical_length(incident_beam))
+    return _canonical_length(sc.norm(incident_beam))
 
 
 def L2(*, scattered_beam: VariableLike) -> VariableLike:
@@ -173,7 +173,7 @@ def L2(*, scattered_beam: VariableLike) -> VariableLike:
     straight_scattered_beam:
         Compute the scattered beam for a straight beamline.
     """
-    return sc.norm(_canonical_length(scattered_beam))
+    return _canonical_length(sc.norm(scattered_beam))
 
 
 def straight_incident_beam(
@@ -201,7 +201,7 @@ def straight_incident_beam(
     :
         ``incident_beam``
     """
-    return _canonical_length(sample_position - source_position)
+    return _canonical_length(sample_position) - _canonical_length(source_position)
 
 
 def straight_scattered_beam(
@@ -252,7 +252,7 @@ def total_beam_length(*, L1: VariableLike, L2: VariableLike) -> VariableLike:
     :
         :math:`L_\\mathsf{total}`
     """
-    return _canonical_length(L1 + L2)
+    return _canonical_length(L1) + _canonical_length(L2)
 
 
 def total_straight_beam_length_no_scatter(
