@@ -35,7 +35,9 @@ def test_straight_incident_beam():
     )
     sc.testing.assert_allclose(
         incident_beam,
-        sc.vectors(dims=['siti'], values=[[-33, -75, -17], [-23, -5, -47]], unit='mm'),
+        sc.vectors(
+            dims=['siti'], values=[[-33, -75, -17], [-23, -5, -47]], unit='mm'
+        ).to(unit='m'),
     )
 
 
@@ -47,7 +49,9 @@ def test_straight_scattered_beam():
     )
     sc.testing.assert_allclose(
         scattered_beam,
-        sc.vectors(dims=['on'], values=[[5.6, 2.4, 8.8], [7.6, 2.4, 0.8]], unit='km'),
+        sc.vectors(
+            dims=['on'], values=[[5.6, 2.4, 8.8], [7.6, 2.4, 0.8]], unit='km'
+        ).to(unit='m'),
     )
 
 
@@ -57,7 +61,10 @@ def test_L1():
     )
     L1 = beamline.L1(incident_beam=incident_beam)
     sc.testing.assert_allclose(
-        L1, sc.array(dims=['inc'], values=[1.870828693386, 1.122497216032], unit='um')
+        L1,
+        sc.array(dims=['inc'], values=[1.870828693386, 1.122497216032], unit='um').to(
+            unit='m'
+        ),
     )
 
 
@@ -68,7 +75,9 @@ def test_L2():
     L2 = beamline.L2(scattered_beam=scattered_beam)
     sc.testing.assert_allclose(
         L2,
-        sc.array(dims=['scat'], values=[41.158231254513, 146.321563687653], unit='am'),
+        sc.array(
+            dims=['scat'], values=[41.158231254513, 146.321563687653], unit='am'
+        ).to(unit='m'),
     )
 
 
@@ -78,7 +87,9 @@ def test_total_beam_length():
     Ltotal = beamline.total_beam_length(L1=L1, L2=L2)
     sc.testing.assert_allclose(
         Ltotal,
-        sc.array(dims=['secondary'], values=[8.27559, 47.134, 1004.134], unit='cm'),
+        sc.array(dims=['secondary'], values=[8.27559, 47.134, 1004.134], unit='cm').to(
+            unit='m'
+        ),
     )
 
 
@@ -672,7 +683,7 @@ def test_scattering_angles_with_gravity_supports_mismatching_units(g: list[float
     sc.testing.assert_allclose(
         res['two_theta'], expected['two_theta'], rtol=sc.scalar(1e-6)
     )
-    sc.testing.assert_allclose(res['phi'], expected['phi'])
+    sc.testing.assert_allclose(res['phi'], expected['phi'], rtol=sc.scalar(1e-6))
 
 
 @given(rotation=rotations())

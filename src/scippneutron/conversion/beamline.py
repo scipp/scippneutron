@@ -117,6 +117,11 @@ from scipp.typing import VariableLike
 from .._utils import elem_dtype, elem_unit
 
 
+def _canonical_length(var: VariableLike) -> VariableLike:
+    """Convert a beam length to the canonical unit (meter)."""
+    return var.to(unit='m', copy=False)
+
+
 def L1(*, incident_beam: VariableLike) -> VariableLike:
     """Compute the length of the incident beam.
 
@@ -141,7 +146,7 @@ def L1(*, incident_beam: VariableLike) -> VariableLike:
     straight_incident_beam:
         Compute the incident beam for a straight beamline.
     """
-    return sc.norm(incident_beam)
+    return _canonical_length(sc.norm(incident_beam))
 
 
 def L2(*, scattered_beam: VariableLike) -> VariableLike:
@@ -168,7 +173,7 @@ def L2(*, scattered_beam: VariableLike) -> VariableLike:
     straight_scattered_beam:
         Compute the scattered beam for a straight beamline.
     """
-    return sc.norm(scattered_beam)
+    return _canonical_length(sc.norm(scattered_beam))
 
 
 def straight_incident_beam(
@@ -196,7 +201,7 @@ def straight_incident_beam(
     :
         ``incident_beam``
     """
-    return sample_position - source_position
+    return _canonical_length(sample_position) - _canonical_length(source_position)
 
 
 def straight_scattered_beam(
@@ -223,7 +228,7 @@ def straight_scattered_beam(
     :
         ``scattered_beam``
     """
-    return position - sample_position
+    return _canonical_length(position) - _canonical_length(sample_position)
 
 
 def total_beam_length(*, L1: VariableLike, L2: VariableLike) -> VariableLike:
@@ -247,7 +252,7 @@ def total_beam_length(*, L1: VariableLike, L2: VariableLike) -> VariableLike:
     :
         :math:`L_\\mathsf{total}`
     """
-    return L1 + L2
+    return _canonical_length(L1) + _canonical_length(L2)
 
 
 def total_straight_beam_length_no_scatter(
@@ -274,7 +279,7 @@ def total_straight_beam_length_no_scatter(
     :
         :math:`L_\\mathsf{total}`
     """
-    return sc.norm(position - source_position.to(unit=position.unit, copy=False))
+    return sc.norm(_canonical_length(position) - _canonical_length(source_position))
 
 
 def two_theta(
@@ -324,6 +329,8 @@ def two_theta(
     # and 'it never errs by more than a modest multiple of epsilon'
     # where 'epsilon is the roundoff threshold for individual arithmetic
     # operations'.
+    incident_beam = _canonical_length(incident_beam)
+    scattered_beam = _canonical_length(scattered_beam)
     b1 = incident_beam / L1(incident_beam=incident_beam)
     b2 = scattered_beam / L2(scattered_beam=scattered_beam)
 
@@ -543,6 +550,8 @@ def scattering_angles_with_gravity(
         Ignores the ``x`` component when computing ``theta``.
         This is used in reflectometry.
     """
+    incident_beam = _canonical_length(incident_beam)
+    scattered_beam = _canonical_length(scattered_beam)
     if sc.any(
         abs(sc.dot(gravity, incident_beam))
         > sc.scalar(1e-10, unit=incident_beam.unit) * sc.norm(gravity)
