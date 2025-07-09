@@ -329,6 +329,8 @@ def two_theta(
     # and 'it never errs by more than a modest multiple of epsilon'
     # where 'epsilon is the roundoff threshold for individual arithmetic
     # operations'.
+    incident_beam = _canonical_length(incident_beam)
+    scattered_beam = _canonical_length(scattered_beam)
     b1 = incident_beam / L1(incident_beam=incident_beam)
     b2 = scattered_beam / L2(scattered_beam=scattered_beam)
 
