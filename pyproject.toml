@@ -31,31 +31,31 @@ dynamic = ["version"]
 # Run 'tox -e deps' after making changes here. This will update requirement files.
 # Make sure to list one dependency per line.
 dependencies = [
-    "python-dateutil",
+    "python-dateutil>=2.8",
     "email-validator>=2",
-    "h5py",
-    "lazy_loader",
-    "mpltoolbox",
+    "h5py>=3.12",
+    "lazy_loader>=0.4",
+    "mpltoolbox>=24.6.0",
     "numpy>=1.20",
     "plopp>=24.09.1",
     "pydantic>=2",
-    "scipp>=23.07.0",
+    "scipp>=24.07.0",
     "scippnexus>=23.11.0",
     "scipy>=1.7.0",
 ]
 
 [project.optional-dependencies]
-all = ["scipp[all]", "pooch"]
+all = ["scipp[all]>=23.07.0", "pooch>=1.5"]
 test = [
-    "hypothesis",
-    "ipympl",
-    "pace_neutrons",
-    "pooch",
-    "psutil",
-    "pytest",
-    "pytest-xdist",
-    "pythreejs",
-    "sciline",
+    "hypothesis>=6.100",
+    "ipympl>0.8.4",
+    "pace_neutrons>=0.3",
+    "pooch>=1.5",
+    "psutil>=5.0",
+    "pytest>=7.0",
+    "pytest-xdist>=3.0",
+    "pythreejs>=2.4.1",
+    "sciline>=25.1.0",
 ]
 
 [project.urls]
@@ -102,6 +102,7 @@ filterwarnings = [
   'ignore:Widget.widget_types is deprecated:DeprecationWarning',
   'ignore:Widget.widgets is deprecated:DeprecationWarning',
   'ignore:Passing unrecognized arguments to super:DeprecationWarning',
+  'ignore:zmq.eventloop.ioloop is deprecated in pyzmq 17. pyzmq now works with default tornado and asyncio eventloops.:DeprecationWarning',
 ]
 
 [tool.ruff]
