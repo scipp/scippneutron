@@ -71,7 +71,7 @@ jobs:
       - run: python -m pytest tests/mantid_*
 
   docs:
-    needs: [tests, mantid]
+    # needs: [tests, mantid]
     uses: ./.github/workflows/docs.yml
     with:
       publish: false
