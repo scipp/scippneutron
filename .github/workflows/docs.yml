@@ -56,22 +56,6 @@ jobs:
           ref: ${{ inputs.branch == '' && github.ref_name || inputs.branch }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           fetch-depth: 0  # history required so cmake can determine version
-      - uses: mamba-org/setup-micromamba@v2
-        if: ${{ inputs.version != '' }}
-        with:
-          environment-file: .buildconfig/ci-linux.yml
-          cache-environment: true
-          create-args: >-
-            python=3.10
-            scippneutron==${{ inputs.version }}
-      - uses: mamba-org/setup-micromamba@v2
-        if: ${{ inputs.version == '' }}
-        with:
-          environment-file: .buildconfig/ci-linux.yml
-          cache-environment: true
-          create-args: >-
-            python=3.10
-            conda-build
       - run: pip install --no-build-isolation --no-deps -e .
         if: ${{ inputs.version == '' }}
       - run: tox -e docs

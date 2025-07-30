@@ -2,3 +2,4 @@ gitpython
 packaging
 requests
 tox
+tox-conda
