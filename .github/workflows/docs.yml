@@ -74,11 +74,7 @@ jobs:
             conda-build
       - run: pip install --no-build-isolation --no-deps -e .
         if: ${{ inputs.version == '' }}
-      - run: python -m sphinx -W -v -b doctest -d doctrees docs html
-      - run: python -m sphinx -W -v -b html -d doctrees docs html
-      - run: python -m sphinx -W -v -b linkcheck -d doctrees docs html
-        if: ${{ inputs.linkcheck }}
-      - run: find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
+      - run: tox -e docs
       - uses: actions/upload-artifact@v4
         id: artifact-upload-step
         with:
