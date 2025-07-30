@@ -67,6 +67,7 @@ jobs:
             python=3.10
             conda-build
       - run: conda develop src
+      - run: python -m pip install -e .
       - run: python -m pytest tests/mantid_*
 
   docs:
