@@ -10,7 +10,6 @@ name = "scippneutron"
 description = "Neutron scattering tools for Data Reduction"
 authors = [{ name = "Scipp contributors" }]
 license = "BSD-3-Clause"
-license-files = ["LICENSE"]
 readme = "README.md"
 classifiers = [
     "Intended Audience :: Science/Research",
