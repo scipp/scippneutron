@@ -72,12 +72,18 @@ jobs:
           release: R2023b
           cache: true
           products: "MATLAB_Compiler_SDK"
-      - uses: actions/setup-python@v5
+      - uses: mamba-org/setup-micromamba@v2
         with:
-          python-version: ${{ inputs.python-version }}
+          condarc: |
+            channels:
+              - mantid
+              - conda-forge
+          create-args: >-
+            python=${{ inputs.python-version }}
+            mantid=6.12.0
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -r ${{ inputs.pip-recipe }}
-      - run: tox -e ${{ inputs.tox-env }}
+      - run: tox -e ${{ inputs.tox-env }} --current-env
       - uses: actions/upload-artifact@v4
         if: ${{ inputs.coverage-report }}
         with:
