@@ -85,6 +85,7 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -r ${{ inputs.pip-recipe }}
       - run: python -m pip install -r requirements/test.txt
+      - run: pip install --no-build-isolation --no-deps -e .
       - run: tox -e ${{ inputs.tox-env }} --current-env
       - uses: actions/upload-artifact@v4
         if: ${{ inputs.coverage-report }}
