@@ -56,4 +56,4 @@ urllib3==2.3.0
     # via requests
 virtualenv==20.29.3
     # via tox
-tox-conda==0.10.2
+tox-current-env==0.0.16
