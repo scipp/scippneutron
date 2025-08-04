@@ -40,6 +40,10 @@ on:
         default: ''
         type: string
 
+defaults:
+  run:
+    shell: bash -leo pipefail {0}
+
 jobs:
   package-test:
     runs-on: ${{ inputs.os-variant }}
