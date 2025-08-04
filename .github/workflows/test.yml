@@ -74,6 +74,7 @@ jobs:
           products: "MATLAB_Compiler_SDK"
       - uses: mamba-org/setup-micromamba@v2
         with:
+          environment-name: ci-test
           condarc: |
             channels:
               - mantid
