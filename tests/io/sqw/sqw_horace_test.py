@@ -3,7 +3,7 @@
 
 import os
 from dataclasses import replace
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -180,8 +180,8 @@ def test_horace_roundtrip_main_header(
     assert main_header.title == "Minimal test file"
     assert main_header.nfiles == 1
     assert (
-        parse_datetime(main_header.creation_date).astimezone(tz=timezone.utc)
-        - datetime.now(tz=timezone.utc)
+        parse_datetime(main_header.creation_date).astimezone(tz=UTC)
+        - datetime.now(tz=UTC)
     ) < timedelta(seconds=5)
 
 

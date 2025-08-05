@@ -3,7 +3,7 @@
 
 import dataclasses
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from io import BytesIO
 from pathlib import Path
 from typing import Literal
@@ -139,9 +139,7 @@ def test_create_writes_main_header(
     assert main_header.full_filename == filename
     assert main_header.title == "my title"
     assert main_header.nfiles == 0
-    assert (main_header.creation_date - datetime.now(tz=timezone.utc)) < timedelta(
-        seconds=1
-    )
+    assert (main_header.creation_date - datetime.now(tz=UTC)) < timedelta(seconds=1)
 
 
 @pytest.mark.parametrize("byteorder", ["native", "little", "big"])
