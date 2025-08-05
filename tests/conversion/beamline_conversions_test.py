@@ -16,7 +16,12 @@ from scippneutron.conversion import beamline
 
 def rotations() -> st.SearchStrategy[sc.Variable]:
     coefficients = st.floats(
-        allow_nan=False, allow_infinity=False, allow_subnormal=False
+        allow_nan=False,
+        allow_infinity=False,
+        allow_subnormal=False,
+        # Limit the range to avoid overflows in norm(q)
+        min_value=-1e10,
+        max_value=1e10,
     )
     return (
         npst.arrays(dtype=np.float64, shape=4, elements=coefficients)
