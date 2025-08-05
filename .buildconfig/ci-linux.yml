@@ -33,6 +33,7 @@ dependencies:
   - tox==4.23.2
 
   # docs
+  - autodoc-pydantic=2.1.0
   - myst-parser==4.0.0
   - nbsphinx==0.9.5
   - packaging==25.0
