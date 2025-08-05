@@ -10,18 +10,18 @@ channels:
   - nodefaults
 dependencies:
   - email-validator==2.2.0
-  - h5py==3.12.1
+  - h5py==3.14.0
   - hypothesis==6.119.4
   - ipykernel==6.29.5
   - ipympl==0.9.4
   - ipywidgets==8.1.5
   - lazy-loader==0.4
-  - mantid==6.11.0
-  - matplotlib==3.7.3
+  - mantid==6.13.0
+  - matplotlib==3.9.4
   - mpltoolbox==24.05.1
   - plopp==24.10.0
   - pooch==1.8.2
-  - pydantic==2.10.5
+  - pydantic==2.11.7
   - pytest==8.3.3
   - pytest-asyncio==0.24.0
   - python-dateutil==2.9.0
@@ -33,6 +33,7 @@ dependencies:
   - tox==4.23.2
 
   # docs
+  - autodoc-pydantic=2.1.0
   - myst-parser==4.0.0
   - nbsphinx==0.9.5
   - packaging==25.0
@@ -47,6 +48,3 @@ dependencies:
 
   # docs and tests
   - sciline==24.10.0
-
-  # Temporary pin, see https://github.com/mantidproject/mantid/issues/39393
-  - muparser==2.3.4

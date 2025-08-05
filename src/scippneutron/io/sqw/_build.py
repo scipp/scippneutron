@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import dataclasses
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import BytesIO
 from os import PathLike
 from pathlib import Path
@@ -83,7 +83,7 @@ class SqwBuilder:
             # To be replaced when registering pixel data.
             nfiles=0,
             # To be replaced when writing the file.
-            creation_date=datetime(1, 1, 1, tzinfo=timezone.utc),
+            creation_date=datetime(1, 1, 1, tzinfo=UTC),
         )
         self._data_blocks: dict[DataBlockName, Any] = {  # TODO type
             ("", "main_header"): main_header,

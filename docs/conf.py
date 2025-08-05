@@ -32,6 +32,7 @@ extensions = [
     'sphinx_autodoc_typehints',
     'sphinx_copybutton',
     'sphinx_design',
+    'sphinxcontrib.autodoc_pydantic',
     'sphinxcontrib.bibtex',
     'nbsphinx',
     'myst_parser',
@@ -208,7 +209,7 @@ html_theme_options = {
         },
         {
             "name": "Conda",
-            "url": "https://anaconda.org/scipp/scippneutron",
+            "url": "https://anaconda.org/conda-forge/scippneutron",
             "icon": "fa-custom fa-anaconda",
             "type": "fontawesome",
         },

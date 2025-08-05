@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import enum
 from dataclasses import dataclass, field, replace
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import ClassVar, TypeAlias
 
 import numpy as np
@@ -68,7 +68,7 @@ class SqwMainHeader(ir.Serializable):
         }
 
     def prepare_for_serialization(self, filename: str, filepath: str) -> SqwMainHeader:
-        return replace(self, creation_date=datetime.now(tz=timezone.utc))
+        return replace(self, creation_date=datetime.now(tz=UTC))
 
 
 @dataclass(kw_only=True, slots=True)
@@ -163,9 +163,7 @@ class SqwLineProj(ir.Serializable):
 class SqwDndMetadata(ir.Serializable):
     axes: SqwLineAxes
     proj: SqwLineProj
-    creation_date: datetime = field(
-        default_factory=lambda: datetime.now(tz=timezone.utc)
-    )
+    creation_date: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
 
     serial_name: ClassVar[str] = "dnd_metadata"
     version: ClassVar[float] = 1.0
@@ -195,7 +193,7 @@ class SqwDndMetadata(ir.Serializable):
     def prepare_for_serialization(self, filename: str, filepath: str) -> SqwDndMetadata:
         return replace(
             self,
-            creation_date=datetime.now(tz=timezone.utc),
+            creation_date=datetime.now(tz=UTC),
             axes=replace(self.axes, filename=filename, filepath=filepath),
         )
 

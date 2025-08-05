@@ -3,7 +3,7 @@
 
 import io
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -118,9 +118,7 @@ _cell.angle_alpha 93(2)
 
 
 def test_write_block_single_pair_datetime():
-    dt = datetime(
-        year=2023, month=12, day=1, hour=15, minute=9, second=45, tzinfo=timezone.utc
-    )
+    dt = datetime(year=2023, month=12, day=1, hour=15, minute=9, second=45, tzinfo=UTC)
     block = cif.Block(
         'datetime',
         [

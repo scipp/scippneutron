@@ -135,7 +135,7 @@ import warnings
 from collections.abc import Iterable, Iterator, Mapping
 from copy import copy
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TextIO
 
@@ -945,7 +945,7 @@ def _add_audit(block: Block, reducers: list[str]) -> None:
 
     audit_chunk = Chunk(
         {
-            'audit.creation_date': datetime.now(timezone.utc).replace(microsecond=0),
+            'audit.creation_date': datetime.now(UTC).replace(microsecond=0),
             'audit.creation_method': f'Written by scippneutron {__version__}',
         },
         schema=CORE_SCHEMA,
