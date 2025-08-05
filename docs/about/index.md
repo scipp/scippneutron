@@ -5,12 +5,11 @@ A key example is "unit conversion", e.g., from time-of-flight to energy transfer
 
 ## Development
 
-ScippNeutron is an open source project by the [European Spallation Source ERIC](https://europeanspallationsource.se/) (ESS).
-Other major contributions were provided by the [Science and Technology Facilities Council](https://www.ukri.org/councils/stfc/) (STFC).
+ScippNeutron is an open source project by the [European Spallation Source ERIC](https://ess.eu/) (ESS).
 
 ## License
 
-ScippNeutron is available as open source under the [BSD-3 license](https://opensource.org/licenses/BSD-3-Clause).
+ScippNeutron is available as open source under the [BSD-3 license](https://opensource.org/license/BSD-3-Clause).
 
 ## Citing ScippNeutron
 

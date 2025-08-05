@@ -23,7 +23,7 @@ for more about extra dependencies.
 ````
 ````{tab-item} conda
 ```sh
-conda install -c conda-forge -c scipp scippneutron
+conda install -c conda-forge scippneutron
 ```
 
 This will install ScippNeutron and all its dependencies.
