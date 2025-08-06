@@ -10,6 +10,8 @@ accessible-pygments==0.0.5
     # via pydata-sphinx-theme
 alabaster==1.0.0
     # via sphinx
+appnope==0.1.4
+    # via ipykernel
 asttokens==3.0.0
     # via stack-data
 attrs==25.3.0
