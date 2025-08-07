@@ -34,4 +34,6 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python.version }}
+      # Sync explicitly to print the installed packages and versions.
+      - run: uv sync --extra=test --resolution=lowest-direct
       - run: uv run --extra=test --resolution=lowest-direct pytest
