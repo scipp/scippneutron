@@ -35,7 +35,7 @@ dependencies = [
     "email-validator>=2",
     "h5py>=3.12",
     "lazy_loader>=0.4",
-    "mpltoolbox>=25.4.0",
+    "mpltoolbox>=24.6.0",
     "numpy>=1.20",
     "plopp>=24.09.1",
     "pydantic>=2",
@@ -48,7 +48,7 @@ dependencies = [
 all = ["scipp[all]>=23.07.0", "pooch>=1.5"]
 test = [
     "hypothesis>=6.100",
-    "ipympl>0.8.4",
+    "ipympl>0.9.0",
     "ipykernel>6.30",
     "pace_neutrons>=0.3",
     "pooch>=1.5",
