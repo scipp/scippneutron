@@ -49,6 +49,7 @@ all = ["scipp[all]>=23.07.0", "pooch>=1.5"]
 test = [
     "hypothesis>=6.100",
     "ipympl>0.8.4",
+    "ipywidgets>8",
     "pace_neutrons>=0.3",
     "pooch>=1.5",
     "psutil>=5.0",
