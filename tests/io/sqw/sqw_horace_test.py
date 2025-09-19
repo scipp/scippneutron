@@ -297,7 +297,7 @@ def test_horace_roundtrip_experiment_indirect(
     experiment_template = SqwIXExperiment(
         run_id=0,
         efix=sc.array(dims=['detector'], values=[0.5, 0.6, 0.8, 0.9, 1.1], unit="meV"),
-        emode=EnergyMode.direct,
+        emode=EnergyMode.indirect,
         en=sc.array(
             dims=["detector", "energy_transfer"],
             values=[[-0.1, 0.3], [-0.2, 0.2], [0.0, 0.6], [0.1, 0.7], [0.3, 0.7]],
