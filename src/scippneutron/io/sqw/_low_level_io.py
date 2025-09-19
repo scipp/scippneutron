@@ -203,9 +203,10 @@ class LowLevelSqw:
         if isinstance(self._file, BytesIO):
             # Inefficient because it constructs an entire separate buffer in memory.
             # Could be optimised to write in chunks if need be.
-            self._file.write(out.tobytes())
+            self._file.write(out.T.tobytes())
         else:
-            out.tofile(self._file)
+            # Transpose to match column-major layout of the file.
+            out.T.tofile(self._file)
 
     @_annotate_write_exception("bytes")
     def write_raw(self, value: bytes | memoryview) -> None:
