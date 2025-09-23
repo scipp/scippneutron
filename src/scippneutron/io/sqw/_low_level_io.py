@@ -199,14 +199,20 @@ class LowLevelSqw:
     def write_array(
         self, array: npt.NDArray[np.float64] | npt.NDArray[np.float32]
     ) -> None:
+        # Transpose to match the column-major layout of the file.
+        self.write_array_fortran_layout(array.T)
+
+    @_annotate_write_exception("array_fortran_layout")
+    def write_array_fortran_layout(
+        self, array: npt.NDArray[np.float64] | npt.NDArray[np.float32]
+    ) -> None:
         out = array.astype(array.dtype.newbyteorder(self.byteorder.value), copy=False)
         if isinstance(self._file, BytesIO):
             # Inefficient because it constructs an entire separate buffer in memory.
             # Could be optimised to write in chunks if need be.
-            self._file.write(out.T.tobytes())
+            self._file.write(out.tobytes())
         else:
-            # Transpose to match column-major layout of the file.
-            out.T.tofile(self._file)
+            out.tofile(self._file)
 
     @_annotate_write_exception("bytes")
     def write_raw(self, value: bytes | memoryview) -> None:
