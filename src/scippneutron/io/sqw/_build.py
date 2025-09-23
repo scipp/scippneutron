@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 import numpy as np
+import numpy.typing as npt
 import scipp as sc
 
 from .._files import open_or_pass
@@ -131,11 +132,10 @@ class SqwBuilder:
 
     def add_pixel_data(
         self,
-        data: sc.DataArray,
+        data: npt.NDArray[np.float32],
         *,
         experiments: list[SqwIXExperiment],
         n_dims: int = 4,
-        rows: tuple[str, ...] = _DEFAULT_PIX_ROWS,
         row_units: tuple[str | None, ...] = _DEFAULT_PIX_ROW_UNITS,
     ) -> SqwBuilder:
         self._n_dims = n_dims
@@ -143,7 +143,7 @@ class SqwBuilder:
             experiments
         )
 
-        self._pix_wrap = _split_pix_rows(data, rows, row_units)
+        self._pix_wrap = _PixWrap(row_data=data, row_units=row_units)
         metadata = self._make_pix_metadata(self._pix_wrap)
         self._data_blocks[("pix", "metadata")] = metadata
         self._data_blocks[("", "main_header")].nfiles = len(experiments)
@@ -206,12 +206,10 @@ class SqwBuilder:
             data_range=np.vstack(
                 [
                     (
-                        sc.to_unit(row.min(), unit).value,
-                        sc.to_unit(row.max(), unit).value,
+                        pix_wrap.row_data[:, i].min().astype(np.float64),
+                        pix_wrap.row_data[:, i].max().astype(np.float64),
                     )
-                    for row, unit in zip(
-                        pix_wrap.row_data, pix_wrap.row_units, strict=True
-                    )
+                    for i, unit in enumerate(pix_wrap.row_units)
                 ]
             ),
         )
@@ -408,31 +406,11 @@ def _to_canonical_block_order(
         ("pix", "data_wrap"),
     )
     blocks = dict(blocks)
-    out = {name: block for name in order if (block := blocks.get(name)) is not None}
+    out = {
+        name: block for name in order if (block := blocks.pop(name, None)) is not None
+    }
     out.update(blocks)  # append remaining blocks if any
     return out
-
-
-def _split_pix_rows(
-    data: sc.DataArray, rows: tuple[str, ...], row_units: tuple[str | None, ...]
-) -> _PixWrap:
-    """Prepare the selected pixel rows for writing."""
-    selected = []
-    for name in rows:
-        if name == 'signal':
-            selected.append(sc.values(data.data))
-        elif name == 'error':
-            selected.append(sc.variances(data.data))
-        else:
-            if data.coords.is_edges(name, data.dim):
-                raise sc.BinEdgeError(
-                    f"Pixel data must not contain bin-edges, got edges for '{name}'."
-                )
-            selected.append(data.coords[name])
-    return _PixWrap(
-        row_data=selected,
-        row_units=row_units,
-    )
 
 
 @dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
@@ -477,7 +455,7 @@ class _DndData:
 
 @dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
 class _PixWrap:
-    row_data: list[sc.Variable]
+    row_data: npt.NDArray[np.float32]  # shape: (n_pixels, n_rows)
     row_units: tuple[str | None, ...]
 
     def size(self) -> int:
@@ -485,24 +463,12 @@ class _PixWrap:
         return 4 + 8 + self.n_rows() * 4 * self.n_pixels()
 
     def n_rows(self) -> int:
-        return len(self.row_data)
+        return self.row_data.shape[1]
 
     def n_pixels(self) -> int:
-        return len(self.row_data[0])
+        return self.row_data.shape[0]
 
     def write(self, sqw_io: LowLevelSqw, chunk_size: int) -> None:
         sqw_io.write_u32(self.n_rows())
         sqw_io.write_u64(self.n_pixels())
-
-        buffer = np.empty((self.n_rows(), self.n_pixels()), dtype=np.float32)
-        remaining = self.n_pixels()
-        for offset in range(0, self.n_rows(), chunk_size):
-            n = min(chunk_size, remaining)
-            remaining -= n
-            for i_row, (row, unit) in enumerate(
-                zip(self.row_data, self.row_units, strict=True)
-            ):
-                buffer[i_row, :n] = sc.to_unit(
-                    row[offset : offset + chunk_size], unit, copy=False
-                ).values
-            sqw_io.write_array(buffer[:, :n])
+        sqw_io.write_array_fortran_layout(self.row_data)
