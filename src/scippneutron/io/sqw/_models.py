@@ -252,7 +252,7 @@ class SqwIXSource(ir.Serializable):
             "version": ir.F64(self.version),
             "name": ir.String(self.name),
             "target_name": ir.String(self.target_name),
-            "frequency": ir.F64(self.frequency.value),  # TODO unit
+            "frequency": ir.F64(self.frequency.to(unit='Hz').value),
         }
 
 

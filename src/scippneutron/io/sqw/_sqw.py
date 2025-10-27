@@ -394,8 +394,7 @@ def _parse_ix_source_2_0(struct: ir.Struct) -> SqwIXSource:
     return SqwIXSource(
         name=name,
         target_name=target_name,
-        # TODO unit currently unknown
-        frequency=sc.scalar(frequency, unit=None),
+        frequency=sc.scalar(frequency, unit="Hz"),
     )
 
 
