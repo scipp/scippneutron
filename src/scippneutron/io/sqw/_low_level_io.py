@@ -155,7 +155,7 @@ class LowLevelSqw:
             flat = flat.copy()
             self._file.seek(self.position + count * dtype.itemsize)
         else:
-            flat = np.fromfile(self._file, dtype=dtype, count=int(np.prod(shape)))
+            flat = np.fromfile(self._file, dtype=dtype, count=count)
         # Invert the shape because files use column-major layout.
         return flat.reshape(shape[::-1])
 
