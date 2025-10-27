@@ -342,7 +342,7 @@ def _parse_line_proj_7_0(struct: ir.Struct) -> tuple[SqwLineProj, list[str]]:
 
     return SqwLineProj(
         lattice_spacing=sc.vector(
-            _get_struct_field(struct, "alatt").data, unit="1/angstrom"
+            _get_struct_field(struct, "alatt").data, unit="angstrom"
         ),
         lattice_angle=sc.vector(_get_struct_field(struct, "angdeg").data, unit="deg"),
         offset=_parse_1d_multi_unit_array(
@@ -407,7 +407,7 @@ def _parse_ix_null_instrument_1_0(struct: ir.Struct) -> SqwIXNullInstrument:
 def _parse_ix_sample_0_0(struct: ir.Struct) -> SqwIXSample:
     name = _get_scalar_struct_field(struct, "name")
     lattice_spacing = sc.vector(
-        _get_struct_field(struct, "alatt").data, unit="1/angstrom"
+        _get_struct_field(struct, "alatt").data, unit="angstrom"
     )
     lattice_angle = sc.vector(_get_struct_field(struct, "angdeg").data, unit="deg")
     return SqwIXSample(

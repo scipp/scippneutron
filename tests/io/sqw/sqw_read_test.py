@@ -171,7 +171,7 @@ def test_read_sample(intact_v4_sqw: Path | BytesIO) -> None:
     assert all(sample == samples[0] for sample in samples[1:])
     sc.testing.assert_identical(
         samples[0].lattice_spacing,
-        sc.vector([2.8579773902893066] * 3, unit="1/angstrom"),
+        sc.vector([2.8579773902893066] * 3, unit="angstrom"),
     )
     sc.testing.assert_identical(
         samples[0].lattice_angle, sc.vector([90, 90, 90], unit="deg")
