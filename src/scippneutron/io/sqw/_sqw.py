@@ -437,7 +437,8 @@ def _parse_single_ix_experiment_3_0(struct: ir.Struct) -> SqwIXExperiment:
 
     raw_en = _get_struct_field(struct, "en").data
     if isinstance(raw_en, np.ndarray):
-        en = raw_en.squeeze()
+        # en = raw_en.squeeze()
+        en = raw_en  # TODO ?! no squeeze in indirect mode?
     else:
         en = [e.value for e in raw_en]
 
@@ -449,10 +450,11 @@ def _parse_single_ix_experiment_3_0(struct: ir.Struct) -> SqwIXExperiment:
         run_id=int(g("run_id")) - 1,
         efix=efix,
         emode=EnergyMode(g("emode")),
-        en=sc.array(dims=["energy_transfer"], values=en, unit="meV"),
+        # TODO indirect mode
+        en=sc.array(dims=["detector", "energy_transfer"], values=en, unit="meV"),
         psi=sc.scalar(g("psi"), unit=angle_unit),
-        u=sc.vector(_get_struct_field(struct, "u").data),
-        v=sc.vector(_get_struct_field(struct, "v").data),
+        u=sc.vector(_get_struct_field(struct, "u").data, unit="1/angstrom"),
+        v=sc.vector(_get_struct_field(struct, "v").data, unit="1/angstrom"),
         omega=sc.scalar(g("omega"), unit=angle_unit),
         dpsi=sc.scalar(g("dpsi"), unit=angle_unit),
         gl=sc.scalar(g("gl"), unit=angle_unit),
