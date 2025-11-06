@@ -17,13 +17,17 @@ Functions in this module come in two categories and return graphs that
   Their ``start`` argument works as in the other functions.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+
+import scipp as sc
 
 from .. import tof as _kernels
 
-Graph = dict[str, Callable]
+Graph = Mapping[
+    str | tuple[str, ...], Callable[..., sc.Variable | dict[str, sc.Variable]]
+]
 
-_GRAPH_DYNAMICS_BY_ORIGIN = {
+_GRAPH_DYNAMICS_BY_ORIGIN: dict[str, Graph] = {
     'energy': {
         'dspacing': _kernels.dspacing_from_energy,
         'wavelength': _kernels.wavelength_from_energy,
@@ -56,7 +60,7 @@ _GRAPH_DYNAMICS_BY_ORIGIN = {
 }
 
 
-def _strip_elastic(start: str, keep: list) -> Graph:
+def _strip_elastic(start: str, keep: list[str | tuple[str, ...]]) -> Graph:
     full_graph = elastic(start)
     return {key: full_graph[key] for key in keep if key != start}
 
@@ -222,7 +226,10 @@ def direct_inelastic(start: str) -> Graph:
     :
         A dict defining a coordinate transformation graph.
     """
-    return {'tof': {'energy_transfer': _kernels.energy_transfer_direct_from_tof}}[start]
+    graphs: dict[str, Graph] = {
+        'tof': {'energy_transfer': _kernels.energy_transfer_direct_from_tof}
+    }
+    return graphs[start]
 
 
 def indirect_inelastic(start: str) -> Graph:
@@ -239,6 +246,7 @@ def indirect_inelastic(start: str) -> Graph:
     :
         A dict defining a coordinate transformation graph.
     """
-    return {'tof': {'energy_transfer': _kernels.energy_transfer_indirect_from_tof}}[
-        start
-    ]
+    graphs: dict[str, Graph] = {
+        'tof': {'energy_transfer': _kernels.energy_transfer_indirect_from_tof}
+    }
+    return graphs[start]

@@ -108,21 +108,22 @@ And :func:`scattering_angle_in_yz_plane` for the definition used in reflectometr
 which also includes gravity.
 """
 
-from typing import TypedDict
+from typing import TypedDict, TypeVar
 
 import scipp as sc
 import scipp.constants
-from scipp.typing import VariableLike
 
 from .._utils import elem_dtype, elem_unit
 
+_V = TypeVar('_V', sc.Variable, sc.DataArray)
 
-def _canonical_length(var: VariableLike) -> VariableLike:
+
+def _canonical_length(var: _V) -> _V:
     """Convert a beam length to the canonical unit (meter)."""
     return var.to(unit='m', copy=False)
 
 
-def L1(*, incident_beam: VariableLike) -> VariableLike:
+def L1(*, incident_beam: _V) -> _V:
     """Compute the length of the incident beam.
 
     The result is the primary beam length
@@ -149,7 +150,7 @@ def L1(*, incident_beam: VariableLike) -> VariableLike:
     return _canonical_length(sc.norm(incident_beam))
 
 
-def L2(*, scattered_beam: VariableLike) -> VariableLike:
+def L2(*, scattered_beam: _V) -> _V:
     """Compute the length of the scattered beam.
 
     The result is the secondary beam length
@@ -176,9 +177,7 @@ def L2(*, scattered_beam: VariableLike) -> VariableLike:
     return _canonical_length(sc.norm(scattered_beam))
 
 
-def straight_incident_beam(
-    *, source_position: VariableLike, sample_position: VariableLike
-) -> VariableLike:
+def straight_incident_beam(*, source_position: _V, sample_position: _V) -> _V:
     """Compute the length of the beam from source to sample.
 
     Assumes a straight beam.
@@ -204,9 +203,7 @@ def straight_incident_beam(
     return _canonical_length(sample_position) - _canonical_length(source_position)
 
 
-def straight_scattered_beam(
-    *, position: VariableLike, sample_position: VariableLike
-) -> VariableLike:
+def straight_scattered_beam(*, position: _V, sample_position: _V) -> _V:
     """Compute the length of the beam from sample to detector.
 
     Assumes a straight beam.
@@ -231,7 +228,7 @@ def straight_scattered_beam(
     return _canonical_length(position) - _canonical_length(sample_position)
 
 
-def total_beam_length(*, L1: VariableLike, L2: VariableLike) -> VariableLike:
+def total_beam_length(*, L1: _V, L2: _V) -> _V:
     """Compute the combined length of the incident and scattered beams.
 
     The result is
@@ -255,9 +252,7 @@ def total_beam_length(*, L1: VariableLike, L2: VariableLike) -> VariableLike:
     return _canonical_length(L1) + _canonical_length(L2)
 
 
-def total_straight_beam_length_no_scatter(
-    *, source_position: VariableLike, position: VariableLike
-) -> VariableLike:
+def total_straight_beam_length_no_scatter(*, source_position: _V, position: _V) -> _V:
     """Compute the length of the beam from source to given position.
 
     Assumes a straight beam.
@@ -283,8 +278,8 @@ def total_straight_beam_length_no_scatter(
 
 
 def two_theta(
-    *, incident_beam: VariableLike, scattered_beam: VariableLike
-) -> VariableLike:
+    *, incident_beam: sc.Variable, scattered_beam: sc.Variable
+) -> sc.Variable:
     """Compute the scattering angle between scattered and transmitted beams.
 
     See :mod:`beamline` for the definition of the angle.

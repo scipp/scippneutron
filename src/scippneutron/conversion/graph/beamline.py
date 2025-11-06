@@ -7,11 +7,15 @@ See :mod:`scippneutron.conversion.beamline` for definitions
 of the quantities used here.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, MutableMapping
+
+import scipp as sc
 
 from .. import beamline as _kernels
 
-Graph = dict[str, Callable]
+Graph = MutableMapping[
+    str | tuple[str, ...], Callable[..., sc.Variable | dict[str, sc.Variable]]
+]
 
 
 def incident_beam() -> Graph:
@@ -93,11 +97,11 @@ def Ltotal(scatter: bool) -> Graph:
     return graph
 
 
-_NO_SCATTER_GRAPH_BEAMLINE = {
+_NO_SCATTER_GRAPH_BEAMLINE: Graph = {
     'Ltotal': _kernels.total_straight_beam_length_no_scatter,
 }
 
-_SCATTER_GRAPH_BEAMLINE = {
+_SCATTER_GRAPH_BEAMLINE: Graph = {
     'incident_beam': _kernels.straight_incident_beam,
     'scattered_beam': _kernels.straight_scattered_beam,
     'L1': _kernels.L1,

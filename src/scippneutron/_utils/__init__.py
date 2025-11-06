@@ -5,24 +5,30 @@
 Internal utilities; do not use outside scippneutron!
 """
 
+from typing import TypeVar
+
 import scipp as sc
-from scipp.typing import VariableLike
+
+_V = TypeVar('_V', sc.Variable, sc.DataArray)
 
 
-def elem_unit(var: VariableLike) -> sc.Unit:
-    return var.bins.unit if var.bins is not None else var.unit
+def elem_unit(var: sc.Variable | sc.DataArray) -> sc.Unit:
+    unit = var.bins.unit if var.bins is not None else var.unit
+    if unit is None:
+        raise sc.UnitError("Cannot do arithmetic with variables without units")
+    return unit
 
 
-def elem_dtype(var: VariableLike) -> sc.DType:
-    return var.bins.constituents['data'].dtype if var.bins is not None else var.dtype
+def elem_dtype(var: sc.Variable | sc.DataArray) -> sc.DType:
+    return var.bins.constituents['data'].dtype if var.bins is not None else var.dtype  # type: ignore[union-attr]
 
 
-def float_dtype(var: VariableLike) -> sc.DType:
+def float_dtype(var: sc.Variable | sc.DataArray) -> sc.DType:
     dtype = elem_dtype(var)
     if dtype == sc.DType.float32:
         return sc.DType.float32
     return sc.DType.float64
 
 
-def as_float_type(var: VariableLike, ref: VariableLike) -> VariableLike:
+def as_float_type(var: _V, ref: sc.Variable | sc.DataArray) -> _V:
     return var.astype(float_dtype(ref), copy=False)

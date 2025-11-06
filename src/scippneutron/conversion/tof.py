@@ -11,12 +11,13 @@ Their values are taken from :mod:`scipp.constants`.
 import numpy as np
 import scipp as sc
 import scipp.constants as const
-from scipp.typing import Variable, VariableLike
 
 from .._utils import as_float_type, elem_dtype, elem_unit
 
 
-def _common_dtype(a, b):
+def _common_dtype(
+    a: sc.Variable | sc.DataArray, b: sc.Variable | sc.DataArray
+) -> sc.DType:
     """Very limited type promotion.
     Only useful to check if the combination of a and b results in
     single or double precision float.
@@ -26,7 +27,7 @@ def _common_dtype(a, b):
     return sc.DType.float64
 
 
-def wavelength_from_tof(*, tof: Variable, Ltotal: Variable) -> Variable:
+def wavelength_from_tof(*, tof: sc.Variable, Ltotal: sc.Variable) -> sc.Variable:
     r"""Compute the wavelength from time-of-flight.
 
     The result is the de Broglie wavelength
@@ -59,8 +60,8 @@ def wavelength_from_tof(*, tof: Variable, Ltotal: Variable) -> Variable:
 
 
 def dspacing_from_tof(
-    *, tof: Variable, Ltotal: Variable, two_theta: Variable
-) -> Variable:
+    *, tof: sc.Variable, Ltotal: sc.Variable, two_theta: sc.Variable
+) -> sc.Variable:
     r"""Compute the d-spacing from time-of-flight.
 
     The result is the inter-planar lattice spacing
@@ -99,7 +100,9 @@ def dspacing_from_tof(
     return 1 / as_float_type(c * Ltotal * sc.sin(two_theta / 2), tof) * tof
 
 
-def _energy_constant(energy_unit: sc.Unit, tof: Variable, length: Variable):
+def _energy_constant(
+    energy_unit: sc.Unit, tof: sc.Variable, length: sc.Variable
+) -> sc.Variable:
     return sc.to_unit(
         const.m_n / 2,
         energy_unit * (elem_unit(tof) / elem_unit(length)) ** 2,
@@ -107,7 +110,7 @@ def _energy_constant(energy_unit: sc.Unit, tof: Variable, length: Variable):
     )
 
 
-def energy_from_tof(*, tof: Variable, Ltotal: Variable) -> Variable:
+def energy_from_tof(*, tof: sc.Variable, Ltotal: sc.Variable) -> sc.Variable:
     r"""Compute the neutron energy from time-of-flight.
 
     The result is
@@ -136,15 +139,17 @@ def energy_from_tof(*, tof: Variable, Ltotal: Variable) -> Variable:
     )
 
 
-def _energy_transfer_t0(energy, tof, length):
+def _energy_transfer_t0(
+    energy: sc.Variable, tof: sc.Variable, length: sc.Variable
+) -> sc.Variable:
     dtype = _common_dtype(energy, tof)
     c = as_float_type(_energy_constant(elem_unit(energy), tof, length), energy)
     return length.astype(dtype, copy=False) * sc.sqrt(c / energy)
 
 
 def energy_transfer_direct_from_tof(
-    *, tof: Variable, L1: Variable, L2: Variable, incident_energy: Variable
-) -> Variable:
+    *, tof: sc.Variable, L1: sc.Variable, L2: sc.Variable, incident_energy: sc.Variable
+) -> sc.Variable:
     r"""Compute the energy transfer in direct inelastic scattering.
 
     The result is
@@ -197,8 +202,8 @@ def energy_transfer_direct_from_tof(
 
 
 def energy_transfer_indirect_from_tof(
-    *, tof: Variable, L1: Variable, L2: Variable, final_energy: Variable
-) -> Variable:
+    *, tof: sc.Variable, L1: sc.Variable, L2: sc.Variable, final_energy: sc.Variable
+) -> sc.Variable:
     r"""Compute the energy transfer in indirect inelastic scattering.
 
     The result is
@@ -250,7 +255,7 @@ def energy_transfer_indirect_from_tof(
     )
 
 
-def energy_from_wavelength(*, wavelength: Variable) -> Variable:
+def energy_from_wavelength(*, wavelength: sc.Variable) -> sc.Variable:
     r"""Compute the neutron energy from wavelength.
 
     The result is
@@ -281,7 +286,7 @@ def energy_from_wavelength(*, wavelength: Variable) -> Variable:
     return c / wavelength**2
 
 
-def wavelength_from_energy(*, energy: Variable) -> Variable:
+def wavelength_from_energy(*, energy: sc.Variable) -> sc.Variable:
     r"""Compute the wavelength from the neutron energy.
 
     The result is the de Broglie wavelength
@@ -312,7 +317,9 @@ def wavelength_from_energy(*, energy: Variable) -> Variable:
     return sc.sqrt(c / energy)
 
 
-def wavevector_from_wavelength(*, wavelength: Variable, beam: Variable) -> Variable:
+def wavevector_from_wavelength(
+    *, wavelength: sc.Variable, beam: sc.Variable
+) -> sc.Variable:
     r"""Compute a wavevector from a wavelength.
 
     The result is
@@ -343,13 +350,17 @@ def wavevector_from_wavelength(*, wavelength: Variable, beam: Variable) -> Varia
     return c * (beam / sc.norm(beam)) / wavelength
 
 
-def _wavelength_elastic_Q_conversions(x: Variable, two_theta: Variable) -> Variable:
+def _wavelength_elastic_Q_conversions(
+    x: sc.Variable, two_theta: sc.Variable
+) -> sc.Variable:
     """Convert either from elastic Q to wavelength or vice-versa."""
     c = as_float_type(4 * const.pi, x)
     return c * sc.sin(as_float_type(two_theta, x) / 2) / x
 
 
-def elastic_Q_from_wavelength(*, wavelength: Variable, two_theta: Variable) -> Variable:
+def elastic_Q_from_wavelength(
+    *, wavelength: sc.Variable, two_theta: sc.Variable
+) -> sc.Variable:
     r"""Compute the absolute value of the elastic momentum transfer from wavelength.
 
     Attention
@@ -382,7 +393,7 @@ def elastic_Q_from_wavelength(*, wavelength: Variable, two_theta: Variable) -> V
     return _wavelength_elastic_Q_conversions(wavelength, two_theta)
 
 
-def wavelength_from_Q(*, Q: Variable, two_theta: Variable) -> Variable:
+def wavelength_from_Q(*, Q: sc.Variable, two_theta: sc.Variable) -> sc.Variable:
     r"""Compute the wavelength from momentum transfer.
 
     Attention
@@ -419,8 +430,8 @@ def wavelength_from_Q(*, Q: Variable, two_theta: Variable) -> Variable:
 
 
 def elastic_Q_elements_from_wavelength(
-    *, wavelength: Variable, incident_beam: Variable, scattered_beam: Variable
-) -> dict[str, Variable]:
+    *, wavelength: sc.Variable, incident_beam: sc.Variable, scattered_beam: sc.Variable
+) -> dict[str, sc.Variable]:
     r"""Compute the elastic momentum transfer vector from wavelength.
 
     Attention
@@ -471,7 +482,9 @@ def elastic_Q_elements_from_wavelength(
     return {'Qx': k * e.fields.x, 'Qy': k * e.fields.y, 'Qz': k * e.fields.z}
 
 
-def dspacing_from_wavelength(*, wavelength: Variable, two_theta: Variable) -> Variable:
+def dspacing_from_wavelength(
+    *, wavelength: sc.Variable, two_theta: sc.Variable
+) -> sc.Variable:
     r"""Compute the d-spacing from wavelength.
 
     The result is the inter-planar lattice spacing
@@ -504,7 +517,7 @@ def dspacing_from_wavelength(*, wavelength: Variable, two_theta: Variable) -> Va
     return c * wavelength / sc.sin(as_float_type(two_theta, wavelength) / 2)
 
 
-def dspacing_from_energy(*, energy: Variable, two_theta: Variable) -> Variable:
+def dspacing_from_energy(*, energy: sc.Variable, two_theta: sc.Variable) -> sc.Variable:
     r"""Compute the d-spacing from the neutron energy.
 
     The result is the inter-planar lattice spacing
@@ -543,8 +556,8 @@ def dspacing_from_energy(*, energy: Variable, two_theta: Variable) -> Variable:
 
 
 def elastic_Q_vec_from_Q_elements(
-    *, Qx: Variable, Qy: Variable, Qz: Variable
-) -> Variable:
+    *, Qx: sc.Variable, Qy: sc.Variable, Qz: sc.Variable
+) -> sc.Variable:
     """Combine elements of elastic momentum transfer into a single vector variable.
 
     Parameters
@@ -569,7 +582,9 @@ def elastic_Q_vec_from_Q_elements(
     return sc.spatial.as_vectors(Qx, Qy, Qz)
 
 
-def ub_matrix_from_u_and_b(*, u_matrix: Variable, b_matrix: Variable) -> Variable:
+def ub_matrix_from_u_and_b(
+    *, u_matrix: sc.Variable, b_matrix: sc.Variable
+) -> sc.Variable:
     r"""Compute the UB matrix from U and B matrices.
 
     .. math::
@@ -595,8 +610,8 @@ def ub_matrix_from_u_and_b(*, u_matrix: Variable, b_matrix: Variable) -> Variabl
 
 
 def hkl_vec_from_elastic_Q_vec(
-    *, Q_vec: Variable, ub_matrix: Variable, sample_rotation: Variable
-) -> Variable:
+    *, Q_vec: sc.Variable, ub_matrix: sc.Variable, sample_rotation: sc.Variable
+) -> sc.Variable:
     r"""Compute hkl indices from elastic momentum transfer.
 
     The hkl indices define the components of the momentum transfer in the
@@ -681,7 +696,7 @@ def hkl_vec_from_elastic_Q_vec(
     return (sc.spatial.inv(sample_rotation * ub_matrix) * Q_vec) / (2 * np.pi)
 
 
-def hkl_elements_from_hkl_vec(*, hkl_vec: Variable) -> dict[str, Variable]:
+def hkl_elements_from_hkl_vec(*, hkl_vec: sc.Variable) -> dict[str, sc.Variable]:
     """Unpack vector of hkl indices into separate variables.
 
     Parameters
@@ -703,11 +718,11 @@ def hkl_elements_from_hkl_vec(*, hkl_vec: Variable) -> dict[str, Variable]:
 
 def time_at_sample_from_tof(
     *,
-    pulse_time: VariableLike,
-    tof: VariableLike,
-    L2: VariableLike,
-    wavelength: VariableLike,
-) -> VariableLike:
+    pulse_time: sc.Variable,
+    tof: sc.Variable,
+    L2: sc.Variable,
+    wavelength: sc.Variable,
+) -> sc.Variable:
     """Compute the absolute time when the neutron passed through the sample.
 
     The result is
