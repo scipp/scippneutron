@@ -55,7 +55,7 @@ class Atom:
             )
         return self._atomic_mass.copy()
 
-    def __eq__(self, other: object) -> bool | type(NotImplemented):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Atom):
             return NotImplemented
         return all(
@@ -139,7 +139,7 @@ class ScatteringParams:
     absorption_cross_section: sc.Variable | None = None
     """Absorption cross-section for λ = 1.7982 Å neutrons."""
 
-    def __eq__(self, other: object) -> bool | type(NotImplemented):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, ScatteringParams):
             return NotImplemented
         return all(
@@ -170,26 +170,24 @@ class ScatteringParams:
 
     @staticmethod
     def _parse_line(isotope: str, line: str) -> ScatteringParams:
-        line = line.rstrip().split(',')
+        col = line.rstrip().split(',')
         return ScatteringParams(
             isotope=isotope,
-            coherent_scattering_length_re=_assemble_scalar(line[0], line[1], 'fm'),
-            coherent_scattering_length_im=_assemble_scalar(line[2], line[3], 'fm'),
-            incoherent_scattering_length_re=_assemble_scalar(line[4], line[5], 'fm'),
-            incoherent_scattering_length_im=_assemble_scalar(line[6], line[7], 'fm'),
-            coherent_scattering_cross_section=_assemble_scalar(
-                line[8], line[9], 'barn'
-            ),
+            coherent_scattering_length_re=_assemble_scalar(col[0], col[1], 'fm'),
+            coherent_scattering_length_im=_assemble_scalar(col[2], col[3], 'fm'),
+            incoherent_scattering_length_re=_assemble_scalar(col[4], col[5], 'fm'),
+            incoherent_scattering_length_im=_assemble_scalar(col[6], col[7], 'fm'),
+            coherent_scattering_cross_section=_assemble_scalar(col[8], col[9], 'barn'),
             incoherent_scattering_cross_section=_assemble_scalar(
-                line[10], line[11], 'barn'
+                col[10], col[11], 'barn'
             ),
-            total_scattering_cross_section=_assemble_scalar(line[12], line[13], 'barn'),
-            absorption_cross_section=_assemble_scalar(line[14], line[15], 'barn'),
+            total_scattering_cross_section=_assemble_scalar(col[12], col[13], 'barn'),
+            absorption_cross_section=_assemble_scalar(col[14], col[15], 'barn'),
         )
 
 
 def _open_bundled_parameters_file(name: str) -> TextIO:
-    return importlib.resources.files('scippneutron.atoms').joinpath(name).open('r')
+    return importlib.resources.files('scippneutron.atoms').joinpath(name).open('r')  # type: ignore[return-value]
 
 
 def _find_line_with_isotope(isotope: str, io: TextIO) -> str | None:
@@ -227,13 +225,11 @@ def _load_atomic_mass(isotope: str) -> sc.Variable | None:
 def _assemble_scalar(value: str, std: str, unit: str) -> sc.Variable | None:
     if not value:
         return None
-    value = float(value)
-    variance = float(std) ** 2 if std else None
-    return sc.scalar(value, variance=variance, unit=unit)
+    return sc.scalar(float(value), variance=float(std) ** 2 if std else None, unit=unit)
 
 
 def _eq_or_identical(a: object, b: object) -> bool:
-    if isinstance(a, sc.Variable) or isinstance(b, sc.Variable):
+    if isinstance(a, sc.Variable) and isinstance(b, sc.Variable):
         return sc.identical(a, b)
     return a == b
 
@@ -242,4 +238,6 @@ def _parse_isotope_name(name: str) -> str:
     # Extract the element name from an isotope name.
     # 'H' -> 'H'
     # '2H' -> 'H'
-    return re.match(r'(?:\d+)?([a-zA-Z]+)', name)[1]
+    if (match := re.match(r'(?:\d+)?([a-zA-Z]+)', name)) is None:
+        raise ValueError(f"Invalid isotope name '{name}'")
+    return match[1]

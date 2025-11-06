@@ -89,8 +89,9 @@ def save_xye(
             'Use, e.g., scipp.midpoints for linearly spaced bins.'
         )
     to_save = np.c_[da.coords[coord].values, da.values, np.sqrt(da.variances)]
-    if header is GenerateHeader:
-        header = _generate_xye_header(da, coord)
+    actual_header: str = (
+        _generate_xye_header(da, coord) if header is GenerateHeader else header  # type: ignore[assignment]
+    )
 
     get_logger().info(
         "Saving data with unit %s and coordinate '%s' to XYE file %s",
@@ -98,7 +99,7 @@ def save_xye(
         coord,
         fname,
     )
-    np.savetxt(fname, to_save, delimiter=' ', header=header)
+    np.savetxt(fname, to_save, delimiter=' ', header=actual_header)
 
 
 def load_xye(
@@ -151,7 +152,7 @@ def load_xye(
 
 
 def _generate_xye_header(da: sc.DataArray, coord: str) -> str:
-    def format_unit(unit):
+    def format_unit(unit: sc.Unit | None) -> str:
         return f'[{unit}]' if unit is not None else ''
 
     c = f'{coord} {format_unit(da.coords[coord].unit)}'

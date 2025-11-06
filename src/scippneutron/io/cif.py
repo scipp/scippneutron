@@ -205,7 +205,7 @@ class CIF:
     See the module documentation of :mod:`cif` for examples.
     """
 
-    def __init__(self, name='', *, comment: str = '') -> None:
+    def __init__(self, name: str = '', *, comment: str = '') -> None:
         self._block = Block(
             name=name
         )  # We mainly keep this around for managing the name.
@@ -445,7 +445,9 @@ class CIF:
 
 
 class _CIFBase:
-    def __init__(self, *, comment: str = '', schema: CIFSchema) -> None:
+    def __init__(
+        self, *, comment: str = '', schema: CIFSchema | Iterable[CIFSchema] | None
+    ) -> None:
         self._comment = ''
         self.comment = comment  # use str-encoding logic
         self._schema = _preprocess_schema(schema)
@@ -555,9 +557,10 @@ class Loop(_CIFBase):
             to the file.
         """
         super().__init__(comment=comment, schema=schema)
-        self._columns = {}
-        for key, column in columns.items():
-            self[key] = column
+        self._columns: dict[str, sc.Variable] = {}
+        if columns is not None:
+            for key, column in dict(columns).items():
+                self[key] = column
 
     def __setitem__(self, name: str, value: sc.Variable) -> None:
         """Add a column to the loop.
@@ -787,7 +790,7 @@ def _preprocess_schema(
 def _make_schema_loop(schema: set[CIFSchema]) -> Loop | None:
     if not schema:
         return None
-    columns = {
+    columns: dict[str, list[str]] = {
         'audit_conform.dict_name': [],
         'audit_conform.dict_version': [],
         'audit_conform.dict_location': [],
@@ -863,7 +866,7 @@ def _write_file_heading(f: TextIO, comment: str) -> None:
     _write_comment(f, comment)
 
 
-def _reduced_powder_coord(data) -> tuple[str, sc.Variable]:
+def _reduced_powder_coord(data: sc.DataArray) -> tuple[str, sc.Variable]:
     if data.ndim != 1:
         raise sc.DimensionError(f'Can only save 1d powder data, got {data.ndim} dims.')
     known_coords = {
@@ -977,10 +980,10 @@ def _serialize_authors(
     if orcid_id := fields.pop(f'{category}.orcid_id', None):
         fields[f'{category}.id_orcid'] = orcid_id
 
-    roles = {next(id_generator): a.role for a in authors}
-    if any(roles.values()):
-        fields[f'{category}.id'] = list(roles.keys())
-    roles = {key: val for key, val in roles.items() if val}
+    maybe_roles = {next(id_generator): a.role for a in authors}
+    if any(maybe_roles.values()):
+        fields[f'{category}.id'] = list(maybe_roles.keys())
+    roles = {key: val for key, val in maybe_roles.items() if val}
 
     if len(authors) == 1:
         return Chunk(
