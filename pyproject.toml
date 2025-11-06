@@ -157,6 +157,40 @@ enable_error_code = [
 warn_unreachable = true
 plugins = ["pydantic.mypy"]
 
+exclude = [
+    # These are not so important for checking package or user code
+    '^benchmarks/',
+    '^docs/',
+
+    # not yet updated for type hints:
+    '^tests/',
+    '^src/scippneutron/masking',
+    '^src/scippneutron/metadata/_model',
+    '^src/scippneutron/tof/chopper_cascade',
+    '^src/scippneutron/tof/diagram',
+    '^src/scippneutron/peaks/_fit_peaks',
+    '^src/scippneutron/peaks/model',
+    '^src/scippneutron/absorption/cylinder',
+    '^src/scippneutron/absorption/material',
+    '^src/scippneutron/core/conversions',
+    '^src/scippneutron/beamline_components',
+    '^src/scippneutron/absorption/base',
+    '^src/scippneutron/chopper/nexus_chopper',
+    '^src/scippneutron/chopper/_svg',
+    '^src/scippneutron/chopper/disk_chopper',
+    '^src/scippneutron/chopper/filtering',
+    '^src/scippneutron/_html_repr/_disk_chopper_repr',
+    '^src/scippneutron/_html_repr/_resources',
+    '^src/scippneutron/data/_chopper_mockup',
+    '^src/scippneutron/data/__init__',
+    '^src/scippneutron/instrument_view',
+    '^src/scippneutron/mantid',
+    '^src/scippneutron/io/_files',
+    '^src/scippneutron/io/sqw/_sqw',
+    '^src/scippneutron/io/sqw/_read_write',
+    '^src/scippneutron/io/sqw/_low_level_io',
+]
+
 [tool.codespell]
 ignore-words-list = [
     # Codespell wants "socioeconomic" which seems to be the standard spelling.
