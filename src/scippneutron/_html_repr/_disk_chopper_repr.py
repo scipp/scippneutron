@@ -7,21 +7,13 @@ from string import Template
 from typing import TYPE_CHECKING
 
 import scipp as sc
+from scipp.visualization.formatting_datagroup_html import (
+    _datagroup_detail,
+    _format_shape,
+    load_dg_repr_tpl,
+)
 
 from ._resources import disk_chopper_repr_template, disk_chopper_style
-
-try:
-    from scipp.visualization.formatting_datagroup_html import (
-        _datagroup_detail,
-        _format_shape,
-        load_dg_repr_tpl,
-    )
-except ImportError:
-    from scipp.html.formatting_datagroup_html import (
-        _datagroup_detail,
-        _format_shape,
-        load_dg_repr_tpl,
-    )
 
 if TYPE_CHECKING:
     from ..chopper import DiskChopper

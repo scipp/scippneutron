@@ -5,10 +5,7 @@ import importlib.resources
 from functools import lru_cache
 from string import Template
 
-try:
-    from scipp.visualization.resources import _preprocess_style, load_dg_style
-except ImportError:
-    from scipp.html.resources import _preprocess_style, load_dg_style
+from scipp.visualization.resources import _preprocess_style, load_dg_style
 
 
 def _read_text(filename: str, group: str) -> str:
