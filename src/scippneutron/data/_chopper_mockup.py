@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
+from typing import Any
+
 import numpy as np
 import scipp as sc
 
 
-def chopper_mockup() -> sc.DataGroup:
+def chopper_mockup() -> sc.DataGroup[Any]:
     """Return a data group for a fake chopper.
 
     Returns
@@ -118,7 +120,9 @@ def _top_dead_center(rotation_speed: sc.DataArray) -> sc.Variable:
     return sc.concat(tdc, dim='time').to(unit='ns', dtype='int64') + sc.epoch(unit='ns')
 
 
-def _interpolate_rotation_speed(*, speed: sc.Variable, time: sc.Variable):
+def _interpolate_rotation_speed(
+    *, speed: sc.Variable, time: sc.Variable
+) -> tuple[sc.Lookup, sc.Lookup]:
     """Interpolate the speed-vs-time curve with line segments."""
     m = sc.to_unit((speed[1:] - speed[:-1]) / (time[1:] - time[:-1]), 'Hz^2')
     d = speed[:-1] - sc.to_unit(m * time[:-1], speed.unit)

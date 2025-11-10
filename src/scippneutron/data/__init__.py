@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 # @author Simon Heybrock
+from pathlib import Path
+from typing import Any
+
 import scipp as sc
 
 from ..mantid import load_with_mantid
@@ -11,7 +14,7 @@ _version = '5'
 __all__ = ['chopper_mockup', 'get_path', 'tutorial_dense_data', 'tutorial_event_data']
 
 
-def _make_pooch():
+def _make_pooch() -> Any:
     import pooch
 
     return pooch.create(
@@ -45,28 +48,28 @@ _pooch = _make_pooch()
 def tutorial_dense_data() -> sc.DataGroup[Any]:
     # This file was produced from loki-at-larmor.hdf5 by converting the data into a
     # data group. But not all attributes were copied.
-    return sc.io.load_hdf5(_pooch.fetch('loki-at-larmor-filtered.hdf5'))
+    return sc.io.load_hdf5(_pooch.fetch('loki-at-larmor-filtered.hdf5'))  # type: ignore[return-value]
 
 
-def tutorial_event_data():
+def tutorial_event_data() -> sc.DataGroup[sc.DataArray]:
     # This file was produced from powder-event.h5 by converting the data into a
     # data group. But not all attributes were copied.
-    return sc.io.load_hdf5(_pooch.fetch('powder-event-filtered.h5'))
+    return sc.io.load_hdf5(_pooch.fetch('powder-event-filtered.h5'))  # type: ignore[return-value]
 
 
-def powder_sample():
-    return load_with_mantid(_pooch.fetch('PG3_4844_event.nxs'))
+def powder_sample() -> sc.DataArray:
+    return load_with_mantid(_pooch.fetch('PG3_4844_event.nxs'))  # type: ignore[return-value]
 
 
-def powder_calibration():
-    return sc.io.load_hdf5(_pooch.fetch('PG3_4844_calibration.h5'))
+def powder_calibration() -> sc.Dataset:
+    return sc.io.load_hdf5(_pooch.fetch('PG3_4844_calibration.h5'))  # type: ignore[return-value]
 
 
-def get_path(name: str) -> str:
+def get_path(name: str) -> Path:
     """
     Return the path to a data file bundled with scippneutron.
 
     This function only works with example data and cannot handle
     paths to custom files.
     """
-    return _pooch.fetch(name)
+    return Path(_pooch.fetch(name))

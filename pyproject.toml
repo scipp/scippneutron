@@ -178,8 +178,6 @@ exclude = [
     '^src/scippneutron/chopper/_svg',
     '^src/scippneutron/chopper/disk_chopper',
     '^src/scippneutron/chopper/filtering',
-    '^src/scippneutron/data/_chopper_mockup',
-    '^src/scippneutron/data/__init__',
     '^src/scippneutron/instrument_view',
     '^src/scippneutron/mantid',
     '^src/scippneutron/io/_files',

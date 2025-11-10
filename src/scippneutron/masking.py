@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from functools import partial, reduce
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import plopp as pp
 import scipp as sc
@@ -13,15 +14,15 @@ from matplotlib.colors import to_rgb
 from plopp.core.typing import FigureLike
 
 if TYPE_CHECKING:
-    from mpltoolbox import Patch
+    from mpltoolbox.patch import Patch
 
 
-def _define_shape_mask(da: sc.DataArray, info: dict) -> sc.Variable:
+def _define_shape_mask(da: sc.DataArray, info: dict[str, object]) -> sc.Variable:
     """
     Function that creates a mask inside the area
     covered by the shape.
     """
-    bounds = info["bounds"]
+    bounds = cast(dict[str, dict[str, sc.Variable]], info["bounds"])
     return reduce(
         lambda a, b: a & b,
         [
@@ -31,7 +32,9 @@ def _define_shape_mask(da: sc.DataArray, info: dict) -> sc.Variable:
     )
 
 
-def _get_rect_info(artist: Patch, figure: FigureLike) -> dict:
+def _get_rect_info(
+    artist: Patch, figure: FigureLike
+) -> Callable[[], dict[str, str | dict[str, dict[str, sc.Variable]]]]:
     """
     Convert the raw rectangle info to a dict containing the dimensions of
     each axis, and values with units.
@@ -55,7 +58,9 @@ def _get_rect_info(artist: Patch, figure: FigureLike) -> dict:
     }
 
 
-def _get_vspan_info(artist: Patch, figure: FigureLike) -> dict:
+def _get_vspan_info(
+    artist: Patch, figure: FigureLike
+) -> Callable[[], dict[str, str | dict[str, dict[str, sc.Variable]]]]:
     x1 = artist.left
     x2 = artist.right
     return lambda: {
@@ -69,7 +74,9 @@ def _get_vspan_info(artist: Patch, figure: FigureLike) -> dict:
     }
 
 
-def _get_hspan_info(artist: Patch, figure: FigureLike) -> dict:
+def _get_hspan_info(
+    artist: Patch, figure: FigureLike
+) -> Callable[[], dict[str, str | dict[str, dict[str, sc.Variable]]]]:
     y1 = artist.bottom
     y2 = artist.top
     return lambda: {
@@ -90,7 +97,7 @@ def _apply_masks(da: sc.DataArray, *masks: sc.Variable) -> sc.DataArray:
     return out
 
 
-def _scalar_to_dict(scalar: sc.Variable) -> dict:
+def _scalar_to_dict(scalar: sc.Variable) -> dict[str, Any]:
     return {"value": scalar.value, "unit": str(scalar.unit)}
 
 
