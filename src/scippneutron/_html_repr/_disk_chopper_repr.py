@@ -4,12 +4,14 @@
 import dataclasses
 import uuid
 from string import Template
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import scipp as sc
 from scipp.visualization.formatting_datagroup_html import (
     _datagroup_detail,
     _format_shape,
+)
+from scipp.visualization.resources import (
     load_dg_repr_tpl,
 )
 
@@ -43,7 +45,7 @@ def disk_chopper_html_repr(chopper: DiskChopper) -> str:
 
 
 def _datagroup_repr(
-    dg: sc.DataGroup, *, type_name: str, max_length_before_fold: int = 15
+    dg: sc.DataGroup[Any], *, type_name: str, max_length_before_fold: int = 15
 ) -> str:
     checkbox_status = "checked" if len(dg) < max_length_before_fold else ''
     header_id = "group-view-" + str(uuid.uuid4())

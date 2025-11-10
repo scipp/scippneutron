@@ -160,7 +160,7 @@ class Measurement(BaseModel):
     def run_number_maybe_int(self) -> int | str | None:
         """Return the run number as an int if possible."""
         try:
-            return int(self.run_number)
+            return int(self.run_number)  # type: ignore[arg-type]
         except ValueError:
             return self.run_number
 
@@ -305,7 +305,7 @@ def _deduce_package_version(package_name: str) -> str | None:
             raise e from None
 
         try:
-            return package.__version__
+            return str(package.__version__)
         except AttributeError:
             raise RuntimeError(
                 f"Package '{package_name}' has no metadata and no "
@@ -327,7 +327,9 @@ def _deduce_package_source_url(package_name: str) -> str | None:
 
     try:
         return next(
-            url.split(',')[-1].strip() for url in urls if url.startswith("Source")
+            url.split(',')[-1].strip()
+            for url in map(str, urls)
+            if url.startswith("Source")
         )
     except StopIteration:
         return None
@@ -385,7 +387,7 @@ def _read_optional_nexus_string(group: snx.Group | None, key: str) -> str | None
     if group is None:
         return None
     if (ds := group.get(key)) is not None:
-        return ds[()]
+        return str(ds[()])
     return None
 
 
@@ -444,9 +446,9 @@ def _guess_facility_and_site(
         return None, None
 
     match _FACILITY_PER_INSTRUMENT.get(instrument_name.lower()):
-        case None:
-            return None, None
         case (facility, site):
             return facility, site
-        case facility:
+        case str(facility):
             return facility, facility
+        case _:
+            return None, None
