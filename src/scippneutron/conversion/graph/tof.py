@@ -17,17 +17,11 @@ Functions in this module come in two categories and return graphs that
   Their ``start`` argument works as in the other functions.
 """
 
-from collections.abc import Callable, Mapping
-
-import scipp as sc
+from scipp.coords.graph import GraphDict
 
 from .. import tof as _kernels
 
-Graph = Mapping[
-    str | tuple[str, ...], Callable[..., sc.Variable | dict[str, sc.Variable]]
-]
-
-_GRAPH_DYNAMICS_BY_ORIGIN: dict[str, Graph] = {
+_GRAPH_DYNAMICS_BY_ORIGIN: dict[str, GraphDict] = {
     'energy': {
         'dspacing': _kernels.dspacing_from_energy,
         'wavelength': _kernels.wavelength_from_energy,
@@ -60,12 +54,12 @@ _GRAPH_DYNAMICS_BY_ORIGIN: dict[str, Graph] = {
 }
 
 
-def _strip_elastic(start: str, keep: list[str | tuple[str, ...]]) -> Graph:
+def _strip_elastic(start: str, keep: list[str | tuple[str, ...]]) -> GraphDict:
     full_graph = elastic(start)
     return {key: full_graph[key] for key in keep if key != start}
 
 
-def elastic(start: str) -> Graph:
+def elastic(start: str) -> GraphDict:
     """Graph for elastic scattering transformations.
 
     Parameters
@@ -82,7 +76,7 @@ def elastic(start: str) -> Graph:
     return dict(_GRAPH_DYNAMICS_BY_ORIGIN[start])
 
 
-def kinematic(start: str) -> Graph:
+def kinematic(start: str) -> GraphDict:
     """Graph with pure kinematics.
 
     The returned graph can be used to compute scattering-independent quantities.
@@ -100,7 +94,7 @@ def kinematic(start: str) -> Graph:
     return _strip_elastic(start, keep=['wavelength', 'energy'])
 
 
-def elastic_dspacing(start: str) -> Graph:
+def elastic_dspacing(start: str) -> GraphDict:
     """
     Graph for elastic scattering transformation to dspacing.
 
@@ -117,7 +111,7 @@ def elastic_dspacing(start: str) -> Graph:
     return _strip_elastic(start, keep=['dspacing'])
 
 
-def elastic_energy(start: str) -> Graph:
+def elastic_energy(start: str) -> GraphDict:
     """
     Graph for elastic scattering transformation to energy.
 
@@ -134,7 +128,7 @@ def elastic_energy(start: str) -> Graph:
     return _strip_elastic(start, keep=['energy'])
 
 
-def elastic_Q(start: str) -> Graph:
+def elastic_Q(start: str) -> GraphDict:
     """
     Graph for elastic scattering transformation to Q.
 
@@ -151,7 +145,7 @@ def elastic_Q(start: str) -> Graph:
     return _strip_elastic(start, keep=['Q', 'wavelength'])
 
 
-def elastic_Q_vec(start: str) -> Graph:
+def elastic_Q_vec(start: str) -> GraphDict:
     """
     Graph for elastic scattering transformation to Q vector.
 
@@ -168,7 +162,7 @@ def elastic_Q_vec(start: str) -> Graph:
     return _strip_elastic(start, keep=[('Qx', 'Qy', 'Qz'), 'Q_vec', 'wavelength'])
 
 
-def elastic_hkl(start: str) -> Graph:
+def elastic_hkl(start: str) -> GraphDict:
     """
     Graph for elastic scattering transformation to Q vector.
 
@@ -195,7 +189,7 @@ def elastic_hkl(start: str) -> Graph:
     )
 
 
-def elastic_wavelength(start: str) -> Graph:
+def elastic_wavelength(start: str) -> GraphDict:
     """
     Graph for elastic scattering transformation to wavelength.
 
@@ -212,7 +206,7 @@ def elastic_wavelength(start: str) -> Graph:
     return _strip_elastic(start, keep=['wavelength'])
 
 
-def direct_inelastic(start: str) -> Graph:
+def direct_inelastic(start: str) -> GraphDict:
     """
     Graph for direct-inelastic scattering transformations.
 
@@ -226,13 +220,13 @@ def direct_inelastic(start: str) -> Graph:
     :
         A dict defining a coordinate transformation graph.
     """
-    graphs: dict[str, Graph] = {
+    graphs: dict[str, GraphDict] = {
         'tof': {'energy_transfer': _kernels.energy_transfer_direct_from_tof}
     }
     return graphs[start]
 
 
-def indirect_inelastic(start: str) -> Graph:
+def indirect_inelastic(start: str) -> GraphDict:
     """
     Graph for indirect-inelastic scattering transformations.
 
@@ -246,7 +240,7 @@ def indirect_inelastic(start: str) -> Graph:
     :
         A dict defining a coordinate transformation graph.
     """
-    graphs: dict[str, Graph] = {
+    graphs: dict[str, GraphDict] = {
         'tof': {'energy_transfer': _kernels.energy_transfer_indirect_from_tof}
     }
     return graphs[start]

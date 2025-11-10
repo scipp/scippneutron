@@ -7,18 +7,12 @@ See :mod:`scippneutron.conversion.beamline` for definitions
 of the quantities used here.
 """
 
-from collections.abc import Callable, MutableMapping
-
-import scipp as sc
+from scipp.coords.graph import GraphDict
 
 from .. import beamline as _kernels
 
-Graph = MutableMapping[
-    str | tuple[str, ...], Callable[..., sc.Variable | dict[str, sc.Variable]]
-]
 
-
-def incident_beam() -> Graph:
+def incident_beam() -> GraphDict:
     """Graph for computing 'incident_beam'.
 
     Returns
@@ -29,7 +23,7 @@ def incident_beam() -> Graph:
     return {'incident_beam': _kernels.straight_incident_beam}
 
 
-def scattered_beam() -> Graph:
+def scattered_beam() -> GraphDict:
     """Graph for computing 'scattered_beam'.
 
     Returns
@@ -40,7 +34,7 @@ def scattered_beam() -> Graph:
     return {'scattered_beam': _kernels.straight_scattered_beam}
 
 
-def two_theta() -> Graph:
+def two_theta() -> GraphDict:
     """Graph for computing the scattering angle 'two_theta'.
 
     Returns
@@ -54,7 +48,7 @@ def two_theta() -> Graph:
     return graph
 
 
-def L1() -> Graph:
+def L1() -> GraphDict:
     """Graph for computing the primary path length 'L1'.
 
     Returns
@@ -65,7 +59,7 @@ def L1() -> Graph:
     return {'incident_beam': _kernels.straight_incident_beam, 'L1': _kernels.L1}
 
 
-def L2() -> Graph:
+def L2() -> GraphDict:
     """Graph for computing the secondary path length 'L2'.
 
     Returns
@@ -76,7 +70,7 @@ def L2() -> Graph:
     return {'scattered_beam': _kernels.straight_scattered_beam, 'L2': _kernels.L2}
 
 
-def Ltotal(scatter: bool) -> Graph:
+def Ltotal(scatter: bool) -> GraphDict:
     """Graph for computing 'Ltotal'.
 
     Parameters
@@ -97,11 +91,11 @@ def Ltotal(scatter: bool) -> Graph:
     return graph
 
 
-_NO_SCATTER_GRAPH_BEAMLINE: Graph = {
+_NO_SCATTER_GRAPH_BEAMLINE: GraphDict = {
     'Ltotal': _kernels.total_straight_beam_length_no_scatter,
 }
 
-_SCATTER_GRAPH_BEAMLINE: Graph = {
+_SCATTER_GRAPH_BEAMLINE: GraphDict = {
     'incident_beam': _kernels.straight_incident_beam,
     'scattered_beam': _kernels.straight_scattered_beam,
     'L1': _kernels.L1,
@@ -111,7 +105,7 @@ _SCATTER_GRAPH_BEAMLINE: Graph = {
 }
 
 
-def beamline(scatter: bool) -> Graph:
+def beamline(scatter: bool) -> GraphDict:
     """Graph defining a straight beamline geometry.
 
     This can be used as part of transformation graphs that require, e.g., scattering
