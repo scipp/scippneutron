@@ -61,12 +61,11 @@ python-dateutil==2.9.0.post0
     # via
     #   -r base.in
     #   matplotlib
-    #   scippnexus
 scipp==25.11.0
     # via
     #   -r base.in
     #   scippnexus
-scippnexus==25.6.0
+scippnexus==25.11.0
     # via -r base.in
 scipy==1.16.1
     # via
