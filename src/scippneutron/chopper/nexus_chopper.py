@@ -39,25 +39,10 @@ def extract_chopper_from_nexus(
     )
 
 
-def _parse_field(key: str, value: Any) -> Any:
-    if key == "top_dead_center":
-        return _parse_tdc(value)
-    return _parse_maybe_log(value)
-
-
-def _parse_tdc(
-    tdc: sc.Variable | sc.DataArray | sc.DataGroup,
+def _parse_field(
+    key: str, value: sc.Variable | sc.DataArray | sc.DataGroup
 ) -> sc.Variable | sc.DataArray:
-    if isinstance(tdc, sc.DataGroup):
-        # An NXlog without 'value'
-        return tdc["time"]
-    return tdc
-
-
-def _parse_maybe_log(
-    x: sc.Variable | sc.DataArray | sc.DataGroup,
-) -> sc.Variable | sc.DataArray:
-    if isinstance(x, sc.DataGroup) and "value" in x:
+    if isinstance(value, sc.DataGroup) and "value" in value:
         # An NXlog
-        return x["value"].squeeze()
-    return x
+        return value["value"].squeeze()
+    return value
