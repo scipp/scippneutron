@@ -33,15 +33,21 @@ def extract_chopper_from_nexus(
     return sc.DataGroup(
         {
             "type": DiskChopperType(chopper.get("type", DiskChopperType.single)),
-            **{key: _parse_field(key, val) for key, val in chopper.items()},
+            **{key: _parse_field(val) for key, val in chopper.items()},
         }
     )
 
 
 def _parse_field(
-    key: str, value: sc.Variable | sc.DataArray | sc.DataGroup
+    x: sc.Variable | sc.DataArray | sc.DataGroup,
 ) -> sc.Variable | sc.DataArray:
-    if isinstance(value, sc.DataGroup) and "value" in value:
-        # An NXlog
-        return value["value"].squeeze()
-    return value
+    if isinstance(x, sc.DataGroup):
+        if "value" in x:
+            # A NXlog
+            return x["value"].squeeze()
+        elif "time" in x:
+            # A NXlog without 'value' field
+            return x["time"].squeeze()
+        else:
+            return x
+    return x

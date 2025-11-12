@@ -60,3 +60,16 @@ def test_post_process_extracts_tdc_from_log(raw_nexus_chopper):
     raw_nexus_chopper['top_dead_center'] = sc.DataGroup({'value': timestamps})
     processed = extract_chopper_from_nexus(raw_nexus_chopper)
     assert sc.identical(processed['top_dead_center'], timestamps)
+
+
+def test_post_process_extracts_tdc_from_log_without_value(raw_nexus_chopper):
+    timestamps = sc.array(
+        dims=['time'],
+        values=np.arange(
+            '2025-02-01', '2025-02-01T00:00:00.000002000', dtype='datetime64'
+        ),
+        unit='ns',
+    )
+    raw_nexus_chopper['top_dead_center'] = sc.DataGroup({'time': timestamps})
+    processed = extract_chopper_from_nexus(raw_nexus_chopper)
+    assert sc.identical(processed['top_dead_center'], timestamps)
