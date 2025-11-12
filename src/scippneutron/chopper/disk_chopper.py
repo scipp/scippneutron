@@ -562,6 +562,10 @@ class DiskChopper:
         # of the slits, so use `max` here:
         return round(max(quot.value, 1))
 
+    def as_dict(self) -> dict[str, Any]:
+        """Return the DiskChopper fields as a dictionary."""
+        return dataclasses.asdict(self)
+
 
 def _field_eq(a: Any, b: Any) -> bool:
     if isinstance(a, sc.Variable | sc.DataArray):
