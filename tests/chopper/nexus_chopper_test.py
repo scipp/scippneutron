@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
+import numpy as np
 import pytest
 import scipp as sc
 
@@ -46,3 +47,16 @@ def test_post_process_extracts_from_logs(raw_nexus_chopper):
         processed['rotation_speed'],
         sc.array(dims=['time'], values=[12, 56, 78], unit='Hz'),
     )
+
+
+def test_post_process_extracts_tdc_from_log(raw_nexus_chopper):
+    timestamps = sc.array(
+        dims=['time'],
+        values=np.arange(
+            '2025-02-01', '2025-02-01T00:00:00.000002000', dtype='datetime64'
+        ),
+        unit='ns',
+    )
+    raw_nexus_chopper['top_dead_center'] = sc.DataGroup({'value': timestamps})
+    processed = extract_chopper_from_nexus(raw_nexus_chopper)
+    assert sc.identical(processed['top_dead_center'], timestamps)
