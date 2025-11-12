@@ -2,7 +2,6 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
 from collections.abc import Mapping
-from typing import Any
 
 import scipp as sc
 
