@@ -334,7 +334,12 @@ class DiskChopper:
             )
         return DiskChopper(
             axle_position=chopper['position'],
-            frequency=_get_1d_variable(chopper, 'rotation_speed'),
+            frequency=_get_1d_variable(
+                chopper,
+                'rotation_speed_setpoint'
+                if 'rotation_speed_setpoint' in chopper
+                else 'rotation_speed',
+            ),
             beam_position=_get_1d_variable(chopper, 'beam_position'),
             phase=_get_1d_variable(chopper, 'phase'),
             slit_height=chopper.get('slit_height'),
@@ -627,12 +632,6 @@ def _get_edges_from_nexus(
     }
 
 
-def _len_or_1(x: sc.Variable) -> int:
-    if x.ndim == 0:
-        return 1
-    return len(x)
-
-
 def _get_1d_variable(
     dg: Mapping[str, sc.Variable | sc.DataArray], name: str
 ) -> sc.Variable:
@@ -642,9 +641,11 @@ def _get_1d_variable(
     msg = (
         "Chopper field '{name}' must be a scalar variable, {got}. "
         "See the chopper user-guide for more information: "
-        "https://scipp.github.io/scippneutron/user-guide/chopper/pre-processing.html"
+        "https://scipp.github.io/scippneutron/user-guide/chopper/processing-nexus-choppers.html"
     )
 
+    if isinstance(val, sc.DataArray):
+        val = val.data
     if not isinstance(val, sc.Variable):
         raise TypeError(msg.format(name=name, got=f'got a {type(val)}'))
     if val.ndim != 0:
