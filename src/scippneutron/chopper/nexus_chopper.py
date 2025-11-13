@@ -2,7 +2,6 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
 from collections.abc import Mapping
-from typing import Any
 
 import scipp as sc
 
@@ -34,30 +33,21 @@ def extract_chopper_from_nexus(
     return sc.DataGroup(
         {
             "type": DiskChopperType(chopper.get("type", DiskChopperType.single)),
-            **{key: _parse_field(key, val) for key, val in chopper.items()},
+            **{key: _parse_field(val) for key, val in chopper.items()},
         }
     )
 
 
-def _parse_field(key: str, value: Any) -> Any:
-    if key == "top_dead_center":
-        return _parse_tdc(value)
-    return _parse_maybe_log(value)
-
-
-def _parse_tdc(
-    tdc: sc.Variable | sc.DataArray | sc.DataGroup,
-) -> sc.Variable | sc.DataArray:
-    if isinstance(tdc, sc.DataGroup):
-        # An NXlog without 'value'
-        return tdc["time"]
-    return tdc
-
-
-def _parse_maybe_log(
+def _parse_field(
     x: sc.Variable | sc.DataArray | sc.DataGroup,
 ) -> sc.Variable | sc.DataArray:
-    if isinstance(x, sc.DataGroup) and "value" in x:
-        # An NXlog
-        return x["value"].squeeze()
+    if isinstance(x, sc.DataGroup):
+        if "value" in x:
+            # A NXlog
+            return x["value"].squeeze()
+        elif "time" in x:
+            # A NXlog without 'value' field
+            return x["time"].squeeze()
+        else:
+            return x
     return x
