@@ -151,10 +151,10 @@ def test_writes_expdata(
             run_id=0,
             efix=sc.scalar(1.2, unit="meV"),
             emode=EnergyMode.direct,
-            en=sc.array(dims=["energy_transfer"], values=[3.0], unit="ueV"),
+            en=sc.array(dims=["energy_transfer"], values=[3.0, 4.0], unit="ueV"),
             psi=sc.scalar(1.2, unit="rad"),
-            u=sc.vector([0.0, 1.0, 0.0]),
-            v=sc.vector([1.0, 1.0, 0.0]),
+            u=sc.vector([0.0, 1.0, 0.0], unit='1/Å'),
+            v=sc.vector([1.0, 1.0, 0.0], unit='1/Å'),
             omega=sc.scalar(1.4, unit="rad"),
             dpsi=sc.scalar(46, unit="deg"),
             gl=sc.scalar(3, unit="rad"),
@@ -168,8 +168,8 @@ def test_writes_expdata(
             emode=EnergyMode.direct,
             en=sc.array(dims=["energy_transfer"], values=[2.0, 4.5], unit="meV"),
             psi=sc.scalar(-10.0, unit="deg"),
-            u=sc.vector([1.0, 0.0, 0.0]),
-            v=sc.vector([0.0, 1.0, 0.0]),
+            u=sc.vector([1.0, 0.0, 0.0], unit='1/Å'),
+            v=sc.vector([0.0, 1.0, 0.0], unit='1/Å'),
             omega=sc.scalar(-91, unit="deg"),
             dpsi=sc.scalar(-0.5, unit="rad"),
             gl=sc.scalar(0.0, unit="deg"),
@@ -184,10 +184,10 @@ def test_writes_expdata(
             run_id=0,
             efix=sc.scalar(1.2, unit="meV"),
             emode=EnergyMode.direct,
-            en=sc.array(dims=["energy_transfer"], values=[0.003], unit="meV"),
+            en=sc.array(dims=["energy_transfer"], values=[0.003, 0.004], unit="meV"),
             psi=sc.scalar(1.2, unit="rad"),
-            u=sc.vector([0.0, 1.0, 0.0]),
-            v=sc.vector([1.0, 1.0, 0.0]),
+            u=sc.vector([0.0, 1.0, 0.0], unit='1/Å'),
+            v=sc.vector([1.0, 1.0, 0.0], unit='1/Å'),
             omega=sc.scalar(1.4, unit="rad"),
             dpsi=sc.scalar(46.0, unit="deg").to(unit="rad"),
             gl=sc.scalar(3.0, unit="rad"),
@@ -201,8 +201,8 @@ def test_writes_expdata(
             emode=EnergyMode.direct,
             en=sc.array(dims=["energy_transfer"], values=[2.0, 4.5], unit="meV"),
             psi=sc.scalar(-10.0, unit="deg").to(unit="rad"),
-            u=sc.vector([1.0, 0.0, 0.0]),
-            v=sc.vector([0.0, 1.0, 0.0]),
+            u=sc.vector([1.0, 0.0, 0.0], unit='1/Å'),
+            v=sc.vector([0.0, 1.0, 0.0], unit='1/Å'),
             omega=sc.scalar(-91.0, unit="deg").to(unit="rad"),
             dpsi=sc.scalar(-0.5, unit="rad"),
             gl=sc.scalar(0.0, unit="deg").to(unit="rad"),
@@ -213,18 +213,7 @@ def test_writes_expdata(
     ]
 
     n_pixels = 7
-    pixels = sc.DataArray(
-        sc.zeros(sizes={'obs': n_pixels}, with_variances=True, unit='count'),
-        coords={
-            'u1': sc.zeros(sizes={'obs': n_pixels}, unit='1/Å'),
-            'u2': sc.zeros(sizes={'obs': n_pixels}, unit='1/Å'),
-            'u3': sc.zeros(sizes={'obs': n_pixels}, unit='1/Å'),
-            'u4': sc.zeros(sizes={'obs': n_pixels}, unit='meV'),
-            'idet': sc.zeros(sizes={'obs': n_pixels}, dtype=int, unit=None),
-            'irun': sc.zeros(sizes={'obs': n_pixels}, dtype=int, unit=None),
-            'ien': sc.zeros(sizes={'obs': n_pixels}, dtype=int, unit=None),
-        },
-    )
+    pixels = np.zeros((n_pixels, 9))
 
     builder = Sqw.build(buffer.get(), byteorder=byteorder)
     builder = builder.add_pixel_data(pixels, experiments=experiments)
@@ -250,10 +239,10 @@ def test_writes_pixel_data(
         run_id=-1,
         efix=sc.scalar(1.2, unit="meV"),
         emode=EnergyMode.direct,
-        en=sc.array(dims=["energy_transfer"], values=[3.0], unit="meV"),
+        en=sc.array(dims=["energy_transfer"], values=[3.0, 4.0], unit="meV"),
         psi=sc.scalar(1.2, unit="rad"),
-        u=sc.vector([0.0, 1.0, 0.0]),
-        v=sc.vector([1.0, 1.0, 0.0]),
+        u=sc.vector([0.0, 1.0, 0.0], unit='1/Å'),
+        v=sc.vector([1.0, 1.0, 0.0], unit='1/Å'),
         omega=sc.scalar(1.4, unit="rad"),
         dpsi=sc.scalar(0.0, unit="rad"),
         gl=sc.scalar(3, unit="rad"),
@@ -268,24 +257,17 @@ def test_writes_pixel_data(
 
     # Chosen numbers can all be represented in float32 to allow exact comparisons.
     n_pixels = 7
-    original = sc.DataArray(
-        sc.array(
-            dims=['obs'],
-            values=rng.uniform(0, 100, n_pixels).astype('float32'),
-            variances=rng.uniform(0.1, 1, n_pixels).astype('float32'),
-            unit='count',
-        ),
-        coords={
-            'idet': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(3),
-            'irun': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(2),
-            'ien': sc.arange('obs', 0, 2 * n_pixels, 2, unit=None).astype(int)
-            // sc.index(10),
-            'u1': sc.arange('obs', 0.0, n_pixels + 0.0, unit='1/Å'),
-            'u2': sc.arange('obs', 1.0, n_pixels + 1.0, unit='1/Å'),
-            'u3': sc.arange('obs', 2.0, n_pixels + 2.0, unit='1/Å'),
-            'u4': sc.arange('obs', n_pixels, unit='meV') * 2,
-        },
-    )
+    original = np.c_[
+        np.arange(0.0, n_pixels + 0.0),  # u1
+        np.arange(1.0, n_pixels + 1.0),  # u2
+        np.arange(2.0, n_pixels + 2.0),  # u3
+        np.arange(n_pixels) * 2,  # u4
+        np.arange(1, 1 + n_pixels) % 2 + 1,  # irun
+        np.arange(0, n_pixels) // 3 + 1,  # iden
+        np.arange(0, n_pixels) % 2 + 1,  # ien
+        rng.uniform(0, 100, n_pixels),  # values
+        rng.uniform(0.1, 1, n_pixels),  # errors
+    ].astype("float32")
     builder = Sqw.build(buffer.get(), byteorder=byteorder)
     builder = builder.add_pixel_data(original, experiments=experiments)
     builder.create()
@@ -294,15 +276,7 @@ def test_writes_pixel_data(
     with Sqw.open(buffer.get()) as sqw:
         loaded = sqw.read_data_block(("pix", "data_wrap"))
 
-    np.testing.assert_equal(loaded[:, 0], original.coords['u1'].values)
-    np.testing.assert_equal(loaded[:, 1], original.coords['u2'].values)
-    np.testing.assert_equal(loaded[:, 2], original.coords['u3'].values)
-    np.testing.assert_equal(loaded[:, 3], original.coords['u4'].values)
-    np.testing.assert_equal(loaded[:, 4], original.coords['irun'].values)
-    np.testing.assert_equal(loaded[:, 5], original.coords['idet'].values)
-    np.testing.assert_equal(loaded[:, 6], original.coords['ien'].values)
-    np.testing.assert_equal(loaded[:, 7], original.values)
-    np.testing.assert_equal(loaded[:, 8], original.variances)
+    np.testing.assert_equal(loaded, original)
 
 
 @pytest.mark.parametrize("byteorder", ["native", "little", "big"])
@@ -314,10 +288,10 @@ def test_writes_pixel_data_chunked(
         run_id=-1,
         efix=sc.scalar(1.2, unit="meV"),
         emode=EnergyMode.direct,
-        en=sc.array(dims=["energy_transfer"], values=[3.0], unit="meV"),
+        en=sc.array(dims=["energy_transfer"], values=[3.0, 4.0], unit="meV"),
         psi=sc.scalar(1.2, unit="rad"),
-        u=sc.vector([0.0, 1.0, 0.0]),
-        v=sc.vector([1.0, 1.0, 0.0]),
+        u=sc.vector([0.0, 1.0, 0.0], unit='1/Å'),
+        v=sc.vector([1.0, 1.0, 0.0], unit='1/Å'),
         omega=sc.scalar(1.4, unit="rad"),
         dpsi=sc.scalar(0.0, unit="rad"),
         gl=sc.scalar(3, unit="rad"),
@@ -332,24 +306,17 @@ def test_writes_pixel_data_chunked(
 
     # Chosen numbers can all be represented in float32 to allow exact comparisons.
     n_pixels = 7
-    original = sc.DataArray(
-        sc.array(
-            dims=['obs'],
-            values=rng.uniform(0, 100, n_pixels).astype('float32'),
-            variances=rng.uniform(0.1, 1, n_pixels).astype('float32'),
-            unit='count',
-        ),
-        coords={
-            'idet': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(3),
-            'irun': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(2),
-            'ien': sc.arange('obs', 0, 2 * n_pixels, 2, unit=None).astype(int)
-            // sc.index(10),
-            'u1': sc.arange('obs', 0.0, n_pixels + 0.0, unit='1/Å'),
-            'u2': sc.arange('obs', 1.0, n_pixels + 1.0, unit='1/Å'),
-            'u3': sc.arange('obs', 2.0, n_pixels + 2.0, unit='1/Å'),
-            'u4': sc.arange('obs', n_pixels, unit='meV') * 2,
-        },
-    )
+    original = np.c_[
+        np.arange(0.0, n_pixels + 0.0),  # u1
+        np.arange(1.0, n_pixels + 1.0),  # u2
+        np.arange(2.0, n_pixels + 2.0),  # u3
+        np.arange(n_pixels) * 2,  # u4
+        np.arange(1, 1 + n_pixels) % 2 + 1,  # irun
+        np.arange(0, n_pixels) // 3 + 1,  # iden
+        np.arange(0, n_pixels) % 2 + 1,  # ien
+        rng.uniform(0, 100, n_pixels),  # values
+        rng.uniform(0.1, 1, n_pixels),  # errors
+    ].astype("float32")
     builder = Sqw.build(buffer.get(), byteorder=byteorder)
     builder = builder.add_pixel_data(original, experiments=experiments)
     builder.create(chunk_size=n_pixels // 3)
@@ -358,86 +325,7 @@ def test_writes_pixel_data_chunked(
     with Sqw.open(buffer.get()) as sqw:
         loaded = sqw.read_data_block(("pix", "data_wrap"))
 
-    np.testing.assert_equal(loaded[:, 0], original.coords['u1'].values)
-    np.testing.assert_equal(loaded[:, 1], original.coords['u2'].values)
-    np.testing.assert_equal(loaded[:, 2], original.coords['u3'].values)
-    np.testing.assert_equal(loaded[:, 3], original.coords['u4'].values)
-    np.testing.assert_equal(loaded[:, 4], original.coords['irun'].values)
-    np.testing.assert_equal(loaded[:, 5], original.coords['idet'].values)
-    np.testing.assert_equal(loaded[:, 6], original.coords['ien'].values)
-    np.testing.assert_equal(loaded[:, 7], original.values)
-    np.testing.assert_equal(loaded[:, 8], original.variances)
-
-
-@pytest.mark.parametrize("byteorder", ["native", "little", "big"])
-def test_writes_pixel_data_convert_units(
-    byteorder: Literal["native", "little", "big"], buffer: _BytesBuffer | _PathBuffer
-) -> None:
-    rng = np.random.default_rng(1732)
-    experiment_template = SqwIXExperiment(
-        run_id=-1,
-        efix=sc.scalar(1.2, unit="meV"),
-        emode=EnergyMode.direct,
-        en=sc.array(dims=["energy_transfer"], values=[3.0], unit="meV"),
-        psi=sc.scalar(1.2, unit="rad"),
-        u=sc.vector([0.0, 1.0, 0.0]),
-        v=sc.vector([1.0, 1.0, 0.0]),
-        omega=sc.scalar(1.4, unit="rad"),
-        dpsi=sc.scalar(0.0, unit="rad"),
-        gl=sc.scalar(3, unit="rad"),
-        gs=sc.scalar(-0.5, unit="rad"),
-        filename="",
-        filepath="/data",
-    )
-    experiments = [
-        dataclasses.replace(experiment_template, run_id=0, filename="f1"),
-        dataclasses.replace(experiment_template, run_id=1, filename="f2"),
-    ]
-
-    n_pixels = 7
-    original = sc.DataArray(
-        sc.array(
-            dims=['obs'],
-            values=rng.uniform(0, 100, n_pixels),
-            variances=rng.uniform(0.1, 1, n_pixels),
-            unit='mega count',
-        ),
-        coords={
-            'idet': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(3),
-            'irun': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(2),
-            'ien': sc.arange('obs', 0, 2 * n_pixels, 2, unit=None).astype(int)
-            // sc.index(10),
-            'u1': sc.arange('obs', 0.0, n_pixels + 0.0, unit='1/fm'),
-            'u2': sc.arange('obs', 1.0, n_pixels + 1.0, unit='10/Å'),
-            'u3': sc.arange('obs', 2.0, n_pixels + 2.0, unit='1/um'),
-            'u4': sc.arange('obs', n_pixels, unit='eV') * 2,
-        },
-    )
-    builder = Sqw.build(buffer.get(), byteorder=byteorder)
-    builder = builder.add_pixel_data(original, experiments=experiments)
-    builder.create()
-    buffer.rewind()
-
-    with Sqw.open(buffer.get()) as sqw:
-        loaded = sqw.read_data_block(("pix", "data_wrap"))
-
-    np.testing.assert_allclose(
-        loaded[:, 0], original.coords['u1'].to(unit='1/Å').values
-    )
-    np.testing.assert_allclose(
-        loaded[:, 1], original.coords['u2'].to(unit='1/Å').values
-    )
-    np.testing.assert_allclose(
-        loaded[:, 2], original.coords['u3'].to(unit='1/Å').values
-    )
-    np.testing.assert_allclose(
-        loaded[:, 3], original.coords['u4'].to(unit='meV').values
-    )
-    np.testing.assert_equal(loaded[:, 4], original.coords['irun'].values)
-    np.testing.assert_equal(loaded[:, 5], original.coords['idet'].values)
-    np.testing.assert_equal(loaded[:, 6], original.coords['ien'].values)
-    np.testing.assert_allclose(loaded[:, 7], original.to(unit='count').values)
-    np.testing.assert_allclose(loaded[:, 8], original.to(unit='count').variances)
+    np.testing.assert_equal(loaded, original)
 
 
 @pytest.mark.parametrize("byteorder", ["native", "little", "big"])

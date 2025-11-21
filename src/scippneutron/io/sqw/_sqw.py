@@ -435,12 +435,18 @@ def _parse_single_ix_experiment_3_0(struct: ir.Struct) -> SqwIXExperiment:
         (e,) = candidate_efix
         efix = sc.scalar(e.value, unit="meV")
 
+    emode = EnergyMode(g("emode"))
+
     raw_en = _get_struct_field(struct, "en").data
-    if isinstance(raw_en, np.ndarray):
-        # en = raw_en.squeeze()
-        en = raw_en  # TODO ?! no squeeze in indirect mode?
+    raw_en = (
+        raw_en
+        if isinstance(raw_en, np.ndarray)
+        else np.array([e.value for e in raw_en])
+    )
+    if emode == EnergyMode.indirect:
+        en = sc.array(dims=["detector", "energy_transfer"], values=raw_en, unit="meV")
     else:
-        en = [e.value for e in raw_en]
+        en = sc.array(dims=["energy_transfer"], values=raw_en.squeeze(), unit="meV")
 
     angle_unit = sc.Unit("deg" if g("angular_is_degree") else "rad")
 
@@ -449,9 +455,8 @@ def _parse_single_ix_experiment_3_0(struct: ir.Struct) -> SqwIXExperiment:
         filepath=g("filepath"),
         run_id=int(g("run_id")) - 1,
         efix=efix,
-        emode=EnergyMode(g("emode")),
-        # TODO indirect mode
-        en=sc.array(dims=["detector", "energy_transfer"], values=en, unit="meV"),
+        emode=emode,
+        en=en,
         psi=sc.scalar(g("psi"), unit=angle_unit),
         u=sc.vector(_get_struct_field(struct, "u").data, unit="1/angstrom"),
         v=sc.vector(_get_struct_field(struct, "v").data, unit="1/angstrom"),
