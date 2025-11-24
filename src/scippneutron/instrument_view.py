@@ -2,18 +2,24 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Neil Vaytet and Owen Arnold
 
+from __future__ import annotations
+
+from collections.abc import Callable, Mapping
+from typing import Any
+
 import numpy as np
+import numpy.typing as npt
+import plopp as pp
+import pythreejs as p3
 import scipp as sc
 from scipy.spatial.transform import Rotation as Rot
 
-try:
-    import pythreejs as p3
-except ImportError as ex:
-    p3 = None
-    _pythreejs_import_error = ex
+_Shape = Callable[..., tuple[p3.Mesh, p3.Sprite]]
 
 
-def _create_text_sprite(position, bounding_box, display_text):
+def _create_text_sprite(
+    position: sc.Variable, bounding_box: tuple[float, float, float], display_text: str
+) -> p3.Sprite:
     # Position offset in y
     text_position = tuple(position.value + np.array([0, 0.8 * bounding_box[1], 0]))
     text = p3.TextTexture(string=display_text, color='black', size=300)
@@ -24,7 +30,9 @@ def _create_text_sprite(position, bounding_box, display_text):
     )
 
 
-def _create_mesh(geometry, color, wireframe, position):
+def _create_mesh(
+    geometry: p3.BaseGeometry, color: str, wireframe: bool, position: sc.Variable
+) -> p3.Mesh:
     if wireframe:
         edges = p3.EdgesGeometry(geometry)
         mesh = p3.LineSegments(
@@ -38,7 +46,14 @@ def _create_mesh(geometry, color, wireframe, position):
     return mesh
 
 
-def _box(position, display_text, bounding_box, color, wireframe, **kwargs):
+def _box(
+    position: sc.Variable,
+    display_text: str,
+    bounding_box: tuple[float, float, float],
+    color: str,
+    wireframe: bool,
+    **kwargs: Any,
+) -> tuple[p3.Mesh, p3.Sprite]:
     geometry = p3.BoxGeometry(
         width=bounding_box[0],
         height=bounding_box[1],
@@ -57,7 +72,7 @@ def _box(position, display_text, bounding_box, color, wireframe, **kwargs):
     return mesh, text_mesh
 
 
-def _find_beam(det_com, pos):
+def _find_beam(det_com: sc.Variable, pos: sc.Variable) -> npt.NDArray[np.float64]:
     # Assume beam is axis aligned and follows largest axis
     # delta between component and detector COM
     beam_dir = np.argmax(np.abs(det_com.value - pos.value))
@@ -66,14 +81,23 @@ def _find_beam(det_com, pos):
     return beam
 
 
-def _alignment_matrix(to_align, target):
+def _alignment_matrix(
+    to_align: npt.NDArray[np.float64], target: npt.NDArray[np.float64]
+) -> npt.NDArray[np.float64]:
     rot_axis = np.cross(to_align, target)
     magnitude = np.linalg.norm(to_align) * np.linalg.norm(target)
     axis_angle = np.arcsin(rot_axis / magnitude)
     return Rot.from_rotvec(axis_angle).as_matrix()
 
 
-def _disk_chopper(position, display_text, bounding_box, color, wireframe, **kwargs):
+def _disk_chopper(
+    position: sc.Variable,
+    display_text: str,
+    bounding_box: tuple[float, float, float],
+    color: str,
+    wireframe: bool,
+    **kwargs: Any,
+) -> tuple[p3.Mesh, p3.Sprite]:
     geometry = p3.CylinderGeometry(
         radiusTop=bounding_box[0] / 2,
         radiusBottom=bounding_box[0] / 2,
@@ -98,7 +122,14 @@ def _disk_chopper(position, display_text, bounding_box, color, wireframe, **kwar
     return mesh, text_mesh
 
 
-def _cylinder(position, display_text, bounding_box, color, wireframe, **kwargs):
+def _cylinder(
+    position: sc.Variable,
+    display_text: str,
+    bounding_box: tuple[float, float, float],
+    color: str,
+    wireframe: bool,
+    **kwargs: Any,
+) -> tuple[p3.Mesh, p3.Sprite]:
     geometry = p3.CylinderGeometry(
         radiusTop=bounding_box[0] / 2,
         radiusBottom=bounding_box[0] / 2,
@@ -119,7 +150,7 @@ def _cylinder(position, display_text, bounding_box, color, wireframe, **kwargs):
     return mesh, text_mesh
 
 
-def _unpack_to_scene(scene, items):
+def _unpack_to_scene(scene: p3.Scene, items: Any) -> None:
     if hasattr(items, "__iter__"):
         for item in items:
             scene.add(item)
@@ -128,8 +159,15 @@ def _unpack_to_scene(scene, items):
 
 
 def _add_to_scene(
-    position, scene, shape, display_text, bounding_box, color, wireframe, **kwargs
-):
+    position: sc.Variable,
+    scene: p3.Scene,
+    shape: _Shape,
+    display_text: str,
+    bounding_box: tuple[float, float, float],
+    color: str,
+    wireframe: bool,
+    **kwargs: Any,
+) -> None:
     _unpack_to_scene(
         scene,
         shape(
@@ -143,8 +181,10 @@ def _add_to_scene(
     )
 
 
-def _furthest_component(det_center, scipp_obj, additional):
-    distances = [
+def _furthest_component(
+    det_center: sc.Variable, additional: Mapping[str, Mapping[str, Any]]
+) -> float:
+    distances: list[float] = [
         sc.norm(settings["center"] - det_center).value
         for settings in list(additional.values())
     ]
@@ -152,18 +192,22 @@ def _furthest_component(det_center, scipp_obj, additional):
     return max_displacement
 
 
-def _instrument_view_shape_types():
+def _instrument_view_shape_types() -> dict[str, _Shape]:
     return {"box": _box, "cylinder": _cylinder, "disk": _disk_chopper}
 
 
-def _as_vector(var):
+def _as_vector(var: sc.Variable) -> sc.Variable:
     if var.dtype == sc.DType.vector3:
         return var
     else:
         return sc.spatial.as_vectors(x=var, y=var, z=var)
 
 
-def _plot_components(scipp_obj, components, positions_var, scene):
+def _plot_components(
+    components: Mapping[str, Mapping[str, Any]],
+    positions_var: sc.Variable,
+    scene: p3.Scene,
+) -> None:
     det_center = sc.mean(positions_var)
     # Some scaling to set width according to distance from detector center
     shapes = _instrument_view_shape_types()
@@ -194,11 +238,11 @@ def _plot_components(scipp_obj, components, positions_var, scene):
     # Reset camera
     camera = _get_camera(scene)
     if camera:
-        furthest_distance = _furthest_component(det_center, scipp_obj, components)
+        furthest_distance = _furthest_component(det_center, components)
         camera.far = max(camera.far, furthest_distance * 5.0)
 
 
-def _get_camera(scene):
+def _get_camera(scene: p3.Scene) -> p3.PerspectiveCamera | None:
     for child in scene.children:
         if isinstance(child, p3.PerspectiveCamera):
             return child
@@ -206,13 +250,13 @@ def _get_camera(scene):
 
 
 def instrument_view(
-    scipp_obj,
-    positions="position",
-    pixel_size=None,
-    components=None,
-    cbar=True,
-    **kwargs,
-):
+    scipp_obj: sc.Dataset,
+    positions: str = "position",
+    pixel_size: sc.Variable | float | None = None,
+    components: Mapping[str, Mapping[str, Any]] | None = None,
+    cbar: bool = True,
+    **kwargs: Any,
+) -> Any:
     """Plot a 3D view of the instrument, using the `position` coordinate as the
     detector vector positions.
 
@@ -267,16 +311,11 @@ def instrument_view(
     :
         The 3D plot object
     """
-    if not p3:
-        raise _pythreejs_import_error
-
-    import plopp as pp
-
     positions_var = scipp_obj.coords[positions]
     if pixel_size is None:
         pos_array = positions_var.values
         if len(pos_array) > 1:
-            pixel_size = np.linalg.norm(pos_array[1] - pos_array[0])
+            pixel_size = np.linalg.norm(pos_array[1] - pos_array[0])  # type: ignore[assignment]
 
     fig = pp.scatter3d(
         scipp_obj, pos=positions, pixel_size=pixel_size, cbar=cbar, **kwargs
@@ -285,6 +324,6 @@ def instrument_view(
 
     # Add additional components from the beamline
     if components:
-        _plot_components(scipp_obj, components, positions_var, scene)
+        _plot_components(components, positions_var, scene)
 
     return fig
