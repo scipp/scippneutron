@@ -175,6 +175,28 @@ class SqwBuilder:
     def add_dnd_data(
         self, metadata: SqwDndMetadata, *, data: sc.Variable, counts: sc.Variable
     ) -> SqwBuilder:
+        """Add a DND data block (image) to the file.
+
+        Attention
+        ---------
+        ``data`` and ``counts`` must be given in row-major layout.
+        They are converted to column-major (FORTRAN) layout internally.
+        This means that the data must have shape ``['u1', 'u2', 'u3', 'u4']``.
+
+        Parameters
+        ----------
+        metadata:
+            Metadata describing the DND data.
+        data:
+            The values and variances of the image.
+        counts:
+            The number of observations ('pixels') per bin.
+
+        Returns
+        -------
+        :
+            Self.
+        """
         builder = self._add_dnd_metadata(metadata)
         builder._dnd_data = _DndData(
             shape=tuple(map(int, metadata.axes.n_bins_all_dims)),  # type: ignore[call-overload]
