@@ -13,14 +13,14 @@ _V = TypeVar('_V', sc.Variable, sc.DataArray)
 
 
 def elem_unit(var: sc.Variable | sc.DataArray) -> sc.Unit:
-    unit = var.bins.unit if var.bins is not None else var.unit
+    unit = var.bins.unit if var.is_binned else var.unit
     if unit is None:
         raise sc.UnitError("Cannot do arithmetic with variables without units")
     return unit
 
 
 def elem_dtype(var: sc.Variable | sc.DataArray) -> sc.DType:
-    return var.bins.constituents['data'].dtype if var.bins is not None else var.dtype  # type: ignore[union-attr]
+    return var.bins.constituents['data'].dtype if var.is_binned else var.dtype  # type: ignore[union-attr]
 
 
 def float_dtype(var: sc.Variable | sc.DataArray) -> sc.DType:

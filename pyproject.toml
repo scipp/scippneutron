@@ -39,7 +39,7 @@ dependencies = [
     "numpy>=1.20",
     "plopp>=24.09.1",
     "pydantic>=2",
-    "scipp>=24.07.0",
+    "scipp>=24.11.0",
     "scippnexus>=23.11.0",
     "scipy>=1.7.0",
 ]
