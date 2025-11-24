@@ -252,7 +252,7 @@ class SqwIXSource(ir.Serializable):
             "version": ir.F64(self.version),
             "name": ir.String(self.name),
             "target_name": ir.String(self.target_name),
-            "frequency": ir.F64(self.frequency.value),  # TODO unit
+            "frequency": ir.F64(self.frequency.to(unit='Hz').value),
         }
 
 
@@ -343,8 +343,8 @@ class SqwIXExperiment(ir.Serializable):
             "emode": ir.F64(float(self.emode.value)),
             "en": ir.Array(en.values, ty=ir.TypeTag.f64),
             "psi": ir.F64(_angle_value(self.psi)),
-            "u": ir.Array(self.u.values, ty=ir.TypeTag.f64),
-            "v": ir.Array(self.v.values, ty=ir.TypeTag.f64),
+            "u": _variable_to_float_array(self.u, unit="1/angstrom"),
+            "v": _variable_to_float_array(self.v, unit="1/angstrom"),
             "omega": ir.F64(_angle_value(self.omega)),
             "dpsi": ir.F64(_angle_value(self.dpsi)),
             "gl": ir.F64(_angle_value(self.gl)),

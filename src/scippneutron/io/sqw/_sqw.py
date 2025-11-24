@@ -342,7 +342,7 @@ def _parse_line_proj_7_0(struct: ir.Struct) -> tuple[SqwLineProj, list[str]]:
 
     return SqwLineProj(
         lattice_spacing=sc.vector(
-            _get_struct_field(struct, "alatt").data, unit="1/angstrom"
+            _get_struct_field(struct, "alatt").data, unit="angstrom"
         ),
         lattice_angle=sc.vector(_get_struct_field(struct, "angdeg").data, unit="deg"),
         offset=_parse_1d_multi_unit_array(
@@ -394,8 +394,7 @@ def _parse_ix_source_2_0(struct: ir.Struct) -> SqwIXSource:
     return SqwIXSource(
         name=name,
         target_name=target_name,
-        # TODO unit currently unknown
-        frequency=sc.scalar(frequency, unit=None),
+        frequency=sc.scalar(frequency, unit="Hz"),
     )
 
 
@@ -408,7 +407,7 @@ def _parse_ix_null_instrument_1_0(struct: ir.Struct) -> SqwIXNullInstrument:
 def _parse_ix_sample_0_0(struct: ir.Struct) -> SqwIXSample:
     name = _get_scalar_struct_field(struct, "name")
     lattice_spacing = sc.vector(
-        _get_struct_field(struct, "alatt").data, unit="1/angstrom"
+        _get_struct_field(struct, "alatt").data, unit="angstrom"
     )
     lattice_angle = sc.vector(_get_struct_field(struct, "angdeg").data, unit="deg")
     return SqwIXSample(
@@ -436,11 +435,18 @@ def _parse_single_ix_experiment_3_0(struct: ir.Struct) -> SqwIXExperiment:
         (e,) = candidate_efix
         efix = sc.scalar(e.value, unit="meV")
 
+    emode = EnergyMode(g("emode"))
+
     raw_en = _get_struct_field(struct, "en").data
-    if isinstance(raw_en, np.ndarray):
-        en = raw_en.squeeze()
+    raw_en = (
+        raw_en
+        if isinstance(raw_en, np.ndarray)
+        else np.array([e.value for e in raw_en])
+    )
+    if emode == EnergyMode.indirect:
+        en = sc.array(dims=["detector", "energy_transfer"], values=raw_en, unit="meV")
     else:
-        en = [e.value for e in raw_en]
+        en = sc.array(dims=["energy_transfer"], values=raw_en.squeeze(), unit="meV")
 
     angle_unit = sc.Unit("deg" if g("angular_is_degree") else "rad")
 
@@ -449,11 +455,11 @@ def _parse_single_ix_experiment_3_0(struct: ir.Struct) -> SqwIXExperiment:
         filepath=g("filepath"),
         run_id=int(g("run_id")) - 1,
         efix=efix,
-        emode=EnergyMode(g("emode")),
-        en=sc.array(dims=["energy_transfer"], values=en, unit="meV"),
+        emode=emode,
+        en=en,
         psi=sc.scalar(g("psi"), unit=angle_unit),
-        u=sc.vector(_get_struct_field(struct, "u").data),
-        v=sc.vector(_get_struct_field(struct, "v").data),
+        u=sc.vector(_get_struct_field(struct, "u").data, unit="1/angstrom"),
+        v=sc.vector(_get_struct_field(struct, "v").data, unit="1/angstrom"),
         omega=sc.scalar(g("omega"), unit=angle_unit),
         dpsi=sc.scalar(g("dpsi"), unit=angle_unit),
         gl=sc.scalar(g("gl"), unit=angle_unit),

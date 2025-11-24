@@ -155,7 +155,7 @@ class LowLevelSqw:
             flat = flat.copy()
             self._file.seek(self.position + count * dtype.itemsize)
         else:
-            flat = np.fromfile(self._file, dtype=dtype, count=int(np.prod(shape)))
+            flat = np.fromfile(self._file, dtype=dtype, count=count)
         # Invert the shape because files use column-major layout.
         return flat.reshape(shape[::-1])
 
@@ -197,6 +197,13 @@ class LowLevelSqw:
 
     @_annotate_write_exception("array")
     def write_array(
+        self, array: npt.NDArray[np.float64] | npt.NDArray[np.float32]
+    ) -> None:
+        # Transpose to match the column-major layout of the file.
+        self.write_array_fortran_layout(array.T)
+
+    @_annotate_write_exception("array_fortran_layout")
+    def write_array_fortran_layout(
         self, array: npt.NDArray[np.float64] | npt.NDArray[np.float32]
     ) -> None:
         out = array.astype(array.dtype.newbyteorder(self.byteorder.value), copy=False)
