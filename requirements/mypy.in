@@ -1,2 +1,3 @@
 -r test.in
 mypy
+scipy-stubs

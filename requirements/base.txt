@@ -11,31 +11,31 @@ contourpy==1.3.3
     # via matplotlib
 cycler==0.12.1
     # via matplotlib
-dnspython==2.7.0
+dnspython==2.8.0
     # via email-validator
-email-validator==2.2.0
+email-validator==2.3.0
     # via -r base.in
-fonttools==4.59.0
+fonttools==4.60.1
     # via matplotlib
-h5py==3.14.0
+h5py==3.15.1
     # via
     #   -r base.in
     #   scippnexus
-idna==3.10
+idna==3.11
     # via email-validator
-kiwisolver==1.4.8
+kiwisolver==1.4.9
     # via matplotlib
 lazy-loader==0.4
     # via
     #   -r base.in
     #   plopp
-matplotlib==3.10.5
+matplotlib==3.10.7
     # via
     #   mpltoolbox
     #   plopp
-mpltoolbox==25.5.0
+mpltoolbox==25.10.0
     # via -r base.in
-numpy==2.3.2
+numpy==2.3.5
     # via
     #   -r base.in
     #   contourpy
@@ -47,15 +47,15 @@ packaging==25.0
     # via
     #   lazy-loader
     #   matplotlib
-pillow==11.3.0
+pillow==12.0.0
     # via matplotlib
 plopp==25.11.0
     # via -r base.in
-pydantic==2.11.7
+pydantic==2.12.4
     # via -r base.in
-pydantic-core==2.33.2
+pydantic-core==2.41.5
     # via pydantic
-pyparsing==3.2.3
+pyparsing==3.2.5
     # via matplotlib
 python-dateutil==2.9.0.post0
     # via
@@ -67,16 +67,16 @@ scipp==25.11.0
     #   scippnexus
 scippnexus==25.11.0
     # via -r base.in
-scipy==1.16.1
+scipy==1.16.3
     # via
     #   -r base.in
     #   scippnexus
 six==1.17.0
     # via python-dateutil
-typing-extensions==4.14.1
+typing-extensions==4.15.0
     # via
     #   pydantic
     #   pydantic-core
     #   typing-inspection
-typing-inspection==0.4.1
+typing-inspection==0.4.2
     # via pydantic
