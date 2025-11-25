@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 import numpy as np
+import numpy.typing as npt
 import scipp as sc
 
 from .._files import open_or_pass
@@ -89,7 +90,7 @@ class SqwBuilder:
             ("", "main_header"): main_header,
         }
 
-        self._dnd_placeholder: _DndPlaceholder | None = None
+        self._dnd_data: _DndPlaceholder | _DndData | None = None
         self._pix_wrap: _PixWrap | None = None
         self._instrument: SqwIXNullInstrument | None = None
         self._sample: SqwIXSample | None = None
@@ -121,7 +122,7 @@ class SqwBuilder:
                         self._pix_wrap.write(sqw_io, chunk_size=chunk_size)  # type: ignore[union-attr]
                     case SqwDataBlockType.dnd:
                         # Type guaranteed by _serialize_data_blocks
-                        self._dnd_placeholder.write(sqw_io)  # type: ignore[union-attr]
+                        self._dnd_data.write(sqw_io)  # type: ignore[union-attr]
                     case _:
                         raise NotImplementedError(
                             f"Unsupported data block type: {descriptor.block_type}"
@@ -131,11 +132,10 @@ class SqwBuilder:
 
     def add_pixel_data(
         self,
-        data: sc.DataArray,
+        data: npt.NDArray[np.float32],
         *,
         experiments: list[SqwIXExperiment],
         n_dims: int = 4,
-        rows: tuple[str, ...] = _DEFAULT_PIX_ROWS,
         row_units: tuple[str | None, ...] = _DEFAULT_PIX_ROW_UNITS,
     ) -> SqwBuilder:
         self._n_dims = n_dims
@@ -143,7 +143,7 @@ class SqwBuilder:
             experiments
         )
 
-        self._pix_wrap = _split_pix_rows(data, rows, row_units)
+        self._pix_wrap = _PixWrap(row_data=data, row_units=row_units)
         metadata = self._make_pix_metadata(self._pix_wrap)
         self._data_blocks[("pix", "metadata")] = metadata
         self._data_blocks[("", "main_header")].nfiles = len(experiments)
@@ -164,11 +164,22 @@ class SqwBuilder:
         self._data_blocks[("data", "metadata")] = block
         return self
 
-    def add_empty_dnd_data(self, block: SqwDndMetadata) -> SqwBuilder:
+    def add_empty_dnd_data(self, metadata: SqwDndMetadata) -> SqwBuilder:
         # The file must always contain a DND block
-        builder = self._add_dnd_metadata(block)
-        builder._dnd_placeholder = _DndPlaceholder(
-            shape=tuple(map(int, block.axes.n_bins_all_dims))  # type: ignore[call-overload]
+        builder = self._add_dnd_metadata(metadata)
+        builder._dnd_data = _DndPlaceholder(
+            shape=tuple(map(int, metadata.axes.n_bins_all_dims))  # type: ignore[call-overload]
+        )
+        return builder
+
+    def add_dnd_data(
+        self, metadata: SqwDndMetadata, *, data: sc.Variable, counts: sc.Variable
+    ) -> SqwBuilder:
+        builder = self._add_dnd_metadata(metadata)
+        builder._dnd_data = _DndData(
+            shape=tuple(map(int, metadata.axes.n_bins_all_dims)),  # type: ignore[call-overload]
+            data=data,
+            counts=counts,
         )
         return builder
 
@@ -195,12 +206,10 @@ class SqwBuilder:
             data_range=np.vstack(
                 [
                     (
-                        sc.to_unit(row.min(), unit).value,
-                        sc.to_unit(row.max(), unit).value,
+                        pix_wrap.row_data[:, i].min().astype(np.float64),
+                        pix_wrap.row_data[:, i].max().astype(np.float64),
                     )
-                    for row, unit in zip(
-                        pix_wrap.row_data, pix_wrap.row_units, strict=True
-                    )
+                    for i, unit in enumerate(pix_wrap.row_units)
                 ]
             ),
         )
@@ -232,15 +241,7 @@ class SqwBuilder:
                 locked=False,
             )
 
-        if self._dnd_placeholder is not None:
-            buffers[("data", "nd_data")] = None
-            descriptors[("data", "nd_data")] = SqwDataBlockDescriptor(
-                block_type=SqwDataBlockType.dnd,
-                name=("data", "nd_data"),
-                position=0,
-                size=self._dnd_placeholder.size(),
-                locked=False,
-            )
+        self._serialize_dnd_data(buffers, descriptors)
 
         if self._pix_wrap is not None:
             buffers[("pix", "data_wrap")] = None
@@ -253,6 +254,31 @@ class SqwBuilder:
             )
 
         return buffers, descriptors
+
+    def _serialize_dnd_data(
+        self,
+        buffers: dict[DataBlockName, memoryview | None],
+        descriptors: dict[tuple[str, str], SqwDataBlockDescriptor],
+    ) -> None:
+        match self._dnd_data:
+            case _DndPlaceholder() as placeholder:
+                buffers[("data", "nd_data")] = None
+                descriptors[("data", "nd_data")] = SqwDataBlockDescriptor(
+                    block_type=SqwDataBlockType.dnd,
+                    name=("data", "nd_data"),
+                    position=0,
+                    size=placeholder.size(),
+                    locked=False,
+                )
+            case _DndData() as data:
+                buffers[("data", "nd_data")] = None
+                descriptors[("data", "nd_data")] = SqwDataBlockDescriptor(
+                    block_type=SqwDataBlockType.dnd,
+                    name=("data", "nd_data"),
+                    position=0,
+                    size=data.size(),
+                    locked=False,
+                )
 
     def _prepare_data_blocks(self) -> dict[DataBlockName, Any]:
         filepath, filename = self._filepath_and_name
@@ -380,31 +406,11 @@ def _to_canonical_block_order(
         ("pix", "data_wrap"),
     )
     blocks = dict(blocks)
-    out = {name: block for name in order if (block := blocks.get(name)) is not None}
+    out = {
+        name: block for name in order if (block := blocks.pop(name, None)) is not None
+    }
     out.update(blocks)  # append remaining blocks if any
     return out
-
-
-def _split_pix_rows(
-    data: sc.DataArray, rows: tuple[str, ...], row_units: tuple[str | None, ...]
-) -> _PixWrap:
-    """Prepare the selected pixel rows for writing."""
-    selected = []
-    for name in rows:
-        if name == 'signal':
-            selected.append(sc.values(data.data))
-        elif name == 'error':
-            selected.append(sc.variances(data.data))
-        else:
-            if data.coords.is_edges(name, data.dim):
-                raise sc.BinEdgeError(
-                    f"Pixel data must not contain bin-edges, got edges for '{name}'."
-                )
-            selected.append(data.coords[name])
-    return _PixWrap(
-        row_data=selected,
-        row_units=row_units,
-    )
 
 
 @dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
@@ -426,8 +432,30 @@ class _DndPlaceholder:
 
 
 @dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
+class _DndData:
+    data: sc.Variable
+    counts: sc.Variable
+    shape: tuple[int, ...]
+
+    def size(self) -> int:
+        n_elem = int(np.prod(self.shape))
+        return 4 + 4 * len(self.shape) + 3 * 8 * n_elem
+
+    def write(self, sqw_io: LowLevelSqw) -> None:
+        sqw_io.write_u32(len(self.shape))
+        for s in self.shape:
+            sqw_io.write_u32(s)
+        sqw_io.write_array(self.data.values.astype("float64", copy=False))
+        sqw_io.write_array(np.sqrt(self.data.variances.astype("float64", copy=False)))
+        # Strictly speaking uint64, but we don't support that in Scipp.
+        # So we have to assume that all numbers are positive anyway.
+        # Then we can avoid unnecessary type casts.
+        sqw_io.write_array(self.counts.values.astype("int64", copy=False))
+
+
+@dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
 class _PixWrap:
-    row_data: list[sc.Variable]
+    row_data: npt.NDArray[np.float32]  # shape: (n_pixels, n_rows)
     row_units: tuple[str | None, ...]
 
     def size(self) -> int:
@@ -435,24 +463,12 @@ class _PixWrap:
         return 4 + 8 + self.n_rows() * 4 * self.n_pixels()
 
     def n_rows(self) -> int:
-        return len(self.row_data)
+        return self.row_data.shape[1]
 
     def n_pixels(self) -> int:
-        return len(self.row_data[0])
+        return self.row_data.shape[0]
 
     def write(self, sqw_io: LowLevelSqw, chunk_size: int) -> None:
         sqw_io.write_u32(self.n_rows())
         sqw_io.write_u64(self.n_pixels())
-
-        buffer = np.empty((self.n_pixels(), self.n_rows()), dtype=np.float32)
-        remaining = self.n_pixels()
-        for offset in range(0, self.n_rows(), chunk_size):
-            n = min(chunk_size, remaining)
-            remaining -= n
-            for i_row, (row, unit) in enumerate(
-                zip(self.row_data, self.row_units, strict=True)
-            ):
-                buffer[:n, i_row] = sc.to_unit(
-                    row[offset : offset + chunk_size], unit, copy=False
-                ).values
-            sqw_io.write_array(buffer[:n])
+        sqw_io.write_array_fortran_layout(self.row_data)

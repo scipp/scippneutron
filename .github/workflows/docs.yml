@@ -7,6 +7,7 @@ on:
         default: false
         type: boolean
       version:
+        description: 'Version of ScippNeutron to use for building the docs. Requires this version to be available on conda-forge! If not set, the current version will be used.'
         default: ''
         required: false
         type: string
@@ -21,6 +22,7 @@ on:
         default: false
         type: boolean
       version:
+        description: 'Version of ScippNeutron to use for building the docs. Requires this version to be available on conda-forge! If not set, the current version will be used.'
         default: ''
         required: false
         type: string

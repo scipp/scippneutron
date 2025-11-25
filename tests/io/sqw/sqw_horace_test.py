@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 import scipp as sc
 from dateutil.parser import parse as parse_datetime
@@ -134,25 +135,17 @@ def experiment_template() -> SqwIXExperiment:
 def pixel_data() -> sc.DataArray:
     rng = np.random.default_rng(9293)
     n_pixels = 76
-    # Chosen numbers can all be represented in float32 to allow exact comparisons.
-    return sc.DataArray(
-        sc.array(
-            dims=['obs'],
-            values=rng.uniform(0, 100, n_pixels).astype('float32'),
-            variances=rng.uniform(0.1, 1, n_pixels).astype('float32'),
-            unit='count',
-        ),
-        coords={
-            'idet': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(3),
-            'irun': sc.arange('obs', 0, n_pixels, unit=None).astype(int) // sc.index(2),
-            'ien': sc.arange('obs', 0, 2 * n_pixels, 2, unit=None).astype(int)
-            // sc.index(10),
-            'u1': sc.arange('obs', 0.0, n_pixels + 0.0, unit='1/Å'),
-            'u2': sc.arange('obs', 1.0, n_pixels + 1.0, unit='1/Å'),
-            'u3': sc.arange('obs', 2.0, n_pixels + 2.0, unit='1/Å'),
-            'u4': sc.arange('obs', n_pixels, unit='meV') * 2,
-        },
-    )
+    return np.c_[
+        np.arange(0.0, n_pixels + 0.0),  # u1
+        np.arange(1.0, n_pixels + 1.0),  # u2
+        np.arange(2.0, n_pixels + 2.0),  # u3
+        np.arange(0.0, n_pixels),  # u4
+        np.ones(n_pixels) % 2 + 1,  # irun
+        np.arange(0, n_pixels) % 5 + 1,  # idet
+        np.arange(0, n_pixels) % 3 + 1,  # ien
+        rng.uniform(0, 100, n_pixels),  # values
+        rng.uniform(0.1, 1, n_pixels),  # errors
+    ].astype(np.float32)
 
 
 def test_horace_roundtrip_main_header(
@@ -161,7 +154,7 @@ def test_horace_roundtrip_main_header(
     null_instrument: SqwIXNullInstrument,
     sample: SqwIXSample,
     experiment_template: SqwIXExperiment,
-    pixel_data: sc.DataArray,
+    pixel_data: npt.NDArray[np.float32],
     tmp_path: Path,
 ) -> None:
     path = tmp_path / "roundtrip_main_header.sqw"
@@ -191,7 +184,7 @@ def test_horace_roundtrip_null_instruments(
     null_instrument: SqwIXNullInstrument,
     sample: SqwIXSample,
     experiment_template: SqwIXExperiment,
-    pixel_data: sc.DataArray,
+    pixel_data: npt.NDArray[np.float32],
     tmp_path: Path,
 ) -> None:
     path = tmp_path / "roundtrip_null_instrument.sqw"
@@ -211,7 +204,9 @@ def test_horace_roundtrip_null_instruments(
     assert loaded.name == null_instrument.name
     assert loaded.source.name == null_instrument.source.name
     assert loaded.source.target_name == null_instrument.source.target_name
-    assert loaded.source.frequency == null_instrument.source.frequency.value
+    assert (
+        loaded.source.frequency == null_instrument.source.frequency.to(unit='Hz').value
+    )
 
 
 def test_horace_roundtrip_sample(
@@ -220,7 +215,7 @@ def test_horace_roundtrip_sample(
     null_instrument: SqwIXNullInstrument,
     sample: SqwIXSample,
     experiment_template: SqwIXExperiment,
-    pixel_data: sc.DataArray,
+    pixel_data: npt.NDArray[np.float32],
     tmp_path: Path,
 ) -> None:
     path = tmp_path / "roundtrip_sample.sqw"
@@ -252,7 +247,7 @@ def test_horace_roundtrip_experiment(
     null_instrument: SqwIXNullInstrument,
     sample: SqwIXSample,
     experiment_template: SqwIXExperiment,
-    pixel_data: sc.DataArray,
+    pixel_data: npt.NDArray[np.float32],
     tmp_path: Path,
 ) -> None:
     path = tmp_path / "roundtrip_experiment.sqw"
@@ -291,13 +286,13 @@ def test_horace_roundtrip_experiment_indirect(
     dnd_metadata: SqwDndMetadata,
     null_instrument: SqwIXNullInstrument,
     sample: SqwIXSample,
-    pixel_data: sc.DataArray,
+    pixel_data: npt.NDArray[np.float32],
     tmp_path: Path,
 ) -> None:
     experiment_template = SqwIXExperiment(
         run_id=0,
         efix=sc.array(dims=['detector'], values=[0.5, 0.6, 0.8, 0.9, 1.1], unit="meV"),
-        emode=EnergyMode.direct,
+        emode=EnergyMode.indirect,
         en=sc.array(
             dims=["detector", "energy_transfer"],
             values=[[-0.1, 0.3], [-0.2, 0.2], [0.0, 0.6], [0.1, 0.7], [0.3, 0.7]],
@@ -353,7 +348,7 @@ def test_horace_roundtrip_pixels(
     null_instrument: SqwIXNullInstrument,
     sample: SqwIXSample,
     experiment_template: SqwIXExperiment,
-    pixel_data: sc.DataArray,
+    pixel_data: npt.NDArray[np.float32],
     tmp_path: Path,
 ) -> None:
     path = tmp_path / "roundtrip_pixels.sqw"
@@ -362,10 +357,6 @@ def test_horace_roundtrip_pixels(
         replace(experiment_template, run_id=0, filename="experiment_1.nxspe"),
         replace(experiment_template, run_id=1, filename="experiment_2.nxspe"),
     ]
-    rng = np.random.default_rng(526)
-    pixel_data.coords['irun'] = sc.array(
-        dims=['obs'], values=rng.integers(0, 2, len(pixel_data)), unit=None
-    )
 
     (
         Sqw.build(path, title="Pixel test file")
@@ -377,18 +368,12 @@ def test_horace_roundtrip_pixels(
     )
 
     loaded = matlab.read_horace(os.fspath(path))
-    np.testing.assert_equal(loaded.pix.u1.squeeze(), pixel_data.coords['u1'].values)
-    np.testing.assert_equal(loaded.pix.u2.squeeze(), pixel_data.coords['u2'].values)
-    np.testing.assert_equal(loaded.pix.u3.squeeze(), pixel_data.coords['u3'].values)
-    np.testing.assert_equal(loaded.pix.dE.squeeze(), pixel_data.coords['u4'].values)
-    np.testing.assert_equal(
-        loaded.pix.run_idx.squeeze(), pixel_data.coords['irun'].values
-    )
-    np.testing.assert_equal(
-        loaded.pix.detector_idx.squeeze(), pixel_data.coords['idet'].values
-    )
-    np.testing.assert_equal(
-        loaded.pix.energy_idx.squeeze(), pixel_data.coords['ien'].values
-    )
-    np.testing.assert_equal(loaded.pix.signal.squeeze(), pixel_data.values)
-    np.testing.assert_equal(loaded.pix.variance.squeeze(), pixel_data.variances)
+    np.testing.assert_equal(loaded.pix.u1.squeeze(), pixel_data[:, 0])
+    np.testing.assert_equal(loaded.pix.u2.squeeze(), pixel_data[:, 1])
+    np.testing.assert_equal(loaded.pix.u3.squeeze(), pixel_data[:, 2])
+    np.testing.assert_equal(loaded.pix.dE.squeeze(), pixel_data[:, 3])
+    np.testing.assert_equal(loaded.pix.run_idx.squeeze(), pixel_data[:, 4])
+    np.testing.assert_equal(loaded.pix.detector_idx.squeeze(), pixel_data[:, 5])
+    np.testing.assert_equal(loaded.pix.energy_idx.squeeze(), pixel_data[:, 6])
+    np.testing.assert_equal(loaded.pix.signal.squeeze(), pixel_data[:, 7])
+    np.testing.assert_equal(loaded.pix.variance.squeeze(), pixel_data[:, 8])
