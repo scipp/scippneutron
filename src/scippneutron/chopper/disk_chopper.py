@@ -308,11 +308,16 @@ class DiskChopper:
 
         Keys in the input correspond to the fields of `NXdisk_chopper
         <https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html>`_.
-        The values have to be post-processed, e.g., with
-        :func:`~scippneutron.chopper.nexus_chopper.post_process_disk_chopper`.
-        See its documentation for the required steps.
-        Also, note the class docs of :class:`DiskChopper`
-        about time-dependent fields.
+
+        The input data group must contain a `rotation_speed_setpoint`. If this is not
+        available, a single (scalar) value must be computed from processing the
+        time-dependent `rotation_speed` data. This can be done with
+        :func:`~scippneutron.chopper.nexus_chopper.post_process_disk_chopper`
+        (see its documentation for the required steps). The resulting single value
+        can then be passed as `rotation_speed_setpoint`.
+
+        If a `phase` field is not present, it is computed from the `delay` field
+        and the `rotation_speed_setpoint` as `phase = 2*pi*frequency*delay`.
 
         Parameters
         ----------
@@ -332,11 +337,23 @@ class DiskChopper:
                 'Class DiskChopper only supports single choppers,'
                 f'got chopper type {typ}'
             )
+
+        frequency = _get_0d_variable(chopper, 'rotation_speed_setpoint')
+        if "phase" in chopper:
+            phase = _get_0d_variable(chopper, 'phase')
+        else:
+            if "delay" not in chopper:
+                raise ValueError(
+                    "DiskChopper.from_nexus: Chopper field 'phase' is missing and "
+                    "cannot be computed because field 'delay' is also missing."
+                )
+            omega = 2 * sc.constants.pi * frequency * sc.scalar(1.0, unit='rad')
+            phase = (chopper["delay"].to(dtype=float) * omega).to(unit='rad')
         return DiskChopper(
             axle_position=chopper['position'],
-            frequency=_get_0d_variable(chopper, 'rotation_speed'),
+            frequency=frequency,
             beam_position=_get_0d_variable(chopper, 'beam_position'),
-            phase=_get_0d_variable(chopper, 'phase'),
+            phase=phase,
             slit_height=chopper.get('slit_height'),
             radius=chopper.get('radius'),
             **_get_edges_from_nexus(chopper),
