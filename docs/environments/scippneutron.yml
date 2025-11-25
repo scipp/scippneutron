@@ -8,7 +8,7 @@ dependencies:
   - ipympl
   - ipython
   - ipywidgets
-  - jinja2==3.0.3  # jupyter/nbconvert#1736
+  - jinja2>=3.1
   - jupyterlab
   - jupyterlab_widgets
   - jupyter_nbextensions_configurator
@@ -16,5 +16,5 @@ dependencies:
   - nodejs
   - pythreejs
   - mantid::mantid
-  - scipp::scippneutron
+  - scippneutron
   - scipy
