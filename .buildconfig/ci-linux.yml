@@ -16,7 +16,7 @@ dependencies:
   - ipympl==0.9.8
   - ipywidgets==8.1.8
   - lazy-loader==0.4
-  - mantid==6.14.0
+  - mantid==6.13.0
   - matplotlib==3.9.4
   - mpltoolbox==25.10.0
   - plopp==25.11.0
