@@ -334,14 +334,9 @@ class DiskChopper:
             )
         return DiskChopper(
             axle_position=chopper['position'],
-            frequency=_get_1d_variable(
-                chopper,
-                'rotation_speed_setpoint'
-                if 'rotation_speed_setpoint' in chopper
-                else 'rotation_speed',
-            ),
-            beam_position=_get_1d_variable(chopper, 'beam_position'),
-            phase=_get_1d_variable(chopper, 'phase'),
+            frequency=_get_0d_variable(chopper, 'rotation_speed'),
+            beam_position=_get_0d_variable(chopper, 'beam_position'),
+            phase=_get_0d_variable(chopper, 'phase'),
             slit_height=chopper.get('slit_height'),
             radius=chopper.get('radius'),
             **_get_edges_from_nexus(chopper),
@@ -636,7 +631,7 @@ def _get_edges_from_nexus(
     }
 
 
-def _get_1d_variable(
+def _get_0d_variable(
     dg: Mapping[str, sc.Variable | sc.DataArray], name: str
 ) -> sc.Variable:
     if (val := dg.get(name)) is None:
