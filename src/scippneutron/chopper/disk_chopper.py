@@ -339,8 +339,10 @@ class DiskChopper:
             )
 
         if "rotation_speed_setpoint" in chopper:
+            # `rotation_speed_setpoint` is preferred if available (ESS files)
             frequency = _get_0d_variable(chopper, 'rotation_speed_setpoint')
         else:
+            # Fallback to `rotation_speed` (standard NeXus)
             frequency = _get_0d_variable(chopper, 'rotation_speed')
         if "phase" in chopper:
             phase = _get_0d_variable(chopper, 'phase')
