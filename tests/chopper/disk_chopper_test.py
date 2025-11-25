@@ -964,3 +964,40 @@ def test_disk_chopper_svg_custom_dim_names(nexus_chopper):
     nexus_chopper['slit_edges'] = nexus_chopper['slit_edges'].rename_dims(slit='dim_0')
     ch = DiskChopper.from_nexus(nexus_chopper)
     assert ch.make_svg()
+
+
+def test_phase_derived_from_delay_and_frequency(nexus_chopper):
+    delay = sc.scalar(5e7, unit='ns')
+    frequency = sc.scalar(14.0, unit='Hz')
+    expected_phase = (2 * pi * frequency * delay * sc.scalar(1.0, unit='rad')).to(
+        unit='deg'
+    )
+
+    chopper_params = nexus_chopper.copy()
+    del chopper_params['phase']
+
+    ch = DiskChopper.from_nexus(
+        {
+            **chopper_params,
+            'delay': delay,
+            _get_rotation_speed_key(nexus_chopper): frequency,
+        }
+    )
+    assert sc.allclose(ch.phase.to(unit='deg'), expected_phase)
+
+
+def test_missing_both_phase_and_delay_raises(nexus_chopper):
+    chopper_params = nexus_chopper.copy()
+    del chopper_params['phase']
+
+    with pytest.raises(
+        ValueError,
+        match="DiskChopper.from_nexus: Chopper field 'phase' is missing and "
+        "cannot be computed because field 'delay' is also missing.",
+    ):
+        DiskChopper.from_nexus(
+            {
+                **chopper_params,
+                _get_rotation_speed_key(nexus_chopper): sc.scalar(14.0, unit='Hz'),
+            }
+        )
