@@ -338,7 +338,10 @@ class DiskChopper:
                 f'got chopper type {typ}'
             )
 
-        frequency = _get_0d_variable(chopper, 'rotation_speed_setpoint')
+        if "rotation_speed_setpoint" in chopper:
+            frequency = _get_0d_variable(chopper, 'rotation_speed_setpoint')
+        else:
+            frequency = _get_0d_variable(chopper, 'rotation_speed')
         if "phase" in chopper:
             phase = _get_0d_variable(chopper, 'phase')
         else:

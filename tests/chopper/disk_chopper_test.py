@@ -18,13 +18,14 @@ def deg_angle_to_time_factor(frequency: sc.Variable) -> sc.Variable:
     return sc.to_unit(to_rad / angular_frequency, 's/deg')
 
 
-@pytest.fixture
-def nexus_chopper():
+@pytest.fixture(params=['rotation_speed', 'rotation_speed_setpoint'])
+def nexus_chopper(request):
+    rotation_speed_key = request.param
     return sc.DataGroup(
         {
             'type': DiskChopperType.single,
             'position': sc.vector([0.0, 0.0, 2.0], unit='m'),
-            'rotation_speed': sc.scalar(12.0, unit='Hz'),
+            rotation_speed_key: sc.scalar(12.0, unit='Hz'),
             'beam_position': sc.scalar(45.0, unit='deg'),
             'phase': sc.scalar(-20.0, unit='deg'),
             'slit_edges': sc.array(
@@ -35,6 +36,14 @@ def nexus_chopper():
             'slit_height': sc.scalar(0.4, unit='m'),
             'radius': sc.scalar(0.5, unit='m'),
         }
+    )
+
+
+def _get_rotation_speed_key(nexus_chopper):
+    return (
+        'rotation_speed_setpoint'
+        if 'rotation_speed_setpoint' in nexus_chopper
+        else 'rotation_speed'
     )
 
 
@@ -54,7 +63,7 @@ def test_chopper_supports_only_single(nexus_chopper, typ):
 
 
 def test_frequency_must_be_frequency(nexus_chopper):
-    nexus_chopper['rotation_speed'] = sc.scalar(1.0, unit='m/s')
+    nexus_chopper[_get_rotation_speed_key(nexus_chopper)] = sc.scalar(1.0, unit='m/s')
     with pytest.raises(sc.UnitError):
         DiskChopper.from_nexus(nexus_chopper)
 
@@ -78,6 +87,11 @@ def test_eq(nexus_chopper):
 )
 def test_neq(nexus_chopper, replacement):
     ch1 = DiskChopper.from_nexus(nexus_chopper)
+    if (
+        replacement[0] == 'rotation_speed'
+        and 'rotation_speed_setpoint' in nexus_chopper
+    ):
+        replacement = ('rotation_speed_setpoint', replacement[1])
     ch2 = DiskChopper.from_nexus({**nexus_chopper, replacement[0]: replacement[1]})
     assert ch1 != ch2
 
@@ -212,7 +226,7 @@ def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_clockwise_single_angle
             **nexus_chopper,
             'beam_position': sc.scalar(0.0, unit=beam_position_unit),
             'phase': sc.scalar(0.0, unit=phase_unit),
-            'rotation_speed': sc.scalar(-2.3, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(-2.3, unit='Hz'),
         }
     )
     omega = 2 * pi * 2.3
@@ -250,7 +264,7 @@ def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_anti_clockwise_single_
             **nexus_chopper,
             'beam_position': sc.scalar(0.0, unit=beam_position_unit),
             'phase': sc.scalar(0.0, unit=phase_unit),
-            'rotation_speed': sc.scalar(2.3, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(2.3, unit='Hz'),
         }
     )
     omega = 2 * pi * 2.3
@@ -287,7 +301,7 @@ def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_clockwise_multi_angle(
             **nexus_chopper,
             'beam_position': sc.scalar(0.0, unit=beam_position_unit),
             'phase': sc.scalar(0.0, unit=phase_unit),
-            'rotation_speed': sc.scalar(-4.4, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(-4.4, unit='Hz'),
         }
     )
     omega = 2 * pi * 4.4
@@ -312,7 +326,7 @@ def test_time_offset_angle_at_beam_no_phase_zero_beam_pos_anti_clockwise_multi_a
             **nexus_chopper,
             'beam_position': sc.scalar(0.0, unit=beam_position_unit),
             'phase': sc.scalar(0.0, unit=phase_unit),
-            'rotation_speed': sc.scalar(4.4, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(4.4, unit='Hz'),
         }
     )
     omega = 2 * pi * 4.4
@@ -335,7 +349,7 @@ def test_time_offset_angle_at_beam_no_phase_with_beam_pos_clockwise(
             **nexus_chopper,
             'beam_position': sc.scalar(1.8, unit='rad'),
             'phase': sc.scalar(0.0, unit=phase_unit),
-            'rotation_speed': sc.scalar(-2.3, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(-2.3, unit='Hz'),
         }
     )
     omega = 2 * pi * 2.3
@@ -368,7 +382,7 @@ def test_time_offset_angle_at_beam_no_phase_with_beam_pos_anti_clockwise(
             **nexus_chopper,
             'beam_position': sc.scalar(1.8, unit='rad'),
             'phase': sc.scalar(0.0, unit=phase_unit),
-            'rotation_speed': sc.scalar(2.3, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(2.3, unit='Hz'),
         }
     )
     omega = 2 * pi * 2.3
@@ -401,7 +415,7 @@ def test_time_offset_angle_at_beam_with_phase_zero_beam_pos_clockwise(
             **nexus_chopper,
             'beam_position': sc.scalar(0.0, unit=beam_position_unit),
             'phase': sc.scalar(-0.7, unit='rad'),
-            'rotation_speed': sc.scalar(-1.1, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(-1.1, unit='Hz'),
         }
     )
     omega = 2 * pi * 1.1
@@ -435,7 +449,7 @@ def test_time_offset_angle_at_beam_with_phase_zero_beam_pos_anti_clockwise(
             **nexus_chopper,
             'beam_position': sc.scalar(0.0, unit=beam_position_unit),
             'phase': sc.scalar(-0.7, unit='rad'),
-            'rotation_speed': sc.scalar(1.1, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(1.1, unit='Hz'),
         }
     )
     omega = 2 * pi * 1.1
@@ -492,7 +506,9 @@ def test_time_offset_open_close_only_slit(nexus_chopper, rotation_speed):
             **nexus_chopper,
             'beam_position': sc.scalar(0.0, unit='rad'),
             'phase': sc.scalar(0.0, unit='rad'),
-            'rotation_speed': sc.scalar(rotation_speed, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(
+                rotation_speed, unit='Hz'
+            ),
             'slit_edges': sc.array(
                 dims=['slit'],
                 values=[0.0, 360.0],
@@ -538,7 +554,7 @@ def test_time_offset_open_close_one_slit_clockwise(nexus_chopper, phase, beam_po
             **nexus_chopper,
             'beam_position': beam_position,
             'phase': phase,
-            'rotation_speed': sc.scalar(-7.21, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(-7.21, unit='Hz'),
             'slit_edges': sc.array(dims=['slit'], values=[87.0, 177.0], unit='deg'),
         }
     )
@@ -584,7 +600,7 @@ def test_time_offset_open_close_one_slit_anticlockwise(
             **nexus_chopper,
             'beam_position': beam_position,
             'phase': phase,
-            'rotation_speed': sc.scalar(7.21, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(7.21, unit='Hz'),
             'slit_edges': sc.array(dims=['slit'], values=[87.0, 177.0], unit='deg'),
         }
     )
@@ -630,7 +646,7 @@ def test_time_offset_open_close_one_slit_across_tdc_clockwise(
             **nexus_chopper,
             'beam_position': beam_position,
             'phase': phase,
-            'rotation_speed': sc.scalar(-7.21, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(-7.21, unit='Hz'),
             'slit_edges': sc.array(dims=['slit'], values=[330.0, 380.0], unit='deg'),
         }
     )
@@ -676,7 +692,7 @@ def test_time_offset_open_close_one_slit_across_tdc_anticlockwise(
             **nexus_chopper,
             'beam_position': beam_position,
             'phase': phase,
-            'rotation_speed': sc.scalar(7.21, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(7.21, unit='Hz'),
             'slit_edges': sc.array(dims=['slit'], values=[330.0, 380.0], unit='deg'),
         }
     )
@@ -704,7 +720,7 @@ def test_time_offset_open_close_two_slits_clockwise(nexus_chopper):
             **nexus_chopper,
             'beam_position': sc.scalar(-32.0, unit='deg'),
             'phase': sc.scalar(0.0, unit='deg'),
-            'rotation_speed': sc.scalar(-11.2, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(-11.2, unit='Hz'),
             'slit_edges': sc.array(
                 dims=['slit'],
                 values=[87.0, 177.0, 280.0, 342.0],
@@ -743,7 +759,7 @@ def test_time_offset_open_close_two_slits_anticlockwise(nexus_chopper):
             **nexus_chopper,
             'beam_position': sc.scalar(-32.0, unit='deg'),
             'phase': sc.scalar(0.0, unit='deg'),
-            'rotation_speed': sc.scalar(11.2, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(11.2, unit='Hz'),
             'slit_edges': sc.array(
                 dims=['slit'],
                 values=[87.0, 177.0, 280.0, 342.0],
@@ -782,7 +798,7 @@ def test_time_offset_open_close_two_slits_clockwise_two_pulses(nexus_chopper):
             **nexus_chopper,
             'beam_position': sc.scalar(0.0, unit='deg'),
             'phase': sc.scalar(60.0, unit='deg'),
-            'rotation_speed': sc.scalar(-14.0, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(-14.0, unit='Hz'),
             'slit_edges': sc.array(
                 dims=['slit'],
                 values=[87.0, 177.0, 200.0, 240.0],
@@ -837,7 +853,7 @@ def test_time_offset_open_close_two_slits_anticlockwise_two_pulses(nexus_chopper
             **nexus_chopper,
             'beam_position': sc.scalar(0.0, unit='deg'),
             'phase': sc.scalar(60.0, unit='deg'),
-            'rotation_speed': sc.scalar(14.0, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(14.0, unit='Hz'),
             'slit_edges': sc.array(
                 dims=['slit'],
                 values=[87.0, 177.0, 200.0, 240.0],
@@ -892,7 +908,7 @@ def test_time_offset_open_close_two_slits_clockwise_half_pulse(nexus_chopper):
             **nexus_chopper,
             'beam_position': sc.scalar(0.0, unit='deg'),
             'phase': sc.scalar(60.0, unit='deg'),
-            'rotation_speed': sc.scalar(-3.5, unit='Hz'),
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(-3.5, unit='Hz'),
             'slit_edges': sc.array(
                 dims=['slit'],
                 values=[87.0, 177.0, 200.0, 240.0],
@@ -928,7 +944,10 @@ def test_time_offset_open_close_two_slits_clockwise_half_pulse(nexus_chopper):
 
 def test_time_offset_open_close_source_frequency_not_multiple_of_chopper(nexus_chopper):
     ch = DiskChopper.from_nexus(
-        {**nexus_chopper, 'rotation_speed': sc.scalar(4.52, unit='Hz')}
+        {
+            **nexus_chopper,
+            _get_rotation_speed_key(nexus_chopper): sc.scalar(4.52, unit='Hz'),
+        }
     )
     with pytest.raises(ValueError, match='out of phase'):
         ch.time_offset_open(pulse_frequency=sc.scalar(4.3, unit='Hz'))
