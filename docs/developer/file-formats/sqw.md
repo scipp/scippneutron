@@ -11,7 +11,7 @@ The contents of this document are based on what documentation is available, on r
 This document should *not* be regarded as authoritative.
 ```
 
-See, e.g., https://github.com/pace-neutrons/Horace/blob/3c00958d578c625a7f2274ef7b34557578abb934/documentation/add/07-sqw_redesign.md for some documentation provided by the developers of Horace.
+See, e.g., [07-sqw_redesign.md](https://github.com/pace-neutrons/Horace/blob/3c00958d578c625a7f2274ef7b34557578abb934/documentation/add/07-sqw_redesign.md) for some documentation provided by the developers of Horace.
 
 ## Overview
 
