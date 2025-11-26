@@ -150,6 +150,8 @@ def test_fit_peaks_select_model_two_strings():
 # Warning about ill-conditioned polynomial.
 # This does not matter for the test.
 @pytest.mark.filterwarnings('ignore::numpy.polynomial.polyutils.RankWarning')
+# 'Covariance of the parameters could not be estimated'
+@pytest.mark.filterwarnings('ignore::scipy.optimize._optimize.OptimizeWarning')
 def test_fit_peaks_select_model_mixed():
     # The data doesn't really matter here.
     # The test is about ensuring that the fit succeeds without raising.
