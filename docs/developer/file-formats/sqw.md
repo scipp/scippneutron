@@ -7,14 +7,16 @@ ScippNeutron can write and, to a limited degree, read SQW files using {mod}`scip
 
 ```{note}
 There is no official specification for the format of SQW files.
-The contents of this document are based the little bits of documentation that are available, from reading the source code of Horace, and from experimenting with Horace and SQW files.
-It should *not* be regarded as authoritative.
+The contents of this document are based on what documentation is available, on reading the source code of Horace, and on experiments with Horace and SQW files.
+This document should *not* be regarded as authoritative.
 ```
+
+See, e.g., [07-sqw_redesign.md](https://github.com/pace-neutrons/Horace/blob/3c00958d578c625a7f2274ef7b34557578abb934/documentation/add/07-sqw_redesign.md) for some documentation provided by the developers of Horace.
 
 ## Overview
 
 SQW files are binary files that encode neutron counts both in a flexible binned format called 'pixels' and a multidimensional histogram called 'DND' (or D1D through D4D for concrete cases).
-In addition to the data, SQW files store metadata that describe how the experiment was set up and how the data were binned.
+In addition to the data, SQW files store metadata that describes how the experiment was set up and how the data was binned.
 
 ### Data Blocks
 
@@ -43,7 +45,7 @@ Block names are split into a 'name' and a 'level2_name' which in ScippNeutron ar
   - Histogram data.
 * - experiment_info
   - instruments
-  - Information about the instrument where the data were measured. One {class}`SqwIXNullInstrument <scippneutron.io.sqw.SqwIXNullInstrument>` per [run](#Runs). (Horace defines several instrument classes but so far, we have only use the null instrument.)
+  - Information about the instrument where the data was measured. One {class}`SqwIXNullInstrument <scippneutron.io.sqw.SqwIXNullInstrument>` per [run](#Runs). (Horace defines several instrument classes. But so far, the null instrument has been sufficient.)
 * - experiment_info
   - samples
   - Information on the sample that was measured. One {class}`SqwIXSample <scippneutron.io.sqw.SqwIXSample>` per [run](#Runs).
@@ -55,7 +57,7 @@ Block names are split into a 'name' and a 'level2_name' which in ScippNeutron ar
   - Information about the pixel data. Largely hidden and automated in ScippNeutron.
 * - pix
   - data_wrap
-  - 'Pixel' data, i.e., binned observations as a function of momentum and energy transfer. Stored as a $9 \times N$ array with [rows](https://github.com/pace-neutrons/Horace/blob/master/documentation/add/05_file_formats.md):
+  - 'Pixel' data, i.e., binned observations as a function of momentum and energy transfer. Stored as a $9 \times N$ array with these [rows](https://github.com/pace-neutrons/Horace/blob/master/documentation/add/05_file_formats.md) in order:
     - `u1`, `u2`, `u3`, `u4`: usually momentum transfers $Q_x$, $Q_y$, $Q_z$ and energy transfer $\Delta E$.
     - `irun`: [Run](#Runs) index.
     - `idet`: Detector (pixel) index.
@@ -66,10 +68,16 @@ Block names are split into a 'name' and a 'level2_name' which in ScippNeutron ar
 
 ### Runs
 
-Data can be collected in multiple runs or 'settings' where each run has a fixed set of sample parameters.
+Data can be collected in multiple runs or 'settings' where each run has a fixed set of sample and instrument parameters.
 In SQW, runs are encoded by assigning a run index `irun` to each observation and providing an appropriate instrument, sample, and experiment object.
 The instrument and sample objects are often the same for all runs.
 This can be encoded by way of 'unique object containers' which store only one copy of each unique object and indices to associate these objects with runs.
+
+### FORTRAN Layout
+
+Horace, being a MATLAB program, uses FORTRAN order for arrays and 1-based indexing.
+{mod}`scippneutron.io.sqw` converts between these conventions and the Python conventions automatically in most cases.
+But some data, most notably the pixel array, must be provided with 1-based indices.
 
 ### Byte Order
 
@@ -103,14 +111,14 @@ For Horace version 4.0, this header is
 
 ### Block Allocation Table
 
-The block allocation table (BAT) encodes which data blocks exist and where they are located in the file.
+The block allocation table (BAT) encodes which [data blocks](#data-blocks) exist and where they are located in the file.
 The BAT is a sequence of data block descriptors.
 The structure of the BAT is
 ```text
-| size | n_blocks | descriptor  | ...
-| :u32 | :u32     | :descriptor | ...
+| size | n_blocks | descriptor_0 | ... | descriptor_n
+| :u32 | :u32     | :descriptor  | ... | :descript
 ```
-where `descriptor` is
+where the `:descriptor` type is
 ```text
 | block_type  | name        | level2_name | position | size | locked |
 | :char array | :char array | :char array | :u64     | u32  | u32    |
@@ -144,9 +152,11 @@ Blocks with type `"dnd_data_block"` are stored as a
 | :u32 | :u32     | :u32     | ... | :f64 array | :f64 array | :u64 array |
 ```
 - `ndim` and `length_i` encode a [shape](#shape) but uses a `u32` for `ndim` instead of the usual `u8`.
-- `values` currently unknown but looks like a spectroscopy pattern.
-- `errors` currently unknown, uncertainties of `values`?
-- `counts` currently unknown but looks like a spectroscopy pattern.
+- `values` is the average intensity per bin (`pix.bins.mean()` or, equivalently, `pix.bins.sum() / pix.bins.size()`).
+- `errors` is the standard deviation per bin (`sc.stddevs(pix.bins.mean())`).
+- `counts` is the number of observations in each bin (`pix.bins.size()`).
+
+Note the example code at the end of the next section.
 
 #### Pixel Data Blocks
 
@@ -159,9 +169,49 @@ The column-major layout results in a file of the form
 | ...
 ```
 
-Columns must be sorted in ascending order according to the `u` rows where `u1` is sorted, for each constant `u1`, `u2` is sorted, etc.
+Pixels are sorted in bins following the same order as in the [DND data block](#dnd-data-blocks).
+Given the [FORTRAN layout](#fortran-layout), the pixels are sorted according to
+```python
+sorted_bins = binned_observations.transpose(['u4', 'u3', 'u2', 'u1'])
+```
+Within each bin, the data is unordered.
 
-## Objects
+The number of bins is encoded by the `n_bins_all_dims` attribute of the DND metadata block.
+The number of pixels in each bin is determined by the ``counts`` array in the [DND data block](#dnd-data-blocks).
+And the ranges of the ``u``s are determined by the ``img_range`` attribute of the DND metadata block.
+```python
+import itertools
+import numpy as np
+import scipp as sc
+from scippneutron.io import sqw
+
+with sqw.Sqw.open("file.sqw") as f:
+    metadata = f.read_data_block("data", "metadata")
+    dnd = f.read_data_block("data", "nd_data")
+    pix = f.read_data_block("pix", "data_wrap")
+
+n_pix = dnd[2].astype(int)
+
+# Compute the bin edges:
+img_range = metadata.axes.img_range
+n_bins = metadata.axes.n_bins_all_dims.values
+u_edges = [
+    sc.linspace(f'u{i}', img_range[i][0], img_range[i][1], n_bins[i] + 1)
+    for i in range(len(n_bins))
+]
+
+# Access pixels bin-by-bin:
+bin_offsets = np.r_[0, np.cumsum(n_pix.flat)]
+for bin_index, (l, k, j, i) in enumerate(  # noqa: E741
+    itertools.product(*(range(nb) for nb in n_bins[::-1]))
+):
+    pix_slice = slice(bin_offsets[bin_index], bin_offsets[bin_index + 1])
+    observations_in_bin = pix[pix_slice]
+```
+
+## Data Types
+
+This section describes the data types used in SQW files.
 
 ### Logical
 
@@ -174,8 +224,8 @@ All numbers are encoded as their byte representation in the target byte order.
 
 ### Character Array
 
-A sequence of ASCII characters with *known* length.
-Encoded as
+A sequence of ASCII characters including the length.
+Encoded as characters ``c0`` through ``cn``:
 ```text
 | length  | c0     | c1     | ... |
 | :uint32 | :uint8 | :uint8 | ... |
@@ -183,10 +233,78 @@ Encoded as
 
 ### Fixed Character Array
 
-A sequence of ASCII characters with *unknown* length.
 Like [Character Array](#character-array) but the length is not stored in the file.
+So the length must be known from context.
 
-### Shape
+### Struct
+
+A collection of named fields with different types.
+
+The field names are encoded as [Fixed Character Arrays](#fixed-character-array) with the lengths up front.
+The field values are encoded as a [Cell Arrays](#cell-array).
+```text
+| n_fields | name_len_0 | ... | name_len_n |
+| :uint32  | :uint32    | ... | :uint32    |
+
+| name_0            | ... | name_n            |
+| :fixed_char_array | ... | :fixed_char_array |
+
+| value_0     | ... | value_n     |
+| :cell_array | ... | :cell_array |
+```
+
+When used in an [Object Array](#object-array) with more than one element, the fields are stored in a 'struct of arrays' fashion.
+This means that if the surrounding object array has shape `S`, so does each [cell array](#cell-array).
+For example, given structs
+```python
+class MyStruct:
+    i: int
+    decimal: float
+
+data = [MyStruct(i=10, decimal=0.1), MyStruct(i=20, decimal=0.2)]
+```
+the data will be encoded as
+```text
+| 2 | 1 | 7 | "i" | "decimal" | 10 | 20 | 0.1 | 0.2 |
+```
+
+### Cell Array
+
+Cell arrays are MATLAB’s way of encoding heterogeneous arrays where the elements can have different types.
+Each element is encoded as an [object array](#object-array).
+
+In SQW, cell arrays can occur either standalone or within an object array (by way of a struct).
+Standalone cell arrays encode their shape in the same way as an object array.
+Otherwise, they do *not* store their shape; it needs to be provided by the [object array](#object-array) that the cell array is part of.
+
+### Object Array
+
+Object arrays are homogeneous, multidimensional arrays of any object type.
+They encode their element type using a type tag:
+```text
+| type_tag | shape  | data |
+| :uint8   | :Shape | :Any |
+```
+See ``TypeTag`` in the source code for a list of supported types and their tags.
+
+Object arrays have some non-trivial interactions with different types.
+
+- For **simple types** like numbers, logical, and strings, ``data`` is simply an array of the given type in FORTRAN layout.
+- For **structs**, the data is encoded in a 'struct of arrays' fashion as described in the [Struct](#struct) section.
+- For **cell arrays**, i.e., if the type tag indicated 'cell array', the entire object array is instead processed as a [cell array](#cell-array). This means that ``data`` is an array of object arrays.
+- For **self-serializing** types, there is no shape and ``data`` has to encode how to read it.
+
+### Self Serializing
+
+Some data is 'self-serializing', meaning that it does not rely on an external type tag and shape to describe the data.
+Instead, if used inside an object array, this data must contain its own type tag.
+In ScippNeutron, this case is treated like a nested object array.
+
+### Auxiliary Types
+
+These types are not represented by type tags but occur in fixed locations in the file.
+
+#### Shape
 
 The shape of a multidimensional array.
 Encoded as
@@ -196,10 +314,12 @@ Encoded as
 ```
 where `ndim` is the number of dimensions and there are this many `length_i` entries.
 
-### Struct
+#### Data Block Type
 
-TODO
+Each data block is encoded as a struct with, among others, fields 'serial_name' and 'version' which together identify the block.
+This is used to determine how to deserialize the block into a Python model.
 
-### Object Array
+#### Unique Object Container
 
-### Self Serializing
+'Unique object container' and 'Unique reference container' are always used together and represent an array of objects where duplicates are only stored once.
+Each 'Unique reference container' contains a 'Unique object container' which in turn contains an array of indices that map from array index to a unique object.

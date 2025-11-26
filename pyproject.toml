@@ -79,31 +79,11 @@ testpaths = "tests"
 filterwarnings = [
   "error",
   'ignore:You are running a "Debug" build of scipp:',
-  # Comes from pytest_asyncio and is not our fault.
-  "ignore:The 'asyncio_mode' default value will change to 'strict' in future:DeprecationWarning",
-  'ignore::scipy.optimize._optimize.OptimizeWarning',
-  # From flatbuffers
-  'ignore:the imp module is deprecated in favour of importlib:DeprecationWarning',
-  # from Mantid
-  'ignore:the load_module\(\) method is deprecated:DeprecationWarning',
-  # from ipywidgets; they are migrating away from ipykernel, this warning should go away
-  'ignore:The `ipykernel.comm.Comm` class has been deprecated.:DeprecationWarning',
-  # from h5py
-  'ignore:`product` is deprecated as of NumPy 1.25.0:DeprecationWarning',
   # Plotting related warnings.
   'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
-  'ignore:Keyword `trait` is deprecated in traitlets 5.0, use `value_trait` instead:DeprecationWarning',
-  'ignore:Keyword `traits` is deprecated in traitlets 5.0, use `per_key_traits` instead:DeprecationWarning',
   # TODO Plotting warnings that need to be addressed
-  'ignore:Support for mapping types has been deprecated and will be dropped in a future release:DeprecationWarning',
-  'ignore:The get_cmap function will be deprecated in a future version:PendingDeprecationWarning',
   'ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning',
-  'ignore:Widget._active_widgets is deprecated:DeprecationWarning',
-  'ignore:Widget._widget_types is deprecated:DeprecationWarning',
-  'ignore:Widget.widget_types is deprecated:DeprecationWarning',
-  'ignore:Widget.widgets is deprecated:DeprecationWarning',
   'ignore:Passing unrecognized arguments to super:DeprecationWarning',
-  'ignore:zmq.eventloop.ioloop is deprecated in pyzmq 17. pyzmq now works with default tornado and asyncio eventloops.:DeprecationWarning',
 ]
 
 [tool.ruff]

@@ -51,8 +51,7 @@ _WRITERS = _IORegistry[_ObjectWriter]("writer")
 def read_object_array(sqw_io: LowLevelSqw) -> ir.ObjectArray | ir.CellArray:
     position = sqw_io.position
     ty = ir.TypeTag(sqw_io.read_u8())
-    if ty == ir.TypeTag.serializable:  # TODO
-        # raise RuntimeError(f'!!!! {ty.value} {sqw_io.position-1}')
+    if ty == ir.TypeTag.serializable:
         # This type object does not encode a shape, so just attempt
         # to read its contents.
         return read_object_array(sqw_io)
