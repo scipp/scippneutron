@@ -6,15 +6,13 @@ import json
 from collections.abc import Callable
 from functools import partial, reduce
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 import plopp as pp
 import scipp as sc
 from matplotlib.colors import to_rgb
+from mpltoolbox.patch import Patch
 from plopp.core.typing import FigureLike
-
-if TYPE_CHECKING:
-    from mpltoolbox.patch import Patch
 
 
 def _define_shape_mask(da: sc.DataArray, info: dict[str, object]) -> sc.Variable:
@@ -102,7 +100,9 @@ def _scalar_to_dict(scalar: sc.Variable) -> dict[str, Any]:
 
 
 class MaskingTool:
-    def __init__(self, data: sc.DataArray, color='magenta', **kwargs):
+    def __init__(
+        self, data: sc.DataArray, color: str = 'magenta', **kwargs: Any
+    ) -> None:
         """
         Interactive masking tool for 1D and 2D data.
         The tool will display a figure with the data and allow the user to
@@ -230,16 +230,16 @@ Instructions:
         )
         self.fig.top_bar.add(self.info)
 
-    def toggle_button_states(self, change: dict) -> None:
+    def toggle_button_states(self, change: dict[str, Any]) -> None:
         if change["new"]:
             for c in self.controls:
                 if c.value and c is not change["owner"]:
                     c.value = False
 
-    def validate_filename(self, change: dict) -> None:
+    def validate_filename(self, change: dict[str, Any]) -> None:
         self.save_button.disabled = not change["new"]
 
-    def toggle_shape_visibility(self, change: dict):
+    def toggle_shape_visibility(self, change: dict[str, Any]) -> None:
         for c in self.controls:
             for child in c._tool.children:
                 child.set(visible=change["new"])
@@ -249,7 +249,7 @@ Instructions:
         )
         self.fig.canvas.draw()
 
-    def get_masks(self) -> dict:
+    def get_masks(self) -> dict[str, dict[str, Any]]:
         masks = {}
         mask_counter = 0
         for c in self.controls:
@@ -270,7 +270,7 @@ Instructions:
                 mask_counter += 1
         return masks
 
-    def _save_button_click(self, _=None) -> None:
+    def _save_button_click(self, _: object = None) -> None:
         self.save_masks(filename=self.filename.value)
 
     def save_masks(self, filename: Path | str) -> None:
@@ -286,5 +286,5 @@ Instructions:
         with open(str(filename).removesuffix(".json") + ".json", "w") as f:
             json.dump(self.get_masks(), f, indent=2)
 
-    def _repr_mimebundle_(self, **kwargs) -> dict:
+    def _repr_mimebundle_(self, **kwargs: object) -> Any:
         return self.fig._repr_mimebundle_()
