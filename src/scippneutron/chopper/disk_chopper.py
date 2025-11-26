@@ -353,7 +353,9 @@ class DiskChopper:
                     "cannot be computed because field 'delay' is also missing."
                 )
             omega = 2 * sc.constants.pi * frequency * sc.scalar(1.0, unit='rad')
-            phase = (chopper["delay"].to(dtype=float) * omega).to(unit='rad')
+            phase = (_get_0d_variable(chopper, 'delay').to(dtype=float) * omega).to(
+                unit='rad'
+            )
         return DiskChopper(
             axle_position=chopper['position'],
             frequency=frequency,

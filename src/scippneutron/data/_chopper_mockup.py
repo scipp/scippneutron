@@ -17,10 +17,11 @@ def chopper_mockup() -> sc.DataGroup:
     rotation_speed = _rotation_speed()
     return sc.DataGroup(
         {
+            'beam_position': sc.scalar(0.0, unit='rad'),
             'delay': sc.DataGroup(
                 {
                     'value': sc.DataArray(
-                        sc.array(dims=['time'], values=[3050], unit='ns'),
+                        sc.array(dims=['time'], values=[int(3.05e7)], unit='ns'),
                         coords={
                             'time': sc.datetimes(
                                 dims=['time'], values=['2023-01-19T08:11:06'], unit='ns'
@@ -34,6 +35,11 @@ def chopper_mockup() -> sc.DataGroup:
             'rotation_speed': sc.DataGroup(
                 {
                     'value': rotation_speed,
+                }
+            ),
+            'rotation_speed_setpoint': sc.DataGroup(
+                {
+                    'value': sc.scalar(14.0, unit='Hz'),
                 }
             ),
             'slit_height': sc.scalar(0.1, unit='m'),
