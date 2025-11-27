@@ -308,11 +308,16 @@ class DiskChopper:
 
         Keys in the input correspond to the fields of `NXdisk_chopper
         <https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html>`_.
-        The values have to be post-processed, e.g., with
-        :func:`~scippneutron.chopper.nexus_chopper.post_process_disk_chopper`.
-        See its documentation for the required steps.
-        Also, note the class docs of :class:`DiskChopper`
-        about time-dependent fields.
+
+        The input data group must contain a `rotation_speed_setpoint`. If this is not
+        available, a single (scalar) value must be computed from processing the
+        time-dependent `rotation_speed` data. This can be done with
+        :func:`~scippneutron.chopper.nexus_chopper.post_process_disk_chopper`
+        (see its documentation for the required steps). The resulting single value
+        can then be passed as `rotation_speed_setpoint`.
+
+        If a `phase` field is not present, it is computed from the `delay` field
+        and the `rotation_speed_setpoint` as `phase = 2*pi*frequency*delay`.
 
         Parameters
         ----------
@@ -332,11 +337,30 @@ class DiskChopper:
                 'Class DiskChopper only supports single choppers,'
                 f'got chopper type {typ}'
             )
+
+        if "rotation_speed_setpoint" in chopper:
+            # `rotation_speed_setpoint` is preferred if available (ESS files)
+            frequency = _get_0d_variable(chopper, 'rotation_speed_setpoint')
+        else:
+            # Fallback to `rotation_speed` (standard NeXus)
+            frequency = _get_0d_variable(chopper, 'rotation_speed')
+        if "phase" in chopper:
+            phase = _get_0d_variable(chopper, 'phase')
+        else:
+            if "delay" not in chopper:
+                raise ValueError(
+                    "DiskChopper.from_nexus: Chopper field 'phase' is missing and "
+                    "cannot be computed because field 'delay' is also missing."
+                )
+            omega = 2 * sc.constants.pi * frequency * sc.scalar(1.0, unit='rad')
+            phase = (_get_0d_variable(chopper, 'delay').to(dtype=float) * omega).to(
+                unit='rad'
+            )
         return DiskChopper(
             axle_position=chopper['position'],
-            frequency=_get_1d_variable(chopper, 'rotation_speed'),
-            beam_position=_get_1d_variable(chopper, 'beam_position'),
-            phase=_get_1d_variable(chopper, 'phase'),
+            frequency=frequency,
+            beam_position=_get_0d_variable(chopper, 'beam_position'),
+            phase=phase,
             slit_height=chopper.get('slit_height'),
             radius=chopper.get('radius'),
             **_get_edges_from_nexus(chopper),
@@ -557,6 +581,10 @@ class DiskChopper:
         # of the slits, so use `max` here:
         return round(max(quot.value, 1))
 
+    def as_dict(self) -> dict[str, Any]:
+        """Return the DiskChopper fields as a dictionary."""
+        return dataclasses.asdict(self)
+
 
 def _field_eq(a: Any, b: Any) -> bool:
     if isinstance(a, sc.Variable | sc.DataArray):
@@ -627,13 +655,7 @@ def _get_edges_from_nexus(
     }
 
 
-def _len_or_1(x: sc.Variable) -> int:
-    if x.ndim == 0:
-        return 1
-    return len(x)
-
-
-def _get_1d_variable(
+def _get_0d_variable(
     dg: Mapping[str, sc.Variable | sc.DataArray], name: str
 ) -> sc.Variable:
     if (val := dg.get(name)) is None:
@@ -642,9 +664,11 @@ def _get_1d_variable(
     msg = (
         "Chopper field '{name}' must be a scalar variable, {got}. "
         "See the chopper user-guide for more information: "
-        "https://scipp.github.io/scippneutron/user-guide/chopper/pre-processing.html"
+        "https://scipp.github.io/scippneutron/user-guide/chopper/processing-nexus-choppers.html"
     )
 
+    if isinstance(val, sc.DataArray):
+        val = val.data
     if not isinstance(val, sc.Variable):
         raise TypeError(msg.format(name=name, got=f'got a {type(val)}'))
     if val.ndim != 0:
