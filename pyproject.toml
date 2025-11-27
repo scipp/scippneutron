@@ -79,6 +79,8 @@ testpaths = "tests"
 filterwarnings = [
   "error",
   'ignore:You are running a "Debug" build of scipp:',
+  # from ipywidgets; they are migrating away from ipykernel, this warning should go away
+  'ignore:The `ipykernel.comm.Comm` class has been deprecated.:DeprecationWarning',
   # Plotting related warnings.
   'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
   # TODO Plotting warnings that need to be addressed
