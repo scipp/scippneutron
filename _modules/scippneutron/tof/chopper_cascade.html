@@ -1,0 +1,1179 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scippneutron.tof.chopper_cascade &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css?v=a0a71c94" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../../_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scippneutron/tof/chopper_cascade';</script>
+    <script src="../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">scippneutron.tof.chopper_cascade</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scippneutron.tof.chopper_cascade</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2023 Scipp contributors (https://github.com/scipp)</span>
+<span class="c1"># @author Simon Heybrock</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Compute result of applying a chopper cascade to a neutron pulse at a time-of-flight</span>
+<span class="sd">neutron source.</span>
+
+<span class="sd">See :py:class:`FrameSequence` for the main entry point.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..chopper</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiskChopper</span>
+
+
+<div class="viewcode-block" id="wavelength_to_inverse_velocity">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.wavelength_to_inverse_velocity.html#scippneutron.tof.chopper_cascade.wavelength_to_inverse_velocity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">wavelength_to_inverse_velocity</span><span class="p">(</span><span class="n">wavelength</span><span class="p">):</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">h</span>
+    <span class="n">m_n</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">m_n</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">*</span> <span class="n">m_n</span> <span class="o">/</span> <span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;s/m&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="propagate_times">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.propagate_times.html#scippneutron.tof.chopper_cascade.propagate_times">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">propagate_times</span><span class="p">(</span>
+    <span class="n">time</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">distance</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Propagate a neutron frame by a distance.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    time:</span>
+<span class="sd">        Time of the neutron frame.</span>
+<span class="sd">    wavelength:</span>
+<span class="sd">        Wavelength of the neutron frame.</span>
+<span class="sd">    distance:</span>
+<span class="sd">        Distance to propagate. Can be a range of distances.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Propagated time.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">inverse_velocity</span> <span class="o">=</span> <span class="n">wavelength_to_inverse_velocity</span><span class="p">(</span><span class="n">wavelength</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">time</span> <span class="o">+</span> <span class="p">(</span><span class="n">distance</span> <span class="o">*</span> <span class="n">inverse_velocity</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Subframe">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.Subframe.html#scippneutron.tof.chopper_cascade.Subframe">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Subframe</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Neutron &quot;subframe&quot; at a time-of-flight neutron source, described as the corners of a</span>
+<span class="sd">    polygon (initially a rectangle) in time and wavelength.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Subframe.__init__">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.Subframe.html#scippneutron.tof.chopper_cascade.Subframe.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">{</span><span class="n">dim</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">sizes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">wavelength</span><span class="o">.</span><span class="n">sizes</span><span class="p">}</span> <span class="o">!=</span> <span class="n">wavelength</span><span class="o">.</span><span class="n">sizes</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Inconsistent dims or shape: </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">sizes</span><span class="si">}</span><span class="s1"> vs </span><span class="si">{</span><span class="n">wavelength</span><span class="o">.</span><span class="n">sizes</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span> <span class="o">=</span> <span class="n">wavelength</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;angstrom&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Subframe</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="c1"># Using sc.identical can lead to flaky behavior (different frames might have</span>
+        <span class="c1"># been obtained via a different operation order), so we use allclose instead.</span>
+        <span class="n">same_time</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+            <span class="n">other</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+            <span class="n">rtol</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">1.0e-12</span><span class="p">),</span>
+            <span class="n">atol</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">1.0e-16</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">unit</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">same_wavelength</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span><span class="p">,</span>
+            <span class="n">other</span><span class="o">.</span><span class="n">wavelength</span><span class="p">,</span>
+            <span class="n">rtol</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">1.0e-12</span><span class="p">),</span>
+            <span class="n">atol</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">1.0e-16</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span><span class="o">.</span><span class="n">unit</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">same_time</span> <span class="ow">and</span> <span class="n">same_wavelength</span>
+
+<div class="viewcode-block" id="Subframe.is_regular">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.Subframe.html#scippneutron.tof.chopper_cascade.Subframe.is_regular">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_regular</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return True if the subframe is regular, i.e., if the vertex with the minimum</span>
+<span class="sd">        wavelength also has the minimum time, and the vertex with the maximum wavelength</span>
+<span class="sd">        also has the maximum time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">min_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">min_wavelength</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">max_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">max_wavelength</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">coinciding_min</span> <span class="o">=</span> <span class="n">min_time</span> <span class="o">&amp;</span> <span class="n">min_wavelength</span>
+        <span class="n">coinciding_max</span> <span class="o">=</span> <span class="n">max_time</span> <span class="o">&amp;</span> <span class="n">max_wavelength</span>
+        <span class="k">return</span> <span class="n">coinciding_min</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">and</span> <span class="n">coinciding_max</span><span class="o">.</span><span class="n">any</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Subframe.propagate_by">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.Subframe.html#scippneutron.tof.chopper_cascade.Subframe.propagate_by">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">propagate_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distance</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Subframe</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Propagate subframe by a distance.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        distance:</span>
+<span class="sd">            Distance to propagate. Note that this is a difference, not an absolute</span>
+<span class="sd">            value, in contrast to the distance in :py:meth:`Frame.propagate_to`.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            Propagated subframe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Subframe</span><span class="p">(</span>
+            <span class="n">time</span><span class="o">=</span><span class="n">propagate_times</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">distance</span><span class="p">),</span>
+            <span class="n">wavelength</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The start time of the subframe for each of the distances in self.time.&quot;&quot;&quot;</span>
+        <span class="c1"># The `self.time` may have an additional dimension for distance, compared to</span>
+        <span class="c1"># `self.wavelength`, and we need to keep that dimension in the output.</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span>
+        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The end time of the subframe for each of the distances in self.time.&quot;&quot;&quot;</span>
+        <span class="c1"># The `self.time` may have an additional dimension for distance, compared to</span>
+        <span class="c1"># `self.wavelength`, and we need to keep that dimension in the output.</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span>
+        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">start_wavelength</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The start wavelength of the subframe for each of the distances in</span>
+<span class="sd">        self.time&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">end_wavelength</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The end wavelength of the subframe for each of the distances in self.time.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span><span class="o">.</span><span class="n">max</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="Frame">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.Frame.html#scippneutron.tof.chopper_cascade.Frame">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Frame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A frame of neutrons, created from a single neutron pulse, potentially chopped into</span>
+<span class="sd">    subframes by choppers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">distance</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+    <span class="n">subframes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Subframe</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Frame</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="c1"># Note: we don&#39;t use sc.identical here because it can fail on the dtype even</span>
+        <span class="c1"># if the values are equal.</span>
+        <span class="n">same_distance</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distance</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">distance</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance</span><span class="o">.</span><span class="n">unit</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">distance</span><span class="o">.</span><span class="n">unit</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">same_distance</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="n">self_sub</span> <span class="o">==</span> <span class="n">other_sub</span>
+            <span class="k">for</span> <span class="n">self_sub</span><span class="p">,</span> <span class="n">other_sub</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subframes</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">subframes</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="Frame.propagate_to">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.Frame.html#scippneutron.tof.chopper_cascade.Frame.propagate_to">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">propagate_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distance</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Frame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute new frame by propagating to a distance.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        distance:</span>
+<span class="sd">            New distance.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            Propagated frame.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">distance</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">distance</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance</span>
+        <span class="n">subframes</span> <span class="o">=</span> <span class="p">[</span><span class="n">subframe</span><span class="o">.</span><span class="n">propagate_by</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="k">for</span> <span class="n">subframe</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subframes</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">Frame</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="n">distance</span><span class="p">,</span> <span class="n">subframes</span><span class="o">=</span><span class="n">subframes</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Frame.chop">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.Frame.html#scippneutron.tof.chopper_cascade.Frame.chop">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">chop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chopper</span><span class="p">:</span> <span class="n">Chopper</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Frame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute a new frame by applying a chopper.</span>
+
+<span class="sd">        A frame is a polygon in time and wavelength. Its initial shape is distorted</span>
+<span class="sd">        by propagation to the chopper. The chopper then cuts off the parts of the frame</span>
+<span class="sd">        that is outside of the chopper opening. Here we apply and algorithm that</span>
+<span class="sd">        computes a new polygon that is the intersection of the frame and the chopper</span>
+<span class="sd">        opening.</span>
+
+<span class="sd">        In practice a chopper may have multiple openings, so a frame may be chopped into</span>
+<span class="sd">        a number of subframes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        chopper:</span>
+<span class="sd">            Chopper to apply.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            Chopped frame.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">distance</span> <span class="o">=</span> <span class="n">chopper</span><span class="o">.</span><span class="n">distance</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">distance</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">distance</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Chopper distance </span><span class="si">{</span><span class="n">distance</span><span class="si">}</span><span class="s1"> is smaller than frame distance &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">distance</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">propagate_to</span><span class="p">(</span><span class="n">distance</span><span class="p">)</span>
+
+        <span class="c1"># A chopper can have multiple openings, call _chop for each of them. The result</span>
+        <span class="c1"># is the union of the resulting subframes.</span>
+        <span class="n">chopped</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="n">frame</span><span class="o">.</span><span class="n">distance</span><span class="p">,</span> <span class="n">subframes</span><span class="o">=</span><span class="p">[])</span>
+        <span class="k">for</span> <span class="n">subframe</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">subframes</span><span class="p">:</span>
+            <span class="k">for</span> <span class="nb">open</span><span class="p">,</span> <span class="n">close</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">chopper</span><span class="o">.</span><span class="n">time_open</span><span class="p">,</span> <span class="n">chopper</span><span class="o">.</span><span class="n">time_close</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">tmp</span> <span class="o">:=</span> <span class="n">_chop</span><span class="p">(</span><span class="n">subframe</span><span class="p">,</span> <span class="nb">open</span><span class="p">,</span> <span class="n">close_to_open</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">tmp</span> <span class="o">:=</span> <span class="n">_chop</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">close</span><span class="p">,</span> <span class="n">close_to_open</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">chopped</span><span class="o">.</span><span class="n">subframes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">chopped</span></div>
+
+
+<div class="viewcode-block" id="Frame.bounds">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.Frame.html#scippneutron.tof.chopper_cascade.Frame.bounds">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The bounds of the frame, i.e., the global min and max time and wavelength.&quot;&quot;&quot;</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">reduce</span><span class="p">([</span><span class="n">sub</span><span class="o">.</span><span class="n">start_time</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subframes</span><span class="p">])</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">reduce</span><span class="p">([</span><span class="n">sub</span><span class="o">.</span><span class="n">end_time</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subframes</span><span class="p">])</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">wav_start</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">reduce</span><span class="p">([</span><span class="n">sub</span><span class="o">.</span><span class="n">start_wavelength</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subframes</span><span class="p">])</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">wav_end</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">reduce</span><span class="p">([</span><span class="n">sub</span><span class="o">.</span><span class="n">end_wavelength</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subframes</span><span class="p">])</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">(</span>
+            <span class="n">time</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;bound&#39;</span><span class="p">),</span>
+            <span class="n">wavelength</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">wav_start</span><span class="p">,</span> <span class="n">wav_end</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;bound&#39;</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Frame.subbounds">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.Frame.html#scippneutron.tof.chopper_cascade.Frame.subbounds">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subbounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The bounds of the individual subframes, stored as a DataGroup.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">starts</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">subframe</span><span class="o">.</span><span class="n">start_time</span> <span class="k">for</span> <span class="n">subframe</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subframes</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;subframe&#39;</span>
+        <span class="p">)</span>
+        <span class="n">ends</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">subframe</span><span class="o">.</span><span class="n">end_time</span> <span class="k">for</span> <span class="n">subframe</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subframes</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;subframe&#39;</span>
+        <span class="p">)</span>
+        <span class="c1"># Given how time-propagation and chopping works, the min wavelength is always</span>
+        <span class="c1"># given by the same vertex as the min time, and the max wavelength by the same</span>
+        <span class="c1"># vertex as the max time. Thus, this check should generally always pass.</span>
+        <span class="c1"># Exceptions may be subframes that have been created manually.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">subframe</span><span class="o">.</span><span class="n">is_regular</span><span class="p">()</span> <span class="k">for</span> <span class="n">subframe</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subframes</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s1">&#39;Subframes must be regular, i.e., min/max time and wavelength must &#39;</span>
+                <span class="s1">&#39;coincide.&#39;</span>
+            <span class="p">)</span>
+        <span class="n">wav_starts</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">subframe</span><span class="o">.</span><span class="n">start_wavelength</span> <span class="k">for</span> <span class="n">subframe</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subframes</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;subframe&#39;</span>
+        <span class="p">)</span>
+        <span class="n">wav_ends</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">subframe</span><span class="o">.</span><span class="n">end_wavelength</span> <span class="k">for</span> <span class="n">subframe</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subframes</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;subframe&#39;</span>
+        <span class="p">)</span>
+
+        <span class="n">time</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">starts</span><span class="p">,</span> <span class="n">ends</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;bound&#39;</span><span class="p">)</span>
+        <span class="n">wavelength</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">wav_starts</span><span class="p">,</span> <span class="n">wav_ends</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;bound&#39;</span><span class="p">)</span>
+        <span class="n">time_dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="s1">&#39;subframe&#39;</span><span class="p">,</span> <span class="s1">&#39;bound&#39;</span><span class="p">})</span>
+        <span class="n">wavelength_dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">wavelength</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="s1">&#39;subframe&#39;</span><span class="p">,</span> <span class="s1">&#39;bound&#39;</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">(</span>
+            <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">transpose</span><span class="p">([</span><span class="o">*</span><span class="n">time_dims</span><span class="p">,</span> <span class="s1">&#39;subframe&#39;</span><span class="p">,</span> <span class="s1">&#39;bound&#39;</span><span class="p">]),</span>
+            <span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="o">.</span><span class="n">transpose</span><span class="p">([</span><span class="o">*</span><span class="n">wavelength_dims</span><span class="p">,</span> <span class="s1">&#39;subframe&#39;</span><span class="p">,</span> <span class="s1">&#39;bound&#39;</span><span class="p">]),</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FrameSequence">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.FrameSequence.html#scippneutron.tof.chopper_cascade.FrameSequence">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FrameSequence</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A sequence of frames, created from a single neutron pulse, potentially chopped into</span>
+<span class="sd">    subframes by choppers.</span>
+
+<span class="sd">    It is recommended to use the :py:meth:`from_source_pulse` constructor to create a</span>
+<span class="sd">    frame sequence from a source pulse. Then, a chopper cascade can be applied using</span>
+<span class="sd">    :py:meth:`chop`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">frames</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Frame</span><span class="p">]</span>
+
+<div class="viewcode-block" id="FrameSequence.from_source_pulse">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.FrameSequence.html#scippneutron.tof.chopper_cascade.FrameSequence.from_source_pulse">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_source_pulse</span><span class="p">(</span>
+        <span class="n">time_min</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">time_max</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">wavelength_min</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">wavelength_max</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a frame sequence from min/max time and wavelength of a pulse.</span>
+
+<span class="sd">        The distance is set to 0 m.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">time_min</span><span class="p">,</span> <span class="n">time_max</span><span class="p">,</span> <span class="n">time_max</span><span class="p">,</span> <span class="n">time_min</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;vertex&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+            <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span>
+        <span class="p">)</span>
+        <span class="n">wavelength</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">wavelength_min</span><span class="p">,</span> <span class="n">wavelength_min</span><span class="p">,</span> <span class="n">wavelength_max</span><span class="p">,</span> <span class="n">wavelength_max</span><span class="p">],</span>
+            <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;vertex&#39;</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;angstrom&#39;</span><span class="p">)</span>
+        <span class="n">frames</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">Frame</span><span class="p">(</span>
+                <span class="n">distance</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">),</span>
+                <span class="n">subframes</span><span class="o">=</span><span class="p">[</span><span class="n">Subframe</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="p">)],</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">FrameSequence</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of frames.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FrameSequence.__getitem__">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.FrameSequence.html#scippneutron.tof.chopper_cascade.FrameSequence.__getitem__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Frame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a frame by index or distance.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+        <span class="n">distance</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+        <span class="n">frame_before_detector</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">distance</span> <span class="o">&gt;</span> <span class="n">distance</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">frame_before_detector</span> <span class="o">=</span> <span class="n">frame</span>
+
+        <span class="k">return</span> <span class="n">frame_before_detector</span><span class="o">.</span><span class="n">propagate_to</span><span class="p">(</span><span class="n">distance</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FrameSequence.propagate_to">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.FrameSequence.html#scippneutron.tof.chopper_cascade.FrameSequence.propagate_to">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">propagate_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distance</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FrameSequence</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Propagate the frame sequence to a distance, adding a new frame.</span>
+
+<span class="sd">        Use this, e.g., to propagate to the sample position after applying choppers.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        distance:</span>
+<span class="sd">            Distance to propagate.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            New frame sequence.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">FrameSequence</span><span class="p">([</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">propagate_to</span><span class="p">(</span><span class="n">distance</span><span class="p">)])</span></div>
+
+
+<div class="viewcode-block" id="FrameSequence.chop">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.FrameSequence.html#scippneutron.tof.chopper_cascade.FrameSequence.chop">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">chop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">choppers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chopper</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">FrameSequence</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Chop the frame sequence by a list of choppers.</span>
+
+<span class="sd">        The choppers will be sorted by their distance, and applied in order.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        choppers:</span>
+<span class="sd">            List of choppers.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            New frame sequence.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">choppers</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">choppers</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">distance</span><span class="p">)</span>
+        <span class="n">frames</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">chopper</span> <span class="ow">in</span> <span class="n">choppers</span><span class="p">:</span>
+            <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">frames</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">chop</span><span class="p">(</span><span class="n">chopper</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">FrameSequence</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FrameSequence.draw">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.FrameSequence.html#scippneutron.tof.chopper_cascade.FrameSequence.draw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">linewidth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">fill</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">transpose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">colors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">grid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;Frame propagation through chopper cascade&#39;</span><span class="p">,</span>
+        <span class="n">time_unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;ms&#39;</span><span class="p">,</span>
+        <span class="n">wavelength_unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;angstrom&#39;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Draw frames using matplotlib.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        linewidth:</span>
+<span class="sd">            Line width of frame edges.</span>
+<span class="sd">        fill:</span>
+<span class="sd">            Fill frame with color.</span>
+<span class="sd">        alpha:</span>
+<span class="sd">            Transparency of frame.</span>
+<span class="sd">        transpose:</span>
+<span class="sd">            Transpose axes.</span>
+<span class="sd">        colors:</span>
+<span class="sd">            List of colors to use for frames. If None, use default matplotlib colors.</span>
+<span class="sd">        grid:</span>
+<span class="sd">            Show grid.</span>
+<span class="sd">        time_unit:</span>
+<span class="sd">            Unit for time axis. Default is ms.</span>
+<span class="sd">        wavelength_unit:</span>
+<span class="sd">            Unit for wavelength axis. Default is angstrom.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mcolors</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">patches</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+        <span class="n">x_max</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">y_max</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">):</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">colors</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s1">&#39;C</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="c1"># Add label to legend</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([],</span> <span class="p">[],</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">frame</span><span class="o">.</span><span class="n">distance</span><span class="si">:</span><span class="s1">c</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="c1"># All subframes have same color</span>
+            <span class="k">for</span> <span class="n">subframe</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">subframes</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">subframe</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">time_unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">subframe</span><span class="o">.</span><span class="n">wavelength</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">wavelength_unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">transpose</span><span class="p">:</span>
+                    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span>
+                <span class="n">x_unit</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">unit</span>
+                <span class="n">y_unit</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">unit</span>
+                <span class="n">x_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">x_max</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                <span class="n">y_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">y_max</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">alpha</span><span class="p">:</span>
+                    <span class="n">color</span> <span class="o">=</span> <span class="n">mcolors</span><span class="o">.</span><span class="n">to_rgba</span><span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+                <span class="n">polygon</span> <span class="o">=</span> <span class="n">patches</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+                    <span class="n">closed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">fill</span><span class="o">=</span><span class="n">fill</span><span class="p">,</span>
+                    <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+                    <span class="n">linewidth</span><span class="o">=</span><span class="n">linewidth</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">polygon</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">x_unit</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">y_unit</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">x_max</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">y_max</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">minorticks_on</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">grid</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="s1">&#39;0.5&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">which</span><span class="o">=</span><span class="s1">&#39;minor&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="s1">&#39;0.5&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span></div>
+
+
+<div class="viewcode-block" id="FrameSequence.acceptance_diagram">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.FrameSequence.html#scippneutron.tof.chopper_cascade.FrameSequence.acceptance_diagram">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">acceptance_diagram</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Draw a chopper acceptance diagram.</span>
+
+<span class="sd">        See, e.g., J.R.D. Copley, An acceptance diagram analysis of the contaminant</span>
+<span class="sd">        pulse removal problem with direct geometry neutron chopper spectrometers,</span>
+<span class="sd">        https://doi.org/10.1016/S0168-9002(03)01731-5 for more background.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+        <span class="n">source_distance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">distance</span>
+        <span class="n">frames</span> <span class="o">=</span> <span class="n">FrameSequence</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">frame</span><span class="o">.</span><span class="n">propagate_to</span><span class="p">(</span><span class="n">source_distance</span><span class="p">)</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># Reset frame distance for plotting labels. This is a bit of a hack.</span>
+        <span class="c1"># We should use chopper names if available.</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">frames</span><span class="o">.</span><span class="n">frames</span><span class="p">):</span>
+            <span class="n">frame</span><span class="o">.</span><span class="n">distance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">distance</span>
+        <span class="n">blue</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">frames</span><span class="o">.</span><span class="n">frames</span><span class="p">))</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">Blues</span><span class="p">(</span><span class="n">blue</span><span class="p">)</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">frames</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span>
+            <span class="n">fill</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">transpose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">colors</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Chopper acceptance diagram&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Put legend outside of plot</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_position</span><span class="p">([</span><span class="n">box</span><span class="o">.</span><span class="n">x0</span><span class="p">,</span> <span class="n">box</span><span class="o">.</span><span class="n">y0</span><span class="p">,</span> <span class="n">box</span><span class="o">.</span><span class="n">width</span> <span class="o">*</span> <span class="mf">0.8</span><span class="p">,</span> <span class="n">box</span><span class="o">.</span><span class="n">height</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span>
+            <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;center left&#39;</span><span class="p">,</span>
+            <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+            <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Distance&#39;</span><span class="p">,</span>
+            <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Chopper">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.Chopper.html#scippneutron.tof.chopper_cascade.Chopper">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Chopper</span><span class="p">:</span>
+    <span class="n">distance</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+    <span class="n">time_open</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+    <span class="n">time_close</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_open</span><span class="o">.</span><span class="n">sizes</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_close</span><span class="o">.</span><span class="n">sizes</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Inconsistent dims or shape: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">time_open</span><span class="o">.</span><span class="n">sizes</span><span class="si">}</span><span class="s1"> vs &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">time_close</span><span class="o">.</span><span class="n">sizes</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Chopper</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Chopper</span><span class="p">(</span>
+            <span class="n">distance</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">distance</span><span class="p">,</span>
+            <span class="n">time_open</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">time_open</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+            <span class="n">time_close</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">time_close</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="Chopper.from_disk_chopper">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.tof.chopper_cascade.Chopper.html#scippneutron.tof.chopper_cascade.Chopper.from_disk_chopper">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_disk_chopper</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">disk_chopper</span><span class="p">:</span> <span class="n">DiskChopper</span><span class="p">,</span>
+        <span class="n">pulse_frequency</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">npulses</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Chopper</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a chopper from a NeXus disk chopper.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        disk_chopper:</span>
+<span class="sd">            Disk chopper.</span>
+<span class="sd">        pulse_frequency:</span>
+<span class="sd">            The frequency of pulses in the neutron source (this is to determine how</span>
+<span class="sd">            many rotations the chopper performs per pulse).</span>
+<span class="sd">        npulses:</span>
+<span class="sd">            Number of pulses to rotate the chopper for.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tpulse</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">pulse_frequency</span>
+        <span class="n">topen</span> <span class="o">=</span> <span class="n">disk_chopper</span><span class="o">.</span><span class="n">time_offset_open</span><span class="p">(</span><span class="n">pulse_frequency</span><span class="o">=</span><span class="n">pulse_frequency</span><span class="p">)</span>
+        <span class="n">tclose</span> <span class="o">=</span> <span class="n">disk_chopper</span><span class="o">.</span><span class="n">time_offset_close</span><span class="p">(</span><span class="n">pulse_frequency</span><span class="o">=</span><span class="n">pulse_frequency</span><span class="p">)</span>
+        <span class="n">offsets</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="s1">&#39;pulse&#39;</span><span class="p">,</span> <span class="n">npulses</span><span class="p">)</span> <span class="o">*</span> <span class="n">tpulse</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">distance</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">disk_chopper</span><span class="o">.</span><span class="n">axle_position</span><span class="p">),</span>
+            <span class="n">time_open</span><span class="o">=</span><span class="p">(</span><span class="n">offsets</span> <span class="o">+</span> <span class="n">topen</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="n">topen</span><span class="o">.</span><span class="n">dim</span><span class="p">),</span>
+            <span class="n">time_close</span><span class="o">=</span><span class="p">(</span><span class="n">offsets</span> <span class="o">+</span> <span class="n">tclose</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="n">tclose</span><span class="o">.</span><span class="n">dim</span><span class="p">),</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_chop</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="n">Subframe</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">close_to_open</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Subframe</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">inside</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">time</span> <span class="o">&gt;=</span> <span class="n">time</span> <span class="k">if</span> <span class="n">close_to_open</span> <span class="k">else</span> <span class="n">frame</span><span class="o">.</span><span class="n">time</span> <span class="o">&lt;=</span> <span class="n">time</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">time</span><span class="p">)):</span>
+        <span class="c1"># Note how j wraps around to 0</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+        <span class="n">inside_i</span> <span class="o">=</span> <span class="n">inside</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">inside_j</span> <span class="o">=</span> <span class="n">inside</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">inside_i</span><span class="p">:</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">frame</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">frame</span><span class="o">.</span><span class="n">wavelength</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">inside_i</span> <span class="o">!=</span> <span class="n">inside_j</span><span class="p">:</span>
+            <span class="c1"># Intersection</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span> <span class="o">-</span> <span class="n">frame</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">frame</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">frame</span><span class="o">.</span><span class="n">wavelength</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">frame</span><span class="o">.</span><span class="n">wavelength</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">time</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">output</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">output</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="n">frame</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+    <span class="n">wavelength</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">v</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">output</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="n">frame</span><span class="o">.</span><span class="n">wavelength</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Subframe</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 0.0.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

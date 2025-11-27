@@ -1,0 +1,799 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scippneutron.absorption.cylinder &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css?v=a0a71c94" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../../_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scippneutron/absorption/cylinder';</script>
+    <script src="../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">scippneutron.absorption.cylinder</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scippneutron.absorption.cylinder</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.polynomial.chebyshev</span><span class="w"> </span><span class="kn">import</span> <span class="n">chebgauss</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.polynomial.legendre</span><span class="w"> </span><span class="kn">import</span> <span class="n">leggauss</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">quadratures</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SampleShape</span>
+
+
+<div class="viewcode-block" id="Cylinder">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.absorption.cylinder.Cylinder.html#scippneutron.absorption.cylinder.Cylinder">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cylinder</span><span class="p">(</span><span class="n">SampleShape</span><span class="p">):</span>
+    <span class="n">symmetry_line</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+    <span class="n">center_of_base</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+    <span class="n">radius</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+    <span class="n">height</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+
+<div class="viewcode-block" id="Cylinder.beam_intersection">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.absorption.cylinder.Cylinder.html#scippneutron.absorption.cylinder.Cylinder.beam_intersection">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">beam_intersection</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">start_point</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Length of intersection between beam and cylinder&quot;&quot;&quot;</span>
+        <span class="n">base_point</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_of_base</span> <span class="o">-</span> <span class="n">start_point</span>
+        <span class="n">cyl_intersection</span><span class="p">,</span> <span class="o">*</span><span class="n">cyl_interval</span> <span class="o">=</span> <span class="n">_line_infinite_cylinder_intersection</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">symmetry_line</span><span class="p">,</span> <span class="n">base_point</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">,</span> <span class="n">direction</span>
+        <span class="p">)</span>
+        <span class="n">slab_intersection</span><span class="p">,</span> <span class="o">*</span><span class="n">slab_interval</span> <span class="o">=</span> <span class="n">_line_slab_intersection</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">symmetry_line</span><span class="p">,</span> <span class="n">base_point</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">direction</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">cyl_intersection</span> <span class="o">&amp;</span> <span class="n">slab_intersection</span><span class="p">,</span>
+            <span class="n">_positive_interval_intersection</span><span class="p">(</span><span class="n">slab_interval</span><span class="p">,</span> <span class="n">cyl_interval</span><span class="p">),</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">start_point</span><span class="o">.</span><span class="n">unit</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">center</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_of_base</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">symmetry_line</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">volume</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_select_quadrature_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;expensive&#39;</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">11</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="mi">35</span><span class="p">),</span> <span class="mi">11</span><span class="p">))</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">chebgauss</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="n">w</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+            <span class="n">w</span> <span class="o">/=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="n">quad</span> <span class="o">=</span> <span class="n">_cylinder_quadrature_from_product</span><span class="p">(</span>
+                <span class="n">quadratures</span><span class="o">.</span><span class="n">disk256_cheb</span><span class="p">,</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">w</span><span class="p">),</span>  <span class="c1"># noqa: C408</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;medium&#39;</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">7</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="mi">25</span><span class="p">),</span> <span class="mi">7</span><span class="p">))</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">chebgauss</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="n">w</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+            <span class="n">w</span> <span class="o">/=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="c1"># Would be nice to have a medium size Chebychev quadrature on the disk,</span>
+            <span class="c1"># but I only found the large one for now.</span>
+            <span class="n">quad</span> <span class="o">=</span> <span class="n">_cylinder_quadrature_from_product</span><span class="p">(</span>
+                <span class="n">quadratures</span><span class="o">.</span><span class="n">disk55</span><span class="p">,</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">w</span><span class="p">),</span>  <span class="c1"># noqa: C408</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;cheap&#39;</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span> <span class="mi">5</span><span class="p">))</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">leggauss</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="n">quad</span> <span class="o">=</span> <span class="n">_cylinder_quadrature_from_product</span><span class="p">(</span>
+                <span class="n">quadratures</span><span class="o">.</span><span class="n">disk12</span><span class="p">,</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">w</span><span class="p">),</span>  <span class="c1"># noqa: C408</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">kind</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span>
+        <span class="p">):</span>
+            <span class="c1"># The Monte-Carlo integration option is useful because</span>
+            <span class="c1"># while inefficient it is guaranteed unbiased and good for debugging.</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="mi">5000</span> <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">kind</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># Uniform sampling in cylinder</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+            <span class="n">th</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">quad</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">th</span><span class="p">),</span>
+                <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">th</span><span class="p">),</span>
+                <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="n">z</span><span class="p">,</span>
+                <span class="s1">&#39;weights&#39;</span><span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">/</span> <span class="n">k</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;quad&#39;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">quad</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+<div class="viewcode-block" id="Cylinder.quadrature">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.absorption.cylinder.Cylinder.html#scippneutron.absorption.cylinder.Cylinder.quadrature">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">quadrature</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;expensive&#39;</span><span class="p">,</span> <span class="s1">&#39;medium&#39;</span><span class="p">,</span> <span class="s1">&#39;cheap&#39;</span><span class="p">,</span> <span class="s1">&#39;mc&#39;</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;mc&#39;</span><span class="p">],</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]:</span>
+        <span class="s1">&#39;Returns quadrature points and weights of the cylinder.&#39;</span>
+        <span class="n">quad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_select_quadrature_points</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+        <span class="c1"># Scale to size of cylinder</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">quad</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">quad</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">quad</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+        <span class="c1"># Quadrature had total weight 2pi before, now it is 2pi radius^2 * height</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">quad</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">vectors</span><span class="p">(</span>
+            <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;quad&#39;</span><span class="p">],</span>
+            <span class="n">values</span><span class="o">=</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;row&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">([</span><span class="s1">&#39;quad&#39;</span><span class="p">,</span> <span class="s1">&#39;row&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+            <span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># By default the cylinder quadrature has z as the symmetry axis.</span>
+        <span class="c1"># We need to rotate the quadrature to match the symmetry axis of the cylinder.</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">vector</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span> <span class="bp">self</span><span class="o">.</span><span class="n">symmetry_line</span><span class="p">)</span>
+        <span class="n">un</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">un</span> <span class="o">&gt;=</span> <span class="mf">1e-10</span><span class="p">:</span>
+            <span class="n">u</span> <span class="o">*=</span> <span class="n">sc</span><span class="o">.</span><span class="n">asin</span><span class="p">(</span><span class="n">un</span><span class="p">)</span> <span class="o">/</span> <span class="n">un</span>
+            <span class="n">points</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">spatial</span><span class="o">.</span><span class="n">rotations_from_rotvecs</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">*</span> <span class="n">points</span>
+
+        <span class="c1"># By default the cylinder quadrature center is at the origin.</span>
+        <span class="c1"># We need to move it so the center matches the cylinder.</span>
+        <span class="n">points</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span>
+        <span class="k">return</span> <span class="n">points</span><span class="p">,</span> <span class="n">weights</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cylinder_quadrature_from_product</span><span class="p">(</span><span class="n">disk_quadrature</span><span class="p">,</span> <span class="n">line_quadrature</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>  <span class="c1"># noqa: C408</span>
+        <span class="n">weights</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">disk_w</span> <span class="o">*</span> <span class="n">line_w</span>
+                <span class="k">for</span> <span class="n">disk_w</span> <span class="ow">in</span> <span class="n">disk_quadrature</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">line_w</span> <span class="ow">in</span> <span class="n">line_quadrature</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">]</span>
+            <span class="p">]</span>
+        <span class="p">),</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">disk_quadrature</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">line_quadrature</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">])),</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">disk_quadrature</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">line_quadrature</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">])),</span>
+        <span class="n">z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">line_quadrature</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">disk_quadrature</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">])),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_minimum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_maximum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_max0</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">_maximum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">unit</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_positive_interval_intersection</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Length of the intersection of a and b and the positive real axis&#39;&#39;&#39;</span>
+    <span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="n">_maximum</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_minimum</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">_max0</span><span class="p">(</span><span class="n">_max0</span><span class="p">(</span><span class="n">right</span><span class="p">)</span> <span class="o">-</span> <span class="n">_max0</span><span class="p">(</span><span class="n">left</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_line_infinite_cylinder_intersection</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Intersection between a cylinder and a line through the origin with direction n.</span>
+<span class="sd">    See https://en.wikipedia.org/wiki/Line-cylinder_intersection.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    a: cylinder symmetry line</span>
+<span class="sd">    b: point on cylinder symmetry line</span>
+<span class="sd">    r: radius</span>
+<span class="sd">    n: direction of line to intersect cylinder</span>
+
+<span class="sd">    If the cylinder intersects the line through the origin in the direction of n</span>
+<span class="sd">    then `intersection` is `True` and the cylinder and the line intersects all</span>
+<span class="sd">    points `t * n` for `left &lt;= t &lt;= right`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    ---------</span>
+<span class="sd">    intersection:</span>
+<span class="sd">        True if the line and the cylinder intersect anywhere</span>
+<span class="sd">    left:</span>
+<span class="sd">        first edge of intersection segment (direction opposite n)</span>
+<span class="sd">    right:</span>
+<span class="sd">        second edge of intersection segment (direction n)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">nxa</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+    <span class="n">nxa_square</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">nxa</span><span class="p">,</span> <span class="n">nxa</span><span class="p">)</span>
+    <span class="n">parallel_to_cylinder</span> <span class="o">=</span> <span class="n">nxa_square</span> <span class="o">==</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">nxa</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+    <span class="n">s2</span> <span class="o">=</span> <span class="n">nxa_square</span> <span class="o">*</span> <span class="n">r</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">nxa</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">nxa</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">))</span>
+    <span class="n">intersection</span> <span class="o">=</span> <span class="n">s2</span> <span class="o">&gt;=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">s2</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+    <span class="n">left</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">parallel_to_cylinder</span><span class="p">,</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;-inf&#39;</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">unit</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">m</span> <span class="o">-</span> <span class="n">s</span><span class="p">)</span> <span class="o">/</span> <span class="n">nxa_square</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">parallel_to_cylinder</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">unit</span><span class="p">),</span> <span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span> <span class="o">/</span> <span class="n">nxa_square</span>
+    <span class="p">)</span>
+    <span class="n">origin_in_cylinder</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">a</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">r</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">parallel_to_cylinder</span><span class="p">,</span> <span class="n">origin_in_cylinder</span><span class="p">,</span> <span class="n">intersection</span><span class="p">),</span>
+        <span class="n">left</span><span class="p">,</span>
+        <span class="n">right</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_line_slab_intersection</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Intersection between a slab (the volume between two parallel planes)</span>
+<span class="sd">    and a line through the origin with direction n.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    --------</span>
+<span class="sd">    intersection:</span>
+<span class="sd">        True if the line and the slab intersect anywhere</span>
+<span class="sd">    left:</span>
+<span class="sd">        first edge of intersection segment (direction opposite n)</span>
+<span class="sd">    right:</span>
+<span class="sd">        second edge of intersection segment (direction n)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">ndota</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+    <span class="n">bdota</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+    <span class="n">origin_in_plane</span> <span class="o">=</span> <span class="p">(</span><span class="n">bdota</span> <span class="o">&lt;=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">h</span><span class="o">.</span><span class="n">unit</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">bdota</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="n">h</span><span class="p">)</span>
+    <span class="n">parallel_to_slab</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ndota</span><span class="p">)</span> <span class="o">==</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">ndota</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">bdota</span> <span class="o">/</span> <span class="n">ndota</span>
+    <span class="n">t1</span> <span class="o">=</span> <span class="n">t0</span> <span class="o">+</span> <span class="n">h</span> <span class="o">/</span> <span class="n">ndota</span>
+    <span class="n">left</span> <span class="o">=</span> <span class="n">_minimum</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="n">_maximum</span><span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">t0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">origin_in_plane</span> <span class="o">|</span> <span class="p">(</span><span class="o">~</span><span class="n">parallel_to_slab</span><span class="p">),</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">parallel_to_slab</span><span class="p">,</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;-inf&#39;</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="n">b</span><span class="o">.</span><span class="n">unit</span><span class="p">),</span>
+            <span class="n">left</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">parallel_to_slab</span><span class="p">,</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="n">b</span><span class="o">.</span><span class="n">unit</span><span class="p">),</span>
+            <span class="n">right</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 0.0.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

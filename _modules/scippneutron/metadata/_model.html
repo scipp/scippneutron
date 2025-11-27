@@ -1,0 +1,1035 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scippneutron.metadata._model &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css?v=a0a71c94" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../../_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scippneutron/metadata/_model';</script>
+    <script src="../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">scippneutron.metadata._model</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scippneutron.metadata._model</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2025 Scipp contributors (https://github.com/scipp)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scippnexus</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">snx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dateutil.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse</span> <span class="k">as</span> <span class="n">parse_datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">,</span> <span class="n">EmailStr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">._orcid</span><span class="w"> </span><span class="kn">import</span> <span class="n">ORCIDiD</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_unpack_variable</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Before validator to support passing scalar scipp variables as inputs.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must be a scalar&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">unit</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">unit</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must be dimensionless or have no unit at all&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
+<div class="viewcode-block" id="Beamline">
+<a class="viewcode-back" href="../../../generated/classes/scippneutron.metadata.Beamline.html#scippneutron.metadata.Beamline">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Beamline</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A beamline / instrument.</span>
+
+<span class="sd">    ``name`` should be the canonical spelling of the beamline name.</span>
+<span class="sd">    The location of the beamline is split into ``facility`` and ``site``, where</span>
+<span class="sd">    a &#39;facility&#39; is located at a &#39;site&#39;. For example:</span>
+
+<span class="sd">    &gt;&gt;&gt; from scippneutron.metadata import Beamline</span>
+<span class="sd">    &gt;&gt;&gt; beamline = Beamline(</span>
+<span class="sd">    ...     name=&#39;Amor&#39;,</span>
+<span class="sd">    ...     facility=&#39;SINQ&#39;,</span>
+<span class="sd">    ...     site=&#39;PSI&#39;,</span>
+<span class="sd">    ... )</span>
+
+<span class="sd">    If there is no separate facility and site, either omit ``site`` or use the same</span>
+<span class="sd">    value for both ``facility`` and ``site``. For example:</span>
+
+<span class="sd">    &gt;&gt;&gt; beamline = Beamline(</span>
+<span class="sd">    ...     name=&#39;ESTIA&#39;,</span>
+<span class="sd">    ...     facility=&#39;ESS&#39;,</span>
+<span class="sd">    ...     site=&#39;ESS&#39;,  # can be omitted</span>
+<span class="sd">    ... )</span>
+
+<span class="sd">    If the beamline has been upgraded, provide a revision to indicate</span>
+<span class="sd">    which version of the beamline was used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of the beamline.&quot;&quot;&quot;</span>
+    <span class="n">facility</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Facility where the beamline is located.&quot;&quot;&quot;</span>
+    <span class="n">site</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Site where the facility is located.&quot;&quot;&quot;</span>
+    <span class="n">revision</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Revision of the beamline in case of upgrades.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Beamline.from_nexus_entry">
+<a class="viewcode-back" href="../../../generated/classes/scippneutron.metadata.Beamline.html#scippneutron.metadata.Beamline.from_nexus_entry">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_nexus_entry</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">instrument_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Beamline</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a Beamline object from a Nexus entry.</span>
+
+<span class="sd">        NeXus does not have a standard method for specifying the facility, site, or</span>
+<span class="sd">        revision. This function only sets those fields for known instruments.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        entry:</span>
+<span class="sd">            ScippNexus group for a NeXus entry.</span>
+<span class="sd">            The entry needs to contain an ``NXinstrument`` with a &#39;name&#39; field</span>
+<span class="sd">            to identify the instrument.</span>
+<span class="sd">        instrument_name:</span>
+<span class="sd">            If the entry contains more than one ``NXinstrument`` group, this parameter</span>
+<span class="sd">            must be the name of one of these groups.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            A Beamline object constructed from the given Nexus entry.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">instrument</span> <span class="o">=</span> <span class="n">_get_unique_nexus_child</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">NXinstrument</span><span class="p">,</span> <span class="n">instrument_name</span><span class="p">)</span>
+        <span class="n">instrument_name</span> <span class="o">=</span> <span class="n">_read_optional_nexus_string</span><span class="p">(</span><span class="n">instrument</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">instrument_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No instrument name found in Nexus entry&quot;</span><span class="p">)</span>
+
+        <span class="n">facility</span><span class="p">,</span> <span class="n">site</span> <span class="o">=</span> <span class="n">_guess_facility_and_site</span><span class="p">(</span><span class="n">instrument_name</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">instrument_name</span><span class="p">,</span>
+            <span class="n">facility</span><span class="o">=</span><span class="n">facility</span><span class="p">,</span>
+            <span class="n">site</span><span class="o">=</span><span class="n">site</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Measurement">
+<a class="viewcode-back" href="../../../generated/classes/scippneutron.metadata.Measurement.html#scippneutron.metadata.Measurement">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Measurement</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A single measurement.</span>
+
+<span class="sd">    Terminology:</span>
+
+<span class="sd">        - An &quot;experiment&quot; is the collection of all related measurements,</span>
+<span class="sd">          typically done during one beamtime.</span>
+<span class="sd">        - A &quot;measurement&quot; is a single step of data collection.</span>
+<span class="sd">          It typically corresponds to a single NeXus file or a single entry</span>
+<span class="sd">          in a NeXus file.</span>
+
+<span class="sd">    The ``Measurement`` class represents a single measurement but also includes some</span>
+<span class="sd">    information about the experiment that this measurement is part of.</span>
+<span class="sd">    In particular, ``experiment_id`` and ``experiment_doi`` encode</span>
+<span class="sd">    information about the experiment.</span>
+<span class="sd">    *All* other fields encode information about a measurement; this includes</span>
+<span class="sd">    ``start_time`` and ``end_time``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">title</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The title of the measurement.&quot;&quot;&quot;</span>
+    <span class="n">run_number</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run number of the measurement.&quot;&quot;&quot;</span>
+    <span class="n">experiment_id</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;An ID for the experiment that this measurement is part of, e.g., proposal ID.&quot;&quot;&quot;</span>
+    <span class="n">experiment_doi</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A DOI for the experiment that this measurement is part of.&quot;&quot;&quot;</span>
+    <span class="c1"># These do not support conversion from variables because variables are naive w.r.t.</span>
+    <span class="c1"># timezones and converting them to datetime.datetime would require extra info.</span>
+    <span class="n">start_time</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Date and time when the measurement started.&quot;&quot;&quot;</span>
+    <span class="n">end_time</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Date and time when the measurement ended.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Measurement.from_nexus_entry">
+<a class="viewcode-back" href="../../../generated/classes/scippneutron.metadata.Measurement.html#scippneutron.metadata.Measurement.from_nexus_entry">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_nexus_entry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Measurement</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a Measurement object from a Nexus entry.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        entry:</span>
+<span class="sd">            ScippNexus group for a NeXus entry.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            An Measurement object constructed from the given Nexus entry.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">_read_optional_nexus_string</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="s1">&#39;title&#39;</span><span class="p">),</span>
+            <span class="n">run_number</span><span class="o">=</span><span class="n">_read_optional_nexus_string</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="s1">&#39;entry_identifier&#39;</span><span class="p">),</span>
+            <span class="n">experiment_id</span><span class="o">=</span><span class="n">_read_optional_nexus_string</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="s1">&#39;experiment_identifier&#39;</span><span class="p">),</span>
+            <span class="n">start_time</span><span class="o">=</span><span class="n">_read_optional_nexus_datetime</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="s1">&#39;start_time&#39;</span><span class="p">),</span>
+            <span class="n">end_time</span><span class="o">=</span><span class="n">_read_optional_nexus_datetime</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="s1">&#39;end_time&#39;</span><span class="p">),</span>
+            <span class="n">experiment_doi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_number_maybe_int</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the run number as an int if possible.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_number</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_number</span></div>
+
+
+
+<div class="viewcode-block" id="Person">
+<a class="viewcode-back" href="../../../generated/classes/scippneutron.metadata.Person.html#scippneutron.metadata.Person">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Person</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A person.</span>
+
+<span class="sd">    .. attention::</span>
+
+<span class="sd">        Please make sure that you don&#39;t specify personal details without permission!</span>
+
+<span class="sd">    Specify an ORCID iD whenever possible to make sure the</span>
+<span class="sd">    person can be uniquely identified.</span>
+<span class="sd">    The name is always required but is often not unique.</span>
+<span class="sd">    Other contact information like address or email address are less important</span>
+<span class="sd">    and can usually be omitted when an ORCID iD is provided.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Free form name of the person.&quot;&quot;&quot;</span>
+    <span class="n">orcid_id</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">ORCIDiD</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;ORCID iD of the person.&quot;&quot;&quot;</span>
+
+    <span class="n">corresponding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether the person is the corresponding / contact author.&quot;&quot;&quot;</span>
+    <span class="n">owner</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether the person owns the data.&quot;&quot;&quot;</span>
+    <span class="n">role</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The role that the person played in collecting / processing the data.</span>
+
+<span class="sd">    `NeXus &lt;https://manual.nexusformat.org/classes/base_classes/NXuser.html#nxuser&gt;`_</span>
+<span class="sd">    and</span>
+<span class="sd">    `CIF &lt;https://github.com/COMCIFS/cif_core/blob/6f8502e81b623eb0fd779c79efaf191d49fa198c/cif_core.dic#L15167&gt;`_</span>
+<span class="sd">    list possible roles.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">address</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Physical (work) address of the person.&quot;&quot;&quot;</span>
+    <span class="n">email</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">EmailStr</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Email address of the person.&quot;&quot;&quot;</span>
+    <span class="n">affiliation</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Affiliation of the person.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Software">
+<a class="viewcode-back" href="../../../generated/classes/scippneutron.metadata.Software.html#scippneutron.metadata.Software">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Software</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A piece of software.</span>
+
+<span class="sd">    The piece of software should be specified as precisely as possible.</span>
+<span class="sd">    For example, a release version of ScippNeutron could be specified as follows:</span>
+
+<span class="sd">    &gt;&gt;&gt; from scippneutron.metadata import Software</span>
+<span class="sd">    &gt;&gt;&gt; software = Software(</span>
+<span class="sd">    ...     name=&#39;ScippNeutron&#39;,</span>
+<span class="sd">    ...     version=&#39;24.11.0&#39;,</span>
+<span class="sd">    ...     url=&#39;https://github.com/scipp/scippneutron/releases/tag/24.11.0&#39;,</span>
+<span class="sd">    ...     doi=&#39;https://doi.org/10.5281/zenodo.14139599&#39;,</span>
+<span class="sd">    ... )</span>
+
+<span class="sd">    A development version might include a Git hash in the version.</span>
+<span class="sd">    Alternative methods can be used for projects that do not use Git.</span>
+<span class="sd">    But the software should be specified as precisely as possible.</span>
+<span class="sd">    For example:</span>
+
+<span class="sd">    &gt;&gt;&gt; software = Software(</span>
+<span class="sd">    ...     name=&#39;ScippNeutron&#39;,</span>
+<span class="sd">    ...     version=&#39;24.11.1.dev8+g10d09ab0&#39;,</span>
+<span class="sd">    ...     url=&#39;https://github.com/scipp/scippneutron&#39;,</span>
+<span class="sd">    ... )</span>
+
+<span class="sd">    The URL can either point to the source code, a release artifact, or a package</span>
+<span class="sd">    index, such as ``pypi.org`` or ``anaconda.org``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of the piece of software.&quot;&quot;&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete version of the piece of software.&quot;&quot;&quot;</span>
+    <span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;URL to the concrete version of the software.</span>
+
+<span class="sd">    If no URL for a concrete version is available,</span>
+<span class="sd">    a URL of the project or source code may be used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">doi</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;DOI of the concrete version of the software.</span>
+
+<span class="sd">    If there is no DOI for the concrete version,</span>
+<span class="sd">    a general DOI for the software may be used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Software.from_package_metadata">
+<a class="viewcode-back" href="../../../generated/classes/scippneutron.metadata.Software.html#scippneutron.metadata.Software.from_package_metadata">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_package_metadata</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">package_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Software</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a Software instance from the metadata of an installed package.</span>
+
+<span class="sd">        This function attempts to deduce all information it can from package metadata.</span>
+<span class="sd">        But it only has access to the information that is encoded in the package.</span>
+<span class="sd">        It therefore returns the base project URL instead of a concrete release URL,</span>
+<span class="sd">        and it does not return a DOI.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        package_name:</span>
+<span class="sd">            The name of the Python package.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            A Software instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">package_name</span><span class="p">,</span>
+            <span class="n">version</span><span class="o">=</span><span class="n">_deduce_package_version</span><span class="p">(</span><span class="n">package_name</span><span class="p">),</span>
+            <span class="n">url</span><span class="o">=</span><span class="n">_deduce_package_source_url</span><span class="p">(</span><span class="n">package_name</span><span class="p">),</span>
+            <span class="n">doi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name_version</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The name and version of the software, separated by a space.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s1">&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compact_repr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A representation of this software as a single short string.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name_version</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s1">)&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name_version</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_deduce_package_version</span><span class="p">(</span><span class="n">package_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">PackageNotFoundError</span><span class="p">,</span> <span class="n">version</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">version</span><span class="p">(</span><span class="n">package_name</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">PackageNotFoundError</span><span class="p">:</span>
+        <span class="c1"># Either the package is not installed or has no metadata.</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_module</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">package</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="n">package_name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ModuleNotFoundError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">e</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">package</span><span class="o">.</span><span class="n">__version__</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Package &#39;</span><span class="si">{</span><span class="n">package_name</span><span class="si">}</span><span class="s2">&#39; has no metadata and no &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;__version__ attribute. Specify the version manually.&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_deduce_package_source_url</span><span class="p">(</span><span class="n">package_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">PackageNotFoundError</span><span class="p">,</span> <span class="n">metadata</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">(</span><span class="n">package_name</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">PackageNotFoundError</span><span class="p">:</span>
+        <span class="c1"># Either the package is not installed or has no metadata.</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">urls</span> <span class="o">:=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get_all</span><span class="p">(</span><span class="s2">&quot;project-url&quot;</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">urls</span> <span class="k">if</span> <span class="n">url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Source&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="SourceType">
+<a class="viewcode-back" href="../../../generated/classes/scippneutron.metadata.SourceType.html#scippneutron.metadata.SourceType">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SourceType</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Type of source.</span>
+
+<span class="sd">    Names are based on NeXus definitions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SpallationNeutronSource</span> <span class="o">=</span> <span class="s1">&#39;Spallation Neutron Source&#39;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A spallation neutron source.&quot;&quot;&quot;</span>
+    <span class="n">ReactorNeutronSource</span> <span class="o">=</span> <span class="s1">&#39;Reactor Neutron Source&#39;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A reactor neutron source.&quot;&quot;&quot;</span>
+    <span class="n">SynchrotronXraySource</span> <span class="o">=</span> <span class="s1">&#39;Synchrotron X-ray Source&#39;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A synchrotron X-ray source.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="RadiationProbe">
+<a class="viewcode-back" href="../../../generated/classes/scippneutron.metadata.RadiationProbe.html#scippneutron.metadata.RadiationProbe">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RadiationProbe</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Type of radiation probe.</span>
+
+<span class="sd">    Names are based on NeXus definitions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">Neutron</span> <span class="o">=</span> <span class="s1">&#39;neutron&#39;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Neutron probe.&quot;&quot;&quot;</span>
+    <span class="n">Xray</span> <span class="o">=</span> <span class="s1">&#39;X-ray&#39;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;X-ray probe.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Source">
+<a class="viewcode-back" href="../../../generated/classes/scippneutron.metadata.Source.html#scippneutron.metadata.Source">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Source</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Information about a neutron source.</span>
+
+<span class="sd">    The ESS source is provided as ``scippneutron.metadata.ESS_SOURCE``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_unpack_variable</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of the source.&quot;&quot;&quot;</span>
+    <span class="n">source_type</span><span class="p">:</span> <span class="n">SourceType</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Type of this source.&quot;&quot;&quot;</span>
+    <span class="n">probe</span><span class="p">:</span> <span class="n">RadiationProbe</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Radiation probe of the source.&quot;&quot;&quot;</span></div>
+
+
+
+<span class="n">ESS_SOURCE</span> <span class="o">=</span> <span class="n">Source</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ESS Butterfly&quot;</span><span class="p">,</span>
+    <span class="n">source_type</span><span class="o">=</span><span class="n">SourceType</span><span class="o">.</span><span class="n">SpallationNeutronSource</span><span class="p">,</span>
+    <span class="n">probe</span><span class="o">=</span><span class="n">RadiationProbe</span><span class="o">.</span><span class="n">Neutron</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">ESS_SOURCE</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Default parameters of the ESS source.&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_optional_nexus_string</span><span class="p">(</span><span class="n">group</span><span class="p">:</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">group</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ds</span> <span class="o">:=</span> <span class="n">group</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ds</span><span class="p">[()]</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_optional_nexus_datetime</span><span class="p">(</span><span class="n">group</span><span class="p">:</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">s</span> <span class="o">:=</span> <span class="n">_read_optional_nexus_string</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">parse_datetime</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_unique_nexus_child</span><span class="p">(</span>
+    <span class="n">entry</span><span class="p">:</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span><span class="p">,</span> <span class="n">nx_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">children</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="n">nx_class</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Got multiple </span><span class="si">{</span><span class="n">nx_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> in NeXus entry &#39;</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">children</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+
+
+<span class="c1"># More instruments may be added as needed.</span>
+<span class="c1"># All instrument names are lowercase.</span>
+<span class="n">_FACILITY_PER_INSTRUMENT</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># ESS</span>
+    <span class="s1">&#39;beer&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;bifrost&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;cspec&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;dream&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;estia&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;freia&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;heimdal&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;loki&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;magic&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;miracles&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;nmx&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;odin&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;skadi&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;tbl&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;trex&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;vespa&#39;</span><span class="p">:</span> <span class="s1">&#39;ESS&#39;</span><span class="p">,</span>
+    <span class="c1"># SINQ</span>
+    <span class="s1">&#39;amor&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;SINQ&#39;</span><span class="p">,</span> <span class="s1">&#39;PSI&#39;</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="c1"># NeXus provides no way to specify the facility.</span>
+<span class="c1"># But we can usually guess it based on the instrument name.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_guess_facility_and_site</span><span class="p">(</span>
+    <span class="n">instrument_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">instrument_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="k">match</span> <span class="n">_FACILITY_PER_INSTRUMENT</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">instrument_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
+        <span class="k">case</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">case</span> <span class="p">(</span><span class="n">facility</span><span class="p">,</span> <span class="n">site</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">facility</span><span class="p">,</span> <span class="n">site</span>
+        <span class="k">case</span> <span class="n">facility</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">facility</span><span class="p">,</span> <span class="n">facility</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 0.0.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
