@@ -1,0 +1,991 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>scippneutron.chopper.disk_chopper &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/autodoc_pydantic.css?v=a0a71c94" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'generated/modules/scippneutron.chopper.disk_chopper';</script>
+    <script src="../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="scippneutron.chopper.disk_chopper.DiskChopper" href="scippneutron.chopper.disk_chopper.DiskChopper.html" />
+    <link rel="prev" title="scippneutron.chopper" href="scippneutron.chopper.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.from_mantid.html">scippneutron.from_mantid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.load_with_mantid.html">scippneutron.load_with_mantid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.to_mantid.html">scippneutron.to_mantid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.fit.html">scippneutron.fit</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.convert.html">scippneutron.convert</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.position.html">scippneutron.position</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.source_position.html">scippneutron.source_position</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.sample_position.html">scippneutron.sample_position</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.Ltotal.html">scippneutron.Ltotal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.L1.html">scippneutron.L1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.L2.html">scippneutron.L2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.two_theta.html">scippneutron.two_theta</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.incident_beam.html">scippneutron.incident_beam</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functions/scippneutron.scattered_beam.html">scippneutron.scattered_beam</a></li>
+</ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.atoms.html">scippneutron.atoms</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.atoms.reference_wavelength.html">scippneutron.atoms.reference_wavelength</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.atoms.Atom.html">scippneutron.atoms.Atom</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.atoms.ScatteringParams.html">scippneutron.atoms.ScatteringParams</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.absorption.html">scippneutron.absorption</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.absorption.base.html">scippneutron.absorption.base</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.absorption.base.compute_transmission_map.html">scippneutron.absorption.base.compute_transmission_map</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.absorption.cylinder.html">scippneutron.absorption.cylinder</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.absorption.cylinder.Cylinder.html">scippneutron.absorption.cylinder.Cylinder</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.absorption.material.html">scippneutron.absorption.material</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.absorption.material.Material.html">scippneutron.absorption.material.Material</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.absorption.quadratures.html">scippneutron.absorption.quadratures</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.absorption.types.html">scippneutron.absorption.types</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.absorption.types.SampleShape.html">scippneutron.absorption.types.SampleShape</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="scippneutron.chopper.html">scippneutron.chopper</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="current reference internal" href="#">scippneutron.chopper.disk_chopper</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html">scippneutron.chopper.disk_chopper.DiskChopper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopperType.html">scippneutron.chopper.disk_chopper.DiskChopperType</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.chopper.filtering.html">scippneutron.chopper.filtering</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.chopper.filtering.collapse_plateaus.html">scippneutron.chopper.filtering.collapse_plateaus</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.chopper.filtering.filter_in_phase.html">scippneutron.chopper.filtering.filter_in_phase</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.chopper.filtering.find_plateaus.html">scippneutron.chopper.filtering.find_plateaus</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.chopper.nexus_chopper.html">scippneutron.chopper.nexus_chopper</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.chopper.nexus_chopper.extract_chopper_from_nexus.html">scippneutron.chopper.nexus_chopper.extract_chopper_from_nexus</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.conversion.html">scippneutron.conversion</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.conversion.beamline.html">scippneutron.conversion.beamline</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.L1.html">scippneutron.conversion.beamline.L1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.L2.html">scippneutron.conversion.beamline.L2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.beam_aligned_unit_vectors.html">scippneutron.conversion.beamline.beam_aligned_unit_vectors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.scattering_angle_in_yz_plane.html">scippneutron.conversion.beamline.scattering_angle_in_yz_plane</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.scattering_angles_with_gravity.html">scippneutron.conversion.beamline.scattering_angles_with_gravity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.straight_incident_beam.html">scippneutron.conversion.beamline.straight_incident_beam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.straight_scattered_beam.html">scippneutron.conversion.beamline.straight_scattered_beam</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.total_beam_length.html">scippneutron.conversion.beamline.total_beam_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.total_straight_beam_length_no_scatter.html">scippneutron.conversion.beamline.total_straight_beam_length_no_scatter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.two_theta.html">scippneutron.conversion.beamline.two_theta</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.BeamAlignedUnitVectors.html">scippneutron.conversion.beamline.BeamAlignedUnitVectors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.beamline.SphericalCoordinates.html">scippneutron.conversion.beamline.SphericalCoordinates</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.conversion.graph.html">scippneutron.conversion.graph</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="scippneutron.conversion.graph.beamline.html">scippneutron.conversion.graph.beamline</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.L1.html">scippneutron.conversion.graph.beamline.L1</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.L2.html">scippneutron.conversion.graph.beamline.L2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.Ltotal.html">scippneutron.conversion.graph.beamline.Ltotal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.beamline.html">scippneutron.conversion.graph.beamline.beamline</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.incident_beam.html">scippneutron.conversion.graph.beamline.incident_beam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.scattered_beam.html">scippneutron.conversion.graph.beamline.scattered_beam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.beamline.two_theta.html">scippneutron.conversion.graph.beamline.two_theta</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="scippneutron.conversion.graph.tof.html">scippneutron.conversion.graph.tof</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.direct_inelastic.html">scippneutron.conversion.graph.tof.direct_inelastic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic.html">scippneutron.conversion.graph.tof.elastic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic_Q.html">scippneutron.conversion.graph.tof.elastic_Q</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic_Q_vec.html">scippneutron.conversion.graph.tof.elastic_Q_vec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic_dspacing.html">scippneutron.conversion.graph.tof.elastic_dspacing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic_energy.html">scippneutron.conversion.graph.tof.elastic_energy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic_hkl.html">scippneutron.conversion.graph.tof.elastic_hkl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.elastic_wavelength.html">scippneutron.conversion.graph.tof.elastic_wavelength</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.indirect_inelastic.html">scippneutron.conversion.graph.tof.indirect_inelastic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scippneutron.conversion.graph.tof.kinematic.html">scippneutron.conversion.graph.tof.kinematic</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.conversion.tof.html">scippneutron.conversion.tof</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.dspacing_from_energy.html">scippneutron.conversion.tof.dspacing_from_energy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.dspacing_from_tof.html">scippneutron.conversion.tof.dspacing_from_tof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.dspacing_from_wavelength.html">scippneutron.conversion.tof.dspacing_from_wavelength</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.elastic_Q_elements_from_wavelength.html">scippneutron.conversion.tof.elastic_Q_elements_from_wavelength</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.elastic_Q_from_wavelength.html">scippneutron.conversion.tof.elastic_Q_from_wavelength</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.elastic_Q_vec_from_Q_elements.html">scippneutron.conversion.tof.elastic_Q_vec_from_Q_elements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.energy_from_tof.html">scippneutron.conversion.tof.energy_from_tof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.energy_from_wavelength.html">scippneutron.conversion.tof.energy_from_wavelength</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.energy_transfer_direct_from_tof.html">scippneutron.conversion.tof.energy_transfer_direct_from_tof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.energy_transfer_indirect_from_tof.html">scippneutron.conversion.tof.energy_transfer_indirect_from_tof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.hkl_elements_from_hkl_vec.html">scippneutron.conversion.tof.hkl_elements_from_hkl_vec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.hkl_vec_from_elastic_Q_vec.html">scippneutron.conversion.tof.hkl_vec_from_elastic_Q_vec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.time_at_sample_from_tof.html">scippneutron.conversion.tof.time_at_sample_from_tof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.ub_matrix_from_u_and_b.html">scippneutron.conversion.tof.ub_matrix_from_u_and_b</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.wavelength_from_Q.html">scippneutron.conversion.tof.wavelength_from_Q</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.wavelength_from_energy.html">scippneutron.conversion.tof.wavelength_from_energy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.wavelength_from_tof.html">scippneutron.conversion.tof.wavelength_from_tof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.conversion.tof.wavevector_from_wavelength.html">scippneutron.conversion.tof.wavevector_from_wavelength</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.io.html">scippneutron.io</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.io.cif.html">scippneutron.io.cif</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.cif.save_cif.html">scippneutron.io.cif.save_cif</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.cif.Block.html">scippneutron.io.cif.Block</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.cif.CIF.html">scippneutron.io.cif.CIF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.cif.CIFSchema.html">scippneutron.io.cif.CIFSchema</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.cif.Chunk.html">scippneutron.io.cif.Chunk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.cif.Loop.html">scippneutron.io.cif.Loop</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.io.sqw.html">scippneutron.io.sqw</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.Byteorder.html">scippneutron.io.sqw.Byteorder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.EnergyMode.html">scippneutron.io.sqw.EnergyMode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.Sqw.html">scippneutron.io.sqw.Sqw</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.SqwBuilder.html">scippneutron.io.sqw.SqwBuilder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.SqwFileType.html">scippneutron.io.sqw.SqwFileType</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.SqwFileHeader.html">scippneutron.io.sqw.SqwFileHeader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.SqwMainHeader.html">scippneutron.io.sqw.SqwMainHeader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.SqwIXExperiment.html">scippneutron.io.sqw.SqwIXExperiment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.SqwDndMetadata.html">scippneutron.io.sqw.SqwDndMetadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.SqwLineAxes.html">scippneutron.io.sqw.SqwLineAxes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.SqwLineProj.html">scippneutron.io.sqw.SqwLineProj</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.SqwIXNullInstrument.html">scippneutron.io.sqw.SqwIXNullInstrument</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.SqwIXSample.html">scippneutron.io.sqw.SqwIXSample</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../classes/scippneutron.io.sqw.SqwIXSource.html">scippneutron.io.sqw.SqwIXSource</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.io.xye.html">scippneutron.io.xye</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.xye.load_xye.html">scippneutron.io.xye.load_xye</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.xye.save_xye.html">scippneutron.io.xye.save_xye</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.io.xye.GenerateHeaderType.html">scippneutron.io.xye.GenerateHeaderType</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.logging.html">scippneutron.logging</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.logging.get_logger.html">scippneutron.logging.get_logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.logging.logger_name.html">scippneutron.logging.logger_name</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.metadata.html">scippneutron.metadata</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../classes/scippneutron.metadata.Beamline.html">scippneutron.metadata.Beamline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../classes/scippneutron.metadata.Measurement.html">scippneutron.metadata.Measurement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../classes/scippneutron.metadata.Person.html">scippneutron.metadata.Person</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../classes/scippneutron.metadata.Software.html">scippneutron.metadata.Software</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../classes/scippneutron.metadata.Source.html">scippneutron.metadata.Source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../classes/scippneutron.metadata.ORCIDiD.html">scippneutron.metadata.ORCIDiD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../classes/scippneutron.metadata.RadiationProbe.html">scippneutron.metadata.RadiationProbe</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../classes/scippneutron.metadata.SourceType.html">scippneutron.metadata.SourceType</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.peaks.html">scippneutron.peaks</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.peaks.FitAssessment.html">scippneutron.peaks.FitAssessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.peaks.FitParameters.html">scippneutron.peaks.FitParameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.peaks.FitResult.html">scippneutron.peaks.FitResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.peaks.FitRequirements.html">scippneutron.peaks.FitRequirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.peaks.fit_peaks.html">scippneutron.peaks.fit_peaks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scippneutron.peaks.remove_peaks.html">scippneutron.peaks.remove_peaks</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.peaks.model.html">scippneutron.peaks.model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.peaks.model.CompositeModel.html">scippneutron.peaks.model.CompositeModel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.peaks.model.GaussianModel.html">scippneutron.peaks.model.GaussianModel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.peaks.model.LorentzianModel.html">scippneutron.peaks.model.LorentzianModel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.peaks.model.Model.html">scippneutron.peaks.model.Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.peaks.model.PolynomialModel.html">scippneutron.peaks.model.PolynomialModel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.peaks.model.PseudoVoigtModel.html">scippneutron.peaks.model.PseudoVoigtModel</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="scippneutron.tof.html">scippneutron.tof</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.tof.chopper_cascade.html">scippneutron.tof.chopper_cascade</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.chopper_cascade.propagate_times.html">scippneutron.tof.chopper_cascade.propagate_times</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.chopper_cascade.wavelength_to_inverse_velocity.html">scippneutron.tof.chopper_cascade.wavelength_to_inverse_velocity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.chopper_cascade.Chopper.html">scippneutron.tof.chopper_cascade.Chopper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.chopper_cascade.Frame.html">scippneutron.tof.chopper_cascade.Frame</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.chopper_cascade.FrameSequence.html">scippneutron.tof.chopper_cascade.FrameSequence</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.chopper_cascade.Subframe.html">scippneutron.tof.chopper_cascade.Subframe</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="scippneutron.tof.diagram.html">scippneutron.tof.diagram</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="scippneutron.tof.diagram.TimeDistanceDiagram.html">scippneutron.tof.diagram.TimeDistanceDiagram</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../../_sources/generated/modules/scippneutron.chopper.disk_chopper.rst">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../api-reference/index.html" class="nav-link">API Reference</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="scippneutron.chopper.html" class="nav-link">scippneutron.chopper</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">scippneutron.chopper.disk_chopper</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-scippneutron.chopper.disk_chopper">
+<span id="scippneutron-chopper-disk-chopper"></span><h1>scippneutron.chopper.disk_chopper<a class="headerlink" href="#module-scippneutron.chopper.disk_chopper" title="Link to this heading">#</a></h1>
+<p>Tools for disk choppers.</p>
+<p class="rubric">Definitions</p>
+<p>The names used here correspond closely to the names used by NeXus’ <code class="docutils literal notranslate"><span class="pre">NXdisk_chopper</span></code>.
+See <a class="reference external" href="https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html">https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html</a>
+for an overview.</p>
+<p>Here is how those attributes are interpreted in ScippNeutron:
+The image below shows a disk chopper with a single slit
+as seen from the neutron source looking towards the sample.
+Note that all definitions are independent of the rotation direction.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Symbol</p></th>
+<th class="head"><p>Definition</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">top_dead_center</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(t_0\)</span></p></td>
+<td><p>Choppers typically have a top-dead-center (TDC) sensor that tracks the
+rotation of the chopper.
+The sensor emits a timestamp when a chosen part of the chopper disk passes by.
+This part of the disk serves as a reference point for defining angles;
+it is marked as ‘TDC’ in the image below.</p>
+<p>The emitted timestamps are stored in the <code class="docutils literal notranslate"><span class="pre">top_dead_center</span></code> field
+of a NeXus chopper.
+This serves as a reference time for the chopper <span class="math notranslate nohighlight">\(t_0\)</span>.
+In <a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper" title="scippneutron.chopper.disk_chopper.DiskChopper"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiskChopper</span></code></a>, the TDC is encoded as a component of
+<a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.phase" title="scippneutron.chopper.disk_chopper.DiskChopper.phase"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DiskChopper.phase</span></code></a>.</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">beam_position</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\tilde{\theta}\)</span></p></td>
+<td><p>The angle under which the beam hits the chopper
+(<a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.beam_position" title="scippneutron.chopper.disk_chopper.DiskChopper.beam_position"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DiskChopper.beam_position</span></code></a>).
+We do not care about the radial position and assume that the beam can
+pass through all chopper slits.</p></td>
+</tr>
+<tr class="row-even"><td><div class="line-block">
+<div class="line"><code class="docutils literal notranslate"><span class="pre">slit_begin</span></code></div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">slit_end</span></code></div>
+</div>
+</td>
+<td></td>
+<td><p>Slits are defined in terms of <em>begin</em> (<a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.slit_begin" title="scippneutron.chopper.disk_chopper.DiskChopper.slit_begin"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DiskChopper.slit_begin</span></code></a>,
+<span class="math notranslate nohighlight">\(\theta\)</span> in the image) and <em>end</em> (<a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.slit_end" title="scippneutron.chopper.disk_chopper.DiskChopper.slit_end"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DiskChopper.slit_end</span></code></a>) angles
+measured from TDC.
+In NeXus, they are stored together as <code class="docutils literal notranslate"><span class="pre">slit_edges</span></code>.
+<a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.from_nexus" title="scippneutron.chopper.disk_chopper.DiskChopper.from_nexus"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DiskChopper.from_nexus()</span></code></a> can extract the begin and end edges from
+this combined array.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">frequency</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(f\)</span></p></td>
+<td><p>The rotation frequency of the chopper.
+Stored in <a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.frequency" title="scippneutron.chopper.disk_chopper.DiskChopper.frequency"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DiskChopper.frequency</span></code></a>.
+A positive frequency means anticlockwise rotation and a negative frequency
+clockwise rotation (as seen from the source).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">angular_frequency</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\omega\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\omega = 2 \pi f\)</span>, <a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.angular_frequency" title="scippneutron.chopper.disk_chopper.DiskChopper.angular_frequency"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DiskChopper.angular_frequency</span></code></a>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">delay</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\delta t\)</span></p></td>
+<td><p>Delay of the chopper timing system relative to global facility time with
+<span class="math notranslate nohighlight">\(t_g = t + \delta t\)</span>, where <span class="math notranslate nohighlight">\(t_g\)</span> is a global time and <span class="math notranslate nohighlight">\(t\)</span>
+a chopper time.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">phase</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\phi\)</span></p></td>
+<td><p>The phase of the chopper relative to the pulse time.
+Defined as <span class="math notranslate nohighlight">\(\phi = \omega (t_0 + \delta t - T_0)\)</span>, see below for
+the explanation.
+(<a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.phase" title="scippneutron.chopper.disk_chopper.DiskChopper.phase"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DiskChopper.phase</span></code></a>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pulse_time</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(T_0\)</span></p></td>
+<td><p>Timestamp of a neutron pulse in global facility time.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<a class="reference internal image-reference" href="../../_images/chopper-coordinates.svg"><img alt="../../_images/chopper-coordinates.svg" class="align-center" src="../../_images/chopper-coordinates.svg" style="width: 400px;" />
+</a>
+<p><a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper" title="scippneutron.chopper.disk_chopper.DiskChopper"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiskChopper</span></code></a> expects the chopper to be in phase with the source.
+It thus requires a constant rotation speed which must be an integer
+multiple of the source frequency or vice versa.
+The phase should be computed as defined about from the difference of a pulse time
+and a corresponding TDC timestamp.
+The user is responsible for determining the correct times.</p>
+<p class="rubric">Slit openings</p>
+<p>The terminology here differentiates slit ‘begin’ and ‘end’ from ‘open’ and ‘close’.
+The former refer to the angles relative to TDC as shown in the image above.
+The latter refer to the times when a slit opens and closes for the beam.</p>
+<p>It is possible to have <code class="docutils literal notranslate"><span class="pre">end</span> <span class="pre">&gt;</span> <span class="pre">360</span> <span class="pre">deg</span></code> if a slit spans TDC.</p>
+<p>For a given slit, we require <code class="docutils literal notranslate"><span class="pre">begin</span> <span class="pre">&lt;</span> <span class="pre">end</span></code>.
+To also have <code class="docutils literal notranslate"><span class="pre">open</span> <span class="pre">&lt;</span> <span class="pre">close</span></code> for both directions of rotation,
+we have the following correspondence:</p>
+<ul class="simple">
+<li><p>clockwise rotation: <code class="docutils literal notranslate"><span class="pre">begin</span></code> &lt;-&gt; <code class="docutils literal notranslate"><span class="pre">open</span></code> and <code class="docutils literal notranslate"><span class="pre">end</span></code> &lt;-&gt; <code class="docutils literal notranslate"><span class="pre">close</span></code></p></li>
+<li><p>anticlockwise rotation: <code class="docutils literal notranslate"><span class="pre">begin</span></code> &lt;-&gt; <code class="docutils literal notranslate"><span class="pre">close</span></code> and <code class="docutils literal notranslate"><span class="pre">end</span></code> &lt;-&gt; <code class="docutils literal notranslate"><span class="pre">open</span></code></p></li>
+</ul>
+<p class="rubric">Time calculations</p>
+<p>Given the definitions above, the time in the global timing system when a point
+at angle <span class="math notranslate nohighlight">\(\theta\)</span> is at the beam position is</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}t_g(\theta) &amp;= t_0 + \delta t + \begin{cases}
+\frac{\theta-\tilde{\theta}}{|\omega|}, &amp; \textsf{clockwise}\\
+\frac{2\pi - (\theta-\tilde{\theta})}{|\omega|}, &amp; \textsf{anticlockwise}
+\end{cases}\\
+&amp;= t_0 + \delta t + \frac{\tilde{\theta} - \theta}{\omega} + \begin{cases}
+0, &amp; \textsf{clockwise}\\
+\frac{2\pi}{\omega}, &amp; \textsf{anticlockwise}
+\end{cases}\end{split}\]</div>
+<p>where the second line uses that, for clockwise rotation, <span class="math notranslate nohighlight">\(|\omega| = -\omega\)</span>
+and for anticlockwise, <span class="math notranslate nohighlight">\(|\omega| = \omega\)</span>.
+This can be converted to a time offset from a pulse time <span class="math notranslate nohighlight">\(T_0\)</span> using</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\Delta t_g(\theta) = t_g(\theta) - T_0 = \frac{\tilde{\theta}
+   + \phi - \theta}{\omega}
+   + \begin{cases}
+     0, &amp; \textsf{clockwise}\\
+     \frac{2\pi}{\omega}, &amp; \textsf{anticlockwise}
+     \end{cases}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\phi = \omega (t_0 + \delta t - T_0)\)</span> is the <code class="docutils literal notranslate"><span class="pre">phase</span></code>.</p>
+<p><a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.time_offset_angle_at_beam" title="scippneutron.chopper.disk_chopper.DiskChopper.time_offset_angle_at_beam"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DiskChopper.time_offset_angle_at_beam()</span></code></a> can calculate <span class="math notranslate nohighlight">\(\Delta t_g(\theta)\)</span>
+and <a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.time_offset_open" title="scippneutron.chopper.disk_chopper.DiskChopper.time_offset_open"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DiskChopper.time_offset_open()</span></code></a> <a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.time_offset_close" title="scippneutron.chopper.disk_chopper.DiskChopper.time_offset_close"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DiskChopper.time_offset_close()</span></code></a> calculate
+<span class="math notranslate nohighlight">\(\Delta t_g\)</span> for slit open and close times.</p>
+<p>The definitions used here can lead to surprising results.
+The plots below show the computed times for an angle <span class="math notranslate nohighlight">\(\theta\)</span> for
+<span class="math notranslate nohighlight">\(\tilde{\theta} \neq 0\)</span> and <span class="math notranslate nohighlight">\(\phi = 0\)</span> (blue lines).
+Note in particular the time ranges for <span class="math notranslate nohighlight">\(\theta \in [0, 2\pi)\)</span> (gray rectangles).
+The other lines show <span class="math notranslate nohighlight">\(\Delta t_g \,\mathsf{mod}\, 1/f\)</span> which is an option
+for restricting the times onto <span class="math notranslate nohighlight">\([0, \frac{2\pi}{|\omega|}) = [0, \frac1{f})\)</span>.</p>
+<a class="only-light reference internal image-reference" href="../../_images/disk-chopper-time-curve.svg"><img alt="../../_images/disk-chopper-time-curve.svg" class="only-light align-center" src="../../_images/disk-chopper-time-curve.svg" style="width: 700px;" />
+</a>
+<a class="only-dark reference internal image-reference" href="../../_images/disk-chopper-time-curve-dark.svg"><img alt="../../_images/disk-chopper-time-curve-dark.svg" class="only-dark align-center" src="../../_images/disk-chopper-time-curve-dark.svg" style="width: 700px;" />
+</a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p><a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.time_offset_open" title="scippneutron.chopper.disk_chopper.DiskChopper.time_offset_open"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DiskChopper.time_offset_open()</span></code></a> and <a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.time_offset_close" title="scippneutron.chopper.disk_chopper.DiskChopper.time_offset_close"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DiskChopper.time_offset_close()</span></code></a>
+compute <span class="math notranslate nohighlight">\(\Delta t_g\)</span> for the slit edges.
+The resulting times are shown below for a chopper with two slits, a short one (blue)
+and a long one (orange/yellow) with
+<span class="math notranslate nohighlight">\(\theta_\mathsf{short} &lt; \theta_\mathsf{long}\)</span>.
+Source pulses are indicated in gray.
+The shown frequency ratio is <code class="docutils literal notranslate"><span class="pre">frequency</span> <span class="pre">/</span> <span class="pre">pulse_frequency</span></code>.</p>
+<p>Times were computed for a pulse at <span class="math notranslate nohighlight">\(T_0\)</span> with length <span class="math notranslate nohighlight">\(\Delta T\)</span> but spill
+into neighboring pulses because of a nonzero beam position and phase.
+If those were zero, the <span class="math notranslate nohighlight">\(\mathsf{frequency\ ratio} \geq 1\)</span> openings would lie
+within <span class="math notranslate nohighlight">\([T_0,\, T_0 + \Delta T)\)</span> and the <span class="math notranslate nohighlight">\(\mathsf{frequency\ ratio} = 0.5\)</span>
+openings would lie within <span class="math notranslate nohighlight">\([T_0,\, T_0 + 2\Delta T)\)</span>.
+Note how, for choppers that spin at a multiple of the pulse frequency, there are
+multiple openings per slit.</p>
+<a class="only-light reference internal image-reference" href="../../_images/disk-chopper-openings.svg"><img alt="../../_images/disk-chopper-openings.svg" class="only-light align-center" src="../../_images/disk-chopper-openings.svg" style="width: 700px;" />
+</a>
+<a class="only-dark reference internal image-reference" href="../../_images/disk-chopper-openings-dark.svg"><img alt="../../_images/disk-chopper-openings-dark.svg" class="only-dark align-center" src="../../_images/disk-chopper-openings-dark.svg" style="width: 700px;" />
+</a>
+<p class="rubric" id="disk-chopper-time-dependent-parameters">Time-dependent parameters</p>
+<p>In NeXus files, many chopper parameters are time-dependent, for example,
+<code class="docutils literal notranslate"><span class="pre">top_dead_center</span></code> is an array of timestamps, or <code class="docutils literal notranslate"><span class="pre">frequency</span></code> typically
+is an <code class="docutils literal notranslate"><span class="pre">NXlog</span></code> with speed measurements for different times.
+However, for simplicity and efficiency, <a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper" title="scippneutron.chopper.disk_chopper.DiskChopper"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiskChopper</span></code></a> requires
+time-independent quantities.
+The guide on <cite>pre-processing choppers &lt;../../user-guide/chopper/pre-processing.ipynb&gt;</cite>
+shows how to extract the required quantities.</p>
+<p class="rubric">Classes</p>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper" title="scippneutron.chopper.disk_chopper.DiskChopper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiskChopper</span></code></a>(axle_position, frequency, ...[, ...])</p></td>
+<td><p>A disk chopper.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="scippneutron.chopper.disk_chopper.DiskChopperType.html#scippneutron.chopper.disk_chopper.DiskChopperType" title="scippneutron.chopper.disk_chopper.DiskChopperType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiskChopperType</span></code></a>(value[, names, module, ...])</p></td>
+<td><p>Type of disk chopper.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="scippneutron.chopper.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">scippneutron.chopper</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="scippneutron.chopper.disk_chopper.DiskChopper.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">scippneutron.chopper.disk_chopper.DiskChopper</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 0.0.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

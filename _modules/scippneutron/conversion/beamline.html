@@ -1,0 +1,1315 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scippneutron.conversion.beamline &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css?v=a0a71c94" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../../_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scippneutron/conversion/beamline';</script>
+    <script src="../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">scippneutron.conversion.beamline</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scippneutron.conversion.beamline</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2023 Scipp contributors (https://github.com/scipp)</span>
+<span class="c1"># @author Jan-Lukas Wynen</span>
+<span class="sa">r</span><span class="sd">&quot;&quot;&quot;Functions for computing coordinates related to beamline geometry.</span>
+
+<span class="sd">Most functions in this module assume a straight beamline geometry.</span>
+<span class="sd">That is, the beams are not curved by, e.g., a beam guide.</span>
+<span class="sd">Specialized functions are provided for handling gravity.</span>
+
+<span class="sd">ScippNeutron uses three positions to define a beamline:</span>
+
+<span class="sd">- ``source_position`` defines the point where :math:`t=0` (or vice versa).</span>
+<span class="sd">  In practice, this can be the actual neutron source, a moderator, or a chopper.</span>
+<span class="sd">- ``sample_position`` is the position of the sample that scatters neutrons.</span>
+<span class="sd">- ``position`` is the position of the detector (pixel / voxel) that detects a neutron</span>
+<span class="sd">  at :math:`t=\mathsf{tof}`.</span>
+
+<span class="sd">Based on these positions, we define:</span>
+
+<span class="sd">- ``incident_beam`` is the vector of incoming neutrons on the sample.</span>
+<span class="sd">  It points from the source to the sample.</span>
+<span class="sd">  (:func:`straight_incident_beam`)</span>
+<span class="sd">- ``L1`` (or :math:`L_1`) is the length of ``incident_beam``.</span>
+<span class="sd">  (:func:`L1`)</span>
+<span class="sd">- ``scattered_beam`` is the vector of neutrons that were scattered off the sample.</span>
+<span class="sd">  It points from the sample to the detector pixels.</span>
+<span class="sd">  (:func:`straight_scattered_beam`)</span>
+<span class="sd">- ``L2`` (or :math:`L_2`) is the length of ``scattered_beam``.</span>
+<span class="sd">  (:func:`L2`)</span>
+<span class="sd">- ``Ltotal`` is the total beam length :math:`L_\mathsf{total} = L_1 + L_2`.</span>
+<span class="sd">  (:func:`total_beam_length` and :func:`total_straight_beam_length_no_scatter`)</span>
+
+<span class="sd">Coordinate system</span>
+<span class="sd">-----------------</span>
+
+<span class="sd">Note</span>
+<span class="sd">----</span>
+<span class="sd">  The coordinate system is not needed by most operations because beamline coordinates</span>
+<span class="sd">  are usually relative to the positions.</span>
+<span class="sd">  As long as ``position``, ``source_position``, and ``sample_position`` are defined</span>
+<span class="sd">  consistently, ``incident_beam``, ``scattered_beam``, and ``two_theta`` can be</span>
+<span class="sd">  computed without knowledge of the coordinate system.</span>
+
+<span class="sd">  However, we need the actual coordinate system to compute ``phi``.</span>
+
+<span class="sd">ScippNeutron uses a coordinate system aligned with</span>
+<span class="sd">the incident beam and gravity.</span>
+<span class="sd">ScippNeutron&#39;s coordinate system corresponds to that of</span>
+<span class="sd">`NeXus &lt;https://manual.nexusformat.org/design.html#the-nexus-coordinate-system&gt;`_</span>
+<span class="sd">when the incident beam is perpendicular to gravity.</span>
+<span class="sd">The image below shows how coordinates are defined with respect to the</span>
+<span class="sd">quantities defined above.</span>
+<span class="sd">The plot on the right-hand side shows the view from the sample along the :math:`z`-axis,</span>
+<span class="sd">that is, the :math:`z`-axis points towards the viewer.</span>
+<span class="sd">(The sample is placed in the origin here; this is only done for illustration purposes</span>
+<span class="sd">and not required.)</span>
+
+<span class="sd">.. image:: ../../../docs/_static/beamline/beamline_coordinates_light.svg</span>
+<span class="sd">   :class: only-light</span>
+<span class="sd">   :scale: 100 %</span>
+<span class="sd">   :alt: Beamline coordinate system.</span>
+<span class="sd">   :align: center</span>
+
+<span class="sd">.. image:: ../../../docs/_static/beamline/beamline_coordinates_dark.svg</span>
+<span class="sd">   :class: only-dark</span>
+<span class="sd">   :scale: 100 %</span>
+<span class="sd">   :alt: Beamline coordinate system.</span>
+<span class="sd">   :align: center</span>
+
+<span class="sd">The axes are defined by these unit vectors:</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \hat{e}_y &amp;= -g / |g| \\</span>
+<span class="sd">    z_{\text{proj}} &amp;= b_1 - (b_1 \cdot \hat{e}_y) \hat{e}_y \\</span>
+<span class="sd">    \hat{e}_z &amp;= z_{\text{proj}} / |z_{\text{proj}}| \\</span>
+<span class="sd">    \hat{e}_x &amp;= \hat{e}_y \times \hat{e}_z</span>
+
+<span class="sd">which span an orthogonal, right-handed coordinate system.</span>
+<span class="sd">Here, :math:`b_1` is the ``incident_beam`` and :math:`g` is the gravity vector.</span>
+<span class="sd">This means that the y-axis is antiparallel to gravity.</span>
+<span class="sd">The z-axis is defined by projecting the incident beam onto a plane perpendicular</span>
+<span class="sd">to gravity.</span>
+<span class="sd">Basis vectors can be computed using :func:`beam_aligned_unit_vectors`.</span>
+
+<span class="sd">:math:`p = \sqrt{x^2 + y^2}` is the projection of the</span>
+<span class="sd">scattered beam onto the :math:`x-y` plane.</span>
+<span class="sd">It is included here because it is used by some coordinate transformations.</span>
+
+<span class="sd">The scattering angles are defined similarly to spherical coordinates as:</span>
+
+<span class="sd">.. math ::</span>
+
+<span class="sd">    \mathsf{cos}(2\theta) &amp;= \frac{b_1 \cdot b_2}{|b_1| |b_2|} \\</span>
+<span class="sd">    \mathsf{tan}(\phi) &amp;= \frac{b_2 \cdot \hat{e}_y}{b_2 \cdot \hat{e}_x}</span>
+
+<span class="sd">where :math:`b_2` is the scattered beam.</span>
+
+<span class="sd">- ``two_theta`` is the angle between the scattered beam and incident beam.</span>
+<span class="sd">  Note the extra factor 2 compared to spherical coordinates;</span>
+<span class="sd">  it ensures that the definition corresponds to Bragg&#39;s law.</span>
+<span class="sd">- ``phi`` is the angle between the x-axis and the projection of the scattered beam</span>
+<span class="sd">  onto the x-y-plane.</span>
+
+<span class="sd">These definitions assume that gravity can be neglected.</span>
+<span class="sd">See :func:`scattering_angles_with_gravity` for definitions that account for gravity.</span>
+<span class="sd">And :func:`scattering_angle_in_yz_plane` for the definition used in reflectometry ---</span>
+<span class="sd">which also includes gravity.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp.constants</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipp.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">VariableLike</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">elem_dtype</span><span class="p">,</span> <span class="n">elem_unit</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_canonical_length</span><span class="p">(</span><span class="n">var</span><span class="p">:</span> <span class="n">VariableLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VariableLike</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a beam length to the canonical unit (meter).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">var</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="L1">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.beamline.L1.html#scippneutron.conversion.beamline.L1">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">L1</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">incident_beam</span><span class="p">:</span> <span class="n">VariableLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VariableLike</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the length of the incident beam.</span>
+
+<span class="sd">    The result is the primary beam length</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        L_1 = | \\mathtt{incident\\_beam} |</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incident_beam:</span>
+<span class="sd">        Beam from source to sample. Expects ``dtype=vector3``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        :math:`L_1`</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    straight_incident_beam:</span>
+<span class="sd">        Compute the incident beam for a straight beamline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_canonical_length</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">incident_beam</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="L2">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.beamline.L2.html#scippneutron.conversion.beamline.L2">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">L2</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">scattered_beam</span><span class="p">:</span> <span class="n">VariableLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VariableLike</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the length of the scattered beam.</span>
+
+<span class="sd">    The result is the secondary beam length</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        L_2 = | \\mathtt{incident\\_beam} |</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    scattered_beam:</span>
+<span class="sd">        Beam from sample to detector. Expects ``dtype=vector3``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        :math:`L_2`</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    straight_scattered_beam:</span>
+<span class="sd">        Compute the scattered beam for a straight beamline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_canonical_length</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="straight_incident_beam">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.beamline.straight_incident_beam.html#scippneutron.conversion.beamline.straight_incident_beam">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">straight_incident_beam</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">source_position</span><span class="p">:</span> <span class="n">VariableLike</span><span class="p">,</span> <span class="n">sample_position</span><span class="p">:</span> <span class="n">VariableLike</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VariableLike</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the length of the beam from source to sample.</span>
+
+<span class="sd">    Assumes a straight beam.</span>
+<span class="sd">    The result is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\mathtt{incident\\_beam} = \\mathtt{sample\\_position}</span>
+<span class="sd">                                    - \\mathtt{source\\_position}</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    source_position:</span>
+<span class="sd">        Position of the beam&#39;s source.</span>
+<span class="sd">    sample_position:</span>
+<span class="sd">        Position of the sample.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        ``incident_beam``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_canonical_length</span><span class="p">(</span><span class="n">sample_position</span><span class="p">)</span> <span class="o">-</span> <span class="n">_canonical_length</span><span class="p">(</span><span class="n">source_position</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="straight_scattered_beam">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.beamline.straight_scattered_beam.html#scippneutron.conversion.beamline.straight_scattered_beam">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">straight_scattered_beam</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">VariableLike</span><span class="p">,</span> <span class="n">sample_position</span><span class="p">:</span> <span class="n">VariableLike</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VariableLike</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the length of the beam from sample to detector.</span>
+
+<span class="sd">    Assumes a straight beam.</span>
+<span class="sd">    The result is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\mathtt{scattered\\_beam} = \\mathtt{position} - \\mathtt{sample\\_position}</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    position:</span>
+<span class="sd">        Position of the detector.</span>
+<span class="sd">    sample_position:</span>
+<span class="sd">        Position of the sample.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        ``scattered_beam``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_canonical_length</span><span class="p">(</span><span class="n">position</span><span class="p">)</span> <span class="o">-</span> <span class="n">_canonical_length</span><span class="p">(</span><span class="n">sample_position</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="total_beam_length">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.beamline.total_beam_length.html#scippneutron.conversion.beamline.total_beam_length">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">total_beam_length</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">L1</span><span class="p">:</span> <span class="n">VariableLike</span><span class="p">,</span> <span class="n">L2</span><span class="p">:</span> <span class="n">VariableLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VariableLike</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the combined length of the incident and scattered beams.</span>
+
+<span class="sd">    The result is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        L_\\mathsf{total} = | L_1 + L_2 |</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    L1:</span>
+<span class="sd">        Primary path length (incident beam).</span>
+<span class="sd">    L2:</span>
+<span class="sd">        Secondary path length (scattered beam).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        :math:`L_\\mathsf{total}`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_canonical_length</span><span class="p">(</span><span class="n">L1</span><span class="p">)</span> <span class="o">+</span> <span class="n">_canonical_length</span><span class="p">(</span><span class="n">L2</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="total_straight_beam_length_no_scatter">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.beamline.total_straight_beam_length_no_scatter.html#scippneutron.conversion.beamline.total_straight_beam_length_no_scatter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">total_straight_beam_length_no_scatter</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">source_position</span><span class="p">:</span> <span class="n">VariableLike</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">VariableLike</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VariableLike</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the length of the beam from source to given position.</span>
+
+<span class="sd">    Assumes a straight beam.</span>
+<span class="sd">    The result is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        L_\\mathsf{total} = | \\mathtt{position} - \\mathtt{{source\\_position}} |</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    source_position:</span>
+<span class="sd">        Position of the beam&#39;s source. Expects ``dtype=vector3``.</span>
+<span class="sd">    position:</span>
+<span class="sd">        Position of the detector. Expects ``dtype=vector3``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        :math:`L_\\mathsf{total}`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">_canonical_length</span><span class="p">(</span><span class="n">position</span><span class="p">)</span> <span class="o">-</span> <span class="n">_canonical_length</span><span class="p">(</span><span class="n">source_position</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="two_theta">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.beamline.two_theta.html#scippneutron.conversion.beamline.two_theta">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">two_theta</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">incident_beam</span><span class="p">:</span> <span class="n">VariableLike</span><span class="p">,</span> <span class="n">scattered_beam</span><span class="p">:</span> <span class="n">VariableLike</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VariableLike</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the scattering angle between scattered and transmitted beams.</span>
+
+<span class="sd">    See :mod:`beamline` for the definition of the angle.</span>
+
+<span class="sd">    The result is equivalent to</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        b_1 &amp;= \\mathtt{incident\\_beam} / |\\mathtt{incident\\_beam}| \\\\</span>
+<span class="sd">        b_2 &amp;= \\mathtt{scattered\\_beam} / |\\mathtt{scattered\\_beam}| \\\\</span>
+<span class="sd">        2\\theta &amp;= \\mathsf{acos}(b_1 \\cdot b_2)</span>
+
+<span class="sd">    but uses a numerically more stable implementation by W. Kahan</span>
+<span class="sd">    described in paragraph of :cite:`kahan:2000:CPR`.</span>
+<span class="sd">    See also</span>
+<span class="sd">    https://people.eecs.berkeley.edu/~wkahan/MathH110/Cross.pdf.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incident_beam:</span>
+<span class="sd">        Beam from source to sample. Expects ``dtype=vector3``.</span>
+<span class="sd">    scattered_beam:</span>
+<span class="sd">        Beam from sample to detector. Expects ``dtype=vector3``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        :math:`2\\theta`</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    straight_incident_beam:</span>
+<span class="sd">        Compute the incident beam for a straight beamline.</span>
+<span class="sd">    straight_scattered_beam:</span>
+<span class="sd">        Compute the scattered beam for a straight beamline.</span>
+<span class="sd">    scattering_angles_with_gravity:</span>
+<span class="sd">        Calculate ``two_theta`` and ``phi`` with gravity.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># The implementation is based on paragraph 13 of</span>
+    <span class="c1"># https://people.eecs.berkeley.edu/~wkahan/MathH110/Cross.pdf</span>
+    <span class="c1"># It claims that the formula is &#39;valid for euclidean spaces of any dimension&#39;</span>
+    <span class="c1"># and &#39;it never errs by more than a modest multiple of epsilon&#39;</span>
+    <span class="c1"># where &#39;epsilon is the roundoff threshold for individual arithmetic</span>
+    <span class="c1"># operations&#39;.</span>
+    <span class="n">incident_beam</span> <span class="o">=</span> <span class="n">_canonical_length</span><span class="p">(</span><span class="n">incident_beam</span><span class="p">)</span>
+    <span class="n">scattered_beam</span> <span class="o">=</span> <span class="n">_canonical_length</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">)</span>
+    <span class="n">b1</span> <span class="o">=</span> <span class="n">incident_beam</span> <span class="o">/</span> <span class="n">L1</span><span class="p">(</span><span class="n">incident_beam</span><span class="o">=</span><span class="n">incident_beam</span><span class="p">)</span>
+    <span class="n">b2</span> <span class="o">=</span> <span class="n">scattered_beam</span> <span class="o">/</span> <span class="n">L2</span><span class="p">(</span><span class="n">scattered_beam</span><span class="o">=</span><span class="n">scattered_beam</span><span class="p">)</span>
+
+    <span class="n">y</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">b1</span> <span class="o">-</span> <span class="n">b2</span><span class="p">)</span>
+    <span class="n">b2</span> <span class="o">+=</span> <span class="n">b1</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">b2</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">atan2</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">*=</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+
+<div class="viewcode-block" id="BeamAlignedUnitVectors">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.beamline.BeamAlignedUnitVectors.html#scippneutron.conversion.beamline.BeamAlignedUnitVectors">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BeamAlignedUnitVectors</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A dict with keys &#39;beam_aligned_unit_{x,y,z}&#39;.&quot;&quot;&quot;</span>
+
+    <span class="n">beam_aligned_unit_x</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unit vector in x-direction.&quot;&quot;&quot;</span>
+    <span class="n">beam_aligned_unit_y</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unit vector in y-direction.&quot;&quot;&quot;</span>
+    <span class="n">beam_aligned_unit_z</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unit vector in z-direction.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="beam_aligned_unit_vectors">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.beamline.beam_aligned_unit_vectors.html#scippneutron.conversion.beamline.beam_aligned_unit_vectors">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">beam_aligned_unit_vectors</span><span class="p">(</span>
+    <span class="n">incident_beam</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">gravity</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BeamAlignedUnitVectors</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return unit vectors for a coordinate system aligned with the incident beam.</span>
+
+<span class="sd">    The unit vectors are</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \hat{e}_y &amp;= -g / |g| \\</span>
+<span class="sd">        z_{\text{proj}} &amp;= b_1 - (b_1 \cdot \hat{e}_y) \hat{e}_y \\</span>
+<span class="sd">        \hat{e}_z &amp;= z_{\text{proj}} / |z_{\text{proj}}| \\</span>
+<span class="sd">        \hat{e}_x &amp;= \hat{e}_y \times \hat{e}_z</span>
+
+<span class="sd">    where :math:`b_1` is the ``incident_beam`` and :math:`g` is the gravity vector.</span>
+<span class="sd">    See the module-level docs of :mod:`scippneutron.conversion.beamline` for  details.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incident_beam:</span>
+<span class="sd">        Beam from source to sample. Expects ``dtype=vector3``.</span>
+<span class="sd">    gravity:</span>
+<span class="sd">        Gravity vector. Expects ``dtype=vector3``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A dict containing the unit vectors with keys &#39;ex&#39;, &#39;ey&#39;, and &#39;ez&#39;.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the incident beam is parallel to gravity.</span>
+<span class="sd">        The rotation of the x-z plane is ill-define din this case.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    straight_incident_beam:</span>
+<span class="sd">        Compute the incident beam for a straight beamline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ey</span> <span class="o">=</span> <span class="o">-</span><span class="n">gravity</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">gravity</span><span class="p">)</span>
+    <span class="c1"># Project incident_beam onto a plane perpendicular to ey.</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">incident_beam</span> <span class="o">-</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">incident_beam</span><span class="p">,</span> <span class="n">ey</span><span class="p">)</span> <span class="o">*</span> <span class="n">ey</span>
+    <span class="n">z_norm</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sc</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">z_norm</span> <span class="o">&lt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">1e-10</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">z_norm</span><span class="o">.</span><span class="n">unit</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Cannot construct a coordinate system. The incident beam and &quot;</span>
+            <span class="s2">&quot;gravity are parallel to each other.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">ez</span> <span class="o">=</span> <span class="n">z</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+    <span class="n">ex</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">ey</span><span class="p">,</span> <span class="n">ez</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;beam_aligned_unit_x&#39;</span><span class="p">:</span> <span class="n">ex</span><span class="p">,</span>
+        <span class="s1">&#39;beam_aligned_unit_y&#39;</span><span class="p">:</span> <span class="n">ey</span><span class="p">,</span>
+        <span class="s1">&#39;beam_aligned_unit_z&#39;</span><span class="p">:</span> <span class="n">ez</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_drop_due_to_gravity</span><span class="p">(</span>
+    <span class="n">distance</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">wavelength</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">gravity</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the distance a neutron drops due to gravity.</span>
+
+<span class="sd">    See the documentation of :func:`scattering_angles_with_gravity`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">distance</span> <span class="o">=</span> <span class="n">distance</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">elem_dtype</span><span class="p">(</span><span class="n">wavelength</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">gravity</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">m_n</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">h</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">elem_dtype</span><span class="p">(</span><span class="n">wavelength</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Convert unit to eventually match the unit of y.</span>
+    <span class="c1"># Copy to make it safe to use in-place ops.</span>
+    <span class="n">drop</span> <span class="o">=</span> <span class="n">wavelength</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+        <span class="n">unit</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">(</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">distance</span><span class="p">)</span> <span class="o">*</span> <span class="n">elem_unit</span><span class="p">(</span><span class="n">const</span><span class="p">))),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">drop</span> <span class="o">*=</span> <span class="n">drop</span>
+    <span class="n">drop</span> <span class="o">*=</span> <span class="n">const</span>
+
+    <span class="n">distance</span> <span class="o">*=</span> <span class="n">distance</span>
+    <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">distance</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">drop</span><span class="o">.</span><span class="n">dims</span><span class="p">):</span>
+        <span class="n">drop</span> <span class="o">*=</span> <span class="n">distance</span>
+        <span class="k">return</span> <span class="n">drop</span>
+    <span class="k">return</span> <span class="n">drop</span> <span class="o">*</span> <span class="n">distance</span>
+
+
+<div class="viewcode-block" id="SphericalCoordinates">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.beamline.SphericalCoordinates.html#scippneutron.conversion.beamline.SphericalCoordinates">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SphericalCoordinates</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A dict with keys &#39;two_theta&#39; and &#39;phi&#39;.&quot;&quot;&quot;</span>
+
+    <span class="n">two_theta</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Polar angle.</span>
+
+<span class="sd">    Between the scattered beam and continuation of the incident beam.</span>
+<span class="sd">    Mind the factor 2 which is defined as in Bragg&#39;s law.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">phi</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Azimuthal angle.</span>
+
+<span class="sd">    The angle between the projection of the scattered beam onto the x-y plane</span>
+<span class="sd">    and the x-axis.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="scattering_angles_with_gravity">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.beamline.scattering_angles_with_gravity.html#scippneutron.conversion.beamline.scattering_angles_with_gravity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">scattering_angles_with_gravity</span><span class="p">(</span>
+    <span class="n">incident_beam</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">scattered_beam</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">wavelength</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">gravity</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SphericalCoordinates</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute scattering angles theta and phi using gravity.</span>
+
+<span class="sd">    With the definitions of the unit vectors in</span>
+<span class="sd">    `Coordinate system &lt;./scippneutron.conversion.beamline.rst#coordinate-system&gt;`_,</span>
+<span class="sd">    we have the components of the scattered beam :math:`b_2` in the beam-aligned</span>
+<span class="sd">    coordinate system:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x_d &amp;= b_2 \cdot \hat{e}_x \\</span>
+<span class="sd">        y_d &amp;= b_2 \cdot \hat{e}_y \\</span>
+<span class="sd">        z_d &amp;= b_2 \cdot \hat{e}_z</span>
+
+<span class="sd">    :math:`b_2` points from the sample to the detector that detected the neutron.</span>
+<span class="sd">    The neutron left the sample in the direction of a vector :math:`b&#39;_2`.</span>
+<span class="sd">    This vector defines the scattering angles :math:`2\theta` and :math:`\phi`.</span>
+<span class="sd">    Taking gravity into account, we have :math:`b&#39;_2 \neq b_2`.</span>
+<span class="sd">    Solving the equations of motion gives the following for the</span>
+<span class="sd">    components of :math:`b&#39;_2`:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x&#39;_d &amp;= x_d \\</span>
+<span class="sd">        y&#39;_d &amp;= y_d + \delta_y \\</span>
+<span class="sd">        z&#39;_d &amp;= z_d</span>
+
+<span class="sd">    Where :math:`|g|` is the strength of gravity, :math:`m_n` is the neutron mass,</span>
+<span class="sd">    :math:`h` is the Planck constant, :math:`\lambda` is the wavelength, and</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \delta_y = \frac{|g| m_n^2}{2 h^2} L_2^{\prime\, 2} \lambda^2</span>
+
+<span class="sd">    This gives the gravity-corrected scattering angles:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        2\theta &amp;= \sphericalangle(b_1, b_2 + \delta_y \hat{e}_y) \\</span>
+<span class="sd">        \mathsf{tan}(\phi) &amp;= \frac{y&#39;_d}{x_d}</span>
+
+<span class="sd">    where :math:`\sphericalangle` is the angle between two vectors as implemented by</span>
+<span class="sd">    :func:`two_theta`.</span>
+<span class="sd">    When :math:`b_1` is orthogonal to gravity, we can equivalently use</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathsf{tan}(2\theta) = \frac{\sqrt{x_d^2 + y_d^{\prime\, 2}}}{z_d}</span>
+
+<span class="sd">    This equation allowed for a more efficient implementation.</span>
+
+<span class="sd">    Attention</span>
+<span class="sd">    ---------</span>
+<span class="sd">        The above equation for :math:`y&#39;_d` contains :math:`L_2^{\prime\, 2} = |b&#39;_2|`</span>
+<span class="sd">        which in turn depends on :math:`y&#39;_d`.</span>
+<span class="sd">        Solving this equation for :math:`y&#39;_d` is too difficult.</span>
+<span class="sd">        Instead, we approximate :math:`L&#39;_2 \approx L_2`.</span>
+<span class="sd">        The impact of this approximation on :math:`2\theta` is of the order of</span>
+<span class="sd">        :math:`10^{-6}` or less for beamlines at ESS.</span>
+<span class="sd">        This is within the expected statistical uncertainties and can be ignored.</span>
+
+<span class="sd">        See `two_theta gravity correction</span>
+<span class="sd">        &lt;../../user-guide/algorithms-background/two_theta-gravity-correction.rst&gt;`_</span>
+<span class="sd">        for details.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incident_beam:</span>
+<span class="sd">        Beam from source to sample. Expects ``dtype=vector3``.</span>
+<span class="sd">    scattered_beam:</span>
+<span class="sd">        Beam from sample to detector. Expects ``dtype=vector3``.</span>
+<span class="sd">    wavelength:</span>
+<span class="sd">        Wavelength of neutrons.</span>
+<span class="sd">    gravity:</span>
+<span class="sd">        Gravity vector.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        A dict containing the polar scattering angle ``&#39;two_theta&#39;`` and</span>
+<span class="sd">        the azimuthal angle ``&#39;phi&#39;``.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scattering_angle_in_yz_plane:</span>
+<span class="sd">        Ignores the ``x`` component when computing ``theta``.</span>
+<span class="sd">        This is used in reflectometry.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">incident_beam</span> <span class="o">=</span> <span class="n">_canonical_length</span><span class="p">(</span><span class="n">incident_beam</span><span class="p">)</span>
+    <span class="n">scattered_beam</span> <span class="o">=</span> <span class="n">_canonical_length</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sc</span><span class="o">.</span><span class="n">any</span><span class="p">(</span>
+        <span class="nb">abs</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gravity</span><span class="p">,</span> <span class="n">incident_beam</span><span class="p">))</span>
+        <span class="o">&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">1e-10</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">incident_beam</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">gravity</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="n">_scattering_angles_with_gravity_generic</span><span class="p">(</span>
+            <span class="n">incident_beam</span><span class="o">=</span><span class="n">incident_beam</span><span class="p">,</span>
+            <span class="n">scattered_beam</span><span class="o">=</span><span class="n">scattered_beam</span><span class="p">,</span>
+            <span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="p">,</span>
+            <span class="n">gravity</span><span class="o">=</span><span class="n">gravity</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">_scattering_angles_with_gravity_orthogonal_coords</span><span class="p">(</span>
+        <span class="n">incident_beam</span><span class="o">=</span><span class="n">incident_beam</span><span class="p">,</span>
+        <span class="n">scattered_beam</span><span class="o">=</span><span class="n">scattered_beam</span><span class="p">,</span>
+        <span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="p">,</span>
+        <span class="n">gravity</span><span class="o">=</span><span class="n">gravity</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scattering_angles_with_gravity_generic</span><span class="p">(</span>
+    <span class="n">incident_beam</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">scattered_beam</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">wavelength</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">gravity</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SphericalCoordinates</span><span class="p">:</span>
+    <span class="n">unit_vectors</span> <span class="o">=</span> <span class="n">beam_aligned_unit_vectors</span><span class="p">(</span>
+        <span class="n">incident_beam</span><span class="o">=</span><span class="n">incident_beam</span><span class="p">,</span> <span class="n">gravity</span><span class="o">=</span><span class="n">gravity</span>
+    <span class="p">)</span>
+    <span class="n">ex</span> <span class="o">=</span> <span class="n">unit_vectors</span><span class="p">[</span><span class="s1">&#39;beam_aligned_unit_x&#39;</span><span class="p">]</span>
+    <span class="n">ey</span> <span class="o">=</span> <span class="n">unit_vectors</span><span class="p">[</span><span class="s1">&#39;beam_aligned_unit_y&#39;</span><span class="p">]</span>
+
+    <span class="n">drop_distance</span> <span class="o">=</span> <span class="n">_drop_due_to_gravity</span><span class="p">(</span>
+        <span class="n">distance</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">),</span> <span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">gravity</span><span class="o">=</span><span class="n">gravity</span>
+    <span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">drop_distance</span> <span class="o">+</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">,</span> <span class="n">ey</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">elem_dtype</span><span class="p">(</span><span class="n">wavelength</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">,</span> <span class="n">ex</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">elem_dtype</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">atan2</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+
+    <span class="n">drop</span> <span class="o">=</span> <span class="n">drop_distance</span> <span class="o">*</span> <span class="p">(</span><span class="n">gravity</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">gravity</span><span class="p">))</span>
+    <span class="n">drop</span> <span class="o">+=</span> <span class="n">scattered_beam</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;two_theta&#39;</span><span class="p">:</span> <span class="n">two_theta</span><span class="p">(</span><span class="n">incident_beam</span><span class="o">=</span><span class="n">incident_beam</span><span class="p">,</span> <span class="n">scattered_beam</span><span class="o">=</span><span class="n">drop</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">elem_dtype</span><span class="p">(</span><span class="n">wavelength</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+        <span class="s1">&#39;phi&#39;</span><span class="p">:</span> <span class="n">phi</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="c1"># This is an optimized implementation that only works when `incident_beam` and `gravity`</span>
+<span class="c1"># are orthogonal to each other. It uses less memory than the generic version.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_scattering_angles_with_gravity_orthogonal_coords</span><span class="p">(</span>
+    <span class="n">incident_beam</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">scattered_beam</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">wavelength</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">gravity</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SphericalCoordinates</span><span class="p">:</span>
+    <span class="n">unit_vectors</span> <span class="o">=</span> <span class="n">beam_aligned_unit_vectors</span><span class="p">(</span>
+        <span class="n">incident_beam</span><span class="o">=</span><span class="n">incident_beam</span><span class="p">,</span> <span class="n">gravity</span><span class="o">=</span><span class="n">gravity</span>
+    <span class="p">)</span>
+    <span class="n">ex</span> <span class="o">=</span> <span class="n">unit_vectors</span><span class="p">[</span><span class="s1">&#39;beam_aligned_unit_x&#39;</span><span class="p">]</span>
+    <span class="n">ey</span> <span class="o">=</span> <span class="n">unit_vectors</span><span class="p">[</span><span class="s1">&#39;beam_aligned_unit_y&#39;</span><span class="p">]</span>
+    <span class="n">ez</span> <span class="o">=</span> <span class="n">unit_vectors</span><span class="p">[</span><span class="s1">&#39;beam_aligned_unit_z&#39;</span><span class="p">]</span>
+
+    <span class="n">y</span> <span class="o">=</span> <span class="n">_drop_due_to_gravity</span><span class="p">(</span>
+        <span class="n">distance</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">),</span> <span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">gravity</span><span class="o">=</span><span class="n">gravity</span>
+    <span class="p">)</span>
+    <span class="n">y</span> <span class="o">+=</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">,</span> <span class="n">ey</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">elem_dtype</span><span class="p">(</span><span class="n">wavelength</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">,</span> <span class="n">ex</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">elem_dtype</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">atan2</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># Corresponds to `two_theta_ = sc.atan2(y=sc.sqrt(x**2 + y**2), x=z)`</span>
+    <span class="n">x</span> <span class="o">*=</span> <span class="n">x</span>
+    <span class="n">y</span> <span class="o">*=</span> <span class="n">y</span>
+    <span class="n">y</span> <span class="o">+=</span> <span class="n">x</span>
+    <span class="k">del</span> <span class="n">x</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">,</span> <span class="n">ez</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">elem_dtype</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">two_theta_</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">atan2</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;two_theta&#39;</span><span class="p">:</span> <span class="n">two_theta_</span><span class="p">,</span> <span class="s1">&#39;phi&#39;</span><span class="p">:</span> <span class="n">phi</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="scattering_angle_in_yz_plane">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.beamline.scattering_angle_in_yz_plane.html#scippneutron.conversion.beamline.scattering_angle_in_yz_plane">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">scattering_angle_in_yz_plane</span><span class="p">(</span>
+    <span class="n">incident_beam</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">scattered_beam</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">wavelength</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">gravity</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute polar scattering angles in the y-z plane using gravity.</span>
+
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">        This function uses the reflectometry definition of the polar scattering angle.</span>
+<span class="sd">        Other techniques define the angle w.r.t. the incident beam.</span>
+<span class="sd">        See :func:`scattering_angles_with_gravity` for those use cases.</span>
+
+<span class="sd">    With the definitions given in :func:`scattering_angles_with_gravity`,</span>
+<span class="sd">    and ignoring :math:`x_d`, we get</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathsf{tan}(\gamma) = \frac{|y_d^{\prime}|}{z_d}</span>
+
+<span class="sd">    with</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        y&#39;_d = y_d + \frac{|g| m_n^2}{2 h^2} L_2^{\prime\, 2} \lambda^2</span>
+
+<span class="sd">    The angle :math:`\gamma` is defined as in Fig. 5 of :cite:`STAHN201644`.</span>
+
+<span class="sd">    Attention</span>
+<span class="sd">    ---------</span>
+<span class="sd">        The above equation for :math:`y&#39;_d` contains :math:`L_2^{\prime\, 2} = |b&#39;_2|`</span>
+<span class="sd">        which in turn depends on :math:`y&#39;_d`.</span>
+<span class="sd">        Solving this equation for :math:`y&#39;_d` is too difficult.</span>
+<span class="sd">        Instead, we approximate :math:`L&#39;_2 \approx L_2`.</span>
+<span class="sd">        The impact of this approximation on :math:`\gamma` is of the order of</span>
+<span class="sd">        :math:`10^{-6}` or less for beamlines at ESS.</span>
+<span class="sd">        This is within the expected statistical uncertainties and can be ignored.</span>
+
+<span class="sd">        See `two_theta gravity correction</span>
+<span class="sd">        &lt;../../user-guide/algorithms-background/two_theta-gravity-correction.rst&gt;`_</span>
+<span class="sd">        for details.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incident_beam:</span>
+<span class="sd">        Beam from source to sample. Expects ``dtype=vector3``.</span>
+<span class="sd">    scattered_beam:</span>
+<span class="sd">        Beam from sample to detector. Expects ``dtype=vector3``.</span>
+<span class="sd">    wavelength:</span>
+<span class="sd">        Wavelength of neutrons.</span>
+<span class="sd">    gravity:</span>
+<span class="sd">        Gravity vector.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        The polar scattering angle :math:`\gamma`.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scattering_angles_with_gravity:</span>
+<span class="sd">        Includes the ``x`` component when computing ``theta``.</span>
+<span class="sd">        This is used in techniques other than reflectometry.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">sc</span><span class="o">.</span><span class="n">any</span><span class="p">(</span>
+        <span class="nb">abs</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gravity</span><span class="p">,</span> <span class="n">incident_beam</span><span class="p">))</span>
+        <span class="o">&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">1e-10</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">incident_beam</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">gravity</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;`gravity` and `incident_beam` must be orthogonal. &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;Got a deviation of </span><span class="si">{</span><span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gravity</span><span class="p">,</span><span class="w"> </span><span class="n">incident_beam</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s1">c</span><span class="si">}</span><span class="s1">. &#39;</span>
+            <span class="s1">&#39;It is unclear how the angle is defined in this case.&#39;</span>
+        <span class="p">)</span>
+
+    <span class="n">unit_vectors</span> <span class="o">=</span> <span class="n">beam_aligned_unit_vectors</span><span class="p">(</span>
+        <span class="n">incident_beam</span><span class="o">=</span><span class="n">incident_beam</span><span class="p">,</span> <span class="n">gravity</span><span class="o">=</span><span class="n">gravity</span>
+    <span class="p">)</span>
+    <span class="n">ey</span> <span class="o">=</span> <span class="n">unit_vectors</span><span class="p">[</span><span class="s1">&#39;beam_aligned_unit_y&#39;</span><span class="p">]</span>
+    <span class="n">ez</span> <span class="o">=</span> <span class="n">unit_vectors</span><span class="p">[</span><span class="s1">&#39;beam_aligned_unit_z&#39;</span><span class="p">]</span>
+
+    <span class="n">y</span> <span class="o">=</span> <span class="n">_drop_due_to_gravity</span><span class="p">(</span>
+        <span class="n">distance</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">),</span> <span class="n">wavelength</span><span class="o">=</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">gravity</span><span class="o">=</span><span class="n">gravity</span>
+    <span class="p">)</span>
+    <span class="n">y</span> <span class="o">+=</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">,</span> <span class="n">ey</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">elem_dtype</span><span class="p">(</span><span class="n">wavelength</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">,</span> <span class="n">ez</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">elem_dtype</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">atan2</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">y</span><span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 0.0.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

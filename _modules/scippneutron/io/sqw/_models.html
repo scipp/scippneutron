@@ -1,0 +1,1041 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scippneutron.io.sqw._models &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/autodoc_pydantic.css?v=a0a71c94" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../../../_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scippneutron/io/sqw/_models';</script>
+    <script src="../../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">scippneutron.io.sqw._models</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scippneutron.io.sqw._models</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2024 Scipp contributors (https://github.com/scipp)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">TypeAlias</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ir</span> <span class="k">as</span> <span class="n">ir</span>
+
+<span class="n">DataBlockName</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="SqwFileType">
+<a class="viewcode-back" href="../../../../generated/classes/scippneutron.io.sqw.SqwFileType.html#scippneutron.io.sqw.SqwFileType">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwFileType</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">DND</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">SQW</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+
+
+<div class="viewcode-block" id="SqwFileHeader">
+<a class="viewcode-back" href="../../../../generated/classes/scippneutron.io.sqw.SqwFileHeader.html#scippneutron.io.sqw.SqwFileHeader">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwFileHeader</span><span class="p">:</span>
+    <span class="n">prog_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">prog_version</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">sqw_type</span><span class="p">:</span> <span class="n">SqwFileType</span>
+    <span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwDataBlockType</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">regular</span> <span class="o">=</span> <span class="s2">&quot;data_block&quot;</span>
+    <span class="n">pix</span> <span class="o">=</span> <span class="s2">&quot;pix_data_block&quot;</span>
+    <span class="n">dnd</span> <span class="o">=</span> <span class="s2">&quot;dnd_data_block&quot;</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwDataBlockDescriptor</span><span class="p">:</span>
+    <span class="n">block_type</span><span class="p">:</span> <span class="n">SqwDataBlockType</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">DataBlockName</span>
+    <span class="n">position</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># u64</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># u64</span>
+
+
+<div class="viewcode-block" id="SqwMainHeader">
+<a class="viewcode-back" href="../../../../generated/classes/scippneutron.io.sqw.SqwMainHeader.html#scippneutron.io.sqw.SqwMainHeader">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwMainHeader</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">):</span>
+    <span class="n">full_filename</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">nfiles</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">creation_date</span><span class="p">:</span> <span class="n">datetime</span>
+
+    <span class="n">serial_name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;main_header_cl&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_to_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Object</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;serial_name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serial_name</span><span class="p">),</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+            <span class="s2">&quot;full_filename&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">full_filename</span><span class="p">),</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">),</span>
+            <span class="s2">&quot;nfiles&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nfiles</span><span class="p">)),</span>
+            <span class="s2">&quot;creation_date&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">creation_date</span><span class="p">),</span>
+            <span class="s2">&quot;creation_date_defined_privately&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Logical</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_for_serialization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SqwMainHeader</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">creation_date</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">tz</span><span class="o">=</span><span class="n">UTC</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="SqwLineAxes">
+<a class="viewcode-back" href="../../../../generated/classes/scippneutron.io.sqw.SqwLineAxes.html#scippneutron.io.sqw.SqwLineAxes">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwLineAxes</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">):</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">img_scales</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]</span>
+    <span class="n">img_range</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]</span>
+    <span class="n">n_bins_all_dims</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># shape=(n_dim,) dtype=float64 [encodes int]</span>
+    <span class="n">single_bin_defines_iax</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># shape=(n_dim,) dtype=bool</span>
+    <span class="n">dax</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]</span>
+    <span class="n">changes_aspect_ratio</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="n">serial_name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;line_axes&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">7.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_to_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Object</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">]:</span>
+        <span class="n">units</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;1/angstrom&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;meV&quot;</span><span class="p">]</span>  <span class="c1"># depends on SqwLineProj.type</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;serial_name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serial_name</span><span class="p">),</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+            <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">),</span>
+            <span class="s2">&quot;filepath&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filepath</span><span class="p">),</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">),</span>
+            <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">_serialize_str_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">),</span>
+            <span class="s2">&quot;img_scales&quot;</span><span class="p">:</span> <span class="n">_serialize_multi_unit_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img_scales</span><span class="p">,</span> <span class="n">units</span><span class="p">),</span>
+            <span class="s2">&quot;img_range&quot;</span><span class="p">:</span> <span class="n">_serialize_multi_unit_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img_range</span><span class="p">,</span> <span class="n">units</span><span class="p">),</span>
+            <span class="s2">&quot;nbins_all_dims&quot;</span><span class="p">:</span> <span class="n">_variable_to_float_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_bins_all_dims</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s2">&quot;single_bin_defines_iax&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span><span class="p">(</span>
+                <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_bins_all_dims</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Logical</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_bin_defines_iax</span><span class="o">.</span><span class="n">values</span><span class="p">],</span>
+                <span class="n">ty</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">TypeTag</span><span class="o">.</span><span class="n">logical</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="c1"># +1 to convert to 1-based indexing</span>
+            <span class="s2">&quot;dax&quot;</span><span class="p">:</span> <span class="n">_variable_to_float_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dax</span> <span class="o">+</span> <span class="n">sc</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s2">&quot;offset&quot;</span><span class="p">:</span> <span class="n">_serialize_multi_unit_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="n">units</span><span class="p">),</span>
+            <span class="s2">&quot;changes_aspect_ratio&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Logical</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">changes_aspect_ratio</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="SqwLineProj">
+<a class="viewcode-back" href="../../../../generated/classes/scippneutron.io.sqw.SqwLineProj.html#scippneutron.io.sqw.SqwLineProj">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwLineProj</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">):</span>
+    <span class="n">lattice_spacing</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># vector</span>
+    <span class="n">lattice_angle</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># vector</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">u</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># vector</span>
+    <span class="n">v</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># vector</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># vector</span>
+    <span class="n">non_orthogonal</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="n">serial_name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;line_proj&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">7.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_to_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Object</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="s2">&quot;aaa&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Projection type not supported: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">units</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;1/angstrom&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;meV&quot;</span><span class="p">]</span>  <span class="c1"># depends on SqwLineProj.type</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]),</span> <span class="n">ir</span><span class="o">.</span><span class="n">TypeTag</span><span class="o">.</span><span class="n">f64</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">_variable_to_float_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="s2">&quot;1/angstrom&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;serial_name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serial_name</span><span class="p">),</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+            <span class="s2">&quot;alatt&quot;</span><span class="p">:</span> <span class="n">_variable_to_float_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice_spacing</span><span class="p">,</span> <span class="s2">&quot;angstrom&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;angdeg&quot;</span><span class="p">:</span> <span class="n">_variable_to_float_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice_angle</span><span class="p">,</span> <span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;offset&quot;</span><span class="p">:</span> <span class="n">_serialize_multi_unit_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="n">units</span><span class="p">),</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">),</span>
+            <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">_serialize_str_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">),</span>
+            <span class="s2">&quot;u&quot;</span><span class="p">:</span> <span class="n">_variable_to_float_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="p">,</span> <span class="s2">&quot;1/angstrom&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;v&quot;</span><span class="p">:</span> <span class="n">_variable_to_float_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">,</span> <span class="s2">&quot;1/angstrom&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;w&quot;</span><span class="p">:</span> <span class="n">w</span><span class="p">,</span>
+            <span class="s2">&quot;nonorthogonal&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Logical</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">non_orthogonal</span><span class="p">),</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="SqwDndMetadata">
+<a class="viewcode-back" href="../../../../generated/classes/scippneutron.io.sqw.SqwDndMetadata.html#scippneutron.io.sqw.SqwDndMetadata">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwDndMetadata</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">):</span>
+    <span class="n">axes</span><span class="p">:</span> <span class="n">SqwLineAxes</span>
+    <span class="n">proj</span><span class="p">:</span> <span class="n">SqwLineProj</span>
+    <span class="n">creation_date</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">tz</span><span class="o">=</span><span class="n">UTC</span><span class="p">))</span>
+
+    <span class="n">serial_name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;dnd_metadata&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_to_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Object</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">]:</span>
+        <span class="n">axes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">serialize_to_ir</span><span class="p">()</span>
+        <span class="n">proj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proj</span><span class="o">.</span><span class="n">serialize_to_ir</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;serial_name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serial_name</span><span class="p">),</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+            <span class="s2">&quot;axes&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span><span class="p">(</span>
+                <span class="n">ty</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">TypeTag</span><span class="o">.</span><span class="n">struct</span><span class="p">,</span>
+                <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+                <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">axes</span><span class="p">],</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;proj&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span><span class="p">(</span>
+                <span class="n">ty</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">TypeTag</span><span class="o">.</span><span class="n">struct</span><span class="p">,</span>
+                <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+                <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">proj</span><span class="p">],</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;creation_date_str&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Datetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">creation_date</span><span class="p">),</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_for_serialization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SqwDndMetadata</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">creation_date</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">tz</span><span class="o">=</span><span class="n">UTC</span><span class="p">),</span>
+            <span class="n">axes</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">filepath</span><span class="o">=</span><span class="n">filepath</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwPixelMetadata</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">):</span>
+    <span class="n">full_filename</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">npix</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">data_range</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]</span>
+
+    <span class="n">serial_name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;pix_metadata&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_to_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Object</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;serial_name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serial_name</span><span class="p">),</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+            <span class="s2">&quot;full_filename&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">full_filename</span><span class="p">),</span>
+            <span class="s2">&quot;npix&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">npix</span><span class="p">)),</span>
+            <span class="s2">&quot;data_range&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_range</span><span class="p">,</span> <span class="n">ty</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">TypeTag</span><span class="o">.</span><span class="n">f64</span><span class="p">),</span>
+        <span class="p">}</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwPixWrap</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents pixel data but does not hold the actual data.&quot;&quot;&quot;</span>
+
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">9</span>
+    <span class="n">n_pixels</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_to_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Object</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;n_rows&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">U32</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_rows</span><span class="p">),</span>
+            <span class="s2">&quot;n_pixels&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">U64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_pixels</span><span class="p">),</span>
+        <span class="p">}</span>
+
+
+<div class="viewcode-block" id="SqwIXSource">
+<a class="viewcode-back" href="../../../../generated/classes/scippneutron.io.sqw.SqwIXSource.html#scippneutron.io.sqw.SqwIXSource">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwIXSource</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">target_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">frequency</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+
+    <span class="n">serial_name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;IX_source&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_to_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Object</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;serial_name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serial_name</span><span class="p">),</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+            <span class="s2">&quot;target_name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_name</span><span class="p">),</span>
+            <span class="s2">&quot;frequency&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;Hz&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="SqwIXNullInstrument">
+<a class="viewcode-back" href="../../../../generated/classes/scippneutron.io.sqw.SqwIXNullInstrument.html#scippneutron.io.sqw.SqwIXNullInstrument">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwIXNullInstrument</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">SqwIXSource</span>
+
+    <span class="n">serial_name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;IX_null_inst&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_to_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Object</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;serial_name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serial_name</span><span class="p">),</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+            <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">serialize_to_ir</span><span class="p">(),</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="EnergyMode">
+<a class="viewcode-back" href="../../../../generated/classes/scippneutron.io.sqw.EnergyMode.html#scippneutron.io.sqw.EnergyMode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EnergyMode</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">direct</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">indirect</span> <span class="o">=</span> <span class="mi">2</span></div>
+
+
+
+<div class="viewcode-block" id="SqwIXSample">
+<a class="viewcode-back" href="../../../../generated/classes/scippneutron.io.sqw.SqwIXSample.html#scippneutron.io.sqw.SqwIXSample">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwIXSample</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">lattice_spacing</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># vector</span>
+    <span class="n">lattice_angle</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># vector</span>
+
+    <span class="n">serial_name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;IX_sample&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_to_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Object</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;serial_name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serial_name</span><span class="p">),</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+            <span class="s2">&quot;alatt&quot;</span><span class="p">:</span> <span class="n">_variable_to_float_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice_spacing</span><span class="p">,</span> <span class="s2">&quot;angstrom&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;angdeg&quot;</span><span class="p">:</span> <span class="n">_variable_to_float_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice_angle</span><span class="p">,</span> <span class="s2">&quot;deg&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+
+<span class="c1"># In contrast to SQW files, this model contains the nested</span>
+<span class="c1"># struct fields instead of a nested struct in `array-dat`.</span>
+<div class="viewcode-block" id="SqwIXExperiment">
+<a class="viewcode-back" href="../../../../generated/classes/scippneutron.io.sqw.SqwIXExperiment.html#scippneutron.io.sqw.SqwIXExperiment">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwIXExperiment</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">):</span>
+    <span class="n">run_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="c1"># 1 element for direct, array of detector.shape for indirect</span>
+    <span class="n">efix</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># array or scalar</span>
+    <span class="n">emode</span><span class="p">:</span> <span class="n">EnergyMode</span>
+    <span class="n">en</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># array</span>
+    <span class="n">psi</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># scalar</span>
+    <span class="n">u</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># vector</span>
+    <span class="n">v</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># vector</span>
+    <span class="n">omega</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># scalar</span>
+    <span class="n">dpsi</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># scalar</span>
+    <span class="n">gl</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># scalar</span>
+    <span class="n">gs</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>  <span class="c1"># scalar</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="n">serial_name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;IX_experiment&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_to_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Object</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">]:</span>
+        <span class="n">en</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">en</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s2">&quot;meV&quot;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">en</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># direct mode; still needs 2D en like indirect mode</span>
+            <span class="n">en</span> <span class="o">=</span> <span class="n">en</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">sizes</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;_&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;energy_transfer&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">en</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">en</span> <span class="o">=</span> <span class="n">en</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;detector&quot;</span><span class="p">,</span> <span class="s2">&quot;energy_transfer&quot;</span><span class="p">])</span>
+
+        <span class="n">efix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">efix</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s2">&quot;meV&quot;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">efix</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">efix</span> <span class="o">=</span> <span class="n">efix</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">sizes</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;_&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">),</span>
+            <span class="s2">&quot;filepath&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filepath</span><span class="p">),</span>
+            <span class="s2">&quot;run_id&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_id</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span>
+            <span class="s2">&quot;efix&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">efix</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">ty</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">TypeTag</span><span class="o">.</span><span class="n">f64</span><span class="p">),</span>
+            <span class="s2">&quot;emode&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emode</span><span class="o">.</span><span class="n">value</span><span class="p">)),</span>
+            <span class="s2">&quot;en&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">en</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">ty</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">TypeTag</span><span class="o">.</span><span class="n">f64</span><span class="p">),</span>
+            <span class="s2">&quot;psi&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="n">_angle_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">psi</span><span class="p">)),</span>
+            <span class="s2">&quot;u&quot;</span><span class="p">:</span> <span class="n">_variable_to_float_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;1/angstrom&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;v&quot;</span><span class="p">:</span> <span class="n">_variable_to_float_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;1/angstrom&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;omega&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="n">_angle_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">omega</span><span class="p">)),</span>
+            <span class="s2">&quot;dpsi&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="n">_angle_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dpsi</span><span class="p">)),</span>
+            <span class="s2">&quot;gl&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="n">_angle_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gl</span><span class="p">)),</span>
+            <span class="s2">&quot;gs&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="n">_angle_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gs</span><span class="p">)),</span>
+            <span class="s2">&quot;angular_is_degree&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Logical</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span>
+            <span class="c1"># serial_name and version are serialized by SqwMultiIXExperiment</span>
+        <span class="p">}</span></div>
+
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqwMultiIXExperiment</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">):</span>
+    <span class="n">array_dat</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SqwIXExperiment</span><span class="p">]</span>
+
+    <span class="n">serial_name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;IX_experiment&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_to_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Object</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;serial_name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serial_name</span><span class="p">),</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+            <span class="s2">&quot;array_dat&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span><span class="p">(</span>
+                <span class="n">ty</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">TypeTag</span><span class="o">.</span><span class="n">struct</span><span class="p">,</span>
+                <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">array_dat</span><span class="p">),),</span>
+                <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">exp</span><span class="o">.</span><span class="n">serialize_to_ir</span><span class="p">()</span> <span class="k">for</span> <span class="n">exp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">array_dat</span><span class="p">],</span>
+            <span class="p">),</span>
+        <span class="p">}</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UniqueRefContainer</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">):</span>
+    <span class="n">global_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">objects</span><span class="p">:</span> <span class="n">UniqueObjContainer</span>
+
+    <span class="n">serial_name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;unique_references_container&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_to_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Object</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;serial_name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serial_name</span><span class="p">),</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+            <span class="s2">&quot;stored_baseclass&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">baseclass</span><span class="p">),</span>
+            <span class="s2">&quot;global_name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">global_name</span><span class="p">),</span>
+            <span class="s2">&quot;unique_objects&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">serialize_to_ir</span><span class="p">()</span><span class="o">.</span><span class="n">to_object_array</span><span class="p">(),</span>
+        <span class="p">}</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UniqueObjContainer</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">):</span>
+    <span class="n">baseclass</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">objects</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Serializable</span><span class="p">]</span>
+    <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+
+    <span class="n">serial_name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;unique_objects_container&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_to_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Object</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span> <span class="o">|</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;serial_name&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serial_name</span><span class="p">),</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">F64</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+            <span class="s2">&quot;baseclass&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baseclass</span><span class="p">),</span>
+            <span class="s2">&quot;unique_objects&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">(</span>
+                <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">objects</span><span class="p">),),</span>
+                <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">obj</span><span class="o">.</span><span class="n">serialize_to_ir</span><span class="p">()</span><span class="o">.</span><span class="n">to_object_array</span><span class="p">()</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">objects</span><span class="p">],</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;idx&quot;</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span><span class="p">(</span>
+                <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">),),</span>
+                <span class="c1"># +1 to convert to 1-based indexing</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">,</span>
+                <span class="n">ty</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">TypeTag</span><span class="o">.</span><span class="n">f64</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_angle_value</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s2">&quot;rad&quot;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>  <span class="c1"># type: ignore[no-any-return]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_serialize_str_array</span><span class="p">(</span><span class="n">strings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">CellArray</span><span class="p">(</span>
+        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">strings</span><span class="p">),),</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">ir</span><span class="o">.</span><span class="n">ObjectArray</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">),),</span> <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">s</span><span class="p">)],</span> <span class="n">ty</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">TypeTag</span><span class="o">.</span><span class="n">char</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strings</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_serialize_multi_unit_array</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">],</span> <span class="n">units</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ir</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+    <span class="n">stacked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">u</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">stacked</span><span class="p">,</span> <span class="n">ty</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">TypeTag</span><span class="o">.</span><span class="n">f64</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_variable_to_float_array</span><span class="p">(</span><span class="n">var</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ir</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">var</span><span class="o">.</span><span class="n">unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">UnitError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected no unit, got: </span><span class="si">{</span><span class="n">var</span><span class="o">.</span><span class="n">unit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span>
+        <span class="n">var</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="n">ir</span><span class="o">.</span><span class="n">TypeTag</span><span class="o">.</span><span class="n">f64</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 0.0.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,997 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>SQW &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/autodoc_pydantic.css?v=a0a71c94" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'developer/file-formats/sqw';</script>
+    <script src="../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="About" href="../../about/index.html" />
+    <link rel="prev" title="File Formats" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../coding-conventions.html">Coding conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dependency-management.html">Dependency management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../file-loading.html">File loading</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">File Formats</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">SQW</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-blocks">Data Blocks</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#runs">Runs</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fortran-layout">FORTRAN Layout</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#byte-order">Byte Order</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#file-structure">File Structure</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#file-header">File Header</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#block-allocation-table">Block Allocation Table</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#block-storage">Block Storage</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#regular-data-blocks">Regular Data Blocks</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#dnd-data-blocks">DND Data Blocks</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#pixel-data-blocks">Pixel Data Blocks</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-types">Data Types</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#logical">Logical</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#number-uintx-floatx">Number (uintx, floatx)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#character-array">Character Array</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fixed-character-array">Fixed Character Array</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#struct">Struct</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cell-array">Cell Array</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#object-array">Object Array</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#self-serializing">Self Serializing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#auxiliary-types">Auxiliary Types</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#shape">Shape</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#data-block-type">Data Block Type</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#unique-object-container">Unique Object Container</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../../_sources/developer/file-formats/sqw.md">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Development</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">File Formats</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">SQW</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="sqw">
+<h1>SQW<a class="headerlink" href="#sqw" title="Link to this heading">#</a></h1>
+<p>This document describes the <strong>SQW format v4.0</strong>.</p>
+<p>SQW files are used in spectroscopy by <a class="reference external" href="https://pace-neutrons.github.io/Horace">Horace</a> for reduced data and intermediate analysis results.
+ScippNeutron can write and, to a limited degree, read SQW files using <a class="reference internal" href="../../generated/modules/scippneutron.io.sqw.html#module-scippneutron.io.sqw" title="scippneutron.io.sqw"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scippneutron.io.sqw</span></code></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>There is no official specification for the format of SQW files.
+The contents of this document are based on what documentation is available, on reading the source code of Horace, and on experiments with Horace and SQW files.
+This document should <em>not</em> be regarded as authoritative.</p>
+</div>
+<p>See, e.g., <a class="reference external" href="https://github.com/pace-neutrons/Horace/blob/3c00958d578c625a7f2274ef7b34557578abb934/documentation/add/07-sqw_redesign.md">07-sqw_redesign.md</a> for some documentation provided by the developers of Horace.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>SQW files are binary files that encode neutron counts both in a flexible binned format called ‘pixels’ and a multidimensional histogram called ‘DND’ (or D1D through D4D for concrete cases).
+In addition to the data, SQW files store metadata that describes how the experiment was set up and how the data was binned.</p>
+<section id="data-blocks">
+<h3>Data Blocks<a class="headerlink" href="#data-blocks" title="Link to this heading">#</a></h3>
+<p>Data and metadata are organized into ‘blocks’ that are stored separately in the file.
+In principle, SQW files can store any number of blocks with arbitrary content.
+But in practice, Horace requires the following blocks and allows only the following blocks.
+Block names are split into a ‘name’ and a ‘level2_name’ which in ScippNeutron are combined into a tuple.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Level 2 name</p></th>
+<th class="head"><p>Content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td></td>
+<td><p>main_header</p></td>
+<td><p>General information about the file. (<a class="reference internal" href="../../generated/classes/scippneutron.io.sqw.SqwMainHeader.html#scippneutron.io.sqw.SqwMainHeader" title="scippneutron.io.sqw.SqwMainHeader"><code class="xref py py-class docutils literal notranslate"><span class="pre">SqwMainHeader</span></code></a>)</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>detpar</p></td>
+<td><p>Used for data analysis, in particular <a class="reference external" href="https://pace-neutrons.github.io/Horace/v4.0.0/manual/Tobyfit.html">Tobyfit</a>. ScippNeutron leaves this block empty.</p></td>
+</tr>
+<tr class="row-even"><td><p>data</p></td>
+<td><p>metadata</p></td>
+<td><p>Information about how the nd data was histogrammed and how to display it. (<a class="reference internal" href="../../generated/classes/scippneutron.io.sqw.SqwDndMetadata.html#scippneutron.io.sqw.SqwDndMetadata" title="scippneutron.io.sqw.SqwDndMetadata"><code class="xref py py-class docutils literal notranslate"><span class="pre">SqwDndMetadata</span></code></a>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>data</p></td>
+<td><p>nd_data</p></td>
+<td><p>Histogram data.</p></td>
+</tr>
+<tr class="row-even"><td><p>experiment_info</p></td>
+<td><p>instruments</p></td>
+<td><p>Information about the instrument where the data was measured. One <a class="reference internal" href="../../generated/classes/scippneutron.io.sqw.SqwIXNullInstrument.html#scippneutron.io.sqw.SqwIXNullInstrument" title="scippneutron.io.sqw.SqwIXNullInstrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">SqwIXNullInstrument</span></code></a> per <a class="reference internal" href="#runs"><span class="std std-ref">run</span></a>. (Horace defines several instrument classes. But so far, the null instrument has been sufficient.)</p></td>
+</tr>
+<tr class="row-odd"><td><p>experiment_info</p></td>
+<td><p>samples</p></td>
+<td><p>Information on the sample that was measured. One <a class="reference internal" href="../../generated/classes/scippneutron.io.sqw.SqwIXSample.html#scippneutron.io.sqw.SqwIXSample" title="scippneutron.io.sqw.SqwIXSample"><code class="xref py py-class docutils literal notranslate"><span class="pre">SqwIXSample</span></code></a> per <a class="reference internal" href="#runs"><span class="std std-ref">run</span></a>.</p></td>
+</tr>
+<tr class="row-even"><td><p>experiment_info</p></td>
+<td><p>expdata</p></td>
+<td><p>Experimental settings such as sample rotation. One <a class="reference internal" href="../../generated/classes/scippneutron.io.sqw.SqwIXExperiment.html#scippneutron.io.sqw.SqwIXExperiment" title="scippneutron.io.sqw.SqwIXExperiment"><code class="xref py py-class docutils literal notranslate"><span class="pre">SqwIXExperiment</span></code></a> per <a class="reference internal" href="#runs"><span class="std std-ref">run</span></a>.</p></td>
+</tr>
+<tr class="row-odd"><td><p>pix</p></td>
+<td><p>metadata</p></td>
+<td><p>Information about the pixel data. Largely hidden and automated in ScippNeutron.</p></td>
+</tr>
+<tr class="row-even"><td><p>pix</p></td>
+<td><p>data_wrap</p></td>
+<td><p>‘Pixel’ data, i.e., binned observations as a function of momentum and energy transfer. Stored as a <span class="math notranslate nohighlight">\(9 \times N\)</span> array with these <a class="reference external" href="https://github.com/pace-neutrons/Horace/blob/master/documentation/add/05_file_formats.md">rows</a> in order:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">u1</span></code>, <code class="docutils literal notranslate"><span class="pre">u2</span></code>, <code class="docutils literal notranslate"><span class="pre">u3</span></code>, <code class="docutils literal notranslate"><span class="pre">u4</span></code>: usually momentum transfers <span class="math notranslate nohighlight">\(Q_x\)</span>, <span class="math notranslate nohighlight">\(Q_y\)</span>, <span class="math notranslate nohighlight">\(Q_z\)</span> and energy transfer <span class="math notranslate nohighlight">\(\Delta E\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">irun</span></code>: <a class="reference internal" href="#runs"><span class="std std-ref">Run</span></a> index.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">idet</span></code>: Detector (pixel) index.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ien</span></code>: Energy bin index.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">signal</span></code>: Counts.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">error</span></code>: Variances of <code class="docutils literal notranslate"><span class="pre">signal</span></code>.</p></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="runs">
+<h3>Runs<a class="headerlink" href="#runs" title="Link to this heading">#</a></h3>
+<p>Data can be collected in multiple runs or ‘settings’ where each run has a fixed set of sample and instrument parameters.
+In SQW, runs are encoded by assigning a run index <code class="docutils literal notranslate"><span class="pre">irun</span></code> to each observation and providing an appropriate instrument, sample, and experiment object.
+The instrument and sample objects are often the same for all runs.
+This can be encoded by way of ‘unique object containers’ which store only one copy of each unique object and indices to associate these objects with runs.</p>
+</section>
+<section id="fortran-layout">
+<h3>FORTRAN Layout<a class="headerlink" href="#fortran-layout" title="Link to this heading">#</a></h3>
+<p>Horace, being a MATLAB program, uses FORTRAN order for arrays and 1-based indexing.
+<a class="reference internal" href="../../generated/modules/scippneutron.io.sqw.html#module-scippneutron.io.sqw" title="scippneutron.io.sqw"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scippneutron.io.sqw</span></code></a> converts between these conventions and the Python conventions automatically in most cases.
+But some data, most notably the pixel array, must be provided with 1-based indices.</p>
+</section>
+<section id="byte-order">
+<h3>Byte Order<a class="headerlink" href="#byte-order" title="Link to this heading">#</a></h3>
+<p>SQW files do not have a dedicated mechanism for encoding or detecting byte order.
+Horace seems to ignore the issue and seems to always read and write files in the host machine’s native order.
+ScippNeutron supports saving files with native, little, or big endianness.
+It also attempts to detect the byte order of a file by inspecting the <a class="reference internal" href="#file-header"><span class="std std-ref">header</span></a>.</p>
+</section>
+</section>
+<section id="file-structure">
+<h2>File Structure<a class="headerlink" href="#file-structure" title="Link to this heading">#</a></h2>
+<p>SQW files contain the following in order:</p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#file-header"><span class="std std-ref">File header</span></a></p></li>
+<li><p><a class="reference internal" href="#block-allocation-table"><span class="std std-ref">Block allocation table</span></a></p></li>
+<li><p><a class="reference internal" href="#block-storage"><span class="std std-ref">Blocks</span></a></p></li>
+</ol>
+<section id="file-header">
+<h3>File Header<a class="headerlink" href="#file-header" title="Link to this heading">#</a></h3>
+<p>SQW files begin with a file header.
+For Horace version 4.0, this header is</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>| program name | program version | file type | n dims  |
+| :char array  | :float64        | :uint32   | :uint32 |
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>The program name is a <a class="reference internal" href="#character-array"><span class="std std-ref">character array</span></a> with value <code class="docutils literal notranslate"><span class="pre">&quot;horace&quot;</span></code>.
+(Note that the first 4 bytes in the file are the array length.)</p></li>
+<li><p>The program version is a <a class="reference internal" href="#number-uintx-floatx"><span class="std std-ref">float64</span></a> with value <code class="docutils literal notranslate"><span class="pre">4.0</span></code>.</p></li>
+<li><p>The file type can be either</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">0</span></code> for DND files or</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">1</span></code> for SQW files. (Required by ScippNeutron.)</p></li>
+</ul>
+</li>
+<li><p>The number of dimensions indicates how many rows <code class="docutils literal notranslate"><span class="pre">u1</span></code> - <code class="docutils literal notranslate"><span class="pre">u4</span></code> in the pixel data are used.</p></li>
+</ul>
+</section>
+<section id="block-allocation-table">
+<h3>Block Allocation Table<a class="headerlink" href="#block-allocation-table" title="Link to this heading">#</a></h3>
+<p>The block allocation table (BAT) encodes which <a class="reference internal" href="#data-blocks"><span class="std std-ref">data blocks</span></a> exist and where they are located in the file.
+The BAT is a sequence of data block descriptors.
+The structure of the BAT is</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>| size | n_blocks | descriptor_0 | ... | descriptor_n
+| :u32 | :u32     | :descriptor  | ... | :descript
+</pre></div>
+</div>
+<p>where the <code class="docutils literal notranslate"><span class="pre">:descriptor</span></code> type is</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>| block_type  | name        | level2_name | position | size |
+| :char array | :char array | :char array | :u64     | u64  |
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Bat.size</span></code>: Size in bytes of the BAT.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Bat.n_blocks</span></code>: The number of blocks.</p></li>
+<li><p>The descriptors contain</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">descriptor.block_type</span></code>: One of</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;data_block&quot;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;dnd_data_block</span></code> (For <code class="docutils literal notranslate"><span class="pre">(&quot;data&quot;,</span> <span class="pre">&quot;nd_data&quot;)</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;pix_data_block&quot;</span></code> (For <code class="docutils literal notranslate"><span class="pre">(&quot;pix&quot;,</span> <span class="pre">&quot;data_wrap&quot;)</span></code>)</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">descriptor.name</span></code> and <code class="docutils literal notranslate"><span class="pre">descriptor.level2_name</span></code>: The block’s name.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">descriptor.position</span></code>: Offset in bytes from the start of the file where the block is located.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">descriptor.size</span></code>: Size in bytes of the block.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="block-storage">
+<h3>Block Storage<a class="headerlink" href="#block-storage" title="Link to this heading">#</a></h3>
+<p>Blocks are stored after the BAT in any order.
+How blocks are stored depends on their type.</p>
+<section id="regular-data-blocks">
+<h4>Regular Data Blocks<a class="headerlink" href="#regular-data-blocks" title="Link to this heading">#</a></h4>
+<p>Blocks with type <code class="docutils literal notranslate"><span class="pre">&quot;data_block&quot;</span></code> are stored as a single <a class="reference internal" href="#object-array"><span class="std std-ref">object array</span></a> or <a class="reference internal" href="#self-serializing"><span class="std std-ref">self serializing object</span></a>.</p>
+</section>
+<section id="dnd-data-blocks">
+<h4>DND Data Blocks<a class="headerlink" href="#dnd-data-blocks" title="Link to this heading">#</a></h4>
+<p>Blocks with type <code class="docutils literal notranslate"><span class="pre">&quot;dnd_data_block&quot;</span></code> are stored as a</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>| ndim | length_0 | length_1 | ... | values     | errors     | counts     |
+| :u32 | :u32     | :u32     | ... | :f64 array | :f64 array | :u64 array |
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ndim</span></code> and <code class="docutils literal notranslate"><span class="pre">length_i</span></code> encode a <a class="reference internal" href="#shape"><span class="std std-ref">shape</span></a> but uses a <code class="docutils literal notranslate"><span class="pre">u32</span></code> for <code class="docutils literal notranslate"><span class="pre">ndim</span></code> instead of the usual <code class="docutils literal notranslate"><span class="pre">u8</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">values</span></code> is the average intensity per bin (<code class="docutils literal notranslate"><span class="pre">pix.bins.mean()</span></code> or, equivalently, <code class="docutils literal notranslate"><span class="pre">pix.bins.sum()</span> <span class="pre">/</span> <span class="pre">pix.bins.size()</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">errors</span></code> is the standard deviation per bin (<code class="docutils literal notranslate"><span class="pre">sc.stddevs(pix.bins.mean())</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">counts</span></code> is the number of observations in each bin (<code class="docutils literal notranslate"><span class="pre">pix.bins.size()</span></code>).</p></li>
+</ul>
+<p>Note the example code at the end of the next section.</p>
+</section>
+<section id="pixel-data-blocks">
+<h4>Pixel Data Blocks<a class="headerlink" href="#pixel-data-blocks" title="Link to this heading">#</a></h4>
+<p>Blocks with type <code class="docutils literal notranslate"><span class="pre">&quot;pix_data_block&quot;</span></code> are stored as a <span class="math notranslate nohighlight">\(9 \times N\)</span> array in column-major layout, where <span class="math notranslate nohighlight">\(N\)</span> is the number of pixels.
+See <a class="reference internal" href="#data-blocks"><span class="std std-ref">Data Blocks</span></a> for the list of rows.
+The column-major layout results in a file of the form</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>| u1[0] | u2[0] | u3[0] | u4[0] | irun[0] | idet[0] | ien[0] | signal[0] | error[0]
+| u1[1] | u2[1] | u3[1] | u4[1] | irun[1] | idet[1] | ien[1] | signal[1] | error[1]
+| ...
+</pre></div>
+</div>
+<p>Pixels are sorted in bins following the same order as in the <a class="reference internal" href="#dnd-data-blocks"><span class="std std-ref">DND data block</span></a>.
+Given the <a class="reference internal" href="#fortran-layout"><span class="std std-ref">FORTRAN layout</span></a>, the pixels are sorted according to</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sorted_bins</span> <span class="o">=</span> <span class="n">binned_observations</span><span class="o">.</span><span class="n">transpose</span><span class="p">([</span><span class="s1">&#39;u4&#39;</span><span class="p">,</span> <span class="s1">&#39;u3&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">,</span> <span class="s1">&#39;u1&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Within each bin, the data is unordered.</p>
+<p>The number of bins is encoded by the <code class="docutils literal notranslate"><span class="pre">n_bins_all_dims</span></code> attribute of the DND metadata block.
+The number of pixels in each bin is determined by the <code class="docutils literal notranslate"><span class="pre">counts</span></code> array in the <a class="reference internal" href="#dnd-data-blocks"><span class="std std-ref">DND data block</span></a>.
+And the ranges of the <code class="docutils literal notranslate"><span class="pre">u</span></code>s are determined by the <code class="docutils literal notranslate"><span class="pre">img_range</span></code> attribute of the DND metadata block.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">sqw</span>
+
+<span class="k">with</span> <span class="n">sqw</span><span class="o">.</span><span class="n">Sqw</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;file.sqw&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read_data_block</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">)</span>
+    <span class="n">dnd</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read_data_block</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="s2">&quot;nd_data&quot;</span><span class="p">)</span>
+    <span class="n">pix</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read_data_block</span><span class="p">(</span><span class="s2">&quot;pix&quot;</span><span class="p">,</span> <span class="s2">&quot;data_wrap&quot;</span><span class="p">)</span>
+
+<span class="n">n_pix</span> <span class="o">=</span> <span class="n">dnd</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+<span class="c1"># Compute the bin edges:</span>
+<span class="n">img_range</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">img_range</span>
+<span class="n">n_bins</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">n_bins_all_dims</span><span class="o">.</span><span class="n">values</span>
+<span class="n">u_edges</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">sc</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;u</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">img_range</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">img_range</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_bins</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">n_bins</span><span class="p">))</span>
+<span class="p">]</span>
+
+<span class="c1"># Access pixels bin-by-bin:</span>
+<span class="n">bin_offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">n_pix</span><span class="o">.</span><span class="n">flat</span><span class="p">)]</span>
+<span class="k">for</span> <span class="n">bin_index</span><span class="p">,</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>  <span class="c1"># noqa: E741</span>
+    <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nb</span><span class="p">)</span> <span class="k">for</span> <span class="n">nb</span> <span class="ow">in</span> <span class="n">n_bins</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+<span class="p">):</span>
+    <span class="n">pix_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">bin_offsets</span><span class="p">[</span><span class="n">bin_index</span><span class="p">],</span> <span class="n">bin_offsets</span><span class="p">[</span><span class="n">bin_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">observations_in_bin</span> <span class="o">=</span> <span class="n">pix</span><span class="p">[</span><span class="n">pix_slice</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="data-types">
+<h2>Data Types<a class="headerlink" href="#data-types" title="Link to this heading">#</a></h2>
+<p>This section describes the data types used in SQW files.</p>
+<section id="logical">
+<h3>Logical<a class="headerlink" href="#logical" title="Link to this heading">#</a></h3>
+<p>A boolean.
+Encoded as a single byte that is <code class="docutils literal notranslate"><span class="pre">\x00</span></code> for false and anything else (typically <code class="docutils literal notranslate"><span class="pre">\0x01</span></code>) for true.</p>
+</section>
+<section id="number-uintx-floatx">
+<h3>Number (uintx, floatx)<a class="headerlink" href="#number-uintx-floatx" title="Link to this heading">#</a></h3>
+<p>All numbers are encoded as their byte representation in the target byte order.</p>
+</section>
+<section id="character-array">
+<h3>Character Array<a class="headerlink" href="#character-array" title="Link to this heading">#</a></h3>
+<p>A sequence of ASCII characters including the length.
+Encoded as characters <code class="docutils literal notranslate"><span class="pre">c0</span></code> through <code class="docutils literal notranslate"><span class="pre">cn</span></code>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>| length  | c0     | c1     | ... |
+| :uint32 | :uint8 | :uint8 | ... |
+</pre></div>
+</div>
+</section>
+<section id="fixed-character-array">
+<h3>Fixed Character Array<a class="headerlink" href="#fixed-character-array" title="Link to this heading">#</a></h3>
+<p>Like <a class="reference internal" href="#character-array"><span class="std std-ref">Character Array</span></a> but the length is not stored in the file.
+So the length must be known from context.</p>
+</section>
+<section id="struct">
+<h3>Struct<a class="headerlink" href="#struct" title="Link to this heading">#</a></h3>
+<p>A collection of named fields with different types.</p>
+<p>The field names are encoded as <a class="reference internal" href="#fixed-character-array"><span class="std std-ref">Fixed Character Arrays</span></a> with the lengths up front.
+The field values are encoded as a <a class="reference internal" href="#cell-array"><span class="std std-ref">Cell Arrays</span></a>.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>| n_fields | name_len_0 | ... | name_len_n |
+| :uint32  | :uint32    | ... | :uint32    |
+
+| name_0            | ... | name_n            |
+| :fixed_char_array | ... | :fixed_char_array |
+
+| value_0     | ... | value_n     |
+| :cell_array | ... | :cell_array |
+</pre></div>
+</div>
+<p>When used in an <a class="reference internal" href="#object-array"><span class="std std-ref">Object Array</span></a> with more than one element, the fields are stored in a ‘struct of arrays’ fashion.
+This means that if the surrounding object array has shape <code class="docutils literal notranslate"><span class="pre">S</span></code>, so does each <a class="reference internal" href="#cell-array"><span class="std std-ref">cell array</span></a>.
+For example, given structs</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyStruct</span><span class="p">:</span>
+    <span class="n">i</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">decimal</span><span class="p">:</span> <span class="nb">float</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">MyStruct</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">decimal</span><span class="o">=</span><span class="mf">0.1</span><span class="p">),</span> <span class="n">MyStruct</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">decimal</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)]</span>
+</pre></div>
+</div>
+<p>the data will be encoded as</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>| 2 | 1 | 7 | &quot;i&quot; | &quot;decimal&quot; | 10 | 20 | 0.1 | 0.2 |
+</pre></div>
+</div>
+</section>
+<section id="cell-array">
+<h3>Cell Array<a class="headerlink" href="#cell-array" title="Link to this heading">#</a></h3>
+<p>Cell arrays are MATLAB’s way of encoding heterogeneous arrays where the elements can have different types.
+Each element is encoded as an <a class="reference internal" href="#object-array"><span class="std std-ref">object array</span></a>.</p>
+<p>In SQW, cell arrays can occur either standalone or within an object array (by way of a struct).
+Standalone cell arrays encode their shape in the same way as an object array.
+Otherwise, they do <em>not</em> store their shape; it needs to be provided by the <a class="reference internal" href="#object-array"><span class="std std-ref">object array</span></a> that the cell array is part of.</p>
+</section>
+<section id="object-array">
+<h3>Object Array<a class="headerlink" href="#object-array" title="Link to this heading">#</a></h3>
+<p>Object arrays are homogeneous, multidimensional arrays of any object type.
+They encode their element type using a type tag:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>| type_tag | shape  | data |
+| :uint8   | :Shape | :Any |
+</pre></div>
+</div>
+<p>See <code class="docutils literal notranslate"><span class="pre">TypeTag</span></code> in the source code for a list of supported types and their tags.</p>
+<p>Object arrays have some non-trivial interactions with different types.</p>
+<ul class="simple">
+<li><p>For <strong>simple types</strong> like numbers, logical, and strings, <code class="docutils literal notranslate"><span class="pre">data</span></code> is simply an array of the given type in FORTRAN layout.</p></li>
+<li><p>For <strong>structs</strong>, the data is encoded in a ‘struct of arrays’ fashion as described in the <a class="reference internal" href="#struct"><span class="std std-ref">Struct</span></a> section.</p></li>
+<li><p>For <strong>cell arrays</strong>, i.e., if the type tag indicated ‘cell array’, the entire object array is instead processed as a <a class="reference internal" href="#cell-array"><span class="std std-ref">cell array</span></a>. This means that <code class="docutils literal notranslate"><span class="pre">data</span></code> is an array of object arrays.</p></li>
+<li><p>For <strong>self-serializing</strong> types, there is no shape and <code class="docutils literal notranslate"><span class="pre">data</span></code> has to encode how to read it.</p></li>
+</ul>
+</section>
+<section id="self-serializing">
+<h3>Self Serializing<a class="headerlink" href="#self-serializing" title="Link to this heading">#</a></h3>
+<p>Some data is ‘self-serializing’, meaning that it does not rely on an external type tag and shape to describe the data.
+Instead, if used inside an object array, this data must contain its own type tag.
+In ScippNeutron, this case is treated like a nested object array.</p>
+</section>
+<section id="auxiliary-types">
+<h3>Auxiliary Types<a class="headerlink" href="#auxiliary-types" title="Link to this heading">#</a></h3>
+<p>These types are not represented by type tags but occur in fixed locations in the file.</p>
+<section id="shape">
+<h4>Shape<a class="headerlink" href="#shape" title="Link to this heading">#</a></h4>
+<p>The shape of a multidimensional array.
+Encoded as</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>| ndim | length_0 | length_1 | ... |
+| :u8  | :u32     | :u32     | ... |
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">ndim</span></code> is the number of dimensions and there are this many <code class="docutils literal notranslate"><span class="pre">length_i</span></code> entries.</p>
+</section>
+<section id="data-block-type">
+<h4>Data Block Type<a class="headerlink" href="#data-block-type" title="Link to this heading">#</a></h4>
+<p>Each data block is encoded as a struct with, among others, fields ‘serial_name’ and ‘version’ which together identify the block.
+This is used to determine how to deserialize the block into a Python model.</p>
+</section>
+<section id="unique-object-container">
+<h4>Unique Object Container<a class="headerlink" href="#unique-object-container" title="Link to this heading">#</a></h4>
+<p>‘Unique object container’ and ‘Unique reference container’ are always used together and represent an array of objects where duplicates are only stored once.
+Each ‘Unique reference container’ contains a ‘Unique object container’ which in turn contains an array of indices that map from array index to a unique object.</p>
+</section>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">File Formats</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../../about/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">About</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 0.0.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

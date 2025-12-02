@@ -1,0 +1,1359 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scippneutron.conversion.tof &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css?v=a0a71c94" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../../_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scippneutron/conversion/tof';</script>
+    <script src="../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">scippneutron.conversion.tof</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scippneutron.conversion.tof</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2023 Scipp contributors (https://github.com/scipp)</span>
+<span class="c1"># @author Jan-Lukas Wynen</span>
+<span class="sd">&quot;&quot;&quot;Functions for computing coordinates in time-of-flight neutron scattering.</span>
+
+<span class="sd">Some functions in this module use the neutron mass :math:`m_n`</span>
+<span class="sd">and Planck constant :math:`h`.</span>
+<span class="sd">Their values are taken from :mod:`scipp.constants`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp.constants</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">const</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipp.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">VariableLike</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">as_float_type</span><span class="p">,</span> <span class="n">elem_dtype</span><span class="p">,</span> <span class="n">elem_unit</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_common_dtype</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Very limited type promotion.</span>
+<span class="sd">    Only useful to check if the combination of a and b results in</span>
+<span class="sd">    single or double precision float.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">elem_dtype</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="n">sc</span><span class="o">.</span><span class="n">DType</span><span class="o">.</span><span class="n">float32</span> <span class="ow">and</span> <span class="n">elem_dtype</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="n">sc</span><span class="o">.</span><span class="n">DType</span><span class="o">.</span><span class="n">float32</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">DType</span><span class="o">.</span><span class="n">float32</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">DType</span><span class="o">.</span><span class="n">float64</span>
+
+
+<div class="viewcode-block" id="wavelength_from_tof">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.wavelength_from_tof.html#scippneutron.conversion.tof.wavelength_from_tof">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">wavelength_from_tof</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">tof</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">Ltotal</span><span class="p">:</span> <span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the wavelength from time-of-flight.</span>
+
+<span class="sd">    The result is the de Broglie wavelength</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \lambda = \frac{h t}{m_n L_\mathsf{total}}</span>
+
+<span class="sd">    Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    tof:</span>
+<span class="sd">        Time-of-flight :math:`t`.</span>
+<span class="sd">    Ltotal:</span>
+<span class="sd">        Total beam length.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Wavelength :math:`\lambda`.</span>
+<span class="sd">        Has unit ångström.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">to_unit</span><span class="p">(</span>
+        <span class="n">const</span><span class="o">.</span><span class="n">h</span> <span class="o">/</span> <span class="n">const</span><span class="o">.</span><span class="n">m_n</span><span class="p">,</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">angstrom</span> <span class="o">*</span> <span class="n">elem_unit</span><span class="p">(</span><span class="n">Ltotal</span><span class="p">)</span> <span class="o">/</span> <span class="n">elem_unit</span><span class="p">(</span><span class="n">tof</span><span class="p">),</span>
+        <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">as_float_type</span><span class="p">(</span><span class="n">c</span> <span class="o">/</span> <span class="n">Ltotal</span><span class="p">,</span> <span class="n">tof</span><span class="p">)</span> <span class="o">*</span> <span class="n">tof</span></div>
+
+
+
+<div class="viewcode-block" id="dspacing_from_tof">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.dspacing_from_tof.html#scippneutron.conversion.tof.dspacing_from_tof">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dspacing_from_tof</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">tof</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">Ltotal</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">two_theta</span><span class="p">:</span> <span class="n">Variable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the d-spacing from time-of-flight.</span>
+
+<span class="sd">    The result is the inter-planar lattice spacing</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        d = \frac{h t}{m_n L_\mathsf{total}\; 2 \sin \theta}</span>
+
+<span class="sd">    Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    tof:</span>
+<span class="sd">        Time-of-flight :math:`t`.</span>
+<span class="sd">    Ltotal:</span>
+<span class="sd">        Total beam length.</span>
+<span class="sd">    two_theta:</span>
+<span class="sd">        Scattering angle :math:`2 \theta`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Inter-planar lattice spacing :math:`d`.</span>
+<span class="sd">        Has unit ångström.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scippneutron.conversions.beamline:</span>
+<span class="sd">        Definitions of ``two_theta`` and ``Ltotal``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">to_unit</span><span class="p">(</span>
+        <span class="mi">2</span> <span class="o">*</span> <span class="n">const</span><span class="o">.</span><span class="n">m_n</span> <span class="o">/</span> <span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="p">,</span>
+        <span class="n">elem_unit</span><span class="p">(</span><span class="n">tof</span><span class="p">)</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">angstrom</span> <span class="o">/</span> <span class="n">elem_unit</span><span class="p">(</span><span class="n">Ltotal</span><span class="p">),</span>
+        <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">as_float_type</span><span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">Ltotal</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">two_theta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="n">tof</span><span class="p">)</span> <span class="o">*</span> <span class="n">tof</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_energy_constant</span><span class="p">(</span><span class="n">energy_unit</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Unit</span><span class="p">,</span> <span class="n">tof</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="n">Variable</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">to_unit</span><span class="p">(</span>
+        <span class="n">const</span><span class="o">.</span><span class="n">m_n</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">energy_unit</span> <span class="o">*</span> <span class="p">(</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">tof</span><span class="p">)</span> <span class="o">/</span> <span class="n">elem_unit</span><span class="p">(</span><span class="n">length</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="energy_from_tof">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.energy_from_tof.html#scippneutron.conversion.tof.energy_from_tof">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">energy_from_tof</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">tof</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">Ltotal</span><span class="p">:</span> <span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the neutron energy from time-of-flight.</span>
+
+<span class="sd">    The result is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        E = \frac{m_n L_\mathsf{total}^2}{2 t^2}</span>
+
+<span class="sd">    Where :math:`m_n` is the neutron mass.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    tof:</span>
+<span class="sd">        Time-of-flight :math:`t`.</span>
+<span class="sd">    Ltotal:</span>
+<span class="sd">        Total beam length.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Neutron energy :math:`E`.</span>
+<span class="sd">        Has unit meV.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">_energy_constant</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">meV</span><span class="p">,</span> <span class="n">tof</span><span class="p">,</span> <span class="n">Ltotal</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">as_float_type</span><span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">Ltotal</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">tof</span><span class="p">)</span> <span class="o">/</span> <span class="n">tof</span> <span class="o">**</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span>
+        <span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">elem_dtype</span><span class="p">(</span><span class="n">tof</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_energy_transfer_t0</span><span class="p">(</span><span class="n">energy</span><span class="p">,</span> <span class="n">tof</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
+    <span class="n">dtype</span> <span class="o">=</span> <span class="n">_common_dtype</span><span class="p">(</span><span class="n">energy</span><span class="p">,</span> <span class="n">tof</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">as_float_type</span><span class="p">(</span><span class="n">_energy_constant</span><span class="p">(</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">energy</span><span class="p">),</span> <span class="n">tof</span><span class="p">,</span> <span class="n">length</span><span class="p">),</span> <span class="n">energy</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">length</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">c</span> <span class="o">/</span> <span class="n">energy</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="energy_transfer_direct_from_tof">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.energy_transfer_direct_from_tof.html#scippneutron.conversion.tof.energy_transfer_direct_from_tof">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">energy_transfer_direct_from_tof</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">tof</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">L1</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">L2</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">incident_energy</span><span class="p">:</span> <span class="n">Variable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the energy transfer in direct inelastic scattering.</span>
+
+<span class="sd">    The result is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \Delta E = E_i - \frac{m_n L_2^2}{2 {(t - t_0)}^2}</span>
+
+<span class="sd">    With</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        t_0 = \sqrt{m_n L_1^2 / (2 E_i)}</span>
+
+<span class="sd">    and :math:`m_n` the neutron mass.</span>
+
+<span class="sd">    The result is ``NaN`` for unphysical points, that is, where :math:`t &lt; t_0`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    tof:</span>
+<span class="sd">        Time-of-flight :math:`t`.</span>
+<span class="sd">    L1:</span>
+<span class="sd">        Primary beam length.</span>
+<span class="sd">    L2:</span>
+<span class="sd">        Secondary beam length.</span>
+<span class="sd">    incident_energy:</span>
+<span class="sd">        Energy before scattering :math:`E_i`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Energy transfer :math:`\Delta E`.</span>
+<span class="sd">        Has the same unit as incident_energy.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scippneutron.conversions.tof.energy_transfer_indirect_from_tof</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">_energy_transfer_t0</span><span class="p">(</span><span class="n">incident_energy</span><span class="p">,</span> <span class="n">tof</span><span class="p">,</span> <span class="n">L1</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">_energy_constant</span><span class="p">(</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">incident_energy</span><span class="p">),</span> <span class="n">tof</span><span class="p">,</span> <span class="n">L2</span><span class="p">)</span>
+    <span class="n">dtype</span> <span class="o">=</span> <span class="n">_common_dtype</span><span class="p">(</span><span class="n">incident_energy</span><span class="p">,</span> <span class="n">tof</span><span class="p">)</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">L2</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">delta_tof</span> <span class="o">=</span> <span class="n">tof</span> <span class="o">-</span> <span class="n">t0</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">delta_tof</span> <span class="o">&lt;=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">delta_tof</span><span class="p">)),</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">incident_energy</span><span class="p">)),</span>
+        <span class="n">incident_energy</span> <span class="o">-</span> <span class="n">scale</span> <span class="o">/</span> <span class="n">delta_tof</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="energy_transfer_indirect_from_tof">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.energy_transfer_indirect_from_tof.html#scippneutron.conversion.tof.energy_transfer_indirect_from_tof">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">energy_transfer_indirect_from_tof</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">tof</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">L1</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">L2</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">final_energy</span><span class="p">:</span> <span class="n">Variable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the energy transfer in indirect inelastic scattering.</span>
+
+<span class="sd">    The result is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \Delta E = \frac{m_n L_1^2}{2 {(t - t_0)}^2} - E_f</span>
+
+<span class="sd">    With</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        t_0 = \sqrt{m_n L_2^2 / (2 E_f)}</span>
+
+<span class="sd">    and :math:`m_n` the neutron mass.</span>
+
+<span class="sd">    The result is ``NaN`` for unphysical points, that is, where :math:`t &lt; t_0`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    tof:</span>
+<span class="sd">        Time-of-flight :math:`t`.</span>
+<span class="sd">    L1:</span>
+<span class="sd">        Primary beam length.</span>
+<span class="sd">    L2:</span>
+<span class="sd">        Secondary beam length.</span>
+<span class="sd">    final_energy:</span>
+<span class="sd">        Energy after scattering :math:`E_f`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Energy transfer :math:`\Delta E`.</span>
+<span class="sd">        Has the same unit as final_energy.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scippneutron.conversions.tof.energy_transfer_direct_from_tof</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">_energy_transfer_t0</span><span class="p">(</span><span class="n">final_energy</span><span class="p">,</span> <span class="n">tof</span><span class="p">,</span> <span class="n">L2</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">_energy_constant</span><span class="p">(</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">final_energy</span><span class="p">),</span> <span class="n">tof</span><span class="p">,</span> <span class="n">L1</span><span class="p">)</span>
+    <span class="n">dtype</span> <span class="o">=</span> <span class="n">_common_dtype</span><span class="p">(</span><span class="n">final_energy</span><span class="p">,</span> <span class="n">tof</span><span class="p">)</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">L1</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">delta_tof</span> <span class="o">=</span> <span class="o">-</span><span class="n">t0</span> <span class="o">+</span> <span class="n">tof</span>  <span class="c1"># Order chosen such that output.dims = [&#39;spectrum&#39;, &#39;tof&#39;]</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">delta_tof</span> <span class="o">&lt;=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">delta_tof</span><span class="p">)),</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">final_energy</span><span class="p">)),</span>
+        <span class="n">scale</span> <span class="o">/</span> <span class="n">delta_tof</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">final_energy</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="energy_from_wavelength">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.energy_from_wavelength.html#scippneutron.conversion.tof.energy_from_wavelength">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">energy_from_wavelength</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">:</span> <span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the neutron energy from wavelength.</span>
+
+<span class="sd">    The result is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        E = \frac{h^2}{2 m_n \lambda^2}</span>
+
+<span class="sd">    Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    wavelength:</span>
+<span class="sd">        De Broglie wavelength :math:`\lambda`.</span>
+<span class="sd">        Has unit meV.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Neutron energy :math:`E`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">as_float_type</span><span class="p">(</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">to_unit</span><span class="p">(</span>
+            <span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">const</span><span class="o">.</span><span class="n">m_n</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">meV</span> <span class="o">*</span> <span class="n">elem_unit</span><span class="p">(</span><span class="n">wavelength</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="p">),</span>
+        <span class="n">wavelength</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">c</span> <span class="o">/</span> <span class="n">wavelength</span><span class="o">**</span><span class="mi">2</span></div>
+
+
+
+<div class="viewcode-block" id="wavelength_from_energy">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.wavelength_from_energy.html#scippneutron.conversion.tof.wavelength_from_energy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">wavelength_from_energy</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">energy</span><span class="p">:</span> <span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the wavelength from the neutron energy.</span>
+
+<span class="sd">    The result is the de Broglie wavelength</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \lambda = \frac{h}{\sqrt{2 m_n E}}</span>
+
+<span class="sd">    Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    energy:</span>
+<span class="sd">        Neutron energy :math:`E`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Wavelength :math:`\lambda`.</span>
+<span class="sd">        Has unit ångström.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">as_float_type</span><span class="p">(</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">to_unit</span><span class="p">(</span>
+            <span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">const</span><span class="o">.</span><span class="n">m_n</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">angstrom</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">elem_unit</span><span class="p">(</span><span class="n">energy</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">energy</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">c</span> <span class="o">/</span> <span class="n">energy</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="wavevector_from_wavelength">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.wavevector_from_wavelength.html#scippneutron.conversion.tof.wavevector_from_wavelength">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">wavevector_from_wavelength</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">beam</span><span class="p">:</span> <span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute a wavevector from a wavelength.</span>
+
+<span class="sd">    The result is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        Q = 2 \pi \frac{\hat{b}}{\lambda}</span>
+
+<span class="sd">    where :math:`\hat{b}` is the normalized beam vector.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    wavelength:</span>
+<span class="sd">        De Broglie wavelength :math:`\lambda`.</span>
+<span class="sd">    beam:</span>
+<span class="sd">        The direction the neutron travels :math:`\vec{b}`.</span>
+<span class="sd">        It does not have to be normalized.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Wavevector :math:`k`.</span>
+<span class="sd">        Has unit 1/ångström.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+        <span class="n">unit</span><span class="o">=</span><span class="n">elem_unit</span><span class="p">(</span><span class="n">wavelength</span><span class="p">)</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">angstrom</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">c</span> <span class="o">*</span> <span class="p">(</span><span class="n">beam</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">beam</span><span class="p">))</span> <span class="o">/</span> <span class="n">wavelength</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_wavelength_elastic_Q_conversions</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">two_theta</span><span class="p">:</span> <span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert either from elastic Q to wavelength or vice-versa.&quot;&quot;&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">as_float_type</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">const</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">c</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">as_float_type</span><span class="p">(</span><span class="n">two_theta</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">x</span>
+
+
+<div class="viewcode-block" id="elastic_Q_from_wavelength">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.elastic_Q_from_wavelength.html#scippneutron.conversion.tof.elastic_Q_from_wavelength">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">elastic_Q_from_wavelength</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">two_theta</span><span class="p">:</span> <span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the absolute value of the elastic momentum transfer from wavelength.</span>
+
+<span class="sd">    Attention</span>
+<span class="sd">    ---------</span>
+<span class="sd">        :math:`Q` as defined here is the momentum transfer for **elastic** scattering.</span>
+
+<span class="sd">    The result is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        Q = \frac{4 \pi \sin \theta}{\lambda}</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    wavelength:</span>
+<span class="sd">        De Broglie wavelength :math:`\lambda`.</span>
+<span class="sd">    two_theta:</span>
+<span class="sd">        Scattering angle :math:`2 \theta`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Momentum transfer :math:`Q`.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scippneutron.conversions.beamline:</span>
+<span class="sd">        Definition of ``two_theta``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_wavelength_elastic_Q_conversions</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">two_theta</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="wavelength_from_Q">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.wavelength_from_Q.html#scippneutron.conversion.tof.wavelength_from_Q">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">wavelength_from_Q</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">Q</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">two_theta</span><span class="p">:</span> <span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the wavelength from momentum transfer.</span>
+
+<span class="sd">    Attention</span>
+<span class="sd">    ---------</span>
+<span class="sd">        :math:`Q` as defined here is the momentum transfer for **elastic** scattering.</span>
+
+<span class="sd">    The result is the de Broglie wavelength</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \lambda = \frac{4 \pi \sin \theta}{Q}</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Q:</span>
+<span class="sd">        Momentum transfer.</span>
+<span class="sd">    two_theta:</span>
+<span class="sd">        Scattering angle :math:`2 \theta`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Wavelength :math:`\lambda`</span>
+<span class="sd">        Has unit ångström.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scippneutron.conversions.beamline:</span>
+<span class="sd">        Definition of ``two_theta``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">to_unit</span><span class="p">(</span>
+        <span class="n">_wavelength_elastic_Q_conversions</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">two_theta</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;angstrom&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="elastic_Q_elements_from_wavelength">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.elastic_Q_elements_from_wavelength.html#scippneutron.conversion.tof.elastic_Q_elements_from_wavelength">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">elastic_Q_elements_from_wavelength</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">incident_beam</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">scattered_beam</span><span class="p">:</span> <span class="n">Variable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Variable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the elastic momentum transfer vector from wavelength.</span>
+
+<span class="sd">    Attention</span>
+<span class="sd">    ---------</span>
+<span class="sd">        :math:`Q` as defined here is the momentum transfer for **elastic** scattering.</span>
+
+<span class="sd">    Computes the three components of the Q-vector :math:`Q_x, Q_y, Q_z`</span>
+<span class="sd">    separately using</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \vec{Q} &amp;= (Q_x, Q_y, Q_z) \\</span>
+<span class="sd">        \vec{Q} &amp;= \vec{k}_i - \vec{k}_f</span>
+<span class="sd">                 = \frac{2\pi}{\lambda} \left(\hat{e}_i - \hat{e}_f\right),</span>
+
+<span class="sd">    where the unit vectors for incident momentum and final momentum</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \hat{e}_i &amp;= \vec{k_i} / | \vec{k_i} | \\</span>
+<span class="sd">        \hat{e}_f &amp;= \vec{k_f} / | \vec{k_f} |</span>
+
+<span class="sd">    are defined as the directions of ``incident_beam`` and ``scattered_beam``,</span>
+<span class="sd">    respectively.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    wavelength:</span>
+<span class="sd">        De Broglie wavelength :math:`\lambda`.</span>
+<span class="sd">    incident_beam:</span>
+<span class="sd">        Beam from source to sample. Expects ``dtype=vector3``.</span>
+<span class="sd">    scattered_beam:</span>
+<span class="sd">        Beam from sample to detector. Expects ``dtype=vector3``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Qx: scipp.Variable</span>
+<span class="sd">        x-component of the momentum transfer :math:`\vec{Q}`.</span>
+<span class="sd">    Qy: scipp.Variable</span>
+<span class="sd">        y-component of the momentum transfer :math:`\vec{Q}`.</span>
+<span class="sd">    Qz: scipp.Variable</span>
+<span class="sd">        z-component of the momentum transfer :math:`\vec{Q}`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">e_i</span> <span class="o">=</span> <span class="n">incident_beam</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">incident_beam</span><span class="p">)</span>
+    <span class="n">e_f</span> <span class="o">=</span> <span class="n">scattered_beam</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">scattered_beam</span><span class="p">)</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">e_i</span> <span class="o">-</span> <span class="n">e_f</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">wavelength</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;Qx&#39;</span><span class="p">:</span> <span class="n">k</span> <span class="o">*</span> <span class="n">e</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;Qy&#39;</span><span class="p">:</span> <span class="n">k</span> <span class="o">*</span> <span class="n">e</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="s1">&#39;Qz&#39;</span><span class="p">:</span> <span class="n">k</span> <span class="o">*</span> <span class="n">e</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">z</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="dspacing_from_wavelength">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.dspacing_from_wavelength.html#scippneutron.conversion.tof.dspacing_from_wavelength">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dspacing_from_wavelength</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">two_theta</span><span class="p">:</span> <span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the d-spacing from wavelength.</span>
+
+<span class="sd">    The result is the inter-planar lattice spacing</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        d = \frac{\lambda}{2 \sin \theta}</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    wavelength:</span>
+<span class="sd">        De Broglie wavelength :math:`\lambda`.</span>
+<span class="sd">    two_theta:</span>
+<span class="sd">        Scattering angle :math:`2 \theta`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Inter-planar lattice spacing :math:`d`.</span>
+<span class="sd">        Has unit ångström.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scippneutron.conversions.beamline:</span>
+<span class="sd">        Definition of ``two_theta``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">as_float_type</span><span class="p">(</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">angstrom</span> <span class="o">/</span> <span class="n">elem_unit</span><span class="p">(</span><span class="n">wavelength</span><span class="p">)),</span> <span class="n">wavelength</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">c</span> <span class="o">*</span> <span class="n">wavelength</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">as_float_type</span><span class="p">(</span><span class="n">two_theta</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="dspacing_from_energy">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.dspacing_from_energy.html#scippneutron.conversion.tof.dspacing_from_energy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dspacing_from_energy</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">energy</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">two_theta</span><span class="p">:</span> <span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the d-spacing from the neutron energy.</span>
+
+<span class="sd">    The result is the inter-planar lattice spacing</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        d = \frac{h}{\sqrt{8 m_n E} \sin \theta}</span>
+
+<span class="sd">    Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    energy:</span>
+<span class="sd">        Neutron energy :math:`E`.</span>
+<span class="sd">    two_theta:</span>
+<span class="sd">        Scattering angle :math:`2 \theta`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Inter-planar lattice spacing :math:`d`.</span>
+<span class="sd">        Has unit ångström.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scippneutron.conversions.beamline:</span>
+<span class="sd">        Definition of ``two_theta``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">as_float_type</span><span class="p">(</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">to_unit</span><span class="p">(</span>
+            <span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">8</span> <span class="o">/</span> <span class="n">const</span><span class="o">.</span><span class="n">m_n</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">angstrom</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">elem_unit</span><span class="p">(</span><span class="n">energy</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">energy</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">c</span> <span class="o">/</span> <span class="n">energy</span><span class="p">)</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">as_float_type</span><span class="p">(</span><span class="n">two_theta</span><span class="p">,</span> <span class="n">energy</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="elastic_Q_vec_from_Q_elements">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.elastic_Q_vec_from_Q_elements.html#scippneutron.conversion.tof.elastic_Q_vec_from_Q_elements">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">elastic_Q_vec_from_Q_elements</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">Qx</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">Qy</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">Qz</span><span class="p">:</span> <span class="n">Variable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine elements of elastic momentum transfer into a single vector variable.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Qx:</span>
+<span class="sd">        x-elements of the momentum transfer.</span>
+<span class="sd">    Qy:</span>
+<span class="sd">        y-elements of the momentum transfer.</span>
+<span class="sd">    Qz:</span>
+<span class="sd">        z-elements of the momentum transfer.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        ``Qx``, ``Qy``, ``Qz`` combined into a single variable of dtype ``vector3``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">Qx</span><span class="o">.</span><span class="n">sizes</span> <span class="o">!=</span> <span class="n">Qy</span><span class="o">.</span><span class="n">sizes</span> <span class="ow">or</span> <span class="n">Qx</span><span class="o">.</span><span class="n">sizes</span> <span class="o">!=</span> <span class="n">Qz</span><span class="o">.</span><span class="n">sizes</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span>
+            <span class="s2">&quot;Qx, Qy, Qz must have the same sizes. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Got </span><span class="si">{</span><span class="n">Qx</span><span class="o">.</span><span class="n">sizes</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">Qy</span><span class="o">.</span><span class="n">sizes</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">Qz</span><span class="o">.</span><span class="n">sizes</span><span class="si">=}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">spatial</span><span class="o">.</span><span class="n">as_vectors</span><span class="p">(</span><span class="n">Qx</span><span class="p">,</span> <span class="n">Qy</span><span class="p">,</span> <span class="n">Qz</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ub_matrix_from_u_and_b">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.ub_matrix_from_u_and_b.html#scippneutron.conversion.tof.ub_matrix_from_u_and_b">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ub_matrix_from_u_and_b</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">u_matrix</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">b_matrix</span><span class="p">:</span> <span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute the UB matrix from U and B matrices.</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \mathsf{UB} = U \cdot B</span>
+
+<span class="sd">    where :math:`U` and :math:`B` are defined as in</span>
+<span class="sd">    :cite:`busing:1967,mantid-lattice:2023`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    u_matrix:</span>
+<span class="sd">        :math:`U`.</span>
+<span class="sd">    b_matrix:</span>
+<span class="sd">        :math:`B`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        :math:`\mathsf{UB}`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">u_matrix</span> <span class="o">*</span> <span class="n">b_matrix</span></div>
+
+
+
+<div class="viewcode-block" id="hkl_vec_from_elastic_Q_vec">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.hkl_vec_from_elastic_Q_vec.html#scippneutron.conversion.tof.hkl_vec_from_elastic_Q_vec">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">hkl_vec_from_elastic_Q_vec</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">Q_vec</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">ub_matrix</span><span class="p">:</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">sample_rotation</span><span class="p">:</span> <span class="n">Variable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute hkl indices from elastic momentum transfer.</span>
+
+<span class="sd">    The hkl indices define the components of the momentum transfer in the</span>
+<span class="sd">    sample coordinate system</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \vec{Q} = \begin{pmatrix} h \\ k \\ l \end{pmatrix}.</span>
+
+<span class="sd">    In the lab frame, the momentum transfer as computed by</span>
+<span class="sd">    :func:`scippneutron.conversion.tof.Q_elements_from_wavelength`</span>
+<span class="sd">    is defined as</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \vec{Q}_l = \vec{k}_i - \vec{k}_f .</span>
+
+<span class="sd">    This quantity is called :math:`Q` elsewhere in ScippNeutron.</span>
+
+<span class="sd">    Those two :math:`Q`&#39;s are related by via</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \vec{Q}_l = 2 \pi R U B \vec{Q},</span>
+
+<span class="sd">    where :math:`U` and :math:`B` transform from sample space to the lab frame.</span>
+<span class="sd">    :math:`R` encodes the sample rotation, e.g., as given by a goniometer.</span>
+<span class="sd">    See, e.g., Refs. :cite:`busing:1967,mantid-lattice:2023,savici:2011`</span>
+<span class="sd">    for a definition.</span>
+
+<span class="sd">    This function computes the elements of :math:`\vec{Q}`, :math:`h, k, l` by inverting</span>
+<span class="sd">    the above equation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Q_vec:</span>
+<span class="sd">        Momentum transfer :math:`\vec{Q}_l` as a vector variable.</span>
+<span class="sd">    ub_matrix:</span>
+<span class="sd">        Matrix :math:`\mathsf{UB}`.</span>
+<span class="sd">    sample_rotation:</span>
+<span class="sd">        Sample rotation matrix :math:`R`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        :math:`h, k, l` as a vector variable.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scippneutron.conversion.tof.Q_elements_from_wavelength:</span>
+<span class="sd">        Computes ``Q_l``.</span>
+<span class="sd">    scippneutron.conversion.tof.Q_vec_from_Q_elements:</span>
+<span class="sd">        Packs elements ``Qx``, ``Qy``, ``Qz`` into a single vector.</span>
+<span class="sd">    scippneutron.conversion.tof.ub_matrix_from_u_and_b:</span>
+<span class="sd">        Compute :math:`\mathsf{UB}` from :math:`B` and :math:`B` matrices.</span>
+<span class="sd">    scippneutron.conversion.tof.hkl_elements_from_hkl_vec:</span>
+<span class="sd">        Unpack the returned hkl vector.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># There are different ways to implement this with different performance and</span>
+    <span class="c1"># accuracy characteristics.</span>
+    <span class="c1"># Matrix-matrix products typically have worse accuracy than matrix-vector</span>
+    <span class="c1"># products due to repeated floating point cutoffs.</span>
+    <span class="c1"># Matrix inversions are often unstable; however, all matrices used here are small.</span>
+    <span class="c1"># Potential implementations are</span>
+    <span class="c1">#</span>
+    <span class="c1"># (sc.spatial.inv(B) * (sc.spatial.inv(U) * (sc.spatial.inv(R) * Q))) / (2*np.pi)</span>
+    <span class="c1">#</span>
+    <span class="c1"># (((sc.spatial.inv(B) * sc.spatial.inv(U)) * sc.spatial.inv(R)) * Q) / (2*np.pi)</span>
+    <span class="c1">#</span>
+    <span class="c1"># (sc.spatial.inv((R * U) * B) * Q) / (2*np.pi)</span>
+    <span class="c1">#</span>
+    <span class="c1"># All 3 were tested with random matrices and vectors and the first was found</span>
+    <span class="c1"># to have the best overall accuracy, being an order of magnitude better than the</span>
+    <span class="c1"># others in particularly bad cases and equal in the majority of cases.</span>
+    <span class="c1">#</span>
+    <span class="c1"># Concerning performance, R, U, B are scalar variables or short array variables</span>
+    <span class="c1"># in typical use cases while Q is typically a long, potentially multi-dim array.</span>
+    <span class="c1"># So implementation 3 will likely perform the best.</span>
+    <span class="c1">#</span>
+    <span class="c1"># This function uses implementation 3 as the performance gain</span>
+    <span class="c1"># is expected to be significant over 1 and 2.</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">spatial</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">sample_rotation</span> <span class="o">*</span> <span class="n">ub_matrix</span><span class="p">)</span> <span class="o">*</span> <span class="n">Q_vec</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="hkl_elements_from_hkl_vec">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.hkl_elements_from_hkl_vec.html#scippneutron.conversion.tof.hkl_elements_from_hkl_vec">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">hkl_elements_from_hkl_vec</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">hkl_vec</span><span class="p">:</span> <span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Variable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unpack vector of hkl indices into separate variables.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    hkl_vec:</span>
+<span class="sd">        Vector of hkl indices.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    h: scipp.Variable</span>
+<span class="sd">        1st component of the hkl vector.</span>
+<span class="sd">    k: scipp.Variable</span>
+<span class="sd">        2nd component of the hkl vector.</span>
+<span class="sd">    l: scipp.Variable</span>
+<span class="sd">        3rd component of the hkl vector.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;h&#39;</span><span class="p">:</span> <span class="n">hkl_vec</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">:</span> <span class="n">hkl_vec</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">:</span> <span class="n">hkl_vec</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">z</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="time_at_sample_from_tof">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.conversion.tof.time_at_sample_from_tof.html#scippneutron.conversion.tof.time_at_sample_from_tof">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">time_at_sample_from_tof</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">pulse_time</span><span class="p">:</span> <span class="n">VariableLike</span><span class="p">,</span>
+    <span class="n">tof</span><span class="p">:</span> <span class="n">VariableLike</span><span class="p">,</span>
+    <span class="n">L2</span><span class="p">:</span> <span class="n">VariableLike</span><span class="p">,</span>
+    <span class="n">wavelength</span><span class="p">:</span> <span class="n">VariableLike</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VariableLike</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the absolute time when the neutron passed through the sample.</span>
+
+<span class="sd">    The result is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        t_{sample} = t_{pulse} + t_{of} - L_2 / v</span>
+
+<span class="sd">    where</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        v = \\frac{h}{m_n \\lambda}</span>
+
+<span class="sd">    where :math:`v` is the estimated velocity of the neutron over its path from</span>
+<span class="sd">    sample to detector and :math:`\\lambda` is the wavelength of the neutron.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pulse_time:</span>
+<span class="sd">        absolute time when time of flight is 0</span>
+<span class="sd">    tof:</span>
+<span class="sd">        the time of fligth of the neutron</span>
+<span class="sd">    L2:</span>
+<span class="sd">        path length from sample to detector</span>
+<span class="sd">    wavelength:</span>
+<span class="sd">        wavelength of the neutron (at the detector).</span>
+<span class="sd">        Assuming this did not change during the neutrons</span>
+<span class="sd">        travel from sample to detector this can be used to compute the</span>
+<span class="sd">        velocity the neutron had between the sample and the detector.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        :math:`t_{sample}`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">to_unit</span><span class="p">(</span>
+        <span class="n">const</span><span class="o">.</span><span class="n">h</span> <span class="o">/</span> <span class="n">const</span><span class="o">.</span><span class="n">m_n</span><span class="p">,</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">angstrom</span> <span class="o">*</span> <span class="n">elem_unit</span><span class="p">(</span><span class="n">L2</span><span class="p">)</span> <span class="o">/</span> <span class="n">elem_unit</span><span class="p">(</span><span class="n">tof</span><span class="p">),</span>
+        <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">pulse_time</span> <span class="o">+</span> <span class="n">tof</span> <span class="o">-</span> <span class="n">L2</span> <span class="o">*</span> <span class="n">wavelength</span> <span class="o">/</span> <span class="n">c</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 0.0.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

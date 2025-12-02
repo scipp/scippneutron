@@ -1,0 +1,1331 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Reading and processing NeXus choppers &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/autodoc_pydantic.css?v=a0a71c94" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user-guide/chopper/processing-nexus-choppers';</script>
+    <script src="../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Chopper Cascades" href="chopper-cascade.html" />
+    <link rel="prev" title="Choppers" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Choppers</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Reading and processing NeXus choppers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chopper-cascade.html">Chopper Cascades</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../coordinate-transformations.html">Coordinate Transformations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../groupby.html">GroupBy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../from-mantid-to-scipp.html">From Mantid to Scipp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../instrument-view.html">Instrument view</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../recipes.html">Recipes: How do I …?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../masking-tool.html">Interactive masking tool</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../algorithms-background/index.html">Background on algorithms</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../algorithms-background/two_theta-gravity-correction.html">two_theta gravity correction</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../absorption-correction.html">Absorption correction example</a></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#NeXus-chopper-data">NeXus chopper data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Converting-to-a-DiskChopper">Converting to a <code class="docutils literal notranslate"><span class="pre">DiskChopper</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Inspecting-time-dependent-logs">Inspecting time-dependent logs</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Identifying-in-phase-regions">Identifying in-phase regions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Inspecting-TDC-timestamps">Inspecting TDC timestamps</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Computing-chopper-phase">Computing chopper phase</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../../_sources/user-guide/chopper/processing-nexus-choppers.ipynb">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">User Guide</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Choppers</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Reading and processing NeXus choppers</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="Reading-and-processing-NeXus-choppers">
+<h1>Reading and processing NeXus choppers<a class="headerlink" href="#Reading-and-processing-NeXus-choppers" title="Link to this heading">#</a></h1>
+<p>This guide shows how to extract the relevant data from a NeXus representation of a chopper and create a <a class="reference internal" href="../../generated/modules/scippneutron.chopper.disk_chopper.DiskChopper.html"><span class="doc">scippneutron.chopper.DiskChopper</span></a> object.</p>
+<p>We also demonstrate some utilities that Scippneutron provides to process and visualize the data inside NeXus choppers.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+</pre></div>
+</div>
+</div>
+<section id="NeXus-chopper-data">
+<h2>NeXus chopper data<a class="headerlink" href="#NeXus-chopper-data" title="Link to this heading">#</a></h2>
+<p>Here, we use fake data which roughly represents what a real chopper loaded from NeXus looks like. ScippNeutron has a function for generating this data:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">chopper_mockup</span>
+
+<span class="n">chopper</span> <span class="o">=</span> <span class="n">chopper_mockup</span><span class="p">()</span>
+<span class="n">chopper</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><style id="scipp-style-sheet">.sc-root{--sc-background-color0:var(--jp-layout-color0,#fff);--sc-background-color1:var(--jp-layout-color1,#fcfcfc);--sc-background-color2:var(--jp-layout-color2,#efefef);--sc-inverse-background-color0:var(--jp-inverse-layout-color4,#111);--sc-font-color0:var(--jp-content-font-color0,#000);--sc-font-color1:var(--jp-content-font-color1,#555);--sc-font-color2:var(--jp-content-font-color2,#888);--sc-font-color3:var(--jp-content-font-color3,#ccc);}body.vscode-dark .sc-root{--sc-font-color0:rgba(255,255,255,1);--sc-font-color1:rgba(255,255,255,0.70);--sc-font-color2:rgba(255,255,255,0.54);--sc-font-color3:rgba(255,255,255,0.38);--sc-border-color:#1F1F1F;--sc-disabled-color:#515151;--sc-background-color0:#111111;--sc-background-color1:#111111;--sc-background-color2:#313131;}.sc-wrap{font-size:14px;min-width:300px;max-width:800px;}.sc-var-attrs .sc-wrap{padding-left:3em;}.sc-header{padding-top:6px;padding-bottom:6px;margin-bottom:4px;border-bottom:solid 1px #ddd;}.sc-header > div,.sc-header > ul{display:inline;margin-top:0;margin-bottom:0;}.sc-obj-type,.sc-array-name{margin-left:2px;margin-right:10px;}.sc-obj-type{color:var(--sc-font-color1);}.sc-underlying-size{color:var(--sc-font-color2);}.sc-sections,.reveal .sc-sections{padding-left:0 !important;display:grid;grid-template-columns:150px auto auto auto 1fr 20px 20px;}.sc-section-item{display:contents;}.sc-section-item input{display:none;}.sc-section-item input:enabled + label{cursor:pointer;color:var(--sc-font-color1);}.sc-section-item input:enabled + label:hover{color:var(--sc-font-color0);}.sc-section-summary{grid-column:1;font-weight:500;}.sc-section-summary > span{display:inline-block;padding-left:0.5em;}.sc-section-summary-in:disabled + label{color:var(--sc-font-color1);}.sc-section-summary-in + label:before{display:inline-block;content:'►';font-size:11px;width:15px;text-align:center;}.sc-section-summary-in:disabled + label:before{color:var(--sc-font-color3);}.sc-section-summary-in:checked + label:before{content:'▼';}.sc-section-summary-in:checked + label > span{display:none;}.sc-section-summary,.sc-section-inline-details{padding-top:4px;padding-bottom:4px;}.sc-section-inline-details{grid-column:2 / 6;}.sc-section-details{display:none;grid-column:1 / -1;margin-bottom:5px;}.sc-section-summary-in:checked ~ .sc-section-details{display:contents;}.sc-array-wrap{grid-column:1 / -1;display:grid;grid-template-columns:20px auto;}.sc-array-wrap > label{grid-column:1;vertical-align:top;}.sc-preview{color:var(--sc-font-color2);}.sc-array-preview,.sc-array-data{padding:0 5px !important;grid-column:2;}.sc-array-data,.sc-array-in:checked ~ .sc-array-preview{display:none;}.sc-array-in:checked ~ .sc-array-data,.sc-array-preview{display:inline-block;}.sc-dim-list{display:inline-block !important;list-style:none;padding:0 !important;margin:0;}.sc-dim-list li{display:inline-block;padding:0;margin:0!important;}.sc-dim-list:before{content:'(';}.sc-dim-list:after{content:')';}.sc-dim-list li:not(:last-child):after{content:',';padding-right:5px;}.sc-dim-list li span,.sc-standalone-var-name > span span,.sc-var-name > span span{padding:0 !important;}.sc-aligned{font-weight:bold;}.sc-var-list,.sc-var-item,.reveal .sc-var-list,.reveal .sc-var-item{display:contents;}.sc-var-item > div,.sc-var-item label,.sc-var-item > .sc-var-name span{background-color:var(--sc-background-color1);margin-bottom:0;}.sc-var-item > .sc-var-name:hover span{padding-right:5px;}.sc-var-list > li:nth-child(odd) > div,.sc-var-list > li:nth-child(odd) > label,.sc-var-list > li:nth-child(odd) > .sc-var-name span{background-color:var(--sc-background-color2);}.sc-var-name{grid-column:1;}.sc-var-dims{grid-column:2;}.sc-var-dtype{grid-column:3;text-align:right;color:var(--sc-font-color2);}.sc-var-unit{grid-column:4;text-align:left;color:var(--sc-font-color1);max-width:50pt;text-overflow:ellipsis;}.sc-value-preview{grid-column:5;}.sc-var-preview-variances{text-align:right;}.sc-sections .sc-section-item .sc-section-summary,.sc-sections .sc-section-item .sc-section-inline-details,.sc-section-item .sc-var-list .sc-var-item > div,.sc-section-item .sc-var-list .sc-var-item > label,.sc-section-details .sc-var-list .sc-var-item > div,.sc-section-details .sc-var-list .sc-var-item > label{margin-top:0;margin-bottom:0;}.sc-var-name,.sc-var-dims,.sc-var-dtype,.sc-var-unit,.sc-preview,.sc-attrs dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px;}.sc-var-name:hover,.sc-var-dims:hover,.sc-var-dtype:hover,.sc-var-unit:hover,.sc-attrs dt:hover{overflow:visible;width:auto;z-index:1;}.sc-var-attrs{display:block;}.sc-var-data,.reveal .sc-var-data{display:none;}.sc-var-attrs,.sc-var-data{background-color:var(--sc-background-color0) !important;padding-bottom:5px !important;}.sc-var-attrs-in:checked ~ .sc-var-attrs{display:none;}.sc-var-data-in:checked ~ .sc-var-data{display:block;}.sc-var-data > table{float:right;}.sc-var-name span,.sc-var-data{padding-left:25px !important;}.sc-var-attrs,.sc-var-data{grid-column:1 / -1;}dl.sc-attrs{padding:0;margin:0;display:grid;grid-template-columns:125px auto;}.sc-attrs dt,dd{padding:0;margin:0;float:left;padding-right:10px;width:auto;}.sc-attrs dt{font-weight:normal;grid-column:1;}.sc-attrs dt:hover span{display:inline-block;padding-right:10px;}.sc-attrs dd{grid-column:2;white-space:pre-wrap;word-break:break-all;}.sc-icon-database,.sc-icon-file-text2{display:inline-block;vertical-align:middle;width:1em;height:1.5em !important;stroke-width:0;stroke:currentColor;fill:currentColor;}label.sc-hide-icon svg{opacity:0;}.sc-standalone-var-name{grid-column:1/3;}.sc-standalone-var-name span{padding-left:25px;padding-right:10px;}.sc-title{font-weight:bold;font-size:1.5em;}.sc-subtitle{font-weight:normal;font-style:italic;text-align:left;font-size:1.2em;padding:1px;}.sc-label{fill:var(--sc-font-color0,#444444);text-anchor:middle;}.sc-name{fill:var(--sc-font-color0,#111111);}.sc-inset-line{stroke:var(--sc-font-color1);stroke-width:0.05;stroke-dasharray:0.2,0.2;}.sc-log-wrap{height:25ex;resize:vertical;overflow-y:scroll;display:flex;flex-direction:column-reverse;border:1px solid;border-color:var(--jp-border-color2);background-color:var(--sc-background-color1);}div.sc-log{line-height:2.5ex;}table.sc-log{table-layout:auto;border-collapse:collapse;}tr.sc-log:nth-child(even){background-color:var(--sc-background-color0);}tr.sc-log > td{vertical-align:top;padding-bottom:0.5ex;}.sc-log-time-stamp{min-width:22ch;font-family:var(--jp-code-font-family);color:var(--sc-font-color2);}.sc-log-level{min-width:10ch;}tr.sc-log-debug td.sc-log-level{color:var(--jp-accent-color1);}tr.sc-log-info td.sc-log-level{color:var(--jp-info-color1);}tr.sc-log-warning td.sc-log-level{color:var(--jp-warn-color1);}tr.sc-log-error td.sc-log-level{font-weight:bold;color:var(--jp-error-color2);}tr.sc-log-critical td.sc-log-level{font-weight:bold;color:var(--sc-background-color0);background-color:var(--jp-error-color1);}.sc-log-message{white-space:pre-wrap;width:100%;}.sc-log-html-payload{white-space:normal;}.sc-log-name{padding-right:0.5em;text-align:right;white-space:pre-wrap;color:var(--sc-font-color3);}</style><style id="datagroup-style-sheet">.dg-root{white-space:normal;font-size:14px;min-width:300px;max-width:1200px;}.dg-root *{box-sizing:border-box;}.sc-header > label,.sc-header > label > div,.sc-header > label > div > ul{display:inline;margin-bottom:0;}.dg-header-in{display:none;}.dg-header-in + .sc-header > label:before{display:inline-block;font-size:11px;text-align:left;content:'►';}.dg-header-in:checked + .sc-header > label:before{content:'▼';}.dg-header-in ~ .dg-detail-box{display:none;}.dg-header-in:checked ~ .dg-detail-box{display:grid;}.dg-detail-box{margin-top:5px;margin-bottom:5px;column-gap:0 !important;display:grid;grid-template-columns:max-content max-content max-content max-content max-content max-content max-content;grid-template-areas:"name        parent      object-type shape       dtype       unit        preview";}.dg-detail-box *{margin-top:0;margin-bottom:0;}.dg-detail-list{display:contents;}.dg-detail-item{display:contents;list-style-type:none;}.dg-detail-item-in{display:none;}.dg-detail-item-in + .dg-detail-name > label:before{display:inline-block;font-size:14px;text-align:left;content:'►';}.dg-detail-item-in:checked + .dg-detail-name > label:before{content:'▼';}.dg-detail-item div,.dg-detail-item span,.dg-detail-item label{word-break:break-all;min-width:1em;max-width:20em;width:100%;}.dg-detail-item > div{display:contents;}.dg-detail-item > div > div > div{width:100%;}.dg-detail-item:hover > div > div{background-color:var(--sc-background-color2) !important;}.dg-detail-item > div span{padding-left:10px;padding-right:10px;}.dg-detail-item > div > div:first-of-type{grid-column-start:1;}.dg-detail-item-subsection{display:none;}.dg-detail-item-in{margin:0;}.dg-detail-item-in:checked ~ .dg-detail-item-subsection{display:contents;}.dg-detail-item .dg-detail-name{grid-area:"name";min-width:5em;}.dg-detail-name{padding-left:calc(var(--depth)*2em);}.dg-detail-name > label{padding-left:8px;}.dg-detail-name > label > span{padding-left:0.1em;}.dg-detail-item .dg-detail-parent{grid-area:"parent";text-align:right;}.dg-detail-item .dg-detail-objtype{grid-area:"objtype";text-align:left;}.dg-detail-item .dg-detail-shape{max-width:30em;grid-area:"shape";text-align:left;}.sc-header .dg-detail-shape{margin-left:1em;text-align:left;}.dg-detail-item .dg-detail-dtype{grid-area:"dtype";text-align:left;}.dg-detail-item .dg-detail-unit{grid-area:"unit";text-align:center;}.dg-detail-item .dg-detail-preview{grid-area:"preview";min-width:15em;max-width:100em !important;text-align:left;}.dg-detail-preview .sc-preview span,.dg-detail-shape span{padding:0 !important;}</style><div class='sc-root dg-root'><input class='dg-header-in' id='datagroup-view-f6c48ed0-b66c-4fb9-9c0d-b5e7553e5174' type='checkbox' checked><div class='sc-header'><label for=datagroup-view-f6c48ed0-b66c-4fb9-9c0d-b5e7553e5174 title='Expand/collapse'><div class='sc-obj-type'>scipp.DataGroup </div><div class='dg-detail-shape'>(time: None, slit: 4)</div></label></div><div class='dg-detail-box'><ul class='dg-detail-list'><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>beam_position</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>rad</span></div><div class='dg-detail-preview'><span class='sc-preview'>0.0</span></div></div></li><li class='dg-detail-item'><div><input class='dg-detail-item-in' id='summary-ec8b5883-a21d-4496-9313-26804f1e97bf' type='checkbox' ><div class='dg-detail-name' style='--depth: 0;'><label for=summary-ec8b5883-a21d-4496-9313-26804f1e97bf title='Expand/collapse'><span>delay<span></label></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>DataGroup</span></div><div class='dg-detail-shape'>(time: 1)</div><div class='dg-detail-dtype'></div><div class='dg-detail-unit'></div><div class='dg-detail-preview'></div><ul class='dg-detail-item-subsection'><ul class='dg-detail-list'><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 1;'><span>value</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>DataArray</span></div><div class='dg-detail-shape'>(time: 1)</div><div class='dg-detail-dtype'><span>int64</span></div><div class='dg-detail-unit'><span>ns</span></div><div class='dg-detail-preview'><span class='sc-preview'>30500000</span></div></div></li></ul></ul></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>position</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>vector3</span></div><div class='dg-detail-unit'><span>m</span></div><div class='dg-detail-preview'><span class='sc-preview'>[ 0.  0. 60.]</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>radius</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>m</span></div><div class='dg-detail-preview'><span class='sc-preview'>0.35</span></div></div></li><li class='dg-detail-item'><div><input class='dg-detail-item-in' id='summary-139f9cd4-436f-4d59-b38d-f4522dcf5611' type='checkbox' ><div class='dg-detail-name' style='--depth: 0;'><label for=summary-139f9cd4-436f-4d59-b38d-f4522dcf5611 title='Expand/collapse'><span>rotation_speed<span></label></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>DataGroup</span></div><div class='dg-detail-shape'>(time: 180)</div><div class='dg-detail-dtype'></div><div class='dg-detail-unit'></div><div class='dg-detail-preview'></div><ul class='dg-detail-item-subsection'><ul class='dg-detail-list'><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 1;'><span>value</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>DataArray</span></div><div class='dg-detail-shape'>(time: 180)</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>Hz</span></div><div class='dg-detail-preview'><span class='sc-preview'>1.287e-05, 0.359, ..., 0.352, -4.904e-07</span></div></div></li></ul></ul></div></li><li class='dg-detail-item'><div><input class='dg-detail-item-in' id='summary-3eabdfbe-8e38-49d4-9ccc-337dd882bafd' type='checkbox' ><div class='dg-detail-name' style='--depth: 0;'><label for=summary-3eabdfbe-8e38-49d4-9ccc-337dd882bafd title='Expand/collapse'><span>rotation_speed_setpoint<span></label></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>DataGroup</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'></div><div class='dg-detail-unit'></div><div class='dg-detail-preview'></div><ul class='dg-detail-item-subsection'><ul class='dg-detail-list'><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 1;'><span>value</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>Hz</span></div><div class='dg-detail-preview'><span class='sc-preview'>14.0</span></div></div></li></ul></ul></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>slit_height</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>m</span></div><div class='dg-detail-preview'><span class='sc-preview'>0.1</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>slit_edges</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>(slit: 4)</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>deg</span></div><div class='dg-detail-preview'><span class='sc-preview'>30.0, 160.0, 210.0, 280.0</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>slits</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'></span></div><div class='dg-detail-objtype'><span>int</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span></span></div><div class='dg-detail-unit'><span></span></div><div class='dg-detail-preview'><span class='sc-preview'>2</span></div></div></li><li class='dg-detail-item'><div><input class='dg-detail-item-in' id='summary-a8ea63ff-fa46-4885-87d6-41e0b397578b' type='checkbox' ><div class='dg-detail-name' style='--depth: 0;'><label for=summary-a8ea63ff-fa46-4885-87d6-41e0b397578b title='Expand/collapse'><span>top_dead_center<span></label></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>DataGroup</span></div><div class='dg-detail-shape'>(time: 2354)</div><div class='dg-detail-dtype'></div><div class='dg-detail-unit'></div><div class='dg-detail-preview'></div><ul class='dg-detail-item-subsection'><ul class='dg-detail-list'><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 1;'><span>time</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>(time: 2354)</div><div class='dg-detail-dtype'><span>datetime64</span></div><div class='dg-detail-unit'><span>ns</span></div><div class='dg-detail-preview'><span class='sc-preview'>2023-01-19T08:11:06.217830400, 2023-01-19T08:11:08.799053824, ..., 2023-01-19T08:14:39.174524416, 2023-01-19T08:14:40.640919296</span></div></div></li></ul></ul></div></li></ul></div></div></div></div>
+</div>
+<p>We can see that there is some information about the slits and geometry of the chopper as well as some timing-related data. Take a look at the <a class="reference external" href="https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html">NXdisk_chopper</a> documentation for an overview of the fields.</p>
+<p>In this case, there already is a <code class="docutils literal notranslate"><span class="pre">position</span></code>. This typically needs to be computed first, see <a class="reference external" href="https://scipp.github.io/scippnexus/generated/functions/scippnexus.compute_positions.html">scippnexus.compute_positions</a>.</p>
+<p>Some fields are nested data groups which happens when a NeXus file contains <code class="docutils literal notranslate"><span class="pre">NXlog</span></code>s. We can extract the relevant arrays from them using <a class="reference internal" href="../../generated/modules/scippneutron.chopper.nexus_chopper.extract_chopper_from_nexus.html"><span class="doc">extract_chopper_from_nexus</span></a>:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron.chopper</span><span class="w"> </span><span class="kn">import</span> <span class="n">extract_chopper_from_nexus</span>
+
+<span class="n">chopper</span> <span class="o">=</span> <span class="n">extract_chopper_from_nexus</span><span class="p">(</span><span class="n">chopper</span><span class="p">)</span>
+<span class="n">chopper</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><style id="scipp-style-sheet">.sc-root{--sc-background-color0:var(--jp-layout-color0,#fff);--sc-background-color1:var(--jp-layout-color1,#fcfcfc);--sc-background-color2:var(--jp-layout-color2,#efefef);--sc-inverse-background-color0:var(--jp-inverse-layout-color4,#111);--sc-font-color0:var(--jp-content-font-color0,#000);--sc-font-color1:var(--jp-content-font-color1,#555);--sc-font-color2:var(--jp-content-font-color2,#888);--sc-font-color3:var(--jp-content-font-color3,#ccc);}body.vscode-dark .sc-root{--sc-font-color0:rgba(255,255,255,1);--sc-font-color1:rgba(255,255,255,0.70);--sc-font-color2:rgba(255,255,255,0.54);--sc-font-color3:rgba(255,255,255,0.38);--sc-border-color:#1F1F1F;--sc-disabled-color:#515151;--sc-background-color0:#111111;--sc-background-color1:#111111;--sc-background-color2:#313131;}.sc-wrap{font-size:14px;min-width:300px;max-width:800px;}.sc-var-attrs .sc-wrap{padding-left:3em;}.sc-header{padding-top:6px;padding-bottom:6px;margin-bottom:4px;border-bottom:solid 1px #ddd;}.sc-header > div,.sc-header > ul{display:inline;margin-top:0;margin-bottom:0;}.sc-obj-type,.sc-array-name{margin-left:2px;margin-right:10px;}.sc-obj-type{color:var(--sc-font-color1);}.sc-underlying-size{color:var(--sc-font-color2);}.sc-sections,.reveal .sc-sections{padding-left:0 !important;display:grid;grid-template-columns:150px auto auto auto 1fr 20px 20px;}.sc-section-item{display:contents;}.sc-section-item input{display:none;}.sc-section-item input:enabled + label{cursor:pointer;color:var(--sc-font-color1);}.sc-section-item input:enabled + label:hover{color:var(--sc-font-color0);}.sc-section-summary{grid-column:1;font-weight:500;}.sc-section-summary > span{display:inline-block;padding-left:0.5em;}.sc-section-summary-in:disabled + label{color:var(--sc-font-color1);}.sc-section-summary-in + label:before{display:inline-block;content:'►';font-size:11px;width:15px;text-align:center;}.sc-section-summary-in:disabled + label:before{color:var(--sc-font-color3);}.sc-section-summary-in:checked + label:before{content:'▼';}.sc-section-summary-in:checked + label > span{display:none;}.sc-section-summary,.sc-section-inline-details{padding-top:4px;padding-bottom:4px;}.sc-section-inline-details{grid-column:2 / 6;}.sc-section-details{display:none;grid-column:1 / -1;margin-bottom:5px;}.sc-section-summary-in:checked ~ .sc-section-details{display:contents;}.sc-array-wrap{grid-column:1 / -1;display:grid;grid-template-columns:20px auto;}.sc-array-wrap > label{grid-column:1;vertical-align:top;}.sc-preview{color:var(--sc-font-color2);}.sc-array-preview,.sc-array-data{padding:0 5px !important;grid-column:2;}.sc-array-data,.sc-array-in:checked ~ .sc-array-preview{display:none;}.sc-array-in:checked ~ .sc-array-data,.sc-array-preview{display:inline-block;}.sc-dim-list{display:inline-block !important;list-style:none;padding:0 !important;margin:0;}.sc-dim-list li{display:inline-block;padding:0;margin:0!important;}.sc-dim-list:before{content:'(';}.sc-dim-list:after{content:')';}.sc-dim-list li:not(:last-child):after{content:',';padding-right:5px;}.sc-dim-list li span,.sc-standalone-var-name > span span,.sc-var-name > span span{padding:0 !important;}.sc-aligned{font-weight:bold;}.sc-var-list,.sc-var-item,.reveal .sc-var-list,.reveal .sc-var-item{display:contents;}.sc-var-item > div,.sc-var-item label,.sc-var-item > .sc-var-name span{background-color:var(--sc-background-color1);margin-bottom:0;}.sc-var-item > .sc-var-name:hover span{padding-right:5px;}.sc-var-list > li:nth-child(odd) > div,.sc-var-list > li:nth-child(odd) > label,.sc-var-list > li:nth-child(odd) > .sc-var-name span{background-color:var(--sc-background-color2);}.sc-var-name{grid-column:1;}.sc-var-dims{grid-column:2;}.sc-var-dtype{grid-column:3;text-align:right;color:var(--sc-font-color2);}.sc-var-unit{grid-column:4;text-align:left;color:var(--sc-font-color1);max-width:50pt;text-overflow:ellipsis;}.sc-value-preview{grid-column:5;}.sc-var-preview-variances{text-align:right;}.sc-sections .sc-section-item .sc-section-summary,.sc-sections .sc-section-item .sc-section-inline-details,.sc-section-item .sc-var-list .sc-var-item > div,.sc-section-item .sc-var-list .sc-var-item > label,.sc-section-details .sc-var-list .sc-var-item > div,.sc-section-details .sc-var-list .sc-var-item > label{margin-top:0;margin-bottom:0;}.sc-var-name,.sc-var-dims,.sc-var-dtype,.sc-var-unit,.sc-preview,.sc-attrs dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px;}.sc-var-name:hover,.sc-var-dims:hover,.sc-var-dtype:hover,.sc-var-unit:hover,.sc-attrs dt:hover{overflow:visible;width:auto;z-index:1;}.sc-var-attrs{display:block;}.sc-var-data,.reveal .sc-var-data{display:none;}.sc-var-attrs,.sc-var-data{background-color:var(--sc-background-color0) !important;padding-bottom:5px !important;}.sc-var-attrs-in:checked ~ .sc-var-attrs{display:none;}.sc-var-data-in:checked ~ .sc-var-data{display:block;}.sc-var-data > table{float:right;}.sc-var-name span,.sc-var-data{padding-left:25px !important;}.sc-var-attrs,.sc-var-data{grid-column:1 / -1;}dl.sc-attrs{padding:0;margin:0;display:grid;grid-template-columns:125px auto;}.sc-attrs dt,dd{padding:0;margin:0;float:left;padding-right:10px;width:auto;}.sc-attrs dt{font-weight:normal;grid-column:1;}.sc-attrs dt:hover span{display:inline-block;padding-right:10px;}.sc-attrs dd{grid-column:2;white-space:pre-wrap;word-break:break-all;}.sc-icon-database,.sc-icon-file-text2{display:inline-block;vertical-align:middle;width:1em;height:1.5em !important;stroke-width:0;stroke:currentColor;fill:currentColor;}label.sc-hide-icon svg{opacity:0;}.sc-standalone-var-name{grid-column:1/3;}.sc-standalone-var-name span{padding-left:25px;padding-right:10px;}.sc-title{font-weight:bold;font-size:1.5em;}.sc-subtitle{font-weight:normal;font-style:italic;text-align:left;font-size:1.2em;padding:1px;}.sc-label{fill:var(--sc-font-color0,#444444);text-anchor:middle;}.sc-name{fill:var(--sc-font-color0,#111111);}.sc-inset-line{stroke:var(--sc-font-color1);stroke-width:0.05;stroke-dasharray:0.2,0.2;}.sc-log-wrap{height:25ex;resize:vertical;overflow-y:scroll;display:flex;flex-direction:column-reverse;border:1px solid;border-color:var(--jp-border-color2);background-color:var(--sc-background-color1);}div.sc-log{line-height:2.5ex;}table.sc-log{table-layout:auto;border-collapse:collapse;}tr.sc-log:nth-child(even){background-color:var(--sc-background-color0);}tr.sc-log > td{vertical-align:top;padding-bottom:0.5ex;}.sc-log-time-stamp{min-width:22ch;font-family:var(--jp-code-font-family);color:var(--sc-font-color2);}.sc-log-level{min-width:10ch;}tr.sc-log-debug td.sc-log-level{color:var(--jp-accent-color1);}tr.sc-log-info td.sc-log-level{color:var(--jp-info-color1);}tr.sc-log-warning td.sc-log-level{color:var(--jp-warn-color1);}tr.sc-log-error td.sc-log-level{font-weight:bold;color:var(--jp-error-color2);}tr.sc-log-critical td.sc-log-level{font-weight:bold;color:var(--sc-background-color0);background-color:var(--jp-error-color1);}.sc-log-message{white-space:pre-wrap;width:100%;}.sc-log-html-payload{white-space:normal;}.sc-log-name{padding-right:0.5em;text-align:right;white-space:pre-wrap;color:var(--sc-font-color3);}</style><style id="datagroup-style-sheet">.dg-root{white-space:normal;font-size:14px;min-width:300px;max-width:1200px;}.dg-root *{box-sizing:border-box;}.sc-header > label,.sc-header > label > div,.sc-header > label > div > ul{display:inline;margin-bottom:0;}.dg-header-in{display:none;}.dg-header-in + .sc-header > label:before{display:inline-block;font-size:11px;text-align:left;content:'►';}.dg-header-in:checked + .sc-header > label:before{content:'▼';}.dg-header-in ~ .dg-detail-box{display:none;}.dg-header-in:checked ~ .dg-detail-box{display:grid;}.dg-detail-box{margin-top:5px;margin-bottom:5px;column-gap:0 !important;display:grid;grid-template-columns:max-content max-content max-content max-content max-content max-content max-content;grid-template-areas:"name        parent      object-type shape       dtype       unit        preview";}.dg-detail-box *{margin-top:0;margin-bottom:0;}.dg-detail-list{display:contents;}.dg-detail-item{display:contents;list-style-type:none;}.dg-detail-item-in{display:none;}.dg-detail-item-in + .dg-detail-name > label:before{display:inline-block;font-size:14px;text-align:left;content:'►';}.dg-detail-item-in:checked + .dg-detail-name > label:before{content:'▼';}.dg-detail-item div,.dg-detail-item span,.dg-detail-item label{word-break:break-all;min-width:1em;max-width:20em;width:100%;}.dg-detail-item > div{display:contents;}.dg-detail-item > div > div > div{width:100%;}.dg-detail-item:hover > div > div{background-color:var(--sc-background-color2) !important;}.dg-detail-item > div span{padding-left:10px;padding-right:10px;}.dg-detail-item > div > div:first-of-type{grid-column-start:1;}.dg-detail-item-subsection{display:none;}.dg-detail-item-in{margin:0;}.dg-detail-item-in:checked ~ .dg-detail-item-subsection{display:contents;}.dg-detail-item .dg-detail-name{grid-area:"name";min-width:5em;}.dg-detail-name{padding-left:calc(var(--depth)*2em);}.dg-detail-name > label{padding-left:8px;}.dg-detail-name > label > span{padding-left:0.1em;}.dg-detail-item .dg-detail-parent{grid-area:"parent";text-align:right;}.dg-detail-item .dg-detail-objtype{grid-area:"objtype";text-align:left;}.dg-detail-item .dg-detail-shape{max-width:30em;grid-area:"shape";text-align:left;}.sc-header .dg-detail-shape{margin-left:1em;text-align:left;}.dg-detail-item .dg-detail-dtype{grid-area:"dtype";text-align:left;}.dg-detail-item .dg-detail-unit{grid-area:"unit";text-align:center;}.dg-detail-item .dg-detail-preview{grid-area:"preview";min-width:15em;max-width:100em !important;text-align:left;}.dg-detail-preview .sc-preview span,.dg-detail-shape span{padding:0 !important;}</style><div class='sc-root dg-root'><input class='dg-header-in' id='datagroup-view-cc50b108-6fa3-4358-a7f7-9695d92268cb' type='checkbox' checked><div class='sc-header'><label for=datagroup-view-cc50b108-6fa3-4358-a7f7-9695d92268cb title='Expand/collapse'><div class='sc-obj-type'>scipp.DataGroup </div><div class='dg-detail-shape'>(time: None, slit: 4)</div></label></div><div class='dg-detail-box'><ul class='dg-detail-list'><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>type</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scippneutron</span></div><div class='dg-detail-objtype'><span>DiskChopperType</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span></span></div><div class='dg-detail-unit'><span></span></div><div class='dg-detail-preview'><span class='sc-preview'>Chopper type single</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>beam_position</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>rad</span></div><div class='dg-detail-preview'><span class='sc-preview'>0.0</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>delay</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>DataArray</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>int64</span></div><div class='dg-detail-unit'><span>ns</span></div><div class='dg-detail-preview'><span class='sc-preview'>30500000</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>position</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>vector3</span></div><div class='dg-detail-unit'><span>m</span></div><div class='dg-detail-preview'><span class='sc-preview'>[ 0.  0. 60.]</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>radius</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>m</span></div><div class='dg-detail-preview'><span class='sc-preview'>0.35</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>rotation_speed</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>DataArray</span></div><div class='dg-detail-shape'>(time: 180)</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>Hz</span></div><div class='dg-detail-preview'><span class='sc-preview'>1.287e-05, 0.359, ..., 0.352, -4.904e-07</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>rotation_speed_setpoint</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>Hz</span></div><div class='dg-detail-preview'><span class='sc-preview'>14.0</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>slit_height</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>m</span></div><div class='dg-detail-preview'><span class='sc-preview'>0.1</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>slit_edges</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>(slit: 4)</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>deg</span></div><div class='dg-detail-preview'><span class='sc-preview'>30.0, 160.0, 210.0, 280.0</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>slits</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'></span></div><div class='dg-detail-objtype'><span>int</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span></span></div><div class='dg-detail-unit'><span></span></div><div class='dg-detail-preview'><span class='sc-preview'>2</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>top_dead_center</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>(time: 2354)</div><div class='dg-detail-dtype'><span>datetime64</span></div><div class='dg-detail-unit'><span>ns</span></div><div class='dg-detail-preview'><span class='sc-preview'>2023-01-19T08:11:06.217830400, 2023-01-19T08:11:08.799053824, ..., 2023-01-19T08:14:39.174524416, 2023-01-19T08:14:40.640919296</span></div></div></li></ul></div></div></div></div>
+</div>
+</section>
+<section id="Converting-to-a-DiskChopper">
+<h2>Converting to a <code class="docutils literal notranslate"><span class="pre">DiskChopper</span></code><a class="headerlink" href="#Converting-to-a-DiskChopper" title="Link to this heading">#</a></h2>
+<p>We can assemble all data into a <a class="reference internal" href="../../generated/modules/scippneutron.chopper.disk_chopper.DiskChopper.html"><span class="doc">scippneutron.chopper.DiskChopper</span></a> object, which enables better exploration/visualization of the chopper properties.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron.chopper</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiskChopper</span>
+
+<span class="n">disk_chopper</span> <span class="o">=</span> <span class="n">DiskChopper</span><span class="o">.</span><span class="n">from_nexus</span><span class="p">(</span><span class="n">chopper</span><span class="p">)</span>
+<span class="n">disk_chopper</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+    <style id="scipp-style-sheet">.sc-root{--sc-background-color0:var(--jp-layout-color0,#fff);--sc-background-color1:var(--jp-layout-color1,#fcfcfc);--sc-background-color2:var(--jp-layout-color2,#efefef);--sc-inverse-background-color0:var(--jp-inverse-layout-color4,#111);--sc-font-color0:var(--jp-content-font-color0,#000);--sc-font-color1:var(--jp-content-font-color1,#555);--sc-font-color2:var(--jp-content-font-color2,#888);--sc-font-color3:var(--jp-content-font-color3,#ccc);}body.vscode-dark .sc-root{--sc-font-color0:rgba(255,255,255,1);--sc-font-color1:rgba(255,255,255,0.70);--sc-font-color2:rgba(255,255,255,0.54);--sc-font-color3:rgba(255,255,255,0.38);--sc-border-color:#1F1F1F;--sc-disabled-color:#515151;--sc-background-color0:#111111;--sc-background-color1:#111111;--sc-background-color2:#313131;}.sc-wrap{font-size:14px;min-width:300px;max-width:800px;}.sc-var-attrs .sc-wrap{padding-left:3em;}.sc-header{padding-top:6px;padding-bottom:6px;margin-bottom:4px;border-bottom:solid 1px #ddd;}.sc-header > div,.sc-header > ul{display:inline;margin-top:0;margin-bottom:0;}.sc-obj-type,.sc-array-name{margin-left:2px;margin-right:10px;}.sc-obj-type{color:var(--sc-font-color1);}.sc-underlying-size{color:var(--sc-font-color2);}.sc-sections,.reveal .sc-sections{padding-left:0 !important;display:grid;grid-template-columns:150px auto auto auto 1fr 20px 20px;}.sc-section-item{display:contents;}.sc-section-item input{display:none;}.sc-section-item input:enabled + label{cursor:pointer;color:var(--sc-font-color1);}.sc-section-item input:enabled + label:hover{color:var(--sc-font-color0);}.sc-section-summary{grid-column:1;font-weight:500;}.sc-section-summary > span{display:inline-block;padding-left:0.5em;}.sc-section-summary-in:disabled + label{color:var(--sc-font-color1);}.sc-section-summary-in + label:before{display:inline-block;content:'►';font-size:11px;width:15px;text-align:center;}.sc-section-summary-in:disabled + label:before{color:var(--sc-font-color3);}.sc-section-summary-in:checked + label:before{content:'▼';}.sc-section-summary-in:checked + label > span{display:none;}.sc-section-summary,.sc-section-inline-details{padding-top:4px;padding-bottom:4px;}.sc-section-inline-details{grid-column:2 / 6;}.sc-section-details{display:none;grid-column:1 / -1;margin-bottom:5px;}.sc-section-summary-in:checked ~ .sc-section-details{display:contents;}.sc-array-wrap{grid-column:1 / -1;display:grid;grid-template-columns:20px auto;}.sc-array-wrap > label{grid-column:1;vertical-align:top;}.sc-preview{color:var(--sc-font-color2);}.sc-array-preview,.sc-array-data{padding:0 5px !important;grid-column:2;}.sc-array-data,.sc-array-in:checked ~ .sc-array-preview{display:none;}.sc-array-in:checked ~ .sc-array-data,.sc-array-preview{display:inline-block;}.sc-dim-list{display:inline-block !important;list-style:none;padding:0 !important;margin:0;}.sc-dim-list li{display:inline-block;padding:0;margin:0!important;}.sc-dim-list:before{content:'(';}.sc-dim-list:after{content:')';}.sc-dim-list li:not(:last-child):after{content:',';padding-right:5px;}.sc-dim-list li span,.sc-standalone-var-name > span span,.sc-var-name > span span{padding:0 !important;}.sc-aligned{font-weight:bold;}.sc-var-list,.sc-var-item,.reveal .sc-var-list,.reveal .sc-var-item{display:contents;}.sc-var-item > div,.sc-var-item label,.sc-var-item > .sc-var-name span{background-color:var(--sc-background-color1);margin-bottom:0;}.sc-var-item > .sc-var-name:hover span{padding-right:5px;}.sc-var-list > li:nth-child(odd) > div,.sc-var-list > li:nth-child(odd) > label,.sc-var-list > li:nth-child(odd) > .sc-var-name span{background-color:var(--sc-background-color2);}.sc-var-name{grid-column:1;}.sc-var-dims{grid-column:2;}.sc-var-dtype{grid-column:3;text-align:right;color:var(--sc-font-color2);}.sc-var-unit{grid-column:4;text-align:left;color:var(--sc-font-color1);max-width:50pt;text-overflow:ellipsis;}.sc-value-preview{grid-column:5;}.sc-var-preview-variances{text-align:right;}.sc-sections .sc-section-item .sc-section-summary,.sc-sections .sc-section-item .sc-section-inline-details,.sc-section-item .sc-var-list .sc-var-item > div,.sc-section-item .sc-var-list .sc-var-item > label,.sc-section-details .sc-var-list .sc-var-item > div,.sc-section-details .sc-var-list .sc-var-item > label{margin-top:0;margin-bottom:0;}.sc-var-name,.sc-var-dims,.sc-var-dtype,.sc-var-unit,.sc-preview,.sc-attrs dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px;}.sc-var-name:hover,.sc-var-dims:hover,.sc-var-dtype:hover,.sc-var-unit:hover,.sc-attrs dt:hover{overflow:visible;width:auto;z-index:1;}.sc-var-attrs{display:block;}.sc-var-data,.reveal .sc-var-data{display:none;}.sc-var-attrs,.sc-var-data{background-color:var(--sc-background-color0) !important;padding-bottom:5px !important;}.sc-var-attrs-in:checked ~ .sc-var-attrs{display:none;}.sc-var-data-in:checked ~ .sc-var-data{display:block;}.sc-var-data > table{float:right;}.sc-var-name span,.sc-var-data{padding-left:25px !important;}.sc-var-attrs,.sc-var-data{grid-column:1 / -1;}dl.sc-attrs{padding:0;margin:0;display:grid;grid-template-columns:125px auto;}.sc-attrs dt,dd{padding:0;margin:0;float:left;padding-right:10px;width:auto;}.sc-attrs dt{font-weight:normal;grid-column:1;}.sc-attrs dt:hover span{display:inline-block;padding-right:10px;}.sc-attrs dd{grid-column:2;white-space:pre-wrap;word-break:break-all;}.sc-icon-database,.sc-icon-file-text2{display:inline-block;vertical-align:middle;width:1em;height:1.5em !important;stroke-width:0;stroke:currentColor;fill:currentColor;}label.sc-hide-icon svg{opacity:0;}.sc-standalone-var-name{grid-column:1/3;}.sc-standalone-var-name span{padding-left:25px;padding-right:10px;}.sc-title{font-weight:bold;font-size:1.5em;}.sc-subtitle{font-weight:normal;font-style:italic;text-align:left;font-size:1.2em;padding:1px;}.sc-label{fill:var(--sc-font-color0,#444444);text-anchor:middle;}.sc-name{fill:var(--sc-font-color0,#111111);}.sc-inset-line{stroke:var(--sc-font-color1);stroke-width:0.05;stroke-dasharray:0.2,0.2;}.sc-log-wrap{height:25ex;resize:vertical;overflow-y:scroll;display:flex;flex-direction:column-reverse;border:1px solid;border-color:var(--jp-border-color2);background-color:var(--sc-background-color1);}div.sc-log{line-height:2.5ex;}table.sc-log{table-layout:auto;border-collapse:collapse;}tr.sc-log:nth-child(even){background-color:var(--sc-background-color0);}tr.sc-log > td{vertical-align:top;padding-bottom:0.5ex;}.sc-log-time-stamp{min-width:22ch;font-family:var(--jp-code-font-family);color:var(--sc-font-color2);}.sc-log-level{min-width:10ch;}tr.sc-log-debug td.sc-log-level{color:var(--jp-accent-color1);}tr.sc-log-info td.sc-log-level{color:var(--jp-info-color1);}tr.sc-log-warning td.sc-log-level{color:var(--jp-warn-color1);}tr.sc-log-error td.sc-log-level{font-weight:bold;color:var(--jp-error-color2);}tr.sc-log-critical td.sc-log-level{font-weight:bold;color:var(--sc-background-color0);background-color:var(--jp-error-color1);}.sc-log-message{white-space:pre-wrap;width:100%;}.sc-log-html-payload{white-space:normal;}.sc-log-name{padding-right:0.5em;text-align:right;white-space:pre-wrap;color:var(--sc-font-color3);}</style><style id="datagroup-style-sheet">.dg-root{white-space:normal;font-size:14px;min-width:300px;max-width:1200px;}.dg-root *{box-sizing:border-box;}.sc-header > label,.sc-header > label > div,.sc-header > label > div > ul{display:inline;margin-bottom:0;}.dg-header-in{display:none;}.dg-header-in + .sc-header > label:before{display:inline-block;font-size:11px;text-align:left;content:'►';}.dg-header-in:checked + .sc-header > label:before{content:'▼';}.dg-header-in ~ .dg-detail-box{display:none;}.dg-header-in:checked ~ .dg-detail-box{display:grid;}.dg-detail-box{margin-top:5px;margin-bottom:5px;column-gap:0 !important;display:grid;grid-template-columns:max-content max-content max-content max-content max-content max-content max-content;grid-template-areas:"name        parent      object-type shape       dtype       unit        preview";}.dg-detail-box *{margin-top:0;margin-bottom:0;}.dg-detail-list{display:contents;}.dg-detail-item{display:contents;list-style-type:none;}.dg-detail-item-in{display:none;}.dg-detail-item-in + .dg-detail-name > label:before{display:inline-block;font-size:14px;text-align:left;content:'►';}.dg-detail-item-in:checked + .dg-detail-name > label:before{content:'▼';}.dg-detail-item div,.dg-detail-item span,.dg-detail-item label{word-break:break-all;min-width:1em;max-width:20em;width:100%;}.dg-detail-item > div{display:contents;}.dg-detail-item > div > div > div{width:100%;}.dg-detail-item:hover > div > div{background-color:var(--sc-background-color2) !important;}.dg-detail-item > div span{padding-left:10px;padding-right:10px;}.dg-detail-item > div > div:first-of-type{grid-column-start:1;}.dg-detail-item-subsection{display:none;}.dg-detail-item-in{margin:0;}.dg-detail-item-in:checked ~ .dg-detail-item-subsection{display:contents;}.dg-detail-item .dg-detail-name{grid-area:"name";min-width:5em;}.dg-detail-name{padding-left:calc(var(--depth)*2em);}.dg-detail-name > label{padding-left:8px;}.dg-detail-name > label > span{padding-left:0.1em;}.dg-detail-item .dg-detail-parent{grid-area:"parent";text-align:right;}.dg-detail-item .dg-detail-objtype{grid-area:"objtype";text-align:left;}.dg-detail-item .dg-detail-shape{max-width:30em;grid-area:"shape";text-align:left;}.sc-header .dg-detail-shape{margin-left:1em;text-align:left;}.dg-detail-item .dg-detail-dtype{grid-area:"dtype";text-align:left;}.dg-detail-item .dg-detail-unit{grid-area:"unit";text-align:center;}.dg-detail-item .dg-detail-preview{grid-area:"preview";min-width:15em;max-width:100em !important;text-align:left;}.dg-detail-preview .sc-preview span,.dg-detail-shape span{padding:0 !important;}</style><style>.scn-disk-chopper{display:flex;flex-direction:row;align-items:center;}</style>
+    <div class="scn-disk-chopper">
+        <div class="scn-disk-chopper-fields">
+            <div><div class='sc-root dg-root'><input class='dg-header-in' id='group-view-48f93021-873a-40bf-a32a-d18615b09956' type='checkbox' checked><div class='sc-header'><label for=group-view-48f93021-873a-40bf-a32a-d18615b09956 title='Expand/collapse'><div class='sc-obj-type'>DiskChopper</div><div class='dg-detail-shape'>(slit: 2)</div></label></div><div class='dg-detail-box'><ul class='dg-detail-list'><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>axle_position</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>vector3</span></div><div class='dg-detail-unit'><span>m</span></div><div class='dg-detail-preview'><span class='sc-preview'>[ 0.  0. 60.]</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>frequency</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>Hz</span></div><div class='dg-detail-preview'><span class='sc-preview'>14.0</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>beam_position</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>rad</span></div><div class='dg-detail-preview'><span class='sc-preview'>0.0</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>phase</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>rad</span></div><div class='dg-detail-preview'><span class='sc-preview'>2.6829201261656834</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>slit_begin</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>(slit: 2)</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>deg</span></div><div class='dg-detail-preview'><span class='sc-preview'>30.0, 210.0</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>slit_end</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>(slit: 2)</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>deg</span></div><div class='dg-detail-preview'><span class='sc-preview'>160.0, 280.0</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>slit_height</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>(slit: 2)</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>m</span></div><div class='dg-detail-preview'><span class='sc-preview'>0.1, 0.1</span></div></div></li><li class='dg-detail-item'><div><div class='dg-detail-name' style='--depth: 0;'><span>radius</span></div><div class='dg-detail-parent'><span style='opacity: 0.5;'>scipp</span></div><div class='dg-detail-objtype'><span>Variable</span></div><div class='dg-detail-shape'>()</div><div class='dg-detail-dtype'><span>float64</span></div><div class='dg-detail-unit'><span>m</span></div><div class='dg-detail-preview'><span class='sc-preview'>0.35</span></div></div></li></ul></div></div></div>
+        </div>
+        <div class="scn-disk-chopper-image">
+            <div>
+            <svg
+    version="1.1"
+    width="400"
+    height="400"
+    viewBox="0 0 400 400"
+    xmlns="http://www.w3.org/2000/svg">
+<path d="M125.750 71.395 L146.964 108.139 A106.071 106.071 0 0 0 163.721 299.675 L149.210 339.544 A148.500 148.500 0 0 0 274.250 328.605 L253.036 291.861 A106.071 106.071 0 0 0 304.460 181.581 L346.244 174.213 A148.500 148.500 0 0 0 125.750 71.395" fill="#e0e0e0" stroke="#a0a0a0" stroke-width="2"/>
+<path d="M200 200 L146.964 108.139" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="125.75000000000001" y="71.39522753801089" text-anchor="end" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">begin0</text>
+<path d="M200 200 L163.721 299.675" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="149.2100087161382" y="339.5443541867074" text-anchor="end" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">end0</text>
+<path d="M200 200 L253.036 291.861" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="274.25" y="328.6047724619891" text-anchor="start" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">begin1</text>
+<path d="M200 200 L304.460 181.581" stroke="#707070" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="346.2439513223129" y="174.2132456164609" text-anchor="start" font-family="sans-serif" dominant-baseline="ideographic" fill="#707070">end1</text>
+<path d="M200 200 L200.0 51.5" stroke="#0065ac" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="200.0" y="40.5" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" fill="#0065ac">TDC</text>
+<g id="rotation-arrow" transform="matrix(1.0,0,0,1.0,0,20)">
+<path fill="#606060"
+ d="m 190.46289,4.140625 c -19.2285,0.9736749 -38.20846,4.7790001 -56.32617,11.292969 l 0.89453,2.490234 C 152.90409,11.497902 171.62709,7.7437179 190.5957,6.7832031 Z"/>
+<path fill="#606060" stroke-linecap="round"
+ d="m 138.29883,5.5019531 a 1.322835,1.322835 0 0 0 -0.75,0.6816406 l -5.34766,11.3515623 11.35156,5.347656 A 1.322835,1.322835 0 0 0 145.3125,22.25 1.322835,1.322835 0 0 0 144.67969,20.488281 l -8.95703,-4.21875 4.21875,-8.9589841 a 1.322835,1.322835 0 0 0 -0.63282,-1.7597657 1.322835,1.322835 0 0 0 -1.00976,-0.048828 z"/>
+</g>
+<path d="M200 200 L200.0 51.5" stroke="#c83737" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="200.0" y="51.5" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" fill="#c83737">beam position</text>
+<circle cx="200.0" cy="200.0" r="5"/>
+</svg>
+
+            </div>
+        </div>
+    </div>
+</div></div>
+</div>
+<p>Note that the chopper phase <span class="math notranslate nohighlight">\(\phi\)</span> was derived from the rotation frequency <span class="math notranslate nohighlight">\(f\)</span> and the <code class="docutils literal notranslate"><span class="pre">delay</span></code> <span class="math notranslate nohighlight">\(\delta_{t}\)</span> using <span class="math notranslate nohighlight">\(\phi = 2 \pi f \delta_{t}\)</span>.</p>
+<p>With the <code class="docutils literal notranslate"><span class="pre">DiskChopper</span></code>, we can for example see at what times the chopper is open and closed:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pulse_frequency</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;Hz&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Times open:  &quot;</span><span class="p">,</span> <span class="n">disk_chopper</span><span class="o">.</span><span class="n">time_offset_open</span><span class="p">(</span><span class="n">pulse_frequency</span><span class="o">=</span><span class="n">pulse_frequency</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Times closed:&quot;</span><span class="p">,</span> <span class="n">disk_chopper</span><span class="o">.</span><span class="n">time_offset_close</span><span class="p">(</span><span class="n">pulse_frequency</span><span class="o">=</span><span class="n">pulse_frequency</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Times open:   &lt;scipp.Variable&gt; (slit: 4)    float64              [s]  [-0.00124603, -0.0250556, 0.0701825, 0.046373]
+Times closed: &lt;scipp.Variable&gt; (slit: 4)    float64              [s]  [0.0245476, -0.0111667, 0.0959762, 0.0602619]
+</pre></div></div>
+</div>
+</section>
+<section id="Inspecting-time-dependent-logs">
+<h2>Inspecting time-dependent logs<a class="headerlink" href="#Inspecting-time-dependent-logs" title="Link to this heading">#</a></h2>
+<p>Some of the entries in the raw NeXus data group are time-dependent. In this section we take a closer look at these logs to gain more insights in how the chopper data is actually recorded.</p>
+<section id="Identifying-in-phase-regions">
+<h3>Identifying in-phase regions<a class="headerlink" href="#Identifying-in-phase-regions" title="Link to this heading">#</a></h3>
+<p>Frame unwrapping and time-of-flight computation are only feasible when the choppers are in-phase with the neutron source pulses because, otherwise, the wavelength frames vary pulse-by-pulse.</p>
+<p>To identify regions where a chopper is in-phase, we can inspect the <code class="docutils literal notranslate"><span class="pre">rotation_speed</span></code> which is the rotation frequency of the chopper.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rotation_speed</span> <span class="o">=</span> <span class="n">chopper</span><span class="p">[</span><span class="s1">&#39;rotation_speed&#39;</span><span class="p">]</span>
+<span class="n">rotation_speed</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;rotation_speed&#39;</span>
+<span class="n">rotation_speed</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><!-- Original source from -->
+<!-- https://github.com/jsignell/xarray/blob/1d960933ab252e0f79f7e050e6c9261d55568057/xarray/static/html/icons-svg-inline.html -->
+<svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewBox="0 0 32 32">
+<title>Show/Hide data repr</title>
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewBox="0 0 32 32">
+<title>Show/Hide attributes</title>
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg><style id="scipp-style-sheet">.sc-root{--sc-background-color0:var(--jp-layout-color0,#fff);--sc-background-color1:var(--jp-layout-color1,#fcfcfc);--sc-background-color2:var(--jp-layout-color2,#efefef);--sc-inverse-background-color0:var(--jp-inverse-layout-color4,#111);--sc-font-color0:var(--jp-content-font-color0,#000);--sc-font-color1:var(--jp-content-font-color1,#555);--sc-font-color2:var(--jp-content-font-color2,#888);--sc-font-color3:var(--jp-content-font-color3,#ccc);}body.vscode-dark .sc-root{--sc-font-color0:rgba(255,255,255,1);--sc-font-color1:rgba(255,255,255,0.70);--sc-font-color2:rgba(255,255,255,0.54);--sc-font-color3:rgba(255,255,255,0.38);--sc-border-color:#1F1F1F;--sc-disabled-color:#515151;--sc-background-color0:#111111;--sc-background-color1:#111111;--sc-background-color2:#313131;}.sc-wrap{font-size:14px;min-width:300px;max-width:800px;}.sc-var-attrs .sc-wrap{padding-left:3em;}.sc-header{padding-top:6px;padding-bottom:6px;margin-bottom:4px;border-bottom:solid 1px #ddd;}.sc-header > div,.sc-header > ul{display:inline;margin-top:0;margin-bottom:0;}.sc-obj-type,.sc-array-name{margin-left:2px;margin-right:10px;}.sc-obj-type{color:var(--sc-font-color1);}.sc-underlying-size{color:var(--sc-font-color2);}.sc-sections,.reveal .sc-sections{padding-left:0 !important;display:grid;grid-template-columns:150px auto auto auto 1fr 20px 20px;}.sc-section-item{display:contents;}.sc-section-item input{display:none;}.sc-section-item input:enabled + label{cursor:pointer;color:var(--sc-font-color1);}.sc-section-item input:enabled + label:hover{color:var(--sc-font-color0);}.sc-section-summary{grid-column:1;font-weight:500;}.sc-section-summary > span{display:inline-block;padding-left:0.5em;}.sc-section-summary-in:disabled + label{color:var(--sc-font-color1);}.sc-section-summary-in + label:before{display:inline-block;content:'►';font-size:11px;width:15px;text-align:center;}.sc-section-summary-in:disabled + label:before{color:var(--sc-font-color3);}.sc-section-summary-in:checked + label:before{content:'▼';}.sc-section-summary-in:checked + label > span{display:none;}.sc-section-summary,.sc-section-inline-details{padding-top:4px;padding-bottom:4px;}.sc-section-inline-details{grid-column:2 / 6;}.sc-section-details{display:none;grid-column:1 / -1;margin-bottom:5px;}.sc-section-summary-in:checked ~ .sc-section-details{display:contents;}.sc-array-wrap{grid-column:1 / -1;display:grid;grid-template-columns:20px auto;}.sc-array-wrap > label{grid-column:1;vertical-align:top;}.sc-preview{color:var(--sc-font-color2);}.sc-array-preview,.sc-array-data{padding:0 5px !important;grid-column:2;}.sc-array-data,.sc-array-in:checked ~ .sc-array-preview{display:none;}.sc-array-in:checked ~ .sc-array-data,.sc-array-preview{display:inline-block;}.sc-dim-list{display:inline-block !important;list-style:none;padding:0 !important;margin:0;}.sc-dim-list li{display:inline-block;padding:0;margin:0!important;}.sc-dim-list:before{content:'(';}.sc-dim-list:after{content:')';}.sc-dim-list li:not(:last-child):after{content:',';padding-right:5px;}.sc-dim-list li span,.sc-standalone-var-name > span span,.sc-var-name > span span{padding:0 !important;}.sc-aligned{font-weight:bold;}.sc-var-list,.sc-var-item,.reveal .sc-var-list,.reveal .sc-var-item{display:contents;}.sc-var-item > div,.sc-var-item label,.sc-var-item > .sc-var-name span{background-color:var(--sc-background-color1);margin-bottom:0;}.sc-var-item > .sc-var-name:hover span{padding-right:5px;}.sc-var-list > li:nth-child(odd) > div,.sc-var-list > li:nth-child(odd) > label,.sc-var-list > li:nth-child(odd) > .sc-var-name span{background-color:var(--sc-background-color2);}.sc-var-name{grid-column:1;}.sc-var-dims{grid-column:2;}.sc-var-dtype{grid-column:3;text-align:right;color:var(--sc-font-color2);}.sc-var-unit{grid-column:4;text-align:left;color:var(--sc-font-color1);max-width:50pt;text-overflow:ellipsis;}.sc-value-preview{grid-column:5;}.sc-var-preview-variances{text-align:right;}.sc-sections .sc-section-item .sc-section-summary,.sc-sections .sc-section-item .sc-section-inline-details,.sc-section-item .sc-var-list .sc-var-item > div,.sc-section-item .sc-var-list .sc-var-item > label,.sc-section-details .sc-var-list .sc-var-item > div,.sc-section-details .sc-var-list .sc-var-item > label{margin-top:0;margin-bottom:0;}.sc-var-name,.sc-var-dims,.sc-var-dtype,.sc-var-unit,.sc-preview,.sc-attrs dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px;}.sc-var-name:hover,.sc-var-dims:hover,.sc-var-dtype:hover,.sc-var-unit:hover,.sc-attrs dt:hover{overflow:visible;width:auto;z-index:1;}.sc-var-attrs{display:block;}.sc-var-data,.reveal .sc-var-data{display:none;}.sc-var-attrs,.sc-var-data{background-color:var(--sc-background-color0) !important;padding-bottom:5px !important;}.sc-var-attrs-in:checked ~ .sc-var-attrs{display:none;}.sc-var-data-in:checked ~ .sc-var-data{display:block;}.sc-var-data > table{float:right;}.sc-var-name span,.sc-var-data{padding-left:25px !important;}.sc-var-attrs,.sc-var-data{grid-column:1 / -1;}dl.sc-attrs{padding:0;margin:0;display:grid;grid-template-columns:125px auto;}.sc-attrs dt,dd{padding:0;margin:0;float:left;padding-right:10px;width:auto;}.sc-attrs dt{font-weight:normal;grid-column:1;}.sc-attrs dt:hover span{display:inline-block;padding-right:10px;}.sc-attrs dd{grid-column:2;white-space:pre-wrap;word-break:break-all;}.sc-icon-database,.sc-icon-file-text2{display:inline-block;vertical-align:middle;width:1em;height:1.5em !important;stroke-width:0;stroke:currentColor;fill:currentColor;}label.sc-hide-icon svg{opacity:0;}.sc-standalone-var-name{grid-column:1/3;}.sc-standalone-var-name span{padding-left:25px;padding-right:10px;}.sc-title{font-weight:bold;font-size:1.5em;}.sc-subtitle{font-weight:normal;font-style:italic;text-align:left;font-size:1.2em;padding:1px;}.sc-label{fill:var(--sc-font-color0,#444444);text-anchor:middle;}.sc-name{fill:var(--sc-font-color0,#111111);}.sc-inset-line{stroke:var(--sc-font-color1);stroke-width:0.05;stroke-dasharray:0.2,0.2;}.sc-log-wrap{height:25ex;resize:vertical;overflow-y:scroll;display:flex;flex-direction:column-reverse;border:1px solid;border-color:var(--jp-border-color2);background-color:var(--sc-background-color1);}div.sc-log{line-height:2.5ex;}table.sc-log{table-layout:auto;border-collapse:collapse;}tr.sc-log:nth-child(even){background-color:var(--sc-background-color0);}tr.sc-log > td{vertical-align:top;padding-bottom:0.5ex;}.sc-log-time-stamp{min-width:22ch;font-family:var(--jp-code-font-family);color:var(--sc-font-color2);}.sc-log-level{min-width:10ch;}tr.sc-log-debug td.sc-log-level{color:var(--jp-accent-color1);}tr.sc-log-info td.sc-log-level{color:var(--jp-info-color1);}tr.sc-log-warning td.sc-log-level{color:var(--jp-warn-color1);}tr.sc-log-error td.sc-log-level{font-weight:bold;color:var(--jp-error-color2);}tr.sc-log-critical td.sc-log-level{font-weight:bold;color:var(--sc-background-color0);background-color:var(--jp-error-color1);}.sc-log-message{white-space:pre-wrap;width:100%;}.sc-log-html-payload{white-space:normal;}.sc-log-name{padding-right:0.5em;text-align:right;white-space:pre-wrap;color:var(--sc-font-color3);}</style><div class='sc-wrap sc-root'><div class='sc-header'><div class='sc-obj-type'>scipp.DataArray (3.68 KB)</div></div><ul class='sc-sections'><li class='sc-section-item'><input id='section-623207e0-d965-4fea-b2e5-727f4084e34b' class='sc-section-summary-in' type='checkbox' disabled ><label for='section-623207e0-d965-4fea-b2e5-727f4084e34b' class='sc-section-summary' >Dimensions:</label><div class='sc-section-inline-details'><ul class='sc-dim-list'><li><span class='sc-has-index'>time</span>: 180</li></ul></div><div class='sc-section-details'></div></li><li class='sc-section-item'><input id='section-075e6237-00de-45f4-9ba5-10f5f2a16562' class='sc-section-summary-in' type='checkbox'  checked><label for='section-075e6237-00de-45f4-9ba5-10f5f2a16562' class='sc-section-summary'  title='Expand/collapse section'>Coordinates: <span>(1)</span></label><div class='sc-section-inline-details'></div><div class='sc-section-details'><ul class='sc-var-list'><li class='sc-var-item'><div class='sc-var-name'><span class='sc-aligned'>time</span></div><div class='sc-var-dims'>(time)</div><div class='sc-var-dtype'>datetime64</div><div class='sc-var-unit'>ns</div><div class='sc-value-preview sc-preview'><span><div>2023-01-19T08:11:06.205830400, 2023-01-19T08:11:07.412763648, ..., 2023-01-19T08:14:41.039957504, 2023-01-19T08:14:42.246890752</div></span></div><input id='attrs-8d4ba6ba-97c0-4e76-b3dc-600f8b811533' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-8d4ba6ba-97c0-4e76-b3dc-600f8b811533' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-c341cc8a-d616-4dfc-8691-8b6720cffdda' class='sc-var-data-in' type='checkbox'><label for='data-c341cc8a-d616-4dfc-8691-8b6720cffdda' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array([&#x27;2023-01-19T08:11:06.205830400&#x27;, &#x27;2023-01-19T08:11:07.412763648&#x27;,
+       &#x27;2023-01-19T08:11:08.619696896&#x27;, &#x27;2023-01-19T08:11:09.826630400&#x27;,
+       &#x27;2023-01-19T08:11:11.033563648&#x27;, &#x27;2023-01-19T08:11:12.240496896&#x27;,
+       &#x27;2023-01-19T08:11:13.447430144&#x27;, &#x27;2023-01-19T08:11:14.654363392&#x27;,
+       &#x27;2023-01-19T08:11:15.861296896&#x27;, &#x27;2023-01-19T08:11:17.068230144&#x27;,
+       &#x27;2023-01-19T08:11:18.275163392&#x27;, &#x27;2023-01-19T08:11:19.482096640&#x27;,
+       &#x27;2023-01-19T08:11:20.689029888&#x27;, &#x27;2023-01-19T08:11:21.895963392&#x27;,
+       &#x27;2023-01-19T08:11:23.102896640&#x27;, &#x27;2023-01-19T08:11:24.309829888&#x27;,
+       &#x27;2023-01-19T08:11:25.516763136&#x27;, &#x27;2023-01-19T08:11:26.723696384&#x27;,
+       &#x27;2023-01-19T08:11:27.930629888&#x27;, &#x27;2023-01-19T08:11:29.137563136&#x27;,
+       &#x27;2023-01-19T08:11:30.344496384&#x27;, &#x27;2023-01-19T08:11:31.551429632&#x27;,
+       &#x27;2023-01-19T08:11:32.758362880&#x27;, &#x27;2023-01-19T08:11:33.965296128&#x27;,
+       &#x27;2023-01-19T08:11:35.172229632&#x27;, &#x27;2023-01-19T08:11:36.379162880&#x27;,
+       &#x27;2023-01-19T08:11:37.586096128&#x27;, &#x27;2023-01-19T08:11:38.793029376&#x27;,
+       &#x27;2023-01-19T08:11:39.999962624&#x27;, &#x27;2023-01-19T08:11:41.206896128&#x27;,
+       &#x27;2023-01-19T08:11:42.413829376&#x27;, &#x27;2023-01-19T08:11:43.620762624&#x27;,
+       &#x27;2023-01-19T08:11:44.827695872&#x27;, &#x27;2023-01-19T08:11:46.034629120&#x27;,
+       &#x27;2023-01-19T08:11:47.241562624&#x27;, &#x27;2023-01-19T08:11:48.448495872&#x27;,
+       &#x27;2023-01-19T08:11:49.655429120&#x27;, &#x27;2023-01-19T08:11:50.862362368&#x27;,
+       &#x27;2023-01-19T08:11:52.069295616&#x27;, &#x27;2023-01-19T08:11:53.276229120&#x27;,
+       &#x27;2023-01-19T08:11:54.483162368&#x27;, &#x27;2023-01-19T08:11:55.690095616&#x27;,
+       &#x27;2023-01-19T08:11:56.897028864&#x27;, &#x27;2023-01-19T08:11:58.103962112&#x27;,
+       &#x27;2023-01-19T08:11:59.310895616&#x27;, &#x27;2023-01-19T08:12:00.517828864&#x27;,
+       &#x27;2023-01-19T08:12:01.724762112&#x27;, &#x27;2023-01-19T08:12:02.931695360&#x27;,
+       &#x27;2023-01-19T08:12:04.138628608&#x27;, &#x27;2023-01-19T08:12:05.345562112&#x27;,
+       &#x27;2023-01-19T08:12:06.552495360&#x27;, &#x27;2023-01-19T08:12:07.759428608&#x27;,
+       &#x27;2023-01-19T08:12:08.966361856&#x27;, &#x27;2023-01-19T08:12:10.173295104&#x27;,
+       &#x27;2023-01-19T08:12:11.380228608&#x27;, &#x27;2023-01-19T08:12:12.587161856&#x27;,
+       &#x27;2023-01-19T08:12:13.794095104&#x27;, &#x27;2023-01-19T08:12:15.001028352&#x27;,
+       &#x27;2023-01-19T08:12:16.207961600&#x27;, &#x27;2023-01-19T08:12:17.414895104&#x27;,
+       &#x27;2023-01-19T08:12:18.621828352&#x27;, &#x27;2023-01-19T08:12:19.828761600&#x27;,
+       &#x27;2023-01-19T08:12:21.035694848&#x27;, &#x27;2023-01-19T08:12:22.242628096&#x27;,
+       &#x27;2023-01-19T08:12:23.449561600&#x27;, &#x27;2023-01-19T08:12:24.656494848&#x27;,
+       &#x27;2023-01-19T08:12:25.863428096&#x27;, &#x27;2023-01-19T08:12:27.070361344&#x27;,
+       &#x27;2023-01-19T08:12:28.277294592&#x27;, &#x27;2023-01-19T08:12:29.484227840&#x27;,
+       &#x27;2023-01-19T08:12:30.691161344&#x27;, &#x27;2023-01-19T08:12:31.898094592&#x27;,
+       &#x27;2023-01-19T08:12:33.105027840&#x27;, &#x27;2023-01-19T08:12:34.311961088&#x27;,
+       &#x27;2023-01-19T08:12:35.518894336&#x27;, &#x27;2023-01-19T08:12:36.725827840&#x27;,
+       &#x27;2023-01-19T08:12:37.932761088&#x27;, &#x27;2023-01-19T08:12:39.139694336&#x27;,
+       &#x27;2023-01-19T08:12:40.346627584&#x27;, &#x27;2023-01-19T08:12:41.553560832&#x27;,
+       &#x27;2023-01-19T08:12:42.760494336&#x27;, &#x27;2023-01-19T08:12:43.967427584&#x27;,
+       &#x27;2023-01-19T08:12:45.174360832&#x27;, &#x27;2023-01-19T08:12:46.381294080&#x27;,
+       &#x27;2023-01-19T08:12:47.588227328&#x27;, &#x27;2023-01-19T08:12:48.795160832&#x27;,
+       &#x27;2023-01-19T08:12:50.002094080&#x27;, &#x27;2023-01-19T08:12:51.209027328&#x27;,
+       &#x27;2023-01-19T08:12:52.415960576&#x27;, &#x27;2023-01-19T08:12:53.622893824&#x27;,
+       &#x27;2023-01-19T08:12:54.829827328&#x27;, &#x27;2023-01-19T08:12:56.036760576&#x27;,
+       &#x27;2023-01-19T08:12:57.243693824&#x27;, &#x27;2023-01-19T08:12:58.450627072&#x27;,
+       &#x27;2023-01-19T08:12:59.657560320&#x27;, &#x27;2023-01-19T08:13:00.864493824&#x27;,
+       &#x27;2023-01-19T08:13:02.071427072&#x27;, &#x27;2023-01-19T08:13:03.278360320&#x27;,
+       &#x27;2023-01-19T08:13:04.485293568&#x27;, &#x27;2023-01-19T08:13:05.692226816&#x27;,
+       &#x27;2023-01-19T08:13:06.899160320&#x27;, &#x27;2023-01-19T08:13:08.106093568&#x27;,
+       &#x27;2023-01-19T08:13:09.313026816&#x27;, &#x27;2023-01-19T08:13:10.519960064&#x27;,
+       &#x27;2023-01-19T08:13:11.726893312&#x27;, &#x27;2023-01-19T08:13:12.933826816&#x27;,
+       &#x27;2023-01-19T08:13:14.140760064&#x27;, &#x27;2023-01-19T08:13:15.347693312&#x27;,
+       &#x27;2023-01-19T08:13:16.554626560&#x27;, &#x27;2023-01-19T08:13:17.761559808&#x27;,
+       &#x27;2023-01-19T08:13:18.968493312&#x27;, &#x27;2023-01-19T08:13:20.175426560&#x27;,
+       &#x27;2023-01-19T08:13:21.382359808&#x27;, &#x27;2023-01-19T08:13:22.589293056&#x27;,
+       &#x27;2023-01-19T08:13:23.796226304&#x27;, &#x27;2023-01-19T08:13:25.003159552&#x27;,
+       &#x27;2023-01-19T08:13:26.210093056&#x27;, &#x27;2023-01-19T08:13:27.417026304&#x27;,
+       &#x27;2023-01-19T08:13:28.623959552&#x27;, &#x27;2023-01-19T08:13:29.830892800&#x27;,
+       &#x27;2023-01-19T08:13:31.037826048&#x27;, &#x27;2023-01-19T08:13:32.244759552&#x27;,
+       &#x27;2023-01-19T08:13:33.451692800&#x27;, &#x27;2023-01-19T08:13:34.658626048&#x27;,
+       &#x27;2023-01-19T08:13:35.865559296&#x27;, &#x27;2023-01-19T08:13:37.072492544&#x27;,
+       &#x27;2023-01-19T08:13:38.279426048&#x27;, &#x27;2023-01-19T08:13:39.486359296&#x27;,
+       &#x27;2023-01-19T08:13:40.693292544&#x27;, &#x27;2023-01-19T08:13:41.900225792&#x27;,
+       &#x27;2023-01-19T08:13:43.107159040&#x27;, &#x27;2023-01-19T08:13:44.314092544&#x27;,
+       &#x27;2023-01-19T08:13:45.521025792&#x27;, &#x27;2023-01-19T08:13:46.727959040&#x27;,
+       &#x27;2023-01-19T08:13:47.934892288&#x27;, &#x27;2023-01-19T08:13:49.141825536&#x27;,
+       &#x27;2023-01-19T08:13:50.348759040&#x27;, &#x27;2023-01-19T08:13:51.555692288&#x27;,
+       &#x27;2023-01-19T08:13:52.762625536&#x27;, &#x27;2023-01-19T08:13:53.969558784&#x27;,
+       &#x27;2023-01-19T08:13:55.176492032&#x27;, &#x27;2023-01-19T08:13:56.383425536&#x27;,
+       &#x27;2023-01-19T08:13:57.590358784&#x27;, &#x27;2023-01-19T08:13:58.797292032&#x27;,
+       &#x27;2023-01-19T08:14:00.004225280&#x27;, &#x27;2023-01-19T08:14:01.211158528&#x27;,
+       &#x27;2023-01-19T08:14:02.418092032&#x27;, &#x27;2023-01-19T08:14:03.625025280&#x27;,
+       &#x27;2023-01-19T08:14:04.831958528&#x27;, &#x27;2023-01-19T08:14:06.038891776&#x27;,
+       &#x27;2023-01-19T08:14:07.245825024&#x27;, &#x27;2023-01-19T08:14:08.452758528&#x27;,
+       &#x27;2023-01-19T08:14:09.659691776&#x27;, &#x27;2023-01-19T08:14:10.866625024&#x27;,
+       &#x27;2023-01-19T08:14:12.073558272&#x27;, &#x27;2023-01-19T08:14:13.280491520&#x27;,
+       &#x27;2023-01-19T08:14:14.487425024&#x27;, &#x27;2023-01-19T08:14:15.694358272&#x27;,
+       &#x27;2023-01-19T08:14:16.901291520&#x27;, &#x27;2023-01-19T08:14:18.108224768&#x27;,
+       &#x27;2023-01-19T08:14:19.315158016&#x27;, &#x27;2023-01-19T08:14:20.522091264&#x27;,
+       &#x27;2023-01-19T08:14:21.729024768&#x27;, &#x27;2023-01-19T08:14:22.935958016&#x27;,
+       &#x27;2023-01-19T08:14:24.142891264&#x27;, &#x27;2023-01-19T08:14:25.349824512&#x27;,
+       &#x27;2023-01-19T08:14:26.556757760&#x27;, &#x27;2023-01-19T08:14:27.763691264&#x27;,
+       &#x27;2023-01-19T08:14:28.970624512&#x27;, &#x27;2023-01-19T08:14:30.177557760&#x27;,
+       &#x27;2023-01-19T08:14:31.384491008&#x27;, &#x27;2023-01-19T08:14:32.591424256&#x27;,
+       &#x27;2023-01-19T08:14:33.798357760&#x27;, &#x27;2023-01-19T08:14:35.005291008&#x27;,
+       &#x27;2023-01-19T08:14:36.212224256&#x27;, &#x27;2023-01-19T08:14:37.419157504&#x27;,
+       &#x27;2023-01-19T08:14:38.626090752&#x27;, &#x27;2023-01-19T08:14:39.833024256&#x27;,
+       &#x27;2023-01-19T08:14:41.039957504&#x27;, &#x27;2023-01-19T08:14:42.246890752&#x27;],
+      dtype=&#x27;datetime64[ns]&#x27;)</pre></span></li></ul></div></li><li class='sc-section-item'><input id='section-ee290ba5-61fc-42ce-b323-3ebb2e6bed2a' class='sc-section-summary-in' type='checkbox'  checked><label for='section-ee290ba5-61fc-42ce-b323-3ebb2e6bed2a' class='sc-section-summary'  title='Expand/collapse section'>Data: <span>(1)</span></label><div class='sc-section-inline-details'></div><div class='sc-section-details'><ul class='sc-var-list'><li class='sc-var-item'><div class='sc-var-name'><span></span></div><div class='sc-var-dims'>(time)</div><div class='sc-var-dtype'>float64</div><div class='sc-var-unit'>Hz</div><div class='sc-value-preview sc-preview'><span><div>1.287e-05, 0.359, ..., 0.352, -4.904e-07</div></span></div><input id='attrs-68b6e805-c744-4539-939c-badb860db663' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-68b6e805-c744-4539-939c-badb860db663' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-4e5214f7-ed81-4b91-bfa0-3c61d4e898e3' class='sc-var-data-in' type='checkbox'><label for='data-4e5214f7-ed81-4b91-bfa0-3c61d4e898e3' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array([ 1.28712703e-05,  3.58958178e-01,  7.17866971e-01,  1.07691359e+00,
+        1.43591746e+00,  1.79487320e+00,  2.15385369e+00,  2.51281987e+00,
+        2.87187121e+00,  3.23081226e+00,  3.58981891e+00,  3.94870842e+00,
+        4.30769912e+00,  4.66666365e+00,  5.02562219e+00,  5.38460756e+00,
+        5.74358259e+00,  6.10256219e+00,  6.46145332e+00,  6.82052313e+00,
+        7.17950960e+00,  7.53843141e+00,  7.89749324e+00,  8.25639496e+00,
+        8.61538232e+00,  8.97432454e+00,  9.33327696e+00,  9.69229285e+00,
+        1.00513025e+01,  1.04102649e+01,  1.07692595e+01,  1.11281847e+01,
+        1.14871807e+01,  1.18461841e+01,  1.22050969e+01,  1.25640798e+01,
+        1.29231327e+01,  1.32820439e+01,  1.36409727e+01,  1.40000353e+01,
+        1.40783218e+01,  1.40743732e+01,  1.40368964e+01,  1.39993821e+01,
+        1.39790818e+01,  1.39768099e+01,  1.39851619e+01,  1.39956710e+01,
+        1.40030625e+01,  1.40059890e+01,  1.40054666e+01,  1.40033109e+01,
+        1.40010291e+01,  1.39994742e+01,  1.39987127e+01,  1.39987323e+01,
+        1.39990919e+01,  1.39995409e+01,  1.39998985e+01,  1.40000804e+01,
+        1.40002122e+01,  1.40001767e+01,  1.40002364e+01,  1.40000597e+01,
+        1.40001066e+01,  1.40000218e+01,  1.40000392e+01,  1.39999286e+01,
+        1.40000235e+01,  1.40000074e+01,  1.39999709e+01,  1.39999340e+01,
+        1.39999981e+01,  1.40000250e+01,  1.40000138e+01,  1.39999544e+01,
+        1.40000262e+01,  1.39999248e+01,  1.39999959e+01,  1.40000356e+01,
+        1.39999859e+01,  1.40000064e+01,  1.40000152e+01,  1.39999306e+01,
+        1.40000103e+01,  1.40000394e+01,  1.40000453e+01,  1.39999621e+01,
+        1.39999829e+01,  1.40000255e+01,  1.40000156e+01,  1.40001212e+01,
+        1.40000104e+01,  1.40000177e+01,  1.40000035e+01,  1.40000708e+01,
+        1.39999885e+01,  1.40000239e+01,  1.39999674e+01,  1.39999966e+01,
+        1.40000941e+01,  1.39999697e+01,  1.40000485e+01,  1.39999898e+01,
+        1.39999805e+01,  1.40000370e+01,  1.39999218e+01,  1.39999741e+01,
+        1.40000058e+01,  1.40000634e+01,  1.39999932e+01,  1.40000127e+01,
+        1.39999972e+01,  1.40000141e+01,  1.40000016e+01,  1.39999793e+01,
+        1.39999465e+01,  1.39997833e+01,  1.39994304e+01,  1.39975883e+01,
+        1.39909586e+01,  1.39679657e+01,  1.39066992e+01,  1.38161344e+01,
+        1.37547382e+01,  1.37317718e+01,  1.37251129e+01,  1.37233104e+01,
+        1.37229065e+01,  1.37227973e+01,  1.37227971e+01,  1.37227141e+01,
+        1.37227334e+01,  1.37227890e+01,  1.37228152e+01,  1.37227866e+01,
+        1.37227864e+01,  1.37227676e+01,  1.37227788e+01,  1.37227187e+01,
+        1.37227271e+01,  1.33708923e+01,  1.30189700e+01,  1.26671450e+01,
+        1.23152892e+01,  1.19635346e+01,  1.16115960e+01,  1.12596457e+01,
+        1.09078860e+01,  1.05559769e+01,  1.02041706e+01,  9.85215034e+00,
+        9.50041097e+00,  9.14844059e+00,  8.79657999e+00,  8.44471935e+00,
+        8.09286946e+00,  7.74101219e+00,  7.38913836e+00,  7.03729080e+00,
+        6.68543505e+00,  6.33355645e+00,  5.98173710e+00,  5.62985157e+00,
+        5.27793131e+00,  4.92608422e+00,  4.57427248e+00,  4.22239068e+00,
+        3.87061422e+00,  3.51868112e+00,  3.16675315e+00,  2.81483757e+00,
+        2.46306945e+00,  2.11123897e+00,  1.75938373e+00,  1.40747555e+00,
+        1.05549357e+00,  7.03716252e-01,  3.51902452e-01, -4.90383720e-07])</pre></li></ul></div></li></ul></div></div></div>
+</div>
+<p>The chopper has a long region of near-constant rotation speed surrounded by spin-up and spin-down regions:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rotation_speed</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">markersize</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_processing-nexus-choppers_13_0.svg" src="../../_images/user-guide_chopper_processing-nexus-choppers_13_0.svg" />
+</div>
+</div>
+<p>The central plateau is the section of the log where the chopper is in-phase with the source (the ESS source has a frequency of 14 Hz).</p>
+<p>We use <a class="reference internal" href="../../generated/modules/scippneutron.chopper.filtering.find_plateaus.html"><span class="doc">find_plateaus</span></a> and <a class="reference internal" href="../../generated/modules/scippneutron.chopper.filtering.collapse_plateaus.html"><span class="doc">collapse_plateaus</span></a> to find one or more plateaus in the log data.</p>
+<p>Note the <code class="docutils literal notranslate"><span class="pre">atol</span></code> and <code class="docutils literal notranslate"><span class="pre">min_n_points</span></code> parameters, they need to be tuned for the specific input data.</p>
+<div class="admonition warning">
+<p class="admonition-title"><strong>Warning</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">find_plateaus</span></code> can potentially falsely identify regions with a small but steady slope as a plateau. See the function’s documentation for details.</p>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron.chopper</span><span class="w"> </span><span class="kn">import</span> <span class="n">collapse_plateaus</span><span class="p">,</span> <span class="n">find_plateaus</span>
+
+<span class="n">plateaus</span> <span class="o">=</span> <span class="n">find_plateaus</span><span class="p">(</span>
+    <span class="n">rotation_speed</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;Hz / s&#39;</span><span class="p">),</span> <span class="n">min_n_points</span><span class="o">=</span><span class="mi">10</span>
+<span class="p">)</span>
+<span class="n">plateaus</span> <span class="o">=</span> <span class="n">collapse_plateaus</span><span class="p">(</span><span class="n">plateaus</span><span class="p">)</span>
+<span class="n">plateaus</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><!-- Original source from -->
+<!-- https://github.com/jsignell/xarray/blob/1d960933ab252e0f79f7e050e6c9261d55568057/xarray/static/html/icons-svg-inline.html -->
+<svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewBox="0 0 32 32">
+<title>Show/Hide data repr</title>
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewBox="0 0 32 32">
+<title>Show/Hide attributes</title>
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg><style id="scipp-style-sheet">.sc-root{--sc-background-color0:var(--jp-layout-color0,#fff);--sc-background-color1:var(--jp-layout-color1,#fcfcfc);--sc-background-color2:var(--jp-layout-color2,#efefef);--sc-inverse-background-color0:var(--jp-inverse-layout-color4,#111);--sc-font-color0:var(--jp-content-font-color0,#000);--sc-font-color1:var(--jp-content-font-color1,#555);--sc-font-color2:var(--jp-content-font-color2,#888);--sc-font-color3:var(--jp-content-font-color3,#ccc);}body.vscode-dark .sc-root{--sc-font-color0:rgba(255,255,255,1);--sc-font-color1:rgba(255,255,255,0.70);--sc-font-color2:rgba(255,255,255,0.54);--sc-font-color3:rgba(255,255,255,0.38);--sc-border-color:#1F1F1F;--sc-disabled-color:#515151;--sc-background-color0:#111111;--sc-background-color1:#111111;--sc-background-color2:#313131;}.sc-wrap{font-size:14px;min-width:300px;max-width:800px;}.sc-var-attrs .sc-wrap{padding-left:3em;}.sc-header{padding-top:6px;padding-bottom:6px;margin-bottom:4px;border-bottom:solid 1px #ddd;}.sc-header > div,.sc-header > ul{display:inline;margin-top:0;margin-bottom:0;}.sc-obj-type,.sc-array-name{margin-left:2px;margin-right:10px;}.sc-obj-type{color:var(--sc-font-color1);}.sc-underlying-size{color:var(--sc-font-color2);}.sc-sections,.reveal .sc-sections{padding-left:0 !important;display:grid;grid-template-columns:150px auto auto auto 1fr 20px 20px;}.sc-section-item{display:contents;}.sc-section-item input{display:none;}.sc-section-item input:enabled + label{cursor:pointer;color:var(--sc-font-color1);}.sc-section-item input:enabled + label:hover{color:var(--sc-font-color0);}.sc-section-summary{grid-column:1;font-weight:500;}.sc-section-summary > span{display:inline-block;padding-left:0.5em;}.sc-section-summary-in:disabled + label{color:var(--sc-font-color1);}.sc-section-summary-in + label:before{display:inline-block;content:'►';font-size:11px;width:15px;text-align:center;}.sc-section-summary-in:disabled + label:before{color:var(--sc-font-color3);}.sc-section-summary-in:checked + label:before{content:'▼';}.sc-section-summary-in:checked + label > span{display:none;}.sc-section-summary,.sc-section-inline-details{padding-top:4px;padding-bottom:4px;}.sc-section-inline-details{grid-column:2 / 6;}.sc-section-details{display:none;grid-column:1 / -1;margin-bottom:5px;}.sc-section-summary-in:checked ~ .sc-section-details{display:contents;}.sc-array-wrap{grid-column:1 / -1;display:grid;grid-template-columns:20px auto;}.sc-array-wrap > label{grid-column:1;vertical-align:top;}.sc-preview{color:var(--sc-font-color2);}.sc-array-preview,.sc-array-data{padding:0 5px !important;grid-column:2;}.sc-array-data,.sc-array-in:checked ~ .sc-array-preview{display:none;}.sc-array-in:checked ~ .sc-array-data,.sc-array-preview{display:inline-block;}.sc-dim-list{display:inline-block !important;list-style:none;padding:0 !important;margin:0;}.sc-dim-list li{display:inline-block;padding:0;margin:0!important;}.sc-dim-list:before{content:'(';}.sc-dim-list:after{content:')';}.sc-dim-list li:not(:last-child):after{content:',';padding-right:5px;}.sc-dim-list li span,.sc-standalone-var-name > span span,.sc-var-name > span span{padding:0 !important;}.sc-aligned{font-weight:bold;}.sc-var-list,.sc-var-item,.reveal .sc-var-list,.reveal .sc-var-item{display:contents;}.sc-var-item > div,.sc-var-item label,.sc-var-item > .sc-var-name span{background-color:var(--sc-background-color1);margin-bottom:0;}.sc-var-item > .sc-var-name:hover span{padding-right:5px;}.sc-var-list > li:nth-child(odd) > div,.sc-var-list > li:nth-child(odd) > label,.sc-var-list > li:nth-child(odd) > .sc-var-name span{background-color:var(--sc-background-color2);}.sc-var-name{grid-column:1;}.sc-var-dims{grid-column:2;}.sc-var-dtype{grid-column:3;text-align:right;color:var(--sc-font-color2);}.sc-var-unit{grid-column:4;text-align:left;color:var(--sc-font-color1);max-width:50pt;text-overflow:ellipsis;}.sc-value-preview{grid-column:5;}.sc-var-preview-variances{text-align:right;}.sc-sections .sc-section-item .sc-section-summary,.sc-sections .sc-section-item .sc-section-inline-details,.sc-section-item .sc-var-list .sc-var-item > div,.sc-section-item .sc-var-list .sc-var-item > label,.sc-section-details .sc-var-list .sc-var-item > div,.sc-section-details .sc-var-list .sc-var-item > label{margin-top:0;margin-bottom:0;}.sc-var-name,.sc-var-dims,.sc-var-dtype,.sc-var-unit,.sc-preview,.sc-attrs dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px;}.sc-var-name:hover,.sc-var-dims:hover,.sc-var-dtype:hover,.sc-var-unit:hover,.sc-attrs dt:hover{overflow:visible;width:auto;z-index:1;}.sc-var-attrs{display:block;}.sc-var-data,.reveal .sc-var-data{display:none;}.sc-var-attrs,.sc-var-data{background-color:var(--sc-background-color0) !important;padding-bottom:5px !important;}.sc-var-attrs-in:checked ~ .sc-var-attrs{display:none;}.sc-var-data-in:checked ~ .sc-var-data{display:block;}.sc-var-data > table{float:right;}.sc-var-name span,.sc-var-data{padding-left:25px !important;}.sc-var-attrs,.sc-var-data{grid-column:1 / -1;}dl.sc-attrs{padding:0;margin:0;display:grid;grid-template-columns:125px auto;}.sc-attrs dt,dd{padding:0;margin:0;float:left;padding-right:10px;width:auto;}.sc-attrs dt{font-weight:normal;grid-column:1;}.sc-attrs dt:hover span{display:inline-block;padding-right:10px;}.sc-attrs dd{grid-column:2;white-space:pre-wrap;word-break:break-all;}.sc-icon-database,.sc-icon-file-text2{display:inline-block;vertical-align:middle;width:1em;height:1.5em !important;stroke-width:0;stroke:currentColor;fill:currentColor;}label.sc-hide-icon svg{opacity:0;}.sc-standalone-var-name{grid-column:1/3;}.sc-standalone-var-name span{padding-left:25px;padding-right:10px;}.sc-title{font-weight:bold;font-size:1.5em;}.sc-subtitle{font-weight:normal;font-style:italic;text-align:left;font-size:1.2em;padding:1px;}.sc-label{fill:var(--sc-font-color0,#444444);text-anchor:middle;}.sc-name{fill:var(--sc-font-color0,#111111);}.sc-inset-line{stroke:var(--sc-font-color1);stroke-width:0.05;stroke-dasharray:0.2,0.2;}.sc-log-wrap{height:25ex;resize:vertical;overflow-y:scroll;display:flex;flex-direction:column-reverse;border:1px solid;border-color:var(--jp-border-color2);background-color:var(--sc-background-color1);}div.sc-log{line-height:2.5ex;}table.sc-log{table-layout:auto;border-collapse:collapse;}tr.sc-log:nth-child(even){background-color:var(--sc-background-color0);}tr.sc-log > td{vertical-align:top;padding-bottom:0.5ex;}.sc-log-time-stamp{min-width:22ch;font-family:var(--jp-code-font-family);color:var(--sc-font-color2);}.sc-log-level{min-width:10ch;}tr.sc-log-debug td.sc-log-level{color:var(--jp-accent-color1);}tr.sc-log-info td.sc-log-level{color:var(--jp-info-color1);}tr.sc-log-warning td.sc-log-level{color:var(--jp-warn-color1);}tr.sc-log-error td.sc-log-level{font-weight:bold;color:var(--jp-error-color2);}tr.sc-log-critical td.sc-log-level{font-weight:bold;color:var(--sc-background-color0);background-color:var(--jp-error-color1);}.sc-log-message{white-space:pre-wrap;width:100%;}.sc-log-html-payload{white-space:normal;}.sc-log-name{padding-right:0.5em;text-align:right;white-space:pre-wrap;color:var(--sc-font-color3);}</style><div class='sc-wrap sc-root'><div class='sc-header'><div class='sc-obj-type'>scipp.DataArray (1.18 KB)</div></div><ul class='sc-sections'><li class='sc-section-item'><input id='section-f0d5b772-8ff4-42e1-b135-613167ac47f7' class='sc-section-summary-in' type='checkbox' disabled ><label for='section-f0d5b772-8ff4-42e1-b135-613167ac47f7' class='sc-section-summary' >Dimensions:</label><div class='sc-section-inline-details'><ul class='sc-dim-list'><li><span class='sc-has-index'>plateau</span>: 2</li></ul></div><div class='sc-section-details'></div></li><li class='sc-section-item'><input id='section-67f0f665-b6cd-46fc-8e1f-efbed7fae6b4' class='sc-section-summary-in' type='checkbox'  checked><label for='section-67f0f665-b6cd-46fc-8e1f-efbed7fae6b4' class='sc-section-summary'  title='Expand/collapse section'>Coordinates: <span>(2)</span></label><div class='sc-section-inline-details'></div><div class='sc-section-details'><ul class='sc-var-list'><li class='sc-var-item'><div class='sc-var-name'><span class='sc-aligned'>plateau</span></div><div class='sc-var-dims'>(plateau)</div><div class='sc-var-dtype'>int64</div><div class='sc-var-unit'></div><div class='sc-value-preview sc-preview'><span><div>0, 1</div></span></div><input id='attrs-c161be78-0bf3-42af-a48a-40d04581ae41' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-c161be78-0bf3-42af-a48a-40d04581ae41' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-18182157-010b-4f2f-b964-566c12c8af8a' class='sc-var-data-in' type='checkbox'><label for='data-18182157-010b-4f2f-b964-566c12c8af8a' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array([0, 1])</pre></span></li><li class='sc-var-item'><div class='sc-var-name'><span class='sc-aligned'>time</span></div><div class='sc-var-dims'>(plateau, time [bin-edge])</div><div class='sc-var-dtype'>datetime64</div><div class='sc-var-unit'>ns</div><div class='sc-value-preview sc-preview'><span><div>2023-01-19T08:12:10.173295104, 2023-01-19T08:13:28.623959553, 2023-01-19T08:13:39.486359296, 2023-01-19T08:13:55.176492033</div></span></div><input id='attrs-06a68688-ca8a-4117-8a86-8bea653267fe' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-06a68688-ca8a-4117-8a86-8bea653267fe' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-eb39b47c-823b-43dc-a2a7-81eb7df03688' class='sc-var-data-in' type='checkbox'><label for='data-eb39b47c-823b-43dc-a2a7-81eb7df03688' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array([[&#x27;2023-01-19T08:12:10.173295104&#x27;, &#x27;2023-01-19T08:13:28.623959553&#x27;],
+       [&#x27;2023-01-19T08:13:39.486359296&#x27;, &#x27;2023-01-19T08:13:55.176492033&#x27;]],
+      dtype=&#x27;datetime64[ns]&#x27;)</pre></span></li></ul></div></li><li class='sc-section-item'><input id='section-21d80bb8-dea2-4f79-bb47-015dcf1de67d' class='sc-section-summary-in' type='checkbox'  checked><label for='section-21d80bb8-dea2-4f79-bb47-015dcf1de67d' class='sc-section-summary'  title='Expand/collapse section'>Data: <span>(1)</span></label><div class='sc-section-inline-details'></div><div class='sc-section-details'><ul class='sc-var-list'><li class='sc-var-item'><div class='sc-var-name'><span></span></div><div class='sc-var-dims'>(plateau)</div><div class='sc-var-dtype'>float64</div><div class='sc-var-unit'>Hz</div><div class='sc-value-preview sc-preview'><span><div>14.000, 13.723</div></span></div><input id='attrs-4fbcc63a-937b-472e-9f02-6fdcb9c45e71' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-4fbcc63a-937b-472e-9f02-6fdcb9c45e71' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-d7c04623-302f-4100-bb81-e457f01efd5b' class='sc-var-data-in' type='checkbox'><label for='data-d7c04623-302f-4100-bb81-e457f01efd5b' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array([13.99993461, 13.7228163 ])</pre></li></ul></div></li></ul></div></div></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">find_plateaus</span></code> found two plateaus that we can plot with the following helper function:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_plateaus</span><span class="p">(</span><span class="n">raw_data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">plateaus</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">to_plot</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">({</span><span class="s1">&#39;Rotation Speed&#39;</span><span class="p">:</span> <span class="n">raw_data</span><span class="p">})</span>
+    <span class="k">for</span> <span class="n">plateau</span> <span class="ow">in</span> <span class="n">plateaus</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">plateau</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;plateau&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">to_plot</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;Plateau </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+            <span class="n">plateau</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">],</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
+            <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">plateau</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]},</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">to_plot</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="n">ls</span><span class="o">=</span><span class="p">{</span><span class="sa">f</span><span class="s1">&#39;Plateau </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="s1">&#39;-&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plateaus</span><span class="p">))},</span>
+        <span class="n">marker</span><span class="o">=</span><span class="p">{</span><span class="sa">f</span><span class="s1">&#39;Plateau </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="s1">&#39;|&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plateaus</span><span class="p">))},</span>
+        <span class="n">markersize</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Rotation Speed&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_plateaus</span><span class="p">(</span><span class="n">rotation_speed</span><span class="p">,</span> <span class="n">plateaus</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_processing-nexus-choppers_18_0.svg" src="../../_images/user-guide_chopper_processing-nexus-choppers_18_0.svg" />
+</div>
+</div>
+<p>In this case, the source has a frequency of 14Hz which means that plateau 0 is in phase. But plateau 1 is not, it is a short region where the chopper slowed down before fully stopping.</p>
+<p>We can use <a class="reference internal" href="../../generated/modules/scippneutron.chopper.filtering.filter_in_phase.html"><span class="doc">filter_in_phase</span></a> to remove all out-of-phase plateaus:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pulse_frequency</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">14.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;Hz&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron.chopper</span><span class="w"> </span><span class="kn">import</span> <span class="n">filter_in_phase</span>
+
+<span class="n">frequency_in_phase</span> <span class="o">=</span> <span class="n">filter_in_phase</span><span class="p">(</span>
+    <span class="n">plateaus</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">pulse_frequency</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">frequency_in_phase</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><!-- Original source from -->
+<!-- https://github.com/jsignell/xarray/blob/1d960933ab252e0f79f7e050e6c9261d55568057/xarray/static/html/icons-svg-inline.html -->
+<svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewBox="0 0 32 32">
+<title>Show/Hide data repr</title>
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewBox="0 0 32 32">
+<title>Show/Hide attributes</title>
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg><style id="scipp-style-sheet">.sc-root{--sc-background-color0:var(--jp-layout-color0,#fff);--sc-background-color1:var(--jp-layout-color1,#fcfcfc);--sc-background-color2:var(--jp-layout-color2,#efefef);--sc-inverse-background-color0:var(--jp-inverse-layout-color4,#111);--sc-font-color0:var(--jp-content-font-color0,#000);--sc-font-color1:var(--jp-content-font-color1,#555);--sc-font-color2:var(--jp-content-font-color2,#888);--sc-font-color3:var(--jp-content-font-color3,#ccc);}body.vscode-dark .sc-root{--sc-font-color0:rgba(255,255,255,1);--sc-font-color1:rgba(255,255,255,0.70);--sc-font-color2:rgba(255,255,255,0.54);--sc-font-color3:rgba(255,255,255,0.38);--sc-border-color:#1F1F1F;--sc-disabled-color:#515151;--sc-background-color0:#111111;--sc-background-color1:#111111;--sc-background-color2:#313131;}.sc-wrap{font-size:14px;min-width:300px;max-width:800px;}.sc-var-attrs .sc-wrap{padding-left:3em;}.sc-header{padding-top:6px;padding-bottom:6px;margin-bottom:4px;border-bottom:solid 1px #ddd;}.sc-header > div,.sc-header > ul{display:inline;margin-top:0;margin-bottom:0;}.sc-obj-type,.sc-array-name{margin-left:2px;margin-right:10px;}.sc-obj-type{color:var(--sc-font-color1);}.sc-underlying-size{color:var(--sc-font-color2);}.sc-sections,.reveal .sc-sections{padding-left:0 !important;display:grid;grid-template-columns:150px auto auto auto 1fr 20px 20px;}.sc-section-item{display:contents;}.sc-section-item input{display:none;}.sc-section-item input:enabled + label{cursor:pointer;color:var(--sc-font-color1);}.sc-section-item input:enabled + label:hover{color:var(--sc-font-color0);}.sc-section-summary{grid-column:1;font-weight:500;}.sc-section-summary > span{display:inline-block;padding-left:0.5em;}.sc-section-summary-in:disabled + label{color:var(--sc-font-color1);}.sc-section-summary-in + label:before{display:inline-block;content:'►';font-size:11px;width:15px;text-align:center;}.sc-section-summary-in:disabled + label:before{color:var(--sc-font-color3);}.sc-section-summary-in:checked + label:before{content:'▼';}.sc-section-summary-in:checked + label > span{display:none;}.sc-section-summary,.sc-section-inline-details{padding-top:4px;padding-bottom:4px;}.sc-section-inline-details{grid-column:2 / 6;}.sc-section-details{display:none;grid-column:1 / -1;margin-bottom:5px;}.sc-section-summary-in:checked ~ .sc-section-details{display:contents;}.sc-array-wrap{grid-column:1 / -1;display:grid;grid-template-columns:20px auto;}.sc-array-wrap > label{grid-column:1;vertical-align:top;}.sc-preview{color:var(--sc-font-color2);}.sc-array-preview,.sc-array-data{padding:0 5px !important;grid-column:2;}.sc-array-data,.sc-array-in:checked ~ .sc-array-preview{display:none;}.sc-array-in:checked ~ .sc-array-data,.sc-array-preview{display:inline-block;}.sc-dim-list{display:inline-block !important;list-style:none;padding:0 !important;margin:0;}.sc-dim-list li{display:inline-block;padding:0;margin:0!important;}.sc-dim-list:before{content:'(';}.sc-dim-list:after{content:')';}.sc-dim-list li:not(:last-child):after{content:',';padding-right:5px;}.sc-dim-list li span,.sc-standalone-var-name > span span,.sc-var-name > span span{padding:0 !important;}.sc-aligned{font-weight:bold;}.sc-var-list,.sc-var-item,.reveal .sc-var-list,.reveal .sc-var-item{display:contents;}.sc-var-item > div,.sc-var-item label,.sc-var-item > .sc-var-name span{background-color:var(--sc-background-color1);margin-bottom:0;}.sc-var-item > .sc-var-name:hover span{padding-right:5px;}.sc-var-list > li:nth-child(odd) > div,.sc-var-list > li:nth-child(odd) > label,.sc-var-list > li:nth-child(odd) > .sc-var-name span{background-color:var(--sc-background-color2);}.sc-var-name{grid-column:1;}.sc-var-dims{grid-column:2;}.sc-var-dtype{grid-column:3;text-align:right;color:var(--sc-font-color2);}.sc-var-unit{grid-column:4;text-align:left;color:var(--sc-font-color1);max-width:50pt;text-overflow:ellipsis;}.sc-value-preview{grid-column:5;}.sc-var-preview-variances{text-align:right;}.sc-sections .sc-section-item .sc-section-summary,.sc-sections .sc-section-item .sc-section-inline-details,.sc-section-item .sc-var-list .sc-var-item > div,.sc-section-item .sc-var-list .sc-var-item > label,.sc-section-details .sc-var-list .sc-var-item > div,.sc-section-details .sc-var-list .sc-var-item > label{margin-top:0;margin-bottom:0;}.sc-var-name,.sc-var-dims,.sc-var-dtype,.sc-var-unit,.sc-preview,.sc-attrs dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px;}.sc-var-name:hover,.sc-var-dims:hover,.sc-var-dtype:hover,.sc-var-unit:hover,.sc-attrs dt:hover{overflow:visible;width:auto;z-index:1;}.sc-var-attrs{display:block;}.sc-var-data,.reveal .sc-var-data{display:none;}.sc-var-attrs,.sc-var-data{background-color:var(--sc-background-color0) !important;padding-bottom:5px !important;}.sc-var-attrs-in:checked ~ .sc-var-attrs{display:none;}.sc-var-data-in:checked ~ .sc-var-data{display:block;}.sc-var-data > table{float:right;}.sc-var-name span,.sc-var-data{padding-left:25px !important;}.sc-var-attrs,.sc-var-data{grid-column:1 / -1;}dl.sc-attrs{padding:0;margin:0;display:grid;grid-template-columns:125px auto;}.sc-attrs dt,dd{padding:0;margin:0;float:left;padding-right:10px;width:auto;}.sc-attrs dt{font-weight:normal;grid-column:1;}.sc-attrs dt:hover span{display:inline-block;padding-right:10px;}.sc-attrs dd{grid-column:2;white-space:pre-wrap;word-break:break-all;}.sc-icon-database,.sc-icon-file-text2{display:inline-block;vertical-align:middle;width:1em;height:1.5em !important;stroke-width:0;stroke:currentColor;fill:currentColor;}label.sc-hide-icon svg{opacity:0;}.sc-standalone-var-name{grid-column:1/3;}.sc-standalone-var-name span{padding-left:25px;padding-right:10px;}.sc-title{font-weight:bold;font-size:1.5em;}.sc-subtitle{font-weight:normal;font-style:italic;text-align:left;font-size:1.2em;padding:1px;}.sc-label{fill:var(--sc-font-color0,#444444);text-anchor:middle;}.sc-name{fill:var(--sc-font-color0,#111111);}.sc-inset-line{stroke:var(--sc-font-color1);stroke-width:0.05;stroke-dasharray:0.2,0.2;}.sc-log-wrap{height:25ex;resize:vertical;overflow-y:scroll;display:flex;flex-direction:column-reverse;border:1px solid;border-color:var(--jp-border-color2);background-color:var(--sc-background-color1);}div.sc-log{line-height:2.5ex;}table.sc-log{table-layout:auto;border-collapse:collapse;}tr.sc-log:nth-child(even){background-color:var(--sc-background-color0);}tr.sc-log > td{vertical-align:top;padding-bottom:0.5ex;}.sc-log-time-stamp{min-width:22ch;font-family:var(--jp-code-font-family);color:var(--sc-font-color2);}.sc-log-level{min-width:10ch;}tr.sc-log-debug td.sc-log-level{color:var(--jp-accent-color1);}tr.sc-log-info td.sc-log-level{color:var(--jp-info-color1);}tr.sc-log-warning td.sc-log-level{color:var(--jp-warn-color1);}tr.sc-log-error td.sc-log-level{font-weight:bold;color:var(--jp-error-color2);}tr.sc-log-critical td.sc-log-level{font-weight:bold;color:var(--sc-background-color0);background-color:var(--jp-error-color1);}.sc-log-message{white-space:pre-wrap;width:100%;}.sc-log-html-payload{white-space:normal;}.sc-log-name{padding-right:0.5em;text-align:right;white-space:pre-wrap;color:var(--sc-font-color3);}</style><div class='sc-wrap sc-root'><div class='sc-header'><div class='sc-obj-type'>scipp.DataArray (1.15 KB)</div></div><ul class='sc-sections'><li class='sc-section-item'><input id='section-cbb02176-a0f3-4f7c-b4c7-58bd61d00c55' class='sc-section-summary-in' type='checkbox' disabled ><label for='section-cbb02176-a0f3-4f7c-b4c7-58bd61d00c55' class='sc-section-summary' >Dimensions:</label><div class='sc-section-inline-details'><ul class='sc-dim-list'><li><span class='sc-has-index'>plateau</span>: 1</li></ul></div><div class='sc-section-details'></div></li><li class='sc-section-item'><input id='section-a1f54617-c054-45ea-85d2-4d835014f9e6' class='sc-section-summary-in' type='checkbox'  checked><label for='section-a1f54617-c054-45ea-85d2-4d835014f9e6' class='sc-section-summary'  title='Expand/collapse section'>Coordinates: <span>(2)</span></label><div class='sc-section-inline-details'></div><div class='sc-section-details'><ul class='sc-var-list'><li class='sc-var-item'><div class='sc-var-name'><span class='sc-aligned'>plateau</span></div><div class='sc-var-dims'>(plateau)</div><div class='sc-var-dtype'>int64</div><div class='sc-var-unit'></div><div class='sc-value-preview sc-preview'><span><div>0</div></span></div><input id='attrs-1a34b867-b9f5-4c78-8075-215759139f26' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-1a34b867-b9f5-4c78-8075-215759139f26' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-eb697b23-d61c-442b-bb94-90c0eb3d32ff' class='sc-var-data-in' type='checkbox'><label for='data-eb697b23-d61c-442b-bb94-90c0eb3d32ff' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array([0])</pre></span></li><li class='sc-var-item'><div class='sc-var-name'><span class='sc-aligned'>time</span></div><div class='sc-var-dims'>(plateau, time [bin-edge])</div><div class='sc-var-dtype'>datetime64</div><div class='sc-var-unit'>ns</div><div class='sc-value-preview sc-preview'><span><div>2023-01-19T08:12:10.173295104, 2023-01-19T08:13:28.623959553</div></span></div><input id='attrs-f48581e3-2c08-4ea8-87be-14999ce7af7f' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-f48581e3-2c08-4ea8-87be-14999ce7af7f' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-eaaa4e58-4c7e-4d0a-b413-c6ee0cb7ce4e' class='sc-var-data-in' type='checkbox'><label for='data-eaaa4e58-4c7e-4d0a-b413-c6ee0cb7ce4e' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array([[&#x27;2023-01-19T08:12:10.173295104&#x27;, &#x27;2023-01-19T08:13:28.623959553&#x27;]],
+      dtype=&#x27;datetime64[ns]&#x27;)</pre></span></li></ul></div></li><li class='sc-section-item'><input id='section-6fc54304-4ab0-447a-8c82-a76a72b824e8' class='sc-section-summary-in' type='checkbox'  checked><label for='section-6fc54304-4ab0-447a-8c82-a76a72b824e8' class='sc-section-summary'  title='Expand/collapse section'>Data: <span>(1)</span></label><div class='sc-section-inline-details'></div><div class='sc-section-details'><ul class='sc-var-list'><li class='sc-var-item'><div class='sc-var-name'><span></span></div><div class='sc-var-dims'>(plateau)</div><div class='sc-var-dtype'>float64</div><div class='sc-var-unit'>Hz</div><div class='sc-value-preview sc-preview'><span><div>14.000</div></span></div><input id='attrs-a32a3703-e754-472d-979d-50b5d610533e' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-a32a3703-e754-472d-979d-50b5d610533e' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-d2acfafb-8d18-40da-90fd-a5bfcb8e0227' class='sc-var-data-in' type='checkbox'><label for='data-d2acfafb-8d18-40da-90fd-a5bfcb8e0227' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array([13.99993461])</pre></li></ul></div></li></ul></div></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_plateaus</span><span class="p">(</span><span class="n">rotation_speed</span><span class="p">,</span> <span class="n">frequency_in_phase</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_processing-nexus-choppers_22_0.svg" src="../../_images/user-guide_chopper_processing-nexus-choppers_22_0.svg" />
+</div>
+</div>
+<p>Since there is only one plateau left, we can simply index into it to get the chopper frequency:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">frequency</span> <span class="o">=</span> <span class="n">frequency_in_phase</span><span class="p">[</span><span class="s1">&#39;plateau&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">frequency</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><!-- Original source from -->
+<!-- https://github.com/jsignell/xarray/blob/1d960933ab252e0f79f7e050e6c9261d55568057/xarray/static/html/icons-svg-inline.html -->
+<svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewBox="0 0 32 32">
+<title>Show/Hide data repr</title>
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewBox="0 0 32 32">
+<title>Show/Hide attributes</title>
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg><style id="scipp-style-sheet">.sc-root{--sc-background-color0:var(--jp-layout-color0,#fff);--sc-background-color1:var(--jp-layout-color1,#fcfcfc);--sc-background-color2:var(--jp-layout-color2,#efefef);--sc-inverse-background-color0:var(--jp-inverse-layout-color4,#111);--sc-font-color0:var(--jp-content-font-color0,#000);--sc-font-color1:var(--jp-content-font-color1,#555);--sc-font-color2:var(--jp-content-font-color2,#888);--sc-font-color3:var(--jp-content-font-color3,#ccc);}body.vscode-dark .sc-root{--sc-font-color0:rgba(255,255,255,1);--sc-font-color1:rgba(255,255,255,0.70);--sc-font-color2:rgba(255,255,255,0.54);--sc-font-color3:rgba(255,255,255,0.38);--sc-border-color:#1F1F1F;--sc-disabled-color:#515151;--sc-background-color0:#111111;--sc-background-color1:#111111;--sc-background-color2:#313131;}.sc-wrap{font-size:14px;min-width:300px;max-width:800px;}.sc-var-attrs .sc-wrap{padding-left:3em;}.sc-header{padding-top:6px;padding-bottom:6px;margin-bottom:4px;border-bottom:solid 1px #ddd;}.sc-header > div,.sc-header > ul{display:inline;margin-top:0;margin-bottom:0;}.sc-obj-type,.sc-array-name{margin-left:2px;margin-right:10px;}.sc-obj-type{color:var(--sc-font-color1);}.sc-underlying-size{color:var(--sc-font-color2);}.sc-sections,.reveal .sc-sections{padding-left:0 !important;display:grid;grid-template-columns:150px auto auto auto 1fr 20px 20px;}.sc-section-item{display:contents;}.sc-section-item input{display:none;}.sc-section-item input:enabled + label{cursor:pointer;color:var(--sc-font-color1);}.sc-section-item input:enabled + label:hover{color:var(--sc-font-color0);}.sc-section-summary{grid-column:1;font-weight:500;}.sc-section-summary > span{display:inline-block;padding-left:0.5em;}.sc-section-summary-in:disabled + label{color:var(--sc-font-color1);}.sc-section-summary-in + label:before{display:inline-block;content:'►';font-size:11px;width:15px;text-align:center;}.sc-section-summary-in:disabled + label:before{color:var(--sc-font-color3);}.sc-section-summary-in:checked + label:before{content:'▼';}.sc-section-summary-in:checked + label > span{display:none;}.sc-section-summary,.sc-section-inline-details{padding-top:4px;padding-bottom:4px;}.sc-section-inline-details{grid-column:2 / 6;}.sc-section-details{display:none;grid-column:1 / -1;margin-bottom:5px;}.sc-section-summary-in:checked ~ .sc-section-details{display:contents;}.sc-array-wrap{grid-column:1 / -1;display:grid;grid-template-columns:20px auto;}.sc-array-wrap > label{grid-column:1;vertical-align:top;}.sc-preview{color:var(--sc-font-color2);}.sc-array-preview,.sc-array-data{padding:0 5px !important;grid-column:2;}.sc-array-data,.sc-array-in:checked ~ .sc-array-preview{display:none;}.sc-array-in:checked ~ .sc-array-data,.sc-array-preview{display:inline-block;}.sc-dim-list{display:inline-block !important;list-style:none;padding:0 !important;margin:0;}.sc-dim-list li{display:inline-block;padding:0;margin:0!important;}.sc-dim-list:before{content:'(';}.sc-dim-list:after{content:')';}.sc-dim-list li:not(:last-child):after{content:',';padding-right:5px;}.sc-dim-list li span,.sc-standalone-var-name > span span,.sc-var-name > span span{padding:0 !important;}.sc-aligned{font-weight:bold;}.sc-var-list,.sc-var-item,.reveal .sc-var-list,.reveal .sc-var-item{display:contents;}.sc-var-item > div,.sc-var-item label,.sc-var-item > .sc-var-name span{background-color:var(--sc-background-color1);margin-bottom:0;}.sc-var-item > .sc-var-name:hover span{padding-right:5px;}.sc-var-list > li:nth-child(odd) > div,.sc-var-list > li:nth-child(odd) > label,.sc-var-list > li:nth-child(odd) > .sc-var-name span{background-color:var(--sc-background-color2);}.sc-var-name{grid-column:1;}.sc-var-dims{grid-column:2;}.sc-var-dtype{grid-column:3;text-align:right;color:var(--sc-font-color2);}.sc-var-unit{grid-column:4;text-align:left;color:var(--sc-font-color1);max-width:50pt;text-overflow:ellipsis;}.sc-value-preview{grid-column:5;}.sc-var-preview-variances{text-align:right;}.sc-sections .sc-section-item .sc-section-summary,.sc-sections .sc-section-item .sc-section-inline-details,.sc-section-item .sc-var-list .sc-var-item > div,.sc-section-item .sc-var-list .sc-var-item > label,.sc-section-details .sc-var-list .sc-var-item > div,.sc-section-details .sc-var-list .sc-var-item > label{margin-top:0;margin-bottom:0;}.sc-var-name,.sc-var-dims,.sc-var-dtype,.sc-var-unit,.sc-preview,.sc-attrs dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px;}.sc-var-name:hover,.sc-var-dims:hover,.sc-var-dtype:hover,.sc-var-unit:hover,.sc-attrs dt:hover{overflow:visible;width:auto;z-index:1;}.sc-var-attrs{display:block;}.sc-var-data,.reveal .sc-var-data{display:none;}.sc-var-attrs,.sc-var-data{background-color:var(--sc-background-color0) !important;padding-bottom:5px !important;}.sc-var-attrs-in:checked ~ .sc-var-attrs{display:none;}.sc-var-data-in:checked ~ .sc-var-data{display:block;}.sc-var-data > table{float:right;}.sc-var-name span,.sc-var-data{padding-left:25px !important;}.sc-var-attrs,.sc-var-data{grid-column:1 / -1;}dl.sc-attrs{padding:0;margin:0;display:grid;grid-template-columns:125px auto;}.sc-attrs dt,dd{padding:0;margin:0;float:left;padding-right:10px;width:auto;}.sc-attrs dt{font-weight:normal;grid-column:1;}.sc-attrs dt:hover span{display:inline-block;padding-right:10px;}.sc-attrs dd{grid-column:2;white-space:pre-wrap;word-break:break-all;}.sc-icon-database,.sc-icon-file-text2{display:inline-block;vertical-align:middle;width:1em;height:1.5em !important;stroke-width:0;stroke:currentColor;fill:currentColor;}label.sc-hide-icon svg{opacity:0;}.sc-standalone-var-name{grid-column:1/3;}.sc-standalone-var-name span{padding-left:25px;padding-right:10px;}.sc-title{font-weight:bold;font-size:1.5em;}.sc-subtitle{font-weight:normal;font-style:italic;text-align:left;font-size:1.2em;padding:1px;}.sc-label{fill:var(--sc-font-color0,#444444);text-anchor:middle;}.sc-name{fill:var(--sc-font-color0,#111111);}.sc-inset-line{stroke:var(--sc-font-color1);stroke-width:0.05;stroke-dasharray:0.2,0.2;}.sc-log-wrap{height:25ex;resize:vertical;overflow-y:scroll;display:flex;flex-direction:column-reverse;border:1px solid;border-color:var(--jp-border-color2);background-color:var(--sc-background-color1);}div.sc-log{line-height:2.5ex;}table.sc-log{table-layout:auto;border-collapse:collapse;}tr.sc-log:nth-child(even){background-color:var(--sc-background-color0);}tr.sc-log > td{vertical-align:top;padding-bottom:0.5ex;}.sc-log-time-stamp{min-width:22ch;font-family:var(--jp-code-font-family);color:var(--sc-font-color2);}.sc-log-level{min-width:10ch;}tr.sc-log-debug td.sc-log-level{color:var(--jp-accent-color1);}tr.sc-log-info td.sc-log-level{color:var(--jp-info-color1);}tr.sc-log-warning td.sc-log-level{color:var(--jp-warn-color1);}tr.sc-log-error td.sc-log-level{font-weight:bold;color:var(--jp-error-color2);}tr.sc-log-critical td.sc-log-level{font-weight:bold;color:var(--sc-background-color0);background-color:var(--jp-error-color1);}.sc-log-message{white-space:pre-wrap;width:100%;}.sc-log-html-payload{white-space:normal;}.sc-log-name{padding-right:0.5em;text-align:right;white-space:pre-wrap;color:var(--sc-font-color3);}</style><div class='sc-wrap sc-root'><div class='sc-header'><div class='sc-obj-type'>scipp.DataArray (1.15 KB)</div></div><ul class='sc-sections'><li class='sc-section-item'><input id='section-ad0214bc-ea64-4a2f-bd86-2da6d53fbf86' class='sc-section-summary-in' type='checkbox' disabled ><label for='section-ad0214bc-ea64-4a2f-bd86-2da6d53fbf86' class='sc-section-summary' >Dimensions:</label><div class='sc-section-inline-details'><ul class='sc-dim-list'></ul></div><div class='sc-section-details'></div></li><li class='sc-section-item'><input id='section-1db693ff-ceba-4f8e-9609-c30f84fc4726' class='sc-section-summary-in' type='checkbox'  checked><label for='section-1db693ff-ceba-4f8e-9609-c30f84fc4726' class='sc-section-summary'  title='Expand/collapse section'>Coordinates: <span>(2)</span></label><div class='sc-section-inline-details'></div><div class='sc-section-details'><ul class='sc-var-list'><li class='sc-var-item'><div class='sc-var-name'><span>plateau</span></div><div class='sc-var-dims'>()</div><div class='sc-var-dtype'>int64</div><div class='sc-var-unit'></div><div class='sc-value-preview sc-preview'><span><div>0</div></span></div><input id='attrs-0b2b515a-fd2d-4bbe-a083-c78d09a95aa1' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-0b2b515a-fd2d-4bbe-a083-c78d09a95aa1' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-110ef6d1-5852-478b-a643-828c6c3c6730' class='sc-var-data-in' type='checkbox'><label for='data-110ef6d1-5852-478b-a643-828c6c3c6730' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array(0)</pre></span></li><li class='sc-var-item'><div class='sc-var-name'><span class='sc-aligned'>time</span></div><div class='sc-var-dims'>(time [bin-edge])</div><div class='sc-var-dtype'>datetime64</div><div class='sc-var-unit'>ns</div><div class='sc-value-preview sc-preview'><span><div>2023-01-19T08:12:10.173295104, 2023-01-19T08:13:28.623959553</div></span></div><input id='attrs-bdc2b1b7-6ba4-4fd4-9a0c-2559c2b28527' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-bdc2b1b7-6ba4-4fd4-9a0c-2559c2b28527' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-0c185cda-5e53-40ea-af20-96b8bb47de35' class='sc-var-data-in' type='checkbox'><label for='data-0c185cda-5e53-40ea-af20-96b8bb47de35' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array([&#x27;2023-01-19T08:12:10.173295104&#x27;, &#x27;2023-01-19T08:13:28.623959553&#x27;],
+      dtype=&#x27;datetime64[ns]&#x27;)</pre></span></li></ul></div></li><li class='sc-section-item'><input id='section-b164632d-d7b8-4818-8443-d745509b6ba9' class='sc-section-summary-in' type='checkbox'  checked><label for='section-b164632d-d7b8-4818-8443-d745509b6ba9' class='sc-section-summary'  title='Expand/collapse section'>Data: <span>(1)</span></label><div class='sc-section-inline-details'></div><div class='sc-section-details'><ul class='sc-var-list'><li class='sc-var-item'><div class='sc-var-name'><span></span></div><div class='sc-var-dims'>()</div><div class='sc-var-dtype'>float64</div><div class='sc-var-unit'>Hz</div><div class='sc-value-preview sc-preview'><span><div>13.999934613725587</div></span></div><input id='attrs-6eee47c0-9277-4afd-9de1-51f70466c900' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-6eee47c0-9277-4afd-9de1-51f70466c900' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-2909a155-d18c-4cd2-abcc-cbec747e4f6c' class='sc-var-data-in' type='checkbox'><label for='data-2909a155-d18c-4cd2-abcc-cbec747e4f6c' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array(13.99993461)</pre></li></ul></div></li></ul></div></div></div>
+</div>
+</section>
+<section id="Inspecting-TDC-timestamps">
+<h3>Inspecting TDC timestamps<a class="headerlink" href="#Inspecting-TDC-timestamps" title="Link to this heading">#</a></h3>
+<p>The top-dead-center (TDC) timestamps are created every time a marker placed on the chopper disk passes in front of a sensor mounted on the chopper module. It is essentially reporting at what times the chopper completed a full rotation.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tdc</span> <span class="o">=</span> <span class="n">chopper</span><span class="p">[</span><span class="s1">&#39;top_dead_center&#39;</span><span class="p">]</span>
+<span class="n">tdc</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><!-- Original source from -->
+<!-- https://github.com/jsignell/xarray/blob/1d960933ab252e0f79f7e050e6c9261d55568057/xarray/static/html/icons-svg-inline.html -->
+<svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewBox="0 0 32 32">
+<title>Show/Hide data repr</title>
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewBox="0 0 32 32">
+<title>Show/Hide attributes</title>
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg><style id="scipp-style-sheet">.sc-root{--sc-background-color0:var(--jp-layout-color0,#fff);--sc-background-color1:var(--jp-layout-color1,#fcfcfc);--sc-background-color2:var(--jp-layout-color2,#efefef);--sc-inverse-background-color0:var(--jp-inverse-layout-color4,#111);--sc-font-color0:var(--jp-content-font-color0,#000);--sc-font-color1:var(--jp-content-font-color1,#555);--sc-font-color2:var(--jp-content-font-color2,#888);--sc-font-color3:var(--jp-content-font-color3,#ccc);}body.vscode-dark .sc-root{--sc-font-color0:rgba(255,255,255,1);--sc-font-color1:rgba(255,255,255,0.70);--sc-font-color2:rgba(255,255,255,0.54);--sc-font-color3:rgba(255,255,255,0.38);--sc-border-color:#1F1F1F;--sc-disabled-color:#515151;--sc-background-color0:#111111;--sc-background-color1:#111111;--sc-background-color2:#313131;}.sc-wrap{font-size:14px;min-width:300px;max-width:800px;}.sc-var-attrs .sc-wrap{padding-left:3em;}.sc-header{padding-top:6px;padding-bottom:6px;margin-bottom:4px;border-bottom:solid 1px #ddd;}.sc-header > div,.sc-header > ul{display:inline;margin-top:0;margin-bottom:0;}.sc-obj-type,.sc-array-name{margin-left:2px;margin-right:10px;}.sc-obj-type{color:var(--sc-font-color1);}.sc-underlying-size{color:var(--sc-font-color2);}.sc-sections,.reveal .sc-sections{padding-left:0 !important;display:grid;grid-template-columns:150px auto auto auto 1fr 20px 20px;}.sc-section-item{display:contents;}.sc-section-item input{display:none;}.sc-section-item input:enabled + label{cursor:pointer;color:var(--sc-font-color1);}.sc-section-item input:enabled + label:hover{color:var(--sc-font-color0);}.sc-section-summary{grid-column:1;font-weight:500;}.sc-section-summary > span{display:inline-block;padding-left:0.5em;}.sc-section-summary-in:disabled + label{color:var(--sc-font-color1);}.sc-section-summary-in + label:before{display:inline-block;content:'►';font-size:11px;width:15px;text-align:center;}.sc-section-summary-in:disabled + label:before{color:var(--sc-font-color3);}.sc-section-summary-in:checked + label:before{content:'▼';}.sc-section-summary-in:checked + label > span{display:none;}.sc-section-summary,.sc-section-inline-details{padding-top:4px;padding-bottom:4px;}.sc-section-inline-details{grid-column:2 / 6;}.sc-section-details{display:none;grid-column:1 / -1;margin-bottom:5px;}.sc-section-summary-in:checked ~ .sc-section-details{display:contents;}.sc-array-wrap{grid-column:1 / -1;display:grid;grid-template-columns:20px auto;}.sc-array-wrap > label{grid-column:1;vertical-align:top;}.sc-preview{color:var(--sc-font-color2);}.sc-array-preview,.sc-array-data{padding:0 5px !important;grid-column:2;}.sc-array-data,.sc-array-in:checked ~ .sc-array-preview{display:none;}.sc-array-in:checked ~ .sc-array-data,.sc-array-preview{display:inline-block;}.sc-dim-list{display:inline-block !important;list-style:none;padding:0 !important;margin:0;}.sc-dim-list li{display:inline-block;padding:0;margin:0!important;}.sc-dim-list:before{content:'(';}.sc-dim-list:after{content:')';}.sc-dim-list li:not(:last-child):after{content:',';padding-right:5px;}.sc-dim-list li span,.sc-standalone-var-name > span span,.sc-var-name > span span{padding:0 !important;}.sc-aligned{font-weight:bold;}.sc-var-list,.sc-var-item,.reveal .sc-var-list,.reveal .sc-var-item{display:contents;}.sc-var-item > div,.sc-var-item label,.sc-var-item > .sc-var-name span{background-color:var(--sc-background-color1);margin-bottom:0;}.sc-var-item > .sc-var-name:hover span{padding-right:5px;}.sc-var-list > li:nth-child(odd) > div,.sc-var-list > li:nth-child(odd) > label,.sc-var-list > li:nth-child(odd) > .sc-var-name span{background-color:var(--sc-background-color2);}.sc-var-name{grid-column:1;}.sc-var-dims{grid-column:2;}.sc-var-dtype{grid-column:3;text-align:right;color:var(--sc-font-color2);}.sc-var-unit{grid-column:4;text-align:left;color:var(--sc-font-color1);max-width:50pt;text-overflow:ellipsis;}.sc-value-preview{grid-column:5;}.sc-var-preview-variances{text-align:right;}.sc-sections .sc-section-item .sc-section-summary,.sc-sections .sc-section-item .sc-section-inline-details,.sc-section-item .sc-var-list .sc-var-item > div,.sc-section-item .sc-var-list .sc-var-item > label,.sc-section-details .sc-var-list .sc-var-item > div,.sc-section-details .sc-var-list .sc-var-item > label{margin-top:0;margin-bottom:0;}.sc-var-name,.sc-var-dims,.sc-var-dtype,.sc-var-unit,.sc-preview,.sc-attrs dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px;}.sc-var-name:hover,.sc-var-dims:hover,.sc-var-dtype:hover,.sc-var-unit:hover,.sc-attrs dt:hover{overflow:visible;width:auto;z-index:1;}.sc-var-attrs{display:block;}.sc-var-data,.reveal .sc-var-data{display:none;}.sc-var-attrs,.sc-var-data{background-color:var(--sc-background-color0) !important;padding-bottom:5px !important;}.sc-var-attrs-in:checked ~ .sc-var-attrs{display:none;}.sc-var-data-in:checked ~ .sc-var-data{display:block;}.sc-var-data > table{float:right;}.sc-var-name span,.sc-var-data{padding-left:25px !important;}.sc-var-attrs,.sc-var-data{grid-column:1 / -1;}dl.sc-attrs{padding:0;margin:0;display:grid;grid-template-columns:125px auto;}.sc-attrs dt,dd{padding:0;margin:0;float:left;padding-right:10px;width:auto;}.sc-attrs dt{font-weight:normal;grid-column:1;}.sc-attrs dt:hover span{display:inline-block;padding-right:10px;}.sc-attrs dd{grid-column:2;white-space:pre-wrap;word-break:break-all;}.sc-icon-database,.sc-icon-file-text2{display:inline-block;vertical-align:middle;width:1em;height:1.5em !important;stroke-width:0;stroke:currentColor;fill:currentColor;}label.sc-hide-icon svg{opacity:0;}.sc-standalone-var-name{grid-column:1/3;}.sc-standalone-var-name span{padding-left:25px;padding-right:10px;}.sc-title{font-weight:bold;font-size:1.5em;}.sc-subtitle{font-weight:normal;font-style:italic;text-align:left;font-size:1.2em;padding:1px;}.sc-label{fill:var(--sc-font-color0,#444444);text-anchor:middle;}.sc-name{fill:var(--sc-font-color0,#111111);}.sc-inset-line{stroke:var(--sc-font-color1);stroke-width:0.05;stroke-dasharray:0.2,0.2;}.sc-log-wrap{height:25ex;resize:vertical;overflow-y:scroll;display:flex;flex-direction:column-reverse;border:1px solid;border-color:var(--jp-border-color2);background-color:var(--sc-background-color1);}div.sc-log{line-height:2.5ex;}table.sc-log{table-layout:auto;border-collapse:collapse;}tr.sc-log:nth-child(even){background-color:var(--sc-background-color0);}tr.sc-log > td{vertical-align:top;padding-bottom:0.5ex;}.sc-log-time-stamp{min-width:22ch;font-family:var(--jp-code-font-family);color:var(--sc-font-color2);}.sc-log-level{min-width:10ch;}tr.sc-log-debug td.sc-log-level{color:var(--jp-accent-color1);}tr.sc-log-info td.sc-log-level{color:var(--jp-info-color1);}tr.sc-log-warning td.sc-log-level{color:var(--jp-warn-color1);}tr.sc-log-error td.sc-log-level{font-weight:bold;color:var(--jp-error-color2);}tr.sc-log-critical td.sc-log-level{font-weight:bold;color:var(--sc-background-color0);background-color:var(--jp-error-color1);}.sc-log-message{white-space:pre-wrap;width:100%;}.sc-log-html-payload{white-space:normal;}.sc-log-name{padding-right:0.5em;text-align:right;white-space:pre-wrap;color:var(--sc-font-color3);}</style><div class='sc-wrap sc-root'><div class='sc-header'><div class='sc-obj-type'>scipp.Variable (18.64 KB)</div></div><ul class='sc-sections'><li class='sc-section-item'><ul class='sc-var-list'><li class='sc-var-item'><div class='sc-standalone-var-name'><span>(time: 2354)</span></div><div class='sc-var-dtype'>datetime64</div><div class='sc-var-unit'>ns</div><div class='sc-value-preview sc-preview'><span><div>2023-01-19T08:11:06.217830400, 2023-01-19T08:11:08.799053824, ..., 2023-01-19T08:14:39.174524416, 2023-01-19T08:14:40.640919296</div></span></div><input id='attrs-44c54228-4788-4032-baf3-779614a4b18d' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-44c54228-4788-4032-baf3-779614a4b18d' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-6fc0ae93-cda3-429d-a6fa-f8110ee732cd' class='sc-var-data-in' type='checkbox'><label for='data-6fc0ae93-cda3-429d-a6fa-f8110ee732cd' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array([&#x27;2023-01-19T08:11:06.217830400&#x27;, &#x27;2023-01-19T08:11:08.799053824&#x27;,
+       &#x27;2023-01-19T08:11:09.873177088&#x27;, ...,
+       &#x27;2023-01-19T08:14:38.209520640&#x27;, &#x27;2023-01-19T08:14:39.174524416&#x27;,
+       &#x27;2023-01-19T08:14:40.640919296&#x27;], dtype=&#x27;datetime64[ns]&#x27;)</pre></li></ul></li></ul></div></div></div>
+</div>
+<p>The initial speed-up and late slow-down are visible when simply plotting all the TDC timestamps:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tdc</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_processing-nexus-choppers_28_0.svg" src="../../_images/user-guide_chopper_processing-nexus-choppers_28_0.svg" />
+</div>
+</div>
+<p>We can filter out the TDCs for the time when the chopper was in-phase by using the time range of the plateau we extracted above:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">low</span> <span class="o">=</span> <span class="n">frequency</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">high</span> <span class="o">=</span> <span class="n">frequency</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">tdc_in_phase</span> <span class="o">=</span> <span class="n">tdc</span><span class="p">[(</span><span class="n">tdc</span> <span class="o">&gt;</span> <span class="n">low</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">tdc</span> <span class="o">&lt;</span> <span class="n">high</span><span class="p">)]</span>
+<span class="n">tdc_in_phase</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><!-- Original source from -->
+<!-- https://github.com/jsignell/xarray/blob/1d960933ab252e0f79f7e050e6c9261d55568057/xarray/static/html/icons-svg-inline.html -->
+<svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewBox="0 0 32 32">
+<title>Show/Hide data repr</title>
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewBox="0 0 32 32">
+<title>Show/Hide attributes</title>
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg><style id="scipp-style-sheet">.sc-root{--sc-background-color0:var(--jp-layout-color0,#fff);--sc-background-color1:var(--jp-layout-color1,#fcfcfc);--sc-background-color2:var(--jp-layout-color2,#efefef);--sc-inverse-background-color0:var(--jp-inverse-layout-color4,#111);--sc-font-color0:var(--jp-content-font-color0,#000);--sc-font-color1:var(--jp-content-font-color1,#555);--sc-font-color2:var(--jp-content-font-color2,#888);--sc-font-color3:var(--jp-content-font-color3,#ccc);}body.vscode-dark .sc-root{--sc-font-color0:rgba(255,255,255,1);--sc-font-color1:rgba(255,255,255,0.70);--sc-font-color2:rgba(255,255,255,0.54);--sc-font-color3:rgba(255,255,255,0.38);--sc-border-color:#1F1F1F;--sc-disabled-color:#515151;--sc-background-color0:#111111;--sc-background-color1:#111111;--sc-background-color2:#313131;}.sc-wrap{font-size:14px;min-width:300px;max-width:800px;}.sc-var-attrs .sc-wrap{padding-left:3em;}.sc-header{padding-top:6px;padding-bottom:6px;margin-bottom:4px;border-bottom:solid 1px #ddd;}.sc-header > div,.sc-header > ul{display:inline;margin-top:0;margin-bottom:0;}.sc-obj-type,.sc-array-name{margin-left:2px;margin-right:10px;}.sc-obj-type{color:var(--sc-font-color1);}.sc-underlying-size{color:var(--sc-font-color2);}.sc-sections,.reveal .sc-sections{padding-left:0 !important;display:grid;grid-template-columns:150px auto auto auto 1fr 20px 20px;}.sc-section-item{display:contents;}.sc-section-item input{display:none;}.sc-section-item input:enabled + label{cursor:pointer;color:var(--sc-font-color1);}.sc-section-item input:enabled + label:hover{color:var(--sc-font-color0);}.sc-section-summary{grid-column:1;font-weight:500;}.sc-section-summary > span{display:inline-block;padding-left:0.5em;}.sc-section-summary-in:disabled + label{color:var(--sc-font-color1);}.sc-section-summary-in + label:before{display:inline-block;content:'►';font-size:11px;width:15px;text-align:center;}.sc-section-summary-in:disabled + label:before{color:var(--sc-font-color3);}.sc-section-summary-in:checked + label:before{content:'▼';}.sc-section-summary-in:checked + label > span{display:none;}.sc-section-summary,.sc-section-inline-details{padding-top:4px;padding-bottom:4px;}.sc-section-inline-details{grid-column:2 / 6;}.sc-section-details{display:none;grid-column:1 / -1;margin-bottom:5px;}.sc-section-summary-in:checked ~ .sc-section-details{display:contents;}.sc-array-wrap{grid-column:1 / -1;display:grid;grid-template-columns:20px auto;}.sc-array-wrap > label{grid-column:1;vertical-align:top;}.sc-preview{color:var(--sc-font-color2);}.sc-array-preview,.sc-array-data{padding:0 5px !important;grid-column:2;}.sc-array-data,.sc-array-in:checked ~ .sc-array-preview{display:none;}.sc-array-in:checked ~ .sc-array-data,.sc-array-preview{display:inline-block;}.sc-dim-list{display:inline-block !important;list-style:none;padding:0 !important;margin:0;}.sc-dim-list li{display:inline-block;padding:0;margin:0!important;}.sc-dim-list:before{content:'(';}.sc-dim-list:after{content:')';}.sc-dim-list li:not(:last-child):after{content:',';padding-right:5px;}.sc-dim-list li span,.sc-standalone-var-name > span span,.sc-var-name > span span{padding:0 !important;}.sc-aligned{font-weight:bold;}.sc-var-list,.sc-var-item,.reveal .sc-var-list,.reveal .sc-var-item{display:contents;}.sc-var-item > div,.sc-var-item label,.sc-var-item > .sc-var-name span{background-color:var(--sc-background-color1);margin-bottom:0;}.sc-var-item > .sc-var-name:hover span{padding-right:5px;}.sc-var-list > li:nth-child(odd) > div,.sc-var-list > li:nth-child(odd) > label,.sc-var-list > li:nth-child(odd) > .sc-var-name span{background-color:var(--sc-background-color2);}.sc-var-name{grid-column:1;}.sc-var-dims{grid-column:2;}.sc-var-dtype{grid-column:3;text-align:right;color:var(--sc-font-color2);}.sc-var-unit{grid-column:4;text-align:left;color:var(--sc-font-color1);max-width:50pt;text-overflow:ellipsis;}.sc-value-preview{grid-column:5;}.sc-var-preview-variances{text-align:right;}.sc-sections .sc-section-item .sc-section-summary,.sc-sections .sc-section-item .sc-section-inline-details,.sc-section-item .sc-var-list .sc-var-item > div,.sc-section-item .sc-var-list .sc-var-item > label,.sc-section-details .sc-var-list .sc-var-item > div,.sc-section-details .sc-var-list .sc-var-item > label{margin-top:0;margin-bottom:0;}.sc-var-name,.sc-var-dims,.sc-var-dtype,.sc-var-unit,.sc-preview,.sc-attrs dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px;}.sc-var-name:hover,.sc-var-dims:hover,.sc-var-dtype:hover,.sc-var-unit:hover,.sc-attrs dt:hover{overflow:visible;width:auto;z-index:1;}.sc-var-attrs{display:block;}.sc-var-data,.reveal .sc-var-data{display:none;}.sc-var-attrs,.sc-var-data{background-color:var(--sc-background-color0) !important;padding-bottom:5px !important;}.sc-var-attrs-in:checked ~ .sc-var-attrs{display:none;}.sc-var-data-in:checked ~ .sc-var-data{display:block;}.sc-var-data > table{float:right;}.sc-var-name span,.sc-var-data{padding-left:25px !important;}.sc-var-attrs,.sc-var-data{grid-column:1 / -1;}dl.sc-attrs{padding:0;margin:0;display:grid;grid-template-columns:125px auto;}.sc-attrs dt,dd{padding:0;margin:0;float:left;padding-right:10px;width:auto;}.sc-attrs dt{font-weight:normal;grid-column:1;}.sc-attrs dt:hover span{display:inline-block;padding-right:10px;}.sc-attrs dd{grid-column:2;white-space:pre-wrap;word-break:break-all;}.sc-icon-database,.sc-icon-file-text2{display:inline-block;vertical-align:middle;width:1em;height:1.5em !important;stroke-width:0;stroke:currentColor;fill:currentColor;}label.sc-hide-icon svg{opacity:0;}.sc-standalone-var-name{grid-column:1/3;}.sc-standalone-var-name span{padding-left:25px;padding-right:10px;}.sc-title{font-weight:bold;font-size:1.5em;}.sc-subtitle{font-weight:normal;font-style:italic;text-align:left;font-size:1.2em;padding:1px;}.sc-label{fill:var(--sc-font-color0,#444444);text-anchor:middle;}.sc-name{fill:var(--sc-font-color0,#111111);}.sc-inset-line{stroke:var(--sc-font-color1);stroke-width:0.05;stroke-dasharray:0.2,0.2;}.sc-log-wrap{height:25ex;resize:vertical;overflow-y:scroll;display:flex;flex-direction:column-reverse;border:1px solid;border-color:var(--jp-border-color2);background-color:var(--sc-background-color1);}div.sc-log{line-height:2.5ex;}table.sc-log{table-layout:auto;border-collapse:collapse;}tr.sc-log:nth-child(even){background-color:var(--sc-background-color0);}tr.sc-log > td{vertical-align:top;padding-bottom:0.5ex;}.sc-log-time-stamp{min-width:22ch;font-family:var(--jp-code-font-family);color:var(--sc-font-color2);}.sc-log-level{min-width:10ch;}tr.sc-log-debug td.sc-log-level{color:var(--jp-accent-color1);}tr.sc-log-info td.sc-log-level{color:var(--jp-info-color1);}tr.sc-log-warning td.sc-log-level{color:var(--jp-warn-color1);}tr.sc-log-error td.sc-log-level{font-weight:bold;color:var(--jp-error-color2);}tr.sc-log-critical td.sc-log-level{font-weight:bold;color:var(--sc-background-color0);background-color:var(--jp-error-color1);}.sc-log-message{white-space:pre-wrap;width:100%;}.sc-log-html-payload{white-space:normal;}.sc-log-name{padding-right:0.5em;text-align:right;white-space:pre-wrap;color:var(--sc-font-color3);}</style><div class='sc-wrap sc-root'><div class='sc-header'><div class='sc-obj-type'>scipp.Variable (8.83 KB)</div></div><ul class='sc-sections'><li class='sc-section-item'><ul class='sc-var-list'><li class='sc-var-item'><div class='sc-standalone-var-name'><span>(time: 1098)</span></div><div class='sc-var-dtype'>datetime64</div><div class='sc-var-unit'>ns</div><div class='sc-value-preview sc-preview'><span><div>2023-01-19T08:12:10.228627200, 2023-01-19T08:12:10.300058880, ..., 2023-01-19T08:13:28.514769152, 2023-01-19T08:13:28.586200832</div></span></div><input id='attrs-3233c0ad-92b7-4c41-bcaa-b35e37fcb953' class='sc-var-attrs-in' type='checkbox' disabled><label for='attrs-3233c0ad-92b7-4c41-bcaa-b35e37fcb953' class='sc-hide-icon' title='Show/Hide attributes'><svg class='icon sc-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-00bb0624-1438-4134-b2aa-3a7524cbb006' class='sc-var-data-in' type='checkbox'><label for='data-00bb0624-1438-4134-b2aa-3a7524cbb006' title='Show/Hide data repr'><svg class='icon sc-icon-database'><use xlink:href='#icon-database'></use></svg></label><pre class='sc-var-data'>Values:<br>array([&#x27;2023-01-19T08:12:10.228627200&#x27;, &#x27;2023-01-19T08:12:10.300058880&#x27;,
+       &#x27;2023-01-19T08:12:10.371490560&#x27;, ...,
+       &#x27;2023-01-19T08:13:28.443337984&#x27;, &#x27;2023-01-19T08:13:28.514769152&#x27;,
+       &#x27;2023-01-19T08:13:28.586200832&#x27;], dtype=&#x27;datetime64[ns]&#x27;)</pre></li></ul></li></ul></div></div></div>
+</div>
+<p>We can check that the rate at which the TDC triggers is indeed close to 14Hz.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">diff</span> <span class="o">=</span> <span class="n">tdc_in_phase</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">tdc_in_phase</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">rate</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">diff</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float64&#39;</span><span class="p">)</span>
+<span class="n">rate</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">rate</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(&lt;scipp.Variable&gt; ()    float64             [Hz]  13.9986,
+ &lt;scipp.Variable&gt; ()    float64             [Hz]  14.0002)
+</pre></div></div>
+</div>
+</section>
+<section id="Computing-chopper-phase">
+<h3>Computing chopper phase<a class="headerlink" href="#Computing-chopper-phase" title="Link to this heading">#</a></h3>
+<p>When constructing the <code class="docutils literal notranslate"><span class="pre">DiskChopper</span></code> at the start of this notebook, the phase was derived from a single <code class="docutils literal notranslate"><span class="pre">delay</span></code> value and the rotation speed setpoint.</p>
+<p>It is however sometimes useful for debugging to compute the actual (time-dependent) phase of the chopper from the TDC information.</p>
+<p>The phase can be defined as <span class="math notranslate nohighlight">\(\phi = \omega (TDC - T_0)\)</span>, where <span class="math notranslate nohighlight">\(\omega\)</span> is the angular frequency of the chopper, <span class="math notranslate nohighlight">\(TDC\)</span> is a TDC timestamp, and <span class="math notranslate nohighlight">\(T_0\)</span> a pulse time.</p>
+<p>We already determined the TDC timestamps above. In practice, we would get <span class="math notranslate nohighlight">\(T_0\)</span> from the input NeXus file, but here, we simply make one up:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pulse_time</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="s1">&#39;2023-01-19T08:12:03.484012915&#39;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;ns&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="admonition note">
+<p class="admonition-title"><strong>Note</strong></p>
+<p>The pulse time is typically an array of timestamps and it can be difficult to determine which pulse goes with which chopper period.</p>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># We multiply by 1 rad to get the proper `rad*Hz` unit in `omega`</span>
+<span class="n">omega</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">frequency</span><span class="o">.</span><span class="n">data</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span><span class="p">)</span>
+<span class="n">phase</span> <span class="o">=</span> <span class="n">omega</span> <span class="o">*</span> <span class="p">(</span><span class="n">tdc</span> <span class="o">-</span> <span class="n">pulse_time</span><span class="p">)</span>
+<span class="n">phase</span> <span class="o">=</span> <span class="n">phase</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;deg&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">360.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;deg&#39;</span><span class="p">)</span>
+
+<span class="n">phase</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_processing-nexus-choppers_36_0.svg" src="../../_images/user-guide_chopper_processing-nexus-choppers_36_0.svg" />
+</div>
+</div>
+<p>We can clearly see the a central region where the phase is almost constant, and close to the value of 153.7° listed by the <code class="docutils literal notranslate"><span class="pre">DiskChopper</span></code> table at the top of the notebook (= 2.683 rad).</p>
+<p>To each side of the central region are areas where the chopper is completely out of phase, during the spin-up and spin-down periods.</p>
+<p>We can take a closer look at the data in the ‘in-phase’ region where we see some jitter around the target value:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">phase</span> <span class="o">=</span> <span class="n">omega</span> <span class="o">*</span> <span class="p">(</span><span class="n">tdc_in_phase</span> <span class="o">-</span> <span class="n">pulse_time</span><span class="p">)</span>
+<span class="n">phase</span> <span class="o">=</span> <span class="n">phase</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;deg&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">360.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;deg&#39;</span><span class="p">)</span>
+<span class="n">phase</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/user-guide_chopper_processing-nexus-choppers_38_0.svg" src="../../_images/user-guide_chopper_processing-nexus-choppers_38_0.svg" />
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Choppers</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="chopper-cascade.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Chopper Cascades</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 0.0.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

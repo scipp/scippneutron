@@ -1,0 +1,1332 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scippneutron.peaks._fit_peaks &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css?v=a0a71c94" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../../_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scippneutron/peaks/_fit_peaks';</script>
+    <script src="../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">scippneutron.peaks._fit_peaks</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scippneutron.peaks._fit_peaks</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2024 Scipp contributors (https://github.com/scipp)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">enum</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipp.scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">curve_fit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">chi2</span> <span class="k">as</span> <span class="n">_scipy_chi2</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">._common</span><span class="w"> </span><span class="kn">import</span> <span class="n">FitParameters</span><span class="p">,</span> <span class="n">FitRequirements</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.model</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GaussianModel</span><span class="p">,</span>
+    <span class="n">LorentzianModel</span><span class="p">,</span>
+    <span class="n">Model</span><span class="p">,</span>
+    <span class="n">PolynomialModel</span><span class="p">,</span>
+    <span class="n">PseudoVoigtModel</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="FitResult">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.peaks.FitResult.html#scippneutron.peaks.FitResult">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FitResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optimized parameters and fit statistics for a single peak.&quot;&quot;&quot;</span>
+
+    <span class="n">aic</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Akaike Information Criterion.</span>
+
+<span class="sd">    A relative estimate of fit quality.</span>
+<span class="sd">    Defined as</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\mathsf{AIC} = 2k - 2\\ln(L)</span>
+
+<span class="sd">    Where :math:`k` is the number of parameters and :math:`L` the likelihood</span>
+<span class="sd">    if the model with the optimized parameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">assessment</span><span class="p">:</span> <span class="n">FitAssessment</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indicates whether the fit was successful or how if failed.&quot;&quot;&quot;</span>
+    <span class="n">background</span><span class="p">:</span> <span class="n">Model</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model for the background.&quot;&quot;&quot;</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Short message describing the fit assessment.&quot;&quot;&quot;</span>
+    <span class="n">p_value</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Probability of the given chi-squared or higher.</span>
+
+<span class="sd">    The :math:`p`-value is the probability to get the same :math:`\\chi^2`</span>
+<span class="sd">    or higher when repeating the fit.</span>
+<span class="sd">    It is defined as</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        p = 1 - F(\\chi^2;\\,\\nu)</span>
+
+<span class="sd">    where :math:`F(\\chi^2;\\,\\nu)` is the cumulative distribution function</span>
+<span class="sd">    of the :math:`\\chi^2`--distribution with :math:`\\nu` degrees of freedom.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">peak</span><span class="p">:</span> <span class="n">Model</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model for the peak.&quot;&quot;&quot;</span>
+    <span class="n">popt</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optimized parameters.&quot;&quot;&quot;</span>
+    <span class="n">red_chisq</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reduced chi-squared for the model and optimized parameters.</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\chi^2_{\\nu} = \\frac1{\\nu} \\sum_{i=0}^n\\,</span>
+<span class="sd">                         \\frac{(y_i - f(x_i))^2}{\\sigma_i^2}</span>
+
+<span class="sd">    where :math:`\\nu` is the number of degrees of freedom.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">window</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fit window for this peak.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="FitResult.for_too_narrow_window">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.peaks.FitResult.html#scippneutron.peaks.FitResult.for_too_narrow_window">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">for_too_narrow_window</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">peak</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">background</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">window</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FitResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a ``FitResult`` for a fit where the window is too narrow.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">for_failure</span><span class="p">(</span>
+            <span class="n">assessment</span><span class="o">=</span><span class="n">FitAssessment</span><span class="o">.</span><span class="n">window_too_narrow</span><span class="p">,</span>
+            <span class="n">peak</span><span class="o">=</span><span class="n">peak</span><span class="p">,</span>
+            <span class="n">background</span><span class="o">=</span><span class="n">background</span><span class="p">,</span>
+            <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FitResult.for_failure">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.peaks.FitResult.html#scippneutron.peaks.FitResult.for_failure">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">for_failure</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">assessment</span><span class="p">:</span> <span class="n">FitAssessment</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">peak</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">background</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">window</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FitResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a ``FitResult`` for a failed fit.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">popt</span><span class="o">=</span><span class="p">{</span>
+                <span class="n">name</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">peak</span><span class="o">.</span><span class="n">param_names</span> <span class="o">|</span> <span class="n">background</span><span class="o">.</span><span class="n">param_names</span>
+            <span class="p">},</span>
+            <span class="n">red_chisq</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+            <span class="n">p_value</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+            <span class="n">aic</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+            <span class="n">assessment</span><span class="o">=</span><span class="n">FitAssessment</span><span class="o">.</span><span class="n">failed</span> <span class="k">if</span> <span class="n">assessment</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">assessment</span><span class="p">,</span>
+            <span class="n">peak</span><span class="o">=</span><span class="n">peak</span><span class="p">,</span>
+            <span class="n">background</span><span class="o">=</span><span class="n">background</span><span class="p">,</span>
+            <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="n">message</span> <span class="ow">or</span> <span class="n">_message_from_assessment</span><span class="p">(</span><span class="n">assessment</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">success</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether the fit was successful.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">assessment</span> <span class="o">==</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">success</span>
+
+<div class="viewcode-block" id="FitResult.better_than">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.peaks.FitResult.html#scippneutron.peaks.FitResult.better_than">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">better_than</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">FitResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if this result is better than another.</span>
+
+<span class="sd">        Uses :attr:`aic` to compare the results.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other:</span>
+<span class="sd">            Another ``FitResult`` to compare to.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            Whether this result is better than the other.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aic</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">aic</span><span class="p">)</span><span class="o">.</span><span class="n">value</span></div>
+
+
+<div class="viewcode-block" id="FitResult.eval_model">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.peaks.FitResult.html#scippneutron.peaks.FitResult.eval_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">eval_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate the model with optimized parameters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x:</span>
+<span class="sd">            Independent variable.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            The model evaluated at ``x`` with optimized parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">background</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">peak</span><span class="p">)(</span>
+            <span class="n">x</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">popt</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FitResult.eval_peak">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.peaks.FitResult.html#scippneutron.peaks.FitResult.eval_peak">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">eval_peak</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate the peak model with optimized parameters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x:</span>
+<span class="sd">            Independent variable.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            The peak model evaluated at ``x`` with optimized parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">peak</span><span class="p">(</span>
+            <span class="n">x</span><span class="p">,</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="n">name</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">popt</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;peak_&#39;</span><span class="p">)</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FitResult.report">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.peaks.FitResult.html#scippneutron.peaks.FitResult.report">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Format an overview of the fit result.&quot;&quot;&quot;</span>
+        <span class="n">param_name_length</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">popt</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">- &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="se">{{</span><span class="s1">:</span><span class="si">{</span><span class="n">param_name_length</span><span class="si">}</span><span class="s1">s</span><span class="se">}}</span><span class="s1">: </span><span class="si">{</span><span class="n">val</span><span class="si">:</span><span class="s1">c</span><span class="si">}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">popt</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;&#39;&#39;FitResult: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span>
+<span class="s1">In window: (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s1">) </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="o">.</span><span class="n">unit</span><span class="si">}</span>
+<span class="s1">Models:</span>
+<span class="s1">- background: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">(prefix=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">prefix</span><span class="si">}</span><span class="s1">&#39;)</span>
+<span class="s1">- peak: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">peak</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">(prefix=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">peak</span><span class="o">.</span><span class="n">prefix</span><span class="si">}</span><span class="s1">&#39;)</span>
+<span class="s1">Parameters:</span>
+<span class="s1">- </span><span class="si">{</span><span class="n">params</span><span class="si">}</span>
+<span class="s1">Statistics:</span>
+<span class="s1">- AIC:              </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">aic</span><span class="o">.</span><span class="n">value</span><span class="si">:</span><span class="s1">.2e</span><span class="si">}</span>
+<span class="s1">- Red. chi-squared: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">red_chisq</span><span class="o">.</span><span class="n">value</span><span class="si">:</span><span class="s1">.2e</span><span class="si">}</span>
+<span class="s1">- p:                </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">p_value</span><span class="o">.</span><span class="n">value</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">&#39;&#39;&#39;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FitAssessment">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.peaks.FitAssessment.html#scippneutron.peaks.FitAssessment">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FitAssessment</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indicates whether the fit was successful or how if failed.&quot;&quot;&quot;</span>
+
+    <span class="n">success</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The fit was successful.&quot;&quot;&quot;</span>
+    <span class="n">failed</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The fit failed for some reason.&quot;&quot;&quot;</span>
+    <span class="n">background_is_better</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The background fit yielded a better result than the background+peak fit.&quot;&quot;&quot;</span>
+    <span class="n">peak_too_narrow</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The peak is too narrow given the resolution of the data.&quot;&quot;&quot;</span>
+    <span class="n">peak_too_wide</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The peak is too wide given the size of the fit window.&quot;&quot;&quot;</span>
+    <span class="n">peak_near_edge</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The peak is too close to the edge of the window.&quot;&quot;&quot;</span>
+    <span class="n">peak_points_down</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The peak amplitude is negative.&quot;&quot;&quot;</span>
+    <span class="n">p_too_small</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The p-value of the fit is below threshold.&quot;&quot;&quot;</span>
+    <span class="n">window_too_narrow</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The fit window does not contain enough points.&quot;&quot;&quot;</span></div>
+
+
+
+<span class="n">_BackgroundModelName</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="s1">&#39;quadratic&#39;</span><span class="p">]</span>
+<span class="n">_PeakModelName</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;lorentzian&#39;</span><span class="p">,</span> <span class="s1">&#39;pseudo_voigt&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="fit_peaks">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.peaks.fit_peaks.html#scippneutron.peaks.fit_peaks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fit_peaks</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">peak_estimates</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">windows</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">background</span><span class="p">:</span> <span class="n">Model</span>
+    <span class="o">|</span> <span class="n">_BackgroundModelName</span>
+    <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Model</span><span class="p">]</span>
+    <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_BackgroundModelName</span><span class="p">],</span>
+    <span class="n">peak</span><span class="p">:</span> <span class="n">Model</span> <span class="o">|</span> <span class="n">_PeakModelName</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Model</span><span class="p">]</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_PeakModelName</span><span class="p">],</span>
+    <span class="n">fit_parameters</span><span class="p">:</span> <span class="n">FitParameters</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fit_requirements</span><span class="p">:</span> <span class="n">FitRequirements</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FitResult</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fit peaks to data.</span>
+
+<span class="sd">    This function fits peaks to 1-dimensional data.</span>
+<span class="sd">    The number of peaks and their approximate locations are determined</span>
+<span class="sd">    by ``peak_estimates``.</span>
+
+<span class="sd">    When defining fit windows, it is important that every</span>
+<span class="sd">    window contains only one peak.</span>
+<span class="sd">    Otherwise, fits may fail or converge to the wrong peak.</span>
+<span class="sd">    Windows are, however, allowed to overlap as long as that</span>
+<span class="sd">    overlap does not contain the bulk of a peak.</span>
+
+<span class="sd">    Consider adjusting ``windows`` and ``fit_parameters`` if fits fail</span>
+<span class="sd">    with all models.</span>
+<span class="sd">    Only change ``fit_requirements`` if really needed as this may lead</span>
+<span class="sd">    to bad fits being marked as succeeded.</span>
+
+<span class="sd">    Fit procedure</span>
+<span class="sd">    -------------</span>
+<span class="sd">    For each peak, initial model parameters are estimated using</span>
+<span class="sd">    :meth:`model.Model.guess` with the data within the fit window.</span>
+<span class="sd">    Then, two fits are performed, one with only the background and one with</span>
+<span class="sd">    background + peak using :func:`scipp.scipy.optimize.curve_fit`.</span>
+
+<span class="sd">    If the latter fit converges, it is assessed based on several criteria like</span>
+<span class="sd">    :attr:`FitRequirements.min_p_value` and the width of the obtained peak.</span>
+<span class="sd">    In addition, the combined background + peak model must yield a better fit</span>
+<span class="sd">    than the background alone (determined by their respective Akaike Information</span>
+<span class="sd">    Criterion, see :attr:`FitResult.aic`).</span>
+<span class="sd">    If the assessment fails, another set of models may be tried, see the section</span>
+<span class="sd">    on model selection below.</span>
+
+<span class="sd">    Finally, a :class:`FitResult` is constructed for each peak which contains the</span>
+<span class="sd">    outcome of the assessment, the best parameters and models, and some goodness</span>
+<span class="sd">    of fit statistics.</span>
+<span class="sd">    Fits for each peak can succeed or fail independently.</span>
+
+<span class="sd">    Model selection</span>
+<span class="sd">    ---------------</span>
+<span class="sd">    In the simplest case, the models for peaks and the background are given as a</span>
+<span class="sd">    concrete model each, see :mod:`scippneutron.peaks.model`.</span>
+<span class="sd">    Alternatively, they can be specified as strings.</span>
+<span class="sd">    See the type annotations of the ``peak`` and ``background`` arguments for the lists</span>
+<span class="sd">    of supported model names.</span>
+
+<span class="sd">    If it is unclear which models are best in a given case or the best model varies</span>
+<span class="sd">    between peaks, ``peak`` and ``background`` can be given as iterables of models</span>
+<span class="sd">    or model names.</span>
+<span class="sd">    In this case, the fit is attempted with each combination of peak and background</span>
+<span class="sd">    model until a fit is successful.</span>
+<span class="sd">    The background is varied first.</span>
+
+<span class="sd">    For example, in</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        fit_peaks(</span>
+<span class="sd">            background=[&#39;linear&#39;, &#39;quadratic&#39;],</span>
+<span class="sd">            peak=[&#39;gaussian&#39;, &#39;lorentzian&#39;],</span>
+<span class="sd">            ...</span>
+<span class="sd">        )</span>
+
+<span class="sd">    models are tried in the order</span>
+
+<span class="sd">    1. ``linear`` + ``gaussian``</span>
+<span class="sd">    2. ``quadratic`` + ``gaussian``</span>
+<span class="sd">    3. ``linear`` + ``lorentzian``</span>
+<span class="sd">    4. ``quadratic`` + ``lorentzian``</span>
+
+<span class="sd">    until the first successful fit.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data:</span>
+<span class="sd">        A 1d data array where ``data.data`` is the dependent variable</span>
+<span class="sd">        and ``data.coords[data.dim]`` is the independent variable for the fit.</span>
+<span class="sd">        Must be 1-dimensional and not binned.</span>
+<span class="sd">    peak_estimates:</span>
+<span class="sd">        Initial estimates of peak locations.</span>
+<span class="sd">        A peak will be fitted for each estimate.</span>
+<span class="sd">        Must be a 1d variable with dimension ``data.dim``.</span>
+<span class="sd">    windows:</span>
+<span class="sd">        If a scalar, the size of fit windows.</span>
+<span class="sd">        A window is constructed for each peak estimate centered on the estimate</span>
+<span class="sd">        with a width equal to ``windows`` (adjusted to the data range and to maintain</span>
+<span class="sd">        a separation between peaks, see</span>
+<span class="sd">        :attr:`FitParameters.neighbor_separation_factor`).</span>
+
+<span class="sd">        If a 2d array, the windows for each peak.</span>
+<span class="sd">        Must have sizes ``{data.dim: len(data), &#39;range&#39;: 2}`` where</span>
+<span class="sd">        ``windows[&#39;range&#39;, 0]`` and ``windows[&#39;range&#39;, 1]`` are the lower and upper</span>
+<span class="sd">        bounds of the fit windows, respectively.</span>
+<span class="sd">        The windows are not adjusted automatically in this case.</span>
+<span class="sd">    background:</span>
+<span class="sd">        The background model or models.</span>
+<span class="sd">    peak:</span>
+<span class="sd">        The peak model or models.</span>
+<span class="sd">    fit_parameters:</span>
+<span class="sd">        Parameters for the fit not otherwise listed as function arguments.</span>
+<span class="sd">    fit_requirements:</span>
+<span class="sd">        Constraints on the fit result.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        A :class:`FitResult` for each peak.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_assert_data_is_supported</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="n">background</span> <span class="o">=</span> <span class="n">_parse_model_spec</span><span class="p">(</span><span class="n">background</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;bkg_&#39;</span><span class="p">)</span>
+    <span class="n">peak</span> <span class="o">=</span> <span class="n">_parse_model_spec</span><span class="p">(</span><span class="n">peak</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;peak_&#39;</span><span class="p">)</span>
+    <span class="n">fit_parameters</span> <span class="o">=</span> <span class="n">fit_parameters</span> <span class="ow">or</span> <span class="n">FitParameters</span><span class="p">()</span>
+    <span class="n">fit_requirements</span> <span class="o">=</span> <span class="n">fit_requirements</span> <span class="ow">or</span> <span class="n">FitRequirements</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">windows</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">windows</span> <span class="o">=</span> <span class="n">_fit_windows</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">peak_estimates</span><span class="p">,</span> <span class="n">windows</span><span class="p">,</span> <span class="n">fit_parameters</span><span class="p">)</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">windows</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="n">peak_estimates</span><span class="o">.</span><span class="n">dim</span><span class="p">]):</span>
+        <span class="n">window</span> <span class="o">=</span> <span class="n">windows</span><span class="p">[</span><span class="n">peak_estimates</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+        <span class="n">data_in_window</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">window</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">:</span> <span class="n">window</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">_fit_peak</span><span class="p">(</span>
+                <span class="n">data_in_window</span><span class="p">,</span>
+                <span class="n">window</span><span class="p">,</span>
+                <span class="n">background</span><span class="p">,</span>
+                <span class="n">peak</span><span class="p">,</span>
+                <span class="n">fit_parameters</span><span class="p">,</span>
+                <span class="n">fit_requirements</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fit_peak</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">window</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">backgrounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Model</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">peaks</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Model</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">fit_parameters</span><span class="p">:</span> <span class="n">FitParameters</span><span class="p">,</span>
+    <span class="n">fit_requirements</span><span class="p">:</span> <span class="n">FitRequirements</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FitResult</span><span class="p">:</span>
+    <span class="n">candidate_result</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Loop order chosen as [(p0, b0), (p0, b1), (p1, b0), (p1, b1), ...]</span>
+    <span class="c1"># because trying different background models usually improves fits more than</span>
+    <span class="c1"># different peak models.</span>
+    <span class="k">for</span> <span class="n">peak</span><span class="p">,</span> <span class="n">background</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">peaks</span><span class="p">,</span> <span class="n">backgrounds</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">_fit_peak_single_model</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span>
+            <span class="n">peak</span><span class="o">=</span><span class="n">peak</span><span class="p">,</span>
+            <span class="n">background</span><span class="o">=</span><span class="n">background</span><span class="p">,</span>
+            <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
+            <span class="n">fit_parameters</span><span class="o">=</span><span class="n">fit_parameters</span><span class="p">,</span>
+            <span class="n">fit_requirements</span><span class="o">=</span><span class="n">fit_requirements</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">assessment</span> <span class="o">==</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">if</span> <span class="n">candidate_result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Keep a potentially failed result to have something to</span>
+            <span class="c1"># return in case all fits fail.</span>
+            <span class="n">candidate_result</span> <span class="o">=</span> <span class="n">result</span>
+        <span class="c1"># else: reject</span>
+
+    <span class="k">return</span> <span class="n">candidate_result</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fit_peak_single_model</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">peak</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">background</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">window</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">fit_parameters</span><span class="p">:</span> <span class="n">FitParameters</span><span class="p">,</span>
+    <span class="n">fit_requirements</span><span class="p">:</span> <span class="n">FitRequirements</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FitResult</span><span class="p">:</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">background</span> <span class="o">+</span> <span class="n">peak</span>
+    <span class="n">bkg_p0</span> <span class="o">=</span> <span class="n">_guess_background</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">background</span><span class="p">,</span> <span class="n">fit_parameters</span><span class="o">=</span><span class="n">fit_parameters</span><span class="p">)</span>
+    <span class="n">p0</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="o">**</span><span class="n">bkg_p0</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">_guess_peak</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">peak</span><span class="p">,</span> <span class="n">fit_parameters</span><span class="o">=</span><span class="n">fit_parameters</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">background</span><span class="o">.</span><span class="n">param_bounds</span> <span class="o">|</span> <span class="n">_peak_param_bounds</span><span class="p">(</span><span class="n">peak</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">p0</span><span class="p">):</span>
+        <span class="c1"># not enough points to fit all parameters</span>
+        <span class="k">return</span> <span class="n">FitResult</span><span class="o">.</span><span class="n">for_too_narrow_window</span><span class="p">(</span>
+            <span class="n">peak</span><span class="o">=</span><span class="n">peak</span><span class="p">,</span> <span class="n">background</span><span class="o">=</span><span class="n">background</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span>
+        <span class="p">)</span>
+
+    <span class="n">bkg_goodness_stats</span> <span class="o">=</span> <span class="n">_fit_background</span><span class="p">(</span><span class="n">background</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">bkg_p0</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">popt</span><span class="p">,</span> <span class="n">goodness_stats</span> <span class="o">=</span> <span class="n">_perform_fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">p0</span><span class="o">=</span><span class="n">p0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">FitResult</span><span class="o">.</span><span class="n">for_failure</span><span class="p">(</span>
+            <span class="n">peak</span><span class="o">=</span><span class="n">peak</span><span class="p">,</span>
+            <span class="n">background</span><span class="o">=</span><span class="n">background</span><span class="p">,</span>
+            <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="p">)</span>
+
+    <span class="n">assessment</span> <span class="o">=</span> <span class="n">_assess_fit</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">,</span>
+        <span class="n">peak</span><span class="p">,</span>
+        <span class="n">popt</span><span class="p">,</span>
+        <span class="n">goodness_stats</span><span class="p">,</span>
+        <span class="n">bkg_goodness_stats</span><span class="p">,</span>
+        <span class="n">fit_requirements</span><span class="o">=</span><span class="n">fit_requirements</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">FitResult</span><span class="p">(</span>
+        <span class="n">popt</span><span class="o">=</span><span class="n">popt</span><span class="p">,</span>
+        <span class="n">assessment</span><span class="o">=</span><span class="n">assessment</span><span class="p">,</span>
+        <span class="n">peak</span><span class="o">=</span><span class="n">peak</span><span class="p">,</span>
+        <span class="n">background</span><span class="o">=</span><span class="n">background</span><span class="p">,</span>
+        <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="n">_message_from_assessment</span><span class="p">(</span><span class="n">assessment</span><span class="p">),</span>
+        <span class="o">**</span><span class="n">goodness_stats</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fit_background</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">p0</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">goodness_stats</span> <span class="o">=</span> <span class="n">_perform_fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">param_bounds</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+        <span class="c1"># Background fits may fail when the background is a bad model.</span>
+        <span class="c1"># Continue with a background+peak fit instead of aborting.</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">goodness_stats</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_perform_fit</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">p0</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">],</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]]:</span>
+    <span class="c1"># Workaround for https://github.com/scipp/scipp/issues/3418</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit_model</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+    <span class="n">popt</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">curve_fit</span><span class="p">(</span><span class="n">fit_model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">p0</span><span class="o">=</span><span class="n">p0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+    <span class="n">best_fit</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">],</span> <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">popt</span><span class="o">.</span><span class="n">items</span><span class="p">()}),</span>
+        <span class="n">coords</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">coords</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">goodness_stats</span> <span class="o">=</span> <span class="n">_goodness_of_fit_statistics</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">best_fit</span><span class="p">,</span> <span class="n">popt</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">popt</span><span class="p">,</span> <span class="n">goodness_stats</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_goodness_of_fit_statistics</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">best_fit</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]:</span>
+    <span class="c1"># number of degrees of freedom</span>
+    <span class="n">n_dof</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+
+    <span class="n">chi_square</span> <span class="o">=</span> <span class="n">_chi_square</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">best_fit</span><span class="p">)</span>
+    <span class="n">reduced_chi_square</span> <span class="o">=</span> <span class="n">chi_square</span> <span class="o">/</span> <span class="n">n_dof</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">_scipy_chi2</span><span class="p">(</span><span class="n">n_dof</span><span class="p">)</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">chi_square</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+
+    <span class="n">aic</span> <span class="o">=</span> <span class="n">_akaike_information_criterion</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">chi_square</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;red_chisq&#39;</span><span class="p">:</span> <span class="n">reduced_chi_square</span><span class="p">,</span>
+        <span class="s1">&#39;p_value&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span>
+        <span class="s1">&#39;aic&#39;</span><span class="p">:</span> <span class="n">aic</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_chi_square</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">best_fit</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+    <span class="n">aux</span> <span class="o">=</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">-</span> <span class="n">best_fit</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">aux</span> <span class="o">/=</span> <span class="n">sc</span><span class="o">.</span><span class="n">variances</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;one&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_akaike_information_criterion</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">chi_square</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+    <span class="n">neg2_log_likelihood</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">chi_square</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">neg2_log_likelihood</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_assess_fit</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">peak</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">popt</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">],</span>
+    <span class="n">goodness_stats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">],</span>
+    <span class="n">bkg_goodness_stats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fit_requirements</span><span class="p">:</span> <span class="n">FitRequirements</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FitAssessment</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default fit result assessment.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data:</span>
+<span class="sd">        Input independent and dependent variable.</span>
+<span class="sd">    peak:</span>
+<span class="sd">        Model for the peak.</span>
+<span class="sd">    popt:</span>
+<span class="sd">        Optimized parameters.</span>
+<span class="sd">    goodness_stats:</span>
+<span class="sd">        Goodness-of-fit statistics for peak + background.</span>
+<span class="sd">        Includes ``red_chisq``, ``p_value``, ``aic``.</span>
+<span class="sd">    bkg_goodness_stats:</span>
+<span class="sd">        Goodness-of-fit statistics for a separate background fit.</span>
+<span class="sd">        Includes ``red_chisq``, ``p_value``, ``aic``.</span>
+<span class="sd">    fit_requirements:</span>
+<span class="sd">        Parameters controlling the fit result assessment.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Fit assessment.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">bkg_goodness_stats</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">bkg_goodness_stats</span><span class="p">[</span><span class="s1">&#39;aic&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">goodness_stats</span><span class="p">[</span><span class="s1">&#39;aic&#39;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">background_is_better</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">goodness_stats</span><span class="p">[</span><span class="s1">&#39;p_value&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">fit_requirements</span><span class="o">.</span><span class="n">min_p_value</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">p_too_small</span>
+    <span class="k">if</span> <span class="n">_peak_is_near_edge</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">popt</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">peak_near_edge</span>
+    <span class="k">if</span> <span class="n">_curve_points_down</span><span class="p">(</span><span class="n">popt</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">peak_points_down</span>
+    <span class="k">if</span> <span class="n">_peak_is_too_wide</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">peak</span><span class="p">,</span> <span class="n">popt</span><span class="p">,</span> <span class="n">fit_requirements</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">peak_too_wide</span>
+    <span class="k">if</span> <span class="n">_peak_is_too_narrow</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">peak</span><span class="p">,</span> <span class="n">popt</span><span class="p">,</span> <span class="n">fit_requirements</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">peak_too_narrow</span>
+    <span class="k">return</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">success</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_peak_is_near_edge</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">popt</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="n">coord</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">]</span>
+    <span class="n">step_size</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">coord</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="s1">&#39;peak_loc&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">step_size</span><span class="p">)</span><span class="o">.</span><span class="n">value</span> <span class="ow">or</span> <span class="p">(</span>
+        <span class="n">coord</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">popt</span><span class="p">[</span><span class="s1">&#39;peak_loc&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">step_size</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_curve_points_down</span><span class="p">(</span><span class="n">popt</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">popt</span><span class="p">[</span><span class="s1">&#39;peak_amplitude&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_peak_is_too_wide</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">peak</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">popt</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">],</span>
+    <span class="n">fit_requirements</span><span class="p">:</span> <span class="n">FitRequirements</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="n">fwhm</span> <span class="o">=</span> <span class="n">peak</span><span class="o">.</span><span class="n">fwhm</span><span class="p">(</span><span class="n">popt</span><span class="p">)</span>
+    <span class="n">coord</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">fwhm</span> <span class="o">&gt;</span> <span class="n">fit_requirements</span><span class="o">.</span><span class="n">max_peak_width_factor</span> <span class="o">*</span> <span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_peak_is_too_narrow</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">peak</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">popt</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">],</span>
+    <span class="n">fit_requirements</span><span class="p">:</span> <span class="n">FitRequirements</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="n">fwhm</span> <span class="o">=</span> <span class="n">peak</span><span class="o">.</span><span class="n">fwhm</span><span class="p">(</span><span class="n">popt</span><span class="p">)</span>
+    <span class="n">coord</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">]</span>
+    <span class="n">center_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">coord</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="n">popt</span><span class="p">[</span><span class="s1">&#39;peak_loc&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+    <span class="c1"># Average of bins around center index.</span>
+    <span class="c1"># Bins don&#39;t normally vary quickly, so this is a good approximation.</span>
+    <span class="n">bin_width</span> <span class="o">=</span> <span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="n">center_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord</span><span class="p">[</span><span class="n">center_idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">fwhm</span> <span class="o">&lt;</span> <span class="n">fit_requirements</span><span class="o">.</span><span class="n">min_peak_width_factor</span> <span class="o">*</span> <span class="n">bin_width</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_guess_background</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">fit_parameters</span><span class="p">:</span> <span class="n">FitParameters</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]:</span>
+    <span class="c1"># 2* because the range is split between beginning and end of window</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">*</span> <span class="n">fit_parameters</span><span class="o">.</span><span class="n">guess_background_fraction</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">tails</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">data</span><span class="p">[:</span><span class="n">n</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:]],</span> <span class="n">dim</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">guess</span><span class="p">(</span><span class="n">tails</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_guess_peak</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">fit_parameters</span><span class="p">:</span> <span class="n">FitParameters</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]:</span>
+    <span class="c1"># 2* to match the range in _guess_background</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">*</span> <span class="n">fit_parameters</span><span class="o">.</span><span class="n">guess_background_fraction</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">bulk</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">n</span><span class="p">:</span><span class="o">-</span><span class="n">n</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">guess</span><span class="p">(</span><span class="n">bulk</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_peak_param_bounds</span><span class="p">(</span><span class="n">peak</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="o">**</span><span class="n">peak</span><span class="o">.</span><span class="n">param_bounds</span><span class="p">,</span>
+        <span class="s1">&#39;peak_amplitude&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fit_windows</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">center</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">width</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">fit_parameters</span><span class="p">:</span> <span class="n">FitParameters</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+    <span class="n">windows</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">sizes</span><span class="o">=</span><span class="p">{</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">center</span><span class="p">),</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="n">unit</span><span class="o">=</span><span class="n">center</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+    <span class="n">windows</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">center</span> <span class="o">-</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">windows</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nextafter</span><span class="p">(</span><span class="n">center</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="n">width</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+
+    <span class="n">windows</span> <span class="o">=</span> <span class="n">_clip_to_data_range</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">windows</span><span class="p">)</span>
+    <span class="n">_separate_from_neighbors_in_place</span><span class="p">(</span><span class="n">center</span><span class="p">,</span> <span class="n">windows</span><span class="p">,</span> <span class="n">fit_parameters</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">windows</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_clip_to_data_range</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">windows</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+    <span class="n">lo</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">hi</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">windows</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">windows</span> <span class="o">&lt;</span> <span class="n">lo</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">windows</span><span class="p">)</span>
+    <span class="n">windows</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">windows</span> <span class="o">&gt;</span> <span class="n">hi</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">windows</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">windows</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_separate_from_neighbors_in_place</span><span class="p">(</span>
+    <span class="n">center</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">windows</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">fit_parameters</span><span class="p">:</span> <span class="n">FitParameters</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">sc</span><span class="o">.</span><span class="n">issorted</span><span class="p">(</span><span class="n">center</span><span class="p">,</span> <span class="n">center</span><span class="o">.</span><span class="n">dim</span><span class="p">):</span>
+        <span class="c1"># Needed to easily identify neighbors.</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Fit window centers must be sorted&#39;</span><span class="p">)</span>
+
+    <span class="n">left_neighbor</span> <span class="o">=</span> <span class="n">center</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">right_neighbor</span> <span class="o">=</span> <span class="n">center</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="n">min_separation</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">right_neighbor</span> <span class="o">-</span> <span class="n">left_neighbor</span>
+    <span class="p">)</span> <span class="o">*</span> <span class="n">fit_parameters</span><span class="o">.</span><span class="n">neighbor_separation_factor</span>
+    <span class="n">lo</span> <span class="o">=</span> <span class="n">left_neighbor</span> <span class="o">+</span> <span class="n">min_separation</span>
+    <span class="n">hi</span> <span class="o">=</span> <span class="n">right_neighbor</span> <span class="o">-</span> <span class="n">min_separation</span>
+    <span class="c1"># Do not adjust the left edge of the first window and the right edge of the</span>
+    <span class="c1"># last window because there are no neighbors on those sides.</span>
+    <span class="n">left_edge</span> <span class="o">=</span> <span class="n">windows</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="n">right_edge</span> <span class="o">=</span> <span class="n">windows</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">left_edge</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">left_edge</span> <span class="o">&lt;</span> <span class="n">lo</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">left_edge</span><span class="p">)</span>
+    <span class="n">right_edge</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">right_edge</span> <span class="o">&gt;</span> <span class="n">hi</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">right_edge</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_message_from_assessment</span><span class="p">(</span><span class="n">assessment</span><span class="p">:</span> <span class="n">FitAssessment</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">match</span> <span class="n">assessment</span><span class="p">:</span>
+        <span class="k">case</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;success&#39;</span>
+        <span class="k">case</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">peak_too_narrow</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;peak too narrow&#39;</span>
+        <span class="k">case</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">peak_too_wide</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;peak too wide&#39;</span>
+        <span class="k">case</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">peak_points_down</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;wrong sign&#39;</span>
+        <span class="k">case</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">window_too_narrow</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;window too narrow&#39;</span>
+        <span class="k">case</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">peak_near_edge</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;too close to edge&#39;</span>
+        <span class="k">case</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">p_too_small</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;p-value too small&#39;</span>
+        <span class="k">case</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">background_is_better</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;background is better&#39;</span>
+        <span class="k">case</span> <span class="n">FitAssessment</span><span class="o">.</span><span class="n">failed</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;failure&#39;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_model_spec</span><span class="p">(</span>
+    <span class="n">spec</span><span class="p">:</span> <span class="n">Model</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Model</span><span class="p">]</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Model</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">Model</span> <span class="o">|</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="p">(</span><span class="n">spec</span><span class="p">,)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">spec</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No models specified for &#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">_parse_single_model_spec</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_single_model_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">Model</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+    <span class="k">match</span> <span class="n">spec</span><span class="p">:</span>
+        <span class="k">case</span> <span class="n">Model</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">spec</span><span class="o">.</span><span class="n">with_prefix</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="k">case</span> <span class="s1">&#39;linear&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PolynomialModel</span><span class="p">(</span><span class="n">degree</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="k">case</span> <span class="s1">&#39;quadratic&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PolynomialModel</span><span class="p">(</span><span class="n">degree</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="k">case</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">GaussianModel</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="k">case</span> <span class="s1">&#39;lorentzian&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">LorentzianModel</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="k">case</span> <span class="s1">&#39;pseudo_voigt&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PseudoVoigtModel</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown model: &#39;</span><span class="si">{</span><span class="n">spec</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_assert_data_is_supported</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;`fit_peaks` requires 1d data, got </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s1"> dimensions&#39;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">bins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DTypeError</span><span class="p">(</span><span class="s1">&#39;`fit_peaks` does not support binned data&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">is_edges</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">CoordError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Coordinate </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="si">}</span><span class="s1"> is bin-edges but `fit_peaks` requires a regular &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;coordinate. Consider using `sc.midpoints` to convert the coordinate.&#39;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">sc</span><span class="o">.</span><span class="n">issorted</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">],</span> <span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;ascending&#39;</span><span class="p">):</span>
+        <span class="c1"># A lot of code here assumes a sorted coord, either to use O(1) instead of O(n)</span>
+        <span class="c1"># operations or to allow extracting windows.</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">CoordError</span><span class="p">(</span>
+            <span class="s1">&#39;fit_peaks requires the coordinate to be sorted in ascending order. &#39;</span>
+            <span class="s1">&#39;Consider using scipp.sort to fix this.&#39;</span>
+        <span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 0.0.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

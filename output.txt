@@ -1,0 +1,65 @@
+Results of doctest builder run on 2025-12-02 06:56:08
+=====================================================
+
+Document: generated/classes/scippneutron.metadata.Beamline
+----------------------------------------------------------
+1 items passed all tests:
+   3 tests in default
+3 tests in 1 items.
+3 passed and 0 failed.
+Test passed.
+
+Document: generated/classes/scippneutron.metadata.ORCIDiD
+---------------------------------------------------------
+1 items passed all tests:
+   5 tests in default
+5 tests in 1 items.
+5 passed and 0 failed.
+Test passed.
+
+Document: generated/classes/scippneutron.metadata.Software
+----------------------------------------------------------
+1 items passed all tests:
+   3 tests in default
+3 tests in 1 items.
+3 passed and 0 failed.
+Test passed.
+
+Document: generated/functions/scippneutron.load_with_mantid
+-----------------------------------------------------------
+1 items passed all tests:
+   1 tests in default
+1 tests in 1 items.
+1 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/scippneutron.conversion.graph
+---------------------------------------------------------
+1 items passed all tests:
+   2 tests in default
+2 tests in 1 items.
+2 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/scippneutron.io.cif
+-----------------------------------------------
+1 items passed all tests:
+  15 tests in default
+15 tests in 1 items.
+15 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/scippneutron.io.cif.CIF
+---------------------------------------------------
+1 items passed all tests:
+  12 tests in default
+12 tests in 1 items.
+12 passed and 0 failed.
+Test passed.
+
+Doctest summary
+===============
+   41 tests
+    0 failures in tests
+    0 failures in setup code
+    0 failures in cleanup code
