@@ -82,7 +82,7 @@ def _add_note_to_write_exception(exc: Exception, sqw_io: LowLevelSqw, ty: str) -
 
 def _add_note(exc: Exception, note: str) -> None:
     try:
-        exc.add_note(note)  # type: ignore[attr-defined]
+        exc.add_note(note)
     except AttributeError:
         # Python < 3.11 -> do nothing and accept throwing a worse error.
         pass

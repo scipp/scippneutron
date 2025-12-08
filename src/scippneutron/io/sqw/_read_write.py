@@ -76,7 +76,7 @@ def write_object_array(
 
             try:
                 # TODO use better mechanism
-                name = _get_scalar_struct_field(structs[0], "serial_name")
+                name = _get_scalar_struct_field(structs[0], "serial_name")  # type: ignore[arg-type]
                 if name.startswith("IX_"):
                     sqw_io.write_u8(32)
             except AbortParse:

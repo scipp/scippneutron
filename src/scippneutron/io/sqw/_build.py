@@ -485,10 +485,10 @@ class _PixWrap:
         return 4 + 8 + self.n_rows() * 4 * self.n_pixels()
 
     def n_rows(self) -> int:
-        return self.row_data.shape[1]
+        return self.row_data.shape[1]  # type: ignore[no-any-return]
 
     def n_pixels(self) -> int:
-        return self.row_data.shape[0]
+        return self.row_data.shape[0]  # type: ignore[no-any-return]
 
     def write(self, sqw_io: LowLevelSqw, chunk_size: int) -> None:
         sqw_io.write_u32(self.n_rows())

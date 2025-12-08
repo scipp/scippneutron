@@ -291,34 +291,38 @@ def _parse_dnd_metadata_1_0(struct: ir.Struct) -> SqwDndMetadata:
 def _parse_line_axes_7_0(struct: ir.Struct, units: list[str]) -> SqwLineAxes:
     return SqwLineAxes(
         title=_get_scalar_struct_field(struct, "title"),
-        label=_unpack_cell_array(_get_struct_field(struct, "label")),
+        label=_unpack_cell_array(_get_struct_field(struct, "label")),  # type: ignore[arg-type]
         img_scales=_parse_1d_multi_unit_array(
-            _get_struct_field(struct, "img_scales").data, units
+            _get_struct_field(struct, "img_scales").data,
+            units,
         ),
         img_range=_parse_2d_multi_unit_array(
-            "range", _get_struct_field(struct, "img_range").data, units
+            "range",
+            _get_struct_field(struct, "img_range").data,
+            units,
         ),
         n_bins_all_dims=sc.array(
             dims=("axis",),
-            values=_get_struct_field(struct, "nbins_all_dims").data,
+            values=_get_struct_field(struct, "nbins_all_dims").data,  # type: ignore[arg-type]
             dtype="int64",
             unit=None,
         ),
         single_bin_defines_iax=sc.array(
             dims=("axis",),
-            values=[
-                d.value
+            values=[  # type: ignore[arg-type]
+                d.value  # type: ignore[union-attr]
                 for d in _get_struct_field(struct, "single_bin_defines_iax").data
             ],
         ),
         dax=sc.array(
             dims=("axis",),
             # -1 to convert to 0-based indexing
-            values=_get_struct_field(struct, "dax").data.astype(int) - 1,
+            values=_get_struct_field(struct, "dax").data.astype(int) - 1,  # type: ignore[union-attr]
             unit=None,
         ),
         offset=_parse_1d_multi_unit_array(
-            _get_struct_field(struct, "offset").data, units
+            _get_struct_field(struct, "offset").data,
+            units,
         ),
         changes_aspect_ratio=_get_scalar_struct_field(struct, "changes_aspect_ratio"),
         filename=_get_scalar_struct_field(struct, "filename"),
@@ -329,9 +333,9 @@ def _parse_line_axes_7_0(struct: ir.Struct, units: list[str]) -> SqwLineAxes:
 def _parse_line_proj_7_0(struct: ir.Struct) -> tuple[SqwLineProj, list[str]]:
     def get_vec(name: str, unit: str) -> sc.Variable | None:
         values = _get_struct_field(struct, name).data
-        if values.shape == (0,):
+        if values.shape == (0,):  # type: ignore[union-attr]
             return None
-        return sc.vector(values, unit=unit)
+        return sc.vector(values, unit=unit)  # type: ignore[arg-type]
 
     ty = _get_scalar_struct_field(struct, "type")
     if ty != "aaa":
@@ -342,17 +346,21 @@ def _parse_line_proj_7_0(struct: ir.Struct) -> tuple[SqwLineProj, list[str]]:
 
     return SqwLineProj(
         lattice_spacing=sc.vector(
-            _get_struct_field(struct, "alatt").data, unit="angstrom"
+            _get_struct_field(struct, "alatt").data,  # type: ignore[arg-type]
+            unit="angstrom",
         ),
-        lattice_angle=sc.vector(_get_struct_field(struct, "angdeg").data, unit="deg"),
+        lattice_angle=sc.vector(
+            _get_struct_field(struct, "angdeg").data,  # type: ignore[arg-type]
+            unit="deg",
+        ),
         offset=_parse_1d_multi_unit_array(
             _get_struct_field(struct, "offset").data,
             units,
         ),
         title=_get_scalar_struct_field(struct, "title"),
-        label=_unpack_cell_array(_get_struct_field(struct, "label")),
-        u=get_vec("u", unit=units[0]),
-        v=get_vec("v", unit=units[1]),
+        label=_unpack_cell_array(_get_struct_field(struct, "label")),  # type: ignore[arg-type]
+        u=get_vec("u", unit=units[0]),  # type: ignore[arg-type]
+        v=get_vec("v", unit=units[1]),  # type: ignore[arg-type]
         w=get_vec("w", unit=units[2]),
         non_orthogonal=_get_scalar_struct_field(struct, "nonorthogonal"),
         type=ty,
@@ -360,7 +368,7 @@ def _parse_line_proj_7_0(struct: ir.Struct) -> tuple[SqwLineProj, list[str]]:
 
 
 def _parse_1d_multi_unit_array(
-    values: npt.NDArray[Any], units: list[str]
+    values: Iterable[Any], units: list[str]
 ) -> list[sc.Variable]:
     return [
         sc.scalar(value, unit=unit) for value, unit in zip(values, units, strict=False)
@@ -368,7 +376,7 @@ def _parse_1d_multi_unit_array(
 
 
 def _parse_2d_multi_unit_array(
-    dim: str, values: npt.NDArray[Any], units: list[str]
+    dim: str, values: Iterable[Any], units: list[str]
 ) -> list[sc.Variable]:
     return [
         sc.array(dims=[dim], values=values, unit=unit)
@@ -399,7 +407,7 @@ def _parse_ix_source_2_0(struct: ir.Struct) -> SqwIXSource:
 
 
 def _parse_ix_null_instrument_1_0(struct: ir.Struct) -> SqwIXNullInstrument:
-    source = _try_parse_block(_get_struct_field(struct, "source"))
+    source = _try_parse_block(_get_struct_field(struct, "source"))  # type: ignore[arg-type]
     name = _get_scalar_struct_field(struct, "name")
     return SqwIXNullInstrument(name=name, source=source)
 
@@ -407,9 +415,13 @@ def _parse_ix_null_instrument_1_0(struct: ir.Struct) -> SqwIXNullInstrument:
 def _parse_ix_sample_0_0(struct: ir.Struct) -> SqwIXSample:
     name = _get_scalar_struct_field(struct, "name")
     lattice_spacing = sc.vector(
-        _get_struct_field(struct, "alatt").data, unit="angstrom"
+        _get_struct_field(struct, "alatt").data,  # type: ignore[arg-type]
+        unit="angstrom",
     )
-    lattice_angle = sc.vector(_get_struct_field(struct, "angdeg").data, unit="deg")
+    lattice_angle = sc.vector(
+        _get_struct_field(struct, "angdeg").data,  # type: ignore[arg-type]
+        unit="deg",
+    )
     return SqwIXSample(
         name=name,
         lattice_spacing=lattice_spacing,
@@ -419,7 +431,7 @@ def _parse_ix_sample_0_0(struct: ir.Struct) -> SqwIXSample:
 
 def _parse_ix_experiment_3_0(struct: ir.Struct) -> list[SqwIXExperiment]:
     return [
-        _parse_single_ix_experiment_3_0(run)
+        _parse_single_ix_experiment_3_0(run)  # type: ignore[arg-type]
         for run in _get_struct_field(struct, "array_dat").data
     ]
 
@@ -433,7 +445,7 @@ def _parse_single_ix_experiment_3_0(struct: ir.Struct) -> SqwIXExperiment:
         efix = sc.array(dims=["detector"], values=candidate_efix, unit="meV")
     else:
         (e,) = candidate_efix
-        efix = sc.scalar(e.value, unit="meV")
+        efix = sc.scalar(e.value, unit="meV")  # type: ignore[union-attr]
 
     emode = EnergyMode(g("emode"))
 
@@ -441,7 +453,7 @@ def _parse_single_ix_experiment_3_0(struct: ir.Struct) -> SqwIXExperiment:
     raw_en = (
         raw_en
         if isinstance(raw_en, np.ndarray)
-        else np.array([e.value for e in raw_en])
+        else np.array([e.value for e in raw_en])  # type: ignore[union-attr]
     )
     if emode == EnergyMode.indirect:
         en = sc.array(dims=["detector", "energy_transfer"], values=raw_en, unit="meV")
@@ -458,8 +470,14 @@ def _parse_single_ix_experiment_3_0(struct: ir.Struct) -> SqwIXExperiment:
         emode=emode,
         en=en,
         psi=sc.scalar(g("psi"), unit=angle_unit),
-        u=sc.vector(_get_struct_field(struct, "u").data, unit="1/angstrom"),
-        v=sc.vector(_get_struct_field(struct, "v").data, unit="1/angstrom"),
+        u=sc.vector(
+            _get_struct_field(struct, "u").data,  # type: ignore[arg-type]
+            unit="1/angstrom",
+        ),
+        v=sc.vector(
+            _get_struct_field(struct, "v").data,  # type: ignore[arg-type]
+            unit="1/angstrom",
+        ),
         omega=sc.scalar(g("omega"), unit=angle_unit),
         dpsi=sc.scalar(g("dpsi"), unit=angle_unit),
         gl=sc.scalar(g("gl"), unit=angle_unit),
@@ -474,15 +492,15 @@ def _parse_unique_references_container_1_0(struct: ir.Struct) -> list[Any]:
             "Expected exactly one object in a 'unique_references_container', "
             f"got {len(objects)}"
         )
-    return _parse_unique_objects_container_1_0(objects[0])
+    return _parse_unique_objects_container_1_0(objects[0])  # type: ignore[arg-type]
 
 
 def _parse_unique_objects_container_1_0(struct: ir.Struct) -> list[Any]:
     objects = _get_struct_field(struct, "unique_objects").data
     idx = _get_struct_field(struct, "idx").data
     if not isinstance(idx, np.ndarray):  # it is list[ir.F64]
-        idx = np.array([i.value for i in idx])
-    parsed_objects = [_try_parse_block(obj) for obj in objects]
+        idx = np.array([i.value for i in idx])  # type: ignore[union-attr]
+    parsed_objects = [_try_parse_block(obj) for obj in objects]  # type: ignore[arg-type]
     # -1 to convert to 0-based index
     return [parsed_objects[int(i) - 1] for i in idx]
 
