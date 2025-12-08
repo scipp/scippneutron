@@ -168,8 +168,6 @@ exclude = [
     '^src/scippneutron/metadata/_model',
     '^src/scippneutron/tof/chopper_cascade',
     '^src/scippneutron/tof/diagram',
-    '^src/scippneutron/peaks/_fit_peaks',
-    '^src/scippneutron/peaks/model',
     '^src/scippneutron/absorption/base',
     '^src/scippneutron/absorption/cylinder',
     '^src/scippneutron/absorption/material',
@@ -180,6 +178,7 @@ exclude = [
     # Need new release of Scipp
     '^src/scippneutron/conversion/graph/tof',
     '^src/scippneutron/core/conversions',
+    '^src/scippneutron/peaks/_fit_peaks',
 ]
 
 [tool.codespell]

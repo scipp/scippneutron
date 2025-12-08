@@ -187,7 +187,7 @@ class Model(abc.ABC):
             f'FWHM is not implemented for model {self.__class__.__name__}'
         )
 
-    def __add__(self, other: Model) -> CompositeModel:
+    def __add__(self, other: object) -> CompositeModel:
         """Combine two models into a :class:`CompositeModel`."""
         if not isinstance(other, Model):
             return NotImplemented
@@ -312,7 +312,7 @@ class PolynomialModel(Model):
     def _guess(self, x: sc.Variable, y: sc.Variable) -> dict[str, sc.Variable]:
         poly = np.polynomial.Polynomial.fit(x.values, y.values, deg=self.degree)
         return {
-            f'a{i}': sc.scalar(c, unit=y.unit / x.unit**i)
+            f'a{i}': sc.scalar(c, unit=y.unit / x.unit**i)  # type: ignore[arg-type, operator]
             for i, c in enumerate(poly.convert().coef)
         }
 
@@ -545,7 +545,7 @@ def _guess_from_peak(x: sc.Variable, y: sc.Variable) -> dict[str, sc.Variable]:
         # Exact gamma = FWHM / 2 for Lorentzian.
         scale = (x_half_max.max() - x_half_max.min()) / 2.0
     else:
-        loc = x[np.argmax(y.values)]
+        loc = x[int(np.argmax(y.values))]
         # 6.0 taken from lmfit, don't know where it comes from.
         scale = (sc.max(x) - sc.min(x)) / 6.0
 

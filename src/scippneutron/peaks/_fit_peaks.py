@@ -139,7 +139,7 @@ class FitResult:
         :
             Whether this result is better than the other.
         """
-        return sc.all(self.aic < other.aic).value
+        return sc.all(self.aic < other.aic).value  # type: ignore[no-any-return]
 
     def eval_model(self, x: sc.Variable) -> sc.Variable:
         """Evaluate the model with optimized parameters.
@@ -401,6 +401,9 @@ def _fit_peak(
             candidate_result = result
         # else: reject
 
+    if candidate_result is None:
+        raise ValueError("Cannot fit anything: No peak or background models")
+
     return candidate_result
 
 
@@ -513,7 +516,7 @@ def _chi_square(data: sc.DataArray, best_fit: sc.DataArray) -> sc.Variable:
 
 
 def _akaike_information_criterion(
-    data: sc.DataArray, chi_square: sc.Variable, params: dict
+    data: sc.DataArray, chi_square: sc.Variable, params: dict[str, sc.Variable]
 ) -> sc.Variable:
     neg2_log_likelihood = len(data) * sc.log(chi_square / len(data))
     return neg2_log_likelihood + 2 * len(params)
@@ -570,14 +573,14 @@ def _assess_fit(
 def _peak_is_near_edge(data: sc.DataArray, popt: dict[str, sc.Variable]) -> bool:
     coord = data.coords[data.dim]
     step_size = sc.min(coord[1:] - coord[:-1])
-    return (popt['peak_loc'] - coord[0] < 2 * step_size).value or (
+    return (popt['peak_loc'] - coord[0] < 2 * step_size).value or (  # type: ignore[no-any-return]
         coord[-1] - popt['peak_loc'] < 2 * step_size
     ).value
 
 
 def _curve_points_down(popt: dict[str, sc.Variable]) -> bool:
     try:
-        return popt['peak_amplitude'].value < 0
+        return popt['peak_amplitude'].value < 0  # type: ignore[no-any-return]
     except KeyError:
         return False
 
@@ -590,7 +593,7 @@ def _peak_is_too_wide(
 ) -> bool:
     fwhm = peak.fwhm(popt)
     coord = data.coords[data.dim]
-    return (
+    return (  # type: ignore[no-any-return]
         fwhm > fit_requirements.max_peak_width_factor * (coord[-1] - coord[0])
     ).value
 
@@ -606,8 +609,8 @@ def _peak_is_too_narrow(
     center_idx = np.argmin(abs(coord.values - popt['peak_loc'].values))
     # Average of bins around center index.
     # Bins don't normally vary quickly, so this is a good approximation.
-    bin_width = (coord[center_idx + 1] - coord[center_idx - 1]) / 2
-    return (fwhm < fit_requirements.min_peak_width_factor * bin_width).value
+    bin_width = (coord[center_idx + 1] - coord[center_idx - 1]) / 2  # type: ignore[index]
+    return (fwhm < fit_requirements.min_peak_width_factor * bin_width).value  # type: ignore[no-any-return]
 
 
 def _guess_background(
@@ -701,16 +704,16 @@ def _message_from_assessment(assessment: FitAssessment | None) -> str:
             return 'background is better'
         case FitAssessment.failed:
             return 'failure'
+    return 'unknown'
 
 
 def _parse_model_spec(
     spec: Model | str | Iterable[Model] | Iterable[str], prefix: str
 ) -> tuple[Model, ...]:
-    if isinstance(spec, Model | str):
-        spec = (spec,)
+    spec_sequence = (spec,) if isinstance(spec, Model | str) else spec
     if not spec:
         raise ValueError(f"No models specified for '{prefix}'")
-    return tuple(_parse_single_model_spec(s, prefix=prefix) for s in spec)
+    return tuple(_parse_single_model_spec(s, prefix=prefix) for s in spec_sequence)
 
 
 def _parse_single_model_spec(spec: Model | str, prefix: str) -> Model:
@@ -736,7 +739,7 @@ def _assert_data_is_supported(data: sc.DataArray) -> None:
         raise sc.DimensionError(
             f'`fit_peaks` requires 1d data, got {data.ndim} dimensions'
         )
-    if data.bins is not None:
+    if data.is_binned:
         raise sc.DTypeError('`fit_peaks` does not support binned data')
     if data.coords.is_edges(data.dim):
         raise sc.CoordError(
