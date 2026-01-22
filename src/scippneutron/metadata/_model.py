@@ -5,12 +5,13 @@ from __future__ import annotations
 import enum
 import warnings
 from datetime import datetime
-from typing import Annotated, Any
+from typing import Annotated, Any, ClassVar
 
 import scipp as sc
 import scippnexus as snx
 from dateutil.parser import parse as parse_datetime
 from pydantic import BaseModel, BeforeValidator, EmailStr
+from scippnexus.typing import H5Group
 
 from ._orcid import ORCIDiD
 
@@ -206,6 +207,42 @@ class Person(BaseModel):
     affiliation: Annotated[str | None, BeforeValidator(_unpack_variable)] = None
     """Affiliation of the person."""
 
+    nx_class: ClassVar[type] = snx.NXuser
+
+    @classmethod
+    def from_nexus_user(cls, group: snx.Group) -> Person:
+        """Construct a Person object from a Nexus NXuser group.
+
+        Parameters
+        ----------
+        group:
+            ScippNexus group for a NeXus group.
+
+        Returns
+        -------
+        :
+            An Person object constructed from the given Nexus entry.
+        """
+        return cls(
+            name=str(group['name'][()]),
+            orcid_id=_read_optional_nexus_string(group, 'ORCID'),
+            # User `or None` to convert empty strings to None to bypass validator
+            email=_read_optional_nexus_string(group, 'email') or None,
+            corresponding=False,
+            owner=True,
+            role=_read_optional_nexus_string(group, 'role'),
+            address=_read_optional_nexus_string(group, 'address'),
+            affiliation=_read_optional_nexus_string(group, 'affiliation'),
+        )
+
+    def __write_to_nexus_group__(self, group: H5Group) -> None:
+        _create_optional_nexus_field(group, 'address', self.address)
+        _create_optional_nexus_field(group, 'affiliation', self.affiliation)
+        _create_optional_nexus_field(group, 'email', self.email)
+        _create_optional_nexus_field(group, 'name', self.name)
+        _create_optional_nexus_field(group, 'ORCID', self.orcid_id)
+        _create_optional_nexus_field(group, 'role', self.role)
+
 
 class Software(BaseModel):
     """A piece of software.
@@ -253,6 +290,8 @@ class Software(BaseModel):
     a general DOI for the software may be used.
     """
 
+    nx_class: ClassVar[str] = 'NXprogram'
+
     @classmethod
     def from_package_metadata(cls, package_name: str) -> Software:
         """Construct a Software instance from the metadata of an installed package.
@@ -290,6 +329,12 @@ class Software(BaseModel):
         if self.url:
             return f'{self.name_version} ({self.url})'
         return self.name_version
+
+    def __write_to_nexus_group__(self, group: H5Group) -> None:
+        field = snx.create_field(group, 'program', self.name)
+        field.attrs['version'] = self.version
+        if self.url:
+            field.attrs['url'] = self.url
 
 
 class SourceType(enum.Enum):
@@ -330,6 +375,13 @@ class Source(BaseModel):
     """Type of this source."""
     probe: RadiationProbe
     """Radiation probe of the source."""
+
+    nx_class: ClassVar[type] = snx.NXsource
+
+    def __write_to_nexus_group__(self, group: H5Group) -> None:
+        _create_optional_nexus_field(group, 'name', self.name)
+        snx.create_field(group, 'type', self.source_type.value)
+        snx.create_field(group, 'probe', self.probe.value)
 
 
 ESS_SOURCE = Source(
@@ -455,3 +507,12 @@ def _deduce_package_source_url(package_name: str) -> str | None:
         )
     except StopIteration:
         return None
+
+
+def _create_optional_nexus_field(
+    group: H5Group, name: str, value: object | None
+) -> None:
+    if value is not None:
+        if not isinstance(value, str):
+            value = str(value)
+        snx.create_field(group, name, value)
