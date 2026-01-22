@@ -3,17 +3,20 @@
 from __future__ import annotations
 
 import enum
+import warnings
 from datetime import datetime
-from typing import Annotated, Any
+from typing import Annotated, Any, ClassVar
 
 import scipp as sc
 import scippnexus as snx
 from dateutil.parser import parse as parse_datetime
 from pydantic import BaseModel, BeforeValidator, EmailStr
+from scippnexus.typing import H5Group
 
 from ._orcid import ORCIDiD
 
 
+# Defined at the top so that Pydantic validators can use it.
 def _unpack_variable(value: object) -> Any:
     """Before validator to support passing scalar scipp variables as inputs."""
     if isinstance(value, sc.Variable):
@@ -204,6 +207,42 @@ class Person(BaseModel):
     affiliation: Annotated[str | None, BeforeValidator(_unpack_variable)] = None
     """Affiliation of the person."""
 
+    nx_class: ClassVar[type] = snx.NXuser
+
+    @classmethod
+    def from_nexus_user(cls, group: snx.Group) -> Person:
+        """Construct a Person object from a Nexus NXuser group.
+
+        Parameters
+        ----------
+        group:
+            ScippNexus group for a NeXus group.
+
+        Returns
+        -------
+        :
+            An Person object constructed from the given Nexus entry.
+        """
+        return cls(
+            name=str(group['name'][()]),
+            orcid_id=_read_optional_nexus_string(group, 'ORCID'),
+            # User `or None` to convert empty strings to None to bypass validator
+            email=_read_optional_nexus_string(group, 'email') or None,
+            corresponding=False,
+            owner=True,
+            role=_read_optional_nexus_string(group, 'role'),
+            address=_read_optional_nexus_string(group, 'address'),
+            affiliation=_read_optional_nexus_string(group, 'affiliation'),
+        )
+
+    def __write_to_nexus_group__(self, group: H5Group) -> None:
+        snx.create_field(group, 'name', self.name)
+        _create_optional_nexus_field(group, 'address', self.address)
+        _create_optional_nexus_field(group, 'affiliation', self.affiliation)
+        _create_optional_nexus_field(group, 'email', self.email)
+        _create_optional_nexus_field(group, 'ORCID', self.orcid_id)
+        _create_optional_nexus_field(group, 'role', self.role)
+
 
 class Software(BaseModel):
     """A piece of software.
@@ -251,6 +290,8 @@ class Software(BaseModel):
     a general DOI for the software may be used.
     """
 
+    nx_class: ClassVar[str] = 'NXprogram'
+
     @classmethod
     def from_package_metadata(cls, package_name: str) -> Software:
         """Construct a Software instance from the metadata of an installed package.
@@ -289,48 +330,11 @@ class Software(BaseModel):
             return f'{self.name_version} ({self.url})'
         return self.name_version
 
-
-def _deduce_package_version(package_name: str) -> str | None:
-    from importlib.metadata import PackageNotFoundError, version
-
-    try:
-        return version(package_name)
-    except PackageNotFoundError:
-        # Either the package is not installed or has no metadata.
-        from importlib import import_module
-
-        try:
-            package = import_module(package_name)
-        except ModuleNotFoundError as e:
-            raise e from None
-
-        try:
-            return package.__version__
-        except AttributeError:
-            raise RuntimeError(
-                f"Package '{package_name}' has no metadata and no "
-                f"__version__ attribute. Specify the version manually."
-            ) from None
-
-
-def _deduce_package_source_url(package_name: str) -> str | None:
-    from importlib.metadata import PackageNotFoundError, metadata
-
-    try:
-        meta = metadata(package_name)
-    except PackageNotFoundError:
-        # Either the package is not installed or has no metadata.
-        return None
-
-    if not (urls := meta.get_all("project-url")):
-        return None
-
-    try:
-        return next(
-            url.split(',')[-1].strip() for url in urls if url.startswith("Source")
-        )
-    except StopIteration:
-        return None
+    def __write_to_nexus_group__(self, group: H5Group) -> None:
+        field = snx.create_field(group, 'program', self.name)
+        field.attrs['version'] = self.version
+        if self.url:
+            field.attrs['url'] = self.url
 
 
 class SourceType(enum.Enum):
@@ -372,6 +376,13 @@ class Source(BaseModel):
     probe: RadiationProbe
     """Radiation probe of the source."""
 
+    nx_class: ClassVar[type] = snx.NXsource
+
+    def __write_to_nexus_group__(self, group: H5Group) -> None:
+        _create_optional_nexus_field(group, 'name', self.name)
+        snx.create_field(group, 'type', self.source_type.value)
+        snx.create_field(group, 'probe', self.probe.value)
+
 
 ESS_SOURCE = Source(
     name="ESS Butterfly",
@@ -385,7 +396,10 @@ def _read_optional_nexus_string(group: snx.Group | None, key: str) -> str | None
     if group is None:
         return None
     if (ds := group.get(key)) is not None:
-        return ds[()]
+        data = ds[()]
+        if not isinstance(data, str):
+            warnings.warn(f"NeXus field '{key}' is not a string", stacklevel=3)
+        return str(data)
     return None
 
 
@@ -450,3 +464,55 @@ def _guess_facility_and_site(
             return facility, site
         case facility:
             return facility, facility
+
+
+def _deduce_package_version(package_name: str) -> str | None:
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version(package_name)
+    except PackageNotFoundError:
+        # Either the package is not installed or has no metadata.
+        from importlib import import_module
+
+        try:
+            package = import_module(package_name)
+        except ModuleNotFoundError as e:
+            raise e from None
+
+        try:
+            return package.__version__
+        except AttributeError:
+            raise RuntimeError(
+                f"Package '{package_name}' has no metadata and no "
+                f"__version__ attribute. Specify the version manually."
+            ) from None
+
+
+def _deduce_package_source_url(package_name: str) -> str | None:
+    from importlib.metadata import PackageNotFoundError, metadata
+
+    try:
+        meta = metadata(package_name)
+    except PackageNotFoundError:
+        # Either the package is not installed or has no metadata.
+        return None
+
+    if not (urls := meta.get_all("project-url")):
+        return None
+
+    try:
+        return next(
+            url.split(',')[-1].strip() for url in urls if url.startswith("Source")
+        )
+    except StopIteration:
+        return None
+
+
+def _create_optional_nexus_field(
+    group: H5Group, name: str, value: object | None
+) -> None:
+    if value is not None:
+        if not isinstance(value, str):
+            value = str(value)
+        snx.create_field(group, name, value)
