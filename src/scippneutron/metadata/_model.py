@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import enum
+import warnings
 from datetime import datetime
 from typing import Annotated, Any
 
@@ -14,6 +15,7 @@ from pydantic import BaseModel, BeforeValidator, EmailStr
 from ._orcid import ORCIDiD
 
 
+# Defined at the top so that Pydantic validators can use it.
 def _unpack_variable(value: object) -> Any:
     """Before validator to support passing scalar scipp variables as inputs."""
     if isinstance(value, sc.Variable):
@@ -290,49 +292,6 @@ class Software(BaseModel):
         return self.name_version
 
 
-def _deduce_package_version(package_name: str) -> str | None:
-    from importlib.metadata import PackageNotFoundError, version
-
-    try:
-        return version(package_name)
-    except PackageNotFoundError:
-        # Either the package is not installed or has no metadata.
-        from importlib import import_module
-
-        try:
-            package = import_module(package_name)
-        except ModuleNotFoundError as e:
-            raise e from None
-
-        try:
-            return package.__version__
-        except AttributeError:
-            raise RuntimeError(
-                f"Package '{package_name}' has no metadata and no "
-                f"__version__ attribute. Specify the version manually."
-            ) from None
-
-
-def _deduce_package_source_url(package_name: str) -> str | None:
-    from importlib.metadata import PackageNotFoundError, metadata
-
-    try:
-        meta = metadata(package_name)
-    except PackageNotFoundError:
-        # Either the package is not installed or has no metadata.
-        return None
-
-    if not (urls := meta.get_all("project-url")):
-        return None
-
-    try:
-        return next(
-            url.split(',')[-1].strip() for url in urls if url.startswith("Source")
-        )
-    except StopIteration:
-        return None
-
-
 class SourceType(enum.Enum):
     """Type of source.
 
@@ -385,7 +344,10 @@ def _read_optional_nexus_string(group: snx.Group | None, key: str) -> str | None
     if group is None:
         return None
     if (ds := group.get(key)) is not None:
-        return ds[()]
+        data = ds[()]
+        if not isinstance(data, str):
+            warnings.warn(f"NeXus field '{key}' is not a string", stacklevel=3)
+        return str(data)
     return None
 
 
@@ -450,3 +412,46 @@ def _guess_facility_and_site(
             return facility, site
         case facility:
             return facility, facility
+
+
+def _deduce_package_version(package_name: str) -> str | None:
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version(package_name)
+    except PackageNotFoundError:
+        # Either the package is not installed or has no metadata.
+        from importlib import import_module
+
+        try:
+            package = import_module(package_name)
+        except ModuleNotFoundError as e:
+            raise e from None
+
+        try:
+            return package.__version__
+        except AttributeError:
+            raise RuntimeError(
+                f"Package '{package_name}' has no metadata and no "
+                f"__version__ attribute. Specify the version manually."
+            ) from None
+
+
+def _deduce_package_source_url(package_name: str) -> str | None:
+    from importlib.metadata import PackageNotFoundError, metadata
+
+    try:
+        meta = metadata(package_name)
+    except PackageNotFoundError:
+        # Either the package is not installed or has no metadata.
+        return None
+
+    if not (urls := meta.get_all("project-url")):
+        return None
+
+    try:
+        return next(
+            url.split(',')[-1].strip() for url in urls if url.startswith("Source")
+        )
+    except StopIteration:
+        return None
