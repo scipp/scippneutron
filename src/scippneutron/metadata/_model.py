@@ -236,10 +236,10 @@ class Person(BaseModel):
         )
 
     def __write_to_nexus_group__(self, group: H5Group) -> None:
+        snx.create_field(group, 'name', self.name)
         _create_optional_nexus_field(group, 'address', self.address)
         _create_optional_nexus_field(group, 'affiliation', self.affiliation)
         _create_optional_nexus_field(group, 'email', self.email)
-        _create_optional_nexus_field(group, 'name', self.name)
         _create_optional_nexus_field(group, 'ORCID', self.orcid_id)
         _create_optional_nexus_field(group, 'role', self.role)
 
