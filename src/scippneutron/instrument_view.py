@@ -1,290 +1,151 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
-# @author Neil Vaytet and Owen Arnold
+# Copyright (c) 2026 Scipp contributors (https://github.com/scipp)
 
-import numpy as np
+import plopp as pp
 import scipp as sc
-from scipy.spatial.transform import Rotation as Rot
-
-try:
-    import pythreejs as p3
-except ImportError as ex:
-    p3 = None
-    _pythreejs_import_error = ex
+from plopp.core.typing import FigureLike
 
 
-def _create_text_sprite(position, bounding_box, display_text):
-    # Position offset in y
-    text_position = tuple(position.value + np.array([0, 0.8 * bounding_box[1], 0]))
-    text = p3.TextTexture(string=display_text, color='black', size=300)
-    text_material = p3.SpriteMaterial(map=text, transparent=True)
-    size = 1.0
-    return p3.Sprite(
-        material=text_material, position=text_position, scale=[size, size, size]
-    )
-
-
-def _create_mesh(geometry, color, wireframe, position):
-    if wireframe:
-        edges = p3.EdgesGeometry(geometry)
-        mesh = p3.LineSegments(
-            geometry=edges, material=p3.LineBasicMaterial(color=color)
+def _to_data_array(
+    data: sc.DataArray | sc.DataGroup | dict, dim: str | None
+) -> sc.DataArray:
+    if isinstance(data, sc.DataArray):
+        data = sc.DataGroup({"": data})
+    pieces = []
+    for da in data.values():
+        da = da.drop_coords(set(da.coords) - {"position", dim})
+        dims = list(da.dims)
+        if (dim is not None) and (dim in dims):
+            # Ensure that the dims to be flattened are contiguous
+            da = da.transpose([d for d in dims if d != dim] + [dim])
+            dims.remove(dim)
+        flat = da.flatten(dims=dims, to="pixel")
+        filtered = flat[sc.isfinite(flat.coords["position"])]
+        pieces.append(
+            filtered.assign_coords(
+                {k: getattr(filtered.coords["position"].fields, k) for k in "xyz"}
+            ).drop_coords("position")
         )
-
-    else:
-        material = p3.MeshBasicMaterial(color=color)
-        mesh = p3.Mesh(geometry=geometry, material=material)
-    mesh.position = tuple(position.value)
-    return mesh
+    return sc.concat(pieces, dim="pixel").squeeze()
 
 
-def _box(position, display_text, bounding_box, color, wireframe, **kwargs):
-    geometry = p3.BoxGeometry(
-        width=bounding_box[0],
-        height=bounding_box[1],
-        depth=bounding_box[2],
-        widthSegments=2,
-        heightSegments=2,
-        depthSegments=2,
-    )
-
-    mesh = _create_mesh(
-        geometry=geometry, color=color, wireframe=wireframe, position=position
-    )
-    text_mesh = _create_text_sprite(
-        position=position, bounding_box=bounding_box, display_text=display_text
-    )
-    return mesh, text_mesh
-
-
-def _find_beam(det_com, pos):
-    # Assume beam is axis aligned and follows largest axis
-    # delta between component and detector COM
-    beam_dir = np.argmax(np.abs(det_com.value - pos.value))
-    beam = np.zeros(3)
-    beam[beam_dir] = 1
-    return beam
-
-
-def _alignment_matrix(to_align, target):
-    rot_axis = np.cross(to_align, target)
-    magnitude = np.linalg.norm(to_align) * np.linalg.norm(target)
-    axis_angle = np.arcsin(rot_axis / magnitude)
-    return Rot.from_rotvec(axis_angle).as_matrix()
-
-
-def _disk_chopper(position, display_text, bounding_box, color, wireframe, **kwargs):
-    geometry = p3.CylinderGeometry(
-        radiusTop=bounding_box[0] / 2,
-        radiusBottom=bounding_box[0] / 2,
-        height=bounding_box[0] / 100,
-        radialSegments=24,
-        heightSegments=12,
-        openEnded=False,
-        thetaStart=np.pi / 8,
-        thetaLength=2 * np.pi - (np.pi / 8),
-    )
-
-    mesh = _create_mesh(
-        geometry=geometry, color=color, wireframe=wireframe, position=position
-    )
-    beam = _find_beam(det_com=kwargs['det_center'], pos=position)
-    disk_axis = np.array([0, 1, 0])  # Disk created with this axis
-    rotation = _alignment_matrix(to_align=disk_axis, target=beam)
-    mesh.setRotationFromMatrix(rotation.flatten())
-    text_mesh = _create_text_sprite(
-        position=position, bounding_box=bounding_box, display_text=display_text
-    )
-    return mesh, text_mesh
-
-
-def _cylinder(position, display_text, bounding_box, color, wireframe, **kwargs):
-    geometry = p3.CylinderGeometry(
-        radiusTop=bounding_box[0] / 2,
-        radiusBottom=bounding_box[0] / 2,
-        height=bounding_box[1],
-        radialSegments=12,
-        heightSegments=12,
-        openEnded=False,
-        thetaStart=0,
-        thetaLength=2.0 * np.pi,
-    )
-    mesh = _create_mesh(
-        geometry=geometry, color=color, wireframe=wireframe, position=position
-    )
-    # Position label above cylinder
-    text_mesh = _create_text_sprite(
-        position=position, bounding_box=bounding_box, display_text=display_text
-    )
-    return mesh, text_mesh
-
-
-def _unpack_to_scene(scene, items):
-    if hasattr(items, "__iter__"):
-        for item in items:
-            scene.add(item)
-    else:
-        scene.add(items)
-
-
-def _add_to_scene(
-    position, scene, shape, display_text, bounding_box, color, wireframe, **kwargs
-):
-    _unpack_to_scene(
-        scene,
-        shape(
-            position,
-            display_text=display_text,
-            bounding_box=bounding_box,
-            color=color,
-            wireframe=wireframe,
-            **kwargs,
-        ),
-    )
-
-
-def _furthest_component(det_center, scipp_obj, additional):
-    distances = [
-        sc.norm(settings["center"] - det_center).value
-        for settings in list(additional.values())
-    ]
-    max_displacement = sorted(distances)[-1]
-    return max_displacement
-
-
-def _instrument_view_shape_types():
-    return {"box": _box, "cylinder": _cylinder, "disk": _disk_chopper}
-
-
-def _as_vector(var):
-    if var.dtype == sc.DType.vector3:
-        return var
-    else:
-        return sc.spatial.as_vectors(x=var, y=var, z=var)
-
-
-def _plot_components(scipp_obj, components, positions_var, scene):
-    det_center = sc.mean(positions_var)
-    # Some scaling to set width according to distance from detector center
-    shapes = _instrument_view_shape_types()
-    for name, settings in components.items():
-        type = settings["type"]
-        size = _as_vector(settings["size"])
-        component_position = settings["center"]
-        color = settings.get("color", "#808080")
-        wireframe = settings.get("wireframe", False)
-        if type not in shapes:
-            supported_shapes = ", ".join(shapes.keys())
-            raise ValueError(
-                f"Unknown shape: {type} requested for {name}. "
-                f"Allowed values are: {supported_shapes}"
-            )
-        component_position = sc.to_unit(component_position, positions_var.unit)
-        size = sc.to_unit(size, positions_var.unit)
-        _add_to_scene(
-            position=component_position,
-            scene=scene,
-            shape=shapes[type],
-            display_text=name,
-            bounding_box=tuple(size.values),
-            color=color,
-            wireframe=wireframe,
-            det_center=det_center,
-        )
-    # Reset camera
-    camera = _get_camera(scene)
-    if camera:
-        furthest_distance = _furthest_component(det_center, scipp_obj, components)
-        camera.far = max(camera.far, furthest_distance * 5.0)
-
-
-def _get_camera(scene):
-    for child in scene.children:
-        if isinstance(child, p3.PerspectiveCamera):
-            return child
-    return None
+def _slice_dim(
+    da: sc.DataArray, slice_params: dict[str, tuple[int, int]]
+) -> sc.DataArray:
+    (params,) = slice_params.items()
+    return da[params[0], params[1][0] : params[1][1] + 1].sum(params[0])
 
 
 def instrument_view(
-    scipp_obj,
-    positions="position",
-    pixel_size=None,
-    components=None,
-    cbar=True,
+    data: sc.DataArray | sc.DataGroup | dict,
+    dim: str | None = None,
+    pixel_size: float | sc.Variable | None = None,
+    autoscale: bool = False,
     **kwargs,
-):
-    """Plot a 3D view of the instrument, using the `position` coordinate as the
-    detector vector positions.
+) -> FigureLike:
+    """
+    Three-dimensional visualization of the DREAM instrument.
+    The instrument view is capable of slicing the input data with a slider widget along
+    a dimension (e.g. ``tof``) by using the ``dim`` argument.
 
-    Use the `positions` argument to change the vectors used as pixel positions.
-    Sliders are added to navigate extra dimensions.
-    Spatial slicing and pixel opacity control is available using the controls
-    below the scene.
-    Use the `pixel_size` argument to specify the size of the detectors.
-    If no `pixel_size` is given, a guess is performed based on the distance
-    between the positions of the first two pixel positions.
-    The aspect ratio of the positions is preserved by default, but this can
-    be changed to automatic scaling using `aspect="equal"`.
-
-    `components` dictionary uses the key as the name to display the component.
-    This can be any desired name, it does not have to relate to the input
-    `scipp_obj` naming.
-    The value for each entry is itself a dictionary that provides the display
-    settings and requires:
-
-    * `center` - scipp scalar vector describing position to place item at.
-    * `size` - scipp scalar vector describing the bounding box to use in the
-    same length units as positions
-    * `type` - known shape type to use.
-    Valid types are: 'box', 'cylinder' or 'disk'.
-
-    Optional arguments are:
-
-    * `color` - a hexadecimal color code such as #F00000 to use as fill or
-    line color
-    * `wireframe` - wireframe is a bool that defaults to False. If set to True,
-    the returned geometrical shape is a wireframe instead of a shape with
-    opaque faces
+    Use the clipping tool to create cuts in 3d space, as well as according to data
+    values.
 
     Parameters
     ----------
-    scipp_obj:
-        Scipp object holding geometries.
-    positions:
-        Key for coord/attr holding positions to use for pixels.
+    data:
+        Data to visualize. The data can be a single detector module (``DataArray``),
+        or a group of detector modules (``dict`` or ``DataGroup``).
+        The data must contain a ``position`` coordinate.
+    dim:
+        Dimension to use for the slider. No slider will be shown if this is None.
     pixel_size:
-        Custom pixel size to use for detector pixels.
-    components:
-        Dictionary containing display names and corresponding settings
-        (also a Dictionary) for additional components to display.
-    cbar:
-        If True, show a colorbar.
-    kwargs:
-        Additional keyword arguments to pass to :func:`plopp.scatter3d`.
-
-    Returns
-    -------
-    :
-        The 3D plot object
+        Size of the pixels.
+    autoscale:
+        If ``True``, the color scale will be automatically adjusted to the data as it
+        gets updated. This can be somewhat expensive with many pixels, so it is set to
+        ``False`` by default.
+    **kwargs:
+        Additional arguments are forwarded to the scatter3d figure
+        (see https://scipp.github.io/plopp/generated/plopp.scatter3d.html).
     """
-    if not p3:
-        raise _pythreejs_import_error
-
-    import plopp as pp
-
-    positions_var = scipp_obj.coords[positions]
-    if pixel_size is None:
-        pos_array = positions_var.values
-        if len(pos_array) > 1:
-            pixel_size = np.linalg.norm(pos_array[1] - pos_array[0])
-
-    fig = pp.scatter3d(
-        scipp_obj, pos=positions, pixel_size=pixel_size, cbar=cbar, **kwargs
+    from ipywidgets import ToggleButtons
+    from plopp.widgets import (
+        ClippingManager,
+        HBar,
+        RangeSliceWidget,
+        SliceWidget,
+        ToggleTool,
+        VBar,
     )
-    scene = fig.canvas.scene
 
-    # Add additional components from the beamline
-    if components:
-        _plot_components(scipp_obj, components, positions_var, scene)
+    data = _to_data_array(data, dim)
+
+    if dim is not None:
+        int_slicer = SliceWidget(data, dims=[dim])
+        int_slider = int_slicer.controls[dim].slider
+        int_slider.value = int_slider.min
+        int_slider.layout = {"width": "42em"}
+
+        range_slicer = RangeSliceWidget(data, dims=[dim])
+        range_slider = range_slicer.controls[dim].slider
+        range_slider.value = 0, data.sizes[dim]
+        range_slider.layout = {"width": "42em"}
+
+        def move_range(change):
+            range_slider.value = (change["new"], change["new"])
+
+        int_slider.observe(move_range, names='value')
+        slider_toggler = ToggleButtons(
+            options=["o-o", "-o-"],
+            tooltips=['Range slider', 'Single slice slider'],
+            style={"button_width": "3.2em"},
+        )
+
+        slicing_container = HBar([slider_toggler, range_slicer])
+
+        def toggle_slider_mode(change):
+            if change["new"] == "o-o":
+                slicing_container.children = [slider_toggler, range_slicer]
+            else:
+                int_slider.value = int(0.5 * sum(range_slider.value))
+                slicing_container.children = [slider_toggler, int_slicer]
+
+        slider_toggler.observe(toggle_slider_mode, names='value')
+
+        slider_node = pp.widget_node(range_slicer)
+        to_scatter = pp.Node(_slice_dim, da=data, slice_params=slider_node)
+
+    else:
+        to_scatter = pp.Node(data)
+
+    kwargs.setdefault('cbar', True)
+    fig = pp.scatter3dfigure(
+        to_scatter,
+        x="x",
+        y="y",
+        z="z",
+        pixel_size=1.0 * sc.Unit("cm") if pixel_size is None else pixel_size,
+        autoscale=autoscale,
+        **kwargs,
+    )
+
+    clip_planes = ClippingManager(fig)
+    fig.toolbar['cut3d'] = ToggleTool(
+        callback=clip_planes.toggle_visibility,
+        icon='layer-group',
+        tooltip='Hide/show spatial cutting tool',
+    )
+    widgets = [clip_planes]
+    if dim is not None:
+        widgets.append(slicing_container)
+
+        def _maybe_update_value_cut(_):
+            if any(cut.kind == "v" for cut in clip_planes.cuts):
+                clip_planes.update_state()
+
+        range_slicer.observe(_maybe_update_value_cut, names='value')
+
+    fig.bottom_bar.add(VBar(widgets))
 
     return fig
