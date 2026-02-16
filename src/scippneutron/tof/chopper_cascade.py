@@ -454,13 +454,19 @@ class FrameSequence:
         fig.tight_layout()
         return fig, ax
 
-    def acceptance_diagram(self):
+    def acceptance_diagram(self, transpose: bool = True):
         """
         Draw a chopper acceptance diagram.
 
         See, e.g., J.R.D. Copley, An acceptance diagram analysis of the contaminant
         pulse removal problem with direct geometry neutron chopper spectrometers,
         https://doi.org/10.1016/S0168-9002(03)01731-5 for more background.
+
+        Parameters
+        ----------
+        transpose:
+            Transpose axes if ``True``, i.e., show wavelength on horizontal axis and
+            time on vertical axis.
         """
         import matplotlib.pyplot as plt
 
@@ -477,7 +483,7 @@ class FrameSequence:
         fig, ax = frames.draw(
             fill=True,
             linewidth=0.5,
-            transpose=True,
+            transpose=transpose,
             colors=colors,
             title='Chopper acceptance diagram',
         )
