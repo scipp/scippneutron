@@ -120,8 +120,8 @@ The structure of the BAT is
 ```
 where the `:descriptor` type is
 ```text
-| block_type  | name        | level2_name | position | size | locked |
-| :char array | :char array | :char array | :u64     | u32  | u32    |
+| block_type  | name        | level2_name | position | size |
+| :char array | :char array | :char array | :u64     | u64  |
 ```
 - `Bat.size`: Size in bytes of the BAT.
 - `Bat.n_blocks`: The number of blocks.
@@ -133,7 +133,6 @@ where the `:descriptor` type is
   - `descriptor.name` and `descriptor.level2_name`: The block's name.
   - `descriptor.position`: Offset in bytes from the start of the file where the block is located.
   - `descriptor.size`: Size in bytes of the block.
-  - `descriptor.locked`: Interpreted as a boolean. If true, the block is currently locked for writing and should not be accessed.
 
 ### Block Storage
 

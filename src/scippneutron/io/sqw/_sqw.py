@@ -98,10 +98,9 @@ class Sqw:
         """Return an iterator over the names of all stored data blocks."""
         return self._block_allocation_table.keys()
 
-    # TODO lock blocks during writing, esp pix data
     def read_data_block(
         self, name: DataBlockName | str, level2_name: str | None = None, /
-    ) -> Any:  # TODO type
+    ) -> Any:
         block_name = _normalize_data_block_name(name, level2_name)
         try:
             block_descriptor = self._block_allocation_table[block_name]
@@ -165,10 +164,9 @@ def _read_data_block_descriptor(sqw_io: LowLevelSqw) -> SqwDataBlockDescriptor:
     block_type = SqwDataBlockType(sqw_io.read_char_array())
     name = sqw_io.read_char_array(), sqw_io.read_char_array()
     position = sqw_io.read_u64()
-    size = sqw_io.read_u32()
-    locked = sqw_io.read_u32() == 1
+    size = sqw_io.read_u64()
     return SqwDataBlockDescriptor(
-        block_type=block_type, name=name, position=position, size=size, locked=locked
+        block_type=block_type, name=name, position=position, size=size
     )
 
 

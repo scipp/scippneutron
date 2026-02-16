@@ -180,7 +180,11 @@ def _line_infinite_cylinder_intersection(a, b, r, n):
     '''
     nxa = sc.cross(n, a)
     nxa_square = sc.dot(nxa, nxa)
-    parallel_to_cylinder = nxa_square == sc.scalar(0.0, unit=nxa.unit)
+    parallel_to_cylinder = sc.isclose(
+        nxa_square,
+        sc.scalar(0.0, unit=nxa_square.unit),
+        atol=sc.scalar(1e-20, unit=nxa_square.unit),
+    )
     s2 = nxa_square * r**2 - sc.dot(b, nxa) ** 2
     s = sc.sqrt(s2)
     m = sc.dot(nxa, sc.cross(b, a))
@@ -217,7 +221,11 @@ def _line_slab_intersection(a, b, h, n):
     ndota = sc.dot(n, a)
     bdota = sc.dot(b, a)
     origin_in_plane = (bdota <= sc.scalar(0.0, unit=h.unit)) & (bdota >= -h)
-    parallel_to_slab = sc.abs(ndota) == sc.scalar(0, unit=ndota.unit)
+    parallel_to_slab = sc.isclose(
+        ndota,
+        sc.scalar(0.0, unit=ndota.unit),
+        atol=sc.scalar(1e-10, unit=ndota.unit),
+    )
     t0 = bdota / ndota
     t1 = t0 + h / ndota
     left = _minimum(t0, t1)

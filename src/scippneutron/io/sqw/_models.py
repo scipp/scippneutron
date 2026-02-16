@@ -40,8 +40,7 @@ class SqwDataBlockDescriptor:
     block_type: SqwDataBlockType
     name: DataBlockName
     position: int  # u64
-    size: int  # u32
-    locked: bool  # u32
+    size: int  # u64
 
 
 @dataclass(kw_only=True, slots=True)

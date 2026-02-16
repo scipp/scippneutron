@@ -260,7 +260,6 @@ class SqwBuilder:
                 name=name,
                 position=0,
                 size=len(buf),
-                locked=False,
             )
 
         self._serialize_dnd_data(buffers, descriptors)
@@ -272,7 +271,6 @@ class SqwBuilder:
                 name=("pix", "data_wrap"),
                 position=0,
                 size=self._pix_wrap.size(),
-                locked=False,
             )
 
         return buffers, descriptors
@@ -290,7 +288,6 @@ class SqwBuilder:
                     name=("data", "nd_data"),
                     position=0,
                     size=placeholder.size(),
-                    locked=False,
                 )
             case _DndData() as data:
                 buffers[("data", "nd_data")] = None
@@ -299,7 +296,6 @@ class SqwBuilder:
                     name=("data", "nd_data"),
                     position=0,
                     size=data.size(),
-                    locked=False,
                 )
 
     def _prepare_data_blocks(self) -> dict[DataBlockName, Any]:
@@ -392,8 +388,7 @@ def _write_data_block_descriptor(
     sqw_io.write_char_array(descriptor.name[1])
     pos = sqw_io.position
     sqw_io.write_u64(descriptor.position)
-    sqw_io.write_u32(descriptor.size)
-    sqw_io.write_u32(int(descriptor.locked))
+    sqw_io.write_u64(descriptor.size)
     return pos
 
 
