@@ -125,12 +125,12 @@ def tof_from_wavelength(*, wavelength: Variable, Ltotal: Variable) -> Variable:
 #     return 1 / as_float_type(c * Ltotal * sc.sin(two_theta / 2), tof) * tof
 
 
-def _energy_constant(energy_unit: sc.Unit, tof: Variable, length: Variable):
-    return sc.to_unit(
-        const.m_n / 2,
-        energy_unit * (elem_unit(tof) / elem_unit(length)) ** 2,
-        copy=False,
-    )
+# def _energy_constant(energy_unit: sc.Unit, tof: Variable, length: Variable):
+#     return sc.to_unit(
+#         const.m_n / 2,
+#         energy_unit * (elem_unit(tof) / elem_unit(length)) ** 2,
+#         copy=False,
+#     )
 
 
 # def energy_from_tof(*, tof: Variable, Ltotal: Variable) -> Variable:
@@ -332,10 +332,63 @@ def energy_transfer_from_wavelength(
     :
         Energy transfer :math:`\Delta E`.
     """
-    diff = sc.reciprocal(final_wavelength) ** 2
-    diff -= sc.reciprocal(incident_wavelength) ** 2
-    diff *= as_float_type(const.h**2 / 2 / const.m_n, incident_wavelength)
-    return sc.to_unit(diff, 'meV', copy=False)
+    dtype = _common_dtype(incident_wavelength, final_wavelength)
+    lambda_i = incident_wavelength.to(dtype=dtype, copy=False)
+    lambda_f = final_wavelength.to(dtype=dtype, copy=False)
+    delta_e = sc.reciprocal(lambda_f) ** 2
+    delta_e -= sc.reciprocal(lambda_i) ** 2
+    delta_e *= sc.to_dtype(const.h**2 / 2 / const.m_n, dtype, copy=False)
+    return sc.to_unit(delta_e, 'meV', copy=False)
+
+
+def incident_energy_from_wavelength(*, incident_wavelength: Variable) -> Variable:
+    r"""Compute the incident energy from the incident wavelength.
+
+    The result is
+
+    .. math::
+
+        E_i = \frac{h^2}{2 m_n \lambda_i^2}
+
+    Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
+
+    Parameters
+    ----------
+    incident_wavelength:
+        Incident neutron wavelength :math:`\lambda_i`.
+
+    Returns
+    -------
+    :
+        Incident energy :math:`E_i`.
+        Has unit meV.
+    """
+    return energy_from_wavelength(wavelength=incident_wavelength)
+
+
+def final_energy_from_wavelength(*, final_wavelength: Variable) -> Variable:
+    r"""Compute the final energy from the final wavelength.
+
+    The result is
+
+    .. math::
+
+        E_f = \frac{h^2}{2 m_n \lambda_f^2}
+
+    Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
+
+    Parameters
+    ----------
+    final_wavelength:
+        Final neutron wavelength :math:`\lambda_f`.
+
+    Returns
+    -------
+    :
+        Final energy :math:`E_f`.
+        Has unit meV.
+    """
+    return energy_from_wavelength(wavelength=final_wavelength)
 
 
 def wavelength_from_energy(*, energy: Variable) -> Variable:
@@ -758,10 +811,9 @@ def hkl_elements_from_hkl_vec(*, hkl_vec: Variable) -> dict[str, Variable]:
     return {'h': hkl_vec.fields.x, 'k': hkl_vec.fields.y, 'l': hkl_vec.fields.z}
 
 
-def time_at_sample_from_tof(
+def time_at_sample_from_wavelength(
     *,
-    pulse_time: VariableLike,
-    tof: VariableLike,
+    toa: VariableLike,
     L2: VariableLike,
     wavelength: VariableLike,
 ) -> VariableLike:
@@ -771,23 +823,23 @@ def time_at_sample_from_tof(
 
     .. math::
 
-        t_{sample} = t_{pulse} + t_{of} - L_2 / v
+        t_{sample} = t_{\\mathsf{arrival}} - L_2 / v
 
-    where
+    where :math:`t_{\\mathsf{arrival}}` is the absolute time when the neutron arrives
+    at the detector, :math:`L_2` is the path length from sample to detector, and
 
     .. math::
 
         v = \\frac{h}{m_n \\lambda}
 
-    where :math:`v` is the estimated velocity of the neutron over its path from
-    sample to detector and :math:`\\lambda` is the wavelength of the neutron.
+    is the estimated velocity of the neutron over its path from
+    sample to detector. Here, :math:`\\lambda` is the wavelength of the neutron,
+    :math:`h` is the Planck constant, and :math:`m_n` is the neutron mass.
 
     Parameters
     ----------
-    pulse_time:
-        absolute time when time of flight is 0
-    tof:
-        the time of fligth of the neutron
+    toa:
+        the absolute time when the neutron arrives at the detector
     L2:
         path length from sample to detector
     wavelength:
@@ -803,7 +855,7 @@ def time_at_sample_from_tof(
     """
     c = sc.to_unit(
         const.h / const.m_n,
-        sc.units.angstrom * elem_unit(L2) / elem_unit(tof),
+        sc.units.angstrom * elem_unit(L2) / elem_unit(toa),
         copy=False,
     )
-    return pulse_time + tof - L2 * wavelength / c
+    return toa - L2 * (wavelength / c)
