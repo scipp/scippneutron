@@ -1,0 +1,1265 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scippneutron.chopper.disk_chopper &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css?v=a0a71c94" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../../_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scippneutron/chopper/disk_chopper';</script>
+    <script src="../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">scippneutron.chopper.disk_chopper</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scippneutron.chopper.disk_chopper</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2024 Scipp contributors (https://github.com/scipp)</span>
+
+<span class="sa">r</span><span class="sd">&quot;&quot;&quot;Tools for disk choppers.</span>
+
+<span class="sd">Definitions</span>
+<span class="sd">-----------</span>
+
+<span class="sd">The names used here correspond closely to the names used by NeXus&#39; ``NXdisk_chopper``.</span>
+<span class="sd">See https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html</span>
+<span class="sd">for an overview.</span>
+
+<span class="sd">Here is how those attributes are interpreted in ScippNeutron:</span>
+<span class="sd">The image below shows a disk chopper with a single slit</span>
+<span class="sd">as seen from the neutron source looking towards the sample.</span>
+<span class="sd">Note that all definitions are independent of the rotation direction.</span>
+
+<span class="sd">.. list-table::</span>
+<span class="sd">    :widths: auto</span>
+<span class="sd">    :header-rows: 1</span>
+
+<span class="sd">    * - Name</span>
+<span class="sd">      - Symbol</span>
+<span class="sd">      - Definition</span>
+<span class="sd">    * - ``top_dead_center``</span>
+<span class="sd">      - :math:`t_0`</span>
+<span class="sd">      - Choppers typically have a top-dead-center (TDC) sensor that tracks the</span>
+<span class="sd">        rotation of the chopper.</span>
+<span class="sd">        The sensor emits a timestamp when a chosen part of the chopper disk passes by.</span>
+<span class="sd">        This part of the disk serves as a reference point for defining angles;</span>
+<span class="sd">        it is marked as &#39;TDC&#39; in the image below.</span>
+
+<span class="sd">        The emitted timestamps are stored in the ``top_dead_center`` field</span>
+<span class="sd">        of a NeXus chopper.</span>
+<span class="sd">        This serves as a reference time for the chopper :math:`t_0`.</span>
+<span class="sd">        In :class:`DiskChopper`, the TDC is encoded as a component of</span>
+<span class="sd">        :attr:`DiskChopper.phase`.</span>
+<span class="sd">    * - ``beam_position``</span>
+<span class="sd">      - :math:`\tilde{\theta}`</span>
+<span class="sd">      - The angle under which the beam hits the chopper</span>
+<span class="sd">        (:attr:`DiskChopper.beam_position`).</span>
+<span class="sd">        We do not care about the radial position and assume that the beam can</span>
+<span class="sd">        pass through all chopper slits.</span>
+<span class="sd">    * - | ``slit_begin``</span>
+<span class="sd">        | ``slit_end``</span>
+<span class="sd">      -</span>
+<span class="sd">      - Slits are defined in terms of *begin* (:attr:`DiskChopper.slit_begin`,</span>
+<span class="sd">        :math:`\theta` in the image) and *end* (:attr:`DiskChopper.slit_end`) angles</span>
+<span class="sd">        measured from TDC.</span>
+<span class="sd">        In NeXus, they are stored together as ``slit_edges``.</span>
+<span class="sd">        :meth:`DiskChopper.from_nexus` can extract the begin and end edges from</span>
+<span class="sd">        this combined array.</span>
+<span class="sd">    * - ``frequency``</span>
+<span class="sd">      - :math:`f`</span>
+<span class="sd">      - The rotation frequency of the chopper.</span>
+<span class="sd">        Stored in :attr:`DiskChopper.frequency`.</span>
+<span class="sd">        A positive frequency means anticlockwise rotation and a negative frequency</span>
+<span class="sd">        clockwise rotation (as seen from the source).</span>
+<span class="sd">    * - ``angular_frequency``</span>
+<span class="sd">      - :math:`\omega`</span>
+<span class="sd">      - :math:`\omega = 2 \pi f`, :attr:`DiskChopper.angular_frequency`.</span>
+<span class="sd">    * - ``delay``</span>
+<span class="sd">      - :math:`\delta t`</span>
+<span class="sd">      - Delay of the chopper timing system relative to global facility time with</span>
+<span class="sd">        :math:`t_g = t + \delta t`, where :math:`t_g` is a global time and :math:`t`</span>
+<span class="sd">        a chopper time.</span>
+<span class="sd">    * - ``phase``</span>
+<span class="sd">      - :math:`\phi`</span>
+<span class="sd">      - The phase of the chopper relative to the pulse time.</span>
+<span class="sd">        Defined as :math:`\phi = \omega (t_0 + \delta t - T_0)`, see below for</span>
+<span class="sd">        the explanation.</span>
+<span class="sd">        (:attr:`DiskChopper.phase`).</span>
+<span class="sd">    * - ``pulse_time``</span>
+<span class="sd">      - :math:`T_0`</span>
+<span class="sd">      - Timestamp of a neutron pulse in global facility time.</span>
+
+<span class="sd">.. image:: /_static/chopper/chopper-coordinates.svg</span>
+<span class="sd">   :width: 400</span>
+<span class="sd">   :align: center</span>
+
+<span class="sd">:class:`DiskChopper` expects the chopper to be in phase with the source.</span>
+<span class="sd">It thus requires a constant rotation speed which must be an integer</span>
+<span class="sd">multiple of the source frequency or vice versa.</span>
+<span class="sd">The phase should be computed as defined about from the difference of a pulse time</span>
+<span class="sd">and a corresponding TDC timestamp.</span>
+<span class="sd">The user is responsible for determining the correct times.</span>
+
+<span class="sd">Slit openings</span>
+<span class="sd">-------------</span>
+
+<span class="sd">The terminology here differentiates slit &#39;begin&#39; and &#39;end&#39; from &#39;open&#39; and &#39;close&#39;.</span>
+<span class="sd">The former refer to the angles relative to TDC as shown in the image above.</span>
+<span class="sd">The latter refer to the times when a slit opens and closes for the beam.</span>
+
+<span class="sd">It is possible to have ``end &gt; 360 deg`` if a slit spans TDC.</span>
+
+<span class="sd">For a given slit, we require ``begin &lt; end``.</span>
+<span class="sd">To also have ``open &lt; close`` for both directions of rotation,</span>
+<span class="sd">we have the following correspondence:</span>
+
+<span class="sd">- clockwise rotation: ``begin`` &lt;-&gt; ``open`` and ``end`` &lt;-&gt; ``close``</span>
+<span class="sd">- anticlockwise rotation: ``begin`` &lt;-&gt; ``close`` and ``end`` &lt;-&gt; ``open``</span>
+
+<span class="sd">Time calculations</span>
+<span class="sd">-----------------</span>
+
+<span class="sd">Given the definitions above, the time in the global timing system when a point</span>
+<span class="sd">at angle :math:`\theta` is at the beam position is</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    t_g(\theta) &amp;= t_0 + \delta t + \begin{cases}</span>
+<span class="sd">    \frac{\theta-\tilde{\theta}}{|\omega|}, &amp; \textsf{clockwise}\\</span>
+<span class="sd">    \frac{2\pi - (\theta-\tilde{\theta})}{|\omega|}, &amp; \textsf{anticlockwise}</span>
+<span class="sd">    \end{cases}\\</span>
+<span class="sd">    &amp;= t_0 + \delta t + \frac{\tilde{\theta} - \theta}{\omega} + \begin{cases}</span>
+<span class="sd">    0, &amp; \textsf{clockwise}\\</span>
+<span class="sd">    \frac{2\pi}{\omega}, &amp; \textsf{anticlockwise}</span>
+<span class="sd">    \end{cases}</span>
+
+<span class="sd">where the second line uses that, for clockwise rotation, :math:`|\omega| = -\omega`</span>
+<span class="sd">and for anticlockwise, :math:`|\omega| = \omega`.</span>
+<span class="sd">This can be converted to a time offset from a pulse time :math:`T_0` using</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \Delta t_g(\theta) = t_g(\theta) - T_0 = \frac{\tilde{\theta}</span>
+<span class="sd">       + \phi - \theta}{\omega}</span>
+<span class="sd">       + \begin{cases}</span>
+<span class="sd">         0, &amp; \textsf{clockwise}\\</span>
+<span class="sd">         \frac{2\pi}{\omega}, &amp; \textsf{anticlockwise}</span>
+<span class="sd">         \end{cases}</span>
+
+<span class="sd">where :math:`\phi = \omega (t_0 + \delta t - T_0)` is the ``phase``.</span>
+
+<span class="sd">:meth:`DiskChopper.time_offset_angle_at_beam` can calculate :math:`\Delta t_g(\theta)`</span>
+<span class="sd">and :meth:`DiskChopper.time_offset_open` :meth:`DiskChopper.time_offset_close` calculate</span>
+<span class="sd">:math:`\Delta t_g` for slit open and close times.</span>
+
+<span class="sd">The definitions used here can lead to surprising results.</span>
+<span class="sd">The plots below show the computed times for an angle :math:`\theta` for</span>
+<span class="sd">:math:`\tilde{\theta} \neq 0` and :math:`\phi = 0` (blue lines).</span>
+<span class="sd">Note in particular the time ranges for :math:`\theta \in [0, 2\pi)` (gray rectangles).</span>
+<span class="sd">The other lines show :math:`\Delta t_g \,\mathsf{mod}\, 1/f` which is an option</span>
+<span class="sd">for restricting the times onto :math:`[0, \frac{2\pi}{|\omega|}) = [0, \frac1{f})`.</span>
+
+<span class="sd">.. image:: /_static/chopper/disk-chopper-time-curve.svg</span>
+<span class="sd">   :class: only-light</span>
+<span class="sd">   :width: 700</span>
+<span class="sd">   :align: center</span>
+
+<span class="sd">.. image:: /_static/chopper/disk-chopper-time-curve-dark.svg</span>
+<span class="sd">   :class: only-dark</span>
+<span class="sd">   :width: 700</span>
+<span class="sd">   :align: center</span>
+
+<span class="sd">|</span>
+
+<span class="sd">:meth:`DiskChopper.time_offset_open` and :meth:`DiskChopper.time_offset_close`</span>
+<span class="sd">compute :math:`\Delta t_g` for the slit edges.</span>
+<span class="sd">The resulting times are shown below for a chopper with two slits, a short one (blue)</span>
+<span class="sd">and a long one (orange/yellow) with</span>
+<span class="sd">:math:`\theta_\mathsf{short} &lt; \theta_\mathsf{long}`.</span>
+<span class="sd">Source pulses are indicated in gray.</span>
+<span class="sd">The shown frequency ratio is ``frequency / pulse_frequency``.</span>
+
+<span class="sd">Times were computed for a pulse at :math:`T_0` with length :math:`\Delta T` but spill</span>
+<span class="sd">into neighboring pulses because of a nonzero beam position and phase.</span>
+<span class="sd">If those were zero, the :math:`\mathsf{frequency\ ratio} \geq 1` openings would lie</span>
+<span class="sd">within :math:`[T_0,\, T_0 + \Delta T)` and the :math:`\mathsf{frequency\ ratio} = 0.5`</span>
+<span class="sd">openings would lie within :math:`[T_0,\, T_0 + 2\Delta T)`.</span>
+<span class="sd">Note how, for choppers that spin at a multiple of the pulse frequency, there are</span>
+<span class="sd">multiple openings per slit.</span>
+
+<span class="sd">.. image:: /_static/chopper/disk-chopper-openings.svg</span>
+<span class="sd">   :class: only-light</span>
+<span class="sd">   :width: 700</span>
+<span class="sd">   :align: center</span>
+
+<span class="sd">.. image:: /_static/chopper/disk-chopper-openings-dark.svg</span>
+<span class="sd">   :class: only-dark</span>
+<span class="sd">   :width: 700</span>
+<span class="sd">   :align: center</span>
+
+<span class="sd">.. _disk_chopper-time_dependent_parameters:</span>
+
+<span class="sd">Time-dependent parameters</span>
+<span class="sd">-------------------------</span>
+
+<span class="sd">In NeXus files, many chopper parameters are time-dependent, for example,</span>
+<span class="sd">``top_dead_center`` is an array of timestamps, or ``frequency`` typically</span>
+<span class="sd">is an ``NXlog`` with speed measurements for different times.</span>
+<span class="sd">However, for simplicity and efficiency, :class:`DiskChopper` requires</span>
+<span class="sd">time-independent quantities.</span>
+<span class="sd">The guide on `pre-processing choppers &lt;../../user-guide/chopper/pre-processing.ipynb&gt;`</span>
+<span class="sd">shows how to extract the required quantities.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">uuid4</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp.constants</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Python 3.11+</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">DiskChopperType</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Type of disk chopper.&quot;&quot;&quot;</span>
+
+        <span class="n">single</span> <span class="o">=</span> <span class="s1">&#39;Chopper type single&#39;</span>
+        <span class="n">contra_rotating_pair</span> <span class="o">=</span> <span class="s1">&#39;contra_rotating_pair&#39;</span>
+        <span class="n">synchro_pair</span> <span class="o">=</span> <span class="s1">&#39;synchro_pair&#39;</span>
+
+    <span class="k">del</span> <span class="n">StrEnum</span>
+
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+
+<div class="viewcode-block" id="DiskChopperType">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.chopper.disk_chopper.DiskChopperType.html#scippneutron.chopper.disk_chopper.DiskChopperType">[docs]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">DiskChopperType</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>  <span class="c1"># type: ignore[no-redef]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Type of disk chopper.&quot;&quot;&quot;</span>
+
+        <span class="n">single</span> <span class="o">=</span> <span class="s1">&#39;Chopper type single&#39;</span>
+        <span class="n">contra_rotating_pair</span> <span class="o">=</span> <span class="s1">&#39;contra_rotating_pair&#39;</span>
+        <span class="n">synchro_pair</span> <span class="o">=</span> <span class="s1">&#39;synchro_pair&#39;</span></div>
+
+
+    <span class="k">del</span> <span class="n">Enum</span>
+
+
+<div class="viewcode-block" id="DiskChopper">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper">[docs]</a>
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiskChopper</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A disk chopper.</span>
+
+<span class="sd">    This is a dataclass that encodes parameters of a single disk chopper and</span>
+<span class="sd">    provides methods for computing slit opening times.</span>
+
+<span class="sd">    This class requires that the chopper is in phase with the neutron source and that</span>
+<span class="sd">    the rotation frequency is constant.</span>
+<span class="sd">    It, therefore, does not accept time-dependent parameters.</span>
+<span class="sd">    If your data is time-dependent, you need to select a time range where the chopper</span>
+<span class="sd">    is in phase and compute a constant rotation frequency and phase for this range.</span>
+<span class="sd">    In particular, the top-dead-center timestamps need to be subsumed by the ``phase``</span>
+<span class="sd">    together with the source frequency.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scippneutron.chopper.disk_chopper:</span>
+<span class="sd">        For detailed documentation of the definitions and calculations used</span>
+<span class="sd">        by ``DiskChopper``.</span>
+<span class="sd">    scippneutron.chopper.nexus_chopper.post_process_disk_chopper:</span>
+<span class="sd">        A function for converting NeXus chopper data into a supported layout.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">axle_position</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Position of the chopper.</span>
+
+<span class="sd">    This is the center point of the chopper&#39;s axle in the face towards the source.</span>
+<span class="sd">    See https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">frequency</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rotation frequency of the chopper.&quot;&quot;&quot;</span>
+    <span class="n">beam_position</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Angle where the beam crosses the chopper.&quot;&quot;&quot;</span>
+    <span class="n">phase</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Phase of the chopper rotation relative to the source pulses.</span>
+
+<span class="sd">    Defined as :math:`\phi = \omega (t_0 + \delta t - T_0)`, where :math:`t_0` is a</span>
+<span class="sd">    TDC timestamp, :math:`\delta t` is the chopper delay, and  :math:`T_0`</span>
+<span class="sd">    is the pulse time.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">slit_begin</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Begin-edges of the slits as angles measured anticlockwise from top-dead-center.</span>
+
+<span class="sd">    The order is arbitrary but must match the order of ``slit_end``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">slit_end</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Begin-edges of the slits as angles measured anticlockwise from top-dead-center.</span>
+
+<span class="sd">    The order is arbitrary but must match the order of ``slit_end``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">slit_height</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Distance from chopper outer edge to bottom of slits.&quot;&quot;&quot;</span>
+    <span class="n">radius</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Radius of the chopper.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Check for frequency because not all NeXus files store a unit</span>
+        <span class="c1"># and the name can be confusing.</span>
+        <span class="n">_require_frequency</span><span class="p">(</span><span class="s1">&#39;frequency&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="p">)</span>
+        <span class="n">_check_edges</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slit_begin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">slit_end</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="s1">&#39;slit_height&#39;</span><span class="p">,</span>
+            <span class="n">_broadcast_slit_height</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slit_height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">slit_begin</span><span class="p">),</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="DiskChopper.from_nexus">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.from_nexus">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_nexus</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">chopper</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DiskChopper</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a new DiskChopper from data loaded from NeXus.</span>
+
+<span class="sd">        Keys in the input correspond to the fields of `NXdisk_chopper</span>
+<span class="sd">        &lt;https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html&gt;`_.</span>
+
+<span class="sd">        The input data group must contain a `rotation_speed_setpoint`. If this is not</span>
+<span class="sd">        available, a single (scalar) value must be computed from processing the</span>
+<span class="sd">        time-dependent `rotation_speed` data. This can be done with</span>
+<span class="sd">        :func:`~scippneutron.chopper.nexus_chopper.post_process_disk_chopper`</span>
+<span class="sd">        (see its documentation for the required steps). The resulting single value</span>
+<span class="sd">        can then be passed as `rotation_speed_setpoint`.</span>
+
+<span class="sd">        If a `phase` field is not present, it is computed from the `delay` field</span>
+<span class="sd">        and the `rotation_speed_setpoint` as `phase = 2*pi*frequency*delay`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        chopper:</span>
+<span class="sd">            Data group with fields loaded from an ``NXdisk_chopper``</span>
+<span class="sd">            and post-processed as described above.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            A new ``DiskChopper`` instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">typ</span> <span class="o">:=</span> <span class="n">chopper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="n">DiskChopperType</span><span class="o">.</span><span class="n">single</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">!=</span> <span class="n">DiskChopperType</span><span class="o">.</span><span class="n">single</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s1">&#39;Class DiskChopper only supports single choppers,&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;got chopper type </span><span class="si">{</span><span class="n">typ</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;rotation_speed_setpoint&quot;</span> <span class="ow">in</span> <span class="n">chopper</span><span class="p">:</span>
+            <span class="c1"># `rotation_speed_setpoint` is preferred if available (ESS files)</span>
+            <span class="n">frequency</span> <span class="o">=</span> <span class="n">_get_0d_variable</span><span class="p">(</span><span class="n">chopper</span><span class="p">,</span> <span class="s1">&#39;rotation_speed_setpoint&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Fallback to `rotation_speed` (standard NeXus)</span>
+            <span class="n">frequency</span> <span class="o">=</span> <span class="n">_get_0d_variable</span><span class="p">(</span><span class="n">chopper</span><span class="p">,</span> <span class="s1">&#39;rotation_speed&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;phase&quot;</span> <span class="ow">in</span> <span class="n">chopper</span><span class="p">:</span>
+            <span class="n">phase</span> <span class="o">=</span> <span class="n">_get_0d_variable</span><span class="p">(</span><span class="n">chopper</span><span class="p">,</span> <span class="s1">&#39;phase&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;delay&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">chopper</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;DiskChopper.from_nexus: Chopper field &#39;phase&#39; is missing and &quot;</span>
+                    <span class="s2">&quot;cannot be computed because field &#39;delay&#39; is also missing.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">omega</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">frequency</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span><span class="p">)</span>
+            <span class="n">phase</span> <span class="o">=</span> <span class="p">(</span><span class="n">_get_0d_variable</span><span class="p">(</span><span class="n">chopper</span><span class="p">,</span> <span class="s1">&#39;delay&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="n">omega</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+                <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">DiskChopper</span><span class="p">(</span>
+            <span class="n">axle_position</span><span class="o">=</span><span class="n">chopper</span><span class="p">[</span><span class="s1">&#39;position&#39;</span><span class="p">],</span>
+            <span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span>
+            <span class="n">beam_position</span><span class="o">=</span><span class="n">_get_0d_variable</span><span class="p">(</span><span class="n">chopper</span><span class="p">,</span> <span class="s1">&#39;beam_position&#39;</span><span class="p">),</span>
+            <span class="n">phase</span><span class="o">=</span><span class="n">phase</span><span class="p">,</span>
+            <span class="n">slit_height</span><span class="o">=</span><span class="n">chopper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;slit_height&#39;</span><span class="p">),</span>
+            <span class="n">radius</span><span class="o">=</span><span class="n">chopper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;radius&#39;</span><span class="p">),</span>
+            <span class="o">**</span><span class="n">_get_edges_from_nexus</span><span class="p">(</span><span class="n">chopper</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_slits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of slits.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slit_begin</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span>
+                <span class="s1">&#39;Cannot determine the number of slits because &#39;</span>
+                <span class="s1">&#39;the edges are not a 1d array.&#39;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slit_begin</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">angular_frequency</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rotation speed as an angular frequency in ``rad * frequency.unit``.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;rad&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_clockwise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if the chopper rotates clockwise.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+
+<div class="viewcode-block" id="DiskChopper.time_offset_open">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.time_offset_open">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">time_offset_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pulse_frequency</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return the opening time offsets of the chopper slits.</span>
+
+<span class="sd">        Computes :math:`\Delta t_g(\theta)` as defined in</span>
+<span class="sd">        :mod:`scippneutron.chopper.disk_chopper` with :math:`\theta` = ``slit_begin``</span>
+<span class="sd">        for clockwise rotation and :math:`\theta` = ``slit_end`` otherwise.</span>
+
+<span class="sd">        If the chopper spins at a multiple of the pulse frequency, each slit shows up</span>
+<span class="sd">        multiple times in the result such that the array covers an entire pulse</span>
+<span class="sd">        length.</span>
+<span class="sd">        If the chopper spins slower than the pulse frequency, only one time per slit</span>
+<span class="sd">        is returned, but the result covers more than one pulse in time.</span>
+<span class="sd">        See the module documentation :mod:`scippneutron.chopper.disk_chopper`</span>
+<span class="sd">        for details.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pulse_frequency;</span>
+<span class="sd">            Frequency of the neutron source.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            Variable of opening times as offsets from the pulse time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">slit_edges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slit_begin</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_clockwise</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">slit_end</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_offset_angle_at_beam</span><span class="p">(</span>
+            <span class="n">angle</span><span class="o">=</span><span class="n">slit_edges</span><span class="p">,</span> <span class="n">n_repetitions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_source_phase_factor</span><span class="p">(</span><span class="n">pulse_frequency</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DiskChopper.time_offset_close">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.time_offset_close">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">time_offset_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pulse_frequency</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return the opening time offsets of the chopper slits.</span>
+
+<span class="sd">        Computes :math:`\Delta t_g(\theta)` as defined in</span>
+<span class="sd">        :mod:`scippneutron.chopper.disk_chopper` with :math:`\theta` = ``slit_end``</span>
+<span class="sd">        for clockwise rotation and :math:`\theta` = ``slit_start`` otherwise.</span>
+
+<span class="sd">        If the chopper spins at a multiple of the pulse frequency, each slit shows up</span>
+<span class="sd">        multiple times in the result such that the array covers an entire pulse</span>
+<span class="sd">        length.</span>
+<span class="sd">        If the chopper spins slower than the pulse frequency, only one time per slit</span>
+<span class="sd">        is returned, but the result covers more than one pulse in time.</span>
+<span class="sd">        See the module documentation :mod:`scippneutron.chopper.disk_chopper`</span>
+<span class="sd">        for details.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pulse_frequency;</span>
+<span class="sd">            Frequency of the neutron source.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            Variable of opening times as offsets from the pulse time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">slit_edges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slit_end</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_clockwise</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">slit_begin</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_offset_angle_at_beam</span><span class="p">(</span>
+            <span class="n">angle</span><span class="o">=</span><span class="n">slit_edges</span><span class="p">,</span> <span class="n">n_repetitions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_source_phase_factor</span><span class="p">(</span><span class="n">pulse_frequency</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DiskChopper.time_offset_angle_at_beam">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.time_offset_angle_at_beam">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">time_offset_angle_at_beam</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">angle</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">n_repetitions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return the time offset when an angle on the chopper is at the beam.</span>
+
+<span class="sd">        The time is an offset from the given pulse time.</span>
+<span class="sd">        It encodes the time when the given angle passes by the beam position.</span>
+
+<span class="sd">        Computes :math:`\Delta t_g(\theta)` as defined in</span>
+<span class="sd">        :mod:`scippneutron.chopper.disk_chopper`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        angle:</span>
+<span class="sd">            Angle to compute time for.</span>
+<span class="sd">            Defined anticlockwise with respect to top-dead-center.</span>
+<span class="sd">        n_repetitions:</span>
+<span class="sd">            How many chopper rotations to perform.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            Computed time offset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">angle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_angle_repetitions</span><span class="p">(</span><span class="n">angle</span><span class="o">=</span><span class="n">angle</span><span class="p">,</span> <span class="n">n_repetitions</span><span class="o">=</span><span class="n">n_repetitions</span><span class="p">)</span>
+        <span class="n">angle</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">beam_position</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float64&#39;</span><span class="p">)</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float64&#39;</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">angle</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float64&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_clockwise</span><span class="p">:</span>
+            <span class="n">angle</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">pi</span> <span class="o">+</span> <span class="n">angle</span>
+        <span class="k">return</span> <span class="n">angle</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">angular_frequency</span></div>
+
+
+<div class="viewcode-block" id="DiskChopper.open_duration">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.open_duration">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">open_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pulse_frequency</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return how long the chopper is open for.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pulse_frequency;</span>
+<span class="sd">            Frequency of the neutron source.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            Variable of opening durations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_offset_close</span><span class="p">(</span>
+            <span class="n">pulse_frequency</span><span class="o">=</span><span class="n">pulse_frequency</span>
+        <span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_offset_open</span><span class="p">(</span><span class="n">pulse_frequency</span><span class="o">=</span><span class="n">pulse_frequency</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span> <span class="o">|</span> <span class="bp">NotImplemented</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">DiskChopper</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="n">_field_eq</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="DiskChopper.make_svg">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.make_svg">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_svg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">400</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate an SVG image for this chopper.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        image_size:</span>
+<span class="sd">            The size in pixels of the image.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            The SVG image as a string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">._svg</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_disk_chopper</span>
+
+        <span class="k">return</span> <span class="n">draw_disk_chopper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_repr_svg_</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_svg</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_repr_html_</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.._html_repr</span><span class="w"> </span><span class="kn">import</span> <span class="n">disk_chopper_html_repr</span>
+
+        <span class="k">return</span> <span class="n">disk_chopper_html_repr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_angle_repetitions</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">angle</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">n_repetitions</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid4</span><span class="p">())</span>
+        <span class="c1"># Start at -1 to ensure a rotation that is finishing when the pulse begins is</span>
+        <span class="c1"># also included.</span>
+        <span class="n">repetition_offsets</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_repetitions</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_clockwise</span><span class="p">:</span>
+            <span class="n">repeated</span> <span class="o">=</span> <span class="n">angle</span> <span class="o">+</span> <span class="n">repetition_offsets</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">angle</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Make sure the repeated angles are later in time.</span>
+            <span class="n">repeated</span> <span class="o">=</span> <span class="n">angle</span> <span class="o">-</span> <span class="n">repetition_offsets</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">angle</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">angle</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">repeated</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="s1">&#39;slit&#39;</span><span class="p">)</span>
+        <span class="c1"># Remove aux dimension.</span>
+        <span class="k">return</span> <span class="n">repeated</span><span class="o">.</span><span class="n">transpose</span><span class="p">([</span><span class="o">*</span><span class="n">angle</span><span class="o">.</span><span class="n">dims</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dim</span><span class="p">,</span> <span class="n">angle</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span>
+            <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="n">dim</span><span class="p">,</span> <span class="n">angle</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">to</span><span class="o">=</span><span class="n">angle</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_source_phase_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pulse_frequency</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span>
+                <span class="s1">&#39;The chopper rotation speed must be a scalar, &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;got dims </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="o">.</span><span class="n">sizes</span><span class="si">}</span><span class="s1">.&#39;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">pulse_frequency</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span>
+                <span class="s1">&#39;The pulse frequency must be a scalar, &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;got dims </span><span class="si">{</span><span class="n">pulse_frequency</span><span class="o">.</span><span class="n">sizes</span><span class="si">}</span><span class="s1">.&#39;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">pulse_frequency</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;The pulse frequency must be &gt; 0, got </span><span class="si">{</span><span class="n">pulse_frequency</span><span class="si">:</span><span class="s1">c</span><span class="si">}</span><span class="s1">.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="n">frequency</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="p">)</span>
+        <span class="n">pulse_frequency</span> <span class="o">=</span> <span class="n">pulse_frequency</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">frequency</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+        <span class="n">quot</span> <span class="o">=</span> <span class="n">frequency</span> <span class="o">/</span> <span class="n">pulse_frequency</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_int_or_inverse_int</span><span class="p">(</span><span class="n">quot</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">1e-8</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;The chopper is out of phase with the source. &#39;</span>
+                <span class="s1">&#39;The frequency must be an integer multiple of the &#39;</span>
+                <span class="s1">&#39;pulse frequency or vice versa.</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;pulse_frequency:</span><span class="se">\n</span><span class="s1">  </span><span class="si">{</span><span class="n">pulse_frequency</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;frequency:</span><span class="se">\n</span><span class="s1">  </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+        <span class="c1"># If pulse_frequency &gt; frequency, quot &lt; 0 but we want 1 repetition</span>
+        <span class="c1"># of the slits, so use `max` here:</span>
+        <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">quot</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+<div class="viewcode-block" id="DiskChopper.as_dict">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.chopper.disk_chopper.DiskChopper.html#scippneutron.chopper.disk_chopper.DiskChopper.as_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the DiskChopper fields as a dictionary.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_field_eq</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">identical</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># if identical does not support b</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_require_frequency</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;Hz&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">sc</span><span class="o">.</span><span class="n">UnitError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">UnitError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; must be a frequency, got unit </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">unit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_edges</span><span class="p">(</span><span class="n">begin</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">begin</span><span class="o">.</span><span class="n">sizes</span> <span class="o">!=</span> <span class="n">end</span><span class="o">.</span><span class="n">sizes</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span>
+            <span class="s1">&#39;The begin and end edges have different sizes: &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">begin</span><span class="o">.</span><span class="n">sizes</span><span class="si">}</span><span class="s1"> and </span><span class="si">{</span><span class="n">end</span><span class="o">.</span><span class="n">sizes</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">sc</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">begin</span> <span class="o">&gt;</span> <span class="n">end</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The begin edges must be smaller than the end edges.&#39;</span><span class="p">)</span>
+    <span class="n">_check_edge_overlap</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_edge_overlap</span><span class="p">(</span><span class="n">begin</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">edges</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">begin</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="s1">&#39;slit&#39;</span><span class="p">),</span> <span class="n">end</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="s1">&#39;slit&#39;</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;edge&#39;</span><span class="p">)</span>
+    <span class="n">edges</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">edges</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">edges</span><span class="p">[</span><span class="s1">&#39;edge&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">begin</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">edges</span><span class="p">[</span><span class="s1">&#39;edge&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">edges</span><span class="p">[</span><span class="s1">&#39;edge&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">sc</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">begin</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">&lt;=</span> <span class="n">end</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The chopper has overlapping slits.&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_broadcast_slit_height</span><span class="p">(</span>
+    <span class="n">slit_height</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">slit_begin</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">slit_height</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">slit_height</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">sizes</span><span class="o">=</span><span class="n">slit_begin</span><span class="o">.</span><span class="n">sizes</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_edges_from_nexus</span><span class="p">(</span>
+    <span class="n">nexus_chopper</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">edges</span> <span class="o">:=</span> <span class="n">nexus_chopper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;slit_edges&#39;</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;slit_begin&#39;</span> <span class="ow">in</span> <span class="n">nexus_chopper</span> <span class="ow">or</span> <span class="s1">&#39;slit_end&#39;</span> <span class="ow">in</span> <span class="n">nexus_chopper</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;NeXus chopper data contains both slit_edges and slit_begin or slit_end&#39;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">edges</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span><span class="s2">&quot;The slit edges must be 1-dimensional&quot;</span><span class="p">)</span>
+
+        <span class="n">begin</span> <span class="o">=</span> <span class="n">edges</span><span class="p">[::</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">edges</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">sc</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">begin</span> <span class="o">&gt;</span> <span class="n">end</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Invalid slit edges, must be given as &quot;</span>
+                <span class="s2">&quot;[begin_0, end_0, begin_1, end_1, ...] where begin_n &lt; end_n&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;slit_begin&#39;</span><span class="p">:</span> <span class="n">begin</span><span class="p">,</span> <span class="s1">&#39;slit_end&#39;</span><span class="p">:</span> <span class="n">end</span><span class="p">}</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;slit_begin&#39;</span><span class="p">:</span> <span class="n">nexus_chopper</span><span class="p">[</span><span class="s1">&#39;slit_begin&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;slit_end&#39;</span><span class="p">:</span> <span class="n">nexus_chopper</span><span class="p">[</span><span class="s1">&#39;slit_end&#39;</span><span class="p">],</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_0d_variable</span><span class="p">(</span>
+    <span class="n">dg</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">val</span> <span class="o">:=</span> <span class="n">dg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">))</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Chopper field &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; is missing&quot;</span><span class="p">)</span>
+
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;Chopper field &#39;</span><span class="si">{name}</span><span class="s2">&#39; must be a scalar variable, </span><span class="si">{got}</span><span class="s2">. &quot;</span>
+        <span class="s2">&quot;See the chopper user-guide for more information: &quot;</span>
+        <span class="s2">&quot;https://scipp.github.io/scippneutron/user-guide/chopper/processing-nexus-choppers.html&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">got</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;got a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">got</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;got a </span><span class="si">{</span><span class="n">val</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s1">d variable&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">val</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_int_or_inverse_int</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">rtol</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">rtol</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">rtol</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">a</span> <span class="o">|</span> <span class="n">b</span><span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 0.0.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

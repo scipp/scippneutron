@@ -1,0 +1,1624 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scippneutron.io.cif &#8212; ScippNeutron</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css?v=a0a71c94" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../../_static/documentation_options.js?v=5db94ae7"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/scippneutron/io/cif';</script>
+    <script src="../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.svg" class="logo__image only-light" alt="ScippNeutron - Home"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ScippNeutron - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/plopp">
+    Plopp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io">
+    Scipp
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/scippnexus">
+    ScippNexus
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/scippneutron" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/scippneutron/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/scippneutron" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">scippneutron.io.cif</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for scippneutron.io.cif</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2023 Scipp contributors (https://github.com/scipp)</span>
+<span class="sd">&quot;&quot;&quot;CIF file writer.</span>
+
+<span class="sd">This module contains tools for writing `CIF &lt;https://www.iucr.org/resources/cif&gt;`_</span>
+<span class="sd">files with diffraction data.</span>
+<span class="sd">`It does not support reading CIF files.`</span>
+
+<span class="sd">CIF Builder: High-level interface</span>
+<span class="sd">---------------------------------</span>
+<span class="sd">This module supports two interfaces for writing files.</span>
+<span class="sd">The high-level interface uses a builder pattern for assembling files.</span>
+<span class="sd">It is implemented by :class:`CIF`.</span>
+
+<span class="sd">To demonstrate the interface, first make some mockup powder diffraction data:</span>
+
+<span class="sd">  &gt;&gt;&gt; import scipp as sc</span>
+<span class="sd">  &gt;&gt;&gt; tof = sc.array(dims=[&#39;tof&#39;], values=[1.2, 1.4, 2.3], unit=&#39;us&#39;)</span>
+<span class="sd">  &gt;&gt;&gt; intensity = sc.array(</span>
+<span class="sd">  ...     dims=[&#39;tof&#39;],</span>
+<span class="sd">  ...     values=[13.6, 26.0, 9.7],</span>
+<span class="sd">  ...     variances=[0.7, 1.1, 0.5],</span>
+<span class="sd">  ... )</span>
+<span class="sd">  &gt;&gt;&gt; da = sc.DataArray(intensity, coords={&#39;tof&#39;: tof})</span>
+
+<span class="sd">Assemble data and metadata using a :class:`CIF` builder:</span>
+
+<span class="sd">  &gt;&gt;&gt; from scippneutron.io import cif</span>
+<span class="sd">  &gt;&gt;&gt; from scippneutron import metadata</span>
+<span class="sd">  &gt;&gt;&gt; cif_ = (</span>
+<span class="sd">  ...  cif.CIF(&#39;my-data&#39;, comment=&quot;This is a demo of ScippNeutron&#39;s CIF builder.&quot;)</span>
+<span class="sd">  ...  .with_beamline(metadata.Beamline(name=&#39;fake&#39;, facility=&#39;made up&#39;))</span>
+<span class="sd">  ...  .with_authors(metadata.Person(</span>
+<span class="sd">  ...      name=&#39;Jane Doe&#39;,</span>
+<span class="sd">  ...      orcid_id=&#39;0000-0000-0000-0001&#39;,</span>
+<span class="sd">  ...      corresponding=True</span>
+<span class="sd">  ...  ))</span>
+<span class="sd">  ...  .with_reduced_powder_data(da)</span>
+<span class="sd">  ... )</span>
+
+<span class="sd">When all data has been added, write it to a file:</span>
+
+<span class="sd">  &gt;&gt;&gt; cif_.save(&#39;example.cif&#39;)</span>
+
+<span class="sd">This results in a file containing</span>
+
+<span class="sd">.. code-block:: text</span>
+
+<span class="sd">    #\\#CIF_1.1</span>
+<span class="sd">    # This is a demo of ScippNeutron&#39;s CIF builder.</span>
+<span class="sd">    data_my-data</span>
+
+<span class="sd">    loop_</span>
+<span class="sd">    _audit_conform.dict_name</span>
+<span class="sd">    _audit_conform.dict_version</span>
+<span class="sd">    _audit_conform.dict_location</span>
+<span class="sd">    pdCIF 2.5.0 https://github.com/COMCIFS/Powder_Dictionary/blob/7608b92165f58f968f054344e67662e01d4b401a/cif_pow.dic</span>
+<span class="sd">    coreCIF 3.3.0 https://github.com/COMCIFS/cif_core/blob/fc3d75a298fd7c0c3cde43633f2a8616e826bfd5/cif_core.dic</span>
+
+<span class="sd">    _audit.creation_date 2024-09-05T13:47:54+00:00</span>
+<span class="sd">    _audit.creation_method &#39;Written by scippneutron v24.6.1</span>
+
+<span class="sd">    _audit_contact_author.name &#39;Jane Doe&#39;</span>
+<span class="sd">    _audit_contact_author.id_orcid 0000-0000-0000-0001</span>
+
+<span class="sd">    _diffrn_source.beamline fake</span>
+<span class="sd">    _diffrn_source.facility &#39;made up&#39;</span>
+
+<span class="sd">    loop_</span>
+<span class="sd">    _pd_meas.time_of_flight</span>
+<span class="sd">    _pd_proc.intensity_net</span>
+<span class="sd">    _pd_proc.intensity_net_su</span>
+<span class="sd">    1.2 13.6 0.8366600265340756</span>
+<span class="sd">    1.4 26.0 1.0488088481701516</span>
+<span class="sd">    2.3 9.7 0.7071067811865476</span>
+
+<span class="sd">Chunks and loops: Low-level interface</span>
+<span class="sd">-------------------------------------</span>
+<span class="sd">The high-level CIF builder uses :class:`Block`, :class:`Chunk`, and :class:`Loop` to</span>
+<span class="sd">encode data.</span>
+<span class="sd">Those classes can also be used directly to gain more control over the file contents.</span>
+
+<span class="sd">To demonstrate, make mockup powder diffraction data:</span>
+
+<span class="sd">  &gt;&gt;&gt; import scipp as sc</span>
+<span class="sd">  &gt;&gt;&gt; tof = sc.array(dims=[&#39;tof&#39;], values=[1.2, 1.4, 2.3], unit=&#39;us&#39;)</span>
+<span class="sd">  &gt;&gt;&gt; intensity = sc.array(</span>
+<span class="sd">  ...     dims=[&#39;tof&#39;],</span>
+<span class="sd">  ...     values=[13.6, 26.0, 9.7],</span>
+<span class="sd">  ...     variances=[0.7, 1.1, 0.5],</span>
+<span class="sd">  ... )</span>
+
+<span class="sd">Wrap the data in a ``Loop`` to write them together as columns.</span>
+
+<span class="sd">  &gt;&gt;&gt; from scippneutron.io import cif</span>
+<span class="sd">  &gt;&gt;&gt; tof_loop = cif.Loop({</span>
+<span class="sd">  ...     &#39;pd_meas.time_of_flight&#39;: tof,</span>
+<span class="sd">  ...     &#39;pd_meas.intensity_total&#39;: sc.values(intensity),</span>
+<span class="sd">  ...     &#39;pd_meas.intensity_total_su&#39;: sc.stddevs(intensity),</span>
+<span class="sd">  ... })</span>
+
+<span class="sd">Write the data to file along with some metadata:</span>
+
+<span class="sd">  &gt;&gt;&gt; block = cif.Block(&#39;example&#39;, [</span>
+<span class="sd">  ...     {</span>
+<span class="sd">  ...         &#39;diffrn_radiation.probe&#39;: &#39;neutron&#39;,</span>
+<span class="sd">  ...         &#39;diffrn_source.beamline&#39;: &#39;some-beamline&#39;,</span>
+<span class="sd">  ...     },</span>
+<span class="sd">  ...     tof_loop,</span>
+<span class="sd">  ... ])</span>
+<span class="sd">  &gt;&gt;&gt; cif.save_cif(&#39;example.cif&#39;, block)</span>
+
+<span class="sd">This results in a file containing</span>
+
+<span class="sd">.. code-block::</span>
+
+<span class="sd">  #\\#CIF_1.1</span>
+<span class="sd">  data_example</span>
+
+<span class="sd">  _diffrn_radiation.probe neutron</span>
+<span class="sd">  _diffrn_source.beamline some-beamline</span>
+
+<span class="sd">  loop_</span>
+<span class="sd">  _pd_meas.time_of_flight</span>
+<span class="sd">  _pd_meas.intensity_total</span>
+<span class="sd">  _pd_meas.intensity_total_su</span>
+<span class="sd">  1.2 13.6 0.8366600265340756</span>
+<span class="sd">  1.4 26.0 1.0488088481701516</span>
+<span class="sd">  2.3 9.7 0.7071067811865476</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">copy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TextIO</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">Beamline</span><span class="p">,</span> <span class="n">Person</span><span class="p">,</span> <span class="n">Source</span><span class="p">,</span> <span class="n">SourceType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._files</span><span class="w"> </span><span class="kn">import</span> <span class="n">open_or_pass</span>
+
+
+<div class="viewcode-block" id="CIFSchema">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.CIFSchema.html#scippneutron.io.cif.CIFSchema">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CIFSchema</span><span class="p">:</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">location</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<span class="n">CORE_SCHEMA</span> <span class="o">=</span> <span class="n">CIFSchema</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;coreCIF&#39;</span><span class="p">,</span>
+    <span class="n">version</span><span class="o">=</span><span class="s1">&#39;3.3.0&#39;</span><span class="p">,</span>
+    <span class="n">location</span><span class="o">=</span><span class="s1">&#39;https://github.com/COMCIFS/cif_core/blob/6f8502e81b623eb0fd779c79efaf191d49fa198c/cif_core.dic&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">PD_SCHEMA</span> <span class="o">=</span> <span class="n">CIFSchema</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pdCIF&#39;</span><span class="p">,</span>
+    <span class="n">version</span><span class="o">=</span><span class="s1">&#39;2.5.0&#39;</span><span class="p">,</span>
+    <span class="n">location</span><span class="o">=</span><span class="s1">&#39;https://github.com/COMCIFS/Powder_Dictionary/blob/970c2b2850a923796db5f4e9b7207d10ab5fd8e5/cif_pow.dic&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="save_cif">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.save_cif.html#scippneutron.io.cif.save_cif">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_cif</span><span class="p">(</span>
+    <span class="n">fname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="n">TextIO</span><span class="p">,</span>
+    <span class="n">content</span><span class="p">:</span> <span class="n">Block</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Block</span><span class="p">]</span> <span class="o">|</span> <span class="n">CIF</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save data blocks to a CIF file.</span>
+
+<span class="sd">    To use, first create :class:`scippneutron.io.cif.Block` objects to collect and</span>
+<span class="sd">    structure data for the file, then use this function to write the file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fname:</span>
+<span class="sd">        Path or file handle for the output file.</span>
+<span class="sd">    content:</span>
+<span class="sd">        One or more CIF data blocks or a ``CIF`` object to write to the file.</span>
+<span class="sd">    comment:</span>
+<span class="sd">        Optional comment that can be written at the top of the file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">CIF</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">comment</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+            <span class="n">content</span><span class="o">.</span><span class="n">comment</span> <span class="o">=</span> <span class="n">comment</span>
+        <span class="n">content</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">Block</span><span class="p">):</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="p">(</span><span class="n">content</span><span class="p">,)</span>
+    <span class="k">with</span> <span class="n">open_or_pass</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">_write_file_heading</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+        <span class="n">_write_multi</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CIF">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.CIF.html#scippneutron.io.cif.CIF">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CIF</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A builder for CIF files.</span>
+
+<span class="sd">    This class implements a builder pattern for defining the contents of a CIF file.</span>
+<span class="sd">    See the module documentation of :mod:`cif` for examples.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CIF.__init__">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.CIF.html#scippneutron.io.cif.CIF.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_block</span> <span class="o">=</span> <span class="n">Block</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span>
+        <span class="p">)</span>  <span class="c1"># We mainly keep this around for managing the name.</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_comment</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comment</span> <span class="o">=</span> <span class="n">comment</span>
+        <span class="c1"># Keep a separate list from self._block to assemble items</span>
+        <span class="c1"># in a specific order when saving.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_content</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span> <span class="o">|</span> <span class="n">Loop</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_authors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Person</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reducers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Should be long enough to never run out of IDs.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_id_generator</span> <span class="o">=</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1_000_000_000</span><span class="p">))</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="nd">@name</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_block</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">comment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Optional comment that can be written at the top of the file.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comment</span>
+
+    <span class="nd">@comment</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">comment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_comment</span> <span class="o">=</span> <span class="n">_encode_non_ascii</span><span class="p">(</span><span class="n">comment</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">schema</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">CIFSchema</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;CIF schemas used for the file.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block</span><span class="o">.</span><span class="n">schema</span>
+
+<div class="viewcode-block" id="CIF.save">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.CIF.html#scippneutron.io.cif.CIF.save">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="n">TextIO</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fname:</span>
+<span class="sd">            Path or file handle for the output file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">_add_audit</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reducers</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_assemble_authors</span><span class="p">(),</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_content</span><span class="p">):</span>
+            <span class="n">block</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="n">save_cif</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_comment</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CIF.copy">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.CIF.html#scippneutron.io.cif.CIF.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CIF</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy of this builder.&quot;&quot;&quot;</span>
+        <span class="n">cif_</span> <span class="o">=</span> <span class="n">CIF</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">comment</span><span class="p">)</span>
+        <span class="n">cif_</span><span class="o">.</span><span class="n">_block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">cif_</span><span class="o">.</span><span class="n">_content</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_content</span><span class="p">)</span>
+        <span class="n">cif_</span><span class="o">.</span><span class="n">_authors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_authors</span><span class="p">)</span>
+        <span class="n">cif_</span><span class="o">.</span><span class="n">_reducers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reducers</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cif_</span></div>
+
+
+<div class="viewcode-block" id="CIF.with_beamline">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.CIF.html#scippneutron.io.cif.CIF.with_beamline">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_beamline</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">beamline</span><span class="p">:</span> <span class="n">Beamline</span><span class="p">,</span>
+        <span class="n">source</span><span class="p">:</span> <span class="n">Source</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CIF</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add beamline information.&quot;&quot;&quot;</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">_get_beamline_device</span><span class="p">(</span><span class="n">beamline</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
+        <span class="n">probe</span> <span class="o">=</span> <span class="n">_get_beamline_probe</span><span class="p">(</span><span class="n">beamline</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;diffrn_radiation.probe&#39;</span><span class="p">:</span> <span class="n">probe</span><span class="p">,</span>
+            <span class="s1">&#39;diffrn_source.beamline&#39;</span><span class="p">:</span> <span class="n">beamline</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s1">&#39;diffrn_source.facility&#39;</span><span class="p">:</span> <span class="n">beamline</span><span class="o">.</span><span class="n">facility</span><span class="p">,</span>
+            <span class="s1">&#39;diffrn_source.device&#39;</span><span class="p">:</span> <span class="n">device</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">cif_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">cif_</span><span class="o">.</span><span class="n">_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Chunk</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">},</span>
+                <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">,</span>
+                <span class="n">schema</span><span class="o">=</span><span class="n">CORE_SCHEMA</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">cif_</span></div>
+
+
+<div class="viewcode-block" id="CIF.with_reduced_powder_data">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.CIF.html#scippneutron.io.cif.CIF.with_reduced_powder_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_reduced_powder_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CIF</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a loop with reduced powder data.</span>
+
+<span class="sd">        The input must be 1-dimensional with a dimension name in</span>
+<span class="sd">        ``(&#39;tof&#39;, &#39;dspacing&#39;)``.</span>
+<span class="sd">        The data array may also have a name in</span>
+<span class="sd">        ``(&#39;intensity_net&#39;, &#39;intensity_norm&#39;, &#39;intensity_total&#39;)``.</span>
+<span class="sd">        If the name is not set, it defaults to ``&#39;intensity_norm&#39;``,</span>
+<span class="sd">        which is appropriate for typical outputs from data reduction.</span>
+<span class="sd">        See https://github.com/COMCIFS/Powder_Dictionary/blob/master/cif_pow.dic</span>
+
+<span class="sd">        The data gets written as intensity along a single coord whose</span>
+<span class="sd">        name matches the dimension name.</span>
+<span class="sd">        Standard uncertainties are also written if present.</span>
+
+<span class="sd">        The unit of the coordinate must match the requirement of pdCIF.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data:</span>
+<span class="sd">            1-dimensional data array with a recognized dimension name</span>
+<span class="sd">        comment:</span>
+<span class="sd">            Optional comment that can be written above the data in the file.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            A builder with added reduced data.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Make mockup powder diffraction data:</span>
+
+<span class="sd">          &gt;&gt;&gt; import scipp as sc</span>
+<span class="sd">          &gt;&gt;&gt; tof = sc.array(dims=[&#39;tof&#39;], values=[1.2, 1.4, 2.3], unit=&#39;us&#39;)</span>
+<span class="sd">          &gt;&gt;&gt; intensity = sc.array(</span>
+<span class="sd">          ...     dims=[&#39;tof&#39;],</span>
+<span class="sd">          ...     values=[13.6, 26.0, 9.7],</span>
+<span class="sd">          ...     variances=[0.7, 1.1, 0.5],</span>
+<span class="sd">          ... )</span>
+
+<span class="sd">        Add to a CIF builder:</span>
+
+<span class="sd">          &gt;&gt;&gt; from scippneutron.io import cif</span>
+<span class="sd">          &gt;&gt;&gt; cif_ = cif.CIF(&#39;reduced-data&#39;)</span>
+<span class="sd">          &gt;&gt;&gt; da = sc.DataArray(intensity, coords={&#39;tof&#39;: tof})</span>
+<span class="sd">          &gt;&gt;&gt; cif_ = cif_.with_reduced_powder_data(da)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cif_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">cif_</span><span class="o">.</span><span class="n">_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_make_reduced_powder_loop</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cif_</span></div>
+
+
+<div class="viewcode-block" id="CIF.with_powder_calibration">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.CIF.html#scippneutron.io.cif.CIF.with_powder_calibration">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_powder_calibration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cal</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CIF</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Add a powder calibration table.</span>
+
+<span class="sd">        The calibration data encode the following transformation from</span>
+<span class="sd">        d-spacing to time-of-flight:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            t = \sum_{i=0}^N\, c_i d^{p_i}</span>
+
+<span class="sd">        where :math:`c_i` is the i-th element of ``cal`` and :math:`p^{p_i}`</span>
+<span class="sd">        is the i-th element of ``cal.coords[&#39;power&#39;]``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cal:</span>
+<span class="sd">            The data are the calibration coefficients (possibly with variances).</span>
+<span class="sd">            Must have a coordinate called ``&#39;power&#39;`` defining :math:`p` in the</span>
+<span class="sd">            equation above.</span>
+<span class="sd">        comment:</span>
+<span class="sd">            Optional comment that can be written above the data in the file.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            A builder with added calibration data.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Add a mockup calibration table:</span>
+
+<span class="sd">          &gt;&gt;&gt; import scipp as sc</span>
+<span class="sd">          &gt;&gt;&gt; from scippneutron.io import cif</span>
+<span class="sd">          &gt;&gt;&gt; cal = sc.DataArray(</span>
+<span class="sd">          ...     sc.array(dims=[&#39;cal&#39;], values=[3.4, 0.2]),</span>
+<span class="sd">          ...     coords={&#39;power&#39;: sc.array(dims=[&#39;cal&#39;], values=[0, 1])},</span>
+<span class="sd">          ... )</span>
+<span class="sd">          &gt;&gt;&gt; cif_ = cif.CIF(&#39;powder-calibration&#39;)</span>
+<span class="sd">          &gt;&gt;&gt; cif_ = cif_.with_powder_calibration(cal)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cif_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">cif_</span><span class="o">.</span><span class="n">_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_make_powder_calibration_loop</span><span class="p">(</span><span class="n">cal</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cif_</span></div>
+
+
+<div class="viewcode-block" id="CIF.with_authors">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.CIF.html#scippneutron.io.cif.CIF.with_authors">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_authors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">authors</span><span class="p">:</span> <span class="n">Person</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CIF</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add one or more authors.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        authors:</span>
+<span class="sd">            Authors to add to this CIF object.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            A builder with added calibration data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cif_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">cif_</span><span class="o">.</span><span class="n">_authors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">authors</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cif_</span></div>
+
+
+<div class="viewcode-block" id="CIF.with_reducers">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.CIF.html#scippneutron.io.cif.CIF.with_reducers">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_reducers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">reducers</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CIF</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add one or more programs that were used to reduce the software.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        reducers:</span>
+<span class="sd">            Pieces of software that were used to reduce the data.</span>
+<span class="sd">            Each string is one piece of software in freeform notation.</span>
+<span class="sd">            It is recommended to include the program name and version.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            A builder with added calibration data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cif_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">cif_</span><span class="o">.</span><span class="n">_reducers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">reducers</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cif_</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_assemble_authors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span> <span class="o">|</span> <span class="n">Loop</span><span class="p">]:</span>
+        <span class="n">contact</span> <span class="o">=</span> <span class="p">[</span><span class="n">author</span> <span class="k">for</span> <span class="n">author</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_authors</span> <span class="k">if</span> <span class="n">author</span><span class="o">.</span><span class="n">corresponding</span><span class="p">]</span>
+        <span class="n">regular</span> <span class="o">=</span> <span class="p">[</span><span class="n">author</span> <span class="k">for</span> <span class="n">author</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_authors</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">author</span><span class="o">.</span><span class="n">corresponding</span><span class="p">]</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">authors</span><span class="p">,</span> <span class="n">category</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">contact</span><span class="p">,</span> <span class="n">regular</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;audit_contact_author&#39;</span><span class="p">,</span> <span class="s1">&#39;audit_author&#39;</span><span class="p">),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">authors</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">data</span><span class="p">,</span> <span class="n">rols</span> <span class="o">=</span> <span class="n">_serialize_authors</span><span class="p">(</span><span class="n">authors</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id_generator</span><span class="p">)</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">roles</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">rols</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">roles</span><span class="p">:</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_serialize_roles</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_CIFBase</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="n">CIFSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_comment</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comment</span> <span class="o">=</span> <span class="n">comment</span>  <span class="c1"># use str-encoding logic</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="o">=</span> <span class="n">_preprocess_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">comment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Optional comment that can be written above the object in the file.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comment</span>
+
+    <span class="nd">@comment</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">comment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_comment</span> <span class="o">=</span> <span class="n">_encode_non_ascii</span><span class="p">(</span><span class="n">comment</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">schema</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">CIFSchema</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;CIF schemas used for the object.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span>
+
+
+<div class="viewcode-block" id="Chunk">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.Chunk.html#scippneutron.io.cif.Chunk">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Chunk</span><span class="p">(</span><span class="n">_CIFBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A group of CIF key-value pairs.</span>
+
+<span class="sd">    Chunks contain one or more key-value pairs where values are scalars,</span>
+<span class="sd">    i.e., not arrays.</span>
+<span class="sd">    Chunks are represented in files as a group of pairs separated from</span>
+<span class="sd">    other chunks and loops by empty lines.</span>
+
+<span class="sd">    Note that CIF has no concept of chunks; they are only used for organizing</span>
+<span class="sd">    data in ScippNeutron.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Chunk.__init__">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.Chunk.html#scippneutron.io.cif.Chunk.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">pairs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="n">schema</span><span class="p">:</span> <span class="n">CIFSchema</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">CIFSchema</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a new CIF chunk.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pairs:</span>
+<span class="sd">            Defines a mapping from keys (a.k.a. tags) to values.</span>
+<span class="sd">        comment:</span>
+<span class="sd">            Optional comment that can be written above the chunk in the file.</span>
+<span class="sd">        schema:</span>
+<span class="sd">            CIF schemas used for the chunk.</span>
+<span class="sd">            Content is not checked against the schema, but the schema is written</span>
+<span class="sd">            to the file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pairs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span> <span class="k">if</span> <span class="n">pairs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a key-value pair to the chunk.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pairs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="Chunk.write">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.Chunk.html#scippneutron.io.cif.Chunk.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">TextIO</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write this chunk to a file.</span>
+
+<span class="sd">        Used mainly internally, use :func:`scippneutron.io.cif.save_cif` instead.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        f:</span>
+<span class="sd">            File handle.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_write_comment</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">comment</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pairs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">_format_value</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">):</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Loop">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.Loop.html#scippneutron.io.cif.Loop">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Loop</span><span class="p">(</span><span class="n">_CIFBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A CIF loop.</span>
+
+<span class="sd">    Contains a mapping from strings to Scipp variables.</span>
+<span class="sd">    The strings are arbitrary and ``Loop`` can merge items from different categories</span>
+<span class="sd">    into a single loop.</span>
+<span class="sd">    All variables must have the same length.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Loop.__init__">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.Loop.html#scippneutron.io.cif.Loop.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">columns</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="n">schema</span><span class="p">:</span> <span class="n">CIFSchema</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">CIFSchema</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a new CIF loop.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        columns:</span>
+<span class="sd">            Defines a mapping from column names (including their category)</span>
+<span class="sd">            to column values as Scipp variables.</span>
+<span class="sd">        comment:</span>
+<span class="sd">            Optional comment that can be written above the loop in the file.</span>
+<span class="sd">        schema:</span>
+<span class="sd">            CIF schemas used for the loop.</span>
+<span class="sd">            Content is not checked against the schema, but the schema is written</span>
+<span class="sd">            to the file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">column</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a column to the loop.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ---------</span>
+<span class="sd">        name:</span>
+<span class="sd">            Column name.</span>
+<span class="sd">        value:</span>
+<span class="sd">            Values of the column.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;CIF loops can only contain 1d variables, got </span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2"> dims&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">:</span>
+            <span class="n">existing</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span><span class="o">.</span><span class="n">sizes</span>
+            <span class="k">if</span> <span class="n">existing</span> <span class="o">!=</span> <span class="n">value</span><span class="o">.</span><span class="n">sizes</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Inconsistent dims in CIF loop: </span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="n">sizes</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;loop dims: </span><span class="si">{</span><span class="n">existing</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="Loop.write">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.Loop.html#scippneutron.io.cif.Loop.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">TextIO</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write this loop to a file.</span>
+
+<span class="sd">        Used mainly internally, use :func:`scippneutron.io.cif.save_cif` instead.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        f:</span>
+<span class="sd">            File handle.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_write_comment</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">comment</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;loop_</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">formatted_values</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">_format_value</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_columns</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="c1"># If any value is a multi-line string, lay out elements as a flat vertical</span>
+        <span class="c1"># list, otherwise use a 2d table.</span>
+        <span class="n">sep</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="s1">&#39;;&#39;</span> <span class="ow">in</span> <span class="n">item</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">formatted_values</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">row</span><span class="p">)</span>
+            <span class="k">else</span> <span class="s1">&#39; &#39;</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">formatted_values</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">row</span><span class="p">))</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Block">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.Block.html#scippneutron.io.cif.Block">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Block</span><span class="p">(</span><span class="n">_CIFBase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A CIF data block.</span>
+
+<span class="sd">    A block contains an ordered sequence of loops</span>
+<span class="sd">    and chunks (groups of key-value-pairs).</span>
+<span class="sd">    The contents are written to file in the order specified in the block.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Block.__init__">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.Block.html#scippneutron.io.cif.Block.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">content</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">Loop</span> <span class="o">|</span> <span class="n">Chunk</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="n">schema</span><span class="p">:</span> <span class="n">CIFSchema</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">CIFSchema</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a new CIF data block.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name:</span>
+<span class="sd">            Name of the block.</span>
+<span class="sd">            Can contain any non-whitespace characters.</span>
+<span class="sd">            Can be at most 75 characters long.</span>
+<span class="sd">        content:</span>
+<span class="sd">            Initial loops and chunks.</span>
+<span class="sd">            ``dicts`` are converted to :class:`scippneutron.io.cif.Chunk`.</span>
+<span class="sd">        comment:</span>
+<span class="sd">            Optional comment that can be written above the block in the file.</span>
+<span class="sd">        schema:</span>
+<span class="sd">            CIF schemas used for the block.</span>
+<span class="sd">            Content is not checked against the schema, but the schema is written</span>
+<span class="sd">            to the file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_content</span> <span class="o">=</span> <span class="n">_convert_input_content</span><span class="p">(</span><span class="n">content</span><span class="p">)</span> <span class="k">if</span> <span class="n">content</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Name of the block.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
+
+    <span class="nd">@name</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">_encode_non_ascii</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39; &#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="ow">or</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="ow">or</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Block name must not contain spaces or line breaks, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got: &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">75</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;cif.Block name should not be longer than 75 characters, got &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">)</span><span class="si">}</span><span class="s2"> characters (&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="si">}</span><span class="s2">&#39;)&quot;</span><span class="p">,</span>
+                <span class="ne">UserWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">schema</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">CIFSchema</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;CIF schemas used for the block.&quot;&quot;&quot;</span>
+        <span class="n">merged</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">schema</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_content</span><span class="p">:</span>
+            <span class="n">merged</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">schema</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">merged</span>
+
+<div class="viewcode-block" id="Block.copy">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.Block.html#scippneutron.io.cif.Block.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Block</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a shallow copy of the block.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Block</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_content</span><span class="p">),</span> <span class="n">comment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">comment</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Block.add">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.Block.html#scippneutron.io.cif.Block.add">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">content</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="n">Chunk</span> <span class="o">|</span> <span class="n">Loop</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a chunk or loop to the end of the block.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        content:</span>
+<span class="sd">            A loop, chunk, or mapping to add.</span>
+<span class="sd">            Mappings get converted to chunks.</span>
+<span class="sd">        comment:</span>
+<span class="sd">            Optional comment that can be written above the chunk or loop in the file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">Chunk</span> <span class="o">|</span> <span class="n">Loop</span><span class="p">):</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">Chunk</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">content</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Block.write">
+<a class="viewcode-back" href="../../../generated/modules/scippneutron.io.cif.Block.html#scippneutron.io.cif.Block.write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">TextIO</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write this block to a file.</span>
+
+<span class="sd">        Used mainly internally, use :func:`scippneutron.io.cif.save_cif` instead.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        f:</span>
+<span class="sd">            File handle.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">schema_loop</span> <span class="o">=</span> <span class="n">_make_schema_loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">)</span>
+
+        <span class="n">_write_comment</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">comment</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;data_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">schema_loop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">schema_loop</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">_write_multi</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_content</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="n">_KNOWN_SPALLATION_SOURCES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;csns&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ess&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;isis&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;j-parc&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;lanscesinq&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sns&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_beamline_device</span><span class="p">(</span><span class="n">beamline</span><span class="p">:</span> <span class="n">Beamline</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Source</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">beamline</span><span class="o">.</span><span class="n">facility</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">_KNOWN_SPALLATION_SOURCES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;spallation&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">match</span> <span class="n">source</span><span class="o">.</span><span class="n">source_type</span><span class="p">:</span>
+        <span class="k">case</span> <span class="n">SourceType</span><span class="o">.</span><span class="n">SpallationNeutronSource</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;spallation&#39;</span>
+        <span class="k">case</span> <span class="n">SourceType</span><span class="o">.</span><span class="n">ReactorNeutronSource</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;nuclear&#39;</span>
+        <span class="k">case</span> <span class="n">SourceType</span><span class="o">.</span><span class="n">SynchrotronXraySource</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;synch&#39;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_beamline_probe</span><span class="p">(</span><span class="n">beamline</span><span class="p">:</span> <span class="n">Beamline</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Source</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">beamline</span><span class="o">.</span><span class="n">facility</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">_KNOWN_SPALLATION_SOURCES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;neutron&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">match</span> <span class="n">source</span><span class="o">.</span><span class="n">source_type</span><span class="p">:</span>
+        <span class="k">case</span> <span class="n">SourceType</span><span class="o">.</span><span class="n">SpallationNeutronSource</span> <span class="o">|</span> <span class="n">SourceType</span><span class="o">.</span><span class="n">ReactorNeutronSource</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;neutron&#39;</span>
+        <span class="k">case</span> <span class="n">SourceType</span><span class="o">.</span><span class="n">SynchrotronXraySource</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;x-ray&#39;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_input_content</span><span class="p">(</span>
+    <span class="n">content</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">Loop</span> <span class="o">|</span> <span class="n">Chunk</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Loop</span> <span class="o">|</span> <span class="n">Chunk</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">item</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">Loop</span> <span class="o">|</span> <span class="n">Chunk</span><span class="p">)</span> <span class="k">else</span> <span class="n">Chunk</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">content</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_preprocess_schema</span><span class="p">(</span>
+    <span class="n">schema</span><span class="p">:</span> <span class="n">CIFSchema</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">CIFSchema</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">CIFSchema</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">CIFSchema</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">{</span><span class="n">schema</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+    <span class="n">res</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">CORE_SCHEMA</span><span class="p">)</span>  <span class="c1"># needed to encode schema itself</span>
+    <span class="k">return</span> <span class="n">res</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_schema_loop</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">CIFSchema</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Loop</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">schema</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;audit_conform.dict_name&#39;</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="s1">&#39;audit_conform.dict_version&#39;</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="s1">&#39;audit_conform.dict_location&#39;</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">schema</span><span class="p">:</span>
+        <span class="n">columns</span><span class="p">[</span><span class="s1">&#39;audit_conform.dict_name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">columns</span><span class="p">[</span><span class="s1">&#39;audit_conform.dict_version&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+        <span class="n">columns</span><span class="p">[</span><span class="s1">&#39;audit_conform.dict_location&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Loop</span><span class="p">(</span>
+        <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;schema&#39;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">columns</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_quotes_for_string_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;;&#39;</span>
+    <span class="k">if</span> <span class="s2">&quot;&#39;&quot;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;&quot;&#39;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;;&#39;</span>
+        <span class="k">return</span> <span class="s1">&#39;&quot;&#39;</span>
+    <span class="k">if</span> <span class="s1">&#39;&quot;&#39;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&#39;&quot;</span>
+    <span class="k">if</span> <span class="s1">&#39; &#39;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&#39;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&#39;&quot;</span>  <span class="c1"># so that empty strings are shown as &#39;&#39;</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_encode_non_ascii</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">,</span> <span class="s1">&#39;backslashreplace&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">variance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">without_unit</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">variance</span><span class="o">=</span><span class="n">value</span><span class="o">.</span><span class="n">variance</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">without_unit</span><span class="si">:</span><span class="s1">c</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="n">s</span> <span class="o">=</span> <span class="n">_encode_non_ascii</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">quotes</span> <span class="o">:=</span> <span class="n">_quotes_for_string_value</span><span class="p">(</span><span class="n">s</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;;&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;; </span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="se">\n</span><span class="s1">;&#39;</span>
+    <span class="k">elif</span> <span class="n">quotes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">quotes</span> <span class="o">+</span> <span class="n">s</span> <span class="o">+</span> <span class="n">quotes</span>
+    <span class="k">return</span> <span class="n">s</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_comment</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">TextIO</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">comment</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;# &#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1"># &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">comment</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()))</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_multi</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">TextIO</span><span class="p">,</span> <span class="n">to_write</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">to_write</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">first</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">first</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">item</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_file_heading</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">TextIO</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#</span><span class="se">\\</span><span class="s1">#CIF_1.1</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">_write_comment</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">comment</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reduced_powder_coord</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Can only save 1d powder data, got </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s1"> dims.&#39;</span><span class="p">)</span>
+    <span class="n">known_coords</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;tof&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;pd_meas.time_of_flight&#39;</span><span class="p">,</span> <span class="s1">&#39;us&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;dspacing&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;pd_proc.d_spacing&#39;</span><span class="p">,</span> <span class="s1">&#39;Å&#39;</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">unit</span> <span class="o">=</span> <span class="n">known_coords</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">CoordError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Unrecognized dim: </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="si">}</span><span class="s1">. Must be one of </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">known_coords</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+
+    <span class="n">coord</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">coord</span><span class="o">.</span><span class="n">unit</span> <span class="o">!=</span> <span class="n">unit</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">UnitError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Incorrect unit for powder coordinate </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">coord</span><span class="o">.</span><span class="n">unit</span><span class="si">}</span><span class="s1"> expected </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="n">coord</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_reduced_powder_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;intensity_net&#39;</span><span class="p">,</span> <span class="s1">&#39;intensity_norm&#39;</span><span class="p">,</span> <span class="s1">&#39;intensity_total&#39;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unrecognized name for reduced powder data: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;pd_proc.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_reduced_powder_loop</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Loop</span><span class="p">:</span>
+    <span class="n">coord_name</span><span class="p">,</span> <span class="n">coord</span> <span class="o">=</span> <span class="n">_reduced_powder_coord</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">data_name</span> <span class="o">=</span> <span class="n">_normalize_reduced_powder_name</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s1">&#39;intensity_norm&#39;</span><span class="p">)</span>
+
+    <span class="n">res</span> <span class="o">=</span> <span class="n">Loop</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;pd_data.point_id&#39;</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span>
+            <span class="n">coord_name</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">coord</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">,</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">PD_SCHEMA</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">coord</span><span class="o">.</span><span class="n">variances</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">res</span><span class="p">[</span><span class="n">coord_name</span> <span class="o">+</span> <span class="s1">&#39;_su&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">stddevs</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+    <span class="n">res</span><span class="p">[</span><span class="n">data_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">variances</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">res</span><span class="p">[</span><span class="n">data_name</span> <span class="o">+</span> <span class="s1">&#39;_su&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">stddevs</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">unit</span> <span class="o">!=</span> <span class="s1">&#39;one&#39;</span><span class="p">:</span>
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">comment</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">comment</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">comment</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">pre</span><span class="si">}</span><span class="s1">Unit of intensity: [</span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">unit</span><span class="si">}</span><span class="s1">]&#39;</span>
+
+    <span class="k">return</span> <span class="n">res</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_powder_calibration_loop</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Loop</span><span class="p">:</span>
+    <span class="c1"># All names are valid python identifiers</span>
+    <span class="n">id_by_power</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s1">&#39;ZERO&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;DIFC&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;DIFA&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;DIFB&#39;</span><span class="p">}</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">dim</span><span class="p">],</span>
+        <span class="n">values</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">id_by_power</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">power</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;c</span><span class="si">{</span><span class="n">power</span><span class="si">}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">power</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;power&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">Loop</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;pd_calib_d_to_tof.id&#39;</span><span class="p">:</span> <span class="n">ids</span><span class="p">,</span>
+            <span class="s1">&#39;pd_calib_d_to_tof.power&#39;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;power&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;pd_calib_d_to_tof.coeff&#39;</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">,</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">PD_SCHEMA</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">variances</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;pd_calib_d_to_tof.coeff_su&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">stddevs</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">res</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_audit</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="n">Block</span><span class="p">,</span> <span class="n">reducers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
+
+    <span class="n">audit_chunk</span> <span class="o">=</span> <span class="n">Chunk</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;audit.creation_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="s1">&#39;audit.creation_method&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;Written by scippneutron </span><span class="si">{</span><span class="n">__version__</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">CORE_SCHEMA</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">block</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">audit_chunk</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">reducers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">audit_chunk</span><span class="p">[</span><span class="s1">&#39;computing.diffrn_reduction&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reducers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">reducers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+            <span class="n">Loop</span><span class="p">(</span>
+                <span class="p">{</span><span class="s1">&#39;computing.diffrn_reduction&#39;</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="n">reducers</span><span class="p">)},</span>
+                <span class="n">schema</span><span class="o">=</span><span class="n">CORE_SCHEMA</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_serialize_authors</span><span class="p">(</span>
+    <span class="n">authors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Person</span><span class="p">],</span>
+    <span class="n">category</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">id_generator</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Chunk</span> <span class="o">|</span> <span class="n">Loop</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">f</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;email&#39;</span><span class="p">,</span> <span class="s1">&#39;address&#39;</span><span class="p">,</span> <span class="s1">&#39;orcid_id&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span> <span class="o">:=</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">authors</span><span class="p">])</span>
+    <span class="p">}</span>
+    <span class="c1"># Map between our name (Person.orcid_id) and CIF&#39;s (id_orcid)</span>
+    <span class="k">if</span> <span class="n">orcid_id</span> <span class="o">:=</span> <span class="n">fields</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s1">.orcid_id&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">fields</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s1">.id_orcid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">orcid_id</span>
+
+    <span class="n">roles</span> <span class="o">=</span> <span class="p">{</span><span class="nb">next</span><span class="p">(</span><span class="n">id_generator</span><span class="p">):</span> <span class="n">a</span><span class="o">.</span><span class="n">role</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">authors</span><span class="p">}</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">roles</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+        <span class="n">fields</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s1">.id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">roles</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">roles</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">val</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">roles</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">val</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">authors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Chunk</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+            <span class="n">schema</span><span class="o">=</span><span class="n">CORE_SCHEMA</span><span class="p">,</span>
+        <span class="p">),</span> <span class="n">roles</span>
+    <span class="k">return</span> <span class="n">Loop</span><span class="p">(</span>
+        <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;author&#39;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">CORE_SCHEMA</span><span class="p">,</span>
+    <span class="p">),</span> <span class="n">roles</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_serialize_roles</span><span class="p">(</span><span class="n">roles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Loop</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">Loop</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;audit_author_role.id&#39;</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;role&#39;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">roles</span><span class="p">)),</span>
+            <span class="s1">&#39;audit_author_role.role&#39;</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;role&#39;</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">roles</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">CORE_SCHEMA</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ScippNeutron version: 0.0.0 (<a href="https://github.com/scipp/scippneutron/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
