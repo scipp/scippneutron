@@ -25,6 +25,9 @@ def test_elastic():
     assert set(tof.elastic('wavelength').keys()) == {
         'dspacing',
         'energy',
+        'energy_transfer',
+        'incident_energy',
+        'final_energy',
         'Q',
         ('Qx', 'Qy', 'Qz'),
         'Q_vec',

@@ -7,7 +7,7 @@ from collections.abc import Generator
 import pytest
 import scipp as sc
 
-from scippneutron.conversion.graph import beamline, kinematics
+from scippneutron.conversion.graph import beamline, tof
 
 
 def _flatten_keys(graph: dict[str, object]) -> Generator[str | tuple[str], None, None]:
@@ -18,9 +18,9 @@ def _flatten_keys(graph: dict[str, object]) -> Generator[str | tuple[str], None,
             yield from key
 
 
-@pytest.mark.parametrize("target", _flatten_keys(kinematics.elastic('tof')))
+@pytest.mark.parametrize("target", _flatten_keys(tof.elastic('tof')))
 def test_elastic_can_compute_all_from_tof(target: str | tuple[str]) -> None:
-    graph = {**kinematics.elastic('tof'), **beamline.beamline(scatter=True)}
+    graph = {**tof.elastic('tof'), **beamline.beamline(scatter=True)}
     da = sc.DataArray(
         sc.zeros(sizes={'event': 4, 'detector': 2}),
         coords={
@@ -44,9 +44,13 @@ def test_elastic_can_compute_all_from_tof(target: str | tuple[str]) -> None:
     assert target in result.coords
 
 
-@pytest.mark.parametrize("target", _flatten_keys(kinematics.elastic('wavelength')))
+@pytest.mark.parametrize(
+    "target",
+    set(_flatten_keys(tof.elastic('wavelength')))
+    - {"energy_transfer", "incident_energy", "final_energy"},
+)
 def test_elastic_can_compute_all_from_wavelength(target: str | tuple[str]) -> None:
-    graph = {**kinematics.elastic('wavelength'), **beamline.beamline(scatter=True)}
+    graph = {**tof.elastic('wavelength'), **beamline.beamline(scatter=True)}
     da = sc.DataArray(
         sc.zeros(sizes={'event': 4, 'detector': 2}),
         coords={
@@ -68,3 +72,16 @@ def test_elastic_can_compute_all_from_wavelength(target: str | tuple[str]) -> No
     )
     result = da.transform_coords(target, graph)
     assert target in result.coords
+
+
+def test_elastic_can_compute_energy_transfer_from_wavelengths() -> None:
+    graph = {**tof.elastic('wavelength'), **beamline.beamline(scatter=True)}
+    da = sc.DataArray(
+        sc.zeros(sizes={'event': 4, 'detector': 2}),
+        coords={
+            'incident_wavelength': sc.arange('event', 1, 5, unit='angstrom'),
+            'final_wavelength': sc.arange('event', 1, 5, unit='angstrom') * 1.5,
+        },
+    )
+    result = da.transform_coords('energy_transfer', graph)
+    assert 'energy_transfer' in result.coords
