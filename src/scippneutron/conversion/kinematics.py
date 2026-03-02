@@ -26,38 +26,6 @@ def _common_dtype(a, b):
     return sc.DType.float64
 
 
-# def wavelength_from_tof(*, tof: Variable, Ltotal: Variable) -> Variable:
-#     r"""Compute the wavelength from time-of-flight.
-
-#     The result is the de Broglie wavelength
-
-#     .. math::
-
-#         \lambda = \frac{h t}{m_n L_\mathsf{total}}
-
-#     Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
-
-#     Parameters
-#     ----------
-#     tof:
-#         Time-of-flight :math:`t`.
-#     Ltotal:
-#         Total beam length.
-
-#     Returns
-#     -------
-#     :
-#         Wavelength :math:`\lambda`.
-#         Has unit ångström.
-#     """
-#     c = sc.to_unit(
-#         const.h / const.m_n,
-#         sc.units.angstrom * elem_unit(Ltotal) / elem_unit(tof),
-#         copy=False,
-#     )
-#     return as_float_type(c / Ltotal, tof) * tof
-
-
 def tof_from_wavelength(*, wavelength: Variable, Ltotal: Variable) -> Variable:
     r"""Compute the time-of-flight from the wavelength.
 
@@ -82,198 +50,6 @@ def tof_from_wavelength(*, wavelength: Variable, Ltotal: Variable) -> Variable:
         "us",
         copy=False,
     )
-
-
-# def dspacing_from_tof(
-#     *, tof: Variable, Ltotal: Variable, two_theta: Variable
-# ) -> Variable:
-#     r"""Compute the d-spacing from time-of-flight.
-
-#     The result is the inter-planar lattice spacing
-
-#     .. math::
-
-#         d = \frac{h t}{m_n L_\mathsf{total}\; 2 \sin \theta}
-
-#     Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
-
-#     Parameters
-#     ----------
-#     tof:
-#         Time-of-flight :math:`t`.
-#     Ltotal:
-#         Total beam length.
-#     two_theta:
-#         Scattering angle :math:`2 \theta`.
-
-#     Returns
-#     -------
-#     :
-#         Inter-planar lattice spacing :math:`d`.
-#         Has unit ångström.
-
-#     See Also
-#     --------
-#     scippneutron.conversions.beamline:
-#         Definitions of ``two_theta`` and ``Ltotal``.
-#     """
-#     c = sc.to_unit(
-#         2 * const.m_n / const.h,
-#         elem_unit(tof) / sc.units.angstrom / elem_unit(Ltotal),
-#         copy=False,
-#     )
-#     return 1 / as_float_type(c * Ltotal * sc.sin(two_theta / 2), tof) * tof
-
-
-# def _energy_constant(energy_unit: sc.Unit, tof: Variable, length: Variable):
-#     return sc.to_unit(
-#         const.m_n / 2,
-#         energy_unit * (elem_unit(tof) / elem_unit(length)) ** 2,
-#         copy=False,
-#     )
-
-
-# def energy_from_tof(*, tof: Variable, Ltotal: Variable) -> Variable:
-#     r"""Compute the neutron energy from time-of-flight.
-
-#     The result is
-
-#     .. math::
-
-#         E = \frac{m_n L_\mathsf{total}^2}{2 t^2}
-
-#     Where :math:`m_n` is the neutron mass.
-
-#     Parameters
-#     ----------
-#     tof:
-#         Time-of-flight :math:`t`.
-#     Ltotal:
-#         Total beam length.
-#     Returns
-#     -------
-#     :
-#         Neutron energy :math:`E`.
-#         Has unit meV.
-#     """
-#     c = _energy_constant(sc.units.meV, tof, Ltotal)
-#     return as_float_type(c * Ltotal**2, tof) / tof ** sc.scalar(
-#         2, dtype=elem_dtype(tof)
-#     )
-
-
-# def _energy_transfer_t0(energy, tof, length):
-#     dtype = _common_dtype(energy, tof)
-#     c = as_float_type(_energy_constant(elem_unit(energy), tof, length), energy)
-#     return length.astype(dtype, copy=False) * sc.sqrt(c / energy)
-
-
-# def energy_transfer_direct_from_tof(
-#     *, tof: Variable, L1: Variable, L2: Variable, incident_energy: Variable
-# ) -> Variable:
-#     r"""Compute the energy transfer in direct inelastic scattering.
-
-#     The result is
-
-#     .. math::
-
-#         \Delta E = E_i - \frac{m_n L_2^2}{2 {(t - t_0)}^2}
-
-#     With
-
-#     .. math::
-
-#         t_0 = \sqrt{m_n L_1^2 / (2 E_i)}
-
-#     and :math:`m_n` the neutron mass.
-
-#     The result is ``NaN`` for unphysical points, that is, where :math:`t < t_0`.
-
-#     Parameters
-#     ----------
-#     tof:
-#         Time-of-flight :math:`t`.
-#     L1:
-#         Primary beam length.
-#     L2:
-#         Secondary beam length.
-#     incident_energy:
-#         Energy before scattering :math:`E_i`.
-
-#     Returns
-#     -------
-#     :
-#         Energy transfer :math:`\Delta E`.
-#         Has the same unit as incident_energy.
-
-#     See Also
-#     --------
-#     scippneutron.conversions.tof.energy_transfer_indirect_from_tof
-#     """
-#     t0 = _energy_transfer_t0(incident_energy, tof, L1)
-#     c = _energy_constant(elem_unit(incident_energy), tof, L2)
-#     dtype = _common_dtype(incident_energy, tof)
-#     scale = (c * L2**2).astype(dtype, copy=False)
-#     delta_tof = tof - t0
-#     return sc.where(
-#         delta_tof <= sc.scalar(0, unit=elem_unit(delta_tof)),
-#         sc.scalar(np.nan, dtype=dtype, unit=elem_unit(incident_energy)),
-#         incident_energy - scale / delta_tof**2,
-#     )
-
-
-# def energy_transfer_indirect_from_tof(
-#     *, tof: Variable, L1: Variable, L2: Variable, final_energy: Variable
-# ) -> Variable:
-#     r"""Compute the energy transfer in indirect inelastic scattering.
-
-#     The result is
-
-#     .. math::
-
-#         \Delta E = \frac{m_n L_1^2}{2 {(t - t_0)}^2} - E_f
-
-#     With
-
-#     .. math::
-
-#         t_0 = \sqrt{m_n L_2^2 / (2 E_f)}
-
-#     and :math:`m_n` the neutron mass.
-
-#     The result is ``NaN`` for unphysical points, that is, where :math:`t < t_0`.
-
-#     Parameters
-#     ----------
-#     tof:
-#         Time-of-flight :math:`t`.
-#     L1:
-#         Primary beam length.
-#     L2:
-#         Secondary beam length.
-#     final_energy:
-#         Energy after scattering :math:`E_f`.
-
-#     Returns
-#     -------
-#     :
-#         Energy transfer :math:`\Delta E`.
-#         Has the same unit as final_energy.
-
-#     See Also
-#     --------
-#     scippneutron.conversions.tof.energy_transfer_direct_from_tof
-#     """
-#     t0 = _energy_transfer_t0(final_energy, tof, L2)
-#     c = _energy_constant(elem_unit(final_energy), tof, L1)
-#     dtype = _common_dtype(final_energy, tof)
-#     scale = (c * L1**2).astype(dtype, copy=False)
-#     delta_tof = -t0 + tof  # Order chosen such that output.dims = ['spectrum', 'tof']
-#     return sc.where(
-#         delta_tof <= sc.scalar(0, unit=elem_unit(delta_tof)),
-#         sc.scalar(np.nan, dtype=dtype, unit=elem_unit(final_energy)),
-#         scale / delta_tof**2 - final_energy,
-#     )
 
 
 def energy_from_wavelength(*, wavelength: Variable) -> Variable:
@@ -316,9 +92,10 @@ def energy_transfer_from_wavelength(
 
     .. math::
 
-        \Delta E = \frac{h^2}{2 m_n} \left( \frac{1}{\lambda_f^2} - \frac{1}{\lambda_i^2} \right)
+        \Delta E = \frac{h^2}{2 m_n} \left( \frac{1}{\lambda_i^2} - \frac{1}{\lambda_f^2} \right)
 
     Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
+    The incident wavelength is :math:`\lambda_i` and the final wavelength is :math:`\lambda_f`.
 
     Parameters
     ----------
@@ -335,8 +112,8 @@ def energy_transfer_from_wavelength(
     dtype = _common_dtype(incident_wavelength, final_wavelength)
     lambda_i = incident_wavelength.to(dtype=dtype, copy=False)
     lambda_f = final_wavelength.to(dtype=dtype, copy=False)
-    delta_e = sc.reciprocal(lambda_f) ** 2
-    delta_e -= sc.reciprocal(lambda_i) ** 2
+    delta_e = sc.reciprocal(lambda_i) ** 2
+    delta_e -= sc.reciprocal(lambda_f) ** 2
     delta_e *= sc.to_dtype(const.h**2 / 2 / const.m_n, dtype, copy=False)
     return sc.to_unit(delta_e, 'meV', copy=False)
 
@@ -717,7 +494,7 @@ def hkl_vec_from_elastic_Q_vec(
         \vec{Q} = \begin{pmatrix} h \\ k \\ l \end{pmatrix}.
 
     In the lab frame, the momentum transfer as computed by
-    :func:`scippneutron.conversion.tof.Q_elements_from_wavelength`
+    :func:`scippneutron.conversion.kinematics.Q_elements_from_wavelength`
     is defined as
 
     .. math::
@@ -756,13 +533,13 @@ def hkl_vec_from_elastic_Q_vec(
 
     See also
     --------
-    scippneutron.conversion.tof.Q_elements_from_wavelength:
+    scippneutron.conversion.kinematics.Q_elements_from_wavelength:
         Computes ``Q_l``.
-    scippneutron.conversion.tof.Q_vec_from_Q_elements:
+    scippneutron.conversion.kinematics.Q_vec_from_Q_elements:
         Packs elements ``Qx``, ``Qy``, ``Qz`` into a single vector.
-    scippneutron.conversion.tof.ub_matrix_from_u_and_b:
+    scippneutron.conversion.kinematics.ub_matrix_from_u_and_b:
         Compute :math:`\mathsf{UB}` from :math:`B` and :math:`B` matrices.
-    scippneutron.conversion.tof.hkl_elements_from_hkl_vec:
+    scippneutron.conversion.kinematics.hkl_elements_from_hkl_vec:
         Unpack the returned hkl vector.
     """
     # There are different ways to implement this with different performance and

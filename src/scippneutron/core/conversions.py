@@ -11,12 +11,12 @@ from ..conversion import graph as _graphs
 
 def _inelastic_scatter_graph(energy_mode):
     inelastic_graph_factory = {
-        'direct_inelastic': _graphs.tof.direct_inelastic,
-        'indirect_inelastic': _graphs.tof.indirect_inelastic,
+        'direct_inelastic': _graphs.kinematics.direct_inelastic,
+        'indirect_inelastic': _graphs.kinematics.indirect_inelastic,
     }
     return {
         **_graphs.beamline.beamline(scatter=True),
-        **inelastic_graph_factory[energy_mode](start='tof'),
+        **inelastic_graph_factory[energy_mode](start='wavelength'),
     }
 
 
@@ -31,7 +31,7 @@ def _elastic_scatter_graph(origin, target):
     scatter_graph_kinematics = _graphs.beamline.beamline(scatter=True)
     if _reachable_by(target, scatter_graph_kinematics):
         return dict(scatter_graph_kinematics)
-    return {**scatter_graph_kinematics, **_graphs.tof.elastic(origin)}
+    return {**scatter_graph_kinematics, **_graphs.kinematics.elastic(origin)}
 
 
 def _scatter_graph(origin, target, energy_mode):
@@ -67,7 +67,7 @@ def conversion_graph(
     else:
         return {
             **_graphs.beamline.beamline(scatter=False),
-            **_graphs.tof.kinematic(start='tof'),
+            **_graphs.kinematics.kinematic(start='wavelength'),
         }
 
 

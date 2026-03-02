@@ -12,8 +12,7 @@ ScippNeutron uses three positions to define a beamline:
 - ``source_position`` defines the point where :math:`t=0` (or vice versa).
   In practice, this can be the actual neutron source, a moderator, or a chopper.
 - ``sample_position`` is the position of the sample that scatters neutrons.
-- ``position`` is the position of the detector (pixel / voxel) that detects a neutron
-  at :math:`t=\mathsf{tof}`.
+- ``position`` is the position of the detector (pixel / voxel) that detects a neutron.
 
 Based on these positions, we define:
 

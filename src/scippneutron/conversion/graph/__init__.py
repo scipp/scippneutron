@@ -12,7 +12,7 @@ For example:
 
     >>> from scippneutron.conversion import graph
     >>> wavelength_graph = {**graph.beamline.beamline(scatter=True),
-    ...                     **graph.tof.elastic_wavelength(start='tof')}
+    ...                     **graph.kinematics.elastic_wavelength(start='wavelength')}
 
 The `user guide <../../user-guide/coordinate-transformations.rst>`_ gives
 more examples.

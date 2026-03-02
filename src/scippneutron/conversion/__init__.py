@@ -7,7 +7,7 @@
 The submodules are mainly intended for constructing graphs for
 :func:`scipp.transform_coords` but can also be used independently.
 
-``beamline`` and ``tof`` contain individual transformation kernels.
+``beamline`` and ``kinematics`` contain individual transformation kernels.
 ``graph`` contains concrete graphs that can be passed to ``transform_coords``.
 
 See also the user guide on

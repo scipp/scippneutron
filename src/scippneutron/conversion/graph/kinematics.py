@@ -3,7 +3,7 @@
 # @author Jan-Lukas Wynen
 """Graphs for computing coordinates in time-of-flight neutron scattering.
 
-See :mod:`scippneutron.conversion.tof` for definitions
+See :mod:`scippneutron.conversion.kinematics` for definitions
 of the quantities used here.
 And the `user guide <../../user-guide/coordinate-transformations.rst>`_
 for examples.
@@ -57,7 +57,7 @@ def elastic(start: str) -> Graph:
     Parameters
     ----------
     start:
-        Input coordinate. One of 'dspacing', 'energy', 'tof', 'Q',
+        Input coordinate. One of 'dspacing', 'energy', 'Q',
         or 'wavelength'.
 
     Returns
@@ -76,7 +76,7 @@ def kinematic(start: str) -> Graph:
     Parameters
     ----------
     start:
-        Input coordinate. Currently, only 'tof' is supported.
+        Input coordinate. Currently, only 'wavelength' is supported.
 
     Returns
     -------
@@ -93,7 +93,7 @@ def elastic_dspacing(start: str) -> Graph:
     Parameters
     ----------
     start:
-     Input coordinate. One of 'energy', 'tof', or 'wavelength'.
+     Input coordinate. One of 'energy', or 'wavelength'.
 
     Returns
     -------
@@ -110,7 +110,7 @@ def elastic_energy(start: str) -> Graph:
     Parameters
     ----------
     start:
-        Input coordinate. One of 'tof' or 'wavelength'.
+        Input coordinate. Currently only 'wavelength' is supported.
 
     Returns
     -------
@@ -127,7 +127,7 @@ def elastic_Q(start: str) -> Graph:
     Parameters
     ----------
     start:
-        Input coordinate. One of 'tof' or 'wavelength'.
+        Input coordinate. Currently only 'wavelength' is supported.
 
     Returns
     -------
@@ -144,7 +144,7 @@ def elastic_Q_vec(start: str) -> Graph:
     Parameters
     ----------
     start:
-        Input coordinate. One of 'tof' or 'wavelength'.
+        Input coordinate. Currently only 'wavelength' is supported.
 
     Returns
     -------
@@ -161,7 +161,7 @@ def elastic_hkl(start: str) -> Graph:
     Parameters
     ----------
     start:
-        Input coordinate. One of 'tof' or 'wavelength'.
+        Input coordinate. Currently only 'wavelength' is supported.
 
     Returns
     -------
@@ -188,7 +188,7 @@ def elastic_wavelength(start: str) -> Graph:
     Parameters
     ----------
     start:
-        Input coordinate. One of 'energy', 'tof', or 'Q'.
+        Input coordinate. One of 'energy', 'wavelength', or 'Q'.
 
     Returns
     -------
@@ -205,14 +205,16 @@ def direct_inelastic(start: str) -> Graph:
     Parameters
     ----------
     start:
-        Input coordinate. Currently, only 'tof' is supported.
+        Input coordinate. Currently only 'wavelength' is supported.
 
     Returns
     -------
     :
         A dict defining a coordinate transformation graph.
     """
-    return {'tof': {'energy_transfer': _kernels.energy_transfer_direct_from_tof}}[start]
+    return {
+        'wavelength': {'energy_transfer': _kernels.energy_transfer_from_wavelength}
+    }[start]
 
 
 def indirect_inelastic(start: str) -> Graph:
@@ -222,13 +224,13 @@ def indirect_inelastic(start: str) -> Graph:
     Parameters
     ----------
     start:
-        Input coordinate. Currently, only 'tof' is supported.
+        Input coordinate. Currently, only 'wavelength' is supported.
 
     Returns
     -------
     :
         A dict defining a coordinate transformation graph.
     """
-    return {'tof': {'energy_transfer': _kernels.energy_transfer_indirect_from_tof}}[
-        start
-    ]
+    return {
+        'wavelength': {'energy_transfer': _kernels.energy_transfer_from_wavelength}
+    }[start]
