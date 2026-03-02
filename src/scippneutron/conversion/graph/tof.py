@@ -56,6 +56,7 @@ _GRAPH_DYNAMICS_BY_ORIGIN = {
         'Q': _kernels.elastic_Q_from_wavelength,
         'Q_vec': _kernels.elastic_Q_vec_from_Q_elements,
         ('Qx', 'Qy', 'Qz'): _kernels.elastic_Q_elements_from_wavelength,
+        'time_at_sample': _kernels.time_at_sample_from_wavelength,
     },
 }
 
