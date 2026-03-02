@@ -35,6 +35,7 @@ def test_elastic():
         ('h', 'k', 'l'),
         'ub_matrix',
         'tof',
+        'time_at_sample',
     }
 
 
