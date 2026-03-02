@@ -112,7 +112,7 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
         return float(x * scale)
 
     def polar_to_svg_coords(*, r: sc.Variable, a: sc.Variable) -> tuple[float, float]:
-        x = to_svg_coord(r * -sc.sin(a))
+        x = to_svg_coord(r * -sc.sin(a.to(dtype=float)))
         y = image_size - to_svg_coord(r * sc.cos(a))
         return x, y
 
