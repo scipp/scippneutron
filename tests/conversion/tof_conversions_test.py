@@ -372,9 +372,6 @@ def test_energy_transfer_direct_from_wavelength(final_wavelength, incident_energ
         ),
         unit=energy_transfer.unit,
     )
-    # expected = sc.where(
-    #     tof >= t0, expected, sc.scalar(np.nan, unit=incident_energy.unit)
-    # )
     assert sc.allclose(energy_transfer, expected, equal_nan=True)
 
 
@@ -395,7 +392,6 @@ def test_energy_transfer_indirect_from_wavelength(incident_wavelength, final_ene
         - final_energy,
         unit=energy_transfer.unit,
     )
-    # expected = sc.where(tof >= t0, expected, sc.scalar(np.nan, unit=final_energy.unit))
     assert sc.allclose(energy_transfer, expected, equal_nan=True)
 
 
