@@ -31,6 +31,7 @@ def test_elastic():
         'hkl_vec',
         ('h', 'k', 'l'),
         'ub_matrix',
+        'tof',
     }
 
 
@@ -100,9 +101,10 @@ def test_elastic_wavelength_unsupported_starts(start):
 
 def test_direct_inelastic():
     assert set(tof.direct_inelastic('tof').keys()) == {'energy_transfer'}
+    assert set(tof.direct_inelastic('wavelength').keys()) == {'energy_transfer'}
 
 
-@pytest.mark.parametrize('start', ['wavelength', 'Q', 'dspacing'])
+@pytest.mark.parametrize('start', ['Q', 'dspacing'])
 def test_direct_inelastic_unsupported_starts(start):
     with pytest.raises(KeyError):
         tof.direct_inelastic(start)
@@ -110,9 +112,10 @@ def test_direct_inelastic_unsupported_starts(start):
 
 def test_indirect_inelastic():
     assert set(tof.indirect_inelastic('tof').keys()) == {'energy_transfer'}
+    assert set(tof.indirect_inelastic('wavelength').keys()) == {'energy_transfer'}
 
 
-@pytest.mark.parametrize('start', ['wavelength', 'Q', 'dspacing'])
+@pytest.mark.parametrize('start', ['Q', 'dspacing'])
 def test_indirect_inelastic_unsupported_starts(start):
     with pytest.raises(KeyError):
         tof.indirect_inelastic(start)

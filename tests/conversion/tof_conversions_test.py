@@ -152,6 +152,36 @@ def test_wavelength_from_tof_single_precision(Ltotal_dtype):
     assert tof_conv.wavelength_from_tof(tof=tof, Ltotal=Ltotal).dtype == 'float32'
 
 
+@given(wavelength=wavelength_variables(), Ltotal=space_variables())
+@settings(**global_settings)
+def test_tof_from_wavelength(wavelength, Ltotal):
+    tof = tof_conv.tof_from_wavelength(wavelength=wavelength, Ltotal=Ltotal)
+    assert sc.allclose(
+        tof, sc.to_unit(const.m_n * wavelength * Ltotal / const.h, unit='us')
+    )
+
+
+@pytest.mark.parametrize('wavelength_dtype', ['float64', 'int64', 'int32'])
+@pytest.mark.parametrize('Ltotal_dtype', ['float64', 'float32', 'int64', 'int32'])
+def test_tof_from_wavelength_double_precision(wavelength_dtype, Ltotal_dtype):
+    wavelength = sc.scalar(1.2, unit='angstrom', dtype=wavelength_dtype)
+    Ltotal = sc.scalar(10.1, unit='m', dtype=Ltotal_dtype)
+    assert (
+        tof_conv.tof_from_wavelength(wavelength=wavelength, Ltotal=Ltotal).dtype
+        == 'float64'
+    )
+
+
+@pytest.mark.parametrize('Ltotal_dtype', ['float64', 'float32', 'int64', 'int32'])
+def test_tof_from_wavelength_single_precision(Ltotal_dtype):
+    wavelength = sc.scalar(1.2, unit='angstrom', dtype='float32')
+    Ltotal = sc.scalar(10.1, unit='m', dtype=Ltotal_dtype)
+    assert (
+        tof_conv.tof_from_wavelength(wavelength=wavelength, Ltotal=Ltotal).dtype
+        == 'float32'
+    )
+
+
 @given(wavelength=wavelength_variables(), beam=vector_variables())
 @settings(**global_settings)
 def test_wavevector_from_wavelength(wavelength: sc.Variable, beam: sc.Variable) -> None:
@@ -323,6 +353,45 @@ def test_wavelength_from_energy_double_precision(energy_dtype):
 def test_wavelength_from_energy_single_precision():
     energy = sc.scalar(61.0, unit='meV', dtype='float32')
     assert tof_conv.wavelength_from_energy(energy=energy).dtype == 'float32'
+
+
+@given(final_wavelength=wavelength_variables(), incident_energy=energy_variables())
+@settings(**global_settings)
+def test_energy_transfer_direct_from_wavelength(final_wavelength, incident_energy):
+    # Energies are always > 0. This matters for detection of invalid tof values.
+    incident_energy = abs(incident_energy) * 1.0001
+
+    energy_transfer = tof_conv.energy_transfer_from_energies(
+        final_energy=tof_conv.energy_from_wavelength(final_wavelength),
+        incident_energy=incident_energy,
+    )
+    expected = incident_energy - sc.to_unit(
+        const.h**2 / (2 * const.m_n * final_wavelength**2), incident_energy.unit
+    )
+    # expected = sc.where(
+    #     tof >= t0, expected, sc.scalar(np.nan, unit=incident_energy.unit)
+    # )
+    assert sc.allclose(energy_transfer, expected, equal_nan=True)
+
+
+@given(incident_wavelength=wavelength_variables(), final_energy=energy_variables())
+@settings(**global_settings)
+def test_energy_transfer_indirect_from_wavelength(incident_wavelength, final_energy):
+    # Energies are always > 0. This matters for detection of invalid tof values.
+    final_energy = abs(final_energy) * 1.0001
+
+    energy_transfer = tof_conv.energy_transfer_from_energies(
+        incident_energy=tof_conv.energy_from_wavelength(incident_wavelength),
+        final_energy=final_energy,
+    )
+    expected = (
+        sc.to_unit(
+            const.h**2 / (2 * const.m_n * incident_wavelength**2), final_energy.unit
+        )
+        - final_energy
+    )
+    # expected = sc.where(tof >= t0, expected, sc.scalar(np.nan, unit=final_energy.unit))
+    assert sc.allclose(energy_transfer, expected, equal_nan=True)
 
 
 @given(wavelength=space_variables(), two_theta=angle_variables())

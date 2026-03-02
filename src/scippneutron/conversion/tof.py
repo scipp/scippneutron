@@ -338,6 +338,87 @@ def wavelength_from_energy(*, energy: Variable) -> Variable:
     return sc.sqrt(c / energy)
 
 
+def incident_energy_from_wavelength(*, incident_wavelength: Variable) -> Variable:
+    r"""Compute the incident energy from the incident wavelength.
+
+    The result is
+
+    .. math::
+
+        E_i = \frac{h^2}{2 m_n \lambda_i^2}
+
+    Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
+
+    Parameters
+    ----------
+    incident_wavelength:
+        Incident neutron wavelength :math:`\lambda_i`.
+
+    Returns
+    -------
+    :
+        Incident energy :math:`E_i`.
+        Has unit meV.
+    """
+    return energy_from_wavelength(wavelength=incident_wavelength)
+
+
+def final_energy_from_wavelength(*, final_wavelength: Variable) -> Variable:
+    r"""Compute the final energy from the final wavelength.
+
+    The result is
+
+    .. math::
+
+        E_f = \frac{h^2}{2 m_n \lambda_f^2}
+
+    Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
+
+    Parameters
+    ----------
+    final_wavelength:
+        Final neutron wavelength :math:`\lambda_f`.
+
+    Returns
+    -------
+    :
+        Final energy :math:`E_f`.
+        Has unit meV.
+    """
+    return energy_from_wavelength(wavelength=final_wavelength)
+
+
+def energy_transfer_from_energies(
+    *, incident_energy: Variable, final_energy: Variable
+) -> Variable:
+    r"""Compute the energy transfer from incident and final energies.
+
+    The result is
+
+    .. math::
+
+        \Delta E = E_i - E_f
+
+    Where :math:`E_i` is the incident energy and :math:`E_f` the final energy.
+
+    Parameters
+    ----------
+    incident_energy:
+        Incident neutron energy :math:`E_i`.
+    final_energy:
+        Final neutron energy :math:`E_f`.
+
+    Returns
+    -------
+    :
+        Energy transfer :math:`\Delta E`.
+    """
+    dtype = _common_dtype(incident_energy, final_energy)
+    e_i = incident_energy.to(dtype=dtype, copy=False)
+    e_f = final_energy.to(dtype=dtype, unit=e_i.unit, copy=False)
+    return sc.to_unit(e_i - e_f, 'meV', copy=False)
+
+
 def wavevector_from_wavelength(*, wavelength: Variable, beam: Variable) -> Variable:
     r"""Compute a wavevector from a wavelength.
 
