@@ -19,7 +19,7 @@ Functions in this module come in two categories and return graphs that
 
 from collections.abc import Callable
 
-from .. import tof as _kernels
+from .. import kinematics as _kernels
 
 Graph = dict[str, Callable]
 
@@ -48,6 +48,7 @@ _GRAPH_DYNAMICS_BY_ORIGIN = {
         'energy': _kernels.energy_from_wavelength,
         'hkl_vec': _kernels.hkl_vec_from_elastic_Q_vec,
         ('h', 'k', 'l'): _kernels.hkl_elements_from_hkl_vec,
+        'tof': _kernels.tof_from_wavelength,
         'ub_matrix': _kernels.ub_matrix_from_u_and_b,
         'Q': _kernels.elastic_Q_from_wavelength,
         'Q_vec': _kernels.elastic_Q_vec_from_Q_elements,

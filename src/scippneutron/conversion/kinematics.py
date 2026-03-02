@@ -58,6 +58,32 @@ def wavelength_from_tof(*, tof: Variable, Ltotal: Variable) -> Variable:
     return as_float_type(c / Ltotal, tof) * tof
 
 
+def tof_from_wavelength(*, wavelength: Variable, Ltotal: Variable) -> Variable:
+    r"""Compute the time-of-flight from the wavelength.
+
+    The result is the time taken by a neutron to travel a distance
+    :math:`L_\mathsf{total}` with a de Broglie wavelength :math:`\lambda`:
+
+    .. math::
+
+        t = \frac{m_n L_\mathsf{total} \lambda}{h}
+
+    Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
+
+    Returns
+    -------
+    :
+        Time-of-flight :math:`t`.
+        Has unit microsecond.
+    """
+
+    return sc.to_unit(
+        as_float_type((const.m_n / const.h) * Ltotal, wavelength) * wavelength,
+        "us",
+        copy=False,
+    )
+
+
 def dspacing_from_tof(
     *, tof: Variable, Ltotal: Variable, two_theta: Variable
 ) -> Variable:
@@ -701,10 +727,9 @@ def hkl_elements_from_hkl_vec(*, hkl_vec: Variable) -> dict[str, Variable]:
     return {'h': hkl_vec.fields.x, 'k': hkl_vec.fields.y, 'l': hkl_vec.fields.z}
 
 
-def time_at_sample_from_tof(
+def time_at_sample_from_wavelength(
     *,
-    pulse_time: VariableLike,
-    tof: VariableLike,
+    toa: VariableLike,
     L2: VariableLike,
     wavelength: VariableLike,
 ) -> VariableLike:
@@ -714,23 +739,23 @@ def time_at_sample_from_tof(
 
     .. math::
 
-        t_{sample} = t_{pulse} + t_{of} - L_2 / v
+        t_{sample} = t_{\\mathsf{arrival}} - L_2 / v
 
-    where
+    where :math:`t_{\\mathsf{arrival}}` is the absolute time when the neutron arrives
+    at the detector, :math:`L_2` is the path length from sample to detector, and
 
     .. math::
 
         v = \\frac{h}{m_n \\lambda}
 
-    where :math:`v` is the estimated velocity of the neutron over its path from
-    sample to detector and :math:`\\lambda` is the wavelength of the neutron.
+    is the estimated velocity of the neutron over its path from
+    sample to detector. Here, :math:`\\lambda` is the wavelength of the neutron,
+    :math:`h` is the Planck constant, and :math:`m_n` is the neutron mass.
 
     Parameters
     ----------
-    pulse_time:
-        absolute time when time of flight is 0
-    tof:
-        the time of fligth of the neutron
+    toa:
+        the absolute time when the neutron arrives at the detector
     L2:
         path length from sample to detector
     wavelength:
@@ -746,7 +771,7 @@ def time_at_sample_from_tof(
     """
     c = sc.to_unit(
         const.h / const.m_n,
-        sc.units.angstrom * elem_unit(L2) / elem_unit(tof),
+        sc.units.angstrom * elem_unit(L2) / elem_unit(toa),
         copy=False,
     )
-    return pulse_time + tof - L2 * wavelength / c
+    return toa - L2 * (wavelength / c)
