@@ -212,9 +212,7 @@ def direct_inelastic(start: str) -> Graph:
     :
         A dict defining a coordinate transformation graph.
     """
-    return {
-        'wavelength': {'energy_transfer': _kernels.energy_transfer_from_wavelength}
-    }[start]
+    return _strip_elastic(start, keep=['energy_transfer'])
 
 
 def indirect_inelastic(start: str) -> Graph:
@@ -231,6 +229,4 @@ def indirect_inelastic(start: str) -> Graph:
     :
         A dict defining a coordinate transformation graph.
     """
-    return {
-        'wavelength': {'energy_transfer': _kernels.energy_transfer_from_wavelength}
-    }[start]
+    return _strip_elastic(start, keep=['energy_transfer'])

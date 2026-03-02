@@ -11,7 +11,7 @@ from hypothesis.extra import numpy as npst
 from scipp.testing import strategies as scst
 
 from scippneutron.conversion import beamline as beamline_conv
-from scippneutron.conversion import tof as tof_conv
+from scippneutron.conversion import kinematics as kin_conv
 
 global_settings = {
     'max_examples': 20,
@@ -128,34 +128,40 @@ def vector_variables():
     )
 
 
-@given(tof=time_variables(), Ltotal=space_variables())
+@given(wavelength=wavelength_variables(), Ltotal=space_variables())
 @settings(**global_settings)
-def test_wavelength_from_tof(tof, Ltotal):
-    wavelength = tof_conv.wavelength_from_tof(tof=tof, Ltotal=Ltotal)
+def test_tof_from_wavelength(wavelength, Ltotal):
+    tof = kin_conv.tof_from_wavelength(wavelength=wavelength, Ltotal=Ltotal)
     assert sc.allclose(
-        wavelength, sc.to_unit(const.h * tof / const.m_n / Ltotal, unit='angstrom')
+        tof, sc.to_unit(const.m_n * wavelength * Ltotal / const.h, unit='us')
     )
 
 
-@pytest.mark.parametrize('tof_dtype', ['float64', 'int64', 'int32'])
+@pytest.mark.parametrize('wavelength_dtype', ['float64', 'int64', 'int32'])
 @pytest.mark.parametrize('Ltotal_dtype', ['float64', 'float32', 'int64', 'int32'])
-def test_wavelength_from_tof_double_precision(tof_dtype, Ltotal_dtype):
-    tof = sc.scalar(1.2, unit='s', dtype=tof_dtype)
+def test_tof_from_wavelength_double_precision(wavelength_dtype, Ltotal_dtype):
+    wavelength = sc.scalar(1.2, unit='angstrom', dtype=wavelength_dtype)
     Ltotal = sc.scalar(10.1, unit='m', dtype=Ltotal_dtype)
-    assert tof_conv.wavelength_from_tof(tof=tof, Ltotal=Ltotal).dtype == 'float64'
+    assert (
+        kin_conv.tof_from_wavelength(wavelength=wavelength, Ltotal=Ltotal).dtype
+        == 'float64'
+    )
 
 
 @pytest.mark.parametrize('Ltotal_dtype', ['float64', 'float32', 'int64', 'int32'])
-def test_wavelength_from_tof_single_precision(Ltotal_dtype):
-    tof = sc.scalar(1.2, unit='s', dtype='float32')
+def test_tof_from_wavelength_single_precision(Ltotal_dtype):
+    wavelength = sc.scalar(1.2, unit='angstrom', dtype='float32')
     Ltotal = sc.scalar(10.1, unit='m', dtype=Ltotal_dtype)
-    assert tof_conv.wavelength_from_tof(tof=tof, Ltotal=Ltotal).dtype == 'float32'
+    assert (
+        kin_conv.tof_from_wavelength(wavelength=wavelength, Ltotal=Ltotal).dtype
+        == 'float32'
+    )
 
 
 @given(wavelength=wavelength_variables(), beam=vector_variables())
 @settings(**global_settings)
 def test_wavevector_from_wavelength(wavelength: sc.Variable, beam: sc.Variable) -> None:
-    wavevector = tof_conv.wavevector_from_wavelength(wavelength=wavelength, beam=beam)
+    wavevector = kin_conv.wavevector_from_wavelength(wavelength=wavelength, beam=beam)
     naive = sc.to_unit(
         2 * np.pi * beam / sc.norm(beam) / wavelength,
         '1/angstrom',
@@ -164,150 +170,151 @@ def test_wavevector_from_wavelength(wavelength: sc.Variable, beam: sc.Variable) 
 
 
 @given(
-    tof=time_variables(),
+    wavelength=wavelength_variables(),
     Ltotal_and_two_theta=n_space_variables(2),
     two_theta_unit=st.sampled_from(('deg', 'rad')),
 )
 @settings(**global_settings)
-def test_dspacing_from_tof(tof, Ltotal_and_two_theta, two_theta_unit):
+def test_dspacing_from_wavelength(wavelength, Ltotal_and_two_theta, two_theta_unit):
     Ltotal, two_theta = Ltotal_and_two_theta
     two_theta.unit = two_theta_unit
-    dspacing = tof_conv.dspacing_from_tof(tof=tof, Ltotal=Ltotal, two_theta=two_theta)
+    dspacing = kin_conv.dspacing_from_wavelength(
+        wavelength=wavelength, Ltotal=Ltotal, two_theta=two_theta
+    )
     assert sc.allclose(
         dspacing,
-        sc.to_unit(
-            const.h * tof / const.m_n / Ltotal / 2 / sc.sin(two_theta / 2),
-            unit='angstrom',
-        ),
+        sc.to_unit(wavelength / 2 / sc.sin(two_theta / 2), unit='angstrom'),
     )
 
 
-@pytest.mark.parametrize('tof_dtype', ['float64', 'int64', 'int32'])
+@pytest.mark.parametrize('wavelength_dtype', ['float64', 'int64', 'int32'])
 @pytest.mark.parametrize('Ltotal_dtype', ['float64', 'float32', 'int64', 'int32'])
 @pytest.mark.parametrize('two_theta_dtype', ['float64', 'float32', 'int64', 'int32'])
-def test_dspacing_from_tof_double_precision(tof_dtype, Ltotal_dtype, two_theta_dtype):
-    tof = sc.scalar(52.0, unit='s', dtype=tof_dtype)
+def test_dspacing_from_wavelength_double_precision(
+    wavelength_dtype, Ltotal_dtype, two_theta_dtype
+):
+    wavelength = sc.scalar(4.2, unit='angstrom', dtype=wavelength_dtype)
     Ltotal = sc.scalar(0.341, unit='m', dtype=Ltotal_dtype)
     two_theta = sc.scalar(1.68, unit='rad', dtype=two_theta_dtype)
     assert (
-        tof_conv.dspacing_from_tof(tof=tof, Ltotal=Ltotal, two_theta=two_theta).dtype
+        kin_conv.dspacing_from_wavelength(
+            wavelength=wavelength, Ltotal=Ltotal, two_theta=two_theta
+        ).dtype
         == 'float64'
     )
 
 
 @pytest.mark.parametrize('Ltotal_dtype', ['float64', 'float32', 'int64', 'int32'])
 @pytest.mark.parametrize('two_theta_dtype', ['float64', 'float32', 'int64', 'int32'])
-def test_dspacing_from_tof_single_precision(Ltotal_dtype, two_theta_dtype):
-    tof = sc.scalar(52.0, unit='s', dtype='float32')
+def test_dspacing_from_wavelength_single_precision(Ltotal_dtype, two_theta_dtype):
+    wavelength = sc.scalar(4.2, unit='angstrom', dtype='float32')
     Ltotal = sc.scalar(0.341, unit='m', dtype=Ltotal_dtype)
     two_theta = sc.scalar(1.68, unit='rad', dtype=two_theta_dtype)
     assert (
-        tof_conv.dspacing_from_tof(tof=tof, Ltotal=Ltotal, two_theta=two_theta).dtype
+        kin_conv.dspacing_from_wavelength(
+            wavelength=wavelength, Ltotal=Ltotal, two_theta=two_theta
+        ).dtype
         == 'float32'
     )
 
 
-@given(tof=time_variables(), Ltotal=space_variables())
-@settings(**global_settings)
-def test_energy_from_tof(tof, Ltotal):
-    energy = tof_conv.energy_from_tof(tof=tof, Ltotal=Ltotal)
-    assert sc.allclose(
-        energy, sc.to_unit(const.m_n * Ltotal**2 / 2 / tof**2, unit='meV')
-    )
-
-
-@pytest.mark.parametrize('tof_dtype', ['float64', 'int64'])
-@pytest.mark.parametrize('Ltotal_dtype', ['float64', 'float32', 'int64'])
-def test_energy_from_tof_double_precision(tof_dtype, Ltotal_dtype):
-    tof = sc.scalar(478.9, unit='s', dtype=tof_dtype)
-    Ltotal = sc.scalar(1.256, unit='m', dtype=Ltotal_dtype)
-    assert tof_conv.energy_from_tof(tof=tof, Ltotal=Ltotal).dtype == 'float64'
-
-
-@pytest.mark.parametrize('Ltotal_dtype', ['float64', 'float32', 'int64'])
-def test_energy_from_tof_single_precision(Ltotal_dtype):
-    tof = sc.scalar(478.9, unit='s', dtype='float32')
-    Ltotal = sc.scalar(1.256, unit='m', dtype=Ltotal_dtype)
-    assert tof_conv.energy_from_tof(tof=tof, Ltotal=Ltotal).dtype == 'float32'
-
-
-@given(
-    tof=time_variables(),
-    L1_and_L2=n_space_variables(2),
-    L2_unit=st.sampled_from(('m', 'mm', 'cm')),
-    incident_energy=energy_variables(),
-)
-@settings(**global_settings)
-def test_energy_transfer_direct_from_tof(tof, L1_and_L2, L2_unit, incident_energy):
-    L1, L2 = L1_and_L2
-    L2.unit = L2_unit
-    # Energies are always > 0. This matters for detection of invalid tof values.
-    incident_energy = abs(incident_energy) * 1.0001
-
-    energy_transfer = tof_conv.energy_transfer_direct_from_tof(
-        tof=tof, L1=L1, L2=L2, incident_energy=incident_energy
-    )
-
-    t0 = sc.to_unit(sc.sqrt(const.m_n * L1**2 / 2 / incident_energy), tof.unit)
-    expected = incident_energy - sc.to_unit(
-        const.m_n * L2**2 / 2 / (tof - t0) ** 2, incident_energy.unit
-    )
-    expected = sc.where(
-        tof >= t0, expected, sc.scalar(np.nan, unit=incident_energy.unit)
-    )
-    assert sc.allclose(energy_transfer, expected, equal_nan=True)
-
-
-@given(
-    tof=time_variables(),
-    L1_and_L2=n_space_variables(2),
-    L2_unit=st.sampled_from(('m', 'mm', 'cm')),
-    final_energy=energy_variables(),
-)
-@settings(**global_settings)
-def test_energy_transfer_indirect_from_tof(tof, L1_and_L2, L2_unit, final_energy):
-    L1, L2 = L1_and_L2
-    L2.unit = L2_unit
-    # Energies are always > 0. This matters for detection of invalid tof values.
-    final_energy = abs(final_energy) * 1.0001
-
-    energy_transfer = tof_conv.energy_transfer_indirect_from_tof(
-        tof=tof, L1=L1, L2=L2, final_energy=final_energy
-    )
-
-    t0 = sc.to_unit(sc.sqrt(const.m_n * L2**2 / 2 / final_energy), tof.unit)
-    expected = (
-        sc.to_unit(const.m_n * L1**2 / 2 / (tof - t0) ** 2, final_energy.unit)
-        - final_energy
-    )
-    expected = sc.where(tof >= t0, expected, sc.scalar(np.nan, unit=final_energy.unit))
-    assert sc.allclose(energy_transfer, expected, equal_nan=True)
-
-
-@given(wavelength=space_variables())
+@given(wavelength=wavelength_variables())
 @settings(**global_settings)
 def test_energy_from_wavelength(wavelength):
-    energy = tof_conv.energy_from_wavelength(wavelength=wavelength)
+    energy = kin_conv.energy_from_wavelength(wavelength=wavelength)
     assert sc.allclose(
-        energy, sc.to_unit(const.h**2 / 2 / const.m_n / wavelength**2, unit='meV')
+        energy, sc.to_unit(const.h**2 / (2 * const.m_n * wavelength**2), unit='meV')
     )
 
 
 @pytest.mark.parametrize('wavelength_dtype', ['float64', 'int64'])
 def test_energy_from_wavelength_double_precision(wavelength_dtype):
-    wavelength = sc.scalar(60.5, unit='m', dtype=wavelength_dtype)
-    assert tof_conv.energy_from_wavelength(wavelength=wavelength).dtype == 'float64'
+    wavelength = sc.scalar(3.6, unit='angstrom', dtype=wavelength_dtype)
+    assert kin_conv.energy_from_wavelength(wavelength=wavelength).dtype == 'float64'
 
 
 def test_energy_from_wavelength_single_precision():
-    wavelength = sc.scalar(60.5, unit='m', dtype='float32')
-    assert tof_conv.energy_from_wavelength(wavelength=wavelength).dtype == 'float32'
+    wavelength = sc.scalar(3.6, unit='angstrom', dtype='float32')
+    assert kin_conv.energy_from_wavelength(wavelength=wavelength).dtype == 'float32'
+
+
+@given(
+    final_wavelength=wavelength_variables(),
+    # L1_and_L2=n_space_variables(2),
+    # L2_unit=st.sampled_from(('m', 'mm', 'cm')),
+    incident_energy=energy_variables(),
+)
+@settings(**global_settings)
+def test_energy_transfer_direct_from_wavelength(final_wavelength, incident_energy):
+    # L1, L2 = L1_and_L2
+    # L2.unit = L2_unit
+    # Energies are always > 0. This matters for detection of invalid tof values.
+    incident_energy = abs(incident_energy) * 1.0001
+
+    energy_transfer = kin_conv.energy_transfer_from_energies(
+        final_energy=kin_conv.energy_from_wavelength(final_wavelength),
+        incident_energy=incident_energy,
+    )
+
+    # t0 = sc.to_unit(sc.sqrt(const.m_n * L1**2 / 2 / incident_energy), tof.unit)
+    expected = incident_energy - sc.to_unit(
+        const.h**2 / (2 * const.m_n * final_wavelength**2), incident_energy.unit
+    )
+    # expected = sc.where(
+    #     tof >= t0, expected, sc.scalar(np.nan, unit=incident_energy.unit)
+    # )
+    assert sc.allclose(energy_transfer, expected, equal_nan=True)
+
+
+@given(
+    incident_wavelength=wavelength_variables(),
+    final_energy=energy_variables(),
+)
+@settings(**global_settings)
+def test_energy_transfer_indirect_from_wavelength(incident_wavelength, final_energy):
+    # Energies are always > 0. This matters for detection of invalid tof values.
+    final_energy = abs(final_energy) * 1.0001
+
+    energy_transfer = kin_conv.energy_transfer_from_energies(
+        incident_energy=kin_conv.energy_from_wavelength(incident_wavelength),
+        final_energy=final_energy,
+    )
+
+    # t0 = sc.to_unit(sc.sqrt(const.m_n * L2**2 / 2 / final_energy), tof.unit)
+    expected = (
+        sc.to_unit(
+            const.h**2 / (2 * const.m_n * incident_wavelength**2), final_energy.unit
+        )
+        - final_energy
+    )
+    # expected = sc.where(tof >= t0, expected, sc.scalar(np.nan, unit=final_energy.unit))
+    assert sc.allclose(energy_transfer, expected, equal_nan=True)
+
+
+# @given(wavelength=space_variables())
+# @settings(**global_settings)
+# def test_energy_from_wavelength(wavelength):
+#     energy = kin_conv.energy_from_wavelength(wavelength=wavelength)
+#     assert sc.allclose(
+#         energy, sc.to_unit(const.h**2 / 2 / const.m_n / wavelength**2, unit='meV')
+#     )
+
+
+# @pytest.mark.parametrize('wavelength_dtype', ['float64', 'int64'])
+# def test_energy_from_wavelength_double_precision(wavelength_dtype):
+#     wavelength = sc.scalar(60.5, unit='m', dtype=wavelength_dtype)
+#     assert kin_conv.energy_from_wavelength(wavelength=wavelength).dtype == 'float64'
+
+
+# def test_energy_from_wavelength_single_precision():
+#     wavelength = sc.scalar(60.5, unit='m', dtype='float32')
+#     assert kin_conv.energy_from_wavelength(wavelength=wavelength).dtype == 'float32'
 
 
 @given(energy=energy_variables())
 @settings(**global_settings)
 def test_wavelength_from_energy(energy):
-    wavelength = tof_conv.wavelength_from_energy(energy=energy)
+    wavelength = kin_conv.wavelength_from_energy(energy=energy)
     assert sc.allclose(
         wavelength,
         sc.to_unit(const.h / sc.sqrt(2 * const.m_n * energy), unit='angstrom'),
@@ -317,18 +324,18 @@ def test_wavelength_from_energy(energy):
 @pytest.mark.parametrize('energy_dtype', ['float64', 'int64'])
 def test_wavelength_from_energy_double_precision(energy_dtype):
     energy = sc.scalar(61.0, unit='meV', dtype=energy_dtype)
-    assert tof_conv.wavelength_from_energy(energy=energy).dtype == 'float64'
+    assert kin_conv.wavelength_from_energy(energy=energy).dtype == 'float64'
 
 
 def test_wavelength_from_energy_single_precision():
     energy = sc.scalar(61.0, unit='meV', dtype='float32')
-    assert tof_conv.wavelength_from_energy(energy=energy).dtype == 'float32'
+    assert kin_conv.wavelength_from_energy(energy=energy).dtype == 'float32'
 
 
 @given(wavelength=space_variables(), two_theta=angle_variables())
 @settings(**global_settings)
 def test_elastic_Q_from_wavelength(wavelength, two_theta):
-    Q = tof_conv.elastic_Q_from_wavelength(wavelength=wavelength, two_theta=two_theta)
+    Q = kin_conv.elastic_Q_from_wavelength(wavelength=wavelength, two_theta=two_theta)
     assert sc.allclose(Q, 4 * np.pi * sc.sin(two_theta / 2) / wavelength)
 
 
@@ -338,7 +345,7 @@ def test_elastic_Q_from_wavelength_double_precision(wavelength_dtype, two_theta_
     wavelength = sc.scalar(3.51, unit='s', dtype=wavelength_dtype)
     two_theta = sc.scalar(0.041, unit='deg', dtype=two_theta_dtype)
     assert (
-        tof_conv.elastic_Q_from_wavelength(
+        kin_conv.elastic_Q_from_wavelength(
             wavelength=wavelength, two_theta=two_theta
         ).dtype
         == 'float64'
@@ -350,7 +357,7 @@ def test_elastic_Q_from_wavelength_single_precision(two_theta_dtype):
     wavelength = sc.scalar(3.51, unit='s', dtype='float32')
     two_theta = sc.scalar(0.041, unit='deg', dtype=two_theta_dtype)
     assert (
-        tof_conv.elastic_Q_from_wavelength(
+        kin_conv.elastic_Q_from_wavelength(
             wavelength=wavelength, two_theta=two_theta
         ).dtype
         == 'float32'
@@ -361,7 +368,7 @@ def test_elastic_Q_from_wavelength_single_precision(two_theta_dtype):
 @settings(**global_settings)
 def test_wavelength_from_elastic_Q(Q, two_theta):
     Q.unit = f'1/{Q.unit}'
-    wavelength = tof_conv.wavelength_from_Q(Q=Q, two_theta=two_theta)
+    wavelength = kin_conv.wavelength_from_Q(Q=Q, two_theta=two_theta)
     assert sc.allclose(
         wavelength, sc.to_unit(4 * np.pi * sc.sin(two_theta / 2) / Q, unit='angstrom')
     )
@@ -372,21 +379,21 @@ def test_wavelength_from_elastic_Q(Q, two_theta):
 def test_wavelength_from_elastic_Q_double_precision(Q_dtype, two_theta_dtype):
     Q = sc.scalar(4.151, unit='1/nm', dtype=Q_dtype)
     two_theta = sc.scalar(5.71, unit='deg', dtype=two_theta_dtype)
-    assert tof_conv.wavelength_from_Q(Q=Q, two_theta=two_theta).dtype == 'float64'
+    assert kin_conv.wavelength_from_Q(Q=Q, two_theta=two_theta).dtype == 'float64'
 
 
 @pytest.mark.parametrize('two_theta_dtype', ['float64', 'float32', 'int64'])
 def test_wavelength_from_elastic_Q_single_precision(two_theta_dtype):
     Q = sc.scalar(4.151, unit='1/nm', dtype='float32')
     two_theta = sc.scalar(5.71, unit='deg', dtype=two_theta_dtype)
-    assert tof_conv.wavelength_from_Q(Q=Q, two_theta=two_theta).dtype == 'float32'
+    assert kin_conv.wavelength_from_Q(Q=Q, two_theta=two_theta).dtype == 'float32'
 
 
 @given(incident_beam=vector_variables(), wavelength=space_variables())
 @settings(**global_settings)
 def test_elastic_Q_elements_from_wavelength_equal_beams(incident_beam, wavelength):
     scattered_beam = incident_beam.copy()
-    Q_elements = tof_conv.elastic_Q_elements_from_wavelength(
+    Q_elements = kin_conv.elastic_Q_elements_from_wavelength(
         wavelength=wavelength,
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
@@ -407,14 +414,14 @@ def test_elastic_Q_elements_from_wavelength_consistent_with_Q(
     incident_beam, scattered_beam, wavelength
 ):
     wavelength = wavelength.rename({wavelength.dim: 'wavelength'})
-    Q_elements = tof_conv.elastic_Q_elements_from_wavelength(
+    Q_elements = kin_conv.elastic_Q_elements_from_wavelength(
         wavelength=wavelength,
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
     )
     Qx, Qy, Qz = Q_elements['Qx'], Q_elements['Qy'], Q_elements['Qz']
     Q_vec = sc.spatial.as_vectors(Qx, Qy, Qz)
-    Q = tof_conv.elastic_Q_from_wavelength(
+    Q = kin_conv.elastic_Q_from_wavelength(
         wavelength=wavelength,
         two_theta=beamline_conv.two_theta(
             incident_beam=incident_beam, scattered_beam=scattered_beam
@@ -431,7 +438,7 @@ def test_elastic_Q_elements_from_wavelength():
         unit='cm',
     )
     wavelength = sc.array(dims=['wavelength'], values=[0.3, 2.0], unit='angstrom')
-    Q_elements = tof_conv.elastic_Q_elements_from_wavelength(
+    Q_elements = kin_conv.elastic_Q_elements_from_wavelength(
         wavelength=wavelength,
         incident_beam=incident_beam,
         scattered_beam=scattered_beam,
@@ -456,7 +463,7 @@ def test_elastic_Q_elements_from_wavelength():
 @given(wavelength=space_variables(), two_theta=angle_variables())
 @settings(**global_settings)
 def test_dspacing_from_wavelength(wavelength, two_theta):
-    dspacing = tof_conv.dspacing_from_wavelength(
+    dspacing = kin_conv.dspacing_from_wavelength(
         wavelength=wavelength, two_theta=two_theta
     )
     assert sc.allclose(
@@ -470,7 +477,7 @@ def test_dspacing_from_wavelength_double_precision(wavelength_dtype, two_theta_d
     wavelength = sc.scalar(41.4, unit='m', dtype=wavelength_dtype)
     two_theta = sc.scalar(8.4, unit='rad', dtype=two_theta_dtype)
     assert (
-        tof_conv.dspacing_from_wavelength(
+        kin_conv.dspacing_from_wavelength(
             wavelength=wavelength, two_theta=two_theta
         ).dtype
         == 'float64'
@@ -482,7 +489,7 @@ def test_dspacing_from_wavelength_single_precision(two_theta_dtype):
     wavelength = sc.scalar(41.4, unit='m', dtype='float32')
     two_theta = sc.scalar(8.4, unit='rad', dtype=two_theta_dtype)
     assert (
-        tof_conv.dspacing_from_wavelength(
+        kin_conv.dspacing_from_wavelength(
             wavelength=wavelength, two_theta=two_theta
         ).dtype
         == 'float32'
@@ -492,7 +499,7 @@ def test_dspacing_from_wavelength_single_precision(two_theta_dtype):
 @given(energy=energy_variables(), two_theta=angle_variables())
 @settings(**global_settings)
 def test_dspacing_from_energy(energy, two_theta):
-    dspacing = tof_conv.dspacing_from_energy(energy=energy, two_theta=two_theta)
+    dspacing = kin_conv.dspacing_from_energy(energy=energy, two_theta=two_theta)
     assert sc.allclose(
         dspacing,
         sc.to_unit(
@@ -508,7 +515,7 @@ def test_dspacing_from_energy_double_precision(energy_dtype, two_theta_dtype):
     energy = sc.scalar(26.90, unit='J', dtype=energy_dtype)
     two_theta = sc.scalar(1.985, unit='rad', dtype=two_theta_dtype)
     assert (
-        tof_conv.dspacing_from_energy(energy=energy, two_theta=two_theta).dtype
+        kin_conv.dspacing_from_energy(energy=energy, two_theta=two_theta).dtype
         == 'float64'
     )
 
@@ -518,7 +525,7 @@ def test_dspacing_from_energy_single_precision(two_theta_dtype):
     energy = sc.scalar(26.90, unit='J', dtype='float32')
     two_theta = sc.scalar(1.985, unit='rad', dtype=two_theta_dtype)
     assert (
-        tof_conv.dspacing_from_energy(energy=energy, two_theta=two_theta).dtype
+        kin_conv.dspacing_from_energy(energy=energy, two_theta=two_theta).dtype
         == 'float32'
     )
 
@@ -528,7 +535,7 @@ def test_elastic_q_vec_from_q_elements():
         sc.array(dims=['Q'], values=[2.1 * i, i / 3], unit='1/angstrom')
         for i in range(3)
     )
-    q_vec = tof_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+    q_vec = kin_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
     sc.testing.assert_identical(q_vec.fields.x, Qx)
     sc.testing.assert_identical(q_vec.fields.y, Qy)
     sc.testing.assert_identical(q_vec.fields.z, Qz)
@@ -539,7 +546,7 @@ def test_elastic_q_vec_from_q_elements_raises_for_shape_mismatch():
     Qy = Qx.copy()
     Qz = sc.array(dims=['q'], values=[2.0, 3.0, 4.0])
     with pytest.raises(sc.DimensionError):
-        tof_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+        kin_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
 
 
 def test_elastic_q_vec_from_q_elements_raises_for_dim_mismatch():
@@ -547,7 +554,7 @@ def test_elastic_q_vec_from_q_elements_raises_for_dim_mismatch():
     Qy = Qx.copy()
     Qz = sc.array(dims=['Q'], values=[2.0, 3.0])
     with pytest.raises(sc.DimensionError):
-        tof_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+        kin_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
 
 
 def test_elastic_q_vec_from_q_elements_raises_for_unit_mismatch():
@@ -557,7 +564,7 @@ def test_elastic_q_vec_from_q_elements_raises_for_unit_mismatch():
     )
     Qy.unit = '1/m'
     with pytest.raises(sc.UnitError):
-        tof_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+        kin_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
 
 
 def make_b_matrix() -> sc.Variable:
@@ -592,14 +599,14 @@ def test_ub_matrix_from_u_and_b():
     expected = u_matrix * b_matrix
 
     assert sc.allclose(
-        tof_conv.ub_matrix_from_u_and_b(u_matrix=u_matrix, b_matrix=b_matrix), expected
+        kin_conv.ub_matrix_from_u_and_b(u_matrix=u_matrix, b_matrix=b_matrix), expected
     )
 
 
 @given(inv_q=n_space_variables(3))
 def test_hkl_vec_from_elastic_Q_vec(inv_q):
     Qx, Qy, Qz = (sc.reciprocal(x.to(dtype='float64')) for x in inv_q)
-    Q_vec = tof_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
+    Q_vec = kin_conv.elastic_Q_vec_from_Q_elements(Qx=Qx, Qy=Qy, Qz=Qz)
 
     b_matrix = make_b_matrix()
     u_coeffs = np.array([0.5, 0.1, -0.4, 0.9])
@@ -611,7 +618,7 @@ def test_hkl_vec_from_elastic_Q_vec(inv_q):
         value=sample_rotation_coeffs / np.linalg.norm(sample_rotation_coeffs)
     )
 
-    hkl_vec = tof_conv.hkl_vec_from_elastic_Q_vec(
+    hkl_vec = kin_conv.hkl_vec_from_elastic_Q_vec(
         Q_vec=Q_vec, ub_matrix=ub_matrix, sample_rotation=sample_rotation_matrix
     )
 
@@ -629,21 +636,25 @@ def test_hkl_vec_from_elastic_Q_vec(inv_q):
 
 def test_hkl_elements_from_hkl_vec():
     hkl_vec = sc.vector([3.1, 4.5, 6.9])
-    hkl = tof_conv.hkl_elements_from_hkl_vec(hkl_vec=hkl_vec)
+    hkl = kin_conv.hkl_elements_from_hkl_vec(hkl_vec=hkl_vec)
     h, k, l = hkl['h'], hkl['k'], hkl['l']  # noqa: E741
     sc.testing.assert_identical(h, hkl_vec.fields.x)
     sc.testing.assert_identical(k, hkl_vec.fields.y)
     sc.testing.assert_identical(l, hkl_vec.fields.z)
 
 
-@pytest.mark.parametrize('pulse_time', [0.0, 1.0])
-def test_time_at_sample(pulse_time):
-    ts = tof_conv.time_at_sample_from_tof(
-        pulse_time=sc.scalar(pulse_time, unit='s'),
-        tof=sc.scalar(3.0, unit='s'),
-        L2=sc.scalar(2.0, unit='m'),
-        wavelength=(sc.constants.h / sc.constants.m_n / sc.scalar(2.0, unit='m/s')).to(
-            unit='Å'
-        ),
+@pytest.mark.parametrize('toa', [0.065, 0.140])
+def test_time_at_sample(toa):
+    L2 = sc.scalar(2.0, unit='m')
+    wav = sc.scalar(2.0, unit='angstrom')
+    ts = kin_conv.time_at_sample_from_wavelength(
+        toa=sc.scalar(toa, unit='s'), L2=L2, wavelength=wav
     )
-    assert sc.allclose(ts, sc.scalar(pulse_time + 2.0, unit='s'))
+    # c = sc.to_unit(
+    #     const.h / const.m_n,
+    #     sc.units.angstrom * elem_unit(L2) / elem_unit(toa),
+    #     copy=False,
+    # )
+    assert sc.allclose(
+        ts, (sc.scalar(toa, unit='s') - L2 * const.m_n * wav / const.h).to(unit='s')
+    )

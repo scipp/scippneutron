@@ -83,39 +83,34 @@ def energy_from_wavelength(*, wavelength: Variable) -> Variable:
     return c / wavelength**2
 
 
-def energy_transfer_from_wavelength(
-    *, incident_wavelength: Variable, final_wavelength: Variable
+def energy_transfer_from_energies(
+    *, incident_energy: Variable, final_energy: Variable
 ) -> Variable:
-    r"""Compute the energy transfer from incident and final wavelengths.
+    r"""Compute the energy transfer from incident and final energies.
 
     The result is
 
     .. math::
 
-        \Delta E = \frac{h^2}{2 m_n} \left( \frac{1}{\lambda_i^2} - \frac{1}{\lambda_f^2} \right)
+        \Delta E = E_i - E_f
 
-    Where :math:`m_n` is the neutron mass and :math:`h` the Planck constant.
-    The incident wavelength is :math:`\lambda_i` and the final wavelength is :math:`\lambda_f`.
+    Where :math:`E_i` is the incident energy and :math:`E_f` the final energy.
 
     Parameters
     ----------
-    incident_wavelength:
-        Incident neutron wavelength :math:`\lambda_i`.
-    final_wavelength:
-        Final neutron wavelength :math:`\lambda_f`.
-
+    incident_energy:
+        Incident neutron energy :math:`E_i`.
+    final_energy:
+        Final neutron energy :math:`E_f`.
     Returns
     -------
     :
         Energy transfer :math:`\Delta E`.
     """
-    dtype = _common_dtype(incident_wavelength, final_wavelength)
-    lambda_i = incident_wavelength.to(dtype=dtype, copy=False)
-    lambda_f = final_wavelength.to(dtype=dtype, copy=False)
-    delta_e = sc.reciprocal(lambda_i) ** 2
-    delta_e -= sc.reciprocal(lambda_f) ** 2
-    delta_e *= sc.to_dtype(const.h**2 / 2 / const.m_n, dtype, copy=False)
-    return sc.to_unit(delta_e, 'meV', copy=False)
+    dtype = _common_dtype(incident_energy, final_energy)
+    e_i = incident_energy.to(dtype=dtype, copy=False)
+    e_f = final_energy.to(dtype=dtype, unit=e_i.unit, copy=False)
+    return sc.to_unit(e_i - e_f, 'meV', copy=False)
 
 
 def incident_energy_from_wavelength(*, incident_wavelength: Variable) -> Variable:
