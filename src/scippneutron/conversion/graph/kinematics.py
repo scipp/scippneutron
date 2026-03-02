@@ -83,7 +83,7 @@ def kinematic(start: str) -> Graph:
     :
         A dict defining a coordinate transformation graph.
     """
-    return _strip_elastic(start, keep=['wavelength', 'energy'])
+    return _strip_elastic(start, keep=['energy'])
 
 
 def elastic_dspacing(start: str) -> Graph:
@@ -134,7 +134,7 @@ def elastic_Q(start: str) -> Graph:
     :
         A dict defining a coordinate transformation graph.
     """
-    return _strip_elastic(start, keep=['Q', 'wavelength'])
+    return _strip_elastic(start, keep=['Q'])
 
 
 def elastic_Q_vec(start: str) -> Graph:
@@ -181,21 +181,21 @@ def elastic_hkl(start: str) -> Graph:
     )
 
 
-def elastic_wavelength(start: str) -> Graph:
+def elastic_tof(start: str) -> Graph:
     """
-    Graph for elastic scattering transformation to wavelength.
+    Graph for elastic scattering transformation to time-of-flight (TOF).
 
     Parameters
     ----------
     start:
-        Input coordinate. One of 'energy', 'wavelength', or 'Q'.
+        Input coordinate. Currently only 'wavelength' is supported.
 
     Returns
     -------
     :
         A dict defining a coordinate transformation graph.
     """
-    return _strip_elastic(start, keep=['wavelength'])
+    return _strip_elastic(start, keep=['tof'])
 
 
 def direct_inelastic(start: str) -> Graph:

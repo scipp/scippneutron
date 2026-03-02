@@ -7,7 +7,7 @@ from collections.abc import Generator
 import pytest
 import scipp as sc
 
-from scippneutron.conversion.graph import beamline, tof
+from scippneutron.conversion.graph import beamline, kinematics
 
 
 def _flatten_keys(graph: dict[str, object]) -> Generator[str | tuple[str], None, None]:
@@ -18,14 +18,14 @@ def _flatten_keys(graph: dict[str, object]) -> Generator[str | tuple[str], None,
             yield from key
 
 
-@pytest.mark.parametrize("target", _flatten_keys(tof.elastic('tof')))
-def test_elastic_can_compute_all_from_tof(target: str | tuple[str]) -> None:
-    graph = {**tof.elastic('tof'), **beamline.beamline(scatter=True)}
+@pytest.mark.parametrize("target", _flatten_keys(kinematics.elastic('wavelength')))
+def test_elastic_can_compute_all_from_wavelength(target: str | tuple[str]) -> None:
+    graph = {**kinematics.elastic('wavelength'), **beamline.beamline(scatter=True)}
     da = sc.DataArray(
-        sc.zeros(sizes={'tof': 4, 'detector': 2}),
+        sc.zeros(sizes={'event': 4, 'detector': 2}),
         coords={
-            'tof': sc.arange('tof', 5, unit='us'),
-            'pulse_time': 0.1 * sc.arange('tof', 5, unit='us'),
+            'wavelength': sc.arange('event', 1, 5, unit='angstrom'),
+            'toa': sc.arange('event', 41e3, 46e3, unit='us'),
             'position': sc.vectors(
                 dims=['detector'], values=[[1, 2, 3], [4, 2, 1]], unit='m'
             ),
