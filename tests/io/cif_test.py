@@ -971,6 +971,33 @@ _pd_proc.intensity_norm_su
     )
 
 
+def test_builder_with_measurement() -> None:
+    original = cif.CIF()
+    cif_ = original.with_measurement(
+        metadata.Measurement(
+            title="Test ScippNeutron",
+            run_number="10394",
+            experiment_id="9900ab",
+            experiment_doi="10.1000/12341234",
+            start_time=datetime.fromisoformat("2020-11-16T09:00:00"),
+            end_time=datetime.fromisoformat("2020-11-19T12:02:47"),
+        ),
+        comment="A measured result",
+    )
+    res = save_to_str(cif_)
+    original_res = save_to_str(original)
+
+    expected = '''# A measured result
+_sc_meas.title 'Test ScippNeutron'
+_sc_meas.proposal_id 9900ab
+_sc_meas.run_number 10394
+_pd_meas.datetime_initiated 2020-11-16T09:00:00
+_sc_meas.datetime_stopped 2020-11-19T12:02:47
+'''
+    assert expected in res
+    assert expected not in original_res
+
+
 def test_builder_with_reduced_powder_data_custom_unit():
     da = sc.DataArray(
         sc.array(dims=['tof'], values=[13.6, 26.0, 9.7], unit='counts'),
