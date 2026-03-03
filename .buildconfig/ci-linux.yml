@@ -4,30 +4,27 @@
 name: ubuntu-latest
 channels:
   - conda-forge
-  - ess-dmsc
   - mantid
-  - scipp
-  - nodefaults
 dependencies:
   - email-validator==2.3.0
   - h5py==3.15.1
-  - hypothesis==6.119.4
+  - hypothesis==6.151.9
   - ipykernel==6.29.5
   - ipympl==0.9.8
   - ipywidgets==8.1.8
   - lazy-loader==0.4
-  - mantid==6.13.0
+  - mantid==6.15.0
   - matplotlib==3.9.4
   - mpltoolbox==25.10.0
   - plopp==25.11.0
-  - pooch==1.8.2
+  - pooch==1.9.0
   - pydantic==2.12.4
   - pytest==8.3.3
   - pytest-asyncio==0.24.0
   - python-dateutil==2.9.0
   - python-graphviz==0.21
   - pythreejs==2.4.2
-  - scipp==25.11.0
+  - scipp==26.3.0
   - scippnexus==25.11.0
   - scipy==1.16.3
   - tox==4.23.2
@@ -44,7 +41,7 @@ dependencies:
   - sphinx-copybutton==0.5.2
   - sphinx-design==0.6.1
   - sphinxcontrib-bibtex==2.6.3
-  - tof==25.1.2
+  - tof==26.1.0
 
   # docs and tests
   - sciline==25.11.1
