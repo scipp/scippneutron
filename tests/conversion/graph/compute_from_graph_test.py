@@ -75,7 +75,7 @@ def test_elastic_can_compute_all_from_wavelength(target: str | tuple[str]) -> No
 
 
 def test_elastic_can_compute_energy_transfer_from_wavelengths() -> None:
-    graph = {**tof.elastic('wavelength'), **beamline.beamline(scatter=True)}
+    graph = tof.indirect_inelastic('wavelength')
     da = sc.DataArray(
         sc.zeros(sizes={'event': 4, 'detector': 2}),
         coords={

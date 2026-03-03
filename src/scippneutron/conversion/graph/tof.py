@@ -46,9 +46,6 @@ _GRAPH_DYNAMICS_BY_ORIGIN = {
     'wavelength': {
         'dspacing': _kernels.dspacing_from_wavelength,
         'energy': _kernels.energy_from_wavelength,
-        'energy_transfer': _kernels.energy_transfer_from_energies,
-        'incident_energy': _kernels.incident_energy_from_wavelength,
-        'final_energy': _kernels.final_energy_from_wavelength,
         'hkl_vec': _kernels.hkl_vec_from_elastic_Q_vec,
         ('h', 'k', 'l'): _kernels.hkl_elements_from_hkl_vec,
         'tof': _kernels.tof_from_wavelength,
@@ -229,7 +226,11 @@ def direct_inelastic(start: str) -> Graph:
     """
     return {
         'tof': {'energy_transfer': _kernels.energy_transfer_direct_from_tof},
-        'wavelength': {'energy_transfer': _kernels.energy_transfer_from_energies},
+        'wavelength': {
+            'energy_transfer': _kernels.energy_transfer_from_energies,
+            'incident_energy': _kernels.incident_energy_from_wavelength,
+            'final_energy': _kernels.final_energy_from_wavelength,
+        },
     }[start]
 
 
@@ -249,5 +250,9 @@ def indirect_inelastic(start: str) -> Graph:
     """
     return {
         'tof': {'energy_transfer': _kernels.energy_transfer_indirect_from_tof},
-        'wavelength': {'energy_transfer': _kernels.energy_transfer_from_energies},
+        'wavelength': {
+            'energy_transfer': _kernels.energy_transfer_from_energies,
+            'incident_energy': _kernels.incident_energy_from_wavelength,
+            'final_energy': _kernels.final_energy_from_wavelength,
+        },
     }[start]
