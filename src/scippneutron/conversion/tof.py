@@ -414,9 +414,9 @@ def energy_transfer_from_energies(
         Energy transfer :math:`\Delta E`.
     """
     dtype = _common_dtype(incident_energy, final_energy)
-    e_i = incident_energy.to(dtype=dtype, copy=False)
-    e_f = final_energy.to(dtype=dtype, unit=e_i.unit, copy=False)
-    return sc.to_unit(e_i - e_f, 'meV', copy=False)
+    e_i = incident_energy.to(dtype=dtype, unit='meV', copy=False)
+    e_f = final_energy.to(dtype=dtype, unit='meV', copy=False)
+    return e_i - e_f
 
 
 def wavevector_from_wavelength(*, wavelength: Variable, beam: Variable) -> Variable:
