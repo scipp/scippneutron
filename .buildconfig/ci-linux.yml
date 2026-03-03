@@ -4,10 +4,7 @@
 name: ubuntu-latest
 channels:
   - conda-forge
-  - ess-dmsc
   - mantid
-  - scipp
-  - nodefaults
 dependencies:
   - email-validator==2.3.0
   - h5py==3.15.1
@@ -27,7 +24,7 @@ dependencies:
   - python-dateutil==2.9.0
   - python-graphviz==0.21
   - pythreejs==2.4.2
-  - scipp==25.11.0
+  - scipp==26.3.0
   - scippnexus==25.11.0
   - scipy==1.16.3
   - tox==4.23.2
