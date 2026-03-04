@@ -38,7 +38,7 @@ _GRAPH_DYNAMICS_BY_ORIGIN = {
         'Q_vec': _kernels.elastic_Q_vec_from_Q_elements,
         ('Qx', 'Qy', 'Qz'): _kernels.elastic_Q_elements_from_wavelength,
         'wavelength': _kernels.wavelength_from_tof,
-        'time_at_sample': _kernels.time_at_sample_from_tof,
+        'time_at_sample': _kernels.time_at_sample_from_wavelength,
     },
     'Q': {
         'wavelength': _kernels.wavelength_from_Q,
@@ -48,10 +48,12 @@ _GRAPH_DYNAMICS_BY_ORIGIN = {
         'energy': _kernels.energy_from_wavelength,
         'hkl_vec': _kernels.hkl_vec_from_elastic_Q_vec,
         ('h', 'k', 'l'): _kernels.hkl_elements_from_hkl_vec,
+        'tof': _kernels.tof_from_wavelength,
         'ub_matrix': _kernels.ub_matrix_from_u_and_b,
         'Q': _kernels.elastic_Q_from_wavelength,
         'Q_vec': _kernels.elastic_Q_vec_from_Q_elements,
         ('Qx', 'Qy', 'Qz'): _kernels.elastic_Q_elements_from_wavelength,
+        'time_at_sample': _kernels.time_at_sample_from_wavelength,
     },
 }
 
@@ -215,14 +217,21 @@ def direct_inelastic(start: str) -> Graph:
     Parameters
     ----------
     start:
-        Input coordinate. Currently, only 'tof' is supported.
+        Input coordinate. One of 'tof' or 'wavelength'.
 
     Returns
     -------
     :
         A dict defining a coordinate transformation graph.
     """
-    return {'tof': {'energy_transfer': _kernels.energy_transfer_direct_from_tof}}[start]
+    return {
+        'tof': {'energy_transfer': _kernels.energy_transfer_direct_from_tof},
+        'wavelength': {
+            'energy_transfer': _kernels.energy_transfer_from_energies,
+            'incident_energy': _kernels.incident_energy_from_wavelength,
+            'final_energy': _kernels.final_energy_from_wavelength,
+        },
+    }[start]
 
 
 def indirect_inelastic(start: str) -> Graph:
@@ -232,13 +241,18 @@ def indirect_inelastic(start: str) -> Graph:
     Parameters
     ----------
     start:
-        Input coordinate. Currently, only 'tof' is supported.
+        Input coordinate. One of 'tof' or 'wavelength'.
 
     Returns
     -------
     :
         A dict defining a coordinate transformation graph.
     """
-    return {'tof': {'energy_transfer': _kernels.energy_transfer_indirect_from_tof}}[
-        start
-    ]
+    return {
+        'tof': {'energy_transfer': _kernels.energy_transfer_indirect_from_tof},
+        'wavelength': {
+            'energy_transfer': _kernels.energy_transfer_from_energies,
+            'incident_energy': _kernels.incident_energy_from_wavelength,
+            'final_energy': _kernels.final_energy_from_wavelength,
+        },
+    }[start]

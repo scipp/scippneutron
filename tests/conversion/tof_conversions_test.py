@@ -152,6 +152,36 @@ def test_wavelength_from_tof_single_precision(Ltotal_dtype):
     assert tof_conv.wavelength_from_tof(tof=tof, Ltotal=Ltotal).dtype == 'float32'
 
 
+@given(wavelength=wavelength_variables(), Ltotal=space_variables())
+@settings(**global_settings)
+def test_tof_from_wavelength(wavelength, Ltotal):
+    tof = tof_conv.tof_from_wavelength(wavelength=wavelength, Ltotal=Ltotal)
+    assert sc.allclose(
+        tof, sc.to_unit(const.m_n * wavelength * Ltotal / const.h, unit='us')
+    )
+
+
+@pytest.mark.parametrize('wavelength_dtype', ['float64', 'int64', 'int32'])
+@pytest.mark.parametrize('Ltotal_dtype', ['float64', 'float32', 'int64', 'int32'])
+def test_tof_from_wavelength_double_precision(wavelength_dtype, Ltotal_dtype):
+    wavelength = sc.scalar(1.2, unit='angstrom', dtype=wavelength_dtype)
+    Ltotal = sc.scalar(10.1, unit='m', dtype=Ltotal_dtype)
+    assert (
+        tof_conv.tof_from_wavelength(wavelength=wavelength, Ltotal=Ltotal).dtype
+        == 'float64'
+    )
+
+
+@pytest.mark.parametrize('Ltotal_dtype', ['float64', 'float32', 'int64', 'int32'])
+def test_tof_from_wavelength_single_precision(Ltotal_dtype):
+    wavelength = sc.scalar(1.2, unit='angstrom', dtype='float32')
+    Ltotal = sc.scalar(10.1, unit='m', dtype=Ltotal_dtype)
+    assert (
+        tof_conv.tof_from_wavelength(wavelength=wavelength, Ltotal=Ltotal).dtype
+        == 'float32'
+    )
+
+
 @given(wavelength=wavelength_variables(), beam=vector_variables())
 @settings(**global_settings)
 def test_wavevector_from_wavelength(wavelength: sc.Variable, beam: sc.Variable) -> None:
@@ -323,6 +353,46 @@ def test_wavelength_from_energy_double_precision(energy_dtype):
 def test_wavelength_from_energy_single_precision():
     energy = sc.scalar(61.0, unit='meV', dtype='float32')
     assert tof_conv.wavelength_from_energy(energy=energy).dtype == 'float32'
+
+
+@given(final_wavelength=wavelength_variables(), incident_energy=energy_variables())
+@settings(**global_settings)
+def test_energy_transfer_direct_from_wavelength(final_wavelength, incident_energy):
+    # Energies are always > 0.
+    incident_energy = abs(incident_energy) * 1.0001
+
+    energy_transfer = tof_conv.energy_transfer_from_energies(
+        final_energy=tof_conv.energy_from_wavelength(wavelength=final_wavelength),
+        incident_energy=incident_energy,
+    )
+    expected = sc.to_unit(
+        incident_energy
+        - sc.to_unit(
+            const.h**2 / (2 * const.m_n * final_wavelength**2), incident_energy.unit
+        ),
+        unit=energy_transfer.unit,
+    )
+    assert sc.allclose(energy_transfer, expected, equal_nan=True)
+
+
+@given(incident_wavelength=wavelength_variables(), final_energy=energy_variables())
+@settings(**global_settings)
+def test_energy_transfer_indirect_from_wavelength(incident_wavelength, final_energy):
+    # Energies are always > 0.
+    final_energy = abs(final_energy) * 1.0001
+
+    energy_transfer = tof_conv.energy_transfer_from_energies(
+        incident_energy=tof_conv.energy_from_wavelength(wavelength=incident_wavelength),
+        final_energy=final_energy,
+    )
+    expected = sc.to_unit(
+        sc.to_unit(
+            const.h**2 / (2 * const.m_n * incident_wavelength**2), final_energy.unit
+        )
+        - final_energy,
+        unit=energy_transfer.unit,
+    )
+    assert sc.allclose(energy_transfer, expected, equal_nan=True)
 
 
 @given(wavelength=space_variables(), two_theta=angle_variables())
@@ -636,14 +706,13 @@ def test_hkl_elements_from_hkl_vec():
     sc.testing.assert_identical(l, hkl_vec.fields.z)
 
 
-@pytest.mark.parametrize('pulse_time', [0.0, 1.0])
-def test_time_at_sample(pulse_time):
-    ts = tof_conv.time_at_sample_from_tof(
-        pulse_time=sc.scalar(pulse_time, unit='s'),
-        tof=sc.scalar(3.0, unit='s'),
-        L2=sc.scalar(2.0, unit='m'),
-        wavelength=(sc.constants.h / sc.constants.m_n / sc.scalar(2.0, unit='m/s')).to(
-            unit='Å'
-        ),
+@pytest.mark.parametrize('toa', [3.5, 4.5])
+def test_time_at_sample(toa):
+    L2 = sc.scalar(2.0, unit='m')
+    wav = sc.scalar(2.0, unit='angstrom')
+    ts = tof_conv.time_at_sample_from_wavelength(
+        toa=sc.scalar(toa, unit='s'), L2=L2, wavelength=wav
     )
-    assert sc.allclose(ts, sc.scalar(pulse_time + 2.0, unit='s'))
+    assert sc.allclose(
+        ts, (sc.scalar(toa, unit='s') - (L2 * const.m_n * wav / const.h).to(unit='s'))
+    )
