@@ -148,7 +148,7 @@ class Measurement(BaseModel):
         Returns
         -------
         :
-            An Measurement object constructed from the given Nexus entry.
+            A Measurement object constructed from the given Nexus entry.
         """
         return cls(
             title=_read_optional_nexus_string(entry, 'title'),
@@ -221,7 +221,7 @@ class Person(BaseModel):
         Returns
         -------
         :
-            An Person object constructed from the given Nexus entry.
+            A Person object constructed from the given Nexus entry.
         """
         return cls(
             name=str(group['name'][()]),
