@@ -141,7 +141,7 @@ from typing import Any, TextIO
 
 import scipp as sc
 
-from ..metadata import Beamline, Person, Source, SourceType
+from ..metadata import Beamline, Measurement, Person, Source, SourceType
 from ._files import open_or_pass
 
 
@@ -422,6 +422,52 @@ class CIF:
         """
         cif_ = self.copy()
         cif_._reducers.extend(reducers)
+        return cif_
+
+    def with_measurement(
+        self,
+        measurement: Measurement,
+        *,
+        comment: str = '',
+    ) -> CIF:
+        """Add measurement metadata.
+
+        Attention
+        ---------
+        Standard CIF does not define a way to encode all data in a
+        :class:`Measurement <scippneutron.metadata.Measurement>` object.
+        This function uses custom keys wherever there is no standard CIF key.
+        These custom keys are prefixed with ``sc_meas``.
+        (The standard defines ``pd_meas``.)
+
+        Parameters
+        ----------
+        measurement:
+            Encodes information about the measurement (and experiment) of the data.
+        comment:
+            Optional comment to add above the measurement chunk.
+
+        Returns
+        -------
+        :
+            A builder with added measurement metadata.
+        """
+        fields = {
+            'sc_meas.title': measurement.title,
+            'sc_meas.proposal_id': measurement.experiment_id,
+            'sc_meas.run_number': measurement.run_number,
+            'pd_meas.datetime_initiated': measurement.start_time,
+            'sc_meas.datetime_stopped': measurement.end_time,
+        }
+
+        cif_ = self.copy()
+        cif_._content.append(
+            Chunk(
+                {k: v for k, v in fields.items() if v is not None},
+                comment=comment,
+                schema=PD_SCHEMA,
+            )
+        )
         return cif_
 
     def _assemble_authors(self) -> list[Chunk | Loop]:

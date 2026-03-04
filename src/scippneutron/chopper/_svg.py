@@ -112,8 +112,9 @@ def draw_disk_chopper(chopper: DiskChopper, *, image_size: int) -> str:
         return float(x * scale)
 
     def polar_to_svg_coords(*, r: sc.Variable, a: sc.Variable) -> tuple[float, float]:
-        x = to_svg_coord(r * -sc.sin(a))
-        y = image_size - to_svg_coord(r * sc.cos(a))
+        angle = a.to(dtype=float)
+        x = to_svg_coord(r * -sc.sin(angle))
+        y = image_size - to_svg_coord(r * sc.cos(angle))
         return x, y
 
     # The state of the disk tracer.
