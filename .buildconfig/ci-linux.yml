@@ -45,3 +45,4 @@ dependencies:
 
   # docs and tests
   - sciline==25.11.1
+  - setuptools_scm==9.2.2
