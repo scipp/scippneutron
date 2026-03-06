@@ -808,12 +808,40 @@ def hkl_elements_from_hkl_vec(*, hkl_vec: Variable) -> dict[str, Variable]:
     return {'h': hkl_vec.fields.x, 'k': hkl_vec.fields.y, 'l': hkl_vec.fields.z}
 
 
+def time_of_arrival(*, event_time_zero: Variable, event_time_offset: Variable):
+    """Compute the absolute time of arrival at the detector from the coordinates
+    recorded in NeXus files ``event_time_zero`` and ``event_time_offset``.
+
+    The result is
+
+    .. math::
+
+        t_{\\mathsf{arrival}} = t_{\\mathsf{zero}} + t_{\\mathsf{offset}}
+
+    where :math:`t_{\\mathsf{zero}}` is the time-zero of the event and
+    :math:`t_{\\mathsf{offset}}` is the time offset of the event.
+
+    Parameters
+    ----------
+    event_time_zero:
+        Time-zero of the event.
+    event_time_offset:
+        Time offset of the event.
+
+    Returns
+    -------
+    :
+        Absolute time of arrival at the detector.
+    """
+    return event_time_zero + event_time_offset
+
+
 def time_at_sample_from_wavelength(
     *,
-    toa: VariableLike,
-    L2: VariableLike,
-    wavelength: VariableLike,
-) -> VariableLike:
+    toa: Variable,
+    L2: Variable,
+    wavelength: Variable,
+) -> Variable:
     """Compute the absolute time when the neutron passed through the sample.
 
     The result is
