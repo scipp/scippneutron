@@ -818,7 +818,7 @@ def time_of_arrival(*, event_time_zero: Variable, event_time_offset: Variable):
 
         t_{\\mathsf{arrival}} = t_{\\mathsf{zero}} + t_{\\mathsf{offset}}
 
-    where :math:`t_{\\mathsf{zero}}` is the time-zero of the event and
+    where :math:`t_{0}` is the time-zero of the event and
     :math:`t_{\\mathsf{offset}}` is the time offset of the event.
 
     Parameters
