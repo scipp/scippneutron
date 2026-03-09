@@ -11,7 +11,7 @@ Their values are taken from :mod:`scipp.constants`.
 import numpy as np
 import scipp as sc
 import scipp.constants as const
-from scipp.typing import Variable, VariableLike
+from scipp.typing import Variable
 
 from .._utils import as_float_type, elem_dtype, elem_unit
 
