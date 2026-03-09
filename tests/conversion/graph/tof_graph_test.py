@@ -19,6 +19,7 @@ def test_elastic():
         'hkl_vec',
         ('h', 'k', 'l'),
         'ub_matrix',
+        'toa',
         'time_at_sample',
     }
     assert set(tof.elastic('Q').keys()) == {'wavelength'}
@@ -32,6 +33,7 @@ def test_elastic():
         ('h', 'k', 'l'),
         'ub_matrix',
         'tof',
+        'toa',
         'time_at_sample',
     }
 
