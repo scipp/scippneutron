@@ -311,9 +311,14 @@ class PolynomialModel(Model):
 
     def _guess(self, x: sc.Variable, y: sc.Variable) -> dict[str, sc.Variable]:
         poly = np.polynomial.Polynomial.fit(x.values, y.values, deg=self.degree)
+        # `fit` returns a polynomial with domain=[x.min, x.max], convert to [-1, 1]
+        # because all models are defined for peaks centered around 0.
+        coef = poly.convert().coef
+        # Pad with 0's because `convert` drops those to simplify the polynomial
+        # but the model requires an exact number of params.
+        coef = np.pad(coef, (0, len(self._param_names) - len(coef)))
         return {
-            f'a{i}': sc.scalar(c, unit=y.unit / x.unit**i)
-            for i, c in enumerate(poly.convert().coef)
+            f'a{i}': sc.scalar(c, unit=y.unit / x.unit**i) for i, c in enumerate(coef)
         }
 
 

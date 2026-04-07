@@ -209,6 +209,26 @@ def test_polynomial_degree_2_guess_params():
     sc.testing.assert_allclose(params['a2'], a2, atol=sc.scalar(0.1, unit='K/m^2'))
 
 
+def test_polynomial_degree_2_guess_params_degenerate():
+    x = sc.linspace('xx', 0.8, 4.3, 10, unit='s')
+    y = sc.zeros(sizes=x.sizes, unit='cm')
+    data = sc.DataArray(y, coords={'xx': x})
+
+    m = model.PolynomialModel(degree=2, prefix='')
+    params = m.guess(data)
+    # Test that no params have been optimized away:
+    assert params.keys() == {'a0', 'a1', 'a2'}
+    sc.testing.assert_allclose(
+        params['a0'], sc.scalar(0.0, unit='cm'), atol=sc.scalar(0.1, unit='cm')
+    )
+    sc.testing.assert_allclose(
+        params['a1'], sc.scalar(0.0, unit='cm/s'), atol=sc.scalar(0.1, unit='cm/s')
+    )
+    sc.testing.assert_allclose(
+        params['a2'], sc.scalar(0.0, unit='cm/s^2'), atol=sc.scalar(0.1, unit='cm/s^2')
+    )
+
+
 def test_gaussian_guess_params_linspace():
     amplitude = sc.scalar(2.8, unit='kg')
     loc = sc.scalar(0.4, unit='m')
