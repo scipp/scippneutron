@@ -51,7 +51,7 @@ def test_instrument_view_two_banks_dict():
 def test_instrument_view_two_banks_datagroup():
     bank1 = make_detector_bank(center=(-1.5, 0, 5))
     bank2 = make_detector_bank(center=(1.5, 0, 5))
-    scn.instrument_view(sc.DataGroup({"bank1": bank1, "bank2": bank2}, size=0.1))
+    scn.instrument_view(sc.DataGroup({"bank1": bank1, "bank2": bank2}), size=0.1)
 
 
 def test_instrument_view_default_size():
