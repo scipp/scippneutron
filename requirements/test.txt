@@ -7,5 +7,5 @@
 #
 -r base.txt
 -r basetest.txt
-tof==25.5.0
+tof==26.3.0
     # via -r test.in
