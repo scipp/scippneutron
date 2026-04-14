@@ -34,6 +34,7 @@ def _to_data_array(
 def instrument_view(
     data: sc.DataArray | sc.DataGroup | dict,
     dim: str | None = None,
+    size: float | sc.Variable | None = None,
     pixel_size: float | sc.Variable | None = None,
     autoscale: bool = False,
     operation: Literal[
@@ -81,13 +82,15 @@ def instrument_view(
     else:
         to_scatter = pp.Node(data)
 
+    size = size or pixel_size
+
     kwargs.setdefault('cbar', True)
     fig = pp.scatter3dfigure(
         to_scatter,
         x="x",
         y="y",
         z="z",
-        pixel_size=1.0 * sc.Unit("cm") if pixel_size is None else pixel_size,
+        size=sc.scalar(1.0, unit="cm") if size is None else size,
         autoscale=autoscale,
         **kwargs,
     )
