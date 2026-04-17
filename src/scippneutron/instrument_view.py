@@ -61,6 +61,8 @@ def instrument_view(
         The data must contain a ``position`` coordinate.
     dim:
         Dimension to use for the slider. No slider will be shown if this is None.
+    pos:
+        The name of the coordinate to use for the pixel positions.
     pixel_size:
         Size of the pixels.
     autoscale:

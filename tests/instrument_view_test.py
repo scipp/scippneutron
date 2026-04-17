@@ -42,16 +42,35 @@ def test_instrument_view():
     scn.instrument_view(bank, size=0.1)
 
 
+def test_instrument_view_with_dim():
+    bank = make_detector_bank(center=(0, 0, 5))
+    scn.instrument_view(bank, size=0.1, dim='time')
+
+
 def test_instrument_view_two_banks_dict():
     bank1 = make_detector_bank(center=(-1.5, 0, 5))
     bank2 = make_detector_bank(center=(1.5, 0, 5))
     scn.instrument_view({"bank1": bank1, "bank2": bank2}, size=0.1)
 
 
+def test_instrument_view_two_banks_dict_with_dim():
+    bank1 = make_detector_bank(center=(-1.5, 0, 5))
+    bank2 = make_detector_bank(center=(1.5, 0, 5))
+    scn.instrument_view({"bank1": bank1, "bank2": bank2}, size=0.1, dim='time')
+
+
 def test_instrument_view_two_banks_datagroup():
     bank1 = make_detector_bank(center=(-1.5, 0, 5))
     bank2 = make_detector_bank(center=(1.5, 0, 5))
     scn.instrument_view(sc.DataGroup({"bank1": bank1, "bank2": bank2}), size=0.1)
+
+
+def test_instrument_view_two_banks_datagroup_with_dim():
+    bank1 = make_detector_bank(center=(-1.5, 0, 5))
+    bank2 = make_detector_bank(center=(1.5, 0, 5))
+    scn.instrument_view(
+        sc.DataGroup({"bank1": bank1, "bank2": bank2}), size=0.1, dim='time'
+    )
 
 
 def test_instrument_view_default_size():
