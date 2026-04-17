@@ -36,6 +36,7 @@ def _make_pooch():
             'PG3_4871_event.nxs': 'md5:a3d0edcb36ab8e9e3342cd8a4440b779',
             'WISH00016748.raw': 'md5:37ecc6f99662b57e405ed967bdc068af',
             'horace_sqw_4d.sqw': 'md5:5a53bdc40334f03741c54d62075c8f27',
+            'dream_geant4_data.h5': 'md5:138864fedb0e1337058cd230afcd1cc6',
         },
     )
 
@@ -65,6 +66,13 @@ def powder_sample():
 
 def powder_calibration():
     return sc.io.load_hdf5(_pooch.fetch('PG3_4844_calibration.h5'))
+
+
+def example_dream_data():
+    """
+    Simulated data for the Dream ESS instrument generated with Geant4 (Si sample).
+    """
+    return sc.io.load_hdf5(_pooch.fetch('dream_geant4_data.h5'))
 
 
 def get_path(name: str) -> str:
