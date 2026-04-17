@@ -15,7 +15,7 @@ colorama==0.4.6
     # via tox
 distlib==0.4.0
     # via virtualenv
-filelock==3.25.2
+filelock==3.28.0
     # via
     #   python-discovery
     #   tox
@@ -26,7 +26,7 @@ gitpython==3.1.46
     # via -r ci.in
 idna==3.11
     # via requests
-packaging==26.0
+packaging==26.1
     # via
     #   -r ci.in
     #   pyproject-api
@@ -54,5 +54,5 @@ tox==4.53.0
     # via -r ci.in
 urllib3==2.6.3
     # via requests
-virtualenv==21.2.3
+virtualenv==21.2.4
     # via tox

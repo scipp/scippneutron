@@ -53,7 +53,7 @@ h5py==3.16.0
     #   -r nightly.in
     #   euphonic
     #   scippnexus
-hypothesis==6.151.14
+hypothesis==6.152.1
     # via -r nightly.in
 idna==3.11
     # via
@@ -133,7 +133,7 @@ numpy==2.4.4
     #   spglib
 pace-neutrons==0.4.0
     # via -r nightly.in
-packaging==26.0
+packaging==26.1
     # via
     #   euphonic
     #   ipykernel
@@ -177,9 +177,9 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
     # via stack-data
-pydantic==2.13.0
+pydantic==2.13.2
     # via -r nightly.in
-pydantic-core==2.46.0
+pydantic-core==2.46.2
     # via pydantic
 pygments==2.20.0
     # via
