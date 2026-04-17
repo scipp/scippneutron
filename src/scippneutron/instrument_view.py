@@ -9,19 +9,21 @@ from plopp.core.typing import FigureLike
 
 
 def _to_data_array(
-    data: sc.DataArray | sc.DataGroup | dict, dim: str | None
+    data: sc.DataArray | sc.DataGroup | dict, dim: str | None, pos: str
 ) -> sc.DataArray:
     if isinstance(data, sc.DataArray):
         data = sc.DataGroup({"": data})
     pieces = []
     for da in data.values():
-        da = da.drop_coords(list(set(da.coords) - {"position", dim}))
-        dims = list(da.dims)
-        if (dim is not None) and (dim in dims):
+        da = da.drop_coords(list(set(da.coords) - {pos, dim}))
+        position_dims = tuple(da.coords[pos].dims)
+        # dims = list(da.dims)
+        # if (dim is not None) and (dim in dims):
+        if dim is not None:
             # Ensure that the dims to be flattened are contiguous
-            da = da.transpose([d for d in dims if d != dim] + [dim])
-            dims.remove(dim)
-        flat = da.flatten(dims=dims, to="pixel")
+            other_dims = tuple(d for d in da.dims if d not in position_dims)
+            da = da.transpose(position_dims + other_dims)
+        flat = da.flatten(dims=position_dims, to="pixel")
         filtered = flat[sc.isfinite(flat.coords["position"])]
         pieces.append(
             filtered.assign_coords(
@@ -34,6 +36,7 @@ def _to_data_array(
 def instrument_view(
     data: sc.DataArray | sc.DataGroup | dict,
     dim: str | None = None,
+    pos: str = 'position',
     size: float | sc.Variable | None = None,
     pixel_size: float | sc.Variable | None = None,
     autoscale: bool = False,
@@ -74,12 +77,14 @@ def instrument_view(
     from plopp.plotting.slicer import Slicer
     from plopp.widgets import ClippingManager, ToggleTool, VBar
 
-    data = _to_data_array(data, dim)
+    data = _to_data_array(data=data, dim=dim, pos=pos)
 
     if dim is not None:
         slicer = Slicer(pp.Node(data), keep=set(data.dims) - {dim}, operation=operation)
-        to_scatter = slicer.output[0]
+        to_scatter = slicer.output
     else:
+        if data.ndim > 1:
+            data = getattr(data, operation)(set(data.dims) - {"pixel"})
         to_scatter = pp.Node(data)
 
     size = size or pixel_size
