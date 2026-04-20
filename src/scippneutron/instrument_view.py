@@ -76,13 +76,15 @@ def instrument_view(
         Additional arguments are forwarded to the scatter3d figure
         (see https://scipp.github.io/plopp/generated/plopp.scatter3d.html).
     """
-    from plopp.plotting.slicer import Slicer
+    from plopp import DimensionSlicer
     from plopp.widgets import ClippingManager, ToggleTool, VBar
 
     data = _to_data_array(data=data, dim=dim, pos=pos)
 
     if dim is not None:
-        slicer = Slicer(pp.Node(data), keep=set(data.dims) - {dim}, operation=operation)
+        slicer = DimensionSlicer(
+            pp.Node(data), keep=set(data.dims) - {dim}, operation=operation
+        )
         to_scatter = slicer.output
     else:
         if data.ndim > 1:
