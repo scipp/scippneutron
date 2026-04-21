@@ -17,8 +17,6 @@ def _to_data_array(
     for da in data.values():
         da = da.drop_coords(list(set(da.coords) - {pos, dim}))
         position_dims = tuple(da.coords[pos].dims)
-        # dims = list(da.dims)
-        # if (dim is not None) and (dim in dims):
         if dim is not None:
             # Ensure that the dims to be flattened are contiguous
             other_dims = tuple(d for d in da.dims if d not in position_dims)
