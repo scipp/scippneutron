@@ -9,11 +9,11 @@ cfgv==3.5.0
     # via pre-commit
 distlib==0.4.0
     # via virtualenv
-filelock==3.28.0
+filelock==3.29.0
     # via
     #   python-discovery
     #   virtualenv
-identify==2.6.18
+identify==2.6.19
     # via pre-commit
 nodeenv==1.10.0
     # via pre-commit

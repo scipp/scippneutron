@@ -57,7 +57,7 @@ jsonschema[format-nongpl]==4.26.0
     #   jupyter-events
     #   jupyterlab-server
     #   nbformat
-jupyter-events==0.12.0
+jupyter-events==0.12.1
     # via jupyter-server
 jupyter-lsp==2.3.1
     # via jupyterlab
@@ -79,7 +79,7 @@ notebook-shim==0.2.4
     # via jupyterlab
 overrides==7.7.0
     # via jupyter-server
-pip-compile-multi==3.3.0
+pip-compile-multi==3.3.1
     # via -r dev.in
 pip-tools==7.5.3
     # via pip-compile-multi

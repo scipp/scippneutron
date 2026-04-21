@@ -160,7 +160,7 @@ pybtex==0.26.1
     #   sphinxcontrib-bibtex
 pybtex-docutils==1.0.3
     # via sphinxcontrib-bibtex
-pydantic-settings==2.13.1
+pydantic-settings==2.14.0
     # via autodoc-pydantic
 pydata-sphinx-theme==0.17.0
     # via -r docs.in
