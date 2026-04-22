@@ -20,7 +20,7 @@ def _to_data_array(
         if dim is not None:
             # Ensure that the dims to be flattened are contiguous
             other_dims = tuple(d for d in da.dims if d not in position_dims)
-            da = da.transpose(position_dims + other_dims)
+            da = da.transpose(other_dims + position_dims)
         flat = da.flatten(dims=position_dims, to="pixel")
         filtered = flat[sc.isfinite(flat.coords["position"])]
         pieces.append(
