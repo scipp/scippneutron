@@ -18,7 +18,9 @@ def _to_data_array(
         da = da.drop_coords(list(set(da.coords) - {pos, dim}))
         position_dims = tuple(da.coords[pos].dims)
         if dim is not None:
-            # Ensure that the dims to be flattened are contiguous
+            # Ensure that the dims to be flattened are contiguous, and place them at
+            # the end so that slicing the first (outer) dim with the slider is
+            # efficient.
             other_dims = tuple(d for d in da.dims if d not in position_dims)
             da = da.transpose(other_dims + position_dims)
         flat = da.flatten(dims=position_dims, to="pixel")
@@ -44,7 +46,8 @@ def instrument_view(
     **kwargs,
 ) -> FigureLike:
     """
-    Three-dimensional visualization of the DREAM instrument.
+    Three-dimensional visualization of an instrument (single data array or group
+    containing multiple detector modules).
     The instrument view is capable of slicing the input data with a slider widget along
     a dimension (e.g. ``tof``) by using the ``dim`` argument.
 
@@ -61,8 +64,10 @@ def instrument_view(
         Dimension to use for the slider. No slider will be shown if this is None.
     pos:
         The name of the coordinate to use for the pixel positions.
-    pixel_size:
+    size:
         Size of the pixels.
+    pixel_size:
+        Alias for ``size`` (deprecated).
     autoscale:
         If ``True``, the color scale will be automatically adjusted to the data as it
         gets updated. This can be somewhat expensive with many pixels, so it is set to
