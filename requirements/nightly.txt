@@ -14,7 +14,7 @@ appdirs==1.4.4
     # via pace-neutrons
 asttokens==3.0.1
     # via stack-data
-certifi==2026.2.25
+certifi==2026.4.22
     # via requests
 charset-normalizer==3.4.7
     # via requests
@@ -53,9 +53,9 @@ h5py==3.16.0
     #   -r nightly.in
     #   euphonic
     #   scippnexus
-hypothesis==6.152.1
+hypothesis==6.152.4
     # via -r nightly.in
-idna==3.11
+idna==3.13
     # via
     #   email-validator
     #   requests
@@ -67,7 +67,7 @@ ipykernel==7.2.0
     # via -r nightly.in
 ipympl==0.10.0
     # via -r nightly.in
-ipython==9.10.1
+ipython==9.13.0
     # via
     #   ipykernel
     #   ipympl
@@ -99,7 +99,7 @@ lazy-loader==0.5
     #   tof
 libpymcr==0.2.1
     # via pace-neutrons
-matplotlib==3.10.8
+matplotlib==3.11.0rc1
     # via
     #   ipympl
     #   mpltoolbox
@@ -133,7 +133,7 @@ numpy==2.4.4
     #   spglib
 pace-neutrons==0.4.0
     # via -r nightly.in
-packaging==26.1
+packaging==26.2
     # via
     #   euphonic
     #   ipykernel
@@ -172,6 +172,7 @@ psutil==7.2.2
     # via
     #   -r nightly.in
     #   ipykernel
+    #   ipython
     #   pace-neutrons
 ptyprocess==0.7.0
     # via pexpect
@@ -266,7 +267,6 @@ typing-extensions==4.15.0
     # via
     #   flexcache
     #   flexparser
-    #   ipython
     #   pint
     #   pydantic
     #   pydantic-core

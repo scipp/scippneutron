@@ -9,7 +9,7 @@ appdirs==1.4.4
     # via pace-neutrons
 asttokens==3.0.1
     # via stack-data
-certifi==2026.2.25
+certifi==2026.4.22
     # via requests
 charset-normalizer==3.4.7
     # via requests
@@ -41,9 +41,9 @@ fonttools==4.62.1
     # via matplotlib
 h5py==3.16.0
     # via euphonic
-hypothesis==6.152.1
+hypothesis==6.152.4
     # via -r basetest.in
-idna==3.11
+idna==3.13
     # via requests
 iniconfig==2.3.0
     # via pytest
@@ -53,7 +53,7 @@ ipykernel==7.2.0
     # via -r basetest.in
 ipympl==0.10.0
     # via -r basetest.in
-ipython==9.10.1
+ipython==9.13.0
     # via
     #   ipykernel
     #   ipympl
@@ -80,7 +80,7 @@ kiwisolver==1.5.0
     # via matplotlib
 libpymcr==0.2.1
     # via pace-neutrons
-matplotlib==3.10.8
+matplotlib==3.10.9
     # via
     #   ipympl
     #   pace-neutrons
@@ -108,7 +108,7 @@ numpy==2.4.4
     #   spglib
 pace-neutrons==0.4.0
     # via -r basetest.in
-packaging==26.1
+packaging==26.2
     # via
     #   euphonic
     #   ipykernel
@@ -140,6 +140,7 @@ psutil==7.2.2
     # via
     #   -r basetest.in
     #   ipykernel
+    #   ipython
     #   pace-neutrons
 ptyprocess==0.7.0
     # via pexpect
@@ -217,7 +218,6 @@ typing-extensions==4.15.0
     # via
     #   flexcache
     #   flexparser
-    #   ipython
     #   pint
     #   spglib
 urllib3==2.6.3
