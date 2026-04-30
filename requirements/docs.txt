@@ -28,7 +28,7 @@ beautifulsoup4==4.14.3
     #   pydata-sphinx-theme
 bleach[css]==6.3.0
     # via nbconvert
-certifi==2026.2.25
+certifi==2026.4.22
     # via requests
 charset-normalizer==3.4.7
     # via requests
@@ -60,7 +60,7 @@ ipykernel==7.2.0
     # via -r docs.in
 ipympl==0.10.0
     # via -r docs.in
-ipython==9.10.1
+ipython==9.13.0
     # via
     #   -r docs.in
     #   ipykernel
@@ -149,7 +149,9 @@ pooch==1.9.0
 prompt-toolkit==3.0.52
     # via ipython
 psutil==7.2.2
-    # via ipykernel
+    # via
+    #   ipykernel
+    #   ipython
 ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
@@ -162,7 +164,7 @@ pybtex-docutils==1.0.3
     # via sphinxcontrib-bibtex
 pydantic-settings==2.14.0
     # via autodoc-pydantic
-pydata-sphinx-theme==0.17.0
+pydata-sphinx-theme==0.17.1
     # via -r docs.in
 pygments==2.20.0
     # via
@@ -200,7 +202,7 @@ snowballstemmer==3.0.1
     # via sphinx
 soupsieve==2.8.3
     # via beautifulsoup4
-sphinx==9.0.4
+sphinx==9.1.0
     # via
     #   -r docs.in
     #   autodoc-pydantic
@@ -211,7 +213,7 @@ sphinx==9.0.4
     #   sphinx-copybutton
     #   sphinx-design
     #   sphinxcontrib-bibtex
-sphinx-autodoc-typehints==3.6.1
+sphinx-autodoc-typehints==3.10.2
     # via -r docs.in
 sphinx-copybutton==0.5.2
     # via -r docs.in
