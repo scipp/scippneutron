@@ -298,6 +298,9 @@ class FrameSequence:
         time_max: sc.Variable,
         wavelength_min: sc.Variable,
         wavelength_max: sc.Variable,
+        npulses: int = 1,
+        pulse_period: sc.Variable | None = None,
+        distance: sc.Variable | None = None,
     ):
         """
         Initialize a frame sequence from min/max time and wavelength of a pulse.
@@ -311,10 +314,21 @@ class FrameSequence:
             [wavelength_min, wavelength_min, wavelength_max, wavelength_max],
             dim='vertex',
         ).to(unit='angstrom')
+
+        if npulses > 1:
+            if pulse_period is None:
+                raise ValueError('pulse_period must be provided if npulses > 1')
+            subframes = [
+                Subframe(time=time + i * pulse_period, wavelength=wavelength)
+                for i in range(npulses)
+            ]
+        else:
+            subframes = [Subframe(time=time, wavelength=wavelength)]
+
         frames = [
             Frame(
-                distance=sc.scalar(0, unit='m'),
-                subframes=[Subframe(time=time, wavelength=wavelength)],
+                distance=sc.scalar(0.0, unit='m') if distance is None else distance,
+                subframes=subframes,
             )
         ]
         return FrameSequence(frames)

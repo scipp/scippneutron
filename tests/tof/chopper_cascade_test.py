@@ -493,3 +493,68 @@ def test_frame_sequence_getitem_by_distance_selects_correct_chopper(
     distance = sc.scalar(3.0, unit='m')
     result = frames[distance]
     assert_identical(result.bounds(), frames[2].propagate_to(distance).bounds())
+
+
+def test_frame_sequence_with_multiple_pulses():
+
+    pulse_period = sc.scalar(1 / 14, unit='s')
+    frames = chopper_cascade.FrameSequence.from_source_pulse(
+        time_min=sc.scalar(0.0, unit='ms'),
+        time_max=sc.scalar(1.0, unit='ms'),
+        wavelength_min=sc.scalar(1.0, unit='angstrom'),
+        wavelength_max=sc.scalar(10.0, unit='angstrom'),
+        npulses=3,
+        pulse_period=pulse_period,
+    )
+    assert len(frames) == 1
+    assert len(frames[0].subframes) == 3
+    expected_time = sc.array(dims=['vertex'], values=[0.0, 1.0, 1.0, 0.0], unit='ms')
+    expected_wavelength = sc.array(
+        dims=['vertex'], values=[1.0, 1.0, 10.0, 10.0], unit='angstrom'
+    )
+
+    for i in range(3):
+        expected_subframe = chopper_cascade.Subframe(
+            time=expected_time + i * pulse_period.to(unit='ms'),
+            wavelength=expected_wavelength,
+        )
+        assert frames[0].subframes[i] == expected_subframe
+
+
+def test_chop_frame_sequence_with_multiple_pulses():
+    pulse_period = sc.scalar(1 / 14, unit='s')
+    frames = chopper_cascade.FrameSequence.from_source_pulse(
+        time_min=sc.scalar(0.0, unit='ms'),
+        time_max=sc.scalar(1.0, unit='ms'),
+        wavelength_min=sc.scalar(1.0, unit='angstrom'),
+        wavelength_max=sc.scalar(10.0, unit='angstrom'),
+        npulses=3,
+        pulse_period=pulse_period,
+    )
+
+    offset = sc.arange('pulse', 3) * pulse_period
+
+    chopper1 = chopper_cascade.Chopper(
+        distance=sc.scalar(5, unit='m'),
+        time_open=(sc.array(dims=['slit'], values=[0.002], unit='s') + offset).flatten(
+            to='slit'
+        ),
+        time_close=(sc.array(dims=['slit'], values=[0.006], unit='s') + offset).flatten(
+            to='slit'
+        ),
+    )
+    chopper2 = chopper_cascade.Chopper(
+        distance=sc.scalar(10, unit='m'),
+        time_open=(
+            sc.array(dims=['slit'], values=[0.007, 0.009], unit='s') + offset
+        ).flatten(to='slit'),
+        time_close=(
+            sc.array(dims=['slit'], values=[0.008, 0.010], unit='s') + offset
+        ).flatten(to='slit'),
+    )
+
+    frames = frames.chop([chopper1, chopper2])
+
+    assert len(frames[0].subframes) == 3
+    assert len(frames[1].subframes) == 3
+    assert len(frames[2].subframes) == 6  # 3 from each slit of chopper2
