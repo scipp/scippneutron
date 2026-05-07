@@ -318,6 +318,7 @@ class FrameSequence:
         if npulses > 1:
             if pulse_period is None:
                 raise ValueError('pulse_period must be provided if npulses > 1')
+            pulse_period = pulse_period.to(unit='s')
             subframes = [
                 Subframe(time=time + i * pulse_period, wavelength=wavelength)
                 for i in range(npulses)
