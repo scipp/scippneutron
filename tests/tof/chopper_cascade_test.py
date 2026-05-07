@@ -496,7 +496,6 @@ def test_frame_sequence_getitem_by_distance_selects_correct_chopper(
 
 
 def test_frame_sequence_with_multiple_pulses():
-
     pulse_period = sc.scalar(1 / 14, unit='s')
     frames = chopper_cascade.FrameSequence.from_source_pulse(
         time_min=sc.scalar(0.0, unit='ms'),
