@@ -10,11 +10,11 @@ from scipp.typing import VariableLike
 
 
 def elem_unit(var: VariableLike) -> sc.Unit:
-    return var.bins.unit if var.bins is not None else var.unit
+    return var.bins.unit if var.is_binned else var.unit
 
 
 def elem_dtype(var: VariableLike) -> sc.DType:
-    return var.bins.constituents['data'].dtype if var.bins is not None else var.dtype
+    return var.bins.constituents['data'].dtype if var.is_binned else var.dtype
 
 
 def float_dtype(var: VariableLike) -> sc.DType:

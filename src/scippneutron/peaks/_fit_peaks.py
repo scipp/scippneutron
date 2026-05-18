@@ -736,7 +736,7 @@ def _assert_data_is_supported(data: sc.DataArray) -> None:
         raise sc.DimensionError(
             f'`fit_peaks` requires 1d data, got {data.ndim} dimensions'
         )
-    if data.bins is not None:
+    if data.is_binned:
         raise sc.DTypeError('`fit_peaks` does not support binned data')
     if data.coords.is_edges(data.dim):
         raise sc.CoordError(
