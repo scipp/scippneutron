@@ -297,6 +297,7 @@ linkcheck_ignore = [
     r'https://support\.orcid\.org/hc/en-us/articles/360006897674-Structure-of-the-ORCID-Identifier',
     r'https://www\.iucr\.org',
     r'https?://www\.sciencedirect.com/',
+    r'https?://journals\.iucr\.org/j/',
     # Linkcheck seems to be denied access by some DOI resolvers.
     # Since DOIs are supposed to be permanent, we don't need to check them.'
     r'https?://doi\.org/',
