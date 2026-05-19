@@ -723,7 +723,7 @@ def hkl_vec_from_elastic_Q_vec(
 
     This quantity is called :math:`Q` elsewhere in ScippNeutron.
 
-    Those two :math:`Q`'s are related by via
+    Those two :math:`Q`'s are related via
 
     .. math::
 
