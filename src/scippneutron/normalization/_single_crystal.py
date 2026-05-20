@@ -4,14 +4,29 @@
 """Normalization routines for single-crystal experiments (SXD and INS)."""
 
 import numpy as np
+import scipp as sc
+import scipp.constants
 
 
 def compute_q_de_norm(
     *,
-    trajectory_start: list[float],
-    trajectory_stop: list[float],
-    all_edges: list[np.ndarray],
-) -> np.ndarray:
+    trajectory_start: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
+    trajectory_stop: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
+    grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
+    incident_energy: sc.Variable,
+) -> sc.Variable:
+    """TODO
+
+    The grid is specified in (h, k, l, dE),
+    gets converted to (h, k, l, kf)
+    """
+    grid = (
+        *grid[:3],
+        _energy_to_final_momentum(
+            energy_transfer=grid[3], incident_energy=incident_energy
+        ),
+    )
+
     intersections = _compute_trajectory_grid_intersections(
         trajectory_start, trajectory_stop, all_edges
     )
@@ -19,15 +34,29 @@ def compute_q_de_norm(
     indices, segment_lengths = _compute_trajectory_segment_lengths(
         start=trajectory_start,
         stop=trajectory_stop,
-        edges=all_edges,
+        edges=grid,
         intersections=intersections,
     )
 
-    norm = np.zeros([edges.size - 1 for edges in all_edges])
-    for i, l in zip(indices, segment_lengths, strict=True):
-        norm[tuple(i)] += l
+    norm = sc.zeros(
+        dims=['h', 'k', 'l', 'energy_transfer'],
+        shape=[len(edge) - 1 for edge in grid],
+        unit='meV',
+    )
+    # for i, l in zip(indices, segment_lengths, strict=True):
+    #     norm[tuple(i)] += l
 
     return norm
+
+
+# TODO move to coord transforms (and use in essspectroscopy)
+def _energy_to_final_momentum(
+    *, incident_energy: sc.Variable, energy_transfer: sc.Variable
+) -> sc.Variable:
+    final_energy = incident_energy - energy_transfer
+    return sc.to_unit(
+        8 * np.pi**2 * sc.constants.m_n / sc.constants.h**2 * final_energy, 'meV'
+    )
 
 
 def _compute_trajectory_grid_intersections(
