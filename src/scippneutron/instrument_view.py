@@ -34,7 +34,7 @@ def _to_data_array(
 
     if (
         (dim is not None)
-        and len(pieces) > 1
+        and (len(pieces) > 1)
         and (not reduce(sc.identical, [da.coords[dim] for da in pieces]))
     ):
         raise ValueError(
