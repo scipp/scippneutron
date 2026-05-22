@@ -21,6 +21,31 @@ class TrajectoryHelper:
             'meV',
         )
 
+    def norm_grid(
+        self,
+        shape: tuple[int, int, int, int],
+        cells: list[tuple[int, int, int, int]],
+        segments: list[float],
+    ) -> sc.Variable:
+        """Construct a normalization factor on a hkl-dE grid.
+
+        ``cells`` is a list of indices of grid cells to fill.
+        ``segments`` is a list of dE edges for each cell.
+        ```len(segments) == len(cells) + 1```, like bin-edges.
+        """
+        de_segments = [
+            self.kf_to_de(sc.scalar(segment, unit='1/Å')) for segment in segments
+        ]
+        expected = sc.zeros(
+            dims=['h', 'k', 'l', 'energy_transfer'], shape=shape, unit='meV'
+        )
+        for i, cell in enumerate(cells):
+            de = abs(de_segments[i + 1] - de_segments[i])
+            expected['h', cell[0]]['k', cell[1]]['l', cell[2]][
+                'energy_transfer', cell[3]
+            ].value = de.value
+        return expected
+
 
 def to_grid_variables(
     h: float, k: float, l: float, mom: float
@@ -51,7 +76,10 @@ def to_grid_variables(
 def test_single_crystal_norm_ins_det_traj_within_grid_2d(
     helper: TrajectoryHelper,
 ) -> None:
-    """Case A1 from tools/detector_test_trajectories.py"""
+    """Case A1 from tools/detector_test_trajectories.py
+
+    Only blue trajectory.
+    """
     trajectory_start = to_grid_variables(0.1, 0.0, 0.0, 1.0)
     trajectory_stop = to_grid_variables(0.9, 0.0, 0.0, 1.5)
 
@@ -68,15 +96,15 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d(
         incident_energy=helper.incident_energy,
     )
 
-    expected = sc.zeros(
-        dims=['h', 'k', 'l', 'energy_transfer'], shape=[4, 3, 3, 3], unit='meV'
+    a1 = 0.125
+    c1 = 0.075
+    cells = [(0, 1, 1, 1), (1, 1, 1, 1), (1, 1, 1, 2), (2, 1, 1, 2)]
+    segments = [1.0, 1.0 + a1, 1.3, 1.3 + c1, 1.5]
+    expected = helper.norm_grid(
+        shape=(4, 3, 3, 3),
+        cells=cells,
+        segments=segments,
     )
-    expected['k', 1]['l', 1].values[:] = [
-        [0, 0.125, 0],
-        [0, 0.175, 0.075],
-        [0, 0, 0.125],
-        [0, 0, 0],
-    ]
 
     sc.testing.assert_allclose(norm, expected)
 
@@ -109,14 +137,12 @@ def test_single_crystal_norm_ins_det_traj_ends_outside_grid_2d(
         incident_energy=helper.incident_energy,
     )
 
-    expected = sc.zeros(
-        dims=['h', 'k', 'l', 'energy_transfer'], shape=[3, 3, 3, 3], unit='meV'
+    b = 0.21538461538461542
+    expected = helper.norm_grid(
+        shape=(3, 3, 3, 3),
+        cells=[(2, 1, 1, 2), (2, 1, 1, 1)],
+        segments=[1.0, 0.7, 0.7 - b],
     )
-    expected['k', 1]['l', 1].values[:] = [
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0.21538461538461542, 0.3],
-    ]
 
     sc.testing.assert_allclose(norm, expected)
 
@@ -149,16 +175,12 @@ def test_single_crystal_norm_ins_det_traj_start_inside_end_outside_grid_2d(
         incident_energy=helper.incident_energy,
     )
 
-    expected = sc.zeros(
-        dims=['h', 'k', 'l', 'energy_transfer'], shape=[5, 3, 3, 3], unit='meV'
+    b = 0.05
+    expected = helper.norm_grid(
+        shape=(5, 3, 3, 3),
+        cells=[(2, 1, 1, 1), (2, 1, 1, 0), (1, 1, 1, 0)],
+        segments=[0.9, 0.5, 0.5 - b, 0.4],
     )
-    expected['k', 1]['l', 1].values[:] = [
-        [0, 0, 0],
-        [0.05, 0, 0],
-        [0.05, 0.4, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-    ]
 
     sc.testing.assert_allclose(norm, expected)
 
@@ -191,15 +213,11 @@ def test_single_crystal_norm_ins_det_traj_single_cell_grid_2d(
         incident_energy=helper.incident_energy,
     )
 
-    expected = sc.zeros(
-        dims=['h', 'k', 'l', 'energy_transfer'], shape=[4, 3, 3, 3], unit='meV'
+    expected = helper.norm_grid(
+        shape=(4, 3, 3, 3),
+        cells=[(1, 1, 1, 1)],
+        segments=[1.0, 1.2],
     )
-    expected['k', 1]['l', 1].values[:] = [
-        [0, 0, 0],
-        [0, 0.2, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-    ]
 
     sc.testing.assert_allclose(norm, expected)
 
@@ -232,15 +250,11 @@ def test_single_crystal_norm_ins_det_traj_vertical_grid_2d(
         incident_energy=helper.incident_energy,
     )
 
-    expected = sc.zeros(
-        dims=['h', 'k', 'l', 'energy_transfer'], shape=[4, 3, 3, 3], unit='meV'
+    expected = helper.norm_grid(
+        shape=(4, 3, 3, 3),
+        cells=[(1, 1, 1, 0), (1, 1, 1, 1), (1, 1, 1, 2)],
+        segments=[0.6, 0.9, 1.3, 1.4],
     )
-    expected['k', 1]['l', 1].values[:] = [
-        [0, 0, 0],
-        [0.3, 0.4, 0.1],
-        [0, 0, 0],
-        [0, 0, 0],
-    ]
 
     sc.testing.assert_allclose(norm, expected)
 
@@ -273,14 +287,11 @@ def test_single_crystal_norm_ins_det_traj_at_grid_lines_grid_2d(
         incident_energy=helper.incident_energy,
     )
 
-    expected = sc.zeros(
-        dims=['h', 'k', 'l', 'energy_transfer'], shape=[4, 3, 3, 3], unit='meV'
+    b = 0.28
+    expected = helper.norm_grid(
+        shape=(4, 3, 3, 3),
+        cells=[(1, 1, 1, 0), (1, 1, 1, 1), (2, 1, 1, 1)],
+        segments=[0.7, 0.9, 0.9 + b, 1.3],
     )
-    expected['k', 1]['l', 1].values[:] = [
-        [0, 0, 0],
-        [0.2, 0.28, 0],
-        [0, 0.12, 0],
-        [0, 0, 0],
-    ]
 
     sc.testing.assert_allclose(norm, expected)

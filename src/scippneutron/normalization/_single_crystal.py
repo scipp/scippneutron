@@ -66,6 +66,12 @@ def _energy_to_final_momentum(
     )
 
 
+def _momentum_to_energy(mom: sc.Variable) -> sc.Variable:
+    return sc.to_unit(
+        sc.constants.hbar**2 / (2 * sc.constants.m_n) * mom**2, 'meV', copy=False
+    )
+
+
 def _compute_trajectory_grid_intersections(
     start: tuple[float, float, float, float],
     stop: tuple[float, float, float, float],
@@ -175,7 +181,13 @@ def _compute_trajectory_segment_lengths(
     if segment_ends.size == 0:
         return np.array([]), np.array([])
 
-    delta_kf = np.diff(segment_ends[:, 3])
+    # Converting to Ef is enough because the diff(energy_transfer) == diff(Ef)
+    # for constant Ei.
+    delta_kf = np.diff(
+        _momentum_to_energy(
+            sc.array(dims=['kf'], values=segment_ends[:, 3], unit='1/Å')
+        ).values
+    )
 
     centers = _midpoints(segment_ends)
     indices = np.stack(
