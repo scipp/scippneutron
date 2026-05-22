@@ -32,7 +32,11 @@ def _to_data_array(
             ).drop_coords("position")
         )
 
-    if not reduce(sc.identical, [da.coords[dim] for da in pieces]):
+    if (
+        (dim is not None)
+        and len(pieces) > 1
+        and (not reduce(sc.identical, [da.coords[dim] for da in pieces]))
+    ):
         raise ValueError(
             "All inputs must have the same coordinate along the slider dimension "
             f"'{dim}'."
