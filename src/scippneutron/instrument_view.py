@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2026 Scipp contributors (https://github.com/scipp)
 
+from functools import reduce
 from typing import Literal
 
 import plopp as pp
@@ -29,6 +30,12 @@ def _to_data_array(
             filtered.assign_coords(
                 {k: getattr(filtered.coords["position"].fields, k) for k in "xyz"}
             ).drop_coords("position")
+        )
+
+    if not reduce(sc.identical, [da.coords[dim] for da in pieces]):
+        raise ValueError(
+            "All inputs must have the same coordinate along the slider dimension "
+            f"'{dim}'."
         )
     return sc.concat(pieces, dim="pixel").squeeze()
 
