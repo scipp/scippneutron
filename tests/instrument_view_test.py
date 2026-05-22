@@ -99,8 +99,11 @@ def test_instrument_view_two_banks_dict_with_dim_different_coords_raises():
     bank1 = make_detector_bank(center=(-1.5, 0, 5))
     bank2 = make_detector_bank(center=(1.5, 0, 5))
     bank2.coords['time'] *= 1.01
+    bank3 = make_detector_bank(center=(1.5, 0, 5))
     with pytest.raises(
         ValueError,
         match="All inputs must have the same coordinate along the slider dimension",
     ):
-        scn.instrument_view({"bank1": bank1, "bank2": bank2}, size=0.1, dim='time')
+        scn.instrument_view(
+            {"bank1": bank1, "bank2": bank2, "bank3": bank3}, size=0.1, dim='time'
+        )
