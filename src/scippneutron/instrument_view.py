@@ -14,10 +14,18 @@ def _to_data_array(
     if isinstance(data, sc.DataArray):
         data = sc.DataGroup({"": data})
     pieces = []
+    dim_coord = None
     for da in data.values():
         da = da.drop_coords(list(set(da.coords) - {pos, dim}))
         position_dims = tuple(da.coords[pos].dims)
         if dim is not None:
+            if dim_coord is None:
+                dim_coord = da.coords[dim]
+            elif not sc.identical(dim_coord, da.coords[dim]):
+                raise ValueError(
+                    "All inputs must have the same coordinate along the slider"
+                    f" dimension '{dim}'."
+                )
             # Ensure that the dims to be flattened are contiguous, and place them at
             # the end so that slicing the first (outer) dim with the slider is
             # efficient.
