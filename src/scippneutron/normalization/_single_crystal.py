@@ -10,8 +10,8 @@ import scipp.constants
 
 def compute_q_de_norm(
     *,
-    trajectory_start: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
-    trajectory_stop: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
+    trajectory_start: list[tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable]],
+    trajectory_stop: list[tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable]],
     grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
     incident_energy: sc.Variable,
 ) -> sc.Variable:
@@ -28,8 +28,8 @@ def compute_q_de_norm(
     )
 
     # TODO for now, convert to raw numbers:
-    trajectory_start = tuple(x.value for x in trajectory_start)
-    trajectory_stop = tuple(x.value for x in trajectory_stop)
+    trajectory_start = [tuple(x.value for x in start) for start in trajectory_start]
+    trajectory_stop = [tuple(x.value for x in stop) for stop in trajectory_stop]
     grid = tuple(x.values for x in grid)
 
     norm = sc.zeros(
@@ -37,22 +37,21 @@ def compute_q_de_norm(
         shape=[len(edge) - 1 for edge in grid],
         unit='meV',
     )
-    if abs(trajectory_stop[3] - trajectory_start[3]) < 1e-10:
-        return norm  # no energy transfer in this trajectory
+    for start, stop in zip(trajectory_start, trajectory_stop, strict=True):
+        if abs(stop[3] - start[3]) < 1e-10:
+            continue  # no energy transfer in this trajectory
 
-    intersections = _compute_trajectory_grid_intersections(
-        trajectory_start, trajectory_stop, grid
-    )
+        intersections = _compute_trajectory_grid_intersections(start, stop, grid)
 
-    indices, segment_lengths = _compute_trajectory_segment_lengths(
-        start=trajectory_start,
-        stop=trajectory_stop,
-        grid=grid,
-        intersections=intersections,
-    )
+        indices, segment_lengths = _compute_trajectory_segment_lengths(
+            start=start,
+            stop=stop,
+            grid=grid,
+            intersections=intersections,
+        )
 
-    for i, l in zip(indices, segment_lengths, strict=True):
-        norm.values[tuple(i)] += l
+        for i, l in zip(indices, segment_lengths, strict=True):
+            norm.values[tuple(i)] += l
 
     return norm
 

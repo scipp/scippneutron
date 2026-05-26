@@ -50,6 +50,11 @@ class TrajectoryHelper:
         return expected
 
 
+@pytest.fixture(params=[1.3, 0.04], ids=["Ei0", "Ei1"])
+def helper(request: Any) -> TrajectoryHelper:
+    return TrajectoryHelper(sc.scalar(request.param, unit='meV'))
+
+
 def to_grid_variables(
     h: float, k: float, l: float, mom: float
 ) -> tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable]:
@@ -89,19 +94,13 @@ def make_trajectory(
 
 
 # TODO test invariants:
-#    - rotate hkl in 2d trajectory
+#    - rotate hkl in traj and grid
 #    - multi traj: swap trajectories
+#    - flip ends
+#    - shift in grid by multiple of cell length -> norm shifts the same
 
 
-# TODO permutations of hkl
 # TODO ranges of other hkl (test with single bin)
-@pytest.mark.parametrize(
-    'helper',
-    [
-        TrajectoryHelper(sc.scalar(1.3, unit='meV')),
-        TrajectoryHelper(sc.scalar(0.04, unit='meV')),
-    ],
-)
 def test_single_crystal_norm_ins_det_traj_within_grid_2d(
     helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
@@ -120,8 +119,8 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=trajectory_start,
-        trajectory_stop=trajectory_stop,
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
         grid=edges,
         incident_energy=helper.incident_energy,
     )
@@ -139,14 +138,51 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d(
     sc.testing.assert_allclose(norm, expected)
 
 
-# TODO permutations of hkl
-@pytest.mark.parametrize(
-    'helper',
-    [
-        TrajectoryHelper(sc.scalar(1.3, unit='meV')),
-        TrajectoryHelper(sc.scalar(0.04, unit='meV')),
-    ],
-)
+def test_single_crystal_norm_ins_det_traj_within_grid_2d_multi_traj(
+    helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
+) -> None:
+    """Case A2 from tools/detector_test_trajectories.py"""
+    trajectory_start1, trajectory_stop1 = make_trajectory(
+        (0.1, 0.0, 0.0, 1.0), (0.9, 0.0, 0.0, 1.5)
+    )
+    trajectory_start2, trajectory_stop2 = make_trajectory(
+        (0.5, 0.0, 0.0, 0.9), (0.8, 0.0, 0.0, 1.4)
+    )
+
+    h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
+    k_edges = sc.linspace('k', -0.5, 0.5, 4)
+    l_edges = sc.linspace('l', -0.5, 0.5, 4)
+    mom_edges = sc.array(dims=['mom'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å')
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+
+    norm = compute_q_de_norm(
+        trajectory_start=[trajectory_start1, trajectory_start2],
+        trajectory_stop=[trajectory_stop1, trajectory_stop2],
+        grid=edges,
+        incident_energy=helper.incident_energy,
+    )
+
+    a1 = 0.125
+    c1 = 0.075
+
+    a2 = 1 / 3
+    c2 = 0.1
+
+    expected1 = helper.norm_grid(
+        shape=(4, 3, 3, 3),
+        cells=[(0, 1, 1, 1), (1, 1, 1, 1), (1, 1, 1, 2), (2, 1, 1, 2)],
+        segments=[1.0, 1.0 + a1, 1.3, 1.3 + c1, 1.5],
+    )
+    expected2 = helper.norm_grid(
+        shape=(4, 3, 3, 3),
+        cells=[(1, 1, 1, 1), (2, 1, 1, 1), (2, 1, 1, 2)],
+        segments=[0.9, 0.9 + a2, 1.3, 1.3 + c2],
+    )
+    expected = expected1 + expected2
+
+    sc.testing.assert_allclose(norm, expected)
+
+
 def test_single_crystal_norm_ins_det_traj_ends_outside_grid_2d(
     helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
@@ -162,8 +198,8 @@ def test_single_crystal_norm_ins_det_traj_ends_outside_grid_2d(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=trajectory_start,
-        trajectory_stop=trajectory_stop,
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
         grid=edges,
         incident_energy=helper.incident_energy,
     )
@@ -178,14 +214,6 @@ def test_single_crystal_norm_ins_det_traj_ends_outside_grid_2d(
     sc.testing.assert_allclose(norm, expected)
 
 
-# TODO permutations of hkl
-@pytest.mark.parametrize(
-    'helper',
-    [
-        TrajectoryHelper(sc.scalar(1.8, unit='meV')),
-        TrajectoryHelper(sc.scalar(0.01, unit='meV')),
-    ],
-)
 def test_single_crystal_norm_ins_det_traj_start_inside_end_outside_grid_2d(
     helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
@@ -201,8 +229,8 @@ def test_single_crystal_norm_ins_det_traj_start_inside_end_outside_grid_2d(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=trajectory_start,
-        trajectory_stop=trajectory_stop,
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
         grid=edges,
         incident_energy=helper.incident_energy,
     )
@@ -217,14 +245,6 @@ def test_single_crystal_norm_ins_det_traj_start_inside_end_outside_grid_2d(
     sc.testing.assert_allclose(norm, expected)
 
 
-# TODO permutations of hkl
-@pytest.mark.parametrize(
-    'helper',
-    [
-        TrajectoryHelper(sc.scalar(1.8, unit='meV')),
-        TrajectoryHelper(sc.scalar(0.01, unit='meV')),
-    ],
-)
 def test_single_crystal_norm_ins_det_traj_single_cell_grid_2d(
     helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
@@ -240,8 +260,8 @@ def test_single_crystal_norm_ins_det_traj_single_cell_grid_2d(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=trajectory_start,
-        trajectory_stop=trajectory_stop,
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
         grid=edges,
         incident_energy=helper.incident_energy,
     )
@@ -255,14 +275,6 @@ def test_single_crystal_norm_ins_det_traj_single_cell_grid_2d(
     sc.testing.assert_allclose(norm, expected)
 
 
-# TODO permutations of hkl
-@pytest.mark.parametrize(
-    'helper',
-    [
-        TrajectoryHelper(sc.scalar(1.8, unit='meV')),
-        TrajectoryHelper(sc.scalar(0.01, unit='meV')),
-    ],
-)
 def test_single_crystal_norm_ins_det_traj_vertical_grid_2d(
     helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
@@ -278,8 +290,8 @@ def test_single_crystal_norm_ins_det_traj_vertical_grid_2d(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=trajectory_start,
-        trajectory_stop=trajectory_stop,
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
         grid=edges,
         incident_energy=helper.incident_energy,
     )
@@ -293,14 +305,6 @@ def test_single_crystal_norm_ins_det_traj_vertical_grid_2d(
     sc.testing.assert_allclose(norm, expected)
 
 
-# TODO permutations of hkl
-@pytest.mark.parametrize(
-    'helper',
-    [
-        TrajectoryHelper(sc.scalar(1.8, unit='meV')),
-        TrajectoryHelper(sc.scalar(0.01, unit='meV')),
-    ],
-)
 def test_single_crystal_norm_ins_det_traj_at_grid_lines_grid_2d(
     helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
@@ -316,8 +320,8 @@ def test_single_crystal_norm_ins_det_traj_at_grid_lines_grid_2d(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=trajectory_start,
-        trajectory_stop=trajectory_stop,
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
         grid=edges,
         incident_energy=helper.incident_energy,
     )
@@ -332,14 +336,6 @@ def test_single_crystal_norm_ins_det_traj_at_grid_lines_grid_2d(
     sc.testing.assert_allclose(norm, expected)
 
 
-# TODO permutations of hkl
-@pytest.mark.parametrize(
-    'helper',
-    [
-        TrajectoryHelper(sc.scalar(1.8, unit='meV')),
-        TrajectoryHelper(sc.scalar(0.01, unit='meV')),
-    ],
-)
 def test_single_crystal_norm_ins_det_traj_outside_grid_single_cell(
     helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
@@ -355,8 +351,8 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_single_cell(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=trajectory_start,
-        trajectory_stop=trajectory_stop,
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
         grid=edges,
         incident_energy=helper.incident_energy,
     )
@@ -366,14 +362,6 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_single_cell(
     sc.testing.assert_allclose(norm, expected)
 
 
-# TODO permutations of hkl
-@pytest.mark.parametrize(
-    'helper',
-    [
-        TrajectoryHelper(sc.scalar(1.8, unit='meV')),
-        TrajectoryHelper(sc.scalar(0.01, unit='meV')),
-    ],
-)
 def test_single_crystal_norm_ins_det_traj_outside_grid_multi_cell(
     helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
@@ -389,8 +377,8 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_multi_cell(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=trajectory_start,
-        trajectory_stop=trajectory_stop,
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
         grid=edges,
         incident_energy=helper.incident_energy,
     )
@@ -400,14 +388,6 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_multi_cell(
     sc.testing.assert_allclose(norm, expected)
 
 
-# TODO permutations of hkl
-@pytest.mark.parametrize(
-    'helper',
-    [
-        TrajectoryHelper(sc.scalar(1.8, unit='meV')),
-        TrajectoryHelper(sc.scalar(0.01, unit='meV')),
-    ],
-)
 def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal(
     helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
@@ -423,8 +403,8 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=trajectory_start,
-        trajectory_stop=trajectory_stop,
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
         grid=edges,
         incident_energy=helper.incident_energy,
     )
