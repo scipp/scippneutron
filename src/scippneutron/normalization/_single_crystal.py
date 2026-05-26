@@ -27,7 +27,7 @@ def compute_q_de_norm(
         ),
     )
 
-    grid = tuple(x.values for x in grid)
+    grid = tuple(np.sort(x.values) for x in grid)
 
     norm = sc.zeros(
         dims=['h', 'k', 'l', 'energy_transfer'],
@@ -100,17 +100,18 @@ def _compute_trajectory_grid_intersections(
         fl = (stop[2] - start[2]) / (stop[dim] - start[dim])
         fmom = (stop[3] - start[3]) / (stop[dim] - start[dim])
         for h in grid[dim]:
-            if (start[dim] < h < stop[dim]) or (stop[dim] < h < start[dim]):
+            if (start[dim] <= h < stop[dim]) or (stop[dim] < h <= start[dim]):
                 k = fk * (h - start[dim]) + start[1]
                 l = fl * (h - start[dim]) + start[2]
                 if (
                     (k >= grid[1][0])
-                    and (k <= grid[1][-1])
+                    and (k < grid[1][-1])
                     and (l >= grid[2][0])
-                    and (l <= grid[2][-1])
+                    and (l < grid[2][-1])
                 ):
-                    momi = fmom * (h - start[dim]) + start[3]
-                    intersections.append((h, k, l, momi))
+                    mom = fmom * (h - start[dim]) + start[3]
+                    if mom >= grid[3][0] and mom < grid[3][-1]:
+                        intersections.append((h, k, l, mom))
 
     # intersections w/ gridlines in k
     dim = 1
@@ -119,17 +120,18 @@ def _compute_trajectory_grid_intersections(
         fl = (stop[2] - start[2]) / (stop[dim] - start[dim])
         fmom = (stop[3] - start[3]) / (stop[dim] - start[dim])
         for k in grid[dim]:
-            if (start[dim] < k < stop[dim]) or (stop[dim] < k < start[dim]):
+            if (start[dim] <= k < stop[dim]) or (stop[dim] < k <= start[dim]):
                 h = fh * (k - start[dim]) + start[0]
                 l = fl * (k - start[dim]) + start[2]
                 if (
                     (h >= grid[0][0])
-                    and (h <= grid[0][-1])
+                    and (h < grid[0][-1])
                     and (l >= grid[2][0])
-                    and (l <= grid[2][-1])
+                    and (l < grid[2][-1])
                 ):
                     mom = fmom * (k - start[dim]) + start[3]
-                    intersections.append((h, k, l, mom))
+                    if mom >= grid[3][0] and mom < grid[3][-1]:
+                        intersections.append((h, k, l, mom))
 
     # intersections w/ gridlines in l
     dim = 2
@@ -138,17 +140,18 @@ def _compute_trajectory_grid_intersections(
         fk = (stop[1] - start[1]) / (stop[dim] - start[dim])
         fmom = (stop[3] - start[3]) / (stop[dim] - start[dim])
         for l in grid[dim]:
-            if (start[dim] < l < stop[dim]) or (stop[dim] < l < start[dim]):
+            if (start[dim] <= l < stop[dim]) or (stop[dim] < l <= start[dim]):
                 h = fh * (l - start[dim]) + start[0]
                 k = fk * (l - start[dim]) + start[1]
                 if (
                     (h >= grid[0][0])
-                    and (h <= grid[0][-1])
+                    and (h < grid[0][-1])
                     and (k >= grid[1][0])
-                    and (k <= grid[1][-1])
+                    and (k < grid[1][-1])
                 ):
                     mom = fmom * (l - start[dim]) + start[3]
-                    intersections.append((h, k, l, mom))
+                    if mom >= grid[3][0] and mom < grid[3][-1]:
+                        intersections.append((h, k, l, mom))
 
     # intersections w/ gridlines in final momentum
     dim = 3
@@ -163,11 +166,11 @@ def _compute_trajectory_grid_intersections(
             # TODO do we need these checks? why do we not check ei in the above cases?
             if (
                 (h >= grid[0][0])
-                and (h <= grid[0][-1])
+                and (h < grid[0][-1])
                 and (k >= grid[1][0])
-                and (k <= grid[1][-1])
+                and (k < grid[1][-1])
                 and (l >= grid[2][0])
-                and (l <= grid[2][-1])
+                and (l < grid[2][-1])
             ):
                 intersections.append((h, k, l, mom))
 
