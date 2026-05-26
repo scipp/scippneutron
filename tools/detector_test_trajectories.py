@@ -267,7 +267,95 @@ def case_i(ax: plt.Axes) -> None:
     )
 
 
-CASES = (case_a, case_b, case_c, case_d, case_e, case_f, case_g, case_h, case_i)
+def case_j(ax: plt.Axes) -> None:
+    ax.set_title("J")
+    h_min, h_max = -0.7, 0.3
+    mom_min, mom_max = 0.8, 1.1
+
+    h_edges = np.array([-0.9, -0.5, 0.0, 0.6])
+    mom_edges = np.array([0.6, 1.3])
+
+    draw_2d_projection(
+        ax,
+        [[h_min, mom_min]],
+        [[h_max, mom_max]],
+        h_edges,
+        mom_edges,
+        "$h$",
+        "$k_f$",
+    )
+
+    a = 0.06
+    b = 0.15
+    c = 0.09
+
+    yline(ax, -0.5, mom_min, mom_min + a, "$a$")
+    yline(ax, -0.5, mom_min + a, mom_min + a + b, "$b$")
+    yline(ax, -0.5, mom_max - c, mom_max, "$c$")
+    xline(ax, mom_min, h_min, -0.5, None, ls='--', c='gray')
+    xline(ax, mom_max - c, 0.0, -0.5, None, ls='--', c='gray')
+    xline(ax, mom_max, h_max, -0.5, None, ls='--', c='gray')
+
+
+def case_k(ax: plt.Axes) -> None:
+    ax.set_title("K")
+    h_min, h_max = -0.3, 0.2
+    mom_min, mom_max = 1.4, 0.7
+
+    h_edges = np.array([-0.9, -0.5, 0.0, 0.6])
+    mom_edges = np.array([0.6, 1.3])
+
+    draw_2d_projection(
+        ax,
+        [[h_min, mom_min]],
+        [[h_max, mom_max]],
+        h_edges,
+        mom_edges,
+        "$h$",
+        "$k_f$",
+    )
+
+    a = 0.32
+    b = 0.28
+
+    yline(ax, 0, 1.3, 1.3 - a, "$a$")
+    yline(ax, 0, mom_max, mom_max + b, "$b$")
+    xline(ax, mom_max, h_max, 0, None, ls='--', c='gray')
+
+
+def case_l(ax: plt.Axes) -> None:
+    ax.set_title("L")
+    h_min, h_max = 1.0, 0.4
+    mom_min, mom_max = 1.0, 1.5
+
+    h_edges = np.array([-0.9, -0.5, 0.0, 0.6])
+    mom_edges = np.array([0.6, 1.3])
+
+    draw_2d_projection(
+        ax,
+        [[h_min, mom_min]],
+        [[h_max, mom_max]],
+        h_edges,
+        mom_edges,
+        "$h$",
+        "$k_f$",
+    )
+
+
+CASES = (
+    case_a,
+    case_b,
+    case_c,
+    case_d,
+    case_e,
+    case_f,
+    case_g,
+    case_h,
+    case_i,
+    case_j,
+    case_k,
+    case_l,
+)
 
 
 def xline(ax, y, xmin, xmax, label, **kwargs):

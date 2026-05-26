@@ -59,6 +59,7 @@ class TrajectoryHelper:
         self._make_kf_trajectory = make_trajectory
 
     def kf_to_de(self, kf: sc.Variable) -> sc.Variable:
+        """Convert final momentum to energy transfer."""
         final_energy = sc.constants.hbar**2 / (2 * sc.constants.m_n) * kf**2
         return sc.to_unit(
             self.incident_energy - final_energy.to(unit=self.incident_energy.unit),
@@ -70,6 +71,14 @@ class TrajectoryHelper:
         start: tuple[float, float, float, float],
         stop: tuple[float, float, float, float],
     ) -> Trajectory:
+        """Make trajectory endpoints from individual (h, k, l, k_f) components.
+
+        The result is two (h, k, l, dE) tuples and ready to be passed to
+        the normalization function.
+
+        This allows tests to be written in terms of (h, k, l, k_f) where the
+        trajectories are straight lines and easier to visualize.
+        """
         start_kf, stop_kf = self._make_kf_trajectory(start, stop)
         return (
             (*start_kf[:3], self.kf_to_de(start_kf[3])),
@@ -427,5 +436,94 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal(
     )
 
     expected = helper.norm_grid(shape=(5, 3, 3, 3), cells=[], segments=[])
+
+    sc.testing.assert_allclose(norm, expected)
+
+
+def test_single_crystal_norm_ins_det_traj_within_grid_2d_single_kf(
+    helper: TrajectoryHelper,
+) -> None:
+    """Case J from tools/detector_test_trajectories.py"""
+    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+        (-0.7, 0.0, 0.0, 0.8), (0.3, 0.0, 0.0, 1.1)
+    )
+
+    h_edges = sc.array(dims=['h'], values=[-0.9, -0.5, 0.0, 0.6])
+    k_edges = sc.linspace('k', -0.5, 0.5, 4)
+    l_edges = sc.linspace('l', -0.5, 0.5, 4)
+    mom_edges = sc.array(dims=['mom'], values=[0.6, 1.3], unit='1/Å')
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+
+    norm = compute_q_de_norm(
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
+        grid=edges,
+        incident_energy=helper.incident_energy,
+    )
+
+    a = 0.06
+    c = 0.09
+    expected = helper.norm_grid(
+        shape=(3, 3, 3, 1),
+        cells=[(0, 1, 1, 0), (1, 1, 1, 0), (2, 1, 1, 0)],
+        segments=[0.8, 0.8 + a, 1.1 - c, 1.1],
+    )
+
+    sc.testing.assert_allclose(norm, expected)
+
+
+def test_single_crystal_norm_ins_det_traj_start_outside_end_inside_grid_2d_single_kf(
+    helper: TrajectoryHelper,
+) -> None:
+    """Case K from tools/detector_test_trajectories.py"""
+    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+        (-0.3, 0.0, 0.0, 1.4), (0.2, 0.0, 0.0, 0.7)
+    )
+
+    h_edges = sc.array(dims=['h'], values=[-0.9, -0.5, 0.0, 0.6])
+    k_edges = sc.linspace('k', -0.5, 0.5, 4)
+    l_edges = sc.linspace('l', -0.5, 0.5, 4)
+    mom_edges = sc.array(dims=['mom'], values=[0.6, 1.3], unit='1/Å')
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+
+    norm = compute_q_de_norm(
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
+        grid=edges,
+        incident_energy=helper.incident_energy,
+    )
+
+    a = 0.32
+    expected = helper.norm_grid(
+        shape=(3, 3, 3, 1),
+        cells=[(1, 1, 1, 0), (2, 1, 1, 0)],
+        segments=[1.3, 1.3 - a, 0.7],
+    )
+
+    sc.testing.assert_allclose(norm, expected)
+
+
+def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal_single_kf(
+    helper: TrajectoryHelper,
+) -> None:
+    """Case L from tools/detector_test_trajectories.py"""
+    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+        (1.0, 0.0, 0.0, 1.0), (0.4, 0.0, 0.0, 1.5)
+    )
+
+    h_edges = sc.array(dims=['h'], values=[-0.9, -0.5, 0.0, 0.6])
+    k_edges = sc.linspace('k', -0.5, 0.5, 4)
+    l_edges = sc.linspace('l', -0.5, 0.5, 4)
+    mom_edges = sc.array(dims=['mom'], values=[0.6, 1.3], unit='1/Å')
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+
+    norm = compute_q_de_norm(
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
+        grid=edges,
+        incident_energy=helper.incident_energy,
+    )
+
+    expected = helper.norm_grid(shape=(3, 3, 3, 1), cells=[], segments=[])
 
     sc.testing.assert_allclose(norm, expected)
