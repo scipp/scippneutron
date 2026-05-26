@@ -12,6 +12,7 @@ def compute_q_de_norm(
     *,
     trajectory_start: list[tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable]],
     trajectory_stop: list[tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable]],
+    solid_angle: sc.Variable,
     grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
     incident_energy: sc.Variable,
 ) -> sc.Variable:
@@ -34,7 +35,9 @@ def compute_q_de_norm(
         shape=[len(edge) - 1 for edge in grid],
         unit='meV',
     )
-    for start, stop in zip(trajectory_start, trajectory_stop, strict=True):
+    for start, stop, omega in zip(
+        trajectory_start, trajectory_stop, solid_angle, strict=True
+    ):
         # TODO for now, convert to raw numbers:
         start = (
             *(x.value for x in start[:3]),
@@ -62,7 +65,7 @@ def compute_q_de_norm(
         )
 
         for i, l in zip(indices, segment_lengths, strict=True):
-            norm.values[tuple(i)] += l
+            norm.values[tuple(i)] += l * omega.value
 
     return norm
 
