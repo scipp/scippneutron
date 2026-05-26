@@ -27,9 +27,6 @@ def compute_q_de_norm(
         ),
     )
 
-    # TODO for now, convert to raw numbers:
-    trajectory_start = [tuple(x.value for x in start) for start in trajectory_start]
-    trajectory_stop = [tuple(x.value for x in stop) for stop in trajectory_stop]
     grid = tuple(x.values for x in grid)
 
     norm = sc.zeros(
@@ -38,6 +35,20 @@ def compute_q_de_norm(
         unit='meV',
     )
     for start, stop in zip(trajectory_start, trajectory_stop, strict=True):
+        # TODO for now, convert to raw numbers:
+        start = (
+            *(x.value for x in start[:3]),
+            _energy_to_final_momentum(
+                energy_transfer=start[3], incident_energy=incident_energy
+            ).value,
+        )
+        stop = (
+            *(x.value for x in stop[:3]),
+            _energy_to_final_momentum(
+                energy_transfer=stop[3], incident_energy=incident_energy
+            ).value,
+        )
+
         if abs(stop[3] - start[3]) < 1e-10:
             continue  # no energy transfer in this trajectory
 
@@ -180,14 +191,6 @@ def _compute_trajectory_segment_lengths(
     if segment_ends.size == 0:
         return np.array([]), np.array([])
 
-    # Converting to Ef is enough because the diff(energy_transfer) == diff(Ef)
-    # for constant Ei.
-    delta_kf = np.diff(
-        _momentum_to_energy(
-            sc.array(dims=['kf'], values=segment_ends[:, 3], unit='1/Å')
-        ).values
-    )
-
     centers = _midpoints(segment_ends)
     indices = np.stack(
         [
@@ -196,7 +199,15 @@ def _compute_trajectory_segment_lengths(
         ]
     ).T
 
-    return indices, delta_kf
+    # Converting to Ef is enough because the diff(energy_transfer) == diff(Ef)
+    # for constant Ei.
+    delta_e = np.diff(
+        _momentum_to_energy(
+            sc.array(dims=['kf'], values=segment_ends[:, 3], unit='1/Å')
+        ).values
+    )
+
+    return indices, delta_e
 
 
 def _is_in_grid(
