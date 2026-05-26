@@ -1,4 +1,13 @@
-"""Plots of detector trajectories used in single crystal normalization tests."""
+"""Plots of detector trajectories used in single crystal normalization tests.
+
+The unit tests refer to the cases in this file by their label in the plot.
+Each case shows a 2D grid in h (from hkl) and final momentum kf as well as one or
+more detector trajectories as straight lines.
+The extent in kf of the overlap of each trajectory is labeled as a, b, c, etc.
+These values are also present in the tests and used to compute the normalization.
+The 'start', 'stop' labels indicate the directions of trajectories, but tests
+may use the opposite direction as well as that leads to the same result.
+"""
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,7 +16,7 @@ import numpy as np
 def main() -> None:
     n = len(CASES)
     _, axs = plt.subplots(
-        int(np.ceil(n / 3)), 3, figsize=(15, 10), layout='constrained'
+        int(np.ceil(n / 3)), 3, figsize=(15, 11), layout='constrained'
     )
     for ax, case in zip(axs.flatten(), CASES, strict=False):
         case(ax)
@@ -15,6 +24,10 @@ def main() -> None:
 
 
 def case_a(ax: plt.Axes) -> None:
+    """
+    A1: single trajectory (blue)
+    A2: both trajectories (blue + orange)
+    """
     ax.set_title("A1 / A2")
     h_min1, h_max1 = 0.1, 0.9
     mom_min1, mom_max1 = 1.0, 1.5
@@ -167,6 +180,7 @@ def case_e(ax: plt.Axes) -> None:
 
 
 def case_f(ax: plt.Axes) -> None:
+    """The trajectory goes exactly from one edge to another."""
     ax.set_title("F")
     h_min, h_max = 0.3, 0.8
     mom_min, mom_max = 0.7, 1.3
@@ -195,7 +209,65 @@ def case_f(ax: plt.Axes) -> None:
     xline(ax, mom_max, h_max, 0.7, None, ls='--', c='gray')
 
 
-CASES = (case_a, case_b, case_c, case_d, case_e, case_f)
+def case_g(ax: plt.Axes) -> None:
+    ax.set_title("G")
+    h_min, h_max = 2.0, 2.0
+    mom_min, mom_max = 0.6, 0.9
+
+    h_edges = np.array([-0.1, 0.3, 0.7, 1.1, 1.5, 1.9])
+    mom_edges = np.array([0.4, 0.5, 1.0, 1.1])
+
+    draw_2d_projection(
+        ax,
+        [[h_min, mom_min]],
+        [[h_max, mom_max]],
+        h_edges,
+        mom_edges,
+        "$h$",
+        "$k_f$",
+    )
+
+
+def case_h(ax: plt.Axes) -> None:
+    ax.set_title("H")
+    h_min, h_max = 0.1, 1.2
+    mom_min, mom_max = 1.2, 1.2
+
+    h_edges = np.array([-0.1, 0.3, 0.7, 1.1, 1.5, 1.9])
+    mom_edges = np.array([0.4, 0.5, 1.0, 1.1])
+
+    draw_2d_projection(
+        ax,
+        [[h_min, mom_min]],
+        [[h_max, mom_max]],
+        h_edges,
+        mom_edges,
+        "$h$",
+        "$k_f$",
+    )
+
+
+def case_i(ax: plt.Axes) -> None:
+    """The trajectory gets close to the grid but stays outside it."""
+    ax.set_title("I")
+    h_min, h_max = -0.4, 0.3
+    mom_min, mom_max = 0.6, 0.1
+
+    h_edges = np.array([-0.1, 0.3, 0.7, 1.1, 1.5, 1.9])
+    mom_edges = np.array([0.4, 0.5, 1.0, 1.1])
+
+    draw_2d_projection(
+        ax,
+        [[h_min, mom_min]],
+        [[h_max, mom_max]],
+        h_edges,
+        mom_edges,
+        "$h$",
+        "$k_f$",
+    )
+
+
+CASES = (case_a, case_b, case_c, case_d, case_e, case_f, case_g, case_h, case_i)
 
 
 def xline(ax, y, xmin, xmax, label, **kwargs):
@@ -222,6 +294,8 @@ def draw_2d_projection(ax, start, stop, x_edges, y_edges, xlabel, ylabel):
 
     for a, b in zip(start, stop, strict=True):
         ax.plot([a[0], b[0]], [a[1], b[1]], marker='o')
+        ax.text(a[0] + 0.02, a[1], "start", ha='left', va='top')
+        ax.text(b[0] + 0.02, b[1], "stop", ha='left', va='top')
 
 
 if __name__ == "__main__":

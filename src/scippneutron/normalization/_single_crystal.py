@@ -32,6 +32,14 @@ def compute_q_de_norm(
     trajectory_stop = tuple(x.value for x in trajectory_stop)
     grid = tuple(x.values for x in grid)
 
+    norm = sc.zeros(
+        dims=['h', 'k', 'l', 'energy_transfer'],
+        shape=[len(edge) - 1 for edge in grid],
+        unit='meV',
+    )
+    if abs(trajectory_stop[3] - trajectory_start[3]) < 1e-10:
+        return norm  # no energy transfer in this trajectory
+
     intersections = _compute_trajectory_grid_intersections(
         trajectory_start, trajectory_stop, grid
     )
@@ -43,11 +51,6 @@ def compute_q_de_norm(
         intersections=intersections,
     )
 
-    norm = sc.zeros(
-        dims=['h', 'k', 'l', 'energy_transfer'],
-        shape=[len(edge) - 1 for edge in grid],
-        unit='meV',
-    )
     for i, l in zip(indices, segment_lengths, strict=True):
         norm.values[tuple(i)] += l
 
@@ -139,9 +142,6 @@ def _compute_trajectory_grid_intersections(
 
     # intersections w/ gridlines in final momentum
     dim = 3
-    if abs(start[dim] - stop[dim]) < eps:
-        raise ValueError("not enough delta energy")
-
     fh = (stop[0] - start[0]) / (stop[dim] - start[dim])
     fk = (stop[1] - start[1]) / (stop[dim] - start[dim])
     fl = (stop[2] - start[2]) / (stop[dim] - start[dim])
