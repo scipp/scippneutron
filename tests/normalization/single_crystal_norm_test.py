@@ -2,6 +2,9 @@
 # Copyright (c) 2026 Scipp contributors (https://github.com/scipp)
 # ruff: noqa: E741  # we use `l` here
 
+from collections.abc import Callable
+from typing import Any, TypeAlias
+
 import pytest
 import scipp as sc
 import scipp.constants
@@ -58,9 +61,35 @@ def to_grid_variables(
     )
 
 
+Trajectory: TypeAlias = tuple[
+    tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
+    tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
+]
+
+
+def traj_as_given(
+    start: tuple[float, float, float, float], stop: tuple[float, float, float, float]
+) -> Trajectory:
+    return to_grid_variables(*start), to_grid_variables(*stop)
+
+
+def traj_flipped(
+    start: tuple[float, float, float, float], stop: tuple[float, float, float, float]
+) -> Trajectory:
+    return to_grid_variables(*stop), to_grid_variables(*start)
+
+
+@pytest.fixture(params=[traj_as_given, traj_flipped], ids=['normal', 'flipped'])
+def make_trajectory(
+    request: Any,
+) -> Callable[
+    [tuple[float, float, float, float], tuple[float, float, float, float]], Trajectory
+]:
+    return request.param
+
+
 # TODO test invariants:
 #    - rotate hkl in 2d trajectory
-#    - flip traj ends
 #    - multi traj: swap trajectories
 
 
@@ -74,14 +103,15 @@ def to_grid_variables(
     ],
 )
 def test_single_crystal_norm_ins_det_traj_within_grid_2d(
-    helper: TrajectoryHelper,
+    helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
     """Case A1 from tools/detector_test_trajectories.py
 
-    Only blue trajectory.
+    Only the blue trajectory.
     """
-    trajectory_start = to_grid_variables(0.1, 0.0, 0.0, 1.0)
-    trajectory_stop = to_grid_variables(0.9, 0.0, 0.0, 1.5)
+    trajectory_start, trajectory_stop = make_trajectory(
+        (0.1, 0.0, 0.0, 1.0), (0.9, 0.0, 0.0, 1.5)
+    )
 
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
@@ -118,11 +148,12 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d(
     ],
 )
 def test_single_crystal_norm_ins_det_traj_ends_outside_grid_2d(
-    helper: TrajectoryHelper,
+    helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
     """Case B from tools/detector_test_trajectories.py"""
-    trajectory_start = to_grid_variables(1.22, 0.0, 0.0, 1.1)
-    trajectory_stop = to_grid_variables(1.35, 0.0, 0.0, 0.1)
+    trajectory_start, trajectory_stop = make_trajectory(
+        (1.22, 0.0, 0.0, 1.1), (1.35, 0.0, 0.0, 0.1)
+    )
 
     h_edges = sc.array(dims=['h'], values=[0.9, 1.0, 1.2, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
@@ -156,11 +187,12 @@ def test_single_crystal_norm_ins_det_traj_ends_outside_grid_2d(
     ],
 )
 def test_single_crystal_norm_ins_det_traj_start_inside_end_outside_grid_2d(
-    helper: TrajectoryHelper,
+    helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
     """Case C from tools/detector_test_trajectories.py"""
-    trajectory_start = to_grid_variables(1.0, 0.0, 0.0, 0.9)
-    trajectory_stop = to_grid_variables(0.6, 0.0, 0.0, 0.3)
+    trajectory_start, trajectory_stop = make_trajectory(
+        (1.0, 0.0, 0.0, 0.9), (0.6, 0.0, 0.0, 0.3)
+    )
 
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.1, 1.5, 1.9])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
@@ -194,11 +226,12 @@ def test_single_crystal_norm_ins_det_traj_start_inside_end_outside_grid_2d(
     ],
 )
 def test_single_crystal_norm_ins_det_traj_single_cell_grid_2d(
-    helper: TrajectoryHelper,
+    helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
     """Case D from tools/detector_test_trajectories.py"""
-    trajectory_start = to_grid_variables(0.6, 0.0, 0.0, 1.0)
-    trajectory_stop = to_grid_variables(0.4, 0.0, 0.0, 1.2)
+    trajectory_start, trajectory_stop = make_trajectory(
+        (0.6, 0.0, 0.0, 1.0), (0.4, 0.0, 0.0, 1.2)
+    )
 
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
@@ -231,11 +264,12 @@ def test_single_crystal_norm_ins_det_traj_single_cell_grid_2d(
     ],
 )
 def test_single_crystal_norm_ins_det_traj_vertical_grid_2d(
-    helper: TrajectoryHelper,
+    helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
     """Case E from tools/detector_test_trajectories.py"""
-    trajectory_start = to_grid_variables(0.4, 0.0, 0.0, 0.6)
-    trajectory_stop = to_grid_variables(0.4, 0.0, 0.0, 1.4)
+    trajectory_start, trajectory_stop = make_trajectory(
+        (0.4, 0.0, 0.0, 0.6), (0.4, 0.0, 0.0, 1.4)
+    )
 
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
@@ -268,11 +302,12 @@ def test_single_crystal_norm_ins_det_traj_vertical_grid_2d(
     ],
 )
 def test_single_crystal_norm_ins_det_traj_at_grid_lines_grid_2d(
-    helper: TrajectoryHelper,
+    helper: TrajectoryHelper, make_trajectory: Callable[..., Trajectory]
 ) -> None:
     """Case F from tools/detector_test_trajectories.py"""
-    trajectory_start = to_grid_variables(0.3, 0.0, 0.0, 0.7)
-    trajectory_stop = to_grid_variables(0.8, 0.0, 0.0, 1.3)
+    trajectory_start, trajectory_stop = make_trajectory(
+        (0.3, 0.0, 0.0, 0.7), (0.8, 0.0, 0.0, 1.3)
+    )
 
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
