@@ -20,6 +20,7 @@ def compute_q_de_norm(
 
     The grid is specified in (h, k, l, dE),
     gets converted to (h, k, l, kf)
+    The trajectory is specified in (h, k, l, kf)
     """
     grid = (
         *grid[:3],
@@ -39,18 +40,8 @@ def compute_q_de_norm(
         trajectory_start, trajectory_stop, solid_angle, strict=True
     ):
         # TODO for now, convert to raw numbers:
-        start = (
-            *(x.value for x in start[:3]),
-            _energy_to_final_momentum(
-                energy_transfer=start[3], incident_energy=incident_energy
-            ).value,
-        )
-        stop = (
-            *(x.value for x in stop[:3]),
-            _energy_to_final_momentum(
-                energy_transfer=stop[3], incident_energy=incident_energy
-            ).value,
-        )
+        start = tuple(x.value for x in start)
+        stop = tuple(x.value for x in stop)
 
         if abs(stop[3] - start[3]) < 1e-10:
             continue  # no energy transfer in this trajectory

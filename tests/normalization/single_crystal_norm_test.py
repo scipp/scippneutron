@@ -66,24 +66,17 @@ class TrajectoryHelper:
             'meV',
         )
 
-    def make_de_trajectory(
+    def make_trajectory(
         self,
         start: tuple[float, float, float, float],
         stop: tuple[float, float, float, float],
     ) -> Trajectory:
         """Make trajectory endpoints from individual (h, k, l, k_f) components.
 
-        The result is two (h, k, l, dE) tuples and ready to be passed to
+        The result is two (h, k, l, k_f) tuples and ready to be passed to
         the normalization function.
-
-        This allows tests to be written in terms of (h, k, l, k_f) where the
-        trajectories are straight lines and easier to visualize.
         """
-        start_kf, stop_kf = self._make_kf_trajectory(start, stop)
-        return (
-            (*start_kf[:3], self.kf_to_de(start_kf[3])),
-            (*stop_kf[:3], self.kf_to_de(stop_kf[3])),
-        )
+        return self._make_kf_trajectory(start, stop)
 
     def norm_grid(
         self,
@@ -136,7 +129,7 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d(
 
     Only the blue trajectory.
     """
-    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+    trajectory_start, trajectory_stop = helper.make_trajectory(
         (0.1, 0.0, 0.0, 1.0), (0.9, 0.0, 0.0, 1.5)
     )
 
@@ -171,10 +164,10 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d_multi_traj(
     helper: TrajectoryHelper,
 ) -> None:
     """Case A2 from tools/detector_test_trajectories.py"""
-    trajectory_start1, trajectory_stop1 = helper.make_de_trajectory(
+    trajectory_start1, trajectory_stop1 = helper.make_trajectory(
         (0.1, 0.0, 0.0, 1.0), (0.9, 0.0, 0.0, 1.5)
     )
-    trajectory_start2, trajectory_stop2 = helper.make_de_trajectory(
+    trajectory_start2, trajectory_stop2 = helper.make_trajectory(
         (0.5, 0.0, 0.0, 0.9), (0.8, 0.0, 0.0, 1.4)
     )
 
@@ -217,7 +210,7 @@ def test_single_crystal_norm_ins_det_traj_ends_outside_grid_2d(
     helper: TrajectoryHelper,
 ) -> None:
     """Case B from tools/detector_test_trajectories.py"""
-    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+    trajectory_start, trajectory_stop = helper.make_trajectory(
         (1.22, 0.0, 0.0, 1.1), (1.35, 0.0, 0.0, 0.1)
     )
 
@@ -249,7 +242,7 @@ def test_single_crystal_norm_ins_det_traj_start_inside_end_outside_grid_2d(
     helper: TrajectoryHelper,
 ) -> None:
     """Case C from tools/detector_test_trajectories.py"""
-    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+    trajectory_start, trajectory_stop = helper.make_trajectory(
         (1.0, 0.0, 0.0, 0.9), (0.6, 0.0, 0.0, 0.3)
     )
 
@@ -281,7 +274,7 @@ def test_single_crystal_norm_ins_det_traj_single_cell_grid_2d(
     helper: TrajectoryHelper,
 ) -> None:
     """Case D from tools/detector_test_trajectories.py"""
-    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+    trajectory_start, trajectory_stop = helper.make_trajectory(
         (0.6, 0.0, 0.0, 1.0), (0.4, 0.0, 0.0, 1.2)
     )
 
@@ -312,7 +305,7 @@ def test_single_crystal_norm_ins_det_traj_vertical_grid_2d(
     helper: TrajectoryHelper,
 ) -> None:
     """Case E from tools/detector_test_trajectories.py"""
-    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+    trajectory_start, trajectory_stop = helper.make_trajectory(
         (0.4, 0.0, 0.0, 0.6), (0.4, 0.0, 0.0, 1.4)
     )
 
@@ -343,7 +336,7 @@ def test_single_crystal_norm_ins_det_traj_at_grid_lines_grid_2d(
     helper: TrajectoryHelper,
 ) -> None:
     """Case F from tools/detector_test_trajectories.py"""
-    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+    trajectory_start, trajectory_stop = helper.make_trajectory(
         (0.3, 0.0, 0.0, 0.7), (0.8, 0.0, 0.0, 1.3)
     )
 
@@ -375,7 +368,7 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_single_cell(
     helper: TrajectoryHelper,
 ) -> None:
     """Case G from tools/detector_test_trajectories.py"""
-    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+    trajectory_start, trajectory_stop = helper.make_trajectory(
         (2.0, 0.0, 0.0, 0.6), (2.0, 0.0, 0.0, 0.9)
     )
 
@@ -402,7 +395,7 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_multi_cell(
     helper: TrajectoryHelper,
 ) -> None:
     """Case H from tools/detector_test_trajectories.py"""
-    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+    trajectory_start, trajectory_stop = helper.make_trajectory(
         (0.1, 0.0, 0.0, 1.2), (1.2, 0.0, 0.0, 1.2)
     )
 
@@ -429,7 +422,7 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal(
     helper: TrajectoryHelper,
 ) -> None:
     """Case I from tools/detector_test_trajectories.py"""
-    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+    trajectory_start, trajectory_stop = helper.make_trajectory(
         (-0.4, 0.0, 0.0, 0.6), (0.3, 0.0, 0.0, 0.1)
     )
 
@@ -456,7 +449,7 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d_single_kf(
     helper: TrajectoryHelper,
 ) -> None:
     """Case J from tools/detector_test_trajectories.py"""
-    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+    trajectory_start, trajectory_stop = helper.make_trajectory(
         (-0.7, 0.0, 0.0, 0.8), (0.3, 0.0, 0.0, 1.1)
     )
 
@@ -489,7 +482,7 @@ def test_single_crystal_norm_ins_det_traj_start_outside_end_inside_grid_2d_singl
     helper: TrajectoryHelper,
 ) -> None:
     """Case K from tools/detector_test_trajectories.py"""
-    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+    trajectory_start, trajectory_stop = helper.make_trajectory(
         (-0.3, 0.0, 0.0, 1.4), (0.2, 0.0, 0.0, 0.7)
     )
 
@@ -521,7 +514,7 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal_single_kf(
     helper: TrajectoryHelper,
 ) -> None:
     """Case L from tools/detector_test_trajectories.py"""
-    trajectory_start, trajectory_stop = helper.make_de_trajectory(
+    trajectory_start, trajectory_stop = helper.make_trajectory(
         (1.0, 0.0, 0.0, 1.0), (0.4, 0.0, 0.0, 1.5)
     )
 
