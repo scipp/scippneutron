@@ -153,7 +153,7 @@ def _compute_trajectory_grid_intersections(
     fk = (stop[1] - start[1]) / (stop[dim] - start[dim])
     fl = (stop[2] - start[2]) / (stop[dim] - start[dim])
     for mom in grid[dim]:
-        if (start[dim] < mom < stop[dim]) or (stop[dim] < mom < start[dim]):
+        if (start[dim] <= mom < stop[dim]) or (stop[dim] <= mom < start[dim]):
             h = fh * (mom - start[dim]) + start[0]
             k = fk * (mom - start[dim]) + start[1]
             l = fl * (mom - start[dim]) + start[2]
