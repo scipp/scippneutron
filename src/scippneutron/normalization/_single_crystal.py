@@ -205,8 +205,9 @@ def _compute_trajectory_segment_lengths(
         ]
     ).T
 
-    # Converting to Ef is enough because the diff(energy_transfer) == diff(Ef)
-    # for constant Ei.
+    # delta_e = abs(diff(energy_transfer))
+    #         = abs(-diff(Ef))   # because Ei is constant
+    #         = diff(Ef)         # because kf (and thus Ef) is sorted in ascending order
     delta_e = np.diff(
         _momentum_to_energy(
             sc.array(dims=['kf'], values=segment_ends[:, 3], unit='1/Å')
