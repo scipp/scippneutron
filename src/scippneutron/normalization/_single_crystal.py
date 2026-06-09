@@ -39,6 +39,10 @@ def compute_q_de_norm(
         shape=[len(edge) - 1 for edge in grid],
         unit='meV',
     )
+
+    trimmed, n_trimmed = _trim_nan(grid[3])
+    grid = (*grid[:3], trimmed)
+
     for start, stop, omega in zip(
         trajectory_start, trajectory_stop, solid_angle, strict=True
     ):
@@ -59,7 +63,7 @@ def compute_q_de_norm(
         )
 
         for i, l in zip(indices, segment_lengths, strict=True):
-            norm.values[tuple(i)] += l * omega.value
+            norm.values[(*i[:3], i[3] + n_trimmed)] += l * omega.value
 
     # TODO handle sorting better?
     norm.values[:] = norm.values[:, :, :, ::-1]
@@ -73,6 +77,25 @@ def compute_q_de_norm(
             'energy_transfer': orig_grid[3],
         },
     )
+
+
+def _trim_nan(array: np.ndarray) -> tuple[np.ndarray, int]:
+    is_nan = np.isnan(array)
+    trim_start = 0
+    for i, x in enumerate(is_nan):
+        if not x:
+            trim_start = i
+            break
+    trim_end = 0
+    for i, x in enumerate(is_nan[::-1]):
+        if not x:
+            trim_end = i
+            break
+
+    trimmed = array[trim_start : len(array) - trim_end]
+    if np.isnan(trimmed).any():
+        raise ValueError("Array contains interior NaN")
+    return trimmed, trim_start
 
 
 # TODO move to coord transforms (and use in essspectroscopy)
@@ -205,7 +228,7 @@ def _compute_trajectory_segment_lengths(
     centers = _midpoints(segment_ends)
     indices = np.stack(
         [
-            np.searchsorted(grid[dim], centers[:, dim], side="right") - 1
+            [_index_of(center, grid[dim]) for center in centers[:, dim]]
             for dim in range(len(grid))
         ]
     ).T
@@ -220,6 +243,15 @@ def _compute_trajectory_segment_lengths(
     )
 
     return indices, delta_e
+
+
+# TODO optimise (needs to handle NaN)
+def _index_of(point: float, array: np.ndarray) -> int:
+    """Assumes that `array` is sorted."""
+    for i, val in enumerate(array):
+        if val > point:
+            return i - 1
+    raise ValueError("Element not in array")  # should never happen (? maybe with NaNs)
 
 
 def _is_in_grid(
