@@ -15,13 +15,14 @@ def compute_q_de_norm(
     solid_angle: sc.Variable,
     grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
     incident_energy: sc.Variable,
-) -> sc.Variable:
+) -> sc.DataArray:
     """TODO
 
     The grid is specified in (h, k, l, dE),
     gets converted to (h, k, l, kf)
     The trajectory is specified in (h, k, l, kf)
     """
+    orig_grid = tuple(x.copy() for x in grid)
     grid = (
         *grid[:3],
         _energy_to_final_momentum(
@@ -29,7 +30,9 @@ def compute_q_de_norm(
         ),
     )
 
-    grid = tuple(np.sort(x.values) for x in grid)
+    # TODO sort is bad when we have NaN from OOB delta E (?)
+    #  dE -> kf reverses order, if inputs are ordered, then just flip the array
+    grid = (*(x.values for x in grid[:3]), grid[3].values[::-1])
 
     norm = sc.zeros(
         dims=['h', 'k', 'l', 'energy_transfer'],
@@ -58,7 +61,18 @@ def compute_q_de_norm(
         for i, l in zip(indices, segment_lengths, strict=True):
             norm.values[tuple(i)] += l * omega.value
 
-    return norm
+    # TODO handle sorting better?
+    norm.values[:] = norm.values[:, :, :, ::-1]
+    # TODO don't rename, use input dim names
+    return sc.DataArray(
+        norm,
+        coords={
+            'h': orig_grid[0],
+            'k': orig_grid[1],
+            'l': orig_grid[2],
+            'energy_transfer': orig_grid[3],
+        },
+    )
 
 
 # TODO move to coord transforms (and use in essspectroscopy)

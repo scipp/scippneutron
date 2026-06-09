@@ -66,6 +66,10 @@ class TrajectoryHelper:
             'meV',
         )
 
+    def kf_to_de_sorted(self, kf: sc.Variable) -> sc.Variable:
+        """Convert final momentum to energy transfer and sort in ascending order."""
+        return sc.sort(self.kf_to_de(kf), kf.dim)
+
     def make_trajectory(
         self,
         start: tuple[float, float, float, float],
@@ -83,25 +87,32 @@ class TrajectoryHelper:
         shape: tuple[int, int, int, int],
         cells: list[tuple[int, int, int, int]],
         segments: list[float],
-    ) -> sc.Variable:
+        edges: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
+    ) -> sc.DataArray:
         """Construct a normalization factor on a hkl-dE grid.
 
         ``cells`` is a list of indices of grid cells to fill.
         ``segments`` is a list of dE edges for each cell.
         ```len(segments) == len(cells) + 1```, like bin-edges.
+
+        Note that cell indices are in dE, not kf. This means that they run the opposite
+        direction as you might expect from the plots.
         """
         de_segments = [
             self.kf_to_de(sc.scalar(segment, unit='1/Å')) for segment in segments
         ]
-        expected = sc.zeros(
+        norm = sc.zeros(
             dims=['h', 'k', 'l', 'energy_transfer'], shape=shape, unit='meV'
         )
         for i, cell in enumerate(cells):
             de = abs(de_segments[i + 1] - de_segments[i])
-            expected['h', cell[0]]['k', cell[1]]['l', cell[2]][
+            norm['h', cell[0]]['k', cell[1]]['l', cell[2]][
                 'energy_transfer', cell[3]
             ].value = de.value
-        return expected
+        return sc.DataArray(
+            norm,
+            coords=dict(zip(['h', 'k', 'l', 'energy_transfer'], edges, strict=True)),
+        )
 
 
 @pytest.fixture(params=[1.3, 0.04], ids=["Ei0", "Ei1"])
@@ -114,9 +125,8 @@ def helper(
 # TODO test invariants:
 #    - rotate hkl in traj and grid
 #    - multi traj: swap trajectories
-#    - flip ends
 #    - shift in grid by multiple of cell length -> norm shifts the same
-#    - total delta for traj contained in grid regardless of orientation
+#    - extending grid does not impact common bins
 
 
 # TODO ranges of other hkl (test with single bin)
@@ -134,8 +144,10 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d(
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
         trajectory_start=[trajectory_start],
@@ -147,12 +159,13 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d(
 
     a1 = 0.125
     c1 = 0.075
-    cells = [(0, 1, 1, 1), (1, 1, 1, 1), (1, 1, 1, 2), (2, 1, 1, 2)]
+    cells = [(0, 1, 1, 1), (1, 1, 1, 1), (1, 1, 1, 0), (2, 1, 1, 0)]
     segments = [1.0, 1.0 + a1, 1.3, 1.3 + c1, 1.5]
     expected = helper.norm_grid(
         shape=(4, 3, 3, 3),
         cells=cells,
         segments=segments,
+        edges=edges,
     )
 
     sc.testing.assert_allclose(norm, expected)
@@ -172,8 +185,10 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d_multi_traj(
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
         trajectory_start=[trajectory_start1, trajectory_start2],
@@ -191,13 +206,15 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d_multi_traj(
 
     expected1 = helper.norm_grid(
         shape=(4, 3, 3, 3),
-        cells=[(0, 1, 1, 1), (1, 1, 1, 1), (1, 1, 1, 2), (2, 1, 1, 2)],
+        cells=[(0, 1, 1, 1), (1, 1, 1, 1), (1, 1, 1, 0), (2, 1, 1, 0)],
         segments=[1.0, 1.0 + a1, 1.3, 1.3 + c1, 1.5],
+        edges=edges,
     )
     expected2 = helper.norm_grid(
         shape=(4, 3, 3, 3),
-        cells=[(1, 1, 1, 1), (2, 1, 1, 1), (2, 1, 1, 2)],
+        cells=[(1, 1, 1, 1), (2, 1, 1, 1), (2, 1, 1, 0)],
         segments=[0.9, 0.9 + a2, 1.3, 1.3 + c2],
+        edges=edges,
     )
     expected = expected1 + expected2
 
@@ -215,8 +232,10 @@ def test_single_crystal_norm_ins_det_traj_ends_outside_grid_2d(
     h_edges = sc.array(dims=['h'], values=[0.9, 1.0, 1.2, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.0, 0.2, 0.7, 1.0], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.0, 0.2, 0.7, 1.0], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
         trajectory_start=[trajectory_start],
@@ -229,8 +248,9 @@ def test_single_crystal_norm_ins_det_traj_ends_outside_grid_2d(
     b = 0.21538461538461542
     expected = helper.norm_grid(
         shape=(3, 3, 3, 3),
-        cells=[(2, 1, 1, 2), (2, 1, 1, 1)],
+        cells=[(2, 1, 1, 0), (2, 1, 1, 1)],
         segments=[1.0, 0.7, 0.7 - b],
+        edges=edges,
     )
 
     sc.testing.assert_allclose(norm, expected)
@@ -247,8 +267,10 @@ def test_single_crystal_norm_ins_det_traj_start_inside_end_outside_grid_2d(
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.1, 1.5, 1.9])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.4, 0.5, 1.0, 1.1], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.4, 0.5, 1.0, 1.1], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
         trajectory_start=[trajectory_start],
@@ -261,8 +283,9 @@ def test_single_crystal_norm_ins_det_traj_start_inside_end_outside_grid_2d(
     b = 0.05
     expected = helper.norm_grid(
         shape=(5, 3, 3, 3),
-        cells=[(2, 1, 1, 1), (2, 1, 1, 0), (1, 1, 1, 0)],
+        cells=[(2, 1, 1, 1), (2, 1, 1, 2), (1, 1, 1, 2)],
         segments=[0.9, 0.5, 0.5 - b, 0.4],
+        edges=edges,
     )
 
     sc.testing.assert_allclose(norm, expected)
@@ -279,8 +302,10 @@ def test_single_crystal_norm_ins_det_traj_single_cell_grid_2d(
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
         trajectory_start=[trajectory_start],
@@ -291,9 +316,7 @@ def test_single_crystal_norm_ins_det_traj_single_cell_grid_2d(
     )
 
     expected = helper.norm_grid(
-        shape=(4, 3, 3, 3),
-        cells=[(1, 1, 1, 1)],
-        segments=[1.0, 1.2],
+        shape=(4, 3, 3, 3), cells=[(1, 1, 1, 1)], segments=[1.0, 1.2], edges=edges
     )
 
     sc.testing.assert_allclose(norm, expected)
@@ -310,8 +333,10 @@ def test_single_crystal_norm_ins_det_traj_vertical_grid_2d(
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
         trajectory_start=[trajectory_start],
@@ -323,8 +348,9 @@ def test_single_crystal_norm_ins_det_traj_vertical_grid_2d(
 
     expected = helper.norm_grid(
         shape=(4, 3, 3, 3),
-        cells=[(1, 1, 1, 0), (1, 1, 1, 1), (1, 1, 1, 2)],
+        cells=[(1, 1, 1, 2), (1, 1, 1, 1), (1, 1, 1, 0)],
         segments=[0.6, 0.9, 1.3, 1.4],
+        edges=edges,
     )
 
     sc.testing.assert_allclose(norm, expected)
@@ -341,8 +367,10 @@ def test_single_crystal_norm_ins_det_traj_at_grid_lines_grid_2d(
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
         trajectory_start=[trajectory_start],
@@ -355,8 +383,9 @@ def test_single_crystal_norm_ins_det_traj_at_grid_lines_grid_2d(
     b = 0.28
     expected = helper.norm_grid(
         shape=(4, 3, 3, 3),
-        cells=[(1, 1, 1, 0), (1, 1, 1, 1), (2, 1, 1, 1)],
+        cells=[(1, 1, 1, 2), (1, 1, 1, 1), (2, 1, 1, 1)],
         segments=[0.7, 0.9, 0.9 + b, 1.3],
+        edges=edges,
     )
 
     sc.testing.assert_allclose(norm, expected)
@@ -373,8 +402,10 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_single_cell(
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.1, 1.5, 1.9])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.4, 0.5, 1.0, 1.1], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.4, 0.5, 1.0, 1.1], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
         trajectory_start=[trajectory_start],
@@ -384,7 +415,7 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_single_cell(
         incident_energy=helper.incident_energy,
     )
 
-    expected = helper.norm_grid(shape=(5, 3, 3, 3), cells=[], segments=[])
+    expected = helper.norm_grid(shape=(5, 3, 3, 3), cells=[], segments=[], edges=edges)
 
     sc.testing.assert_allclose(norm, expected)
 
@@ -400,8 +431,10 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_multi_cell(
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.1, 1.5, 1.9])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.4, 0.5, 1.0, 1.1], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.4, 0.5, 1.0, 1.1], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
         trajectory_start=[trajectory_start],
@@ -411,7 +444,7 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_multi_cell(
         incident_energy=helper.incident_energy,
     )
 
-    expected = helper.norm_grid(shape=(5, 3, 3, 3), cells=[], segments=[])
+    expected = helper.norm_grid(shape=(5, 3, 3, 3), cells=[], segments=[], edges=edges)
 
     sc.testing.assert_allclose(norm, expected)
 
@@ -427,8 +460,10 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal(
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.1, 1.5, 1.9])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.4, 0.5, 1.0, 1.1], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.4, 0.5, 1.0, 1.1], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
         trajectory_start=[trajectory_start],
@@ -438,7 +473,7 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal(
         incident_energy=helper.incident_energy,
     )
 
-    expected = helper.norm_grid(shape=(5, 3, 3, 3), cells=[], segments=[])
+    expected = helper.norm_grid(shape=(5, 3, 3, 3), cells=[], segments=[], edges=edges)
 
     sc.testing.assert_allclose(norm, expected)
 
@@ -454,8 +489,8 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d_single_kf(
     h_edges = sc.array(dims=['h'], values=[-0.9, -0.5, 0.0, 0.6])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.6, 1.3], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(dims=['energy_transfer'], values=[0.6, 1.3], unit='1/Å')
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
         trajectory_start=[trajectory_start],
@@ -471,6 +506,7 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d_single_kf(
         shape=(3, 3, 3, 1),
         cells=[(0, 1, 1, 0), (1, 1, 1, 0), (2, 1, 1, 0)],
         segments=[0.8, 0.8 + a, 1.1 - c, 1.1],
+        edges=edges,
     )
 
     sc.testing.assert_allclose(norm, expected)
@@ -487,8 +523,8 @@ def test_single_crystal_norm_ins_det_traj_start_outside_end_inside_grid_2d_singl
     h_edges = sc.array(dims=['h'], values=[-0.9, -0.5, 0.0, 0.6])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.6, 1.3], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(dims=['energy_transfer'], values=[0.6, 1.3], unit='1/Å')
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
         trajectory_start=[trajectory_start],
@@ -503,6 +539,7 @@ def test_single_crystal_norm_ins_det_traj_start_outside_end_inside_grid_2d_singl
         shape=(3, 3, 3, 1),
         cells=[(1, 1, 1, 0), (2, 1, 1, 0)],
         segments=[1.3, 1.3 - a, 0.7],
+        edges=edges,
     )
 
     sc.testing.assert_allclose(norm, expected)
@@ -519,8 +556,8 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal_single_kf(
     h_edges = sc.array(dims=['h'], values=[-0.9, -0.5, 0.0, 0.6])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.6, 1.3], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(dims=['energy_transfer'], values=[0.6, 1.3], unit='1/Å')
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
         trajectory_start=[trajectory_start],
@@ -530,7 +567,7 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal_single_kf(
         incident_energy=helper.incident_energy,
     )
 
-    expected = helper.norm_grid(shape=(3, 3, 3, 1), cells=[], segments=[])
+    expected = helper.norm_grid(shape=(3, 3, 3, 1), cells=[], segments=[], edges=edges)
 
     sc.testing.assert_allclose(norm, expected)
 
@@ -545,8 +582,10 @@ def test_single_crystal_norm_ins_solid_angle_multiplies_norm(
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     # Single trajectory => solid angle is constant factor in norm
     norm_1 = compute_q_de_norm(
@@ -579,8 +618,10 @@ def test_single_crystal_norm_ins_solid_angle_is_multiplied_per_detector(
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
     l_edges = sc.linspace('l', -0.5, 0.5, 4)
-    mom_edges = sc.array(dims=['mom'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å')
-    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     # The factor is multiplied to the contributions from each trajectory
     # separately and the results are added together.
