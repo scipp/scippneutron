@@ -111,8 +111,6 @@ def helper(
     return TrajectoryHelper(sc.scalar(request.param, unit='meV'), make_trajectory)
 
 
-# TODO test solid angle
-
 # TODO test invariants:
 #    - rotate hkl in traj and grid
 #    - multi traj: swap trajectories
@@ -535,3 +533,77 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal_single_kf(
     expected = helper.norm_grid(shape=(3, 3, 3, 1), cells=[], segments=[])
 
     sc.testing.assert_allclose(norm, expected)
+
+
+def test_single_crystal_norm_ins_solid_angle_multiplies_norm(
+    helper: TrajectoryHelper,
+) -> None:
+    trajectory_start, trajectory_stop = helper.make_trajectory(
+        (0.1, 0.0, 0.0, 1.0), (0.9, 0.0, 0.0, 1.5)
+    )
+
+    h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
+    k_edges = sc.linspace('k', -0.5, 0.5, 4)
+    l_edges = sc.linspace('l', -0.5, 0.5, 4)
+    mom_edges = sc.array(dims=['mom'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å')
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+
+    # Single trajectory => solid angle is constant factor in norm
+    norm_1 = compute_q_de_norm(
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
+        solid_angle=sc.array(dims=['pixel'], values=[1.0]),
+        grid=edges,
+        incident_energy=helper.incident_energy,
+    )
+    norm_2 = compute_q_de_norm(
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
+        solid_angle=sc.array(dims=['pixel'], values=[0.4]),
+        grid=edges,
+        incident_energy=helper.incident_energy,
+    )
+    sc.testing.assert_allclose(0.4 * norm_1, norm_2)
+
+
+def test_single_crystal_norm_ins_solid_angle_is_multiplied_per_detector(
+    helper: TrajectoryHelper,
+) -> None:
+    trajectory_start1, trajectory_stop1 = helper.make_trajectory(
+        (0.1, 0.0, 0.0, 1.0), (0.9, 0.0, 0.0, 1.5)
+    )
+    trajectory_start2, trajectory_stop2 = helper.make_trajectory(
+        (0.5, 0.0, 0.0, 0.9), (0.8, 0.0, 0.0, 1.4)
+    )
+
+    h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
+    k_edges = sc.linspace('k', -0.5, 0.5, 4)
+    l_edges = sc.linspace('l', -0.5, 0.5, 4)
+    mom_edges = sc.array(dims=['mom'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å')
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de(mom_edges))
+
+    # The factor is multiplied to the contributions from each trajectory
+    # separately and the results are added together.
+    norm_combined = compute_q_de_norm(
+        trajectory_start=[trajectory_start1, trajectory_start2],
+        trajectory_stop=[trajectory_stop1, trajectory_stop2],
+        solid_angle=sc.array(dims=['pixel'], values=[1.2, 0.6]),
+        grid=edges,
+        incident_energy=helper.incident_energy,
+    )
+    norm_1 = compute_q_de_norm(
+        trajectory_start=[trajectory_start1],
+        trajectory_stop=[trajectory_stop1],
+        solid_angle=sc.array(dims=['pixel'], values=[1.0]),
+        grid=edges,
+        incident_energy=helper.incident_energy,
+    )
+    norm_2 = compute_q_de_norm(
+        trajectory_start=[trajectory_start2],
+        trajectory_stop=[trajectory_stop2],
+        solid_angle=sc.array(dims=['pixel'], values=[1.0]),
+        grid=edges,
+        incident_energy=helper.incident_energy,
+    )
+    expected = 1.2 * norm_1 + 0.6 * norm_2
+    sc.testing.assert_allclose(norm_combined, expected)
