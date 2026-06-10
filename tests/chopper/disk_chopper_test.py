@@ -1001,3 +1001,51 @@ def test_missing_both_phase_and_delay_raises(nexus_chopper):
                 _get_rotation_speed_key(nexus_chopper): sc.scalar(14.0, unit='Hz'),
             }
         )
+
+
+def _make_chopper_log(value):
+    return sc.DataArray(
+        data=sc.concat([value], dim='time'),
+        coords={
+            'time': sc.datetime('2022-01-01T00:00:00'),
+            'average_value': value,
+            'minimum_value': value,
+            'maximum_value': value,
+        },
+    )
+
+
+def test_from_nexus_nxlogs_with_single_value_are_squeezed():
+    chopper_nexus = sc.DataGroup(
+        {
+            'position': sc.vector([0, 0, 6], unit='m'),
+            'delay': _make_chopper_log(sc.scalar(0, unit='ns')),
+            'radius': sc.scalar(0.5, unit='m'),
+            'rotation_speed_setpoint': _make_chopper_log(sc.scalar(14.0, unit='Hz')),
+            'slit_edges': sc.array(dims=['edge'], values=[7.35, 54.08], unit='deg'),
+            'beam_position': sc.scalar(0.0, unit='deg'),
+        }
+    )
+
+    disk_chopper = DiskChopper.from_nexus(chopper_nexus)
+
+    assert sc.identical(disk_chopper.axle_position, sc.vector([0, 0, 6], unit='m'))
+    assert sc.identical(disk_chopper.phase, sc.scalar(0.0, unit='rad'))
+    assert sc.identical(disk_chopper.frequency, sc.scalar(14.0, unit='Hz'))
+
+
+def test_from_nexus_position_can_be_nxlog():
+    chopper_nexus = sc.DataGroup(
+        {
+            'position': _make_chopper_log(sc.vector([0, 0, 6.5], unit='m')),
+            'delay': sc.scalar(0, unit='ns'),
+            'radius': sc.scalar(0.5, unit='m'),
+            'rotation_speed_setpoint': sc.scalar(14.0, unit='Hz'),
+            'slit_edges': sc.array(dims=['edge'], values=[7.35, 54.08], unit='deg'),
+            'beam_position': sc.scalar(0.0, unit='deg'),
+        }
+    )
+
+    disk_chopper = DiskChopper.from_nexus(chopper_nexus)
+
+    assert sc.identical(disk_chopper.axle_position, sc.vector([0, 0, 6.5], unit='m'))

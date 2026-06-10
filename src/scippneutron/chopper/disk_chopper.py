@@ -357,7 +357,7 @@ class DiskChopper:
                 unit='rad'
             )
         return DiskChopper(
-            axle_position=chopper['position'],
+            axle_position=_get_0d_variable(chopper, 'position'),
             frequency=frequency,
             beam_position=_get_0d_variable(chopper, 'beam_position'),
             phase=phase,
@@ -671,6 +671,7 @@ def _get_0d_variable(
         val = val.data
     if not isinstance(val, sc.Variable):
         raise TypeError(msg.format(name=name, got=f'got a {type(val)}'))
+    val = val.squeeze()
     if val.ndim != 0:
         raise sc.DimensionError(
             msg.format(name=name, got=f'got a {val.ndim}d variable')
