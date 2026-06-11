@@ -3,7 +3,9 @@
 # ruff: noqa: E741  # we use `l` here
 """Normalization routines for single-crystal experiments (SXD and INS)."""
 
+import numba
 import numpy as np
+import numpy.typing as npt
 import scipp as sc
 import scipp.constants
 
@@ -53,7 +55,15 @@ def compute_q_de_norm(
         if abs(stop[3] - start[3]) < 1e-10:
             continue  # no energy transfer in this trajectory
 
-        intersections = _compute_trajectory_grid_intersections(start, stop, grid)
+        # `sorted` must be outside of jitted code because it cannot be cached
+        intersections = np.array(
+            sorted(
+                _compute_trajectory_grid_intersections(start, stop, grid),
+                key=lambda t: t[3],
+            )
+        )
+        if intersections.size == 0:
+            continue  # Numba cannot handle this case below
 
         indices, segment_lengths = _compute_trajectory_segment_lengths(
             start=start,
@@ -61,13 +71,20 @@ def compute_q_de_norm(
             grid=grid,
             intersections=intersections,
         )
+        if not indices:  # TODOD should already be handled by intersections.size == 0
+            continue
 
-        for i, l in zip(indices, segment_lengths, strict=True):
-            norm.values[(*i[:3], i[3] + n_trimmed)] += l * omega.value
+        _accumulate(norm.values, indices, segment_lengths, omega.value, n_trimmed)
 
     # TODO handle sorting better?
     norm.values[:] = norm.values[:, :, :, ::-1]
     return sc.DataArray(norm, coords={edge.dim: edge for edge in orig_grid})
+
+
+@numba.njit(cache=True)
+def _accumulate(out, indices, segment_lengths, omega, de_offset):
+    for i, l in zip(indices, segment_lengths):  # noqa: B905 # not supported by Numba
+        out[i[0], i[1], i[2], i[3] + de_offset] += l * omega
 
 
 def _trim_nan(array: np.ndarray) -> tuple[np.ndarray, int]:
@@ -101,17 +118,12 @@ def _energy_to_final_momentum(
     )
 
 
-def _momentum_to_energy(mom: sc.Variable) -> sc.Variable:
-    return sc.to_unit(
-        sc.constants.hbar**2 / (2 * sc.constants.m_n) * mom**2, 'meV', copy=False
-    )
-
-
+@numba.njit(cache=True)
 def _compute_trajectory_grid_intersections(
     start: tuple[float, float, float, float],
     stop: tuple[float, float, float, float],
     grid: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
-) -> np.ndarray:
+) -> list[tuple[float, float, float, float]]:
     intersections = []
     eps = 1e-10
 
@@ -196,61 +208,121 @@ def _compute_trajectory_grid_intersections(
             ):
                 intersections.append((h, k, l, mom))
 
-    return np.array(sorted(intersections, key=lambda t: t[3]))
+    if _is_in_grid(start, grid):
+        intersections.append(start)
+    if _is_in_grid(stop, grid):
+        intersections.append(stop)
+
+    return intersections
 
 
+@numba.njit(cache=True)
 def _compute_trajectory_segment_lengths(
     start: tuple[float, float, float, float],
     stop: tuple[float, float, float, float],
-    grid: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
-    intersections: np.ndarray,
-) -> tuple[np.ndarray, np.ndarray]:
-    p0, p1 = (start, stop) if stop[3] >= start[3] else (stop, start)
+    grid: tuple[
+        npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
+    ],
+    intersections: npt.NDArray[np.float64],
+) -> tuple[list[int], npt.NDArray[np.float64]]:
+    # p0, p1 = (start, stop) if stop[3] >= start[3] else (stop, start)
     segment_ends = intersections
-    if segment_ends.size == 0:
-        segment_ends = np.zeros((0, 4))
-    if _is_in_grid(p0, grid):
-        segment_ends = np.concat([[p0], segment_ends])
-    if _is_in_grid(p1, grid):
-        segment_ends = np.concat([segment_ends, [p1]])
-    if segment_ends.size == 0:
-        return np.array([]), np.array([])
+    # if segment_ends.size == 0:
+    #     # The input may be 1D in this case, make sure it is 2D.
+    #     segment_ends = np.zeros((0, 4))
+    # if _is_in_grid(p0, grid):
+    #     segment_ends = np.concat([[p0], segment_ends])
+    # if _is_in_grid(p1, grid):
+    #     segment_ends = np.concat([segment_ends, [p1]])
+    # if segment_ends.size == 0:
+    #     return np.array([]), np.array([])
 
-    centers = _midpoints(segment_ends)
-    indices = np.stack(
-        [
-            [_index_of(center, grid[dim]) for center in centers[:, dim]]
-            for dim in range(len(grid))
-        ]
-    ).T
+    indices = list(zip(*_indices_of(_midpoints(segment_ends), grid)))  # noqa: B905 # not supported by Numba
 
     # delta_e = abs(diff(energy_transfer))
     #         = abs(-diff(Ef))   # because Ei is constant
     #         = diff(Ef)         # because kf (and thus Ef) is sorted in ascending order
-    delta_e = np.diff(
-        _momentum_to_energy(
-            sc.array(dims=['kf'], values=segment_ends[:, 3], unit='1/Å')
-        ).values
-    )
+    # delta_e = np.diff(
+    #     _momentum_to_energy(
+    #         sc.array(dims=['kf'], values=segment_ends[:, 3], unit='1/Å')
+    #     ).values
+    # )
+    delta_e = np.diff(_momentum_to_energy(segment_ends[:, 3]))
 
     return indices, delta_e
 
 
-# TODO optimise (needs to handle NaN)
+@numba.njit(cache=True)
+def _momentum_to_energy(mom: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    # This factor is hbar ** 2 / (2 * m_n) combined with a conversion from J to meV:
+    factor = 2.072124851989335
+    return factor * mom**2
+
+
+# # def _momentum_to_energy(mom: sc.Variable) -> sc.Variable:
+#     return sc.to_unit(
+#         sc.constants.hbar ** 2 / (2 * sc.constants.m_n) * mom ** 2, 'meV', copy=False
+#     )
+
+
+@numba.njit(cache=True)
+def _indices_of(points, grid):
+    # Ideally, we would loop `for dim in range(len(grid))` and use `grid[dim]`.
+    # But Numba can't handle that because `dim` is an `int64` and `grid` is a tuple.
+    # Somehow that is not supported.
+    return (
+        [_index_of(point, grid[0]) for point in points[:, 0]],
+        [_index_of(point, grid[1]) for point in points[:, 1]],
+        [_index_of(point, grid[2]) for point in points[:, 2]],
+        [_index_of(point, grid[3]) for point in points[:, 3]],
+    )
+
+
+# Currently a linear search, but could use a binary search if the array is long enough.
+@numba.njit(numba.int64(numba.float64, numba.float64[:]), cache=True)
 def _index_of(point: float, array: np.ndarray) -> int:
     """Assumes that `array` is sorted."""
     for i, val in enumerate(array):
         if val > point:
             return i - 1
-    raise ValueError("Element not in array")  # should never happen (? maybe with NaNs)
+    raise ValueError("Element not in array")  # should never happen
 
 
+@numba.njit(cache=True)
 def _is_in_grid(
     point: tuple[float, float, float, float],
     grid: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
 ) -> bool:
-    return all(edges[0] <= p < edges[-1] for p, edges in zip(point, grid, strict=True))
+    # Ideally, we would use
+    #     return all(
+    #           edges[0] <= p < edges[-1]
+    #           for p, edges in zip(point, grid, strict=True)
+    #     )
+    # or a similar for-loop. But Numba cannot zip tuples. And an index loop does not
+    # work either, see `_indices_of`.
+
+    p, edges = point[0], grid[0]
+    if p < edges[0] or p >= edges[-1]:
+        return False
+
+    p, edges = point[1], grid[1]
+    if p < edges[0] or p >= edges[-1]:
+        return False
+
+    p, edges = point[2], grid[2]
+    if p < edges[0] or p >= edges[-1]:
+        return False
+
+    p, edges = point[3], grid[3]
+    if p < edges[0] or p >= edges[-1]:
+        return False
+
+    return True
 
 
-def _midpoints(a):
+@numba.njit(cache=True)
+def _midpoints(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     return (a[0:-1] + a[1:]) / 2
