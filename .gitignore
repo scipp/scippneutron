@@ -6,6 +6,8 @@ html
 *.egg-info
 # we lock dependencies with pip-compile, not uv
 uv.lock
+rust/target
+*.so
 
 *.sw?
 

@@ -22,6 +22,8 @@ def compute_q_de_norm(
     gets converted to (h, k, l, kf)
     The trajectory is specified in (h, k, l, kf)
     """
+    from .._scippneutron_algo import compute_q_de_norm_impl
+
     orig_grid = tuple(x.copy() for x in grid)
     grid = (
         *grid[:3],
@@ -29,10 +31,17 @@ def compute_q_de_norm(
             energy_transfer=grid[3], incident_energy=incident_energy
         ),
     )
-
-    # TODO sort is bad when we have NaN from OOB delta E (?)
-    #  dE -> kf reverses order, if inputs are ordered, then just flip the array
+    # dE -> kf reverses order, if inputs are ordered, then just flip the array
     grid = (*(x.values for x in grid[:3]), grid[3].values[::-1])
+
+    # TODO units
+    start_arrays = np.array([[x.value for x in point] for point in trajectory_start])
+    stop_arrays = np.array([[x.value for x in point] for point in trajectory_stop])
+
+    norm = compute_q_de_norm_impl(
+        start_arrays, stop_arrays, solid_angle.values, incident_energy.value, grid
+    )
+    raise RuntimeError("STOP")
 
     norm = sc.zeros(
         dims=[edge.dim for edge in orig_grid],

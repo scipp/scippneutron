@@ -7,7 +7,6 @@
 #
 -r base.txt
 -r ci.txt
--r docs.txt
 -r mypy.txt
 -r static.txt
 -r test.txt

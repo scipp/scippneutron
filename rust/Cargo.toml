@@ -1,0 +1,13 @@
+[package]
+name = "_scippneutron_algo"
+version = "1.0.0"  # TODO this sets the version of the package
+edition = "2024"
+
+[lib]
+name = "scippneutron"
+crate-type = ["cdylib"]
+
+[dependencies]
+ndarray = "0.17.2"
+numpy = "0.28"
+pyo3 = { version = "0.28.3", features = ["abi3", "abi3-py311"] }
