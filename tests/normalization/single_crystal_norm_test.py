@@ -2,6 +2,7 @@
 # Copyright (c) 2026 Scipp contributors (https://github.com/scipp)
 # ruff: noqa: E741  # we use `l` here
 
+import itertools
 from collections.abc import Callable
 from typing import Any, TypeAlias
 
@@ -123,7 +124,6 @@ def helper(
 
 
 # TODO test invariants:
-#    - rotate hkl in traj and grid
 #    - multi traj: swap trajectories
 #    - shift in grid by multiple of cell length -> norm shifts the same
 #    - extending grid does not impact common bins
@@ -617,6 +617,86 @@ def tnanesnant_single_crystal_norm_ins_det_traj_unphysical_energy_bins(
     )
 
     sc.testing.assert_allclose(norm, expected)
+
+
+@pytest.mark.parametrize(
+    'permutation',
+    itertools.permutations(range(3), 3),
+    ids=map(str, itertools.permutations(range(3), 3)),
+)
+def test_single_crystal_norm_ins_det_traj_flip_axes(
+    permutation: tuple[int, int, int],
+    helper: TrajectoryHelper,
+) -> None:
+    """Test that the norm is invariant under permutations of hkl.
+
+    This test is important for checking that the normalization works for all
+    h, k, l, not just for trajectories in the h-dE plane which is used in most
+    other tests.
+
+    The test constructs a test grid in hkl with a trajectory chosen from ``specs``
+    in all possible permutations. It also constructs a reference grid and trajectory
+    with a fixed order. A norm computed on those grids must be the same up to
+    transposing and renaming of dimensions.
+    """
+    specs = [
+        (0.1, 0.9, [-0.1, 0.3, 0.7, 1.0, 1.3], 'dim0'),
+        (-1.2, 0.5, [-0.9, -0.5, -0.1, 0.3, 0.5, 0.7, 0.9], 'dim1'),
+        (0.4, 1.8, [-0.2, 0.0, 0.4, 0.8, 1.4, 2.0], 'dim2'),
+    ]
+    h_spec = specs[permutation[0]]
+    k_spec = specs[permutation[1]]
+    l_spec = specs[permutation[2]]
+
+    trajectory_start, trajectory_stop = helper.make_trajectory(
+        (h_spec[0], k_spec[0], l_spec[0], 1.0), (h_spec[1], k_spec[1], l_spec[1], 1.5)
+    )
+    ref_trajectory_start, ref_trajectory_stop = helper.make_trajectory(
+        (specs[0][0], specs[1][0], specs[2][0], 1.0),
+        (specs[0][1], specs[1][1], specs[2][1], 1.5),
+    )
+
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å'
+    )
+    h_edges = sc.array(dims=['h'], values=h_spec[2])
+    k_edges = sc.array(dims=['k'], values=k_spec[2])
+    l_edges = sc.array(dims=['l'], values=l_spec[2])
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
+
+    ref_h_edges = sc.array(dims=['h'], values=specs[0][2])
+    ref_k_edges = sc.array(dims=['k'], values=specs[1][2])
+    ref_l_edges = sc.array(dims=['l'], values=specs[2][2])
+    ref_edges = (
+        ref_h_edges,
+        ref_k_edges,
+        ref_l_edges,
+        helper.kf_to_de_sorted(mom_edges),
+    )
+
+    norm = compute_q_de_norm(
+        trajectory_start=[trajectory_start],
+        trajectory_stop=[trajectory_stop],
+        solid_angle=sc.array(dims=['pixel'], values=[1.0]),
+        grid=edges,
+        incident_energy=helper.incident_energy,
+    )
+
+    ref_norm = (
+        compute_q_de_norm(
+            trajectory_start=[ref_trajectory_start],
+            trajectory_stop=[ref_trajectory_stop],
+            solid_angle=sc.array(dims=['pixel'], values=[1.0]),
+            grid=ref_edges,
+            incident_energy=helper.incident_energy,
+        )
+        # Transpose `ref_norm` to match the permutation used for `norm`.
+        .rename(h='dim0', k='dim1', l='dim2')
+        .rename({h_spec[3]: 'h', k_spec[3]: 'k', l_spec[3]: 'l'})
+        .transpose(['h', 'k', 'l', 'energy_transfer'])
+    )
+
+    sc.testing.assert_allclose(norm, ref_norm)
 
 
 def test_single_crystal_norm_ins_solid_angle_multiplies_norm(
