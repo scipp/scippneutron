@@ -35,7 +35,7 @@ def compute_q_de_norm(
     grid = (*(x.values for x in grid[:3]), grid[3].values[::-1])
 
     norm = sc.zeros(
-        dims=['h', 'k', 'l', 'energy_transfer'],
+        dims=[edge.dim for edge in orig_grid],
         shape=[len(edge) - 1 for edge in grid],
         unit='meV',
     )
@@ -67,16 +67,7 @@ def compute_q_de_norm(
 
     # TODO handle sorting better?
     norm.values[:] = norm.values[:, :, :, ::-1]
-    # TODO don't rename, use input dim names
-    return sc.DataArray(
-        norm,
-        coords={
-            'h': orig_grid[0],
-            'k': orig_grid[1],
-            'l': orig_grid[2],
-            'energy_transfer': orig_grid[3],
-        },
-    )
+    return sc.DataArray(norm, coords={edge.dim: edge for edge in orig_grid})
 
 
 def _trim_nan(array: np.ndarray) -> tuple[np.ndarray, int]:
