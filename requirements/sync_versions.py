@@ -28,7 +28,8 @@ def main(fname, requirements_folder):
             parts = line.split("==")
             package_name = parts[0].strip()
             old_version = parts[1].strip()
-            pattern = package_name.lstrip(" -") + "=="
+            clean_package_name = package_name.lstrip(" -")
+            pattern = clean_package_name + "=="
             found = False
             for req_file in requirements_folder.glob("*.txt"):
                 if "nightly" in req_file.name:
@@ -36,7 +37,14 @@ def main(fname, requirements_folder):
                 with open(req_file) as req_f:
                     for req_line in req_f:
                         if pattern in req_line:
-                            version = req_line.split("==")[1].strip()
+                            # We need to guard against cases where a package with a long
+                            # name contains the pattern of a shorter package. For
+                            # example "autodoc-pydantic==2.2.0" contains
+                            # "pydantic==2.2.0", which would be a false match.
+                            split_req_line = req_line.split("==")
+                            if split_req_line[0].strip() != clean_package_name:
+                                continue
+                            version = split_req_line[1].strip()
                             if version != old_version:
                                 logger.info(
                                     "%s: %s --> %s", package_name, old_version, version

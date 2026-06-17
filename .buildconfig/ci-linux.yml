@@ -18,7 +18,7 @@ dependencies:
   - mpltoolbox==26.2.0
   - plopp==26.5.0
   - pooch==1.9.0
-  - pydantic==2.2.0
+  - pydantic==2.13.4
   - pytest==9.0.3
   - pytest-asyncio==0.24.0
   - python-dateutil==2.9.0.post0
@@ -36,7 +36,7 @@ dependencies:
   - packaging==26.2
   - pandoc==3.4.0
   - pydata-sphinx-theme==0.18.0
-  - sphinx==0.9.8
+  - sphinx==9.0.4
   - sphinx-autodoc-typehints==3.6.1
   - sphinx-copybutton==0.5.2
   - sphinx-design==0.7.0
