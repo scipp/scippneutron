@@ -25,14 +25,13 @@ mod _scippneutron_algo {
             grid.2.as_array(),
             grid.3.as_array(),
         )?;
-        super::compute_q_de_norm_impl(
+        Ok(super::compute_q_de_norm_impl(
             start.as_array(),
             stop.as_array(),
             solid_angle.as_array(),
             grid,
         )
-        .map(|a| a.into_pyarray(py))
-        .map_err(|message| PyErr::new::<PyRuntimeError, _>(message))
+        .into_pyarray(py))
     }
 }
 
@@ -62,39 +61,62 @@ impl<'g> Grid<'g> {
     }
 
     pub fn n_cells(&self) -> (usize, usize, usize, usize) {
-        (self.h.len()-1, self.k.len()-1, self.l.len()-1, self.kf.len()-1)
+        (
+            self.h.len() - 1,
+            self.k.len() - 1,
+            self.l.len() - 1,
+            self.kf.len() - 1,
+        )
     }
 
     // TODO check that edges are >=2 elems, then error never happens
     pub fn includes_h(&self, h: f64) -> bool {
-        let Some(first) = self.h.first() else {return false;};
-        let Some(last) = self.h.last() else {return false;};
+        let Some(first) = self.h.first() else {
+            return false;
+        };
+        let Some(last) = self.h.last() else {
+            return false;
+        };
         h >= *first && h < *last
     }
 
     pub fn includes_k(&self, k: f64) -> bool {
-        let Some(first) = self.k.first() else {return false;};
-        let Some(last) = self.k.last() else {return false;};
+        let Some(first) = self.k.first() else {
+            return false;
+        };
+        let Some(last) = self.k.last() else {
+            return false;
+        };
         k >= *first && k < *last
     }
 
     pub fn includes_l(&self, l: f64) -> bool {
-        let Some(first) = self.l.first() else {return false;};
-        let Some(last) = self.l.last() else {return false;};
+        let Some(first) = self.l.first() else {
+            return false;
+        };
+        let Some(last) = self.l.last() else {
+            return false;
+        };
         l >= *first && l < *last
     }
 
     pub fn includes_kf(&self, kf: f64) -> bool {
-        let Some(first) = self.kf.first() else {return false;};
-        let Some(last) = self.kf.last() else {return false;};
+        let Some(first) = self.kf.first() else {
+            return false;
+        };
+        let Some(last) = self.kf.last() else {
+            return false;
+        };
         kf >= *first && kf < *last
     }
 
-    pub fn index_of(&self, point: &(f64,f64,f64,f64))->(usize,usize,usize,usize) {
-        (bin_index_of(&self.h, point.0),
+    pub fn index_of(&self, point: &(f64, f64, f64, f64)) -> (usize, usize, usize, usize) {
+        (
+            bin_index_of(&self.h, point.0),
             bin_index_of(&self.k, point.1),
             bin_index_of(&self.l, point.2),
-            bin_index_of(&self.kf, point.3),)
+            bin_index_of(&self.kf, point.3),
+        )
     }
 }
 
@@ -107,7 +129,7 @@ fn bin_index_of(array: &ArrayView1<'_, f64>, x: f64) -> usize {
             return i - 1;
         }
     }
-    panic!("Element not in array");  // Should never happen to way the centers are constructed.
+    panic!("Element not in array"); // Should never happen to way the centers are constructed.
 }
 
 fn compute_kf_offset(kf: ArrayView1<f64>) -> PyResult<(usize, usize)> {
@@ -139,20 +161,23 @@ fn compute_q_de_norm_impl(
     stop: ArrayView2<f64>,
     solid_angle: ArrayView1<f64>,
     grid: Grid,
-) -> Result<Array4<f64>, String> {
+) -> Array4<f64> {
     let mut out = Array4::zeros(grid.n_cells());
-    Zip::from(start.rows()).and(stop.rows()).and(&solid_angle).for_each(|start, stop, solid_angle| {
-        let segment_endpoints = find_trajectory_segments(start, stop, &grid);
-        add_strajectory_to_norm(&mut out, segment_endpoints, *solid_angle, &grid);
-    });
-    Ok(out)
+    Zip::from(start.rows())
+        .and(stop.rows())
+        .and(&solid_angle)
+        .for_each(|start, stop, solid_angle| {
+            let segment_endpoints = find_trajectory_segments(start, stop, &grid);
+            add_strajectory_to_norm(&mut out, segment_endpoints, *solid_angle, &grid);
+        });
+    out
 }
 
 fn find_trajectory_segments(
     start: ArrayView1<f64>,
     stop: ArrayView1<f64>,
     grid: &Grid,
-) -> Vec<(f64,f64,f64,f64)> {
+) -> Vec<(f64, f64, f64, f64)> {
     let mut segment_endpoints = Vec::new();
     const EPS: f64 = 1e-10;
 
@@ -239,24 +264,36 @@ fn find_trajectory_segments(
         }
     }
 
-    if grid.includes_h(start[0]) && grid.includes_k(start[1])&&grid.includes_l(start[2])&&grid.includes_kf(start[3]) {
+    if grid.includes_h(start[0])
+        && grid.includes_k(start[1])
+        && grid.includes_l(start[2])
+        && grid.includes_kf(start[3])
+    {
         segment_endpoints.push((start[0], start[1], start[2], start[3]));
     }
-    if grid.includes_h(stop[0]) && grid.includes_k(stop[1])&&grid.includes_l(stop[2])&&grid.includes_kf(stop[3]) {
+    if grid.includes_h(stop[0])
+        && grid.includes_k(stop[1])
+        && grid.includes_l(stop[2])
+        && grid.includes_kf(stop[3])
+    {
         segment_endpoints.push((stop[0], stop[1], stop[2], stop[3]));
     }
 
     segment_endpoints
 }
 
-fn add_strajectory_to_norm(norm: &mut Array4<f64>, mut segment_endpoints: Vec<(f64,f64,f64,f64)>,
-    solid_angle: f64, grid:&Grid){
+fn add_strajectory_to_norm(
+    norm: &mut Array4<f64>,
+    mut segment_endpoints: Vec<(f64, f64, f64, f64)>,
+    solid_angle: f64,
+    grid: &Grid,
+) {
     sort_by_kf(&mut segment_endpoints);
 
     let left = segment_endpoints.iter();
     let mut right = left.clone();
     if right.next().is_none() {
-        return;  // should never happen
+        return; // should never happen
     }
     for (a, b) in left.zip(right) {
         let center = midpoint(a, b);
@@ -268,23 +305,30 @@ fn add_strajectory_to_norm(norm: &mut Array4<f64>, mut segment_endpoints: Vec<(f
 
 fn sort_by_kf(points: &mut [(f64, f64, f64, f64)]) {
     // Custom comparator to make this work with floats
-    points.sort_by(|a, b| if a.3 < b.3 {
-        std::cmp::Ordering::Less
-    } else if b.3 < a.3 {
-        std::cmp::Ordering::Greater
-    } else if !a.3.is_finite() || !b.3.is_finite() {
-        std::cmp::Ordering::Greater  // Move all NaNs and Infs to the end
-    } else {
-        std::cmp::Ordering::Equal
+    points.sort_by(|a, b| {
+        if a.3 < b.3 {
+            std::cmp::Ordering::Less
+        } else if b.3 < a.3 {
+            std::cmp::Ordering::Greater
+        } else if !a.3.is_finite() || !b.3.is_finite() {
+            std::cmp::Ordering::Greater // Move all NaNs and Infs to the end
+        } else {
+            std::cmp::Ordering::Equal
+        }
     });
 }
 
-fn midpoint(a:&(f64,f64,f64,f64), b:&(f64,f64,f64,f64))->(f64,f64,f64,f64){
-    (a.0.midpoint(b.0), a.1.midpoint(b.1), a.2.midpoint(b.2), a.3.midpoint(b.3))
+fn midpoint(a: &(f64, f64, f64, f64), b: &(f64, f64, f64, f64)) -> (f64, f64, f64, f64) {
+    (
+        a.0.midpoint(b.0),
+        a.1.midpoint(b.1),
+        a.2.midpoint(b.2),
+        a.3.midpoint(b.3),
+    )
 }
 
 fn momentum_to_energy(momentum: f64) -> f64 {
     // This factor is hbar ** 2 / (2 * m_n) combined with a conversion from J to meV:
     const FACTOR: f64 = 2.072124851989335;
-    FACTOR * momentum*momentum
+    FACTOR * momentum * momentum
 }
