@@ -10,8 +10,8 @@ import scipp.constants
 
 def compute_q_de_norm(
     *,
-    trajectory_start: list[tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable]],
-    trajectory_stop: list[tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable]],
+    trajectory_start: sc.Variable,  # shape: [*other, pixel, q-e]
+    trajectory_stop: sc.Variable,
     solid_angle: sc.Variable,
     grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
     incident_energy: sc.Variable,
@@ -22,9 +22,30 @@ def compute_q_de_norm(
     gets converted to (h, k, l, kf)
     The trajectory is specified in (h, k, l, kf)
     """
+    return _rust_impl(
+        trajectory_start,
+        trajectory_stop,
+        solid_angle,
+        grid,
+        incident_energy,
+    )
+
+
+def _reshape_trajectory_point(point: sc.Variable) -> sc.Variable:
+    other_dims = tuple(dim for dim in point.dims if dim != 'q-e')
+    return point.transpose((*other_dims, 'q-e')).flatten(dims=other_dims, to='other')
+
+
+def _rust_impl(
+    trajectory_start: sc.Variable,  # shape: [*other, pixel, q-e]
+    trajectory_stop: sc.Variable,
+    solid_angle: sc.Variable,
+    grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
+    incident_energy: sc.Variable,
+):
     from .._scippneutron_algo import compute_q_de_norm_impl
 
-    orig_grid = tuple(x.copy() for x in grid)
+    orig_grid = tuple(grid)
     grid = (
         *grid[:3],
         _energy_to_final_momentum(
@@ -34,14 +55,40 @@ def compute_q_de_norm(
     # dE -> kf reverses order, if inputs are ordered, then just flip the array
     grid = (*(x.values for x in grid[:3]), grid[3].values[::-1])
 
-    # TODO units
-    start_arrays = np.array([[x.value for x in point] for point in trajectory_start])
-    stop_arrays = np.array([[x.value for x in point] for point in trajectory_stop])
-
-    norm = compute_q_de_norm_impl(
-        start_arrays, stop_arrays, solid_angle.values, incident_energy.value, grid
+    norm_values = compute_q_de_norm_impl(
+        _reshape_trajectory_point(trajectory_start).values,
+        _reshape_trajectory_point(trajectory_stop).values,
+        solid_angle.values,
+        grid,
+    )[:, :, :, ::-1]  # TODO do this in rust
+    return sc.DataArray(
+        sc.array(
+            dims=['h', 'k', 'l', 'energy_transfer'],
+            values=norm_values,
+            unit=sc.Unit('1/meV') / solid_angle.unit,
+        ),
+        coords=dict(zip(('h', 'k', 'l', 'energy_transfer'), orig_grid, strict=True)),
     )
-    raise RuntimeError("STOP")
+
+
+def _python_impl(
+    trajectory_start: sc.Variable,  # shape: [*other, pixel, q-e]
+    trajectory_stop: sc.Variable,
+    solid_angle: sc.Variable,
+    grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
+    incident_energy: sc.Variable,
+):
+    orig_grid = tuple(x.copy() for x in grid)
+    grid = (
+        *grid[:3],
+        _energy_to_final_momentum(
+            energy_transfer=grid[3], incident_energy=incident_energy
+        ),
+    )
+
+    # TODO sort is bad when we have NaN from OOB delta E (?)
+    #  dE -> kf reverses order, if inputs are ordered, then just flip the array
+    grid = (*(x.values for x in grid[:3]), grid[3].values[::-1])
 
     norm = sc.zeros(
         dims=[edge.dim for edge in orig_grid],
@@ -52,9 +99,11 @@ def compute_q_de_norm(
     trimmed, n_trimmed = _trim_nan(grid[3])
     grid = (*grid[:3], trimmed)
 
-    for start, stop, omega in zip(
-        trajectory_start, trajectory_stop, solid_angle, strict=True
-    ):
+    for i in range(len(solid_angle)):
+        start = trajectory_start[solid_angle.dim, i]
+        stop = trajectory_stop[solid_angle.dim, i]
+        omega = solid_angle[i]
+
         # TODO for now, convert to raw numbers:
         start = tuple(x.value for x in start)
         stop = tuple(x.value for x in stop)

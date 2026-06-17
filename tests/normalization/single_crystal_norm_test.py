@@ -14,33 +14,23 @@ import scipp.testing
 from scippneutron.normalization import compute_q_de_norm
 
 
-def to_grid_variables(
-    h: float, k: float, l: float, mom: float
-) -> tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable]:
-    return (
-        sc.scalar(h),
-        sc.scalar(k),
-        sc.scalar(l),
-        sc.scalar(mom, unit='1/Å'),
-    )
+def to_trajectory_point(h: float, k: float, l: float, mom: float) -> sc.Variable:
+    return sc.array(dims=['pixel', 'q-e'], values=[[h, k, l, mom]], unit='1/Å')
 
 
-Trajectory: TypeAlias = tuple[
-    tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
-    tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
-]
+Trajectory: TypeAlias = tuple[sc.Variable, sc.Variable]
 
 
 def traj_as_given(
     start: tuple[float, float, float, float], stop: tuple[float, float, float, float]
 ) -> Trajectory:
-    return to_grid_variables(*start), to_grid_variables(*stop)
+    return to_trajectory_point(*start), to_trajectory_point(*stop)
 
 
 def traj_flipped(
     start: tuple[float, float, float, float], stop: tuple[float, float, float, float]
 ) -> Trajectory:
-    return to_grid_variables(*stop), to_grid_variables(*start)
+    return to_trajectory_point(*stop), to_trajectory_point(*start)
 
 
 @pytest.fixture(params=[traj_as_given, traj_flipped], ids=['normal', 'flipped'])
@@ -150,8 +140,8 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -181,6 +171,8 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d_multi_traj(
     trajectory_start2, trajectory_stop2 = helper.make_trajectory(
         (0.5, 0.0, 0.0, 0.9), (0.8, 0.0, 0.0, 1.4)
     )
+    trajectory_start = sc.concat([trajectory_start1, trajectory_start2], dim='pixel')
+    trajectory_stop = sc.concat([trajectory_stop1, trajectory_stop2], dim='pixel')
 
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
@@ -191,8 +183,8 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d_multi_traj(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start1, trajectory_start2],
-        trajectory_stop=[trajectory_stop1, trajectory_stop2],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0, 1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -238,8 +230,8 @@ def test_single_crystal_norm_ins_det_traj_ends_outside_grid_2d(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -273,8 +265,8 @@ def test_single_crystal_norm_ins_det_traj_start_inside_end_outside_grid_2d(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -308,8 +300,8 @@ def test_single_crystal_norm_ins_det_traj_single_cell_grid_2d(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -339,8 +331,8 @@ def test_single_crystal_norm_ins_det_traj_vertical_grid_2d(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -373,8 +365,8 @@ def test_single_crystal_norm_ins_det_traj_at_grid_lines_grid_2d(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -408,8 +400,8 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_single_cell(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -437,8 +429,8 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_multi_cell(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -466,8 +458,8 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -493,8 +485,8 @@ def test_single_crystal_norm_ins_det_traj_within_grid_2d_single_kf(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -527,8 +519,8 @@ def test_single_crystal_norm_ins_det_traj_start_outside_end_inside_grid_2d_singl
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -560,8 +552,8 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal_single_kf(
     edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -598,8 +590,8 @@ def tnanesnant_single_crystal_norm_ins_det_traj_unphysical_energy_bins(
     edges = (h_edges, k_edges, l_edges, de_edges)
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -675,8 +667,8 @@ def test_single_crystal_norm_ins_det_traj_flip_axes(
     )
 
     norm = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -684,8 +676,8 @@ def test_single_crystal_norm_ins_det_traj_flip_axes(
 
     ref_norm = (
         compute_q_de_norm(
-            trajectory_start=[ref_trajectory_start],
-            trajectory_stop=[ref_trajectory_stop],
+            trajectory_start=ref_trajectory_start,
+            trajectory_stop=ref_trajectory_stop,
             solid_angle=sc.array(dims=['pixel'], values=[1.0]),
             grid=ref_edges,
             incident_energy=helper.incident_energy,
@@ -716,15 +708,15 @@ def test_single_crystal_norm_ins_solid_angle_multiplies_norm(
 
     # Single trajectory => solid angle is constant factor in norm
     norm_1 = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
     )
     norm_2 = compute_q_de_norm(
-        trajectory_start=[trajectory_start],
-        trajectory_stop=[trajectory_stop],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[0.4]),
         grid=edges,
         incident_energy=helper.incident_energy,
@@ -741,6 +733,8 @@ def test_single_crystal_norm_ins_solid_angle_is_multiplied_per_detector(
     trajectory_start2, trajectory_stop2 = helper.make_trajectory(
         (0.5, 0.0, 0.0, 0.9), (0.8, 0.0, 0.0, 1.4)
     )
+    trajectory_start = sc.concat([trajectory_start1, trajectory_start2], dim='pixel')
+    trajectory_stop = sc.concat([trajectory_stop1, trajectory_stop2], dim='pixel')
 
     h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3])
     k_edges = sc.linspace('k', -0.5, 0.5, 4)
@@ -753,22 +747,22 @@ def test_single_crystal_norm_ins_solid_angle_is_multiplied_per_detector(
     # The factor is multiplied to the contributions from each trajectory
     # separately and the results are added together.
     norm_combined = compute_q_de_norm(
-        trajectory_start=[trajectory_start1, trajectory_start2],
-        trajectory_stop=[trajectory_stop1, trajectory_stop2],
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
         solid_angle=sc.array(dims=['pixel'], values=[1.2, 0.6]),
         grid=edges,
         incident_energy=helper.incident_energy,
     )
     norm_1 = compute_q_de_norm(
-        trajectory_start=[trajectory_start1],
-        trajectory_stop=[trajectory_stop1],
+        trajectory_start=trajectory_start1,
+        trajectory_stop=trajectory_stop1,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
     )
     norm_2 = compute_q_de_norm(
-        trajectory_start=[trajectory_start2],
-        trajectory_stop=[trajectory_stop2],
+        trajectory_start=trajectory_start2,
+        trajectory_stop=trajectory_stop2,
         solid_angle=sc.array(dims=['pixel'], values=[1.0]),
         grid=edges,
         incident_energy=helper.incident_energy,
