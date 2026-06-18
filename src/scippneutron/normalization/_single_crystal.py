@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2026 Scipp contributors (https://github.com/scipp)
-# ruff: noqa: E741  # we use `l` here
 """Normalization routines for single-crystal experiments (SXD and INS)."""
 
 import numpy as np
