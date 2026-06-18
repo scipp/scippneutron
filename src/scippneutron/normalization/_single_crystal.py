@@ -63,11 +63,12 @@ def compute_q_de_norm(
             intersections=intersections,
         )
 
+        # `offset - i` assigns in reverse order to undo the flip from
+        # converting dE -> kf.
+        offset = norm.sizes['energy_transfer'] - 1 - n_trimmed
         for i, l in zip(indices, segment_lengths, strict=True):
-            norm.values[(*i[:3], i[3] + n_trimmed)] += l * omega.value
+            norm.values[(*i[:3], offset - i[3])] += l * omega.value
 
-    # TODO handle sorting better?
-    norm.values[:] = norm.values[:, :, :, ::-1]
     return sc.DataArray(norm, coords={edge.dim: edge for edge in orig_grid})
 
 

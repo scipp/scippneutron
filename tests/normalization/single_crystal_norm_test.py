@@ -565,7 +565,7 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal_single_kf(
     sc.testing.assert_allclose(norm, expected)
 
 
-def tnanesnant_single_crystal_norm_ins_det_traj_unphysical_energy_bins(
+def test_single_crystal_norm_ins_det_traj_unphysical_energy_bins(
     make_trajectory: Callable[..., Trajectory],
 ) -> None:
     """Modified case A1 from tools/detector_test_trajectories.py
@@ -583,9 +583,12 @@ def tnanesnant_single_crystal_norm_ins_det_traj_unphysical_energy_bins(
     som_mom_edges = sc.array(
         dims=['energy_transfer'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å'
     )
-    # Add a NaN edge at the end (dE=1.7 => kf=NaN with given Ei)
+    # Add NaN edges at the end (dE>=1.9 => kf=NaN with given Ei)
     de_edges = sc.concat(
-        [helper.kf_to_de_sorted(som_mom_edges), sc.scalar(1.9, unit='meV')],
+        [
+            helper.kf_to_de_sorted(som_mom_edges),
+            sc.array(dims=['energy_transfer'], values=[1.9, 2.1], unit='meV'),
+        ],
         'energy_transfer',
     )
     edges = (h_edges, k_edges, l_edges, de_edges)
@@ -600,10 +603,10 @@ def tnanesnant_single_crystal_norm_ins_det_traj_unphysical_energy_bins(
 
     a1 = 0.125
     c1 = 0.075
-    cells = [(0, 1, 1, 2), (1, 1, 1, 2), (1, 1, 1, 1), (2, 1, 1, 1)]
+    cells = [(0, 1, 1, 1), (1, 1, 1, 1), (1, 1, 1, 0), (2, 1, 1, 0)]
     segments = [1.0, 1.0 + a1, 1.3, 1.3 + c1, 1.5]
     expected = helper.norm_grid(
-        shape=(4, 3, 3, 4),
+        shape=(4, 3, 3, 5),
         cells=cells,
         segments=segments,
         edges=edges,
