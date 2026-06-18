@@ -22,11 +22,13 @@ def compute_q_de_norm(
     gets converted to (h, k, l, kf)
     The trajectory is specified in (h, k, l, kf)
     """
+    for edges in grid:
+        if not sc.issorted(edges, edges.dim):
+            raise sc.CoordError(f"The input bin-edges must be sorted, got {edges}")
+
     grid_energy_transfer = grid[3]
     grid = (
         *grid[:3],
-        # TODO check that inputs are sorted
-        #  dE -> kf reverses order, if inputs are ordered, then just flip the array
         _flip_array(
             _energy_to_final_momentum(
                 energy_transfer=grid[3], incident_energy=incident_energy
@@ -43,10 +45,11 @@ def compute_q_de_norm(
         grid=grid, segment_ends=intersections, solid_angle=solid_angle
     )
 
+    # dE -> kf above flipped the order, flip again to match the input edges.
+    norm.values[:] = norm.values[:, :, :, ::-1]
+
     norm = norm.drop_coords('kf').rename_dims(kf='energy_transfer')
     norm.coords['energy_transfer'] = grid_energy_transfer
-
-    norm.values[:] = norm.values[:, :, :, ::-1]
 
     return norm
 
