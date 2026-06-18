@@ -3,6 +3,7 @@
 """Normalization routines for single-crystal experiments (SXD and INS)."""
 
 import numpy as np
+import numpy.typing as npt
 import scipp as sc
 import scipp.constants
 
@@ -24,6 +25,7 @@ def compute_q_de_norm(
     for edges in grid:
         if not sc.issorted(edges, edges.dim):
             raise sc.CoordError(f"The input bin-edges must be sorted, got {edges}")
+    # TODO convert units to match between traj and grid
 
     grid_energy_transfer = grid[3]
     grid = (
@@ -35,10 +37,19 @@ def compute_q_de_norm(
         ),
     )
 
-    # TODO prefilter
+    # Per traj and dimension smallest and larges values,
+    # cannot use left=start, right=stop because trajectories are not sorted like that.
+    traj_left = np.minimum(trajectory_start.values, trajectory_stop.values)
+    traj_right = np.maximum(trajectory_start.values, trajectory_stop.values)
+
+    interior_grid = _filter_grid(grid, traj_left, traj_right)
 
     intersections = _compute_trajectory_grid_intersections(
-        trajectory_start, trajectory_stop, grid
+        start=trajectory_start,
+        stop=trajectory_stop,
+        traj_left=traj_left,
+        traj_right=traj_right,
+        grid=interior_grid,
     )
     coverage = _compute_detector_coverage(
         segment_ends=intersections, solid_angle=solid_angle
@@ -58,23 +69,24 @@ def compute_q_de_norm(
     return norm
 
 
-def _trim_nan(array: np.ndarray) -> tuple[np.ndarray, int]:
-    is_nan = np.isnan(array)
-    trim_start = 0
-    for i, x in enumerate(is_nan):
-        if not x:
-            trim_start = i
-            break
-    trim_end = 0
-    for i, x in enumerate(is_nan[::-1]):
-        if not x:
-            trim_end = i
-            break
+def _filter_grid(
+    grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
+    traj_left: npt.NDArray[np.float64],
+    traj_right: npt.NDArray[np.float64],
+) -> tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable]:
+    """Filter out all edges that are outside the range of the trajectories.
 
-    trimmed = array[trim_start : len(array) - trim_end]
-    if np.isnan(trimmed).any():
-        raise ValueError("Array contains interior NaN")
-    return trimmed, trim_start
+    For computing intersections, we only need grid lines that are between the
+    trajectory endpoints.
+    """
+    total_left = np.min(traj_left, axis=0)
+    total_right = np.max(traj_right, axis=0)
+
+    def select_in_range(axis: int, edges: sc.Variable) -> sc.Variable:
+        sel = (edges.values >= total_left[axis]) & (edges.values < total_right[axis])
+        return sc.array(dims=edges.dims, values=edges.values[sel], unit=edges.unit)
+
+    return tuple(select_in_range(axis, edges) for axis, edges in enumerate(grid))
 
 
 # TODO move to coord transforms (and use in essspectroscopy)
@@ -102,19 +114,19 @@ def _momentum_to_energy(mom: sc.Variable) -> sc.Variable:
 def _compute_trajectory_grid_intersections(
     start: sc.Variable,
     stop: sc.Variable,
+    traj_left: npt.NDArray[np.float64],
+    traj_right: npt.NDArray[np.float64],
     grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
 ) -> sc.Variable:
     intersections = [np.stack([start.values, stop.values])]
-
-    traj_left = np.minimum(start.values, stop.values)
-    traj_right = np.maximum(start.values, stop.values)
 
     for dim in range(4):
         slope = (stop - start) / (stop['q-e', dim] - start['q-e', dim])
         pos = slope * (grid[dim] - start['q-e', dim]) + start
 
         # The condition here is right-inclusive even though binning is right-exclusive.
-        # This is ok because this will lead to an intersection with distance 0 to
+        # This is required to handle trajectories that are constant in one dimension.
+        # Doing this is ok because this will lead to an intersection with distance 0 to
         # a trajectory endpoint and so does not contribute to the result.
         pos.values[:] = np.where(
             (pos.values < traj_left) | (pos.values > traj_right),
@@ -155,23 +167,3 @@ def _compute_detector_coverage(
         .flatten(to='observation')
         .copy()
     )
-
-
-# TODO optimise (needs to handle NaN)
-def _index_of(point: float, array: np.ndarray) -> int:
-    """Assumes that `array` is sorted."""
-    for i, val in enumerate(array):
-        if val > point:
-            return i - 1
-    raise ValueError("Element not in array")  # should never happen (? maybe with NaNs)
-
-
-def _is_in_grid(
-    point: tuple[float, float, float, float],
-    grid: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
-) -> bool:
-    return all(edges[0] <= p < edges[-1] for p, edges in zip(point, grid, strict=True))
-
-
-def _midpoints(a):
-    return (a[0:-1] + a[1:]) / 2
