@@ -565,7 +565,7 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal_single_kf(
     sc.testing.assert_allclose(norm, expected)
 
 
-def tnanesnant_single_crystal_norm_ins_det_traj_unphysical_energy_bins(
+def test_single_crystal_norm_ins_det_traj_unphysical_energy_bins(
     make_trajectory: Callable[..., Trajectory],
 ) -> None:
     """Modified case A1 from tools/detector_test_trajectories.py
