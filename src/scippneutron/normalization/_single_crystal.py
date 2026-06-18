@@ -10,8 +10,8 @@ import scipp.constants
 
 def compute_q_de_norm(
     *,
-    trajectory_start: list[tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable]],
-    trajectory_stop: list[tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable]],
+    trajectory_start: sc.Variable,
+    trajectory_stop: sc.Variable,
     solid_angle: sc.Variable,
     grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
     incident_energy: sc.Variable,
@@ -43,9 +43,10 @@ def compute_q_de_norm(
     trimmed, n_trimmed = _trim_nan(grid[3])
     grid = (*grid[:3], trimmed)
 
-    for start, stop, omega in zip(
-        trajectory_start, trajectory_stop, solid_angle, strict=True
-    ):
+    for i in range(len(solid_angle)):
+        start = trajectory_start['pixel', i]
+        stop = trajectory_stop['pixel', i]
+        omega = solid_angle[i]
         # TODO for now, convert to raw numbers:
         start = tuple(x.value for x in start)
         stop = tuple(x.value for x in stop)
