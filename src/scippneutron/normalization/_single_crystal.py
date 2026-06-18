@@ -41,15 +41,20 @@ def compute_q_de_norm(
     intersections = _compute_trajectory_grid_intersections(
         trajectory_start, trajectory_stop, grid
     )
-    norm = _norm_from_intersections(
-        grid=grid, segment_ends=intersections, solid_angle=solid_angle
+    coverage = _compute_detector_coverage(
+        segment_ends=intersections, solid_angle=solid_angle
     )
-
-    # dE -> kf above flipped the order, flip again to match the input edges.
-    norm.values[:] = norm.values[:, :, :, ::-1]
-
-    norm = norm.drop_coords('kf').rename_dims(kf='energy_transfer')
-    norm.coords['energy_transfer'] = grid_energy_transfer
+    coverage.coords['energy_transfer'] = incident_energy - _momentum_to_energy(
+        coverage.coords.pop('kf')
+    )
+    norm = coverage.hist(
+        {
+            'h': grid[0],
+            'k': grid[1],
+            'l': grid[2],
+            'energy_transfer': grid_energy_transfer,
+        }
+    )
 
     return norm
 
@@ -128,8 +133,7 @@ def _compute_trajectory_grid_intersections(
     return sc.array(dims=['intersection', *start.dims], values=sorted, unit='1/Å')
 
 
-def _norm_from_intersections(
-    grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
+def _compute_detector_coverage(
     segment_ends: sc.Variable,
     solid_angle: sc.Variable,
 ) -> sc.DataArray:
@@ -138,7 +142,7 @@ def _norm_from_intersections(
     energy_delta = (
         energy['intersection', 1:]['q-e', 3] - energy['intersection', :-1]['q-e', 3]
     )
-    coverage = (
+    return (
         sc.DataArray(
             energy_delta * solid_angle,
             coords={
@@ -150,9 +154,8 @@ def _norm_from_intersections(
             },
         )
         .flatten(to='observation')
-        .copy()  # hist below needs contiguous memory
+        .copy()
     )
-    return coverage.hist({'h': grid[0], 'k': grid[1], 'l': grid[2], 'kf': grid[3]})
 
 
 # TODO optimise (needs to handle NaN)
