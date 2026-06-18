@@ -10,7 +10,7 @@ import scipp.constants
 
 def compute_q_de_norm(
     *,
-    trajectory_start: sc.Variable,
+    trajectory_start: sc.Variable,  # shape: [*other, pixel, hkl_kf]
     trajectory_stop: sc.Variable,
     solid_angle: sc.Variable,
     grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
@@ -22,54 +22,41 @@ def compute_q_de_norm(
     gets converted to (h, k, l, kf)
     The trajectory is specified in (h, k, l, kf)
     """
-    orig_grid = tuple(x.copy() for x in grid)
+    for edges in grid:
+        if not sc.issorted(edges, edges.dim):
+            raise sc.CoordError(f"The input bin-edges must be sorted, got {edges}")
+
+    grid_energy_transfer = grid[3]
     grid = (
         *grid[:3],
-        _energy_to_final_momentum(
-            energy_transfer=grid[3], incident_energy=incident_energy
+        _flip_array(
+            _energy_to_final_momentum(
+                energy_transfer=grid[3], incident_energy=incident_energy
+            ).rename(energy_transfer='kf')
         ),
     )
 
-    # TODO sort is bad when we have NaN from OOB delta E (?)
-    #  dE -> kf reverses order, if inputs are ordered, then just flip the array
-    grid = (*(x.values for x in grid[:3]), grid[3].values[::-1])
+    # TODO prefilter
 
-    norm = sc.zeros(
-        dims=[edge.dim for edge in orig_grid],
-        shape=[len(edge) - 1 for edge in grid],
-        unit='meV',
+    intersections = _compute_trajectory_grid_intersections(
+        trajectory_start, trajectory_stop, grid
+    )
+    coverage = _compute_detector_coverage(
+        segment_ends=intersections, solid_angle=solid_angle
+    )
+    coverage.coords['energy_transfer'] = incident_energy - _momentum_to_energy(
+        coverage.coords.pop('kf')
+    )
+    norm = coverage.hist(
+        {
+            'h': grid[0],
+            'k': grid[1],
+            'l': grid[2],
+            'energy_transfer': grid_energy_transfer,
+        }
     )
 
-    trimmed, n_trimmed = _trim_nan(grid[3])
-    grid = (*grid[:3], trimmed)
-
-    for i in range(len(solid_angle)):
-        start = trajectory_start['pixel', i]
-        stop = trajectory_stop['pixel', i]
-        omega = solid_angle[i]
-        # TODO for now, convert to raw numbers:
-        start = tuple(x.value for x in start)
-        stop = tuple(x.value for x in stop)
-
-        if abs(stop[3] - start[3]) < 1e-10:
-            continue  # no energy transfer in this trajectory
-
-        intersections = _compute_trajectory_grid_intersections(start, stop, grid)
-
-        indices, segment_lengths = _compute_trajectory_segment_lengths(
-            start=start,
-            stop=stop,
-            grid=grid,
-            intersections=intersections,
-        )
-
-        # `offset - i` assigns in reverse order to undo the flip from
-        # converting dE -> kf.
-        offset = norm.sizes['energy_transfer'] - 1 - n_trimmed
-        for i, l in zip(indices, segment_lengths, strict=True):
-            norm.values[(*i[:3], offset - i[3])] += l * omega.value
-
-    return sc.DataArray(norm, coords={edge.dim: edge for edge in orig_grid})
+    return norm
 
 
 def _trim_nan(array: np.ndarray) -> tuple[np.ndarray, int]:
@@ -103,6 +90,10 @@ def _energy_to_final_momentum(
     )
 
 
+def _flip_array(x: sc.Variable) -> sc.Variable:
+    return sc.array(dims=x.dims, values=x.values[::-1], unit=x.unit)
+
+
 def _momentum_to_energy(mom: sc.Variable) -> sc.Variable:
     return sc.to_unit(
         sc.constants.hbar**2 / (2 * sc.constants.m_n) * mom**2, 'meV', copy=False
@@ -110,132 +101,61 @@ def _momentum_to_energy(mom: sc.Variable) -> sc.Variable:
 
 
 def _compute_trajectory_grid_intersections(
-    start: tuple[float, float, float, float],
-    stop: tuple[float, float, float, float],
-    grid: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
-) -> np.ndarray:
-    intersections = []
-    eps = 1e-10
+    start: sc.Variable,
+    stop: sc.Variable,
+    grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
+) -> sc.Variable:
+    intersections = [np.stack([start.values, stop.values])]
 
-    # intersections w/ gridlines in h
-    dim = 0
-    if abs(start[dim] - stop[dim]) > eps:
-        fk = (stop[1] - start[1]) / (stop[dim] - start[dim])
-        fl = (stop[2] - start[2]) / (stop[dim] - start[dim])
-        fmom = (stop[3] - start[3]) / (stop[dim] - start[dim])
-        for h in grid[dim]:
-            if (start[dim] <= h < stop[dim]) or (stop[dim] < h <= start[dim]):
-                k = fk * (h - start[dim]) + start[1]
-                l = fl * (h - start[dim]) + start[2]
-                if (
-                    (k >= grid[1][0])
-                    and (k < grid[1][-1])
-                    and (l >= grid[2][0])
-                    and (l < grid[2][-1])
-                ):
-                    mom = fmom * (h - start[dim]) + start[3]
-                    if mom >= grid[3][0] and mom < grid[3][-1]:
-                        intersections.append((h, k, l, mom))
+    traj_left = np.minimum(start.values, stop.values)
+    traj_right = np.maximum(start.values, stop.values)
 
-    # intersections w/ gridlines in k
-    dim = 1
-    if abs(start[dim] - stop[dim]) > eps:
-        fh = (stop[0] - start[0]) / (stop[dim] - start[dim])
-        fl = (stop[2] - start[2]) / (stop[dim] - start[dim])
-        fmom = (stop[3] - start[3]) / (stop[dim] - start[dim])
-        for k in grid[dim]:
-            if (start[dim] <= k < stop[dim]) or (stop[dim] < k <= start[dim]):
-                h = fh * (k - start[dim]) + start[0]
-                l = fl * (k - start[dim]) + start[2]
-                if (
-                    (h >= grid[0][0])
-                    and (h < grid[0][-1])
-                    and (l >= grid[2][0])
-                    and (l < grid[2][-1])
-                ):
-                    mom = fmom * (k - start[dim]) + start[3]
-                    if mom >= grid[3][0] and mom < grid[3][-1]:
-                        intersections.append((h, k, l, mom))
+    for dim in range(4):
+        slope = (stop - start) / (stop['q-e', dim] - start['q-e', dim])
+        pos = slope * (grid[dim] - start['q-e', dim]) + start
 
-    # intersections w/ gridlines in l
-    dim = 2
-    if abs(start[dim] - stop[dim]) > eps:
-        fh = (stop[0] - start[0]) / (stop[dim] - start[dim])
-        fk = (stop[1] - start[1]) / (stop[dim] - start[dim])
-        fmom = (stop[3] - start[3]) / (stop[dim] - start[dim])
-        for l in grid[dim]:
-            if (start[dim] <= l < stop[dim]) or (stop[dim] < l <= start[dim]):
-                h = fh * (l - start[dim]) + start[0]
-                k = fk * (l - start[dim]) + start[1]
-                if (
-                    (h >= grid[0][0])
-                    and (h < grid[0][-1])
-                    and (k >= grid[1][0])
-                    and (k < grid[1][-1])
-                ):
-                    mom = fmom * (l - start[dim]) + start[3]
-                    if mom >= grid[3][0] and mom < grid[3][-1]:
-                        intersections.append((h, k, l, mom))
+        # The condition here is right-inclusive even though binning is right-exclusive.
+        # This is ok because this will lead to an intersection with distance 0 to
+        # a trajectory endpoint and so does not contribute to the result.
+        pos.values[:] = np.where(
+            (pos.values < traj_left) | (pos.values > traj_right),
+            np.nan,
+            pos.values,
+        )
 
-    # intersections w/ gridlines in final momentum
-    dim = 3
-    fh = (stop[0] - start[0]) / (stop[dim] - start[dim])
-    fk = (stop[1] - start[1]) / (stop[dim] - start[dim])
-    fl = (stop[2] - start[2]) / (stop[dim] - start[dim])
-    for mom in grid[dim]:
-        if (start[dim] <= mom < stop[dim]) or (stop[dim] <= mom < start[dim]):
-            h = fh * (mom - start[dim]) + start[0]
-            k = fk * (mom - start[dim]) + start[1]
-            l = fl * (mom - start[dim]) + start[2]
-            # TODO do we need these checks? why do we not check ei in the above cases?
-            if (
-                (h >= grid[0][0])
-                and (h < grid[0][-1])
-                and (k >= grid[1][0])
-                and (k < grid[1][-1])
-                and (l >= grid[2][0])
-                and (l < grid[2][-1])
-            ):
-                intersections.append((h, k, l, mom))
+        intersections.append(pos.values)
 
-    return np.array(sorted(intersections, key=lambda t: t[3]))
-
-
-def _compute_trajectory_segment_lengths(
-    start: tuple[float, float, float, float],
-    stop: tuple[float, float, float, float],
-    grid: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
-    intersections: np.ndarray,
-) -> tuple[np.ndarray, np.ndarray]:
-    p0, p1 = (start, stop) if stop[3] >= start[3] else (stop, start)
-    segment_ends = intersections
-    if segment_ends.size == 0:
-        segment_ends = np.zeros((0, 4))
-    if _is_in_grid(p0, grid):
-        segment_ends = np.concat([[p0], segment_ends])
-    if _is_in_grid(p1, grid):
-        segment_ends = np.concat([segment_ends, [p1]])
-    if segment_ends.size == 0:
-        return np.array([]), np.array([])
-
-    centers = _midpoints(segment_ends)
-    indices = np.stack(
-        [
-            [_index_of(center, grid[dim]) for center in centers[:, dim]]
-            for dim in range(len(grid))
-        ]
-    ).T
-
-    # delta_e = abs(diff(energy_transfer))
-    #         = abs(-diff(Ef))   # because Ei is constant
-    #         = diff(Ef)         # because kf (and thus Ef) is sorted in ascending order
-    delta_e = np.diff(
-        _momentum_to_energy(
-            sc.array(dims=['kf'], values=segment_ends[:, 3], unit='1/Å')
-        ).values
+    inter = np.concat(intersections, axis=0)
+    idx = np.argsort(inter[:, :, 3], axis=0)
+    sorted = np.stack(
+        [np.take_along_axis(inter[:, :, i], idx, axis=0) for i in range(4)], axis=2
     )
+    return sc.array(dims=['intersection', *start.dims], values=sorted, unit='1/Å')
 
-    return indices, delta_e
+
+def _compute_detector_coverage(
+    segment_ends: sc.Variable,
+    solid_angle: sc.Variable,
+) -> sc.DataArray:
+    centers = sc.midpoints(segment_ends, dim='intersection')
+    energy = _momentum_to_energy(segment_ends)
+    energy_delta = (
+        energy['intersection', 1:]['q-e', 3] - energy['intersection', :-1]['q-e', 3]
+    )
+    return (
+        sc.DataArray(
+            energy_delta * solid_angle,
+            coords={
+                'h': centers['q-e', 0],
+                'k': centers['q-e', 1],
+                'l': centers['q-e', 2],
+                'kf': centers['q-e', 3],
+                'pixel': sc.arange('pixel', segment_ends.sizes['pixel'], unit=None),
+            },
+        )
+        .flatten(to='observation')
+        .copy()
+    )
 
 
 # TODO optimise (needs to handle NaN)
