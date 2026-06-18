@@ -22,6 +22,7 @@ def compute_q_de_norm(
     gets converted to (h, k, l, kf)
     The trajectory is specified in (h, k, l, kf)
     """
+    grid_energy_transfer = grid[3]
     grid = (
         *grid[:3],
         # TODO check that inputs are sorted
@@ -33,12 +34,6 @@ def compute_q_de_norm(
         ),
     )
 
-    # norm = sc.zeros(
-    #     dims=[edge.dim for edge in orig_grid],
-    #     shape=[len(edge) - 1 for edge in grid],
-    #     unit='meV',
-    # )
-
     # TODO prefilter
 
     intersections = _compute_trajectory_grid_intersections(
@@ -48,15 +43,10 @@ def compute_q_de_norm(
         grid=grid, segment_ends=intersections, solid_angle=solid_angle
     )
 
-    norm.coords['energy_transfer'] = incident_energy - _momentum_to_energy(
-        norm.coords.pop('kf')
-    )
-    norm = norm.rename_dims(kf='energy_transfer')
+    norm = norm.drop_coords('kf').rename_dims(kf='energy_transfer')
+    norm.coords['energy_transfer'] = grid_energy_transfer
 
     norm.values[:] = norm.values[:, :, :, ::-1]
-    norm.coords['energy_transfer'].values[:] = norm.coords['energy_transfer'].values[
-        ::-1
-    ]
 
     return norm
 
@@ -109,9 +99,22 @@ def _compute_trajectory_grid_intersections(
 ) -> sc.Variable:
     intersections = [np.stack([start.values, stop.values])]
 
+    traj_left = np.minimum(start.values, stop.values)
+    traj_right = np.maximum(start.values, stop.values)
+
     for dim in range(4):
         slope = (stop - start) / (stop['q-e', dim] - start['q-e', dim])
         pos = slope * (grid[dim] - start['q-e', dim]) + start
+
+        # The condition here is right-inclusive even though binning is right-exclusive.
+        # This is ok because this will lead to an intersection with distance 0 to
+        # a trajectory endpoint and so does not contribute to the result.
+        pos.values[:] = np.where(
+            (pos.values < traj_left) | (pos.values > traj_right),
+            np.nan,
+            pos.values,
+        )
+
         intersections.append(pos.values)
 
     inter = np.concat(intersections, axis=0)
