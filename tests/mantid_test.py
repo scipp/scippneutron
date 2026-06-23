@@ -1019,7 +1019,7 @@ def test_duplicate_monitor_names():
 
 
 def test_load_error_when_file_not_found_via_fuzzy_match():
-    with pytest.raises(ValueError, match='fictional.nxs'):
+    with pytest.raises(ValueError, match=r'fictional\.nxs'):
         scn.load_with_mantid("fictional.nxs")
 
 
@@ -1055,7 +1055,7 @@ def make_dynamic_algorithm_without_fileproperty(alg_name):
 
 def test_load_error_when_file_not_found_via_exact_match():
     make_dynamic_algorithm_without_fileproperty("DummyLoader")
-    with pytest.raises(ValueError, match='fictional.nxs'):
+    with pytest.raises(ValueError, match=r'fictional\.nxs'):
         # DummyLoader has no FileProperty and forces
         # load to evaluate the path given as an absolute path
         scn.load_with_mantid("fictional.nxs", mantid_alg="DummyLoader")
