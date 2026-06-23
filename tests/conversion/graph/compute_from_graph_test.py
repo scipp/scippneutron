@@ -18,7 +18,7 @@ def _flatten_keys(graph: dict[str, object]) -> Generator[str | tuple[str], None,
             yield from key
 
 
-@pytest.mark.parametrize("target", _flatten_keys(tof.elastic('tof')))
+@pytest.mark.parametrize("target", list(_flatten_keys(tof.elastic('tof'))))
 def test_elastic_can_compute_all_from_tof(target: str | tuple[str]) -> None:
     graph = {**tof.elastic('tof'), **beamline.beamline(scatter=True)}
     da = sc.DataArray(
