@@ -992,8 +992,8 @@ def test_missing_both_phase_and_delay_raises(nexus_chopper):
 
     with pytest.raises(
         ValueError,
-        match="DiskChopper.from_nexus: Chopper field 'phase' is missing and "
-        "cannot be computed because field 'delay' is also missing.",
+        match=r"DiskChopper\.from_nexus: Chopper field 'phase' is missing and "
+        r"cannot be computed because field 'delay' is also missing\.",
     ):
         DiskChopper.from_nexus(
             {

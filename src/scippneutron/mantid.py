@@ -533,7 +533,7 @@ def _convert_MatrixWorkspace_info(ws, advanced_geometry=False, load_run_logs=Tru
 
 
 def convert_monitors_ws(ws, converter, **ignored):
-    spec_dim, spec_coord = init_spec_axis(ws)
+    _, spec_coord = init_spec_axis(ws)
     spec_info = ws.spectrumInfo()
     comp_info = ws.componentInfo()
     monitors = []
@@ -572,7 +572,7 @@ def convert_monitors_ws(ws, converter, **ignored):
 def convert_Workspace2D_to_data_group(
     ws, load_run_logs=True, advanced_geometry=False, **ignored
 ) -> sc.DataGroup:
-    dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
+    dim, _ = validate_and_get_unit(ws.getAxis(0).getUnit())
     spec_dim, spec_coord = init_spec_axis(ws)
 
     coords_labs_data = _convert_MatrixWorkspace_info(
@@ -638,7 +638,7 @@ def convert_EventWorkspace_to_data_group(
     ws, load_pulse_times=True, advanced_geometry=False, load_run_logs=True, **ignored
 ):
     dim, unit = validate_and_get_unit(ws.getAxis(0).getUnit())
-    spec_dim, spec_coord = init_spec_axis(ws)
+    spec_dim, _ = init_spec_axis(ws)
     nHist = ws.getNumberHistograms()
     _, data_unit = validate_and_get_unit(ws.YUnit(), allow_empty=True)
 

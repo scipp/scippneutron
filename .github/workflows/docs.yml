@@ -53,7 +53,7 @@ jobs:
 
     steps:
       - run: sudo apt install --yes graphviz pandoc
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch == '' && github.ref_name || inputs.branch }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
@@ -81,14 +81,14 @@ jobs:
       - run: python -m sphinx -W -v -b linkcheck -d doctrees docs html
         if: ${{ inputs.linkcheck }}
       - run: find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         id: artifact-upload-step
         with:
           name: docs_html
           path: html/
-      - run: echo "::notice::https://remote-unzip.deno.dev/${{ github.repository }}/artifacts/${{ steps.artifact-upload-step.outputs.artifact-id }}"
+      - run: echo "::notice::https://remote-unzip.scipp.deno.net/${{ github.repository }}/artifacts/${{ steps.artifact-upload-step.outputs.artifact-id }}"
 
-      - uses: JamesIves/github-pages-deploy-action@v4.7.3
+      - uses: JamesIves/github-pages-deploy-action@v4
         if: ${{ inputs.publish }}
         with:
           branch: gh-pages
