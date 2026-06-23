@@ -14,7 +14,7 @@ appdirs==1.4.4
     # via pace-neutrons
 asttokens==3.0.1
     # via stack-data
-certifi==2026.4.22
+certifi==2026.6.17
     # via requests
 charset-normalizer==3.4.7
     # via requests
@@ -28,15 +28,15 @@ cyclebane==24.10.0
     # via sciline
 cycler==0.12.1
     # via matplotlib
-debugpy==1.8.20
+debugpy==1.8.21
     # via ipykernel
-decorator==5.2.1
+decorator==5.3.1
     # via ipython
 dnspython==2.8.0
     # via email-validator
 email-validator==2.3.0
     # via -r nightly.in
-euphonic[phonopy-reader]==1.6.1
+euphonic[phonopy-reader]==2.0.0
     # via pace-neutrons
 execnet==2.1.2
     # via pytest-xdist
@@ -46,16 +46,17 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.62.1
+fonttools==4.63.0
     # via matplotlib
 h5py==3.16.0
     # via
     #   -r nightly.in
     #   euphonic
     #   scippnexus
-hypothesis==6.152.4
+    #   tof
+hypothesis==6.155.7
     # via -r nightly.in
-idna==3.13
+idna==3.18
     # via
     #   email-validator
     #   requests
@@ -63,11 +64,11 @@ iniconfig==2.3.0
     # via pytest
 ipydatawidgets==4.3.5
     # via pythreejs
-ipykernel==7.2.0
+ipykernel==7.3.0
     # via -r nightly.in
 ipympl==0.10.0
     # via -r nightly.in
-ipython==9.13.0
+ipython==9.14.1
     # via
     #   ipykernel
     #   ipympl
@@ -80,9 +81,9 @@ ipywidgets==8.1.8
     #   ipydatawidgets
     #   ipympl
     #   pythreejs
-jedi==0.19.2
+jedi==0.20.0
     # via ipython
-jupyter-client==8.8.0
+jupyter-client==8.9.1
     # via ipykernel
 jupyter-core==5.9.1
     # via
@@ -99,23 +100,23 @@ lazy-loader==0.5
     #   tof
 libpymcr==0.2.1
     # via pace-neutrons
-matplotlib==3.11.0rc1
+matplotlib==3.11.0
     # via
     #   ipympl
     #   mpltoolbox
     #   pace-neutrons
     #   plopp
-matplotlib-inline==0.2.1
+matplotlib-inline==0.2.2
     # via
     #   ipykernel
     #   ipython
 mpltoolbox @ git+https://github.com/scipp/mpltoolbox@main
     # via -r nightly.in
-nest-asyncio==1.6.0
+nest-asyncio2==1.7.2
     # via ipykernel
 networkx==3.6.1
     # via cyclebane
-numpy==2.4.4
+numpy==2.4.6
     # via
     #   -r nightly.in
     #   contourpy
@@ -141,7 +142,7 @@ packaging==26.2
     #   matplotlib
     #   pooch
     #   pytest
-parso==0.8.6
+parso==0.8.7
     # via jedi
 pexpect==4.9.0
     # via ipython
@@ -151,7 +152,7 @@ pillow==12.2.0
     #   matplotlib
 pint==0.25.3
     # via euphonic
-platformdirs==4.9.6
+platformdirs==4.10.0
     # via
     #   jupyter-core
     #   pint
@@ -178,9 +179,9 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
     # via stack-data
-pydantic==2.13.3
+pydantic==2.14.0a1
     # via -r nightly.in
-pydantic-core==2.46.3
+pydantic-core==2.47.0
     # via pydantic
 pygments==2.20.0
     # via
@@ -189,7 +190,7 @@ pygments==2.20.0
     #   pytest
 pyparsing==3.3.2
     # via matplotlib
-pytest==9.0.3
+pytest==9.1.1
     # via
     #   -r nightly.in
     #   pytest-xdist
@@ -208,7 +209,7 @@ pyzmq==27.1.0
     # via
     #   ipykernel
     #   jupyter-client
-requests==2.33.1
+requests==2.34.2
     # via
     #   pace-neutrons
     #   pooch
@@ -217,6 +218,7 @@ sciline @ git+https://github.com/scipp/sciline@main
 scipp==100.0.0.dev0
     # via
     #   -r nightly.in
+    #   plopp
     #   scippnexus
     #   tof
 scippnexus @ git+https://github.com/scipp/scippnexus@main
@@ -226,6 +228,7 @@ scipy==1.17.1
     #   -r nightly.in
     #   euphonic
     #   scippnexus
+    #   tof
 seekpath==2.2.1
     # via euphonic
 six==1.17.0
@@ -246,11 +249,11 @@ tof @ git+https://github.com/scipp/tof@main
     # via -r nightly.in
 toolz==1.1.0
     # via euphonic
-tornado==6.5.5
+tornado==6.5.7
     # via
     #   ipykernel
     #   jupyter-client
-traitlets==5.14.3
+traitlets==5.15.1
     # via
     #   ipykernel
     #   ipympl
@@ -265,8 +268,11 @@ traittypes==0.2.3
     # via ipydatawidgets
 typing-extensions==4.15.0
     # via
+    #   euphonic
     #   flexcache
     #   flexparser
+    #   ipython
+    #   jupyter-client
     #   pint
     #   pydantic
     #   pydantic-core
@@ -274,9 +280,9 @@ typing-extensions==4.15.0
     #   typing-inspection
 typing-inspection==0.4.2
     # via pydantic
-urllib3==2.6.3
+urllib3==2.7.0
     # via requests
-wcwidth==0.6.0
+wcwidth==0.8.1
     # via prompt-toolkit
 widgetsnbextension==4.0.15
     # via ipywidgets
