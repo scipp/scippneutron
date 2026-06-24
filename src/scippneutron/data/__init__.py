@@ -21,7 +21,6 @@ def _make_pooch():
         base_url='https://public.esss.dk/groups/scipp/scippneutron/{version}/',
         version=_version,
         registry={
-            'bigfake.nxs': 'md5:ebf73017ddd03cee2a14a887c439bf35',
             'iris26176_graphite002_sqw.nxs': 'md5:7ea63f9137602b7e9b604fe30f0c6ec2',
             'loki-at-larmor.hdf5': 'md5:9c93f36fa2e94a7b63f2b946705e74f3',
             'loki-at-larmor-filtered.hdf5': 'md5:2789d0384339d1e130b86a44f22d11c6',
@@ -42,10 +41,6 @@ def _make_pooch():
 
 
 _pooch = _make_pooch()
-
-
-def bigfake():
-    return get_path('bigfake.nxs')
 
 
 def tutorial_dense_data():
