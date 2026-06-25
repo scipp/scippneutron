@@ -12,7 +12,7 @@
 -r static.txt
 -r test.txt
 -r wheels.txt
-anyio==4.14.0
+anyio==4.14.1
     # via
     #   httpx
     #   jupyter-server
@@ -26,11 +26,11 @@ async-lru==2.3.0
     # via jupyterlab
 cffi==2.0.0
     # via argon2-cffi-bindings
-click==8.4.1
+click==8.4.2
     # via
     #   pip-compile-multi
     #   pip-tools
-copier==9.15.2
+copier==9.16.0
     # via -r dev.in
 dunamai==1.26.1
     # via copier
