@@ -13,7 +13,8 @@ ipykernel>6.30
 pace_neutrons>=0.3
 pooch>=1.5
 psutil>=5.0
-pytest>=7.0
+pytest>=8.0
 pytest-xdist>=3.0
 pythreejs>=2.4.1
 sciline>=25.1.0
+anywidget>=0.8.0
