@@ -16,7 +16,7 @@ import numpy as np
 def main() -> None:
     n = len(CASES)
     _, axs = plt.subplots(
-        int(np.ceil(n / 3)), 3, figsize=(15, 11), layout='constrained'
+        int(np.ceil(n / 4)), 4, figsize=(15, 11), layout='constrained'
     )
     for ax, case in zip(axs.flatten(), CASES, strict=False):
         case(ax)
@@ -342,6 +342,54 @@ def case_l(ax: plt.Axes) -> None:
     )
 
 
+def case_m(ax: plt.Axes) -> None:
+    """The trajectory lies exactly on a h-gridline."""
+    ax.set_title("M")
+    h_min, h_max = 0.7, 0.7
+    mom_min, mom_max = 0.7, 1.4
+
+    h_edges = np.array([-0.1, 0.3, 0.7, 1.0, 1.3])
+    mom_edges = np.array([0.5, 0.9, 1.3, 1.6])
+
+    draw_2d_projection(
+        ax,
+        [[h_min, mom_min]],
+        [[h_max, mom_max]],
+        h_edges,
+        mom_edges,
+        "$h$",
+        "$k_f$",
+    )
+
+    a = 0.2
+    b = 0.4
+    c = 0.1
+
+    yline(ax, 0.9, mom_min, mom_min + a, "$a$")
+    yline(ax, 0.9, 0.9, 0.9 + b, "$b$")
+    yline(ax, 0.9, 1.3, 1.3 + c, "$c$")
+
+
+def case_n(ax: plt.Axes) -> None:
+    """The trajectory lies exactly on a k_f-gridline."""
+    ax.set_title("N")
+    h_min, h_max = 0.4, 1.2
+    mom_min, mom_max = 0.9, 0.9
+
+    h_edges = np.array([-0.1, 0.3, 0.7, 1.0, 1.3])
+    mom_edges = np.array([0.5, 0.9, 1.3, 1.6])
+
+    draw_2d_projection(
+        ax,
+        [[h_min, mom_min]],
+        [[h_max, mom_max]],
+        h_edges,
+        mom_edges,
+        "$h$",
+        "$k_f$",
+    )
+
+
 CASES = (
     case_a,
     case_b,
@@ -355,6 +403,8 @@ CASES = (
     case_j,
     case_k,
     case_l,
+    case_m,
+    case_n,
 )
 
 

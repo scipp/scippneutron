@@ -593,6 +593,69 @@ def test_single_crystal_norm_ins_det_traj_outside_grid_diagonal_single_kf(
     sc.testing.assert_allclose(norm, expected)
 
 
+def test_single_crystal_norm_ins_det_traj_on_h_gridline_grid_2d(
+    helper: TrajectoryHelper,
+) -> None:
+    """Case M from tools/detector_test_trajectories.py"""
+    trajectory_start, trajectory_stop = helper.make_trajectory(
+        (0.7, 0.0, 0.0, 0.7), (0.7, 0.0, 0.0, 1.4)
+    )
+
+    h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3], unit='1/Å')
+    k_edges = sc.linspace('k', -0.5, 0.5, 4, unit='1/Å')
+    l_edges = sc.linspace('l', -0.5, 0.5, 4, unit='1/Å')
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
+
+    norm = compute_q_de_norm(
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
+        solid_angle=sc.array(dims=['pixel'], values=[1.0]),
+        grid=edges,
+        incident_energy=helper.incident_energy,
+    )
+
+    expected = helper.norm_grid(
+        shape=(4, 3, 3, 3),
+        cells=[(2, 1, 1, 2), (2, 1, 1, 1), (2, 1, 1, 0)],
+        segments=[0.7, 0.9, 1.3, 1.4],
+        edges=edges,
+    )
+
+    sc.testing.assert_allclose(norm, expected)
+
+
+def test_single_crystal_norm_ins_det_traj_on_kf_gridline_grid_2d(
+    helper: TrajectoryHelper,
+) -> None:
+    """Case N from tools/detector_test_trajectories.py"""
+    trajectory_start, trajectory_stop = helper.make_trajectory(
+        (0.4, 0.0, 0.0, 0.9), (1.2, 0.0, 0.0, 0.9)
+    )
+
+    h_edges = sc.array(dims=['h'], values=[-0.1, 0.3, 0.7, 1.0, 1.3], unit='1/Å')
+    k_edges = sc.linspace('k', -0.5, 0.5, 4, unit='1/Å')
+    l_edges = sc.linspace('l', -0.5, 0.5, 4, unit='1/Å')
+    mom_edges = sc.array(
+        dims=['energy_transfer'], values=[0.5, 0.9, 1.3, 1.6], unit='1/Å'
+    )
+    edges = (h_edges, k_edges, l_edges, helper.kf_to_de_sorted(mom_edges))
+
+    norm = compute_q_de_norm(
+        trajectory_start=trajectory_start,
+        trajectory_stop=trajectory_stop,
+        solid_angle=sc.array(dims=['pixel'], values=[1.0]),
+        grid=edges,
+        incident_energy=helper.incident_energy,
+    )
+
+    expected = helper.norm_grid(shape=(4, 3, 3, 3), cells=[], segments=[], edges=edges)
+
+    sc.testing.assert_allclose(norm, expected)
+
+
 def test_single_crystal_norm_ins_det_traj_unphysical_energy_bins(
     make_trajectory: Callable[..., Trajectory],
 ) -> None:
