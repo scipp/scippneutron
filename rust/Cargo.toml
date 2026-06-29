@@ -11,3 +11,8 @@ crate-type = ["cdylib"]
 ndarray = "0.17.2"
 numpy = "0.28"
 pyo3 = { version = "0.28.3", features = ["abi3", "abi3-py311"] }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+strip = true

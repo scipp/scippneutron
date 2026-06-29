@@ -1,4 +1,5 @@
 mod alg1;
+mod alg2;
 mod grid;
 
 use pyo3::prelude::*;
@@ -28,7 +29,7 @@ mod _scippneutron_algo {
             grid.2.as_array(),
             grid.3.as_array(),
         )?;
-        Ok(crate::alg1::compute_q_de_norm_impl(
+        Ok(crate::alg2::compute_q_de_norm_impl(
             start.as_array(),
             stop.as_array(),
             solid_angle.as_array(),

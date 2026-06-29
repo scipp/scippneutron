@@ -35,6 +35,16 @@ impl<'g> Grid<'g> {
         )
     }
 
+    // TODO unify
+    pub fn n_cells_array(&self) -> [usize;4] {
+        [
+            self.h.len() - 1,
+            self.k.len() - 1,
+            self.l.len() - 1,
+            self.kf.len() - 1,
+        ]
+    }
+
     // TODO check that edges are >=2 elems, then error never happens
     pub fn includes_h(&self, h: f64) -> bool {
         let Some(first) = self.h.first() else {
@@ -84,14 +94,22 @@ impl<'g> Grid<'g> {
             bin_index_of(&self.kf, point.3),
         )
     }
+
+    // TODO generic over axis?
+    pub fn edges(&self, axis: usize) -> &ArrayView1<f64> {
+        match axis {
+            0 => &self.h,
+            1 => &self.k,
+            2 => &self.l,
+            3 => &self.kf,
+            _ => panic!(),
+        }
+    }
 }
 
 pub fn bin_index_of(array: &ArrayView1<'_, f64>, x: f64) -> usize {
     for (i, val) in array.iter().enumerate() {
         if *val > x {
-            if i == 0 {
-                dbg!(val, x, array);
-            }
             return i - 1;
         }
     }

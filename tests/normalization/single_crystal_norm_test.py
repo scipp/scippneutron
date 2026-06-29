@@ -118,6 +118,8 @@ def helper(
 #    - shift in grid by multiple of cell length -> norm shifts the same
 #    - extending grid does not impact common bins
 #    - change k,l values (independently)
+#    - traj ending in cell 0 along an axis (coming from bottom right)
+#    - traj ending left of cell 0 (coming from bottom right)
 
 
 # TODO ranges of other hkl (test with single bin)
