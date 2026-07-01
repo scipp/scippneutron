@@ -88,8 +88,9 @@ pub fn compute_q_de_norm_impl(
                 scope.spawn(|| {
                     let mut out = Array4::<f64>::zeros(grid.n_cells_array());
 
-                    // TODO ordering?
-                    while let block = next_block.fetch_add(1, std::sync::atomic::Ordering::AcqRel)
+                    // Use relaxed ordering because we do not synchronize any memory
+                    // beside this atomic counter.
+                    while let block = next_block.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
                         && block < n_blocks
                     {
                         let base_index = block * block_size;
