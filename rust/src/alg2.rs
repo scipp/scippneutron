@@ -1,20 +1,134 @@
 use super::grid::Grid;
-use ndarray::{Array4, ArrayView1, ArrayView2, Zip};
+use ndarray::{Array4, ArrayView1, ArrayView2, Axis, Slice, Zip};
+use std::num::NonZeroUsize;
+
+// single threaded
+// pub fn compute_q_de_norm_impl(
+//     start: ArrayView2<f64>,
+//     stop: ArrayView2<f64>,
+//     solid_angle: ArrayView1<f64>,
+//     grid: Grid,
+// ) -> Array4<f64> {
+//     let mut out = Array4::<f64>::zeros(grid.n_cells_array());
+//     Zip::from(start.rows())
+//         .and(stop.rows())
+//         .and(&solid_angle)
+//         .for_each(|start, stop, solid_angle| {
+//             compute_norm_single(&mut out, &start, &stop, solid_angle, &grid);
+//         });
+//     out
+// }
+
+#[derive(Clone, Copy, Debug)]
+pub struct ThreadConfig {
+    pub n_threads: NonZeroUsize,
+    pub block_size: NonZeroUsize,
+}
+
+impl ThreadConfig {
+    pub fn new(n_threads: Option<usize>, block_size: Option<usize>) -> Self {
+        let n_threads = n_threads.map_or_else(
+            || std::thread::available_parallelism().unwrap_or(NonZeroUsize::new(1).unwrap()),
+            |n| NonZeroUsize::new(n.max(1)).unwrap(),
+        );
+        let block_size = block_size.map_or_else(
+            || NonZeroUsize::new(10_000).unwrap(),
+            |s| NonZeroUsize::new(s.max(1)).unwrap(),
+        );
+
+        Self {
+            n_threads,
+            block_size,
+        }
+    }
+}
+
+const N_MIN_TRAJ_PER_THREAD: usize = 1_000;
+
+// TODO test (needs to split python / other code into separate crates)
+fn determine_work_partitioning(
+    n_trajectories: usize,
+    n_possible_threads: Option<usize>,
+) -> (NonZeroUsize, NonZeroUsize) {
+    let n_possible_threads = n_possible_threads
+        .and_then(|n| NonZeroUsize::new(n.max(1)))
+        .unwrap_or_else(|| {
+            std::thread::available_parallelism().unwrap_or(NonZeroUsize::new(1).unwrap())
+        });
+    let space_for_n_threads =
+        NonZeroUsize::new((n_trajectories.div_ceil(N_MIN_TRAJ_PER_THREAD)).max(1)).unwrap();
+    let n_threads = n_possible_threads.min(space_for_n_threads);
+    let n_traj_per_thread = n_trajectories / n_threads;
+    dbg!(n_trajectories);
+    dbg!(n_possible_threads, space_for_n_threads, n_threads);
+    dbg!(n_traj_per_thread);
+
+    (n_threads, NonZeroUsize::new(n_traj_per_thread).unwrap())
+}
 
 pub fn compute_q_de_norm_impl(
     start: ArrayView2<f64>,
     stop: ArrayView2<f64>,
     solid_angle: ArrayView1<f64>,
     grid: Grid,
+    thread_confg: ThreadConfig,
 ) -> Array4<f64> {
-    let mut out = Array4::<f64>::zeros(grid.n_cells_array());
-    Zip::from(start.rows())
-        .and(stop.rows())
-        .and(&solid_angle)
-        .for_each(|start, stop, solid_angle| {
-            compute_norm_single(&mut out, &start, &stop, solid_angle, &grid);
-        });
-    out
+    let n_traj = solid_angle.len();
+    if n_traj == 0 {
+        return Array4::zeros(grid.n_cells_array());
+    };
+    let block_size = thread_confg.block_size.get();
+    let n_blocks = n_traj.div_ceil(block_size);
+    let n_threads = thread_confg.n_threads.get().min(n_blocks);
+
+    let next_block = std::sync::atomic::AtomicUsize::new(0);
+    std::thread::scope(|scope| {
+        let threads: Vec<_> = (0..n_threads)
+            .map(|_| {
+                scope.spawn(|| {
+                    let mut out = Array4::<f64>::zeros(grid.n_cells_array());
+
+                    // TODO ordering?
+                    while let block = next_block.fetch_add(1, std::sync::atomic::Ordering::AcqRel)
+                        && block < n_blocks
+                    {
+                        let base_index = block * block_size;
+                        if base_index >= n_traj {
+                            break;
+                        }
+                        let slice = Slice::new(
+                            base_index as isize,
+                            Some((base_index + block_size).min(n_traj) as isize),
+                            1,
+                        );
+                        Zip::from(start.slice_axis(Axis(0), slice).rows())
+                            .and(stop.slice_axis(Axis(0), slice).rows())
+                            .and(&solid_angle.slice_axis(Axis(0), slice))
+                            .for_each(|start, stop, solid_angle| {
+                                compute_norm_single(&mut out, &start, &stop, solid_angle, &grid);
+                            });
+                    }
+                    out
+                })
+            })
+            .collect();
+
+        let result = threads
+            .into_iter()
+            .map(|t| t.join().unwrap())
+            .reduce(|acc, e| acc + e)
+            .unwrap();
+        result
+    })
+
+    // let mut out = Array4::<f64>::zeros(grid.n_cells_array());
+    // Zip::from(start.rows())
+    //     .and(stop.rows())
+    //     .and(&solid_angle)
+    //     .for_each(|start, stop, solid_angle| {
+    //         compute_norm_single(&mut out, &start, &stop, solid_angle, &grid);
+    //     });
+    // out
 }
 
 type Point = [f64; 4];
@@ -52,8 +166,7 @@ fn compute_norm_single(
         // If the next index is 0 or N, we are currently outside the grid.
         // Advance to the next intersection point but don't write the result.
         let bi = bin_index(&indices, &directions);
-        if !index_out_of_bounds(&bi, grid)
-        {
+        if !index_out_of_bounds(&bi, grid) {
             out[bin_index(&indices, &directions)] += delta_e * solid_angle;
         }
 
@@ -80,10 +193,7 @@ fn compute_norm_single(
 fn index_out_of_bounds(index: &(usize, usize, usize, usize), grid: &Grid) -> bool {
     // All indices are unsigned, so checking for >= n also covers underflow
     let n = grid.n_cells_array();
-    index.0 >= n[0]
-        || index.1 >= n[1]
-        ||  index.2 >= n[2]
-        ||  index.3 >= n[3]
+    index.0 >= n[0] || index.1 >= n[1] || index.2 >= n[2] || index.3 >= n[3]
 }
 
 fn reached_end_of_axis(

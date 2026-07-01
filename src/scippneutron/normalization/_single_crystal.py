@@ -15,6 +15,8 @@ def compute_q_de_norm(
     solid_angle: sc.Variable,
     grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
     incident_energy: sc.Variable,
+    n_threads: int | None = None,
+    block_size: int | None = None,
 ) -> sc.DataArray:
     """TODO
 
@@ -28,6 +30,8 @@ def compute_q_de_norm(
         solid_angle,
         grid,
         incident_energy,
+        n_threads=n_threads,
+        block_size=block_size,
     )
 
 
@@ -42,6 +46,8 @@ def _rust_impl(
     solid_angle: sc.Variable,
     grid: tuple[sc.Variable, sc.Variable, sc.Variable, sc.Variable],
     incident_energy: sc.Variable,
+    n_threads: int | None,
+    block_size: int | None,
 ):
     from .._scippneutron_algo import compute_q_de_norm_impl
 
@@ -56,10 +62,12 @@ def _rust_impl(
     grid = (*(x.values for x in grid[:3]), grid[3].values[::-1])
 
     norm_values = compute_q_de_norm_impl(
-        _reshape_trajectory_point(trajectory_start).values,
-        _reshape_trajectory_point(trajectory_stop).values,
-        solid_angle.values,
-        grid,
+        start=_reshape_trajectory_point(trajectory_start).values,
+        stop=_reshape_trajectory_point(trajectory_stop).values,
+        solid_angle=solid_angle.values,
+        grid=grid,
+        n_threads=n_threads,
+        block_size=block_size,
     )[:, :, :, ::-1]  # TODO do this in rust
     return sc.DataArray(
         sc.array(
