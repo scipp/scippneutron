@@ -92,15 +92,6 @@ pub fn compute_q_de_norm_impl(
             .unwrap();
         result
     })
-
-    // let mut out = Array4::<f64>::zeros(grid.n_cells_array());
-    // Zip::from(start.rows())
-    //     .and(stop.rows())
-    //     .and(&solid_angle)
-    //     .for_each(|start, stop, solid_angle| {
-    //         compute_norm_single(&mut out, &start, &stop, solid_angle, &grid);
-    //     });
-    // out
 }
 
 type Point = [f64; 4];
@@ -132,14 +123,13 @@ fn compute_norm_single(
         } else {
             next_intersections[next_axis]
         };
-        // don't need delta E because Ei = const -> goes away in diff
-        let delta_e = momentum_to_energy(next_intersection[3]) - momentum_to_energy(point[3]);
 
         // TODO better check?
         // If the next index is 0 or N, we are currently outside the grid.
         // Advance to the next intersection point but don't write the result.
         let bi = bin_index(&indices, &directions);
         if !index_out_of_bounds(&bi, grid) {
+            let delta_e = energy_difference_from_momenta(next_intersection[3], point[3]);
             out[bin_index(&indices, &directions)] += delta_e * solid_angle;
         }
 
@@ -324,8 +314,19 @@ fn start_stop_points(start: &ArrayView1<f64>, stop: &ArrayView1<f64>) -> (Point,
     }
 }
 
-fn momentum_to_energy(momentum: f64) -> f64 {
+/**
+ * Compute the energy difference between two points defined via momenta.
+ *
+ * The result is delta_E(m1) - delta_E(m2) where delta_E is a momentum transfer.
+ *
+ * The implementation assumes that m2 > m1 and that both m correspond to kf.
+ * With this, the result is always positive and independent of ki.
+ *
+ * !! TODO This does not support fixed kf (indirect geometry).
+ *         That case needs an additional minus sign.
+ */
+fn energy_difference_from_momenta(m1: f64, m2: f64) -> f64 {
     // This factor is hbar ** 2 / (2 * m_n) combined with a conversion from J to meV:
     const FACTOR: f64 = 2.072124851989335;
-    FACTOR * momentum * momentum
+    (m1 * m1 - m2 * m2) * FACTOR
 }
