@@ -2,23 +2,6 @@ use super::grid::Grid;
 use ndarray::{Array4, ArrayView1, ArrayView2, Axis, Slice, Zip};
 use std::num::NonZeroUsize;
 
-// single threaded
-// pub fn compute_q_de_norm_impl(
-//     start: ArrayView2<f64>,
-//     stop: ArrayView2<f64>,
-//     solid_angle: ArrayView1<f64>,
-//     grid: Grid,
-// ) -> Array4<f64> {
-//     let mut out = Array4::<f64>::zeros(grid.n_cells_array());
-//     Zip::from(start.rows())
-//         .and(stop.rows())
-//         .and(&solid_angle)
-//         .for_each(|start, stop, solid_angle| {
-//             compute_norm_single(&mut out, &start, &stop, solid_angle, &grid);
-//         });
-//     out
-// }
-
 #[derive(Clone, Copy, Debug)]
 pub struct ThreadConfig {
     pub n_threads: NonZeroUsize,
@@ -138,6 +121,7 @@ fn compute_norm_single(
         return; // Trajectory outside the grid -> no contribution
     };
     let slopes = compute_slopes(&start, &stop);
+    let end_indices = find_end_indices(&directions, grid);
 
     let mut next_intersections = compute_next_intersections(&indices, &start, &slopes, grid);
 
@@ -159,7 +143,7 @@ fn compute_norm_single(
             out[bin_index(&indices, &directions)] += delta_e * solid_angle;
         }
 
-        if next_axis > 3 || reached_end_of_axis(next_axis, &indices, &directions, grid) {
+        if next_axis > 3 || reached_end_of_axis(next_axis, &indices, &end_indices) {
             return; // we left the grid or reached stop
         }
         if directions[next_axis] == 1 {
@@ -185,17 +169,19 @@ fn index_out_of_bounds(index: &(usize, usize, usize, usize), grid: &Grid) -> boo
     index.0 >= n[0] || index.1 >= n[1] || index.2 >= n[2] || index.3 >= n[3]
 }
 
-fn reached_end_of_axis(
-    axis: usize,
-    indices: &[isize; 4],
-    directions: &Directions,
-    grid: &Grid,
-) -> bool {
-    if directions[axis] == 1 {
-        indices[axis] == grid.n_cells_array()[axis] as isize
-    } else {
-        indices[axis] == 0
+fn find_end_indices(directions: &Directions, grid: &Grid) -> [isize; 4] {
+    let n = grid.n_cells_array();
+    let mut ends = [0; 4];
+    for (axis, direction) in directions.iter().enumerate() {
+        if *direction == 1 {
+            ends[axis] = n[axis] as isize
+        }
     }
+    ends
+}
+
+fn reached_end_of_axis(axis: usize, indices: &[isize; 4], end_indices: &[isize; 4]) -> bool {
+    indices[axis] == end_indices[axis]
 }
 
 fn bin_index(
