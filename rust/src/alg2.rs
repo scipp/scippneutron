@@ -43,29 +43,6 @@ impl ThreadConfig {
     }
 }
 
-const N_MIN_TRAJ_PER_THREAD: usize = 1_000;
-
-// TODO test (needs to split python / other code into separate crates)
-fn determine_work_partitioning(
-    n_trajectories: usize,
-    n_possible_threads: Option<usize>,
-) -> (NonZeroUsize, NonZeroUsize) {
-    let n_possible_threads = n_possible_threads
-        .and_then(|n| NonZeroUsize::new(n.max(1)))
-        .unwrap_or_else(|| {
-            std::thread::available_parallelism().unwrap_or(NonZeroUsize::new(1).unwrap())
-        });
-    let space_for_n_threads =
-        NonZeroUsize::new((n_trajectories.div_ceil(N_MIN_TRAJ_PER_THREAD)).max(1)).unwrap();
-    let n_threads = n_possible_threads.min(space_for_n_threads);
-    let n_traj_per_thread = n_trajectories / n_threads;
-    dbg!(n_trajectories);
-    dbg!(n_possible_threads, space_for_n_threads, n_threads);
-    dbg!(n_traj_per_thread);
-
-    (n_threads, NonZeroUsize::new(n_traj_per_thread).unwrap())
-}
-
 pub fn compute_q_de_norm_impl(
     start: ArrayView2<f64>,
     stop: ArrayView2<f64>,
@@ -80,6 +57,17 @@ pub fn compute_q_de_norm_impl(
     let block_size = thread_confg.block_size.get();
     let n_blocks = n_traj.div_ceil(block_size);
     let n_threads = thread_confg.n_threads.get().min(n_blocks);
+
+    if n_threads == 1 {
+        let mut out = Array4::<f64>::zeros(grid.n_cells_array());
+        Zip::from(start.rows())
+            .and(stop.rows())
+            .and(&solid_angle)
+            .for_each(|start, stop, solid_angle| {
+                compute_norm_single(&mut out, &start, &stop, solid_angle, &grid);
+            });
+        return out;
+    }
 
     let next_block = std::sync::atomic::AtomicUsize::new(0);
     std::thread::scope(|scope| {
