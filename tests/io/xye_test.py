@@ -13,6 +13,7 @@ from packaging.version import Version
 from scipp.testing import strategies as scst
 
 import scippneutron as scn
+from scippneutron.metadata import Beamline, Software
 
 
 @st.composite
@@ -59,8 +60,12 @@ def roundtrip(da: sc.DataArray, coord: str | None = None, **kwargs) -> sc.DataAr
     )
 
 
+def read_header(buffer: StringIO) -> list[str]:
+    return [line[2:] for line in buffer.getvalue().splitlines() if line.startswith('#')]
+
+
 @given(initial=one_dim_data_arrays(), header=headers(), data=st.data())
-def test_roundtrip(initial, header, data):
+def test_roundtrip(initial: sc.DataArray, header: str, data: st.DataObject) -> None:
     coord_name = data.draw(st.sampled_from(list(initial.coords.keys())))
     loaded = roundtrip(initial, coord=coord_name, header=header)
     assert set(loaded.coords.keys()) == {coord_name}
@@ -73,7 +78,7 @@ def test_roundtrip(initial, header, data):
 
 
 @given(da=one_dim_data_arrays(), data=st.data())
-def test_saved_file_contains_data_table(da, data):
+def test_saved_file_contains_data_table(da: sc.DataArray, data: st.DataObject) -> None:
     coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
     file_contents = save_to_buffer(da, coord=coord_name).getvalue()
     for i, line in enumerate(
@@ -89,7 +94,7 @@ def test_saved_file_contains_data_table(da, data):
 
 @given(initial=one_dim_data_arrays(max_n_coords=1))
 @settings(max_examples=20)
-def test_save_deduce_coord_data_with_one_coord(initial):
+def test_save_deduce_coord_data_with_one_coord(initial: sc.DataArray) -> None:
     coord_name = next(iter(initial.coords.keys()))
     loaded = roundtrip(initial)
     loaded = loaded.rename_dims({loaded.dim: initial.dim})
@@ -101,7 +106,9 @@ def test_save_deduce_coord_data_with_one_coord(initial):
 
 @given(initial=one_dim_data_arrays(), data=st.data())
 @settings(max_examples=20)
-def test_save_deduce_coord_dim_coord(initial, data):
+def test_save_deduce_coord_dim_coord(
+    initial: sc.DataArray, data: st.DataObject
+) -> None:
     dim = initial.dim
     initial_coord = data.draw(
         scst.variables(sizes=initial.sizes, dtype='float64', with_variances=False)
@@ -118,7 +125,7 @@ def test_save_deduce_coord_dim_coord(initial, data):
 
 @given(da=one_dim_data_arrays(min_n_coords=2))
 @settings(max_examples=20)
-def test_save_cannot_deduce_coord_if_multiple_non_dim_coords(da):
+def test_save_cannot_deduce_coord_if_multiple_non_dim_coords(da: sc.DataArray) -> None:
     # It can deduce if there is a dim-coord, exclude that.
     assume(da.dim not in da.coords)
     with pytest.raises(
@@ -131,7 +138,7 @@ def test_save_cannot_deduce_coord_if_multiple_non_dim_coords(da):
 
 @given(da=one_dim_data_arrays(max_n_coords=1))
 @settings(max_examples=20)
-def test_input_must_have_at_least_one_coord(da):
+def test_input_must_have_at_least_one_coord(da: sc.DataArray) -> None:
     for c in list(da.coords.keys()):
         del da.coords[c]
     with pytest.raises(
@@ -142,7 +149,7 @@ def test_input_must_have_at_least_one_coord(da):
 
 @given(da=one_dim_data_arrays(), data=st.data())
 @settings(max_examples=20)
-def test_input_must_have_variances(da, data):
+def test_input_must_have_variances(da: sc.DataArray, data: st.DataObject) -> None:
     da.variances = None
     coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
     with pytest.raises(sc.VariancesError):
@@ -151,7 +158,7 @@ def test_input_must_have_variances(da, data):
 
 @given(da=one_dim_data_arrays(), data=st.data())
 @settings(max_examples=20)
-def test_cannot_save_data_with_bin_edges(da, data):
+def test_cannot_save_data_with_bin_edges(da: sc.DataArray, data: st.DataObject) -> None:
     coord_name = data.draw(st.sampled_from(list(da.coords.keys())))
     da.coords[coord_name] = sc.concat(
         [da.coords[coord_name], sc.scalar(0.0, unit=da.coords[coord_name].unit)],
@@ -163,7 +170,7 @@ def test_cannot_save_data_with_bin_edges(da, data):
 
 @given(da=one_dim_data_arrays(), data=st.data())
 @settings(max_examples=20)
-def test_cannot_save_data_with_masks(da, data):
+def test_cannot_save_data_with_masks(da: sc.DataArray, data: st.DataObject) -> None:
     mask = data.draw(scst.variables(sizes=da.sizes, dtype=bool))
     da.masks[data.draw(st.text())] = mask
     with pytest.raises(
@@ -178,7 +185,7 @@ def test_cannot_save_data_with_masks(da, data):
 )
 @given(data=st.data())
 @settings(max_examples=20)
-def test_input_must_be_one_dimensional(data):
+def test_input_must_be_one_dimensional(data: sc.DataArray) -> None:
     da = data.draw(
         scst.dataarrays(
             data_args={
@@ -197,18 +204,55 @@ def test_input_must_be_one_dimensional(data):
 
 
 @given(da=one_dim_data_arrays(), header=headers())
-def test_can_set_header(da, header):
+@settings(max_examples=40)
+def test_can_set_header(da: sc.DataArray, header: str) -> None:
     buffer = save_to_buffer(da, coord=next(iter(da.coords)), header=header)
-    commented_header = (
-        '\n'.join(f'# {line}' for line in header.splitlines()) if header else ''
-    )
-    assert buffer.getvalue().startswith(commented_header)
+    loaded = "\n".join(read_header(buffer)[1:]).strip()
+    assert loaded == header.strip()
+
+
+@given(da=one_dim_data_arrays(), comment=headers())
+@settings(max_examples=40)
+def test_can_set_comment(da: sc.DataArray, comment: str) -> None:
+    buffer = save_to_buffer(da, coord=next(iter(da.coords)), comment=comment)
+    loaded = "\n".join(read_header(buffer)[1:-1]).strip()
+    assert loaded == comment.strip()
+
+
+@given(da=one_dim_data_arrays())
+@settings(max_examples=1)
+def test_can_set_metadata(da: sc.DataArray) -> None:
+    metadata = {
+        "beamline": Beamline(name="test", facility="pytest"),
+        "software": [
+            Software(name="scippneutron", version="2026.7.0"),
+            Software(name="scipp", version="100", url="https://scipp.github.io"),
+        ],
+        "other": 123,
+    }
+    buffer = save_to_buffer(da, coord=next(iter(da.coords)), metadata=metadata)
+    loaded = "\n".join(read_header(buffer)[1:-1]).strip()
+
+    expected = """beamline:
+  facility: pytest
+  name: test
+other: 123
+software:
+- name: scippneutron
+  version: 2026.7.0
+- name: scipp
+  url: https://scipp.github.io
+  version: '100'"""
+
+    assert loaded == expected
 
 
 @given(
     da=one_dim_data_arrays(), coord_name=st.text(string.ascii_letters + string.digits)
 )
-def test_generated_header_includes_coord_name_and_units(da, coord_name):
+def test_generated_header_includes_coord_name_and_units(
+    da: sc.DataArray, coord_name: str
+) -> None:
     # Detecting the coord name in the file can be tricky if it can contain arbitrary
     # characters (like '\n' or '#') because lines in the header start with '# '.
     initial_name = next(iter(da.coords))
@@ -222,7 +266,7 @@ def test_generated_header_includes_coord_name_and_units(da, coord_name):
         assert str(da.unit) in buffer.getvalue()
 
 
-def test_loads_correct_values():
+def test_loads_correct_values() -> None:
     file_contents = '''1 2 3
 1.003 32.1 5
 0.1111 0 2.1e-3

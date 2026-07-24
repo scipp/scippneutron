@@ -3,10 +3,13 @@
 """File writer and reader for XYE files."""
 
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 
 import numpy as np
+import pydantic
 import scipp as sc
+import yaml
+from pydantic import BaseModel
 
 from ..logging import get_logger
 
@@ -25,6 +28,8 @@ def save_xye(
     *,
     coord: str | None = None,
     header: str | GenerateHeaderType = GenerateHeader,
+    metadata: dict[str, BaseModel | str | list[Any] | dict[str, Any]] | None = None,
+    comment: str = "",
 ) -> None:
     """Write a data array to an XYE file.
 
@@ -40,8 +45,18 @@ def save_xye(
     This format is lossy, coordinates other than X, attributes,
     and masks are not written and the coordinate name, dimension name, and
     units of the input are lost.
-    To improve the situation slightly, ``save_xye`` writes a basic header by default.
-    All lines in the header are prefixed with ``#``.
+    To improve the situation slightly, ``save_xye`` can write some description
+    to the top of the file.
+    All lines in the description are prefixed with ``#``.
+
+    The description is structured like this:
+
+    .. code-block:: yaml
+
+        # ScippNeutron XYE file
+        # <comment>
+        # <metadata>
+        # <header>
 
     Parameters
     ----------
@@ -59,6 +74,26 @@ def save_xye(
         String to write at the beginning of the file.
         A simple table header gets generated automatically by default.
         Set ``header=''`` to prevent this.
+    metadata:
+        Optional dictionary of metadata to serialize into the header.
+        The metadata is serialized as YAML.
+        Each entry can be any data that pydantic can serialize.
+
+        Note that there is no fixed schema for metadata, so ``save_xye`` will
+        accept any serializable metadata.
+    comment:
+        Optional string to show at the top of the file.
+
+    Examples
+    --------
+
+    >>> from scippneutron.io.xye import save_xye
+    >>> from scippneutron.metadata import Beamline
+    >>> # Make test data
+    >>> data = sc.DataArray(sc.arange('x', 4.0), coords={'x': sc.arange('x', 4)})
+    >>> data.variances = 0.1 * data.values
+    >>> # Serialize
+    >>> save_xye("data.xye", data, metadata={"beamline": Beamline(name="test")})
 
     See Also
     --------
@@ -90,7 +125,12 @@ def save_xye(
         )
     to_save = np.c_[da.coords[coord].values, da.values, np.sqrt(da.variances)]
     if header is GenerateHeader:
-        header = _generate_xye_header(da, coord)
+        header = _generate_xye_column_header(da, coord)
+    if metadata is not None:
+        header = "\n".join((_serialize_xye_metadata(metadata), header))
+    if comment:
+        header = "\n".join((comment, header))
+    header = "\n".join((_HEADER_NOTE, header))
 
     get_logger().info(
         "Saving data with unit %s and coordinate '%s' to XYE file %s",
@@ -150,7 +190,7 @@ def load_xye(
     )
 
 
-def _generate_xye_header(da: sc.DataArray, coord: str) -> str:
+def _generate_xye_column_header(da: sc.DataArray, coord: str) -> str:
     def format_unit(unit):
         return f'[{unit}]' if unit is not None else ''
 
@@ -159,6 +199,19 @@ def _generate_xye_header(da: sc.DataArray, coord: str) -> str:
     e = f'E {format_unit(da.unit)}'
     # Widths are for the default format of `0.0`
     return f'{c:22} {y:24} {e:24}'
+
+
+_HEADER_NOTE = "# ScippNeutron XYE file"
+
+
+def _serialize_xye_metadata(
+    metadata: dict[str, BaseModel | str | list[Any] | dict[str, Any]],
+) -> str:
+    return yaml.safe_dump(
+        pydantic.create_model(
+            "xye_metadata", **{key: (type(val), val) for key, val in metadata.items()}
+        )().model_dump(mode="json", exclude_none=True)
+    )
 
 
 def _deduce_coord(da: sc.DataArray) -> str:
