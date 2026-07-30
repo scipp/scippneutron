@@ -46,12 +46,13 @@ dependencies = [
 
 [project.optional-dependencies]
 all = ["scipp[all]>=25.8.0", "pooch>=1.5"]
+# pace_neutrons needs a MATLAB runtime, so it is kept out of 'test'.
+sqw = ["pace_neutrons>=0.3"]
 test = [
     "euphonic>=2.0",
     "hypothesis>=6.100",
     "ipympl>0.9.0",
     "ipykernel>6.30",
-    "pace_neutrons>=0.3",
     "pooch>=1.5",
     "psutil>=5.9.6",
     "pytest>=8.0",
