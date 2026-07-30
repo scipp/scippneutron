@@ -147,4 +147,4 @@ ignore-words-list = [
     "elemt",
     "nd",
 ]
-skip = "./.git,./.tox,*/.virtual_documents,*/.ipynb_checkpoints,*.pdf,*.svg,*.csv"
+skip = "./.git,./.pixi,*.lock,*/.virtual_documents,*/.ipynb_checkpoints,*.pdf,*.svg,*.csv"
