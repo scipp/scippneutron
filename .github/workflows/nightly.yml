@@ -1,0 +1,71 @@
+name: Nightly tests
+
+# Replaces the former nightly_at_main, nightly_at_main_lower_bound,
+# nightly_at_release and unpinned workflows.
+#
+# The Scipp stack is exempt from the workspace 'exclude-newer' baseline (see
+# pixi.toml), so the locked environments already test against the newest Scipp
+# release. There is therefore no separate job resolving Scipp nightly wheels; the
+# uv jobs below cover the unpinned ends of the range instead.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 1 * * 1-5'
+
+env:
+  PIXI_FROZEN: true
+  ESS_PROTECTED_FILESTORE_USERNAME: ${{ secrets.ESS_PROTECTED_FILESTORE_USERNAME }}
+  ESS_PROTECTED_FILESTORE_PASSWORD: ${{ secrets.ESS_PROTECTED_FILESTORE_PASSWORD }}
+
+jobs:
+  locked:
+    name: Locked ${{ matrix.environment }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment: default
+            task: test
+          - environment: mantid
+            task: test-mantid
+    runs-on: 'ubuntu-24.04'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # history required so setuptools_scm can determine the version
+      - uses: prefix-dev/setup-pixi@v0.9.4
+        with:
+          pixi-version: v0.74.0
+          environments: ${{ matrix.environment }}
+      - run: pixi run -e ${{ matrix.environment }} ${{ matrix.task }}
+
+  unpinned:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Lowest direct dependencies
+            resolution: lowest-direct
+            ref: ''
+          - name: Latest dependencies
+            resolution: highest
+            ref: ''
+          - name: Latest dependencies at last release
+            resolution: highest
+            ref: release
+    runs-on: 'ubuntu-24.04'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # history required to determine the last release tag
+      - name: Check out the last release
+        if: ${{ matrix.ref == 'release' }}
+        run: git checkout "$(git describe --tags --abbrev=0 --match '[0-9]*.[0-9]*.[0-9]*')"
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version-file: '.github/workflows/python-version-ci'
+      # Sync explicitly to print the installed packages and versions.
+      - run: uv sync --extra=test --resolution=${{ matrix.resolution }}
+      - run: uv run --extra=test --resolution=${{ matrix.resolution }} pytest

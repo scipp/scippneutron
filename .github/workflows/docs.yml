@@ -6,26 +6,21 @@ on:
       publish:
         default: false
         type: boolean
-      version:
-        description: 'Version of ScippNeutron to use for building the docs. Requires this version to be available on conda-forge! If not set, the current version will be used.'
-        default: ''
-        required: false
-        type: string
       branch:
         description: 'Branch/tag with documentation source. If not set, the current branch will be used.'
         default: ''
         required: false
         type: string
+      linkcheck:
+        description: 'Run the link checker. If not set the link checker will not be run.'
+        default: false
+        required: false
+        type: boolean
   workflow_call:
     inputs:
       publish:
         default: false
         type: boolean
-      version:
-        description: 'Version of ScippNeutron to use for building the docs. Requires this version to be available on conda-forge! If not set, the current version will be used.'
-        default: ''
-        required: false
-        type: string
       branch:
         description: 'Branch/tag with documentation source. If not set, the current branch will be used.'
         default: ''
@@ -38,47 +33,31 @@ on:
         type: boolean
 
 env:
-  VERSION: ${{ inputs.version }}
+  PIXI_FROZEN: true
 
 jobs:
   docs:
     name: Build documentation
     runs-on: 'ubuntu-24.04'
-    defaults:
-      run:
-        shell: bash -l {0}  # required for conda env
     env:
         ESS_PROTECTED_FILESTORE_USERNAME: ${{ secrets.ESS_PROTECTED_FILESTORE_USERNAME }}
         ESS_PROTECTED_FILESTORE_PASSWORD: ${{ secrets.ESS_PROTECTED_FILESTORE_PASSWORD }}
 
     steps:
-      - run: sudo apt install --yes graphviz pandoc
       - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch == '' && github.ref_name || inputs.branch }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
-          fetch-depth: 0  # history required so cmake can determine version
-      - uses: mamba-org/setup-micromamba@v2
-        if: ${{ inputs.version != '' }}
+          fetch-depth: 0  # history required so setuptools_scm can determine the version
+      # pandoc and graphviz come from the docs environment, so there is nothing to
+      # install with apt here.
+      - uses: prefix-dev/setup-pixi@v0.9.4
         with:
-          environment-file: .buildconfig/ci-linux.yml
-          cache-environment: true
-          create-args: >-
-            python=3.12
-            scippneutron==${{ inputs.version }}
-      - uses: mamba-org/setup-micromamba@v2
-        if: ${{ inputs.version == '' }}
-        with:
-          environment-file: .buildconfig/ci-linux.yml
-          cache-environment: true
-          create-args: >-
-            python=3.12
-            conda-build
-      - run: pip install --no-build-isolation --no-deps -e .
-        if: ${{ inputs.version == '' }}
-      - run: python -m sphinx -W -v -b doctest -d doctrees docs html
-      - run: python -m sphinx -W -v -b html -d doctrees docs html
-      - run: python -m sphinx -W -v -b linkcheck -d doctrees docs html
+          pixi-version: v0.74.0
+          environments: docs
+      - run: pixi run docs doctest
+      - run: pixi run docs html
+      - run: pixi run docs linkcheck
         if: ${{ inputs.linkcheck }}
       - run: find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
       - uses: actions/upload-artifact@v7
@@ -86,6 +65,7 @@ jobs:
         with:
           name: docs_html
           path: html/
+          if-no-files-found: error
       - run: echo "::notice::https://remote-unzip.scipp.deno.net/${{ github.repository }}/artifacts/${{ steps.artifact-upload-step.outputs.artifact-id }}"
 
       - uses: JamesIves/github-pages-deploy-action@v4
