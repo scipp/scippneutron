@@ -4,7 +4,7 @@
 """Implementations of readers and writers for SQW object types."""
 
 from collections.abc import Callable, Sequence
-from typing import Any, Generic, TypeVar
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -13,7 +13,6 @@ from . import _ir as ir
 from ._low_level_io import LowLevelSqw
 
 _Shape = tuple[int, ...]
-_T = TypeVar("_T")
 _AnyObjectList = (
     Sequence[ir.Object] | list[ir.ObjectArray | ir.CellArray] | npt.NDArray[Any]
 )
@@ -21,13 +20,13 @@ _ObjectReader = Callable[[LowLevelSqw, _Shape], _AnyObjectList]
 _ObjectWriter = Callable[[LowLevelSqw, _AnyObjectList], None]
 
 
-class _IORegistry(Generic[_T]):
+class _IORegistry[T]:
     def __init__(self, action: str) -> None:
         self._action = action
-        self._registry: dict[ir.TypeTag, _T] = {}
+        self._registry: dict[ir.TypeTag, T] = {}
 
-    def add(self, ty: ir.TypeTag) -> Callable[[_T], _T]:
-        def add_impl(impl: _T) -> _T:
+    def add(self, ty: ir.TypeTag) -> Callable[[T], T]:
+        def add_impl(impl: T) -> T:
             if ty in self._registry:
                 raise ValueError(f"Duplicate registration for {self._action} type {ty}")
             self._registry[ty] = impl
@@ -35,7 +34,7 @@ class _IORegistry(Generic[_T]):
 
         return add_impl
 
-    def get(self, ty: ir.TypeTag, pos: int) -> _T:
+    def get(self, ty: ir.TypeTag, pos: int) -> T:
         try:
             return self._registry[ty]
         except KeyError:
@@ -230,10 +229,9 @@ def _read_shape(sqw_io: LowLevelSqw) -> _Shape:
     return tuple(sqw_io.read_u32() for _ in range(n_dims))
 
 
-_O = TypeVar("_O", bound=ir.Object | ir.ObjectArray | ir.CellArray)
-
-
-def _expect_ty(ty: ir.TypeTag, obj: _O) -> _O:
+def _expect_ty[ObjT: ir.Object | ir.ObjectArray | ir.CellArray](
+    ty: ir.TypeTag, obj: ObjT
+) -> ObjT:
     if obj.ty != ty:
         raise TypeError(f"Expected {ty}, got {obj.ty}")
     return obj
