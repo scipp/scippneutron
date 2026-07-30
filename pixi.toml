@@ -1,0 +1,196 @@
+[workspace]
+name = "scippneutron"
+channels = ["conda-forge"]
+# scipp does not support macOS older than 14.0, so the macOS entries declare it as
+# a virtual package. This requires a name distinct from the subdir.
+platforms = [
+    "linux-64",
+    { name = "osx-64-14", platform = "osx-64", macos = "14.0" },
+    { name = "osx-arm64-14", platform = "osx-arm64", macos = "14.0" },
+    "win-64",
+]
+# Resolve as of two weeks ago, so a freshly published (and occasionally broken)
+# build cannot break the lock the moment it lands. The tables below exempt the
+# Scipp stack from that delay: those are the packages we want to test against as
+# soon as they are released. Note that the '0m' overrides only mean something
+# because of this baseline.
+exclude-newer = "14d"
+
+# For the conda-resolved environments (mantid, docs).
+[exclude-newer]
+mpltoolbox = "0m"
+plopp = "0m"
+sciline = "0m"
+scipp = "0m"
+scippnexus = "0m"
+tof = "0m"
+
+# For the PyPI-resolved environments (default, sqw, mypy).
+[pypi-exclude-newer]
+mpltoolbox = "0m"
+plopp = "0m"
+sciline = "0m"
+scipp = "0m"
+scippnexus = "0m"
+tof = "0m"
+
+[dependencies]
+# Lowest supported version, see 'requires-python' in pyproject.toml.
+python = "3.12.*"
+
+# ============================== Test ==============================
+# Resolved through PyPI, i.e. the same way a user installing with pip gets it.
+# Mantid tests skip themselves when Mantid is unavailable.
+
+[feature.test.pypi-dependencies]
+scippneutron = { path = ".", editable = true, extras = ["all", "test"] }
+
+[feature.test.tasks.test]
+cmd = "pytest"
+description = "Run the test suite without Mantid"
+
+# ============================== Mantid ==============================
+# Mantid is only published on the 'mantid' channel, and only for linux-64,
+# osx-arm64 and win-64.
+#
+# win-64 is deliberately excluded, because Mantid and scipp cannot coexist there.
+# The two pull in mutually exclusive MinGW toolchain eras:
+#
+#   mantid  -> quasielasticbayes ==0.3.0
+#           -> m2w64-gcc-libs-core 5.3.0     (legacy MSYS2 Fortran toolchain)
+#           -> msys2-conda-epoch ==20160418
+#
+#   scipp   -> tbb >=2022.3.0 -> libhwloc -> libwinpthread
+#           -> constrains: msys2-conda-epoch <0.0a0
+#
+# That is, Mantid transitively requires the 2016-era MSYS2 marker package to be
+# present, while every modern libwinpthread build declares it must be absent --
+# conda-forge's way of retiring the old m2w64 toolchain. The intersection is
+# empty, so no version pin, exclude-newer date or channel order can resolve it.
+# Verified with pixi 0.74.0 against mantid 6.16.1; Mantid alone does solve on
+# win-64, it is only the combination with scipp that fails.
+#
+# Unblocking this needs an upstream rebuild of quasielasticbayes against the
+# current mingw toolchain (or Mantid dropping the dependency). It is a
+# Windows-only problem: m2w64 does not exist on Linux or macOS.
+
+[feature.mantid]
+channels = [{ channel = "mantid", priority = -1 }]
+platforms = ["linux-64", "osx-arm64-14"]
+
+[feature.mantid.dependencies]
+mantid = "6.16.*"
+# Taken from conda so the whole stack is ABI-consistent with Mantid.
+email-validator = ">=2"
+h5py = ">=3.12"
+lazy_loader = ">=0.4"
+mpltoolbox = ">=24.6.0"
+numpy = ">=1.20"
+plopp = ">=26.5.0"
+pooch = ">=1.5"
+pydantic = ">=2"
+python-dateutil = ">=2.8"
+scipp = ">=25.11.0"
+scippnexus = ">=23.11.0"
+scipy = ">=1.7.0"
+# Test dependencies.
+anywidget = ">=0.8.0"
+hypothesis = ">=6.100"
+ipykernel = ">6.30"
+ipympl = ">0.9.0"
+psutil = ">=5.0"
+pytest = ">=8.0"
+pytest-xdist = ">=3.0"
+pythreejs = ">=2.4.1"
+sciline = ">=25.1.0"
+
+[feature.mantid.pypi-dependencies]
+scippneutron = { path = ".", editable = true }
+
+[feature.mantid.tasks.test-mantid]
+cmd = "pytest tests/mantid_test.py tests/mantid_scipp_comparison"
+description = "Run the Mantid tests"
+
+# ============================== SQW / Horace ==============================
+# pace_neutrons is PyPI-only and needs a MATLAB runtime, so it is kept out of the
+# 'test' extra and given its own environment.
+
+[feature.sqw.pypi-dependencies]
+scippneutron = { path = ".", editable = true, extras = ["all", "test", "sqw"] }
+
+[feature.sqw.tasks.test-sqw]
+cmd = "pytest tests/io/sqw"
+description = "Run the SQW/Horace tests (requires MATLAB)"
+
+# ============================== Docs ==============================
+# Several notebooks execute Mantid, so the docs environment builds on it.
+
+[feature.docs.dependencies]
+autodoc-pydantic = "*"
+ipython = "!=8.7.0"           # 8.7.0 breaks syntax highlighting in Jupyter cells
+myst-parser = "*"
+nbsphinx = "*"
+pandoc = "*"
+pydata-sphinx-theme = ">=0.14"
+python-graphviz = "*"
+sphinx = "<9.0.0"
+sphinx-autodoc-typehints = "*"
+sphinx-copybutton = "*"
+sphinx-design = "*"
+sphinxcontrib-bibtex = "*"
+tof = "*"
+
+[feature.docs.tasks._graphviz-config]
+# conda-forge's graphviz registers its layout plugins from a post-link script, and
+# pixi does not run those by default. Without this, rendering fails with
+# "There is no layout engine support for dot".
+cmd = "dot -c"
+description = "Register the graphviz layout plugins"
+
+[feature.docs.tasks.docs]
+args = [{ arg = "builder", default = "html" }]
+cmd = "python -m sphinx -W -v -b {{ builder }} -d .doctrees docs html"
+depends-on = ["_graphviz-config"]
+description = "Build the documentation (builder: html, doctest or linkcheck)"
+
+# ============================== Lint ==============================
+
+[feature.lint.dependencies]
+python = "3.12.*"
+pre-commit = "*"
+
+[feature.lint.tasks.lint]
+cmd = "pre-commit run --all-files"
+description = "Run all formatters and static analysis"
+
+# ============================== Mypy ==============================
+
+[feature.mypy.pypi-dependencies]
+mypy = "*"
+
+[feature.mypy.tasks.mypy]
+cmd = "mypy ."
+description = "Run static type checking"
+
+# ============================== Build ==============================
+
+[feature.build.dependencies]
+python = "3.12.*"
+python-build = "*"
+setuptools = ">=77"
+setuptools_scm = ">=8.0"
+
+[feature.build.tasks.build]
+cmd = "python -m build"
+description = "Build the sdist and wheel"
+
+# ============================== Environments ==============================
+
+[environments]
+default = { features = ["test"] }
+mantid = { features = ["mantid"], solve-group = "mantid" }
+docs = { features = ["mantid", "docs"], solve-group = "mantid" }
+sqw = { features = ["test", "sqw"], solve-group = "sqw" }
+mypy = { features = ["test", "mypy"], solve-group = "mypy" }
+lint = { features = ["lint"], no-default-feature = true }
+build = { features = ["build"], no-default-feature = true }

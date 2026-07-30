@@ -2,9 +2,9 @@
 build
 dist
 html
-.tox
+.doctrees
 *.egg-info
-# we lock dependencies with pip-compile, not uv
+# uv is only used for the unpinned/nightly CI jobs, which resolve from scratch
 uv.lock
 
 *.sw?
@@ -12,6 +12,7 @@ uv.lock
 # Environments
 venv
 .venv
+.pixi
 
 # Caches
 *.DS_Store
