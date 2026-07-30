@@ -1,7 +1,7 @@
 [build-system]
 requires = [
-  "setuptools>=77",
-  "setuptools_scm[toml]>=8.0",
+    "setuptools>=77",
+    "setuptools_scm[toml]>=8.0",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -39,6 +39,7 @@ dependencies = [
     "numpy>=1.20",
     "plopp>=26.5.0",
     "pydantic>=2",
+    "pyyaml>=5.3",
     "scipp>=25.11.0",
     "scippnexus>=23.11.0",
     "scipy>=1.7.0",
@@ -78,15 +79,15 @@ addopts = """
 """
 testpaths = "tests"
 filterwarnings = [
-  "error",
-  'ignore:You are running a "Debug" build of scipp:',
-  # from ipywidgets; they are migrating away from ipykernel, this warning should go away
-  'ignore:The `ipykernel.comm.Comm` class has been deprecated.:DeprecationWarning',
-  # Plotting related warnings.
-  'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
-  # TODO Plotting warnings that need to be addressed
-  'ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning',
-  'ignore:Passing unrecognized arguments to super:DeprecationWarning',
+    "error",
+    'ignore:You are running a "Debug" build of scipp:',
+    # from ipywidgets; they are migrating away from ipykernel, this warning should go away
+    'ignore:The `ipykernel.comm.Comm` class has been deprecated.:DeprecationWarning',
+    # Plotting related warnings.
+    'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
+    # TODO Plotting warnings that need to be addressed
+    'ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning',
+    'ignore:Passing unrecognized arguments to super:DeprecationWarning',
 ]
 
 [tool.ruff]
@@ -111,19 +112,19 @@ pydocstyle.convention = "numpy"
 [tool.ruff.lint.per-file-ignores]
 # those files have an increased risk of relying on import order
 "tests/*" = [
-    "S101",  # asserts are fine in tests
-    "B018",  # 'useless expressions' are ok because some tests just check for exceptions
+    "S101", # asserts are fine in tests
+    "B018", # 'useless expressions' are ok because some tests just check for exceptions
 ]
 "*.ipynb" = [
-    "E501",  # longer lines are sometimes more readable
-    "F403",  # *-imports used with domain types
-    "F405",  # linter may fail to find names because of *-imports
-    "I",  # we don't collect imports at the top
-    "S101",  # asserts are used for demonstration and are safe in notebooks
-    "T201",  # printing is ok for demonstration purposes
+    "E501", # longer lines are sometimes more readable
+    "F403", # *-imports used with domain types
+    "F405", # linter may fail to find names because of *-imports
+    "I", # we don't collect imports at the top
+    "S101", # asserts are used for demonstration and are safe in notebooks
+    "T201", # printing is ok for demonstration purposes
 ]
 "docs/user-guide/recipes.ipynb" = [
-  "F821"  # this notebook is never executed and uses undefined names
+    "F821"  # this notebook is never executed and uses undefined names
 ]
 
 [tool.ruff.format]
