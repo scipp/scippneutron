@@ -260,10 +260,88 @@ def test_fixed_width_smoothing_accepts_data_array():
     assert sc.identical(actual.coords['aux'], data.coords['aux'])
 
 
-def test_fixed_width_smoothing_rejects_nonuniform_grid():
-    x, y = _variables([0.0, 1.0, 2.1], [1.0, 2.0, 3.0])
+def test_fixed_width_smoothing_resamples_nonuniform_grid():
+    x_values = np.array([0.0, 0.25, 0.75, 1.0])
+    y_values = _quadratic(x_values)
+    width = sc.scalar(0.2, unit='m')
+    x, y = _variables(x_values, y_values)
 
-    with pytest.raises(ValueError, match="regularly spaced"):
+    actual = smooth_gaussian(x, y, width=width)
+
+    xp_values = np.linspace(0.0, 1.0, 5)
+    xp, yp = _variables(xp_values, np.interp(xp_values, x_values, y_values))
+    smoothed_yp = smooth_gaussian(xp, yp, width=width)
+    expected = np.interp(x_values, xp_values, smoothed_yp.values)
+    np.testing.assert_allclose(actual.values, expected)
+
+
+def test_fixed_width_gaussian_matches_exact_quadratic_on_nonuniform_grid():
+    lower = -0.4
+    upper = 0.9
+    size = 2000
+    width = 0.1
+    spacing = (upper - lower) / size
+    x = _linear_cell_centers(lower, upper, size)
+    x += 0.2 * spacing * np.sin(np.linspace(0.0, 8.0 * np.pi, size))
+    x_var, y_var = _variables(x, _quadratic(x))
+
+    actual = smooth_gaussian(
+        x_var,
+        y_var,
+        width=sc.scalar(width, unit='m'),
+        tail=1e-9,
+    ).values
+
+    intervals = int(np.ceil((x[-1] - x[0]) / np.min(np.diff(x))))
+    resampled_spacing = (x[-1] - x[0]) / intervals
+    expected = _exact_smoothed_quadratic_with_sigma(
+        x,
+        width,
+        x[0] - 0.5 * resampled_spacing,
+        x[-1] + 0.5 * resampled_spacing,
+    )
+
+    assert np.max(np.abs(actual - expected)) < 5e-7
+
+
+def test_fixed_width_smoothing_rejects_resampled_grid_larger_than_limit():
+    x, y = _variables([0.0, 0.25, 1.0], [1.0, 2.0, 3.0])
+
+    with pytest.raises(
+        ValueError,
+        match=r"uniform resampling would require too many points.*max_grid_points=4",
+    ):
+        smooth_kernel(x, y, width=sc.scalar(0.1, unit='m'), max_grid_points=4)
+
+
+def test_fixed_width_smoothing_accepts_resampled_grid_equal_to_limit():
+    x, y = _variables([0.0, 0.25, 1.0], [1.0, 1.0, 1.0])
+
+    actual = smooth_kernel(
+        x,
+        y,
+        width=sc.scalar(0.1, unit='m'),
+        max_grid_points=5,
+    )
+
+    np.testing.assert_allclose(actual.values, y.values)
+
+
+@pytest.mark.parametrize("smooth", [smooth_gaussian, smooth_rectangle, smooth_triangle])
+def test_fixed_width_convenience_functions_forward_max_grid_points(smooth):
+    x, y = _variables([0.0, 0.25, 1.0], [1.0, 2.0, 3.0])
+
+    with pytest.raises(ValueError, match="max_grid_points=2"):
+        smooth(x, y, width=sc.scalar(0.1, unit='m'), max_grid_points=2)
+
+
+def test_fixed_width_pathologically_close_coordinates_fail_before_allocation():
+    x, y = _variables(
+        [1.0, np.nextafter(1.0, 2.0), 2.0],
+        [1.0, 1.0, 1.0],
+    )
+
+    with pytest.raises(ValueError, match="exceeding max_grid_points=1,000,000"):
         smooth_kernel(x, y, width=sc.scalar(0.1, unit='m'))
 
 
@@ -667,15 +745,29 @@ def test_rejects_invalid_single_coordinate_before_noop_return(x, message):
         smooth_relative_kernel(x, y)
 
 
+@pytest.mark.parametrize(
+    ("smooth", "kwargs"),
+    [
+        (smooth_relative_kernel, {}),
+        (smooth_kernel, {"width": sc.scalar(0.1, unit='m')}),
+    ],
+)
 @pytest.mark.parametrize("max_grid_points", [True, 2.5])
-def test_rejects_non_integer_max_grid_points(max_grid_points):
+def test_rejects_non_integer_max_grid_points(smooth, kwargs, max_grid_points):
     x, y = _variables([], [])
     with pytest.raises(TypeError, match="max_grid_points must be an integer"):
-        smooth_relative_kernel(x, y, max_grid_points=max_grid_points)
+        smooth(x, y, max_grid_points=max_grid_points, **kwargs)
 
 
+@pytest.mark.parametrize(
+    ("smooth", "kwargs"),
+    [
+        (smooth_relative_kernel, {}),
+        (smooth_kernel, {"width": sc.scalar(0.1, unit='m')}),
+    ],
+)
 @pytest.mark.parametrize("max_grid_points", [-1, 0, 1])
-def test_rejects_too_small_max_grid_points(max_grid_points):
+def test_rejects_too_small_max_grid_points(smooth, kwargs, max_grid_points):
     x, y = _variables([], [])
     with pytest.raises(ValueError, match="max_grid_points must be at least 2"):
-        smooth_relative_kernel(x, y, max_grid_points=max_grid_points)
+        smooth(x, y, max_grid_points=max_grid_points, **kwargs)

@@ -312,6 +312,15 @@ def _smooth_relative_kernel_on_geomgrid(
     return _smooth_with_weights(y, offsets, weights)
 
 
+def _validate_max_grid_points(max_grid_points: int) -> None:
+    if isinstance(max_grid_points, bool | np.bool_) or not isinstance(
+        max_grid_points, int | np.integer
+    ):
+        raise TypeError("max_grid_points must be an integer")
+    if max_grid_points < 2:
+        raise ValueError("max_grid_points must be at least 2")
+
+
 def _smooth_relative_kernel(
     x: ArrayLike,
     y: ArrayLike,
@@ -331,12 +340,7 @@ def _smooth_relative_kernel(
         raise ValueError("alpha must be non-negative")
     if not np.isfinite(tail) or not (0.0 < tail < 1.0):
         raise ValueError("tail must be between 0 and 1")
-    if isinstance(max_grid_points, bool | np.bool_) or not isinstance(
-        max_grid_points, int | np.integer
-    ):
-        raise TypeError("max_grid_points must be an integer")
-    if max_grid_points < 2:
-        raise ValueError("max_grid_points must be at least 2")
+    _validate_max_grid_points(max_grid_points)
     if np.any(~np.isfinite(x)):
         raise ValueError("x must contain only finite values")
     if np.any(x <= 0):
@@ -382,6 +386,7 @@ def _smooth_kernel_values(
     width: float,
     kernel: _Kernel = "gaussian",
     tail: float = 1e-12,
+    max_grid_points: int = 1_000_000,
 ) -> _FloatArray:
     x = np.asarray(x, dtype=float)
     y = np.asarray(y, dtype=float)
@@ -394,6 +399,7 @@ def _smooth_kernel_values(
         raise ValueError("width must be non-negative")
     if not np.isfinite(tail) or not (0.0 < tail < 1.0):
         raise ValueError("tail must be between 0 and 1")
+    _validate_max_grid_points(max_grid_points)
     if np.any(~np.isfinite(x)):
         raise ValueError("x must contain only finite values")
     if np.any(np.diff(x) <= 0):
@@ -402,17 +408,34 @@ def _smooth_kernel_values(
         return y.copy()
 
     spacing = np.diff(x)
-    if not np.allclose(spacing, spacing[0], rtol=1e-7, atol=0.0):
-        raise ValueError("x must be regularly spaced")
+    x_range = float(x[-1] - x[0])
+
+    # Preserve an existing uniform grid. Otherwise choose a uniform grid at
+    # least as dense as the smallest input spacing.
+    if np.allclose(spacing, spacing[0], rtol=1e-7, atol=0.0):
+        k = x.size
+    else:
+        k = int(np.ceil(x_range / np.min(spacing))) + 1
+
+    if k > max_grid_points:
+        raise ValueError(
+            "uniform resampling would require too many points, exceeding "
+            f"max_grid_points={max_grid_points:,}. Increase max_grid_points to "
+            "allow a larger grid."
+        )
 
     offsets, weights = _translation_invariant_kernel_weights(
-        spacing=float(spacing[0]),
+        spacing=x_range / (k - 1),
         width=width,
         kernel=kernel,
         tail=tail,
-        max_offset=y.size - 1,
+        max_offset=k - 1,
     )
-    return _smooth_with_weights(y, offsets, weights)
+    xp = np.linspace(x[0], x[-1], k)
+    yg = np.interp(xp, x, y)
+
+    zg = _smooth_with_weights(yg, offsets, weights)
+    return cast(_FloatArray, np.interp(x, xp, zg))
 
 
 def _scipp_input(
@@ -480,19 +503,22 @@ def smooth_kernel(
     width: sc.Variable,
     kernel: _Kernel = "gaussian",
     tail: float = 1e-12,
+    max_grid_points: int = 1_000_000,
 ) -> _ScippArray:
-    """Smooth regularly sampled data with a translation-invariant kernel.
+    """Smooth sampled data with a translation-invariant kernel.
 
     The kernel describes a distribution of displacements ``Z``, with displaced
     coordinates given by ``x' = x + width * Z``. At the boundaries, the kernel
     is renormalized over the available finite input domain.
 
+    Input that is not uniformly spaced is interpolated to a uniform grid,
+    smoothed, and interpolated back to the original coordinates.
+
     Parameters
     ----------
     x:
-        One-dimensional data to smooth, or strictly increasing, regularly
-        spaced sample coordinates. A data array must have a dimension
-        coordinate.
+        One-dimensional data to smooth, or strictly increasing sample
+        coordinates. A data array must have a dimension coordinate.
     y:
         Values to smooth when ``x`` contains the sample coordinates. Must be a
         one-dimensional variable with the same dimension as ``x``. Must be
@@ -509,6 +535,9 @@ def smooth_kernel(
     tail:
         Total probability omitted when truncating a kernel with unbounded
         support.
+    max_grid_points:
+        Maximum permitted size of the intermediate uniform grid. Raises an
+        error rather than silently reducing resolution if this limit is exceeded.
 
     Returns
     -------
@@ -519,9 +548,9 @@ def smooth_kernel(
     Raises
     ------
     ValueError
-        If the coordinate is not regularly spaced or the inputs otherwise have
-        invalid values, if a data array has masks, or if a string does not
-        identify a supported kernel.
+        If the inputs have invalid values, if a data array has masks, if a string
+        does not identify a supported kernel, or if the required intermediate
+        grid exceeds ``max_grid_points``.
     scipp.DimensionError
         If the inputs are not one-dimensional, a pair of variables does not
         have matching dimensions, or ``width`` is not scalar.
@@ -533,8 +562,8 @@ def smooth_kernel(
     scipp.VariancesError
         If the signal or ``width`` has variances.
     TypeError
-        If ``width`` is not a variable or ``kernel`` is not a distribution-like
-        object.
+        If ``width`` is not a variable, ``kernel`` is not a distribution-like
+        object, or ``max_grid_points`` is not an integer.
     """
     x, y, template = _scipp_input(x, y)
     values = _smooth_kernel_values(
@@ -543,6 +572,7 @@ def smooth_kernel(
         width=_width_in_coordinate_unit(width, x),
         kernel=kernel,
         tail=tail,
+        max_grid_points=max_grid_points,
     )
     return _scipp_output(template, y, values)
 
@@ -553,15 +583,15 @@ def smooth_gaussian(
     *,
     width: sc.Variable,
     tail: float = 1e-12,
+    max_grid_points: int = 1_000_000,
 ) -> _ScippArray:
-    """Smooth regularly sampled data with a fixed-width Gaussian kernel.
+    """Smooth sampled data with a fixed-width Gaussian kernel.
 
     Parameters
     ----------
     x:
-        One-dimensional data to smooth, or strictly increasing, regularly
-        spaced sample coordinates. A data array must have a dimension
-        coordinate.
+        One-dimensional data to smooth, or strictly increasing sample
+        coordinates. A data array must have a dimension coordinate.
     y:
         Values to smooth when ``x`` contains the sample coordinates. Must be a
         one-dimensional variable with the same dimension as ``x``. Must be
@@ -571,6 +601,8 @@ def smooth_gaussian(
         compatible with the coordinate.
     tail:
         Total Gaussian probability omitted when truncating the kernel.
+    max_grid_points:
+        Maximum permitted size of the intermediate uniform grid.
 
     Returns
     -------
@@ -582,7 +614,14 @@ def smooth_gaussian(
     smooth_kernel:
         Smooth with a named or user-provided translation-invariant kernel.
     """
-    return smooth_kernel(x, y, width=width, kernel="gaussian", tail=tail)
+    return smooth_kernel(
+        x,
+        y,
+        width=width,
+        kernel="gaussian",
+        tail=tail,
+        max_grid_points=max_grid_points,
+    )
 
 
 def smooth_rectangle(
@@ -590,17 +629,17 @@ def smooth_rectangle(
     y: sc.Variable | None = None,
     *,
     width: sc.Variable,
+    max_grid_points: int = 1_000_000,
 ) -> _ScippArray:
-    """Smooth regularly sampled data with a fixed-width rectangular kernel.
+    """Smooth sampled data with a fixed-width rectangular kernel.
 
     The displacement is uniformly distributed on ``[-width, width]``.
 
     Parameters
     ----------
     x:
-        One-dimensional data to smooth, or strictly increasing, regularly
-        spaced sample coordinates. A data array must have a dimension
-        coordinate.
+        One-dimensional data to smooth, or strictly increasing sample
+        coordinates. A data array must have a dimension coordinate.
     y:
         Values to smooth when ``x`` contains the sample coordinates. Must be a
         one-dimensional variable with the same dimension as ``x``. Must be
@@ -608,6 +647,8 @@ def smooth_rectangle(
     width:
         Half-width of the rectangular kernel. Must be a scalar with a unit
         compatible with the coordinate.
+    max_grid_points:
+        Maximum permitted size of the intermediate uniform grid.
 
     Returns
     -------
@@ -619,7 +660,13 @@ def smooth_rectangle(
     smooth_kernel:
         Smooth with a named or user-provided translation-invariant kernel.
     """
-    return smooth_kernel(x, y, width=width, kernel="rectangle")
+    return smooth_kernel(
+        x,
+        y,
+        width=width,
+        kernel="rectangle",
+        max_grid_points=max_grid_points,
+    )
 
 
 def smooth_triangle(
@@ -627,8 +674,9 @@ def smooth_triangle(
     y: sc.Variable | None = None,
     *,
     width: sc.Variable,
+    max_grid_points: int = 1_000_000,
 ) -> _ScippArray:
-    """Smooth regularly sampled data with a fixed-width triangular kernel.
+    """Smooth sampled data with a fixed-width triangular kernel.
 
     The displacement has symmetric triangular support on ``[-width, width]``
     and its peak at zero.
@@ -636,9 +684,8 @@ def smooth_triangle(
     Parameters
     ----------
     x:
-        One-dimensional data to smooth, or strictly increasing, regularly
-        spaced sample coordinates. A data array must have a dimension
-        coordinate.
+        One-dimensional data to smooth, or strictly increasing sample
+        coordinates. A data array must have a dimension coordinate.
     y:
         Values to smooth when ``x`` contains the sample coordinates. Must be a
         one-dimensional variable with the same dimension as ``x``. Must be
@@ -646,6 +693,8 @@ def smooth_triangle(
     width:
         Half-width of the triangular kernel. Must be a scalar with a unit
         compatible with the coordinate.
+    max_grid_points:
+        Maximum permitted size of the intermediate uniform grid.
 
     Returns
     -------
@@ -657,7 +706,13 @@ def smooth_triangle(
     smooth_kernel:
         Smooth with a named or user-provided translation-invariant kernel.
     """
-    return smooth_kernel(x, y, width=width, kernel="triangle")
+    return smooth_kernel(
+        x,
+        y,
+        width=width,
+        kernel="triangle",
+        max_grid_points=max_grid_points,
+    )
 
 
 def smooth_relative_kernel(
