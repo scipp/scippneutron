@@ -11,14 +11,8 @@ import scippneutron as scn
 from scippneutron.smoothing import (
     _relative_kernel_weights,
     _smooth_relative_kernel_on_geomgrid,
-    smooth_gaussian,
-    smooth_kernel,
-    smooth_rectangle,
-    smooth_relative_gaussian,
-    smooth_relative_kernel,
-    smooth_relative_rectangle,
-    smooth_relative_triangle,
-    smooth_triangle,
+    smooth,
+    smooth_relative,
 )
 
 
@@ -87,10 +81,10 @@ def _quadratic_smoothing_error(*, size, alpha, tail=1e-9):
     upper = 0.9
     x = _geometric_cell_centers(lower, upper, size)
     actual = _smooth_values(
-        smooth_relative_gaussian,
+        smooth_relative,
         x,
         _quadratic(x),
-        alpha=alpha,
+        scale=alpha,
         tail=tail,
     )
     expected = _exact_smoothed_quadratic(x, alpha, lower, upper)
@@ -102,10 +96,10 @@ def _fixed_width_quadratic_smoothing_error(*, size, width, tail=1e-9):
     upper = 0.9
     x = _linear_cell_centers(lower, upper, size)
     x_var, y_var = _variables(x, _quadratic(x))
-    actual = smooth_gaussian(
+    actual = smooth(
         x_var,
         y_var,
-        width=sc.scalar(width, unit='m'),
+        scale=sc.scalar(width, unit='m'),
         tail=tail,
     ).values
     expected = _exact_smoothed_quadratic_with_sigma(x, width, lower, upper)
@@ -168,14 +162,14 @@ def test_fixed_width_gaussian_error_scales_with_tail_until_grid_error_dominates(
 
 
 @pytest.mark.parametrize(
-    ("smooth", "kernel_variance", "max_error"),
+    ("kernel", "kernel_variance", "max_error"),
     [
-        (smooth_rectangle, 1.0 / 3.0, 3e-7),
-        (smooth_triangle, 1.0 / 6.0, 5e-8),
+        ("boxcar", 1.0 / 3.0, 3e-7),
+        ("triangular", 1.0 / 6.0, 5e-8),
     ],
 )
 def test_fixed_width_compact_kernel_matches_interior_quadratic_moments(
-    smooth, kernel_variance, max_error
+    kernel, kernel_variance, max_error
 ):
     lower = -0.4
     upper = 0.9
@@ -184,19 +178,24 @@ def test_fixed_width_compact_kernel_matches_interior_quadratic_moments(
     x = _linear_cell_centers(lower, upper, size)
     x_var, y_var = _variables(x, _quadratic(x))
 
-    actual = smooth(x_var, y_var, width=sc.scalar(width, unit='m')).values
+    actual = smooth(
+        x_var,
+        y_var,
+        scale=sc.scalar(width, unit='m'),
+        kernel=kernel,
+    ).values
     expected = 1.0 + 0.3 * x + 0.7 * (x**2 + width**2 * kernel_variance)
     interior = (x - width >= lower) & (x + width <= upper)
 
     assert np.max(np.abs(actual[interior] - expected[interior])) < max_error
 
 
-def test_fixed_width_smoothing_converts_width_to_coordinate_unit():
+def test_fixed_width_smoothing_converts_scale_to_coordinate_unit():
     x = sc.linspace('x', -0.4, 0.9, 100, unit='m')
     y = sc.array(dims=['x'], values=_quadratic(x.values), unit='counts')
 
-    in_meters = smooth_gaussian(x, y, width=sc.scalar(0.1, unit='m'))
-    in_centimeters = smooth_gaussian(x, y, width=sc.scalar(10.0, unit='cm'))
+    in_meters = smooth(x, y, scale=sc.scalar(0.1, unit='m'))
+    in_centimeters = smooth(x, y, scale=sc.scalar(10.0, unit='cm'))
 
     assert sc.identical(in_meters, in_centimeters)
 
@@ -204,15 +203,15 @@ def test_fixed_width_smoothing_converts_width_to_coordinate_unit():
 def test_fixed_width_smoothing_accepts_distribution():
     x = sc.linspace('x', -0.4, 0.9, 100, unit='m')
     y = sc.array(dims=['x'], values=_quadratic(x.values), unit='counts')
-    width = sc.scalar(0.1, unit='m')
+    scale = sc.scalar(0.1, unit='m')
 
-    actual = smooth_kernel(
+    actual = smooth(
         x,
         y,
-        width=width,
+        scale=scale,
         kernel=uniform(loc=-1.0, scale=2.0),
     )
-    expected = smooth_rectangle(x, y, width=width)
+    expected = smooth(x, y, scale=scale, kernel="boxcar")
 
     assert sc.identical(actual, expected)
 
@@ -221,10 +220,10 @@ def test_fixed_width_asymmetric_kernel_has_correct_direction():
     x = sc.arange('x', 0.0, 2.0, 0.1, unit='m')
     y = sc.array(dims=['x'], values=x.values, unit='counts')
 
-    actual = smooth_kernel(
+    actual = smooth(
         x,
         y,
-        width=sc.scalar(0.2, unit='m'),
+        scale=sc.scalar(0.2, unit='m'),
         kernel=uniform(loc=0.5, scale=1.0),
     )
 
@@ -238,7 +237,7 @@ def test_nonfinite_value_only_affects_overlapping_kernel_windows():
     values[size // 2] = np.nan
     y = sc.array(dims=['x'], values=values)
 
-    actual = smooth_gaussian(x, y, width=sc.scalar(150.0))
+    actual = smooth(x, y, scale=sc.scalar(150.0))
 
     assert np.isfinite(actual.values[0])
     assert np.isnan(actual.values[size // 2])
@@ -252,8 +251,8 @@ def test_fixed_width_smoothing_accepts_data_array():
         coords={'x': x, 'aux': sc.arange('x', 100)},
     )
 
-    actual = smooth_gaussian(data, width=sc.scalar(0.1, unit='m'))
-    expected = smooth_gaussian(x, data.data, width=sc.scalar(0.1, unit='m'))
+    actual = smooth(data, scale=sc.scalar(0.1, unit='m'))
+    expected = smooth(x, data.data, scale=sc.scalar(0.1, unit='m'))
 
     assert sc.identical(actual.data, expected)
     assert sc.identical(actual.coords['x'], data.coords['x'])
@@ -263,14 +262,14 @@ def test_fixed_width_smoothing_accepts_data_array():
 def test_fixed_width_smoothing_resamples_nonuniform_grid():
     x_values = np.array([0.0, 0.25, 0.75, 1.0])
     y_values = _quadratic(x_values)
-    width = sc.scalar(0.2, unit='m')
+    scale = sc.scalar(0.2, unit='m')
     x, y = _variables(x_values, y_values)
 
-    actual = smooth_gaussian(x, y, width=width)
+    actual = smooth(x, y, scale=scale)
 
     xp_values = np.linspace(0.0, 1.0, 5)
     xp, yp = _variables(xp_values, np.interp(xp_values, x_values, y_values))
-    smoothed_yp = smooth_gaussian(xp, yp, width=width)
+    smoothed_yp = smooth(xp, yp, scale=scale)
     expected = np.interp(x_values, xp_values, smoothed_yp.values)
     np.testing.assert_allclose(actual.values, expected)
 
@@ -285,10 +284,10 @@ def test_fixed_width_gaussian_matches_exact_quadratic_on_nonuniform_grid():
     x += 0.2 * spacing * np.sin(np.linspace(0.0, 8.0 * np.pi, size))
     x_var, y_var = _variables(x, _quadratic(x))
 
-    actual = smooth_gaussian(
+    actual = smooth(
         x_var,
         y_var,
-        width=sc.scalar(width, unit='m'),
+        scale=sc.scalar(width, unit='m'),
         tail=1e-9,
     ).values
 
@@ -311,28 +310,20 @@ def test_fixed_width_smoothing_rejects_resampled_grid_larger_than_limit():
         ValueError,
         match=r"uniform resampling would require too many points.*max_grid_points=4",
     ):
-        smooth_kernel(x, y, width=sc.scalar(0.1, unit='m'), max_grid_points=4)
+        smooth(x, y, scale=sc.scalar(0.1, unit='m'), max_grid_points=4)
 
 
 def test_fixed_width_smoothing_accepts_resampled_grid_equal_to_limit():
     x, y = _variables([0.0, 0.25, 1.0], [1.0, 1.0, 1.0])
 
-    actual = smooth_kernel(
+    actual = smooth(
         x,
         y,
-        width=sc.scalar(0.1, unit='m'),
+        scale=sc.scalar(0.1, unit='m'),
         max_grid_points=5,
     )
 
     np.testing.assert_allclose(actual.values, y.values)
-
-
-@pytest.mark.parametrize("smooth", [smooth_gaussian, smooth_rectangle, smooth_triangle])
-def test_fixed_width_convenience_functions_forward_max_grid_points(smooth):
-    x, y = _variables([0.0, 0.25, 1.0], [1.0, 2.0, 3.0])
-
-    with pytest.raises(ValueError, match="max_grid_points=2"):
-        smooth(x, y, width=sc.scalar(0.1, unit='m'), max_grid_points=2)
 
 
 def test_fixed_width_pathologically_close_coordinates_fail_before_allocation():
@@ -342,46 +333,46 @@ def test_fixed_width_pathologically_close_coordinates_fail_before_allocation():
     )
 
     with pytest.raises(ValueError, match="exceeding max_grid_points=1,000,000"):
-        smooth_kernel(x, y, width=sc.scalar(0.1, unit='m'))
+        smooth(x, y, scale=sc.scalar(0.1, unit='m'))
 
 
-@pytest.mark.parametrize("width", [np.nan, np.inf, -np.inf, -1.0])
-def test_fixed_width_smoothing_rejects_invalid_width(width):
+@pytest.mark.parametrize("scale", [np.nan, np.inf, -np.inf, -1.0])
+def test_fixed_width_smoothing_rejects_invalid_scale(scale):
     x, y = _variables([], [])
 
-    with pytest.raises(ValueError, match="width must be non-negative"):
-        smooth_kernel(x, y, width=sc.scalar(width, unit='m'))
+    with pytest.raises(ValueError, match="scale must be non-negative"):
+        smooth(x, y, scale=sc.scalar(scale, unit='m'))
 
 
-def test_fixed_width_smoothing_rejects_non_scalar_width():
+def test_fixed_width_smoothing_rejects_non_scalar_scale():
     x, y = _variables([0.0, 1.0], [1.0, 2.0])
 
-    with pytest.raises(sc.DimensionError, match="width must be a scalar"):
-        smooth_kernel(x, y, width=sc.array(dims=['width'], values=[0.1], unit='m'))
+    with pytest.raises(sc.DimensionError, match="scale must be a scalar"):
+        smooth(x, y, scale=sc.array(dims=['scale'], values=[0.1], unit='m'))
 
 
-def test_fixed_width_smoothing_rejects_non_variable_width():
+def test_fixed_width_smoothing_rejects_non_variable_scale():
     x, y = _variables([0.0, 1.0], [1.0, 2.0])
 
-    with pytest.raises(TypeError, match=r"width must be a scipp\.Variable"):
-        smooth_kernel(x, y, width=0.1)  # type: ignore[arg-type]
+    with pytest.raises(TypeError, match=r"scale must be a scipp\.Variable"):
+        smooth(x, y, scale=0.1)  # type: ignore[arg-type]
 
 
-def test_fixed_width_smoothing_rejects_incompatible_width_unit():
+def test_fixed_width_smoothing_rejects_incompatible_scale_unit():
     x, y = _variables([0.0, 1.0], [1.0, 2.0])
 
     with pytest.raises(sc.UnitError):
-        smooth_kernel(x, y, width=sc.scalar(0.1, unit='s'))
+        smooth(x, y, scale=sc.scalar(0.1, unit='s'))
 
 
-def test_fixed_width_smoothing_rejects_width_with_variance():
+def test_fixed_width_smoothing_rejects_scale_with_variance():
     x, y = _variables([0.0, 1.0], [1.0, 2.0])
 
-    with pytest.raises(sc.VariancesError, match="widths with variances"):
-        smooth_kernel(
+    with pytest.raises(sc.VariancesError, match="scales with variances"):
+        smooth(
             x,
             y,
-            width=sc.scalar(0.1, variance=0.01, unit='m'),
+            scale=sc.scalar(0.1, variance=0.01, unit='m'),
         )
 
 
@@ -459,14 +450,14 @@ def test_gaussian_smoothing_error_scales_with_tail_until_grid_error_dominates():
 
 
 @pytest.mark.parametrize(
-    ("smooth", "relative_variance", "max_error"),
+    ("kernel", "relative_variance", "max_error"),
     [
-        (smooth_relative_rectangle, 1.0 / 3.0, 3e-7),
-        (smooth_relative_triangle, 1.0 / 6.0, 5e-8),
+        ("boxcar", 1.0 / 3.0, 3e-7),
+        ("triangular", 1.0 / 6.0, 5e-8),
     ],
 )
 def test_compact_symmetric_kernel_matches_exact_interior_quadratic_moments(
-    smooth, relative_variance, max_error
+    kernel, relative_variance, max_error
 ):
     lower = 0.1
     upper = 0.9
@@ -474,7 +465,13 @@ def test_compact_symmetric_kernel_matches_exact_interior_quadratic_moments(
     alpha = 0.1
     x = _geometric_cell_centers(lower, upper, size)
 
-    actual = _smooth_values(smooth, x, _quadratic(x), alpha=alpha)
+    actual = _smooth_values(
+        smooth_relative,
+        x,
+        _quadratic(x),
+        scale=alpha,
+        kernel=kernel,
+    )
     expected = 1.0 + 0.3 * x + 0.7 * x**2 * (1.0 + alpha**2 * relative_variance)
     interior = (x * (1.0 - alpha) >= lower) & (x * (1.0 + alpha) <= upper)
 
@@ -482,7 +479,7 @@ def test_compact_symmetric_kernel_matches_exact_interior_quadratic_moments(
 
 
 def test_smoothing_module_is_exposed_by_package():
-    assert scn.smoothing.smooth_relative_gaussian is smooth_relative_gaussian
+    assert scn.smoothing.smooth_relative is smooth_relative
 
 
 def test_accepts_data_array_and_preserves_metadata():
@@ -497,8 +494,8 @@ def test_accepts_data_array_and_preserves_metadata():
     )
     original = data.copy()
 
-    actual = smooth_relative_gaussian(data, alpha=0.1)
-    expected = smooth_relative_gaussian(x, data.data, alpha=0.1)
+    actual = smooth_relative(data, scale=0.1)
+    expected = smooth_relative(x, data.data, scale=0.1)
 
     assert sc.identical(data, original)
     assert isinstance(actual, sc.DataArray)
@@ -509,6 +506,36 @@ def test_accepts_data_array_and_preserves_metadata():
 
     actual.values[0] = -1.0
     assert sc.identical(data, original)
+
+
+def test_relative_smoothing_accepts_dimensionless_variable_scale():
+    x, y = _variables([1.0, 2.0, 3.0], [1.0, 4.0, 9.0])
+
+    actual = smooth_relative(x, y, scale=sc.scalar(0.1))
+    expected = smooth_relative(x, y, scale=0.1)
+
+    assert sc.identical(actual, expected)
+
+
+def test_relative_smoothing_rejects_non_scalar_scale():
+    x, y = _variables([1.0, 2.0], [1.0, 2.0])
+
+    with pytest.raises(sc.DimensionError, match="scale must be a scalar"):
+        smooth_relative(x, y, scale=sc.array(dims=['scale'], values=[0.1]))
+
+
+def test_relative_smoothing_rejects_scale_with_unit():
+    x, y = _variables([1.0, 2.0], [1.0, 2.0])
+
+    with pytest.raises(sc.UnitError):
+        smooth_relative(x, y, scale=sc.scalar(0.1, unit='m'))
+
+
+def test_relative_smoothing_rejects_scale_with_variance():
+    x, y = _variables([1.0, 2.0], [1.0, 2.0])
+
+    with pytest.raises(sc.VariancesError, match="scales with variances"):
+        smooth_relative(x, y, scale=sc.scalar(0.1, variance=0.01))
 
 
 def test_rejects_variable_with_variances():
@@ -522,7 +549,7 @@ def test_rejects_variable_with_variances():
     )
 
     with pytest.raises(sc.VariancesError, match="signals with variances"):
-        smooth_relative_gaussian(x, y, alpha=0.1)
+        smooth_relative(x, y, scale=0.1)
 
 
 def test_rejects_data_array_with_variances():
@@ -538,12 +565,12 @@ def test_rejects_data_array_with_variances():
     )
 
     with pytest.raises(sc.VariancesError, match="signals with variances"):
-        smooth_relative_gaussian(data, alpha=0.1)
+        smooth_relative(data, scale=0.1)
 
 
 def test_rejects_numpy_arrays():
     with pytest.raises(TypeError, match="DataArray or a pair of Variables"):
-        smooth_relative_gaussian(np.arange(1.0, 4.0), np.ones(3))
+        smooth_relative(np.arange(1.0, 4.0), np.ones(3), scale=0.1)
 
 
 def test_rejects_variables_with_different_dimensions():
@@ -551,14 +578,14 @@ def test_rejects_variables_with_different_dimensions():
     y = sc.ones(dims=['y'], shape=[3])
 
     with pytest.raises(sc.DimensionError, match="same dimension"):
-        smooth_relative_gaussian(x, y)
+        smooth_relative(x, y, scale=0.1)
 
 
 def test_rejects_data_array_without_dimension_coordinate():
     data = sc.DataArray(sc.ones(dims=['x'], shape=[3]))
 
     with pytest.raises(sc.CoordError, match="dimension coordinate"):
-        smooth_relative_gaussian(data)
+        smooth_relative(data, scale=0.1)
 
 
 def test_rejects_data_array_with_bin_edge_coordinate():
@@ -568,7 +595,7 @@ def test_rejects_data_array_with_bin_edge_coordinate():
     )
 
     with pytest.raises(sc.CoordError, match="bin edges"):
-        smooth_relative_gaussian(data)
+        smooth_relative(data, scale=0.1)
 
 
 def test_rejects_data_array_with_masks():
@@ -579,7 +606,7 @@ def test_rejects_data_array_with_masks():
     )
 
     with pytest.raises(ValueError, match="data with masks"):
-        smooth_relative_gaussian(data)
+        smooth_relative(data, scale=0.1)
 
 
 def test_rejects_y_with_data_array():
@@ -587,7 +614,7 @@ def test_rejects_y_with_data_array():
     data = sc.DataArray(y, coords={'x': x})
 
     with pytest.raises(TypeError, match="y must be omitted"):
-        smooth_relative_gaussian(data, y)
+        smooth_relative(data, y, scale=0.1)
 
 
 def test_rejects_geometric_grid_larger_than_limit():
@@ -598,14 +625,14 @@ def test_rejects_geometric_grid_larger_than_limit():
         ValueError,
         match=r"geometric resampling would require too many points.*max_grid_points=70",
     ):
-        _smooth_values(smooth_relative_kernel, x, y, max_grid_points=70)
+        _smooth_values(smooth_relative, x, y, scale=0.1, max_grid_points=70)
 
 
 def test_accepts_geometric_grid_equal_to_limit():
     x = np.array([1.0, 1.01, 2.0])
     y = np.ones_like(x)
 
-    actual = _smooth_values(smooth_relative_kernel, x, y, max_grid_points=71)
+    actual = _smooth_values(smooth_relative, x, y, scale=0.1, max_grid_points=71)
 
     np.testing.assert_allclose(actual, y)
 
@@ -615,25 +642,15 @@ def test_geometric_input_does_not_gain_a_point_from_roundoff():
     x = _geometric_cell_centers(0.1, 0.9, size)
     y = _quadratic(x)
 
-    actual = _smooth_values(smooth_relative_gaussian, x, y, max_grid_points=size)
+    actual = _smooth_values(
+        smooth_relative,
+        x,
+        y,
+        scale=0.1,
+        max_grid_points=size,
+    )
 
     assert actual.shape == y.shape
-
-
-@pytest.mark.parametrize(
-    "smooth",
-    [
-        smooth_relative_gaussian,
-        smooth_relative_rectangle,
-        smooth_relative_triangle,
-    ],
-)
-def test_convenience_functions_forward_max_grid_points(smooth):
-    x = np.array([1.0, 1.01, 2.0])
-    y = np.ones_like(x)
-
-    with pytest.raises(ValueError, match="max_grid_points=2"):
-        _smooth_values(smooth, x, y, max_grid_points=2)
 
 
 def test_pathologically_close_coordinates_fail_before_allocation():
@@ -641,14 +658,14 @@ def test_pathologically_close_coordinates_fail_before_allocation():
     y = np.ones_like(x)
 
     with pytest.raises(ValueError, match="exceeding max_grid_points=1,000,000"):
-        _smooth_values(smooth_relative_kernel, x, y)
+        _smooth_values(smooth_relative, x, y, scale=0.1)
 
 
 def test_wide_coordinate_range_does_not_overflow_grid_construction():
     x = np.array([1e-300, 1.0, 1e300])
     y = np.ones_like(x)
 
-    actual = _smooth_values(smooth_relative_kernel, x, y)
+    actual = _smooth_values(smooth_relative, x, y, scale=0.1)
 
     np.testing.assert_allclose(actual, y)
 
@@ -658,7 +675,7 @@ def test_kernel_stencil_is_bounded_before_allocation():
 
     offsets, weights = _relative_kernel_weights(
         log_spacing=1e-6,
-        alpha=1.0,
+        scale=1.0,
         kernel="gaussian",
         tail=1e-12,
         max_offset=max_offset,
@@ -679,7 +696,7 @@ def test_asymmetric_kernel_convolution_matches_direct_weighted_sum():
 
     offsets, weights = _relative_kernel_weights(
         log_spacing=log_spacing,
-        alpha=alpha,
+        scale=alpha,
         kernel=kernel,
         tail=1e-12,
         max_offset=size - 1,
@@ -697,7 +714,7 @@ def test_asymmetric_kernel_convolution_matches_direct_weighted_sum():
     actual = _smooth_relative_kernel_on_geomgrid(
         y,
         log_spacing=log_spacing,
-        alpha=alpha,
+        scale=alpha,
         kernel=kernel,
         tail=1e-12,
     )
@@ -709,7 +726,7 @@ def test_kernel_with_no_reachable_mass_returns_nan():
     actual = _smooth_relative_kernel_on_geomgrid(
         np.arange(5.0),
         log_spacing=0.1,
-        alpha=0.1,
+        scale=0.1,
         kernel=uniform(loc=100.0, scale=1.0),
         tail=1e-12,
     )
@@ -717,18 +734,18 @@ def test_kernel_with_no_reachable_mass_returns_nan():
     assert np.all(np.isnan(actual))
 
 
-@pytest.mark.parametrize("alpha", [np.nan, np.inf, -np.inf, -1.0])
-def test_rejects_invalid_alpha_before_noop_return(alpha):
+@pytest.mark.parametrize("scale", [np.nan, np.inf, -np.inf, -1.0])
+def test_rejects_invalid_relative_scale_before_noop_return(scale):
     x, y = _variables([], [])
-    with pytest.raises(ValueError, match="alpha must be non-negative"):
-        smooth_relative_kernel(x, y, alpha=alpha)
+    with pytest.raises(ValueError, match="scale must be non-negative"):
+        smooth_relative(x, y, scale=scale)
 
 
 @pytest.mark.parametrize("tail", [np.nan, np.inf, -np.inf, 0.0, 1.0])
 def test_rejects_invalid_tail_before_noop_return(tail):
     x, y = _variables([], [])
     with pytest.raises(ValueError, match="tail must be between 0 and 1"):
-        smooth_relative_kernel(x, y, tail=tail)
+        smooth_relative(x, y, scale=0.1, tail=tail)
 
 
 @pytest.mark.parametrize(
@@ -742,32 +759,32 @@ def test_rejects_invalid_tail_before_noop_return(tail):
 def test_rejects_invalid_single_coordinate_before_noop_return(x, message):
     x, y = _variables(x, [1.0])
     with pytest.raises(ValueError, match=message):
-        smooth_relative_kernel(x, y)
+        smooth_relative(x, y, scale=0.1)
 
 
 @pytest.mark.parametrize(
-    ("smooth", "kwargs"),
+    ("function", "kwargs"),
     [
-        (smooth_relative_kernel, {}),
-        (smooth_kernel, {"width": sc.scalar(0.1, unit='m')}),
+        (smooth_relative, {"scale": 0.1}),
+        (smooth, {"scale": sc.scalar(0.1, unit='m')}),
     ],
 )
 @pytest.mark.parametrize("max_grid_points", [True, 2.5])
-def test_rejects_non_integer_max_grid_points(smooth, kwargs, max_grid_points):
+def test_rejects_non_integer_max_grid_points(function, kwargs, max_grid_points):
     x, y = _variables([], [])
     with pytest.raises(TypeError, match="max_grid_points must be an integer"):
-        smooth(x, y, max_grid_points=max_grid_points, **kwargs)
+        function(x, y, max_grid_points=max_grid_points, **kwargs)
 
 
 @pytest.mark.parametrize(
-    ("smooth", "kwargs"),
+    ("function", "kwargs"),
     [
-        (smooth_relative_kernel, {}),
-        (smooth_kernel, {"width": sc.scalar(0.1, unit='m')}),
+        (smooth_relative, {"scale": 0.1}),
+        (smooth, {"scale": sc.scalar(0.1, unit='m')}),
     ],
 )
 @pytest.mark.parametrize("max_grid_points", [-1, 0, 1])
-def test_rejects_too_small_max_grid_points(smooth, kwargs, max_grid_points):
+def test_rejects_too_small_max_grid_points(function, kwargs, max_grid_points):
     x, y = _variables([], [])
     with pytest.raises(ValueError, match="max_grid_points must be at least 2"):
-        smooth(x, y, max_grid_points=max_grid_points, **kwargs)
+        function(x, y, max_grid_points=max_grid_points, **kwargs)
