@@ -11,10 +11,14 @@ import scippneutron as scn
 from scippneutron.smoothing import (
     _relative_kernel_weights,
     _smooth_relative_kernel_on_geomgrid,
+    smooth_gaussian,
+    smooth_kernel,
+    smooth_rectangle,
     smooth_relative_gaussian,
     smooth_relative_kernel,
     smooth_relative_rectangle,
     smooth_relative_triangle,
+    smooth_triangle,
 )
 
 
@@ -27,10 +31,9 @@ def _quadratic(x):
     return 1.0 + 0.3 * x + 0.7 * x**2
 
 
-def _exact_smoothed_quadratic(x, alpha, lower, upper):
-    """Exactly smooth ``_quadratic`` with a finite-domain Gaussian."""
+def _exact_smoothed_quadratic_with_sigma(x, sigma, lower, upper):
     x = np.asarray(x, dtype=float)
-    sigma = alpha * x
+    sigma = np.asarray(sigma, dtype=float)
 
     z_lower = (lower - x) / sigma
     z_upper = (upper - x) / sigma
@@ -48,18 +51,27 @@ def _exact_smoothed_quadratic(x, alpha, lower, upper):
     return 1.0 + 0.3 * mean_x + 0.7 * mean_x_squared
 
 
+def _exact_smoothed_quadratic(x, alpha, lower, upper):
+    """Exactly smooth ``_quadratic`` with a relative finite-domain Gaussian."""
+    return _exact_smoothed_quadratic_with_sigma(x, alpha * np.asarray(x), lower, upper)
+
+
 def _geometric_cell_centers(lower, upper, size):
     log_step = np.log(upper / lower) / size
     return lower * np.exp((np.arange(size) + 0.5) * log_step)
 
 
-def _variables(x, y, *, variances=None):
+def _linear_cell_centers(lower, upper, size):
+    step = (upper - lower) / size
+    return lower + (np.arange(size) + 0.5) * step
+
+
+def _variables(x, y):
     return (
         sc.array(dims=['x'], values=np.asarray(x), unit='m'),
         sc.array(
             dims=['x'],
             values=np.asarray(y),
-            variances=None if variances is None else np.asarray(variances),
             unit='counts',
         ),
     )
@@ -83,6 +95,216 @@ def _quadratic_smoothing_error(*, size, alpha, tail=1e-9):
     )
     expected = _exact_smoothed_quadratic(x, alpha, lower, upper)
     return actual - expected
+
+
+def _fixed_width_quadratic_smoothing_error(*, size, width, tail=1e-9):
+    lower = -0.4
+    upper = 0.9
+    x = _linear_cell_centers(lower, upper, size)
+    x_var, y_var = _variables(x, _quadratic(x))
+    actual = smooth_gaussian(
+        x_var,
+        y_var,
+        width=sc.scalar(width, unit='m'),
+        tail=tail,
+    ).values
+    expected = _exact_smoothed_quadratic_with_sigma(x, width, lower, upper)
+    return actual - expected
+
+
+def test_fixed_width_gaussian_matches_exact_quadratic_on_regular_grid():
+    error = _fixed_width_quadratic_smoothing_error(size=4000, width=0.1)
+
+    assert np.max(np.abs(error)) < 5e-7
+    assert np.sqrt(np.mean(error**2)) < 1e-7
+
+
+def test_fixed_width_gaussian_error_is_second_order_in_grid_spacing():
+    sizes = np.array([500, 1000, 2000, 4000])
+    errors = np.array(
+        [
+            np.max(np.abs(_fixed_width_quadratic_smoothing_error(size=size, width=0.1)))
+            for size in sizes
+        ]
+    )
+
+    observed_orders = np.log2(errors[:-1] / errors[1:])
+    np.testing.assert_allclose(observed_orders, 2.0, atol=0.06)
+
+
+def test_fixed_width_gaussian_error_scales_with_tail_until_grid_error_dominates():
+    tails = np.array([1e-2, 1e-3, 1e-4, 1e-5])
+    errors = np.array(
+        [
+            np.max(
+                np.abs(
+                    _fixed_width_quadratic_smoothing_error(
+                        size=4000, width=0.1, tail=tail
+                    )
+                )
+            )
+            for tail in tails
+        ]
+    )
+
+    reduction_per_decade = errors[:-1] / errors[1:]
+    assert np.all((5.0 < reduction_per_decade) & (reduction_per_decade < 15.0))
+
+    grid_limited_errors = np.array(
+        [
+            np.max(
+                np.abs(
+                    _fixed_width_quadratic_smoothing_error(
+                        size=4000, width=0.1, tail=tail
+                    )
+                )
+            )
+            for tail in (1e-9, 1e-12)
+        ]
+    )
+    np.testing.assert_allclose(
+        grid_limited_errors[0], grid_limited_errors[1], rtol=0.05
+    )
+
+
+@pytest.mark.parametrize(
+    ("smooth", "kernel_variance", "max_error"),
+    [
+        (smooth_rectangle, 1.0 / 3.0, 3e-7),
+        (smooth_triangle, 1.0 / 6.0, 5e-8),
+    ],
+)
+def test_fixed_width_compact_kernel_matches_interior_quadratic_moments(
+    smooth, kernel_variance, max_error
+):
+    lower = -0.4
+    upper = 0.9
+    size = 4000
+    width = 0.1
+    x = _linear_cell_centers(lower, upper, size)
+    x_var, y_var = _variables(x, _quadratic(x))
+
+    actual = smooth(x_var, y_var, width=sc.scalar(width, unit='m')).values
+    expected = 1.0 + 0.3 * x + 0.7 * (x**2 + width**2 * kernel_variance)
+    interior = (x - width >= lower) & (x + width <= upper)
+
+    assert np.max(np.abs(actual[interior] - expected[interior])) < max_error
+
+
+def test_fixed_width_smoothing_converts_width_to_coordinate_unit():
+    x = sc.linspace('x', -0.4, 0.9, 100, unit='m')
+    y = sc.array(dims=['x'], values=_quadratic(x.values), unit='counts')
+
+    in_meters = smooth_gaussian(x, y, width=sc.scalar(0.1, unit='m'))
+    in_centimeters = smooth_gaussian(x, y, width=sc.scalar(10.0, unit='cm'))
+
+    assert sc.identical(in_meters, in_centimeters)
+
+
+def test_fixed_width_smoothing_accepts_distribution():
+    x = sc.linspace('x', -0.4, 0.9, 100, unit='m')
+    y = sc.array(dims=['x'], values=_quadratic(x.values), unit='counts')
+    width = sc.scalar(0.1, unit='m')
+
+    actual = smooth_kernel(
+        x,
+        y,
+        width=width,
+        kernel=uniform(loc=-1.0, scale=2.0),
+    )
+    expected = smooth_rectangle(x, y, width=width)
+
+    assert sc.identical(actual, expected)
+
+
+def test_fixed_width_asymmetric_kernel_has_correct_direction():
+    x = sc.arange('x', 0.0, 2.0, 0.1, unit='m')
+    y = sc.array(dims=['x'], values=x.values, unit='counts')
+
+    actual = smooth_kernel(
+        x,
+        y,
+        width=sc.scalar(0.2, unit='m'),
+        kernel=uniform(loc=0.5, scale=1.0),
+    )
+
+    np.testing.assert_allclose(actual.values[3:-3], y.values[3:-3] + 0.2)
+
+
+def test_nonfinite_value_only_affects_overlapping_kernel_windows():
+    size = 10_000
+    x = sc.arange('x', float(size))
+    values = np.ones(size)
+    values[size // 2] = np.nan
+    y = sc.array(dims=['x'], values=values)
+
+    actual = smooth_gaussian(x, y, width=sc.scalar(150.0))
+
+    assert np.isfinite(actual.values[0])
+    assert np.isnan(actual.values[size // 2])
+    assert np.isfinite(actual.values[-1])
+
+
+def test_fixed_width_smoothing_accepts_data_array():
+    x = sc.linspace('x', -0.4, 0.9, 100, unit='m')
+    data = sc.DataArray(
+        sc.array(dims=['x'], values=_quadratic(x.values), unit='counts'),
+        coords={'x': x, 'aux': sc.arange('x', 100)},
+    )
+
+    actual = smooth_gaussian(data, width=sc.scalar(0.1, unit='m'))
+    expected = smooth_gaussian(x, data.data, width=sc.scalar(0.1, unit='m'))
+
+    assert sc.identical(actual.data, expected)
+    assert sc.identical(actual.coords['x'], data.coords['x'])
+    assert sc.identical(actual.coords['aux'], data.coords['aux'])
+
+
+def test_fixed_width_smoothing_rejects_nonuniform_grid():
+    x, y = _variables([0.0, 1.0, 2.1], [1.0, 2.0, 3.0])
+
+    with pytest.raises(ValueError, match="regularly spaced"):
+        smooth_kernel(x, y, width=sc.scalar(0.1, unit='m'))
+
+
+@pytest.mark.parametrize("width", [np.nan, np.inf, -np.inf, -1.0])
+def test_fixed_width_smoothing_rejects_invalid_width(width):
+    x, y = _variables([], [])
+
+    with pytest.raises(ValueError, match="width must be non-negative"):
+        smooth_kernel(x, y, width=sc.scalar(width, unit='m'))
+
+
+def test_fixed_width_smoothing_rejects_non_scalar_width():
+    x, y = _variables([0.0, 1.0], [1.0, 2.0])
+
+    with pytest.raises(sc.DimensionError, match="width must be a scalar"):
+        smooth_kernel(x, y, width=sc.array(dims=['width'], values=[0.1], unit='m'))
+
+
+def test_fixed_width_smoothing_rejects_non_variable_width():
+    x, y = _variables([0.0, 1.0], [1.0, 2.0])
+
+    with pytest.raises(TypeError, match=r"width must be a scipp\.Variable"):
+        smooth_kernel(x, y, width=0.1)  # type: ignore[arg-type]
+
+
+def test_fixed_width_smoothing_rejects_incompatible_width_unit():
+    x, y = _variables([0.0, 1.0], [1.0, 2.0])
+
+    with pytest.raises(sc.UnitError):
+        smooth_kernel(x, y, width=sc.scalar(0.1, unit='s'))
+
+
+def test_fixed_width_smoothing_rejects_width_with_variance():
+    x, y = _variables([0.0, 1.0], [1.0, 2.0])
+
+    with pytest.raises(sc.VariancesError, match="widths with variances"):
+        smooth_kernel(
+            x,
+            y,
+            width=sc.scalar(0.1, variance=0.01, unit='m'),
+        )
 
 
 def test_gaussian_smoothing_matches_exact_quadratic_on_geometric_grid():
@@ -195,15 +417,20 @@ def test_accepts_data_array_and_preserves_metadata():
             'scalar': sc.scalar(1.2, unit='K'),
         },
     )
+    original = data.copy()
 
     actual = smooth_relative_gaussian(data, alpha=0.1)
     expected = smooth_relative_gaussian(x, data.data, alpha=0.1)
 
+    assert sc.identical(data, original)
     assert isinstance(actual, sc.DataArray)
     assert sc.identical(actual.data, expected)
     assert sc.identical(actual.coords['x'], data.coords['x'])
     assert sc.identical(actual.coords['aux'], data.coords['aux'])
     assert sc.identical(actual.coords['scalar'], data.coords['scalar'])
+
+    actual.values[0] = -1.0
+    assert sc.identical(data, original)
 
 
 def test_rejects_variable_with_variances():

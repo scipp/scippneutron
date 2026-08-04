@@ -12,10 +12,14 @@ from scipy.signal import convolve
 from scipy.stats import norm, triang, uniform
 
 __all__ = [
+    "smooth_gaussian",
+    "smooth_kernel",
+    "smooth_rectangle",
     "smooth_relative_gaussian",
     "smooth_relative_kernel",
     "smooth_relative_rectangle",
     "smooth_relative_triangle",
+    "smooth_triangle",
 ]
 
 
@@ -33,11 +37,10 @@ _IntArray: TypeAlias = NDArray[np.int64]
 _ScippArray: TypeAlias = sc.DataArray | sc.Variable
 
 _BUILTIN_KERNELS: dict[str, _Distribution] = {
-    # Standard Gaussian in relative-coordinate units.
+    # Standard Gaussian.
     "gaussian": norm(),
     "normal": norm(),
     # Centered rectangle on [-1, 1].
-    # With alpha=a, this has relative support [-a, a].
     "rectangle": uniform(loc=-1.0, scale=2.0),
     "rect": uniform(loc=-1.0, scale=2.0),
     "box": uniform(loc=-1.0, scale=2.0),
@@ -70,6 +73,33 @@ def _as_kernel_distribution(kernel: _Kernel) -> _Distribution:
     return kernel
 
 
+def _kernel_support(dist: _Distribution) -> tuple[float, float]:
+    try:
+        support_min, support_max = dist.support()
+    except TypeError as e:
+        raise TypeError(
+            "kernel must be a fully specified distribution. For distributions "
+            "with shape parameters, pass a frozen distribution such as "
+            "triang(c=0.5), not triang."
+        ) from e
+    return float(support_min), float(support_max)
+
+
+def _trim_kernel_weights(
+    offsets: _IntArray, weights: _FloatArray
+) -> tuple[_IntArray, _FloatArray]:
+    nonzero = np.flatnonzero(weights > 0.0)
+    if nonzero.size == 0:
+        return offsets, weights
+
+    # Trim zero-only ends, but preserve offset zero for convolution alignment.
+    zero = -offsets[0]
+    first = min(nonzero[0], zero)
+    last = max(nonzero[-1], zero) + 1
+    weights = weights[first:last]
+    return offsets[first:last], weights / weights.sum()
+
+
 def _relative_kernel_weights(
     log_spacing: float,
     alpha: float,
@@ -89,7 +119,6 @@ def _relative_kernel_weights(
         K(q, q') = 1 / (alpha * q) * f((q' - q) / (alpha * q))
 
     where f is the PDF of the supplied distribution.
-
     """
     if not np.isfinite(alpha) or alpha <= 0:
         raise ValueError("alpha must be positive")
@@ -115,17 +144,7 @@ def _relative_kernel_weights(
     if not np.isfinite(norm_mass) or norm_mass <= 0.0:
         raise ValueError("kernel has no positive-domain mass for this alpha")
 
-    try:
-        support_min, support_max = dist.support()
-    except TypeError as e:
-        raise TypeError(
-            "kernel must be a fully specified distribution. For distributions "
-            "with shape parameters, pass a frozen distribution such as "
-            "triang(c=0.5), not triang."
-        ) from e
-
-    support_min = float(support_min)
-    support_max = float(support_max)
+    support_min, support_max = _kernel_support(dist)
 
     # Exact z-support after clipping to q' > 0.
     z_left_exact = max(z_domain_min, support_min)
@@ -174,20 +193,44 @@ def _relative_kernel_weights(
     w = (dist.cdf(zU) - dist.cdf(zL)) / norm_mass
     w = np.maximum(w, 0.0)
 
-    nonzero = np.flatnonzero(w > 0.0)
-    if nonzero.size == 0:
-        # The distribution has no mass within reach of the finite input.
-        # Returning zero weights lets the caller mark those values as NaN.
-        return m, w
+    return _trim_kernel_weights(m, w)
 
-    # Trim zero-only ends, but preserve offset zero for convolution alignment.
-    zero = -m_min
-    first = min(nonzero[0], zero)
-    last = max(nonzero[-1], zero) + 1
 
-    # Renormalize after finite tail truncation.
-    trimmed_weights = w[first:last]
-    return m[first:last], trimmed_weights / trimmed_weights.sum()
+def _translation_invariant_kernel_weights(
+    spacing: float,
+    width: float,
+    kernel: _Kernel,
+    tail: float,
+    max_offset: int,
+) -> tuple[_IntArray, _FloatArray]:
+    if not np.isfinite(width) or width <= 0:
+        raise ValueError("width must be positive")
+    if not np.isfinite(spacing) or spacing <= 0:
+        raise ValueError("spacing must be positive")
+    if not np.isfinite(tail) or not (0.0 < tail < 1.0):
+        raise ValueError("tail must be between 0 and 1")
+    if max_offset < 0:
+        raise ValueError("max_offset must be non-negative")
+
+    dist = _as_kernel_distribution(kernel)
+    z_left, z_right = _kernel_support(dist)
+    if not np.all(np.isfinite([z_left, z_right])):
+        z_left, z_right = (
+            float(value) for value in dist.ppf([0.5 * tail, 1.0 - 0.5 * tail])
+        )
+
+    bounds = width * np.array([z_left, z_right])
+    if not np.all(np.isfinite(bounds)):
+        raise ValueError("kernel bounds are not finite; increase tail")
+
+    m_min = int(np.clip(np.floor(bounds[0] / spacing + 0.5), -max_offset, 0))
+    m_max = int(np.clip(np.ceil(bounds[1] / spacing - 0.5), 0, max_offset))
+    m = np.arange(m_min, m_max + 1, dtype=np.int64)
+
+    lower = (m - 0.5) * spacing / width
+    upper = (m + 0.5) * spacing / width
+    weights = np.maximum(dist.cdf(upper) - dist.cdf(lower), 0.0)
+    return _trim_kernel_weights(m, weights)
 
 
 def _valid_weight_sums(n: int, m: _IntArray, w: _FloatArray) -> _FloatArray:
@@ -218,6 +261,27 @@ def _valid_weight_sums(n: int, m: _IntArray, w: _FloatArray) -> _FloatArray:
     )
 
 
+def _smooth_with_weights(
+    y: _FloatArray, offsets: _IntArray, weights: _FloatArray
+) -> _FloatArray:
+    # Desired operation:
+    #
+    #   out[i] = sum_m weights[m] * y[i + m]
+    #
+    # scipy convolution reverses the second argument, hence weights[::-1].
+    # FFT convolution would spread a single NaN or infinity over the entire
+    # output. SciPy recommends the direct method for non-finite inputs.
+    method = "auto" if np.all(np.isfinite(y)) else "direct"
+    full = cast(_FloatArray, convolve(y, weights[::-1], mode="full", method=method))
+    start = int(offsets[-1])
+    numerator = full[start : start + y.size]
+    denominator = _valid_weight_sums(y.size, offsets, weights)
+
+    out = np.full_like(numerator, np.nan)
+    np.divide(numerator, denominator, out=out, where=denominator > 0.0)
+    return out
+
+
 def _smooth_relative_kernel_on_geomgrid(
     y: ArrayLike,
     log_spacing: float,
@@ -238,34 +302,14 @@ def _smooth_relative_kernel_on_geomgrid(
     if y.size == 0 or alpha == 0:
         return y.copy()
 
-    m, w = _relative_kernel_weights(
+    offsets, weights = _relative_kernel_weights(
         log_spacing=log_spacing,
         alpha=alpha,
         kernel=kernel,
         tail=tail,
         max_offset=y.size - 1,
     )
-
-    # Desired operation:
-    #
-    #   out[i] = sum_m w[m] * y[i + m]
-    #
-    # scipy convolution reverses the second argument, hence w[::-1].
-    full = cast(_FloatArray, convolve(y, w[::-1], mode="full"))
-
-    start = int(m[-1])
-    numerator = full[start : start + y.size]
-
-    denom = _valid_weight_sums(y.size, m, w)
-
-    out = np.full_like(numerator, np.nan)
-    np.divide(
-        numerator,
-        denom,
-        out=out,
-        where=denom > 0.0,
-    )
-    return out
+    return _smooth_with_weights(y, offsets, weights)
 
 
 def _smooth_relative_kernel(
@@ -332,15 +376,66 @@ def _smooth_relative_kernel(
     return cast(_FloatArray, np.interp(x, xp, zg))
 
 
-def _smooth_variable(
-    x: sc.Variable,
-    y: sc.Variable,
-    *,
-    alpha: float,
-    kernel: _Kernel,
-    tail: float,
-    max_grid_points: int,
-) -> sc.Variable:
+def _smooth_kernel_values(
+    x: ArrayLike,
+    y: ArrayLike,
+    width: float,
+    kernel: _Kernel = "gaussian",
+    tail: float = 1e-12,
+) -> _FloatArray:
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+
+    if x.ndim != 1 or y.ndim != 1:
+        raise ValueError("x and y must be one-dimensional")
+    if x.size != y.size:
+        raise ValueError("x and y must have the same length")
+    if not np.isfinite(width) or width < 0:
+        raise ValueError("width must be non-negative")
+    if not np.isfinite(tail) or not (0.0 < tail < 1.0):
+        raise ValueError("tail must be between 0 and 1")
+    if np.any(~np.isfinite(x)):
+        raise ValueError("x must contain only finite values")
+    if np.any(np.diff(x) <= 0):
+        raise ValueError("x must be strictly increasing")
+    if x.size == 0 or width == 0 or x.size == 1:
+        return y.copy()
+
+    spacing = np.diff(x)
+    if not np.allclose(spacing, spacing[0], rtol=1e-7, atol=0.0):
+        raise ValueError("x must be regularly spaced")
+
+    offsets, weights = _translation_invariant_kernel_weights(
+        spacing=float(spacing[0]),
+        width=width,
+        kernel=kernel,
+        tail=tail,
+        max_offset=y.size - 1,
+    )
+    return _smooth_with_weights(y, offsets, weights)
+
+
+def _scipp_input(
+    x: _ScippArray, y: sc.Variable | None
+) -> tuple[sc.Variable, sc.Variable, sc.DataArray | None]:
+    template: sc.DataArray | None = None
+    if isinstance(x, sc.DataArray):
+        if y is not None:
+            raise TypeError("y must be omitted when x is a DataArray")
+        if x.ndim != 1:
+            raise sc.DimensionError("data must be one-dimensional")
+        if x.dim not in x.coords:
+            raise sc.CoordError("data must have a dimension coordinate")
+        if x.coords.is_edges(x.dim):
+            raise sc.CoordError("the dimension coordinate must not contain bin edges")
+        if x.masks:
+            raise ValueError("smoothing data with masks is not supported")
+        template = x
+        y = x.data
+        x = x.coords[x.dim]
+    elif not isinstance(y, sc.Variable):
+        raise TypeError("expected a DataArray or a pair of Variables")
+
     if x.ndim != 1 or y.ndim != 1:
         raise sc.DimensionError("x and y must be one-dimensional")
     if x.dims != y.dims:
@@ -352,19 +447,217 @@ def _smooth_variable(
             "Smoothing signals with variances is not supported because it would "
             "introduce correlations between data points."
         )
+    return x, y, template
 
-    return sc.array(
-        dims=y.dims,
-        values=_smooth_relative_kernel(
-            x.values,
-            y.values,
-            alpha=alpha,
-            kernel=kernel,
-            tail=tail,
-            max_grid_points=max_grid_points,
-        ),
-        unit=y.unit,
+
+def _scipp_output(
+    template: sc.DataArray | None, y: sc.Variable, values: _FloatArray
+) -> _ScippArray:
+    data = sc.array(dims=y.dims, values=values, unit=y.unit)
+    if template is None:
+        return data
+
+    # The new container shares unchanged coordinates, but its data is independent.
+    out = template.copy(deep=False)
+    out.data = data
+    return out
+
+
+def _width_in_coordinate_unit(width: sc.Variable, x: sc.Variable) -> float:
+    if not isinstance(width, sc.Variable):
+        raise TypeError("width must be a scipp.Variable")
+    if width.ndim != 0:
+        raise sc.DimensionError("width must be a scalar")
+    if width.variances is not None:
+        raise sc.VariancesError("kernel widths with variances are not supported")
+    return float(width.to(unit=x.unit).value)
+
+
+def smooth_kernel(
+    x: _ScippArray,
+    y: sc.Variable | None = None,
+    *,
+    width: sc.Variable,
+    kernel: _Kernel = "gaussian",
+    tail: float = 1e-12,
+) -> _ScippArray:
+    """Smooth regularly sampled data with a translation-invariant kernel.
+
+    The kernel describes a distribution of displacements ``Z``, with displaced
+    coordinates given by ``x' = x + width * Z``. At the boundaries, the kernel
+    is renormalized over the available finite input domain.
+
+    Parameters
+    ----------
+    x:
+        One-dimensional data to smooth, or strictly increasing, regularly
+        spaced sample coordinates. A data array must have a dimension
+        coordinate.
+    y:
+        Values to smooth when ``x`` contains the sample coordinates. Must be a
+        one-dimensional variable with the same dimension as ``x``. Must be
+        omitted when ``x`` is a data array.
+    width:
+        Scale factor for the displacement distribution. Must be a scalar with a
+        unit compatible with the coordinate. Set to zero to return a copy of the
+        input without smoothing.
+    kernel:
+        Kernel distribution. Supported names are ``'gaussian'``, ``'rectangle'``,
+        and ``'triangle'``, including their aliases. Alternatively, provide a
+        fully specified distribution with ``cdf``, ``ppf``, and ``support``
+        methods.
+    tail:
+        Total probability omitted when truncating a kernel with unbounded
+        support.
+
+    Returns
+    -------
+    :
+        Smoothed data of the same type as the input. Coordinates and units are
+        preserved.
+
+    Raises
+    ------
+    ValueError
+        If the coordinate is not regularly spaced or the inputs otherwise have
+        invalid values, if a data array has masks, or if a string does not
+        identify a supported kernel.
+    scipp.DimensionError
+        If the inputs are not one-dimensional, a pair of variables does not
+        have matching dimensions, or ``width`` is not scalar.
+    scipp.CoordError
+        If a data array has no dimension coordinate or has a bin-edge
+        coordinate.
+    scipp.UnitError
+        If the unit of ``width`` is incompatible with the coordinate unit.
+    scipp.VariancesError
+        If the signal or ``width`` has variances.
+    TypeError
+        If ``width`` is not a variable or ``kernel`` is not a distribution-like
+        object.
+    """
+    x, y, template = _scipp_input(x, y)
+    values = _smooth_kernel_values(
+        x.values,
+        y.values,
+        width=_width_in_coordinate_unit(width, x),
+        kernel=kernel,
+        tail=tail,
     )
+    return _scipp_output(template, y, values)
+
+
+def smooth_gaussian(
+    x: _ScippArray,
+    y: sc.Variable | None = None,
+    *,
+    width: sc.Variable,
+    tail: float = 1e-12,
+) -> _ScippArray:
+    """Smooth regularly sampled data with a fixed-width Gaussian kernel.
+
+    Parameters
+    ----------
+    x:
+        One-dimensional data to smooth, or strictly increasing, regularly
+        spaced sample coordinates. A data array must have a dimension
+        coordinate.
+    y:
+        Values to smooth when ``x`` contains the sample coordinates. Must be a
+        one-dimensional variable with the same dimension as ``x``. Must be
+        omitted when ``x`` is a data array.
+    width:
+        Standard deviation of the Gaussian. Must be a scalar with a unit
+        compatible with the coordinate.
+    tail:
+        Total Gaussian probability omitted when truncating the kernel.
+
+    Returns
+    -------
+    :
+        Smoothed data of the same type as the input.
+
+    See Also
+    --------
+    smooth_kernel:
+        Smooth with a named or user-provided translation-invariant kernel.
+    """
+    return smooth_kernel(x, y, width=width, kernel="gaussian", tail=tail)
+
+
+def smooth_rectangle(
+    x: _ScippArray,
+    y: sc.Variable | None = None,
+    *,
+    width: sc.Variable,
+) -> _ScippArray:
+    """Smooth regularly sampled data with a fixed-width rectangular kernel.
+
+    The displacement is uniformly distributed on ``[-width, width]``.
+
+    Parameters
+    ----------
+    x:
+        One-dimensional data to smooth, or strictly increasing, regularly
+        spaced sample coordinates. A data array must have a dimension
+        coordinate.
+    y:
+        Values to smooth when ``x`` contains the sample coordinates. Must be a
+        one-dimensional variable with the same dimension as ``x``. Must be
+        omitted when ``x`` is a data array.
+    width:
+        Half-width of the rectangular kernel. Must be a scalar with a unit
+        compatible with the coordinate.
+
+    Returns
+    -------
+    :
+        Smoothed data of the same type as the input.
+
+    See Also
+    --------
+    smooth_kernel:
+        Smooth with a named or user-provided translation-invariant kernel.
+    """
+    return smooth_kernel(x, y, width=width, kernel="rectangle")
+
+
+def smooth_triangle(
+    x: _ScippArray,
+    y: sc.Variable | None = None,
+    *,
+    width: sc.Variable,
+) -> _ScippArray:
+    """Smooth regularly sampled data with a fixed-width triangular kernel.
+
+    The displacement has symmetric triangular support on ``[-width, width]``
+    and its peak at zero.
+
+    Parameters
+    ----------
+    x:
+        One-dimensional data to smooth, or strictly increasing, regularly
+        spaced sample coordinates. A data array must have a dimension
+        coordinate.
+    y:
+        Values to smooth when ``x`` contains the sample coordinates. Must be a
+        one-dimensional variable with the same dimension as ``x``. Must be
+        omitted when ``x`` is a data array.
+    width:
+        Half-width of the triangular kernel. Must be a scalar with a unit
+        compatible with the coordinate.
+
+    Returns
+    -------
+    :
+        Smoothed data of the same type as the input.
+
+    See Also
+    --------
+    smooth_kernel:
+        Smooth with a named or user-provided translation-invariant kernel.
+    """
+    return smooth_kernel(x, y, width=width, kernel="triangle")
 
 
 def smooth_relative_kernel(
@@ -434,39 +727,16 @@ def smooth_relative_kernel(
         If ``kernel`` is not a distribution-like object, or if
         ``max_grid_points`` is not an integer.
     """
-    if isinstance(x, sc.DataArray):
-        if y is not None:
-            raise TypeError("y must be omitted when x is a DataArray")
-        if x.ndim != 1:
-            raise sc.DimensionError("data must be one-dimensional")
-        if x.dim not in x.coords:
-            raise sc.CoordError("data must have a dimension coordinate")
-        if x.coords.is_edges(x.dim):
-            raise sc.CoordError("the dimension coordinate must not contain bin edges")
-        if x.masks:
-            raise ValueError("smoothing data with masks is not supported")
-
-        out = x.copy(deep=False)
-        out.data = _smooth_variable(
-            x.coords[x.dim],
-            x.data,
-            alpha=alpha,
-            kernel=kernel,
-            tail=tail,
-            max_grid_points=max_grid_points,
-        )
-        return out
-
-    if not isinstance(y, sc.Variable):
-        raise TypeError("expected a DataArray or a pair of Variables")
-    return _smooth_variable(
-        x,
-        y,
+    x, y, template = _scipp_input(x, y)
+    values = _smooth_relative_kernel(
+        x.values,
+        y.values,
         alpha=alpha,
         kernel=kernel,
         tail=tail,
         max_grid_points=max_grid_points,
     )
+    return _scipp_output(template, y, values)
 
 
 def smooth_relative_gaussian(
