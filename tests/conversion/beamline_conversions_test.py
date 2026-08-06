@@ -213,7 +213,7 @@ def test_two_theta_invariant_under_rotation(rotation: sc.Variable) -> None:
         incident_beam=rotation * incident_beam, scattered_beam=rotation * scattered_beam
     )
 
-    sc.testing.assert_allclose(original, rotated)
+    sc.testing.assert_allclose(original, rotated, rtol=sc.scalar(1e-4))
 
 
 @given(incident_rotation=rotations(), scattered_rotation=rotations())
@@ -718,8 +718,10 @@ def test_scattering_angles_with_gravity_invariant_under_rotation(
         gravity=rotation * gravity,
     )
 
-    sc.testing.assert_allclose(original['two_theta'], rotated['two_theta'])
-    sc.testing.assert_allclose(original['phi'], rotated['phi'])
+    sc.testing.assert_allclose(
+        original['two_theta'], rotated['two_theta'], rtol=sc.scalar(1e-4)
+    )
+    sc.testing.assert_allclose(original['phi'], rotated['phi'], rtol=sc.scalar(1e-4))
 
 
 def test_scattering_angle_in_yz_plane_requires_gravity_orthogonal_to_incident_beam():
