@@ -7,7 +7,7 @@ from io import StringIO
 import numpy as np
 import pytest
 import scipp as sc
-from hypothesis import assume, given, settings
+from hypothesis import assume, example, given, settings
 from hypothesis import strategies as st
 from packaging.version import Version
 from scipp.testing import strategies as scst
@@ -213,6 +213,13 @@ def test_can_set_header(da: sc.DataArray, header: str) -> None:
 
 @given(da=one_dim_data_arrays(), comment=headers())
 @settings(max_examples=40)
+@example(
+    da=sc.DataArray(
+        sc.array(dims=[''], values=[0.0], variances=[0.0]),
+        coords={'0\n': sc.array(dims=[''], values=[0.0], variances=[0.0])},
+    ),
+    comment='0',
+)
 def test_can_set_comment(da: sc.DataArray, comment: str) -> None:
     buffer = save_to_buffer(da, coord=next(iter(da.coords)), comment=comment)
     loaded = "\n".join(read_header(buffer)[1:-1]).strip()
