@@ -88,6 +88,16 @@ def make_test_data(coords=(), dataset=False):
     return da
 
 
+def test_convert_is_deprecated():
+    tof = make_test_data(coords=('tof', 'Ltotal'))
+    with pytest.warns(
+        sc.VisibleDeprecationWarning,
+        match=r'scippneutron\.convert is deprecated.*scipp\.transform_coords',
+    ) as warnings:
+        scn.convert(tof, origin='tof', target='wavelength', scatter=True)
+    assert warnings[0].filename == __file__
+
+
 def make_tof_binned_events():
     buffer = sc.DataArray(
         sc.zeros(dims=['event'], shape=[7], dtype=float),

@@ -2,6 +2,7 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 # @author Jan-Lukas Wynen
 
+import warnings
 from collections.abc import Callable
 
 import scipp as sc
@@ -140,7 +141,20 @@ def convert(
     :seealso: :py:func:`scippneutron.deduce_conversion_graph` and
               :py:func:`scippneutron.conversion_graph` to inspect
               the possible conversions.
+
+    .. deprecated:: 26.8.0
+       Use :py:meth:`scipp.DataArray.transform_coords` or
+       :py:meth:`scipp.Dataset.transform_coords` with a graph from
+       :py:mod:`scippneutron.conversion.graph` instead.
     """
+
+    warnings.warn(
+        "scippneutron.convert is deprecated and will be removed in a future "
+        "release. Use scipp.transform_coords with a graph from "
+        "scippneutron.conversion.graph instead.",
+        sc.VisibleDeprecationWarning,
+        stacklevel=2,
+    )
 
     graph = deduce_conversion_graph(data, origin, target, scatter)
 

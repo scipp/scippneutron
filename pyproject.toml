@@ -80,6 +80,8 @@ addopts = """
 testpaths = "tests"
 filterwarnings = [
     "error",
+    # Legacy conversion tests intentionally exercise this deprecated API.
+    'ignore:scippneutron.convert is deprecated:scipp.VisibleDeprecationWarning',
     'ignore:You are running a "Debug" build of scipp:',
     # from ipywidgets; they are migrating away from ipykernel, this warning should go away
     'ignore:The `ipykernel.comm.Comm` class has been deprecated.:DeprecationWarning',
