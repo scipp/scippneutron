@@ -194,7 +194,8 @@ def _generate_xye_column_header(da: sc.DataArray, coord: str) -> str:
     def format_unit(unit):
         return f'[{unit}]' if unit is not None else ''
 
-    c = f'{coord} {format_unit(da.coords[coord].unit)}'
+    escaped_coord = coord.translate(_LINE_SEPARATOR_ESCAPES)
+    c = f'{escaped_coord} {format_unit(da.coords[coord].unit)}'
     y = f'Y {format_unit(da.unit)}'
     e = f'E {format_unit(da.unit)}'
     # Widths are for the default format of `0.0`
@@ -202,6 +203,15 @@ def _generate_xye_column_header(da: sc.DataArray, coord: str) -> str:
 
 
 _HEADER_NOTE = "# ScippNeutron XYE file"
+
+# All characters that Python recognizes as line boundaries in str.splitlines().
+_LINE_SEPARATORS = '\n\r\v\f\x1c\x1d\x1e\x85\u2028\u2029'
+_LINE_SEPARATOR_ESCAPES = str.maketrans(
+    {
+        separator: separator.encode('unicode_escape').decode('ascii')
+        for separator in _LINE_SEPARATORS
+    }
+)
 
 
 def _serialize_xye_metadata(
