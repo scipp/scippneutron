@@ -8,12 +8,7 @@ from scipy.special import ndtr
 from scipy.stats import uniform
 
 import scippneutron as scn
-from scippneutron.smoothing import (
-    _relative_kernel_weights,
-    _smooth_relative_kernel_on_geomgrid,
-    smooth,
-    smooth_relative,
-)
+from scippneutron.smoothing import _relative_kernel_weights, smooth, smooth_relative
 
 
 def _normal_pdf(z):
@@ -304,7 +299,7 @@ def test_fixed_width_gaussian_matches_exact_quadratic_on_nonuniform_grid():
 
 
 def test_fixed_width_smoothing_rejects_resampled_grid_larger_than_limit():
-    x, y = _variables([0.0, 0.25, 1.0], [1.0, 2.0, 3.0])
+    x, y = _variables([0.0, 0.125, 1.0], [1.0, 2.0, 3.0])
 
     with pytest.raises(
         ValueError,
@@ -324,6 +319,40 @@ def test_fixed_width_smoothing_accepts_resampled_grid_equal_to_limit():
     )
 
     np.testing.assert_allclose(actual.values, y.values)
+
+
+@pytest.mark.parametrize(
+    ("function", "x", "kwargs"),
+    [
+        (
+            smooth,
+            np.linspace(0.0, 1.0, 11),
+            {"scale": sc.scalar(0.1, unit='m')},
+        ),
+        (smooth_relative, np.geomspace(1.0, 2.0, 11), {"scale": 0.1}),
+    ],
+)
+def test_input_grid_larger_than_limit_is_accepted(function, x, kwargs):
+    y = np.ones_like(x)
+
+    actual = _smooth_values(function, x, y, max_grid_points=10, **kwargs)
+
+    np.testing.assert_allclose(actual, y)
+
+
+@pytest.mark.parametrize(
+    ("function", "x", "kwargs"),
+    [
+        (smooth, np.array([0.0, 0.26, 1.0]), {"scale": sc.scalar(0.1, unit='m')}),
+        (smooth_relative, 2.0 ** np.array([0.0, 0.26, 1.0]), {"scale": 0.1}),
+    ],
+)
+def test_modest_resampling_larger_than_limit_is_accepted(function, x, kwargs):
+    y = np.ones_like(x)
+
+    actual = _smooth_values(function, x, y, max_grid_points=4, **kwargs)
+
+    np.testing.assert_allclose(actual, y)
 
 
 def test_fixed_width_pathologically_close_coordinates_fail_before_allocation():
@@ -568,9 +597,16 @@ def test_rejects_data_array_with_variances():
         smooth_relative(data, scale=0.1)
 
 
-def test_rejects_numpy_arrays():
+@pytest.mark.parametrize(
+    ("x", "y"),
+    [
+        (np.arange(1.0, 4.0), sc.ones(dims=['x'], shape=[3])),
+        (sc.arange('x', 1.0, 4.0), np.ones(3)),
+    ],
+)
+def test_rejects_non_scipp_pair_member(x, y):
     with pytest.raises(TypeError, match="DataArray or a pair of Variables"):
-        smooth_relative(np.arange(1.0, 4.0), np.ones(3), scale=0.1)
+        smooth_relative(x, y, scale=0.1)
 
 
 def test_rejects_variables_with_different_dimensions():
@@ -653,8 +689,10 @@ def test_geometric_input_does_not_gain_a_point_from_roundoff():
     assert actual.shape == y.shape
 
 
-def test_pathologically_close_coordinates_fail_before_allocation():
-    x = np.array([1.0, np.nextafter(1.0, 2.0), 2.0])
+@pytest.mark.filterwarnings("ignore:divide by zero encountered in scalar divide")
+@pytest.mark.parametrize("x0", [1.0, 3.0, 10.0, 0.1])
+def test_pathologically_close_coordinates_fail_before_allocation(x0):
+    x = np.array([x0, np.nextafter(x0, 2.0 * x0), 2.0 * x0])
     y = np.ones_like(x)
 
     with pytest.raises(ValueError, match="exceeding max_grid_points=1,000,000"):
@@ -693,14 +731,12 @@ def test_asymmetric_kernel_convolution_matches_direct_weighted_sum():
     alpha = 0.2
     kernel = uniform(loc=0.5, scale=1.0)
     y = np.arange(size, dtype=float) ** 2
+    x = np.geomspace(1.0, np.exp((size - 1) * log_spacing), size)
 
-    offsets, weights = _relative_kernel_weights(
-        log_spacing=log_spacing,
-        scale=alpha,
-        kernel=kernel,
-        tail=1e-12,
-        max_offset=size - 1,
-    )
+    offsets = np.arange(-size + 1, size)
+    lower = np.expm1((offsets - 0.5) * log_spacing) / alpha
+    upper = np.expm1((offsets + 0.5) * log_spacing) / alpha
+    weights = kernel.cdf(upper) - kernel.cdf(lower)
     expected = np.empty_like(y)
     for i in range(size):
         valid = (0 <= i + offsets) & (i + offsets < size)
@@ -711,9 +747,10 @@ def test_asymmetric_kernel_convolution_matches_direct_weighted_sum():
             else np.nan
         )
 
-    actual = _smooth_relative_kernel_on_geomgrid(
+    actual = _smooth_values(
+        smooth_relative,
+        x,
         y,
-        log_spacing=log_spacing,
         scale=alpha,
         kernel=kernel,
         tail=1e-12,
@@ -723,9 +760,12 @@ def test_asymmetric_kernel_convolution_matches_direct_weighted_sum():
 
 
 def test_kernel_with_no_reachable_mass_returns_nan():
-    actual = _smooth_relative_kernel_on_geomgrid(
-        np.arange(5.0),
-        log_spacing=0.1,
+    y = np.arange(5.0)
+    x = np.geomspace(1.0, np.exp((y.size - 1) * 0.1), y.size)
+    actual = _smooth_values(
+        smooth_relative,
+        x,
+        y,
         scale=0.1,
         kernel=uniform(loc=100.0, scale=1.0),
         tail=1e-12,

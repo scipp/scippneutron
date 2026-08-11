@@ -1,5 +1,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2026 Scipp contributors (https://github.com/scipp)
+"""Kernel smoothing of one-dimensional sampled signals.
+
+``smooth`` applies a translation-invariant displacement distribution, for a kernel
+whose width is constant in coordinate units. ``smooth_relative`` instead applies a
+distribution of fractional displacements, so its width scales with the coordinate.
+
+Both procedures accept irregularly spaced samples. They interpolate onto a uniform
+or geometric working grid that is no coarser than the tightest input spacing,
+integrate the kernel probability over grid cells, renormalize the convolution at
+finite boundaries, and interpolate the result back to the original coordinates.
+"""
 
 from __future__ import annotations
 
@@ -116,15 +127,6 @@ def _relative_kernel_weights(
 
     where f is the PDF of the supplied distribution.
     """
-    if not np.isfinite(scale) or scale <= 0:
-        raise ValueError("scale must be positive")
-    if not np.isfinite(log_spacing) or log_spacing <= 0:
-        raise ValueError("log_spacing must be positive")
-    if not np.isfinite(tail) or not (0.0 < tail < 1.0):
-        raise ValueError("tail must be between 0 and 1")
-    if max_offset < 0:
-        raise ValueError("max_offset must be non-negative")
-
     dist = _as_kernel_distribution(kernel)
 
     # Positive physical domain:
@@ -199,15 +201,6 @@ def _translation_invariant_kernel_weights(
     tail: float,
     max_offset: int,
 ) -> tuple[_IntArray, _FloatArray]:
-    if not np.isfinite(scale) or scale <= 0:
-        raise ValueError("scale must be positive")
-    if not np.isfinite(spacing) or spacing <= 0:
-        raise ValueError("spacing must be positive")
-    if not np.isfinite(tail) or not (0.0 < tail < 1.0):
-        raise ValueError("tail must be between 0 and 1")
-    if max_offset < 0:
-        raise ValueError("max_offset must be non-negative")
-
     dist = _as_kernel_distribution(kernel)
     z_left, z_right = _kernel_support(dist)
     if not np.all(np.isfinite([z_left, z_right])):
@@ -278,36 +271,6 @@ def _smooth_with_weights(
     return out
 
 
-def _smooth_relative_kernel_on_geomgrid(
-    y: ArrayLike,
-    log_spacing: float,
-    scale: float,
-    kernel: _Kernel,
-    tail: float,
-) -> _FloatArray:
-    y = np.asarray(y, dtype=float)
-
-    if y.ndim != 1:
-        raise ValueError("y must be one-dimensional")
-    if not np.isfinite(scale) or scale < 0:
-        raise ValueError("scale must be non-negative")
-    if not np.isfinite(log_spacing) or log_spacing <= 0:
-        raise ValueError("log_spacing must be positive")
-    if not np.isfinite(tail) or not (0.0 < tail < 1.0):
-        raise ValueError("tail must be between 0 and 1")
-    if y.size == 0 or scale == 0:
-        return y.copy()
-
-    offsets, weights = _relative_kernel_weights(
-        log_spacing=log_spacing,
-        scale=scale,
-        kernel=kernel,
-        tail=tail,
-        max_offset=y.size - 1,
-    )
-    return _smooth_with_weights(y, offsets, weights)
-
-
 def _validate_max_grid_points(max_grid_points: int) -> None:
     if isinstance(max_grid_points, bool | np.bool_) or not isinstance(
         max_grid_points, int | np.integer
@@ -317,7 +280,7 @@ def _validate_max_grid_points(max_grid_points: int) -> None:
         raise ValueError("max_grid_points must be at least 2")
 
 
-def _smooth_relative_kernel(
+def _smooth_relative_values(
     x: ArrayLike,
     y: ArrayLike,
     scale: float,
@@ -355,28 +318,33 @@ def _smooth_relative_kernel(
     if np.allclose(dlog, dlog[0], rtol=1e-7, atol=0.0):
         k = x.size
     else:
-        k = int(np.ceil(log_range / np.min(dlog))) + 1
+        k = np.ceil(log_range / np.min(dlog)) + 1.0
 
-    if k > max_grid_points:
+    if not (k <= max_grid_points) and k > 2 * x.size:
         raise ValueError(
             "geometric resampling would require too many points, exceeding "
             f"max_grid_points={max_grid_points:,}. Increase max_grid_points to "
             "allow a larger grid."
         )
+    k = int(k)
+    log_spacing = log_range / (k - 1)
+    if not np.isfinite(log_spacing) or log_spacing <= 0:
+        raise ValueError("log_spacing must be positive")
 
     xp = np.geomspace(x[0], x[-1], k)
     yg = np.interp(xp, x, y)
-    zg = _smooth_relative_kernel_on_geomgrid(
-        yg,
+    offsets, weights = _relative_kernel_weights(
         scale=scale,
-        log_spacing=log_range / (k - 1),
+        log_spacing=log_spacing,
         kernel=kernel,
         tail=tail,
+        max_offset=k - 1,
     )
+    zg = _smooth_with_weights(yg, offsets, weights)
     return cast(_FloatArray, np.interp(x, xp, zg))
 
 
-def _smooth_kernel_values(
+def _smooth_values(
     x: ArrayLike,
     y: ArrayLike,
     scale: float,
@@ -413,15 +381,18 @@ def _smooth_kernel_values(
     else:
         k = int(np.ceil(x_range / np.min(spacing))) + 1
 
-    if k > max_grid_points:
+    if k > max_grid_points and k > 2 * x.size:
         raise ValueError(
             "uniform resampling would require too many points, exceeding "
             f"max_grid_points={max_grid_points:,}. Increase max_grid_points to "
             "allow a larger grid."
         )
 
+    spacing = x_range / (k - 1)
+    if not np.isfinite(spacing) or spacing <= 0:
+        raise ValueError("spacing must be positive")
     offsets, weights = _translation_invariant_kernel_weights(
-        spacing=x_range / (k - 1),
+        spacing=spacing,
         scale=scale,
         kernel=kernel,
         tail=tail,
@@ -452,7 +423,7 @@ def _scipp_input(
         template = x
         y = x.data
         x = x.coords[x.dim]
-    elif not isinstance(y, sc.Variable):
+    elif not isinstance(x, sc.Variable) or not isinstance(y, sc.Variable):
         raise TypeError("expected a DataArray or a pair of Variables")
 
     if x.ndim != 1 or y.ndim != 1:
@@ -546,8 +517,8 @@ def smooth(
         Total probability omitted when truncating a kernel with unbounded
         support.
     max_grid_points:
-        Maximum permitted size of the intermediate uniform grid. Raises an
-        error rather than silently reducing resolution if this limit is exceeded.
+        Intermediate uniform grids no larger than this are always allowed. Larger
+        grids may be rejected to guard against excessive resampling.
 
     Returns
     -------
@@ -576,7 +547,7 @@ def smooth(
         object, or ``max_grid_points`` is not an integer.
     """
     x, y, template = _scipp_input(x, y)
-    values = _smooth_kernel_values(
+    values = _smooth_values(
         x.values,
         y.values,
         scale=_scale_in_coordinate_unit(scale, x),
@@ -631,8 +602,8 @@ def smooth_relative(
         Total probability omitted when truncating a kernel with unbounded support
         or support reaching the nonpositive coordinate domain.
     max_grid_points:
-        Maximum permitted size of the intermediate geometric grid. Raises an
-        error rather than silently reducing resolution if this limit is exceeded.
+        Intermediate geometric grids no larger than this are always allowed. Larger
+        grids may be rejected to guard against excessive resampling.
 
     Returns
     -------
@@ -661,7 +632,7 @@ def smooth_relative(
         a distribution-like object, or ``max_grid_points`` is not an integer.
     """
     x, y, template = _scipp_input(x, y)
-    values = _smooth_relative_kernel(
+    values = _smooth_relative_values(
         x.values,
         y.values,
         scale=_dimensionless_scale(scale),
