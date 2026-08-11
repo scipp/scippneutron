@@ -26,9 +26,12 @@ def rotations() -> st.SearchStrategy[sc.Variable]:
     return (
         npst.arrays(dtype=np.float64, shape=4, elements=coefficients)
         .filter(lambda q: np.linalg.norm(q) != 0)
+        # Double normalization to prevent numerical edge cases
+        # to translate to non-unit quaternions.
+        # After first normalization the norm of the vector might be 1+1e-6.
         .map(lambda q: q / np.linalg.norm(q))
-        # Double normalization is intentional
-        .map(lambda q: sc.spatial.rotation(value=q / np.linalg.norm(q)))
+        .map(lambda q: q / np.linalg.norm(q))
+        .map(lambda q: sc.spatial.rotation(value=q))
     )
 
 
