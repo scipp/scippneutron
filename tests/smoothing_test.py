@@ -8,7 +8,7 @@ from scipy.special import ndtr
 from scipy.stats import uniform
 
 import scippneutron as scn
-from scippneutron.smoothing import _relative_kernel_weights, smooth, smooth_relative
+from scippneutron.smoothing import smooth, smooth_relative
 
 
 def _normal_pdf(z):
@@ -355,11 +355,19 @@ def test_modest_resampling_larger_than_limit_is_accepted(function, x, kwargs):
     np.testing.assert_allclose(actual, y)
 
 
-def test_fixed_width_pathologically_close_coordinates_fail_before_allocation():
-    x, y = _variables(
+@pytest.mark.parametrize(
+    "coordinates",
+    [
         [1.0, np.nextafter(1.0, 2.0), 2.0],
-        [1.0, 1.0, 1.0],
-    )
+        # The spacing ratio overflows to infinity rather than merely being large.
+        [0.0, 5e-324, 1.0],
+        [1.0, np.nextafter(1.0, 2.0), 1e300],
+    ],
+)
+def test_fixed_width_pathologically_close_coordinates_fail_before_allocation(
+    coordinates,
+):
+    x, y = _variables(coordinates, [1.0, 1.0, 1.0])
 
     with pytest.raises(ValueError, match="exceeding max_grid_points=1,000,000"):
         smooth(x, y, scale=sc.scalar(0.1, unit='m'))
@@ -709,20 +717,18 @@ def test_wide_coordinate_range_does_not_overflow_grid_construction():
 
 
 def test_kernel_stencil_is_bounded_before_allocation():
-    max_offset = 1000
+    # A gaussian truncated at tail=1e-12 spans roughly 14 sigma, which is about
+    # 1e7 offsets on this grid. The stencil must be clamped to offsets that can
+    # reach the input rather than allocated at its nominal width.
+    size = 21
+    x = np.geomspace(1.0, np.exp((size - 1) * 1e-6), size)
+    y = np.arange(size, dtype=float)
 
-    offsets, weights = _relative_kernel_weights(
-        log_spacing=1e-6,
-        scale=1.0,
-        kernel="gaussian",
-        tail=1e-12,
-        max_offset=max_offset,
-    )
+    actual = _smooth_values(smooth_relative, x, y, scale=1.0)
 
-    assert offsets[0] >= -max_offset
-    assert offsets[-1] <= max_offset
-    assert offsets.size <= 2 * max_offset + 1
-    assert offsets.size == weights.size
+    # The kernel is flat to within 1e-5 over the whole input, so every point
+    # averages the entire array.
+    np.testing.assert_allclose(actual, np.full(size, y.mean()), rtol=1e-4)
 
 
 def test_asymmetric_kernel_convolution_matches_direct_weighted_sum():

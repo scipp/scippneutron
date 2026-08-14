@@ -107,117 +107,148 @@ def _trim_kernel_weights(
     return offsets[first:last], weights / weights.sum()
 
 
-def _relative_kernel_weights(
-    log_spacing: float,
-    scale: float,
-    kernel: _Kernel,
-    tail: float,
-    max_offset: int,
-) -> tuple[_IntArray, _FloatArray]:
+class _Geometry(Protocol):
     """
-    Weights for smoothing on a geometric grid q_i = q0 * exp(i * log_spacing).
+    A grid on which the kernel is translation invariant.
 
-    The kernel distribution describes the relative displacement Z:
-
-        q' = q * (1 + scale * Z)
-
-    Equivalently,
-
-        K(q, q') = 1 / (scale * q) * f((q' - q) / (scale * q))
-
-    where f is the PDF of the supplied distribution.
+    Both smoothing procedures displace a coordinate x by a distribution Z. The
+    displacement law differs, but in both cases there is a working coordinate
+    ``u`` in which the displacement is an additive offset independent of x, so
+    that a single set of weights applies at every grid point. ``offset`` and
+    ``displacement`` convert between a displacement z and its offset in u; they
+    are inverses of each other.
     """
-    dist = _as_kernel_distribution(kernel)
 
-    # Positive physical domain:
-    #
-    #   q' > 0
-    #   q * (1 + scale * z) > 0
-    #   z > -1 / scale
-    z_domain_min = -1.0 / scale
+    #: Names the grid in user-facing messages.
+    name: str
 
-    p_domain_min = float(dist.cdf(z_domain_min))
-    norm_mass = 1.0 - p_domain_min
+    def check(self, x: _FloatArray) -> None:
+        """Reject coordinates outside the domain of the displacement law."""
 
-    if not np.isfinite(norm_mass) or norm_mass <= 0.0:
-        raise ValueError("kernel has no positive-domain mass for this scale")
+    def coordinate(self, x: _FloatArray) -> _FloatArray:
+        """Working coordinate u(x)."""
 
-    support_min, support_max = _kernel_support(dist)
+    def points(self, start: float, stop: float, count: int) -> _FloatArray:
+        """``count`` samples from ``start`` to ``stop``, uniform in u."""
 
-    # Exact z-support after clipping to q' > 0.
-    z_left_exact = max(z_domain_min, support_min)
-    z_right_exact = support_max
+    def displacement_min(self, scale: float) -> float:
+        """Smallest displacement z that keeps x within the valid domain."""
 
-    # If the clipped support maps to finite log-space, use it exactly.
-    # If it touches q' = 0, the log lower bound is -inf, so use a tail cutoff.
-    has_finite_log_support = (
-        np.isfinite(z_left_exact)
-        and np.isfinite(z_right_exact)
-        and (1.0 + scale * z_left_exact > 0.0)
-    )
+    def offset(self, scale: float, z: ArrayLike) -> Any:
+        """Offset in u produced by displacement z."""
 
-    if has_finite_log_support:
-        u_left = np.log1p(scale * z_left_exact)
-        u_right = np.log1p(scale * z_right_exact)
-    else:
-        probabilities = (
-            p_domain_min + np.array([0.5 * tail, 1.0 - 0.5 * tail]) * norm_mass
-        )
-        z_left, z_right = (float(value) for value in dist.ppf(probabilities))
-
-        u_left = np.log1p(scale * z_left)
-        u_right = np.log1p(scale * z_right)
-
-    if not np.isfinite(u_right):
-        raise ValueError("right kernel bound is not finite; increase tail")
-
-    # Cells are centered at m*h and span [(m-1/2)h, (m+1/2)h].
-    # Include offset zero even for one-sided kernels and clamp the stencil to
-    # offsets that can contribute to the finite input.
-    m_min = int(np.clip(np.floor(u_left / log_spacing + 0.5), -max_offset, 0))
-    m_max = int(np.clip(np.ceil(u_right / log_spacing - 0.5), 0, max_offset))
-
-    m = np.arange(m_min, m_max + 1, dtype=np.int64)
-
-    L = (m - 0.5) * log_spacing
-    U = (m + 0.5) * log_spacing
-
-    # z = (q' - q) / (scale q)
-    #   = (exp(u) - 1) / scale
-    zL = np.expm1(L) / scale
-    zU = np.expm1(U) / scale
-
-    # Exact cell-integrated weights in log-space.
-    w = (dist.cdf(zU) - dist.cdf(zL)) / norm_mass
-    w = np.maximum(w, 0.0)
-
-    return _trim_kernel_weights(m, w)
+    def displacement(self, scale: float, u: ArrayLike) -> Any:
+        """Displacement z producing an offset u."""
 
 
-def _translation_invariant_kernel_weights(
+class _Uniform:
+    """Constant kernel width: ``x' = x + scale * Z``, additive in x itself."""
+
+    name = "uniform"
+
+    def check(self, x: _FloatArray) -> None:
+        pass
+
+    def coordinate(self, x: _FloatArray) -> _FloatArray:
+        return x
+
+    def points(self, start: float, stop: float, count: int) -> _FloatArray:
+        return np.linspace(start, stop, count)
+
+    def displacement_min(self, scale: float) -> float:
+        return -np.inf
+
+    def offset(self, scale: float, z: ArrayLike) -> Any:
+        return scale * np.asarray(z, dtype=float)
+
+    def displacement(self, scale: float, u: ArrayLike) -> Any:
+        return np.asarray(u, dtype=float) / scale
+
+
+class _Geometric:
+    """
+    Relative kernel width: ``x' = x * (1 + scale * Z)``, additive in ``log(x)``.
+
+    Equivalently, the kernel is
+
+        K(x, x') = 1 / (scale * x) * f((x' - x) / (scale * x))
+
+    for a distribution with PDF f. Displacements are restricted to ``x' > 0``,
+    that is ``1 + scale * z > 0``.
+    """
+
+    name = "geometric"
+
+    def check(self, x: _FloatArray) -> None:
+        if np.any(x <= 0):
+            raise ValueError("x must be positive")
+
+    def coordinate(self, x: _FloatArray) -> _FloatArray:
+        return cast(_FloatArray, np.log(x))
+
+    def points(self, start: float, stop: float, count: int) -> _FloatArray:
+        return np.geomspace(start, stop, count)
+
+    def displacement_min(self, scale: float) -> float:
+        return -1.0 / scale
+
+    def offset(self, scale: float, z: ArrayLike) -> Any:
+        # log1p(-1) is -inf, which _kernel_weights treats as unbounded support.
+        with np.errstate(divide="ignore", invalid="ignore"):
+            return np.log1p(scale * np.asarray(z, dtype=float))
+
+    def displacement(self, scale: float, u: ArrayLike) -> Any:
+        return np.expm1(np.asarray(u, dtype=float)) / scale
+
+
+def _kernel_weights(
+    geometry: _Geometry,
     spacing: float,
     scale: float,
     kernel: _Kernel,
     tail: float,
     max_offset: int,
 ) -> tuple[_IntArray, _FloatArray]:
+    """
+    Cell-integrated kernel weights on a grid of the given spacing in u.
+
+    Weights are exact integrals of the kernel probability over grid cells, so
+    the result is a proper quadrature of the smoothing integral rather than a
+    point sampling of the kernel.
+    """
     dist = _as_kernel_distribution(kernel)
-    z_left, z_right = _kernel_support(dist)
-    if not np.all(np.isfinite([z_left, z_right])):
-        z_left, z_right = (
-            float(value) for value in dist.ppf([0.5 * tail, 1.0 - 0.5 * tail])
+
+    z_min = geometry.displacement_min(scale)
+    p_min = float(dist.cdf(z_min))
+    reachable_mass = 1.0 - p_min
+    if not np.isfinite(reachable_mass) or reachable_mass <= 0.0:
+        raise ValueError("kernel has no mass in the valid domain for this scale")
+
+    support_min, support_max = _kernel_support(dist)
+    u_left = float(geometry.offset(scale, max(z_min, support_min)))
+    u_right = float(geometry.offset(scale, support_max))
+
+    # Unbounded support, or support reaching the edge of the valid domain,
+    # gives an infinite bound in u. Truncate at the requested tail instead.
+    if not (np.isfinite(u_left) and np.isfinite(u_right)):
+        probabilities = (
+            p_min + np.array([0.5 * tail, 1.0 - 0.5 * tail]) * reachable_mass
         )
+        u_left, u_right = (
+            float(value) for value in geometry.offset(scale, dist.ppf(probabilities))
+        )
+        if not np.isfinite(u_right):
+            raise ValueError("right kernel bound is not finite; increase tail")
 
-    bounds = scale * np.array([z_left, z_right])
-    if not np.all(np.isfinite(bounds)):
-        raise ValueError("kernel bounds are not finite; increase tail")
-
-    m_min = int(np.clip(np.floor(bounds[0] / spacing + 0.5), -max_offset, 0))
-    m_max = int(np.clip(np.ceil(bounds[1] / spacing - 0.5), 0, max_offset))
+    # Cells are centered at m*h and span [(m-1/2)h, (m+1/2)h].
+    # Include offset zero even for one-sided kernels and clamp the stencil to
+    # offsets that can contribute to the finite input.
+    m_min = int(np.clip(np.floor(u_left / spacing + 0.5), -max_offset, 0))
+    m_max = int(np.clip(np.ceil(u_right / spacing - 0.5), 0, max_offset))
     m = np.arange(m_min, m_max + 1, dtype=np.int64)
 
-    lower = (m - 0.5) * spacing / scale
-    upper = (m + 0.5) * spacing / scale
+    lower = geometry.displacement(scale, (m - 0.5) * spacing)
+    upper = geometry.displacement(scale, (m + 0.5) * spacing)
     weights = np.maximum(dist.cdf(upper) - dist.cdf(lower), 0.0)
     return _trim_kernel_weights(m, weights)
 
@@ -280,13 +311,14 @@ def _validate_max_grid_points(max_grid_points: int) -> None:
         raise ValueError("max_grid_points must be at least 2")
 
 
-def _smooth_relative_values(
+def _smooth_values(
+    geometry: _Geometry,
     x: ArrayLike,
     y: ArrayLike,
     scale: float,
-    kernel: _Kernel = "gaussian",
-    tail: float = 1e-12,
-    max_grid_points: int = 1_000_000,
+    kernel: _Kernel,
+    tail: float,
+    max_grid_points: int,
 ) -> _FloatArray:
     x = np.asarray(x, dtype=float)
     y = np.asarray(y, dtype=float)
@@ -302,112 +334,56 @@ def _smooth_relative_values(
     _validate_max_grid_points(max_grid_points)
     if np.any(~np.isfinite(x)):
         raise ValueError("x must contain only finite values")
-    if np.any(x <= 0):
-        raise ValueError("x must be positive")
+    geometry.check(x)
     if np.any(np.diff(x) <= 0):
         raise ValueError("x must be strictly increasing")
-    if x.size == 0 or scale == 0 or x.size == 1:
+    if x.size < 2 or scale == 0:
         return y.copy()
 
-    logx = np.log(x)
-    dlog = np.diff(logx)
-    log_range = float(logx[-1] - logx[0])
+    u = geometry.coordinate(x)
+    du = np.diff(u)
+    u_range = float(u[-1] - u[0])
 
-    # Preserve an existing geometric grid. Otherwise choose a geometric grid
-    # at least as dense as the smallest input spacing in log-space.
-    if np.allclose(dlog, dlog[0], rtol=1e-7, atol=0.0):
-        k = x.size
+    # Preserve an existing regular grid. Otherwise choose a grid at least as
+    # dense as the smallest input spacing, measured in the working coordinate.
+    if np.allclose(du, du[0], rtol=1e-7, atol=0.0):
+        k = float(x.size)
     else:
-        k = np.ceil(log_range / np.min(dlog)) + 1.0
+        # Coordinates that are distinct but collide, or nearly so, in the
+        # working coordinate give an infinite point count. Let it propagate to
+        # the guard below rather than raising here.
+        with np.errstate(divide="ignore", over="ignore"):
+            k = np.ceil(u_range / np.min(du)) + 1.0
 
     if not (k <= max_grid_points) and k > 2 * x.size:
         raise ValueError(
-            "geometric resampling would require too many points, exceeding "
+            f"{geometry.name} resampling would require too many points, exceeding "
             f"max_grid_points={max_grid_points:,}. Increase max_grid_points to "
             "allow a larger grid."
         )
     k = int(k)
-    log_spacing = log_range / (k - 1)
-    if not np.isfinite(log_spacing) or log_spacing <= 0:
-        raise ValueError("log_spacing must be positive")
 
-    xp = np.geomspace(x[0], x[-1], k)
-    yg = np.interp(xp, x, y)
-    offsets, weights = _relative_kernel_weights(
-        scale=scale,
-        log_spacing=log_spacing,
-        kernel=kernel,
-        tail=tail,
-        max_offset=k - 1,
-    )
-    zg = _smooth_with_weights(yg, offsets, weights)
-    return cast(_FloatArray, np.interp(x, xp, zg))
-
-
-def _smooth_values(
-    x: ArrayLike,
-    y: ArrayLike,
-    scale: float,
-    kernel: _Kernel = "gaussian",
-    tail: float = 1e-12,
-    max_grid_points: int = 1_000_000,
-) -> _FloatArray:
-    x = np.asarray(x, dtype=float)
-    y = np.asarray(y, dtype=float)
-
-    if x.ndim != 1 or y.ndim != 1:
-        raise ValueError("x and y must be one-dimensional")
-    if x.size != y.size:
-        raise ValueError("x and y must have the same length")
-    if not np.isfinite(scale) or scale < 0:
-        raise ValueError("scale must be non-negative")
-    if not np.isfinite(tail) or not (0.0 < tail < 1.0):
-        raise ValueError("tail must be between 0 and 1")
-    _validate_max_grid_points(max_grid_points)
-    if np.any(~np.isfinite(x)):
-        raise ValueError("x must contain only finite values")
-    if np.any(np.diff(x) <= 0):
-        raise ValueError("x must be strictly increasing")
-    if x.size == 0 or scale == 0 or x.size == 1:
-        return y.copy()
-
-    spacing = np.diff(x)
-    x_range = float(x[-1] - x[0])
-
-    # Preserve an existing uniform grid. Otherwise choose a uniform grid at
-    # least as dense as the smallest input spacing.
-    if np.allclose(spacing, spacing[0], rtol=1e-7, atol=0.0):
-        k = x.size
-    else:
-        k = int(np.ceil(x_range / np.min(spacing))) + 1
-
-    if k > max_grid_points and k > 2 * x.size:
-        raise ValueError(
-            "uniform resampling would require too many points, exceeding "
-            f"max_grid_points={max_grid_points:,}. Increase max_grid_points to "
-            "allow a larger grid."
-        )
-
-    spacing = x_range / (k - 1)
+    spacing = u_range / (k - 1)
     if not np.isfinite(spacing) or spacing <= 0:
-        raise ValueError("spacing must be positive")
-    offsets, weights = _translation_invariant_kernel_weights(
+        raise ValueError("grid spacing must be positive")
+
+    offsets, weights = _kernel_weights(
+        geometry,
         spacing=spacing,
         scale=scale,
         kernel=kernel,
         tail=tail,
         max_offset=k - 1,
     )
-    xp = np.linspace(x[0], x[-1], k)
-    yg = np.interp(xp, x, y)
-
-    zg = _smooth_with_weights(yg, offsets, weights)
+    xp = geometry.points(float(x[0]), float(x[-1]), k)
+    zg = _smooth_with_weights(np.interp(xp, x, y), offsets, weights)
     return cast(_FloatArray, np.interp(x, xp, zg))
 
 
 def _scipp_input(
-    x: _ScippArray, y: sc.Variable | None
+    x: object, y: object
 ) -> tuple[sc.Variable, sc.Variable, sc.DataArray | None]:
+    """Validate untyped user input and reduce it to a coordinate/data pair."""
     template: sc.DataArray | None = None
     if isinstance(x, sc.DataArray):
         if y is not None:
@@ -548,6 +524,7 @@ def smooth(
     """
     x, y, template = _scipp_input(x, y)
     values = _smooth_values(
+        _Uniform(),
         x.values,
         y.values,
         scale=_scale_in_coordinate_unit(scale, x),
@@ -632,7 +609,8 @@ def smooth_relative(
         a distribution-like object, or ``max_grid_points`` is not an integer.
     """
     x, y, template = _scipp_input(x, y)
-    values = _smooth_relative_values(
+    values = _smooth_values(
+        _Geometric(),
         x.values,
         y.values,
         scale=_dimensionless_scale(scale),
