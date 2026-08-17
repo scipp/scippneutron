@@ -26,7 +26,12 @@ def rotations() -> st.SearchStrategy[sc.Variable]:
     return (
         npst.arrays(dtype=np.float64, shape=4, elements=coefficients)
         .filter(lambda q: np.linalg.norm(q) != 0)
-        .map(lambda q: sc.spatial.rotation(value=q / np.linalg.norm(q)))
+        # Double normalization to prevent numerical edge cases
+        # to translate to non-unit quaternions.
+        # After first normalization the norm of the vector might be 1+1e-6.
+        .map(lambda q: q / np.linalg.norm(q))
+        .map(lambda q: q / np.linalg.norm(q))
+        .map(lambda q: sc.spatial.rotation(value=q))
     )
 
 
@@ -213,7 +218,7 @@ def test_two_theta_invariant_under_rotation(rotation: sc.Variable) -> None:
         incident_beam=rotation * incident_beam, scattered_beam=rotation * scattered_beam
     )
 
-    sc.testing.assert_allclose(original, rotated)
+    sc.testing.assert_allclose(original, rotated, rtol=sc.scalar(1e-8))
 
 
 @given(incident_rotation=rotations(), scattered_rotation=rotations())
@@ -718,8 +723,10 @@ def test_scattering_angles_with_gravity_invariant_under_rotation(
         gravity=rotation * gravity,
     )
 
-    sc.testing.assert_allclose(original['two_theta'], rotated['two_theta'])
-    sc.testing.assert_allclose(original['phi'], rotated['phi'])
+    sc.testing.assert_allclose(
+        original['two_theta'], rotated['two_theta'], rtol=sc.scalar(1e-8)
+    )
+    sc.testing.assert_allclose(original['phi'], rotated['phi'], rtol=sc.scalar(1e-8))
 
 
 def test_scattering_angle_in_yz_plane_requires_gravity_orthogonal_to_incident_beam():
