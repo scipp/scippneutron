@@ -11,6 +11,10 @@ from scipp.constants import m_n
 
 import scippneutron as scn
 
+pytestmark = pytest.mark.filterwarnings(
+    'ignore:scippneutron.convert is deprecated:scipp.VisibleDeprecationWarning'
+)
+
 
 def make_source_position():
     return sc.vector(value=[0.0, 0.0, -10.0], unit='m')
