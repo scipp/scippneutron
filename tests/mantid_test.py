@@ -169,7 +169,15 @@ class TestMantidConversion(unittest.TestCase):
         )['data']
         da = da.hist(tof=target_tof)
         d = sc.Dataset(data={da.name: da})
-        converted = scn.convert(d, 'tof', 'wavelength', scatter=True)
+        converted = d.transform_coords(
+            'wavelength',
+            graph=scn.conversion_graph(
+                origin='tof',
+                target='wavelength',
+                scatter=True,
+                energy_mode='elastic',
+            ),
+        )
 
         assert sc.allclose(
             converted_mantid['data'].data, converted[""].data.to(dtype='float64')
@@ -203,7 +211,15 @@ class TestMantidConversion(unittest.TestCase):
         da.coords['position'] *= np.sqrt(scale)
         low_tof = da.bins.constituents['data'].coords['tof'] < 49000.0 * sc.units.us
         da.coords['incident_energy'] = 3.0 * sc.units.meV
-        da = scn.convert(da, 'tof', 'energy_transfer', scatter=True)
+        da = da.transform_coords(
+            'energy_transfer',
+            graph=scn.conversion_graph(
+                origin='tof',
+                target='energy_transfer',
+                scatter=True,
+                energy_mode='direct_inelastic',
+            ),
+        )
         assert sc.all(
             sc.isnan(da.coords['energy_transfer'])
             | sc.isclose(
