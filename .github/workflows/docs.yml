@@ -64,7 +64,7 @@ jobs:
           environment-file: .buildconfig/ci-linux.yml
           cache-environment: true
           create-args: >-
-            python=3.11
+            python=3.12
             scippneutron==${{ inputs.version }}
       - uses: mamba-org/setup-micromamba@v2
         if: ${{ inputs.version == '' }}
@@ -72,7 +72,7 @@ jobs:
           environment-file: .buildconfig/ci-linux.yml
           cache-environment: true
           create-args: >-
-            python=3.11
+            python=3.12
             conda-build
       - run: pip install --no-build-isolation --no-deps -e .
         if: ${{ inputs.version == '' }}
