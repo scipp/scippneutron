@@ -6,14 +6,14 @@ from __future__ import annotations
 import enum
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
-from typing import ClassVar, TypeAlias
+from typing import ClassVar
 
 import numpy as np
 import scipp as sc
 
 from . import _ir as ir
 
-DataBlockName: TypeAlias = tuple[str, str]
+type DataBlockName = tuple[str, str]
 
 
 class SqwFileType(enum.Enum):

@@ -18,42 +18,42 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
     "Typing :: Typed",
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dynamic = ["version"]
 
 # IMPORTANT:
 # Run 'tox -e deps' after making changes here. This will update requirement files.
 # Make sure to list one dependency per line.
 dependencies = [
-    "python-dateutil>=2.8",
+    "python-dateutil>=2.9.0",
     "email-validator>=2",
     "h5py>=3.12",
     "lazy_loader>=0.4",
     "mpltoolbox>=24.6.0",
-    "numpy>=1.20",
+    "numpy>=2",
     "plopp>=26.5.0",
-    "pydantic>=2",
-    "pyyaml>=5.3",
+    "pydantic>=2.4",
+    "pyyaml>=6.0.1",
     "scipp>=25.11.0",
-    "scippnexus>=23.11.0",
-    "scipy>=1.7.0",
+    "scippnexus>=24.6.0",
+    "scipy>=1.13.0",
 ]
 
 [project.optional-dependencies]
 all = ["scipp[all]>=25.8.0", "pooch>=1.5"]
 test = [
+    "euphonic>=2.0",
     "hypothesis>=6.100",
     "ipympl>0.9.0",
     "ipykernel>6.30",
     "pace_neutrons>=0.3",
     "pooch>=1.5",
-    "psutil>=5.0",
+    "psutil>=5.9.6",
     "pytest>=8.0",
     "pytest-xdist>=3.0",
     "pythreejs>=2.4.1",
