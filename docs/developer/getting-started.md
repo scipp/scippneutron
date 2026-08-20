@@ -81,16 +81,12 @@ pixi run docs doctest
 pixi run docs linkcheck
 ```
 
+Each builder writes its output to `build/docs/<builder>/output` and keeps its
+doctrees in `build/docs/<builder>/doctrees`, so the different checks do not
+overwrite one another.
+
 The documentation is built in the `docs` environment, which extends the Mantid
 stack because several notebooks use Mantid.
-
-## Type checking
-
-Static type checking is not part of CI, but can be run with
-
-```sh
-pixi run mypy
-```
 
 ## Tutorial and Test Data
 

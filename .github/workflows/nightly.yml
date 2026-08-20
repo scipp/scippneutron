@@ -9,10 +9,15 @@ on:
   schedule:
     - cron: '30 1 * * 1-5'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 env:
   PIXI_FROZEN: true
-  ESS_PROTECTED_FILESTORE_USERNAME: ${{ secrets.ESS_PROTECTED_FILESTORE_USERNAME }}
-  ESS_PROTECTED_FILESTORE_PASSWORD: ${{ secrets.ESS_PROTECTED_FILESTORE_PASSWORD }}
 
 jobs:
   locked:
@@ -27,30 +32,37 @@ jobs:
             task: test-mantid
     runs-on: 'ubuntu-24.04'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0  # history required so setuptools_scm can determine the version
-      - uses: prefix-dev/setup-pixi@v0.9.4
+          persist-credentials: false
+      - uses: prefix-dev/setup-pixi@f00437f565399d418b0acc85936d12c1fb668347 # v0.10.1
         with:
-          pixi-version: v0.74.0
+          pixi-version: v0.77.0
           environments: ${{ matrix.environment }}
+          locked: true
       - run: pixi run -e ${{ matrix.environment }} ${{ matrix.task }}
+        env:
+          ESS_PROTECTED_FILESTORE_USERNAME: ${{ secrets.ESS_PROTECTED_FILESTORE_USERNAME }}
+          ESS_PROTECTED_FILESTORE_PASSWORD: ${{ secrets.ESS_PROTECTED_FILESTORE_PASSWORD }}
 
   upstream:
     name: Scipp nightly and Git main (including SQW/Horace)
     runs-on: 'ubuntu-24.04'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0  # history required so setuptools_scm can determine the version
+          persist-credentials: false
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2
+        uses: matlab-actions/setup-matlab@2323adb8243827ea460b0def4c413545aaec46a9 # v3.0.2
         with:
           cache: true
           products: "MATLAB_Compiler_SDK"
-      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
-          python-version-file: '.github/workflows/python-version-ci'
+          version: latest-known
+          python-version: '3.12'
       - run: uv venv
       - name: Install the upstream Scipp stack
         run: |
@@ -71,6 +83,9 @@ jobs:
       - name: Verify MATLAB is available to pace_neutrons
         run: uv run --no-sync python -c "import pace_neutrons; pace_neutrons.Matlab()"
       - run: uv run --no-sync pytest
+        env:
+          ESS_PROTECTED_FILESTORE_USERNAME: ${{ secrets.ESS_PROTECTED_FILESTORE_USERNAME }}
+          ESS_PROTECTED_FILESTORE_PASSWORD: ${{ secrets.ESS_PROTECTED_FILESTORE_PASSWORD }}
 
   stable:
     name: ${{ matrix.name }}
@@ -92,15 +107,17 @@ jobs:
             with_tof: true
     runs-on: 'ubuntu-24.04'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0  # history required to determine the last release tag
+          persist-credentials: false
       # Create the environment before checking out an old tag. This deliberately
       # tests the last release on the Python version supported by current CI; old
       # tags may still name an older minimum in their python-version-ci file.
-      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
-          python-version-file: '.github/workflows/python-version-ci'
+          version: latest-known
+          python-version: '3.12'
       - run: uv venv
       - name: Check out the last release
         if: ${{ matrix.ref == 'release' }}
@@ -118,3 +135,6 @@ jobs:
       - run: uv pip check
       - run: uv pip list
       - run: uv run --no-sync pytest
+        env:
+          ESS_PROTECTED_FILESTORE_USERNAME: ${{ secrets.ESS_PROTECTED_FILESTORE_USERNAME }}
+          ESS_PROTECTED_FILESTORE_PASSWORD: ${{ secrets.ESS_PROTECTED_FILESTORE_PASSWORD }}

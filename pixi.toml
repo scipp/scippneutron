@@ -25,7 +25,7 @@ scipp = "0m"
 scippnexus = "0m"
 tof = "0m"
 
-# For the PyPI-resolved environments (default, sqw, mypy).
+# For the PyPI-resolved environments (default, sqw).
 [pypi-exclude-newer]
 mpltoolbox = "0m"
 plopp = "0m"
@@ -108,8 +108,13 @@ description = "Run the Mantid tests"
 [feature.sqw.pypi-dependencies]
 scippneutron = { path = ".", editable = true, extras = ["all", "test", "sqw"] }
 
+[feature.sqw.tasks._verify-matlab]
+cmd = '''python -c "import pace_neutrons; pace_neutrons.Matlab()"'''
+description = "Verify that pace_neutrons can start MATLAB"
+
 [feature.sqw.tasks.test-sqw]
 cmd = "pytest tests/io/sqw"
+depends-on = ["_verify-matlab"]
 description = "Run the SQW/Horace tests (requires MATLAB)"
 
 # ============================== Docs ==============================
@@ -139,7 +144,7 @@ description = "Register the graphviz layout plugins"
 
 [feature.docs.tasks.docs]
 args = [{ arg = "builder", default = "html" }]
-cmd = "python -m sphinx -W -v -b {{ builder }} -d .doctrees docs html"
+cmd = "python -m sphinx -W -v -b {{ builder }} -d build/docs/{{ builder }}/doctrees docs build/docs/{{ builder }}/output"
 depends-on = ["_graphviz-config"]
 description = "Build the documentation (builder: html, doctest or linkcheck)"
 
@@ -153,15 +158,6 @@ pre-commit = "*"
 cmd = "pre-commit run --all-files"
 description = "Run all formatters and static analysis"
 
-# ============================== Mypy ==============================
-
-[feature.mypy.pypi-dependencies]
-mypy = "*"
-
-[feature.mypy.tasks.mypy]
-cmd = "mypy ."
-description = "Run static type checking"
-
 # ============================== Build ==============================
 
 [feature.build.dependencies]
@@ -171,8 +167,13 @@ setuptools = ">=77"
 setuptools_scm = ">=8.0"
 twine = "*"
 
+[feature.build.tasks._clean-build]
+cmd = '''python -c "import shutil; shutil.rmtree('build', ignore_errors=True); shutil.rmtree('dist', ignore_errors=True)"'''
+description = "Remove existing build artifacts"
+
 [feature.build.tasks.build]
 cmd = "python -m build --no-isolation"
+depends-on = ["_clean-build"]
 description = "Build the sdist and wheel"
 
 [feature.build.tasks.check-build]
@@ -187,6 +188,5 @@ default = { features = ["test"] }
 mantid = { features = ["mantid"], solve-group = "mantid" }
 docs = { features = ["mantid", "docs"], solve-group = "mantid" }
 sqw = { features = ["test", "sqw"], solve-group = "sqw" }
-mypy = { features = ["test", "mypy"], solve-group = "mypy" }
 lint = { features = ["lint"], no-default-feature = true }
 build = { features = ["build"], no-default-feature = true }

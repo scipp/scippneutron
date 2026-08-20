@@ -27,7 +27,6 @@ Pixi's combined conda/PyPI solve.
 | `mantid`    | Mantid tests, resolved from conda so the stack is ABI-consistent with Mantid |
 | `docs`      | Building the documentation; extends `mantid` because several notebooks use it |
 | `sqw`       | SQW/Horace tests, which need `pace_neutrons` and a MATLAB runtime |
-| `mypy`      | Static type checking |
 | `lint`      | Formatting and static analysis |
 | `build`     | Building the sdist and wheel |
 
