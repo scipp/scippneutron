@@ -11,6 +11,10 @@ from scipp.constants import m_n
 
 import scippneutron as scn
 
+pytestmark = pytest.mark.filterwarnings(
+    'ignore:scippneutron.convert is deprecated:scipp.VisibleDeprecationWarning'
+)
+
 
 def make_source_position():
     return sc.vector(value=[0.0, 0.0, -10.0], unit='m')
@@ -86,6 +90,16 @@ def make_test_data(coords=(), dataset=False):
     if dataset:
         return sc.Dataset(data={'counts': da})
     return da
+
+
+def test_convert_is_deprecated():
+    tof = make_test_data(coords=('tof', 'Ltotal'))
+    with pytest.warns(
+        sc.VisibleDeprecationWarning,
+        match=r'scippneutron\.convert is deprecated.*scipp\.transform_coords',
+    ) as warnings:
+        scn.convert(tof, origin='tof', target='wavelength', scatter=True)
+    assert warnings[0].filename == __file__
 
 
 def make_tof_binned_events():

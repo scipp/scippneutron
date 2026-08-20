@@ -79,7 +79,15 @@ def test_mantid_convert_tof_to_wavelength():
     out_mantid = mantid_convert_units(in_ws, 'wavelength')
 
     in_da = scn.mantid.from_mantid(in_ws)['data']
-    out_scipp = scn.convert(data=in_da, origin='tof', target='wavelength', scatter=True)
+    out_scipp = in_da.transform_coords(
+        'wavelength',
+        graph=scn.conversion_graph(
+            origin='tof',
+            target='wavelength',
+            scatter=True,
+            energy_mode='elastic',
+        ),
+    )
 
     assert sc.allclose(
         out_scipp.coords['wavelength'],
@@ -94,7 +102,15 @@ def test_mantid_convert_tof_to_dspacing():
     out_mantid = mantid_convert_units(in_ws, 'dspacing')
 
     in_da = scn.mantid.from_mantid(in_ws)['data']
-    out_scipp = scn.convert(data=in_da, origin='tof', target='dspacing', scatter=True)
+    out_scipp = in_da.transform_coords(
+        'dspacing',
+        graph=scn.conversion_graph(
+            origin='tof',
+            target='dspacing',
+            scatter=True,
+            energy_mode='elastic',
+        ),
+    )
 
     assert sc.allclose(
         out_scipp.coords['dspacing'],
@@ -109,7 +125,15 @@ def test_mantid_convert_tof_to_energy():
     out_mantid = mantid_convert_units(in_ws, 'energy')
 
     in_da = scn.mantid.from_mantid(in_ws)['data']
-    out_scipp = scn.convert(data=in_da, origin='tof', target='energy', scatter=True)
+    out_scipp = in_da.transform_coords(
+        'energy',
+        graph=scn.conversion_graph(
+            origin='tof',
+            target='energy',
+            scatter=True,
+            energy_mode='elastic',
+        ),
+    )
 
     # Mantid reverses the order of the energy dim.
     mantid_energy = sc.empty_like(out_mantid.coords['energy'])
@@ -130,8 +154,14 @@ def test_mantid_convert_tof_to_direct_energy_transfer():
     )
 
     in_da = scn.mantid.from_mantid(in_ws)['data']
-    out_scipp = scn.convert(
-        data=in_da, origin='tof', target='energy_transfer', scatter=True
+    out_scipp = in_da.transform_coords(
+        'energy_transfer',
+        graph=scn.conversion_graph(
+            origin='tof',
+            target='energy_transfer',
+            scatter=True,
+            energy_mode='direct_inelastic',
+        ),
     )
 
     # The conversion consists of multiplications and additions, thus the relative error
