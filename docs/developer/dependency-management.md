@@ -15,6 +15,9 @@ Both files are committed.
 Mantid is only distributed as a conda package, while the rest of the stack is on PyPI, so development requires resolving across both ecosystems at once.
 Pixi does this in a single solve and writes the result to one lock file.
 That is why it replaced the previous combination of `pip-compile-multi`, `tox` and a hand-maintained conda environment file, which had to keep two sets of pins in agreement by hand.
+The Mantid feature in `pixi.toml` only names packages that must come from conda;
+their supported version ranges remain owned by `pyproject.toml` and are checked by
+Pixi's combined conda/PyPI solve.
 
 ## Environments
 
@@ -51,7 +54,11 @@ The exemptions only have an effect because of the workspace-level baseline.
 ## Testing outside the lock file
 
 Pinned environments cannot catch a dependency range that is wrong.
-The nightly workflow therefore also resolves dependencies from scratch with [uv](https://docs.astral.sh/uv/), at both ends of the declared ranges:
+The nightly workflow therefore also resolves dependencies from scratch with [uv](https://docs.astral.sh/uv/):
 
 - `--resolution=lowest-direct` checks that the lower bounds in `pyproject.toml` are actually correct.
 - `--resolution=highest` checks against the newest release of everything, both on the main branch and at the last release tag.
+- A separate upstream solve installs the Scipp nightly wheel and the Git `main`
+  branches of the rest of the Scipp stack. It includes the optional and SQW
+  dependencies and runs with MATLAB so the Horace integration cannot silently
+  skip.

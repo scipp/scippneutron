@@ -76,9 +76,9 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # history required so setuptools_scm can determine the version
-      # pace_neutrons needs a MATLAB runtime. It imports fine without one, so these
-      # tests do not skip themselves, which is why they are kept out of the regular
-      # test job rather than run there.
+      # Horace compatibility tests need both pace_neutrons and a MATLAB runtime.
+      # Keep them in a dedicated environment so missing MATLAB cannot turn the
+      # regular test job into a green run with silently skipped integration tests.
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2
         with:
@@ -88,6 +88,8 @@ jobs:
         with:
           pixi-version: v0.74.0
           environments: sqw
+      - name: Verify MATLAB is available to pace_neutrons
+        run: pixi run -e sqw python -c "import pace_neutrons; pace_neutrons.Matlab()"
       - run: pixi run -e sqw test-sqw
 
   package:
@@ -98,13 +100,16 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # history required so setuptools_scm can determine the version
-      # Deliberately does not use pixi: this checks that a plain, non-editable
-      # install of the package works, as a user would get it.
+      # Deliberately does not use pixi: this checks the actual wheel through the
+      # same plain pip installation path used by package consumers.
       - uses: actions/setup-python@v6
         with:
           python-version-file: '.github/workflows/python-version-ci'
-      - run: python -m pip install .
-      - run: python tests/package_test.py
+      - run: python -m pip install build
+      - run: python -m build --wheel
+      - run: python -m pip install dist/*.whl
+      - run: python "${{ github.workspace }}/tests/package_test.py"
+        working-directory: ${{ runner.temp }}
 
   docs:
     needs: [tests, sqw, package]

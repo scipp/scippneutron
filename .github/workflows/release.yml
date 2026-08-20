@@ -24,7 +24,7 @@ jobs:
           environments: build
 
       - name: Build wheels
-        run: pixi run -e build build
+        run: pixi run -e build check-build
 
       - name: Upload wheels
         uses: actions/upload-artifact@v7

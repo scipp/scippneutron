@@ -1,12 +1,8 @@
 name: Nightly tests
 
-# Replaces the former nightly_at_main, nightly_at_main_lower_bound,
-# nightly_at_release and unpinned workflows.
-#
-# The Scipp stack is exempt from the workspace 'exclude-newer' baseline (see
-# pixi.toml), so the locked environments already test against the newest Scipp
-# release. There is therefore no separate job resolving Scipp nightly wheels; the
-# uv jobs below cover the unpinned ends of the range instead.
+# The locked jobs verify the committed Pixi environments. The upstream job is
+# deliberately resolved from scratch so it can catch breakage in Scipp nightly
+# wheels and the main branches of the rest of the Scipp stack.
 
 on:
   workflow_dispatch:
@@ -40,7 +36,43 @@ jobs:
           environments: ${{ matrix.environment }}
       - run: pixi run -e ${{ matrix.environment }} ${{ matrix.task }}
 
-  unpinned:
+  upstream:
+    name: Scipp nightly and Git main (including SQW/Horace)
+    runs-on: 'ubuntu-24.04'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # history required so setuptools_scm can determine the version
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v2
+        with:
+          cache: true
+          products: "MATLAB_Compiler_SDK"
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version-file: '.github/workflows/python-version-ci'
+      - run: uv venv
+      - name: Install the upstream Scipp stack
+        run: |
+          uv pip install \
+            --prerelease allow \
+            --index https://pypi.anaconda.org/scipp-nightly-wheels/simple \
+            --default-index https://pypi.org/simple \
+            --index-strategy first-index \
+            --editable ".[all,test,sqw]" \
+            scipp \
+            "scippnexus @ git+https://github.com/scipp/scippnexus@main" \
+            "plopp @ git+https://github.com/scipp/plopp@main" \
+            "mpltoolbox @ git+https://github.com/scipp/mpltoolbox@main" \
+            "sciline @ git+https://github.com/scipp/sciline@main" \
+            "tof @ git+https://github.com/scipp/tof@main"
+      - run: uv pip check
+      - run: uv pip list
+      - name: Verify MATLAB is available to pace_neutrons
+        run: uv run --no-sync python -c "import pace_neutrons; pace_neutrons.Matlab()"
+      - run: uv run --no-sync pytest
+
+  stable:
     name: ${{ matrix.name }}
     strategy:
       fail-fast: false
@@ -48,24 +80,41 @@ jobs:
         include:
           - name: Lowest direct dependencies
             resolution: lowest-direct
-            ref: ''
+            ref: current
+            with_tof: false
           - name: Latest dependencies
             resolution: highest
-            ref: ''
+            ref: current
+            with_tof: true
           - name: Latest dependencies at last release
             resolution: highest
             ref: release
+            with_tof: true
     runs-on: 'ubuntu-24.04'
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # history required to determine the last release tag
-      - name: Check out the last release
-        if: ${{ matrix.ref == 'release' }}
-        run: git checkout "$(git describe --tags --abbrev=0 --match '[0-9]*.[0-9]*.[0-9]*')"
+      # Create the environment before checking out an old tag. This deliberately
+      # tests the last release on the Python version supported by current CI; old
+      # tags may still name an older minimum in their python-version-ci file.
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           python-version-file: '.github/workflows/python-version-ci'
-      # Sync explicitly to print the installed packages and versions.
-      - run: uv sync --extra=test --resolution=${{ matrix.resolution }}
-      - run: uv run --extra=test --resolution=${{ matrix.resolution }} pytest
+      - run: uv venv
+      - name: Check out the last release
+        if: ${{ matrix.ref == 'release' }}
+        run: git checkout "$(git describe --tags --abbrev=0 --match '[0-9]*.[0-9]*.[0-9]*')"
+      - name: Resolve and install project dependencies
+        if: ${{ !matrix.with_tof }}
+        run: >-
+          uv pip install --resolution=${{ matrix.resolution }}
+          --editable ".[all,test]"
+      - name: Resolve and install project dependencies with Tof
+        if: ${{ matrix.with_tof }}
+        run: >-
+          uv pip install --resolution=${{ matrix.resolution }}
+          --editable ".[all,test]" tof
+      - run: uv pip check
+      - run: uv pip list
+      - run: uv run --no-sync pytest

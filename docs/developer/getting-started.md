@@ -81,8 +81,8 @@ pixi run docs doctest
 pixi run docs linkcheck
 ```
 
-The documentation is built in the `mantid` environment because several notebooks
-use Mantid.
+The documentation is built in the `docs` environment, which extends the Mantid
+stack because several notebooks use Mantid.
 
 ## Type checking
 

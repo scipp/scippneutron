@@ -44,27 +44,70 @@ jobs:
         ESS_PROTECTED_FILESTORE_PASSWORD: ${{ secrets.ESS_PROTECTED_FILESTORE_PASSWORD }}
 
     steps:
-      - uses: actions/checkout@v6
+      # Keep the workflow and locked Pixi environments on the caller's ref. The
+      # documentation source may point at a release that predates pixi.toml.
+      - name: Check out current workflow tooling
+        uses: actions/checkout@v6
+        with:
+          path: tooling
+          fetch-depth: 0
+      - name: Check out documentation source
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch == '' && github.ref_name || inputs.branch }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          path: source
           fetch-depth: 0  # history required so setuptools_scm can determine the version
       # pandoc and graphviz come from the docs environment, so there is nothing to
       # install with apt here.
       - uses: prefix-dev/setup-pixi@v0.9.4
         with:
           pixi-version: v0.74.0
-          environments: docs
-      - run: pixi run docs doctest
-      - run: pixi run docs html
-      - run: pixi run docs linkcheck
+          working-directory: tooling
+          environments: build docs
+          frozen: true
+      - name: Create build directories
+        run: mkdir -p artifacts/wheel artifacts/doctrees
+      - name: Build selected ScippNeutron version
+        working-directory: source
+        run: >-
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml
+          -e build python -m build --wheel --no-isolation
+          --outdir ../artifacts/wheel
+      - name: Install selected ScippNeutron version
+        working-directory: source
+        run: |
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml -e docs python -m ensurepip --upgrade
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml -e docs python -m pip install --no-deps --force-reinstall ../artifacts/wheel/scippneutron-*.whl
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml -e docs python -c 'from importlib.metadata import version; print("Building ScippNeutron", version("scippneutron"), "documentation")'
+      - name: Configure Graphviz
+        working-directory: source
+        run: pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml -e docs dot -c
+      - name: Run doctests
+        working-directory: source
+        run: >-
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml
+          -e docs python -m sphinx -W -v -b doctest
+          -d ../artifacts/doctrees docs ../artifacts/doctest
+      - name: Build HTML
+        working-directory: source
+        run: >-
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml
+          -e docs python -m sphinx -W -v -b html
+          -d ../artifacts/doctrees docs ../artifacts/html
+      - name: Check links
         if: ${{ inputs.linkcheck }}
-      - run: find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
+        working-directory: source
+        run: >-
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml
+          -e docs python -m sphinx -W -v -b linkcheck
+          -d ../artifacts/doctrees docs ../artifacts/linkcheck
+      - run: find artifacts/html -type f -name "*.ipynb" -not -path "artifacts/html/_sources/*" -delete
       - uses: actions/upload-artifact@v7
         id: artifact-upload-step
         with:
           name: docs_html
-          path: html/
+          path: artifacts/html/
           if-no-files-found: error
       - run: echo "::notice::https://remote-unzip.scipp.deno.net/${{ github.repository }}/artifacts/${{ steps.artifact-upload-step.outputs.artifact-id }}"
 
@@ -72,5 +115,5 @@ jobs:
         if: ${{ inputs.publish }}
         with:
           branch: gh-pages
-          folder: html
+          folder: artifacts/html
           single-commit: true

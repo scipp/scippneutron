@@ -26,8 +26,6 @@ classifiers = [
 requires-python = ">=3.12"
 dynamic = ["version"]
 
-# IMPORTANT:
-# Run 'tox -e deps' after making changes here. This will update requirement files.
 # Make sure to list one dependency per line.
 dependencies = [
     "python-dateutil>=2.9.0",
@@ -35,13 +33,13 @@ dependencies = [
     "h5py>=3.12",
     "lazy_loader>=0.4",
     "mpltoolbox>=24.6.0",
-    "numpy>=2",
+    "numpy>2",
     "plopp>=26.5.0",
     "pydantic>=2.4",
     "pyyaml>=6.0.1",
     "scipp>=25.11.0",
     "scippnexus>=24.6.0",
-    "scipy>=1.13.0",
+    "scipy>1.14",
 ]
 
 [project.optional-dependencies]
@@ -49,7 +47,6 @@ all = ["scipp[all]>=25.8.0", "pooch>=1.5"]
 # pace_neutrons needs a MATLAB runtime, so it is kept out of 'test'.
 sqw = ["pace_neutrons>=0.3"]
 test = [
-    "euphonic>=2.0",
     "hypothesis>=6.100",
     "ipympl>0.9.0",
     "ipykernel>6.30",
