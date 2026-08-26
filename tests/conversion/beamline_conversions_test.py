@@ -536,6 +536,7 @@ def test_scattering_angles_with_gravity_unscattered_neutron_has_zero_two_theta()
         res['two_theta'], sc.scalar(0.0, unit='rad'), atol=sc.scalar(1e-8, unit='rad')
     )
 
+
 @pytest.mark.parametrize('polar', [0.01, 0.1, 0.5])
 @pytest.mark.parametrize('azimuthal', [0.0, np.pi / 3, -2.0, 2.9])
 def test_scattering_angles_with_gravity_round_trip_beam_not_orthogonal_to_gravity(
@@ -569,7 +570,9 @@ def test_scattering_angles_with_gravity_round_trip_beam_not_orthogonal_to_gravit
     )
 
     atol = sc.scalar(1e-7, unit='rad')
-    sc.testing.assert_allclose(res['two_theta'], sc.scalar(polar, unit='rad'), atol=atol)
+    sc.testing.assert_allclose(
+        res['two_theta'], sc.scalar(polar, unit='rad'), atol=atol
+    )
     sc.testing.assert_allclose(res['phi'], sc.scalar(azimuthal, unit='rad'), atol=atol)
 
 
