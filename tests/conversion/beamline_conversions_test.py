@@ -483,6 +483,7 @@ def test_scattering_angles_with_gravity_drops_in_expected_direction():
         sc.array(dims=['det'], values=[np.pi / 2, -np.pi / 2], unit='rad'),
     )
 
+
 def test_scattering_angles_with_gravity_continuous_at_orthogonality_threshold():
     # `scattering_angles_with_gravity` uses a separate implementation when
     # incident_beam and gravity are not orthogonal. The two must agree in the limit.
@@ -520,8 +521,7 @@ def test_scattering_angles_with_gravity_unscattered_neutron_has_zero_two_theta()
     speed = (sc.constants.h / (sc.constants.m_n * wavelength)).to(unit='m/s')
     time = sc.scalar(10.0, unit='m') / speed
     scattered_beam = (
-        speed * time * (incident_beam / sc.norm(incident_beam))
-        + gravity * time**2 / 2
+        speed * time * (incident_beam / sc.norm(incident_beam)) + gravity * time**2 / 2
     ).to(unit='m')
 
     res = beamline.scattering_angles_with_gravity(
