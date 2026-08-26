@@ -585,18 +585,19 @@ def _scattering_angles_with_gravity_generic(
     drop_distance = _drop_due_to_gravity(
         distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
     )
-    y = drop_distance + sc.dot(scattered_beam, ey).to(
-        dtype=elem_dtype(wavelength), copy=False
-    )
-    x = sc.dot(scattered_beam, ex).to(dtype=elem_dtype(y), copy=False)
+    # The neutron fell by `drop_distance` on its way to the detector, so it left the
+    # sample as if the detector were higher up by that amount. `drop_distance` is a
+    # positive length, hence the displacement is antiparallel to gravity.
+    corrected_beam = scattered_beam - drop_distance * (gravity / sc.norm(gravity))
+
+    y = sc.dot(corrected_beam, ey).to(dtype=elem_dtype(wavelength), copy=False)
+    x = sc.dot(corrected_beam, ex).to(dtype=elem_dtype(y), copy=False)
     phi = sc.atan2(y=y, x=x, out=y)
 
-    drop = drop_distance * (gravity / sc.norm(gravity))
-    drop += scattered_beam
     return {
-        'two_theta': two_theta(incident_beam=incident_beam, scattered_beam=drop).to(
-            dtype=elem_dtype(wavelength), copy=False
-        ),
+        'two_theta': two_theta(
+            incident_beam=incident_beam, scattered_beam=corrected_beam
+        ).to(dtype=elem_dtype(wavelength), copy=False),
         'phi': phi,
     }
 
