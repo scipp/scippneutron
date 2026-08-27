@@ -14,8 +14,6 @@ anywidget==0.11.0
     # via -r nightly.in
 appdirs==1.4.4
     # via pace-neutrons
-appnope==0.1.4
-    # via ipykernel
 asttokens==3.0.2
     # via stack-data
 certifi==2026.7.22
@@ -121,7 +119,7 @@ nest-asyncio2==1.7.2
     # via ipykernel
 networkx==3.6.1
     # via cyclebane
-numpy==2.5.2
+numpy==2.4.6
     # via
     #   -r nightly.in
     #   contourpy
@@ -157,7 +155,7 @@ pillow==12.3.0
     #   matplotlib
 pint==0.25.3
     # via euphonic
-platformdirs==4.11.3
+platformdirs==4.11.4
     # via
     #   jupyter-core
     #   pint
@@ -214,7 +212,7 @@ pyyaml==6.0.3
     # via
     #   -r nightly.in
     #   euphonic
-pyzmq==27.1.0
+pyzmq==27.2.0
     # via
     #   ipykernel
     #   jupyter-client
@@ -232,7 +230,7 @@ scipp==100.0.0.dev0
     #   tof
 scippnexus @ git+https://github.com/scipp/scippnexus@main
     # via -r nightly.in
-scipy==1.18.0
+scipy==1.17.1
     # via
     #   -r nightly.in
     #   euphonic
@@ -281,6 +279,7 @@ typing-extensions==4.16.0
     #   euphonic
     #   flexcache
     #   flexparser
+    #   ipython
     #   jupyter-client
     #   pint
     #   pydantic
