@@ -1,5 +1,0 @@
-# Add test dependencies in basetest.in
-
--r base.in
--r basetest.in
-tof  # Note that we add tof here because it depends on plopp, and plopp should not be in basetest.in because of the nightly dependencies
