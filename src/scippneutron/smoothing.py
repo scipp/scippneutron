@@ -219,12 +219,12 @@ def _kernel_weights(
     dist = _as_kernel_distribution(kernel)
 
     z_min = geometry.displacement_min(scale)
+    support_min, support_max = _kernel_support(dist)
+
     p_min = float(dist.cdf(z_min))
     reachable_mass = 1.0 - p_min
     if not np.isfinite(reachable_mass) or reachable_mass <= 0.0:
         raise ValueError("kernel has no mass in the valid domain for this scale")
-
-    support_min, support_max = _kernel_support(dist)
     u_left = float(geometry.offset(scale, max(z_min, support_min)))
     u_right = float(geometry.offset(scale, support_max))
 
