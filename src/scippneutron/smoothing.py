@@ -40,7 +40,6 @@ class _Distribution(Protocol):
 _Kernel: TypeAlias = str | _Distribution
 _FloatArray: TypeAlias = NDArray[np.float64]
 _IntArray: TypeAlias = NDArray[np.int64]
-_ScippArray: TypeAlias = sc.DataArray | sc.Variable
 
 _BUILTIN_KERNELS: dict[str, _Distribution] = {
     # Standard Gaussian.
@@ -103,8 +102,7 @@ def _trim_kernel_weights(
     zero = -offsets[0]
     first = min(nonzero[0], zero)
     last = max(nonzero[-1], zero) + 1
-    weights = weights[first:last]
-    return offsets[first:last], weights / weights.sum()
+    return offsets[first:last], weights[first:last]
 
 
 class _Geometry(Protocol):
@@ -323,10 +321,6 @@ def _smooth_values(
     x = np.asarray(x, dtype=float)
     y = np.asarray(y, dtype=float)
 
-    if x.ndim != 1 or y.ndim != 1:
-        raise ValueError("x and y must be one-dimensional")
-    if x.size != y.size:
-        raise ValueError("x and y must have the same length")
     if not np.isfinite(scale) or scale < 0:
         raise ValueError("scale must be non-negative")
     if not np.isfinite(tail) or not (0.0 < tail < 1.0):
@@ -380,52 +374,32 @@ def _smooth_values(
     return cast(_FloatArray, np.interp(x, xp, zg))
 
 
-def _scipp_input(
-    x: object, y: object
-) -> tuple[sc.Variable, sc.Variable, sc.DataArray | None]:
-    """Validate untyped user input and reduce it to a coordinate/data pair."""
-    template: sc.DataArray | None = None
-    if isinstance(x, sc.DataArray):
-        if y is not None:
-            raise TypeError("y must be omitted when x is a DataArray")
-        if x.ndim != 1:
-            raise sc.DimensionError("data must be one-dimensional")
-        if x.dim not in x.coords:
-            raise sc.CoordError("data must have a dimension coordinate")
-        if x.coords.is_edges(x.dim):
-            raise sc.CoordError("the dimension coordinate must not contain bin edges")
-        if x.masks:
-            raise ValueError("smoothing data with masks is not supported")
-        template = x
-        y = x.data
-        x = x.coords[x.dim]
-    elif not isinstance(x, sc.Variable) or not isinstance(y, sc.Variable):
-        raise TypeError("expected a DataArray or a pair of Variables")
-
-    if x.ndim != 1 or y.ndim != 1:
-        raise sc.DimensionError("x and y must be one-dimensional")
-    if x.dims != y.dims:
-        raise sc.DimensionError("x and y must have the same dimension")
-    if x.is_binned or y.is_binned:
-        raise sc.DTypeError("x and y must not be binned")
-    if y.variances is not None:
+def _validate_data(data: object) -> sc.Variable:
+    """Validate user input and return its dimension coordinate."""
+    if not isinstance(data, sc.DataArray):
+        raise TypeError("expected a DataArray")
+    if data.ndim != 1:
+        raise sc.DimensionError("data must be one-dimensional")
+    if data.is_binned:
+        raise sc.DTypeError("data must not be binned")
+    if data.dim not in data.coords:
+        raise sc.CoordError("data must have a dimension coordinate")
+    if data.coords.is_edges(data.dim):
+        raise sc.CoordError("the dimension coordinate must not contain bin edges")
+    if data.masks:
+        raise ValueError("smoothing data with masks is not supported")
+    if data.variances is not None:
         raise sc.VariancesError(
             "Smoothing signals with variances is not supported because it would "
             "introduce correlations between data points."
         )
-    return x, y, template
+    return data.coords[data.dim]
 
 
-def _scipp_output(
-    template: sc.DataArray | None, y: sc.Variable, values: _FloatArray
-) -> _ScippArray:
-    data = sc.array(dims=y.dims, values=values, unit=y.unit)
-    if template is None:
-        return data
-
+def _with_values(data: sc.DataArray, values: _FloatArray) -> sc.DataArray:
     # The new container shares unchanged coordinates, but its data is independent.
-    out = template.copy(deep=False)
-    out.data = data
+    out = data.copy(deep=False)
+    out.data = sc.array(dims=data.dims, values=values, unit=data.unit)
     return out
 
 
@@ -452,14 +426,13 @@ def _dimensionless_scale(scale: object) -> float:
 
 
 def smooth(
-    x: _ScippArray,
-    y: sc.Variable | None = None,
+    data: sc.DataArray,
     *,
     scale: sc.Variable,
     kernel: _Kernel = "gaussian",
     tail: float = 1e-12,
     max_grid_points: int = 1_000_000,
-) -> _ScippArray:
+) -> sc.DataArray:
     """Smooth sampled data with a translation-invariant kernel.
 
     The kernel describes a distribution of displacements ``Z``, with displaced
@@ -471,13 +444,9 @@ def smooth(
 
     Parameters
     ----------
-    x:
-        One-dimensional data to smooth, or strictly increasing sample
-        coordinates. A data array must have a dimension coordinate.
-    y:
-        Values to smooth when ``x`` contains the sample coordinates. Must be a
-        one-dimensional variable with the same dimension as ``x``. Must be
-        omitted when ``x`` is a data array.
+    data:
+        One-dimensional data to smooth. Must have a strictly increasing
+        dimension coordinate.
     scale:
         Scale factor for the displacement distribution. Must be a scalar with a
         unit compatible with the coordinate. Set to zero to return a copy of the
@@ -499,8 +468,7 @@ def smooth(
     Returns
     -------
     :
-        Smoothed data of the same type as the input. Coordinates and units are
-        preserved.
+        Smoothed data. Coordinates and units are preserved.
 
     Raises
     ------
@@ -509,41 +477,42 @@ def smooth(
         does not identify a supported kernel, or if the required intermediate
         grid exceeds ``max_grid_points``.
     scipp.DimensionError
-        If the inputs are not one-dimensional, a pair of variables does not
-        have matching dimensions, or ``scale`` is not scalar.
+        If the input is not one-dimensional or ``scale`` is not scalar.
     scipp.CoordError
         If a data array has no dimension coordinate or has a bin-edge
         coordinate.
+    scipp.DTypeError
+        If ``data`` is binned.
     scipp.UnitError
         If the unit of ``scale`` is incompatible with the coordinate unit.
     scipp.VariancesError
         If the signal or ``scale`` has variances.
     TypeError
-        If ``scale`` is not a variable, ``kernel`` is not a distribution-like
-        object, or ``max_grid_points`` is not an integer.
+        If ``data`` is not a data array, ``scale`` is not a variable, ``kernel``
+        is not a distribution-like object, or ``max_grid_points`` is not an
+        integer.
     """
-    x, y, template = _scipp_input(x, y)
+    x = _validate_data(data)
     values = _smooth_values(
         _Uniform(),
         x.values,
-        y.values,
+        data.values,
         scale=_scale_in_coordinate_unit(scale, x),
         kernel=kernel,
         tail=tail,
         max_grid_points=max_grid_points,
     )
-    return _scipp_output(template, y, values)
+    return _with_values(data, values)
 
 
 def smooth_relative(
-    x: _ScippArray,
-    y: sc.Variable | None = None,
+    data: sc.DataArray,
     *,
     scale: float | sc.Variable,
     kernel: _Kernel = "gaussian",
     tail: float = 1e-12,
     max_grid_points: int = 1_000_000,
-) -> _ScippArray:
+) -> sc.DataArray:
     """Smooth sampled data with a kernel of relative width.
 
     The kernel describes a distribution of relative displacements ``Z``, with
@@ -556,14 +525,9 @@ def smooth_relative(
 
     Parameters
     ----------
-    x:
-        One-dimensional data to smooth, or positive, strictly increasing
-        one-dimensional sample coordinates. A data array must have a
-        dimension coordinate.
-    y:
-        Values to smooth when ``x`` contains the sample coordinates. Must be a
-        one-dimensional variable with the same dimension as ``x``. Must be
-        omitted when ``x`` is a data array.
+    data:
+        One-dimensional data to smooth. Must have a positive, strictly
+        increasing dimension coordinate.
     scale:
         Dimensionless scale factor for the relative-displacement distribution.
         May be a real number or a scalar, dimensionless variable. Set to zero to
@@ -585,8 +549,7 @@ def smooth_relative(
     Returns
     -------
     :
-        Smoothed data of the same type as the input. Coordinates and units are
-        preserved.
+        Smoothed data. Coordinates and units are preserved.
 
     Raises
     ------
@@ -595,27 +558,29 @@ def smooth_relative(
         string does not identify a supported kernel, or if the required
         intermediate grid exceeds ``max_grid_points``.
     scipp.DimensionError
-        If the inputs are not one-dimensional or a pair of variables does not
-        have matching dimensions, or ``scale`` is not scalar.
+        If the input is not one-dimensional or ``scale`` is not scalar.
     scipp.CoordError
         If a data array has no dimension coordinate or has a bin-edge
         coordinate.
+    scipp.DTypeError
+        If ``data`` is binned.
     scipp.UnitError
         If ``scale`` is a variable with a non-dimensionless unit.
     scipp.VariancesError
         If the signal or ``scale`` has variances.
     TypeError
-        If ``scale`` is neither a real number nor a variable, ``kernel`` is not
-        a distribution-like object, or ``max_grid_points`` is not an integer.
+        If ``data`` is not a data array, ``scale`` is neither a real number nor a
+        variable, ``kernel`` is not a distribution-like object, or
+        ``max_grid_points`` is not an integer.
     """
-    x, y, template = _scipp_input(x, y)
+    x = _validate_data(data)
     values = _smooth_values(
         _Geometric(),
         x.values,
-        y.values,
+        data.values,
         scale=_dimensionless_scale(scale),
         kernel=kernel,
         tail=tail,
         max_grid_points=max_grid_points,
     )
-    return _scipp_output(template, y, values)
+    return _with_values(data, values)
