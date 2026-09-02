@@ -15,7 +15,7 @@ finite boundaries, and interpolate the result back to the original coordinates.
 from __future__ import annotations
 
 from numbers import Real
-from typing import Any, Protocol, TypeAlias, cast
+from typing import Any, Protocol, cast
 
 import numpy as np
 import scipp as sc
@@ -37,9 +37,9 @@ class _Distribution(Protocol):
     def support(self) -> tuple[Any, Any]: ...
 
 
-_Kernel: TypeAlias = str | _Distribution
-_FloatArray: TypeAlias = NDArray[np.float64]
-_IntArray: TypeAlias = NDArray[np.int64]
+type _Kernel = str | _Distribution
+type _FloatArray = NDArray[np.float64]
+type _IntArray = NDArray[np.int64]
 
 _BUILTIN_KERNELS: dict[str, _Distribution] = {
     # Standard Gaussian.
