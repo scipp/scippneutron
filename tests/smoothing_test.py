@@ -413,7 +413,7 @@ def test_fixed_width_smoothing_rejects_scale_with_variance():
         )
 
 
-def test_gaussian_smoothing_matches_exact_quadratic_on_geometric_grid():
+def test_relative_width_gaussian_matches_exact_quadratic_on_geometric_grid():
     # The outer cell edges of this grid coincide with the finite integration
     # domain used by _quadratic_smoothing_error.
     error = _quadratic_smoothing_error(size=4000, alpha=0.1)
