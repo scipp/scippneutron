@@ -484,6 +484,59 @@ def test_scattering_angles_with_gravity_drops_in_expected_direction():
     )
 
 
+def test_scattering_angles_with_gravity_continuous_at_orthogonality_threshold():
+    # `scattering_angles_with_gravity` uses a separate implementation when
+    # incident_beam and gravity are not orthogonal. The two must agree in the limit.
+    wavelength = sc.array(dims=['wavelength'], values=[1.6, 6.0], unit='Å')
+    gravity = sc.vector([0.0, -sc.constants.g.value, 0.0], unit=sc.constants.g.unit)
+    scattered_beam = sc.vectors(
+        dims=['det'], values=[[1.8, 2.5, 8.6], [-0.4, -1.7, 6.9]], unit='m'
+    )
+    kwargs = {
+        'scattered_beam': scattered_beam,
+        'wavelength': wavelength,
+        'gravity': gravity,
+    }
+
+    orthogonal = beamline.scattering_angles_with_gravity(
+        incident_beam=sc.vector([0.0, 0.0, 41.1], unit='m'), **kwargs
+    )
+    tilted = beamline.scattering_angles_with_gravity(
+        incident_beam=sc.vector([0.0, 1e-9, 41.1], unit='m'), **kwargs
+    )
+
+    sc.testing.assert_allclose(tilted['two_theta'], orthogonal['two_theta'])
+    sc.testing.assert_allclose(tilted['phi'], orthogonal['phi'])
+
+
+def test_scattering_angles_with_gravity_unscattered_neutron_has_zero_two_theta():
+    # A neutron that leaves the sample along the incident beam was not scattered.
+    # It still arrives below the incident beam because it falls on the way, and the
+    # gravity correction has to undo exactly that, for any incident beam direction.
+    wavelength = sc.scalar(6.0, unit='Å')
+    gravity = sc.vector([0.0, -sc.constants.g.value, 0.0], unit=sc.constants.g.unit)
+    # Tilted out of the horizontal plane to exercise the generic implementation.
+    incident_beam = sc.vector([1.4, 0.9, 41.1], unit='m')
+
+    speed = (sc.constants.h / (sc.constants.m_n * wavelength)).to(unit='m/s')
+    time = sc.scalar(10.0, unit='m') / speed
+    scattered_beam = (
+        speed * time * (incident_beam / sc.norm(incident_beam)) + gravity * time**2 / 2
+    ).to(unit='m')
+
+    res = beamline.scattering_angles_with_gravity(
+        incident_beam=incident_beam,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
+    )
+
+    # Not exactly zero because the drop is computed from L2 instead of L2'.
+    sc.testing.assert_allclose(
+        res['two_theta'], sc.scalar(0.0, unit='rad'), atol=sc.scalar(1e-8, unit='rad')
+    )
+
+
 def test_scattering_angles_with_gravity_beams_aligned_with_lab_coords():
     wavelength = sc.array(dims=['wavelength'], values=[1.6, 0.9, 0.7], unit='Å')
     gravity = sc.vector([0.0, -sc.constants.g.value, 0.0], unit=sc.constants.g.unit)

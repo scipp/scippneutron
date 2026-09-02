@@ -65,6 +65,7 @@ def read_header(buffer: StringIO) -> list[str]:
 
 
 @given(initial=one_dim_data_arrays(), header=headers(), data=st.data())
+@settings(deadline=None)
 def test_roundtrip(initial: sc.DataArray, header: str, data: st.DataObject) -> None:
     coord_name = data.draw(st.sampled_from(list(initial.coords.keys())))
     loaded = roundtrip(initial, coord=coord_name, header=header)

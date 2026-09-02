@@ -60,7 +60,7 @@ class Sqw:
         path: str | PathLike[str] | BinaryIO | BytesIO,
         *,
         byteorder: Byteorder | Literal["little", "big"] | None = None,
-    ) -> Generator[Sqw, None, None]:
+    ) -> Generator[Sqw]:
         with open_or_pass(path, "rb") as f:
             stored_path = None if isinstance(path, BinaryIO | BytesIO) else Path(path)
             sqw_io = LowLevelSqw(
@@ -175,9 +175,9 @@ def _normalize_data_block_name(
 ) -> DataBlockName:
     match (name, level2_name):
         case (str(n1), str(n2)), None:
-            return DataBlockName((n1, n2))  # type: ignore[no-any-return, operator]
+            return (n1, n2)
         case str(n1), str(n2):
-            return DataBlockName((n1, n2))  # type: ignore[no-any-return, operator]
+            return (n1, n2)
     raise TypeError(
         "Data block name must be given either as a tuple of two strings or two "
         f"separate strings. Got {name!r} and {level2_name!r}."
