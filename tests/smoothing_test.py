@@ -493,7 +493,7 @@ def test_gaussian_smoothing_error_scales_with_tail_until_grid_error_dominates():
         ("triangular", 1.0 / 6.0, 5e-8),
     ],
 )
-def test_compact_symmetric_kernel_matches_exact_interior_quadratic_moments(
+def test_relative_width_compact_kernel_matches_interior_quadratic_moments(
     kernel, relative_variance, max_error
 ):
     lower = 0.1
