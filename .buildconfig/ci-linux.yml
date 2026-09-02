@@ -25,6 +25,7 @@ dependencies:
   - python-graphviz==0.21
   - pythreejs==2.4.2
   - scipp==26.3.0
+  - scippneutron_algorithms==26.7.0
   - scippnexus==25.11.0
   - scipy==1.16.3
   - tox==4.23.2

@@ -10,8 +10,6 @@ accessible-pygments==0.0.5
     # via pydata-sphinx-theme
 alabaster==1.0.0
     # via sphinx
-appnope==0.1.4
-    # via ipykernel
 asttokens==3.0.2
     # via stack-data
 attrs==26.1.0
@@ -54,7 +52,7 @@ executing==2.2.1
     # via stack-data
 fastjsonschema==2.22.2
     # via nbformat
-imagesize==2.0.0
+imagesize==2.0.1
     # via sphinx
 ipykernel==7.3.0
     # via -r docs.in
@@ -139,7 +137,7 @@ parso==0.8.7
     # via jedi
 pexpect==4.9.0
     # via ipython
-platformdirs==4.11.3
+platformdirs==4.11.4
     # via
     #   jupyter-core
     #   pooch
@@ -165,7 +163,7 @@ pybtex-docutils==1.0.3
     # via sphinxcontrib-bibtex
 pydantic-settings==2.15.0
     # via autodoc-pydantic
-pydata-sphinx-theme==0.20.0
+pydata-sphinx-theme==0.21.0
     # via -r docs.in
 pygments==2.21.0
     # via
@@ -177,7 +175,7 @@ pygments==2.21.0
     #   sphinx
 python-dotenv==1.2.3
     # via pydantic-settings
-pyzmq==27.1.0
+pyzmq==27.2.0
     # via
     #   ipykernel
     #   jupyter-client
