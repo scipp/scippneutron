@@ -459,7 +459,7 @@ def test_gaussian_smoothing_error_scales_with_inverse_kernel_width():
     )
 
 
-def test_gaussian_smoothing_error_scales_with_tail_until_grid_error_dominates():
+def test_relative_width_gaussian_error_scales_with_tail_until_grid_error_dominates():
     tails = np.array([1e-2, 1e-3, 1e-4, 1e-5])
     truncation_errors = np.array(
         [
