@@ -422,7 +422,7 @@ def test_relative_width_gaussian_matches_exact_quadratic_on_geometric_grid():
     assert np.sqrt(np.mean(error**2)) < 1e-7
 
 
-def test_gaussian_smoothing_error_is_second_order_in_log_grid_spacing():
+def test_relative_width_gaussian_error_is_second_order_in_log_grid_spacing():
     sizes = np.array([500, 1000, 2000, 4000])
     errors = np.array(
         [
