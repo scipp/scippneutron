@@ -66,9 +66,9 @@ def _variables(x, y):
     )
 
 
-def _smooth_values(smooth, x, y, **kwargs):
+def _smooth_values(function, x, y, **kwargs):
     x, y = _variables(x, y)
-    return smooth(x, y, **kwargs).values
+    return function(x, y, **kwargs).values
 
 
 def _quadratic_smoothing_error(*, size, alpha, tail=1e-9):
