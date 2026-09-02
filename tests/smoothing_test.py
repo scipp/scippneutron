@@ -437,7 +437,7 @@ def test_relative_width_gaussian_error_is_second_order_in_log_grid_spacing():
     np.testing.assert_allclose(observed_orders, 2.0, atol=0.06)
 
 
-def test_gaussian_smoothing_error_scales_with_inverse_kernel_width():
+def test_relative_width_gaussian_error_scales_with_inverse_kernel_width():
     size = 4000
     alphas = np.array([0.025, 0.05, 0.1])
     errors = np.array(
