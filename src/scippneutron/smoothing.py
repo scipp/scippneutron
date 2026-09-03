@@ -484,7 +484,9 @@ def smooth(
     Returns
     -------
     :
-        Smoothed data. Coordinates and units are preserved.
+        Smoothed data. Coordinates and units are preserved. Points where no
+        kernel mass falls inside the input domain are NaN; this can occur at
+        the boundaries for one-sided kernels.
 
     Raises
     ------
