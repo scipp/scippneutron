@@ -14,6 +14,7 @@ finite boundaries, and interpolate the result back to the original coordinates.
 
 from __future__ import annotations
 
+import warnings
 from numbers import Real
 from typing import Any, Protocol, cast
 
@@ -235,6 +236,8 @@ def _kernel_weights(
         u_left, u_right = (
             float(value) for value in geometry.offset(scale, dist.ppf(probabilities))
         )
+        # The geometric domain boundary may leave u_left non-finite; m_min is
+        # safely clamped to the finite input below. u_right has no such bound.
         if not np.isfinite(u_right):
             raise ValueError("right kernel bound is not finite; increase tail")
 
@@ -268,6 +271,8 @@ def _valid_weight_sums(n: int, m: _IntArray, w: _FloatArray) -> _FloatArray:
 
     lower = np.maximum(m_min, -i)
     upper = np.minimum(m_max, n - 1 - i)
+    # _kernel_weights preserves offset zero, which is valid for every i, so
+    # [lower, upper] is never empty.
 
     cumsum = np.empty(w.size + 1, dtype=float)
     cumsum[0] = 0.0
@@ -392,6 +397,13 @@ def _validate_data(data: object) -> sc.Variable:
         raise sc.VariancesError(
             "Smoothing signals with variances is not supported because it would "
             "introduce correlations between data points."
+        )
+    if np.any(~np.isfinite(data.values)):
+        warnings.warn(
+            "Data contains NaNs or infinities; smoothing may fall back to a slower "
+            "method.",
+            UserWarning,
+            stacklevel=3,
         )
     return data.coords[data.dim]
 

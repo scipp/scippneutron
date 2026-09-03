@@ -221,11 +221,29 @@ def test_nonfinite_value_only_affects_overlapping_kernel_windows():
     values[size // 2] = np.nan
     data = sc.DataArray(sc.array(dims=['x'], values=values), coords={'x': x})
 
-    actual = smooth(data, scale=sc.scalar(150.0))
+    with pytest.warns(UserWarning, match="NaNs or infinities"):
+        actual = smooth(data, scale=sc.scalar(150.0))
 
     assert np.isfinite(actual.values[0])
     assert np.isnan(actual.values[size // 2])
     assert np.isfinite(actual.values[-1])
+
+
+@pytest.mark.parametrize(
+    ("function", "x", "scale"),
+    [
+        (smooth, [0.0, 1.0], sc.scalar(0.1, unit='m')),
+        (smooth_relative, [1.0, 2.0], 0.1),
+    ],
+)
+@pytest.mark.parametrize("nonfinite", [np.nan, np.inf, -np.inf])
+def test_warns_for_nonfinite_data(function, x, scale, nonfinite):
+    data = _data_array(x, [1.0, nonfinite])
+
+    with pytest.warns(UserWarning, match="NaNs or infinities.*slower") as emitted:
+        function(data, scale=scale)
+
+    assert emitted[0].filename == __file__
 
 
 def test_fixed_width_smoothing_preserves_coordinates():
