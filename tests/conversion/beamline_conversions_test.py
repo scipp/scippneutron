@@ -537,6 +537,45 @@ def test_scattering_angles_with_gravity_unscattered_neutron_has_zero_two_theta()
     )
 
 
+@pytest.mark.parametrize('polar', [0.01, 0.1, 0.5])
+@pytest.mark.parametrize('azimuthal', [0.0, np.pi / 3, -2.0, 2.9])
+def test_scattering_angles_with_gravity_round_trip_beam_not_orthogonal_to_gravity(
+    polar: float, azimuthal: float
+):
+    # Send a neutron away from the sample at known angles relative to an incident beam
+    # that is not orthogonal to gravity, let it fall onto a detector, and check that
+    # the angles are recovered. This pins `phi` as the azimuth about the incident beam
+    # rather than about the projection of the incident beam onto the horizontal plane.
+    wavelength = sc.scalar(6.0, unit='Å')
+    gravity = sc.vector([0.0, -sc.constants.g.value, 0.0], unit=sc.constants.g.unit)
+    incident_beam = sc.vector([1.4, 0.9, 41.1], unit='m')
+
+    ez = incident_beam / sc.norm(incident_beam)
+    ex = sc.cross(-gravity / sc.norm(gravity), ez)
+    ex = ex / sc.norm(ex)
+    ey = sc.cross(ez, ex)
+    direction = np.cos(polar) * ez + np.sin(polar) * (
+        np.cos(azimuthal) * ex + np.sin(azimuthal) * ey
+    )
+
+    speed = (sc.constants.h / (sc.constants.m_n * wavelength)).to(unit='m/s')
+    time = sc.scalar(10.0, unit='m') / speed
+    scattered_beam = (speed * time * direction + gravity * time**2 / 2).to(unit='m')
+
+    res = beamline.scattering_angles_with_gravity(
+        incident_beam=incident_beam,
+        scattered_beam=scattered_beam,
+        wavelength=wavelength,
+        gravity=gravity,
+    )
+
+    atol = sc.scalar(1e-7, unit='rad')
+    sc.testing.assert_allclose(
+        res['two_theta'], sc.scalar(polar, unit='rad'), atol=atol
+    )
+    sc.testing.assert_allclose(res['phi'], sc.scalar(azimuthal, unit='rad'), atol=atol)
+
+
 def test_scattering_angles_with_gravity_beams_aligned_with_lab_coords():
     wavelength = sc.array(dims=['wavelength'], values=[1.6, 0.9, 0.7], unit='Å')
     gravity = sc.vector([0.0, -sc.constants.g.value, 0.0], unit=sc.constants.g.unit)
@@ -1128,3 +1167,27 @@ def test_beam_aligned_unit_vectors_complicated_inputs():
     sc.testing.assert_allclose(sc.dot(ex, ey), sc.scalar(0.0), atol=sc.scalar(1e-16))
     sc.testing.assert_allclose(sc.dot(ey, ez), sc.scalar(0.0), atol=sc.scalar(1e-16))
     sc.testing.assert_allclose(sc.dot(ez, ex), sc.scalar(0.0), atol=sc.scalar(1e-16))
+
+
+def test_beam_aligned_unit_vectors_beam_not_orthogonal_to_gravity():
+    incident_beam = sc.vector([3.1, -1.9, 23.6], unit='m')
+    gravity = sc.vector([-0.01, -9.5, 3.2], unit='m/s/s')
+
+    res = beamline.beam_aligned_unit_vectors(
+        incident_beam=incident_beam, gravity=gravity
+    )
+    ex = res['beam_aligned_unit_x']
+    ey = res['beam_aligned_unit_y']
+    ez = res['beam_aligned_unit_z']
+
+    # The z-axis is along the incident beam even though gravity is not orthogonal
+    # to it, and the x-axis remains horizontal.
+    sc.testing.assert_allclose(ez, incident_beam / sc.norm(incident_beam))
+    sc.testing.assert_allclose(sc.dot(ex, gravity), sc.scalar(0.0, unit='m/s/s'))
+
+    for e in (ex, ey, ez):
+        sc.testing.assert_allclose(sc.norm(e), sc.scalar(1.0))
+    sc.testing.assert_allclose(sc.dot(ex, ey), sc.scalar(0.0), atol=sc.scalar(1e-16))
+    sc.testing.assert_allclose(sc.dot(ey, ez), sc.scalar(0.0), atol=sc.scalar(1e-16))
+    sc.testing.assert_allclose(sc.dot(ez, ex), sc.scalar(0.0), atol=sc.scalar(1e-16))
+    sc.testing.assert_allclose(sc.cross(ex, ey), ez)
