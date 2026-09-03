@@ -65,5 +65,6 @@ and possible confusion of `theta` (from Bragg’s law) with `theta` in spherical
    logging
    metadata
    peaks
+   smoothing
    tof
 ```
