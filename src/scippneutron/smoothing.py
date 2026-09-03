@@ -460,9 +460,9 @@ def smooth(
         One-dimensional data to smooth. Must have a strictly increasing
         dimension coordinate.
     scale:
-        Scale factor for the displacement distribution. Must be a scalar with a
-        unit compatible with the coordinate. Set to zero to return a copy of the
-        input without smoothing.
+        Finite, non-negative scale factor for the displacement distribution. Must
+        be a scalar with a unit compatible with the coordinate. Set to zero to
+        return a copy of the input without smoothing.
     kernel:
         Kernel distribution. The canonical names are ``'gaussian'``,
         ``'boxcar'``, and ``'triangular'``. They represent a standard normal
@@ -472,7 +472,7 @@ def smooth(
         ``cdf``, ``ppf``, and ``support`` methods.
     tail:
         Total probability omitted when truncating a kernel with unbounded
-        support.
+        support. Must be strictly between zero and one.
     max_grid_points:
         Intermediate uniform grids no larger than this are always allowed. Larger
         grids may be rejected to guard against excessive resampling.
@@ -503,6 +503,12 @@ def smooth(
         If ``data`` is not a data array, ``scale`` is not a variable, ``kernel``
         is not a distribution-like object, or ``max_grid_points`` is not an
         integer.
+
+    Warns
+    -----
+    UserWarning
+        If the data contains NaNs or infinities, since smoothing may fall back to
+        a slower method.
     """
     x = _validate_data(data)
     values = _smooth_values(
@@ -541,9 +547,10 @@ def smooth_relative(
         One-dimensional data to smooth. Must have a positive, strictly
         increasing dimension coordinate.
     scale:
-        Dimensionless scale factor for the relative-displacement distribution.
-        May be a real number or a scalar, dimensionless variable. Set to zero to
-        return a copy of the input without smoothing.
+        Finite, non-negative, dimensionless scale factor for the
+        relative-displacement distribution. May be a real number or a scalar,
+        dimensionless variable. Set to zero to return a copy of the input without
+        smoothing.
     kernel:
         Kernel distribution. The canonical names are ``'gaussian'``,
         ``'boxcar'``, and ``'triangular'``. They represent a standard normal
@@ -553,7 +560,8 @@ def smooth_relative(
         ``cdf``, ``ppf``, and ``support`` methods.
     tail:
         Total probability omitted when truncating a kernel with unbounded support
-        or support reaching the nonpositive coordinate domain.
+        or support reaching the nonpositive coordinate domain. Must be strictly
+        between zero and one.
     max_grid_points:
         Intermediate geometric grids no larger than this are always allowed. Larger
         grids may be rejected to guard against excessive resampling.
@@ -584,6 +592,12 @@ def smooth_relative(
         If ``data`` is not a data array, ``scale`` is neither a real number nor a
         variable, ``kernel`` is not a distribution-like object, or
         ``max_grid_points`` is not an integer.
+
+    Warns
+    -----
+    UserWarning
+        If the data contains NaNs or infinities, since smoothing may fall back to
+        a slower method.
     """
     x = _validate_data(data)
     values = _smooth_values(
