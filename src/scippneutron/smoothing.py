@@ -97,12 +97,10 @@ def _trim_kernel_weights(
 ) -> tuple[_IntArray, _FloatArray]:
     nonzero = np.flatnonzero(weights > 0.0)
     if nonzero.size == 0:
-        return offsets, weights
+        return offsets[:0], weights[:0]
 
-    # Trim zero-only ends, but preserve offset zero for convolution alignment.
-    zero = -offsets[0]
-    first = min(nonzero[0], zero)
-    last = max(nonzero[-1], zero) + 1
+    first = nonzero[0]
+    last = nonzero[-1] + 1
     return offsets[first:last], weights[first:last]
 
 
@@ -258,11 +256,8 @@ def _valid_weight_sums(n: int, m: _IntArray, w: _FloatArray) -> _FloatArray:
     """
     Boundary normalization.
 
-    Equivalent to
-
-        np.convolve(np.ones(n), w[::-1], mode="full")[start:start+n]
-
-    but O(n), not another full convolution.
+    Sum weights whose offsets remain within the input at each output position.
+    This uses cumulative sums and is O(n), not another full convolution.
     """
     i = np.arange(n, dtype=np.int64)
 
@@ -271,22 +266,23 @@ def _valid_weight_sums(n: int, m: _IntArray, w: _FloatArray) -> _FloatArray:
 
     lower = np.maximum(m_min, -i)
     upper = np.minimum(m_max, n - 1 - i)
-    # _kernel_weights preserves offset zero, which is valid for every i, so
-    # [lower, upper] is never empty.
 
     cumsum = np.empty(w.size + 1, dtype=float)
     cumsum[0] = 0.0
     np.cumsum(w, out=cumsum[1:])
 
-    return cast(
-        _FloatArray,
-        cumsum[upper - m_min + 1] - cumsum[lower - m_min],
-    )
+    out = np.zeros(n, dtype=float)
+    valid = lower <= upper
+    out[valid] = cumsum[upper[valid] - m_min + 1] - cumsum[lower[valid] - m_min]
+    return out
 
 
 def _smooth_with_weights(
     y: _FloatArray, offsets: _IntArray, weights: _FloatArray
 ) -> _FloatArray:
+    if weights.size == 0:
+        return np.full_like(y, np.nan)
+
     # Desired operation:
     #
     #   out[i] = sum_m weights[m] * y[i + m]
@@ -297,7 +293,12 @@ def _smooth_with_weights(
     method = "auto" if np.all(np.isfinite(y)) else "direct"
     full = cast(_FloatArray, convolve(y, weights[::-1], mode="full", method=method))
     start = int(offsets[-1])
-    numerator = full[start : start + y.size]
+    source_begin = max(start, 0)
+    source_end = min(start + y.size, full.size)
+    destination_begin = source_begin - start
+    destination_end = destination_begin + source_end - source_begin
+    numerator = np.zeros_like(y)
+    numerator[destination_begin:destination_end] = full[source_begin:source_end]
     denominator = _valid_weight_sums(y.size, offsets, weights)
 
     out = np.full_like(numerator, np.nan)
@@ -389,8 +390,11 @@ def _validate_data(data: object) -> sc.Variable:
         raise sc.DTypeError("data must not be binned")
     if data.dim not in data.coords:
         raise sc.CoordError("data must have a dimension coordinate")
-    if data.coords.is_edges(data.dim):
-        raise sc.CoordError("the dimension coordinate must not contain bin edges")
+    coord = data.coords[data.dim]
+    if coord.sizes != data.sizes:
+        raise sc.CoordError(
+            "the dimension coordinate must have the same shape as the data"
+        )
     if data.masks:
         raise ValueError("smoothing data with masks is not supported")
     if data.variances is not None:
@@ -405,7 +409,7 @@ def _validate_data(data: object) -> sc.Variable:
             UserWarning,
             stacklevel=3,
         )
-    return data.coords[data.dim]
+    return coord
 
 
 def _with_values(data: sc.DataArray, values: _FloatArray) -> sc.DataArray:

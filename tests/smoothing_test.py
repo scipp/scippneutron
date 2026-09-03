@@ -229,6 +229,19 @@ def test_nonfinite_value_only_affects_overlapping_kernel_windows():
     assert np.isfinite(actual.values[-1])
 
 
+def test_zero_weight_does_not_propagate_nonfinite_value():
+    data = _data_array([0.0, 1.0, 2.0], [np.inf, 2.0, 3.0])
+
+    with pytest.warns(UserWarning, match="NaNs or infinities"):
+        actual = smooth(
+            data,
+            scale=sc.scalar(1.0, unit='m'),
+            kernel=uniform(loc=0.5, scale=1.0),
+        )
+
+    np.testing.assert_equal(actual.values, [2.0, 3.0, np.nan])
+
+
 @pytest.mark.parametrize(
     ("function", "x", "scale"),
     [
@@ -688,13 +701,20 @@ def test_rejects_data_array_without_dimension_coordinate():
         smooth_relative(data, scale=0.1)
 
 
+def test_rejects_scalar_dimension_coordinate():
+    data = sc.DataArray(sc.ones(dims=['x'], shape=[3]), coords={'x': sc.scalar(1.0)})
+
+    with pytest.raises(sc.CoordError, match="same shape as the data"):
+        smooth_relative(data, scale=0.1)
+
+
 def test_rejects_data_array_with_bin_edge_coordinate():
     data = sc.DataArray(
         sc.ones(dims=['x'], shape=[3]),
         coords={'x': sc.arange('x', 1.0, 5.0)},
     )
 
-    with pytest.raises(sc.CoordError, match="bin edges"):
+    with pytest.raises(sc.CoordError, match="same shape as the data"):
         smooth_relative(data, scale=0.1)
 
 
@@ -777,11 +797,17 @@ def test_kernel_stencil_is_bounded_before_allocation():
     np.testing.assert_allclose(actual, np.full(size, y.mean()), rtol=1e-4)
 
 
-def test_asymmetric_kernel_convolution_matches_direct_weighted_sum():
+@pytest.mark.parametrize(
+    "kernel",
+    [
+        pytest.param(uniform(loc=0.5, scale=1.0), id="positive-offsets"),
+        pytest.param(uniform(loc=-1.5, scale=1.0), id="negative-offsets"),
+    ],
+)
+def test_asymmetric_kernel_convolution_matches_direct_weighted_sum(kernel):
     size = 20
     log_spacing = 0.03
     alpha = 0.2
-    kernel = uniform(loc=0.5, scale=1.0)
     y = np.arange(size, dtype=float) ** 2
     x = np.geomspace(1.0, np.exp((size - 1) * log_spacing), size)
 
