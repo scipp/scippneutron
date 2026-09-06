@@ -6,26 +6,6 @@ on:
       publish:
         default: false
         type: boolean
-      version:
-        description: 'Version of ScippNeutron to use for building the docs. Requires this version to be available on conda-forge! If not set, the current version will be used.'
-        default: ''
-        required: false
-        type: string
-      branch:
-        description: 'Branch/tag with documentation source. If not set, the current branch will be used.'
-        default: ''
-        required: false
-        type: string
-  workflow_call:
-    inputs:
-      publish:
-        default: false
-        type: boolean
-      version:
-        description: 'Version of ScippNeutron to use for building the docs. Requires this version to be available on conda-forge! If not set, the current version will be used.'
-        default: ''
-        required: false
-        type: string
       branch:
         description: 'Branch/tag with documentation source. If not set, the current branch will be used.'
         default: ''
@@ -36,61 +16,142 @@ on:
         default: false
         required: false
         type: boolean
+  workflow_call:
+    inputs:
+      publish:
+        default: false
+        type: boolean
+      branch:
+        description: 'Branch/tag with documentation source. If not set, the current branch will be used.'
+        default: ''
+        required: false
+        type: string
+      linkcheck:
+        description: 'Run the link checker. If not set the link checker will not be run.'
+        default: false
+        required: false
+        type: boolean
+    secrets:
+      ESS_PROTECTED_FILESTORE_USERNAME:
+        required: false
+      ESS_PROTECTED_FILESTORE_PASSWORD:
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.workflow }}-${{ github.ref }}-${{ inputs.branch }}
+  cancel-in-progress: ${{ !inputs.publish }}
 
 env:
-  VERSION: ${{ inputs.version }}
+  PIXI_FROZEN: true
 
 jobs:
   docs:
     name: Build documentation
     runs-on: 'ubuntu-24.04'
-    defaults:
-      run:
-        shell: bash -l {0}  # required for conda env
-    env:
-        ESS_PROTECTED_FILESTORE_USERNAME: ${{ secrets.ESS_PROTECTED_FILESTORE_USERNAME }}
-        ESS_PROTECTED_FILESTORE_PASSWORD: ${{ secrets.ESS_PROTECTED_FILESTORE_PASSWORD }}
-
     steps:
-      - run: sudo apt install --yes graphviz pandoc
-      - uses: actions/checkout@v6
+      # Keep the workflow and locked Pixi environments on the caller's ref. The
+      # documentation source may point at a release that predates pixi.toml.
+      - name: Check out current workflow tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          path: tooling
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check out documentation source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           ref: ${{ inputs.branch == '' && github.ref_name || inputs.branch }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          fetch-depth: 0  # history required so cmake can determine version
-      - uses: mamba-org/setup-micromamba@v2
-        if: ${{ inputs.version != '' }}
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          path: source
+          fetch-depth: 0  # history required so setuptools_scm can determine the version
+          persist-credentials: false
+      # pandoc and graphviz come from the docs environment, so there is nothing to
+      # install with apt here.
+      - uses: prefix-dev/setup-pixi@f00437f565399d418b0acc85936d12c1fb668347  # v0.10.1
         with:
-          environment-file: .buildconfig/ci-linux.yml
-          cache-environment: true
-          create-args: >-
-            python=3.12
-            scippneutron==${{ inputs.version }}
-      - uses: mamba-org/setup-micromamba@v2
-        if: ${{ inputs.version == '' }}
-        with:
-          environment-file: .buildconfig/ci-linux.yml
-          cache-environment: true
-          create-args: >-
-            python=3.12
-            conda-build
-      - run: pip install --no-build-isolation --no-deps -e .
-        if: ${{ inputs.version == '' }}
-      - run: python -m sphinx -W -v -b doctest -d doctrees docs html
-      - run: python -m sphinx -W -v -b html -d doctrees docs html
-      - run: python -m sphinx -W -v -b linkcheck -d doctrees docs html
+          pixi-version: v0.77.0
+          working-directory: tooling
+          environments: build docs
+          locked: true
+      - name: Create build directories
+        run: mkdir -p artifacts/wheel artifacts/doctrees
+      - name: Build selected ScippNeutron version
+        working-directory: source
+        run: >-
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml
+          -e build python -m build --wheel --no-isolation
+          --outdir ../artifacts/wheel
+      - name: Install selected ScippNeutron version
+        working-directory: source
+        run: |
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml -e docs python -m ensurepip --upgrade
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml -e docs python -m pip install --no-deps --force-reinstall ../artifacts/wheel/scippneutron-*.whl
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml -e docs python -c 'from importlib.metadata import version; print("Building ScippNeutron", version("scippneutron"), "documentation")'
+      - name: Configure Graphviz
+        working-directory: source
+        run: pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml -e docs dot -c
+      - name: Run doctests
+        working-directory: source
+        env:
+          ESS_PROTECTED_FILESTORE_USERNAME: ${{ secrets.ESS_PROTECTED_FILESTORE_USERNAME }}
+          ESS_PROTECTED_FILESTORE_PASSWORD: ${{ secrets.ESS_PROTECTED_FILESTORE_PASSWORD }}
+        run: >-
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml
+          -e docs python -m sphinx -W -v -b doctest
+          -d ../artifacts/doctrees docs ../artifacts/doctest
+      - name: Build HTML
+        working-directory: source
+        env:
+          ESS_PROTECTED_FILESTORE_USERNAME: ${{ secrets.ESS_PROTECTED_FILESTORE_USERNAME }}
+          ESS_PROTECTED_FILESTORE_PASSWORD: ${{ secrets.ESS_PROTECTED_FILESTORE_PASSWORD }}
+        run: >-
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml
+          -e docs python -m sphinx -W -v -b html
+          -d ../artifacts/doctrees docs ../artifacts/html
+      - name: Check links
         if: ${{ inputs.linkcheck }}
-      - run: find html -type f -name "*.ipynb" -not -path "html/_sources/*" -delete
-      - uses: actions/upload-artifact@v7
+        working-directory: source
+        env:
+          ESS_PROTECTED_FILESTORE_USERNAME: ${{ secrets.ESS_PROTECTED_FILESTORE_USERNAME }}
+          ESS_PROTECTED_FILESTORE_PASSWORD: ${{ secrets.ESS_PROTECTED_FILESTORE_PASSWORD }}
+        run: >-
+          pixi run --frozen --no-install --manifest-path ../tooling/pixi.toml
+          -e docs python -m sphinx -W -v -b linkcheck
+          -d ../artifacts/doctrees docs ../artifacts/linkcheck
+      - run: find artifacts/html -type f -name "*.ipynb" -not -path "artifacts/html/_sources/*" -delete
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         id: artifact-upload-step
         with:
           name: docs_html
-          path: html/
+          path: artifacts/html/
+          if-no-files-found: error
       - run: echo "::notice::https://remote-unzip.scipp.deno.net/${{ github.repository }}/artifacts/${{ steps.artifact-upload-step.outputs.artifact-id }}"
 
-      - uses: JamesIves/github-pages-deploy-action@v4
-        if: ${{ inputs.publish }}
+  deploy:
+    name: Deploy documentation
+    if: ${{ inputs.publish }}
+    needs: docs
+    runs-on: 'ubuntu-24.04'
+    permissions:
+      contents: write
+    concurrency:
+      group: pages-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      # The deployment action requires a checked-out Git repository, but it uses
+      # its own scoped token for the push so checkout credentials need not persist.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          name: docs_html
+          path: artifacts/html
+      - uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445  # v4.9.0
         with:
           branch: gh-pages
-          folder: html
+          folder: artifacts/html
           single-commit: true

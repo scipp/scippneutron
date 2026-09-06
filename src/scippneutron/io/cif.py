@@ -301,7 +301,7 @@ class CIF:
         ``('intensity_net', 'intensity_norm', 'intensity_total')``.
         If the name is not set, it defaults to ``'intensity_norm'``,
         which is appropriate for typical outputs from data reduction.
-        See https://github.com/COMCIFS/Powder_Dictionary/blob/master/cif_pow.dic
+        See https://github.com/COMCIFS/cif_pd/blob/master/cif_pd.dic
 
         The data gets written as intensity along a single coord whose
         name matches the dimension name.
