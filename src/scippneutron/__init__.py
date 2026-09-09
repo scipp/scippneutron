@@ -32,6 +32,7 @@ submodules = [
     'data',
     'metadata',
     'peaks',
+    'smoothing',
     'tof',
 ]
 
