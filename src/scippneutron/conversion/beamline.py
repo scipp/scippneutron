@@ -71,16 +71,16 @@ The axes are defined by these unit vectors:
 
 .. math::
 
-    \hat{e}_y &= -g / |g| \\
-    z_{\text{proj}} &= b_1 - (b_1 \cdot \hat{e}_y) \hat{e}_y \\
-    \hat{e}_z &= z_{\text{proj}} / |z_{\text{proj}}| \\
-    \hat{e}_x &= \hat{e}_y \times \hat{e}_z
+    \hat{e}_z &= b_1 / |b_1| \\
+    x_\perp &= -g \times \hat{e}_z \\
+    \hat{e}_x &= x_\perp / |x_\perp| \\
+    \hat{e}_y &= \hat{e}_z \times \hat{e}_x
 
 which span an orthogonal, right-handed coordinate system.
 Here, :math:`b_1` is the ``incident_beam`` and :math:`g` is the gravity vector.
-This means that the y-axis is antiparallel to gravity.
-The z-axis is defined by projecting the incident beam onto a plane perpendicular
-to gravity.
+This means that the z-axis is along the incident beam and the x-axis is horizontal.
+The y-axis is antiparallel to gravity if and only if the incident beam is
+perpendicular to gravity, which is the case on most beamlines.
 Basis vectors can be computed using :func:`beam_aligned_unit_vectors`.
 
 :math:`p = \sqrt{x^2 + y^2}` is the projection of the
@@ -362,12 +362,15 @@ def beam_aligned_unit_vectors(
 
     .. math::
 
-        \hat{e}_y &= -g / |g| \\
-        z_{\text{proj}} &= b_1 - (b_1 \cdot \hat{e}_y) \hat{e}_y \\
-        \hat{e}_z &= z_{\text{proj}} / |z_{\text{proj}}| \\
-        \hat{e}_x &= \hat{e}_y \times \hat{e}_z
+        \hat{e}_z &= b_1 / |b_1| \\
+        x_\perp &= -g \times \hat{e}_z \\
+        \hat{e}_x &= x_\perp / |x_\perp| \\
+        \hat{e}_y &= \hat{e}_z \times \hat{e}_x
 
     where :math:`b_1` is the ``incident_beam`` and :math:`g` is the gravity vector.
+    The z-axis is along the incident beam and the x-axis is horizontal.
+    The y-axis is antiparallel to gravity if and only if the incident beam is
+    perpendicular to gravity.
     See the module-level docs of :mod:`scippneutron.conversion.beamline` for  details.
 
     Parameters
@@ -392,20 +395,19 @@ def beam_aligned_unit_vectors(
     straight_incident_beam:
         Compute the incident beam for a straight beamline.
     """
-    ey = -gravity / sc.norm(gravity)
-    # Project incident_beam onto a plane perpendicular to ey.
-    z = incident_beam - sc.dot(incident_beam, ey) * ey
-    z_norm = sc.norm(z)
-    if sc.any(z_norm < sc.scalar(1e-10, unit=z_norm.unit)):
+    ez = incident_beam / sc.norm(incident_beam)
+    ex = sc.cross(-gravity / sc.norm(gravity), ez)
+    # |ex| is the sine of the angle between gravity and the incident beam.
+    ex_norm = sc.norm(ex)
+    if sc.any(ex_norm < sc.scalar(1e-10)):
         raise ValueError(
             "Cannot construct a coordinate system. The incident beam and "
             "gravity are parallel to each other."
         )
-    ez = z / sc.norm(z)
-    ex = sc.cross(ey, ez)
+    ex = ex / ex_norm
     return {
         'beam_aligned_unit_x': ex,
-        'beam_aligned_unit_y': ey,
+        'beam_aligned_unit_y': sc.cross(ez, ex),
         'beam_aligned_unit_z': ez,
     }
 
@@ -480,14 +482,12 @@ def scattering_angles_with_gravity(
     The neutron left the sample in the direction of a vector :math:`b'_2`.
     This vector defines the scattering angles :math:`2\theta` and :math:`\phi`.
     Taking gravity into account, we have :math:`b'_2 \neq b_2`.
-    Solving the equations of motion gives the following for the
-    components of :math:`b'_2`:
+    Solving the equations of motion shows that the neutron fell by :math:`\delta_y`
+    on its way to the detector:
 
     .. math::
 
-        x'_d &= x_d \\
-        y'_d &= y_d + \delta_y \\
-        z'_d &= z_d
+        b'_2 = b_2 - \delta_y \frac{g}{|g|}
 
     Where :math:`|g|` is the strength of gravity, :math:`m_n` is the neutron mass,
     :math:`h` is the Planck constant, :math:`\lambda` is the wavelength, and
@@ -500,12 +500,21 @@ def scattering_angles_with_gravity(
 
     .. math::
 
-        2\theta &= \sphericalangle(b_1, b_2 + \delta_y \hat{e}_y) \\
-        \mathsf{tan}(\phi) &= \frac{y'_d}{x_d}
+        2\theta &= \sphericalangle(b_1, b'_2) \\
+        \mathsf{tan}(\phi) &= \frac{b'_2 \cdot \hat{e}_y}{b'_2 \cdot \hat{e}_x}
 
     where :math:`\sphericalangle` is the angle between two vectors as implemented by
     :func:`two_theta`.
-    When :math:`b_1` is orthogonal to gravity, we can equivalently use
+    When :math:`b_1` is orthogonal to gravity, :math:`\hat{e}_y = -g / |g|`, so the
+    components of :math:`b'_2` are
+
+    .. math::
+
+        x'_d &= x_d \\
+        y'_d &= y_d + \delta_y \\
+        z'_d &= z_d
+
+    and we can equivalently use
 
     .. math::
 
