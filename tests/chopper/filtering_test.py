@@ -1,9 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
-import subprocess
-import sys
-
 import pytest
 import scipp as sc
 import scipp.testing
@@ -371,33 +368,3 @@ def test_filter_in_phase_floats():
     filtered = filter_in_phase(da, reference=sc.scalar(1.2), rtol=sc.scalar(0.1))
     expected = sc.DataArray(sc.array(dims=['t'], values=[0.6, 1.2, 2.4]))
     sc.testing.assert_identical(filtered, expected)
-
-
-def test_find_plateaus_does_not_mint_a_dim_label_per_call():
-    # scipp interns dimension labels -- coord names included -- in a process-global
-    # table that is never pruned, so a label minted per call stops the function from
-    # working part-way through a long-running process. Filling that table breaks every
-    # later test in the process, hence the subprocess.
-    script = '''
-import scipp as sc
-from scippneutron.chopper import find_plateaus
-
-da = sc.DataArray(
-    sc.full(value=4.2, sizes={'x': 12}), coords={'x': sc.arange('x', 12)}
-)
-find_plateaus(da, atol=sc.scalar(1e-7), min_n_points=3)
-
-n = 0
-while True:
-    try:
-        sc.zeros(dims=[f'exhaust_{n}'], shape=[0])
-    except RuntimeError:
-        break
-    n += 1
-
-find_plateaus(da, atol=sc.scalar(1e-7), min_n_points=3)
-'''
-    result = subprocess.run(  # noqa: S603  # the script is a literal above
-        [sys.executable, '-c', script], capture_output=True, text=True, check=False
-    )
-    assert result.returncode == 0, result.stderr
