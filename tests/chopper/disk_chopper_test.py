@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
+import subprocess
+import sys
+
 import pytest
 import scipp as sc
 import scipp.constants
@@ -1049,3 +1052,40 @@ def test_from_nexus_position_can_be_nxlog():
     disk_chopper = DiskChopper.from_nexus(chopper_nexus)
 
     assert sc.identical(disk_chopper.axle_position, sc.vector([0, 0, 6.5], unit='m'))
+
+
+def test_time_offset_does_not_mint_a_dim_label_per_call():
+    # scipp interns dimension labels in a process-global table that is never pruned.
+    # Chopper timings that mint a label per call therefore stop working part-way
+    # through a long-running process. Filling that table breaks every later test in
+    # the process, hence the subprocess.
+    script = '''
+import scipp as sc
+from scippneutron.chopper import DiskChopper
+
+chopper = DiskChopper(
+    frequency=sc.scalar(-14.0, unit='Hz'),
+    beam_position=sc.scalar(0.0, unit='deg'),
+    phase=sc.scalar(0.0, unit='deg'),
+    axle_position=sc.vector([0.0, 0.0, 10.0], unit='m'),
+    slit_begin=sc.array(dims=['slit'], values=[0.0, 90.0], unit='deg'),
+    slit_end=sc.array(dims=['slit'], values=[10.0, 100.0], unit='deg'),
+)
+pulse_frequency = sc.scalar(14.0, unit='Hz')
+chopper.time_offset_open(pulse_frequency=pulse_frequency)
+
+n = 0
+while True:
+    try:
+        sc.zeros(dims=[f'exhaust_{n}'], shape=[0])
+    except RuntimeError:
+        break
+    n += 1
+
+chopper.time_offset_open(pulse_frequency=pulse_frequency)
+chopper.time_offset_close(pulse_frequency=pulse_frequency)
+'''
+    result = subprocess.run(  # noqa: S603  # the script is a literal above
+        [sys.executable, '-c', script], capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 0, result.stderr

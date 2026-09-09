@@ -233,6 +233,15 @@ except ImportError:
     del Enum
 
 
+#: Name of the auxiliary dim of :meth:`DiskChopper._apply_angle_repetitions`, which
+#: is flattened away again before the method returns. Random, so it cannot collide
+#: with a dim of the input, but minted once per process rather than per call: scipp
+#: interns dimension labels in a process-global table that is never pruned, so a
+#: label per call exhausts that table (raising "Exceeded maximum number of different
+#: dimension labels") in a process that keeps computing chopper timings.
+_REPETITION_DIM = uuid4().hex
+
+
 @dataclasses.dataclass(frozen=True, eq=False)
 class DiskChopper:
     """A disk chopper.
@@ -533,10 +542,11 @@ class DiskChopper:
     def _apply_angle_repetitions(
         self, *, angle: sc.Variable, n_repetitions: int
     ) -> sc.Variable:
-        dim = str(uuid4())
         # Start at -1 to ensure a rotation that is finishing when the pulse begins is
         # also included.
-        repetition_offsets = sc.arange(dim, -1, n_repetitions, unit='rad') * (2 * np.pi)
+        repetition_offsets = sc.arange(
+            _REPETITION_DIM, -1, n_repetitions, unit='rad'
+        ) * (2 * np.pi)
         if self.is_clockwise:
             repeated = angle + repetition_offsets.to(unit=angle.unit)
         else:
@@ -546,9 +556,9 @@ class DiskChopper:
         if angle.ndim == 0:
             return repeated.flatten(to='slit')
         # Remove aux dimension.
-        return repeated.transpose([*angle.dims[:-1], dim, angle.dims[-1]]).flatten(
-            dims=[dim, angle.dims[-1]], to=angle.dims[-1]
-        )
+        return repeated.transpose(
+            [*angle.dims[:-1], _REPETITION_DIM, angle.dims[-1]]
+        ).flatten(dims=[_REPETITION_DIM, angle.dims[-1]], to=angle.dims[-1])
 
     def _source_phase_factor(self, pulse_frequency: sc.Variable) -> int:
         if self.frequency.ndim != 0:

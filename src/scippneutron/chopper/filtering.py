@@ -6,6 +6,13 @@ import uuid
 import numpy as np
 import scipp as sc
 
+#: Name of the temporary coord ``find_plateaus`` groups by, deleted again before it
+#: returns. Random, so it cannot collide with a coord of the input, but minted once
+#: per process rather than per call: scipp interns dimension labels -- coord names
+#: included -- in a process-global table that is never pruned, so a label per call
+#: exhausts that table in a long-running process.
+_GROUP_LABEL = uuid.uuid4().hex
+
 
 def find_plateaus(
     data: sc.DataArray,
@@ -72,14 +79,13 @@ def find_plateaus(
     # Prepend a 0 to align the groups with the data points (diff reduces length by 1).
     group_id = sc.concat([sc.index(0, dtype="int64"), group_id], dim=derivative.dim)
 
-    group_label = str(uuid.uuid4())
     to_group = data.copy(deep=False)
-    to_group.coords[group_label] = group_id
-    groups = to_group.group(group_label)
-    del groups.coords[group_label]
+    to_group.coords[_GROUP_LABEL] = group_id
+    groups = to_group.group(_GROUP_LABEL)
+    del groups.coords[_GROUP_LABEL]
 
     plateaus = groups[groups.bins.size().data >= min_n_points].rename_dims(
-        {group_label: plateau_dim}
+        {_GROUP_LABEL: plateau_dim}
     )
     plateaus.coords[plateau_dim] = sc.arange(plateau_dim, len(plateaus), unit=None)
     if exceeds_tolerance := _check_total_tolerance(plateaus, atol=atol):
