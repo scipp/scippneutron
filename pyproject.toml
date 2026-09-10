@@ -40,6 +40,7 @@ dependencies = [
     "pydantic>=2.4",
     "pyyaml>=6.0.1",
     "scipp>=25.11.0",
+    "scippneutron_algorithms>=26.7.0",
     "scippnexus>=24.6.0",
     "scipy>=1.13.0",
 ]

@@ -9,8 +9,6 @@ anywidget==0.11.0
     # via -r basetest.in
 appdirs==1.4.4
     # via pace-neutrons
-appnope==0.1.4
-    # via ipykernel
 asttokens==3.0.2
     # via stack-data
 certifi==2026.7.22
@@ -97,7 +95,7 @@ nest-asyncio2==1.7.2
     # via ipykernel
 networkx==3.6.1
     # via cyclebane
-numpy==2.5.2
+numpy==2.4.6
     # via
     #   contourpy
     #   euphonic
@@ -130,7 +128,7 @@ pillow==12.3.0
     #   matplotlib
 pint==0.25.3
     # via euphonic
-platformdirs==4.11.3
+platformdirs==4.11.4
     # via
     #   jupyter-core
     #   pint
@@ -174,7 +172,7 @@ pythreejs==2.4.2
     # via -r basetest.in
 pyyaml==6.0.3
     # via euphonic
-pyzmq==27.1.0
+pyzmq==27.2.0
     # via
     #   ipykernel
     #   jupyter-client
@@ -182,9 +180,9 @@ requests==2.34.2
     # via
     #   pace-neutrons
     #   pooch
-sciline==25.11.1
+sciline==26.8.0
     # via -r basetest.in
-scipy==1.18.0
+scipy==1.17.1
     # via euphonic
 seekpath==2.2.1
     # via euphonic
@@ -227,6 +225,7 @@ typing-extensions==4.16.0
     #   euphonic
     #   flexcache
     #   flexparser
+    #   ipython
     #   jupyter-client
     #   pint
     #   spglib
