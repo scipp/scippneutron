@@ -10,7 +10,7 @@ from dataclasses import dataclass
 import numpy as np
 import scipp as sc
 
-from ._linalg import invert_transform
+from ._linalg import invert_transform, transpose_matrix
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,7 +54,53 @@ class BraggPeaks:
         return self.hkl.shape
 
 
-def ub_matrix_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
+def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
+    r"""Compute the UB matrix from three Bragg peaks.
+
+    Given three Bragg peaks with known
+
+    .. math::
+
+        \vec{v}_i = \begin{pmatrix} h_i \\ k_i \\ l_i \end{pmatrix}
+
+    that where observed at rotations :math:`R_i` and momentum transfers
+
+    .. math::
+
+        \vec{Q}_i = \begin{pmatrix} q_{ix} \\ q_{iy} \\ q_{iz} \end{pmatrix}
+
+    define matrices
+
+    .. math::
+
+        Q_\nu &= \begin{pmatrix}
+                    \vec{Q}_{\nu 1} & \vec{Q}_{\nu 2} & \vec{Q}_{\nu 3}
+                 \end{pmatrix}, \quad
+        \vec{Q}_{\nu i} = \frac{1}{2\pi} R_i^{-1} \vec{Q}_i, \\
+        V &= \begin{pmatrix} \vec{v}_1 & \vec{v}_2 & \vec{v}_3 \end{pmatrix}
+
+    With this we get
+
+    .. math::
+
+        \vec{Q}_i &= 2 \pi R_i U B \begin{pmatrix} h_i \\ k_i \\ l_i \end{pmatrix} \\
+        \Rightarrow U B &= Q_\nu V^{-1}
+
+    Parameters
+    ----------
+    peaks:
+        The three Bragg peaks to use for the UB matrix calculation.
+
+    Returns
+    -------
+    :
+        The combined :math:`UB` matrix as a linear transform with unit 'one'.
+
+    Raises
+    ------
+    ValueError:
+        If the rotation matrices or :math:`V` cannot be inverted.
+    """
     if peaks.shape != (3,):
         raise ValueError(f"Expected exactly 3 peaks, got {peaks.shape}.")
 
@@ -80,3 +126,76 @@ def ub_matrix_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
         raise
 
     return sc.to_unit(q_mat * v_mat_inv, "one")
+
+
+def g_star_from_ub(ub: sc.Variable) -> sc.Variable:
+    """Compute the reciprocal metric tensor G* from a UB matrix.
+
+    The result is calculated via
+
+    .. math::
+
+        {(UB)}^T (UB) = B^T U^T U B = B^T B = G^*
+
+    Using the fact that :math:`U` is a rotation matrix and thus :math:`U^T = U^{-1}`.
+
+    Parameters
+    ----------
+    ub:
+        The combined UB matrix as a linear transform.
+
+    Returns
+    -------
+    :
+        :math:`G^*`, the metric tensor of the reciprocal lattice.
+
+    See Also
+    --------
+    ub_from_3_peaks:
+        Compute the UB matrix from three known Bragg peaks.
+    """
+    return transpose_matrix(ub) * ub
+
+
+def u_from_b_and_ub(b: sc.Variable, ub: sc.Variable) -> sc.Variable:
+    """Compute the U matrix from B and the combined UB matrix.
+
+    This function computes
+
+    .. math::
+
+        U = (UB) B^{-1}
+
+    Parameters
+    ----------
+    b:
+        The B matrix as a linear transform.
+    ub:
+        The combined UB matrix as a linear transform.
+
+    Returns
+    -------
+    :
+        The U matrix.
+
+    Raises
+    ------
+    ValueError
+        If B cannot be inverted.
+
+    See Also
+    --------
+    ub_from_3_peaks:
+        Compute the UB matrix from three known Bragg peaks.
+    .lattice.build_b_matrix:
+        Construct a B matrix from lattice parameters.
+    """
+    try:
+        b_inv = invert_transform(b)
+    except ValueError as error:
+        error.add_note("When inverting a B matrix")
+        raise
+    # TODO do we want to convert to a rotation?
+    #   that would require computing quaternions, see
+    #   https://www.iri.upc.edu/files/scidoc/2068-Accurate-Computation-of-Quaternions-from-Rotation-Matrices.pdf
+    return ub * b_inv
