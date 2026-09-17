@@ -9,6 +9,8 @@ import scipp as sc
 
 def transpose_matrix(mat: sc.Variable) -> sc.Variable:
     """Transpose a matrix given as a linear transform."""
+    if mat.dtype != sc.DType.linear_transform3:
+        raise sc.DTypeError(f"Expected dtype 'linear_transform3' but got {mat.dtype}.")
     return sc.spatial.linear_transform(value=mat.value.T, unit=mat.unit)
 
 

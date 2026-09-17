@@ -179,6 +179,11 @@ def lattice_params_from_g_star(g_star: sc.Variable) -> UnitCell:
     ------
     ValueError
         If ``g_star`` is not invertible.
+
+    See Also
+    --------
+    .alignment.g_star_from_ub:
+        Compute the metric tensor :math:`G^*` from a :math:`UB` matrix.
     """
     try:
         g_matrix = invert_transform(g_star)
