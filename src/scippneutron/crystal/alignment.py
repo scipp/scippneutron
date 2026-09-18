@@ -10,6 +10,7 @@ from dataclasses import dataclass
 import numpy as np
 import scipp as sc
 
+from . import lattice
 from ._linalg import invert_transform, transpose_matrix
 
 
@@ -52,6 +53,47 @@ class BraggPeaks:
     def shape(self) -> tuple[int, ...]:
         """The shape of the peak coordinates."""
         return self.hkl.shape
+
+
+@dataclass(frozen=True, slots=True)
+class UAndB:
+    """A U and a B matrix."""
+
+    u: sc.Variable
+    """A U matrix transforming crystal coordinates into lab frame coordinates."""
+    b: sc.Variable
+    """A B matrix transforming miller indices into crystal coordinates."""
+
+
+def u_and_b_from_3_peaks(peaks: BraggPeaks) -> UAndB:
+    r"""Compute U and B matrices from three Bragg peaks.
+
+    Given three known Bragg peaks, this function computes the U and B matrices
+    that best satisfy
+
+    .. math::
+
+        \vec{Q}_i &= 2 \pi R_i U B \begin{pmatrix} h_i \\ k_i \\ l_i \end{pmatrix}
+
+    for each peak :math:`i`.
+
+    Parameters
+    ----------
+    peaks:
+        Three known Bragg peaks specifying Miller indices, observed momentum transfers,
+        and sample rotations.
+
+    Returns
+    -------
+    :
+        The U and B matrices, packaged into a dataclass.
+    """
+    ub = ub_from_3_peaks(peaks)
+    g_star = g_star_from_ub(ub)
+    unit_cell = lattice.lattice_params_from_g_star(g_star)
+    b = lattice.build_b_matrix(unit_cell)
+    u = u_from_b_and_ub(b, ub)
+    return UAndB(u=u, b=b)
 
 
 def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
