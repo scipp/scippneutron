@@ -683,9 +683,11 @@ def _get_0d_variable(
         raise TypeError(msg.format(name=name, got=f'got a {type(val)}'))
     val = val.squeeze()
     if val.ndim != 0:
-        raise sc.DimensionError(
-            msg.format(name=name, got=f'got a {val.ndim}d variable')
-        )
+        if val.size == 0:
+            got = 'got an empty variable'
+        else:
+            got = f'got a {val.ndim}d variable'
+        raise sc.DimensionError(msg.format(name=name, got=got))
     return val
 
 
