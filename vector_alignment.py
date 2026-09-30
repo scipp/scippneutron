@@ -114,11 +114,14 @@ class GoniometerAxis:
         self, *, name: str, axis: sc.Variable, min: sc.Variable, max: sc.Variable
     ) -> None:
         self.name = name
-        self.axis = axis / sc.norm(axis)
+        self.axis = axis / sc.norm(axis)  # TODO store XYZ +-
         self.limits = (min, sc.to_unit(max, min.unit))
 
     def __str__(self) -> str:
-        return f"GoniometerAxis({self.name!r}, axis={self.axis.value}, limits=({self.limits[0]:c}, {self.limits[1]:c}))"
+        return (
+            f"GoniometerAxis({self.name!r}, axis={self.axis.value}, "
+            f"limits=({self.limits[0]:c}, {self.limits[1]:c}))"
+        )
 
     def __repr__(self) -> str:
         return str(self)
@@ -138,21 +141,22 @@ class Goniometer:
         ax.view_init(elev=None, azim=-135, vertical_axis="y")
 
         x, y, z = 0, 0, 0
-        ax.quiver(x, y, z, 1, 0, 0, length=1, arrow_length_ratio=0.20, colors='C1')
-        ax.quiver(x, y, z, 0, 1, 0, length=1, arrow_length_ratio=0.20, colors='C2')
-        ax.quiver(x, y, z, 0, 0, 1, length=1, arrow_length_ratio=0.20, colors='C0')
+        ax.quiver(x, y, z, 1, 0, 0, length=1, arrow_length_ratio=0.20, colors='k')
+        ax.quiver(x, y, z, 0, 1, 0, length=1, arrow_length_ratio=0.20, colors='k')
+        ax.quiver(x, y, z, 0, 0, 1, length=1, arrow_length_ratio=0.20, colors='k')
 
-        ax.text(1.1, 0, 0, "x", color='C1')
-        ax.text(0, 1.1, 0, "y", color='C2')
-        ax.text(0, 0, 1.1, "z", color='C0')
+        ax.text(1.1, 0, 0, "x", color='k')
+        ax.text(0, 1.1, 0, "y", color='k')
+        ax.text(0, 0, 1.1, "z", color='k')
 
-        draw_goniometer_axis(ax, axis=[0, 1, 0], y=-2, color='C0', name=r"$\omega$")
-        draw_goniometer_axis(ax, axis=[0, 0, 1], y=-1.3, color='C1', name="gcl")
-        draw_goniometer_axis(ax, axis=[1, 0, 0], y=-0.6, color='C2', name="gcu")
-
-        # ax.set_xlabel("X")
-        # ax.set_ylabel("Y")
-        # ax.set_zlabel("Z")
+        for i, axis in enumerate(self.axes):
+            draw_goniometer_axis(
+                ax,
+                axis=axis.axis.value,
+                y=-0.5 * (i + 1),
+                color=f"C{len(self.axes) - i}",
+                name=axis.name,
+            )
 
         ax.set_xlim(-2, 2)
         ax.set_zlim(-2, 2)
@@ -160,7 +164,7 @@ class Goniometer:
 
         for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
             axis.set_ticks([])
-            # axis.line.set_visible(False)
+            axis.line.set_visible(False)
 
         return fig
 
