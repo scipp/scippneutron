@@ -9,8 +9,8 @@ from scippneutron.spectroscopy.crystal import lattice
 from scippneutron.spectroscopy.crystal._linalg import transpose_matrix
 
 
-def test_unit_cell_to_reciprocal() -> None:
-    unit_cell = lattice.UnitCell(
+def test_lattice_parameters_to_reciprocal() -> None:
+    lattice_parameters = lattice.LatticeParameters(
         a=sc.scalar(1.0, unit='angstrom'),
         b=sc.scalar(0.02, unit='nm'),
         c=sc.scalar(34, unit='pm'),
@@ -18,7 +18,7 @@ def test_unit_cell_to_reciprocal() -> None:
         beta=sc.scalar(80.0, unit='degree'),
         gamma=sc.scalar(1.2, unit='radian'),
     )
-    reciprocal = unit_cell.to_reciprocal()
+    reciprocal = lattice_parameters.to_reciprocal()
     assert reciprocal.a_star.unit == '1/angstrom'
     assert reciprocal.b_star.unit == '1/angstrom'
     assert reciprocal.b_star.unit == '1/angstrom'
@@ -27,8 +27,8 @@ def test_unit_cell_to_reciprocal() -> None:
     assert reciprocal.gamma_star.unit == 'radian'
 
 
-def test_b_matrix_from_unit_cell() -> None:
-    unit_cell = lattice.UnitCell(
+def test_b_matrix_from_lattice_parameters() -> None:
+    lattice_parameters = lattice.LatticeParameters(
         a=sc.scalar(1.0, unit='angstrom'),
         b=sc.scalar(0.02, unit='nm'),
         c=sc.scalar(34, unit='pm'),
@@ -36,14 +36,14 @@ def test_b_matrix_from_unit_cell() -> None:
         beta=sc.scalar(80.0, unit='degree'),
         gamma=sc.scalar(1.2, unit='radian'),
     )
-    b = lattice.build_b_matrix(unit_cell)
+    b = lattice.b_matrix_from_lattice_parameters(lattice_parameters)
     # There is little we can test here, so just check that the function returns
     # and that the unit is correct.
     assert b.unit == '1/angstrom'
 
 
 def test_lattice_params_from_g_star() -> None:
-    original = lattice.UnitCell(
+    original = lattice.LatticeParameters(
         a=sc.scalar(1.0, unit='angstrom'),
         b=sc.scalar(1.4, unit='angstrom'),
         c=sc.scalar(6.4, unit='angstrom'),
@@ -51,7 +51,7 @@ def test_lattice_params_from_g_star() -> None:
         beta=sc.scalar(0.7, unit='rad'),
         gamma=sc.scalar(1.3, unit='rad'),
     )
-    b = lattice.build_b_matrix(original)
+    b = lattice.b_matrix_from_lattice_parameters(original)
     g_star = transpose_matrix(b) * b
 
     reconstructed = lattice.lattice_params_from_g_star(g_star)
