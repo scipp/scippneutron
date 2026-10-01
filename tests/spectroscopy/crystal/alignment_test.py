@@ -5,7 +5,7 @@ import numpy as np
 import scipp as sc
 import scipp.testing
 
-from scippneutron.crystal import alignment
+from scippneutron.spectroscopy.crystal import alignment
 
 
 def test_ub_matrix_from_3_peaks() -> None:

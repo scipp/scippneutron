@@ -13,7 +13,7 @@ import scipp as sc
 from ._linalg import invert_transform
 
 
-# TODO name?
+# TODO name? -> LatticeParameters
 @dataclass(frozen=True, slots=True)
 class UnitCell:
     """A unit cell of a crystal.
@@ -41,6 +41,8 @@ class UnitCell:
         v = _v_alpha_beta_gamma(cos_alpha, cos_beta, cos_gamma)
 
         # TODO the PDF does not have 2pi here (eq. 39)
+        #    crystallography vs solid state physics
+        #    follow PDF
         a_star = sc.to_unit(sin_alpha / self.a / v * np.pi * 2, unit='1/angstrom')
         b_star = sc.to_unit(sin_beta / self.b / v * np.pi * 2, unit='1/angstrom')
         c_star = sc.to_unit(sin_gamma / self.c / v * np.pi * 2, unit='1/angstrom')
@@ -53,6 +55,7 @@ class UnitCell:
         )
 
 
+# TODO name
 @dataclass(frozen=True, slots=True)
 class ReciprocalUnitCell:
     """A reciprocal unit cell of a crystal.
@@ -69,6 +72,7 @@ class ReciprocalUnitCell:
     gamma_star: sc.Variable
 
 
+# TODO more explicit name (from lattice params, *not* from UB)
 def build_b_matrix(
     unit_cell: UnitCell, reciprocal_unit_cell: ReciprocalUnitCell | None = None
 ) -> sc.Variable:

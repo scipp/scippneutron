@@ -13,7 +13,18 @@ import scipp as sc
 from . import lattice
 from ._linalg import invert_transform, transpose_matrix
 
+# TODO
+# u: along beam
+# v: perp s.t. u x v points up
+# only direction matters
+# in terms of miller indices
+#
+#
+# - Needs motor angles from peak
+# - indices from peak position
 
+
+# TODO do we need a class here or should we split into separate args?
 @dataclass(frozen=True, slots=True)
 class BraggPeaks:
     """Lattice coordinates and instrumental parameters for one or more Bragg peaks.
@@ -27,7 +38,7 @@ class BraggPeaks:
     q: sc.Variable
     """The lab-frame momentum transfer where the peak is observed."""
     r: sc.Variable
-    """The sample rotation matrix corresponding the the observed momentum transfer."""
+    """The sample rotation (matrix) corresponding the the observed momentum transfer."""
 
     def __post_init__(self) -> None:
         if self.r.dtype != sc.DType.rotation3:
@@ -65,6 +76,7 @@ class UAndB:
     """A B matrix transforming miller indices into crystal coordinates."""
 
 
+# TODO make function that splits UB -> U * B instead of combined fn
 def u_and_b_from_3_peaks(peaks: BraggPeaks) -> UAndB:
     r"""Compute U and B matrices from three Bragg peaks.
 

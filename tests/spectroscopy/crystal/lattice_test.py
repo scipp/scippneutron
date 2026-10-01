@@ -5,8 +5,8 @@ import dataclasses
 import scipp as sc
 import scipp.testing
 
-from scippneutron.crystal import lattice
-from scippneutron.crystal._linalg import transpose_matrix
+from scippneutron.spectroscopy.crystal import lattice
+from scippneutron.spectroscopy.crystal._linalg import transpose_matrix
 
 
 def test_unit_cell_to_reciprocal() -> None:
