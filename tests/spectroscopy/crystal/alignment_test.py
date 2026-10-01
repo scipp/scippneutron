@@ -11,7 +11,7 @@ from scippneutron.spectroscopy.crystal import alignment
 def test_ub_matrix_from_3_peaks() -> None:
     peaks = alignment.BraggPeaks(
         hkl=sc.vectors(
-            dims=['p'], values=[[1, 0, 0], [0, 1, 0], [0, 1, 1]], unit='1/angstrom'
+            dims=['p'], values=[[1, 0, 0], [1, 1, 0], [0, 1, 1]], unit='1/angstrom'
         ),
         q=sc.vectors(
             dims=['p'], values=[[1, 2, 3], [4, 5, 6], [-1, -2, -3]], unit='1/angstrom'
@@ -29,6 +29,10 @@ def test_ub_matrix_from_3_peaks() -> None:
     assert ub.sizes == {}
     assert ub.dtype == sc.DType.linear_transform3
     assert ub.unit == 'one'
+
+    for hkl, q, r in zip(peaks.hkl, peaks.q, peaks.r, strict=True):
+        q_calc = r * ub * hkl * (2 * np.pi)
+        sc.testing.assert_allclose(q_calc, q)
 
 
 def test_u_from_b_and_ub() -> None:
