@@ -60,12 +60,12 @@ in the community and possible confusion of `theta` (from Bragg’s law) with `th
    absorption
    chopper
    conversion
-   crystal
    io
    logging
    metadata
    normalization
    peaks
    smoothing
+   spectroscopy
    tof
 ```
