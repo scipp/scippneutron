@@ -128,9 +128,13 @@ class Goniometer:
     def __init__(self, axes: Iterable[GoniometerAxis]) -> None:
         self.axes = list(axes)
 
-    def plot(self) -> plt.Figure:
-        fig = plt.figure()
-        ax: Axes3D = fig.add_subplot(projection='3d')  # type: ignore[assignment]
+    def plot(self, *, ax: Axes3D | None = None) -> plt.Figure | None:
+        if ax is None:
+            fig = plt.figure()
+            ax: Axes3D = fig.add_subplot(projection='3d')  # type: ignore[assignment]
+        else:
+            fig = None
+
         ax.view_init(elev=None, azim=-135, vertical_axis="y")
 
         x, y, z = 0, 0, 0
@@ -156,7 +160,7 @@ class Goniometer:
 
         for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
             axis.set_ticks([])
-            axis.line.set_visible(False)
+            # axis.line.set_visible(False)
 
         return fig
 
