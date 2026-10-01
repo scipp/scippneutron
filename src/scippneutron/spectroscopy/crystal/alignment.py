@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import scipp as sc
+from scipy.linalg import solve
 
 from ._linalg import invert_transform, transpose_matrix
 
@@ -125,28 +126,29 @@ def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
         raise ValueError(f"Expected exactly 3 peaks, got {peaks.shape}.")
 
     try:
-        # TODO solve equations instead
-        r_inv_times_q = [
-            invert_transform(r) * q for q, r in zip(peaks.q, peaks.r, strict=True)
-        ]
+        q_nu = invert_transform(peaks.r) * peaks.q / (2 * np.pi)
     except ValueError as error:
         error.add_note("When inverting the sample rotation matrix.")
         raise
-    q_mat = sc.spatial.linear_transform(
-        value=np.array([x.value for x in r_inv_times_q]).T / (2 * np.pi),
-        unit=peaks.q.unit / peaks.r.unit,
-    )
 
-    v_mat = sc.spatial.linear_transform(
-        value=np.array([hkl.value for hkl in peaks.hkl]).T, unit=peaks.hkl.unit
-    )
     try:
-        v_mat_inv = invert_transform(v_mat)
+        # Determine UB from
+        #   Q_nu = UB * V
+        # by solving the linear equations
+        #   Q_nu^T = V^T * (UB)^T
+        # for (UB)^T and then transposing the result.
+        # We use this instead of inverting V because it is more numerically stable.
+        ub_array = solve(peaks.hkl.values, q_nu.values)
     except ValueError as error:
-        error.add_note("When inverting the V matrix (combination of hkl vectors).")
+        error.add_note(
+            "When solving for the UB matrix. Check for collinear hkl vectors."
+        )
         raise
 
-    return sc.to_unit(q_mat * v_mat_inv, "one")
+    return sc.to_unit(
+        sc.spatial.linear_transform(value=ub_array.T, unit=q_nu.unit / peaks.hkl.unit),  # type: ignore[operator]
+        "one",
+    )
 
 
 def g_star_from_ub(ub: sc.Variable) -> sc.Variable:
