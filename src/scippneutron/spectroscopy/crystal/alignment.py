@@ -10,7 +10,6 @@ from dataclasses import dataclass
 import numpy as np
 import scipp as sc
 
-from . import lattice
 from ._linalg import invert_transform, transpose_matrix
 
 # TODO
@@ -24,7 +23,6 @@ from ._linalg import invert_transform, transpose_matrix
 # - indices from peak position
 
 
-# TODO do we need a class here or should we split into separate args?
 @dataclass(frozen=True, slots=True)
 class BraggPeaks:
     """Lattice coordinates and instrumental parameters for one or more Bragg peaks.
@@ -74,38 +72,6 @@ class UAndB:
     """A U matrix transforming crystal coordinates into lab frame coordinates."""
     b: sc.Variable
     """A B matrix transforming miller indices into crystal coordinates."""
-
-
-# TODO make function that splits UB -> U * B instead of combined fn
-def u_and_b_from_3_peaks(peaks: BraggPeaks) -> UAndB:
-    r"""Compute U and B matrices from three Bragg peaks.
-
-    Given three known Bragg peaks, this function computes the U and B matrices
-    that best satisfy
-
-    .. math::
-
-        \vec{Q}_i &= 2 \pi R_i U B \begin{pmatrix} h_i \\ k_i \\ l_i \end{pmatrix}
-
-    for each peak :math:`i`.
-
-    Parameters
-    ----------
-    peaks:
-        Three known Bragg peaks specifying Miller indices, observed momentum transfers,
-        and sample rotations.
-
-    Returns
-    -------
-    :
-        The U and B matrices, packaged into a dataclass.
-    """
-    ub = ub_from_3_peaks(peaks)
-    g_star = g_star_from_ub(ub)
-    unit_cell = lattice.lattice_params_from_g_star(g_star)
-    b = lattice.build_b_matrix(unit_cell)
-    u = u_from_b_and_ub(b, ub)
-    return UAndB(u=u, b=b)
 
 
 def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
@@ -159,6 +125,7 @@ def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
         raise ValueError(f"Expected exactly 3 peaks, got {peaks.shape}.")
 
     try:
+        # TODO solve equations instead
         r_inv_times_q = [
             invert_transform(r) * q for q, r in zip(peaks.q, peaks.r, strict=True)
         ]
@@ -232,6 +199,10 @@ def u_from_b_and_ub(b: sc.Variable, ub: sc.Variable) -> sc.Variable:
     :
         The U matrix.
 
+        Note that this is a :attr:`sc.DType.linear_transform` and not a clean rotation
+        because the inputs are typically inaccurate measurements. So the result may
+        have a scaling component in addition to the rotation.
+
     Raises
     ------
     ValueError
@@ -241,7 +212,7 @@ def u_from_b_and_ub(b: sc.Variable, ub: sc.Variable) -> sc.Variable:
     --------
     ub_from_3_peaks:
         Compute the UB matrix from three known Bragg peaks.
-    .lattice.build_b_matrix:
+    .lattice.b_matrix_from_lattice_parameters:
         Construct a B matrix from lattice parameters.
     """
     try:
@@ -249,7 +220,4 @@ def u_from_b_and_ub(b: sc.Variable, ub: sc.Variable) -> sc.Variable:
     except ValueError as error:
         error.add_note("When inverting a B matrix")
         raise
-    # TODO do we want to convert to a rotation?
-    #   that would require computing quaternions, see
-    #   https://www.iri.upc.edu/files/scidoc/2068-Accurate-Computation-of-Quaternions-from-Rotation-Matrices.pdf
     return ub * b_inv

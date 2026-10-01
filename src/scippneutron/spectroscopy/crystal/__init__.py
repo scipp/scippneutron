@@ -2,6 +2,6 @@
 # Copyright (c) 2026 Scipp contributors (https://github.com/scipp)
 """Sample crystal utilities."""
 
-from .lattice import ReciprocalUnitCell, UnitCell
+from .lattice import LatticeParameters, ReciprocalLatticeParameters
 
-__all__ = ['ReciprocalUnitCell', 'UnitCell']
+__all__ = ['LatticeParameters', 'ReciprocalLatticeParameters']
