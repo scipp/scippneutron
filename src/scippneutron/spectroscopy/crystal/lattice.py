@@ -13,10 +13,9 @@ import scipp as sc
 from ._linalg import invert_transform
 
 
-# TODO name? -> LatticeParameters
 @dataclass(frozen=True, slots=True)
-class UnitCell:
-    """A unit cell of a crystal.
+class LatticeParameters:
+    """Parameters for a forward crystal lattice.
 
     Encodes the lattice lengths a, b, c and
     the angles alpha, beta, gamma.
@@ -29,7 +28,7 @@ class UnitCell:
     beta: sc.Variable
     gamma: sc.Variable
 
-    def to_reciprocal(self) -> ReciprocalUnitCell:
+    def to_reciprocal(self) -> ReciprocalLatticeParameters:
         """Convert to reciprocal lattice parameters."""
         sin_alpha = sc.sin(self.alpha)
         cos_alpha = sc.cos(self.alpha)
@@ -40,25 +39,21 @@ class UnitCell:
 
         v = _v_alpha_beta_gamma(cos_alpha, cos_beta, cos_gamma)
 
-        # TODO the PDF does not have 2pi here (eq. 39)
-        #    crystallography vs solid state physics
-        #    follow PDF
-        a_star = sc.to_unit(sin_alpha / self.a / v * np.pi * 2, unit='1/angstrom')
-        b_star = sc.to_unit(sin_beta / self.b / v * np.pi * 2, unit='1/angstrom')
-        c_star = sc.to_unit(sin_gamma / self.c / v * np.pi * 2, unit='1/angstrom')
+        a_star = sc.to_unit(sin_alpha / self.a / v, unit='1/angstrom')
+        b_star = sc.to_unit(sin_beta / self.b / v, unit='1/angstrom')
+        c_star = sc.to_unit(sin_gamma / self.c / v, unit='1/angstrom')
         alpha_star = sc.acos((cos_beta * cos_gamma - cos_alpha) / sin_beta / sin_gamma)
         beta_star = sc.acos((cos_gamma * cos_alpha - cos_beta) / sin_alpha / sin_gamma)
         gamma_star = sc.acos((cos_alpha * cos_beta - cos_gamma) / sin_beta / sin_alpha)
 
-        return ReciprocalUnitCell(
+        return ReciprocalLatticeParameters(
             a_star, b_star, c_star, alpha_star, beta_star, gamma_star
         )
 
 
-# TODO name
 @dataclass(frozen=True, slots=True)
-class ReciprocalUnitCell:
-    """A reciprocal unit cell of a crystal.
+class ReciprocalLatticeParameters:
+    """Parameters of a reciprocal crystal lattice.
 
     Encodes the reciprocal lattice lengths a*, b*, c* and
     the angles alpha*, beta*, gamma*.
@@ -72,9 +67,9 @@ class ReciprocalUnitCell:
     gamma_star: sc.Variable
 
 
-# TODO more explicit name (from lattice params, *not* from UB)
-def build_b_matrix(
-    unit_cell: UnitCell, reciprocal_unit_cell: ReciprocalUnitCell | None = None
+def b_matrix_from_lattice_parameters(
+    lattice_parameters: LatticeParameters,
+    reciprocal_lattice_parameters: ReciprocalLatticeParameters | None = None,
 ) -> sc.Variable:
     r"""Construct the B matrix from (reciprocal) lattice parameters.
 
@@ -99,9 +94,9 @@ def build_b_matrix(
 
     Parameters
     ----------
-    unit_cell:
+    lattice_parameters:
         The lattice parameters of the crystal.
-    reciprocal_unit_cell:
+    reciprocal_lattice_parameters:
         The reciprocal lattice parameters of the crystal.
         If not provided, they will be computed from the unit cell.
 
@@ -110,32 +105,29 @@ def build_b_matrix(
     :
         The B matrix.
     """
-    uc = unit_cell
-    ruc = reciprocal_unit_cell or unit_cell.to_reciprocal()
+    p = lattice_parameters
+    rp = reciprocal_lattice_parameters or lattice_parameters.to_reciprocal()
     zero = sc.scalar(0, unit='1/angstrom')
     raw = [
         [
-            ruc.a_star,
-            ruc.b_star * sc.cos(ruc.gamma_star),
-            ruc.c_star * sc.cos(ruc.beta_star),
+            rp.a_star,
+            rp.b_star * sc.cos(rp.gamma_star),
+            rp.c_star * sc.cos(rp.beta_star),
         ],
         [
             zero,
-            ruc.b_star * sc.sin(ruc.gamma_star),
-            -ruc.c_star * sc.sin(ruc.beta_star) * sc.cos(uc.alpha),
+            rp.b_star * sc.sin(rp.gamma_star),
+            -rp.c_star * sc.sin(rp.beta_star) * sc.cos(p.alpha),
         ],
-        [zero, zero, 2 * np.pi / uc.c],  # TODO no 2pi in PDF
+        [zero, zero, 1 / p.c],
     ]
-    # TODO no 2pi in PDF
     return sc.spatial.linear_transform(
         unit='1/angstrom',
-        value=[
-            [x.to(unit='1/angstrom').value / (2 * np.pi) for x in row] for row in raw
-        ],
+        value=[[x.to(unit='1/angstrom').value for x in row] for row in raw],
     )
 
 
-def lattice_params_from_g_star(g_star: sc.Variable) -> UnitCell:
+def lattice_params_from_g_star(g_star: sc.Variable) -> LatticeParameters:
     r"""Compute lattice parameters from a G* matrix.
 
     This function extracts the lattice parameters from the metric tensor
@@ -204,7 +196,7 @@ def lattice_params_from_g_star(g_star: sc.Variable) -> UnitCell:
     beta = np.arccos((g[0, 2] + g[2, 0]) / (2 * a * c))
     gamma = np.arccos((g[0, 1] + g[1, 0]) / (2 * a * b))
 
-    return UnitCell(
+    return LatticeParameters(
         a=sc.scalar(a, unit=sc.sqrt(g_matrix.unit)).to(unit='angstrom'),
         b=sc.scalar(b, unit=sc.sqrt(g_matrix.unit)).to(unit='angstrom'),
         c=sc.scalar(c, unit=sc.sqrt(g_matrix.unit)).to(unit='angstrom'),
