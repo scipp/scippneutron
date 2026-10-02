@@ -9,24 +9,26 @@ from mpl_toolkits.mplot3d.art3d import Line3DCollection
 from scipy.linalg import polar
 from scipy.spatial.transform import Rotation
 
+from scippneutron.spectroscopy.goniometer import Goniometer, GoniometerAxis
+
 
 def main() -> None:
     axes = [
         GoniometerAxis(
             name="gcu",
-            axis=sc.vector([1, 0, 0]),
+            axis='+x',
             min=sc.scalar(-30, unit="degree"),
             max=sc.scalar(30, unit="degree"),
         ),
         GoniometerAxis(
             name="gcl",
-            axis=sc.vector([0, 0, 1]),
+            axis='+z',
             min=sc.scalar(-30, unit="degree"),
             max=sc.scalar(30, unit="degree"),
         ),
         GoniometerAxis(
             name=r"$\omega$",
-            axis=sc.vector([0, 1, 0]),
+            axis='+y',
             min=sc.scalar(-np.inf, unit="degree"),
             max=sc.scalar(np.inf, unit="degree"),
         ),
@@ -105,151 +107,6 @@ def main() -> None:
     angle_y = angles[seq.index('Y')]
     angle_z = angles[seq.index('Z')]
     print(angle_x, angle_y, angle_z)
-
-
-class GoniometerAxis:
-    __slots__ = ("axis", "limits", "name")
-
-    def __init__(
-        self, *, name: str, axis: sc.Variable, min: sc.Variable, max: sc.Variable
-    ) -> None:
-        self.name = name
-        self.axis = axis / sc.norm(axis)  # TODO store XYZ +-
-        self.limits = (min, sc.to_unit(max, min.unit))
-
-    def __str__(self) -> str:
-        return (
-            f"GoniometerAxis({self.name!r}, axis={self.axis.value}, "
-            f"limits=({self.limits[0]:c}, {self.limits[1]:c}))"
-        )
-
-    def __repr__(self) -> str:
-        return str(self)
-
-
-class Goniometer:
-    def __init__(self, axes: Iterable[GoniometerAxis]) -> None:
-        self.axes = list(axes)
-
-    def plot(self, *, ax: Axes3D | None = None) -> plt.Figure | None:
-        if ax is None:
-            fig = plt.figure()
-            ax: Axes3D = fig.add_subplot(projection='3d')  # type: ignore[assignment]
-        else:
-            fig = None
-
-        ax.view_init(elev=None, azim=-135, vertical_axis="y")
-
-        x, y, z = 0, 0, 0
-        ax.quiver(x, y, z, 1, 0, 0, length=1, arrow_length_ratio=0.20, colors='k')
-        ax.quiver(x, y, z, 0, 1, 0, length=1, arrow_length_ratio=0.20, colors='k')
-        ax.quiver(x, y, z, 0, 0, 1, length=1, arrow_length_ratio=0.20, colors='k')
-
-        ax.text(1.1, 0, 0, "x", color='k')
-        ax.text(0, 1.1, 0, "y", color='k')
-        ax.text(0, 0, 1.1, "z", color='k')
-
-        for i, axis in enumerate(self.axes):
-            draw_goniometer_axis(
-                ax,
-                axis=axis.axis.value,
-                y=-0.5 * (i + 1),
-                color=f"C{len(self.axes) - i}",
-                name=axis.name,
-            )
-
-        ax.set_xlim(-2, 2)
-        ax.set_zlim(-2, 2)
-        ax.set_ylim(-2.3, 1.3)
-
-        for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-            axis.set_ticks([])
-            axis.line.set_visible(False)
-
-        return fig
-
-
-def draw_goniometer_axis(
-    ax: Axes3D,
-    *,
-    axis: npt.ArrayLike,
-    y: float,
-    color: str,
-    name: str | None = None,
-    axis_length: float = 1,
-    circle_radius: float = 0.5,
-    n_circle_segments: int = 20,
-) -> None:
-    center = np.array([0, y, 0])
-    axis = np.asarray(axis) / np.linalg.norm(axis)
-
-    tail = center - axis * axis_length / 2
-    ax.quiver(
-        *tail,
-        *axis,
-        length=axis_length,
-        arrow_length_ratio=0.2,
-        colors=color,
-        alpha=0.7,
-        linewidth=2,
-    )
-    if name is not None:
-        ax.text(
-            *tail - axis * axis_length / 4,
-            name,
-            color=color,
-            horizontalalignment="center",
-            verticalalignment="center",
-        )
-
-    draw_arrow_circle(
-        ax,
-        axis=axis,
-        center=center,
-        radius=circle_radius,
-        n_segments=n_circle_segments,
-        color=color,
-    )
-
-
-def draw_arrow_circle(
-    ax: Axes3D,
-    *,
-    axis: npt.ArrayLike,
-    center: npt.ArrayLike,
-    radius: float,
-    n_segments: int,
-    color: str,
-    arc_fraction: float = 3 / 4,
-) -> None:
-    axis = np.asarray(axis, dtype=float)
-    w = axis / np.linalg.norm(axis)
-
-    # Pick a reference vector that is not (nearly) parallel to the axis.
-    ref = np.array([1.0, 0.0, 0.0])
-    if abs(np.dot(ref, w)) > 0.9:
-        ref = np.array([0.0, 0.0, 1.0])
-
-    u = np.cross(ref, w)
-    u /= np.linalg.norm(u)
-    v = np.cross(w, u)  # right-handed: u x v = w
-
-    center = np.asarray(center, dtype=float)
-    angles = np.linspace(0, arc_fraction * 2 * np.pi, n_segments + 1)
-    points = center + radius * (
-        np.cos(angles)[:, None] * u + np.sin(angles)[:, None] * v
-    )
-
-    lines = Line3DCollection([points[:-1]], colors=color)
-    vec = points[-1] - points[-2]
-    ax.quiver(
-        *points[-2],
-        *vec,
-        length=np.linalg.norm(vec),
-        arrow_length_ratio=15,
-        colors=color,
-    )
-    ax.add_artist(lines)
 
 
 if __name__ == "__main__":
