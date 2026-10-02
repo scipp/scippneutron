@@ -8,7 +8,7 @@ import scipp.testing
 from scippneutron.spectroscopy.crystal import alignment
 
 
-def test_ub_matrix_from_3_peaks() -> None:
+def test_ub_from_3_peaks() -> None:
     peaks = alignment.BraggPeaks(
         hkl=sc.vectors(
             dims=['p'], values=[[1, 0, 0], [1, 1, 0], [0, 1, 1]], unit='1/angstrom'
