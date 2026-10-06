@@ -252,7 +252,7 @@ def test_scattering_angles_with_gravity_small_gravity(
 
 def test_scattering_angles_with_gravity_small_gravity_orthogonal_coords() -> None:
     # This case is unphysical but tests the consistency with `two_theta`.
-    # Here, incident_beam and gravity are orthogonal to use the optimized code.
+    # Here, incident_beam and gravity are orthogonal, so the drop is along e_y only.
     incident_beam = sc.vector([0.564, 0.0, 10.4], unit='m')
     scattered_beam = sc.vectors(
         dims=['beam'],
@@ -317,7 +317,7 @@ def test_scattering_angles_with_gravity_reproduces_angles_orthogonal_coords(
 ):
     # This case is unphysical but tests that the function reproduces
     # the expected angles using a rotated vector.
-    # Here, incident_beam and gravity are orthogonal to use the optimized code.
+    # Here, incident_beam and gravity are orthogonal, so the drop is along e_y only.
 
     gravity = sc.vector([0.0, -1e-11, 0.0], unit='cm/s^2')
     incident_beam = sc.vector([0.0, 0.0, 968.0], unit='cm')
@@ -390,7 +390,7 @@ def test_scattering_angles_with_gravity_reproduces_angles_azimuth_greater_pi_ort
 ):
     # This case is unphysical but tests that the function reproduces
     # the expected angles using a rotated vector.
-    # Here, incident_beam and gravity are orthogonal to use the optimized code.
+    # Here, incident_beam and gravity are orthogonal, so the drop is along e_y only.
 
     gravity = sc.vector([0.0, -1e-11, 0.0], unit='cm/s^2')
     incident_beam = sc.vector([0.0, 0.0, 968.0], unit='cm')
@@ -485,8 +485,8 @@ def test_scattering_angles_with_gravity_drops_in_expected_direction():
 
 
 def test_scattering_angles_with_gravity_continuous_at_orthogonality_threshold():
-    # `scattering_angles_with_gravity` uses a separate implementation when
-    # incident_beam and gravity are not orthogonal. The two must agree in the limit.
+    # The drop has a component along the incident beam only if incident_beam and
+    # gravity are not orthogonal. Including it must not change the result in the limit.
     wavelength = sc.array(dims=['wavelength'], values=[1.6, 6.0], unit='Å')
     gravity = sc.vector([0.0, -sc.constants.g.value, 0.0], unit=sc.constants.g.unit)
     scattered_beam = sc.vectors(
@@ -515,7 +515,7 @@ def test_scattering_angles_with_gravity_unscattered_neutron_has_zero_two_theta()
     # gravity correction has to undo exactly that, for any incident beam direction.
     wavelength = sc.scalar(6.0, unit='Å')
     gravity = sc.vector([0.0, -sc.constants.g.value, 0.0], unit=sc.constants.g.unit)
-    # Tilted out of the horizontal plane to exercise the generic implementation.
+    # Tilted out of the horizontal plane, so the drop has a component along the beam.
     incident_beam = sc.vector([1.4, 0.9, 41.1], unit='m')
 
     speed = (sc.constants.h / (sc.constants.m_n * wavelength)).to(unit='m/s')

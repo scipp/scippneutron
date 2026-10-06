@@ -505,22 +505,25 @@ def scattering_angles_with_gravity(
 
     where :math:`\sphericalangle` is the angle between two vectors as implemented by
     :func:`two_theta`.
-    When :math:`b_1` is orthogonal to gravity, :math:`\hat{e}_y = -g / |g|`, so the
-    components of :math:`b'_2` are
+    With :math:`\hat{u} = -g / |g|` and :math:`\hat{e}_x \perp g`, the components of
+    :math:`b'_2` are
 
     .. math::
 
         x'_d &= x_d \\
-        y'_d &= y_d + \delta_y \\
-        z'_d &= z_d
+        y'_d &= y_d + \delta_y\, \hat{u} \cdot \hat{e}_y \\
+        z'_d &= z_d + \delta_y\, \hat{u} \cdot \hat{e}_z
 
-    and we can equivalently use
+    and, since :math:`\hat{e}_z` is along :math:`b_1`, we can equivalently use
 
     .. math::
 
-        \mathsf{tan}(2\theta) = \frac{\sqrt{x_d^2 + y_d^{\prime\, 2}}}{z_d}
+        \mathsf{tan}(2\theta) = \frac{\sqrt{x_d^2 + y_d^{\prime\, 2}}}{z'_d}
 
-    This equation allowed for a more efficient implementation.
+    This avoids forming :math:`b'_2` as an array of vectors, which would take three
+    times the memory of each of its components.
+    When :math:`b_1` is orthogonal to gravity, which is the case on most beamlines,
+    :math:`\hat{u} \cdot \hat{e}_y = 1` and :math:`\hat{u} \cdot \hat{e}_z = 0`.
 
     Attention
     ---------
@@ -561,75 +564,28 @@ def scattering_angles_with_gravity(
     """
     incident_beam = _canonical_length(incident_beam)
     scattered_beam = _canonical_length(scattered_beam)
-    if sc.any(
-        abs(sc.dot(gravity, incident_beam))
-        > sc.scalar(1e-10, unit=incident_beam.unit) * sc.norm(gravity)
-    ):
-        return _scattering_angles_with_gravity_generic(
-            incident_beam=incident_beam,
-            scattered_beam=scattered_beam,
-            wavelength=wavelength,
-            gravity=gravity,
-        )
-    return _scattering_angles_with_gravity_orthogonal_coords(
-        incident_beam=incident_beam,
-        scattered_beam=scattered_beam,
-        wavelength=wavelength,
-        gravity=gravity,
-    )
-
-
-def _scattering_angles_with_gravity_generic(
-    incident_beam: sc.Variable,
-    scattered_beam: sc.Variable,
-    wavelength: sc.Variable,
-    gravity: sc.Variable,
-) -> SphericalCoordinates:
-    unit_vectors = beam_aligned_unit_vectors(
-        incident_beam=incident_beam, gravity=gravity
-    )
-    ex = unit_vectors['beam_aligned_unit_x']
-    ey = unit_vectors['beam_aligned_unit_y']
-
-    drop_distance = _drop_due_to_gravity(
-        distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
-    )
-    # The neutron fell by `drop_distance` on its way to the detector, so it left the
-    # sample as if the detector were higher up by that amount. `drop_distance` is a
-    # positive length, hence the displacement is antiparallel to gravity.
-    corrected_beam = scattered_beam - drop_distance * (gravity / sc.norm(gravity))
-
-    y = sc.dot(corrected_beam, ey).to(dtype=elem_dtype(wavelength), copy=False)
-    x = sc.dot(corrected_beam, ex).to(dtype=elem_dtype(y), copy=False)
-    phi = sc.atan2(y=y, x=x, out=y)
-
-    return {
-        'two_theta': two_theta(
-            incident_beam=incident_beam, scattered_beam=corrected_beam
-        ).to(dtype=elem_dtype(wavelength), copy=False),
-        'phi': phi,
-    }
-
-
-# This is an optimized implementation that only works when `incident_beam` and `gravity`
-# are orthogonal to each other. It uses less memory than the generic version.
-def _scattering_angles_with_gravity_orthogonal_coords(
-    incident_beam: sc.Variable,
-    scattered_beam: sc.Variable,
-    wavelength: sc.Variable,
-    gravity: sc.Variable,
-) -> SphericalCoordinates:
     unit_vectors = beam_aligned_unit_vectors(
         incident_beam=incident_beam, gravity=gravity
     )
     ex = unit_vectors['beam_aligned_unit_x']
     ey = unit_vectors['beam_aligned_unit_y']
     ez = unit_vectors['beam_aligned_unit_z']
+    up = -gravity / sc.norm(gravity)
+    dtype = elem_dtype(wavelength)
 
+    # The neutron fell by `drop` on its way to the detector, so it left the sample as
+    # if the detector were higher up by that amount, i.e., displaced along `up`.
     y = _drop_due_to_gravity(
         distance=sc.norm(scattered_beam), wavelength=wavelength, gravity=gravity
     )
-    y += sc.dot(scattered_beam, ey).to(dtype=elem_dtype(wavelength), copy=False)
+    z = sc.dot(scattered_beam, ez).to(dtype=dtype, copy=False)
+    # Zero if the incident beam is orthogonal to gravity. Skipping it then keeps `z`
+    # in the shape of `scattered_beam` instead of broadcasting it to that of `y`.
+    up_z = sc.dot(up, ez)
+    if sc.any(up_z != sc.scalar(0.0)).value:
+        z = z + y * up_z.to(dtype=dtype)
+    y *= sc.dot(up, ey).to(dtype=dtype)
+    y += sc.dot(scattered_beam, ey).to(dtype=dtype, copy=False)
 
     x = sc.dot(scattered_beam, ex).to(dtype=elem_dtype(y), copy=False)
     phi = sc.atan2(y=y, x=x)
@@ -640,7 +596,6 @@ def _scattering_angles_with_gravity_orthogonal_coords(
     y += x
     del x
     y = sc.sqrt(y, out=y)
-    z = sc.dot(scattered_beam, ez).to(dtype=elem_dtype(y), copy=False)
     two_theta_ = sc.atan2(y=y, x=z, out=y)
 
     return {'two_theta': two_theta_, 'phi': phi}
