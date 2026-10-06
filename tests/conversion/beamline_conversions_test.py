@@ -484,7 +484,7 @@ def test_scattering_angles_with_gravity_drops_in_expected_direction():
     )
 
 
-def test_scattering_angles_with_gravity_continuous_at_orthogonality_threshold():
+def test_scattering_angles_with_gravity_continuous_as_tilt_goes_to_zero():
     # The drop has a component along the incident beam only if incident_beam and
     # gravity are not orthogonal. Including it must not change the result in the limit.
     wavelength = sc.array(dims=['wavelength'], values=[1.6, 6.0], unit='Å')
@@ -633,13 +633,12 @@ def _reference_scattering_angles_with_gravity(
     wavelength: sc.Variable,
 ) -> dict[str, sc.Variable]:
     # This is a simplified, independently checked implementation.
+    # It forms the gravity-corrected scattered beam as a vector.
+    up = -gravity / sc.norm(gravity)
     e_z = incident_beam / sc.norm(incident_beam)
-    e_y = -gravity / sc.norm(gravity)
-    e_x = sc.cross(e_y, e_z)
-
-    x = sc.dot(scattered_beam, e_x)
-    y = sc.dot(scattered_beam, e_y)
-    z = sc.dot(scattered_beam, e_z)
+    e_x = sc.cross(up, e_z)
+    e_x = e_x / sc.norm(e_x)
+    e_y = sc.cross(e_z, e_x)
 
     L2 = sc.norm(scattered_beam)
     drop = (
@@ -648,19 +647,32 @@ def _reference_scattering_angles_with_gravity(
         * sc.norm(gravity)
         * (sc.constants.m_n**2 / (2 * sc.constants.h**2))
     )
-    dropped_y = y + drop.to(unit=y.unit)
+    corrected_beam = scattered_beam + drop.to(unit=scattered_beam.unit) * up
 
-    two_theta = sc.atan2(y=sc.sqrt(x**2 + dropped_y**2), x=z)
-    phi = sc.atan2(y=dropped_y, x=x)
+    x = sc.dot(corrected_beam, e_x)
+    y = sc.dot(corrected_beam, e_y)
+    z = sc.dot(corrected_beam, e_z)
+
+    two_theta = sc.atan2(y=sc.sqrt(x**2 + y**2), x=z)
+    phi = sc.atan2(y=y, x=x)
     return {'two_theta': two_theta, 'phi': phi}
 
 
-def test_scattering_angles_with_gravity_beams_unaligned_with_lab_coords():
+# Gravity and incident beams for tests that are not aligned with the lab coordinate
+# system. The first beam is orthogonal to gravity, the second is not.
+UNALIGNED_GRAVITY = sc.vector([-0.3, -9.81, 0.01167883211678832], unit='m/s^2')
+UNALIGNED_INCIDENT_BEAMS = [
+    sc.vector([1.6, 0.0, 41.1], unit='m'),
+    sc.vector([1.6, 2.3, 41.1], unit='m'),
+]
+
+
+@pytest.mark.parametrize('incident_beam', UNALIGNED_INCIDENT_BEAMS)
+def test_scattering_angles_with_gravity_beams_unaligned_with_lab_coords(
+    incident_beam: sc.Variable,
+):
     wavelength = sc.array(dims=['wavelength'], values=[1.6, 0.9, 0.7], unit='Å')
-    # Gravity and incident_beam are not aligned with the coordinate system
-    # but orthogonal to each other.
-    gravity = sc.vector([-0.3, -9.81, 0.01167883211678832], unit='m/s^2')
-    incident_beam = sc.vector([1.6, 0.0, 41.1], unit='m')
+    gravity = UNALIGNED_GRAVITY
     scattered_beam = sc.vectors(
         dims=['det'], values=[[1.8, 2.5, 3.6], [-0.4, -1.7, 2.9]], unit='m'
     )
@@ -698,7 +710,8 @@ def test_scattering_angles_with_gravity_beams_unaligned_with_lab_coords():
     sc.testing.assert_identical(scattered_beam, original_scattered_beam)
 
 
-def test_scattering_angles_with_gravity_binned_data():
+@pytest.mark.parametrize('incident_beam', UNALIGNED_INCIDENT_BEAMS)
+def test_scattering_angles_with_gravity_binned_data(incident_beam: sc.Variable):
     wavelength = sc.array(dims=['wavelength'], values=[1.6, 0.9, 0.7], unit='Å')
     wavelength = sc.bins(
         dim='wavelength',
@@ -706,8 +719,7 @@ def test_scattering_angles_with_gravity_binned_data():
         begin=sc.array(dims=['det'], values=[0, 2], unit=None),
         end=sc.array(dims=['det'], values=[2, 3], unit=None),
     )
-    gravity = sc.vector([-0.3, -9.81, 0.01167883211678832], unit='m/s^2')
-    incident_beam = sc.vector([1.6, 0.0, 41.1], unit='m')
+    gravity = UNALIGNED_GRAVITY
     scattered_beam = sc.vectors(
         dims=['det'], values=[[1.8, 2.5, 3.6], [-0.4, -1.7, 2.9]], unit='m'
     )

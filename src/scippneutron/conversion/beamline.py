@@ -482,19 +482,19 @@ def scattering_angles_with_gravity(
     The neutron left the sample in the direction of a vector :math:`b'_2`.
     This vector defines the scattering angles :math:`2\theta` and :math:`\phi`.
     Taking gravity into account, we have :math:`b'_2 \neq b_2`.
-    Solving the equations of motion shows that the neutron fell by :math:`\delta_y`
+    Solving the equations of motion shows that the neutron fell by :math:`\delta`
     on its way to the detector:
 
     .. math::
 
-        b'_2 = b_2 - \delta_y \frac{g}{|g|}
+        b'_2 = b_2 - \delta \frac{g}{|g|}
 
     Where :math:`|g|` is the strength of gravity, :math:`m_n` is the neutron mass,
     :math:`h` is the Planck constant, :math:`\lambda` is the wavelength, and
 
     .. math::
 
-        \delta_y = \frac{|g| m_n^2}{2 h^2} L_2^{\prime\, 2} \lambda^2
+        \delta = \frac{|g| m_n^2}{2 h^2} L_2^{\prime\, 2} \lambda^2
 
     This gives the gravity-corrected scattering angles:
 
@@ -511,8 +511,8 @@ def scattering_angles_with_gravity(
     .. math::
 
         x'_d &= x_d \\
-        y'_d &= y_d + \delta_y\, \hat{u} \cdot \hat{e}_y \\
-        z'_d &= z_d + \delta_y\, \hat{u} \cdot \hat{e}_z
+        y'_d &= y_d + \delta\, \hat{u} \cdot \hat{e}_y \\
+        z'_d &= z_d + \delta\, \hat{u} \cdot \hat{e}_z
 
     and, since :math:`\hat{e}_z` is along :math:`b_1`, we can equivalently use
 
@@ -527,9 +527,9 @@ def scattering_angles_with_gravity(
 
     Attention
     ---------
-        The above equation for :math:`y'_d` contains :math:`L_2^{\prime\, 2} = |b'_2|`
-        which in turn depends on :math:`y'_d`.
-        Solving this equation for :math:`y'_d` is too difficult.
+        The above equation for :math:`\delta` contains :math:`L'_2 = |b'_2|`
+        which in turn depends on :math:`\delta`.
+        Solving this equation for :math:`\delta` is too difficult.
         Instead, we approximate :math:`L'_2 \approx L_2`.
         The impact of this approximation on :math:`2\theta` is of the order of
         :math:`10^{-6}` or less for beamlines at ESS.
@@ -581,8 +581,10 @@ def scattering_angles_with_gravity(
     z = sc.dot(scattered_beam, ez).to(dtype=dtype, copy=False)
     # Zero if the incident beam is orthogonal to gravity. Skipping it then keeps `z`
     # in the shape of `scattered_beam` instead of broadcasting it to that of `y`.
+    # The tolerance lets geometries that are orthogonal up to rounding errors take this
+    # path; the term skipped is at most `1e-12 * drop`.
     up_z = sc.dot(up, ez)
-    if sc.any(up_z != sc.scalar(0.0)).value:
+    if sc.any(abs(up_z) > sc.scalar(1e-12)).value:
         z = z + y * up_z.to(dtype=dtype)
     y *= sc.dot(up, ey).to(dtype=dtype)
     y += sc.dot(scattered_beam, ey).to(dtype=dtype, copy=False)
@@ -632,7 +634,7 @@ def scattering_angle_in_yz_plane(
 
     Attention
     ---------
-        The above equation for :math:`y'_d` contains :math:`L_2^{\prime\, 2} = |b'_2|`
+        The above equation for :math:`y'_d` contains :math:`L'_2 = |b'_2|`
         which in turn depends on :math:`y'_d`.
         Solving this equation for :math:`y'_d` is too difficult.
         Instead, we approximate :math:`L'_2 \approx L_2`.
