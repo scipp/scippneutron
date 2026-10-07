@@ -884,3 +884,32 @@ def time_at_sample_from_wavelength(
         copy=False,
     )
     return toa - L2 * (wavelength / c)
+
+
+def momentum_from_energy(energy: sc.Variable) -> Variable:
+    r"""Compute a momentum magnitude from a neutron energy.
+
+    The result is
+
+    .. math::
+
+        k = \sqrt{E \frac{2 m_n}{\hbar}}
+
+    Parameters
+    ----------
+    energy:
+        The neutron energy.
+
+    Returns
+    -------
+    :
+        The magnitude of the neutron momentum $k$ in inverse Ångström.
+    """
+    c = as_float_type(
+        sc.to_unit(
+            2 * sc.constants.neutron_mass / sc.constants.hbar**2,
+            sc.reciprocal(sc.units.angstrom) ** 2 / energy.unit,
+        ),
+        energy,
+    )
+    return sc.sqrt(energy * c)
