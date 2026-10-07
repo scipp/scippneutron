@@ -716,3 +716,13 @@ def test_time_at_sample(toa):
     assert sc.allclose(
         ts, (sc.scalar(toa, unit='s') - (L2 * const.m_n * wav / const.h).to(unit='s'))
     )
+
+
+@pytest.mark.parametrize('dtype', ['float64', 'float32'])
+def test_momentum_from_energy(dtype: str) -> None:
+    energy = sc.array(dims=['e'], values=[10.2, 3.7], unit='µeV', dtype=dtype)
+
+    c = 2 * sc.constants.m_n / sc.constants.hbar**2
+    print(c)
+    expected = sc.sqrt(energy * c).to(unit='1/Å', dtype=dtype)
+    assert sc.allclose(tof_conv.momentum_from_energy(energy), expected)

@@ -5,12 +5,16 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 
 import numpy as np
+import numpy.typing as npt
 import scipp as sc
 from scipy.linalg import solve
+from scipy.spatial.transform import Rotation
 
+from ...conversion.tof import momentum_from_energy
 from ._linalg import invert_transform, transpose_matrix
 
 # TODO
@@ -223,3 +227,178 @@ def u_from_b_and_ub(b: sc.Variable, ub: sc.Variable) -> sc.Variable:
         error.add_note("When inverting a B matrix")
         raise
     return ub * b_inv
+
+
+def target_rotation_for_reflection(
+    *,
+    hkl: sc.Variable,
+    two_theta: sc.Variable,
+    ei: sc.Variable,
+    ef: sc.Variable,
+    ub: sc.Variable,
+    scattering_plane_normal: sc.Variable,
+    scattering_plane_reference: sc.Variable | None,
+    epsilon: float = 1e-5,
+    error_threshold: float = 1e-5,
+) -> sc.Variable:
+    r"""Compute the rotation that places the given reflection at the given $2 \theta$.
+
+    Given a known sample UB matrix and scattering plane information, this function
+    computes the sample rotation that places a reflection with Miller indices ``hkl``
+    at a specific scattering angle $2 \theta$.
+
+    This problem is under determined. This function resolves this issue by computing
+    the rotation with the minimal tilt of the sample while placing the target
+    in or close to the horizontal plane ($\phi \approx 0$ or $\phi \approx \pi$).
+
+    Parameters
+    ----------
+    hkl:
+        Miller indices of the target reflection.
+    two_theta
+        Scattering angle $2 \theta$ where the target reflection should be visible.
+        **Assumes that the incident beam is along z.**
+    ei:
+        Incident energy.
+    ef:
+        Final energy.
+    ub:
+        UB matrix of the sample.
+    scattering_plane_normal:
+        Normal vector of the scattering plane.
+    scattering_plane_reference:
+        A vector in the scattering plane.
+        Only required when the target reflection is along the plane normal.
+    epsilon:
+        Threshold for checking whether vectors align with the scattering plane
+        or scattering plane normal.
+    error_threshold:
+        Raise a warning when the error (squared residuals) of computing the target
+        rotation is larger than this threshold.
+
+    Returns
+    -------
+    :
+        The best estimate for the rotation that places the target peak at the given
+        $2 \theta$.
+
+    Warns
+    -----
+    RuntimeWarning
+        The target rotation is determined using a minimization algorithm which returns
+        approximate results. When the error of the result exceeds ``error_threshold``,
+        a :class:`RuntimeWarning` is raised.
+        See the underlying
+        `SciPy docs <https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.align_vectors.html>`_.
+    """
+    ki = momentum_from_energy(ei)
+    kf = momentum_from_energy(ef)
+    two_theta = two_theta.to(dtype=float)  # to support integer inputs
+
+    q = sc.sqrt(ki**2 + kf**2 - 2 * ki * kf * sc.cos(two_theta))
+    if q.value == 0:
+        # This should not happen in practice because there are no detectors two_theta=0.
+        raise ValueError(
+            "Invalid scattering condition: The momentum transfer Q is zero."
+        )
+
+    zero = sc.scalar(0.0, unit=ki.unit)
+    q_list = [
+        [-kf / q * sc.sin(two_theta), zero, ki / q - kf / q * sc.cos(two_theta)],
+        [ki / q - kf / q * sc.cos(two_theta), zero, kf / q * sc.sin(two_theta)],
+        [zero, sc.scalar(1.0, unit=ki.unit), zero],
+    ]
+    # All elements have unit 'one' because ki, kf, and q have the same unit.
+    q_lab = np.array([[x.value for x in row] for row in q_list])
+
+    t = _construct_orthogonal_target_system(
+        hkl=hkl,
+        ub=ub,
+        scattering_plane_normal=scattering_plane_normal,
+        scattering_plane_reference=scattering_plane_reference,
+        epsilon=epsilon,
+    )
+
+    rotation, error = Rotation.align_vectors(q_lab, t)
+    if error > error_threshold:
+        warnings.warn(
+            f"The target rotation to align a sample with hkl={hkl:c} could only be "
+            f"computed up to an error of {error} (threshold is {error_threshold}).",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    return sc.spatial.rotation(value=rotation.as_quat())
+
+
+def _construct_orthogonal_target_system(
+    *,
+    hkl: sc.Variable,
+    ub: sc.Variable,
+    scattering_plane_normal: sc.Variable,
+    scattering_plane_reference: sc.Variable | None,
+    epsilon: float = 1e-5,
+) -> npt.NDArray[np.float64]:
+    """Construct an orthogonal coordinate system for a target rotation.
+
+    The implementation is based on ``rot_matrix_with_minimal_tilt`` from TAVI:
+    https://github.com/neutrons/TAVI/blob/905c5f5dcd372f9eef2c9d88a37323fd0edb6276/src/tavi/library/geometry/oriented_lattice.py#L399
+
+    Parameters
+    ----------
+    hkl:
+        Target peak.
+    ub:
+        Sample UB matrix.
+    scattering_plane_normal:
+        The normal vector of the horizontal scattering plane.
+    scattering_plane_reference:
+        A reference vector in the horizontal scattering plane.
+        Required only if the target scattered beam is perpendicular
+        to the horizontal scattering plane.
+    epsilon:
+        Tolerance for considering a vector to be perpendicular or parallel to another.
+
+    Returns
+    -------
+    :
+        A numpy array encoding the three basis vectors as rows.
+    """
+    eps = sc.scalar(epsilon)
+    scattering_plane_normal = scattering_plane_normal / sc.norm(scattering_plane_normal)
+
+    t1 = ub * hkl
+
+    if abs(sc.dot(t1, scattering_plane_normal).value) < eps:
+        # t1 in plane
+        t3 = scattering_plane_normal
+        t2 = sc.cross(t3, t1)
+    elif sc.norm(sc.cross(t1, scattering_plane_normal)).value < eps:
+        if scattering_plane_reference is None:
+            raise ValueError(
+                f"Peak {hkl:c} is perpendicular to the horizontal scattering plane. "
+                "scattering_plane_reference is required to determine R matrix."
+            )
+
+        # Calculate R when t1 is along scattering_plane_normal.
+        # The easiest way to construct three perp axes is to use t2 as in-plane axis.
+        # This already considers a 90 degree rotation to bring t1 in-plane.
+        t2 = scattering_plane_reference / sc.norm(scattering_plane_reference)
+        t3 = sc.cross(t1, t2)  # t3 along y
+    else:
+        # t1 not in plane.
+        # cross(scattering_plane_normal, t1) incorporates a minimal rotation along
+        # t2 to bring t1 in-plane.
+        t2 = sc.cross(scattering_plane_normal, t1)
+        t3 = sc.cross(t1, t2)
+
+    return np.stack(
+        [
+            _normed_vector_values(t1),
+            _normed_vector_values(t2),
+            _normed_vector_values(t3),
+        ]
+    )
+
+
+def _normed_vector_values(vector: sc.Variable) -> npt.NDArray[np.float64]:
+    return sc.to_unit(vector / sc.norm(vector), 'one').values
