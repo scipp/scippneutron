@@ -8,9 +8,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+import numpy.typing as npt
 import scipp as sc
 from scipy.linalg import solve
 
+from ...conversion.tof import momentum_from_energy
 from ._linalg import invert_transform, transpose_matrix
 
 # TODO
@@ -223,3 +225,60 @@ def u_from_b_and_ub(b: sc.Variable, ub: sc.Variable) -> sc.Variable:
         error.add_note("When inverting a B matrix")
         raise
     return ub * b_inv
+
+
+def target_rotation_from_ub(
+    *,
+    hkl: sc.Variable,
+    two_theta: sc.Variable,
+    ei: sc.Variable,
+    ef: sc.Variable,
+    ub: sc.Variable,
+) -> sc.Variable:
+    ki = momentum_from_energy(ei)
+    kf = momentum_from_energy(ef)
+
+    q = sc.sqrt(ki**2 + kf**2 - 2 * ki * kf * sc.cos(two_theta))
+    t = _construct_orthogonal_target_system(hkl=hkl, ub=ub)
+
+
+def _construct_orthogonal_target_system(
+    *, hkl: sc.Variable, ub: sc.Variable
+) -> sc.Variable:
+    eps = sc.scalar(1e-5)
+
+    t1 = ub * hkl
+    # TODO handle in-plane vectors
+    # if np.abs(np.dot(t1, plane_normal)) < eps:
+    #     # t1 in plane
+    #     t3 = plane_normal
+    #     t2 = np.cross(t3, t1)
+    # elif np.linalg.norm(np.cross(plane_normal, t1)) < ZERO:
+    #     # oops, t1 along plane_normal
+    #     if in_plane_ref is None:
+    #         raise ValueError(
+    #             "Peak ({:.3g}, {:.3g}, {:.3g}) is perpendicular to the horizaontal scattering plane. in_plane_ref is required to determine R matrix.".format(
+    #                 *hkl
+    #             )
+    #         )
+    #     t2 = in_plane_ref
+    #     t3 = np.cross(t1, t2)
+    # else:
+    # t1 not in plane, need to change tilts
+    # t2p = np.cross(plane_normal, t1)
+    # t3 = np.cross(t1, t2p)
+    # t2 = np.cross(t3, t1)
+    t2 = sc.cross(plane_normal, t1)
+    t3 = np.cross(t1, t2)
+
+    return sc.spatial.linear_transform(
+        value=np.c_[
+            _normed_vector_values(t1),
+            _normed_vector_values(t2),
+            _normed_vector_values(t3),
+        ]
+    )
+
+
+def _normed_vector_values(vector: sc.Variable) -> npt.NDArray[np.float64]:
+    return sc.to_unit(vector / sc.norm(vector), 'one').values
