@@ -52,7 +52,7 @@ Two coordinate systems are involved:
   `NeXus coordinate system <https://manual.nexusformat.org/design.html#the-nexus-coordinate-system>`_,
   where the z-axis points along the beam and the y-axis points up.
 - The *beam-aligned frame*, which ScippNeutron derives from the incident beam and
-  gravity in order to define ``phi``.
+  gravity in order to define angles relative to them, such as ``phi``.
 
 Below, :math:`x`, :math:`y`, and :math:`z` refer to the beam-aligned frame.
 It is identical to the NeXus lab frame when the incident beam points along the
