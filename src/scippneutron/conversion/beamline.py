@@ -43,13 +43,22 @@ Note
 
   However, we need the actual coordinate system to compute ``phi``.
 
-ScippNeutron uses a coordinate system aligned with
-the incident beam and gravity.
-ScippNeutron's coordinate system corresponds to that of
-`NeXus <https://manual.nexusformat.org/design.html#the-nexus-coordinate-system>`_
-when the incident beam is perpendicular to gravity.
+Two coordinate systems are involved:
+
+- The *lab frame* in which ``position``, ``source_position``, and ``sample_position``
+  are given.
+  ScippNeutron does not define it.
+  Typically, it is the
+  `NeXus coordinate system <https://manual.nexusformat.org/design.html#the-nexus-coordinate-system>`_,
+  where the z-axis points along the beam and the y-axis points up.
+- The *beam-aligned frame*, which ScippNeutron derives from the incident beam and
+  gravity in order to define angles relative to them, such as ``phi``.
+
+Below, :math:`x`, :math:`y`, and :math:`z` refer to the beam-aligned frame.
+It is identical to the NeXus lab frame when the incident beam points along the
+lab z-axis.
 The image below shows how coordinates are defined with respect to the
-quantities defined above.
+quantities defined above, for an incident beam perpendicular to gravity.
 The plot on the right-hand side shows the view from the sample along the :math:`z`-axis,
 that is, the :math:`z`-axis points towards the viewer.
 (The sample is placed in the origin here; this is only done for illustration purposes
@@ -81,6 +90,9 @@ Here, :math:`b_1` is the ``incident_beam`` and :math:`g` is the gravity vector.
 This means that the z-axis is along the incident beam and the x-axis is horizontal.
 The y-axis is antiparallel to gravity if and only if the incident beam is
 perpendicular to gravity, which is the case on most beamlines.
+If the incident beam is tilted with respect to the horizontal plane,
+the y-axis tilts with it, such that ``phi`` remains the azimuthal angle about the
+incident beam.
 Basis vectors can be computed using :func:`beam_aligned_unit_vectors`.
 
 :math:`p = \sqrt{x^2 + y^2}` is the projection of the

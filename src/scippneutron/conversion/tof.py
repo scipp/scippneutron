@@ -552,6 +552,8 @@ def elastic_Q_elements_from_wavelength(
 
     are defined as the directions of ``incident_beam`` and ``scattered_beam``,
     respectively.
+    The components refer to the lab frame of ``incident_beam`` and ``scattered_beam``,
+    not to the beam-aligned frame of :mod:`scippneutron.conversion.beamline`.
 
     Parameters
     ----------
