@@ -44,7 +44,7 @@ def make_detector_bank(
 
 @pytest.mark.parametrize("fold", [False, True])
 def test_instrument_view(fold):
-    bank = make_detector_bank(center=(0, 0, 5), fold=fold)
+    bank = make_detector_bank(center=(0, 0, 5), fold=fold).sum('time')
     scn.instrument_view(bank, size=0.1)
 
 
@@ -56,8 +56,8 @@ def test_instrument_view_with_dim(fold):
 
 @pytest.mark.parametrize("fold", [False, True])
 def test_instrument_view_two_banks_dict(fold):
-    bank1 = make_detector_bank(center=(-1.5, 0, 5), fold=fold)
-    bank2 = make_detector_bank(center=(1.5, 0, 5), fold=fold)
+    bank1 = make_detector_bank(center=(-1.5, 0, 5), fold=fold).sum('time')
+    bank2 = make_detector_bank(center=(1.5, 0, 5), fold=fold).sum('time')
     scn.instrument_view({"bank1": bank1, "bank2": bank2}, size=0.1)
 
 
@@ -72,7 +72,9 @@ def test_instrument_view_two_banks_dict_with_dim(fold):
 def test_instrument_view_two_banks_datagroup(fold):
     bank1 = make_detector_bank(center=(-1.5, 0, 5), fold=fold)
     bank2 = make_detector_bank(center=(1.5, 0, 5), fold=fold)
-    scn.instrument_view(sc.DataGroup({"bank1": bank1, "bank2": bank2}), size=0.1)
+    scn.instrument_view(
+        sc.DataGroup({"bank1": bank1, "bank2": bank2}).sum('time'), size=0.1
+    )
 
 
 @pytest.mark.parametrize("fold", [False, True])
