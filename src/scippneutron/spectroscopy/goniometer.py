@@ -5,7 +5,9 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Iterable
+from functools import reduce
 from typing import Literal, overload
 
 import matplotlib.pyplot as plt
@@ -14,6 +16,7 @@ import numpy.typing as npt
 import scipp as sc
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
+from scipy.spatial.transform import Rotation
 
 
 class Goniometer:
@@ -57,7 +60,154 @@ class Goniometer:
     """
 
     def __init__(self, axes: Iterable[GoniometerAxis]) -> None:
-        self.axes = list(axes)
+        self._axes = list(axes)
+
+    @property
+    def axes(self) -> list[GoniometerAxis]:
+        """The axes of the goniometer."""
+        return list(self._axes)
+
+    def decompose_rotation(
+        self, rotation: sc.Variable, *, suppress_warnings: bool = False
+    ) -> list[sc.Variable]:
+        r"""Compute the rotation angles of this goniometer for a given rotation.
+
+        For the input ``rotation``, this function computes the angles of all goniometer
+        axes that would produce that rotation.
+        This makes this function the inverse of :meth:`Goniometer.rotation_for`:
+
+        .. code-block:: python
+
+            initial = ...  # some rotation
+            angles = goniometer.decompose_rotation(initial)
+            reconstructed = goniometer.rotation_for(angles)
+            # initial and reconstructed are equal
+
+        Parameters
+        ----------
+        rotation:
+            A variable with ``dtype = sc.DType.rotation3``.
+        suppress_warnings:
+            If true, do not emit warnings about gimbal locks.
+
+        Returns
+        -------
+        :
+            A list of rotation angles, one for each axis.
+            In the same order as :attr:`Goniometer.axes`.
+            Each angle is in the range $(-\pi, \pi]$.
+
+        Warns
+        -----
+        UserWarning
+            If a gimbal lock is detected unless ``suppress_warnings=True``.
+            See https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.as_euler.html
+        RuntimeWarning
+            If a computed angle exceeds the axis limits unless
+            ``suppress_warnings=True``. See :attr:`GoniometerAxis.limits`.
+
+        Raises
+        ------
+        RuntimeError
+            If the goniometer requires a rotation around an axis that is not available.
+
+        Examples
+        --------
+        Construct a goniometer where the sample is attached to the z axis
+        and define a rotation around the x and y axes. Note that "ax2" points in
+        negative x direction which is reflected in the final angle.
+
+            >>> from scippneutron.spectroscopy.goniometer import *
+            >>> inf = sc.scalar(np.inf, unit="rad")
+            >>> goniometer = Goniometer(
+            ...     axes=[
+            ...         GoniometerAxis(name="ax1", axis="+z", min=-inf, max=inf),
+            ...         GoniometerAxis(name="ax2", axis="-x", min=-inf, max=inf),
+            ...         GoniometerAxis(name="ax3", axis="+y", min=-inf, max=inf),
+            ...     ]
+            ... )
+            >>> rx = sc.spatial.rotations_from_rotvecs(
+            ...     sc.vector([0.2, 0.0, 0.0], unit='rad')
+            ... )
+            >>> ry = sc.spatial.rotations_from_rotvecs(
+            ...     sc.vector([0.0, 0.5, 0.0], unit='rad')
+            ... )
+            >>> rotation = ry * rx  # no rotation around z
+            >>> # Compute the angles:
+            >>> angles = goniometer.decompose_rotation(rotation)
+            >>> ", ".join(f"{angle.value:.1f}" for angle in angles)
+            '0.0, -0.2, 0.5'
+        """
+        if rotation.dtype != sc.DType.rotation3:
+            raise sc.DTypeError("Expected rotation3, got " + str(rotation.dtype))
+
+        if len(self._axes) == 3:
+            raw_angles = _compute_angles_for_3_axes(rotation, self._axes)
+        elif len(self._axes) == 2:
+            raw_angles = _compute_angles_for_2_axes(rotation, self._axes)
+        else:
+            raise NotImplementedError(
+                "Can only decompose rotations into 2 or 3 axes. "
+                f"The goniometer has {len(self._axes)} axes."
+            )
+        signs = (1 if axis.axis[0] == "+" else -1 for axis in self._axes)
+        angles = [
+            sc.scalar(sign * angle, unit='rad')
+            for sign, angle in zip(signs, raw_angles, strict=True)
+        ]
+
+        if not suppress_warnings:
+            for axis, angle in zip(self._axes, angles, strict=True):
+                if not (
+                    axis.limits[0]
+                    < sc.to_unit(angle, axis.limits[0].unit)
+                    <= axis.limits[1]
+                ):
+                    warnings.warn(
+                        f"The computed angle of axis {axis.name} is outside its "
+                        f"limits. Got {angle:c} with limits ({axis.limits[0]:c}, "
+                        f"{axis.limits[1]:c}]",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
+
+        return angles
+
+    def rotation_for(self, angles: Iterable[sc.Variable]) -> sc.Variable:
+        """Return the rotation for the given angles for this goniometer.
+
+        Each axis is rotated by the given angle following this relationship:
+
+        .. code-block:: python
+
+            for angle, axis in zip(angles, self._axes):
+                rotation = sc.spatial.rotations_from_rotvecs(angle * axis.vector())
+
+        This function is the inverse of :meth:`Goniometer.decompose_rotation`.
+
+        Parameters
+        ----------
+        angles:
+            One angle per goniometer axis.
+            Ordered the same way as `self.axes`, i.e., the first element is applied
+            to the sample.
+
+        Returns
+        -------
+        :
+            The rotation for the given angles and `self.axes` as a variable with
+            :attr:`sc.DType.rotation3`.
+        """
+        angles = list(angles)
+        if len(angles) != len(self._axes):
+            raise ValueError(f"Expected {len(self._axes)} angles, got {len(angles)}.")
+        return reduce(
+            lambda a, b: b * a,  # Order s.t. axes[0] is applied to sample
+            (
+                sc.spatial.rotations_from_rotvecs(axis.vector() * angle)
+                for axis, angle in zip(self._axes, angles, strict=True)
+            ),
+        )
 
     @overload
     def plot(self, *, ax: Axes3D) -> plt.Figure: ...
@@ -97,17 +247,17 @@ class Goniometer:
         ax.text(0, 1.1, 0, "y", color='k')
         ax.text(0, 0, 1.1, "z", color='k')
 
-        for i, axis in enumerate(self.axes):
+        for i, axis in enumerate(self._axes):
             _draw_goniometer_axis(
                 ax,
                 axis=axis.vector().value,
                 y=-0.5 * (i + 1),
-                color=f"C{len(self.axes) - i}",
+                color=f"C{len(self._axes) - i}",
                 name=axis.name,
             )
 
         # Set limits such that the plot axes are a cube.
-        ylim = -len(self.axes) / 2 - 0.5, 1.3
+        ylim = -len(self._axes) / 2 - 0.5, 1.3
         ax_height = ylim[1] - ylim[0]
         ax.set_xlim(-ax_height / 2, ax_height / 2)
         ax.set_zlim(-ax_height / 2, ax_height / 2)
@@ -131,9 +281,9 @@ class GoniometerAxis:
         Indicates which axis of the lab coordinate system
         this goniometer axis rotates around.
     min:
-        The minimum angle this axis can rotate to.
+        The minimum angle this axis can rotate to (exclusive).
     max:
-        The maximum angle this axis can rotate to.
+        The maximum angle this axis can rotate to (inclusive).
 
     See Also
     --------
@@ -147,8 +297,11 @@ class GoniometerAxis:
         self, *, name: str, axis: Axis, min: sc.Variable, max: sc.Variable
     ) -> None:
         self.name = name
+        """The name of the axis."""
         self.axis = _check_axis_param(axis)
+        """The axis of the lab coordinate system this goniometer axis rotates around."""
         self.limits = (min, sc.to_unit(max, min.unit))
+        """Lower and upper limit of the axis."""
 
     def vector(self) -> sc.Variable:
         """Return a unit vector pointing along this axis."""
@@ -179,6 +332,38 @@ def _check_axis_param(axis: Axis) -> Axis:
             f"Invalid axis: {axis!r}, expected one of {', '.join(Axis.__args__)}"
         )
     return axis
+
+
+def _compute_angles_for_3_axes(
+    rotation: sc.Variable, axes: list[GoniometerAxis]
+) -> list[float]:
+    # axis.axis[1] is lowercase, so this uses extrinsic rotations which matches
+    # the order of the axes in Goniometer.
+    axis_sequence = "".join(axis.axis[1] for axis in axes)
+    return Rotation.from_quat(rotation.value).as_euler(axis_sequence)
+
+
+def _compute_angles_for_2_axes(
+    rotation: sc.Variable, axes: list[GoniometerAxis]
+) -> list[float]:
+    # axis.axis[1] is lowercase, so this uses extrinsic rotations which matches
+    # the order of the axes in Goniometer.
+    #
+    # `as_euler` requires 3 axes, one of them is fixed here. Insert the fixed axis in
+    # the middle so that it does not impact the result for the other two.
+    # (SciPy uses the Tait-Bryan convention in this case which means that the outer
+    # angles have range (-pi, +pi] while the middle angle only has [-pi/2, pi/2].
+    # By placing the fixed axis in the middle, we do not have to worry about that.)
+    [fixed_axis] = {"x", "y", "z"} - {axis.axis[1] for axis in axes}
+    axis_sequence = f"{axes[0].axis[1]}{fixed_axis}{axes[1].axis[1]}"
+    angles = Rotation.from_quat(rotation.value).as_euler(axis_sequence)
+    if abs(angles[1]) > 1e-3:
+        raise RuntimeError(
+            f"The goniometer requires a rotation around axis {fixed_axis!r} by "
+            f"{angles[1]}rad to reach the given rotation {rotation}. "
+            f"But it only has axes {[ax.axis for ax in axes]}."
+        )
+    return [angles[0], angles[2]]
 
 
 def _draw_goniometer_axis(
