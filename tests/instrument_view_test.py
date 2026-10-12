@@ -11,7 +11,9 @@ import scippneutron as scn
 matplotlib.use('Agg')
 
 
-def make_detector_bank(center: list | tuple | None = None) -> sc.DataArray:
+def make_detector_bank(
+    center: list | tuple | None = None, fold: bool = False
+) -> sc.DataArray:
     if center is None:
         center = (0, 0, 0)
 
@@ -35,40 +37,50 @@ def make_detector_bank(center: list | tuple | None = None) -> sc.DataArray:
             'time': sc.linspace('time', start=0, stop=7.1e4, num=nt + 1, unit='us'),
         },
     )
+    if fold:
+        da = da.fold(dim='pixel', sizes={'y': ny, 'x': nx})
     return da
 
 
-def test_instrument_view():
-    bank = make_detector_bank(center=(0, 0, 5))
+@pytest.mark.parametrize("fold", [False, True])
+def test_instrument_view(fold):
+    bank = make_detector_bank(center=(0, 0, 5), fold=fold).sum('time')
     scn.instrument_view(bank, size=0.1)
 
 
-def test_instrument_view_with_dim():
-    bank = make_detector_bank(center=(0, 0, 5))
+@pytest.mark.parametrize("fold", [False, True])
+def test_instrument_view_with_dim(fold):
+    bank = make_detector_bank(center=(0, 0, 5), fold=fold)
     scn.instrument_view(bank, size=0.1, dim='time')
 
 
-def test_instrument_view_two_banks_dict():
-    bank1 = make_detector_bank(center=(-1.5, 0, 5))
-    bank2 = make_detector_bank(center=(1.5, 0, 5))
+@pytest.mark.parametrize("fold", [False, True])
+def test_instrument_view_two_banks_dict(fold):
+    bank1 = make_detector_bank(center=(-1.5, 0, 5), fold=fold).sum('time')
+    bank2 = make_detector_bank(center=(1.5, 0, 5), fold=fold).sum('time')
     scn.instrument_view({"bank1": bank1, "bank2": bank2}, size=0.1)
 
 
-def test_instrument_view_two_banks_dict_with_dim():
-    bank1 = make_detector_bank(center=(-1.5, 0, 5))
-    bank2 = make_detector_bank(center=(1.5, 0, 5))
+@pytest.mark.parametrize("fold", [False, True])
+def test_instrument_view_two_banks_dict_with_dim(fold):
+    bank1 = make_detector_bank(center=(-1.5, 0, 5), fold=fold)
+    bank2 = make_detector_bank(center=(1.5, 0, 5), fold=fold)
     scn.instrument_view({"bank1": bank1, "bank2": bank2}, size=0.1, dim='time')
 
 
-def test_instrument_view_two_banks_datagroup():
-    bank1 = make_detector_bank(center=(-1.5, 0, 5))
-    bank2 = make_detector_bank(center=(1.5, 0, 5))
-    scn.instrument_view(sc.DataGroup({"bank1": bank1, "bank2": bank2}), size=0.1)
+@pytest.mark.parametrize("fold", [False, True])
+def test_instrument_view_two_banks_datagroup(fold):
+    bank1 = make_detector_bank(center=(-1.5, 0, 5), fold=fold)
+    bank2 = make_detector_bank(center=(1.5, 0, 5), fold=fold)
+    scn.instrument_view(
+        sc.DataGroup({"bank1": bank1, "bank2": bank2}).sum('time'), size=0.1
+    )
 
 
-def test_instrument_view_two_banks_datagroup_with_dim():
-    bank1 = make_detector_bank(center=(-1.5, 0, 5))
-    bank2 = make_detector_bank(center=(1.5, 0, 5))
+@pytest.mark.parametrize("fold", [False, True])
+def test_instrument_view_two_banks_datagroup_with_dim(fold):
+    bank1 = make_detector_bank(center=(-1.5, 0, 5), fold=fold)
+    bank2 = make_detector_bank(center=(1.5, 0, 5), fold=fold)
     scn.instrument_view(
         sc.DataGroup({"bank1": bank1, "bank2": bank2}), size=0.1, dim='time'
     )
@@ -107,3 +119,19 @@ def test_instrument_view_two_banks_dict_with_dim_different_coords_raises():
         scn.instrument_view(
             {"bank1": bank1, "bank2": bank2, "bank3": bank3}, size=0.1, dim='time'
         )
+
+
+@pytest.mark.parametrize("fold", [False, True])
+def test_instrument_view_slider_not_last_dim_dataarray(fold):
+    bank = make_detector_bank(center=(0, 0, 5), fold=fold)
+    bank = bank.transpose(('time', *(set(bank.dims) - {'time'})))
+    scn.instrument_view(bank, dim='time')
+
+
+@pytest.mark.parametrize("fold", [False, True])
+def test_instrument_view_slider_not_last_dim_datagroup(fold):
+    bank1 = make_detector_bank(center=(-1.5, 0, 5), fold=fold)
+    bank2 = make_detector_bank(center=(1.5, 0, 5), fold=fold)
+    dg = sc.DataGroup({"bank1": bank1, "bank2": bank2})
+    dg = dg.transpose(('time', *(set(dg.dims) - {'time'})))
+    scn.instrument_view(dg, dim='time')
