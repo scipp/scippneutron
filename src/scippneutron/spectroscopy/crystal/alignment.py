@@ -27,6 +27,9 @@ from ._linalg import invert_transform, transpose_matrix
 # - Needs motor angles from peak
 # - indices from peak position
 
+# TODO make symbols internally consistent
+#   - maybe avoid using v for miller indices to avoid confusion if u-v
+
 
 @dataclass(frozen=True, slots=True)
 class BraggPeaks:
@@ -55,12 +58,12 @@ class BraggPeaks:
             item = getattr(self, key)
             if item.sizes != sizes:
                 raise sc.DimensionError(
-                    f"Mismatch between sizes: '{key}' has sizes {item.sizes} "
-                    f"but expected {sizes}."
+                    f"Mismatch between sizes: `{key}` has sizes {item.sizes} "
+                    f"but expected {sizes} based on `r`."
                 )
             if item.dtype != sc.DType.vector3:
                 raise sc.DTypeError(
-                    f"Expected dtype 'vector3' for '{key}' but got {item.dtype}."
+                    f"Expected dtype 'vector3' for `{key}` but got {item.dtype}."
                 )
 
     @property
@@ -142,7 +145,7 @@ def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
         #   Q_nu^T = V^T * (UB)^T
         # for (UB)^T and then transposing the result.
         # We use this instead of inverting V because it is more numerically stable.
-        ub_array = solve(peaks.hkl.values, q_nu.values)
+        ub_array = solve(peaks.hkl.values, q_nu.values).T
     except ValueError as error:
         error.add_note(
             "When solving for the UB matrix. Check for collinear hkl vectors."
@@ -150,7 +153,7 @@ def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
         raise
 
     return sc.to_unit(
-        sc.spatial.linear_transform(value=ub_array.T, unit=q_nu.unit / peaks.hkl.unit),  # type: ignore[operator]
+        sc.spatial.linear_transform(value=ub_array, unit=q_nu.unit / peaks.hkl.unit),  # type: ignore[operator]
         "one",
     )
 
