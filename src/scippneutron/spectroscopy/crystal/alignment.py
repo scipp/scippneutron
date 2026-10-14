@@ -15,6 +15,7 @@ from scipy.linalg import solve
 from scipy.spatial.transform import Rotation
 
 from ...conversion.tof import momentum_from_energy
+from ..geometry import Plane
 from ._linalg import invert_transform, transpose_matrix
 
 # TODO
@@ -239,8 +240,7 @@ def target_rotation_for_reflection(
     ei: sc.Variable,
     ef: sc.Variable,
     ub: sc.Variable,
-    scattering_plane_normal: sc.Variable,
-    scattering_plane_reference: sc.Variable | None,
+    scattering_plane: Plane,
     epsilon: float = 1e-5,
     error_threshold: float = 1e-5,
 ) -> sc.Variable:
@@ -267,11 +267,8 @@ def target_rotation_for_reflection(
         Final energy.
     ub:
         UB matrix of the sample.
-    scattering_plane_normal:
-        Normal vector of the scattering plane.
-    scattering_plane_reference:
-        A vector in the scattering plane.
-        Only required when the target reflection is along the plane normal.
+    scattering_plane:
+        The scattering plane.
     epsilon:
         Threshold for checking whether vectors align with the scattering plane
         or scattering plane normal.
@@ -317,8 +314,7 @@ def target_rotation_for_reflection(
     t = _construct_orthogonal_target_system(
         hkl=hkl,
         ub=ub,
-        scattering_plane_normal=scattering_plane_normal,
-        scattering_plane_reference=scattering_plane_reference,
+        scattering_plane=scattering_plane,
         epsilon=epsilon,
     )
 
@@ -337,8 +333,7 @@ def _construct_orthogonal_target_system(
     *,
     hkl: sc.Variable,
     ub: sc.Variable,
-    scattering_plane_normal: sc.Variable,
-    scattering_plane_reference: sc.Variable | None,
+    scattering_plane: Plane,
     epsilon: float = 1e-5,
 ) -> npt.NDArray[np.float64]:
     """Construct an orthogonal coordinate system for a target rotation.
@@ -352,12 +347,8 @@ def _construct_orthogonal_target_system(
         Target peak.
     ub:
         Sample UB matrix.
-    scattering_plane_normal:
-        The normal vector of the horizontal scattering plane.
-    scattering_plane_reference:
-        A reference vector in the horizontal scattering plane.
-        Required only if the target scattered beam is perpendicular
-        to the horizontal scattering plane.
+    scattering_plane:
+        The horizontal scattering plane.
     epsilon:
         Tolerance for considering a vector to be perpendicular or parallel to another.
 
@@ -367,31 +358,23 @@ def _construct_orthogonal_target_system(
         A numpy array encoding the three basis vectors as rows.
     """
     eps = sc.scalar(epsilon)
-    scattering_plane_normal = scattering_plane_normal / sc.norm(scattering_plane_normal)
-
     t1 = ub * hkl
 
-    if abs(sc.dot(t1, scattering_plane_normal).value) < eps:
+    if abs(sc.dot(t1, scattering_plane.normal).value) < eps:
         # t1 in plane
-        t3 = scattering_plane_normal
+        t3 = scattering_plane.normal
         t2 = sc.cross(t3, t1)
-    elif sc.norm(sc.cross(t1, scattering_plane_normal)).value < eps:
-        if scattering_plane_reference is None:
-            raise ValueError(
-                f"Peak {hkl:c} is perpendicular to the horizontal scattering plane. "
-                "scattering_plane_reference is required to determine R matrix."
-            )
-
+    elif sc.norm(sc.cross(t1, scattering_plane.normal)).value < eps:
         # Calculate R when t1 is along scattering_plane_normal.
         # The easiest way to construct three perp axes is to use t2 as in-plane axis.
         # This already considers a 90 degree rotation to bring t1 in-plane.
-        t2 = scattering_plane_reference / sc.norm(scattering_plane_reference)
+        t2 = scattering_plane.vector1
         t3 = sc.cross(t1, t2)  # t3 along y
     else:
         # t1 not in plane.
         # cross(scattering_plane_normal, t1) incorporates a minimal rotation along
         # t2 to bring t1 in-plane.
-        t2 = sc.cross(scattering_plane_normal, t1)
+        t2 = sc.cross(scattering_plane.normal, t1)
         t3 = sc.cross(t1, t2)
 
     return np.stack(
