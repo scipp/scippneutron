@@ -8,6 +8,7 @@ import scipp.testing
 
 from scippneutron.conversion.tof import momentum_from_energy
 from scippneutron.spectroscopy.crystal import alignment
+from scippneutron.spectroscopy.geometry import Plane
 
 
 def test_ub_from_3_peaks() -> None:
@@ -60,7 +61,9 @@ def test_target_rotation_for_reflection(two_theta_value: int) -> None:
     ub = sc.spatial.linear_transform(
         value=[[1.1, 0.5, 0.4], [0.0, 1.0, 1.8], [0, 0, 0.02]], unit='1/Å'
     )
-    scattering_plane_normal = sc.vector([0, 1, 0])
+    scattering_plane = Plane.from_normal_and_reference(
+        normal=sc.vector([0, 1, 0]), reference=sc.vector([0, 0, 1])
+    )
 
     rotation = alignment.target_rotation_for_reflection(
         hkl=hkl,
@@ -68,8 +71,7 @@ def test_target_rotation_for_reflection(two_theta_value: int) -> None:
         ei=ei,
         ef=ef,
         ub=ub,
-        scattering_plane_normal=scattering_plane_normal,
-        scattering_plane_reference=None,
+        scattering_plane=scattering_plane,
     )
     q_lab = rotation * ub * hkl
 
