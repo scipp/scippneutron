@@ -102,7 +102,7 @@ def instrument_view(
             data = getattr(data, operation)(set(data.dims) - {"pixel"})
         to_scatter = pp.Node(data)
 
-    size = size or pixel_size
+    size = size if pixel_size is None else pixel_size
 
     kwargs.setdefault('cbar', True)
     fig = pp.scatter3dfigure(
