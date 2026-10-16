@@ -91,9 +91,24 @@ def test_instrument_view_default_size():
     scn.instrument_view(bank)
 
 
+def test_instrument_view_size():
+    bank = make_detector_bank(center=(0, 0, 5))
+    scn.instrument_view(bank, size=0.2)
+
+
 def test_instrument_view_pixel_size():
     bank = make_detector_bank(center=(0, 0, 5))
     scn.instrument_view(bank, pixel_size=0.2)
+
+
+def test_instrument_view_size_with_units():
+    bank = make_detector_bank(center=(0, 0, 5))
+    scn.instrument_view(bank, size=sc.scalar(0.2, unit="cm"))
+
+
+def test_instrument_view_pixel_size_with_units():
+    bank = make_detector_bank(center=(0, 0, 5))
+    scn.instrument_view(bank, pixel_size=sc.scalar(0.2, unit="cm"))
 
 
 def test_neutron_instrument_view_with_masks():
