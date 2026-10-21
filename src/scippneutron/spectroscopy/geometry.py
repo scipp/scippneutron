@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Self
 
 import scipp as sc
 
@@ -33,7 +34,7 @@ class Plane:
     @classmethod
     def from_normal_and_reference(
         cls, *, normal: sc.Variable, reference: sc.Variable
-    ) -> Plane:
+    ) -> Self:
         r"""Construct a plane from a normal vector and an in-plane vector.
 
         The plane vectors are computed as follows to produce an orthogonal system.
@@ -72,7 +73,7 @@ class Plane:
     @classmethod
     def from_in_plane_vectors(
         cls, reference1: sc.Variable, reference2: sc.Variable
-    ) -> Plane:
+    ) -> Self:
         r"""Construct a plane from two in-plane vectors.
 
         The plane vectors are computed as follows to produce an orthogonal system.
@@ -107,3 +108,47 @@ class Plane:
             vector2=vector2 / sc.norm(vector2),
             normal=normal / sc.norm(normal),
         )
+
+
+class ScatteringPlaneSampleHolder(Plane):
+    r"""A scattering plane in the sample holder coordinate system.
+
+    This plane is defined in the sample holder system that is related
+    to the lab system and Miller indices via
+
+    .. math::
+
+        \vec{v}_{\text{lab}} &= R \vec{v}_{\text{holder}} \\
+        \vec{v}_{\text{holder}} &= U B \vec{v}_{\text{hkl}}
+
+    where :math:`R` is the sample rotation matrix based on a goniometer.
+
+    See Also
+    --------
+    ScatteringPlaneMiller:
+        A scattering plane in Miller index space.
+    Plane:
+        The underlying implementation.
+    """
+
+
+class ScatteringPlaneMiller(Plane):
+    r"""A scattering plane in Miller index space.
+
+    This plane is defined in the Miller index space that is related
+    to the sample holder system and lab system via
+
+    .. math::
+
+        \vec{v}_{\text{holder}} &= U B \vec{v}_{\text{hkl}} \\
+        \vec{v}_{\text{lab}} &= R \vec{v}_{\text{holder}}
+
+    where :math:`R` is the sample rotation matrix based on a goniometer.
+
+    See Also
+    --------
+    ScatteringPlaneSampleHolder:
+        A scattering plane in sample holder space.
+    Plane:
+        The underlying implementation.
+    """
