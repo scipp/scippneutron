@@ -5,10 +5,66 @@ import numpy as np
 import pytest
 import scipp as sc
 import scipp.testing
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from scippneutron.conversion.tof import momentum_from_energy
-from scippneutron.spectroscopy.crystal import alignment
-from scippneutron.spectroscopy.geometry import Plane
+from scippneutron.spectroscopy.crystal import alignment, lattice
+from scippneutron.spectroscopy.geometry import (
+    ScatteringPlaneMiller,
+    ScatteringPlaneSampleHolder,
+)
+from scippneutron.spectroscopy.goniometer import Goniometer, GoniometerAxis
+
+
+@settings(max_examples=50)
+@given(
+    angles=st.lists(st.floats(min_value=-180, max_value=180), min_size=3, max_size=3)
+)
+@pytest.mark.parametrize('hkl', [[4, 0, 0], [0, 0, 6]])
+def test_u_from_1_peak_and_scattering_plane(
+    hkl: list[float], angles: list[float]
+) -> None:
+    inf = sc.scalar(np.inf, unit='rad')
+    goniometer = Goniometer(
+        axes=[
+            GoniometerAxis(name='sgu', axis="+x", min=-inf, max=inf),
+            GoniometerAxis(name='sgl', axis="-z", min=-inf, max=inf),
+            GoniometerAxis(name='omega', axis="+y", min=-inf, max=inf),
+        ]
+    )
+    peaks = alignment.BraggPeaks(
+        q=sc.vector([0.0007, 0.0004, 1.5335], unit='1/Å'),
+        hkl=sc.vector(hkl),
+        r=goniometer.rotation_for(sc.array(dims=['angles'], values=angles, unit='deg')),
+    )
+    plane = ScatteringPlaneMiller.from_in_plane_vectors(
+        sc.vector([0, 0, 1]),  # order s.t. normal points along +y
+        sc.vector([1, 0, 0]),
+    )
+    b = lattice.b_matrix_from_lattice_parameters(
+        lattice.LatticeParameters(
+            a=sc.scalar(5.0556, unit='Å'),
+            b=sc.scalar(5.0556, unit='Å'),
+            c=sc.scalar(24.5980, unit='Å'),
+            alpha=sc.scalar(90.0, unit='deg'),
+            beta=sc.scalar(90.0, unit='deg'),
+            gamma=sc.scalar(120.0, unit='deg'),
+        )
+    )
+
+    u = alignment.u_from_1_peak_and_scattering_plane(
+        peaks=peaks,
+        scattering_plane=plane,
+        b=b,
+    )
+
+    computed = peaks.r * u * b * peaks.hkl
+    actual = peaks.q
+    sc.testing.assert_allclose(
+        computed / sc.norm(computed),
+        actual / sc.norm(actual),
+    )
 
 
 def test_ub_from_3_peaks() -> None:
@@ -61,7 +117,7 @@ def test_target_rotation_for_reflection(two_theta_value: int) -> None:
     ub = sc.spatial.linear_transform(
         value=[[1.1, 0.5, 0.4], [0.0, 1.0, 1.8], [0, 0, 0.02]], unit='1/Å'
     )
-    scattering_plane = Plane.from_normal_and_reference(
+    scattering_plane = ScatteringPlaneSampleHolder.from_normal_and_reference(
         normal=sc.vector([0, 1, 0]), reference=sc.vector([0, 0, 1])
     )
 
