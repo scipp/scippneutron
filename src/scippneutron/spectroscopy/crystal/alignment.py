@@ -15,7 +15,7 @@ from scipy.linalg import solve
 from scipy.spatial.transform import Rotation
 
 from ...conversion.tof import momentum_from_energy
-from ..geometry import Plane
+from ..geometry import ScatteringPlaneMiller, ScatteringPlaneSampleHolder
 from ._linalg import invert_transform, transpose_matrix
 
 # TODO
@@ -42,6 +42,7 @@ class BraggPeaks:
 
     hkl: sc.Variable
     """The Miller indices of the peak."""
+    # TODO rename to q_lab?
     q: sc.Variable
     """The lab-frame momentum transfer where the peak is observed."""
     r: sc.Variable
@@ -73,14 +74,108 @@ class BraggPeaks:
         return self.hkl.shape
 
 
-@dataclass(frozen=True, slots=True)
-class UAndB:
-    """A U and a B matrix."""
+def u_from_1_peak_and_scattering_plane(
+    peaks: BraggPeaks,
+    b: sc.Variable,
+    scattering_plane: ScatteringPlaneMiller,
+    *,
+    error_threshold: float = 1e-5,
+) -> sc.Variable:
+    r"""Compute U from one Bragg peak, a scattering plane, and a B matrix.
 
-    u: sc.Variable
-    """A U matrix transforming crystal coordinates into lab frame coordinates."""
-    b: sc.Variable
-    """A B matrix transforming miller indices into crystal coordinates."""
+    This function solves
+
+    .. math::
+
+        \vec{Q}_{\text{lab}} = 2 \pi R U B \begin{pmatrix} h \\ k \\ l \end{pmatrix}
+
+    for the rotation :math:`U`.
+    All other quantities are provides as function arguments.
+
+    The above equation does not uniquely determine :math:`U`. This is resolved by
+    placing the x-axis in the sample holder system :math:`R^{-1} \vec{Q}_{\text{lab}}`
+    in the given scattering plane. The y-axis is then as close to the lab-frame
+    y-axis as possible.
+
+    Attention
+    ---------
+    The given peak (hkl) must lie in the given scattering plane.
+    Otherwise, :math:`U` would bot be a pure rotation.
+    But since this function only returns a rotation, any other contribution
+    to :math:`U` would be lost.
+
+    Parameters
+    ----------
+    peaks:
+        The Bragg peak to use for the U matrix calculation.
+        Must contain exactly one peak.
+    b:
+        The B matrix as a linear transform.
+    scattering_plane:
+        The scattering plane **in Miller indices**.
+        Must contain the peak.
+    error_threshold:
+        Raise a warning when the error (squared residuals) of computing the target
+        rotation is larger than this threshold.
+
+    Returns
+    -------
+    :
+        The best estimate for the rotation :math:`U`.
+
+    Warns
+    -----
+    RuntimeWarning
+        The target rotation is determined using a minimization algorithm which returns
+        approximate results. When the error of the result exceeds ``error_threshold``,
+        a :class:`RuntimeWarning` is raised.
+        See the underlying
+        `SciPy docs <https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.align_vectors.html>`_.
+    """
+    if peaks.shape not in ((), (1,)):
+        raise ValueError(f"Expected exactly 1 peak, got {peaks.shape}.")
+    if not isinstance(scattering_plane, ScatteringPlaneMiller):
+        raise TypeError(
+            f"Expected a ScatteringPlaneMiller, got {type(scattering_plane)}."
+        )
+
+    hkl = peaks.hkl.squeeze()
+    q_lab = peaks.q.squeeze()
+    r = peaks.r.squeeze()
+
+    # Construct a basis in the cartesian sample space (B * hkl)
+    # Order: (given_hkl, in_plane, out_of_plane)
+    c1, c2 = (
+        sc.dot(scattering_plane.vector1, hkl),
+        sc.dot(scattering_plane.vector2, hkl),
+    )
+    if abs(c1) > abs(c2):
+        q_hkl2p = b * scattering_plane.vector2 * np.sign(c1.value)
+    else:
+        q_hkl2p = b * scattering_plane.vector1 * np.sign(c2.value)
+    q_hkl1 = b * hkl
+    q_hkl3 = sc.cross(q_hkl1, q_hkl2p)
+    q_hkl2 = sc.cross(q_hkl3, q_hkl1)
+    q_hkl = _normed_coord_basis(q_hkl1, q_hkl2, q_hkl3)
+
+    # Construct a basis in the sample holder space (R^-1 * q_lab)
+    # Order: (given_q_lab, close_to_xz_plane, y)
+    r_inv = invert_transform(r)
+    q_holder1 = r_inv * q_lab
+    q_holder3 = r_inv * sc.vector([0, 1, 0])
+    q_holder2 = sc.cross(q_holder3, q_holder1)
+    q_holder3 = sc.cross(q_holder1, q_holder2)
+    q_holder = _normed_coord_basis(q_holder1, q_holder2, q_holder3)
+
+    rotation, error = Rotation.align_vectors(q_holder, q_hkl)
+    if error > error_threshold:
+        warnings.warn(
+            f"The target rotation to align a sample with hkl={hkl:c} could only be "
+            f"computed up to an error of {error} (threshold is {error_threshold}).",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    return sc.spatial.rotation(value=rotation.as_quat())
 
 
 def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
@@ -92,11 +187,13 @@ def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
 
         \vec{v}_i = \begin{pmatrix} h_i \\ k_i \\ l_i \end{pmatrix}
 
-    that where observed at rotations :math:`R_i` and momentum transfers
+    that were observed at rotations :math:`R_i` and momentum transfers
 
     .. math::
 
-        \vec{Q}_i = \begin{pmatrix} q_{ix} \\ q_{iy} \\ q_{iz} \end{pmatrix}
+        \vec{Q}_{\text{lab}\,i} = \begin{pmatrix}
+            q_{ix} \\ q_{iy} \\ q_{iz}
+        \end{pmatrix}
 
     define matrices
 
@@ -240,7 +337,7 @@ def target_rotation_for_reflection(
     ei: sc.Variable,
     ef: sc.Variable,
     ub: sc.Variable,
-    scattering_plane: Plane,
+    scattering_plane: ScatteringPlaneSampleHolder,
     epsilon: float = 1e-5,
     error_threshold: float = 1e-5,
 ) -> sc.Variable:
@@ -291,6 +388,11 @@ def target_rotation_for_reflection(
         See the underlying
         `SciPy docs <https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.align_vectors.html>`_.
     """
+    if not isinstance(scattering_plane, ScatteringPlaneSampleHolder):
+        raise TypeError(
+            f"Expected a ScatteringPlaneSampleHolder, got {type(scattering_plane)}."
+        )
+
     ki = momentum_from_energy(ei)
     kf = momentum_from_energy(ef)
     two_theta = two_theta.to(dtype=float)  # to support integer inputs
@@ -333,7 +435,7 @@ def _construct_orthogonal_target_system(
     *,
     hkl: sc.Variable,
     ub: sc.Variable,
-    scattering_plane: Plane,
+    scattering_plane: ScatteringPlaneSampleHolder,
     epsilon: float = 1e-5,
 ) -> npt.NDArray[np.float64]:
     """Construct an orthogonal coordinate system for a target rotation.
@@ -377,12 +479,18 @@ def _construct_orthogonal_target_system(
         t2 = sc.cross(scattering_plane.normal, t1)
         t3 = sc.cross(t1, t2)
 
+    return _normed_coord_basis(t1, t2, t3)
+
+
+def _normed_coord_basis(
+    a: sc.Variable, b: sc.Variable, c: sc.Variable
+) -> npt.NDArray[np.float64]:
+    """Construct a basis of 3 normalized vectors.
+
+    The vectors are returned as *rows* of a matrix.
+    """
     return np.stack(
-        [
-            _normed_vector_values(t1),
-            _normed_vector_values(t2),
-            _normed_vector_values(t3),
-        ]
+        [_normed_vector_values(a), _normed_vector_values(b), _normed_vector_values(c)]
     )
 
 
