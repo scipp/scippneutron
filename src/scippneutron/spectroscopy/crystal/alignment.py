@@ -37,13 +37,13 @@ class BraggPeaks:
     """Lattice coordinates and instrumental parameters for one or more Bragg peaks.
 
     All fields must have matching shapes.
-    ``hkl`` and ``q`` must have dtype 'vector3' and ``r`` must have dtype 'rotation3'.
+    ``hkl`` and ``q_lab`` must have dtype 'vector3'
+    and ``r`` must have dtype 'rotation3'.
     """
 
     hkl: sc.Variable
     """The Miller indices of the peak."""
-    # TODO rename to q_lab?
-    q: sc.Variable
+    q_lab: sc.Variable
     """The lab-frame momentum transfer where the peak is observed."""
     r: sc.Variable
     """The sample rotation (matrix) corresponding the the observed momentum transfer."""
@@ -56,7 +56,7 @@ class BraggPeaks:
 
         sizes = self.r.sizes
 
-        for key in ('hkl', 'q'):
+        for key in ('hkl', 'q_lab'):
             item = getattr(self, key)
             if item.sizes != sizes:
                 raise sc.DimensionError(
@@ -140,7 +140,7 @@ def u_from_1_peak_and_scattering_plane(
         )
 
     hkl = peaks.hkl.squeeze()
-    q_lab = peaks.q.squeeze()
+    q_lab = peaks.q_lab.squeeze()
     r = peaks.r.squeeze()
 
     # Construct a basis in the cartesian sample space (B * hkl)
@@ -231,7 +231,7 @@ def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
         raise ValueError(f"Expected exactly 3 peaks, got {peaks.shape}.")
 
     try:
-        q_nu = invert_transform(peaks.r) * peaks.q / (2 * np.pi)
+        q_nu = invert_transform(peaks.r) * peaks.q_lab / (2 * np.pi)
     except ValueError as error:
         error.add_note("When inverting the sample rotation matrix.")
         raise
