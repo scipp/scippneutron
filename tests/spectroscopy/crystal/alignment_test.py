@@ -34,7 +34,7 @@ def test_u_from_1_peak_and_scattering_plane(
         ]
     )
     peaks = alignment.BraggPeaks(
-        q=sc.vector([0.0007, 0.0004, 1.5335], unit='1/Å'),
+        q_lab=sc.vector([0.0007, 0.0004, 1.5335], unit='1/Å'),
         hkl=sc.vector(hkl),
         r=goniometer.rotation_for(sc.array(dims=['angles'], values=angles, unit='deg')),
     )
@@ -60,7 +60,7 @@ def test_u_from_1_peak_and_scattering_plane(
     )
 
     computed = peaks.r * u * b * peaks.hkl
-    actual = peaks.q
+    actual = peaks.q_lab
     sc.testing.assert_allclose(
         computed / sc.norm(computed),
         actual / sc.norm(actual),
@@ -72,7 +72,7 @@ def test_ub_from_3_peaks() -> None:
         hkl=sc.vectors(
             dims=['p'], values=[[1, 0, 0], [1, 1, 0], [0, 1, 1]], unit='1/angstrom'
         ),
-        q=sc.vectors(
+        q_lab=sc.vectors(
             dims=['p'], values=[[1, 2, 3], [4, 5, 6], [-1, -2, -3]], unit='1/angstrom'
         ),
         r=sc.spatial.rotations_from_rotvecs(
@@ -89,7 +89,7 @@ def test_ub_from_3_peaks() -> None:
     assert ub.dtype == sc.DType.linear_transform3
     assert ub.unit == 'one'
 
-    for hkl, q, r in zip(peaks.hkl, peaks.q, peaks.r, strict=True):
+    for hkl, q, r in zip(peaks.hkl, peaks.q_lab, peaks.r, strict=True):
         q_calc = r * ub * hkl * (2 * np.pi)
         sc.testing.assert_allclose(q_calc, q)
 
