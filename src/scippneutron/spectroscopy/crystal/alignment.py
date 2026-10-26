@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass
+from typing import Self
 
 import numpy as np
 import numpy.typing as npt
@@ -43,30 +44,84 @@ class BraggPeaks:
 
     hkl: sc.Variable
     """The Miller indices of the peak."""
-    q_lab: sc.Variable
+    _q_lab: sc.Variable | None
     """The lab-frame momentum transfer where the peak is observed."""
-    r: sc.Variable
-    """The sample rotation (matrix) corresponding the the observed momentum transfer."""
+    _q_sample: sc.Variable | None
+    """The sample-(holder)-frame momentum transfer where the peak is observed."""
+    _r: sc.Variable | None
+    """The sample rotation (matrix) corresponding the observed momentum transfer."""
+
+    @classmethod
+    def from_q_lab(
+        cls, q_lab: sc.Variable, *, hkl: sc.Variable, r: sc.Variable | None = None
+    ) -> Self:
+        """Construct from lab-frame momentum transfer and Miller indices."""
+        return cls(
+            hkl=hkl,
+            _q_lab=q_lab,
+            _q_sample=None,
+            _r=r,
+        )
+
+    @classmethod
+    def from_q_sample(
+        cls, q_sample: sc.Variable, *, hkl: sc.Variable, r: sc.Variable | None = None
+    ) -> Self:
+        """Construct from sample-frame momentum transfer and Miller indices."""
+        return cls(
+            hkl=hkl,
+            _q_lab=None,
+            _q_sample=q_sample,
+            _r=r,
+        )
 
     def __post_init__(self) -> None:
-        if self.r.dtype != sc.DType.rotation3:
+        if self._r is not None and self._r.dtype != sc.DType.rotation3:
             raise sc.DTypeError(
-                f"Expected dtype 'rotation3' for 'r' but got {self.r.dtype}."
+                f"Expected dtype 'rotation3' for 'r' but got {self._r.dtype}."
             )
 
-        sizes = self.r.sizes
+        sizes = self.hkl.sizes
 
-        for key in ('hkl', 'q_lab'):
-            item = getattr(self, key)
+        for key in ('_q_lab', '_q_sample', '_r'):
+            if (item := getattr(self, key)) is None:
+                continue
             if item.sizes != sizes:
                 raise sc.DimensionError(
-                    f"Mismatch between sizes: `{key}` has sizes {item.sizes} "
-                    f"but expected {sizes} based on `r`."
+                    f"Mismatch between sizes: `{key.removeprefix('_')}` has sizes "
+                    f"{item.sizes} but expected {sizes} based on `hkl`."
                 )
-            if item.dtype != sc.DType.vector3:
-                raise sc.DTypeError(
-                    f"Expected dtype 'vector3' for `{key}` but got {item.dtype}."
+
+    @property
+    def q_lab(self) -> sc.Variable:
+        """The lab-frame momentum transfer where the peak is observed."""
+        if self._q_lab is None:
+            if self._r is None:
+                raise ValueError(
+                    "`q_lab` is not available. "
+                    "Missing either explicit `q_lab` or rotation `r`."
                 )
+            return self._r * self._q_sample  # type: ignore[operator]
+        return self._q_lab
+
+    @property
+    def q_sample(self) -> sc.Variable:
+        """The sample-(holder)-frame momentum transfer where the peak is observed."""
+        if self._q_sample is None:
+            if self._r is None:
+                raise ValueError(
+                    "`q_sample` is not available. "
+                    "Missing either explicit `q_sample` or rotation `r`."
+                )
+            return invert_transform(self._r) * self._q_lab  # type: ignore[operator]
+        return self._q_sample
+
+    @property
+    def r(self) -> sc.Variable:
+        """The sample rotation corresponding the observed momentum transfer."""
+        if self._r is None:
+            raise ValueError("`r` is not available.")
+        return self._r
 
     @property
     def shape(self) -> tuple[int, ...]:
@@ -109,6 +164,7 @@ def u_from_1_peak_and_scattering_plane(
     peaks:
         The Bragg peak to use for the U matrix calculation.
         Must contain exactly one peak.
+        Must provide Q in the sample frame.
     b:
         The B matrix as a linear transform.
     scattering_plane:
@@ -161,13 +217,13 @@ def u_from_1_peak_and_scattering_plane(
     # Construct a basis in the sample holder space (R^-1 * q_lab)
     # Order: (given_q_lab, close_to_xz_plane, y)
     r_inv = invert_transform(r)
-    q_holder1 = r_inv * q_lab
-    q_holder3 = r_inv * sc.vector([0, 1, 0])
-    q_holder2 = sc.cross(q_holder3, q_holder1)
-    q_holder3 = sc.cross(q_holder1, q_holder2)
-    q_holder = _normed_coord_basis(q_holder1, q_holder2, q_holder3)
+    q_sample1 = r_inv * q_lab
+    q_sample3 = r_inv * sc.vector([0, 1, 0])
+    q_sample2 = sc.cross(q_sample3, q_sample1)
+    q_sample3 = sc.cross(q_sample1, q_sample2)
+    q_sample = _normed_coord_basis(q_sample1, q_sample2, q_sample3)
 
-    rotation, error = Rotation.align_vectors(q_holder, q_hkl)
+    rotation, error = Rotation.align_vectors(q_sample, q_hkl)
     if error > error_threshold:
         warnings.warn(
             f"The target rotation to align a sample with hkl={hkl:c} could only be "
