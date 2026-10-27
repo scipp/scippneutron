@@ -33,7 +33,7 @@ def test_u_from_1_peak_and_scattering_plane(
             GoniometerAxis(name='omega', axis="+y", min=-inf, max=inf),
         ]
     )
-    peaks = alignment.BraggPeaks(
+    peaks = alignment.BraggPeaks.from_q_lab(
         q_lab=sc.vector([0.0007, 0.0004, 1.5335], unit='1/Å'),
         hkl=sc.vector(hkl),
         r=goniometer.rotation_for(sc.array(dims=['angles'], values=angles, unit='deg')),
@@ -61,37 +61,57 @@ def test_u_from_1_peak_and_scattering_plane(
 
     computed = peaks.r * u * b * peaks.hkl
     actual = peaks.q_lab
+    sc.testing.assert_allclose(computed / sc.norm(computed), actual / sc.norm(actual))
+
+
+def test_u_from_2_peaks() -> None:
+    peaks = alignment.BraggPeaks.from_q_sample(
+        q_sample=sc.vectors(
+            dims=['peak'],
+            values=[
+                [2.0000e-04, -3.0000e-04, 1.5328e00],
+                [1.3008e00, -6.0700e-01, 2.5520e-01],
+            ],
+            unit='1/Å',
+        ),
+        hkl=sc.vectors(dims=['peak'], values=[[0, 0, 6], [1, 0, 1]]),
+    )
+    b = lattice.b_matrix_from_lattice_parameters(
+        lattice.LatticeParameters(
+            a=sc.scalar(5.0556, unit='Å'),
+            b=sc.scalar(5.0556, unit='Å'),
+            c=sc.scalar(24.5980, unit='Å'),
+            alpha=sc.scalar(90.0, unit='deg'),
+            beta=sc.scalar(90.0, unit='deg'),
+            gamma=sc.scalar(120.0, unit='deg'),
+        )
+    )
+
+    u = alignment.u_from_2_peaks(peaks=peaks, b=b)
+
+    computed = u * b * peaks.hkl
+    actual = peaks.q_sample
     sc.testing.assert_allclose(
-        computed / sc.norm(computed),
-        actual / sc.norm(actual),
+        computed / sc.norm(computed), actual / sc.norm(actual), rtol=sc.scalar(2e-5)
     )
 
 
 def test_ub_from_3_peaks() -> None:
-    peaks = alignment.BraggPeaks(
-        hkl=sc.vectors(
-            dims=['p'], values=[[1, 0, 0], [1, 1, 0], [0, 1, 1]], unit='1/angstrom'
-        ),
-        q_lab=sc.vectors(
+    peaks = alignment.BraggPeaks.from_q_sample(
+        hkl=sc.vectors(dims=['p'], values=[[1, 0, 0], [1, 1, 0], [0, 1, 1]]),
+        q_sample=sc.vectors(
             dims=['p'], values=[[1, 2, 3], [4, 5, 6], [-1, -2, -3]], unit='1/angstrom'
-        ),
-        r=sc.spatial.rotations_from_rotvecs(
-            sc.vectors(
-                dims=['p'],
-                values=[[0, 0.1, 0], [0, 1.1, 0], [0, 0.8, 0]],
-                unit='rad',
-            )
         ),
     )
 
     ub = alignment.ub_from_3_peaks(peaks)
     assert ub.sizes == {}
     assert ub.dtype == sc.DType.linear_transform3
-    assert ub.unit == 'one'
+    assert ub.unit == '1/angstrom'
 
-    for hkl, q, r in zip(peaks.hkl, peaks.q_lab, peaks.r, strict=True):
-        q_calc = r * ub * hkl * (2 * np.pi)
-        sc.testing.assert_allclose(q_calc, q)
+    for hkl, q_sample in zip(peaks.hkl, peaks.q_sample, strict=True):
+        q_calc = ub * hkl * (2 * np.pi)
+        sc.testing.assert_allclose(q_calc, q_sample)
 
 
 def test_u_from_b_and_ub() -> None:

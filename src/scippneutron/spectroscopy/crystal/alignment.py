@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from typing import Self
 
 import numpy as np
-import numpy.typing as npt
 import scipp as sc
 from scipy.linalg import solve
 from scipy.spatial.transform import Rotation
@@ -142,7 +141,7 @@ def u_from_1_peak_and_scattering_plane(
 
     .. math::
 
-        \vec{Q}_{\text{lab}} = 2 \pi R U B \begin{pmatrix} h \\ k \\ l \end{pmatrix}
+        \vec{Q}_{\text{sample}} = 2 \pi U B \begin{pmatrix} h \\ k \\ l \end{pmatrix}
 
     for the rotation :math:`U`.
     All other quantities are provides as function arguments.
@@ -209,10 +208,7 @@ def u_from_1_peak_and_scattering_plane(
         q_hkl2p = b * scattering_plane.vector2 * np.sign(c1.value)
     else:
         q_hkl2p = b * scattering_plane.vector1 * np.sign(c2.value)
-    q_hkl1 = b * hkl
-    q_hkl3 = sc.cross(q_hkl1, q_hkl2p)
-    q_hkl2 = sc.cross(q_hkl3, q_hkl1)
-    q_hkl = _normed_coord_basis(q_hkl1, q_hkl2, q_hkl3)
+    q_hkl = _orthonormal_system_from_xy(b * hkl, q_hkl2p)
 
     # Construct a basis in the sample holder space (R^-1 * q_lab)
     # Order: (given_q_lab, close_to_xz_plane, y)
@@ -223,17 +219,80 @@ def u_from_1_peak_and_scattering_plane(
     q_sample3 = sc.cross(q_sample1, q_sample2)
     q_sample = _normed_coord_basis(q_sample1, q_sample2, q_sample3)
 
-    rotation, error = Rotation.align_vectors(q_sample, q_hkl)
-    if error > error_threshold:
-        warnings.warn(
-            f"The target rotation to align a sample with hkl={hkl:c} could only be "
-            f"computed up to an error of {error} (threshold is {error_threshold}).",
-            RuntimeWarning,
-            stacklevel=2,
-        )
-    return sc.spatial.rotation(value=rotation.as_quat())
+    return _align_vectors(
+        q_sample,
+        q_hkl,
+        a_name="Q_sample",
+        b_name="B * (hkl)",
+        error_threshold=error_threshold,
+    )
 
 
+def u_from_2_peaks(
+    peaks: BraggPeaks,
+    b: sc.Variable,
+    error_threshold: float = 1e-5,
+) -> sc.Variable:
+    r"""Compute U from two Bragg peaks and a B matrix.
+
+    This function solves
+
+    .. math::
+
+        \vec{Q}_{\text{sample}} = 2 \pi U B \begin{pmatrix} h \\ k \\ l \end{pmatrix}
+
+    for the rotation :math:`U` for both Bragg peaks.
+    All other quantities are provides as function arguments.
+
+    Due to experimental inaccuracies, the resulting :math:`U` usually does not
+    satisfy the above equation exactly for both peaks.
+    This function tries to reproduce the first peak as best as possible and
+    approximates the second peak less accurately.
+
+    The two peaks must not be linearly dependent.
+
+    Parameters
+    ----------
+    peaks:
+        The Bragg peaks to use for the U matrix calculation.
+        Must contain exactly two peaks.
+        Must provide Q in the sample frame.
+    b:
+        The B matrix as a linear transform.
+    error_threshold:
+        Raise a warning when the error (squared residuals) of computing the target
+        rotation is larger than this threshold.
+
+    Returns
+    -------
+    :
+        The best estimate for the rotation :math:`U`.
+
+    Warns
+    -----
+    RuntimeWarning
+        The target rotation is determined using a minimization algorithm which returns
+        approximate results. When the error of the result exceeds ``error_threshold``,
+        a :class:`RuntimeWarning` is raised.
+        See the underlying
+        `SciPy docs <https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.align_vectors.html>`_.
+    """
+    if peaks.shape != (2,):
+        raise ValueError(f"Expected exactly 2 peaks, got {peaks.shape}.")
+
+    q_hkl = _orthonormal_system_from_xy(*(b * peaks.hkl))
+    q_sample = _orthonormal_system_from_xy(*peaks.q_sample)
+
+    return _align_vectors(
+        q_sample,
+        q_hkl,
+        a_name="Q_sample",
+        b_name="B * (hkl)",
+        error_threshold=error_threshold,
+    )
+
+
+# TODO update docs to match other u_from functions
 def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
     r"""Compute the UB matrix from three Bragg peaks.
 
@@ -287,7 +346,7 @@ def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
         raise ValueError(f"Expected exactly 3 peaks, got {peaks.shape}.")
 
     try:
-        q_nu = invert_transform(peaks.r) * peaks.q_lab / (2 * np.pi)
+        q_nu = peaks.q_sample / (2 * np.pi)  # a.k.a. q_hkl? (unit?)
     except ValueError as error:
         error.add_note("When inverting the sample rotation matrix.")
         raise
@@ -308,7 +367,7 @@ def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
 
     return sc.to_unit(
         sc.spatial.linear_transform(value=ub_array, unit=q_nu.unit / peaks.hkl.unit),  # type: ignore[operator]
-        "one",
+        "1/Å",
     )
 
 
@@ -379,11 +438,12 @@ def u_from_b_and_ub(b: sc.Variable, ub: sc.Variable) -> sc.Variable:
         Construct a B matrix from lattice parameters.
     """
     try:
-        b_inv = invert_transform(b)
+        # Solve (UB)^T = B^T U^T for U^T
+        u_matrix = solve(b.values.T, ub.values.T).T
+        return sc.spatial.linear_transform(value=u_matrix)
     except ValueError as error:
         error.add_note("When inverting a B matrix")
         raise
-    return ub * b_inv
 
 
 def target_rotation_for_reflection(
@@ -460,40 +520,38 @@ def target_rotation_for_reflection(
             "Invalid scattering condition: The momentum transfer Q is zero."
         )
 
-    zero = sc.scalar(0.0, unit=ki.unit)
+    # All elements have unit 'one' because ki, kf, and q have the same unit.
+    zero = sc.scalar(0.0)
     q_list = [
         [-kf / q * sc.sin(two_theta), zero, ki / q - kf / q * sc.cos(two_theta)],
         [ki / q - kf / q * sc.cos(two_theta), zero, kf / q * sc.sin(two_theta)],
-        [zero, sc.scalar(1.0, unit=ki.unit), zero],
+        [zero, sc.scalar(1.0), zero],
     ]
-    # All elements have unit 'one' because ki, kf, and q have the same unit.
-    q_lab = np.array([[x.value for x in row] for row in q_list])
+    q_lab = sc.concat([sc.spatial.as_vectors(*row) for row in q_list], dim='vector')
 
-    t = _construct_orthogonal_target_system(
+    t = _construct_orthonormal_target_system(
         hkl=hkl,
         ub=ub,
         scattering_plane=scattering_plane,
         epsilon=epsilon,
     )
 
-    rotation, error = Rotation.align_vectors(q_lab, t)
-    if error > error_threshold:
-        warnings.warn(
-            f"The target rotation to align a sample with hkl={hkl:c} could only be "
-            f"computed up to an error of {error} (threshold is {error_threshold}).",
-            RuntimeWarning,
-            stacklevel=2,
-        )
-    return sc.spatial.rotation(value=rotation.as_quat())
+    return _align_vectors(
+        q_lab,
+        t,
+        a_name="Q_lab",
+        b_name="UB * (hkl)",
+        error_threshold=error_threshold,
+    )
 
 
-def _construct_orthogonal_target_system(
+def _construct_orthonormal_target_system(
     *,
     hkl: sc.Variable,
     ub: sc.Variable,
     scattering_plane: ScatteringPlaneSampleHolder,
     epsilon: float = 1e-5,
-) -> npt.NDArray[np.float64]:
+) -> sc.Variable:
     """Construct an orthogonal coordinate system for a target rotation.
 
     The implementation is based on ``rot_matrix_with_minimal_tilt`` from TAVI:
@@ -513,7 +571,7 @@ def _construct_orthogonal_target_system(
     Returns
     -------
     :
-        A numpy array encoding the three basis vectors as rows.
+        A variable with the three basis vectors.
     """
     eps = sc.scalar(epsilon)
     t1 = ub * hkl
@@ -538,17 +596,40 @@ def _construct_orthogonal_target_system(
     return _normed_coord_basis(t1, t2, t3)
 
 
-def _normed_coord_basis(
-    a: sc.Variable, b: sc.Variable, c: sc.Variable
-) -> npt.NDArray[np.float64]:
-    """Construct a basis of 3 normalized vectors.
+def _align_vectors(
+    a: sc.Variable, b: sc.Variable, *, a_name: str, b_name: str, error_threshold: float
+) -> sc.Variable:
+    """a = R * b"""
+    rotation, error = Rotation.align_vectors(a.values, b.values)
+    if error > error_threshold:
+        warnings.warn(
+            f"Computing a rotation from '{b_name}' to '{a_name}' resulted in an error"
+            f"of {error} (threshold is {error_threshold}).",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    return sc.spatial.rotation(value=rotation.as_quat())
 
-    The vectors are returned as *rows* of a matrix.
+
+def _orthonormal_system_from_xy(v1: sc.Variable, v2: sc.Variable) -> sc.Variable:
+    r"""Compute an orthonormal system from two vectors.
+
+    Given two vectors v1 and v2, compute a set of vectors
+    where z ⟂ (v1, v2), y ⟂ (v1, z), x || v1
     """
-    return np.stack(
-        [_normed_vector_values(a), _normed_vector_values(b), _normed_vector_values(c)]
+    x = v1
+    z = sc.cross(x, v2)
+    y = sc.cross(z, x)
+    return _normed_coord_basis(x, y, z)
+
+
+def _normed_coord_basis(a: sc.Variable, b: sc.Variable, c: sc.Variable) -> sc.Variable:
+    """Construct a basis of 3 normalized vectors."""
+    return sc.concat(
+        [
+            sc.to_unit(a / sc.norm(a), 'one'),
+            sc.to_unit(b / sc.norm(b), 'one'),
+            sc.to_unit(c / sc.norm(c), 'one'),
+        ],
+        dim='vector',
     )
-
-
-def _normed_vector_values(vector: sc.Variable) -> npt.NDArray[np.float64]:
-    return sc.to_unit(vector / sc.norm(vector), 'one').values
