@@ -371,6 +371,69 @@ def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
     )
 
 
+def ub_from_many_peaks(peaks: BraggPeaks) -> sc.Variable:
+    r"""Compute the UB matrix from three or more Bragg peaks.
+
+    This function solves
+
+    .. math::
+
+        \vec{Q}_{\text{sample}} = 2 \pi U B \begin{pmatrix} h \\ k \\ l \end{pmatrix}
+
+    for the combined rotation :math:`UB` matrix for many (three or more) Bragg peaks.
+    All other quantities are provides as function arguments.
+
+    Due to experimental inaccuracies, these equations usually cannot be solved exactly.
+    Instead, this function minimizes the square of each of the
+    three (h, k, l) equations.
+
+    Parameters
+    ----------
+    peaks:
+        The Bragg peaks to use for the U matrix calculation.
+        Must contain three or more peaks.
+        Must provide Q in the sample frame.
+
+    Returns
+    -------
+    :
+        The best estimate for the rotation :math:`U`.
+
+    Raises
+    ------
+    ValueError:
+        If a singular matrix is encountered.
+        This is typically caused by collinear hkl vectors.
+    """
+    # See implementation is based on equation (97) of
+    # "Introduction to the use the U B matrix" by A. T. Savici
+    # With the names used here, this equation is
+    #   hkl_squared * (UB)^T = hkl_q
+    if peaks.shape[0] < 3:
+        # The system is under-determined otherwise.
+        raise ValueError(f"Expected at least 3 peaks, got {peaks.shape}.")
+
+    hkl = peaks.hkl.values
+    q_sample = peaks.q_sample.values
+    hkl_squared = np.tensordot(hkl, hkl, axes=(0, 0))
+    hkl_q = np.tensordot(hkl, q_sample / (2 * np.pi), axes=(0, 0))
+    try:
+        ub_array = solve(hkl_squared, hkl_q).T
+    except ValueError as error:
+        error.add_note(
+            "When solving for the UB matrix. Check for collinear hkl vectors."
+        )
+        raise
+
+    return sc.to_unit(
+        sc.spatial.linear_transform(
+            value=ub_array,
+            unit=peaks.q_sample.unit / peaks.hkl.unit,  # type: ignore[operator]
+        ),
+        "1/Å",
+    )
+
+
 def g_star_from_ub(ub: sc.Variable) -> sc.Variable:
     """Compute the reciprocal metric tensor G* from a UB matrix.
 

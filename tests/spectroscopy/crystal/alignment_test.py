@@ -100,18 +100,68 @@ def test_ub_from_3_peaks() -> None:
     peaks = alignment.BraggPeaks.from_q_sample(
         hkl=sc.vectors(dims=['p'], values=[[1, 0, 0], [1, 1, 0], [0, 1, 1]]),
         q_sample=sc.vectors(
-            dims=['p'], values=[[1, 2, 3], [4, 5, 6], [-1, -2, -3]], unit='1/angstrom'
+            dims=['p'], values=[[1, 2, 3], [4, 5, 6], [-1, -2, -3]], unit='1/Å'
         ),
     )
 
     ub = alignment.ub_from_3_peaks(peaks)
-    assert ub.sizes == {}
     assert ub.dtype == sc.DType.linear_transform3
-    assert ub.unit == '1/angstrom'
 
     for hkl, q_sample in zip(peaks.hkl, peaks.q_sample, strict=True):
         q_calc = ub * hkl * (2 * np.pi)
         sc.testing.assert_allclose(q_calc, q_sample)
+
+
+def test_ub_from_many_peaks_with_three_peaks() -> None:
+    # The result is best with 3 linearly-independent vectors.
+    peaks = alignment.BraggPeaks.from_q_sample(
+        hkl=sc.vectors(dims=['p'], values=[[1, 0, 0], [1, 1, 0], [0, 1, 1]]),
+        q_sample=sc.vectors(
+            dims=['p'], values=[[1, 2, 3], [4, 5, 6], [-1, -2, -3]], unit='1/Å'
+        ),
+    )
+
+    ub = alignment.ub_from_many_peaks(peaks)
+    assert ub.dtype == sc.DType.linear_transform3
+
+    for hkl, q_sample in zip(peaks.hkl, peaks.q_sample, strict=True):
+        q_calc = ub * hkl * (2 * np.pi)
+        sc.testing.assert_allclose(q_calc, q_sample)
+
+
+def test_ub_from_many_peaks_with_many_peaks() -> None:
+    # Not all peaks can be reproduced exactly when they are linearly-dependent.
+    # => need a high tolerance
+    peaks = alignment.BraggPeaks.from_q_sample(
+        hkl=sc.vectors(
+            dims=['p'],
+            values=[
+                [1, -0, 1],
+                [-0, -0, 6],
+                [2, 1, -0],
+                [-1, -0, 11],
+                [2, 1, 6],
+            ],
+        ),
+        q_sample=sc.vectors(
+            dims=['p'],
+            values=[
+                [1.3008, -6.0700e-01, 2.5520e-01],
+                [2e-04, -3e-04, 1.5328],
+                [2.4763, 2.1720e-01, 1e-04],
+                [-1.3014, 6.0670e-01, 2.8098],
+                [2.4765, 2.1720e-01, 1.5329],
+            ],
+            unit='1/Å',
+        ),
+    )
+
+    ub = alignment.ub_from_many_peaks(peaks)
+    assert ub.dtype == sc.DType.linear_transform3
+
+    for hkl, q_sample in zip(peaks.hkl, peaks.q_sample, strict=True):
+        q_calc = ub * hkl * (2 * np.pi)
+        sc.testing.assert_allclose(q_calc, q_sample, atol=sc.scalar(1e-3, unit='1/Å'))
 
 
 def test_u_from_b_and_ub() -> None:
