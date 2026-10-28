@@ -5,18 +5,22 @@
 
 from __future__ import annotations
 
-import warnings
 from dataclasses import dataclass
 from typing import Self
 
 import numpy as np
 import scipp as sc
 from scipy.linalg import solve
-from scipy.spatial.transform import Rotation
 
 from ...conversion.tof import momentum_from_energy
 from ..geometry import ScatteringPlaneMiller, ScatteringPlaneSampleHolder
-from ._linalg import invert_transform, transpose_matrix
+from ._linalg import (
+    align_vectors,
+    invert_transform,
+    normed_coord_basis,
+    orthonormal_system_from_xy,
+    transpose_matrix,
+)
 
 # TODO
 # u: along beam
@@ -208,7 +212,7 @@ def u_from_1_peak_and_scattering_plane(
         q_hkl2p = b * scattering_plane.vector2 * np.sign(c1.value)
     else:
         q_hkl2p = b * scattering_plane.vector1 * np.sign(c2.value)
-    q_hkl = _orthonormal_system_from_xy(b * hkl, q_hkl2p)
+    q_hkl = orthonormal_system_from_xy(b * hkl, q_hkl2p)
 
     # Construct a basis in the sample holder space (R^-1 * q_lab)
     # Order: (given_q_lab, close_to_xz_plane, y)
@@ -217,9 +221,9 @@ def u_from_1_peak_and_scattering_plane(
     q_sample3 = r_inv * sc.vector([0, 1, 0])
     q_sample2 = sc.cross(q_sample3, q_sample1)
     q_sample3 = sc.cross(q_sample1, q_sample2)
-    q_sample = _normed_coord_basis(q_sample1, q_sample2, q_sample3)
+    q_sample = normed_coord_basis(q_sample1, q_sample2, q_sample3)
 
-    return _align_vectors(
+    return align_vectors(
         q_sample,
         q_hkl,
         a_name="Q_sample",
@@ -280,10 +284,10 @@ def u_from_2_peaks(
     if peaks.shape != (2,):
         raise ValueError(f"Expected exactly 2 peaks, got {peaks.shape}.")
 
-    q_hkl = _orthonormal_system_from_xy(*(b * peaks.hkl))
-    q_sample = _orthonormal_system_from_xy(*peaks.q_sample)
+    q_hkl = orthonormal_system_from_xy(*(b * peaks.hkl))
+    q_sample = orthonormal_system_from_xy(*peaks.q_sample)
 
-    return _align_vectors(
+    return align_vectors(
         q_sample,
         q_hkl,
         a_name="Q_sample",
@@ -599,7 +603,7 @@ def target_rotation_for_reflection(
         epsilon=epsilon,
     )
 
-    return _align_vectors(
+    return align_vectors(
         q_lab,
         t,
         a_name="Q_lab",
@@ -656,43 +660,4 @@ def _construct_orthonormal_target_system(
         t2 = sc.cross(scattering_plane.normal, t1)
         t3 = sc.cross(t1, t2)
 
-    return _normed_coord_basis(t1, t2, t3)
-
-
-def _align_vectors(
-    a: sc.Variable, b: sc.Variable, *, a_name: str, b_name: str, error_threshold: float
-) -> sc.Variable:
-    """a = R * b"""
-    rotation, error = Rotation.align_vectors(a.values, b.values)
-    if error > error_threshold:
-        warnings.warn(
-            f"Computing a rotation from '{b_name}' to '{a_name}' resulted in an error"
-            f"of {error} (threshold is {error_threshold}).",
-            RuntimeWarning,
-            stacklevel=2,
-        )
-    return sc.spatial.rotation(value=rotation.as_quat())
-
-
-def _orthonormal_system_from_xy(v1: sc.Variable, v2: sc.Variable) -> sc.Variable:
-    r"""Compute an orthonormal system from two vectors.
-
-    Given two vectors v1 and v2, compute a set of vectors
-    where z ⟂ (v1, v2), y ⟂ (v1, z), x || v1
-    """
-    x = v1
-    z = sc.cross(x, v2)
-    y = sc.cross(z, x)
-    return _normed_coord_basis(x, y, z)
-
-
-def _normed_coord_basis(a: sc.Variable, b: sc.Variable, c: sc.Variable) -> sc.Variable:
-    """Construct a basis of 3 normalized vectors."""
-    return sc.concat(
-        [
-            sc.to_unit(a / sc.norm(a), 'one'),
-            sc.to_unit(b / sc.norm(b), 'one'),
-            sc.to_unit(c / sc.norm(c), 'one'),
-        ],
-        dim='vector',
-    )
+    return normed_coord_basis(t1, t2, t3)

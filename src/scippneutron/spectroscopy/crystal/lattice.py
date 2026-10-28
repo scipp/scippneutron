@@ -9,8 +9,9 @@ from dataclasses import dataclass
 
 import numpy as np
 import scipp as sc
+from scipy.linalg import solve
 
-from ._linalg import invert_transform
+from ._linalg import align_vectors, invert_transform, orthonormal_system_from_xy
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,6 +125,122 @@ def b_matrix_from_lattice_parameters(
     return sc.spatial.linear_transform(
         unit='1/angstrom',
         value=[[x.to(unit='1/angstrom').value for x in row] for row in raw],
+    )
+
+
+def u_matrix_from_uv_vectors(
+    u: sc.Variable, v: sc.Variable, b: sc.Variable, *, error_threshold: float = 1e-5
+) -> sc.Variable:
+    r"""Calculate a U matrix from u and v vectors and a B matrix.
+
+    The :math:`\vec{u}` and :math:`\vec{v}` vectors define the z and x axes of
+    the sample coordinate system. That is, given
+
+    .. math::
+
+        \vec{t}_1 = B \vec{u},\quad \vec{t}_2 = B \vec{v}
+
+    we get
+
+    .. math::
+
+        U \hat{t}_1 &= {\begin{pmatrix}0 & 0 & 1\end{pmatrix}}^T \\
+        U \hat{t}_2 &= {\begin{pmatrix}1 & 0 & 0\end{pmatrix}}^T
+
+    Extending this with a vector :math:`\vec{w} = \vec{u} \times \vec{v}` that
+    defines :math:`\vec{t}_3`, we have
+
+    .. math::
+
+        U T = O,\quad T = \begin{pmatrix}\hat{t}_1 & \hat{t}_2 & \hat{t}_3\end{pmatrix}
+
+    with
+
+    .. math::
+
+        O = \begin{pmatrix}
+            0 & 1 & 0 \\
+            0 & 0 & 1 \\
+            1 & 0 & 0
+        \end{pmatrix}
+
+    This function computes :math:`U` by finding a rotation that maps
+    :math:`T` onto :math:`O`.
+
+    Parameters
+    ----------
+    u:
+        A vector in Miller indices along the incoming beam (for R = 1).
+    v:
+        A vector in Miller indices in the scattering plane.
+        Ideally, :math:`\vec{u} \cdot \vec{v}` should point up.
+    b:
+        The B matrix of the sample.
+    error_threshold:
+        Raise a warning when the error (squared residuals) of computing the target
+        rotation is larger than this threshold.
+
+    Returns
+    -------
+    :
+        The U 'matrix' as a :class:`scipp.DType.rotation3`.
+
+    See Also
+    --------
+    .uvw_vectors_from_ub_matrix:
+        For computing u and v vectors from a UB matrix.
+    """
+
+    t = orthonormal_system_from_xy(b * u, b * v)
+    o = sc.vectors(dims=['vector'], values=[[0, 0, 1], [1, 0, 0], [0, 1, 0]])
+    return align_vectors(
+        o,
+        t,
+        a_name="O",
+        b_name="T",
+        error_threshold=error_threshold,
+    )
+
+
+def uvw_vectors_from_ub_matrix(ub: sc.Variable) -> sc.Variable:
+    r"""Compute u, v, and w vectors from a UB matrix.
+
+    This functions solves
+
+    .. math::
+
+        UB \begin{pmatrix}\vec{u} & \vec{v} & \vec{w}\end{pmatrix} = O
+
+    for the vectors :math:`\vec{u}`, :math:`\vec{v}`, and :math:`\vec{w}` given
+
+    with
+
+    .. math::
+
+        O = \begin{pmatrix}
+            0 & 1 & 0 \\
+            0 & 0 & 1 \\
+            1 & 0 & 0
+        \end{pmatrix}
+
+    Parameters
+    ----------
+    ub:
+        A UB matrix.
+
+    Returns
+    -------
+    :
+        Three vectors u, v, w.
+
+    See Also
+    --------
+    .u_matrix_from_uv_vectors:
+        For computing a U matrix from u and v vectors.
+    """
+    o = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]]).T
+    return sc.vectors(
+        dims=['vector'], values=solve(ub.values, o).T, unit=sc.reciprocal(ub.unit)
     )
 
 
