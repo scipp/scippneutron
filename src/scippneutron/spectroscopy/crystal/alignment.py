@@ -513,6 +513,35 @@ def u_from_b_and_ub(b: sc.Variable, ub: sc.Variable) -> sc.Variable:
         raise
 
 
+def scattering_plane_from_one_peak(
+    peaks: BraggPeaks, ub: sc.Variable
+) -> ScatteringPlaneSampleHolder:
+    """Compute a scattering plane in the sample frame from one peak and UB matrix.
+
+    Parameters
+    ----------
+    peaks:
+        A single measured peak.
+        Needs to have a rotation `r`.
+    ub:
+        The UB matrix of the sample.
+
+    Returns
+    -------
+    :
+        The scattering plane in the sample frame.
+        The plane normal is :math:`R^{-1} (0 1 0)^T`.
+    """
+    if peaks.shape not in ((), (1,)):
+        raise ValueError(f"Expected exactly 1 peak, got {peaks.shape}.")
+    plane_normal = invert_transform(peaks.r.squeeze()) * sc.vector([0, 1, 0])
+    q = ub * peaks.hkl.squeeze()
+    in_plane_ref = sc.cross(plane_normal, q / sc.norm(q))
+    return ScatteringPlaneSampleHolder.from_normal_and_reference(
+        normal=plane_normal, reference=in_plane_ref
+    )
+
+
 def target_rotation_for_reflection(
     *,
     hkl: sc.Variable,
