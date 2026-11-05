@@ -389,7 +389,7 @@ def ub_from_many_peaks(peaks: BraggPeaks) -> sc.Variable:
         ub_array = solve(hkl_squared, hkl_q).T
     except ValueError as error:
         error.add_note(
-            "When solving for the UB matrix. Check for collinear hkl vectors."
+            "When solving for the UB matrix. Check for linearly dependent hkl vectors."
         )
         raise
 

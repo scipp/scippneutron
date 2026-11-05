@@ -17,13 +17,27 @@ from scippneutron.spectroscopy.geometry import (
 from scippneutron.spectroscopy.goniometer import Goniometer, GoniometerAxis
 
 
+@pytest.fixture(scope="module")
+def b_matrix() -> sc.Variable:
+    return lattice.b_matrix_from_lattice_parameters(
+        lattice.LatticeParameters(
+            a=sc.scalar(5.0556, unit='Å'),
+            b=sc.scalar(5.0556, unit='Å'),
+            c=sc.scalar(24.5980, unit='Å'),
+            alpha=sc.scalar(90.0, unit='deg'),
+            beta=sc.scalar(90.0, unit='deg'),
+            gamma=sc.scalar(120.0, unit='deg'),
+        )
+    )
+
+
 @settings(max_examples=50)
 @given(
     angles=st.lists(st.floats(min_value=-180, max_value=180), min_size=3, max_size=3)
 )
 @pytest.mark.parametrize('hkl', [[4, 0, 0], [0, 0, 6]])
 def test_u_from_1_peak_and_scattering_plane(
-    hkl: list[float], angles: list[float]
+    hkl: list[float], angles: list[float], b_matrix: sc.Variable
 ) -> None:
     inf = sc.scalar(np.inf, unit='rad')
     goniometer = Goniometer(
@@ -42,29 +56,19 @@ def test_u_from_1_peak_and_scattering_plane(
         sc.vector([0, 0, 1]),  # order s.t. normal points along +y
         sc.vector([1, 0, 0]),
     )
-    b = lattice.b_matrix_from_lattice_parameters(
-        lattice.LatticeParameters(
-            a=sc.scalar(5.0556, unit='Å'),
-            b=sc.scalar(5.0556, unit='Å'),
-            c=sc.scalar(24.5980, unit='Å'),
-            alpha=sc.scalar(90.0, unit='deg'),
-            beta=sc.scalar(90.0, unit='deg'),
-            gamma=sc.scalar(120.0, unit='deg'),
-        )
-    )
 
     u = alignment.u_from_1_peak_and_scattering_plane(
         peaks=peaks,
         scattering_plane=plane,
-        b=b,
+        b=b_matrix,
     )
 
-    computed = peaks.r * u * b * peaks.hkl
+    computed = peaks.r * u * b_matrix * peaks.hkl
     actual = peaks.q_lab
     sc.testing.assert_allclose(computed / sc.norm(computed), actual / sc.norm(actual))
 
 
-def test_u_from_2_peaks() -> None:
+def test_u_from_2_peaks(b_matrix: sc.Variable) -> None:
     peaks = alignment.BraggPeaks.from_q_sample(
         q_sample=sc.vectors(
             dims=['peak'],
@@ -76,24 +80,28 @@ def test_u_from_2_peaks() -> None:
         ),
         hkl=sc.vectors(dims=['peak'], values=[[0, 0, 6], [1, 0, 1]]),
     )
-    b = lattice.b_matrix_from_lattice_parameters(
-        lattice.LatticeParameters(
-            a=sc.scalar(5.0556, unit='Å'),
-            b=sc.scalar(5.0556, unit='Å'),
-            c=sc.scalar(24.5980, unit='Å'),
-            alpha=sc.scalar(90.0, unit='deg'),
-            beta=sc.scalar(90.0, unit='deg'),
-            gamma=sc.scalar(120.0, unit='deg'),
-        )
-    )
 
-    u = alignment.u_from_2_peaks(peaks=peaks, b=b)
+    u = alignment.u_from_2_peaks(peaks=peaks, b=b_matrix)
 
-    computed = u * b * peaks.hkl
+    computed = u * b_matrix * peaks.hkl
     actual = peaks.q_sample
     sc.testing.assert_allclose(
         computed / sc.norm(computed), actual / sc.norm(actual), rtol=sc.scalar(2e-5)
     )
+
+
+def test_u_from_2_peaks_fails_with_collinear_vectors(b_matrix: sc.Variable) -> None:
+    peaks = alignment.BraggPeaks.from_q_sample(
+        q_sample=sc.vectors(
+            dims=['peak'],
+            values=[[0.01, 0.4, 0.06], [0.03, 1.2, 0.18]],
+            unit='1/Å',
+        ),
+        hkl=sc.vectors(dims=['peak'], values=[[0, 1, 6], [0, 3, 18]]),
+    )
+
+    with pytest.raises(np.linalg.LinAlgError):
+        alignment.u_from_2_peaks(peaks=peaks, b=b_matrix)
 
 
 def test_ub_from_3_peaks() -> None:
@@ -127,6 +135,20 @@ def test_ub_from_many_peaks_with_three_peaks() -> None:
     for hkl, q_sample in zip(peaks.hkl, peaks.q_sample, strict=True):
         q_calc = ub * hkl * (2 * np.pi)
         sc.testing.assert_allclose(q_calc, q_sample)
+
+
+def test_ub_from_many_peaks_with_three_peaks_fails_with_linear_dependent_vectors() -> (
+    None
+):
+    peaks = alignment.BraggPeaks.from_q_sample(
+        hkl=sc.vectors(dims=['p'], values=[[1, 0, 0], [1, 1, 0], [3, 1, 0]]),
+        q_sample=sc.vectors(
+            dims=['p'], values=[[1, 2, 3], [4, 5, 6], [-1, -2, -3]], unit='1/Å'
+        ),
+    )
+
+    with pytest.raises(np.linalg.LinAlgError):
+        alignment.ub_from_many_peaks(peaks)
 
 
 def test_ub_from_many_peaks_with_many_peaks() -> None:

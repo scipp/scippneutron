@@ -70,7 +70,10 @@ def align_vectors(
     try:
         rotation, error = Rotation.align_vectors(a.values, b.values)
     except ValueError as error:
-        error.add_note(f"When computing a rotation from '{b_name}' to '{a_name}'")
+        error.add_note(
+            f"When computing a rotation from '{b_name}' to '{a_name}'. "
+            "Check for collinear input vectors."
+        )
         raise
     if error > error_threshold:
         warnings.warn(
