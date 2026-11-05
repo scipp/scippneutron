@@ -15,4 +15,5 @@ recipes
 masking-tool
 algorithms-background/index
 absorption-correction
+spectroscopy-crystal-alignment
 ```
