@@ -19,9 +19,16 @@ class Plane:
 
     .. math::
 
-        \vec{v}_1 \cross \vec{v}_2 = \vec{n}
+        \vec{v}_1 \times \vec{v}_2 = \vec{n}
 
-    All vectors are automatically normalized and are thus dimensionless.
+    The constructors normalize all vectors, making them dimensionless.
+
+    Use one of the following to construct planes:
+
+    - :meth:`.from_normal_and_reference`
+    - :meth:`.from_in_plane_vectors`
+
+    This ensures that the vectors form an orthonormal system.
     """
 
     vector1: sc.Variable
@@ -41,8 +48,8 @@ class Plane:
 
         .. math::
 
-            \hat{v}_2 &= \hat{n} \cross \hat{r}_1 \\
-            \hat{v}_1 &= \hat{v}_2 \cross \hat{n}
+            \hat{v}_2 &= \hat{n} \times \hat{r}_1 \\
+            \hat{v}_1 &= \hat{v}_2 \times \hat{n}
 
         All vectors are normalized.
         :math:`\hat{r}_i` are the normalized input reference vectors.
@@ -81,8 +88,8 @@ class Plane:
         .. math::
 
             \hat{v}_1 &= \hat{r}_1 \\
-            \hat{n} &= \hat{v}_1 \cross \hat{r}_2 \\
-            \hat{v}_2 &= \hat{n} \cross \hat{v}_1
+            \hat{n} &= \hat{v}_1 \times \hat{r}_2 \\
+            \hat{v}_2 &= \hat{n} \times \hat{v}_1
 
         All vectors are normalized.
         :math:`\hat{r}_i` are the normalized input reference vectors.
