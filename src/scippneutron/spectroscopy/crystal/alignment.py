@@ -22,19 +22,6 @@ from ._linalg import (
     transpose_matrix,
 )
 
-# TODO
-# u: along beam
-# v: perp s.t. u x v points up
-# only direction matters
-# in terms of miller indices
-#
-#
-# - Needs motor angles from peak
-# - indices from peak position
-
-# TODO make symbols internally consistent
-#   - maybe avoid using v for miller indices to avoid confusion if u-v
-
 
 @dataclass(frozen=True, slots=True)
 class BraggPeaks:
@@ -296,40 +283,17 @@ def u_from_2_peaks(
     )
 
 
-# TODO update docs to match other u_from functions
 def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
     r"""Compute the UB matrix from three Bragg peaks.
 
-    Given three Bragg peaks with known
+    This function solves
 
     .. math::
 
-        \vec{v}_i = \begin{pmatrix} h_i \\ k_i \\ l_i \end{pmatrix}
+        \vec{Q}_{\text{sample}} = 2 \pi U B \begin{pmatrix} h \\ k \\ l \end{pmatrix}
 
-    that were observed at rotations :math:`R_i` and momentum transfers
-
-    .. math::
-
-        \vec{Q}_{\text{lab}\,i} = \begin{pmatrix}
-            q_{ix} \\ q_{iy} \\ q_{iz}
-        \end{pmatrix}
-
-    define matrices
-
-    .. math::
-
-        Q_\nu &= \begin{pmatrix}
-                    \vec{Q}_{\nu 1} & \vec{Q}_{\nu 2} & \vec{Q}_{\nu 3}
-                 \end{pmatrix}, \quad
-        \vec{Q}_{\nu i} = \frac{1}{2\pi} R_i^{-1} \vec{Q}_i, \\
-        V &= \begin{pmatrix} \vec{v}_1 & \vec{v}_2 & \vec{v}_3 \end{pmatrix}
-
-    With this we get
-
-    .. math::
-
-        \vec{Q}_i &= 2 \pi R_i U B \begin{pmatrix} h_i \\ k_i \\ l_i \end{pmatrix} \\
-        \Rightarrow U B &= Q_\nu V^{-1}
+    for the combined matrix :math:`UB` for all three Bragg peaks.
+    All other quantities are provides as function arguments.
 
     Parameters
     ----------
@@ -350,7 +314,7 @@ def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
         raise ValueError(f"Expected exactly 3 peaks, got {peaks.shape}.")
 
     try:
-        q_nu = peaks.q_sample / (2 * np.pi)  # a.k.a. q_hkl? (unit?)
+        q_nu = peaks.q_sample / (2 * np.pi)
     except ValueError as error:
         error.add_note("When inverting the sample rotation matrix.")
         raise

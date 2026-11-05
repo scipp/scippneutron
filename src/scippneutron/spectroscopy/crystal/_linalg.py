@@ -39,6 +39,7 @@ def align_vectors(
     This function solves
 
     .. math::
+
         a = R b
 
     for :math:`R`.
