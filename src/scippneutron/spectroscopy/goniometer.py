@@ -265,7 +265,6 @@ class Goniometer:
 
         for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
             axis.set_ticks([])
-            axis.line.set_visible(False)
 
         return fig
 
