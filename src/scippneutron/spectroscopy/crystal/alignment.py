@@ -145,7 +145,7 @@ def u_from_1_peak_and_scattering_plane(
     Attention
     ---------
     The given peak (hkl) must lie in the given scattering plane.
-    Otherwise, :math:`U` would bot be a pure rotation.
+    Otherwise, :math:`U` would not be a pure rotation.
     But since this function only returns a rotation, any other contribution
     to :math:`U` would be lost.
 
