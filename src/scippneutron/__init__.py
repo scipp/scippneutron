@@ -28,13 +28,13 @@ submodules = [
     'atoms',
     'chopper',
     'conversion',
-    'crystal',
     'data',
     'io',
     'metadata',
     'normalization',
     'peaks',
     'smoothing',
+    'spectroscopy',
     'tof',
 ]
 
