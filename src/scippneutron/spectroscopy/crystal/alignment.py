@@ -137,10 +137,12 @@ def u_from_1_peak_and_scattering_plane(
     for the rotation :math:`U`.
     All other quantities are provides as function arguments.
 
-    The above equation does not uniquely determine :math:`U`. This is resolved by
-    placing the x-axis in the sample holder system :math:`R^{-1} \vec{Q}_{\text{lab}}`
-    in the given scattering plane. The y-axis is then as close to the lab-frame
-    y-axis as possible.
+    The above equation does not uniquely determine :math:`U`. This is resolved with the
+    help of the scattering plane:
+    The scattering plane in the sample system is :math``B \text{scattering_plane}`.
+    :math:`U` is computed to place the x-axis of the sample frame in that plane such
+    that the y-axis points up.
+    This puts the y-axis as close to the lab-frame y-axis as possible.
 
     Attention
     ---------
