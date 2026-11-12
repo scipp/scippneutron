@@ -173,7 +173,7 @@ def u_matrix_from_uv_vectors(
         A vector in Miller indices along the incoming beam (for R = 1).
     v:
         A vector in Miller indices in the scattering plane.
-        Ideally, :math:`\vec{u} \cdot \vec{v}` should point up.
+        Ideally, :math:`\vec{u} \times \vec{v}` should point up.
     b:
         The B matrix of the sample.
     error_threshold:
