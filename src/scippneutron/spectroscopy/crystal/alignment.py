@@ -326,6 +326,7 @@ def ub_from_3_peaks(peaks: BraggPeaks) -> sc.Variable:
         #   Q_nu^T = V^T * (UB)^T
         # for (UB)^T and then transposing the result.
         # We use this instead of inverting V because it is more numerically stable.
+        # Note that `.values` gives us row vectors, i.e., the transposed matrices.
         ub_array = solve(peaks.hkl.values, q_nu.values).T
     except ValueError as error:
         error.add_note(
