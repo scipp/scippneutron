@@ -1,0 +1,161 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2026 Scipp contributors (https://github.com/scipp)
+
+"""Tools for geometry calculations and representations."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Self
+
+import scipp as sc
+
+
+@dataclass(slots=True, kw_only=True, frozen=True)
+class Plane:
+    r"""A plane in 3 dimensions defined by two in-plane vectors and a normal vector.
+
+    The vectors form a right-handed system with
+
+    .. math::
+
+        \vec{v}_1 \times \vec{v}_2 = \vec{n}
+
+    The constructors normalize all vectors, making them dimensionless.
+
+    Use one of the following to construct planes:
+
+    - :meth:`.from_normal_and_reference`
+    - :meth:`.from_in_plane_vectors`
+
+    This ensures that the vectors form an orthonormal system.
+    """
+
+    vector1: sc.Variable
+    """First in-plane vector."""
+    vector2: sc.Variable
+    """Second in-plane vector."""
+    normal: sc.Variable
+    """Normal vector."""
+
+    @classmethod
+    def from_normal_and_reference(
+        cls, *, normal: sc.Variable, reference: sc.Variable
+    ) -> Self:
+        r"""Construct a plane from a normal vector and an in-plane vector.
+
+        The plane vectors are computed as follows to produce an orthogonal system.
+
+        .. math::
+
+            \hat{v}_2 &= \hat{n} \times \hat{r}_1 \\
+            \hat{v}_1 &= \hat{v}_2 \times \hat{n}
+
+        All vectors are normalized.
+        :math:`\hat{r}_i` are the normalized input reference vectors.
+
+        This algorithm uses the direction of ``reference`` for ``vector``
+         if it is orthogonal to ``normal``. But it computes a new vector otherwise.
+
+        Parameters
+        ----------
+        normal:
+            Normal vector of the plane.
+        reference:
+            An in-plane vector.
+
+        Returns
+        -------
+        :
+            A plane with ``vector2 = cross(normal, vector1)``.
+        """
+        vector2 = sc.cross(normal, reference)
+        vector1 = sc.cross(vector2, normal)
+        return cls(
+            vector1=vector1 / sc.norm(vector1),
+            vector2=vector2 / sc.norm(vector2),
+            normal=normal / sc.norm(normal),
+        )
+
+    @classmethod
+    def from_in_plane_vectors(
+        cls, reference1: sc.Variable, reference2: sc.Variable
+    ) -> Self:
+        r"""Construct a plane from two in-plane vectors.
+
+        The plane vectors are computed as follows to produce an orthogonal system.
+
+        .. math::
+
+            \hat{v}_1 &= \hat{r}_1 \\
+            \hat{n} &= \hat{v}_1 \times \hat{r}_2 \\
+            \hat{v}_2 &= \hat{n} \times \hat{v}_1
+
+        All vectors are normalized.
+        :math:`\hat{r}_i` are the normalized input reference vectors.
+        Note that ``reference1`` is used as the direction of ``vector1`` while
+        ``reference2`` and ``vector2`` are not necessarily parallel.
+
+        Parameters
+        ----------
+        reference1:
+            First in-plane vector.
+        reference2:
+            Second in-plane vector.
+
+        Returns
+        -------
+        :
+            A plane with ``normal = cross(vector1, vector2)``.
+        """
+        normal = sc.cross(reference1, reference2)
+        vector2 = sc.cross(normal, reference1)
+        return cls(
+            vector1=reference1 / sc.norm(reference1),
+            vector2=vector2 / sc.norm(vector2),
+            normal=normal / sc.norm(normal),
+        )
+
+
+class ScatteringPlaneSampleHolder(Plane):
+    r"""A scattering plane in the sample holder coordinate system.
+
+    This plane is defined in the sample holder system that is related
+    to the lab system and Miller indices via
+
+    .. math::
+
+        \vec{v}_{\text{lab}} &= R \vec{v}_{\text{holder}} \\
+        \vec{v}_{\text{holder}} &= U B \vec{v}_{\text{hkl}}
+
+    where :math:`R` is the sample rotation matrix based on a goniometer.
+
+    See Also
+    --------
+    ScatteringPlaneMiller:
+        A scattering plane in Miller index space.
+    Plane:
+        The underlying implementation.
+    """
+
+
+class ScatteringPlaneMiller(Plane):
+    r"""A scattering plane in Miller index space.
+
+    This plane is defined in the Miller index space that is related
+    to the sample holder system and lab system via
+
+    .. math::
+
+        \vec{v}_{\text{holder}} &= U B \vec{v}_{\text{hkl}} \\
+        \vec{v}_{\text{lab}} &= R \vec{v}_{\text{holder}}
+
+    where :math:`R` is the sample rotation matrix based on a goniometer.
+
+    See Also
+    --------
+    ScatteringPlaneSampleHolder:
+        A scattering plane in sample holder space.
+    Plane:
+        The underlying implementation.
+    """

@@ -29,9 +29,8 @@
 
 ### Beamline geometry
 
-Note that `theta` or `scattering_angle` are deliberately not supported,
-due to some ambiguity on how the terms are used in the community
-and possible confusion of `theta` (from Bragg’s law) with `theta` in spherical coordinates.
+Note that `theta` or `scattering_angle` are deliberately not supported, due to some ambiguity on how the terms are used
+in the community and possible confusion of `theta` (from Bragg’s law) with `theta` in spherical coordinates.
 
 ```{eval-rst}
 .. autosummary::
@@ -67,5 +66,6 @@ and possible confusion of `theta` (from Bragg’s law) with `theta` in spherical
    normalization
    peaks
    smoothing
+   spectroscopy
    tof
 ```
