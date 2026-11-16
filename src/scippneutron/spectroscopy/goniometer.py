@@ -30,7 +30,7 @@ class Goniometer:
     incident beam projected onto the horizontal plane, and x is perpendicular to both,
     forming a right-handed coordinate system.
     Note that this differs slightly from the convention used in
-    `Coordinate Transformations <../../user-guide/coordinate-transformations.html>`_
+    `Coordinate Transformations <../../user-guide/coordinate-transformations.ipynb>`_
     because for goniometers, the z-axis is always horizontal.
 
     Motors rotate around their axis in a right-handed sense.
