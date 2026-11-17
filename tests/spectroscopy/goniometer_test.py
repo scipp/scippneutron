@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2026 Scipp contributors (https://github.com/scipp)
-import warnings
 from itertools import permutations, product
 
 import numpy as np
@@ -8,7 +7,7 @@ import numpy.typing as npt
 import pytest
 import scipp as sc
 import scipp.testing
-from hypothesis import given, settings
+from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
 
@@ -130,9 +129,16 @@ def test_goniometer_decompose_rotation_roundtrip_3_axes(
     )
     initial = sc.spatial.rotation(value=quat)
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "Gimbal lock", UserWarning)
+    try:
         decomposed = goniometer.decompose_rotation(initial)
+    except UserWarning as warning:
+        # The 3rd angle is 0 in case of a gimbal lock, so we cannot uniquely
+        # reproduce the rotation.
+        # Gimbal lock is difficult to predict from quaternions, so we can't easily
+        # prevent it in the strategy.
+        if "Gimbal lock" in ";".join(warning.args):
+            assume(False)
+        raise
     reconstructed = goniometer.rotation_for(decomposed)
 
     # Compare rotation matrices, not the dtype=rotation3 variables because
@@ -169,9 +175,16 @@ def test_goniometer_decompose_rotation_roundtrip_2_axes(
     )
     initial = r1 * r0
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "Gimbal lock", UserWarning)
+    try:
         decomposed = goniometer.decompose_rotation(initial)
+    except UserWarning as warning:
+        # The last angle is 0 in case of a gimbal lock, so we cannot uniquely
+        # reproduce the rotation.
+        # Gimbal lock is difficult to predict from quaternions, so we can't easily
+        # prevent it in the strategy.
+        if "Gimbal lock" in ";".join(warning.args):
+            assume(False)
+        raise
 
     sc.testing.assert_allclose(
         decomposed[0],
