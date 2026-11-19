@@ -311,22 +311,20 @@ class DiskChopper:
 
     @classmethod
     def from_nexus(
-        cls, chopper: Mapping[str, sc.Variable | sc.DataArray]
+        cls, chopper: Mapping[str, sc.Variable | sc.DataArray | sc.DataGroup]
     ) -> DiskChopper:
         """Construct a new DiskChopper from data loaded from NeXus.
 
         Keys in the input correspond to the fields of `NXdisk_chopper
         <https://manual.nexusformat.org/classes/base_classes/NXdisk_chopper.html>`_.
 
-        The input data group must contain a `rotation_speed_setpoint`. If this is not
-        available, a single (scalar) value must be computed from processing the
-        time-dependent `rotation_speed` data. This can be done with
-        :func:`~scippneutron.chopper.nexus_chopper.post_process_disk_chopper`
-        (see its documentation for the required steps). The resulting single value
-        can then be passed as `rotation_speed_setpoint`.
+        The rotation frequency is read from `rotation_speed_setpoint` if present,
+        otherwise from `rotation_speed`. Fields that require a scalar also accept a
+        nonempty time log with identical values. For time-dependent fields, see
+        :ref:`disk_chopper-time_dependent_parameters` for preprocessing.
 
         If a `phase` field is not present, it is computed from the `delay` field
-        and the `rotation_speed_setpoint` as `phase = 2*pi*frequency*delay`.
+        and the rotation frequency as `phase = 2*pi*frequency*delay`.
 
         Parameters
         ----------
@@ -640,7 +638,7 @@ def _broadcast_slit_height(
 
 
 def _get_edges_from_nexus(
-    nexus_chopper: Mapping[str, sc.Variable | sc.DataArray],
+    nexus_chopper: Mapping[str, sc.Variable | sc.DataArray | sc.DataGroup],
 ) -> dict[str, sc.Variable]:
     if (edges := nexus_chopper.get('slit_edges')) is not None:
         if 'slit_begin' in nexus_chopper or 'slit_end' in nexus_chopper:
@@ -666,7 +664,7 @@ def _get_edges_from_nexus(
 
 
 def _get_0d_variable(
-    dg: Mapping[str, sc.Variable | sc.DataArray], name: str
+    dg: Mapping[str, sc.Variable | sc.DataArray | sc.DataGroup], name: str
 ) -> sc.Variable:
     if (val := dg.get(name)) is None:
         raise ValueError(f"Chopper field '{name}' is missing")
@@ -677,11 +675,18 @@ def _get_0d_variable(
         "https://scipp.github.io/scippneutron/user-guide/chopper/processing-nexus-choppers.html"
     )
 
+    if isinstance(val, sc.DataGroup):
+        # ScippNexus can put the main series and sublogs in the same data group.
+        val = val.get('value', val)
     if isinstance(val, sc.DataArray):
         val = val.data
     if not isinstance(val, sc.Variable):
         raise TypeError(msg.format(name=name, got=f'got a {type(val)}'))
     val = val.squeeze()
+    if val.dims == ('time',) and val.size > 0:
+        first = val['time', 0]
+        if sc.identical(val, first.broadcast(sizes=val.sizes)):
+            return first
     if val.ndim != 0:
         if val.size == 0:
             got = 'got an empty variable'

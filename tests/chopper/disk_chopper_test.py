@@ -1049,3 +1049,39 @@ def test_from_nexus_position_can_be_nxlog():
     disk_chopper = DiskChopper.from_nexus(chopper_nexus)
 
     assert sc.identical(disk_chopper.axle_position, sc.vector([0, 0, 6.5], unit='m'))
+
+
+@pytest.mark.parametrize('representation', ['variable', 'data_array', 'group'])
+def test_from_nexus_constant_frequency_log(nexus_chopper, representation):
+    expected = DiskChopper.from_nexus(nexus_chopper)
+    key = _get_rotation_speed_key(nexus_chopper)
+    values = sc.concat([expected.frequency] * 3, dim='time')
+    if representation == 'variable':
+        log = values
+    else:
+        time = sc.datetimes(dims=['time'], values=[0, 1, 2], unit='s')
+        log = sc.DataArray(values, coords={'time': time})
+        if representation == 'group':
+            log = sc.DataGroup(value=log)
+    nexus_chopper[key] = log
+
+    assert DiskChopper.from_nexus(nexus_chopper) == expected
+
+
+@pytest.mark.parametrize(
+    ('dims', 'values', 'message'),
+    [
+        (['time'], [12.0, 13.0, 12.0], 'got a 1d variable'),
+        (['time'], [], 'got an empty variable'),
+        (['channel'], [12.0, 12.0], 'got a 1d variable'),
+    ],
+)
+def test_from_nexus_non_scalar_frequency_log_is_rejected(
+    nexus_chopper, dims, values, message
+):
+    nexus_chopper[_get_rotation_speed_key(nexus_chopper)] = sc.array(
+        dims=dims, values=values, unit='Hz'
+    )
+
+    with pytest.raises(sc.DimensionError, match=message):
+        DiskChopper.from_nexus(nexus_chopper)
