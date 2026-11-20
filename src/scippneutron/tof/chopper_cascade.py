@@ -60,7 +60,10 @@ class Subframe:
             raise sc.DimensionError(
                 f'Inconsistent dims or shape: {time.sizes} vs {wavelength.sizes}'
             )
+        #: Arrival times at the polygon vertices, stored in seconds. May have
+        #: additional dimensions when propagated to multiple distances.
         self.time = time.to(unit='s', copy=False)
+        #: Wavelengths at the corresponding polygon vertices, stored in angstroms.
         self.wavelength = wavelength.to(unit='angstrom', copy=False)
 
     def __eq__(self, other: object) -> bool:
@@ -155,7 +158,10 @@ class Frame:
     subframes by choppers.
     """
 
+    #: Position along the beam path at which the subframes are evaluated.
     distance: sc.Variable
+    #: Pulse regions that reach this position, each represented by a subframe
+    #: polygon in time and wavelength. Empty if no neutrons reach this position.
     subframes: list[Subframe]
 
     def __eq__(self, other: object) -> bool:
@@ -290,6 +296,8 @@ class FrameSequence:
     :py:meth:`chop`.
     """
 
+    #: Frames in propagation order, from the initial frame through each applied
+    #: chopper and any additional positions added by propagation.
     frames: list[Frame]
 
     @staticmethod
@@ -516,8 +524,14 @@ class FrameSequence:
 
 @dataclass
 class Chopper:
+    """A chopper represented by its open time windows at a beamline position."""
+
+    #: Position along the beam path, measured from the same origin as the frames.
     distance: sc.Variable
+    #: Start times of the open windows, in the same time reference as the frames.
+    #: Entries pair with the corresponding entries in :attr:`time_close`.
     time_open: sc.Variable
+    #: End times of the open windows, paired with :attr:`time_open`.
     time_close: sc.Variable
 
     def __post_init__(self):
