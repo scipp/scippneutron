@@ -631,28 +631,14 @@ def test_elastic_q_vec_from_q_elements_raises_for_unit_mismatch():
 
 
 def make_b_matrix() -> sc.Variable:
-    """Return a B matrix.
-
-    Uses and Levi convention
-      W. R. Busing and H. A. Levy
-      Angle calculations for 3- and 4-circle X-ray and neutron diffractometers
-      Acta Cryst. (1967). 22, 457-464)
-    """
-    a = 3.1
-    b = 0.3
-    c = 1.1
-    alpha = 0.7
-    beta = 4.6
-    gamma = 1.4
-
-    return sc.spatial.linear_transform(
-        value=[
-            [a, b * np.cos(gamma), c * np.cos(beta)],
-            [0, b * np.sin(gamma), -c * np.sin(beta) * np.cos(alpha)],
-            [0, 0, 1 / c],
-        ],
-        unit='1/angstrom',
-    )
+    """Return the Busing-Levy B matrix for a triclinic test cell."""
+    # Columns are direct-space basis vectors in angstroms.
+    direct_basis = np.array([[4.0, 1.0, 2.0], [0.0, 5.0, 1.0], [0.0, 0.0, 6.0]])
+    direct_metric = direct_basis.T @ direct_basis
+    # The upper triangular factor places the first reciprocal vector on x
+    # and the second in the xy plane (Busing and Levy, 1967, Eq. (3)).
+    reciprocal_basis = np.linalg.cholesky(np.linalg.inv(direct_metric)).T
+    return sc.spatial.linear_transform(value=reciprocal_basis, unit='1/angstrom')
 
 
 def test_ub_matrix_from_u_and_b():
