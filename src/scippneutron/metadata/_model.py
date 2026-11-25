@@ -164,7 +164,7 @@ class Measurement(BaseModel):
         """Return the run number as an int if possible."""
         try:
             return int(self.run_number)
-        except ValueError:
+        except (ValueError, TypeError):
             return self.run_number
 
 

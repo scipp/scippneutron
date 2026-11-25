@@ -25,25 +25,34 @@ def nxroot() -> snx.Group:
 
 def test_measurement_from_nexus_entry() -> None:
     with snx.File(scn.data.get_path('PG3_4844_event.nxs')) as f:
-        experiment = metadata.Measurement.from_nexus_entry(f['entry'])
-    assert experiment.title == 'diamond cw0.533 4.22e12 60Hz [10x30]'
-    assert experiment.run_number == '4844'
-    assert experiment.experiment_id == 'IPTS-2767'
-    assert experiment.start_time == parse_datetime('2011-08-12T11:50:17-04:00')
-    assert experiment.end_time == parse_datetime('2011-08-12T13:22:05-04:00')
-    assert experiment.experiment_doi is None
+        measurement = metadata.Measurement.from_nexus_entry(f['entry'])
+    assert measurement.title == 'diamond cw0.533 4.22e12 60Hz [10x30]'
+    assert measurement.run_number == '4844'
+    assert measurement.run_number_maybe_int == 4844
+    assert measurement.experiment_id == 'IPTS-2767'
+    assert measurement.start_time == parse_datetime('2011-08-12T11:50:17-04:00')
+    assert measurement.end_time == parse_datetime('2011-08-12T13:22:05-04:00')
+    assert measurement.experiment_doi is None
 
 
 def test_measurement_from_individual_variables() -> None:
-    experiment = metadata.Measurement(
+    measurement = metadata.Measurement(
         title=sc.scalar('The title'),
         run_number='12b',
         experiment_id=sc.scalar('EXP-1', unit=''),
     )
-    assert experiment.title == 'The title'
-    assert experiment.run_number == '12b'
-    assert experiment.experiment_id == 'EXP-1'
-    assert experiment.experiment_doi is None
+    assert measurement.title == 'The title'
+    assert measurement.run_number == '12b'
+    assert measurement.run_number_maybe_int == '12b'
+    assert measurement.experiment_id == 'EXP-1'
+    assert measurement.experiment_doi is None
+
+
+def test_measurement_no_run_number() -> None:
+    measurement = metadata.Measurement(title='t')
+    assert measurement.title == 't'
+    assert measurement.run_number is None
+    assert measurement.run_number_maybe_int is None
 
 
 def test_beamline_from_nexus_entry() -> None:
